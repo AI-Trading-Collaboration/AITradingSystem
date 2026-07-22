@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2455_SIMULATION_DEFENSIVE_WIN_RATE_POLICY_GATE_CORRECTION
+  title: null
+  domain: Strategy correctness / simulation defensive win-rate policy enforcement
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 已完成；后续由普通 policy/version review 承接，不自动校准数值
+  requirement_refs:
+  - docs/requirements/TRADING-2455_Simulation_Defensive_Win_Rate_Policy_Gate_Correction.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2455_Simulation_Defensive_Win_Rate_Policy_Gate_Correction.md`。loader
+    已校验 `minimum_win_rate_vs_no_trade=0.50` 的 finite/range，regime status 已真实执行该门槛，低胜率样本不再误报
+    `PROVEN_DEFENSIVE`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 边界/低于边界/invalid policy/不足样本测试通过；expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6575 passed/2 skipped`；不改 policy 数值、研究窗口或 production state，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 469
+    row_sha256: 190ab9ec3a94d048f5a33db32d9f255ebfeeddf1dcb1d394e80042e4e67d8c0e
+    cell_count: 8
+    all_cells:
+    - TRADING-2455_SIMULATION_DEFENSIVE_WIN_RATE_POLICY_GATE_CORRECTION
+    - Strategy correctness / simulation defensive win-rate policy enforcement
+    - P0
+    - DONE
+    - 已完成；后续由普通 policy/version review 承接，不自动校准数值
+    - 详见 `docs/requirements/TRADING-2455_Simulation_Defensive_Win_Rate_Policy_Gate_Correction.md`。loader
+      已校验 `minimum_win_rate_vs_no_trade=0.50` 的 finite/range，regime status 已真实执行该门槛，低胜率样本不再误报
+      `PROVEN_DEFENSIVE`。
+    - 边界/低于边界/invalid policy/不足样本测试通过；expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6575 passed/2 skipped`；不改 policy 数值、研究窗口或 production state，`production_effect=none`。
+    - 2026-07-22：Wave 8 correctness blocker 闭合并转 DONE；三个投资解释指标 return/drawdown/win-rate
+      必须同时通过。
+    raw_line: '|TRADING-2455_SIMULATION_DEFENSIVE_WIN_RATE_POLICY_GATE_CORRECTION|Strategy
+      correctness / simulation defensive win-rate policy enforcement|P0|DONE|已完成；后续由普通
+      policy/version review 承接，不自动校准数值|详见 `docs/requirements/TRADING-2455_Simulation_Defensive_Win_Rate_Policy_Gate_Correction.md`。loader
+      已校验 `minimum_win_rate_vs_no_trade=0.50` 的 finite/range，regime status 已真实执行该门槛，低胜率样本不再误报
+      `PROVEN_DEFENSIVE`。|边界/低于边界/invalid policy/不足样本测试通过；expanded focused=`164 passed/1
+      skipped`，architecture/contract/reproducibility=`446/265/23 passed`，Full=`6575
+      passed/2 skipped`；不改 policy 数值、研究窗口或 production state，`production_effect=none`。|2026-07-22：Wave
+      8 correctness blocker 闭合并转 DONE；三个投资解释指标 return/drawdown/win-rate 必须同时通过。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-190ab9ec3a94d048f5a33db3
+  task_id: TRADING-2455_SIMULATION_DEFENSIVE_WIN_RATE_POLICY_GATE_CORRECTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 已完成；后续由普通 policy/version review 承接，不自动校准数值
+    notes: 2026-07-22：Wave 8 correctness blocker 闭合并转 DONE；三个投资解释指标 return/drawdown/win-rate
+      必须同时通过。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:190ab9ec3a94d048f5a33db32d9f255ebfeeddf1dcb1d394e80042e4e67d8c0e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2455_SIMULATION_DEFENSIVE_WIN_RATE_POLICY_GATE_CORRECTION
+  - Strategy correctness / simulation defensive win-rate policy enforcement
+  - P0
+  - DONE
+  - 已完成；后续由普通 policy/version review 承接，不自动校准数值
+  - 详见 `docs/requirements/TRADING-2455_Simulation_Defensive_Win_Rate_Policy_Gate_Correction.md`。loader
+    已校验 `minimum_win_rate_vs_no_trade=0.50` 的 finite/range，regime status 已真实执行该门槛，低胜率样本不再误报
+    `PROVEN_DEFENSIVE`。
+  - 边界/低于边界/invalid policy/不足样本测试通过；expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
+    passed`，Full=`6575 passed/2 skipped`；不改 policy 数值、研究窗口或 production state，`production_effect=none`。
+  - 2026-07-22：Wave 8 correctness blocker 闭合并转 DONE；三个投资解释指标 return/drawdown/win-rate
+    必须同时通过。
+  docs_links:
+  - docs/requirements/TRADING-2455_Simulation_Defensive_Win_Rate_Policy_Gate_Correction.md
+  terminal: true
+  raw_row_sha256: 190ab9ec3a94d048f5a33db32d9f255ebfeeddf1dcb1d394e80042e4e67d8c0e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0697dcd2c6326b2c2e1e479557a81009035b0287df3042eecd590a1483829cd1

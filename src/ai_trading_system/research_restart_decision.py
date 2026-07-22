@@ -16,12 +16,14 @@ from ai_trading_system.etf_portfolio.dynamic_v3_r1_evidence import (
     validate_r1_walk_forward_evidence,
 )
 from ai_trading_system.legacy_research_artifact_portable_lineage import (
-    DEFAULT_POLICY_PATH as DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
-)
-from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    DEFAULT_HISTORICAL_SOURCE_ARCHIVE_POLICY_PATH,
     PortableLineageError,
     PortableLineageResolver,
     portable_lineage_failure_evidence,
+    require_portable_lineage_archive_sidecar_pair,
+)
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    DEFAULT_POLICY_PATH as DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
 )
 from ai_trading_system.platform.artifacts.writer import (
     write_json_atomic,
@@ -160,8 +162,14 @@ def validate_strategy_research_restart_decision(
     portable_lineage_sidecar_path: Path | None = None,
     portable_project_root: Path = PROJECT_ROOT,
     portable_lineage_policy_path: Path = DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+    historical_source_archive_manifest_path: Path | None = None,
+    historical_source_archive_policy_path: Path = (DEFAULT_HISTORICAL_SOURCE_ARCHIVE_POLICY_PATH),
 ) -> dict[str, Any]:
     resolver: PortableLineageResolver | None = None
+    require_portable_lineage_archive_sidecar_pair(
+        portable_lineage_sidecar_path=portable_lineage_sidecar_path,
+        historical_source_archive_manifest_path=historical_source_archive_manifest_path,
+    )
     try:
         if portable_lineage_sidecar_path is not None:
             resolver = PortableLineageResolver(
@@ -170,6 +178,8 @@ def validate_strategy_research_restart_decision(
                 consumer="r2_decision",
                 project_root=portable_project_root,
                 policy_path=portable_lineage_policy_path,
+                historical_source_archive_manifest_path=(historical_source_archive_manifest_path),
+                historical_source_archive_policy_path=historical_source_archive_policy_path,
             )
         result = _validate_strategy_research_restart_decision(
             output_root=output_root, resolver=resolver
@@ -278,6 +288,12 @@ def _validated_evidence(
             "portable_lineage_sidecar_path": portable_resolver.sidecar_path,
             "portable_project_root": portable_resolver.project_root,
             "portable_lineage_policy_path": portable_resolver.policy_path,
+            "historical_source_archive_manifest_path": (
+                portable_resolver.historical_source_archive_manifest_path
+            ),
+            "historical_source_archive_policy_path": (
+                portable_resolver.historical_source_archive_policy_path
+            ),
         }
     r0_validation = validate_research_restart_preflight(
         artifact_path=r0_preflight_path, **portable_kwargs

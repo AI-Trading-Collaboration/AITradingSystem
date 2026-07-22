@@ -120,15 +120,9 @@ BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION = (
 )
 SIM_INTERPRETATION_SNAPSHOT_SCHEMA_VERSION = "sim_interpretation_input_snapshot.v2"
 SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION = "sim_risk_return_input_snapshot.v2"
-SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION = (
-    "sim_defensive_validation_input_snapshot.v2"
-)
-ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION = (
-    "advisory_proposal_review_input_snapshot.v2"
-)
-FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION = (
-    "forward_confirmation_plan_input_snapshot.v2"
-)
+SIM_DEFENSIVE_VALIDATION_SNAPSHOT_SCHEMA_VERSION = "sim_defensive_validation_input_snapshot.v2"
+ADVISORY_PROPOSAL_REVIEW_SNAPSHOT_SCHEMA_VERSION = "advisory_proposal_review_input_snapshot.v2"
+FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION = "forward_confirmation_plan_input_snapshot.v2"
 BACKTEST_SIM_VARIANTS = (
     "no_trade",
     "consensus_target",
@@ -521,9 +515,9 @@ def generate_backtest_sim_events(
         "data_quality_status": quality_status,
         "data_quality_enforced": enforce_data_quality_gate,
         "data_quality_report_content": quality_report_text,
-        "data_quality_report_checksum": sha256(quality_report_text.encode("utf-8")).hexdigest()
-        if quality_report_text
-        else "",
+        "data_quality_report_checksum": (
+            sha256(quality_report_text.encode("utf-8")).hexdigest() if quality_report_text else ""
+        ),
         "outcome_mode": OUTCOME_MODE_BACKTEST_SIMULATION,
         "pit_safety_status": PIT_SAFETY_SIMULATION,
         "not_for_production": True,
@@ -1672,9 +1666,7 @@ def _backtest_sim_outcome_bundle(outcome_dir: Path) -> dict[str, Any]:
     }
 
 
-def _advisory_proposal_review_source_bundle(
-    source_dir: Path, source_type: str
-) -> dict[str, Any]:
+def _advisory_proposal_review_source_bundle(source_dir: Path, source_type: str) -> dict[str, Any]:
     specs: dict[str, tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]] = {
         "interpretation": (
             (
@@ -3642,8 +3634,7 @@ def validate_backtest_sim_forward_bridge_artifact(
         lineage = _mapping(snapshot.get("lineage"))
         calibration_pack_id = _text(lineage.get("calibration_pack_id"))
         if (
-            snapshot.get("schema_version")
-            != BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION
+            snapshot.get("schema_version") != BACKTEST_SIM_FORWARD_BRIDGE_SNAPSHOT_SCHEMA_VERSION
             or generated is None
             or source_dir.name != calibration_pack_id
         ):
@@ -3731,9 +3722,7 @@ def validate_backtest_sim_forward_bridge_artifact(
         _check("manifest_exists", (bridge_dir / "sim_forward_bridge_manifest.json").exists(), ""),
         _check("targets_exists", (bridge_dir / "forward_confirmation_targets.json").exists(), ""),
         _check("questions_exists", (bridge_dir / "weekly_review_questions.json").exists(), ""),
-        _check(
-            "snapshot_exists", (bridge_dir / "forward_bridge_input_snapshot.json").exists(), ""
-        ),
+        _check("snapshot_exists", (bridge_dir / "forward_bridge_input_snapshot.json").exists(), ""),
         _check("report_exists", (bridge_dir / "sim_forward_bridge_report.md").exists(), ""),
         _check("reader_brief_exists", (bridge_dir / "reader_brief_section.md").exists(), ""),
         _check("bridge_id_matches", manifest.get("bridge_id") == bridge_id, ""),
@@ -3980,9 +3969,7 @@ def _sim_interpretation_source_bundles(
 ) -> dict[str, Any]:
     return {
         "outcome": _backtest_sim_outcome_bundle(source_dirs["outcome"]),
-        "calibration": _backtest_sim_forward_bridge_source_bundle(
-            source_dirs["calibration"]
-        ),
+        "calibration": _backtest_sim_forward_bridge_source_bundle(source_dirs["calibration"]),
         "bridge": _backtest_sim_calibration_source_bundle(
             source_dirs["bridge"],
             json_files=(
@@ -4093,8 +4080,7 @@ def validate_sim_interpretation_artifact(
     try:
         generated = _datetime_from_any(snapshot.get("generated_at"))
         source_dirs = {
-            name: Path(_text(path))
-            for name, path in _mapping(snapshot.get("source_dirs")).items()
+            name: Path(_text(path)) for name, path in _mapping(snapshot.get("source_dirs")).items()
         }
         lineage = _mapping(snapshot.get("lineage"))
         if (
@@ -4113,9 +4099,7 @@ def validate_sim_interpretation_artifact(
             or source_dirs["calibration"].name != calibration_id
             or source_dirs["bridge"].name != bridge_id
         ):
-            raise DynamicV3BacktestSimulationError(
-                "simulation interpretation source ids invalid"
-            )
+            raise DynamicV3BacktestSimulationError("simulation interpretation source ids invalid")
         live_validations = _sim_interpretation_source_validations(
             outcome_id=outcome_id,
             calibration_id=calibration_id,
@@ -4241,9 +4225,7 @@ def validate_sim_interpretation_artifact(
         _check(
             "report_recomputed",
             (interpretation_dir / "sim_interpretation_report.md").is_file()
-            and (interpretation_dir / "sim_interpretation_report.md").read_text(
-                encoding="utf-8"
-            )
+            and (interpretation_dir / "sim_interpretation_report.md").read_text(encoding="utf-8")
             == expected_report,
             "Markdown",
         ),
@@ -4292,10 +4274,7 @@ def validate_sim_interpretation_artifact(
                     "avg_20d_return",
                 )
             )
-            and all(
-                row.get("confidence") != "HIGH"
-                for row in _records(findings.get("findings"))
-            ),
+            and all(row.get("confidence") != "HIGH" for row in _records(findings.get("findings"))),
             "null/finite evidence and no synthetic HIGH confidence",
         ),
         _check("broker_action_forbidden", manifest.get("broker_action_taken") is False, ""),
@@ -4452,9 +4431,7 @@ def validate_sim_risk_return_artifact(
     risk_return_dir = output_dir / risk_return_id
     manifest = _read_optional_json(risk_return_dir / "risk_return_manifest.json") or {}
     summary = _read_optional_json(risk_return_dir / "risk_adjusted_summary.json") or {}
-    snapshot = (
-        _read_optional_json(risk_return_dir / "sim_risk_return_input_snapshot.json") or {}
-    )
+    snapshot = _read_optional_json(risk_return_dir / "sim_risk_return_input_snapshot.json") or {}
     rows = _records(summary.get("summary"))
     source_errors: list[str] = []
     recompute_error = ""
@@ -4496,9 +4473,7 @@ def validate_sim_risk_return_artifact(
             source_errors.append("Outcome validation drifted from frozen snapshot")
         if snapshot.get("outcome_bundle") != expected_bundle:
             source_errors.append("Outcome bundle drifted from frozen snapshot")
-        expected_table = _risk_return_tradeoff_table(
-            _records(expected_bundle.get("windows"))
-        )
+        expected_table = _risk_return_tradeoff_table(_records(expected_bundle.get("windows")))
         expected_summary = _risk_adjusted_summary(expected_table)
         expected_snapshot = {
             "schema_version": SIM_RISK_RETURN_SNAPSHOT_SCHEMA_VERSION,
@@ -4548,8 +4523,7 @@ def validate_sim_risk_return_artifact(
         _check(
             "all_json_bytes_recomputed",
             all(
-                path.is_file()
-                and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
                 for path, payload in (
                     (
                         risk_return_dir / "sim_risk_return_input_snapshot.json",
@@ -4564,9 +4538,7 @@ def validate_sim_risk_return_artifact(
         _check(
             "tradeoff_csv_recomputed",
             (risk_return_dir / "active_variant_tradeoff_table.csv").is_file()
-            and (risk_return_dir / "active_variant_tradeoff_table.csv").read_text(
-                encoding="utf-8"
-            )
+            and (risk_return_dir / "active_variant_tradeoff_table.csv").read_text(encoding="utf-8")
             == expected_csv,
             "CSV",
         ),
@@ -4617,8 +4589,7 @@ def validate_sim_risk_return_artifact(
                     row.get("evidence_status") == "AVAILABLE"
                     and row.get("paired_event_count", 0) > 0
                     and all(
-                        row.get(key) is None or _finite_number(row.get(key))
-                        for key in metric_keys
+                        row.get(key) is None or _finite_number(row.get(key)) for key in metric_keys
                     )
                 )
                 for row in rows
@@ -4681,9 +4652,7 @@ def run_sim_defensive_validation(
         "payload": policy,
         "file_contents": _read_text(policy_path),
     }
-    matrix_rows = _defensive_regime_matrix(
-        _records(outcome_bundle.get("windows")), policy=policy
-    )
+    matrix_rows = _defensive_regime_matrix(_records(outcome_bundle.get("windows")), policy=policy)
     failure_cases = [
         _defensive_failure_case(row)
         for row in matrix_rows
@@ -4724,9 +4693,7 @@ def run_sim_defensive_validation(
     _write_jsonl(defensive_dir / "defensive_regime_matrix.jsonl", matrix_rows)
     _write_jsonl(defensive_dir / "defensive_failure_cases.jsonl", failure_cases)
     _write_json(defensive_dir / "defensive_validation_summary.json", summary)
-    _write_json(
-        defensive_dir / "sim_defensive_validation_input_snapshot.json", input_snapshot
-    )
+    _write_json(defensive_dir / "sim_defensive_validation_input_snapshot.json", input_snapshot)
     _write_text(defensive_dir / "defensive_validation_report.md", report)
     _update_latest_pointer(
         "latest_sim_defensive_validation",
@@ -4762,8 +4729,7 @@ def _sim_defensive_validation_manifest(
         "generated_at": generated.isoformat(),
         "status": (
             "PASS"
-            if summary.get("defensive_limited_adjustment_status")
-            != "INSUFFICIENT_DATA"
+            if summary.get("defensive_limited_adjustment_status") != "INSUFFICIENT_DATA"
             else "INSUFFICIENT_DATA"
         ),
         "market_regime": "ai_after_chatgpt",
@@ -4832,8 +4798,7 @@ def validate_sim_defensive_validation_artifact(
     failure_cases = _read_jsonl(defensive_dir / "defensive_failure_cases.jsonl")
     summary = _read_optional_json(defensive_dir / "defensive_validation_summary.json") or {}
     snapshot = (
-        _read_optional_json(defensive_dir / "sim_defensive_validation_input_snapshot.json")
-        or {}
+        _read_optional_json(defensive_dir / "sim_defensive_validation_input_snapshot.json") or {}
     )
     source_errors: list[str] = []
     recompute_error = ""
@@ -4963,8 +4928,7 @@ def validate_sim_defensive_validation_artifact(
         _check(
             "all_json_bytes_recomputed",
             all(
-                path.is_file()
-                and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
                 for path, payload in (
                     (
                         defensive_dir / "sim_defensive_validation_input_snapshot.json",
@@ -4991,16 +4955,13 @@ def validate_sim_defensive_validation_artifact(
         _check(
             "report_recomputed",
             (defensive_dir / "defensive_validation_report.md").is_file()
-            and (defensive_dir / "defensive_validation_report.md").read_text(
-                encoding="utf-8"
-            )
+            and (defensive_dir / "defensive_validation_report.md").read_text(encoding="utf-8")
             == expected_report,
             "Markdown",
         ),
         _check(
             "pressure_regimes_present",
-            {row.get("regime") for row in rows}
-            >= set(_texts(policy.get("pressure_regimes"))),
+            {row.get("regime") for row in rows} >= set(_texts(policy.get("pressure_regimes"))),
             "pressure regimes",
         ),
         _check(
@@ -5226,9 +5187,7 @@ def run_advisory_proposal_review(
         policy=policy,
         decision_matrix=decision_matrix,
     )
-    report = render_advisory_proposal_review_report(
-        manifest, decision_matrix, defensive_summary
-    )
+    report = render_advisory_proposal_review_report(manifest, decision_matrix, defensive_summary)
     review_dir.mkdir(parents=True, exist_ok=False)
     _write_json(review_dir / "proposal_review_manifest.json", manifest)
     _write_json(review_dir / "proposal_decision_matrix.json", decision_matrix)
@@ -5433,16 +5392,12 @@ def validate_advisory_proposal_review_artifact(
         risk_json = _mapping(live_bundles["risk_return"].get("json"))
         defensive_json = _mapping(live_bundles["defensive"].get("json"))
         calibration_json = _mapping(live_bundles["calibration"].get("json"))
-        source_proposals = _mapping(
-            calibration_json.get("proposed_advisory_rule_changes.json")
-        )
+        source_proposals = _mapping(calibration_json.get("proposed_advisory_rule_changes.json"))
         source_proposal_ids = [
             _text(row.get("proposal_id") or row.get("proposal_type"))
             for row in _records(source_proposals.get("proposals"))
         ]
-        defensive_summary = _mapping(
-            defensive_json.get("defensive_validation_summary.json")
-        )
+        defensive_summary = _mapping(defensive_json.get("defensive_validation_summary.json"))
         expected_matrix = _proposal_decision_matrix(
             proposals=source_proposals,
             risk_summary=_mapping(risk_json.get("risk_adjusted_summary.json")),
@@ -5481,9 +5436,7 @@ def validate_advisory_proposal_review_artifact(
             policy=policy,
             decision_matrix=expected_matrix,
         )
-        expected_checklist = render_owner_approval_checklist(
-            expected_matrix, defensive_summary
-        )
+        expected_checklist = render_owner_approval_checklist(expected_matrix, defensive_summary)
         expected_report = render_advisory_proposal_review_report(
             expected_manifest, expected_matrix, defensive_summary
         )
@@ -5524,8 +5477,7 @@ def validate_advisory_proposal_review_artifact(
         _check(
             "all_json_bytes_recomputed",
             all(
-                path.is_file()
-                and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
+                path.is_file() and path.read_text(encoding="utf-8") == _canonical_json_text(payload)
                 for path, payload in (
                     (
                         review_dir / "advisory_proposal_review_input_snapshot.json",
@@ -5712,9 +5664,7 @@ def run_forward_confirmation_plan(
     }
 
 
-def _forward_confirmation_plan_source_bundle(
-    source_dir: Path, source_type: str
-) -> dict[str, Any]:
+def _forward_confirmation_plan_source_bundle(source_dir: Path, source_type: str) -> dict[str, Any]:
     specs = {
         "proposal_review": (
             (
@@ -5777,9 +5727,7 @@ def _load_forward_confirmation_plan_policy(policy_path: Path) -> dict[str, Any]:
             or not _text(rule.get("failure_condition"))
             or not _text(rule.get("failure_action"))
         ):
-            raise DynamicV3BacktestSimulationError(
-                f"forward plan target rule invalid: {target_id}"
-            )
+            raise DynamicV3BacktestSimulationError(f"forward plan target rule invalid: {target_id}")
     return policy
 
 
@@ -5800,9 +5748,7 @@ def _validate_forward_confirmation_plan_lineage_and_time(
     for name, manifest in (("proposal review", review_manifest), ("bridge", bridge_manifest)):
         source_generated = _datetime_from_any(manifest.get("generated_at"))
         if source_generated is None or source_generated > generated:
-            raise DynamicV3BacktestSimulationError(
-                f"forward plan {name} generated after cutoff"
-            )
+            raise DynamicV3BacktestSimulationError(f"forward plan {name} generated after cutoff")
 
 
 def _forward_confirmation_plan_manifest(
@@ -5892,9 +5838,7 @@ def validate_forward_confirmation_plan_artifact(
     targets = _read_optional_json(plan_dir / "confirmation_targets.json") or {}
     trigger_conditions = _read_optional_json(plan_dir / "trigger_conditions.json") or {}
     failure_conditions = _read_optional_json(plan_dir / "failure_conditions.json") or {}
-    snapshot = (
-        _read_optional_json(plan_dir / "forward_confirmation_plan_input_snapshot.json") or {}
-    )
+    snapshot = _read_optional_json(plan_dir / "forward_confirmation_plan_input_snapshot.json") or {}
     source_errors: list[str] = []
     recompute_error = ""
     expected_snapshot: dict[str, Any] = {}
@@ -5912,8 +5856,7 @@ def validate_forward_confirmation_plan_artifact(
             raise DynamicV3BacktestSimulationError("forward plan snapshot time invalid")
         lineage = _mapping(snapshot.get("lineage"))
         source_dirs = {
-            name: Path(_text(path))
-            for name, path in _mapping(snapshot.get("source_dirs")).items()
+            name: Path(_text(path)) for name, path in _mapping(snapshot.get("source_dirs")).items()
         }
         if set(source_dirs) != {"proposal_review", "forward_bridge"}:
             raise DynamicV3BacktestSimulationError("forward plan source dirs incomplete")
@@ -5973,9 +5916,7 @@ def validate_forward_confirmation_plan_artifact(
             decision_matrix, bridge_targets, policy=live_policy
         )
         expected_triggers = _confirmation_trigger_conditions(expected_targets)
-        expected_failures = _confirmation_failure_conditions(
-            expected_targets, policy=live_policy
-        )
+        expected_failures = _confirmation_failure_conditions(expected_targets, policy=live_policy)
         expected_snapshot = {
             "schema_version": FORWARD_CONFIRMATION_PLAN_SNAPSHOT_SCHEMA_VERSION,
             "report_type": "etf_dynamic_v3_forward_confirmation_plan_input_snapshot",
@@ -6538,10 +6479,13 @@ def render_forward_confirmation_plan_reader_brief(
     trigger_conditions: Mapping[str, Any],
 ) -> str:
     target_ids = ", ".join(row.get("target_id", "") for row in _records(targets.get("targets")))
-    ready = ", ".join(
-        _text(row.get("target_id"))
-        for row in _records(trigger_conditions.get("calibration_ready_conditions"))
-    ) or "none"
+    ready = (
+        ", ".join(
+            _text(row.get("target_id"))
+            for row in _records(trigger_conditions.get("calibration_ready_conditions"))
+        )
+        or "none"
+    )
     return "\n".join(
         [
             "## Dynamic Rescue Forward Confirmation Plan",
@@ -6681,8 +6625,7 @@ def _paired_interpretation_metrics(
 
     pair_events = {_text(pair[0].get("sim_event_id")) for pair in pairs}
     pair_windows = {
-        (_text(pair[0].get("sim_event_id")), _int(pair[0].get("window_days")))
-        for pair in pairs
+        (_text(pair[0].get("sim_event_id")), _int(pair[0].get("window_days"))) for pair in pairs
     }
     status = "AVAILABLE" if pairs else "INSUFFICIENT_DATA"
     common = {
@@ -6802,14 +6745,10 @@ def _return_compare(row: Mapping[str, Any], baseline: Mapping[str, Any], key: st
 def _medium_horizon_compare(row: Mapping[str, Any], baseline: Mapping[str, Any]) -> str:
     keys = ("avg_5d_return", "avg_10d_return", "avg_20d_return")
     if any(
-        not _finite_number(row.get(key)) or not _finite_number(baseline.get(key))
-        for key in keys
+        not _finite_number(row.get(key)) or not _finite_number(baseline.get(key)) for key in keys
     ):
         return "INSUFFICIENT_DATA"
-    comparisons = [
-        _float(row.get(key)) - _float(baseline.get(key))
-        for key in keys
-    ]
+    comparisons = [_float(row.get(key)) - _float(baseline.get(key)) for key in keys]
     positive = sum(1 for value in comparisons if value > 0.000001)
     negative = sum(1 for value in comparisons if value < -0.000001)
     if positive == len(comparisons):
@@ -6850,8 +6789,7 @@ def _sim_key_findings(
     bridge_targets: Mapping[str, Any],
 ) -> dict[str, Any]:
     matrix_rows = {
-        _text(row.get("variant")): row
-        for row in _records(interpretation_matrix.get("variants"))
+        _text(row.get("variant")): row for row in _records(interpretation_matrix.get("variants"))
     }
     active_rows = [matrix_rows.get(variant, {}) for variant in ACTIVE_SIM_VARIANTS]
     medium_positive = [
@@ -6912,9 +6850,7 @@ def _sim_key_findings(
             ),
             "evidence": [consensus] if consensus.get("evidence_status") == "AVAILABLE" else [],
             "confidence": (
-                "MEDIUM"
-                if consensus.get("evidence_status") == "AVAILABLE"
-                else "INSUFFICIENT_DATA"
+                "MEDIUM" if consensus.get("evidence_status") == "AVAILABLE" else "INSUFFICIENT_DATA"
             ),
             "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "turnover and drawdown risk"],
         },
@@ -6933,9 +6869,7 @@ def _sim_key_findings(
                     ),
                 }
             ],
-            "confidence": (
-                "MEDIUM" if _finite_number(defensive_metric) else "INSUFFICIENT_DATA"
-            ),
+            "confidence": ("MEDIUM" if _finite_number(defensive_metric) else "INSUFFICIENT_DATA"),
             "limitations": [REPORT_LABEL_BACKTEST_SIMULATION, "pressure regime sample required"],
         },
         {
@@ -7019,10 +6953,7 @@ def _risk_return_pairs(
         for row in outcome_windows
         if row.get("outcome_status") == "AVAILABLE"
         and _int(row.get("window_days")) == 20
-        and all(
-            _finite_number(row.get(key))
-            for key in ("return", "max_drawdown", "turnover")
-        )
+        and all(_finite_number(row.get(key)) for key in ("return", "max_drawdown", "turnover"))
     }
     return [
         (row, available[(event_id, "no_trade")])
@@ -7031,9 +6962,7 @@ def _risk_return_pairs(
     ]
 
 
-def _nullable_positive_denominator_ratio(
-    numerator: float, denominator: float
-) -> float | None:
+def _nullable_positive_denominator_ratio(numerator: float, denominator: float) -> float | None:
     if not math.isfinite(numerator) or not math.isfinite(denominator) or denominator <= 0:
         return None
     return round(numerator / denominator, 6)
@@ -7142,8 +7071,7 @@ def _load_sim_defensive_validation_policy(path: Path) -> dict[str, Any]:
         not isinstance(windows, list)
         or not windows
         or any(
-            isinstance(value, bool) or not isinstance(value, int) or value <= 0
-            for value in windows
+            isinstance(value, bool) or not isinstance(value, int) or value <= 0 for value in windows
         )
         or len(windows) != len(set(windows))
     ):
@@ -7154,6 +7082,15 @@ def _load_sim_defensive_validation_policy(path: Path) -> dict[str, Any]:
     for key in ("minimum_relative_return", "minimum_drawdown_delta_vs_no_trade"):
         if not _finite_number(policy.get(key)):
             raise DynamicV3BacktestSimulationError(f"defensive validation {key} invalid")
+    minimum_win_rate = policy.get("minimum_win_rate_vs_no_trade")
+    if (
+        not _finite_number(minimum_win_rate)
+        or _float(minimum_win_rate) < 0.0
+        or _float(minimum_win_rate) > 1.0
+    ):
+        raise DynamicV3BacktestSimulationError(
+            "defensive validation minimum_win_rate_vs_no_trade invalid"
+        )
     safety = _mapping(policy.get("safety"))
     if (
         safety.get("outcome_mode") != OUTCOME_MODE_BACKTEST_SIMULATION
@@ -7209,11 +7146,15 @@ def _defensive_regime_matrix(
         avg_return = _nullable_avg([_float(row.get("return")) for row in defensive_rows])
         avg_relative = _nullable_avg(rel)
         avg_drawdown_delta = _nullable_avg(drawdown_deltas)
+        win_rate_vs_no_trade = (
+            round(sum(1 for value in rel if value > 0) / len(rel), 6) if rel else None
+        )
         status = _defensive_regime_status(
             regime=regime,
             paired_event_count=paired_event_count,
             avg_relative=avg_relative,
             avg_drawdown_delta=avg_drawdown_delta,
+            win_rate_vs_no_trade=win_rate_vs_no_trade,
             policy=policy,
         )
         best_variant = _best_regime_variant(by_variant_regime, regime)
@@ -7228,11 +7169,7 @@ def _defensive_regime_matrix(
                 "defensive_limited_adjustment": {
                     "avg_return": avg_return,
                     "avg_relative_to_no_trade": avg_relative,
-                    "win_rate_vs_no_trade": (
-                        round(sum(1 for value in rel if value > 0) / len(rel), 6)
-                        if rel
-                        else None
-                    ),
+                    "win_rate_vs_no_trade": win_rate_vs_no_trade,
                     "avg_drawdown_delta_vs_no_trade": avg_drawdown_delta,
                     "status": status,
                 },
@@ -7265,12 +7202,14 @@ def _defensive_regime_status(
     paired_event_count: int,
     avg_relative: float | None,
     avg_drawdown_delta: float | None,
+    win_rate_vs_no_trade: float | None,
     policy: Mapping[str, Any],
 ) -> str:
     if (
         paired_event_count <= 0
         or not _finite_number(avg_relative)
         or not _finite_number(avg_drawdown_delta)
+        or not _finite_number(win_rate_vs_no_trade)
     ):
         return "INSUFFICIENT_DATA"
     if regime in set(_texts(policy.get("pressure_regimes"))) and paired_event_count < _int(
@@ -7281,9 +7220,10 @@ def _defensive_regime_status(
     drawdown_ok = _float(avg_drawdown_delta) >= _float(
         policy.get("minimum_drawdown_delta_vs_no_trade")
     )
-    if return_ok and drawdown_ok:
+    win_rate_ok = _float(win_rate_vs_no_trade) >= _float(policy.get("minimum_win_rate_vs_no_trade"))
+    if return_ok and drawdown_ok and win_rate_ok:
         return "PROVEN_DEFENSIVE"
-    if not return_ok and not drawdown_ok:
+    if not return_ok and not drawdown_ok and not win_rate_ok:
         return "FAILS_DEFENSIVE_EXPECTATION"
     return "PARTIALLY_DEFENSIVE"
 
@@ -7320,7 +7260,10 @@ def _defensive_regime_conclusion(regime: str, best_variant: str, status: str) ->
     if best_variant == "no_trade":
         return f"no_trade outperformed defensive_limited_adjustment in {regime}."
     if status == "PROVEN_DEFENSIVE":
-        return f"defensive_limited_adjustment met return and drawdown checks in {regime}."
+        return (
+            "defensive_limited_adjustment met return, drawdown, and win-rate checks "
+            f"in {regime}."
+        )
     if status == "PARTIALLY_DEFENSIVE":
         return f"defensive_limited_adjustment was mixed in {regime}."
     return f"defensive_limited_adjustment failed defensive expectations in {regime}."
@@ -7335,6 +7278,7 @@ def _defensive_failure_case(row: Mapping[str, Any]) -> dict[str, Any]:
         "best_variant": row.get("best_variant"),
         "avg_relative_to_no_trade": defensive.get("avg_relative_to_no_trade"),
         "avg_drawdown_delta_vs_no_trade": defensive.get("avg_drawdown_delta_vs_no_trade"),
+        "win_rate_vs_no_trade": defensive.get("win_rate_vs_no_trade"),
         "reason": "defensive_limited_adjustment did not beat no_trade in pressure validation",
         "broker_action_taken": False,
     }
@@ -7449,9 +7393,7 @@ def _load_advisory_proposal_review_policy(path: Path) -> dict[str, Any]:
         if item.get("decision") not in PROPOSAL_REVIEW_DECISIONS or not _texts(
             item.get("conditions")
         ):
-            raise DynamicV3BacktestSimulationError(
-                f"advisory proposal review rule invalid: {name}"
-            )
+            raise DynamicV3BacktestSimulationError(f"advisory proposal review rule invalid: {name}")
     safety = _mapping(policy.get("safety"))
     if (
         safety.get("outcome_mode") != OUTCOME_MODE_BACKTEST_SIMULATION
@@ -7592,9 +7534,7 @@ def _confirmation_failure_conditions(
                 "condition": _mapping(rules.get(_text(row.get("target_id")))).get(
                     "failure_condition"
                 ),
-                "action": _mapping(rules.get(_text(row.get("target_id")))).get(
-                    "failure_action"
-                ),
+                "action": _mapping(rules.get(_text(row.get("target_id")))).get("failure_action"),
             }
             for row in _records(targets.get("targets"))
         ],
@@ -8526,9 +8466,7 @@ def _forward_confirmation_targets(
     min_relative_return = _float(policy.get("min_relative_return"))
     max_drawdown_delta = _float(policy.get("avg_drawdown_delta_max"))
     windows = list(policy.get("windows", []))
-    proposal_ids = [
-        _text(row.get("proposal_id")) for row in _records(proposals.get("proposals"))
-    ]
+    proposal_ids = [_text(row.get("proposal_id")) for row in _records(proposals.get("proposals"))]
     source_readiness = evidence.get("calibration_readiness")
     return {
         "schema_version": SCHEMA_VERSION,

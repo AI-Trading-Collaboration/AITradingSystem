@@ -1,0 +1,1404 @@
+schema_version: "1.0"
+policy_id: controlled_strategy_research_next_stage_775_842
+status: next_stage_controlled_baseline
+owner: research_governance
+heuristic_policy_version: controlled_strategy_next_stage_heuristic_v1
+base_config_path: config/research/controlled_strategy_candidate_research.yaml
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch on 2022-11-30
+  default_start: "2022-12-01"
+production_effect: none
+rationale: >
+  Continue only the value surface line after controlled strategy batch 1,
+  audit utility-ranking sensitivity, track append-only forward evidence
+  maturity, pivot GBDT by design, run residual diagnostics, and keep regret
+  state-machine expansion gated until enough cases exist. After TRADING-809
+  kills value surface as an action policy, downgrade it to diagnostics and move
+  the main research line to benchmark-first tail-risk avoidance. After
+  TRADING-815 continues the tail-risk fallback family, expand robustness,
+  trigger quality, opportunity cost, and forward evidence tracking without
+  promotion. TRADING-821 to TRADING-825 switch the fallback line into
+  falsification-first audit: reconcile count universes, test leakage and label
+  coupling, perturb thresholds/lags/horizons/benchmarks/costs, segment by
+  regime, and monitor forward maturity. TRADING-826 adds a read-only blocker
+  diagnostic over the latest controlled review board and the TRADING-821 to
+  TRADING-825 input artifacts. TRADING-827 adds a read-only trigger/label
+  independence audit to verify whether fallback trigger inputs also define
+  validation labels or share derived risk logic. TRADING-828 to TRADING-842
+  rebuild independent forward validation, quarantine tainted metrics, add
+  contract/boundary/leakage hard gates, and draft a non-promotional trigger v2
+  candidate path. This policy does not validate utility boundaries and does not
+  permit promotion, paper-shadow, production weight, or broker changes.
+controlled_scope:
+  validation_only: true
+  observe_only: true
+  promotion_gate_allowed: false
+  paper_shadow_change_allowed: false
+  production_weight_change_allowed: false
+  broker_action: none
+value_surface_expansion:
+  task_id: TRADING-775
+  max_decision_dates: 72
+  benchmark_required: true
+  negative_controls_required: true
+  gross_net_turnover_drawdown_required: true
+  cluster_policy:
+    unclassified_cluster: unclassified
+    static_clusters:
+      broad_market:
+        - SPY
+        - QQQ
+      ai_semiconductors:
+        - SMH
+        - NVDA
+        - AMD
+        - TSM
+      ai_platforms:
+        - MSFT
+        - GOOGL
+  regime_segments:
+    - segment_id: ai_after_chatgpt_full
+      start_date: "2022-12-01"
+      end_date: null
+    - segment_id: recent_controlled_window
+      trailing_decision_dates: 24
+  horizon_smoothness:
+    audit_only: true
+    adjacent_delta_materiality_bps: 100
+    rationale: >
+      Materiality is an owner-review sorting threshold for sensitivity audit
+      only; it is not a pass/fail promotion threshold and cannot validate a
+      utility boundary.
+utility_boundary_audit:
+  task_id: TRADING-776
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  dominance_share_review_floor: 0.65
+  rationale: >
+    Profiles decompose return, risk, cost, and uncertainty effects on ranking.
+    Profile reversals are expected evidence for owner review, not automatic
+    calibration or promotion evidence.
+  utility_profiles:
+    - profile_id: return_only
+      expected_return_weight: 1.0
+      median_return_weight: 0.0
+      downside_risk_weight: 0.0
+      cost_weight: 0.0
+      uncertainty_weight: 0.0
+    - profile_id: return_minus_cost
+      expected_return_weight: 1.0
+      median_return_weight: 0.0
+      downside_risk_weight: 0.0
+      cost_weight: 1.0
+      uncertainty_weight: 0.0
+    - profile_id: risk_adjusted
+      expected_return_weight: 1.0
+      median_return_weight: 0.0
+      downside_risk_weight: 0.5
+      cost_weight: 1.0
+      uncertainty_weight: 0.0
+    - profile_id: balanced_transparent
+      expected_return_weight: 0.6
+      median_return_weight: 0.2
+      downside_risk_weight: 0.5
+      cost_weight: 1.0
+      uncertainty_weight: 0.1
+    - profile_id: uncertainty_penalized
+      expected_return_weight: 0.6
+      median_return_weight: 0.2
+      downside_risk_weight: 0.5
+      cost_weight: 1.0
+      uncertainty_weight: 0.5
+  pareto_components:
+    reward: expected_return
+    risk: downside_risk
+    cost: estimated_cost
+    uncertainty: uncertainty
+forward_evidence_maturity:
+  task_id: TRADING-777
+  append_only_outcome_policy: true
+  horizons:
+    - horizon_id: 1d
+      days: 1
+    - horizon_id: 5d
+      days: 5
+    - horizon_id: 10d
+      days: 10
+    - horizon_id: 20d
+      days: 20
+    - horizon_id: 60d
+      days: 60
+  required_artifact_families:
+    - benchmark_expansion
+    - control_audit
+    - value_surface_controlled_expansion
+    - candidate_outputs
+gbdt_pivot_review:
+  task_id: TRADING-778
+  no_local_parameter_tuning: true
+  design_only: true
+  pivot_options:
+    - option_id: gbdt_action_ranking_classifier
+      target: action_rank_bucket
+      rationale: Predict action ranking instead of noisy scalar utility.
+    - option_id: gbdt_regret_type_classifier
+      target: regret_type
+      rationale: Predict failure mode diagnostics for value surface cases.
+    - option_id: gbdt_state_transition_predictor
+      target: state_transition
+      rationale: Estimate controlled state transition probability.
+    - option_id: gbdt_value_surface_residual_model
+      target: value_surface_residual
+      rationale: Explain residuals after transparent value surface policy.
+regret_casebook_expansion_gate:
+  task_id: TRADING-779
+  status_cap: WATCHLIST
+  activation_allowed_without_gate_pass: false
+  minimum_case_count: 50
+  minimum_distinct_regret_types: 4
+  required_conditions:
+    - regret_case_count_floor_met
+    - regret_type_distribution_stable
+    - teacher_oracle_diagnostic_difference_present
+    - value_surface_failure_cases_attributed
+value_surface_warning_triage:
+  task_id: TRADING-780
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - DATA_REQUIRED
+    - PAUSE
+    - KILL
+  continue_requires:
+    horizon_leakage_check_pass: true
+    negative_control_promotion_count: 0
+    benchmark_comparison_present: true
+    action_horizon_surface_present: true
+  sample_concentration_review_share: 0.50
+  warning_categories:
+    - category_id: data_quality_warning
+      source_field: data_quality_status
+      warning_when_not: PASS
+      severity: review
+    - category_id: utility_boundary_unvalidated
+      source_field: not_validated_utility_boundary
+      warning_when: true
+      severity: blocking_for_promotion
+    - category_id: forward_evidence_immature
+      source_field: ledger_event_count
+      warning_when_below: 5
+      severity: review
+    - category_id: sample_concentration
+      source_field: max_group_share
+      warning_when_above: 0.50
+      severity: review
+    - category_id: horizon_smoothness_material_pairs
+      source_field: material_pair_count
+      warning_when_above: 0
+      severity: diagnostic
+utility_ranking_robustness:
+  task_id: TRADING-781
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  pareto_stability_review_floor: 0.50
+  diagnostic_only_when_reversal_count_above: 0
+forward_evidence_continuity:
+  task_id: TRADING-782
+  minimum_ledger_events_for_continue: 5
+  missing_archive_allowed: false
+  append_only_required: true
+  required_output_families:
+    - benchmark_expansion
+    - control_audit
+    - value_surface_controlled_expansion
+gbdt_pivot_selection:
+  task_id: TRADING-783
+  model_training_allowed: false
+  selected_direction: gbdt_value_surface_residual_model
+  rationale: >
+    Start with residual diagnostics because it keeps the transparent value
+    surface as the primary object and avoids another direct scalar utility
+    regression.
+  direction_details:
+    - direction_id: gbdt_regret_type_classifier
+      minimum_viable_experiment: classify_top_value_surface_failure_cases_by_regret_type
+      required_data: value_surface_failure_cases_with_regret_taxonomy
+      failure_mode: regret_labels_sparse_or_unstable
+      kill_criteria: regret_type_precision_below_simple_frequency_baseline
+      difference_from_previous_action_utility_model: predicts_failure_mode_not_scalar_utility
+    - direction_id: gbdt_state_transition_predictor
+      minimum_viable_experiment: predict_next_controlled_state_from_pit_state_features
+      required_data: state_transition_casebook_with_forward_maturity
+      failure_mode: state_transitions_too_rare_or_hysteresis_dominated
+      kill_criteria: transition_recall_below_static_state_baseline
+      difference_from_previous_action_utility_model: predicts_transition_probability_not_action_return
+    - direction_id: gbdt_value_surface_residual_model
+      minimum_viable_experiment: explain_residual_between_value_surface_rank_and_forward_outcome
+      required_data: matured_value_surface_rows_with_benchmark_disagreement
+      failure_mode: residuals_are_noise_or_follow_single_cost_return_component
+      kill_criteria: residual_rank_information_not_above_simple_component_baseline
+      difference_from_previous_action_utility_model: models_surface_error_after_transparent_policy
+    - direction_id: gbdt_action_ranking_classifier
+      minimum_viable_experiment: classify_top_action_bucket_with_time_ordered_split
+      required_data: matured_action_horizon_rows_with_stable_action_labels
+      failure_mode: action_labels_flip_under_utility_profile_changes
+      kill_criteria: rank_top1_accuracy_below_buy_and_hold_or_cash_baseline
+      difference_from_previous_action_utility_model: predicts_rank_bucket_not_continuous_utility
+regret_activation_inputs:
+  task_id: TRADING-784
+  minimum_value_surface_losing_cases: 25
+  minimum_benchmark_disagreement_cases: 15
+  minimum_false_risk_off_or_missed_upside_cases: 10
+  minimum_distinct_regret_types: 4
+  oracle_teacher_required_for_activation: true
+value_surface_walk_forward_expansion:
+  task_id: TRADING-785
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - DATA_REQUIRED
+    - PAUSE
+    - KILL
+  max_window_count: 6
+  min_decision_dates_per_window: 6
+  continue_min_window_win_rate: 0.50
+  continue_min_mean_delta_vs_benchmark_bps: 0
+  sample_concentration_review_share: 0.50
+  rationale: >
+    Walk-forward thresholds are controlled-review sorting rules only. They are
+    not validated investment boundaries and cannot allow promotion or
+    paper-shadow.
+utility_pareto_ranking_review:
+  task_id: TRADING-786
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  horizon_cliff_abs_utility_bps: 100
+  rationale: >
+    Ranking flip and horizon cliff checks identify heuristic utility fragility.
+    They cannot upgrade the boundary to VALIDATED_BOUNDARY.
+forward_evidence_daily_continuity_review:
+  task_id: TRADING-787
+  minimum_ledger_events_for_continuity_review: 5
+  missing_archive_allowed: false
+  append_only_required: true
+  required_output_families:
+    - benchmark_expansion
+    - control_audit
+    - value_surface_controlled_expansion
+  rationale: >
+    Forward evidence continuity is an accumulation tracker. Early continuity
+    warnings are not paper-shadow readiness evidence.
+gbdt_value_surface_residual_diagnostic:
+  task_id: TRADING-788
+  large_residual_abs_return_floor_bps: 200
+  feature_importance_method: categorical_residual_separation
+  strategy_signal_generated: false
+  rationale: >
+    The residual diagnostic can generate hypotheses about where the transparent
+    value surface fails, but it does not directly generate strategy actions.
+regret_casebook_activation_recheck:
+  task_id: TRADING-789
+  minimum_value_surface_losing_cases: 25
+  minimum_benchmark_disagreement_cases: 15
+  minimum_oracle_teacher_better_cases: 1
+  minimum_distinct_regret_types: 4
+  expansion_execution_allowed: false
+  rationale: >
+    This recheck only decides whether a follow-up regret casebook expansion
+    task should be opened. It does not expand the casebook by itself.
+value_surface_failure_attribution:
+  task_id: TRADING-790
+  top_losing_case_count: 25
+  tail_loss_quantile: 0.10
+  concentration_review_share: 0.50
+  rationale: >
+    Attribution explains why high beat rate can still produce negative average
+    benchmark delta. Tail and concentration thresholds are diagnostic sorting
+    rules, not promotion gates or validated risk boundaries.
+horizon_cliff_stabilization_review:
+  task_id: TRADING-791
+  status_cap: SENSITIVITY_TESTED
+  validated_boundary_allowed: false
+  ranking_jump_review_floor: 2
+  horizon_cliff_abs_utility_bps: 100
+  single_horizon_action_review_share: 0.80
+  rationale: >
+    Horizon cliff and ranking stabilization review can suggest smoothing or
+    Pareto direction, but cannot validate utility boundaries.
+gbdt_residual_hypothesis_triage:
+  task_id: TRADING-792
+  hypothesis_candidate_limit: 10
+  repair_rule_candidates:
+    - tail-loss filter
+    - horizon smoothing
+    - regime-conditioned utility
+    - cost-aware action suppression
+    - drawdown-sensitive ranking
+  rationale: >
+    Residual triage turns diagnostic residual concentration into reviewable
+    hypotheses. It does not train or deploy a GBDT strategy.
+forward_evidence_continuity_extension:
+  task_id: TRADING-793
+  minimum_ledger_events_for_extension_review: 5
+  missing_archive_allowed: false
+  append_only_required: true
+  rationale: >
+    Continuity extension keeps forward evidence running. It does not decide
+    current strategy validity or paper-shadow readiness.
+value_surface_direction_review:
+  task_id: TRADING-794
+  allowed_decisions:
+    - CONTINUE_LOCAL_FIX
+    - WATCHLIST
+    - PIVOT_TO_REGIME_CONDITIONED_VALUE_SURFACE
+    - PIVOT_TO_PARETO_FRONTIER_POLICY
+    - PIVOT_TO_TAIL_RISK_FILTER
+    - KILL_CURRENT_VALUE_SURFACE_VERSION
+  tail_loss_pivot_share: 0.50
+  horizon_cliff_pivot_floor: 10
+  broad_loss_group_share_ceiling: 0.35
+  kill_mean_delta_floor_bps: -500
+  rationale: >
+    Direction review must not default to continuing. Negative benchmark-relative
+    delta, tail loss concentration, horizon cliffs, and broad distribution risk
+    decide whether to local-fix, watchlist, pivot, or kill the current version.
+regime_conditioned_value_surface_design:
+  task_id: TRADING-795
+  tail_loss_regime_share_floor: 0.35
+  high_risk_horizon_cliff_count_floor: 1
+  aggressive_actions:
+    - risk_on
+    - buy_and_hold
+    - no_masking
+  low_risk_actions:
+    - cash
+    - risk_off
+    - drawdown_guard
+  fallback_actions:
+    tail_risk_regime: benchmark
+    horizon_cliff_regime: shorter_horizon_or_benchmark
+    high_uncertainty_regime: benchmark
+  controlled_validation_required: true
+  rationale: >
+    Regime-conditioned design is a protocol and controlled ablation plan. It
+    can define where value surface should be suppressed, but cannot validate a
+    production boundary without out-of-sample forward evidence.
+tail_loss_guardrail_fallback_policy:
+  task_id: TRADING-796
+  tail_loss_regime_share_floor: 0.35
+  severe_loss_delta_floor_bps: -500
+  horizon_cliff_disable_days_floor: 20
+  benchmark_disagreement_requires_confirmation: true
+  loss_concentration_size_multiplier: 0.50
+  allowed_variants:
+    - original_value_surface
+    - regime_conditioned_value_surface
+    - tail_loss_guarded_value_surface
+    - benchmark_fallback_value_surface
+  rationale: >
+    Guardrail rules are retrospective controlled-research hypotheses derived
+    from failure attribution. They can reduce candidate action exposure in
+    diagnostic ablations only and require later walk-forward confirmation.
+regime_horizon_loss_attribution_matrix:
+  task_id: TRADING-797
+  broad_loss_group_share_ceiling: 0.35
+  date_window: month
+  utility_profile_mapping:
+    aggressive_return_seeking:
+      - risk_on
+      - buy_and_hold
+      - no_masking
+    risk_controlled:
+      - cash
+      - risk_off
+      - drawdown_guard
+    benchmark_like:
+      - hold_exposure
+      - static_allocation
+  rationale: >
+    The matrix explains whether losing cases are concentrated in repairable
+    regime/horizon/asset/action pockets or broadly distributed. It is not a
+    promotion or kill rule by itself.
+gbdt_residual_regime_conditioning:
+  task_id: TRADING-798
+  hypothesis_candidate_limit: 10
+  residual_sign_floor_bps: 0
+  strategy_signal_generated: false
+  rationale: >
+    GBDT residual regime conditioning uses residual diagnostics only to form
+    regime-conditioning hypotheses. It does not train a strategy or produce a
+    direct action policy.
+regime_conditioned_value_surface_controlled_review:
+  task_id: TRADING-799
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - KILL_CURRENT_VALUE_SURFACE
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_BENCHMARK_FALLBACK
+    - DATA_REQUIRED
+  mean_delta_improvement_required_bps: 0
+  tail_loss_reduction_required_share: 0.20
+  losing_avg_improvement_required_bps: 0
+  beat_rate_retention_floor: 0.80
+  turnover_increase_ceiling_share: 0.10
+  cost_increase_ceiling_share: 0.10
+  rationale: >
+    Controlled review compares guarded variants against the original value
+    surface. It can continue research or pivot, but cannot permit promotion,
+    paper-shadow, production weight changes, or broker action.
+cost_turnover_aware_regime_conditioned_value_surface:
+  task_id: TRADING-800
+  turnover_penalty_bps: 25
+  action_hysteresis_min_delta_bps: 25
+  no_trade_band_abs_delta_bps: 10
+  max_action_change_cap_per_asset: 2
+  beat_rate_retention_floor: 0.80
+  v2_score_turnover_penalty_weight: 0.001
+  v2_score_cost_penalty_weight: 0.01
+  v2_score_tail_loss_penalty_weight: 1.0
+  allowed_variants:
+    - regime_conditioned_turnover_penalty
+    - regime_conditioned_action_hysteresis
+    - regime_conditioned_no_trade_band
+    - regime_conditioned_benchmark_fallback
+    - regime_conditioned_max_action_change_cap
+  rationale: >
+    These are controlled diagnostic variants that test whether the regime
+    conditioned repair can keep tail-loss benefits without worsening
+    turnover/cost. They are not production execution rules.
+long_horizon_quarantine_selection_review:
+  task_id: TRADING-801
+  reviewed_horizons:
+    - 20d
+    - 60d
+  downgrade_multiplier: 0.50
+  trend_confirmation_required: true
+  high_loss_share_floor: 0.25
+  fallback_to_shorter_horizon: 10d
+  comparison_variants:
+    - original
+    - disable_20d_60d
+    - downgrade_20d_60d
+    - regime_only_20d_60d
+    - confirmation_required_20d_60d
+    - fallback_to_shorter_horizon
+  rationale: >
+    Long-horizon quarantine tests whether 20d/60d losses point to a horizon
+    selector problem rather than a broader action model failure.
+ai_after_chatgpt_full_regime_attribution:
+  task_id: TRADING-802
+  target_regime: ai_after_chatgpt_full
+  benchmark_stability_drawdown_floor_bps: 0
+  overoptimism_delta_floor_bps: 0
+  candidate_repairs:
+    - regime-specific action cap
+    - regime-specific horizon cap
+    - regime-specific fallback benchmark
+    - regime-specific volatility guard
+  rationale: >
+    The top loss regime must be decomposed before value surface v2 can be
+    interpreted. Findings are diagnostic only and cannot justify promotion.
+regime_conditioned_walk_forward_holdout:
+  task_id: TRADING-803
+  holdout_dimensions:
+    - regime_segment
+    - horizon
+    - asset_cluster
+    - date_window
+  min_holdout_case_count: 20
+  mean_delta_floor_bps: 0
+  tail_loss_reduction_floor: 0.10
+  cost_turnover_not_worse_required: true
+  holdout_pass_rate_floor: 0.60
+  date_window: month
+  rationale: >
+    Holdout checks whether v2 improvements are only fitted to known failure
+    pockets. A failed holdout keeps the line in watchlist or pivot status.
+value_surface_v2_controlled_review:
+  task_id: TRADING-804
+  allowed_decisions:
+    - CONTINUE_TO_LARGER_CONTROLLED_RESEARCH
+    - WATCHLIST
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_HORIZON_SELECTOR
+    - KILL_VALUE_SURFACE
+    - DATA_REQUIRED
+  mean_delta_floor_bps: 0
+  tail_loss_reduction_required_share: 0.20
+  beat_rate_retention_floor: 0.80
+  turnover_cost_not_worse_required: true
+  holdout_pass_rate_floor: 0.60
+  horizon_quarantine_tail_loss_reduction_floor: 0.20
+  rationale: >
+    V2 can only continue to larger controlled research when return, tail-loss,
+    beat-rate, turnover/cost and holdout criteria all hold. This review cannot
+    permit promotion, paper-shadow, production weights, or broker action.
+horizon_selector_problem_contract:
+  task_id: TRADING-805
+  candidate_horizons:
+    - 1d
+    - 5d
+    - 10d
+    - 20d
+    - 60d
+  horizon_status:
+    1d: ALLOWED
+    5d: ALLOWED
+    10d: ALLOWED
+    20d: QUARANTINED
+    60d: FALLBACK_ONLY
+  allowed_statuses:
+    - ALLOWED
+    - DOWNWEIGHTED
+    - QUARANTINED
+    - FALLBACK_ONLY
+  default_preferred_horizon: 5d
+  default_fallback_horizon: 5d
+  review_interval: daily
+  horizon_confidence_default: 0.50
+  target_horizon_is_holding_commitment: false
+  regime_change_can_invalidate_horizon: true
+  invalidation_conditions:
+    - regime_change
+    - horizon_cliff_high
+    - long_horizon_tail_loss_concentration
+    - uncertainty_high
+    - turnover_cost_pressure_high
+  selector_output_fields:
+    - allowed_horizons
+    - preferred_horizon
+    - fallback_horizon
+    - horizon_confidence
+    - invalidation_condition
+    - review_interval
+  rationale: >
+    The selector contract defines the research problem before any model training.
+    The target horizon is a review target, not a holding-period promise, and it
+    can be invalidated early when regime or risk conditions change.
+long_horizon_quarantine_fallback_review:
+  task_id: TRADING-806
+  long_horizons:
+    - 20d
+    - 60d
+  fallback_horizons:
+    - 10d
+    - 5d
+  confirmation_required_for_long_horizon: true
+  confirmation_utility_floor_bps: 0
+  beat_rate_retention_floor: 0.80
+  tail_loss_reduction_floor: 0.20
+  holdout_pass_rate_floor: 0.60
+  variants:
+    - baseline_value_surface
+    - disable_60d
+    - disable_20d_60d
+    - long_horizon_only_with_confirmation
+    - long_horizon_fallback_to_5d_10d
+    - long_horizon_fallback_to_benchmark
+  rationale: >
+    This review tests whether 20d/60d failures are horizon-selector failures
+    rather than value-surface action model failures.
+horizon_selector_controlled_prototype:
+  task_id: TRADING-807
+  horizon_cliff_high_threshold: 0.20
+  uncertainty_high_utility_floor: 0.00
+  turnover_cost_pressure_cost_floor: 0.50
+  high_confidence_floor: 0.70
+  long_horizon_regime_quarantine:
+    regime_segment: ai_after_chatgpt_full
+    horizons:
+      - 20d
+      - 60d
+  fallback_to_benchmark_when_uncertain: true
+  fallback_horizon: 5d
+  max_decision_rows: 250
+  rationale: >
+    First selector prototype uses explicit controlled rules only. It does not
+    train ML or produce a production horizon policy.
+cost_aware_horizon_hysteresis:
+  task_id: TRADING-808
+  min_utility_advantage_bps_for_switch: 25
+  no_switch_band_bps: 10
+  high_cost_state_cost_floor: 0.50
+  long_horizon_confirmation_count: 2
+  high_confidence_floor: 0.70
+  rationale: >
+    Hysteresis tests whether cost-aware horizon switching discipline can reduce
+    turnover and cost without reintroducing large tail losses.
+horizon_selector_holdout_review:
+  task_id: TRADING-809
+  holdout_dimensions:
+    - regime_segment
+    - horizon
+    - asset_cluster
+    - date_window
+  min_holdout_case_count: 20
+  mean_delta_floor_bps: 0
+  tail_loss_reduction_floor: 0.10
+  holdout_pass_rate_floor: 0.60
+  cost_turnover_not_worse_required: true
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - PIVOT_TO_TAIL_RISK_POLICY
+    - PIVOT_TO_BENCHMARK_SELECTOR
+    - KILL_VALUE_SURFACE_AS_ACTION_POLICY
+    - DATA_REQUIRED
+  rationale: >
+    The selector can continue only if leave-one holdouts reduce tail loss without
+    worsening cost/turnover. Failed holdout keeps the line in watchlist or pivot.
+value_surface_policy_kill_diagnostic_downgrade:
+  task_id: TRADING-810
+  action_policy_allowed: false
+  promotion_gate_allowed: false
+  allowed_uses:
+    - diagnostic
+    - residual_analysis
+    - tail_loss_attribution
+    - horizon_risk_signal
+    - benchmark_fallback_trigger
+  disallowed_uses:
+    - direct_action_policy
+    - horizon_selector_policy
+    - paper_shadow_signal
+    - production_weight_policy
+    - broker_order_instruction
+  kill_reason: horizon_selector_holdout_failed_and_action_policy_killed
+  required_prior_decision: KILL_VALUE_SURFACE_AS_ACTION_POLICY
+  rationale: >
+    TRADING-809 failed holdout, tail-loss, and turnover/cost requirements.
+    Value surface remains useful as diagnostics and fallback triggers, but it is
+    no longer allowed to act as an action, horizon, paper-shadow, or production
+    policy.
+benchmark_first_tail_risk_policy_contract:
+  task_id: TRADING-811
+  base_policy: benchmark_or_simple_trend_static_allocation
+  allowed_deviation:
+    - risk_downshift
+    - drawdown_guard
+    - cash_fallback
+    - low_cost_confirmed_deviation
+  risk_downshift_condition:
+    - tail_risk_signal_high
+    - benchmark_deviation_loss_risk_high
+    - long_horizon_failure_risk_high
+    - drawdown_pressure_high
+  risk_recovery_condition:
+    - tail_risk_signal_low
+    - cost_pressure_acceptable
+    - confirmation_persistent
+    - drawdown_pressure_normalized
+  max_turnover_budget:
+    policy_status: diagnostic_baseline
+    daily_action_flip_budget: 0
+    daily_horizon_switch_budget: 0
+    rationale: >
+      Zero incremental flip/switch budget is a conservative diagnostic baseline,
+      not a calibrated production turnover limit.
+  fallback_policy: benchmark_first
+  review_interval: daily
+  confirmation_window_count: 2
+  rationale: >
+    The new main problem is benchmark-first loss avoidance. Deviations are
+    allowed only for risk downshift or low-cost confirmed changes, not for
+    unconstrained return maximization.
+tail_loss_avoidance_classifier_prototype:
+  task_id: TRADING-812
+  large_loss_delta_floor: -0.05
+  tail_loss_quantile: 0.10
+  benchmark_underperformance_floor_bps: 0
+  long_horizon_failure_horizons:
+    - 20d
+    - 60d
+  gate_value_surface_or_aggressive_action_only: true
+  strategy_signal_generated: false
+  labels:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  rationale: >
+    This controlled prototype predicts whether deviation from benchmark is at
+    risk of large loss. Labels only gate value-surface or aggressive actions and
+    cannot directly determine portfolio weights.
+conservative_horizon_risk_filter:
+  task_id: TRADING-813
+  horizon_status:
+    1d: ALLOWED
+    5d: ALLOWED
+    10d: ALLOWED
+    20d: QUARANTINED
+    60d: FALLBACK_ONLY
+  default_allowed_horizons:
+    - 1d
+    - 5d
+    - 10d
+  fallback_horizon: 5d
+  low_risk_regime_condition:
+    - tail_risk_signal_low
+    - benchmark_underperformance_case_false
+    - cost_pressure_acceptable
+  long_horizon_activation_requires_low_risk_regime: true
+  selector_mode: risk_filter_not_optimal_horizon_selector
+  rationale: >
+    Horizon research is retained only as a conservative risk filter. The filter
+    blocks dangerous long horizons instead of selecting a return-maximizing
+    horizon.
+benchmark_fallback_drawdown_guard_controlled_prototype:
+  task_id: TRADING-814
+  policy_variants:
+    - benchmark_first_baseline
+    - tail_risk_benchmark_fallback
+    - drawdown_guard_cash_fallback
+    - conservative_horizon_filter_fallback
+  tail_risk_fallback_labels:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  drawdown_guard_action: hold_cash
+  beat_rate_retention_floor: 0.80
+  tail_loss_reduction_floor: 0.20
+  max_turnover_cost_worsening_allowed: false
+  holdout_pass_rate_floor: 0.60
+  rationale: >
+    The prototype tests whether a simple benchmark-first fallback or drawdown
+    guard is more robust than a complex value-surface action policy.
+tail_risk_policy_family_controlled_review:
+  task_id: TRADING-815
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - KILL
+    - PIVOT
+    - DATA_REQUIRED
+  tail_loss_reduction_floor: 0.20
+  beat_rate_retention_floor: 0.80
+  holdout_pass_rate_floor: 0.60
+  cost_turnover_not_worse_required: true
+  explainability_required: true
+  benchmark_improvement_required: true
+  rationale: >
+    The family can continue only when tail loss is reduced, turnover/cost do not
+    worsen, holdout evidence is acceptable, simple benchmark comparison remains
+    favorable, and the policy is interpretable.
+tail_risk_benchmark_fallback_robustness_expansion:
+  task_id: TRADING-816
+  target_variant: tail_risk_benchmark_fallback
+  allowed_decisions:
+    - CONTINUE
+    - WATCHLIST
+    - KILL
+    - DATA_REQUIRED
+  tail_loss_reduction_floor: 0.20
+  mean_delta_floor_bps: 0
+  upside_capture_floor: 0.70
+  missed_upside_cost_ceiling: 0.02
+  cost_turnover_not_worse_required: true
+  concentration_dimensions:
+    - asset
+    - horizon
+    - regime_segment
+    - asset_cluster
+  rationale: >
+    Robustness expansion checks whether the best fallback variant remains
+    stable across asset, horizon, regime, and cluster while preserving upside
+    capture and not worsening cost or turnover.
+tail_risk_fallback_trigger_precision_recall_audit:
+  task_id: TRADING-817
+  positive_label_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+  false_positive_original_delta_floor_bps: 0
+  tail_loss_from_false_negative_delta_floor: -0.05
+  rationale: >
+    Trigger audit separates smart tail-risk avoidance from crude under-trading
+    by measuring true/false positives and false negatives using controlled
+    labels and realized benchmark-relative deltas.
+tail_risk_opportunity_cost_upside_capture_review:
+  task_id: TRADING-818
+  benchmark_upside_floor_bps: 0
+  tail_loss_to_missed_upside_min_ratio: 2.0
+  concentration_dimensions:
+    - regime_segment
+    - horizon
+    - asset
+  rationale: >
+    Opportunity-cost review tests whether fallback sacrifices too much upside.
+    Passing does not require zero missed upside; tail-loss reduction must exceed
+    missed-upside cost by the configured diagnostic ratio.
+tail_risk_forward_evidence_integration:
+  task_id: TRADING-819
+  archive_id: tail_risk_benchmark_fallback
+  maturity_horizons:
+    - 1d
+    - 5d
+    - 10d
+    - 20d
+    - 60d
+  max_forward_records: 250
+  append_only_integrity_required: true
+  future_outcome_status: pending_maturity
+  required_record_fields:
+    - benchmark_output
+    - tail_risk_fallback_signal
+    - fallback_triggered
+    - trigger_reason
+    - expected_avoided_risk
+    - actual_future_outcome_after_maturity
+  rationale: >
+    Forward integration records the fallback signal in the dry-run evidence
+    path with pending maturity outcomes. It remains broker_action=none and does
+    not start paper-shadow.
+tail_risk_policy_controlled_review_board:
+  task_id: TRADING-820
+  allowed_decisions:
+    - CONTROLLED_RESEARCH_CONTINUE
+    - CONTROLLED_RESEARCH_BLOCKED
+    - NEEDS_MORE_FORWARD_EVIDENCE
+    - PROMOTION_NOT_ALLOWED
+    - WATCHLIST_FORWARD_MATURITY
+    - WATCHLIST
+    - PIVOT_OVERCONSERVATIVE
+    - KILL
+    - DATA_REQUIRED
+  tail_loss_reduction_floor: 0.20
+  precision_floor: 0.60
+  recall_floor: 0.60
+  upside_capture_floor: 0.70
+  tail_loss_to_missed_upside_min_ratio: 2.0
+  forward_record_count_floor: 1
+  promotion_allowed: false
+  rationale: >
+    The review board can only continue controlled research, wait for forward
+    maturity, watchlist, pivot, kill, or request data. Even strong results do
+    not permit paper-shadow, production weights, or broker action.
+tail_risk_fallback_audit_universe_reconciliation:
+  task_id: TRADING-821
+  allowed_statuses:
+    - RECONCILED
+    - PARTIALLY_RECONCILED
+    - INCOMPLETE
+    - BLOCKED_BY_MISSING_ARTIFACT
+  required_source_tasks:
+    - TRADING-816
+    - TRADING-817
+    - TRADING-818
+    - TRADING-819
+  direct_count_comparison_allowed: false
+  rationale: >
+    Count reconciliation is an audit artifact. It explains different
+    denominator universes and blocks only when source artifacts or denominators
+    are missing.
+tail_risk_fallback_anti_leakage_audit:
+  task_id: TRADING-822
+  trigger_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  label_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+  independent_outcome_validation_present: false
+  feature_inputs:
+    - feature_name: trailing_return
+      source_type: price_cache
+      pit_status: pit_safe
+    - feature_name: trailing_volatility
+      source_type: price_cache
+      pit_status: pit_safe
+    - feature_name: trailing_drawdown
+      source_type: price_cache
+      pit_status: pit_safe
+    - feature_name: classifier_tail_risk_labels
+      source_type: controlled_historical_label_proxy
+      pit_status: unknown
+  blocked_risks:
+    - CRITICAL
+    - feature_available_after_decision
+    - trigger_label_same_source_without_independent_validation
+  rationale: >
+    Precision/recall can look perfect when trigger and label share the same
+    label source. Unknown PIT status is not treated as safe.
+tail_risk_fallback_threshold_sensitivity:
+  task_id: TRADING-823
+  threshold_deltas:
+    - -0.20
+    - -0.10
+    - -0.05
+    - 0.00
+    - 0.05
+    - 0.10
+    - 0.20
+  lag_modes:
+    - same_day_close
+    - next_day_open
+    - next_day_close
+    - two_day_lag
+  outcome_horizons:
+    - 1d
+    - 3d
+    - 5d
+    - 10d
+    - 20d
+    - 60d
+  benchmarks:
+    - no_trade
+    - static_baseline
+    - current_dynamic_policy
+    - defensive_baseline
+  cost_levels:
+    - cost=0
+    - cost=low
+    - cost=medium
+    - cost=high
+  small_threshold_tail_loss_drop_floor: 0.20
+  small_threshold_missed_upside_increase_floor: 1
+  precision_floor: 0.60
+  cost_high_upside_capture_floor: 1.00
+  rationale: >
+    Sensitivity diagnostics can mark the candidate fragile and keep promotion
+    blocked, but they do not by themselves modify production policy.
+tail_risk_fallback_regime_segmented_robustness:
+  task_id: TRADING-824
+  required_segment_types:
+    - calendar
+    - volatility
+    - trend
+  min_segment_sample_count: 20
+  top_segment_contribution_high_risk_floor: 0.60
+  unavailable_segments_must_report_reason: true
+  rationale: >
+    Segment review checks whether controlled evidence is concentrated in a
+    small set of calendar or market-regime slices. Missing macro or liquidity
+    features must be disclosed rather than fabricated.
+tail_risk_fallback_forward_maturity_scoreboard:
+  task_id: TRADING-825
+  min_matured_forward_records: 100
+  min_matured_fallback_triggers: 30
+  max_forward_false_positive_rate_tolerance: 0.05
+  max_forward_false_negative_rate_tolerance: 0.05
+  max_missed_upside_count: 0
+  min_forward_tail_loss_reduction: 0
+  min_evidence_maturity_ratio: 0.60
+  allowed_promotion_readiness_assessments:
+    - NOT_ASSESSED
+    - NOT_READY_FORWARD_PENDING
+    - NOT_READY_INSUFFICIENT_MATURED_TRIGGERS
+    - NOT_READY_FORWARD_METRIC_DEGRADATION
+    - NOT_READY_LEAKAGE_OR_RECONCILIATION_BLOCKED
+    - WATCHLIST_ONLY
+  forbidden_assessments:
+    - READY
+    - PROMOTION_READY
+  rationale: >
+    The forward scoreboard is blocking-only. It monitors maturity and explains
+    what remains missing before any future promotion discussion, but it cannot
+    open promotion.
+tail_risk_fallback_blocker_diagnostic:
+  task_id: TRADING-826
+  read_only: true
+  required_review_board_report: tail_risk_policy_controlled_review_board
+  required_input_tasks:
+    - TRADING-821
+    - TRADING-822
+    - TRADING-823
+    - TRADING-824
+    - TRADING-825
+  severity_order:
+    - anti_leakage_critical
+    - universe_reconciliation_incomplete
+    - forward_degraded
+    - sensitivity_fragile
+    - regime_concentrated
+    - forward_insufficient_or_pending
+  forbidden_recommendations:
+    - promotion
+    - paper_shadow
+    - production_weight_change
+    - broker_action
+  rationale: >
+    This diagnostic explains why the controlled review board is blocked by
+    reading existing artifacts only. It may recommend data repair, trigger/label
+    decoupling, more forward maturity, sensitivity investigation, or segment
+    evidence collection, but it must never recommend promotion, paper-shadow,
+    production weights, or broker action.
+tail_risk_trigger_label_independence_audit:
+  task_id: TRADING-827
+  owner_suggested_task_id: TRADING-826
+  read_only: true
+  trigger_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - benchmark_underperformance_case
+    - long_horizon_failure_case
+  trigger_derived_fields:
+    - tail_risk_signal_high
+    - fallback_triggered
+    - trigger_labels
+    - trigger_reason
+    - trigger_score
+  label_input_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+  label_derived_fields:
+    - tail_risk_validation_label
+    - precision_recall_confusion_matrix
+    - future_outcome_after_maturity
+  validation_outcome_fields:
+    - selected_realized_net_return
+    - benchmark_realized_net_return
+    - delta_vs_benchmark
+    - missed_upside
+    - avoided_tail_loss
+    - fallback_precision
+    - fallback_recall
+    - confusion_matrix
+  independent_forward_outcome_fields:
+    - future_5d_max_drawdown
+    - future_10d_max_drawdown
+    - future_20d_max_drawdown
+    - future_20d_realized_vol
+    - future_20d_underperform_vs_static
+    - future_20d_recovery_failure
+    - future_gap_down_event
+  required_matrices:
+    - overlap_matrix
+    - time_window_matrix
+    - derived_dependency_matrix
+  block_on_direct_overlap: true
+  block_on_derived_overlap: true
+  require_trigger_decision_time_visible: true
+  require_label_after_decision_window: true
+  forbidden_recommendations:
+    - promotion
+    - paper_shadow
+    - production_weight_change
+    - broker_action
+  rationale: >
+    This read-only audit answers whether the fallback currently uses the same
+    risk definition to trigger fallback and validate it. If trigger and label
+    share core fields or derived logic, the audit must output BLOCKED and mark
+    return metrics as temporarily untrustworthy until independent forward
+    outcomes are validated.
+tail_risk_independent_forward_outcome_validation:
+  task_id: TRADING-828
+  min_total_decision_count: 30
+  min_valid_20d_count: 20
+  outcome_fields:
+    - future_5d_return
+    - future_10d_return
+    - future_20d_return
+    - future_5d_max_drawdown
+    - future_10d_max_drawdown
+    - future_20d_max_drawdown
+    - future_20d_realized_vol
+    - future_20d_underperform_vs_static
+    - future_20d_recovery_failure
+    - future_gap_down_event
+  forbidden_outcome_fields:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+    - tail_risk_signal_high
+    - fallback_triggered
+  rationale: >
+    Independent validation must use only post-decision market-path outcome
+    fields. Sample floors are conservative research-evidence floors, not
+    promotion gates or production thresholds.
+tail_risk_forward_outcome_contract_audit:
+  task_id: TRADING-829
+  block_on_direct_overlap: true
+  block_on_derived_overlap: true
+  block_on_forbidden_dependency: true
+  rationale: >
+    The contract audit prevents trigger fields, label cases, and future outcome
+    fields from sharing direct or derived dependencies. Passing this audit does
+    not permit promotion.
+tail_risk_decision_time_boundary_audit:
+  task_id: TRADING-830
+  rolling_window_rule: closed_at_decision_time
+  block_on_label_proxy_trigger_input: true
+  rationale: >
+    Trigger and policy inputs must be visible at decision_time. Historical
+    label proxy fields remain blocking until replaced by decision-time market
+    features.
+tail_risk_tainted_metric_quarantine:
+  task_id: TRADING-831
+  metric_status: TAINTED_BY_TRIGGER_LABEL_COUPLING
+  usable_for_promotion: false
+  usable_for_paper_shadow: false
+  usable_for_production: false
+  rationale: >
+    Metrics produced before independent forward validation are retained for
+    audit lineage but cannot support promotion, paper-shadow, or production.
+tail_risk_fallback_counterfactual_validation:
+  task_id: TRADING-832
+  min_sample_count: 30
+  comparison_policies:
+    - fallback_policy
+    - no_fallback_baseline
+    - static_allocation_baseline
+    - existing_best_baseline_if_available
+  rationale: >
+    Counterfactual comparison must use independent forward outcomes rather than
+    label hit rate. Status remains review-only.
+tail_risk_regime_stratified_forward_outcome_review:
+  task_id: TRADING-833
+  min_regime_sample_count: 20
+  concentration_score_floor: 0.60
+  rationale: >
+    Regime stratification checks sample concentration and mixed market states.
+    The concentration floor is an owner-review diagnostic threshold.
+tail_risk_threshold_sensitivity_review:
+  task_id: TRADING-834
+  fragile_degradation_floor: 0.02
+  perturbations:
+    trigger_threshold: [-0.10, -0.05, 0.05, 0.10]
+    risk_score_cutoff: [-0.10, -0.05, 0.05, 0.10]
+    lookback_window: [-0.20, 0.20]
+    fallback_allocation_intensity: [-0.10, 0.10]
+  rationale: >
+    Sensitivity perturbations are robustness diagnostics for review only. They
+    cannot update production trigger thresholds or fallback intensity.
+tail_risk_fallback_error_cost_ledger:
+  task_id: TRADING-835
+  min_sample_count: 30
+  unacceptable_asymmetry_floor: 3.0
+  rationale: >
+    Error-cost asymmetry quantifies false-positive and false-negative impact on
+    independent outcomes. The asymmetry floor is a triage threshold, not a
+    promotion rule.
+tail_risk_evidence_maturity_gate:
+  task_id: TRADING-836
+  initial_triggered_floor: 30
+  weak_triggered_floor: 60
+  moderate_triggered_floor: 100
+  regime_min_sample_floor: 20
+  rationale: >
+    Evidence maturity floors prevent over-strong conclusions from small samples.
+    They are conservative research-readiness floors only.
+tail_risk_forward_aging_tracker:
+  task_id: TRADING-837
+  horizons:
+    - 5d
+    - 10d
+    - 20d
+  rationale: >
+    Aging tracks pending and matured forward outcomes without creating
+    paper-shadow or production effects.
+tail_risk_leakage_stress_suite:
+  task_id: TRADING-838
+  required_tests:
+    - signal_lag_test
+    - label_permutation_test
+    - timestamp_boundary_test
+    - feature_availability_test
+    - forward_window_overlap_test
+    - trigger_outcome_overlap_test
+    - randomized_decision_time_test
+    - shuffled_outcome_sanity_test
+  rationale: >
+    Leakage stress tests are fail-closed safety checks. Any blocked stress test
+    keeps promotion and paper-shadow unavailable.
+tail_risk_promotion_readiness_gate:
+  task_id: TRADING-839
+  hard_block_statuses:
+    TRADING-827: BLOCKED
+    TRADING-828: INDEPENDENT_FORWARD_BLOCKED
+    TRADING-829: BLOCKED
+    TRADING-830: TIME_BOUNDARY_BLOCKED
+    TRADING-838: LEAKAGE_STRESS_BLOCKED
+  rationale: >
+    The readiness gate is a hard blocker integration. REVIEWABLE means manual
+    review only and never automatic promotion.
+tail_risk_independent_trigger_v2_builder:
+  task_id: TRADING-840
+  allowed_input_families:
+    - price_trend
+    - drawdown_from_recent_high
+    - realized_volatility
+    - volatility_expansion
+    - moving_average_distance
+    - market_breadth_proxy
+    - credit_liquidity_proxy
+    - vix_vxn_level_proxy
+  forbidden_inputs:
+    - large_loss_case
+    - tail_loss_case
+    - long_horizon_failure_case
+    - future_outcome
+  rationale: >
+    Trigger v2 is a non-promotional candidate builder using decision-time
+    market features only. It does not repair or promote the old fallback by
+    itself.
+tail_risk_trigger_feature_availability_catalog:
+  task_id: TRADING-841
+  allow_partial_proxy_catalog: true
+  usage_allowed_for_outcome: false
+  rationale: >
+    The catalog documents feature availability and PIT quality. Partial proxy
+    features require owner review before any v2 validation.
+tail_risk_research_master_review:
+  task_id: TRADING-842
+  allowed_recommendations:
+    - CONTINUE_RESEARCH
+    - REBUILD_TRIGGER
+    - REBUILD_OUTCOME
+    - KEEP_QUARANTINED
+    - PAUSE_RESEARCH
+    - DEPRECATE_CANDIDATE
+  rationale: >
+    The master review aggregates 827 to 841 and recommends next research action
+    while preserving the no-promotion safety boundary.
+tail_risk_governance_artifact_snapshot:
+  task_id: TRADING-843
+  required_task_range: TRADING-827..TRADING-842
+  no_state_mutation: true
+  rationale: >
+    Snapshot generation only reads or regenerates governance artifacts and
+    records paths, mtimes, statuses, blockers, and warnings. It cannot change
+    promotion, paper-shadow, production, or broker state.
+tail_risk_status_matrix:
+  task_id: TRADING-844
+  hard_block_overall_status: TAIL_RISK_RESEARCH_BLOCKED
+  rationale: >
+    Any inherited hard blocker keeps the whole tail-risk fallback line blocked
+    for promotion, paper-shadow, production, and broker action.
+tail_risk_real_data_validation_audit:
+  task_id: TRADING-845
+  blocked_statuses:
+    - FIXTURE_ONLY_BLOCKED
+    - INPUT_MISSING_BLOCKED
+  rationale: >
+    A structurally valid artifact is not enough; missing inputs, fixture-only
+    execution, placeholder payloads, and zero-sample positive conclusions must
+    fail closed.
+tail_risk_independent_forward_outcome_result_review:
+  task_id: TRADING-846
+  min_total_decision_count: 30
+  min_valid_20d_count: 20
+  rationale: >
+    Independent forward outcomes may become usable for research only, but this
+    never authorizes promotion, paper-shadow, production, or broker action.
+tail_risk_counterfactual_baseline_result_review:
+  task_id: TRADING-847
+  required_baselines:
+    - fallback_policy
+    - no_fallback_baseline
+    - static_allocation_baseline
+    - simple_trend_baseline
+    - equal_risk_qqq_sgov_baseline
+  rationale: >
+    Fallback research must be compared against simple transparent baselines.
+    A complex fallback that does not beat simple rules should not be optimized
+    further.
+tail_risk_artifact_determinism_check:
+  task_id: TRADING-848
+  ignored_volatile_fields:
+    - generated_at
+    - runtime
+    - runtime_seconds
+    - mtime
+    - artifact_paths
+  rationale: >
+    Determinism checks compare stable artifact content and ignore fields that
+    are expected to vary between runs.
+tail_risk_task_coverage_map:
+  task_id: TRADING-850
+  output_doc: docs/research/tail_risk_fallback_governance_task_coverage_map.md
+  rationale: >
+    The coverage map compensates for grouped tail-risk governance commits by
+    mapping each task to implementation files, CLI entrypoints, registry
+    entries, artifacts, tests, docs, and shared components.
+tail_risk_hard_block_mutation_tests:
+  task_id: TRADING-851
+  warn_only_release_allowed: false
+  rationale: >
+    Mutated leakage, overlap, future-input, zero-sample, and promotion-allowed
+    payloads must be blocked rather than downgraded to warnings.
+tail_risk_report_registry_integrity_review:
+  task_id: TRADING-852
+  required_for_daily_reading_expected: false
+  artifact_selection_policy: latest_available
+  rationale: >
+    Tail-risk governance reports remain owner-review artifacts. They must be
+    registered and discoverable, but not required daily reading inputs.
+tail_risk_daily_reading_safety_summary:
+  task_id: TRADING-853
+  body_policy: summary_only
+  rationale: >
+    Reader Brief should disclose the blocked/safety state without embedding all
+    governance reports in the daily body.
+tail_risk_independent_trigger_v2_input_quality_review:
+  task_id: TRADING-854
+  allowed_feature_families:
+    - price_trend
+    - drawdown_from_recent_high
+    - realized_volatility
+    - volatility_expansion
+    - moving_average_distance
+    - VIX_VXN_proxy
+    - market_breadth_proxy
+    - credit_liquidity_proxy
+    - rate_regime_proxy
+  rationale: >
+    Trigger v2 inputs must be reviewed for PIT quality, missingness, history,
+    trigger usability, and leakage risk before validation.
+tail_risk_simple_baseline_expansion:
+  task_id: TRADING-855
+  baseline_proxy_policy: diagnostic_proxy_only
+  baselines:
+    - qqq_100_baseline
+    - qqq_60_sgov_40_baseline
+    - qqq_70_sgov_30_baseline
+    - tqqq_50_sgov_50_baseline
+    - tqqq_25_sgov_75_baseline
+    - simple_200dma_risk_off_baseline
+    - simple_volatility_target_baseline
+    - equal_risk_qqq_sgov_baseline
+  rationale: >
+    These simple baseline rows are transparent diagnostic proxies based on the
+    independent forward rows and existing defensive/static baseline. They are
+    not production benchmark substitutions and do not authorize promotion.
+tail_risk_baseline_dominance_gate:
+  task_id: TRADING-856
+  majority_criteria:
+    - return
+    - max_drawdown
+    - sharpe_proxy
+    - turnover
+    - false_positive_cost
+  rationale: >
+    If simple baselines win most available criteria, fallback research remains
+    blocked from promotion-oriented continuation.
+tail_risk_research_readiness_score:
+  task_id: TRADING-857
+  component_weights:
+    anti_leakage_cleanliness: 25
+    forward_outcome_independence: 20
+    sample_maturity: 15
+    regime_robustness: 15
+    sensitivity_stability: 10
+    baseline_competitiveness: 10
+    operational_safety: 5
+  rationale: >
+    The score is a research maturity summary. Even high scores still require
+    manual approval and cannot auto-promote.
+tail_risk_next_decision:
+  task_id: TRADING-858
+  allowed_owner_next_actions:
+    - continue
+    - rebuild
+    - pause
+    - deprecate
+  output_doc: docs/research/tail_risk_fallback_next_decision.md
+  rationale: >
+    The final decision document answers whether to continue tail-risk fallback
+    research while preserving manual review and no-production boundaries.

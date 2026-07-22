@@ -10,6 +10,15 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.historical_portable_source_archive import (
+    ARCHIVE_LOCATOR_KIND,
+    HistoricalArchiveResolution,
+    HistoricalPortableSourceArchive,
+    HistoricalPortableSourceArchiveError,
+)
+from ai_trading_system.historical_portable_source_archive import (
+    DEFAULT_POLICY_PATH as DEFAULT_HISTORICAL_SOURCE_ARCHIVE_POLICY_PATH,
+)
 from ai_trading_system.platform.artifacts.writer import write_json_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -356,17 +365,40 @@ class PortableLineageResolver:
         consumer: str,
         project_root: Path = PROJECT_ROOT,
         policy_path: Path = DEFAULT_POLICY_PATH,
+        historical_source_archive_manifest_path: Path | None = None,
+        historical_source_archive_policy_path: Path = (
+            DEFAULT_HISTORICAL_SOURCE_ARCHIVE_POLICY_PATH
+        ),
     ) -> None:
         self.sidecar_path = sidecar_path.resolve()
         self.subject_artifact_path = subject_artifact_path.resolve()
         self.consumer = consumer
         self.project_root = project_root.resolve()
         self.policy_path = policy_path.resolve()
+        self.historical_source_archive_manifest_path = (
+            historical_source_archive_manifest_path.resolve()
+            if historical_source_archive_manifest_path is not None
+            else None
+        )
+        self.historical_source_archive_policy_path = historical_source_archive_policy_path.resolve()
         self.policy = load_portable_lineage_policy(self.policy_path)
         self.sidecar = _load_sidecar(self.sidecar_path)
         self._resolved: dict[str, dict[str, Any]] = {}
         self._artifact_binding: dict[str, Any] = {}
+        self.historical_source_archive: HistoricalPortableSourceArchive | None = None
         self._validate_contract()
+        if self.historical_source_archive_manifest_path is not None:
+            try:
+                self.historical_source_archive = HistoricalPortableSourceArchive(
+                    manifest_path=self.historical_source_archive_manifest_path,
+                    expected_sidecar_id=str(self.sidecar.get("sidecar_id", "")),
+                    expected_sidecar_sha256=_file_sha256(self.sidecar_path),
+                    frozen_source_records=_records(self.sidecar.get("sources")),
+                    project_root=self.project_root,
+                    policy_path=self.historical_source_archive_policy_path,
+                )
+            except HistoricalPortableSourceArchiveError as exc:
+                raise PortableLineageError(exc.reason_code, exc.detail) from exc
         self._verify_subject_binding()
         self.verify_consumer_sources()
 
@@ -400,12 +432,11 @@ class PortableLineageResolver:
                 "SOURCE_EXPECTATION_MISMATCH",
                 f"manifest size disagrees with sidecar for {legacy_path}",
             )
-        self._verify_record(record)
-        return _locator_path(record, project_root=self.project_root)
+        return self._verify_record(record)
 
     def evidence(self) -> dict[str, Any]:
         binding = self._artifact_binding
-        return {
+        evidence = {
             "schema_version": "legacy_research_artifact_resolution_evidence.v1",
             "status": "PASS",
             "mode": "explicit_portable_lineage",
@@ -429,6 +460,9 @@ class PortableLineageResolver:
             "production_effect": "none",
             "broker_action": "none",
         }
+        if self.historical_source_archive is not None:
+            evidence["historical_source_archive"] = self.historical_source_archive.evidence()
+        return evidence
 
     def _validate_contract(self) -> None:
         if self.sidecar.get("schema_version") != SIDECAR_SCHEMA_VERSION:
@@ -495,12 +529,17 @@ class PortableLineageResolver:
             for record in _records(self.sidecar.get("sources"))
         }
 
-    def _verify_record(self, record: Mapping[str, Any], *, artifact: bool = False) -> None:
+    def _verify_record(self, record: Mapping[str, Any], *, artifact: bool = False) -> Path:
         binding_id = str(record.get("binding_id", ""))
         cache_key = ("artifact:" if artifact else "source:") + binding_id
         if cache_key in self._resolved:
-            return
-        portable = _locator_path(record, project_root=self.project_root)
+            return Path(str(self._resolved[cache_key]["resolved_path"]))
+        archive_resolution = self._archive_resolution(record) if not artifact else None
+        portable = (
+            archive_resolution.path
+            if archive_resolution is not None
+            else _locator_path(record, project_root=self.project_root)
+        )
         historical = _historical_path(
             str(record.get("legacy_path", "")), project_root=self.project_root
         )
@@ -512,7 +551,12 @@ class PortableLineageResolver:
             )
         portable_hash = _file_sha256(portable)
         portable_size = portable.stat().st_size
-        historical_exists = historical.is_file()
+        active_locator_superseded = (
+            archive_resolution is not None
+            and archive_resolution.legacy_locator_disposition
+            == "active_locator_superseded_by_window_migration"
+        )
+        historical_exists = historical.is_file() and not active_locator_superseded
         historical_hash = _file_sha256(historical) if historical_exists else None
         historical_size = historical.stat().st_size if historical_exists else None
         same_path = historical_exists and historical.resolve() == portable.resolve()
@@ -529,20 +573,65 @@ class PortableLineageResolver:
         ):
             reason = "LEGACY_ARTIFACT_TAMPERED" if artifact else "HISTORICAL_SOURCE_TAMPERED"
             raise PortableLineageError(reason, f"historical content mismatch for {binding_id}")
-        self._resolved[cache_key] = {
+        resolved_evidence = {
             "binding_id": binding_id,
             "legacy_path": str(record.get("legacy_path", "")),
-            "locator_kind": LOCATOR_KIND,
-            "locator_path": _mapping(record.get("locator")).get("path"),
+            "locator_kind": (
+                ARCHIVE_LOCATOR_KIND if archive_resolution is not None else LOCATOR_KIND
+            ),
+            "locator_path": (
+                archive_resolution.evidence["archive_locator_path"]
+                if archive_resolution is not None
+                else _mapping(record.get("locator")).get("path")
+            ),
             "resolved_path": str(portable),
             "sha256": expected_hash,
             "size": expected_size,
+            "resolution_origin": (
+                "historical_source_archive"
+                if archive_resolution is not None
+                else "frozen_sidecar_locator"
+            ),
             "historical_path_status": (
-                "SAME_AS_PORTABLE"
-                if same_path
-                else "MATCH" if historical_exists else "MISSING_ALLOWED"
+                "SUPERSEDED_ACTIVE_LOCATOR_PRESENT"
+                if active_locator_superseded and historical.is_file()
+                else (
+                    "SUPERSEDED_ACTIVE_LOCATOR_MISSING"
+                    if active_locator_superseded
+                    else (
+                        "SAME_AS_PORTABLE"
+                        if same_path
+                        else "MATCH" if historical_exists else "MISSING_ALLOWED"
+                    )
+                )
             ),
         }
+        if archive_resolution is not None:
+            resolved_evidence["historical_source_archive"] = archive_resolution.evidence
+        self._resolved[cache_key] = resolved_evidence
+        return portable
+
+    def _archive_resolution(self, record: Mapping[str, Any]) -> HistoricalArchiveResolution | None:
+        if self.historical_source_archive is None:
+            return None
+        try:
+            return self.historical_source_archive.resolve(record)
+        except HistoricalPortableSourceArchiveError as exc:
+            raise PortableLineageError(exc.reason_code, exc.detail) from exc
+
+
+def require_portable_lineage_archive_sidecar_pair(
+    *,
+    portable_lineage_sidecar_path: Path | None,
+    historical_source_archive_manifest_path: Path | None,
+) -> None:
+    """Reject an archive opt-in that has no frozen sidecar identity to bind."""
+
+    if (
+        historical_source_archive_manifest_path is not None
+        and portable_lineage_sidecar_path is None
+    ):
+        raise ValueError("historical source archive requires portable lineage sidecar")
 
 
 def portable_lineage_failure_evidence(
@@ -729,6 +818,7 @@ def _consumers(record: Mapping[str, Any]) -> tuple[str, ...]:
 
 __all__ = [
     "DEFAULT_POLICY_PATH",
+    "DEFAULT_HISTORICAL_SOURCE_ARCHIVE_POLICY_PATH",
     "DEFAULT_TRADING2449_SIDECAR_PATH",
     "LOCATOR_KIND",
     "POLICY_SCHEMA_VERSION",

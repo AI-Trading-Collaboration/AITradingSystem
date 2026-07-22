@@ -11,66 +11,61 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Validation performance coordinator：按冻结门槛选择下一独立尾部候选，等待下一自然Full验证v22；策略lane输入/授权独立判断
+  next_owner: Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
+    有界长尾候选
   requirement_refs:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-    provenance、W2E1～W7E1已完成；W8E1未过门槛并完整撤回；W9E1=`COMPLETE_RUNTIME_TASK_CONTINUES`，W10E1=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`，W11E1=`COMPLETE_RUNTIME_TASK_CONTINUES`。W11只复用同一Typer
-    app生成的Click command tree，不改50次真实callback。
+    provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
+    复用真实 Defensive DAG。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: W11E1 baseline=`1 passed/98.11s`，两次after较慢=`25.84s/-73.66%`，绝对节省`72.27s`并通过冻结双门槛；完整文件、focused、architecture、contract及failure-fix
-      Full全部PASS。50组args/callback/参数解析/exit/output、producer/validator/DQ与registry断言不变；v22只作advisory
-      scheduling。连续证据不足不得声称stable Full improvement，`production_effect=none`。
+    text: W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s -> 14.82/15.12s`，Full=`16.2301
+      worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
+      isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1567
-    row_sha256: 99e22c775f57f5014f1a1b53274f5e9431f15a0179a4b7e88b20efbeb7026453
+    row_sha256: f96099059b3b87006ea085afec678e918a2a1faa2dad5d965a6ee5f964d256da
     cell_count: 8
     all_cells:
     - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
     - P1
     - IN_PROGRESS
-    - Validation performance coordinator：按冻结门槛选择下一独立尾部候选，等待下一自然Full验证v22；策略lane输入/授权独立判断
+    - Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
+      有界长尾候选
     - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-      provenance、W2E1～W7E1已完成；W8E1未过门槛并完整撤回；W9E1=`COMPLETE_RUNTIME_TASK_CONTINUES`，W10E1=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`，W11E1=`COMPLETE_RUNTIME_TASK_CONTINUES`。W11只复用同一Typer
-      app生成的Click command tree，不改50次真实callback。
-    - W11E1 baseline=`1 passed/98.11s`，两次after较慢=`25.84s/-73.66%`，绝对节省`72.27s`并通过冻结双门槛；完整文件、focused、architecture、contract及failure-fix
-      Full全部PASS。50组args/callback/参数解析/exit/output、producer/validator/DQ与registry断言不变；v22只作advisory
-      scheduling。连续证据不足不得声称stable Full improvement，`production_effect=none`。
-    - 2026-07-22：W9 Full因v20未识别六个新文件而runner=`1228.36s`、tail idle max=`190.89s`，机械刷新v21。W10尝试反增`1.25%`并撤回。W11
-      cProfile归因50次Typer tree重建约`156.40s`，parallel baseline=`98.11s`，两次after=`25.80/25.84s`，完整文件=`7
-      passed/102.92s`。首个自然Full=`6547 passed/6 failed/1094.01s`明确FAIL：v21 source-bound
-      test仍绑v20/traversal旧哨兵，且运行期间OPS-062并行更新shared task register导致shadow/hash stale；失败未降级。修复后focused=`28
-      passed`、architecture=`446 passed/44.15s`、contract=`265 passed/125.82s`，绑定首轮FAIL的rerun
-      Full=`6553 passed/2 skipped/1089.21s`。相对W9 target node=`-77.50%`、profile elapsed=`-11.34%`、tail
-      max=`0.0146s`，但共同文件中位数约`+1.33%`，故不声明稳定全局提速。已机械刷新v22 exact `6555/1095` seed；ARCH-004仍停在G2.5前。
+      provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
+      复用真实 Defensive DAG。
+    - W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s -> 14.82/15.12s`，Full=`16.2301
+      worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
+      isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。
+    - 2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
+      PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。
     raw_line: '|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture
       / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Validation
-      performance coordinator：按冻结门槛选择下一独立尾部候选，等待下一自然Full验证v22；策略lane输入/授权独立判断|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-      provenance、W2E1～W7E1已完成；W8E1未过门槛并完整撤回；W9E1=`COMPLETE_RUNTIME_TASK_CONTINUES`，W10E1=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`，W11E1=`COMPLETE_RUNTIME_TASK_CONTINUES`。W11只复用同一Typer
-      app生成的Click command tree，不改50次真实callback。|W11E1 baseline=`1 passed/98.11s`，两次after较慢=`25.84s/-73.66%`，绝对节省`72.27s`并通过冻结双门槛；完整文件、focused、architecture、contract及failure-fix
-      Full全部PASS。50组args/callback/参数解析/exit/output、producer/validator/DQ与registry断言不变；v22只作advisory
-      scheduling。连续证据不足不得声称stable Full improvement，`production_effect=none`。|2026-07-22：W9
-      Full因v20未识别六个新文件而runner=`1228.36s`、tail idle max=`190.89s`，机械刷新v21。W10尝试反增`1.25%`并撤回。W11
-      cProfile归因50次Typer tree重建约`156.40s`，parallel baseline=`98.11s`，两次after=`25.80/25.84s`，完整文件=`7
-      passed/102.92s`。首个自然Full=`6547 passed/6 failed/1094.01s`明确FAIL：v21 source-bound
-      test仍绑v20/traversal旧哨兵，且运行期间OPS-062并行更新shared task register导致shadow/hash stale；失败未降级。修复后focused=`28
-      passed`、architecture=`446 passed/44.15s`、contract=`265 passed/125.82s`，绑定首轮FAIL的rerun
-      Full=`6553 passed/2 skipped/1089.21s`。相对W9 target node=`-77.50%`、profile elapsed=`-11.34%`、tail
-      max=`0.0146s`，但共同文件中位数约`+1.33%`，故不声明稳定全局提速。已机械刷新v22 exact `6555/1095` seed；ARCH-004仍停在G2.5前。|'
+      performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow 有界长尾候选|详见
+      `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
+      provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
+      复用真实 Defensive DAG。|W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s
+      -> 14.82/15.12s`，Full=`16.2301 worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
+      passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
+      isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。|2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
+      PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-99e22c775f57f5014f1a1b53
+  event_id: legacy-import-f96099059b3b87006ea085af
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -83,17 +78,13 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: Validation performance coordinator：按冻结门槛选择下一独立尾部候选，等待下一自然Full验证v22；策略lane输入/授权独立判断
-    notes: 2026-07-22：W9 Full因v20未识别六个新文件而runner=`1228.36s`、tail idle max=`190.89s`，机械刷新v21。W10尝试反增`1.25%`并撤回。W11
-      cProfile归因50次Typer tree重建约`156.40s`，parallel baseline=`98.11s`，两次after=`25.80/25.84s`，完整文件=`7
-      passed/102.92s`。首个自然Full=`6547 passed/6 failed/1094.01s`明确FAIL：v21 source-bound
-      test仍绑v20/traversal旧哨兵，且运行期间OPS-062并行更新shared task register导致shadow/hash stale；失败未降级。修复后focused=`28
-      passed`、architecture=`446 passed/44.15s`、contract=`265 passed/125.82s`，绑定首轮FAIL的rerun
-      Full=`6553 passed/2 skipped/1089.21s`。相对W9 target node=`-77.50%`、profile elapsed=`-11.34%`、tail
-      max=`0.0146s`，但共同文件中位数约`+1.33%`，故不声明稳定全局提速。已机械刷新v22 exact `6555/1095` seed；ARCH-004仍停在G2.5前。
+    next_owner: Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
+      有界长尾候选
+    notes: 2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
+      PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:99e22c775f57f5014f1a1b53274f5e9431f15a0179a4b7e88b20efbeb7026453
+  - sha256:f96099059b3b87006ea085afec678e918a2a1faa2dad5d965a6ee5f964d256da
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -101,23 +92,20 @@ projection:
   - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
   - P1
   - IN_PROGRESS
-  - Validation performance coordinator：按冻结门槛选择下一独立尾部候选，等待下一自然Full验证v22；策略lane输入/授权独立判断
+  - Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
+    有界长尾候选
   - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-    provenance、W2E1～W7E1已完成；W8E1未过门槛并完整撤回；W9E1=`COMPLETE_RUNTIME_TASK_CONTINUES`，W10E1=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`，W11E1=`COMPLETE_RUNTIME_TASK_CONTINUES`。W11只复用同一Typer
-    app生成的Click command tree，不改50次真实callback。
-  - W11E1 baseline=`1 passed/98.11s`，两次after较慢=`25.84s/-73.66%`，绝对节省`72.27s`并通过冻结双门槛；完整文件、focused、architecture、contract及failure-fix
-    Full全部PASS。50组args/callback/参数解析/exit/output、producer/validator/DQ与registry断言不变；v22只作advisory
-    scheduling。连续证据不足不得声称stable Full improvement，`production_effect=none`。
-  - 2026-07-22：W9 Full因v20未识别六个新文件而runner=`1228.36s`、tail idle max=`190.89s`，机械刷新v21。W10尝试反增`1.25%`并撤回。W11
-    cProfile归因50次Typer tree重建约`156.40s`，parallel baseline=`98.11s`，两次after=`25.80/25.84s`，完整文件=`7
-    passed/102.92s`。首个自然Full=`6547 passed/6 failed/1094.01s`明确FAIL：v21 source-bound
-    test仍绑v20/traversal旧哨兵，且运行期间OPS-062并行更新shared task register导致shadow/hash stale；失败未降级。修复后focused=`28
-    passed`、architecture=`446 passed/44.15s`、contract=`265 passed/125.82s`，绑定首轮FAIL的rerun
-    Full=`6553 passed/2 skipped/1089.21s`。相对W9 target node=`-77.50%`、profile elapsed=`-11.34%`、tail
-    max=`0.0146s`，但共同文件中位数约`+1.33%`，故不声明稳定全局提速。已机械刷新v22 exact `6555/1095` seed；ARCH-004仍停在G2.5前。
+    provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
+    复用真实 Defensive DAG。
+  - W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s -> 14.82/15.12s`，Full=`16.2301
+    worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
+    passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
+    isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。
+  - 2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
+    PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。
   docs_links:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   terminal: false
-  raw_row_sha256: 99e22c775f57f5014f1a1b53274f5e9431f15a0179a4b7e88b20efbeb7026453
+  raw_row_sha256: f96099059b3b87006ea085afec678e918a2a1faa2dad5d965a6ee5f964d256da
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: d48b4ae21ec73ea1d5f50bcbaf2e004e660b15c59062c9164ae3c957b022e0b9
+fragment_checksum: a8ced27282be5e2dab826cf187fb32b00af1fff263127de3e7bbe53339181495

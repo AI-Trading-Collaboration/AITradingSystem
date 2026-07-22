@@ -1,0 +1,73 @@
+{
+  "archive_id": "historical-source-archive_a836b2b05e95b9e16e8a",
+  "policy_binding": {
+    "policy_id": "historical_portable_source_archive_v1",
+    "policy_sha256": "ba8ddebacfdc09bbac882e37e2f223c8087fd95dd1e867e5487a99fcde428c41",
+    "policy_version": 1
+  },
+  "safety": {
+    "active_config_overwrite_allowed": false,
+    "broker_action": "none",
+    "candidate_generation_allowed": false,
+    "canonical_sidecar_rewrite_allowed": false,
+    "immutable_legacy_artifact_rewrite_allowed": false,
+    "parameter_search_allowed": false,
+    "production_effect": "none",
+    "promotion_change_allowed": false,
+    "research_recalculation_allowed": false
+  },
+  "schema_version": "historical_portable_source_archive_manifest.v1",
+  "sidecar_binding": {
+    "path": "inputs/research/legacy_lineage/trading2449_r0_r1_r2_portable_lineage.v1.json",
+    "sha256": "031428a97a3e123486142bc603a7df52f65d1b32f987cef32630b13e296c4f9b",
+    "sidecar_id": "portable-lineage_dfa5dfc7208e5913fc75"
+  },
+  "sources": [
+    {
+      "archive_locator": {
+        "kind": "project_relative_content_archive",
+        "path": "inputs/research/legacy_lineage/source_archive/portable-lineage_dfa5dfc7208e5913fc75/0f81afa123d5646548496951a912b04a00dd4535b77ef60de5760ed6f02bf476/strategy_research_restart_policy.yaml"
+      },
+      "binding_id": "source_100e2a05abff91305c13",
+      "frozen_locator": {
+        "kind": "project_relative_content",
+        "path": "config/research/strategy_research_restart_policy.yaml"
+      },
+      "legacy_locator_disposition": "historical_path_must_match_when_present",
+      "legacy_path": "D:\\Work\\AITradingSystem-eb0-candidate\\config\\research\\strategy_research_restart_policy.yaml",
+      "provenance": {
+        "active_window_migration_commit": "bc78fb180819c1f4f812783e0ee3859b0557dae3",
+        "last_pre_migration_commit": "0fc316e53ddf6ab859ed93af48a332d7695da72f",
+        "recovery_source": "trusted_git_object_and_exact_historical_worktree",
+        "sidecar_freeze_commit": "3156a4b91b170880c9b8e46802e85f81637af015",
+        "source_commit": "20b878ea2d84a31238311bdbcac14a28892dabe1",
+        "source_git_blob": "db706fcd9c6501710a629972ce3450162f31405c"
+      },
+      "sha256": "0f81afa123d5646548496951a912b04a00dd4535b77ef60de5760ed6f02bf476",
+      "size": 6866
+    },
+    {
+      "archive_locator": {
+        "kind": "project_relative_content_archive",
+        "path": "inputs/research/legacy_lineage/source_archive/portable-lineage_dfa5dfc7208e5913fc75/626ad4a44cde8cfd6d29442ad2514aed776689aae77a9f7c878e278969e4156e/controlled_strategy_next_stage_research.yaml"
+      },
+      "binding_id": "source_2c9c99f56d401726e639",
+      "frozen_locator": {
+        "kind": "project_relative_content",
+        "path": "config/research/controlled_strategy_next_stage_research.yaml"
+      },
+      "legacy_locator_disposition": "active_locator_superseded_by_window_migration",
+      "legacy_path": "config\\research\\controlled_strategy_next_stage_research.yaml",
+      "provenance": {
+        "active_window_migration_commit": "bc78fb180819c1f4f812783e0ee3859b0557dae3",
+        "last_pre_migration_commit": "0fc316e53ddf6ab859ed93af48a332d7695da72f",
+        "recovery_source": "trusted_git_object_and_exact_historical_worktree",
+        "sidecar_freeze_commit": "3156a4b91b170880c9b8e46802e85f81637af015",
+        "source_commit": "f7fd3583bc9430c3af6a9385fbe0ba3f402242bc",
+        "source_git_blob": "65dc4e91c519c7ca0831dc4eeea439e6357214b6"
+      },
+      "sha256": "626ad4a44cde8cfd6d29442ad2514aed776689aae77a9f7c878e278969e4156e",
+      "size": 49482
+    }
+  ]
+}

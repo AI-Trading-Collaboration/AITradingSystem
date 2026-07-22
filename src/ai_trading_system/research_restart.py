@@ -17,12 +17,14 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.quality import DataQualityReport, validate_data_cache
 from ai_trading_system.legacy_research_artifact_portable_lineage import (
-    DEFAULT_POLICY_PATH as DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
-)
-from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    DEFAULT_HISTORICAL_SOURCE_ARCHIVE_POLICY_PATH,
     PortableLineageError,
     PortableLineageResolver,
     portable_lineage_failure_evidence,
+    require_portable_lineage_archive_sidecar_pair,
+)
+from ai_trading_system.legacy_research_artifact_portable_lineage import (
+    DEFAULT_POLICY_PATH as DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
 )
 from ai_trading_system.platform.artifacts.writer import (
     write_json_atomic,
@@ -272,8 +274,14 @@ def validate_research_restart_preflight(
     portable_lineage_sidecar_path: Path | None = None,
     portable_project_root: Path = PROJECT_ROOT,
     portable_lineage_policy_path: Path = DEFAULT_PORTABLE_LINEAGE_POLICY_PATH,
+    historical_source_archive_manifest_path: Path | None = None,
+    historical_source_archive_policy_path: Path = (DEFAULT_HISTORICAL_SOURCE_ARCHIVE_POLICY_PATH),
 ) -> dict[str, Any]:
     resolver: PortableLineageResolver | None = None
+    require_portable_lineage_archive_sidecar_pair(
+        portable_lineage_sidecar_path=portable_lineage_sidecar_path,
+        historical_source_archive_manifest_path=historical_source_archive_manifest_path,
+    )
     try:
         if portable_lineage_sidecar_path is not None:
             resolver = PortableLineageResolver(
@@ -282,6 +290,8 @@ def validate_research_restart_preflight(
                 consumer="r0_preflight",
                 project_root=portable_project_root,
                 policy_path=portable_lineage_policy_path,
+                historical_source_archive_manifest_path=(historical_source_archive_manifest_path),
+                historical_source_archive_policy_path=historical_source_archive_policy_path,
             )
         payload = _load_json_mapping(artifact_path)
         checks = [

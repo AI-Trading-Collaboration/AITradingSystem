@@ -192,8 +192,15 @@ historical/portable conflict、absolute/parent traversal、symlink escape、poli
 TRADING-2450 closeout 时真实 replay R0/WF/robustness/R2 全部 PASS。TRADING-2452 随后按 owner 决策
 更新 active `strategy_research_restart_policy.yaml` 与 `controlled_strategy_next_stage_research.yaml`，因此
 当前 locator 不再等于 sidecar 冻结的历史 bytes；canonical sidecar 与四份 immutable artifacts 保持不变，
-当前 replay 正确以 `HISTORICAL_PORTABLE_CONFLICT` fail closed。TRADING-2454 将恢复精确历史 source archive
-并建立与 active config 分离的 versioned locator；不得用当前 source 重建 sidecar或回滚 2021 active window。
+当前 replay 正确以 `HISTORICAL_PORTABLE_CONFLICT` fail closed。TRADING-2454 新增独立
+`historical_portable_source_archive.v1` policy/manifest、content-addressed archive 与显式
+`historical_source_archive_manifest_path` overlay；未 opt-in 时路径不变，opt-in 后只有 manifest 与 frozen
+sidecar binding/locator/hash/size exact 的 source 才切到 archive；单传 archive 而不传 sidecar 立即 fail
+closed。resolver 验证和缓存 archive resolution 后，consumer adapter 必须返回 evidence 中的 exact
+`resolved_path`，不得回退读取 active locator。当前两个 Git config blobs已可解析，但全量
+inventory 发现另有download manifest、primary/secondary prices、rates与forward ledger drift；prices/rates exact
+历史 bytes 尚不可得，因此四级 replay仍在下一真实 source上fail closed。不得用当前 source 重建 sidecar、
+近似下载历史数据、放宽hash或回滚 2021 active window。
 R2 仍保持 `CONTINUE_EVIDENCE_CLOSURE`，TRADING-2449 gate 仍为
 `BLOCKED_CONTAMINATED_LEGACY_SOURCE`；`production_effect=none`、`broker_action=none`。
 
@@ -201,10 +208,10 @@ R2 仍保持 `CONTINUE_EVIDENCE_CLOSURE`，TRADING-2449 gate 仍为
 flowchart LR
     POLICY2450["Reviewed portable-lineage v1 policy"] --> RESOLVE2450["Explicit opt-in resolver"]
     SIDECAR2450["Tracked sidecar<br/>4 artifacts / 108 sources<br/>path + size + SHA + consumer"] --> RESOLVE2450
-    ARCHIVE2450["Exact versioned historical artifact/source archive<br/>(TRADING-2454 restores drifted sources)"] --> RESOLVE2450
+    ARCHIVE2450["Explicit TRADING-2454 archive overlay<br/>2 exact config blobs / 5 data sources pending"] --> RESOLVE2450
     HIST2450["Historical paths<br/>optional when missing / exact match when present"] --> RESOLVE2450
     RESOLVE2450 -->|"policy / content / containment PASS"| VALIDATE2450["Original R0 / WF / robustness / R2 validators"]
-    RESOLVE2450 -->|"missing / drift / conflict / traversal"| FAIL2450["FAIL CLOSED + stable reason code"]
+    RESOLVE2450 -->|"missing / drift / conflict / traversal / incomplete archive"| FAIL2450["FAIL CLOSED + stable reason code"]
     VALIDATE2450 --> EVIDENCE2450["Portable resolution evidence<br/>legacy bytes and decisions unchanged"]
 ```
 
@@ -381,7 +388,7 @@ ARCH-004G2.4CV3 把 TRADING-294～305 Weight Search Decision 的18个CLI callbac
 
 ARCH-004G2.4BW 把 Advisory Proposal Review的三个CLI callback迁至`interfaces/cli/etf_portfolio/dynamic_v3_advisory_proposal_review.py`，数据流固定为：显式Interpretation+Risk+Defensive+Calibration ids/roots → 四个content-derived validators → timezone/cutoff + same-Outcome + Interpretation→Calibration lineage + reviewed proposal policy gate → four full bundles/validations/policy bytes → `advisory_proposal_review_input_snapshot.v2` → only-real-Calibration-proposals policy mapping → decision matrix/checklist/report/Reader Brief/manifest → live sources/policy/content-derived byte validator。Empty proposal为`INSUFFICIENT_DATA`，不补造proposal/confidence，conditions不硬编码forward数值。该链只作non-PIT manual review，不运行Forward或后续链，不改policy/config/portfolio/production/order/broker。
 
-ARCH-004G2.4BV 把 Simulation Defensive Validation的三个CLI callback迁至`interfaces/cli/etf_portfolio/dynamic_v3_sim_defensive_validation.py`，数据流固定为：显式Outcome id/root → Outcome content-derived validator → timezone/cutoff + reviewed defensive policy gate → full Outcome bundle/validation/lineage + policy bytes → `sim_defensive_validation_input_snapshot.v2` → same-regime/event/window AVAILABLE finite defensive/no_trade pairs → paired units + null-preserving return/relative/win-rate/drawdown delta + common-cohort best variant → matrix/failure cases/summary/manifest/Markdown → live Outcome/policy/content-derived byte validator。Pressure regimes/windows/sample floor/boundaries由policy治理；missing不填0。该链只作non-PIT manual diagnostic，不运行Proposal或后续链，不改policy/config/portfolio/production/order/broker。
+ARCH-004G2.4BV 把 Simulation Defensive Validation的三个CLI callback迁至`interfaces/cli/etf_portfolio/dynamic_v3_sim_defensive_validation.py`，数据流固定为：显式Outcome id/root → Outcome content-derived validator → timezone/cutoff + reviewed defensive policy gate → full Outcome bundle/validation/lineage + policy bytes → `sim_defensive_validation_input_snapshot.v2` → same-regime/event/window AVAILABLE finite defensive/no_trade pairs → paired units + null-preserving return/relative/win-rate/drawdown delta + common-cohort best variant → matrix/failure cases/summary/manifest/Markdown → live Outcome/policy/content-derived byte validator。Pressure regimes/windows/sample floor/return/drawdown/win-rate boundaries均由policy治理；`minimum_win_rate_vs_no_trade`必须finite且在`[0,1]`，`PROVEN_DEFENSIVE`同时满足sample floor、return、drawdown与win-rate四项门槛；missing不填0。该链只作non-PIT manual diagnostic，不运行Proposal或后续链，不改policy/config/portfolio/production/order/broker。
 
 ARCH-004G2.4BU 把 Simulation Risk-Return的三个CLI callback迁至`interfaces/cli/etf_portfolio/dynamic_v3_sim_risk_return.py`，数据流固定为：显式Outcome id/root → Outcome content-derived validator → timezone/cutoff gate → full Outcome bundle/validation/lineage → `sim_risk_return_input_snapshot.v2` → same-event 20d AVAILABLE finite active/no_trade pairs → paired event/window counts + return/drawdown/turnover deltas + null-preserving ratios/status → CSV/summary/manifest/Markdown → live Outcome/content-derived byte validator。无配对、missing metric和非正ratio分母保持null/`INSUFFICIENT_DATA`，不跨cohort、不填0。该链只作non-PIT manual diagnostic，不运行Defensive或后续链，不改policy/config/portfolio/production/order/broker。
 

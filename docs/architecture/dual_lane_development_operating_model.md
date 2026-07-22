@@ -381,6 +381,37 @@ holdout；工程 W11 完成 Typer command-tree fixture reuse，formal Full failu
 复核一致。该结果证明 validated coordinator closeout 可执行，不代表策略 PASS、S5 cutover 或 G2.5
 恢复，`production_effect=none`。
 
+### Wave 8：historical source archive + simulation defensive runtime
+
+Base=`4b6b6ee6`，branch=`codex/dual-lane-wave8-runtime-archive`。本 wave 只处理一项 test-only
+runtime leaf 和一项 strategy-evidence portability debt；不恢复 Strategy B/C，不运行 backtest/search，
+也不恢复 ARCH-004 G2.5。
+
+|Lane|启动状态|任务/owned scope|冲突与停止条件|
+|---|---|---|---|
+|Engineering|`COMPLETE_RETAINED_W12E1`|`ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE/W12E1`；仅 `tests/test_sim_defensive_validation.py`|13 nodeids 保持；`79.52s -> 14.82/15.12s`，worst `-64.40s/-80.98%`；Full 中为 `16.2301 worker-s`，tamper/fail-closed、byte-exact restore 与隔离 latest pointer 均闭合|
+|Strategy evidence|`BASELINE_DONE_BLOCKED_INPUT`|TRADING-2454 versioned historical archive policy/manifest/2 exact config blobs、archive resolver、portable-lineage adapters 与专属 tests|实际有7个drift source；两个config已解析，prices/rates exact历史bytes不可得，故四级 replay仍fail closed，退出条件为可信data archive|
+|Coordinator|`VALIDATED_MAIN_INTEGRATION`|task/requirements、catalog/system flow、generated views/manifests/hashes、formal gates、S4C main integration|expanded focused=`164 passed/1 skipped`；architecture/contract/reproducibility=`446/265/23 passed`；唯一 Full=`6575 passed/2 skipped`，门禁全部 PASS 后才允许 fast-forward main|
+
+两 lane 的 source paths、module ownership 与 runtime resources 不重叠。若策略 locator 不能严格绑定
+sidecar/original locator/disposition，或工程 fixture 出现顺序依赖、跨测试写入、teardown/resource 异常，
+对应 lane 独立撤回；不得用另一 lane 的成功掩盖失败。`production_effect=none`、`broker_action=none`。
+
+策略 focused 首轮 `31 passed/1 failed` 暴露原“只有两个配置 drift”的审计假设不完整；修正后的全量
+inventory 为 101 exact + 7 drift。实现没有扩大 archive 去猜历史数据：只保留两个 Git 可证明的配置
+overlay，并将 S2 记录为 prices/rates exact bytes blocker；最终 focused=`32 passed`。Engineering expanded
+focused=`112 passed/1 skipped`，skip 为 Windows 不支持 `os.fork` 的既有条件用例。Coordinator 只在共享
+文档、manifests 与 formal gates 闭合后按 S4C 决定是否集成该 fail-closed baseline。
+
+独立集成审查同时修复了两个 P1：archive resolver 必须返回实际校验过的 archive path，而不是继续返回
+active locator；`minimum_win_rate_vs_no_trade` 必须成为 Simulation Defensive 的真实 policy gate。
+修正后 archive overlay 的四级 adapters 均被 exact path/bytes 测试覆盖，manifest-without-sidecar、rooted/
+UNC/path escape、非法 disposition 全部 fail closed；Simulation Defensive 的 invalid/boundary/低胜率语义均有
+独立测试。唯一自然 Full=`6,575 passed/2 skipped/1,079.35s`，scheduler、profile、telemetry、performance、
+provenance 全部 PASS，tail-idle max=`0.48s`；v23 advisory seed 精确覆盖 `6,577 nodes/1,097 files`。
+Wave 8 因此满足 S4C validated-main integration 条件，但 TRADING-2454 仍按真实 exact-data blocker 保持
+`BASELINE_DONE`，不得将工程门禁 PASS 解释为历史 replay 已恢复。
+
 ### 后续架构方向
 
 - `ARCH-004G2_PARALLEL_READINESS_GATE` / G2.5 是下一项高杠杆工程方向，但仍等待 owner 对恢复

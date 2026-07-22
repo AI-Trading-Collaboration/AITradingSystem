@@ -1,6 +1,6 @@
 # ARCH-004G2 Validation Runtime Budget 与 Immutable Fixture Reuse
 
-最后更新：2026-07-19
+最后更新：2026-07-22
 
 ## 任务信息
 
@@ -503,6 +503,61 @@ P95=`1,231.76s`，满足既定墙钟阈值；但第1份collection少22个runtime
 `complete_profile_count=3`但`stable_full_improvement_claimed=false`，不得把计数闭合误报为长期验收完成。
 两份tracked research Markdown在full前后SHA与worktree均不变，direct-writer隔离闭合；本批
 `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+### Wave 12 W12E1：Simulation defensive immutable DAG reuse
+
+2026-07-22：Wave 8 从 `main@4b6b6ee6` 启动。v22 authoritative advisory profile 中
+`tests/test_sim_defensive_validation.py` 为 `107.5985 worker-s / 13 nodes`；12 个重节点 call
+合计 `107.5704s`，均重复经过 Event→Variant→Outcome→Paper/Regime/Sensitivity→Calibration→
+Forward Bridge 前缀，6 个 output-tamper 参数还重复生成同一 Defensive 输出。该 profile 只用于候选
+排序，不作为 isolated 收益分母。
+
+W12E1 owned scope 仅为 `tests/test_sim_defensive_validation.py`。允许使用 module-scoped
+`tmp_path_factory`、`pytest.MonkeyPatch` 与既有 `artifact_validation_session()` 构造一次完整 PASS 的
+immutable Defensive fixture；normal/naive/invalid-policy/output-tamper/live-outcome 仍执行各自真实 consumer。
+所有 source/output drift 必须 `read_bytes -> try/finally tamper -> write_bytes` 并证明 byte-exact 恢复；
+custom live-policy 只可复用 immutable upstream，并在独立 output root 生成真实下游结果。禁止改 helper、
+production module、CLI、config、DQ/PIT、13 个 nodeid、断言或 fixture 规模，FAIL/exception 不得缓存。
+
+实现前在无其他 pytest 负载时运行 exact file baseline `B`，冻结两次 after 较慢值必须
+`<= min(0.80 * B, B - 20s)`；共享前缀须从每个重节点一次降至 module 一次，custom-policy 只允许必要的
+额外下游生成。若 `B < 50s`、调用证据显示前缀不足总 call 的 40%、首轮 after 已使 worst gate 数学上
+不可达，或 tamper/fail-closed/teardown/nodeid/资源隔离任一退化，则 early-stop 并 byte-exact 撤回。
+保留后依次验证目标文件、`test_backtest_sim_forward_bridge.py`、`test_sim_interpretation.py` 与
+`test_artifact_validation_session.py` 的 focused 组合，再由 coordinator 在 Wave 8 integration boundary
+统一执行 generated freshness、architecture、contract 与一次自然 Full；不足连续证据仍不声明稳定 Full
+提速，`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+无其他 Python/pytest candidate 负载的正式 baseline 已冻结为 `13 passed / 79.52s`，12 个重 call
+为 `5.63～6.60s`；因此两次 after 的较慢值必须 `<=59.52s`，不得按实现结果放宽。baseline node、
+skip、xfail 与调用范围已满足启动条件，W12E1 由 `BASELINING` 转 `IMPLEMENTING`。
+
+两次 exact-file after=`13 passed / 14.82s` 与 `13 passed / 15.12s`，较慢值相对 baseline 减少
+`64.40s / 80.98%`，远低于 `59.52s` 门槛。重 fixture 只在 module 构建一次；invalid source、6 类
+output tamper 与 live outcome 全部在真实 validator 后 byte-exact restore，live policy 写独立 output root。
+W12E1 裁决=`RETAINED_THRESHOLD_PASS`，转入跨 Forward Bridge/Interpretation/session 的 focused 集成；
+formal gates 与 Full 仍等待整个 Wave 8 统一边界，`stable_full_improvement_claimed=false`。
+
+Wave 8 独立集成审查未发现性能优化本身改变 node 数或绕过 tamper，但发现 module fixture 的一次成功
+custom-policy producer 会更新全局 latest pointer，且原断言允许当前不足样本 fixture 意外变成
+`PROVEN_DEFENSIVE`。W12E1 在正式门禁前追加两项收口：成功 producer 使用隔离 latest root 或 byte-exact
+恢复 pointer；主语义测试精确断言 overall=`INSUFFICIENT_DATA` 及三个 pressure regime 均为
+`INSUFFICIENT_SAMPLE|INSUFFICIENT_DATA`。另行登记的 `TRADING-2455` 负责既有胜率 policy 未生效问题；
+两项 correctness 修正均通过后，W12E1 才可进入正式门禁。
+
+Wave 8 最终门禁已闭合。目标文件在唯一自然 Full 中保持 `13 nodes / 16.2301 worker-s`，相对
+isolated baseline=`79.52s` 减少约 `79.59%`；expanded focused=`164 passed/1 skipped`，skip 为 Windows
+缺少 `os.fork` 的既有条件用例。正式 architecture 首轮真实捕获 generated aggregate 的依赖顺序漂移，
+按 `task registry -> DevEx manifests/aggregate -> deprecation -> compatibility hashes` 重新生成后，
+architecture=`446 passed`、contract=`265 passed`、reproducibility=`23 passed`。本 wave 唯一自然 Full=
+`outputs/validation_runtime/full_20260722T050041Z/test_runtime_summary.json`，结果为
+`6,575 passed / 2 skipped / 642 warnings`、runner=`1,079.35s`，exact collection=
+`6,577 nodes / 1,097 files / 16 workers`；scheduler applied/no-fallback，profile、telemetry、performance 与
+validation-provenance 全部 PASS，tail-idle total/max=`7.15s/0.48s`。本次没有第二次 Full；PASS profile
+机械刷新为 `arch_004g2_wave12_full_duration_partial_seed` v23，manifest SHA-256=
+`8f9c4d201091aa418989fab091c8d90371ef42bf0f4f7d2ccd0e7fb34bf160bb`。由于仍只有一次当前集合样本，
+`stable_full_improvement_claimed=false`；W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`，下一工程候选
+从新 profile 的 smoothed/paper-shadow 长尾只读筛选，`production_effect=none`。
 
 2026-07-19 / ARCH-004G2.4-EB3 collection bootstrap：EB3新增一个test file后，PB1的
 `COMPLETE v8 (6,352 nodes / 1,071 files)` identity自然过期。为避免先运行一次必然fallback的

@@ -11,6 +11,15 @@ from ai_trading_system import research_restart
 from ai_trading_system import research_restart_decision as r2
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio import dynamic_v3_r1_evidence as r1
+from ai_trading_system.historical_portable_source_archive import (
+    DEFAULT_MANIFEST_PATH,
+)
+from ai_trading_system.historical_portable_source_archive import (
+    DEFAULT_POLICY_PATH as DEFAULT_HISTORICAL_ARCHIVE_POLICY_PATH,
+)
+from ai_trading_system.historical_portable_source_archive import (
+    SAFETY as HISTORICAL_ARCHIVE_SAFETY,
+)
 from ai_trading_system.legacy_research_artifact_portable_lineage import (
     DEFAULT_POLICY_PATH,
     DEFAULT_TRADING2449_SIDECAR_PATH,
@@ -310,6 +319,63 @@ def test_r1_and_r2_adapters_require_explicit_sidecar_opt_in(
     assert all(path.read_bytes() == value for path, value in immutable_before.items())
 
 
+@pytest.mark.parametrize(
+    ("consumer", "adapter"),
+    [
+        ("r0_preflight", research_restart._portable_path),
+        ("r1_walk_forward", r1._portable_path),
+        ("r2_decision", r2._portable_path),
+    ],
+)
+def test_portable_adapters_return_verified_archive_path(
+    tmp_path: Path, consumer: str, adapter: Any
+) -> None:
+    fixture = _archive_overlay_fixture(tmp_path)
+    resolver = PortableLineageResolver(
+        sidecar_path=fixture["sidecar"],
+        subject_artifact_path=fixture["subject"],
+        consumer=consumer,
+        project_root=tmp_path,
+        historical_source_archive_manifest_path=fixture["archive_manifest"],
+    )
+
+    resolved = adapter(
+        Path("config/research/historical-source.yaml"),
+        resolver,
+        expected_sha256=fixture["source_sha256"],
+        expected_size=len(fixture["historical_bytes"]),
+    )
+
+    assert resolved == fixture["archive_source"].resolve()
+    assert resolved.read_bytes() == fixture["historical_bytes"]
+    assert resolved != fixture["active_source"].resolve()
+
+
+@pytest.mark.parametrize(
+    "validator",
+    [
+        lambda manifest: research_restart.validate_research_restart_preflight(
+            artifact_path=Path("missing-r0.json"),
+            historical_source_archive_manifest_path=manifest,
+        ),
+        lambda manifest: r1.validate_r1_walk_forward_evidence(
+            walk_forward_id="missing-wf",
+            historical_source_archive_manifest_path=manifest,
+        ),
+        lambda manifest: r1.validate_r1_robustness_evidence(
+            robustness_id="missing-robustness",
+            historical_source_archive_manifest_path=manifest,
+        ),
+        lambda manifest: r2.validate_strategy_research_restart_decision(
+            historical_source_archive_manifest_path=manifest,
+        ),
+    ],
+)
+def test_archive_opt_in_without_sidecar_fails_closed(validator: Any) -> None:
+    with pytest.raises(ValueError, match="requires portable lineage sidecar"):
+        validator(DEFAULT_MANIFEST_PATH)
+
+
 def test_recovered_r0_r1_r2_bundle_fails_closed_after_reviewed_source_drift(
     tmp_path: Path,
 ) -> None:
@@ -390,6 +456,40 @@ def test_recovered_r0_r1_r2_bundle_fails_closed_after_reviewed_source_drift(
         assert resolution["production_effect"] == "none"
     assert {path: (path.stat().st_size, _sha256(path)) for path in artifacts} == before
 
+    archive_kwargs = {
+        **kwargs,
+        "historical_source_archive_manifest_path": DEFAULT_MANIFEST_PATH,
+    }
+    archived_validations = (
+        research_restart.validate_research_restart_preflight(
+            artifact_path=r0_path, **archive_kwargs
+        ),
+        r1.validate_r1_walk_forward_evidence(
+            walk_forward_id=wf_id,
+            output_dir=wf_root,
+            **archive_kwargs,
+        ),
+        r1.validate_r1_robustness_evidence(
+            robustness_id=robustness_id,
+            output_dir=robustness_root,
+            **archive_kwargs,
+        ),
+        r2.validate_strategy_research_restart_decision(output_root=r2_root, **archive_kwargs),
+    )
+    expected_next_blockers = (
+        "source_f3af401bd04447415bc1",
+        "source_2359a08b2c37809e744c",
+        "source_2359a08b2c37809e744c",
+        "source_2359a08b2c37809e744c",
+    )
+    for validation, binding_id in zip(archived_validations, expected_next_blockers, strict=True):
+        assert validation["status"] == "FAIL"
+        resolution = validation["portable_lineage_resolution"]
+        assert resolution["reason_code"] == "PORTABLE_SOURCE_TAMPERED"
+        assert binding_id in resolution["detail"]
+        assert resolution["production_effect"] == "none"
+    assert {path: (path.stat().st_size, _sha256(path)) for path in artifacts} == before
+
 
 def _minimal_sidecar(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
     subject = _write(tmp_path / "portable" / "subject.json", b"subject")
@@ -405,6 +505,101 @@ def _minimal_sidecar(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
         project_root=tmp_path,
     )
     return subject, source, sidecar, historical_source
+
+
+def _archive_overlay_fixture(tmp_path: Path) -> dict[str, Any]:
+    historical_bytes = b"reviewed-historical-source\n"
+    active_source = _write(
+        tmp_path / "config" / "research" / "historical-source.yaml",
+        historical_bytes,
+    )
+    subject = _write(tmp_path / "portable" / "subject.json", b'{"immutable":true}\n')
+    sidecar = tmp_path / "inputs" / "research" / "portable-lineage.json"
+    consumers = ("r0_preflight", "r1_walk_forward", "r2_decision")
+    build_portable_lineage_sidecar(
+        output_path=sidecar,
+        legacy_artifacts=[
+            PortableLineageBinding(
+                binding_id="artifact_all_consumers",
+                legacy_path=str(tmp_path / "missing-legacy" / "subject.json"),
+                portable_path=subject,
+                consumers=consumers,
+            )
+        ],
+        sources=[
+            PortableLineageBinding(
+                binding_id="source_historical_overlay",
+                legacy_path="config/research/historical-source.yaml",
+                portable_path=active_source,
+                consumers=consumers,
+            )
+        ],
+        project_root=tmp_path,
+    )
+    frozen = _read_json(sidecar)
+    source = frozen["sources"][0]
+    active_source.write_bytes(b"current-active-source\n")
+    archive_source = (
+        tmp_path
+        / "inputs"
+        / "research"
+        / "legacy_lineage"
+        / "source_archive"
+        / frozen["sidecar_id"]
+        / source["sha256"]
+        / "historical-source.yaml"
+    )
+    _write(archive_source, historical_bytes)
+    manifest = {
+        "schema_version": "historical_portable_source_archive_manifest.v1",
+        "policy_binding": {
+            "policy_id": "historical_portable_source_archive_v1",
+            "policy_version": 1,
+            "policy_sha256": _sha256(DEFAULT_HISTORICAL_ARCHIVE_POLICY_PATH),
+        },
+        "sidecar_binding": {
+            "sidecar_id": frozen["sidecar_id"],
+            "path": sidecar.relative_to(tmp_path).as_posix(),
+            "sha256": _sha256(sidecar),
+        },
+        "sources": [
+            {
+                "binding_id": source["binding_id"],
+                "legacy_path": source["legacy_path"],
+                "frozen_locator": source["locator"],
+                "sha256": source["sha256"],
+                "size": source["size"],
+                "archive_locator": {
+                    "kind": "project_relative_content_archive",
+                    "path": archive_source.relative_to(tmp_path).as_posix(),
+                },
+                "legacy_locator_disposition": ("active_locator_superseded_by_window_migration"),
+                "provenance": {
+                    "source_commit": "0" * 40,
+                    "source_git_blob": "1" * 40,
+                    "sidecar_freeze_commit": "2" * 40,
+                    "last_pre_migration_commit": "3" * 40,
+                    "active_window_migration_commit": "4" * 40,
+                    "recovery_source": "trusted_git_object_and_exact_historical_worktree",
+                },
+            }
+        ],
+        "safety": dict(HISTORICAL_ARCHIVE_SAFETY),
+    }
+    manifest["archive_id"] = _historical_archive_id(manifest)
+    archive_manifest = _write(
+        tmp_path / "inputs" / "research" / "historical-source-archive.json",
+        (json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode(),
+    )
+    return {
+        "active_source": active_source,
+        "archive_manifest": archive_manifest,
+        "archive_source": archive_source,
+        "historical_bytes": historical_bytes,
+        "sidecar": sidecar,
+        "source_sha256": source["sha256"],
+        "subject": subject,
+    }
 
 
 def _binding(
@@ -440,6 +635,15 @@ def _sidecar_id(payload: dict[str, Any]) -> str:
         unsigned, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return "portable-lineage_" + sha256(encoded).hexdigest()[:20]
+
+
+def _historical_archive_id(payload: dict[str, Any]) -> str:
+    unsigned = dict(payload)
+    unsigned.pop("archive_id", None)
+    encoded = json.dumps(
+        unsigned, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return "historical-source-archive_" + sha256(encoded).hexdigest()[:20]
 
 
 def _sha256(path: Path) -> str:

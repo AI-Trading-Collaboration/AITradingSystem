@@ -1,0 +1,61 @@
+schema_version: historical_portable_source_archive_policy.v1
+policy_id: historical_portable_source_archive_v1
+policy_version: 1
+status: owner_approved_portability_contract
+owner: research_governance
+rationale: >-
+  Preserve exact historical source bytes after an active configuration locator is
+  legitimately migrated, without rewriting the frozen portable-lineage sidecar or
+  allowing current configuration bytes to masquerade as historical evidence.
+archive:
+  schema_version: historical_portable_source_archive_manifest.v1
+  locator_kind: project_relative_content_archive
+  archive_root: inputs/research/legacy_lineage/source_archive
+  require_manifest_content_id: true
+  require_policy_hash_binding: true
+  require_sidecar_id_binding: true
+  require_sidecar_sha256_binding: true
+  require_source_binding_id: true
+  require_source_sha256: true
+  require_source_size: true
+  require_git_provenance: true
+resolution:
+  explicit_opt_in_required: true
+  unlisted_source_action: use_frozen_sidecar_locator
+  archive_binding_mismatch_action: fail_closed
+  missing_archive_source_action: fail_closed
+  archive_tamper_action: fail_closed
+  reject_absolute_locator: true
+  reject_parent_traversal: true
+  require_locator_under_project_root: true
+  active_locator_supersession_requires_exact_manifest_binding: true
+  supported_legacy_locator_dispositions:
+    - historical_path_must_match_when_present
+    - active_locator_superseded_by_window_migration
+safety:
+  canonical_sidecar_rewrite_allowed: false
+  immutable_legacy_artifact_rewrite_allowed: false
+  active_config_overwrite_allowed: false
+  research_recalculation_allowed: false
+  candidate_generation_allowed: false
+  parameter_search_allowed: false
+  promotion_change_allowed: false
+  production_effect: none
+  broker_action: none
+validation:
+  required_failure_reasons:
+    - ARCHIVE_POLICY_SCHEMA_INVALID
+    - ARCHIVE_MANIFEST_MISSING
+    - ARCHIVE_MANIFEST_SCHEMA_INVALID
+    - ARCHIVE_CONTENT_ID_MISMATCH
+    - ARCHIVE_POLICY_BINDING_MISMATCH
+    - ARCHIVE_SIDECAR_BINDING_MISMATCH
+    - ARCHIVE_SOURCE_BINDING_MISMATCH
+    - ARCHIVE_SOURCE_MISSING
+    - ARCHIVE_SOURCE_TAMPERED
+    - ARCHIVE_LOCATOR_PATH_TRAVERSAL
+    - ARCHIVE_LOCATOR_OUTSIDE_PROJECT_ROOT
+    - ARCHIVE_ACTIVE_LOCATOR_CONFLICT
+  review_condition: >-
+    Review before adding a locator kind, changing archive precedence, relaxing an
+    exact binding, or adding a new active-locator supersession disposition.
