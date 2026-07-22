@@ -1,6 +1,6 @@
 # TRADING-2450：Legacy research artifact portable lineage
 
-最后更新：2026-07-20
+最后更新：2026-07-21
 
 状态：`DONE`
 

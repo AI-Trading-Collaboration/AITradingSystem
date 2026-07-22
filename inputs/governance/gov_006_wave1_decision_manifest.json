@@ -15,12 +15,12 @@
     "source_hash_policy_hash_status_and_ancestry_revalidation_required": true
   },
   "before_inventory": {
-    "active_section_count_sum": 436,
+    "active_section_count_sum": 435,
     "active_section_counts": [
       {
         "category": "main",
         "section": "当前任务",
-        "task_count": 421
+        "task_count": 420
       },
       {
         "category": "supplemental",
@@ -33,14 +33,14 @@
         "task_count": 1
       }
     ],
-    "active_task_count": 436,
-    "active_task_count_formula": "421 + 14 + 1 = 436",
-    "completed_task_count": 456,
+    "active_task_count": 435,
+    "active_task_count_formula": "420 + 14 + 1 = 435",
+    "completed_task_count": 457,
     "inventory_scope": "all_legacy_task_rows",
     "priority_counts": {
       "P0": 269,
       "P1": 136,
-      "P2": 31
+      "P2": 30
     },
     "status_counts": {
       "BASELINE_DONE": 100,
@@ -49,7 +49,7 @@
       "DEFERRED": 3,
       "IN_PROGRESS": 4,
       "PROPOSED": 16,
-      "READY": 3,
+      "READY": 2,
       "VALIDATING": 284
     }
   },
@@ -62,7 +62,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Typed executor implementation and focused validation are complete; real replay belongs to M2B.",
-          "line": 1587,
+          "line": 1586,
           "path": "docs/task_register.md",
           "sha256": "12a11cd6c425b1d8654a89fe36497780cea27b451a00637846a4171fc3bf1335",
           "source": "active",
@@ -84,7 +84,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The old replay-blocker route was superseded by the authoritative family closure.",
-          "line": 1580,
+          "line": 1579,
           "path": "docs/task_register.md",
           "sha256": "545476b884553680b07fc6fd128a19c3429a07ff7d7ce9c6ff91885670d759da",
           "source": "active",
@@ -105,7 +105,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -119,7 +119,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -137,7 +137,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The old candidate approval route has no active candidate after family closure.",
-          "line": 1581,
+          "line": 1580,
           "path": "docs/task_register.md",
           "sha256": "2d5eced60a98d54bbababf24a6eece77b27f74d44c1c7cd1754716000d187a9c",
           "source": "active",
@@ -158,7 +158,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -172,7 +172,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -190,7 +190,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The prior A/B/C decision route was closed and cannot remain an owner action.",
-          "line": 1582,
+          "line": 1581,
           "path": "docs/task_register.md",
           "sha256": "becfcf9a891f46807b62b7b645574aadfa72727d55274edecfaa892fe898d8c1",
           "source": "active",
@@ -211,7 +211,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -225,7 +225,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -243,7 +243,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The pending screening policy belongs to a closed candidate family.",
-          "line": 1585,
+          "line": 1584,
           "path": "docs/task_register.md",
           "sha256": "d58906ef18c277bf4b083e3f3846151c448dc486bf7aaae55141d9610d84ecf6",
           "source": "active",
@@ -264,7 +264,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -278,7 +278,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -296,7 +296,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The old mapping route was superseded by the no-mutation-ready capability conclusion.",
-          "line": 1586,
+          "line": 1585,
           "path": "docs/task_register.md",
           "sha256": "8cb563a4d8d4bc2d48d8ee0a96de31432d2dda4eeb55e8da7853ebaa00d20724",
           "source": "active",
@@ -317,7 +317,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -331,7 +331,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -349,7 +349,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Replay binding was never eligible and the governing family is now closed.",
-          "line": 1588,
+          "line": 1587,
           "path": "docs/task_register.md",
           "sha256": "af256a1ca534d6f40ed506b73f0f1f225de25b4de87809a83ed3b472f8983052",
           "source": "active",
@@ -370,7 +370,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -384,7 +384,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -402,7 +402,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Runtime metric resolution depended on a replay route that the closure removed.",
-          "line": 1589,
+          "line": 1588,
           "path": "docs/task_register.md",
           "sha256": "4d312267ecf77477dd7cdcd5da1a0c16242979c0e6c65185079034d817a96a64",
           "source": "active",
@@ -423,7 +423,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -437,7 +437,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -455,7 +455,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The post-replay disposition is superseded by the terminal family disposition.",
-          "line": 1590,
+          "line": 1589,
           "path": "docs/task_register.md",
           "sha256": "92dfcaefda0d971a4d586ca9699032510f40444cbd7830372595d02ac93b9219",
           "source": "active",
@@ -476,7 +476,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -490,7 +490,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -508,7 +508,7 @@
       "own_acceptance_refs": [
         {
           "claim": "N3 was explicitly not started because mutation-ready capability count is zero.",
-          "line": 1583,
+          "line": 1582,
           "path": "docs/task_register.md",
           "sha256": "34d72cfe806b09381b89a0fdadecdae25f831deb4ceb02b95de7b06b3381dd43",
           "source": "active",
@@ -529,7 +529,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -543,7 +543,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -561,7 +561,7 @@
       "own_acceptance_refs": [
         {
           "claim": "N4 was explicitly not started because no contract-ready candidate exists.",
-          "line": 1584,
+          "line": 1583,
           "path": "docs/task_register.md",
           "sha256": "acbdf505ac7dcfd4b631fbd4a7e61d138c0e349b52fe59b54306d26d4b1c535d",
           "source": "active",
@@ -582,7 +582,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 35,
+          "line": 36,
           "path": "docs/task_register_completed.md",
           "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
           "source": "completed",
@@ -596,7 +596,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 34,
+          "line": 35,
           "path": "docs/task_register_completed.md",
           "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
           "source": "completed",
@@ -614,7 +614,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The evidence-extension plan and its governed route were implemented and consumed downstream.",
-          "line": 1602,
+          "line": 1601,
           "path": "docs/task_register.md",
           "sha256": "b51e55a7c0b29e67eae83894f942b0fbc33a6ad09390c7e8bbe0adf9fa6409ba",
           "source": "active",
@@ -633,7 +633,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -647,7 +647,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -665,7 +665,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The cooldown/decay design contract and validation were completed.",
-          "line": 1623,
+          "line": 1622,
           "path": "docs/task_register.md",
           "sha256": "61c98a9eaac347c4d7035f8219a4a93333c19b77205109e23a00ed92d17c415a",
           "source": "active",
@@ -684,7 +684,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -698,7 +698,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -716,7 +716,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The signal-validity aging design contract and validation were completed.",
-          "line": 1624,
+          "line": 1623,
           "path": "docs/task_register.md",
           "sha256": "cb34bd67307e185a8801a36f936884f8f1d8fa4d3e75daa295b683aa210ac265",
           "source": "active",
@@ -735,7 +735,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -749,7 +749,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -767,7 +767,7 @@
       "own_acceptance_refs": [
         {
           "claim": "SOURCE_BLOCKED_NOT_EXECUTED is the required fail-closed result for unavailable source evidence.",
-          "line": 1625,
+          "line": 1624,
           "path": "docs/task_register.md",
           "sha256": "5d4896cfeaf8224ff9e9c1e7f5e8d4ea6718b38a6944cb817188754886e68e1e",
           "source": "active",
@@ -786,7 +786,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -800,7 +800,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -818,7 +818,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Source binding and its validation were completed and consumed by later risk-cap stages.",
-          "line": 1601,
+          "line": 1600,
           "path": "docs/task_register.md",
           "sha256": "c7b2737c2ac4b8f841e84bd3b5458387489696e0ae8041c952faf3fb889df633",
           "source": "active",
@@ -837,7 +837,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -851,7 +851,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -869,7 +869,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Baseline source decision evidence was completed and consumed downstream.",
-          "line": 1600,
+          "line": 1599,
           "path": "docs/task_register.md",
           "sha256": "94d8028bb81bf9dd94d1b4fc9a61f400fbaf0b29d5caa1f71baf606765aeb6e4",
           "source": "active",
@@ -888,7 +888,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -902,7 +902,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -920,7 +920,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The source-bound dry-run implementation and validation were completed.",
-          "line": 1599,
+          "line": 1598,
           "path": "docs/task_register.md",
           "sha256": "2a0b679a19b5b130bb7512628f4bc2bb39f63fc5f9e40ef0d670385b5d4b9496",
           "source": "active",
@@ -939,7 +939,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -953,7 +953,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -971,7 +971,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The static exposure-cap diagnostic review was completed.",
-          "line": 1598,
+          "line": 1597,
           "path": "docs/task_register.md",
           "sha256": "fcc38f0f58b6d1259448cff7f89b3130cecb404580daed286a2509105349443f",
           "source": "active",
@@ -990,7 +990,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -1004,7 +1004,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -1022,7 +1022,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Dynamic target baseline preparation was completed.",
-          "line": 1597,
+          "line": 1596,
           "path": "docs/task_register.md",
           "sha256": "85960b8deb6d5912d1fb9bd1cb31ee3d147330b80510fe92d0d82919895ed5be",
           "source": "active",
@@ -1041,7 +1041,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -1055,7 +1055,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -1073,7 +1073,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Dynamic target source remediation was completed.",
-          "line": 1596,
+          "line": 1595,
           "path": "docs/task_register.md",
           "sha256": "403bd0529dd5f940b71e44b935b3df87d2dd5a2a885a7ed61734e119240ef8dd",
           "source": "active",
@@ -1092,7 +1092,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -1106,7 +1106,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -1124,7 +1124,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Timestamp remediation and validation were completed.",
-          "line": 1595,
+          "line": 1594,
           "path": "docs/task_register.md",
           "sha256": "cd38a0b9fd3f95c71147a7b9fc2a17702d8298e48568a1b0e9031f011f4d050e",
           "source": "active",
@@ -1143,7 +1143,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -1157,7 +1157,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -1175,7 +1175,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The PIT-caveated readiness artifact is the task's governed completion result.",
-          "line": 1594,
+          "line": 1593,
           "path": "docs/task_register.md",
           "sha256": "7129afb1800d29ec9d6c98cca4a88a65c1b1842d945600916dd0f43d605950a5",
           "source": "active",
@@ -1194,7 +1194,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -1208,7 +1208,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -1226,7 +1226,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Dynamic exposure-cap diagnostics and formal validation were completed.",
-          "line": 1593,
+          "line": 1592,
           "path": "docs/task_register.md",
           "sha256": "b7595b7c7dbc4315c5003a4d4b6f82222236debdf889ea3f331d63d24820ca55",
           "source": "active",
@@ -1245,7 +1245,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -1259,7 +1259,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -1277,7 +1277,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The forward-observe plan was completed; later owner pause evidence owns runtime disposition.",
-          "line": 1591,
+          "line": 1590,
           "path": "docs/task_register.md",
           "sha256": "3dd1abb57053fd4e9c33a7bf991f3068fe4d290fc0db3562708bd471c2448dec",
           "source": "active",
@@ -1296,7 +1296,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 172,
+          "line": 173,
           "path": "docs/task_register_completed.md",
           "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
           "source": "completed",
@@ -1310,7 +1310,7 @@
           "expected_status": [
             "DONE"
           ],
-          "line": 135,
+          "line": 136,
           "path": "docs/task_register_completed.md",
           "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
           "source": "completed",
@@ -1328,7 +1328,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The master closeout records that Phase 2 integration is not authorized by current evidence.",
-          "line": 1654,
+          "line": 1653,
           "path": "docs/task_register.md",
           "sha256": "25f579b34c9e54e27e6380641cc023c28e3fd8f137c22c5a67ecf46fa278c639",
           "source": "active",
@@ -1349,7 +1349,7 @@
           "expected_status": [
             "VALIDATING"
           ],
-          "line": 1651,
+          "line": 1650,
           "path": "docs/task_register.md",
           "sha256": "2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf",
           "source": "active",
@@ -1367,7 +1367,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The master closeout records that Phase 3 multi-window work is not authorized by current evidence.",
-          "line": 1655,
+          "line": 1654,
           "path": "docs/task_register.md",
           "sha256": "bf1518bf1edde0803e888c9e4ad2dc4c5ba1361dec5a1d5ab97af1edfb8ee2e1",
           "source": "active",
@@ -1388,7 +1388,7 @@
           "expected_status": [
             "VALIDATING"
           ],
-          "line": 1651,
+          "line": 1650,
           "path": "docs/task_register.md",
           "sha256": "2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf",
           "source": "active",
@@ -1406,7 +1406,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The validation-tier implementation acceptance is complete; ongoing optimization has a separate owner.",
-          "line": 1854,
+          "line": 1853,
           "path": "docs/task_register.md",
           "sha256": "4b8c62c719458de02b0a665ac4642fae0cc8c17358f8a230a43bd3fc520001ee",
           "source": "active",
@@ -1443,7 +1443,7 @@
       "own_acceptance_refs": [
         {
           "claim": "Full runtime stabilization acceptance is complete; ongoing long-tail work has a separate owner.",
-          "line": 1828,
+          "line": 1827,
           "path": "docs/task_register.md",
           "sha256": "1f5b1fd8ec59e6126b90c083ac53f1b8e482cf8ff525df0f9e1d4139c3bca2ac",
           "source": "active",
@@ -1480,7 +1480,7 @@
       "own_acceptance_refs": [
         {
           "claim": "The row records a clean diff check and completed CRLF normalization acceptance.",
-          "line": 1725,
+          "line": 1724,
           "path": "docs/task_register.md",
           "sha256": "d5992c06197ecd4aad13433e9d74be83766968c2fb0bb895352618dbcbde660b",
           "source": "active",
@@ -1496,8 +1496,8 @@
       "task_id": "TRADING-849_CRLF_NORMALIZATION_CLEANUP"
     }
   ],
-  "manifest_id": "gov_006_decision_manifest_39215b522a97512cb56c",
-  "manifest_sha256": "39215b522a97512cb56cf241c8f9ab708323d8dff94cf169e8de398c5096cb96",
+  "manifest_id": "gov_006_decision_manifest_5bbdafd86334e2909887",
+  "manifest_sha256": "5bbdafd86334e2909887a27e1f783a163ec930c7b8f925667329119e55b565d5",
   "policy": {
     "authorization": {
       "authorized_by": "project_owner",
@@ -1528,11 +1528,11 @@
   "schema_version": "gov_006_portfolio_normalization_decision_manifest.v2",
   "source": {
     "active_path": "docs/task_register.md",
-    "active_sha256": "c0d0e39946533184e90256fe714b796321be22b5b12150ddfab20472a55df185",
-    "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+    "active_sha256": "7e029259b55590e95c8b2a63551a9ef4096407a7f5f766e7235afb83ce162006",
+    "base_commit": "53c60c8e9351a0480987cd4ecdbd746a09e807cf",
     "base_commit_rule": "CURRENT_COMMIT_MUST_EQUAL_OR_DESCEND_FROM_BASE_COMMIT",
     "completed_path": "docs/task_register_completed.md",
-    "completed_sha256": "99119968b83dcc67f43d7c45e6325abbb15811d0e21bed04e4591d48b1772c0c"
+    "completed_sha256": "9d0efb26e95c4e387ec74356016d27f2aba54019e2fb344330e62336b0d93256"
   },
   "status": "DRY_RUN_READY",
   "task_id": "GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION",

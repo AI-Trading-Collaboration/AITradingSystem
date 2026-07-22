@@ -17481,3 +17481,90 @@ phase_arch_004_g2_5_wave11:
   - {path: tests/test_gov_006_task_portfolio_normalization.py, sha256: 3da02fa1a1516424695420724e55788d38aae58eebeb1a778a76abd4081bfa7f}
   - {path: tests/test_immutable_data_publish.py, sha256: 1de5a5f3b6df48cf421d68cfadd7d69f27ccfca4445aea00eb4cfef5509edf85}
   - {path: tests/test_trading2452_architecture_contract.py, sha256: deec971fc2dbbaae9b5810e0e219e042c3e8b8a8e8c440991dacae8ef295ec54}
+
+phase_docs_gov_001_freshness_closeout:
+  schema_version: docs_gov_001_freshness_closeout.v1
+  status: COMPLETE_DOCS_FRESHNESS_CLOSEOUT
+  boundary_id: DOCS-GOV-001_FRESHNESS_CLOSEOUT
+  task_ids:
+  - DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+  prior_sections_immutability:
+    source_commit: 53c60c8e9351a0480987cd4ecdbd746a09e807cf
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 4c71f33b9e72fd9f61a7fc26534c5b4fee4dbf96
+    raw_byte_count: 1151797
+    raw_sha256: b0085b51a4c2ff19ffa7257e5d01a49fbdd85e300b3a43e379bf2737f67682f5
+    append_offset: 1151797
+    current_section_must_be_eof: true
+  closeout:
+    task_counts: {active: 435, completed: 457, total: 892}
+    freshness:
+      issue_count_before: 11
+      target_document_count: 11
+      metadata_only_document_count: 11
+      targeted_batch_document_counts: [5, 6]
+      targeted_issue_count_after: 0
+      global_document_count: 688
+      global_issue_count_after: 0
+  validation:
+    targeted: {status: PASS, document_count: 11, issue_count: 0}
+    global: {status: PASS, document_count: 688, issue_count: 0}
+    docs:
+      status: PASS
+      docs_freshness_tests: PASS
+      documentation_contract_tests: PASS
+      task_register_consistency: PASS
+  supersession:
+    superseded_by_phase: DOCS-GOV-001_FRESHNESS_CLOSEOUT
+    scope: ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH
+    historical_hashes_rewritten: false
+    current_hash_authority: phase_docs_gov_001_freshness_closeout.sources
+  superseded_live_source_paths:
+  - docs/requirements/ARCH-004F1_Operations_Control_Plane.md
+  - docs/requirements/ARCH-004F3_Reporting_Architecture.md
+  - docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
+  - docs/requirements/TRADING-111_to_113_Real_Research_Evidence_Closure.md
+  - docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md
+  - docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md
+  - docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md
+  - docs/requirements/TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md
+  - docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md
+  - docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md
+  - docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/governance/gov_006_wave1_decision_manifest.json
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_trading2452_architecture_contract.py
+  source_hash_status: FINAL_TRACKED_STATE_FRESH
+  safety:
+    metadata_only: true
+    runtime_behavior_changed: false
+    strategy_or_investment_interpretation_changed: false
+    data_backtest_or_provider_execution: false
+    order_or_broker_action: none
+    production_effect: none
+  sources:
+  - {path: docs/requirements/ARCH-004F1_Operations_Control_Plane.md, sha256: dac70032d5144135dac936ee70df3f64d75c9af55e0595e393d8d36d6b4544d6}
+  - {path: docs/requirements/ARCH-004F3_Reporting_Architecture.md, sha256: c06e48546d7c21677d65d2c4f39b532d2c97a4548d346d157d9ee4ecf732b47a}
+  - {path: docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md, sha256: bce500654bc74f16aa6509f6f5a80810bf6d6deef5df101c3be26e658a561310}
+  - {path: docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md, sha256: 7e85bde4eaeb7558083e2b6b4bd7f32e09cac051028a9fbe775ac9ea1d73c6a2}
+  - {path: docs/requirements/TRADING-111_to_113_Real_Research_Evidence_Closure.md, sha256: 2bfc41021816eeaef8b0ef6fafbe236c0af3965ed64903f027421b72e9c3aaaf}
+  - {path: docs/requirements/TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md, sha256: a366dd6c677d465731314c0700c5742c9a209e8a9f3f14678a364f4eb3fe2ad7}
+  - {path: docs/requirements/TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md, sha256: 7c28a138fe9ff85a25af098776f1ea6dbea5e5fa04d1bca46bbd5dd88bd0ff44}
+  - {path: docs/requirements/TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md, sha256: 5189e9476ae5ab51735f51d00096aaf61e73ad8966b77c74b02e2766d87c37f7}
+  - {path: docs/requirements/TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md, sha256: ab2f073ed3e32287b3fabd47ebc32612e27af71c40ca22cebe19e456c33b5f8b}
+  - {path: docs/requirements/TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md, sha256: 19b2cdc972dbecb20f680e050e4a88648136dbb7f89f41a6268e8090c29f7b71}
+  - {path: docs/requirements/TRADING-204_to_208_Real_Manual_Snapshot_Dry_Run_and_Owner_Decision_Loop.md, sha256: c3041c16199f3bddb385b44f955c3268ab9498ea59aad90af4daa878db3db0c5}
+  - {path: docs/requirements/TRADING-2450_Legacy_Research_Artifact_Portable_Lineage.md, sha256: d17bc8405dc22822ebbefa29b12d0dcc0f5383b1eedb49b2fef0a327276cb308}
+  - {path: docs/task_register.md, sha256: 7e029259b55590e95c8b2a63551a9ef4096407a7f5f766e7235afb83ce162006}
+  - {path: docs/task_register_completed.md, sha256: 9d0efb26e95c4e387ec74356016d27f2aba54019e2fb344330e62336b0d93256}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 9200feae74ef294cc3a7a0ae0a6ac736ba581ec24527f5d469ea90d87bbe1725}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: f65fdd4cb7ea3ccf33f120ef8b6ed62e375a25d0f83995c74b7dbbf2b2c04d1f}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 65e8c22b723a324b6f1216c69072787c852eed4527454abc9016fa92bab48dc3}
+  - {path: inputs/governance/gov_006_wave1_decision_manifest.json, sha256: ce04092cc2f6752120f4626367c1ea433cfede392a78081777474ec816a5aa1d}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: d137a725b49f06d07e541eb0b9dfdbf20d7c9e9f0bbeeca7167ebd11e21c06c6}
+  - {path: tests/test_trading2452_architecture_contract.py, sha256: 4026a9812474c9ebda06470d38743beff3642342a4d9ae6ff378aa16c46776d2}

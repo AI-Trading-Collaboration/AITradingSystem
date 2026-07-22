@@ -1,5 +1,7 @@
 # ARCH-004F1 Operations Control Plane
 
+最后更新：2026-07-11
+
 ## 基本信息
 
 - task id：`ARCH-004F1_OPERATIONS_CONTROL_PLANE`

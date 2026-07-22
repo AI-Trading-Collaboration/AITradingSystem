@@ -1,6 +1,6 @@
 # TRADING-169 to TRADING-173 Simulation Result Interpretation and Advisory Rule Review
 
-最后更新：2026-06-10
+最后更新：2026-07-13
 
 ## 1. 背景
 

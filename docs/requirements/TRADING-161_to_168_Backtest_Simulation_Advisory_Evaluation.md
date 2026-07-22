@@ -1,6 +1,6 @@
 # TRADING-161 to TRADING-168: Backtest Simulation Advisory Evaluation
 
-最后更新：2026-06-10
+最后更新：2026-07-13
 
 ## 背景
 

@@ -1,6 +1,6 @@
 # TRADING-156 to TRADING-160: Outcome Update Loop and Rolling Advisory Evidence Refresh
 
-最后更新：2026-06-10
+最后更新：2026-07-12
 
 ## 背景
 

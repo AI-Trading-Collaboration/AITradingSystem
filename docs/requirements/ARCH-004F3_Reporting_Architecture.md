@@ -1,5 +1,7 @@
 # ARCH-004F3 Reporting Architecture
 
+最后更新：2026-07-11
+
 ## 基本信息
 
 - task id：`ARCH-004F3_REPORTING_ARCHITECTURE`

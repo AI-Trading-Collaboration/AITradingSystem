@@ -33,22 +33,41 @@ def _assert_historical_source_is_current_or_superseded(
     if source["sha256"] == live_hash:
         return
 
-    wave11 = baseline[WAVE11_PHASE_KEY]
-    supersession = wave11["supersession"]
-    assert source_path in wave11["superseded_live_source_paths"], (
-        f"{source_path}: historical hash drift is not declared in the Wave11 "
-        "supersession path inventory"
+    latest_authority: tuple[str, dict[str, Any], dict[str, str]] | None = None
+    for section_key, section in reversed(tuple(baseline.items())):
+        if not isinstance(section, dict):
+            continue
+        superseded_paths = section.get("superseded_live_source_paths")
+        section_sources = section.get("sources")
+        if not isinstance(superseded_paths, list) or source_path not in superseded_paths:
+            continue
+        if not isinstance(section_sources, list):
+            continue
+        matching_sources = [
+            item
+            for item in section_sources
+            if isinstance(item, dict) and item.get("path") == source_path
+        ]
+        if matching_sources:
+            latest_authority = (section_key, section, matching_sources[-1])
+            break
+
+    assert latest_authority is not None, (
+        f"{source_path}: historical hash drift is not declared in an append-only "
+        "supersession section that also contains its current source hash"
     )
+    section_key, section, current_source = latest_authority
+    supersession = section["supersession"]
     assert (
         supersession["historical_hashes_rewritten"] is False
-    ), "Wave11 must preserve historical source hashes"
+    ), f"{section_key} must preserve historical source hashes"
+    expected_authority = f"{section_key}.sources"
     assert (
-        supersession["current_hash_authority"] == WAVE11_CURRENT_HASH_AUTHORITY
-    ), "Wave11 current hash authority must be its append-only sources section"
-    current_hashes = {item["path"]: item["sha256"] for item in wave11["sources"]}
+        supersession["current_hash_authority"] == expected_authority
+    ), f"{section_key} current hash authority must be {expected_authority}"
     assert (
-        current_hashes.get(source_path) == live_hash
-    ), f"{source_path}: Wave11 authority hash does not match live bytes"
+        current_source.get("sha256") == live_hash
+    ), f"{source_path}: latest authority hash does not match live bytes"
 
 
 def test_trading2452_active_glossary_supersedes_frozen_v1_without_rewriting_it() -> None:
@@ -126,6 +145,39 @@ def test_historical_source_drift_requires_explicit_wave11_supersession(
 
     with pytest.raises(AssertionError, match="drift is not declared"):
         _assert_historical_source_is_current_or_superseded(baseline, historical_source)
+
+
+def test_historical_source_drift_accepts_a_later_append_only_authority(
+    tmp_path: Path,
+) -> None:
+    live_path = tmp_path / "future_authority_source.txt"
+    live_path.write_bytes(b"current")
+    source_path = live_path.as_posix()
+    future_phase_key = "phase_future_append_only"
+    baseline = {
+        WAVE11_PHASE_KEY: {
+            "supersession": {
+                "historical_hashes_rewritten": False,
+                "current_hash_authority": WAVE11_CURRENT_HASH_AUTHORITY,
+            },
+            "superseded_live_source_paths": [source_path],
+            "sources": [{"path": source_path, "sha256": sha256(b"wave11").hexdigest()}],
+        },
+        future_phase_key: {
+            "supersession": {
+                "historical_hashes_rewritten": False,
+                "current_hash_authority": f"{future_phase_key}.sources",
+            },
+            "superseded_live_source_paths": [source_path],
+            "sources": [{"path": source_path, "sha256": _sha256_path(live_path)}],
+        },
+    }
+    historical_source = {
+        "path": source_path,
+        "sha256": sha256(b"historical").hexdigest(),
+    }
+
+    _assert_historical_source_is_current_or_superseded(baseline, historical_source)
 
 
 def test_historical_source_drift_rejects_stale_wave11_authority(tmp_path: Path) -> None:

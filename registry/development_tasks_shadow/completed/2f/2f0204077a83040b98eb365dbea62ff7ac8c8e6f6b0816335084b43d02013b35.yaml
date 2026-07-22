@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+  title: null
+  domain: Documentation governance / existing committed freshness metadata debt
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: documentation governance owner：后续新增 stale metadata 以独立任务处理
+  requirement_refs:
+  - docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；父提交与
+    Wave11 push CI 均在既有 Docs freshness 前置失败，本批按每份文档内部最大状态日期修复 11 个 requirements 的
+    `最后更新`，不重写历史结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 11 个文档 targeted freshness=`5/0 + 6/0`，global freshness=`688 docs / 0 issues
+      / PASS`；docs/documentation-contract/task consistency、task shadow、GOV normalization
+      与 compatibility authority 闭合；push CI 作为提交后远端 checkpoint，不在本地证据中预写 PASS；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: 1acaa5b735508c9cecc429d60a49aedf61a111f6730afcfa52b014e0859272c3
+    cell_count: 8
+    all_cells:
+    - DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+    - Documentation governance / existing committed freshness metadata debt
+    - P2
+    - DONE
+    - documentation governance owner：后续新增 stale metadata 以独立任务处理
+    - 详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；父提交与
+      Wave11 push CI 均在既有 Docs freshness 前置失败，本批按每份文档内部最大状态日期修复 11 个 requirements
+      的 `最后更新`，不重写历史结论。
+    - 11 个文档 targeted freshness=`5/0 + 6/0`，global freshness=`688 docs / 0 issues
+      / PASS`；docs/documentation-contract/task consistency、task shadow、GOV normalization
+      与 compatibility authority 闭合；push CI 作为提交后远端 checkpoint，不在本地证据中预写 PASS；`production_effect=none`。
+    - 2026-07-23：范围由原 10 个扩为 11 个（新增 TRADING-2450 metadata）；每份文档仅替换一行日期 metadata，不改变
+      runtime、策略、数据、投资解释或生产语义。
+    raw_line: '|DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT|Documentation governance
+      / existing committed freshness metadata debt|P2|DONE|documentation governance
+      owner：后续新增 stale metadata 以独立任务处理|详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；父提交与
+      Wave11 push CI 均在既有 Docs freshness 前置失败，本批按每份文档内部最大状态日期修复 11 个 requirements
+      的 `最后更新`，不重写历史结论。|11 个文档 targeted freshness=`5/0 + 6/0`，global freshness=`688
+      docs / 0 issues / PASS`；docs/documentation-contract/task consistency、task shadow、GOV
+      normalization 与 compatibility authority 闭合；push CI 作为提交后远端 checkpoint，不在本地证据中预写
+      PASS；`production_effect=none`。|2026-07-23：范围由原 10 个扩为 11 个（新增 TRADING-2450 metadata）；每份文档仅替换一行日期
+      metadata，不改变 runtime、策略、数据、投资解释或生产语义。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1acaa5b735508c9cecc429d6
+  task_id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: documentation governance owner：后续新增 stale metadata 以独立任务处理
+    notes: 2026-07-23：范围由原 10 个扩为 11 个（新增 TRADING-2450 metadata）；每份文档仅替换一行日期 metadata，不改变
+      runtime、策略、数据、投资解释或生产语义。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1acaa5b735508c9cecc429d60a49aedf61a111f6730afcfa52b014e0859272c3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
+  - Documentation governance / existing committed freshness metadata debt
+  - P2
+  - DONE
+  - documentation governance owner：后续新增 stale metadata 以独立任务处理
+  - 详见 `docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md`；父提交与 Wave11
+    push CI 均在既有 Docs freshness 前置失败，本批按每份文档内部最大状态日期修复 11 个 requirements 的 `最后更新`，不重写历史结论。
+  - 11 个文档 targeted freshness=`5/0 + 6/0`，global freshness=`688 docs / 0 issues /
+    PASS`；docs/documentation-contract/task consistency、task shadow、GOV normalization
+    与 compatibility authority 闭合；push CI 作为提交后远端 checkpoint，不在本地证据中预写 PASS；`production_effect=none`。
+  - 2026-07-23：范围由原 10 个扩为 11 个（新增 TRADING-2450 metadata）；每份文档仅替换一行日期 metadata，不改变
+    runtime、策略、数据、投资解释或生产语义。
+  docs_links:
+  - docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md
+  terminal: true
+  raw_row_sha256: 1acaa5b735508c9cecc429d60a49aedf61a111f6730afcfa52b014e0859272c3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b94b54f5eee4a65fc494c05fe7c1ccd4518a329b8563eb0d921f82b976989cb2
