@@ -1,19 +1,20 @@
 # ARCH-005 Parallel Development Control Plane
 
-最后更新：2026-07-20
+最后更新：2026-07-22
 
 ## 任务信息
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`BASELINE_DONE_S4B_OPERATING_MODEL_S5_PENDING`
+- status：`IN_PROGRESS_S4C_VALIDATED_MAIN_INTEGRATION`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
 - bootstrap start condition：`SATISFIED`；G2.4 phase exit source=`152f2d33`，`arch_005_bootstrap_handoff.v1`已提交推送并以`f1045634`修正为Git-blob可复算hash basis；`next_slice_unblocked=false`
 - approved pre-bootstrap boundary：ARCH-004G2.4-EB2 integration gate 已 PASS，owner 批准的下一实现范围为最终可复用、非 cutover 的 manifest/conflict/lane-plan/evidence primitives；它不是 S0，不得迁移 task registry、切换事实源、生成替代 task views、派发任务或获取真实 lease
 - pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
-- integration milestone：S0～S4 已在 G2.4 handoff 后完成；S5 canonical cutover 尚未授权
+- integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已获
+  owner 窄授权并在当前 Wave 7 执行；S5 canonical cutover 尚未授权
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
 
@@ -47,7 +48,28 @@ helper、降低门禁或用 stale artifact 提升表面吞吐。
 
 完整 operating model、冲突决策表、验证/性能复盘规则及近期双线队列见
 `docs/architecture/dual_lane_development_operating_model.md`。S4B 仍保持 Markdown 为唯一可写任务事实源，
-不授权 S5、自动 commit/merge/push/PR、task status mutation、ARCH-004 G2.5 或策略/生产副作用。
+不授权 S5、worker 自动 commit/merge/push、PR、task status mutation、ARCH-004 G2.5 或策略/生产副作用。
+
+### S4C 验证通过后的 main 自动集成
+
+2026-07-22，Owner 授权 integration coordinator 在候选批次完成全部适用验证后自动完成
+`commit -> fast-forward main -> ordinary push`，无需每批再次等待人工合并指令。该授权只缩短已通过
+验证的 coordinator closeout，不让 worker 自行合并，也不把 integration PASS 解释为策略 PASS。
+
+自动集成前必须同时满足：
+
+1. 候选 worktree 只有本批可归属变更，shared/generated 文件由 coordinator 单写且 active lease=0；
+2. lane focused 与本批 required architecture/contract/full 均 PASS；失败修复 Full 必须绑定原失败
+   provenance，文档/generated-only closeout只能在最后代码 Full 之后且不得改变运行语义；
+3. module/test manifests、task shadows、compatibility/deprecation/source hashes 对候选最终 tree 新鲜；
+4. 本地 `main` 与 `origin/main` 已 fetch 校验，`origin/main` 是候选提交祖先，可使用 `--ff-only`；
+5. commit 后 tree bytes 与验证时冻结 tree 相同，push 后必须验证 `main=origin/main=candidate`。
+
+标准动作固定为 fetch、候选归属/验证复核、coordinator commit、切换 main、`git merge --ff-only`、
+普通 `git push origin main` 和远端 SHA 复核。脏工作区、validation/base/hash stale、活动共享 lease、
+main 分叉、非 fast-forward、无远端权限或 push rejection 任一出现都 fail closed 并报告；不得自动
+rebase、建立 merge commit、force-push、删除用户改动或绕过门禁。S4C 不授权 PR 自动创建、S5
+source-of-truth cutover、ARCH-004 G2.5、策略 search/promotion、production 或 broker action。
 
 ## 决策
 
@@ -480,10 +502,18 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 - S6 throughput、queue age、conflict/rework 与 coordinator wait telemetry 的长期 read model；
 - S5 后 canonical event 写入采用一事件一文件还是 task-local append-only stream。
 
-这些问题不影响已闭合的 S0～S4A 与已采用的 S4B operating model。任何扩大 lane capacity、切换
-source-of-truth、自动集成或恢复 G2.5 的决定仍必须单独授权，不能从“双线默认”推断。
+这些问题不影响已闭合的 S0～S4A 与已采用的 S4B operating model。S4C 已获得上述窄范围
+validated-main integration 授权；任何扩大 lane capacity、切换 source-of-truth、扩大自动集成权限或
+恢复 G2.5 的决定仍必须单独授权，不能从“双线默认”推断。
 
 ## 状态记录
+
+- 2026-07-22：project owner 授权验证通过后的 main 自动集成。范围仅限 integration coordinator 对
+  已完成归属、freshness、required focused/architecture/contract/full、generated hashes、lease 与
+  fast-forward 检查的候选执行 commit、`git merge --ff-only` 和普通 push；失败一律停止，不允许
+  rebase/merge commit/force-push，也不授权 S5、G2.5、策略或 production 行为。当前 Wave 7 作为首个
+  S4C 集成批次，候选=`codex/dual-lane-wave7-window-migration@1b46c116`，初始
+  `origin/main=0fc316e5`、`0 behind/5 ahead`。
 
 - 2026-07-20：project owner 确认后续默认按 engineering + strategy-evidence 双线推进，并要求重点
   固化冲突处理以提升安全并行度。S4B operating model 已记录 owned/shared/coordinator-only 分区、

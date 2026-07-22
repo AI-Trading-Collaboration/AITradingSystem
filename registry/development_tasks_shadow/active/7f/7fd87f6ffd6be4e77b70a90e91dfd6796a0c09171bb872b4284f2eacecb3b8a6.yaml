@@ -11,7 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture coordinator + developer platform owner + integration coordinator
+  next_owner: integration coordinator：固化S4C validated-main auto-integration gate，并把当前已验证Wave
+    7安全合入main
   requirement_refs:
   - docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md
   - docs/architecture/dual_lane_development_operating_model.md
@@ -21,49 +22,49 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4A均已闭合；S4B已固化工程/策略双线
-    operating model、冲突拆解协议和近期队列，旧Markdown仍是唯一可写事实源，S5待新授权。
+    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。Owner于2026-07-22新增授权：集成候选在归属、freshness、required
+    focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，由coordinator自动commit、fast-forward
+    main并普通push；任一检查失败即停止。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: S4B 已定义 lane 输入输出、owned/shared/coordinator-only 分区、path/module/API/semantic/generated-view/resource/base/evidence冲突处理、contract
-      wave、lease/base freshness、共享文件单写者、失败隔离、固定集成顺序、分层验证与双批次 telemetry 扩容条件；不得以复制逻辑、跳过验证或降低门禁换并行度。禁止自动commit/merge/push、task
-      status mutation、S5 cutover与策略/生产副作用。
+    text: S4C必须只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
+      status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；验证必须绑定候选最终tree，`origin/main`必须是候选祖先，push后`main=origin/main=candidate`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1569
-    row_sha256: e25afd54a4882faafd74f744bd6b1738037b8322e8833b867288e647e3f476ba
+    row_sha256: c4fe8c5543031fe58d47cd0b76e166fb8ecdfeab0943e9404b191e4087416fd6
     cell_count: 8
     all_cells:
     - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
     - Architecture / auditable parallel development scheduling foundation
     - P0
-    - BASELINE_DONE
-    - architecture coordinator + developer platform owner + integration coordinator
+    - IN_PROGRESS
+    - integration coordinator：固化S4C validated-main auto-integration gate，并把当前已验证Wave
+      7安全合入main
     - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4A均已闭合；S4B已固化工程/策略双线
-      operating model、冲突拆解协议和近期队列，旧Markdown仍是唯一可写事实源，S5待新授权。
-    - S4B 已定义 lane 输入输出、owned/shared/coordinator-only 分区、path/module/API/semantic/generated-view/resource/base/evidence冲突处理、contract
-      wave、lease/base freshness、共享文件单写者、失败隔离、固定集成顺序、分层验证与双批次 telemetry 扩容条件；不得以复制逻辑、跳过验证或降低门禁换并行度。禁止自动commit/merge/push、task
-      status mutation、S5 cutover与策略/生产副作用。
-    - 2026-07-20：owner批准后续默认双线；S4B文档闭合并转回`BASELINE_DONE`。首批=OPS-065 + TRADING-2449
-      canonical artifact recovery audit；S5未授权、ARCH-004仍停G2.5前。
+      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。Owner于2026-07-22新增授权：集成候选在归属、freshness、required
+      focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，由coordinator自动commit、fast-forward
+      main并普通push；任一检查失败即停止。
+    - S4C必须只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
+      status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；验证必须绑定候选最终tree，`origin/main`必须是候选祖先，push后`main=origin/main=candidate`。
+    - 2026-07-22：S4C进入`IN_PROGRESS`。当前候选`codex/dual-lane-wave7-window-migration@1b46c116`相对`origin/main@0fc316e5`为`0
+      behind/5 ahead`且可fast-forward；先更新任务/operating model和生成物并完成最终门禁，再自动合入main。
     raw_line: '|ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE|Architecture / auditable
-      parallel development scheduling foundation|P0|BASELINE_DONE|architecture coordinator
-      + developer platform owner + integration coordinator|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4A均已闭合；S4B已固化工程/策略双线
-      operating model、冲突拆解协议和近期队列，旧Markdown仍是唯一可写事实源，S5待新授权。|S4B 已定义 lane 输入输出、owned/shared/coordinator-only
-      分区、path/module/API/semantic/generated-view/resource/base/evidence冲突处理、contract
-      wave、lease/base freshness、共享文件单写者、失败隔离、固定集成顺序、分层验证与双批次 telemetry 扩容条件；不得以复制逻辑、跳过验证或降低门禁换并行度。禁止自动commit/merge/push、task
-      status mutation、S5 cutover与策略/生产副作用。|2026-07-20：owner批准后续默认双线；S4B文档闭合并转回`BASELINE_DONE`。首批=OPS-065
-      + TRADING-2449 canonical artifact recovery audit；S5未授权、ARCH-004仍停G2.5前。|'
+      parallel development scheduling foundation|P0|IN_PROGRESS|integration coordinator：固化S4C
+      validated-main auto-integration gate，并把当前已验证Wave 7安全合入main|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
+      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。Owner于2026-07-22新增授权：集成候选在归属、freshness、required
+      focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，由coordinator自动commit、fast-forward
+      main并普通push；任一检查失败即停止。|S4C必须只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge
+      commit、force-push、task status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；验证必须绑定候选最终tree，`origin/main`必须是候选祖先，push后`main=origin/main=candidate`。|2026-07-22：S4C进入`IN_PROGRESS`。当前候选`codex/dual-lane-wave7-window-migration@1b46c116`相对`origin/main@0fc316e5`为`0
+      behind/5 ahead`且可fast-forward；先更新任务/operating model和生成物并完成最终门禁，再自动合入main。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-e25afd54a4882faafd74f744
+  event_id: legacy-import-c4fe8c5543031fe58d47cd0b
   task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -73,38 +74,39 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: BASELINE_DONE
+  to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture coordinator + developer platform owner + integration
-      coordinator
-    notes: 2026-07-20：owner批准后续默认双线；S4B文档闭合并转回`BASELINE_DONE`。首批=OPS-065 + TRADING-2449
-      canonical artifact recovery audit；S5未授权、ARCH-004仍停G2.5前。
+    next_owner: integration coordinator：固化S4C validated-main auto-integration gate，并把当前已验证Wave
+      7安全合入main
+    notes: 2026-07-22：S4C进入`IN_PROGRESS`。当前候选`codex/dual-lane-wave7-window-migration@1b46c116`相对`origin/main@0fc316e5`为`0
+      behind/5 ahead`且可fast-forward；先更新任务/operating model和生成物并完成最终门禁，再自动合入main。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:e25afd54a4882faafd74f744bd6b1738037b8322e8833b867288e647e3f476ba
+  - sha256:c4fe8c5543031fe58d47cd0b76e166fb8ecdfeab0943e9404b191e4087416fd6
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   - Architecture / auditable parallel development scheduling foundation
   - P0
-  - BASELINE_DONE
-  - architecture coordinator + developer platform owner + integration coordinator
+  - IN_PROGRESS
+  - integration coordinator：固化S4C validated-main auto-integration gate，并把当前已验证Wave
+    7安全合入main
   - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。PB1、S0/S1、S2～S4A均已闭合；S4B已固化工程/策略双线
-    operating model、冲突拆解协议和近期队列，旧Markdown仍是唯一可写事实源，S5待新授权。
-  - S4B 已定义 lane 输入输出、owned/shared/coordinator-only 分区、path/module/API/semantic/generated-view/resource/base/evidence冲突处理、contract
-    wave、lease/base freshness、共享文件单写者、失败隔离、固定集成顺序、分层验证与双批次 telemetry 扩容条件；不得以复制逻辑、跳过验证或降低门禁换并行度。禁止自动commit/merge/push、task
-    status mutation、S5 cutover与策略/生产副作用。
-  - 2026-07-20：owner批准后续默认双线；S4B文档闭合并转回`BASELINE_DONE`。首批=OPS-065 + TRADING-2449 canonical
-    artifact recovery audit；S5未授权、ARCH-004仍停G2.5前。
+    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。Owner于2026-07-22新增授权：集成候选在归属、freshness、required
+    focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，由coordinator自动commit、fast-forward
+    main并普通push；任一检查失败即停止。
+  - S4C必须只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
+    status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；验证必须绑定候选最终tree，`origin/main`必须是候选祖先，push后`main=origin/main=candidate`。
+  - 2026-07-22：S4C进入`IN_PROGRESS`。当前候选`codex/dual-lane-wave7-window-migration@1b46c116`相对`origin/main@0fc316e5`为`0
+    behind/5 ahead`且可fast-forward；先更新任务/operating model和生成物并完成最终门禁，再自动合入main。
   docs_links:
   - docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md
   - docs/architecture/dual_lane_development_operating_model.md
   - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
   - docs/requirements/ARCH-005_S4A_Supervised_Automation.md
   terminal: false
-  raw_row_sha256: e25afd54a4882faafd74f744bd6b1738037b8322e8833b867288e647e3f476ba
+  raw_row_sha256: c4fe8c5543031fe58d47cd0b76e166fb8ecdfeab0943e9404b191e4087416fd6
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 063d93a0177bebe460c99beca84d84f36918af8c1e2634b7245cf7a398b3e501
+fragment_checksum: 1ea923be7c52cdbc167cba910a8748238822883f31a7c7eb0fb3b08c2af3b39d
