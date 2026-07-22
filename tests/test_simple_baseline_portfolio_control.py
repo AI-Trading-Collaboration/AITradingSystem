@@ -7,7 +7,8 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
-from typer.testing import CliRunner
+from click.testing import CliRunner
+from typer.main import get_command
 
 from ai_trading_system.cli import app
 from ai_trading_system.reports import reader_brief
@@ -333,6 +334,7 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
     output_root = tmp_path / "outputs" / "research_strategies" / "simple_baselines"
     docs_path = tmp_path / "docs" / "research" / "simple_baseline_master_review.md"
     runner = CliRunner()
+    cli_command = get_command(app)
 
     data_args = [
         "--prices-path",
@@ -408,7 +410,7 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         ["research", "strategies", "options-next-stage-gate", "--output-root", str(output_root)],
     ]
     for command in commands:
-        result = runner.invoke(app, command)
+        result = runner.invoke(cli_command, command)
         assert result.exit_code == 0, result.output
     _write_minimal_real_run_support(output_root)
     new_commands = [
@@ -427,7 +429,7 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         ],
     ]
     for command in new_commands:
-        result = runner.invoke(app, command)
+        result = runner.invoke(cli_command, command)
         assert result.exit_code == 0, result.output
     forward_commands = [
         [
@@ -532,7 +534,7 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         ],
     ]
     for command in forward_commands:
-        result = runner.invoke(app, command)
+        result = runner.invoke(cli_command, command)
         assert result.exit_code == 0, result.output
     _write_json(
         output_root / "data_repair_owner_decision_pack.json",
@@ -572,7 +574,7 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         ],
     ]
     for command in forward_launch_commands:
-        result = runner.invoke(app, command)
+        result = runner.invoke(cli_command, command)
         assert result.exit_code == 0, result.output
     repair_commands = [
         [
@@ -661,10 +663,10 @@ def test_simple_baseline_cli_smoke_and_report_registry(tmp_path: Path) -> None:
         ],
     ]
     for command in repair_commands:
-        result = runner.invoke(app, command)
+        result = runner.invoke(cli_command, command)
         assert result.exit_code == 0, result.output
     result = runner.invoke(
-        app,
+        cli_command,
         [
             "research",
             "strategies",

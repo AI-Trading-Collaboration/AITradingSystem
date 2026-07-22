@@ -14691,7 +14691,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_simple_baseline_portfolio_control
   path: tests/test_simple_baseline_portfolio_control.py
-  sha256: 72c2f918d096a432370286a390f8d2306ac6100a2e5333b4ed83fa9a4452decb
+  sha256: a360106623517491e559308a769a4469e68675bffbd93ac50d8c91ddd9635e13
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -15637,7 +15637,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: 185d1a428d04183e8490a5cc386b745b815d47841a1c8eec8144f0e0730bba97
+  sha256: 579cdad26ab349e97f96dd0fd5c2e44da6758a08cef1a36a034c265e9ab5e269
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

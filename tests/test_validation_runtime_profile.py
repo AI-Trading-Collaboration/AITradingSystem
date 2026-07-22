@@ -263,16 +263,16 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.partial_seed is True
     assert profile.complete_profile is False
     assert profile.owner == "validation_operations"
-    assert profile.version == 20
+    assert profile.version == 22
     assert profile.source_workers == 16
     assert profile.source_dist == "loadfile"
     assert profile.source_artifact_path == (
-        "outputs/validation_runtime/full_20260720T185256Z/test_runtime_profile.json"
+        "outputs/validation_runtime/full_20260722T022254Z/test_runtime_profile.json"
     )
     assert profile.source_artifact_sha256 == (
-        "4b6c8c5040b732e3e1d40f9e666c6d2728637626909418d00505dfd91c56841c"
+        "8a08243dc394cb3cc1cfa2f42dfe2f6482b568e10a8f174833ffec3841063ae9"
     )
-    assert len(profile.observed_seconds) == 1085
+    assert len(profile.observed_seconds) == 1095
     assert profile.source_node_count is None
     assert profile.source_file_count is None
     assert profile.source_collection_ordered_sha256 is None
@@ -281,10 +281,12 @@ def test_tracked_partial_profile_is_valid_and_source_bound(tmp_path: Path) -> No
     assert profile.source_file_rows_sha256 is None
     assert profile.expected_scheduled_ordered_sha256 is None
     assert profile.source_file_duration_total_seconds is None
-    assert profile.observed_seconds["tests/test_layer1_meta_policy_readiness.py"] == (405.4114613)
+    assert profile.observed_seconds[
+        "tests/test_layer1_meta_policy_archive_stabilization.py"
+    ] == (175.2432392)
     assert (
         profile.observed_seconds["tests/test_filtered_candidate_readiness_pipeline_foundation.py"]
-        == 108.9618279
+        == 136.181112
     )
 
     legacy = load_duration_profile(_write_legacy_partial_profile(tmp_path / "legacy_partial.yaml"))
@@ -581,9 +583,11 @@ def test_invalid_profile_is_explicit_and_can_only_use_stock_fallback(tmp_path: P
     assert "could not be read" in str(malformed_profile.fallback_reason)
 
     traversal_path = tmp_path / "traversal_profile.yaml"
+    tracked_profile = load_duration_profile(PROFILE_PATH)
+    tracked_file = next(iter(tracked_profile.observed_seconds))
     traversal_path.write_text(
         PROFILE_PATH.read_text(encoding="utf-8").replace(
-            "tests/test_layer1_meta_policy_readiness.py",
+            tracked_file,
             "tests/../outside.py",
             1,
         ),
