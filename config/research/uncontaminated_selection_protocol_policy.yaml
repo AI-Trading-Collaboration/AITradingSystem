@@ -1,0 +1,45 @@
+schema_version: uncontaminated_selection_protocol_foundation_policy.v1
+policy_id: uncontaminated_selection_protocol_foundation_v1
+version: v1
+status: owner_reviewed_foundation
+owner: research_governance
+rationale: >
+  Establish one deterministic admission contract before any future candidate
+  selection or validation run. The contract prevents historical discovery,
+  train-time selection, historical-seen validation, and untouched prospective
+  confirmation from being silently interchanged.
+review_condition: >
+  Review before changing a data role, permitting overlap, allowing a
+  result-ranked candidate universe, changing an intended policy role, or
+  authorizing any prospective-holdout access.
+active_primary:
+  market_regime_id: unified_primary_2021
+  market_regime_start: 2021-02-22
+  research_window_id: exact_three_asset_validated
+  research_window_start: 2021-02-22
+required_data_roles:
+  - DISCOVERY_HISTORICAL_KNOWN
+  - TRAIN_SELECTION
+  - HISTORICAL_SEEN_VALIDATION
+  - PROSPECTIVE_UNTOUCHED
+forbidden_overlap_pairs:
+  - [DISCOVERY_HISTORICAL_KNOWN, TRAIN_SELECTION]
+  - [DISCOVERY_HISTORICAL_KNOWN, HISTORICAL_SEEN_VALIDATION]
+  - [DISCOVERY_HISTORICAL_KNOWN, PROSPECTIVE_UNTOUCHED]
+  - [TRAIN_SELECTION, HISTORICAL_SEEN_VALIDATION]
+  - [TRAIN_SELECTION, PROSPECTIVE_UNTOUCHED]
+  - [HISTORICAL_SEEN_VALIDATION, PROSPECTIVE_UNTOUCHED]
+prohibited_candidate_universe_origins:
+  - full_period_source_leaderboard_top_n
+  - post_result_ranked_top_n
+  - result_visible_leaderboard_selection
+required_false_safety_flags:
+  - evaluator_execution_allowed
+  - backtest_execution_allowed
+  - parameter_search_allowed
+  - prospective_holdout_access_allowed
+  - unbiased_oos_claim_allowed
+  - paper_shadow_change_allowed
+  - promotion_allowed
+  - production_weight_change_allowed
+  - broker_action_allowed

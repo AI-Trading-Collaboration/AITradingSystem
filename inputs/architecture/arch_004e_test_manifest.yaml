@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 test_root: tests
-test_file_count: 1156
-test_count: 1097
+test_file_count: 1158
+test_count: 1099
 support_file_count: 59
 orphan_count: 0
 specific_overlap_count: 0
@@ -7673,7 +7673,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 249fad9d6eea275a99961b8e5907349d96fd9448513914ed65f07000144aa088
+  sha256: 481a4eefcb51ba3c5471cd4b6d5e585254c9d20671050d749ebb9efa3a8c65b3
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -11617,6 +11617,22 @@ tests:
   suite: full
   covered_module_prefixes:
   - src/ai_trading_system/
+- test_id: tests.test_layer1_meta_policy_opportunity_cost_schedule
+  path: tests/test_layer1_meta_policy_opportunity_cost_schedule.py
+  sha256: e8e4f1cbca492e4ae196b3d444f7fa91eaf62a126094f4d2d3493fd9fa7a6cc2
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
 - test_id: tests.test_layer1_meta_policy_registry
   path: tests/test_layer1_meta_policy_registry.py
   sha256: fa99561309442f8580eefeb69884f65ef3d8aa27552d8ec933562fc28c2932b0
@@ -15510,6 +15526,22 @@ tests:
 - test_id: tests.test_trading2453_constraint_hit_diagnosis
   path: tests/test_trading2453_constraint_hit_diagnosis.py
   sha256: 71cd4b4196b5fba1c69e926e8938560fdaeb2d298d44400124e82229b2fa2aa6
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_trading2457_uncontaminated_selection_protocol
+  path: tests/test_trading2457_uncontaminated_selection_protocol.py
+  sha256: fc3159c88f83cdf1aec5e43e985a446043f2f35494da86327a92c44be80d267a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

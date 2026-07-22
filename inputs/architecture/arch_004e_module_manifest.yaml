@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 996
+module_count: 997
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -2210,6 +2210,28 @@ modules:
 - module_id: src.ai_trading_system.contracts.research_review
   path: src/ai_trading_system/contracts/research_review.py
   sha256: 2e718bc871bb4ad8f055448f3cf89af05173248e912dbc42ce912d8fe73963bf
+  rule_id: contracts
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: contracts
+  category: semantic_and_platform_contracts
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_core_contracts.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.contracts.research_selection_protocol
+  path: src/ai_trading_system/contracts/research_selection_protocol.py
+  sha256: 1f2f40d67d7cec9c4d7bd493ee4668c8562f544f436ff9cbb9b13dc96b46f6e5
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -13134,7 +13156,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.layer1_simple_rule_meta_policy
   path: src/ai_trading_system/layer1_simple_rule_meta_policy.py
-  sha256: 7bab0ec20bead5202276bb2a4c7ba6a9fdb643b4a6923879d95ca1e1baebfc8e
+  sha256: 96320fd393098a0f5b1cc64987fc27c21a3c6d9d26c2d3a132769014d71c5f7c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

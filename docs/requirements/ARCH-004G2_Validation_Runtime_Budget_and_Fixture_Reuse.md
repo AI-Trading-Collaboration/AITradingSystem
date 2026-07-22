@@ -1799,6 +1799,48 @@ max=`0.016s`。新profile的主要长尾仍是Smoothed真实链，slowest为week
 并证明不削弱真实producer/validator/tamper/fail-closed覆盖；本次Full只证明集成回归PASS，不声明stable
 global improvement。
 
+### Wave 14 W14E1：Layer1 constrained-search opportunity schedule
+
+2026-07-22：Wave 9自动集成main后，按新Full profile选择
+`tests/test_layer1_meta_policy_final_gate.py::test_layer1_selector_low_turnover_final_gate_outputs_are_research_only`
+作为下一有界候选。Formal Full call=`174.15s`；无其他pytest负载、显式`PYTHONPATH=src;tests`、
+`-n 16 --dist loadfile`的pre-change baseline=`1 passed/104.50s`，call=`98.65s`。直接运行同一test
+函数的调用级剖分为`90.47s`：soft-blend constrained search=`63.36s`，占约70%；真实
+`_build_context` 10次仅`11.26s`，因此禁止把context cache当作本轮方案。
+
+进一步只读归因显示 `_opportunity_costs` 303次约`53.33s`，其中constrained search固定243次；
+每条360-day path重复以既有 `_future_component_return` 计算相同date/horizon的QQQ与equal-risk 20d
+component return，约174,717次重复窗口切片/compound。W14E1只允许在
+`_soft_blend_constrained_search_rows` 内为同一ordered dates预计算既有20d component returns，再按
+原date顺序、原Python加法顺序计算每条path的missed-rebound/late-risk-off costs。date-set、column、shape
+或identity不一致必须回退现有 `_opportunity_costs`；不得改变243 grid、公式、rounding、排序、status、
+schema、DQ/PIT、CLI或任何策略/阈值。
+
+最小owned scope为`src/ai_trading_system/layer1_simple_rule_meta_policy.py`与一个专属exact-equivalence
+test；共享requirement/task/manifests/hashes由coordinator单写。必须保留原nodeid与真实CLI owner-pack，
+增加schedule/direct byte/value equivalence、mismatch fallback和调用计数证明。两次相同after的较慢值必须
+同时满足至少20%与至少20秒改善，即`<=83.60s`；否则byte-exact撤回。单次局部改善不声明stable Full
+improvement，`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+
+2026-07-22 实施结果：专属equivalence/fallback/call-count矩阵=`9 passed`；原final-gate node由
+pre-change wall/call=`104.50s/98.65s`降为worker after=`53.66s/48.32s`。Coordinator在无其他pytest
+负载下用相同命令连续复跑两次，wall/call分别为`52.91s/47.63s`与`58.11s/52.65s`；以较慢值计算，
+wall减少`46.39s/44.39%`，同时超过20秒与20%门槛，因此W14E1=`RETAINED_EXIT_GATE_PASS`。实现只在
+constrained-search内部复用同一context/panel/ordered-date/20d horizon的component-return schedule；
+任一identity、shape、column、date或return-column不匹配均回退legacy计算。243 grid、浮点比较/累加顺序、
+rounding、schema、status、DQ/PIT、CLI与research-only safety保持不变；全局Full改善仍只能由Wave 10
+profile证明，不能从单node直接外推。
+
+同一最终tree的自然集成Full=`6604 passed/2 skipped/1179.75s`，profile/provenance/scheduler/telemetry/
+performance均PASS。目标node在Full中call=`103.41s`，相对Wave 9 Formal Full的`174.15s`下降
+`70.74s/40.62%`，证明优化未在真实调度中消失；但Full总wall相对`1082.57s`上升
+`97.18s/8.98%`。49个共同slowest节点的耗时比中位数为`1.0618x`，旧Smoothed主链同时上升约
+`14%～26%`，16个worker busy time由约`1071s`同步升至约`1156s`；tail-idle max=`12.85s`仅约占
+总wall 1.1%。因此本次保留W14局部实现，但`stable_full_improvement_claimed=false`，不把单次全局
+变慢误归因给W14，也不把局部PASS宣传为Full稳定提速。下一工程候选继续从Smoothed重复producer/
+validator链做调用级归因，并以新的pre-change isolated gate约束；禁止恢复W13已拒绝的duplicate-builder
+重排或通过删减真实覆盖压低Full。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前

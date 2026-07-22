@@ -135,6 +135,30 @@ fold hard eligibility，形成`POLICY_ROLE_MISMATCH_REQUIRES_OWNER_REVIEW`。Own
 per-template/per-axis causal replay也需新授权。该链固定prospective/promotion/paper-shadow/production/
 broker关闭，不能把修改gate后的运行称为same-package replay。
 
+TRADING-2457 在任何未来新策略运行之前增加通用、纯合同的selection admission层，但不替换
+TRADING-2449/2451/2452历史artifact或建立第二套evaluator。输入为reviewed
+`uncontaminated_selection_protocol_foundation_policy.v1`、canonical `ResearchEvaluationContext` /
+`ResearchPreregistration`、candidate generator/universe SHA、四类data-role bindings和policy
+intended/consumed roles。validator重算policy semantic hash与`protocol_id`，要求active primary从
+`2021-02-22`开始、四角色exact-once且窗口互不重叠、candidate只来自discovery、train/validation结果在
+freeze时不可见、prospective untouched且未访问、hard-eligibility消费与policy intended role一致。
+full-period top-N、2022 active default、freeze/visibility倒序、source/hash drift、observe/reporting→hard
+gate、任何execution/effect flag放宽或nested tamper均BLOCKED。唯一正向输出是
+`FOUNDATION_ONLY / READY_FOR_OWNER_PROTOCOL_AUTHORING`，同时`execution_unblocked=false`；它不调用
+DQ/provider/evaluator/backtest/search，不打开B/C、prospective、paper-shadow、promotion、production或broker。
+
+```mermaid
+flowchart LR
+    FP["Reviewed foundation policy\n2021-02-22 + role matrix"] --> SP["Typed selection protocol"]
+    CTX["Canonical context + preregistration"] --> SP
+    CAND["Generator/universe/source hashes"] --> SP
+    ROLE["Discovery / Train / Historical-seen / Prospective"] --> SP
+    SP --> VAL["Content-derived admission validator"]
+    VAL -->|"PASS"| AUTHOR["READY_FOR_OWNER_PROTOCOL_AUTHORING\nexecution=false"]
+    VAL -->|"contamination / drift / access"| BLOCK["BLOCKED + reason checks"]
+    AUTHOR -.-> STOP["Separate owner task required before any run"]
+```
+
 `aits research ops strategy-restart-decision` 仅消费 R0/R1 validator PASS artifacts，按
 HOLD→CONTINUE_EVIDENCE_CLOSURE→PAUSE_CANDIDATE_EXPANSION→CONTINUE_FORWARD_MATURATION→READY
 顺序决策；validator 重验所有 live source commitments、80 fold summaries、stress/regime

@@ -5,6 +5,7 @@ import json
 import math
 from collections import defaultdict
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -85,6 +86,29 @@ DEFAULT_LAYER1_SELECTOR_PAUSE_OR_CONTINUE_OWNER_PACK_DOC_PATH = (
 )
 
 BlendPath = dict[str, dict[str, float]]
+
+# This is the existing opportunity-cost contract, not a tunable search threshold.
+_OPPORTUNITY_COST_HORIZON_DAYS = 20
+
+
+@dataclass(frozen=True)
+class _OpportunityComponentReturn:
+    day: str
+    qqq_return: float
+    equal_risk_return: float
+    available_days: int
+
+
+@dataclass(frozen=True)
+class _OpportunityComponentReturnSchedule:
+    context: Mapping[str, Any]
+    panel: object
+    panel_shape: tuple[int, int]
+    panel_columns: tuple[str, ...]
+    return_columns: tuple[str, ...]
+    ordered_dates: tuple[str, ...]
+    horizon_days: int
+    rows: tuple[_OpportunityComponentReturn, ...]
 
 REQUIRED_SELECTOR_IDS = {
     "always_equal_risk",
@@ -3354,6 +3378,7 @@ def _soft_blend_constrained_search_rows(
     registry: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     original = _selector_path(context, registry, "trend_200dma_selector")
+    opportunity_schedule = _build_opportunity_component_return_schedule(context, original)
     rows = []
     for risk_on_weight in LOW_TURNOVER_CONSTRAINED_RISK_ON_WEIGHTS:
         for neutral_weight in LOW_TURNOVER_CONSTRAINED_NEUTRAL_WEIGHTS:
@@ -3383,6 +3408,7 @@ def _soft_blend_constrained_search_rows(
                                 "soft_blend_constrained_search",
                                 path,
                                 original,
+                                opportunity_schedule=opportunity_schedule,
                                 extra=_soft_blend_parameter_fields(
                                     risk_on_weight,
                                     neutral_weight,
@@ -3707,11 +3733,20 @@ def _low_turnover_variant_row(
     path: BlendPath,
     original_path: BlendPath,
     *,
+    opportunity_schedule: _OpportunityComponentReturnSchedule | None = None,
     extra: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     metrics = _evaluate_blend_path(context, path)
     original = _evaluate_blend_path(context, original_path)
-    opportunity = _opportunity_costs(context, path)
+    opportunity = (
+        _opportunity_costs_from_component_return_schedule(
+            context,
+            path,
+            opportunity_schedule,
+        )
+        if opportunity_schedule is not None
+        else _opportunity_costs(context, path)
+    )
     original_turnover = _float(original["turnover"])
     turnover = _float(metrics["turnover"])
     switch_count = _int(metrics["switch_count"])
@@ -3969,6 +4004,116 @@ def _opportunity_costs(context: Mapping[str, Any], path: BlendPath) -> dict[str,
         "missed_rebound_cost": missed_rebound_cost,
         "late_risk_off_cost": late_risk_off_cost,
     }
+
+
+def _build_opportunity_component_return_schedule(
+    context: Mapping[str, Any],
+    path: BlendPath,
+) -> _OpportunityComponentReturnSchedule:
+    returns = _returns_frame(context)
+    dates = tuple(sorted(day for day in path if day in returns.index))
+    dates_list = list(dates)
+    rows: list[_OpportunityComponentReturn] = []
+    for index, day in enumerate(dates):
+        qqq_return, available = _future_component_return(
+            returns,
+            dates_list,
+            index,
+            "100_qqq",
+            horizon=_OPPORTUNITY_COST_HORIZON_DAYS,
+        )
+        equal_return = 0.0
+        if available > 0:
+            equal_return, _ = _future_component_return(
+                returns,
+                dates_list,
+                index,
+                "equal_risk_qqq_sgov",
+                horizon=_OPPORTUNITY_COST_HORIZON_DAYS,
+            )
+        rows.append(
+            _OpportunityComponentReturn(
+                day=day,
+                qqq_return=qqq_return,
+                equal_risk_return=equal_return,
+                available_days=available,
+            )
+        )
+    panel = context.get("panel")
+    panel_shape = panel.shape if isinstance(panel, pd.DataFrame) else (0, 0)
+    panel_columns = (
+        tuple(str(column) for column in panel.columns)
+        if isinstance(panel, pd.DataFrame)
+        else ()
+    )
+    return _OpportunityComponentReturnSchedule(
+        context=context,
+        panel=panel,
+        panel_shape=panel_shape,
+        panel_columns=panel_columns,
+        return_columns=tuple(sorted(str(column) for column in returns.columns)),
+        ordered_dates=dates,
+        horizon_days=_OPPORTUNITY_COST_HORIZON_DAYS,
+        rows=tuple(rows),
+    )
+
+
+def _opportunity_costs_from_component_return_schedule(
+    context: Mapping[str, Any],
+    path: BlendPath,
+    schedule: _OpportunityComponentReturnSchedule,
+) -> dict[str, float]:
+    if not _opportunity_component_return_schedule_matches(context, path, schedule):
+        return _opportunity_costs(context, path)
+    missed_rebound_cost = 0.0
+    late_risk_off_cost = 0.0
+    for row in schedule.rows:
+        if row.available_days <= 0:
+            continue
+        weight_100 = _float(path[row.day].get("100_qqq"))
+        if row.qqq_return > row.equal_risk_return:
+            missed_rebound_cost += (1.0 - weight_100) * (
+                row.qqq_return - row.equal_risk_return
+            )
+        elif row.equal_risk_return > row.qqq_return:
+            late_risk_off_cost += weight_100 * (
+                row.equal_risk_return - row.qqq_return
+            )
+    return {
+        "missed_rebound_cost": missed_rebound_cost,
+        "late_risk_off_cost": late_risk_off_cost,
+    }
+
+
+def _opportunity_component_return_schedule_matches(
+    context: Mapping[str, Any],
+    path: BlendPath,
+    schedule: _OpportunityComponentReturnSchedule,
+) -> bool:
+    panel = context.get("panel")
+    if context is not schedule.context or panel is not schedule.panel:
+        return False
+    if not isinstance(panel, pd.DataFrame):
+        return False
+    if panel.shape != schedule.panel_shape:
+        return False
+    if tuple(str(column) for column in panel.columns) != schedule.panel_columns:
+        return False
+    if schedule.horizon_days != _OPPORTUNITY_COST_HORIZON_DAYS:
+        return False
+    if tuple(sorted(str(day) for day in path)) != schedule.ordered_dates:
+        return False
+    if "date" not in panel.columns or "strategy_id" not in panel.columns:
+        return False
+    panel_dates = tuple(sorted(str(value) for value in panel["date"].dropna().unique()))
+    return_columns = tuple(
+        sorted(str(value) for value in panel["strategy_id"].dropna().unique())
+    )
+    if panel_dates != schedule.ordered_dates:
+        return False
+    if return_columns != schedule.return_columns:
+        return False
+    return len(schedule.rows) == len(schedule.ordered_dates)
 
 
 def _low_turnover_acceptable(context: Mapping[str, Any], metrics: Mapping[str, Any]) -> bool:
