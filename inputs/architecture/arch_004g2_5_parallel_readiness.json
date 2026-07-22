@@ -1,0 +1,1244 @@
+{
+  "aggregate_source_of_truth_changed": false,
+  "automatic_merge_allowed": false,
+  "broker_action": "none",
+  "change_manifests": [
+    {
+      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "change_id": "arch-004-g2-5-01-g4-operations",
+      "contract_claims": [
+        {
+          "access": "READ",
+          "contract_id": "data_quality_evidence.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "run_ledger.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "workflow_spec.v1",
+          "version": "v1"
+        }
+      ],
+      "lane_role": "DOMAIN",
+      "module_ids": [
+        "ai_trading_system.platform.operations.periodic_consumer_migration"
+      ],
+      "owned_paths": [
+        "config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml",
+        "config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml",
+        "src/ai_trading_system/platform/operations/periodic_consumer_migration.py",
+        "tests/test_arch_004g4_operations_consumer_migration.py"
+      ],
+      "owner": "operations_platform",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "focused",
+        "full",
+        "integration"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [],
+      "task_id": "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION"
+    },
+    {
+      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "change_id": "arch-004-g2-5-02-g3-reporting",
+      "contract_claims": [
+        {
+          "access": "READ",
+          "contract_id": "artifact_envelope.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "report_spec.v1",
+          "version": "v1"
+        }
+      ],
+      "lane_role": "DOMAIN",
+      "module_ids": [
+        "ai_trading_system.platform.reporting.reader_brief_native"
+      ],
+      "owned_paths": [
+        "config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml",
+        "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml",
+        "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml",
+        "src/ai_trading_system/platform/reporting/reader_brief_native.py",
+        "tests/test_arch_004g3_reporting_native_migration.py"
+      ],
+      "owner": "reporting_platform",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "focused",
+        "full",
+        "report-validation"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [],
+      "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
+    },
+    {
+      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "change_id": "arch-004-g2-5-03-g5-research-wrapper",
+      "contract_claims": [
+        {
+          "access": "READ",
+          "contract_id": "experiment_spec.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "research_evaluation_context.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "research_lifecycle.v1",
+          "version": "v1"
+        }
+      ],
+      "lane_role": "DOMAIN",
+      "module_ids": [
+        "ai_trading_system.research_framework.wrapper_migration"
+      ],
+      "owned_paths": [
+        "config/architecture/fragments/artifacts/arch_004g5_research_wrapper.yaml",
+        "config/architecture/fragments/flows/arch_004g5_research_wrapper.yaml",
+        "src/ai_trading_system/research_framework/wrapper_migration.py",
+        "tests/test_arch_004g5_research_wrapper_migration.py"
+      ],
+      "owner": "research_platform",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "focused",
+        "full",
+        "reproducibility",
+        "slow-research-regression"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [],
+      "task_id": "ARCH-004G5_RESEARCH_WRAPPER_MIGRATION"
+    },
+    {
+      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "change_id": "arch-004-g2-5-integration-coordinator",
+      "contract_claims": [],
+      "lane_role": "COORDINATOR",
+      "module_ids": [],
+      "owned_paths": [
+        "inputs/architecture/arch_004g2_5_parallel_readiness.json"
+      ],
+      "owner": "architecture_coordinator",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "full"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [
+        "config/report_registry.yaml",
+        "config/scheduled_tasks.yaml",
+        "docs/artifact_catalog.md",
+        "docs/system_flow.md",
+        "src/ai_trading_system/controlled_strategy_batch.py",
+        "src/ai_trading_system/ops_daily.py",
+        "src/ai_trading_system/reports/reader_brief.py"
+      ],
+      "task_id": "ARCH-004G2_PARALLEL_READINESS_GATE"
+    }
+  ],
+  "dispatch_allowed": false,
+  "fail_closed_rehearsals": [
+    {
+      "case_id": "conflicting_owned_path",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "OWNED_PATH_OVERLAP"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "OWNED_PATH_OVERLAP",
+        "OWNERSHIP_SCOPE_DRIFT",
+        "UNKNOWN_OWNED_PATH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "unknown_owned_path",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "UNKNOWN_OWNED_PATH"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "UNKNOWN_OWNED_PATH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "domain_shared_path_claim",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "DOMAIN_SHARED_PATH_CLAIM"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "DOMAIN_SHARED_PATH_CLAIM",
+        "SHARED_PATH_OVERLAP",
+        "UNKNOWN_OR_UNAUTHORIZED_SHARED_PATH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_only_path_claim",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_ONLY_PATH_VIOLATION"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_ONLY_PATH_VIOLATION",
+        "OWNED_SHARED_PATH_OVERLAP",
+        "UNKNOWN_OWNED_PATH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "unknown_owner",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "OWNERSHIP_MISMATCH",
+        "UNKNOWN_DOMAIN_OWNER"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "OWNERSHIP_MISMATCH",
+        "UNKNOWN_DOMAIN_OWNER"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "unknown_module",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "UNKNOWN_MODULE"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "MODULE_SCOPE_DRIFT",
+        "UNKNOWN_MODULE"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "base_commit_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "BASE_DRIFT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "BASE_DRIFT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "contract_version_conflict",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "CONTRACT_VERSION_CONFLICT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "CONTRACT_SCOPE_DRIFT",
+        "CONTRACT_VERSION_CONFLICT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_lane_role_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_LANE_ROLE_MISMATCH"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_LANE_ROLE_MISMATCH",
+        "DOMAIN_SHARED_PATH_CLAIM",
+        "UNKNOWN_OR_UNAUTHORIZED_SHARED_PATH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_change_binding_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_CHANGE_BINDING_MISMATCH"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_CHANGE_BINDING_MISMATCH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_task_binding_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_TASK_BINDING_MISMATCH"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_TASK_BINDING_MISMATCH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_base_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_BASE_DRIFT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "BASE_DRIFT",
+        "COORDINATOR_BASE_DRIFT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_owner_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_OWNER_MISMATCH"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_OWNER_MISMATCH"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_owned_path_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_OWNED_PATH_SCOPE_DRIFT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_OWNED_PATH_SCOPE_DRIFT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_shared_path_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_SHARED_PATH_SCOPE_DRIFT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_SHARED_PATH_SCOPE_DRIFT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_module_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_MODULE_SCOPE_DRIFT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_MODULE_SCOPE_DRIFT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_contract_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_CONTRACT_SCOPE_DRIFT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_CONTRACT_SCOPE_DRIFT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "coordinator_validation_tier_drift",
+      "dispatch_allowed": false,
+      "expected_outcome": "BLOCKED",
+      "expected_reason_codes": [
+        "COORDINATOR_VALIDATION_TIER_SCOPE_DRIFT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "BLOCKED",
+      "observed_reason_codes": [
+        "COORDINATOR_VALIDATION_TIER_SCOPE_DRIFT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "unsafe_production_effect",
+      "dispatch_allowed": false,
+      "expected_outcome": "PARSE_REJECTED",
+      "expected_reason_codes": [
+        "UNSAFE_PRODUCTION_EFFECT"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "PARSE_REJECTED",
+      "observed_reason_codes": [
+        "UNSAFE_PRODUCTION_EFFECT"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    },
+    {
+      "case_id": "missing_validation_tier",
+      "dispatch_allowed": false,
+      "expected_outcome": "PARSE_REJECTED",
+      "expected_reason_codes": [
+        "MISSING_VALIDATION_REQUIREMENTS"
+      ],
+      "lease_acquisition_allowed": false,
+      "observed_outcome": "PARSE_REJECTED",
+      "observed_reason_codes": [
+        "MISSING_VALIDATION_REQUIREMENTS"
+      ],
+      "production_effect": "none",
+      "rehearsal_status": "PASS"
+    }
+  ],
+  "fragment_preview": {
+    "aggregate_source_of_truth_changed": false,
+    "aggregate_write_performed": false,
+    "broker_action": "none",
+    "duplicate_fragment_count": 0,
+    "fragment_count": 7,
+    "fragment_order": [
+      {
+        "fragment_id": "artifact.arch_004g3_reader_brief_native",
+        "fragment_kind": "artifact",
+        "generated_source_of_truth_active": false,
+        "owner": "reporting_platform",
+        "path": "config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml",
+        "production_effect": "none",
+        "target_id": "artifact_catalog"
+      },
+      {
+        "fragment_id": "artifact.arch_004g4_periodic_consumers",
+        "fragment_kind": "artifact",
+        "generated_source_of_truth_active": false,
+        "owner": "operations_platform",
+        "path": "config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml",
+        "production_effect": "none",
+        "target_id": "artifact_catalog"
+      },
+      {
+        "fragment_id": "artifact.arch_004g5_research_wrapper",
+        "fragment_kind": "artifact",
+        "generated_source_of_truth_active": false,
+        "owner": "research_platform",
+        "path": "config/architecture/fragments/artifacts/arch_004g5_research_wrapper.yaml",
+        "production_effect": "none",
+        "target_id": "artifact_catalog"
+      },
+      {
+        "fragment_id": "report.arch_004g3_reader_brief_native",
+        "fragment_kind": "report",
+        "generated_source_of_truth_active": false,
+        "owner": "reporting_platform",
+        "path": "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml",
+        "production_effect": "none",
+        "target_id": "report_registry"
+      },
+      {
+        "fragment_id": "flow.arch_004g3_reader_brief_native",
+        "fragment_kind": "flow",
+        "generated_source_of_truth_active": false,
+        "owner": "reporting_platform",
+        "path": "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml",
+        "production_effect": "none",
+        "target_id": "system_flow"
+      },
+      {
+        "fragment_id": "flow.arch_004g4_periodic_consumers",
+        "fragment_kind": "flow",
+        "generated_source_of_truth_active": false,
+        "owner": "operations_platform",
+        "path": "config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml",
+        "production_effect": "none",
+        "target_id": "system_flow"
+      },
+      {
+        "fragment_id": "flow.arch_004g5_research_wrapper",
+        "fragment_kind": "flow",
+        "generated_source_of_truth_active": false,
+        "owner": "research_platform",
+        "path": "config/architecture/fragments/flows/arch_004g5_research_wrapper.yaml",
+        "production_effect": "none",
+        "target_id": "system_flow"
+      }
+    ],
+    "preview_id": "g2-5-fragment-84c75e481cfe134fdbe0",
+    "production_effect": "none",
+    "schema_version": "arch_004_g2_5_fragment_preview.v1",
+    "source_of_truth_diffs": [
+      {
+        "current_path": "docs/artifact_catalog.md",
+        "current_sha256": "8e15b4f8b31d098a32fb22d3283fbd20ceb605f856ae92c4661eb540e3536f49",
+        "preview_fragment_ids": [
+          "artifact.arch_004g3_reader_brief_native",
+          "artifact.arch_004g4_periodic_consumers",
+          "artifact.arch_004g5_research_wrapper"
+        ],
+        "preview_fragment_paths": [
+          "config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml",
+          "config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml",
+          "config/architecture/fragments/artifacts/arch_004g5_research_wrapper.yaml"
+        ],
+        "source_of_truth_diff_status": "UNCHANGED_SHADOW_PREVIEW",
+        "source_of_truth_write_performed": false,
+        "target_id": "artifact_catalog"
+      },
+      {
+        "current_path": "config/report_registry.yaml",
+        "current_sha256": "0ceffb31e018423b1f018fe94b9be0db1a92f5f3203fe58a86b669f5a8fc4dca",
+        "preview_fragment_ids": [
+          "report.arch_004g3_reader_brief_native"
+        ],
+        "preview_fragment_paths": [
+          "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml"
+        ],
+        "source_of_truth_diff_status": "UNCHANGED_SHADOW_PREVIEW",
+        "source_of_truth_write_performed": false,
+        "target_id": "report_registry"
+      },
+      {
+        "current_path": "docs/system_flow.md",
+        "current_sha256": "1bd72303d3474df29259cadaa5d1c29dbd7f8d2621b9eec7b088a0e023b68c62",
+        "preview_fragment_ids": [
+          "flow.arch_004g3_reader_brief_native",
+          "flow.arch_004g4_periodic_consumers",
+          "flow.arch_004g5_research_wrapper"
+        ],
+        "preview_fragment_paths": [
+          "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml",
+          "config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml",
+          "config/architecture/fragments/flows/arch_004g5_research_wrapper.yaml"
+        ],
+        "source_of_truth_diff_status": "UNCHANGED_SHADOW_PREVIEW",
+        "source_of_truth_write_performed": false,
+        "target_id": "system_flow"
+      }
+    ],
+    "status": "PASS",
+    "unknown_owner_count": 0,
+    "unknown_target_count": 0,
+    "unsafe_effect_count": 0
+  },
+  "gate_id": "ARCH-004G2_PARALLEL_READINESS_GATE",
+  "generator_source": {
+    "path": "src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py",
+    "sha256": "8f9276f798608091938b48c246e648bb0f2def902faf20d0ed7566633d30bc0f"
+  },
+  "lease_acquisition_allowed": false,
+  "merge_order": [
+    "contract",
+    "adapter",
+    "domain_migration",
+    "tests_and_fragments",
+    "shared_wiring_and_docs",
+    "generated_aggregate",
+    "compatibility_removal"
+  ],
+  "next_domain_batches": [
+    {
+      "active_domain_worker_count": 2,
+      "batch": 1,
+      "domain_ids": [
+        "G4_OPERATIONS",
+        "G3_REPORTING"
+      ]
+    },
+    {
+      "active_domain_worker_count": 1,
+      "batch": 2,
+      "domain_ids": [
+        "G5_RESEARCH_WRAPPER"
+      ]
+    }
+  ],
+  "non_conflicting_lane_plan": {
+    "broker_action": "none",
+    "conflicting_manifests_rejected": true,
+    "dispatch_allowed": false,
+    "issues": [],
+    "lane_plan": {
+      "blocking_issues": [],
+      "conflicts": [],
+      "current_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "dispatch_allowed": false,
+      "lease_acquisition_allowed": false,
+      "manifest_sha256": [
+        {
+          "change_id": "arch-004-g2-5-01-g4-operations",
+          "sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef"
+        },
+        {
+          "change_id": "arch-004-g2-5-02-g3-reporting",
+          "sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30"
+        },
+        {
+          "change_id": "arch-004-g2-5-03-g5-research-wrapper",
+          "sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7"
+        },
+        {
+          "change_id": "arch-004-g2-5-integration-coordinator",
+          "sha256": "5f7973c86a295fa6d5737973815f9c914285ca6633160293f8b8ba79cd68b17c"
+        }
+      ],
+      "max_parallel_domain_lanes": 2,
+      "plan_id": "lane-plan-cf7e984c30d2bdc99bd1",
+      "production_effect": "none",
+      "schema_version": "lane_plan.v1",
+      "status": "PASS",
+      "task_registry_mutated": false,
+      "waves": [
+        {
+          "assignments": [
+            {
+              "change_id": "arch-004-g2-5-01-g4-operations",
+              "lane_id": "domain-01",
+              "manifest_sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef"
+            },
+            {
+              "change_id": "arch-004-g2-5-02-g3-reporting",
+              "lane_id": "domain-02",
+              "manifest_sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30"
+            }
+          ],
+          "kind": "DOMAIN",
+          "wave_id": "domain-wave-001"
+        },
+        {
+          "assignments": [
+            {
+              "change_id": "arch-004-g2-5-03-g5-research-wrapper",
+              "lane_id": "domain-01",
+              "manifest_sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7"
+            }
+          ],
+          "kind": "DOMAIN",
+          "wave_id": "domain-wave-002"
+        },
+        {
+          "assignments": [
+            {
+              "change_id": "arch-004-g2-5-integration-coordinator",
+              "lane_id": "integration-coordinator",
+              "manifest_sha256": "5f7973c86a295fa6d5737973815f9c914285ca6633160293f8b8ba79cd68b17c"
+            }
+          ],
+          "kind": "COORDINATOR",
+          "wave_id": "integration-wave-003"
+        }
+      ]
+    },
+    "lease_acquisition_allowed": false,
+    "production_effect": "none",
+    "reason_codes": [],
+    "status": "PASS"
+  },
+  "ownership_snapshot": {
+    "broker_action": "none",
+    "coordinator_only_paths": [
+      "config/architecture/arch_004_refactor_policy.yaml",
+      "config/report_registry.yaml",
+      "config/scheduled_tasks.yaml",
+      "docs/artifact_catalog.md",
+      "docs/system_flow.md",
+      "docs/task_register.md",
+      "docs/task_register_completed.md",
+      "inputs/architecture/arch_004_compatibility_baseline.yaml",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "inputs/architecture/arch_004e_architecture_fitness.yaml",
+      "inputs/architecture/arch_004e_module_manifest.yaml",
+      "inputs/architecture/arch_004e_test_manifest.yaml",
+      "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+      "src/ai_trading_system/cli.py",
+      "src/ai_trading_system/contracts/operations.py",
+      "src/ai_trading_system/contracts/report_spec.py",
+      "src/ai_trading_system/contracts/research_lifecycle.py",
+      "src/ai_trading_system/controlled_strategy_batch.py",
+      "src/ai_trading_system/ops_daily.py",
+      "src/ai_trading_system/reports/reader_brief.py"
+    ],
+    "domain_count": 3,
+    "domains": [
+      {
+        "batch": 1,
+        "change_id": "arch-004-g2-5-01-g4-operations",
+        "contract_claims": [
+          {
+            "access": "READ",
+            "contract_id": "data_quality_evidence.v1",
+            "version": "v1"
+          },
+          {
+            "access": "READ",
+            "contract_id": "run_ledger.v1",
+            "version": "v1"
+          },
+          {
+            "access": "READ",
+            "contract_id": "workflow_spec.v1",
+            "version": "v1"
+          }
+        ],
+        "domain_id": "G4_OPERATIONS",
+        "generated_outputs": [
+          "config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml",
+          "config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml"
+        ],
+        "module_ids": [
+          "ai_trading_system.platform.operations.periodic_consumer_migration"
+        ],
+        "owned_paths": [
+          "config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml",
+          "config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml",
+          "src/ai_trading_system/platform/operations/periodic_consumer_migration.py",
+          "tests/test_arch_004g4_operations_consumer_migration.py"
+        ],
+        "owner": "operations_platform",
+        "priority": "P0",
+        "removal_targets": [
+          {
+            "path": "src/ai_trading_system/ops_daily.py",
+            "removal_gate": "2_daily_2_weekly_1_monthly_parity_then_coordinator_cutover"
+          }
+        ],
+        "required_validation_tiers": [
+          "architecture-fitness",
+          "contract-validation",
+          "focused",
+          "full",
+          "integration"
+        ],
+        "sequence": 1,
+        "shared_paths_requested": [
+          "config/scheduled_tasks.yaml",
+          "docs/artifact_catalog.md",
+          "docs/system_flow.md",
+          "src/ai_trading_system/ops_daily.py"
+        ],
+        "source_inventory": [
+          {
+            "canonical_owner_profile": "operations",
+            "current_owner_profile": "general",
+            "ownership_transition_required": true,
+            "path": "src/ai_trading_system/ops_daily.py",
+            "role": "legacy_periodic_entrypoint",
+            "sha256": "5a29b697ed8d394a655625f3181daf61a757d729070cca71912d3218a456efce"
+          },
+          {
+            "canonical_owner_profile": "operations",
+            "current_owner_profile": "platform",
+            "ownership_transition_required": true,
+            "path": "src/ai_trading_system/platform/operations/periodic_control.py",
+            "role": "canonical_due_control",
+            "sha256": "3eb1892e187c28f98a47ecb5a361ff6a81bcbf5c1db6903161cfc753ea9bd3f3"
+          },
+          {
+            "canonical_owner_profile": "operations",
+            "current_owner_profile": "platform",
+            "ownership_transition_required": true,
+            "path": "src/ai_trading_system/platform/operations/runtime_control.py",
+            "role": "canonical_runtime_control",
+            "sha256": "b4bc48f95fb75ee7e6952ce9f1f0267be423edd2070f2be34c494a73de40deef"
+          },
+          {
+            "canonical_owner_profile": "quality",
+            "current_owner_profile": "quality",
+            "ownership_transition_required": false,
+            "path": "tests/test_arch_004f1_operations_control_plane.py",
+            "role": "characterization_and_contract_tests",
+            "sha256": "ce92f840ba1f96d10ad1fed675183a1226bf0e11a649e0904330204b85ffcb09"
+          }
+        ],
+        "task_id": "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION"
+      },
+      {
+        "batch": 1,
+        "change_id": "arch-004-g2-5-02-g3-reporting",
+        "contract_claims": [
+          {
+            "access": "READ",
+            "contract_id": "artifact_envelope.v1",
+            "version": "v1"
+          },
+          {
+            "access": "READ",
+            "contract_id": "report_spec.v1",
+            "version": "v1"
+          }
+        ],
+        "domain_id": "G3_REPORTING",
+        "generated_outputs": [
+          "config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml",
+          "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml",
+          "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml"
+        ],
+        "module_ids": [
+          "ai_trading_system.platform.reporting.reader_brief_native"
+        ],
+        "owned_paths": [
+          "config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml",
+          "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml",
+          "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml",
+          "src/ai_trading_system/platform/reporting/reader_brief_native.py",
+          "tests/test_arch_004g3_reporting_native_migration.py"
+        ],
+        "owner": "reporting_platform",
+        "priority": "P1",
+        "removal_targets": [
+          {
+            "path": "src/ai_trading_system/reports/reader_brief.py",
+            "removal_gate": "native_semantic_parity_then_coordinator_cutover"
+          }
+        ],
+        "required_validation_tiers": [
+          "architecture-fitness",
+          "contract-validation",
+          "focused",
+          "full",
+          "report-validation"
+        ],
+        "sequence": 2,
+        "shared_paths_requested": [
+          "config/report_registry.yaml",
+          "docs/artifact_catalog.md",
+          "docs/system_flow.md",
+          "src/ai_trading_system/reports/reader_brief.py"
+        ],
+        "source_inventory": [
+          {
+            "canonical_owner_profile": "reporting",
+            "current_owner_profile": "reporting",
+            "ownership_transition_required": false,
+            "path": "src/ai_trading_system/reports/reader_brief.py",
+            "role": "legacy_reader_brief_core",
+            "sha256": "c7e984900be4826cf5621b63e26fd7e6c6f31efe633360cf611db1b954e05cdc"
+          },
+          {
+            "canonical_owner_profile": "reporting",
+            "current_owner_profile": "platform",
+            "ownership_transition_required": true,
+            "path": "src/ai_trading_system/platform/reporting/audit_index.py",
+            "role": "canonical_audit_index",
+            "sha256": "3e1bfa40b20969be366e04c709d6a59e2795872b6742dcc45934f0dfafe7dbef"
+          },
+          {
+            "canonical_owner_profile": "reporting",
+            "current_owner_profile": "platform",
+            "ownership_transition_required": true,
+            "path": "src/ai_trading_system/platform/reporting/owner_daily.py",
+            "role": "canonical_owner_daily_provider",
+            "sha256": "6b4a64f110ac156f555ef9e2ca6affade0da51b921cf4f3681e2e341b11f6a6f"
+          },
+          {
+            "canonical_owner_profile": "reporting",
+            "current_owner_profile": "platform",
+            "ownership_transition_required": true,
+            "path": "src/ai_trading_system/platform/reporting/research_review.py",
+            "role": "canonical_research_review_provider",
+            "sha256": "c6391c499fc0a124589f640f378600e6ba63c3b13daecc0cd06f352ff607c8dd"
+          },
+          {
+            "canonical_owner_profile": "quality",
+            "current_owner_profile": "quality",
+            "ownership_transition_required": false,
+            "path": "tests/test_arch_004f3_reporting_architecture.py",
+            "role": "characterization_and_contract_tests",
+            "sha256": "58bfdbd5898151b562ffe53553db87bec3930365f504ee780b6f594b09e17526"
+          }
+        ],
+        "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
+      },
+      {
+        "batch": 2,
+        "change_id": "arch-004-g2-5-03-g5-research-wrapper",
+        "contract_claims": [
+          {
+            "access": "READ",
+            "contract_id": "experiment_spec.v1",
+            "version": "v1"
+          },
+          {
+            "access": "READ",
+            "contract_id": "research_evaluation_context.v1",
+            "version": "v1"
+          },
+          {
+            "access": "READ",
+            "contract_id": "research_lifecycle.v1",
+            "version": "v1"
+          }
+        ],
+        "domain_id": "G5_RESEARCH_WRAPPER",
+        "generated_outputs": [
+          "config/architecture/fragments/artifacts/arch_004g5_research_wrapper.yaml",
+          "config/architecture/fragments/flows/arch_004g5_research_wrapper.yaml"
+        ],
+        "module_ids": [
+          "ai_trading_system.research_framework.wrapper_migration"
+        ],
+        "owned_paths": [
+          "config/architecture/fragments/artifacts/arch_004g5_research_wrapper.yaml",
+          "config/architecture/fragments/flows/arch_004g5_research_wrapper.yaml",
+          "src/ai_trading_system/research_framework/wrapper_migration.py",
+          "tests/test_arch_004g5_research_wrapper_migration.py"
+        ],
+        "owner": "research_platform",
+        "priority": "P1",
+        "removal_targets": [
+          {
+            "path": "src/ai_trading_system/controlled_strategy_batch.py",
+            "removal_gate": "selected_wrapper_parity_then_coordinator_freeze_or_removal"
+          }
+        ],
+        "required_validation_tiers": [
+          "architecture-fitness",
+          "contract-validation",
+          "focused",
+          "full",
+          "reproducibility",
+          "slow-research-regression"
+        ],
+        "sequence": 3,
+        "shared_paths_requested": [
+          "docs/artifact_catalog.md",
+          "docs/system_flow.md",
+          "src/ai_trading_system/controlled_strategy_batch.py"
+        ],
+        "source_inventory": [
+          {
+            "canonical_owner_profile": "research",
+            "current_owner_profile": "general",
+            "ownership_transition_required": true,
+            "path": "src/ai_trading_system/controlled_strategy_batch.py",
+            "role": "legacy_task_shaped_research_wrapper",
+            "sha256": "e4fdb010f3f3170415f9b2a97d2334fa2b36c5929d28b950a76efe6f05683824"
+          },
+          {
+            "canonical_owner_profile": "research",
+            "current_owner_profile": "research",
+            "ownership_transition_required": false,
+            "path": "src/ai_trading_system/research_framework/runner.py",
+            "role": "canonical_experiment_runner",
+            "sha256": "32e828b8f47fbd00b3e1e067fac9460717785f6e35b3ab2106763e96d6d8d8b6"
+          },
+          {
+            "canonical_owner_profile": "research",
+            "current_owner_profile": "research",
+            "ownership_transition_required": false,
+            "path": "src/ai_trading_system/research_framework/spec.py",
+            "role": "canonical_experiment_spec",
+            "sha256": "dd669c4aa61ce473178269ecc6e6e547f77ad14a5776bc2c9fab33c6d1728d1f"
+          },
+          {
+            "canonical_owner_profile": "quality",
+            "current_owner_profile": "quality",
+            "ownership_transition_required": false,
+            "path": "tests/test_arch_004f2_research_lifecycle.py",
+            "role": "lifecycle_contract_tests",
+            "sha256": "82d549a3cd6dc9cedfebb21a52c0d4d81061541956e350d0359b2b01eaa7d9d2"
+          },
+          {
+            "canonical_owner_profile": "quality",
+            "current_owner_profile": "quality",
+            "ownership_transition_required": false,
+            "path": "tests/test_arch_004f2_research_execution_chain.py",
+            "role": "execution_chain_contract_tests",
+            "sha256": "438ce7e59012244a59bc44ebcf24f1ad9017fbd68a1fb31025dbad32462e975b"
+          }
+        ],
+        "task_id": "ARCH-004G5_RESEARCH_WRAPPER_MIGRATION"
+      }
+    ],
+    "gate_id": "ARCH-004G2_PARALLEL_READINESS_GATE",
+    "max_active_domain_workers": 2,
+    "owned_path_overlap_count": 0,
+    "production_effect": "none",
+    "schema_version": "arch_004_g2_5_ownership_snapshot.v1",
+    "shared_path_worker_owner_count": 0,
+    "snapshot_id": "g2-5-ownership-5b8e90efca321104c3b5",
+    "source_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+    "source_phase": "ARCH-004G2.4",
+    "status": "PASS",
+    "unknown_owner_count": 0
+  },
+  "parallel_control_policy": {
+    "path": "config/architecture/arch_005_parallel_control_policy.yaml",
+    "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
+    "sha256": "820c78dfa483b848090f4417c05b8ff93da3c2b98e516e9bd38eb313352ed12f",
+    "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+    "status": "REVIEWED_PILOT_BASELINE"
+  },
+  "policy": {
+    "owner": "architecture_coordinator",
+    "owner_resume_ref": "owner_instruction_2026-07-23_parallel_execution",
+    "path": "config/architecture/arch_004_g2_5_readiness.yaml",
+    "sha256": "3ccba631a12e67b94ec855fb96476d5326b1ffc3f677941525d299e6449ffbbd",
+    "status": "OWNER_RESUMED_IMPLEMENTATION_GATE"
+  },
+  "production_effect": "none",
+  "report_checksum": "471b26c5f31c62098a5317aff4ab8c8a5d76274e1a052aeff89b3204ffc2d733",
+  "schema_version": "arch_004_g2_5_readiness_rehearsal.v1",
+  "source_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+  "source_gate": {
+    "broker_action": "none",
+    "canonical_handoff_validation": "PASS",
+    "current_matrix": {
+      "current_callback_set_sha256": "245e22a50f652a41a37c750c0c6b529838e4077afc994ea8572f786c5177252e",
+      "matches_frozen_phase_exit_sha256": false,
+      "path": "inputs/architecture/arch_004g2_callback_migration_matrix.yaml",
+      "schema_version": "arch_004g2_callback_migration_matrix.v1",
+      "sha256": "8dac5e0591385909d66d8542e12db8e8c92b278fe0df412a80c8000650da9f6f",
+      "source_phase": "ARCH-004G2.4",
+      "status": "PASS",
+      "summary": {
+        "baseline_callback_count": 967,
+        "duplicate_callback_count": 0,
+        "migrated_callback_count": 967,
+        "pending_callback_count": 0,
+        "phase_exit_ready": true,
+        "unresolved_callback_count": 0
+      }
+    },
+    "frozen_phase_exit_matrix": {
+      "path": "inputs/architecture/arch_004g2_callback_migration_matrix.yaml",
+      "sha256": "a26f38536c22237c034079877e0372b7222322dfdd5345485708573d66e1904b",
+      "status": "PASS",
+      "summary": {
+        "baseline_callback_count": 967,
+        "duplicate_callback_count": 0,
+        "migrated_callback_count": 967,
+        "pending_callback_count": 0,
+        "phase_exit_ready": true,
+        "unresolved_callback_count": 0
+      }
+    },
+    "git_lineage": {
+      "handoff_base_commit": "873ad74c662394e876472a4cdd027458457c2dec",
+      "handoff_base_is_ancestor_of_handoff_head": true,
+      "handoff_head_commit": "152f2d332b174018ad9fca2ecb568469eaeaf0f8",
+      "handoff_head_is_ancestor_of_source_base": true,
+      "source_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "status": "PASS"
+    },
+    "handoff": {
+      "base_commit": "873ad74c662394e876472a4cdd027458457c2dec",
+      "branch": "codex/arch004g2-eb0-s3a-tail-optimization",
+      "checksum": "10d3106b08582183aef07989d146d31c0bfed783a59fe273496beaa216afbfa0",
+      "head_commit": "152f2d332b174018ad9fca2ecb568469eaeaf0f8",
+      "path": "inputs/architecture/arch_005_bootstrap_handoff.yaml",
+      "push_status": "SYNCED_WITH_UPSTREAM",
+      "sha256": "239f9ee871b1497948af8414dfb389a5b33c0740f788fbaf02c2f0ebf3457f39"
+    },
+    "historical_next_slice_unblocked": false,
+    "owner_resume_authorized": true,
+    "owner_resume_ref": "owner_instruction_2026-07-23_parallel_execution",
+    "production_effect": "none",
+    "source_phase": "ARCH-004G2.4",
+    "status": "PASS",
+    "validation_bundle": {
+      "artifact_count": 4,
+      "complete": true,
+      "original_paths": [
+        "outputs/validation_runtime/architecture-fitness_20260719T184530Z/test_runtime_summary.json",
+        "outputs/validation_runtime/contract-validation_20260719T184612Z/test_runtime_summary.json",
+        "outputs/validation_runtime/fast-unit_20260719T184434Z/test_runtime_summary.json",
+        "outputs/validation_runtime/full_20260719T182127Z/test_runtime_summary.json"
+      ],
+      "path": "inputs/architecture/arch_005_bootstrap_validation_bundle.json",
+      "schema_version": "arch_005_bootstrap_validation_bundle.v1",
+      "sha256": "ca19518b825092225880d0245ba133fbc44ac126cde011aa4046b412d3de0295"
+    }
+  },
+  "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+  "status": "PASS",
+  "strategy_logic_changed": false,
+  "task_registry_mutated": false,
+  "two_active_domain_worker_fixture": {
+    "active_domain_worker_count": 2,
+    "active_lease_ids": [],
+    "alternatives": [
+      "arch-004-g2-5-03-g5-research-wrapper"
+    ],
+    "broker_action": "none",
+    "capacity": 2,
+    "current_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+    "decision_id": "scheduler-decision-963ed9841c55954290da",
+    "dispatch_allowed": false,
+    "fixture_status": "PASS",
+    "lease_acquisition_allowed": false,
+    "max_active_domain_workers": 2,
+    "not_selected": [
+      {
+        "change_id": "arch-004-g2-5-03-g5-research-wrapper",
+        "manifest_sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7",
+        "reason_codes": [
+          "DOMAIN_CAPACITY_REACHED"
+        ],
+        "task_id": "ARCH-004G5_RESEARCH_WRAPPER_MIGRATION"
+      }
+    ],
+    "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
+    "production_effect": "none",
+    "readiness": [
+      {
+        "change_id": "arch-004-g2-5-01-g4-operations",
+        "dependency_checks": [],
+        "dispatch_allowed": false,
+        "lease_acquisition_allowed": false,
+        "manifest_sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef",
+        "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
+        "production_effect": "none",
+        "reason_codes": [
+          "READY_ALL_GATES_PASS"
+        ],
+        "schema_version": "task_readiness_decision.v1",
+        "status": "READY",
+        "task_governance_status_mutated": false,
+        "task_id": "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION"
+      },
+      {
+        "change_id": "arch-004-g2-5-02-g3-reporting",
+        "dependency_checks": [],
+        "dispatch_allowed": false,
+        "lease_acquisition_allowed": false,
+        "manifest_sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30",
+        "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
+        "production_effect": "none",
+        "reason_codes": [
+          "READY_ALL_GATES_PASS"
+        ],
+        "schema_version": "task_readiness_decision.v1",
+        "status": "READY",
+        "task_governance_status_mutated": false,
+        "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
+      },
+      {
+        "change_id": "arch-004-g2-5-03-g5-research-wrapper",
+        "dependency_checks": [],
+        "dispatch_allowed": false,
+        "lease_acquisition_allowed": false,
+        "manifest_sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7",
+        "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
+        "production_effect": "none",
+        "reason_codes": [
+          "READY_ALL_GATES_PASS"
+        ],
+        "schema_version": "task_readiness_decision.v1",
+        "status": "READY",
+        "task_governance_status_mutated": false,
+        "task_id": "ARCH-004G5_RESEARCH_WRAPPER_MIGRATION"
+      }
+    ],
+    "reason_codes": [
+      "DOMAIN_CAPACITY_REACHED",
+      "SELECTED_READY_NON_CONFLICTING"
+    ],
+    "schema_version": "scheduler_decision.v1",
+    "selected": [
+      {
+        "change_id": "arch-004-g2-5-01-g4-operations",
+        "lane_id": "domain-01",
+        "manifest_sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef",
+        "reason_codes": [
+          "SELECTED_READY_NON_CONFLICTING"
+        ],
+        "task_id": "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION"
+      },
+      {
+        "change_id": "arch-004-g2-5-02-g3-reporting",
+        "lane_id": "domain-02",
+        "manifest_sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30",
+        "reason_codes": [
+          "SELECTED_READY_NON_CONFLICTING"
+        ],
+        "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
+      }
+    ],
+    "snapshot_sha256": "7c64c9227a110d89fe1b410bbe32c0448975cab703059c531f900b19900bb237",
+    "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+    "status": "PASS",
+    "task_governance_status_mutated": false
+  }
+}

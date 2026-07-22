@@ -1,16 +1,17 @@
 # DATA-GOV-001 统一 Data Foundation 治理与长期数据平台加固
 
-最后更新：2026-07-12
+最后更新：2026-07-23
 
 ## 任务信息
 
 - task id：`DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE`
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
-- status：`PROPOSED`
+- status：`IN_PROGRESS`
+- current phase：`D0A_FORMAL_COMPLETE_D0B_NEXT`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
-- production effect：`none`（本次仅登记需求，不改变运行时）
+- production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
 
 ## Owner 决策与目标
 
@@ -66,7 +67,40 @@ provider / request cache
    - 为 raw、normalized、request cache、research cache、run artifact 定义 owner、TTL/retention、quota、archive 和 deletion proof；
    - 实际执行 cache prune/GC，并生成删除清单与保留原因；
    - forward-only PIT、manual inputs、manifests 和关键配置建立 checksum backup 与 restore rehearsal；
+   - D0C 同步补齐 bound-directory descriptor close 的结构化 cleanup 可观测性；该 P2 缺口可能造成
+     资源泄漏或目录 rename/delete 可用性问题，但不改变 D0A 已提交 current 的 bytes 或 commit state；
    - 任何清理不得删除仍被 run manifest、lineage 或审计 retention 引用的对象。
+
+#### D0A / D0B 边界
+
+D0A 只建立 immutable publication transaction。它严格验证 caller-supplied DQ report 的 schema、
+candidate bytes/schema、窗口、policy/status/count binding，并把 report 冻结到 store；但 D0A 不重新执行
+`aits validate-data`，也不独立证明 caller 提供的 policy id/version 已由 canonical registry 审核。因此
+D0A 的 manifest/envelope/result 必须机器可读地声明：
+
+- `dq_execution_provenance_verified=false`；
+- `filesystem_security_profile=acl_isolated_writer.v1`、`trusted_writer_principal_required=true`；
+- `same_principal_adversarial_mutation_resistance=NOT_GUARANTEED`、
+  `same_principal_post_ack_mutation_protection=false`；
+- `store_acl_verified=false`、`consumer_cutover_allowed=false`、`crash_durability_verified=false`。
+
+因此任何 feature/score/backtest/report consumer 不得把 D0A PASS 当作 required data-quality gate 已执行，
+也不得把逻辑原子性解释为已验证 store ACL、同 principal 对抗性 CAS 或断电持久性。D0A 在 rename 前立即
+重验旧 current exact bytes/首代 absence 和 source fd/path/nlink；replace 后继续重验 identity、nlink、
+size、version 与 digest。检测到的 race 不能按 profile 降级为 warning：旧 current 必须精确恢复、首代
+current 必须精确删除；成功回滚返回 `commit_state=ROLLED_BACK`，不能证明回滚结果则返回
+`commit_state=INDETERMINATE`，replace 前拒绝保持 `commit_state=NOT_REPLACED`。只有全部 post-replace
+attestation 已通过后的 descriptor/unlock/stage cleanup 故障才能作为 committed warning 返回。
+
+D0B 才负责把 reviewed DQ policy path/version/SHA、canonical validator identity 与运行结果绑定到
+publication，并选择首批真实 consumer 走同一 fail-closed preflight。只有 D0B 的 provenance、negative
+tests、system-flow 与 formal gates 全部通过后，才能逐 consumer 授权 cutover。这个拆分避免 D0A
+伪造比实际更强的安全保证，同时保留事务发布与 DQ 执行职责的清晰边界。
+
+D0C 负责运行耐久性与可恢复性：跨进程 writer/reader/lock matrix、power-loss/crash-point rehearsal、
+file + parent-directory durable commit、retention/reference-safe GC、forward-only/manual/config backup 与
+restore 演练。D0A 的逻辑原子性与线程级测试不能替代 D0C；在 D0C 通过前不得声称 power-loss durable
+或 backup/restore 已闭环。
 
 ### D1：P1 统一运行时与可重放 lineage
 
@@ -115,4 +149,23 @@ provider / request cache
 
 ## 状态记录
 
+- 2026-07-23：D0A 多轮审计加固的 implementation 已完成。bound-directory authority 已覆盖 POSIX
+  parent `dir_fd` 相对 mutation 与 Windows root→parent 不共享 delete 的目录 handle；stage/current/link
+  三类 junction race 均证明 store 外零文件。后续独立复核又精确复现并关闭三项 P1：post-attest→hash
+  hardlink 窗口、rename 前 current 复绑定距离过远、committed descriptor close 被静默吞掉。当前实现对
+  pre/post-replace fd/path/nlink/version/digest 做 fail-closed attestation，旧 current 精确恢复、首代精确删除，
+  rollback 不可证明时返回 `INDETERMINATE`；安全 profile 与 DQ/cutover/crash 限制按本节机器字段冻结，
+  envelope 对 8 个 governed limitation key 的 missing/duplicate/contradictory/malformed 均 fail closed。
+  协调线程 component-focused=`48 passed / 1 skipped`，Ruff、Black、mypy strict PASS；原子提交与
+  contract 两项独立只读复审均为 no P0/P1。随后共同 formal gate 收口为 focused=
+  `183 passed / 1 skipped`、architecture=`482 passed`、contract=`266 passed`；Full append-only ledger
+  保留 attempt 1=`6701 passed / 2 failed` 与 attempt 2=`6706 passed / 1 failed`，最终 attempt=
+  `6710 passed / 0 failed / 3 skipped / 643 warnings`，runner=`1106.60s`。前两次 FAIL 作为不可覆盖证据
+  保留，最终 PASS 后 D0A 标记 formal complete，DATA-GOV-001 overall 仍为 `IN_PROGRESS`，D0B 为下一
+  阶段且尚未自动 dispatch。DQ 边界仍是“验证并冻结上游 evidence，不证明 canonical gate 执行
+  provenance”；`dq_execution_provenance_verified=false`、`store_acl_verified=false`、
+  `crash_durability_verified=false`、`consumer_cutover_allowed=false` 继续生效。D0B 负责 policy
+  SHA/registry、canonical validator 与首批 consumer cutover；在其独立授权和验收前不得切换 consumer，
+  `production_effect=none`。
+- 2026-07-23：owner 授权按双线推进长期任务，DATA-GOV-001 转 `IN_PROGRESS`。首个原子切片冻结为 D0A：复用现有 `ArtifactEnvelope`、atomic writer 与 DQ contract，建立 staged immutable snapshot、validated manifest、atomic current pointer 及 fail-closed validator；不在本切片迁移所有消费者、不选择 Parquet/DuckDB、不改变 score/backtest/report/production。数据 worker 只持有 data-foundation implementation/tests/本需求，`docs/task_register.md`、`docs/system_flow.md`、operations runbook、registry/catalog 与最终验证由 coordinator 集成。
 - 2026-07-12：根据 owner 对当前数据管理、数据与知识系统分离及长期治理的讨论登记为 `PROPOSED`。本次只冻结目标、阶段、边界与冲突处置，不修改 cache、gate、score、backtest、report、scheduler 或 production runtime。

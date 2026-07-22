@@ -13,7 +13,7 @@
 
 产品策略和模块原则见 `docs/product_strategy.md`。可落地模块、数据对象和命令拆解见 `docs/implementation_backlog.md`。
 
-默认市场阶段为 `ai_after_chatgpt`：锚定事件是 `2022-11-30` ChatGPT 公开发布，默认回测起点是 `2022-12-01`，即其后的首个完整美股交易日。2019 年以来的数据保留为跨周期压力测试和长窗口 warm-up，不作为 AI 主线行情的默认结论窗口。
+active strategy research、primary backtest 与投资面对结论的统一默认窗口为 `unified_primary_2021`，从 QQQ/SGOV/TQQQ exact-three-asset 共同可验证日 `2021-02-22` 开始。新报告必须同时披露 selected research window、actual requested range 与 actual evaluated range。`ai_after_chatgpt` / `2022-12-01` 只保留为明确的 AI-cycle attribution、historical comparison 或 sensitivity/stress 角色；2019 年以来的数据只用于带数据质量 caveat 的跨周期压力测试和 warm-up。
 
 ## 基础工程规则
 
@@ -66,7 +66,7 @@
 - 一条命令能跑历史回测。
 - 报告能解释本期相对上期为什么加仓、减仓或不动。
 - 报告同时输出股票风险资产内 AI 仓位和总资产内 AI 仓位。
-- 默认回测覆盖 ChatGPT 之后的 AI 主线行情；跨周期压力测试可以额外覆盖 2019、2020、2022 这类不同市场环境，但必须在报告中标注为非默认市场阶段。
+- 默认回测覆盖从 `2021-02-22` 开始的 `unified_primary_2021` 主研究窗口；AI-cycle comparison 与跨周期压力测试可以显式覆盖 2019、2020、2022 等不同市场环境，但必须披露其 historical/sensitivity/stress 角色，不能替代默认主结论窗口。
 
 ## 阶段 2：基本面与估值增强
 
@@ -229,7 +229,7 @@
 
 默认规则：
 
-- 默认市场阶段为 `config/market_regimes.yaml` 中的 `ai_after_chatgpt`，回测起点为 `2022-12-01`。
+- 默认 primary research window 为 `unified_primary_2021`，回测起点为 `2021-02-22`；报告必须披露 selected window 及实际 requested/evaluated date range。只有显式选择 historical comparison/sensitivity/stress role 时才使用 `ai_after_chatgpt` 或其他窗口。
 - 使用 `SMH` 作为 AI 仓位代理标的。
 - 与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。
 - 每日收盘后生成信号，下一交易日生效。
@@ -246,7 +246,7 @@
 
 当前回测状态仍会标记为 `PASS_WITH_LIMITATIONS`。SEC 基本面、估值快照和政策/地缘风险事件发生记录已经按 signal_date 接入 point-in-time 历史切片；限制主要来自税费、汇率、融资利率、非线性盘口冲击、容量约束和盘中执行偏差等简化假设。`backtest_audit_*.md` 会单独判断数据质量、输入覆盖率、来源类型和执行假设是否足以支撑解释本次回测；`--fail-on-audit-warning` 可把非 PASS 审计状态升级为本地门禁失败。
 
-如果要运行跨周期压力测试，可以使用 `--regime cross_cycle_stress`，其默认起点为 `2019-01-01`，使用 2018 年历史作为 200 日均线和 252 日 VIX 分位的 warm-up。该区间覆盖更多宏观压力环境，但不应替代 ChatGPT 之后 AI 主线行情的默认解释窗口。
+如果要运行跨周期压力测试，可以使用 `--regime cross_cycle_stress`，其默认起点为 `2019-01-01`，使用 2018 年历史作为 200 日均线和 252 日 VIX 分位的 warm-up。该区间覆盖更多宏观压力环境，但不应替代从 `2021-02-22` 开始的 `unified_primary_2021` 默认主结论窗口。
 
 ## 产业链因果图约定
 

@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import subprocess
+from copy import deepcopy
+from functools import cache
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -14,7 +20,142 @@ DEPENDENCY_POLICY_PATH = Path("config/architecture/arch_004c_dependency_policy.y
 DIRECT_WRITER_BASELINE_PATH = Path("inputs/architecture/arch_004c_direct_writer_baseline.yaml")
 
 
-def _source_sha256(source: dict[str, object]) -> str:
+WAVE11_SECTION = "phase_arch_004_g2_5_wave11"
+WAVE11_BASE_COMMIT = "6ee5903a929da593746e1459c055c8226cc21157"
+WAVE11_BASELINE_REPOSITORY_PATH = "inputs/architecture/arch_004_compatibility_baseline.yaml"
+WAVE11_BASELINE_GIT_BLOB = "166901e26b8d2369f7ee22455e161c95be20d9a5"
+WAVE11_HISTORICAL_PREFIX_BYTE_COUNT = 1_136_370
+WAVE11_HISTORICAL_PREFIX_SHA256 = "f81225a6a10c56ee74bf9958e383a2c9ee5bc16c09c8b74317ce3aa12f8945ce"
+
+
+@cache
+def _wave11_base_baseline_blob() -> bytes:
+    object_name = f"{WAVE11_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == WAVE11_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+def _assert_wave11_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == WAVE11_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == WAVE11_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:WAVE11_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert (
+        historical_prefix == base_blob
+    ), "Wave11 historical prefix differs from the immutable base blob"
+    assert hashlib.sha256(historical_prefix).hexdigest() == WAVE11_HISTORICAL_PREFIX_SHA256
+    wave11_suffix = current_bytes[WAVE11_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{WAVE11_SECTION}:\n".encode()
+    assert wave11_suffix.startswith(
+        expected_marker
+    ), "Wave11 must be appended after the exact base blob with one blank line"
+    assert wave11_suffix.count(expected_marker) == 1
+
+
+def _wave11_portable_artifact_identity(attempt: dict[str, Any]) -> tuple[str, str]:
+    artifact = attempt.get("artifact")
+    assert isinstance(artifact, dict), "executed attempt requires portable artifact evidence"
+    artifact_path = artifact.get("path")
+    artifact_sha256 = artifact.get("sha256")
+    artifact_size = artifact.get("size_bytes")
+    assert (
+        isinstance(artifact_path, str) and artifact_path.strip()
+    ), "executed attempt artifact path must be non-empty"
+    assert (
+        isinstance(artifact_sha256, str)
+        and len(artifact_sha256) == 64
+        and all(character in "0123456789abcdef" for character in artifact_sha256)
+    ), "executed attempt artifact SHA256 must be lowercase 64-hex"
+    assert (
+        type(artifact_size) is int and artifact_size > 0
+    ), "executed attempt artifact size_bytes must be a positive integer"
+    return artifact_path, artifact_sha256
+
+
+def _assert_wave11_full_attempt_chain(attempts: list[dict[str, Any]]) -> None:
+    assert len(attempts) >= 2
+    attempt_ids = [attempt.get("attempt_id") for attempt in attempts]
+    assert all(isinstance(attempt_id, str) and attempt_id for attempt_id in attempt_ids)
+    assert len(attempt_ids) == len(set(attempt_ids)), "Full attempt ids must be unique"
+    assert (
+        attempts[0]["role"] == "INITIAL_FORMAL_GATE"
+    ), "first Full attempt must remain the initial formal gate"
+    assert (
+        "replaces_attempt_id" not in attempts[0]
+    ), "initial Full attempt cannot replace another attempt"
+
+    artifact_paths: set[str] = set()
+    artifact_hashes: set[str] = set()
+    for index, attempt in enumerate(attempts):
+        is_latest = index == len(attempts) - 1
+        if index > 0:
+            previous = attempts[index - 1]
+            assert attempt["role"] == "FAILURE_FIX_REPLACEMENT"
+            assert (
+                previous["status"] == "FAIL"
+            ), "replacement must immediately follow a failed attempt"
+            assert (
+                attempt.get("replaces_attempt_id") == previous["attempt_id"]
+            ), "replacement must identify the immediately preceding failed attempt"
+
+        status = attempt["status"]
+        if is_latest:
+            assert status in {"PENDING", "PASS"}, "latest Full attempt must be PENDING or PASS"
+        else:
+            assert status == "FAIL", "every intermediate Full attempt must be FAIL"
+
+        if status == "PENDING":
+            assert attempt.get("required") is True
+            assert "artifact" not in attempt
+            continue
+
+        assert status in {"FAIL", "PASS"}
+        if status == "FAIL":
+            assert attempt["failed"] > 0
+        else:
+            assert attempt["failed"] == 0
+        artifact_path, artifact_sha256 = _wave11_portable_artifact_identity(attempt)
+        assert (
+            artifact_path not in artifact_paths
+        ), "executed Full attempt artifact paths must be unique"
+        assert (
+            artifact_sha256 not in artifact_hashes
+        ), "executed Full attempt artifact SHA256 values must be unique"
+        artifact_paths.add(artifact_path)
+        artifact_hashes.add(artifact_sha256)
+
+
+@cache
+def _assert_current_wave11_historical_prefix_immutable() -> None:
+    _assert_wave11_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _wave11_base_baseline_blob(),
+    )
+
+
+@cache
+def _wave11_superseded_live_source_paths() -> frozenset[str]:
+    _assert_current_wave11_historical_prefix_immutable()
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    wave11 = baseline[WAVE11_SECTION]
+    paths = wave11["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+def _raw_source_sha256(source: dict[str, object]) -> str:
     payload = Path(str(source["path"])).read_bytes()
     normalization = source.get("hash_normalization")
     if normalization == "git_eol_lf":
@@ -22,6 +163,49 @@ def _source_sha256(source: dict[str, object]) -> str:
     elif normalization is not None:
         raise AssertionError(f"unsupported hash normalization: {normalization}")
     return hashlib.sha256(payload).hexdigest()
+
+
+@cache
+def _wave11_prior_active_source_mismatches() -> frozenset[str]:
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == WAVE11_SECTION
+    mismatches: set[str] = set()
+    for section_id, section in baseline.items():
+        if section_id == WAVE11_SECTION:
+            break
+        if not isinstance(section, dict):
+            continue
+        section_superseded_paths = {
+            str(path) for path in section.get("superseded_source_paths", [])
+        }
+        for source_key in ("frozen_sources", "sources"):
+            records = section.get(source_key, [])
+            if not isinstance(records, list):
+                continue
+            for source in records:
+                if not isinstance(source, dict) or not {"path", "sha256"} <= source.keys():
+                    continue
+                path = str(source["path"])
+                is_historical = any(
+                    str(key).startswith("historical_") and bool(value)
+                    for key, value in source.items()
+                )
+                if is_historical or path in section_superseded_paths:
+                    continue
+                if _raw_source_sha256(source) != str(source["sha256"]):
+                    mismatches.add(path)
+    return frozenset(mismatches)
+
+
+def _source_sha256(source: dict[str, object]) -> str:
+    # Historical source bytes remain immutable. Once Wave11 names a path in its
+    # append-only supersession ledger, the new section becomes the current hash
+    # authority and prior phase records intentionally retain their captured hash.
+    superseded_paths = _wave11_superseded_live_source_paths()
+    assert _wave11_prior_active_source_mismatches() == superseded_paths
+    if str(source["path"]) in superseded_paths:
+        return str(source["sha256"])
+    return _raw_source_sha256(source)
 
 
 def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety() -> None:
@@ -229,7 +413,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["status"] == "IN_PROGRESS"
     assert phase_g["stages"]["G0_inventory_deprecation_policy_and_removal_gate"] == ("COMPLETE")
     assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "COMPLETE"
-    assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "IN_PROGRESS"
+    assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "COMPLETE"
     assert phase_g["permanent_dual_track_allowed"] is False
     assert phase_g["runtime_removal_allowed_in_g0"] is False
     assert phase_g["investment_semantics_change_allowed"] is False
@@ -333,7 +517,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     }
     assert phase_g["g1_sixth_family_plan"]["architecture_fitness"]["passed"] == 168
     assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "COMPLETE"
-    assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "IN_PROGRESS"
+    assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "COMPLETE"
     assert phase_g["g1_closeout"] == {
         "status": "COMPLETE",
         "canonical_family_count": 6,
@@ -362,14 +546,24 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         },
         "production_effect": "none",
     }
-    assert phase_g["g2_current_plan"]["status"] == "IN_PROGRESS"
+    assert phase_g["g2_current_plan"]["status"] == "COMPLETE"
     assert phase_g["g2_current_plan"]["implementation_started_in_g1_closeout_slice"] is False
     assert phase_g["g2_current_plan"]["stages"] == {
         "G2_1_command_registry_and_golden_contract": "COMPLETE",
         "G2_2_registration_shell_and_shared_parameters": "COMPLETE",
         "G2_3_data_operations_reporting_groups": "COMPLETE",
-        "G2_4_research_shadow_portfolio_groups": "IN_PROGRESS",
-        "G2_5_freeze_deprecation_and_closeout": "NOT_STARTED",
+        "G2_4_research_shadow_portfolio_groups": "COMPLETE",
+        "G2_5_freeze_deprecation_and_closeout": "COMPLETE",
+    }
+    assert phase_g["g2_current_plan"]["closeout_status"] == ("COMPLETE_FORMAL_GATES_PASS")
+    assert phase_g["g2_current_plan"]["next_wave"] == {
+        "status": "READY_NOT_DISPATCHED",
+        "architecture_stage": "G4_operations_consumer_migration",
+        "paired_task": "DATA-GOV-001_D0B_CANONICAL_DQ_EVIDENCE",
+        "max_active_domain_workers": 2,
+        "g3_dispatch_allowed": False,
+        "g5_dispatch_allowed": False,
+        "production_effect": "none",
     }
     assert phase_g["g2_current_plan"]["g2_1_contract"]["leaf_command_count"] == 993
     assert phase_g["g2_current_plan"]["g2_1_contract"]["duplicate_path_count"] == 0
@@ -483,7 +677,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert g2_3_closeout["focused_closeout_validation"] == {"status": "PASS", "passed": 15}
     assert g2_3_closeout["architecture_fitness"]["passed"] == 183
     g2_4 = phase_g["g2_current_plan"]["g2_4_current_plan"]
-    assert g2_4["status"] == "IN_PROGRESS"
+    assert g2_4["status"] == "COMPLETE"
     assert g2_4["first_slice"] == "baseline_review"
     assert g2_4["implementation_started_in_g2_3_closeout"] is False
     assert g2_4["callback_count"] == 7
@@ -869,6 +1063,318 @@ def test_arch_004_semantic_glossary_separates_regime_and_research_window() -> No
     assert implementation["runtime_enforcement_implemented"] is True
     assert implementation["context_schema_version"] == "research_evaluation_context.v1"
     assert implementation["existing_artifact_migration_status"] == "GOVERNED_WAVES_PENDING"
+
+
+def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
+    _assert_current_wave11_historical_prefix_immutable()
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == WAVE11_SECTION
+    wave11 = baseline[WAVE11_SECTION]
+
+    assert (
+        str(
+            baseline["explicit_cli_adapter_contracts"]["date_range_kwargs"]["missing_start_default"]
+        )
+        == "2022-12-01"
+    )
+    assert wave11["status"] == "COMPLETE_WAVE11"
+    assert wave11["boundary_id"] == "ARCH-004G2.5_WAVE11"
+    assert wave11["task_ids"] == [
+        "ARCH-004G2_PARALLEL_READINESS_GATE",
+        "DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE",
+        "GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION",
+    ]
+    window = wave11["research_window"]
+    assert window == {
+        "active_default_start": "2021-02-22",
+        "active_default_scope": "QQQ_SGOV_TQQQ_PRIMARY_RESEARCH_AND_BACKTESTS",
+        "legacy_2022_12_01_active_default": False,
+        "legacy_2022_12_01_required_comparator": False,
+        "legacy_2022_12_01_minimum_allowed_start": False,
+        "legacy_2022_12_01_role": ("IMMUTABLE_HISTORICAL_OR_EXPLICIT_SENSITIVITY_EVIDENCE_ONLY"),
+    }
+    assert wave11["prior_sections_immutability"] == {
+        "source_commit": WAVE11_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": WAVE11_BASELINE_GIT_BLOB,
+        "raw_byte_count": WAVE11_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": WAVE11_HISTORICAL_PREFIX_SHA256,
+        "append_offset": WAVE11_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+
+    components = wave11["components"]
+    g2_5 = components["g2_5_parallel_readiness"]
+    assert g2_5["current_status"] == "COMPLETE_FORMAL_GATES_PASS"
+    assert g2_5["evidence_status"] == "PASS"
+    assert g2_5["max_active_domain_workers"] == 2
+    assert g2_5["coordinator_count"] == 1
+    assert g2_5["dispatch_allowed"] is False
+    assert g2_5["lease_acquisition_allowed"] is False
+    assert g2_5["automatic_merge_allowed"] is False
+    assert g2_5["next_domain_slice_started"] is False
+    d0a = components["data_d0a_immutable_publish"]
+    assert d0a["current_status"] == "D0A_COMPLETE_FORMAL_GATES_PASS"
+    assert d0a["atomic_independent_review_p0_p1_finding_count"] == 0
+    assert d0a["contract_independent_review_p0_p1_finding_count"] == 0
+    assert d0a["focused_passed"] == 48
+    assert d0a["focused_skipped"] == 1
+    assert d0a["dq_execution_provenance_verified"] is False
+    assert d0a["consumer_cutover_allowed"] is False
+    assert d0a["store_acl_verified"] is False
+    assert d0a["crash_durability_verified"] is False
+    assert d0a["cross_process_crash_power_loss_durability_claimed"] is False
+    gov_n0 = components["gov_006_n0_normalization"]
+    assert gov_n0["current_status"] == "COMPLETE_FORMAL_GATES_PASS"
+    assert gov_n0["manifest_validation_status"] == "PASS"
+    assert gov_n0["decision_count"] == 30
+    assert gov_n0["automatic_apply_allowed"] is False
+    assert gov_n0["task_register_mutated_by_n0"] is False
+
+    expected_superseded_paths = {
+        ".github/workflows/ci.yml",
+        "config/architecture/arch_004_refactor_policy.yaml",
+        "docs/architecture/dual_lane_development_operating_model.md",
+        "docs/artifact_catalog.md",
+        "docs/operations/operations_runbook.md",
+        "docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md",
+        "docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md",
+        "docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md",
+        "docs/runbooks/scheduled_task_orchestration.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "src/ai_trading_system/platform/architecture/bootstrap_handoff.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_arch_005_bootstrap_handoff.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+    assert len(expected_superseded_paths) == 24
+    assert set(wave11["superseded_live_source_paths"]) == expected_superseded_paths
+    assert _wave11_prior_active_source_mismatches() == expected_superseded_paths
+    assert wave11["supersession"] == {
+        "superseded_by_phase": "ARCH-004G2.5_WAVE11",
+        "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
+        "historical_hashes_rewritten": False,
+        "current_hash_authority": "phase_arch_004_g2_5_wave11.sources",
+    }
+
+    sources = wave11["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == 55
+    assert len(source_paths) == len(set(source_paths))
+    assert expected_superseded_paths <= set(source_paths)
+    assert {
+        "config/architecture/arch_004_g2_5_readiness.yaml",
+        "config/governance/gov_006_wave1_normalization.yaml",
+        "inputs/architecture/arch_004g2_5_parallel_readiness.json",
+        "inputs/architecture/arch_005_bootstrap_validation_bundle.json",
+        "inputs/governance/gov_006_wave1_decision_manifest.json",
+        "src/ai_trading_system/data/immutable_publish.py",
+        "src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py",
+        "src/ai_trading_system/platform/architecture/task_portfolio_normalization.py",
+        "tests/test_arch_004_g2_5_readiness.py",
+        "tests/test_external_request_cache_revalidation_coordination.py",
+        "tests/test_gov_006_task_portfolio_normalization.py",
+        "tests/test_immutable_data_publish.py",
+    } <= set(source_paths)
+    assert "inputs/architecture/arch_004_compatibility_baseline.yaml" not in source_paths
+    assert "docs/research/growth_tilt_owner_diagnosis_pack.md" not in source_paths
+    assert all(
+        isinstance(source["sha256"], str)
+        and len(source["sha256"]) == 64
+        and int(source["sha256"], 16) >= 0
+        for source in sources
+    )
+    for source in sources:
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    validation = wave11["validation"]
+    full_validation = validation["full_validation"]
+    assert full_validation["attempts_append_only"] is True
+    assert full_validation["initial_failure_may_be_removed_or_overwritten"] is False
+    assert full_validation["executed_attempts_may_be_removed_or_overwritten"] is False
+    assert full_validation["complete_status_requires_replacement_pass"] is True
+    attempts = full_validation["attempts"]
+    _assert_wave11_full_attempt_chain(attempts)
+    assert len(attempts) == 3
+    assert attempts[0] == {
+        "attempt_id": "INITIAL_FORMAL_GATE_20260722T183541Z",
+        "role": "INITIAL_FORMAL_GATE",
+        "status": "FAIL",
+        "passed": 6701,
+        "failed": 2,
+        "skipped": 3,
+        "warnings": 643,
+        "pytest_elapsed_seconds": 1108.72,
+        "runner_elapsed_seconds": 1109.83,
+        "workers": 16,
+        "artifact": {
+            "path": "outputs/validation_runtime/full_20260722T183541Z/test_runtime_summary.json",
+            "sha256": "f9490a13b31637b0910ca0c0e14a00ed78cff88c643c8621532d4374d99919fc",
+            "size_bytes": 26429,
+            "local_file_required": False,
+        },
+        "cause": "LEGACY_TRADING2452_2453_TEST_DID_NOT_APPLY_WAVE11_SUPERSESSION",
+        "durable_fix_path": "tests/test_trading2452_architecture_contract.py",
+        "production_effect": "none",
+    }
+    assert attempts[1] == {
+        "attempt_id": "FAILURE_FIX_REPLACEMENT_20260722T193219Z",
+        "role": "FAILURE_FIX_REPLACEMENT",
+        "replaces_attempt_id": "INITIAL_FORMAL_GATE_20260722T183541Z",
+        "status": "FAIL",
+        "passed": 6706,
+        "failed": 1,
+        "skipped": 3,
+        "warnings": 642,
+        "pytest_elapsed_seconds": 1110.81,
+        "runner_elapsed_seconds": 1111.95,
+        "workers": 16,
+        "artifact": {
+            "path": "outputs/validation_runtime/full_20260722T193219Z/test_runtime_summary.json",
+            "sha256": "7d79db367e464f29975db1311120f8a8f0899db5b546f8d19b7600439015c8c8",
+            "size_bytes": 26836,
+            "local_file_required": False,
+        },
+        "cause": "RACE_DEPENDENT_TEST_ORACLE_REJECTED_VALID_LATE_CONTENDER_DOUBLE_CHECK_REUSE",
+        "durable_fix_path": "tests/test_external_request_cache_revalidation_coordination.py",
+        "production_effect": "none",
+    }
+    replacement_attempt = attempts[2]
+    assert replacement_attempt == {
+        "attempt_id": "FAILURE_FIX_REPLACEMENT_2_20260722T201357Z",
+        "role": "FAILURE_FIX_REPLACEMENT",
+        "replaces_attempt_id": "FAILURE_FIX_REPLACEMENT_20260722T193219Z",
+        "status": "PASS",
+        "passed": 6710,
+        "failed": 0,
+        "skipped": 3,
+        "warnings": 643,
+        "pytest_elapsed_seconds": 1105.37,
+        "runner_elapsed_seconds": 1106.6,
+        "workers": 16,
+        "artifact": {
+            "path": (
+                "outputs/validation_runtime/full_20260722T201357Z/" "test_runtime_summary.json"
+            ),
+            "sha256": "6e324617d82455e9af185aa80fa8f237054fc4a69d17e63853c928f19a606546",
+            "size_bytes": 26538,
+            "local_file_required": False,
+        },
+        "production_effect": "none",
+    }
+    assert wave11["source_hash_status"] == "FINAL_TRACKED_STATE_FRESH"
+    assert validation["focused"] == {
+        "status": "PASS",
+        "passed": 183,
+        "failed": 0,
+        "skipped": 1,
+        "workers": 16,
+    }
+    assert validation["architecture_fitness"]["status"] == "PASS"
+    assert validation["architecture_fitness"]["passed"] == 482
+    assert validation["contract_validation"]["status"] == "PASS"
+    assert validation["contract_validation"]["passed"] == 266
+    assert full_validation["status"] == "PASS_AFTER_FAILURE_FIX_REPLACEMENT"
+
+    assert wave11["generated_state"] == {
+        "status": "COMPLETE_WAVE11",
+        "module_count": 1000,
+        "test_file_count": 1161,
+        "direct_writer_current_count": 856,
+        "direct_writer_violation_count": 0,
+        "deprecation_inventory_id": "arch_004g_deprecation_inventory_5d0dba8b6f4962b467d8",
+        "active_task_count": 436,
+        "completed_task_count": 456,
+    }
+
+    assert set(wave11["safety"].values()) <= {False, "none"}
+    assert wave11["safety"]["production_effect"] == "none"
+    assert wave11["safety"]["order_or_broker_action"] == "none"
+
+
+def test_arch_004_g2_5_wave11_rejects_historical_source_hash_rewrite() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _wave11_base_baseline_blob()
+    section_offset = current_bytes.index(b"\nintegrated_change_trading_2452:\n")
+    source_marker = b"- {path: docs/system_flow.md, sha256: "
+    source_offset = current_bytes.index(source_marker, section_offset)
+    hash_offset = source_offset + len(source_marker)
+    historical_hash = current_bytes[hash_offset : hash_offset + 64]
+    assert historical_hash == (b"2e09f70fadd52c90dcac3bd18c24625154e9f95a7a43dc57ad98d05a15efb9a3")
+    tampered = current_bytes[:hash_offset] + (b"0" * 64) + current_bytes[hash_offset + 64 :]
+
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_wave11_historical_prefix_immutable(tampered, base_blob)
+
+
+def test_arch_004_g2_5_wave11_rejects_unportable_or_reused_replacement_evidence() -> None:
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    attempts = baseline[WAVE11_SECTION]["validation"]["full_validation"]["attempts"]
+    _assert_wave11_full_attempt_chain(attempts)
+
+    deleted_failure = [deepcopy(attempts[0]), deepcopy(attempts[-1])]
+    reordered_failures = [
+        deepcopy(attempts[1]),
+        deepcopy(attempts[0]),
+        deepcopy(attempts[-1]),
+    ]
+    wrong_parent = deepcopy(attempts)
+    wrong_parent[-1]["replaces_attempt_id"] = "UNRELATED_ATTEMPT"
+    reused_path = deepcopy(attempts)
+    reused_path[1]["artifact"]["path"] = attempts[0]["artifact"]["path"]
+    reused_sha256 = deepcopy(attempts)
+    reused_sha256[1]["artifact"]["sha256"] = attempts[0]["artifact"]["sha256"]
+    intermediate_pending = deepcopy(attempts)
+    intermediate_pending[1]["status"] = "PENDING"
+    duplicate_id = deepcopy(attempts)
+    duplicate_id[1]["attempt_id"] = attempts[0]["attempt_id"]
+    missing_artifact = deepcopy(attempts)
+    del missing_artifact[1]["artifact"]
+    latest_fail = deepcopy(attempts)
+    latest_fail[-1].update({"status": "FAIL", "failed": 1})
+    invalid_cases = [
+        (
+            deleted_failure,
+            "immediately preceding failed attempt",
+        ),
+        (
+            reordered_failures,
+            "first Full attempt must remain the initial formal gate",
+        ),
+        (
+            wrong_parent,
+            "immediately preceding failed attempt",
+        ),
+        (
+            reused_path,
+            "artifact paths must be unique",
+        ),
+        (
+            reused_sha256,
+            "artifact SHA256 values must be unique",
+        ),
+        (intermediate_pending, "intermediate Full attempt must be FAIL"),
+        (duplicate_id, "Full attempt ids must be unique"),
+        (missing_artifact, "executed attempt requires portable artifact evidence"),
+        (latest_fail, "latest Full attempt must be PENDING or PASS"),
+    ]
+
+    for invalid_attempts, error_pattern in invalid_cases:
+        with pytest.raises(AssertionError, match=error_pattern):
+            _assert_wave11_full_attempt_chain(invalid_attempts)
+
+    equal_positive_size = deepcopy(attempts)
+    equal_positive_size[1]["artifact"]["size_bytes"] = attempts[0]["artifact"]["size_bytes"]
+    _assert_wave11_full_attempt_chain(equal_positive_size)
 
 
 def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> None:

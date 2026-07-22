@@ -1,10 +1,10 @@
 # 工程落地 Backlog
 
-最后更新：2026-05-10
+最后更新：2026-07-23
 
 本文把 `docs/product_strategy.md` 中的方向拆成可开发模块。它的用途不是替代开发计划，而是把“想建设什么”转换成数据结构、命令、验收标准和阶段顺序。
 
-具体未完成任务、优先级、阻塞原因、owner 配合事项和基础版遗留缺口统一登记在 `docs/task_register.md`。已完成和基础版完成任务归档在 `docs/task_register_completed.md`。本文负责长期模块路线图；任务状态变更以 task register 为准。
+具体未完成任务、优先级、阻塞原因、owner 配合事项和基础版遗留缺口统一登记在 `docs/task_register.md`。只有 terminal `DONE/DROPPED` 任务归档在 `docs/task_register_completed.md`；仍有明确缺口的 `BASELINE_DONE` 保留在 active register。本文负责长期模块路线图；任务状态变更以 task register 为准。
 
 ## 落地原则
 
@@ -13,7 +13,7 @@
 - 任何评分必须说明输入来源：硬数据、手工录入、占位默认值，还是 LLM 辅助抽取。
 - 不把新闻摘要直接变成交易动作；新闻只能改变假设、风险等级、人工审核状态或评分输入。
 - 所有仓位建议必须同时输出“风险资产内口径”和“总资产口径”。
-- 默认策略解释和回测优先使用 `ai_after_chatgpt` 市场阶段：锚定 `2022-11-30` ChatGPT 公开发布，默认起点 `2022-12-01`。2019 年以来的长窗口只作为跨周期压力测试或 warm-up。
+- 活跃策略研究、主回测和投资面对结论统一使用 `unified_primary_2021`，默认起点为 QQQ/SGOV/TQQQ exact-three-asset 可验证共同覆盖日 `2021-02-22`。`ai_after_chatgpt`（`2022-12-01`）只保留为历史比较或明确的 sensitivity/regime 角色；2019 年以来的长窗口只作为跨周期压力测试或 warm-up。
 
 ## 当前已完成基础
 
@@ -78,7 +78,7 @@ aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 
 - 先执行数据质量门禁，失败则停止。
 - 未显式传入 `--from` 时，起点来自 `config/market_regimes.yaml` 的默认市场阶段。
-- 默认市场阶段为 `ai_after_chatgpt`，即 `2022-12-01` 开始的 ChatGPT 后 AI 主线行情。
+- 默认市场阶段为 `unified_primary_2021`，即从 `2021-02-22` 开始的三资产共同可验证主窗口；`ai_after_chatgpt` 不是 active default 或 required comparator。
 - 每日收盘后计算评分，目标仓位从下一交易日收益开始生效，避免未来函数。
 - 使用 AI 仓位区间中点作为目标仓位。
 - 变化小于 `config/scoring_rules.yaml` 的最小调仓阈值时维持原仓位。

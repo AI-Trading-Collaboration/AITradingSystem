@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
+  title: null
+  domain: Governance / active task lifecycle and priority reconciliation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: governance coordinator；下一阶段N1高置信terminal reconciliation，coordinator单写共享register/views
+  requirement_refs:
+  - docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0已冻结inventory、task-own
+    acceptance、successor/closure evidence、remaining condition与recommended status，并生成30-decision
+    dry-run；下一步N1只应用高置信小批，不按数量目标强行归档。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；2021窗口、双线容量、runtime
+      baseline等active语义一致；ARCH-005 shadow/compatibility views byte-identical，task
+      consistency/docs/architecture/contract/required Full PASS；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1936
+    row_sha256: 121edba4eabdcc3681007ccbf5e4a1013233188c01b57bc567269a959746d860
+    cell_count: 8
+    all_cells:
+    - GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
+    - Governance / active task lifecycle and priority reconciliation
+    - P0
+    - IN_PROGRESS
+    - governance coordinator；下一阶段N1高置信terminal reconciliation，coordinator单写共享register/views
+    - 详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0已冻结inventory、task-own
+      acceptance、successor/closure evidence、remaining condition与recommended status，并生成30-decision
+      dry-run；下一步N1只应用高置信小批，不按数量目标强行归档。
+    - 实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；2021窗口、双线容量、runtime
+      baseline等active语义一致；ARCH-005 shadow/compatibility views byte-identical，task
+      consistency/docs/architecture/contract/required Full PASS；`production_effect=none`。
+    - 2026-07-23：N0随Wave11正式门禁闭合，`automatic_apply_allowed=false`、未自动执行任何disposition；任务保持IN_PROGRESS，N1须作为后续治理lane显式推进，不改变策略/数据/调度/production。
+    raw_line: '|GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION|Governance / active task
+      lifecycle and priority reconciliation|P0|IN_PROGRESS|governance coordinator；下一阶段N1高置信terminal
+      reconciliation，coordinator单写共享register/views|详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0已冻结inventory、task-own
+      acceptance、successor/closure evidence、remaining condition与recommended status，并生成30-decision
+      dry-run；下一步N1只应用高置信小批，不按数量目标强行归档。|实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；2021窗口、双线容量、runtime
+      baseline等active语义一致；ARCH-005 shadow/compatibility views byte-identical，task
+      consistency/docs/architecture/contract/required Full PASS；`production_effect=none`。|2026-07-23：N0随Wave11正式门禁闭合，`automatic_apply_allowed=false`、未自动执行任何disposition；任务保持IN_PROGRESS，N1须作为后续治理lane显式推进，不改变策略/数据/调度/production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-121edba4eabdcc3681007ccb
+  task_id: GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: governance coordinator；下一阶段N1高置信terminal reconciliation，coordinator单写共享register/views
+    notes: 2026-07-23：N0随Wave11正式门禁闭合，`automatic_apply_allowed=false`、未自动执行任何disposition；任务保持IN_PROGRESS，N1须作为后续治理lane显式推进，不改变策略/数据/调度/production。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:121edba4eabdcc3681007ccbf5e4a1013233188c01b57bc567269a959746d860
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
+  - Governance / active task lifecycle and priority reconciliation
+  - P0
+  - IN_PROGRESS
+  - governance coordinator；下一阶段N1高置信terminal reconciliation，coordinator单写共享register/views
+  - 详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0已冻结inventory、task-own
+    acceptance、successor/closure evidence、remaining condition与recommended status，并生成30-decision
+    dry-run；下一步N1只应用高置信小批，不按数量目标强行归档。
+  - 实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；2021窗口、双线容量、runtime
+    baseline等active语义一致；ARCH-005 shadow/compatibility views byte-identical，task consistency/docs/architecture/contract/required
+    Full PASS；`production_effect=none`。
+  - 2026-07-23：N0随Wave11正式门禁闭合，`automatic_apply_allowed=false`、未自动执行任何disposition；任务保持IN_PROGRESS，N1须作为后续治理lane显式推进，不改变策略/数据/调度/production。
+  docs_links:
+  - docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md
+  terminal: false
+  raw_row_sha256: 121edba4eabdcc3681007ccbf5e4a1013233188c01b57bc567269a959746d860
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 40a19b6cc9dd11e779e47e43fac5e22b95086832fc3409fb79fc33e92d1461e9

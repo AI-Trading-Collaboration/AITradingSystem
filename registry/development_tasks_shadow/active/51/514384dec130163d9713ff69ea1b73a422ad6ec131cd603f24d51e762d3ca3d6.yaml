@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  title: null
+  domain: Architecture / Operations and periodic consumer native migration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations domain worker + architecture coordinator；与DATA-GOV D0B组成下一双线批次
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: coordinator先冻结最小shared DQ preflight interface、owner与version；G4只持operations
+    consumer adapter，D0B只持data-side evidence/provider binding，root CLI、scheduler wiring、runbook、system
+    flow和shared contract由coordinator单写。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 2 daily、2 weekly、1 monthly representative parity；date/condition gate、lock、retry/resume、typed
+      status、DQ failure propagation和artifact lineage逐项可重放；初期不开放真实automatic non-daily
+      dispatch；focused/architecture/contract/required Full PASS，`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1937
+    row_sha256: 432850a089742ddcafdf72ac53779564ec6a1318c0044472b6846af4fa447c9f
+    cell_count: 8
+    all_cells:
+    - ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+    - Architecture / Operations and periodic consumer native migration
+    - P0
+    - READY
+    - operations domain worker + architecture coordinator；与DATA-GOV D0B组成下一双线批次
+    - coordinator先冻结最小shared DQ preflight interface、owner与version；G4只持operations consumer
+      adapter，D0B只持data-side evidence/provider binding，root CLI、scheduler wiring、runbook、system
+      flow和shared contract由coordinator单写。
+    - 2 daily、2 weekly、1 monthly representative parity；date/condition gate、lock、retry/resume、typed
+      status、DQ failure propagation和artifact lineage逐项可重放；初期不开放真实automatic non-daily
+      dispatch；focused/architecture/contract/required Full PASS，`production_effect=none`。
+    - 2026-07-23：G2.5 readiness正式PASS后登记为唯一下一architecture domain slice；不与G3/G5同时开放。
+    raw_line: '|ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION|Architecture / Operations
+      and periodic consumer native migration|P0|READY|operations domain worker + architecture
+      coordinator；与DATA-GOV D0B组成下一双线批次|coordinator先冻结最小shared DQ preflight interface、owner与version；G4只持operations
+      consumer adapter，D0B只持data-side evidence/provider binding，root CLI、scheduler
+      wiring、runbook、system flow和shared contract由coordinator单写。|2 daily、2 weekly、1
+      monthly representative parity；date/condition gate、lock、retry/resume、typed status、DQ
+      failure propagation和artifact lineage逐项可重放；初期不开放真实automatic non-daily dispatch；focused/architecture/contract/required
+      Full PASS，`production_effect=none`。|2026-07-23：G2.5 readiness正式PASS后登记为唯一下一architecture
+      domain slice；不与G3/G5同时开放。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-432850a089742ddcafdf72ac
+  task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: READY
+  payload:
+    priority: P0
+    next_owner: operations domain worker + architecture coordinator；与DATA-GOV D0B组成下一双线批次
+    notes: 2026-07-23：G2.5 readiness正式PASS后登记为唯一下一architecture domain slice；不与G3/G5同时开放。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:432850a089742ddcafdf72ac53779564ec6a1318c0044472b6846af4fa447c9f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  - Architecture / Operations and periodic consumer native migration
+  - P0
+  - READY
+  - operations domain worker + architecture coordinator；与DATA-GOV D0B组成下一双线批次
+  - coordinator先冻结最小shared DQ preflight interface、owner与version；G4只持operations consumer
+    adapter，D0B只持data-side evidence/provider binding，root CLI、scheduler wiring、runbook、system
+    flow和shared contract由coordinator单写。
+  - 2 daily、2 weekly、1 monthly representative parity；date/condition gate、lock、retry/resume、typed
+    status、DQ failure propagation和artifact lineage逐项可重放；初期不开放真实automatic non-daily
+    dispatch；focused/architecture/contract/required Full PASS，`production_effect=none`。
+  - 2026-07-23：G2.5 readiness正式PASS后登记为唯一下一architecture domain slice；不与G3/G5同时开放。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 432850a089742ddcafdf72ac53779564ec6a1318c0044472b6846af4fa447c9f
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7f611616352846db430a2e1226c95b445c26da5499c52a607e4dd8de35a34e19

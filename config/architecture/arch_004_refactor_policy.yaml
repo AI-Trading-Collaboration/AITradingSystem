@@ -613,7 +613,7 @@ phase_g_execution:
   stages:
     G0_inventory_deprecation_policy_and_removal_gate: COMPLETE
     G1_shared_platform_helper_migration: COMPLETE
-    G2_interfaces_and_etf_cli_migration: IN_PROGRESS
+    G2_interfaces_and_etf_cli_migration: COMPLETE
     G3_reporting_native_migration: NOT_STARTED
     G4_operations_consumer_migration: NOT_STARTED
     G5_research_wrapper_migration: NOT_STARTED
@@ -883,7 +883,7 @@ phase_g_execution:
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260711T064010Z/test_runtime_summary.json
     production_effect: none
   g2_current_plan:
-    status: IN_PROGRESS
+    status: COMPLETE
     scope: interfaces_and_etf_cli
     target: src/ai_trading_system/cli_commands/etf_portfolio.py
     requirement_path: docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
@@ -891,8 +891,17 @@ phase_g_execution:
       G2_1_command_registry_and_golden_contract: COMPLETE
       G2_2_registration_shell_and_shared_parameters: COMPLETE
       G2_3_data_operations_reporting_groups: COMPLETE
-      G2_4_research_shadow_portfolio_groups: IN_PROGRESS
-      G2_5_freeze_deprecation_and_closeout: NOT_STARTED
+      G2_4_research_shadow_portfolio_groups: COMPLETE
+      G2_5_freeze_deprecation_and_closeout: COMPLETE
+    closeout_status: COMPLETE_FORMAL_GATES_PASS
+    next_wave:
+      status: READY_NOT_DISPATCHED
+      architecture_stage: G4_operations_consumer_migration
+      paired_task: DATA-GOV-001_D0B_CANONICAL_DQ_EVIDENCE
+      max_active_domain_workers: 2
+      g3_dispatch_allowed: false
+      g5_dispatch_allowed: false
+      production_effect: none
     command_groups: [data, research, portfolio, shadow, operations, reporting]
     golden_command_option_default_exit_help_parity_required: true
     duplicate_command_allowed: false
@@ -1194,7 +1203,7 @@ phase_g_execution:
       strategy_or_threshold_changed: false
       production_effect: none
     g2_4_current_plan:
-      status: IN_PROGRESS
+      status: COMPLETE
       first_slice: baseline_review
       implementation_started_in_g2_3_closeout: false
       callback_count: 7

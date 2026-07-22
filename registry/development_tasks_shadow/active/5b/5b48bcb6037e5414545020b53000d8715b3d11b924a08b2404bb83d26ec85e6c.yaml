@@ -12,15 +12,17 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner + data platform owner + architecture coordinator
+  next_owner: data platform worker + architecture coordinator；下一切片D0B provenance/consumer
+    preflight与G4并行
   requirement_refs:
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
-    contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
-    preflight、retention/backup的实施顺序与shared-path ownership。
+    contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract。D0A
+    immutable publication transaction已经正式闭合；D0B绑定reviewed DQ policy/validator/runtime
+    evidence并选择首批真实consumer，D0C再处理crash durability、backup/restore和reference-safe GC。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
@@ -31,37 +33,44 @@ task_record:
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1571
-    row_sha256: b2f90f58846ba1e65d7eb0debe62d1863b9fb6172c3edeac3533b78dcb670a54
+    line_number: 1573
+    row_sha256: 1c61ec7e36973a170793b5ffc4e924cce691fcbd1fc38a0aaf29808a9ebac26f
     cell_count: 8
     all_cells:
     - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
     - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and
       lineage
     - P0
-    - PROPOSED
-    - project owner + data platform owner + architecture coordinator
+    - IN_PROGRESS
+    - data platform worker + architecture coordinator；下一切片D0B provenance/consumer
+      preflight与G4并行
     - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
-      contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
-      preflight、retention/backup的实施顺序与shared-path ownership。
+      contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract。D0A
+      immutable publication transaction已经正式闭合；D0B绑定reviewed DQ policy/validator/runtime
+      evidence并选择首批真实consumer，D0C再处理crash durability、backup/restore和reference-safe
+      GC。
     - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
       freshness/区间coverage/内部缺口进入gate；cache lifecycle与backup/restore真实执行；instance
       lineage和source identity可重放；system flow/runbook/registry/catalog/tests同步。
-    - '2026-07-12: 根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。'
+    - 2026-07-23：D0A focused=`48 passed / 1 skipped`，两轮独立复审no P0/P1；随Wave11 architecture/contract/Full=`482/266/6710
+      passed`正式闭合。consumer cutover、DQ execution provenance、ACL/crash durability仍为false；下一步仅为D0B，`production_effect=none`。
     raw_line: '|DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE|Data Foundation /
-      immutable snapshots, canonical DQ evidence, lifecycle and lineage|P0|PROPOSED|project
-      owner + data platform owner + architecture coordinator|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
-      contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
-      preflight、retention/backup的实施顺序与shared-path ownership。|canonical数据采用staged immutable
-      snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
+      immutable snapshots, canonical DQ evidence, lifecycle and lineage|P0|IN_PROGRESS|data
+      platform worker + architecture coordinator；下一切片D0B provenance/consumer preflight与G4并行|详见
+      `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
+      contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract。D0A
+      immutable publication transaction已经正式闭合；D0B绑定reviewed DQ policy/validator/runtime
+      evidence并选择首批真实consumer，D0C再处理crash durability、backup/restore和reference-safe
+      GC。|canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
       freshness/区间coverage/内部缺口进入gate；cache lifecycle与backup/restore真实执行；instance
-      lineage和source identity可重放；system flow/runbook/registry/catalog/tests同步。|2026-07-12:
-      根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。|'
+      lineage和source identity可重放；system flow/runbook/registry/catalog/tests同步。|2026-07-23：D0A
+      focused=`48 passed / 1 skipped`，两轮独立复审no P0/P1；随Wave11 architecture/contract/Full=`482/266/6710
+      passed`正式闭合。consumer cutover、DQ execution provenance、ACL/crash durability仍为false；下一步仅为D0B，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b2f90f58846ba1e65d7eb0de
+  event_id: legacy-import-1c61ec7e36973a170793b5ff
   task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -71,32 +80,36 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: project owner + data platform owner + architecture coordinator
-    notes: '2026-07-12: 根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。'
+    next_owner: data platform worker + architecture coordinator；下一切片D0B provenance/consumer
+      preflight与G4并行
+    notes: 2026-07-23：D0A focused=`48 passed / 1 skipped`，两轮独立复审no P0/P1；随Wave11 architecture/contract/Full=`482/266/6710
+      passed`正式闭合。consumer cutover、DQ execution provenance、ACL/crash durability仍为false；下一步仅为D0B，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b2f90f58846ba1e65d7eb0debe62d1863b9fb6172c3edeac3533b78dcb670a54
+  - sha256:1c61ec7e36973a170793b5ffc4e924cce691fcbd1fc38a0aaf29808a9ebac26f
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
   - P0
-  - PROPOSED
-  - project owner + data platform owner + architecture coordinator
+  - IN_PROGRESS
+  - data platform worker + architecture coordinator；下一切片D0B provenance/consumer preflight与G4并行
   - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`；复用ARCH-004
-    contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract；下一步复核D0事务发布、统一DQ
-    preflight、retention/backup的实施顺序与shared-path ownership。
+    contracts/atomic writer及TRADING-726～759 validation-only baseline，不建立第二套contract。D0A
+    immutable publication transaction已经正式闭合；D0B绑定reviewed DQ policy/validator/runtime
+    evidence并选择首批真实consumer，D0C再处理crash durability、backup/restore和reference-safe GC。
   - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可校验`DataQualityEvidence`并在FAIL前零下游结果；market-calendar
     freshness/区间coverage/内部缺口进入gate；cache lifecycle与backup/restore真实执行；instance lineage和source
     identity可重放；system flow/runbook/registry/catalog/tests同步。
-  - '2026-07-12: 根据owner数据管理审计与逻辑分层决策登记为PROPOSED；只冻结目标和边界，不改变cache、gate、score、backtest或production。'
+  - 2026-07-23：D0A focused=`48 passed / 1 skipped`，两轮独立复审no P0/P1；随Wave11 architecture/contract/Full=`482/266/6710
+    passed`正式闭合。consumer cutover、DQ execution provenance、ACL/crash durability仍为false；下一步仅为D0B，`production_effect=none`。
   docs_links:
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   terminal: false
-  raw_row_sha256: b2f90f58846ba1e65d7eb0debe62d1863b9fb6172c3edeac3533b78dcb670a54
+  raw_row_sha256: 1c61ec7e36973a170793b5ffc4e924cce691fcbd1fc38a0aaf29808a9ebac26f
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 1c38cc02385e0680d5ed1a8409c9d64c57be1771996f580f2fd28f9099feece0
+fragment_checksum: 3fc3587ee1ac19e7cf3a5154a3a95240bc96ce500ee1c3556bdc829b6dd807a9

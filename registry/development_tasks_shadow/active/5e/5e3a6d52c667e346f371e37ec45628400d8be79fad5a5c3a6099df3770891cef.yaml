@@ -11,7 +11,7 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner；若决定恢复则显式授权G2.5
+  next_owner: architecture coordinator；下一批协调G4 + DATA-GOV D0B，保持shared-path串行集成
   requirement_refs:
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
@@ -20,42 +20,47 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-    handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。
+    handoff、ARCH-005 S0～S4B和G2.5 readiness均已PASS；下一执行批次只开放G4 Operations与DATA-GOV D0B，G3/G5按依赖顺序等待。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full
-      parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
+    text: 保持既有控制面、domain迁移与安全边界；依次完成G4、G3、G5、G6 characterization与G7 closeout，最终通过daily/weekly/monthly
+      parity、clean-clone、reproducibility、full parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1566
-    row_sha256: 28297ced51988a7a50e7cfb7d42a154e43756a12b268acd2d5537fc79cdc703e
+    line_number: 1569
+    row_sha256: 96af3d9f29a527a1b37609e0c133f842fd4b53f48b6d4fc6179ce1955da7d889
     cell_count: 8
     all_cells:
     - ARCH-004
     - Architecture / post-freeze architecture v2 after TRADING-2438N
     - P0
-    - BLOCKED_OWNER_INPUT
-    - project owner；若决定恢复则显式授权G2.5
+    - IN_PROGRESS
+    - architecture coordinator；下一批协调G4 + DATA-GOV D0B，保持shared-path串行集成
     - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-      handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。
-    - 保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full
-      parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
-    - 2026-07-19：S0/S1以869个task shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
-      passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。
-    raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|BLOCKED_OWNER_INPUT|project
-      owner；若决定恢复则显式授权G2.5|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-      handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。|保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly
-      parity、clean-clone、reproducibility、full parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。|2026-07-19：S0/S1以869个task
-      shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
-      passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。|'
+      handoff、ARCH-005 S0～S4B和G2.5 readiness均已PASS；下一执行批次只开放G4 Operations与DATA-GOV
+      D0B，G3/G5按依赖顺序等待。
+    - 保持既有控制面、domain迁移与安全边界；依次完成G4、G3、G5、G6 characterization与G7 closeout，最终通过daily/weekly/monthly
+      parity、clean-clone、reproducibility、full parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
+    - 2026-07-23：G2.5、D0A、N0及required focused/architecture/contract/Full已闭合；Full最终=`6710
+      passed / 3 skipped / 643 warnings / 1106.60s runner`。下一批固定为G4 + D0B；不自动启动G3/G5、S5、H、策略B/C或production
+      dispatch。
+    raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|IN_PROGRESS|architecture
+      coordinator；下一批协调G4 + DATA-GOV D0B，保持shared-path串行集成|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
+      handoff、ARCH-005 S0～S4B和G2.5 readiness均已PASS；下一执行批次只开放G4 Operations与DATA-GOV
+      D0B，G3/G5按依赖顺序等待。|保持既有控制面、domain迁移与安全边界；依次完成G4、G3、G5、G6 characterization与G7
+      closeout，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full parallel
+      pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。|2026-07-23：G2.5、D0A、N0及required
+      focused/architecture/contract/Full已闭合；Full最终=`6710 passed / 3 skipped / 643
+      warnings / 1106.60s runner`。下一批固定为G4 + D0B；不自动启动G3/G5、S5、H、策略B/C或production
+      dispatch。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-28297ced51988a7a50e7cfb7
+  event_id: legacy-import-96af3d9f29a527a1b37609e0
   task_id: ARCH-004
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -65,34 +70,36 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: project owner；若决定恢复则显式授权G2.5
-    notes: 2026-07-19：S0/S1以869个task shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
-      passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。
+    next_owner: architecture coordinator；下一批协调G4 + DATA-GOV D0B，保持shared-path串行集成
+    notes: 2026-07-23：G2.5、D0A、N0及required focused/architecture/contract/Full已闭合；Full最终=`6710
+      passed / 3 skipped / 643 warnings / 1106.60s runner`。下一批固定为G4 + D0B；不自动启动G3/G5、S5、H、策略B/C或production
+      dispatch。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:28297ced51988a7a50e7cfb7d42a154e43756a12b268acd2d5537fc79cdc703e
+  - sha256:96af3d9f29a527a1b37609e0c133f842fd4b53f48b6d4fc6179ce1955da7d889
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-004
   - Architecture / post-freeze architecture v2 after TRADING-2438N
   - P0
-  - BLOCKED_OWNER_INPUT
-  - project owner；若决定恢复则显式授权G2.5
+  - IN_PROGRESS
+  - architecture coordinator；下一批协调G4 + DATA-GOV D0B，保持shared-path串行集成
   - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-    handoff及ARCH-005 S0/S1均已PASS；既定技术依赖已满足，但handoff固定`next_slice_unblocked=false`，因此没有owner新指令不得进入G2.5。
-  - 保持既有控制面、domain迁移与安全边界；后续恢复时继续G2.5及后续lane，最终通过daily/weekly/monthly parity、clean-clone、reproducibility、full
-    parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
-  - 2026-07-19：S0/S1以869个task shadow、byte-identical views及fast/architecture/contract/reproducibility/full=`300/419/265/23/6394
-    passed`闭合。ARCH-004仍停在G2.5前，等待owner显式决定是否恢复；不自动续跑。
+    handoff、ARCH-005 S0～S4B和G2.5 readiness均已PASS；下一执行批次只开放G4 Operations与DATA-GOV D0B，G3/G5按依赖顺序等待。
+  - 保持既有控制面、domain迁移与安全边界；依次完成G4、G3、G5、G6 characterization与G7 closeout，最终通过daily/weekly/monthly
+    parity、clean-clone、reproducibility、full parallel pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
+  - 2026-07-23：G2.5、D0A、N0及required focused/architecture/contract/Full已闭合；Full最终=`6710
+    passed / 3 skipped / 643 warnings / 1106.60s runner`。下一批固定为G4 + D0B；不自动启动G3/G5、S5、H、策略B/C或production
+    dispatch。
   docs_links:
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   terminal: false
-  raw_row_sha256: 28297ced51988a7a50e7cfb7d42a154e43756a12b268acd2d5537fc79cdc703e
+  raw_row_sha256: 96af3d9f29a527a1b37609e0c133f842fd4b53f48b6d4fc6179ce1955da7d889
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 89eae1d8e0c9fa03059e2361df43f3c0ff52b93f4245b7360bbf6090b0ccaee5
+fragment_checksum: fc2e7b1fe0813c5da45c86314a90369ac7b9c87e047782b29ca14bd4367db1a9

@@ -1,0 +1,88 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  title: null
+  domain: Architecture maintenance / portable bootstrap validator bundle adoption
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: architecture platform maintainer
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 将G2.5已验证的tracked exact-byte bootstrap
+    validation bundle模式抽象为可复用、clean-clone可执行的standalone validator输入；保持历史handoff不可变。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: validator不依赖untracked `outputs/`；path/SHA/size/status/exit/tier和Git lineage全量校验；tamper/missing/CRLF/base-drift负例fail
+      closed；无第二套事实源。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1941
+    row_sha256: 30abf0a3bcdde7487401090e0c772ff799f8e78063e99ceae5b1809e8b962037
+    cell_count: 8
+    all_cells:
+    - ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+    - Architecture maintenance / portable bootstrap validator bundle adoption
+    - P2
+    - PROPOSED
+    - architecture platform maintainer
+    - 将G2.5已验证的tracked exact-byte bootstrap validation bundle模式抽象为可复用、clean-clone可执行的standalone
+      validator输入；保持历史handoff不可变。
+    - validator不依赖untracked `outputs/`；path/SHA/size/status/exit/tier和Git lineage全量校验；tamper/missing/CRLF/base-drift负例fail
+      closed；无第二套事实源。
+    - 2026-07-23：作为G2.5成功模式的后续复用项登记；不阻断G4/D0B。
+    raw_line: '|ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION|Architecture
+      maintenance / portable bootstrap validator bundle adoption|P2|PROPOSED|architecture
+      platform maintainer|将G2.5已验证的tracked exact-byte bootstrap validation bundle模式抽象为可复用、clean-clone可执行的standalone
+      validator输入；保持历史handoff不可变。|validator不依赖untracked `outputs/`；path/SHA/size/status/exit/tier和Git
+      lineage全量校验；tamper/missing/CRLF/base-drift负例fail closed；无第二套事实源。|2026-07-23：作为G2.5成功模式的后续复用项登记；不阻断G4/D0B。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-30abf0a3bcdde7487401090e
+  task_id: ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P2
+    next_owner: architecture platform maintainer
+    notes: 2026-07-23：作为G2.5成功模式的后续复用项登记；不阻断G4/D0B。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:30abf0a3bcdde7487401090e0c772ff799f8e78063e99ceae5b1809e8b962037
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  - Architecture maintenance / portable bootstrap validator bundle adoption
+  - P2
+  - PROPOSED
+  - architecture platform maintainer
+  - 将G2.5已验证的tracked exact-byte bootstrap validation bundle模式抽象为可复用、clean-clone可执行的standalone
+    validator输入；保持历史handoff不可变。
+  - validator不依赖untracked `outputs/`；path/SHA/size/status/exit/tier和Git lineage全量校验；tamper/missing/CRLF/base-drift负例fail
+    closed；无第二套事实源。
+  - 2026-07-23：作为G2.5成功模式的后续复用项登记；不阻断G4/D0B。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 30abf0a3bcdde7487401090e0c772ff799f8e78063e99ceae5b1809e8b962037
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: da039b19cc9e1abf084ea15611914bc21f2182deeb5f47b79597e0826e553d97

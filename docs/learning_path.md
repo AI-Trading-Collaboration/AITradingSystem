@@ -4,7 +4,7 @@
 
 如果你没有金融背景，建议先读 `docs/calculation_logic.md`。它用普通语言解释价格、收益率、移动平均、相对强弱、VIX、利率、基本面、估值、confidence、gate 和 position，并说明输入数据如何一步步算成日报、snapshot、trace 和 ledger。
 
-默认市场阶段是 `ai_after_chatgpt`：锚点为 ChatGPT 于 2022-11-30 公开发布，默认回测结论窗口从 2022-12-01 开始。早于该日期的数据可以用于 warm-up、压力测试或 regime 对比，但不应被当成默认 AI cycle 结论窗口。
+项目 active strategy research、primary backtest 与投资面对结论统一使用 `unified_primary_2021`，默认从 QQQ/SGOV/TQQQ exact-three-asset 共同可验证日 `2021-02-22` 开始。`ai_after_chatgpt`（`2022-12-01`）只用于明确声明的 AI-cycle attribution、historical comparison 或 sensitivity/stress 角色，不能为新 run 提供默认起点或 minimum bound。
 
 ## 第 0 步：系统做什么、不做什么
 

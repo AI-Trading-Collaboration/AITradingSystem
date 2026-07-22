@@ -32,7 +32,7 @@ AI 自动炒股系统
 -> 评分 / 置信度 / 仓位边界 / 报告 / 校准
 ```
 
-默认市场阶段是 ChatGPT 后 AI 主线行情。工程配置中的 `ai_after_chatgpt` 锚定 `2022-11-30` ChatGPT 公开发布，默认回测和策略解释从 `2022-12-01` 开始。更早数据可用于 warm-up、压力测试和跨周期比较，但不应替代这个默认结论窗口。
+项目 active strategy research、primary backtest 与投资面对结论统一采用 `unified_primary_2021`，从 QQQ/SGOV/TQQQ exact-three-asset 共同可验证日 `2021-02-22` 开始。工程配置中的 `ai_after_chatgpt` 仍锚定 `2022-11-30` ChatGPT 公开发布，但 `2022-12-01` 只承担明确声明的 AI-cycle attribution、historical comparison 或 sensitivity/stress 角色，不是新 run 的默认起点、必选 comparator 或 minimum bound。
 
 ## 能力圈
 

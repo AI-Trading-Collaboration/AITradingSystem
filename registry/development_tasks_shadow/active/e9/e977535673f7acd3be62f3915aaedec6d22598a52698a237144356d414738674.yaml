@@ -1,0 +1,91 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+  title: null
+  domain: Architecture / Reporting native migration and readable conclusion chain
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: reporting domain worker + architecture coordinator；等待G4/D0B typed status、DQ和artifact
+    contract稳定
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 迁移报告native consumer并梳理“数据→事实→解释→限制→结论”链；report
+    renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 关键CLI/schema/artifact/Reader Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
+      Full PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1938
+    row_sha256: 49ec3a5b385ef097a19579e2676b2c1340efd7a4b8e212098824be99c81273dc
+    cell_count: 8
+    all_cells:
+    - ARCH-004G3_REPORTING_NATIVE_MIGRATION
+    - Architecture / Reporting native migration and readable conclusion chain
+    - P1
+    - PROPOSED
+    - reporting domain worker + architecture coordinator；等待G4/D0B typed status、DQ和artifact
+      contract稳定
+    - 迁移报告native consumer并梳理“数据→事实→解释→限制→结论”链；report renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。
+    - 关键CLI/schema/artifact/Reader Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
+      Full PASS。
+    - 2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。
+    raw_line: '|ARCH-004G3_REPORTING_NATIVE_MIGRATION|Architecture / Reporting native
+      migration and readable conclusion chain|P1|PROPOSED|reporting domain worker
+      + architecture coordinator；等待G4/D0B typed status、DQ和artifact contract稳定|迁移报告native
+      consumer并梳理“数据→事实→解释→限制→结论”链；report renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。|关键CLI/schema/artifact/Reader
+      Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
+      Full PASS。|2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-49ec3a5b385ef097a19579e2
+  task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: reporting domain worker + architecture coordinator；等待G4/D0B typed
+      status、DQ和artifact contract稳定
+    notes: 2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:49ec3a5b385ef097a19579e2676b2c1340efd7a4b8e212098824be99c81273dc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004G3_REPORTING_NATIVE_MIGRATION
+  - Architecture / Reporting native migration and readable conclusion chain
+  - P1
+  - PROPOSED
+  - reporting domain worker + architecture coordinator；等待G4/D0B typed status、DQ和artifact
+    contract稳定
+  - 迁移报告native consumer并梳理“数据→事实→解释→限制→结论”链；report renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。
+  - 关键CLI/schema/artifact/Reader Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
+    Full PASS。
+  - 2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 49ec3a5b385ef097a19579e2676b2c1340efd7a4b8e212098824be99c81273dc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 17cf3aa958daafc07f14413f3bee552dbd54f28377c92c353290101446ee7e84

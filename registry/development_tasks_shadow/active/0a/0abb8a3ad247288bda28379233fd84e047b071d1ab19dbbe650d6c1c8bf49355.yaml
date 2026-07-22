@@ -1,0 +1,87 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+  title: null
+  domain: Architecture maintenance / strict YAML loader consolidation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: architecture platform maintainer
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 盘点task/change/compatibility/governance控制面中的重复strict
+    YAML parsing和错误边界，冻结单一canonical loader contract后分批迁移；不得改变schema或放宽fail-closed。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate key/unsafe
+      tag/encoding负例PASS，architecture/contract gates无回退。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1940
+    row_sha256: 379a1aa15f6f841b8492a6542578e40bf5c25f109190ec19b02415ce42bbde24
+    cell_count: 8
+    all_cells:
+    - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+    - Architecture maintenance / strict YAML loader consolidation
+    - P2
+    - PROPOSED
+    - architecture platform maintainer
+    - 盘点task/change/compatibility/governance控制面中的重复strict YAML parsing和错误边界，冻结单一canonical
+      loader contract后分批迁移；不得改变schema或放宽fail-closed。
+    - 重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate key/unsafe
+      tag/encoding负例PASS，architecture/contract gates无回退。
+    - 2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。
+    raw_line: '|ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION|Architecture maintenance
+      / strict YAML loader consolidation|P2|PROPOSED|architecture platform maintainer|盘点task/change/compatibility/governance控制面中的重复strict
+      YAML parsing和错误边界，冻结单一canonical loader contract后分批迁移；不得改变schema或放宽fail-closed。|重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate
+      key/unsafe tag/encoding负例PASS，architecture/contract gates无回退。|2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-379a1aa15f6f841b8492a654
+  task_id: ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P2
+    next_owner: architecture platform maintainer
+    notes: 2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:379a1aa15f6f841b8492a6542578e40bf5c25f109190ec19b02415ce42bbde24
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+  - Architecture maintenance / strict YAML loader consolidation
+  - P2
+  - PROPOSED
+  - architecture platform maintainer
+  - 盘点task/change/compatibility/governance控制面中的重复strict YAML parsing和错误边界，冻结单一canonical
+    loader contract后分批迁移；不得改变schema或放宽fail-closed。
+  - 重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate key/unsafe
+    tag/encoding负例PASS，architecture/contract gates无回退。
+  - 2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 379a1aa15f6f841b8492a6542578e40bf5c25f109190ec19b02415ce42bbde24
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 275ab3ebab97bfcbd9f25f289e5ebbb1f8e211056bb8842f5841a446629cbac4

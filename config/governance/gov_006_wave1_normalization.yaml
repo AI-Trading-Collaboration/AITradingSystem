@@ -1,0 +1,267 @@
+schema_version: gov_006_portfolio_normalization_policy.v2
+policy_id: gov_006_wave1_normalization
+wave_id: GOV-006-WAVE1-HIGH-CONFIDENCE
+version: 2.0.0
+status: GOVERNANCE_COORDINATOR_REVIEWED_WAVE1
+authorization:
+  authorized_by: project_owner
+  scope: GOVERNANCE_TASK_AND_PARALLEL_EXECUTION_ONLY
+  ref: owner_instruction_2026-07-23_parallel_execution
+  exact_decisions_approved: false
+decision_review:
+  reviewer: governance_coordinator
+  scope: EXACT_WAVE1_DECISIONS
+rationale: >-
+  Owner授权GOV-006治理任务登记与并行推进，不代表逐项批准Wave1决策。Wave1的
+  exact decisions由governance coordinator基于own acceptance与权威closure证据复核；
+  不把未来运行成熟、owner决策或新研究路线继续挂在旧实现任务上。
+required_validation:
+  - task-register-consistency
+  - arch-005-shadow-registry
+  - documentation-contract
+  - docs-freshness
+  - architecture-fitness
+  - contract-validation
+  - full
+
+decisions:
+  - task_id: TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE
+    own_acceptance_claim: Typed executor implementation and focused validation are complete; real replay belongs to M2B.
+    successors: []
+    remaining_work: []
+
+  - task_id: TRADING-2438M_GROWTH_TILT_POST_RUNTIME_CANDIDATE_PIT_REPLAY_BLOCKER_RESOLUTION
+    expected_source_status: BLOCKED_OWNER_INPUT
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: The old replay-blocker route was superseded by the authoritative family closure.
+    successors: &growth_closure
+      - task_id: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER
+        evidence_role: terminal_closure
+        expected_source: completed
+        expected_status: [DONE]
+      - task_id: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH
+        evidence_role: terminal_closure
+        expected_source: completed
+        expected_status: [DONE]
+    remaining_work: &new_growth_task
+      - Any future candidate-independent evidence must open a new governed task.
+  - task_id: TRADING-2438M1_GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVAL
+    expected_source_status: BLOCKED_OWNER_INPUT
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: The old candidate approval route has no active candidate after family closure.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438M1A_GROWTH_TILT_OWNER_DECISION_FINALIZATION
+    expected_source_status: BLOCKED_OWNER_INPUT
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: The prior A/B/C decision route was closed and cannot remain an owner action.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
+    expected_source_status: BLOCKED_OWNER_INPUT
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: The pending screening policy belongs to a closed candidate family.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438M1C_GROWTH_TILT_BASELINE_RUNTIME_MAPPING_INVENTORY_AND_OWNER_PREREGISTRATION
+    expected_source_status: BLOCKED_OWNER_INPUT
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: The old mapping route was superseded by the no-mutation-ready capability conclusion.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+    expected_source_status: PROPOSED
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: Replay binding was never eligible and the governing family is now closed.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION
+    expected_source_status: PROPOSED
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: Runtime metric resolution depended on a replay route that the closure removed.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION
+    expected_source_status: PROPOSED
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: The post-replay disposition is superseded by the terminal family disposition.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+    expected_source_status: DEFERRED
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: N3 was explicitly not started because mutation-ready capability count is zero.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+  - task_id: TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING
+    expected_source_status: DEFERRED
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    own_acceptance_claim: N4 was explicitly not started because no contract-ready candidate exists.
+    successors: *growth_closure
+    remaining_work: *new_growth_task
+
+  - task_id: TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: The evidence-extension plan and its governed route were implemented and consumed downstream.
+    successors: &risk_closeout
+      - task_id: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION
+        evidence_role: completed_consumer
+        expected_source: completed
+        expected_status: [DONE]
+      - task_id: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT
+        evidence_role: completed_consumer
+        expected_source: completed
+        expected_status: [DONE]
+    remaining_work: []
+  - task_id: TRADING-2321_RISK_CAP_COOLDOWN_DECAY_DESIGN
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: The cooldown/decay design contract and validation were completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: The signal-validity aging design contract and validation were completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+    own_acceptance_claim: SOURCE_BLOCKED_NOT_EXECUTED is the required fail-closed result for unavailable source evidence.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: Source binding and its validation were completed and consumed by later risk-cap stages.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2325_PORTFOLIO_BASELINE_SOURCE_DECISION
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: Baseline source decision evidence was completed and consumed downstream.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: The source-bound dry-run implementation and validation were completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: The static exposure-cap diagnostic review was completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: Dynamic target baseline preparation was completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2329_DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: Dynamic target source remediation was completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: Timestamp remediation and validation were completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+    own_acceptance_claim: The PIT-caveated readiness artifact is the task's governed completion result.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: Dynamic exposure-cap diagnostics and formal validation were completed.
+    successors: *risk_closeout
+    remaining_work: []
+  - task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    own_acceptance_claim: The forward-observe plan was completed; later owner pause evidence owns runtime disposition.
+    successors: *risk_closeout
+    remaining_work: []
+
+  - task_id: TRADING-1861_to_1875_TWO_LANE_GATED_OVERLAY_INTEGRATION
+    expected_source_status: BLOCKED_OWNER_INPUT
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_1806_TO_1885_MASTER_CLOSEOUT
+    own_acceptance_claim: The master closeout records that Phase 2 integration is not authorized by current evidence.
+    successors: &two_lane_closeout
+      - task_id: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
+        evidence_role: terminal_closure
+        expected_source: active
+        expected_status: [VALIDATING]
+    remaining_work: &new_two_lane_task
+      - New evidence must open a new integration task rather than revive this closed route.
+  - task_id: TRADING-1876_to_1885_MULTI_WINDOW_VALIDATION_AND_OVERFITTING_PRE_REVIEW
+    expected_source_status: BLOCKED_OWNER_INPUT
+    target_status: DROPPED
+    reason_code: SUPERSEDED_BY_TRADING_1806_TO_1885_MASTER_CLOSEOUT
+    own_acceptance_claim: The master closeout records that Phase 3 multi-window work is not authorized by current evidence.
+    successors: *two_lane_closeout
+    remaining_work: *new_two_lane_task
+
+  - task_id: TRADING-174
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE
+    own_acceptance_claim: The validation-tier implementation acceptance is complete; ongoing optimization has a separate owner.
+    successors: &runtime_owner
+      - task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+        evidence_role: active_continuation
+        expected_source: active
+        expected_status: [IN_PROGRESS]
+    remaining_work: []
+  - task_id: TRADING-347_FULL_TEST_RUNTIME_STABILIZATION
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE
+    own_acceptance_claim: Full runtime stabilization acceptance is complete; ongoing long-tail work has a separate owner.
+    successors: *runtime_owner
+    remaining_work: []
+  - task_id: TRADING-849_CRLF_NORMALIZATION_CLEANUP
+    expected_source_status: VALIDATING
+    target_status: DONE
+    reason_code: OWN_ACCEPTANCE_COMPLETE
+    own_acceptance_claim: The row records a clean diff check and completed CRLF normalization acceptance.
+    successors: []
+    remaining_work: []

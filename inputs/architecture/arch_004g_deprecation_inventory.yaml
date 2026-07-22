@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_317bfbd34e5e90143c0d
+inventory_id: arch_004g_deprecation_inventory_5d0dba8b6f4962b467d8
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 997
-  python_test_file_count: 1158
+  python_module_count: 1000
+  python_test_file_count: 1161
   direct_writer_baseline_count: 894
   direct_writer_current_count: 856
   direct_writer_violation_count: 0
@@ -92,7 +92,7 @@ surfaces:
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 7
   test_reference_file_count: 194
-  docs_config_reference_file_count: 92
+  docs_config_reference_file_count: 93
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
@@ -122,8 +122,8 @@ surfaces:
   top_level_class_count: 10
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 4
-  test_reference_file_count: 4
-  docs_config_reference_file_count: 26
+  test_reference_file_count: 5
+  docs_config_reference_file_count: 27
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
@@ -153,8 +153,8 @@ surfaces:
   top_level_class_count: 4
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 5
-  test_reference_file_count: 7
-  docs_config_reference_file_count: 23
+  test_reference_file_count: 8
+  docs_config_reference_file_count: 24
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:
@@ -246,8 +246,8 @@ surfaces:
   top_level_class_count: 0
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 2
-  test_reference_file_count: 8
-  docs_config_reference_file_count: 24
+  test_reference_file_count: 9
+  docs_config_reference_file_count: 25
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:

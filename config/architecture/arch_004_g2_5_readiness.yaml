@@ -1,0 +1,209 @@
+schema_version: arch_004_g2_5_readiness_policy.v1
+gate_id: ARCH-004G2_PARALLEL_READINESS_GATE
+status: OWNER_RESUMED_IMPLEMENTATION_GATE
+owner: architecture_coordinator
+owner_resume_ref: owner_instruction_2026-07-23_parallel_execution
+source_phase: ARCH-004G2.4
+source_handoff_path: inputs/architecture/arch_005_bootstrap_handoff.yaml
+source_validation_bundle_path: inputs/architecture/arch_005_bootstrap_validation_bundle.json
+source_validation_bundle_sha256: ca19518b825092225880d0245ba133fbc44ac126cde011aa4046b412d3de0295
+migration_matrix_path: inputs/architecture/arch_004g2_callback_migration_matrix.yaml
+parallel_control_policy_path: config/architecture/arch_005_parallel_control_policy.yaml
+ownership_policy_path: config/architecture/devex_ownership_policy.yaml
+max_active_domain_workers: 2
+reviewed_domain_owners: [operations_platform, reporting_platform, research_platform]
+gate_requirement_refs:
+  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+gate_acceptance_criteria:
+  - architecture-specific ownership and fail-closed rehearsal pass
+  - shared integration remains coordinator-owned
+  - production effect and broker action remain none
+
+coordinator:
+  change_id: arch-004-g2-5-integration-coordinator
+  task_id: ARCH-004G2_PARALLEL_READINESS_GATE
+  owner: architecture_coordinator
+  owned_paths: [inputs/architecture/arch_004g2_5_parallel_readiness.json]
+  coordinator_only_paths:
+    - config/architecture/arch_004_refactor_policy.yaml
+    - config/report_registry.yaml
+    - config/scheduled_tasks.yaml
+    - docs/artifact_catalog.md
+    - docs/system_flow.md
+    - docs/task_register.md
+    - docs/task_register_completed.md
+    - inputs/architecture/arch_004_compatibility_baseline.yaml
+    - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    - inputs/architecture/arch_004e_architecture_fitness.yaml
+    - inputs/architecture/arch_004e_module_manifest.yaml
+    - inputs/architecture/arch_004e_test_manifest.yaml
+    - inputs/architecture/arch_004g_deprecation_inventory.yaml
+    - src/ai_trading_system/cli.py
+    - src/ai_trading_system/contracts/operations.py
+    - src/ai_trading_system/contracts/report_spec.py
+    - src/ai_trading_system/contracts/research_lifecycle.py
+    - src/ai_trading_system/controlled_strategy_batch.py
+    - src/ai_trading_system/ops_daily.py
+    - src/ai_trading_system/reports/reader_brief.py
+  required_validation_tiers: [architecture-fitness, contract-validation, full]
+
+aggregate_targets:
+  - target_id: artifact_catalog
+    current_path: docs/artifact_catalog.md
+    fragment_root: config/architecture/fragments/artifacts
+  - target_id: report_registry
+    current_path: config/report_registry.yaml
+    fragment_root: config/architecture/fragments/reports
+  - target_id: system_flow
+    current_path: docs/system_flow.md
+    fragment_root: config/architecture/fragments/flows
+
+merge_order:
+  - contract
+  - adapter
+  - domain_migration
+  - tests_and_fragments
+  - shared_wiring_and_docs
+  - generated_aggregate
+  - compatibility_removal
+
+domains:
+  - domain_id: G4_OPERATIONS
+    task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+    change_id: arch-004-g2-5-01-g4-operations
+    owner: operations_platform
+    priority: P0
+    batch: 1
+    sequence: 1
+    owned_paths:
+      - config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml
+      - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
+      - src/ai_trading_system/platform/operations/periodic_consumer_migration.py
+      - tests/test_arch_004g4_operations_consumer_migration.py
+    shared_paths_requested:
+      - config/scheduled_tasks.yaml
+      - docs/artifact_catalog.md
+      - docs/system_flow.md
+      - src/ai_trading_system/ops_daily.py
+    module_ids: [ai_trading_system.platform.operations.periodic_consumer_migration]
+    contract_claims:
+      - {contract_id: data_quality_evidence.v1, version: v1, access: READ}
+      - {contract_id: run_ledger.v1, version: v1, access: READ}
+      - {contract_id: workflow_spec.v1, version: v1, access: READ}
+    required_validation_tiers:
+      - architecture-fitness
+      - contract-validation
+      - focused
+      - full
+      - integration
+    removal_targets:
+      - path: src/ai_trading_system/ops_daily.py
+        removal_gate: 2_daily_2_weekly_1_monthly_parity_then_coordinator_cutover
+    source_inventory:
+      - {path: src/ai_trading_system/ops_daily.py, role: legacy_periodic_entrypoint, current_owner_profile: general, canonical_owner_profile: operations}
+      - {path: src/ai_trading_system/platform/operations/periodic_control.py, role: canonical_due_control, current_owner_profile: platform, canonical_owner_profile: operations}
+      - {path: src/ai_trading_system/platform/operations/runtime_control.py, role: canonical_runtime_control, current_owner_profile: platform, canonical_owner_profile: operations}
+      - {path: tests/test_arch_004f1_operations_control_plane.py, role: characterization_and_contract_tests, current_owner_profile: quality, canonical_owner_profile: quality}
+    fragments:
+      - {fragment_id: artifact.arch_004g4_periodic_consumers, fragment_kind: artifact, target_id: artifact_catalog, path: config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml}
+      - {fragment_id: flow.arch_004g4_periodic_consumers, fragment_kind: flow, target_id: system_flow, path: config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml}
+
+  - domain_id: G3_REPORTING
+    task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+    change_id: arch-004-g2-5-02-g3-reporting
+    owner: reporting_platform
+    priority: P1
+    batch: 1
+    sequence: 2
+    owned_paths:
+      - config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml
+      - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
+      - config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml
+      - src/ai_trading_system/platform/reporting/reader_brief_native.py
+      - tests/test_arch_004g3_reporting_native_migration.py
+    shared_paths_requested:
+      - config/report_registry.yaml
+      - docs/artifact_catalog.md
+      - docs/system_flow.md
+      - src/ai_trading_system/reports/reader_brief.py
+    module_ids: [ai_trading_system.platform.reporting.reader_brief_native]
+    contract_claims:
+      - {contract_id: artifact_envelope.v1, version: v1, access: READ}
+      - {contract_id: report_spec.v1, version: v1, access: READ}
+    required_validation_tiers:
+      - architecture-fitness
+      - contract-validation
+      - focused
+      - full
+      - report-validation
+    removal_targets:
+      - path: src/ai_trading_system/reports/reader_brief.py
+        removal_gate: native_semantic_parity_then_coordinator_cutover
+    source_inventory:
+      - {path: src/ai_trading_system/reports/reader_brief.py, role: legacy_reader_brief_core, current_owner_profile: reporting, canonical_owner_profile: reporting}
+      - {path: src/ai_trading_system/platform/reporting/audit_index.py, role: canonical_audit_index, current_owner_profile: platform, canonical_owner_profile: reporting}
+      - {path: src/ai_trading_system/platform/reporting/owner_daily.py, role: canonical_owner_daily_provider, current_owner_profile: platform, canonical_owner_profile: reporting}
+      - {path: src/ai_trading_system/platform/reporting/research_review.py, role: canonical_research_review_provider, current_owner_profile: platform, canonical_owner_profile: reporting}
+      - {path: tests/test_arch_004f3_reporting_architecture.py, role: characterization_and_contract_tests, current_owner_profile: quality, canonical_owner_profile: quality}
+    fragments:
+      - {fragment_id: artifact.arch_004g3_reader_brief_native, fragment_kind: artifact, target_id: artifact_catalog, path: config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml}
+      - {fragment_id: flow.arch_004g3_reader_brief_native, fragment_kind: flow, target_id: system_flow, path: config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml}
+      - {fragment_id: report.arch_004g3_reader_brief_native, fragment_kind: report, target_id: report_registry, path: config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml}
+
+  - domain_id: G5_RESEARCH_WRAPPER
+    task_id: ARCH-004G5_RESEARCH_WRAPPER_MIGRATION
+    change_id: arch-004-g2-5-03-g5-research-wrapper
+    owner: research_platform
+    priority: P1
+    batch: 2
+    sequence: 3
+    owned_paths:
+      - config/architecture/fragments/artifacts/arch_004g5_research_wrapper.yaml
+      - config/architecture/fragments/flows/arch_004g5_research_wrapper.yaml
+      - src/ai_trading_system/research_framework/wrapper_migration.py
+      - tests/test_arch_004g5_research_wrapper_migration.py
+    shared_paths_requested:
+      - docs/artifact_catalog.md
+      - docs/system_flow.md
+      - src/ai_trading_system/controlled_strategy_batch.py
+    module_ids: [ai_trading_system.research_framework.wrapper_migration]
+    contract_claims:
+      - {contract_id: experiment_spec.v1, version: v1, access: READ}
+      - {contract_id: research_evaluation_context.v1, version: v1, access: READ}
+      - {contract_id: research_lifecycle.v1, version: v1, access: READ}
+    required_validation_tiers:
+      - architecture-fitness
+      - contract-validation
+      - focused
+      - full
+      - reproducibility
+      - slow-research-regression
+    removal_targets:
+      - path: src/ai_trading_system/controlled_strategy_batch.py
+        removal_gate: selected_wrapper_parity_then_coordinator_freeze_or_removal
+    source_inventory:
+      - {path: src/ai_trading_system/controlled_strategy_batch.py, role: legacy_task_shaped_research_wrapper, current_owner_profile: general, canonical_owner_profile: research}
+      - {path: src/ai_trading_system/research_framework/runner.py, role: canonical_experiment_runner, current_owner_profile: research, canonical_owner_profile: research}
+      - {path: src/ai_trading_system/research_framework/spec.py, role: canonical_experiment_spec, current_owner_profile: research, canonical_owner_profile: research}
+      - {path: tests/test_arch_004f2_research_lifecycle.py, role: lifecycle_contract_tests, current_owner_profile: quality, canonical_owner_profile: quality}
+      - {path: tests/test_arch_004f2_research_execution_chain.py, role: execution_chain_contract_tests, current_owner_profile: quality, canonical_owner_profile: quality}
+    fragments:
+      - {fragment_id: artifact.arch_004g5_research_wrapper, fragment_kind: artifact, target_id: artifact_catalog, path: config/architecture/fragments/artifacts/arch_004g5_research_wrapper.yaml}
+      - {fragment_id: flow.arch_004g5_research_wrapper, fragment_kind: flow, target_id: system_flow, path: config/architecture/fragments/flows/arch_004g5_research_wrapper.yaml}
+
+safety:
+  source_of_truth: LEGACY_MARKDOWN_ONLY
+  task_registry_mutation_allowed: false
+  aggregate_source_of_truth_write_allowed: false
+  dispatch_allowed: false
+  lease_acquisition_allowed: false
+  automatic_merge_allowed: false
+  strategy_logic_change_allowed: false
+  strategy_threshold_change_allowed: false
+  data_quality_change_allowed: false
+  pit_change_allowed: false
+  backtest_change_allowed: false
+  paper_shadow_change_allowed: false
+  production_effect: none
+  broker_action: none

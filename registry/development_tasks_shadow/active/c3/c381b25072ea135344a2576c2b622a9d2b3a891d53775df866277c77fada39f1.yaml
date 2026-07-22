@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+  title: null
+  domain: Test infrastructure / external request cache multiprocess harness hardening
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: data-platform test maintainer
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 在不改production coordination语义的前提下，把跨进程测试结果改为structured
+    PID/result，增加child early-exit检测、统一orchestration deadline及finally中的terminate/join/queue
+    close；保留waiter与late-contender两种合法路径。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 同key exactly one live request；唯一winner publish；loser只能是waiter reuse或winner
+      double-check reuse且event generation链精确；失败不依赖blind timeout、不遗留进程/queue；20次重复与完整文件PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1942
+    row_sha256: 02f0c151eadcb923ceade777d3053c150c0aa3e19f9cd4a87545e85ff040c104
+    cell_count: 8
+    all_cells:
+    - ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+    - Test infrastructure / external request cache multiprocess harness hardening
+    - P2
+    - PROPOSED
+    - data-platform test maintainer
+    - 在不改production coordination语义的前提下，把跨进程测试结果改为structured PID/result，增加child early-exit检测、统一orchestration
+      deadline及finally中的terminate/join/queue close；保留waiter与late-contender两种合法路径。
+    - 同key exactly one live request；唯一winner publish；loser只能是waiter reuse或winner double-check
+      reuse且event generation链精确；失败不依赖blind timeout、不遗留进程/queue；20次重复与完整文件PASS。
+    - 2026-07-23：Wave11第二次Full暴露race-dependent oracle后，当前最小durable test fix已PASS；剩余harness工程化作为P2独立项，不扩展production
+      lease/heartbeat/unlock。
+    raw_line: '|ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING|Test
+      infrastructure / external request cache multiprocess harness hardening|P2|PROPOSED|data-platform
+      test maintainer|在不改production coordination语义的前提下，把跨进程测试结果改为structured PID/result，增加child
+      early-exit检测、统一orchestration deadline及finally中的terminate/join/queue close；保留waiter与late-contender两种合法路径。|同key
+      exactly one live request；唯一winner publish；loser只能是waiter reuse或winner double-check
+      reuse且event generation链精确；失败不依赖blind timeout、不遗留进程/queue；20次重复与完整文件PASS。|2026-07-23：Wave11第二次Full暴露race-dependent
+      oracle后，当前最小durable test fix已PASS；剩余harness工程化作为P2独立项，不扩展production lease/heartbeat/unlock。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-02f0c151eadcb923ceade777
+  task_id: ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P2
+    next_owner: data-platform test maintainer
+    notes: 2026-07-23：Wave11第二次Full暴露race-dependent oracle后，当前最小durable test fix已PASS；剩余harness工程化作为P2独立项，不扩展production
+      lease/heartbeat/unlock。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:02f0c151eadcb923ceade777d3053c150c0aa3e19f9cd4a87545e85ff040c104
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+  - Test infrastructure / external request cache multiprocess harness hardening
+  - P2
+  - PROPOSED
+  - data-platform test maintainer
+  - 在不改production coordination语义的前提下，把跨进程测试结果改为structured PID/result，增加child early-exit检测、统一orchestration
+    deadline及finally中的terminate/join/queue close；保留waiter与late-contender两种合法路径。
+  - 同key exactly one live request；唯一winner publish；loser只能是waiter reuse或winner double-check
+    reuse且event generation链精确；失败不依赖blind timeout、不遗留进程/queue；20次重复与完整文件PASS。
+  - 2026-07-23：Wave11第二次Full暴露race-dependent oracle后，当前最小durable test fix已PASS；剩余harness工程化作为P2独立项，不扩展production
+    lease/heartbeat/unlock。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 02f0c151eadcb923ceade777d3053c150c0aa3e19f9cd4a87545e85ff040c104
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6396cd2d70e84e9db5d337ebadb2768763d1d066e95d52e4f864903fe2e8afcd

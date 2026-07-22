@@ -11,59 +11,53 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: 系统实现
+  next_owner: 系统验证；按真实日报继续观察当前窗口口径
   requirement_refs:
   - docs/requirements/price_source_reconciliation_2026-05-05.md
-  - docs/system_flow.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到
-    `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
+  unstructured_legacy_blocker_or_next_step: 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到当前
+    `unified_primary_2021` 主研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`。2026-05-05
+    使用的 `2022-12-01` 只保留为历史 baseline，不再供应当前默认。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01`
-      以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础 schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close
-      跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011 降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整
-      DONE 需后续按真实日报运行观察确认窗口口径足够稳定
+    text: Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2021-02-22`
+      以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断默认日报；基础 schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍
+      fail closed；第二源自身硬错误按 DATA-011 作为可审计告警；报告必须声明实际检查窗口。完整 DONE 需后续按真实日报运行观察确认当前窗口口径稳定。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1517
-    row_sha256: 7ff54686cc6e2387565776aa167aa473959f5818dd377eb7bca5deeffa83cf6c
+    line_number: 1520
+    row_sha256: 5bbfe80a069887c10e823dffb71eb1b2bef1ec078086ff61bdb6c06f61e9b82c
     cell_count: 8
     all_cells:
     - DATA-010
     - 数据源/一致性研究窗口
     - P0
     - BASELINE_DONE
-    - 系统实现
-    - 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到 `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
-    - Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础
-      schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011
-      降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整 DONE 需后续按真实日报运行观察确认窗口口径足够稳定
-    - '2026-05-05: 新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
-      P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
-      `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
-      错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
-      已将第二源自身异常从阻断项改为可审计告警。'
-    raw_line: '|DATA-010|数据源/一致性研究窗口|P0|BASELINE_DONE|系统实现|已把价格一致性、宏观变化和跨源 reconciliation
-      的默认检查窗口绑定到 `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`|Baseline
-      完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础
-      schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011
-      降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整 DONE 需后续按真实日报运行观察确认窗口口径足够稳定|2026-05-05:
-      新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
-      P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
-      `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
-      错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
-      已将第二源自身异常从阻断项改为可审计告警。|'
+    - 系统验证；按真实日报继续观察当前窗口口径
+    - 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到当前 `unified_primary_2021` 主研究窗口；详细记录见
+      `docs/requirements/price_source_reconciliation_2026-05-05.md`。2026-05-05 使用的
+      `2022-12-01` 只保留为历史 baseline，不再供应当前默认。
+    - Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2021-02-22` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断默认日报；基础
+      schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误按 DATA-011
+      作为可审计告警；报告必须声明实际检查窗口。完整 DONE 需后续按真实日报运行观察确认当前窗口口径稳定。
+    - 2026-07-23：active语义与实际 `config/data_quality.yaml` 对齐为 `2021-02-22`；不回写2026-05-05历史run。此前baseline实现与DATA-011安全边界保持不变。
+    raw_line: '|DATA-010|数据源/一致性研究窗口|P0|BASELINE_DONE|系统验证；按真实日报继续观察当前窗口口径|已把价格一致性、宏观变化和跨源
+      reconciliation 的默认检查窗口绑定到当前 `unified_primary_2021` 主研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`。2026-05-05
+      使用的 `2022-12-01` 只保留为历史 baseline，不再供应当前默认。|Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源
+      consistency 检查只统计 `2021-02-22` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断默认日报；基础 schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内
+      raw close 跨源真实冲突仍 fail closed；第二源自身硬错误按 DATA-011 作为可审计告警；报告必须声明实际检查窗口。完整 DONE
+      需后续按真实日报运行观察确认当前窗口口径稳定。|2026-07-23：active语义与实际 `config/data_quality.yaml` 对齐为
+      `2021-02-22`；不回写2026-05-05历史run。此前baseline实现与DATA-011安全边界保持不变。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-7ff54686cc6e2387565776aa
+  event_id: legacy-import-5bbfe80a069887c10e823dff
   task_id: DATA-010
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -76,15 +70,11 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: 系统实现
-    notes: '2026-05-05: 新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
-      P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
-      `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
-      错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
-      已将第二源自身异常从阻断项改为可审计告警。'
+    next_owner: 系统验证；按真实日报继续观察当前窗口口径
+    notes: 2026-07-23：active语义与实际 `config/data_quality.yaml` 对齐为 `2021-02-22`；不回写2026-05-05历史run。此前baseline实现与DATA-011安全边界保持不变。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:7ff54686cc6e2387565776aa167aa473959f5818dd377eb7bca5deeffa83cf6c
+  - sha256:5bbfe80a069887c10e823dffb71eb1b2bef1ec078086ff61bdb6c06f61e9b82c
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -92,20 +82,17 @@ projection:
   - 数据源/一致性研究窗口
   - P0
   - BASELINE_DONE
-  - 系统实现
-  - 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到 `ai_after_chatgpt` 研究窗口；详细记录见 `docs/requirements/price_source_reconciliation_2026-05-05.md`
-  - Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2022-12-01` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断或提示默认日报；基础
-    schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误的默认处理由 DATA-011
-    降级为告警；报告声明一致性检查窗口；已同步更新 `docs/system_flow.md`、配置和测试。完整 DONE 需后续按真实日报运行观察确认窗口口径足够稳定
-  - '2026-05-05: 新增并进入实现，原因：owner 明确验证数据一致性只考虑研究时间跨度，太久之前的不一致可忽略或降低严重等级；该规则影响质量门禁和日报是否可继续，属于
-    P0 数据解释口径。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：配置、质量报告、价格/宏观窗口过滤和测试已完成；真实
-    `validate-data` warning 从 8 降到 7，2020 年 DTWEXBGS 旧窗口 warning 已移出，4 个研究窗口内 Marketstack
-    错误仍 fail closed；`ruff check .` 和 `pytest -q` 356 项通过。2026-05-05: 更新边界，原因：DATA-011
-    已将第二源自身异常从阻断项改为可审计告警。'
+  - 系统验证；按真实日报继续观察当前窗口口径
+  - 已把价格一致性、宏观变化和跨源 reconciliation 的默认检查窗口绑定到当前 `unified_primary_2021` 主研究窗口；详细记录见
+    `docs/requirements/price_source_reconciliation_2026-05-05.md`。2026-05-05 使用的 `2022-12-01`
+    只保留为历史 baseline，不再供应当前默认。
+  - Baseline 完成：默认数据质量门禁的价格波动、复权比例、宏观单日变化和主源/二源 consistency 检查只统计 `2021-02-22` 以来样本；早于研究窗口的复权/跨源/宏观变化差异不阻断默认日报；基础
+    schema、覆盖、新鲜度、重复键、主源硬错误和研究窗口内 raw close 跨源真实冲突仍 fail closed；第二源自身硬错误按 DATA-011
+    作为可审计告警；报告必须声明实际检查窗口。完整 DONE 需后续按真实日报运行观察确认当前窗口口径稳定。
+  - 2026-07-23：active语义与实际 `config/data_quality.yaml` 对齐为 `2021-02-22`；不回写2026-05-05历史run。此前baseline实现与DATA-011安全边界保持不变。
   docs_links:
   - docs/requirements/price_source_reconciliation_2026-05-05.md
-  - docs/system_flow.md
   terminal: false
-  raw_row_sha256: 7ff54686cc6e2387565776aa167aa473959f5818dd377eb7bca5deeffa83cf6c
+  raw_row_sha256: 5bbfe80a069887c10e823dffb71eb1b2bef1ec078086ff61bdb6c06f61e9b82c
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 049415d7ad6709ee8cbb859e2bc7cb9456109af2da0a65f53473055c1b8b4faf
+fragment_checksum: f94990d75193656a2d0b58ba5cea6c4f5f81fea1fb4b6be38eaa668337ad5d46

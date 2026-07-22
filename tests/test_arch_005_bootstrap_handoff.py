@@ -88,9 +88,7 @@ def test_bootstrap_handoff_builds_complete_fail_closed_contract(tmp_path: Path) 
             "HANDOFF_SHARED_ACTIVITY_ACTIVE",
         ),
         (
-            lambda payload: payload["migration_matrix"].__setitem__(
-                "pending_callback_count", 1
-            ),
+            lambda payload: payload["migration_matrix"].__setitem__("pending_callback_count", 1),
             "HANDOFF_MATRIX_INCOMPLETE",
         ),
     ],
@@ -143,15 +141,11 @@ def test_bootstrap_handoff_accepts_frozen_git_blob_with_checkout_eol_normalizati
     payload = _payload(tmp_path)
     tracked_paths = [
         payload["migration_matrix"]["path"],
-        *(
-            record["path"]
-            for record in payload["architecture_state"].values()
-        ),
+        *(record["path"] for record in payload["architecture_state"].values()),
         payload["worktree_attribution"]["attribution_path"],
     ]
     frozen = {
-        path: (tmp_path / path).read_bytes().replace(b"\r\n", b"\n")
-        for path in tracked_paths
+        path: (tmp_path / path).read_bytes().replace(b"\r\n", b"\n") for path in tracked_paths
     }
 
     validate_bootstrap_handoff(
@@ -159,6 +153,52 @@ def test_bootstrap_handoff_accepts_frozen_git_blob_with_checkout_eol_normalizati
         project_root=tmp_path,
         frozen_tracked_files=frozen,
     )
+
+
+def test_bootstrap_handoff_accepts_frozen_validation_artifacts_without_output_files(
+    tmp_path: Path,
+) -> None:
+    payload = _payload(tmp_path)
+    frozen: dict[str, bytes] = {}
+    for record in payload["validation_artifacts"].values():
+        path = tmp_path / record["artifact_path"]
+        frozen[record["artifact_path"]] = path.read_bytes()
+        path.unlink()
+
+    validate_bootstrap_handoff(
+        payload,
+        project_root=tmp_path,
+        frozen_validation_artifacts=frozen,
+    )
+
+
+@pytest.mark.parametrize("mutation", ["missing", "extra", "tamper"])
+def test_bootstrap_handoff_rejects_invalid_frozen_validation_set(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    payload = _payload(tmp_path)
+    frozen = {
+        record["artifact_path"]: (tmp_path / record["artifact_path"]).read_bytes()
+        for record in payload["validation_artifacts"].values()
+    }
+    first = sorted(frozen)[0]
+    if mutation == "missing":
+        frozen.pop(first)
+        code = "HANDOFF_FROZEN_VALIDATION_SET"
+    elif mutation == "extra":
+        frozen["outputs/validation_runtime/unexpected.json"] = b"{}"
+        code = "HANDOFF_FROZEN_VALIDATION_SET"
+    else:
+        frozen[first] += b"\n"
+        code = "HANDOFF_FILE_HASH_DRIFT"
+
+    with pytest.raises(BootstrapHandoffError, match=code):
+        validate_bootstrap_handoff(
+            payload,
+            project_root=tmp_path,
+            frozen_validation_artifacts=frozen,
+        )
 
 
 def _payload(root: Path) -> dict[str, object]:
@@ -213,16 +253,17 @@ def _frozen_project(root: Path) -> dict[str, Path]:
         {"status": "fixture"},
     )
     artifacts: dict[str, Path] = {}
-    for tier in (
-        "focused",
-        "architecture_fitness",
-        "contract_validation",
-        "full_validation",
-    ):
+    summary_tiers = {
+        "focused": "fast-unit",
+        "architecture_fitness": "architecture-fitness",
+        "contract_validation": "contract-validation",
+        "full_validation": "full",
+    }
+    for tier, summary_tier in summary_tiers.items():
         path = root / "outputs/validation_runtime" / tier / "test_runtime_summary.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps({"status": "PASS", "exit_code": 0, "tier": tier}),
+            json.dumps({"status": "PASS", "exit_code": 0, "tier": summary_tier}),
             encoding="utf-8",
         )
         artifacts[tier] = path

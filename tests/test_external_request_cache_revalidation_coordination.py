@@ -111,6 +111,23 @@ def _start_spawn_workers(
     network_delay_seconds: float,
     published_status: str = "REUSABLE",
 ) -> tuple[list[Any], Any, Any, Path]:
+    request_keys: dict[str, str] = {}
+    for request_name, cache_key in specifications:
+        existing_key = request_keys.setdefault(request_name, cache_key)
+        if existing_key != cache_key:
+            raise ValueError("spawn fixture request_name must map to exactly one cache_key")
+
+    for request_name in request_keys:
+        write_json_atomic(
+            tmp_path / f"{request_name}.json",
+            {
+                "status": "NEEDS_REVALIDATION",
+                "generation_id": "expired-generation",
+                "body_sha256": BODY_OLD,
+                "reason_code": "EXPIRED_REVALIDATE",
+            },
+        )
+
     context = multiprocessing.get_context("spawn")
     first_probe_queue = context.Queue()
     release_first_probe = context.Event()
@@ -121,15 +138,6 @@ def _start_spawn_workers(
     for request_name, cache_key in specifications:
         request_dir = tmp_path / request_name
         state_path = tmp_path / f"{request_name}.json"
-        write_json_atomic(
-            state_path,
-            {
-                "status": "NEEDS_REVALIDATION",
-                "generation_id": "expired-generation",
-                "body_sha256": BODY_OLD,
-                "reason_code": "EXPIRED_REVALIDATE",
-            },
-        )
         worker = context.Process(
             target=_multiprocess_execute_worker,
             args=(
@@ -279,6 +287,89 @@ def test_winner_double_check_reuses_without_live_request(tmp_path: Path) -> None
 
     assert result.status == "WINNER_DOUBLE_CHECK_REUSE"
     assert result.value == "cached"
+
+
+def test_waiter_reuses_after_active_owner_publishes_without_live_request(
+    tmp_path: Path,
+) -> None:
+    coordinator = ExternalRequestRevalidationCoordinator(tmp_path / "request", cache_key=KEY_A)
+    needs = RevalidationProbe[str](
+        status="NEEDS_REVALIDATION",
+        generation_id="generation-1",
+        body_sha256=BODY_OLD,
+        reason_code="EXPIRED_REVALIDATE",
+    )
+    reusable = RevalidationProbe(
+        status="REUSABLE",
+        generation_id="generation-2",
+        body_sha256=BODY_NEW,
+        reason_code="HIT",
+        value="cached",
+    )
+    prior_owner = coordinator.acquire(needs, owner_id="owner-prior000")
+    assert prior_owner.lease is not None
+    published = False
+
+    def probe() -> RevalidationProbe[str]:
+        return reusable if published else needs
+
+    def publish_during_wait(_seconds: float) -> None:
+        nonlocal published
+        published = True
+        coordinator.complete(
+            prior_owner.lease,
+            outcome="PUBLISHED",
+            published_probe=reusable,
+        )
+
+    result = coordinator.execute(
+        probe=probe,
+        fetch=lambda: pytest.fail("waiter reuse must not call live client"),
+        publish=lambda _value: pytest.fail("waiter reuse must not publish"),
+        sleep=publish_during_wait,
+    )
+
+    assert result.status == "WAITER_REUSE"
+    assert result.value == "cached"
+    assert coordinator.replay().current_state == "COMPLETED"
+
+
+def test_late_contender_double_checks_completed_owner_without_live_request(
+    tmp_path: Path,
+) -> None:
+    coordinator = ExternalRequestRevalidationCoordinator(tmp_path / "request", cache_key=KEY_A)
+    needs = RevalidationProbe[str](
+        status="NEEDS_REVALIDATION",
+        generation_id="generation-1",
+        body_sha256=BODY_OLD,
+        reason_code="EXPIRED_REVALIDATE",
+    )
+    reusable = RevalidationProbe(
+        status="REUSABLE",
+        generation_id="generation-2",
+        body_sha256=BODY_NEW,
+        reason_code="HIT",
+        value="cached",
+    )
+    prior_owner = coordinator.acquire(needs, owner_id="owner-prior000")
+    assert prior_owner.lease is not None
+    coordinator.complete(
+        prior_owner.lease,
+        outcome="PUBLISHED",
+        published_probe=reusable,
+    )
+    observations = iter((needs, reusable))
+
+    result = coordinator.execute(
+        probe=lambda: next(observations),
+        fetch=lambda: pytest.fail("late contender must not call live client"),
+        publish=lambda _value: pytest.fail("late contender must not publish"),
+    )
+
+    assert result.status == "WINNER_DOUBLE_CHECK_REUSE"
+    assert result.value == "cached"
+    assert result.lease_generation == 2
+    assert coordinator.replay().current_state == "COMPLETED"
 
 
 def test_stale_owner_takeover_is_bounded_and_old_owner_cannot_publish(tmp_path: Path) -> None:
@@ -451,11 +542,34 @@ def test_two_spawned_processes_same_key_make_one_live_request(tmp_path: Path) ->
     results = _finish_workers(workers, result_queue)
 
     assert all(result[0] == "PASS" for result in results), results
-    assert sorted(result[1] for result in results) == ["WAITER_REUSE", "WINNER_PUBLISHED"]
+    statuses = [result[1] for result in results]
+    assert statuses.count("WINNER_PUBLISHED") == 1
+    reuse_statuses = [status for status in statuses if status != "WINNER_PUBLISHED"]
+    # The first-probe barrier freezes the same stale observation in both processes, but
+    # Windows may schedule the contender either before or after the winner completes.
+    # Both paths reuse the published generation and must make no second live request.
+    assert reuse_statuses in (["WAITER_REUSE"], ["WINNER_DOUBLE_CHECK_REUSE"])
     assert len(list(call_dir.glob("*.json"))) == 1
     replay = ExternalRequestRevalidationCoordinator(tmp_path / "shared", cache_key=KEY_A).replay()
     assert replay.status == "PASS"
     assert replay.current_state == "COMPLETED"
+    terminal_outcomes = [event["outcome"] for event in replay.events if event["outcome"]]
+    if reuse_statuses == ["WAITER_REUSE"]:
+        assert terminal_outcomes == ["PUBLISHED"]
+    else:
+        assert terminal_outcomes == ["PUBLISHED", "DOUBLE_CHECK_REUSE"]
+        assert [event["generation"] for event in replay.events] == [1, 1, 2, 2]
+
+
+def test_spawn_fixture_rejects_same_request_name_with_different_keys(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="exactly one cache_key"):
+        _start_spawn_workers(
+            tmp_path,
+            [("shared", KEY_A), ("shared", KEY_B)],
+            network_delay_seconds=0.01,
+        )
+
+    assert not (tmp_path / "calls").exists()
 
 
 def test_spawned_processes_different_keys_revalidate_in_parallel(tmp_path: Path) -> None:

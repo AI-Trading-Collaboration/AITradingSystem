@@ -153,6 +153,7 @@ def validate_bootstrap_handoff(
     expected_head_commit: str | None = None,
     expected_branch: str | None = None,
     frozen_tracked_files: Mapping[str, bytes] | None = None,
+    frozen_validation_artifacts: Mapping[str, bytes] | None = None,
 ) -> None:
     expected_top = {
         "schema_version",
@@ -220,14 +221,14 @@ def validate_bootstrap_handoff(
     _parse_generated_at(payload["generated_at"])
     root = project_root.resolve()
     _validate_matrix(payload["migration_matrix"], root, frozen_tracked_files)
-    _validate_tiers(payload["validation_artifacts"], root)
-    _validate_architecture_state(
-        payload["architecture_state"], root, frozen_tracked_files
+    _validate_tiers(
+        payload["validation_artifacts"],
+        root,
+        frozen_validation_artifacts,
     )
+    _validate_architecture_state(payload["architecture_state"], root, frozen_tracked_files)
     _validate_shared_path_activity(payload["shared_path_activity"])
-    _validate_worktree_attribution(
-        payload["worktree_attribution"], root, frozen_tracked_files
-    )
+    _validate_worktree_attribution(payload["worktree_attribution"], root, frozen_tracked_files)
     checksum = _sha256(payload["handoff_checksum"], "handoff_checksum")
     if checksum != bootstrap_handoff_checksum(payload):
         raise BootstrapHandoffError("HANDOFF_CHECKSUM_DRIFT", "handoff checksum mismatch")
@@ -339,25 +340,68 @@ def _validate_matrix(
             raise BootstrapHandoffError("HANDOFF_MATRIX_DRIFT", handoff_field)
 
 
-def _validate_tiers(value: object, root: Path) -> None:
+def _validate_tiers(
+    value: object,
+    root: Path,
+    frozen_validation_artifacts: Mapping[str, bytes] | None,
+) -> None:
     tiers = _mapping(value, "validation_artifacts")
     if set(tiers) != set(REQUIRED_VALIDATION_TIERS):
         raise BootstrapHandoffError("HANDOFF_VALIDATION_TIERS", str(sorted(tiers)))
     expected = {"tier", "status", "artifact_path", "artifact_sha256"}
+    expected_paths: set[str] = set()
+    records: dict[str, Mapping[str, Any]] = {}
     for tier in REQUIRED_VALIDATION_TIERS:
         record = _mapping(tiers[tier], tier)
         _require_exact_keys(record, expected, "HANDOFF_VALIDATION_FIELDS")
         if record["tier"] != tier or record["status"] != "PASS":
             raise BootstrapHandoffError("HANDOFF_VALIDATION_NOT_PASS", tier)
-        artifact = _verify_file_reference(
-            record,
-            root,
-            path_key="artifact_path",
-            sha_key="artifact_sha256",
+        path = _portable_path(record["artifact_path"], f"validation_artifacts.{tier}")
+        if path in expected_paths:
+            raise BootstrapHandoffError("HANDOFF_VALIDATION_PATH_DUPLICATE", path)
+        expected_paths.add(path)
+        records[tier] = record
+    if (
+        frozen_validation_artifacts is not None
+        and set(frozen_validation_artifacts) != expected_paths
+    ):
+        raise BootstrapHandoffError(
+            "HANDOFF_FROZEN_VALIDATION_SET",
+            f"expected={sorted(expected_paths)} actual={sorted(frozen_validation_artifacts)}",
         )
-        summary = _json_mapping(artifact, f"validation artifact {tier}")
+    expected_summary_tiers = {
+        "focused": "fast-unit",
+        "architecture_fitness": "architecture-fitness",
+        "contract_validation": "contract-validation",
+        "full_validation": "full",
+    }
+    for tier in REQUIRED_VALIDATION_TIERS:
+        record = records[tier]
+        if frozen_validation_artifacts is None:
+            artifact = _verify_file_reference(
+                record,
+                root,
+                path_key="artifact_path",
+                sha_key="artifact_sha256",
+            )
+            summary = _json_mapping(artifact, f"validation artifact {tier}")
+        else:
+            path = _portable_path(record["artifact_path"], f"validation_artifacts.{tier}")
+            content = frozen_validation_artifacts[path]
+            if not isinstance(content, bytes):
+                raise BootstrapHandoffError("HANDOFF_FROZEN_VALIDATION_BYTES", path)
+            expected_sha = _sha256(record["artifact_sha256"], "artifact_sha256")
+            actual_sha = hashlib.sha256(content).hexdigest()
+            if actual_sha != expected_sha:
+                raise BootstrapHandoffError(
+                    "HANDOFF_FILE_HASH_DRIFT",
+                    f"{path}: expected={expected_sha} actual={actual_sha}",
+                )
+            summary = _json_bytes_mapping(content, f"validation artifact {tier}")
         if summary.get("status") != "PASS" or summary.get("exit_code") != 0:
             raise BootstrapHandoffError("HANDOFF_VALIDATION_ARTIFACT_INVALID", tier)
+        if summary.get("tier") != expected_summary_tiers[tier]:
+            raise BootstrapHandoffError("HANDOFF_VALIDATION_ARTIFACT_TIER", tier)
 
 
 def _validate_architecture_state(
@@ -556,6 +600,14 @@ def _json_mapping(path: Path, label: str) -> Mapping[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise BootstrapHandoffError("HANDOFF_ARTIFACT_READ", f"{label}: {exc}") from exc
+    return _mapping(value, label)
+
+
+def _json_bytes_mapping(content: bytes, label: str) -> Mapping[str, Any]:
+    try:
+        value = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise BootstrapHandoffError("HANDOFF_ARTIFACT_READ", f"{label}: {exc}") from exc
     return _mapping(value, label)
 

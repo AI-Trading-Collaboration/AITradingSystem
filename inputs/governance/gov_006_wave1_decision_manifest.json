@@ -1,0 +1,1540 @@
+{
+  "apply_boundary": {
+    "automatic_apply_allowed": false,
+    "coordinator_only": true,
+    "refresh_arch_005_shadow_views_required": true,
+    "required_validation": [
+      "task-register-consistency",
+      "arch-005-shadow-registry",
+      "documentation-contract",
+      "docs-freshness",
+      "architecture-fitness",
+      "contract-validation",
+      "full"
+    ],
+    "source_hash_policy_hash_status_and_ancestry_revalidation_required": true
+  },
+  "before_inventory": {
+    "active_section_count_sum": 436,
+    "active_section_counts": [
+      {
+        "category": "main",
+        "section": "当前任务",
+        "task_count": 421
+      },
+      {
+        "category": "supplemental",
+        "section": "当前推进补充",
+        "task_count": 14
+      },
+      {
+        "category": "deferred",
+        "section": "暂缓任务",
+        "task_count": 1
+      }
+    ],
+    "active_task_count": 436,
+    "active_task_count_formula": "421 + 14 + 1 = 436",
+    "completed_task_count": 456,
+    "inventory_scope": "all_legacy_task_rows",
+    "priority_counts": {
+      "P0": 269,
+      "P1": 136,
+      "P2": 31
+    },
+    "status_counts": {
+      "BASELINE_DONE": 100,
+      "BLOCKED_EXTERNAL": 11,
+      "BLOCKED_OWNER_INPUT": 15,
+      "DEFERRED": 3,
+      "IN_PROGRESS": 4,
+      "PROPOSED": 16,
+      "READY": 3,
+      "VALIDATING": 284
+    }
+  },
+  "decision_count": 30,
+  "decisions": [
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Typed executor implementation and focused validation are complete; real replay belongs to M2B.",
+          "line": 1587,
+          "path": "docs/task_register.md",
+          "sha256": "12a11cd6c425b1d8654a89fe36497780cea27b451a00637846a4171fc3bf1335",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE",
+      "remaining_work": [],
+      "successor_refs": [],
+      "target_status": "DONE",
+      "task_id": "TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "BLOCKED_OWNER_INPUT",
+      "own_acceptance_refs": [
+        {
+          "claim": "The old replay-blocker route was superseded by the authoritative family closure.",
+          "line": 1580,
+          "path": "docs/task_register.md",
+          "sha256": "545476b884553680b07fc6fd128a19c3429a07ff7d7ce9c6ff91885670d759da",
+          "source": "active",
+          "status": "BLOCKED_OWNER_INPUT",
+          "task_id": "TRADING-2438M_GROWTH_TILT_POST_RUNTIME_CANDIDATE_PIT_REPLAY_BLOCKER_RESOLUTION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438M_GROWTH_TILT_POST_RUNTIME_CANDIDATE_PIT_REPLAY_BLOCKER_RESOLUTION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "BLOCKED_OWNER_INPUT",
+      "own_acceptance_refs": [
+        {
+          "claim": "The old candidate approval route has no active candidate after family closure.",
+          "line": 1581,
+          "path": "docs/task_register.md",
+          "sha256": "2d5eced60a98d54bbababf24a6eece77b27f74d44c1c7cd1754716000d187a9c",
+          "source": "active",
+          "status": "BLOCKED_OWNER_INPUT",
+          "task_id": "TRADING-2438M1_GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVAL"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438M1_GROWTH_TILT_CANDIDATE_RUNTIME_SPEC_AND_THRESHOLD_POLICY_APPROVAL"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "BLOCKED_OWNER_INPUT",
+      "own_acceptance_refs": [
+        {
+          "claim": "The prior A/B/C decision route was closed and cannot remain an owner action.",
+          "line": 1582,
+          "path": "docs/task_register.md",
+          "sha256": "becfcf9a891f46807b62b7b645574aadfa72727d55274edecfaa892fe898d8c1",
+          "source": "active",
+          "status": "BLOCKED_OWNER_INPUT",
+          "task_id": "TRADING-2438M1A_GROWTH_TILT_OWNER_DECISION_FINALIZATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438M1A_GROWTH_TILT_OWNER_DECISION_FINALIZATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "BLOCKED_OWNER_INPUT",
+      "own_acceptance_refs": [
+        {
+          "claim": "The pending screening policy belongs to a closed candidate family.",
+          "line": 1585,
+          "path": "docs/task_register.md",
+          "sha256": "d58906ef18c277bf4b083e3f3846151c448dc486bf7aaae55141d9610d84ecf6",
+          "source": "active",
+          "status": "BLOCKED_OWNER_INPUT",
+          "task_id": "TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "BLOCKED_OWNER_INPUT",
+      "own_acceptance_refs": [
+        {
+          "claim": "The old mapping route was superseded by the no-mutation-ready capability conclusion.",
+          "line": 1586,
+          "path": "docs/task_register.md",
+          "sha256": "8cb563a4d8d4bc2d48d8ee0a96de31432d2dda4eeb55e8da7853ebaa00d20724",
+          "source": "active",
+          "status": "BLOCKED_OWNER_INPUT",
+          "task_id": "TRADING-2438M1C_GROWTH_TILT_BASELINE_RUNTIME_MAPPING_INVENTORY_AND_OWNER_PREREGISTRATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438M1C_GROWTH_TILT_BASELINE_RUNTIME_MAPPING_INVENTORY_AND_OWNER_PREREGISTRATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "PROPOSED",
+      "own_acceptance_refs": [
+        {
+          "claim": "Replay binding was never eligible and the governing family is now closed.",
+          "line": 1588,
+          "path": "docs/task_register.md",
+          "sha256": "af256a1ca534d6f40ed506b73f0f1f225de25b4de87809a83ed3b472f8983052",
+          "source": "active",
+          "status": "PROPOSED",
+          "task_id": "TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "PROPOSED",
+      "own_acceptance_refs": [
+        {
+          "claim": "Runtime metric resolution depended on a replay route that the closure removed.",
+          "line": 1589,
+          "path": "docs/task_register.md",
+          "sha256": "4d312267ecf77477dd7cdcd5da1a0c16242979c0e6c65185079034d817a96a64",
+          "source": "active",
+          "status": "PROPOSED",
+          "task_id": "TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438M3_GROWTH_TILT_METRIC_AND_THRESHOLD_RESOLUTION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "PROPOSED",
+      "own_acceptance_refs": [
+        {
+          "claim": "The post-replay disposition is superseded by the terminal family disposition.",
+          "line": 1590,
+          "path": "docs/task_register.md",
+          "sha256": "92dfcaefda0d971a4d586ca9699032510f40444cbd7830372595d02ac93b9219",
+          "source": "active",
+          "status": "PROPOSED",
+          "task_id": "TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "DEFERRED",
+      "own_acceptance_refs": [
+        {
+          "claim": "N3 was explicitly not started because mutation-ready capability count is zero.",
+          "line": 1583,
+          "path": "docs/task_register.md",
+          "sha256": "34d72cfe806b09381b89a0fdadecdae25f831deb4ceb02b95de7b06b3381dd43",
+          "source": "active",
+          "status": "DEFERRED",
+          "task_id": "TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "DEFERRED",
+      "own_acceptance_refs": [
+        {
+          "claim": "N4 was explicitly not started because no contract-ready candidate exists.",
+          "line": 1584,
+          "path": "docs/task_register.md",
+          "sha256": "acbdf505ac7dcfd4b631fbd4a7e61d138c0e349b52fe59b54306d26d4b1c535d",
+          "source": "active",
+          "status": "DEFERRED",
+          "task_id": "TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE",
+      "remaining_work": [
+        "Any future candidate-independent evidence must open a new governed task."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 35,
+          "path": "docs/task_register_completed.md",
+          "sha256": "e295362b8294d2b029707e70fe084e08b508ffad44431a100168c7fdec35e0d2",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N1_GROWTH_TILT_CANDIDATE_FAMILY_CLOSURE_AND_NEGATIVE_EVIDENCE_LEDGER"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH",
+          "evidence_role": "terminal_closure",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 34,
+          "path": "docs/task_register_completed.md",
+          "sha256": "bc53d78204753607ceebd59a50182948c71a541ab025fa05054be15116caf1bf",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2438N2_GROWTH_TILT_BASELINE_CAPABILITY_GRAPH"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-2438N4_GROWTH_TILT_MULTI_FIDELITY_CANDIDATE_SCREENING"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The evidence-extension plan and its governed route were implemented and consumed downstream.",
+          "line": 1602,
+          "path": "docs/task_register.md",
+          "sha256": "b51e55a7c0b29e67eae83894f942b0fbc33a6ad09390c7e8bbe0adf9fa6409ba",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The cooldown/decay design contract and validation were completed.",
+          "line": 1623,
+          "path": "docs/task_register.md",
+          "sha256": "61c98a9eaac347c4d7035f8219a4a93333c19b77205109e23a00ed92d17c415a",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2321_RISK_CAP_COOLDOWN_DECAY_DESIGN"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2321_RISK_CAP_COOLDOWN_DECAY_DESIGN"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The signal-validity aging design contract and validation were completed.",
+          "line": 1624,
+          "path": "docs/task_register.md",
+          "sha256": "cb34bd67307e185a8801a36f936884f8f1d8fa4d3e75daa295b683aa210ac265",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "SOURCE_BLOCKED_NOT_EXECUTED is the required fail-closed result for unavailable source evidence.",
+          "line": 1625,
+          "path": "docs/task_register.md",
+          "sha256": "5d4896cfeaf8224ff9e9c1e7f5e8d4ea6718b38a6944cb817188754886e68e1e",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Source binding and its validation were completed and consumed by later risk-cap stages.",
+          "line": 1601,
+          "path": "docs/task_register.md",
+          "sha256": "c7b2737c2ac4b8f841e84bd3b5458387489696e0ae8041c952faf3fb889df633",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2324_EXPOSURE_CAP_SIMULATION_SOURCE_BINDING"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Baseline source decision evidence was completed and consumed downstream.",
+          "line": 1600,
+          "path": "docs/task_register.md",
+          "sha256": "94d8028bb81bf9dd94d1b4fc9a61f400fbaf0b29d5caa1f71baf606765aeb6e4",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2325_PORTFOLIO_BASELINE_SOURCE_DECISION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2325_PORTFOLIO_BASELINE_SOURCE_DECISION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The source-bound dry-run implementation and validation were completed.",
+          "line": 1599,
+          "path": "docs/task_register.md",
+          "sha256": "2a0b679a19b5b130bb7512628f4bc2bb39f63fc5f9e40ef0d670385b5d4b9496",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2326_SOURCE_BOUND_EXPOSURE_CAP_DRY_RUN_STATIC_ETF_BASELINE"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The static exposure-cap diagnostic review was completed.",
+          "line": 1598,
+          "path": "docs/task_register.md",
+          "sha256": "fcc38f0f58b6d1259448cff7f89b3130cecb404580daed286a2509105349443f",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Dynamic target baseline preparation was completed.",
+          "line": 1597,
+          "path": "docs/task_register.md",
+          "sha256": "85960b8deb6d5912d1fb9bd1cb31ee3d147330b80510fe92d0d82919895ed5be",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2328_DYNAMIC_TARGET_BASELINE_PREPARATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Dynamic target source remediation was completed.",
+          "line": 1596,
+          "path": "docs/task_register.md",
+          "sha256": "403bd0529dd5f940b71e44b935b3df87d2dd5a2a885a7ed61734e119240ef8dd",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2329_DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2329_DYNAMIC_TARGET_BASELINE_SOURCE_REMEDIATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Timestamp remediation and validation were completed.",
+          "line": 1595,
+          "path": "docs/task_register.md",
+          "sha256": "cd38a0b9fd3f95c71147a7b9fc2a17702d8298e48568a1b0e9031f011f4d050e",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2330_DYNAMIC_TARGET_BASELINE_TIMESTAMP_REMEDIATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The PIT-caveated readiness artifact is the task's governed completion result.",
+          "line": 1594,
+          "path": "docs/task_register.md",
+          "sha256": "7129afb1800d29ec9d6c98cca4a88a65c1b1842d945600916dd0f43d605950a5",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Dynamic exposure-cap diagnostics and formal validation were completed.",
+          "line": 1593,
+          "path": "docs/task_register.md",
+          "sha256": "b7595b7c7dbc4315c5003a4d4b6f82222236debdf889ea3f331d63d24820ca55",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2333_DYNAMIC_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The forward-observe plan was completed; later owner pause evidence owns runtime disposition.",
+          "line": 1591,
+          "path": "docs/task_register.md",
+          "sha256": "3dd1abb57053fd4e9c33a7bf991f3068fe4d290fc0db3562708bd471c2448dec",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 172,
+          "path": "docs/task_register_completed.md",
+          "sha256": "693badee905034f24dd05be82c22e40be2d4f86b50dced2801ccc52cf28221f5",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2335_HIGH_INTENSITY_RISK_CAP_THRESHOLD_SELECTION"
+        },
+        {
+          "claim": "typed successor/closure evidence: TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT",
+          "evidence_role": "completed_consumer",
+          "expected_source": "completed",
+          "expected_status": [
+            "DONE"
+          ],
+          "line": 135,
+          "path": "docs/task_register_completed.md",
+          "sha256": "8c78d9e55b8caea1511f427712eb8154006fb2c30cd5047bad95156929ecf2bd",
+          "source": "completed",
+          "status": "DONE",
+          "task_id": "TRADING-2363_OBSERVE_ONLY_OWNER_DECISION_PAUSE_CHECKPOINT"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "BLOCKED_OWNER_INPUT",
+      "own_acceptance_refs": [
+        {
+          "claim": "The master closeout records that Phase 2 integration is not authorized by current evidence.",
+          "line": 1654,
+          "path": "docs/task_register.md",
+          "sha256": "25f579b34c9e54e27e6380641cc023c28e3fd8f137c22c5a67ecf46fa278c639",
+          "source": "active",
+          "status": "BLOCKED_OWNER_INPUT",
+          "task_id": "TRADING-1861_to_1875_TWO_LANE_GATED_OVERLAY_INTEGRATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_1806_TO_1885_MASTER_CLOSEOUT",
+      "remaining_work": [
+        "New evidence must open a new integration task rather than revive this closed route."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT",
+          "evidence_role": "terminal_closure",
+          "expected_source": "active",
+          "expected_status": [
+            "VALIDATING"
+          ],
+          "line": 1651,
+          "path": "docs/task_register.md",
+          "sha256": "2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-1861_to_1875_TWO_LANE_GATED_OVERLAY_INTEGRATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "BLOCKED_OWNER_INPUT",
+      "own_acceptance_refs": [
+        {
+          "claim": "The master closeout records that Phase 3 multi-window work is not authorized by current evidence.",
+          "line": 1655,
+          "path": "docs/task_register.md",
+          "sha256": "bf1518bf1edde0803e888c9e4ad2dc4c5ba1361dec5a1d5ab97af1edfb8ee2e1",
+          "source": "active",
+          "status": "BLOCKED_OWNER_INPUT",
+          "task_id": "TRADING-1876_to_1885_MULTI_WINDOW_VALIDATION_AND_OVERFITTING_PRE_REVIEW"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "SUPERSEDED_BY_TRADING_1806_TO_1885_MASTER_CLOSEOUT",
+      "remaining_work": [
+        "New evidence must open a new integration task rather than revive this closed route."
+      ],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT",
+          "evidence_role": "terminal_closure",
+          "expected_source": "active",
+          "expected_status": [
+            "VALIDATING"
+          ],
+          "line": 1651,
+          "path": "docs/task_register.md",
+          "sha256": "2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT"
+        }
+      ],
+      "target_status": "DROPPED",
+      "task_id": "TRADING-1876_to_1885_MULTI_WINDOW_VALIDATION_AND_OVERFITTING_PRE_REVIEW"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The validation-tier implementation acceptance is complete; ongoing optimization has a separate owner.",
+          "line": 1854,
+          "path": "docs/task_register.md",
+          "sha256": "4b8c62c719458de02b0a665ac4642fae0cc8c17358f8a230a43bd3fc520001ee",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-174"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+          "evidence_role": "active_continuation",
+          "expected_source": "active",
+          "expected_status": [
+            "IN_PROGRESS"
+          ],
+          "line": 1570,
+          "path": "docs/task_register.md",
+          "sha256": "0f7614c5fbdd7cc9b9d242cebbbc3b829dd0692edcd87cf9657e5101dddb9fbc",
+          "source": "active",
+          "status": "IN_PROGRESS",
+          "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-174"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "Full runtime stabilization acceptance is complete; ongoing long-tail work has a separate owner.",
+          "line": 1828,
+          "path": "docs/task_register.md",
+          "sha256": "1f5b1fd8ec59e6126b90c083ac53f1b8e482cf8ff525df0f9e1d4139c3bca2ac",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-347_FULL_TEST_RUNTIME_STABILIZATION"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE",
+      "remaining_work": [],
+      "successor_refs": [
+        {
+          "claim": "typed successor/closure evidence: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE",
+          "evidence_role": "active_continuation",
+          "expected_source": "active",
+          "expected_status": [
+            "IN_PROGRESS"
+          ],
+          "line": 1570,
+          "path": "docs/task_register.md",
+          "sha256": "0f7614c5fbdd7cc9b9d242cebbbc3b829dd0692edcd87cf9657e5101dddb9fbc",
+          "source": "active",
+          "status": "IN_PROGRESS",
+          "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
+        }
+      ],
+      "target_status": "DONE",
+      "task_id": "TRADING-347_FULL_TEST_RUNTIME_STABILIZATION"
+    },
+    {
+      "action": "MOVE_ACTIVE_ROW_TO_COMPLETED_REGISTER",
+      "confidence": "HIGH",
+      "expected_source_status": "VALIDATING",
+      "own_acceptance_refs": [
+        {
+          "claim": "The row records a clean diff check and completed CRLF normalization acceptance.",
+          "line": 1725,
+          "path": "docs/task_register.md",
+          "sha256": "d5992c06197ecd4aad13433e9d74be83766968c2fb0bb895352618dbcbde660b",
+          "source": "active",
+          "status": "VALIDATING",
+          "task_id": "TRADING-849_CRLF_NORMALIZATION_CLEANUP"
+        }
+      ],
+      "production_effect": "none",
+      "reason_code": "OWN_ACCEPTANCE_COMPLETE",
+      "remaining_work": [],
+      "successor_refs": [],
+      "target_status": "DONE",
+      "task_id": "TRADING-849_CRLF_NORMALIZATION_CLEANUP"
+    }
+  ],
+  "manifest_id": "gov_006_decision_manifest_39215b522a97512cb56c",
+  "manifest_sha256": "39215b522a97512cb56cf241c8f9ab708323d8dff94cf169e8de398c5096cb96",
+  "policy": {
+    "authorization": {
+      "authorized_by": "project_owner",
+      "exact_decisions_approved": false,
+      "ref": "owner_instruction_2026-07-23_parallel_execution",
+      "scope": "GOVERNANCE_TASK_AND_PARALLEL_EXECUTION_ONLY"
+    },
+    "canonical_semantic_sha256": "a55f1ba1223cb9fa478f7ea5455454d20df9c3a9f9dd1717a9d62852e82440c5",
+    "decision_review": {
+      "reviewer": "governance_coordinator",
+      "scope": "EXACT_WAVE1_DECISIONS"
+    },
+    "path": "config/governance/gov_006_wave1_normalization.yaml",
+    "policy_id": "gov_006_wave1_normalization",
+    "raw_sha256": "b02d7913d9155c48d90403fd26f0491d6972f4bbb60b5cf8f809156a2c333450",
+    "schema_version": "gov_006_portfolio_normalization_policy.v2",
+    "status": "GOVERNANCE_COORDINATOR_REVIEWED_WAVE1",
+    "version": "2.0.0",
+    "wave_id": "GOV-006-WAVE1-HIGH-CONFIDENCE"
+  },
+  "safety": {
+    "broker_action": "none",
+    "data_or_runtime_change": false,
+    "production_effect": "none",
+    "strategy_logic_change": false,
+    "task_source_of_truth_cutover": false
+  },
+  "schema_version": "gov_006_portfolio_normalization_decision_manifest.v2",
+  "source": {
+    "active_path": "docs/task_register.md",
+    "active_sha256": "c0d0e39946533184e90256fe714b796321be22b5b12150ddfab20472a55df185",
+    "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+    "base_commit_rule": "CURRENT_COMMIT_MUST_EQUAL_OR_DESCEND_FROM_BASE_COMMIT",
+    "completed_path": "docs/task_register_completed.md",
+    "completed_sha256": "99119968b83dcc67f43d7c45e6325abbb15811d0e21bed04e4591d48b1772c0c"
+  },
+  "status": "DRY_RUN_READY",
+  "task_id": "GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION",
+  "wave_id": "GOV-006-WAVE1-HIGH-CONFIDENCE"
+}

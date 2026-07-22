@@ -22,6 +22,31 @@ from ai_trading_system.platform.architecture.deprecation import (
 )
 
 AT = datetime(2026, 7, 11, 5, 0, tzinfo=UTC)
+WAVE11_FINAL_REPOSITORY_COUNTS = {
+    "python_module_count": 1000,
+    "python_test_file_count": 1161,
+    "direct_writer_current_count": 856,
+}
+WAVE11_FINAL_DOCS_CONFIG_REFERENCE_COUNTS = {
+    "reader_brief_legacy_builder_renderer": 93,
+    "operations_daily_legacy_facade": 27,
+    "scheduled_tasks_legacy_facade": 24,
+    "controlled_strategy_batch_god_module": 25,
+}
+
+
+def test_wave11_deprecation_expectations_are_locked_at_pre_formal_freeze() -> None:
+    assert WAVE11_FINAL_REPOSITORY_COUNTS == {
+        "python_module_count": 1000,
+        "python_test_file_count": 1161,
+        "direct_writer_current_count": 856,
+    }
+    assert WAVE11_FINAL_DOCS_CONFIG_REFERENCE_COUNTS == {
+        "reader_brief_legacy_builder_renderer": 93,
+        "operations_daily_legacy_facade": 27,
+        "scheduled_tasks_legacy_facade": 24,
+        "controlled_strategy_batch_god_module": 25,
+    }
 
 
 def test_g0_policy_freezes_lifecycle_targets_and_removal_safety() -> None:
@@ -46,11 +71,12 @@ def test_g0_policy_freezes_lifecycle_targets_and_removal_safety() -> None:
 def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
+    repository_counts = WAVE11_FINAL_REPOSITORY_COUNTS
 
-    assert inventory.python_module_count == 997
-    assert inventory.python_test_file_count == 1158
+    assert inventory.python_module_count == repository_counts["python_module_count"]
+    assert inventory.python_test_file_count == repository_counts["python_test_file_count"]
     assert inventory.direct_writer_baseline_count == 894
-    assert inventory.direct_writer_current_count == 856
+    assert inventory.direct_writer_current_count == repository_counts["direct_writer_current_count"]
     assert inventory.direct_writer_violation_count == 0
     assert inventory.legacy_adapter_file_count == 7
     assert inventory.dynamic_strategy_wrapper_file_count == 99
@@ -67,6 +93,8 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert surfaces["dynamic_strategy_task_wrappers"].file_count == 99
     assert surfaces["dynamic_strategy_task_wrappers"].line_count == 88315
     assert surfaces["dynamic_strategy_task_wrappers"].top_level_function_count == 2114
+    for surface_id, expected_count in WAVE11_FINAL_DOCS_CONFIG_REFERENCE_COUNTS.items():
+        assert surfaces[surface_id].docs_config_reference_file_count == expected_count
     assert all(not item.removal_ready for item in inventory.surfaces)
     assert all(len(item.open_gate_ids) == 12 for item in inventory.surfaces)
     assert_frozen_deprecation_inventory(inventory)

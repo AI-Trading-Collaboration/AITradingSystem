@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004G2_PARALLEL_READINESS_GATE
+  title: null
+  domain: Architecture / G2.5 parallel change and merge readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: architecture coordinator：按新active任务启动G4 + DATA-GOV D0B；G3/G5继续等待依赖
+  requirement_refs:
+  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4
+    matrix=`967/0/0/0`、bootstrap handoff与ARCH-005 S0～S4B均PASS；G2.5绑定tracked bootstrap
+    validation bundle、三份exact change manifests、capacity=2双批rehearsal、7 fragments与20负例，历史handoff保持不可变。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: clean-clone validator不依赖`outputs/`；Git lineage=`handoff base -> handoff
+      HEAD -> source base`；focused/architecture/contract/Full、manifests/shadows/deprecation/compatibility/freshness全部PASS；55
+      current sources/24 superseded/stale=0；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 17
+    row_sha256: 91b2b9733c59996dc7537ed6b157fe388207feb8bac56a143a1c1c1c0dc8c69a
+    cell_count: 8
+    all_cells:
+    - ARCH-004G2_PARALLEL_READINESS_GATE
+    - Architecture / G2.5 parallel change and merge readiness
+    - P1
+    - DONE
+    - architecture coordinator：按新active任务启动G4 + DATA-GOV D0B；G3/G5继续等待依赖
+    - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4 matrix=`967/0/0/0`、bootstrap
+      handoff与ARCH-005 S0～S4B均PASS；G2.5绑定tracked bootstrap validation bundle、三份exact
+      change manifests、capacity=2双批rehearsal、7 fragments与20负例，历史handoff保持不可变。
+    - clean-clone validator不依赖`outputs/`；Git lineage=`handoff base -> handoff HEAD
+      -> source base`；focused/architecture/contract/Full、manifests/shadows/deprecation/compatibility/freshness全部PASS；55
+      current sources/24 superseded/stale=0；`production_effect=none`。
+    - 2026-07-23：Wave11与DATA-GOV D0A、GOV-006 N0共同收口。正式focused=`183 passed / 1 skipped`、architecture=`482
+      passed`、contract=`266 passed`；Full attempt chain保留两次真实FAIL，最终replacement=`6710
+      passed / 3 skipped / 643 warnings / 1106.60s runner`。下一批仅G4 + D0B，不自动启动G3/G5、S5、H、策略B/C或production。
+    raw_line: '|ARCH-004G2_PARALLEL_READINESS_GATE|Architecture / G2.5 parallel change
+      and merge readiness|P1|DONE|architecture coordinator：按新active任务启动G4 + DATA-GOV
+      D0B；G3/G5继续等待依赖|详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4
+      matrix=`967/0/0/0`、bootstrap handoff与ARCH-005 S0～S4B均PASS；G2.5绑定tracked bootstrap
+      validation bundle、三份exact change manifests、capacity=2双批rehearsal、7 fragments与20负例，历史handoff保持不可变。|clean-clone
+      validator不依赖`outputs/`；Git lineage=`handoff base -> handoff HEAD -> source base`；focused/architecture/contract/Full、manifests/shadows/deprecation/compatibility/freshness全部PASS；55
+      current sources/24 superseded/stale=0；`production_effect=none`。|2026-07-23：Wave11与DATA-GOV
+      D0A、GOV-006 N0共同收口。正式focused=`183 passed / 1 skipped`、architecture=`482 passed`、contract=`266
+      passed`；Full attempt chain保留两次真实FAIL，最终replacement=`6710 passed / 3 skipped
+      / 643 warnings / 1106.60s runner`。下一批仅G4 + D0B，不自动启动G3/G5、S5、H、策略B/C或production。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-91b2b9733c59996dc7537ed6
+  task_id: ARCH-004G2_PARALLEL_READINESS_GATE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: architecture coordinator：按新active任务启动G4 + DATA-GOV D0B；G3/G5继续等待依赖
+    notes: 2026-07-23：Wave11与DATA-GOV D0A、GOV-006 N0共同收口。正式focused=`183 passed / 1
+      skipped`、architecture=`482 passed`、contract=`266 passed`；Full attempt chain保留两次真实FAIL，最终replacement=`6710
+      passed / 3 skipped / 643 warnings / 1106.60s runner`。下一批仅G4 + D0B，不自动启动G3/G5、S5、H、策略B/C或production。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:91b2b9733c59996dc7537ed6b157fe388207feb8bac56a143a1c1c1c0dc8c69a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004G2_PARALLEL_READINESS_GATE
+  - Architecture / G2.5 parallel change and merge readiness
+  - P1
+  - DONE
+  - architecture coordinator：按新active任务启动G4 + DATA-GOV D0B；G3/G5继续等待依赖
+  - 详见 `docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`。G2.4 matrix=`967/0/0/0`、bootstrap
+    handoff与ARCH-005 S0～S4B均PASS；G2.5绑定tracked bootstrap validation bundle、三份exact
+    change manifests、capacity=2双批rehearsal、7 fragments与20负例，历史handoff保持不可变。
+  - clean-clone validator不依赖`outputs/`；Git lineage=`handoff base -> handoff HEAD ->
+    source base`；focused/architecture/contract/Full、manifests/shadows/deprecation/compatibility/freshness全部PASS；55
+    current sources/24 superseded/stale=0；`production_effect=none`。
+  - 2026-07-23：Wave11与DATA-GOV D0A、GOV-006 N0共同收口。正式focused=`183 passed / 1 skipped`、architecture=`482
+    passed`、contract=`266 passed`；Full attempt chain保留两次真实FAIL，最终replacement=`6710
+    passed / 3 skipped / 643 warnings / 1106.60s runner`。下一批仅G4 + D0B，不自动启动G3/G5、S5、H、策略B/C或production。
+  docs_links:
+  - docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md
+  terminal: true
+  raw_row_sha256: 91b2b9733c59996dc7537ed6b157fe388207feb8bac56a143a1c1c1c0dc8c69a
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 810f1ec89045d507db342217346e86adf5b2bebcff4cd5c4751563c7f4b72db6
