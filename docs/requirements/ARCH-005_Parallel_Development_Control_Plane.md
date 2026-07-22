@@ -6,7 +6,7 @@
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`IN_PROGRESS_S4C_VALIDATED_MAIN_INTEGRATION`
+- status：`BASELINE_DONE_S4C_VALIDATED_MAIN_INTEGRATION_S5_PENDING`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
@@ -14,7 +14,7 @@
 - approved pre-bootstrap boundary：ARCH-004G2.4-EB2 integration gate 已 PASS，owner 批准的下一实现范围为最终可复用、非 cutover 的 manifest/conflict/lane-plan/evidence primitives；它不是 S0，不得迁移 task registry、切换事实源、生成替代 task views、派发任务或获取真实 lease
 - pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
 - integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已获
-  owner 窄授权并在当前 Wave 7 执行；S5 canonical cutover 尚未授权
+  owner 窄授权并由 Wave 7 首次真实执行 PASS；S5 canonical cutover 尚未授权
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
 
@@ -507,6 +507,15 @@ validated-main integration 授权；任何扩大 lane capacity、切换 source-o
 恢复 G2.5 的决定仍必须单独授权，不能从“双线默认”推断。
 
 ## 状态记录
+
+- 2026-07-22：S4C 首个真实批次已完成。候选分支最终提交=`80ffc28c273ff4e3a2d8a50ebe165ea2e7441a45`，
+  fetch 后相对 `origin/main@0fc316e5` 为 `0 behind/6 ahead`；归属工作区 clean、active lease=0，
+  focused/architecture/contract=`22/446/265 passed`，代码最终 Full 证据=`6553 passed/2 skipped`、
+  runner=`1089.21s`，task shadow、module/test manifests、compatibility/deprecation/source hashes 均 fresh。
+  coordinator 执行 `git merge --ff-only` 与普通 push 后复核
+  `main=origin/main=candidate=80ffc28c273ff4e3a2d8a50ebe165ea2e7441a45`。S4C 因此转
+  `BASELINE_DONE_S4C_VALIDATED_MAIN_INTEGRATION_S5_PENDING`；本次仅为研发集成，
+  `production_effect=none`，不解锁 S5、ARCH-004 G2.5 或策略 promotion。
 
 - 2026-07-22：project owner 授权验证通过后的 main 自动集成。范围仅限 integration coordinator 对
   已完成归属、freshness、required focused/architecture/contract/full、generated hashes、lease 与

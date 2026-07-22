@@ -366,13 +366,20 @@ historical-seen evaluator；prospective holdout 仍未授权。
 |Lane|状态|任务/owned scope|冲突与停止条件|
 |---|---|---|---|
 |Engineering|`COMPLETE`|W7E1仅`tests/test_sim_interpretation.py`，复用immutable真实DAG|10 nodeids与PIT/missing/live drift/tamper保持；`105.71s -> 45.15s`，减少`57.29%`；weekly候选负优化已撤回|
-|Strategy evidence|`IN_PROGRESS`|`TRADING-2452` versioned package、validator与historical-seen evaluator；独占新inputs/module/tests/output root|policy冻结后才重建；DQ与2021 alignment必须PASS；300→train-only top20、六个fold、recent diagnostic；prospective access=false|
-|Coordinator|`IN_PROGRESS`|active policy/runtime/CLI/glossary迁移、shared docs/manifests/hash/formal gates与commit/push|保留旧TRADING-2451和Phase A glossary bytes；共享路径单写；不得把historical-seen结果描述为无偏OOS|
+|Strategy evidence|`COMPLETE_KILL_PAUSE`|`TRADING-2452` versioned package、validator与historical-seen evaluator；独占新inputs/module/tests/output root|policy冻结后才重建；DQ与2021 alignment必须PASS；300→train-only top20、六个fold、recent diagnostic；prospective access=false|
+|Coordinator|`COMPLETE_MAIN_INTEGRATED`|active policy/runtime/CLI/glossary迁移、shared docs/manifests/hash/formal gates与commit/push|保留旧TRADING-2451和Phase A glossary bytes；共享路径单写；不得把historical-seen结果描述为无偏OOS|
 
 本wave把“策略授权”与“工程性能优化”分开：策略lane可执行的最大边界是已知历史 clean evaluator，
 工程lane仍只做 test-only runtime 优化。任何 DQ 失败、2021 consistency misalignment、package/source
 drift、prospective holdout读取、搜索空间扩张或策略结果参与selection都会使策略lane fail closed；任何
 nodeid/producer/validator/tamper覆盖损失或 isolated门槛失败都会撤回工程改动。
+
+策略结果按预注册边界形成 A=`KILL_PAUSE`，没有据此自动启动 B/C、clean search 或 prospective
+holdout；工程 W11 完成 Typer command-tree fixture reuse，formal Full failure-fix rerun 为
+`6553 passed/2 skipped/1089.21s`。S4C 首次自动集成在全部适用门禁与 freshness PASS 后将
+`codex/dual-lane-wave7-window-migration@80ffc28c` fast-forward 到 `main` 并普通 push，远端 SHA
+复核一致。该结果证明 validated coordinator closeout 可执行，不代表策略 PASS、S5 cutover 或 G2.5
+恢复，`production_effect=none`。
 
 ### 后续架构方向
 
