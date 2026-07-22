@@ -7583,7 +7583,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004f2_research_execution_chain
   path: tests/test_arch_004f2_research_execution_chain.py
-  sha256: c7b061f008e9877e0502ffef8db49895bd6850175bfcf76df5895d93e74058d4
+  sha256: 438ce7e59012244a59bc44ebcf24f1ad9017fbd68a1fb31025dbad32462e975b
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

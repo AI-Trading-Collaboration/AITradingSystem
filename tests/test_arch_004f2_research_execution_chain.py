@@ -58,3 +58,20 @@ def test_research_execution_chain_keeps_production_boundary_explicit() -> None:
     assert "`production_effect=none`" in text
     assert "official target weights、paper-shadow、production、broker 均未启用" in text
     assert "不能自动调参、改权重或 promotion" in text
+
+
+def test_research_execution_chain_rejects_retired_2022_primary_claims() -> None:
+    text = DOCUMENT.read_text(encoding="utf-8")
+
+    retired_claims = (
+        "当前 source-backed 结果仍使用 `ai_after_chatgpt=2022-12-01` 主结论窗口",
+        "当前 source-backed 结果仍以 `ai_after_chatgpt=2022-12-01` 为主结论窗口",
+        "主结论窗口仍是 `ai_after_chatgpt=2022-12-01`",
+    )
+    for claim in retired_claims:
+        assert claim not in text
+
+    assert "Active primary conclusion window 统一从 `2021-02-22` 开始" in text
+    normalized = " ".join(text.split())
+    assert normalized.count("不再是 active default、required comparator 或 minimum start") >= 3
+    assert "immutable historical/legacy comparison" in text

@@ -11,61 +11,45 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
-    有界长尾候选
+  next_owner: Validation performance coordinator：本次formal closeout后从新Full profile选择有调用级归因的新候选
   requirement_refs:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-    provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
-    复用真实 Defensive DAG。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W13先拒绝无安全裁剪点的Smoothed
+    data/freshness，再验证Layer1 duplicate-builder重排；后者after仅`115.68s`、未达`<=96.56s`门槛并已byte-exact撤回。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s -> 14.82/15.12s`，Full=`16.2301
-      worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
-      passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
-      isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。
+    text: W13两个候选均不保留实现；Layer1 source blob恢复`af5586c...b6`，node/真实CLI/scoreboard/roadmap/安全语义不变。下一候选必须换机制、重新冻结baseline/门槛，不以本次0.75%噪声声明收益；`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1567
-    row_sha256: f96099059b3b87006ea085afec678e918a2a1faa2dad5d965a6ee5f964d256da
+    row_sha256: 7f239fed80d2faaf697051a822d470c7255921e0a39d702744552c462b9c4855
     cell_count: 8
     all_cells:
     - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
     - P1
     - IN_PROGRESS
-    - Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
-      有界长尾候选
-    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-      provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
-      复用真实 Defensive DAG。
-    - W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s -> 14.82/15.12s`，Full=`16.2301
-      worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
-      passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
-      isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。
-    - 2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
-      PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。
+    - Validation performance coordinator：本次formal closeout后从新Full profile选择有调用级归因的新候选
+    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W13先拒绝无安全裁剪点的Smoothed
+      data/freshness，再验证Layer1 duplicate-builder重排；后者after仅`115.68s`、未达`<=96.56s`门槛并已byte-exact撤回。
+    - W13两个候选均不保留实现；Layer1 source blob恢复`af5586c...b6`，node/真实CLI/scoreboard/roadmap/安全语义不变。下一候选必须换机制、重新冻结baseline/门槛，不以本次0.75%噪声声明收益；`production_effect=none`。
+    - 2026-07-22：W13=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；工程线本wave无源码/测试变更，不单独触发Full，策略窗口修复在双线集成边界独立验证。
     raw_line: '|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture
       / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Validation
-      performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow 有界长尾候选|详见
-      `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-      provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
-      复用真实 Defensive DAG。|W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s
-      -> 14.82/15.12s`，Full=`16.2301 worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
-      passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
-      isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。|2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
-      PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。|'
+      performance coordinator：本次formal closeout后从新Full profile选择有调用级归因的新候选|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W13先拒绝无安全裁剪点的Smoothed
+      data/freshness，再验证Layer1 duplicate-builder重排；后者after仅`115.68s`、未达`<=96.56s`门槛并已byte-exact撤回。|W13两个候选均不保留实现；Layer1
+      source blob恢复`af5586c...b6`，node/真实CLI/scoreboard/roadmap/安全语义不变。下一候选必须换机制、重新冻结baseline/门槛，不以本次0.75%噪声声明收益；`production_effect=none`。|2026-07-22：W13=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；工程线本wave无源码/测试变更，不单独触发Full，策略窗口修复在双线集成边界独立验证。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-f96099059b3b87006ea085af
+  event_id: legacy-import-7f239fed80d2faaf697051a8
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -78,13 +62,11 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
-      有界长尾候选
-    notes: 2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
-      PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。
+    next_owner: Validation performance coordinator：本次formal closeout后从新Full profile选择有调用级归因的新候选
+    notes: 2026-07-22：W13=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；工程线本wave无源码/测试变更，不单独触发Full，策略窗口修复在双线集成边界独立验证。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:f96099059b3b87006ea085afec678e918a2a1faa2dad5d965a6ee5f964d256da
+  - sha256:7f239fed80d2faaf697051a822d470c7255921e0a39d702744552c462b9c4855
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -92,20 +74,14 @@ projection:
   - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
   - P1
   - IN_PROGRESS
-  - Validation performance coordinator：从 v23 Full profile 只读筛选下一项 smoothed/paper-shadow
-    有界长尾候选
-  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。S3A～S3N、S4
-    provenance、W2E1～W7E1、W9/W11/W12E1已完成；W8E1/W10撤回。W12E1 以 module immutable fixture
-    复用真实 Defensive DAG。
-  - W12E1保持13 nodeids、真实tamper/fail-closed与byte-exact restore；`79.52s -> 14.82/15.12s`，Full=`16.2301
-    worker-s`。expanded focused=`164 passed/1 skipped`，architecture/contract/reproducibility=`446/265/23
-    passed`，Full=`6575 passed/2 skipped/1079.35s`；v23 exact=`6577 nodes/1097 files`。下一候选必须重新冻结
-    isolated baseline/收益阈值，不以一次 Full 声明稳定改善，`production_effect=none`。
-  - 2026-07-22：W12E1=`COMPLETE_RETAINED_RUNTIME_TASK_CONTINUES`。scheduler/profile/telemetry/performance/provenance
-    PASS、tail-idle max=`0.48s`；v23仅作下一自然 Full advisory scheduling。ARCH-004仍停在G2.5前。
+  - Validation performance coordinator：本次formal closeout后从新Full profile选择有调用级归因的新候选
+  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W13先拒绝无安全裁剪点的Smoothed
+    data/freshness，再验证Layer1 duplicate-builder重排；后者after仅`115.68s`、未达`<=96.56s`门槛并已byte-exact撤回。
+  - W13两个候选均不保留实现；Layer1 source blob恢复`af5586c...b6`，node/真实CLI/scoreboard/roadmap/安全语义不变。下一候选必须换机制、重新冻结baseline/门槛，不以本次0.75%噪声声明收益；`production_effect=none`。
+  - 2026-07-22：W13=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`；工程线本wave无源码/测试变更，不单独触发Full，策略窗口修复在双线集成边界独立验证。
   docs_links:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   terminal: false
-  raw_row_sha256: f96099059b3b87006ea085afec678e918a2a1faa2dad5d965a6ee5f964d256da
+  raw_row_sha256: 7f239fed80d2faaf697051a822d470c7255921e0a39d702744552c462b9c4855
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: a8ced27282be5e2dab826cf187fb32b00af1fff263127de3e7bbe53339181495
+fragment_checksum: 64d18070752e74584c58f21a3fee6944dbe2d6513a572bc6b7355237aad33815

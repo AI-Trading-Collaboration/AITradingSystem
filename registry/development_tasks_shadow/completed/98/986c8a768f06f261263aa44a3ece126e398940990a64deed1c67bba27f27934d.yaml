@@ -1,0 +1,95 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2456_CURRENT_RESEARCH_EXECUTION_CHAIN_WINDOW_SEMANTIC_CONSISTENCY
+  title: null
+  domain: Strategy governance / current research execution-chain active-window semantics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 已完成；由权威文档合同持续阻止旧active-primary表述回归
+  requirement_refs:
+  - docs/requirements/TRADING-2456_Current_Research_Execution_Chain_Window_Semantic_Consistency.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2456_Current_Research_Execution_Chain_Window_Semantic_Consistency.md`。权威研究执行链三个残留错误已修复；2021为active
+    primary，2022只保留immutable historical fixture实际范围与legacy comparison角色，历史artifact未改。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Fail-closed合同禁止三类旧错误短语并要求三处窗口边界；expanded focused/architecture/contract/reproducibility=`52/447/265/23
+      passed`，唯一Full=`6576 passed/2 skipped/1082.57s`；`strategy_logic_changed=false`、`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 470
+    row_sha256: edd2c113c38f67e8be0eeb35af2e5643de772d204dbe0c0ad52146e6facf92b9
+    cell_count: 8
+    all_cells:
+    - TRADING-2456_CURRENT_RESEARCH_EXECUTION_CHAIN_WINDOW_SEMANTIC_CONSISTENCY
+    - Strategy governance / current research execution-chain active-window semantics
+    - P0
+    - DONE
+    - 已完成；由权威文档合同持续阻止旧active-primary表述回归
+    - 详见 `docs/requirements/TRADING-2456_Current_Research_Execution_Chain_Window_Semantic_Consistency.md`。权威研究执行链三个残留错误已修复；2021为active
+      primary，2022只保留immutable historical fixture实际范围与legacy comparison角色，历史artifact未改。
+    - Fail-closed合同禁止三类旧错误短语并要求三处窗口边界；expanded focused/architecture/contract/reproducibility=`52/447/265/23
+      passed`，唯一Full=`6576 passed/2 skipped/1082.57s`；`strategy_logic_changed=false`、`production_effect=none`。
+    - 2026-07-22：S0～S3完成并转`DONE`；Full provenance/scheduler/telemetry/performance/safety均PASS，tail-idle
+      max=`0.016s`。
+    raw_line: '|TRADING-2456_CURRENT_RESEARCH_EXECUTION_CHAIN_WINDOW_SEMANTIC_CONSISTENCY|Strategy
+      governance / current research execution-chain active-window semantics|P0|DONE|已完成；由权威文档合同持续阻止旧active-primary表述回归|详见
+      `docs/requirements/TRADING-2456_Current_Research_Execution_Chain_Window_Semantic_Consistency.md`。权威研究执行链三个残留错误已修复；2021为active
+      primary，2022只保留immutable historical fixture实际范围与legacy comparison角色，历史artifact未改。|Fail-closed合同禁止三类旧错误短语并要求三处窗口边界；expanded
+      focused/architecture/contract/reproducibility=`52/447/265/23 passed`，唯一Full=`6576
+      passed/2 skipped/1082.57s`；`strategy_logic_changed=false`、`production_effect=none`。|2026-07-22：S0～S3完成并转`DONE`；Full
+      provenance/scheduler/telemetry/performance/safety均PASS，tail-idle max=`0.016s`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-edd2c113c38f67e8be0eeb35
+  task_id: TRADING-2456_CURRENT_RESEARCH_EXECUTION_CHAIN_WINDOW_SEMANTIC_CONSISTENCY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 已完成；由权威文档合同持续阻止旧active-primary表述回归
+    notes: 2026-07-22：S0～S3完成并转`DONE`；Full provenance/scheduler/telemetry/performance/safety均PASS，tail-idle
+      max=`0.016s`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:edd2c113c38f67e8be0eeb35af2e5643de772d204dbe0c0ad52146e6facf92b9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2456_CURRENT_RESEARCH_EXECUTION_CHAIN_WINDOW_SEMANTIC_CONSISTENCY
+  - Strategy governance / current research execution-chain active-window semantics
+  - P0
+  - DONE
+  - 已完成；由权威文档合同持续阻止旧active-primary表述回归
+  - 详见 `docs/requirements/TRADING-2456_Current_Research_Execution_Chain_Window_Semantic_Consistency.md`。权威研究执行链三个残留错误已修复；2021为active
+    primary，2022只保留immutable historical fixture实际范围与legacy comparison角色，历史artifact未改。
+  - Fail-closed合同禁止三类旧错误短语并要求三处窗口边界；expanded focused/architecture/contract/reproducibility=`52/447/265/23
+    passed`，唯一Full=`6576 passed/2 skipped/1082.57s`；`strategy_logic_changed=false`、`production_effect=none`。
+  - 2026-07-22：S0～S3完成并转`DONE`；Full provenance/scheduler/telemetry/performance/safety均PASS，tail-idle
+    max=`0.016s`。
+  docs_links:
+  - docs/requirements/TRADING-2456_Current_Research_Execution_Chain_Window_Semantic_Consistency.md
+  terminal: true
+  raw_row_sha256: edd2c113c38f67e8be0eeb35af2e5643de772d204dbe0c0ad52146e6facf92b9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fe89fdf2de52b445b6af222303bd4be1c91a3cd272894070d14ae0bea2094c6e

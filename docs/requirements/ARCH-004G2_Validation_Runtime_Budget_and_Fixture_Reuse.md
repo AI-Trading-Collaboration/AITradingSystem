@@ -1754,6 +1754,51 @@ v22只作为下一自然Full的advisory scheduling输入；本批只更新source
 architecture/contract，不再运行Full。策略、数据、缓存和production行为未改变，
 `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
 
+### Wave 13 W13E1：Layer1 Scoreboard duplicate-builder elimination
+
+2026-07-22：W12E1闭合并自动集成main后，从v23 Full profile只读筛选下一项有界候选。最初候选
+`tests/test_smoothed_data_refresh.py`与`tests/test_smoothed_freshness_hardening.py`在Full中分别为
+`441.351s/408.974s`，其中两个重节点为`385.995s/395.031s`。无其他pytest负载的同命令combined
+baseline=`10 passed / 210.36s`，重节点call=`180.00/184.33s`。进一步不改代码的调用级剖分显示
+recorded-owner authority约`55.78s`，data-refresh的retry/resume约`55.91s`、sample-growth约`6.86s`；
+freshness节点还必须逐个tamper八个materialized views和validated weekly child。这些都是目标测试必须
+证明的真实producer/validator/fail-closed行为，跨worker store又会让第二个worker等待cold build，不能
+同时证明墙钟收益，故本候选裁决=`REJECTED_NO_SAFE_DUPLICATION`，不恢复W8E1方案、不修改源码或测试。
+
+下一候选冻结为
+`tests/test_layer1_meta_policy_archive_stabilization.py::test_layer1_archive_and_equal_risk_forward_aging_stabilization_outputs`。
+该节点先直接调用`run_equal_risk_forward_aging_scoreboard_first_window_review`生成scoreboard，完成roadmap
+后又通过真实CLI以同一输入/输出根重算同一scoreboard。W13E1只允许把真实CLI提前到roadmap之前，
+从CLI生成的canonical JSON读取scoreboard payload供既有断言和roadmap消费，并删除此前的重复direct
+builder调用。必须保留一次真实CLI、scoreboard JSON/Markdown、roadmap真实消费、原nodeid、fixture日期、
+DQ/source输入与全部research-only/paper-shadow/production/broker安全断言；不得修改production/helper、
+策略/config、阈值或输出schema。
+
+无其他pytest负载、显式`PYTHONPATH=src;tests`、`-n 16 --dist loadfile`的pre-change baseline=
+`1 passed / 116.56s`，call=`111.39s`。两次相同命令after的较慢值必须同时满足至少15%与至少20秒改善，
+即`<=96.56s`；任一覆盖、artifact、CLI、roadmap、nodeid或收益门槛不满足即byte-exact撤回。局部通过后
+才运行expanded focused、Ruff、manifests/hashes、architecture/contract，并只在双线最终集成边界运行
+一次Full；单次Full不声明stable global improvement。`strategy_logic_changed=false`、
+`cached_data_mutated=false`、`production_effect=none`。
+
+W13E1最终状态=`CLOSED_REVERTED_EXIT_GATE_NOT_MET`。唯一after功能PASS，但pytest=`115.68s`、
+call=`110.51s`，相对baseline仅减少`0.88s / 0.75%`，远高于冻结上限`96.56s`。由于裁决取两次after
+较慢值，第一次已经使门槛在数学上不可能满足，因此没有为凑样本运行第二次。实现随后byte-exact撤回，
+`tests/layer1_meta_policy_readiness_cases.py`的worktree/index blob均恢复为
+`af5586c957486637d3c7ad392fe80fceda1e52b6`。该结果证明重复scoreboard调用不是本节点主长尾；后续不得
+以同一重排重试，应从新的Full profile选择具有调用级归因和安全收益路径的候选。本wave工程线没有保留
+源码/测试改动，也不单独触发Full；策略治理线的窗口语义修复在同一双线集成边界独立验证。
+`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、
+`cached_data_mutated=false`、`production_effect=none`。
+
+双线自然集成边界的唯一Full=`6576 passed/2 skipped/1082.57s`，相对Wave 8的`1079.35s`约
+`+3.22s/+0.30%`；scheduler、profile、telemetry、performance、provenance均PASS，tail-idle
+max=`0.016s`。新profile的主要长尾仍是Smoothed真实链，slowest为weekly no-due-window
+`531.60s`，其次为freshness/data-refresh/retry链`393.66s/384.08s/359.60s/349.76s`；这与W13的
+`REJECTED_NO_SAFE_DUPLICATION`一致，不应恢复已拒绝方案。下一候选必须从新profile重新做调用级归因，
+并证明不削弱真实producer/validator/tamper/fail-closed覆盖；本次Full只证明集成回归PASS，不声明stable
+global improvement。
+
 ## 验收标准
 
 - 当前 4 个 confirmation 长尾 module 的累计 wall time至少降低70%，最大单shard不超过当前

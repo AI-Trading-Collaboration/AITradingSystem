@@ -412,6 +412,28 @@ provenance 全部 PASS，tail-idle max=`0.48s`；v23 advisory seed 精确覆盖 
 Wave 8 因此满足 S4C validated-main integration 条件，但 TRADING-2454 仍按真实 exact-data blocker 保持
 `BASELINE_DONE`，不得将工程门禁 PASS 解释为历史 replay 已恢复。
 
+### Wave 9：active-window 文档一致性 + runtime candidate falsification
+
+Base=`b2a1e3af`，branch=`codex/dual-lane-wave9-window-consistency-runtime`。本 wave 的策略线只修复
+权威研究执行链的 active-window 解释，不运行被Owner关闭的B/C、新backtest/search或prospective；
+工程线继续按预冻结门槛筛选长尾，但允许真实证据否决候选，不为维持“双线都有代码”保留无收益实现。
+
+|Lane|当前状态|任务/owned scope|冲突与停止条件|
+|---|---|---|---|
+|Engineering|`CLOSED_REVERTED_NO_CHANGE`|W13先审计Smoothed data/freshness，再试点Layer1 archive scoreboard duplicate-builder elimination|Smoothed真实链无安全裁剪点；Layer1 `116.56s -> 115.68s`仅`-0.75%`，未达`<=96.56s`并byte-exact撤回；不得原机制重试|
+|Strategy governance|`COMPLETE`|TRADING-2456；仅权威研究链文档、专属合同、requirement/task状态|2021 active primary与2022 immutable historical-only同时成立；历史artifact/requested/evaluated bytes不改；focused=`3 passed`|
+|Coordinator|`VALIDATED_MAIN_INTEGRATION`|generated task views/manifests/hashes、formal gates与S4C自动集成|最终tree的required gates与freshness已PASS；提交前继续执行lease/owner、归属、upstream与fast-forward检查|
+
+两条lane的保留文件不重叠：工程实现已撤回，仅runtime requirement保留否决证据；策略线修改
+research document/contract/requirement。`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`、`broker_action=none`。
+
+Wave 9集成门禁为expanded focused=`52 passed`、architecture=`447 passed`、contract=`265 passed`、
+reproducibility=`23 passed`；唯一自然Full=`6576 passed/2 skipped/1082.57s`。Full provenance、scheduler、
+telemetry、performance与safety boundary均PASS，tail-idle max=`0.016s`。相对Wave 8的`1079.35s`
+墙钟仅增加约`0.30%`，不构成性能退化信号；smoothed链仍占主要长尾，作为下一工程wave候选池继续
+要求调用级归因和预冻结收益门槛，不在本wave引入未验证优化。
+
 ### 后续架构方向
 
 - `ARCH-004G2_PARALLEL_READINESS_GATE` / G2.5 是下一项高杠杆工程方向，但仍等待 owner 对恢复
