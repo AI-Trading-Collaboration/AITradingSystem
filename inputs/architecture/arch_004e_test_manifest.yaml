@@ -7947,7 +7947,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_architecture_wave_readiness
   path: tests/test_architecture_wave_readiness.py
-  sha256: 688d011baae24c68730e1d1c609113f5fb8e86fbf3a19cdfffbda6617e222c8f
+  sha256: 33d6f6a10ff5828347ceb668234097e29e5829e962d05613cb27ae59e3a26534
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
