@@ -13950,7 +13950,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.arch_004_g2_5_readiness
   path: src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
-  sha256: 5dbd9f08065c726b8a425b63f7f70615b00db7d7227284030bbb2373f4638472
+  sha256: 1ab1e846c77bfeeb8b2618411e80483c3696a29045ec0d6100fcf315e79bb797
   rule_id: platform_architecture
   owner_profile: platform
   owners:

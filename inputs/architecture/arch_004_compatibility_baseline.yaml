@@ -18980,7 +18980,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 0fe442b1173f4b562cf90dc62b1bef15d9bd5c7df2cc0adfa94f89529aa8128d
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
-    sha256: 52eb5d546163e6c053536c38593c173053cddf8568ba1a374e737f18bf631aa0
+    sha256: 47cf4cfd820dbeedb2c70d6e5bd45411d22c28e1a197fc8bf8d18563dfa1e503
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
     sha256: 9726659eeabcabdadcb0c58327adce9974bce7fd58fd83cf2ef7ebb2f57e72d8
@@ -19031,7 +19031,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 974752e849010e995230a97761420e81e97e892076b8c9ab3aa522ce03111e61
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: ae87a72be1999e5c363bcf569a515a8f60da1572556ff2559a11a9f902d40c42
+    sha256: db725e88218aa3d903a831e07d5f6f317a97405e51051b009b8c06bbcadea656
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: 310a374cf2ddf9231a407204b9d41d8d48e99a309111258f21362922b6061eeb
@@ -19043,10 +19043,10 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: d37306ada2e8b6d170465033bbc4cc8746c75922c5e6fb8e4cad0de27208a391
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
-    sha256: 1cb5f32a56cff7059cdd158d174f72d81e451cdeb2cac75c5c8196d2467d7853
+    sha256: f4caf9d291ca5eecf4b39cbc82244346c0f6e5c9621499595e91ab450491b8c4
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: ca2a036c2f3532dc94c6800d8ae9741eaee6269752a6ea18b2127348ea6e6262
+    sha256: 7d552046b4982cfc97cfa684d5927f5abf806e57b4df7bf0b37bdf48d9f6f5fe
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -19058,10 +19058,10 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: f2ff2d3a0dd9664da632585a75ec7a047d8c3ba813b07260d3f22dd667d0ab49
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 465620f1cfb426e48a405a17846018a696686b552e0b7c1aedd93193fa1cf92a
+    sha256: c3df577811af429879a02171f416df9a372c5e34546debd748cefe984b41a6b5
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 548858d55035d99efe597b45b14d940f0677743923f2feadb4d0cb73ea39ab83
+    sha256: 1da6d637ad0c4089e8ba377cf69a66b8805c4adda8f86850feec2136bdf51e26
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_applied_closeout.json
     sha256: f8ea35968cfc0ad206904009ac0f78cf75b4eadba8acf87d326a4459469be386
@@ -19100,7 +19100,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: cd61079eb75b92c859403314c12195b7044873d0eee44e49e10bc36253d63779
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
-    sha256: ce872fee3b5720c3ac80714d7ee5e7ff4c5550459c1620c2cdf8e2af3695fbec
+    sha256: cb772a54f59f0ccae838bdbdbbc77efef6c2c6662f51ae910283891cee7a0d45
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
     sha256: a23af0687fb17f46543bfabbf2368ad675314a2bec801ec5d93dbd50eb5ab847
@@ -19151,7 +19151,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: ab054ef5ccc9a97d073386fccd709ba1cb041df8a3a9019de82ce83294d20060
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
-    sha256: 5dbd9f08065c726b8a425b63f7f70615b00db7d7227284030bbb2373f4638472
+    sha256: 1ab1e846c77bfeeb8b2618411e80483c3696a29045ec0d6100fcf315e79bb797
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/architecture/bootstrap_handoff.py
     sha256: 04f2d9d7fb274f0907afaaf7e504aa8a148f6e311a4a329fb9c9eb0e8dae4570
@@ -19193,7 +19193,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 05a4b709b0846fb4de24fd162127a42938144a995118a784abba51829a409ba0
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_g2_5_readiness.py
-    sha256: 90653c174ee47b42e90891e9994242197049c784eeaa1a83cecd8dee7f836e35
+    sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
     sha256: cb2aae6e33e040b7cf0544d22965c7c6fb3f35a3abd02eb3d808cad3e539c4a4

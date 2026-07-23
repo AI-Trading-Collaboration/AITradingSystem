@@ -7421,7 +7421,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_g2_5_readiness
   path: tests/test_arch_004_g2_5_readiness.py
-  sha256: 90653c174ee47b42e90891e9994242197049c784eeaa1a83cecd8dee7f836e35
+  sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
