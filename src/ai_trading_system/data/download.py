@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-import hashlib
+import csv
+import io
 import json
 import math
+import os
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -18,10 +20,24 @@ from ai_trading_system.config import (
     configured_rate_series,
     load_data_source_request_budget_policy,
 )
+from ai_trading_system.data.download_publication import (
+    DownloadArtifactCandidate,
+    DownloadLegacyBootstrapPrecondition,
+    DownloadLegacyFilePrecondition,
+    DownloadPublicationIntegrityError,
+    DownloadReplayInputCandidate,
+    DownloadSourceBinding,
+    ValidatedDownloadPublication,
+    publish_download_transaction,
+    resolve_download_publication_if_present,
+)
+from ai_trading_system.data.immutable_publish import (
+    DataPublicationError,
+    read_contained_artifact_bytes,
+)
 from ai_trading_system.data.market_data import (
     CBOE_VIX_TICKER,
     CboeVixPriceProvider,
-    CsvDataCache,
     FmpPriceProvider,
     FredRateProvider,
     MarketstackPriceProvider,
@@ -39,9 +55,14 @@ from ai_trading_system.external_request_cache import (
     external_request_cache_trace,
     sanitize_diagnostic_text,
 )
+from ai_trading_system.platform.artifacts import sha256_bytes
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 _PRICE_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
+_PROVENANCE_EVENT_COLUMN = "__download_source_event_id"
+_LIVE_PROVIDER = "LIVE_PROVIDER"
+_CANONICAL_PREDECESSOR_REUSE = "CANONICAL_PREDECESSOR_REUSE"
+_LEGACY_LOCAL_CACHE_IMPORT = "LEGACY_LOCAL_CACHE_IMPORT"
 
 
 @dataclass(frozen=True)
@@ -57,6 +78,12 @@ class DataDownloadSummary:
     secondary_price_rows: int = 0
     request_cache_summaries: tuple[dict[str, object], ...] = ()
     request_budget_statuses: tuple[dict[str, object], ...] = ()
+    publication_transaction_id: str | None = None
+    publication_manifest_path: Path | None = None
+    publication_discovery_path: Path | None = None
+    publication_atomicity_scope: str | None = None
+    legacy_projection_atomicity: str | None = None
+    consumer_cutover_allowed: bool = False
 
 
 @dataclass(frozen=True)
@@ -79,10 +106,42 @@ class IncrementalPriceDownload:
     supported_tickers: tuple[str, ...]
     skipped_tickers: tuple[str, ...]
     fetch_windows: tuple[IncrementalPriceWindow, ...]
+    fetched_tickers: tuple[str, ...]
     reused_row_count: int
     fetched_row_count: int
     output_row_count: int
     request_budget_status: dict[str, object] | None = None
+
+
+@dataclass(frozen=True)
+class _ExistingPriceCacheSnapshot:
+    path: Path | None
+    raw: bytes | None
+    frame: pd.DataFrame
+    sha256: str | None
+    size_bytes: int | None
+    row_count: int | None
+
+
+@dataclass(frozen=True)
+class _LegacyManifestSnapshot:
+    raw: bytes | None
+    sha256: str | None
+    size_bytes: int | None
+    row_count: int | None
+    records: tuple[dict[str, str], ...] | None
+
+
+@dataclass(frozen=True)
+class _SourceEventDefinition:
+    source_event_id: str
+    artifact_role: str
+    source_kind: str
+    source_id: str
+    provider: str
+    endpoint: str
+    request_parameters: Mapping[str, object]
+    replay_inputs: tuple[DownloadReplayInputCandidate, ...] = ()
 
 
 class ProviderQuotaBudgetError(RuntimeError):
@@ -185,6 +244,9 @@ def download_daily_data(
 ) -> DataDownloadSummary:
     if start > end:
         raise ValueError("start date must be earlier than or equal to end date")
+    if not isinstance(output_dir, Path):
+        raise TypeError("output_dir must be Path")
+    output_dir = output_dir.resolve(strict=False)
 
     price_tickers = configured_price_tickers(config, include_full_ai_chain=include_full_ai_chain)
     rate_series = configured_rate_series(config)
@@ -196,12 +258,105 @@ def download_daily_data(
 
     price_provider = price_provider or YFinancePriceProvider()
     rate_provider = rate_provider or FredRateProvider()
-    cache = CsvDataCache(output_dir)
     prices_path_target = output_dir / "prices_daily.csv"
     secondary_prices_path_target = output_dir / "prices_marketstack_daily.csv"
+    publication_base = resolve_download_publication_if_present(output_dir=output_dir)
+    legacy_primary_raw: bytes | None = None
+    legacy_secondary_raw: bytes | None = None
+    legacy_manifest_raw: bytes | None = None
+    if publication_base is None:
+        legacy_primary_raw = _read_legacy_bootstrap_artifact(
+            root=output_dir,
+            relative_path="prices_daily.csv",
+        )
+        legacy_secondary_raw = _read_legacy_bootstrap_artifact(
+            root=output_dir,
+            relative_path="prices_marketstack_daily.csv",
+        )
+        legacy_manifest_raw = _read_legacy_bootstrap_artifact(
+            root=output_dir,
+            relative_path="download_manifest.csv",
+        )
+        primary_existing_path = prices_path_target
+        secondary_existing_path: Path | None = secondary_prices_path_target
+        primary_snapshot = _existing_price_cache_snapshot_from_raw(
+            prices_path_target,
+            legacy_primary_raw,
+            required=False,
+        )
+    else:
+        primary_existing_path = publication_base.prices_path
+        secondary_existing_path = publication_base.secondary_prices_path
+        primary_snapshot = _capture_existing_price_cache(
+            primary_existing_path,
+            required=True,
+        )
+    capture_secondary_predecessor = secondary_price_provider is not None or (
+        publication_base is not None and secondary_existing_path is not None
+    )
+    secondary_snapshot = (
+        (
+            _existing_price_cache_snapshot_from_raw(
+                secondary_prices_path_target,
+                legacy_secondary_raw,
+                required=False,
+            )
+            if publication_base is None
+            else _capture_existing_price_cache(
+                secondary_existing_path,
+                required=secondary_existing_path is not None,
+            )
+        )
+        if capture_secondary_predecessor
+        else _empty_existing_price_cache_snapshot()
+    )
+    if publication_base is not None:
+        _verify_canonical_cache_snapshot(
+            primary_snapshot,
+            publication=publication_base,
+            artifact_role="prices",
+        )
+        if secondary_existing_path is not None:
+            _verify_canonical_cache_snapshot(
+                secondary_snapshot,
+                publication=publication_base,
+                artifact_role="secondary_prices",
+            )
+    legacy_manifest_snapshot = (
+        _legacy_manifest_snapshot_from_raw(legacy_manifest_raw)
+        if publication_base is None
+        else _empty_legacy_manifest_snapshot()
+    )
+    legacy_bootstrap_precondition = (
+        _build_legacy_bootstrap_precondition(
+            prices_raw=legacy_primary_raw,
+            secondary_prices_raw=legacy_secondary_raw,
+            manifest_raw=legacy_manifest_raw,
+        )
+        if publication_base is None
+        else None
+    )
 
     price_request = PriceRequest(tickers=price_tickers, start=start, end=end, interval="1d")
     rate_request = RateRequest(series_ids=rate_series, start=start, end=end)
+    price_source_id, price_provider_name, price_endpoint = _price_provider_metadata(price_provider)
+    primary_live_event_id = _source_event_id(
+        "prices",
+        "primary_live",
+        price_source_id,
+    )
+    primary_existing_event = _existing_source_event_definition(
+        artifact_role="prices",
+        snapshot=primary_snapshot,
+        output_dir=output_dir,
+        publication=publication_base,
+        legacy_manifest=legacy_manifest_snapshot,
+    )
+    primary_existing_event_id = (
+        None if primary_existing_event is None else primary_existing_event.source_event_id
+    )
+    rate_source_id, rate_provider_name, rate_endpoint = _rate_provider_metadata(rate_provider)
+    rate_event_id = _source_event_id("rates", "live", rate_source_id)
 
     with external_request_cache_trace() as request_cache_events:
         primary_tickers = _supported_price_tickers(price_provider, price_tickers)
@@ -213,13 +368,20 @@ def download_daily_data(
                 end=end,
                 interval="1d",
             ),
-            existing_path=prices_path_target,
+            existing_snapshot=primary_snapshot,
+            existing_source_event_id=primary_existing_event_id,
+            live_source_event_id=primary_live_event_id,
         )
         price_frames = [primary_download.prices]
         vix_download: IncrementalPriceDownload | None = None
         vix_request: PriceRequest | None = None
-        if CBOE_VIX_TICKER in price_tickers and CBOE_VIX_TICKER not in set(
-            primary_download.prices["ticker"].astype(str)
+        vix_live_event_id: str | None = None
+        vix_was_requested_live = any(
+            CBOE_VIX_TICKER in window.tickers for window in primary_download.fetch_windows
+        )
+        if CBOE_VIX_TICKER in price_tickers and (
+            CBOE_VIX_TICKER not in set(primary_download.prices["ticker"].astype(str))
+            or (vix_was_requested_live and CBOE_VIX_TICKER not in primary_download.fetched_tickers)
         ):
             vix_price_provider = vix_price_provider or CboeVixPriceProvider()
             vix_request = PriceRequest(
@@ -228,10 +390,18 @@ def download_daily_data(
                 end=end,
                 interval="1d",
             )
+            vix_source_id, _, _ = _price_provider_metadata(vix_price_provider)
+            vix_live_event_id = _source_event_id(
+                "prices",
+                "vix_fallback_live",
+                vix_source_id,
+            )
             vix_download = _download_incremental_prices(
                 provider=vix_price_provider,
                 request=vix_request,
-                existing_path=prices_path_target,
+                existing_snapshot=primary_snapshot,
+                existing_source_event_id=primary_existing_event_id,
+                live_source_event_id=vix_live_event_id,
             )
             price_frames.append(vix_download.prices)
         prices = _merge_price_frames(
@@ -240,10 +410,32 @@ def download_daily_data(
             start=start,
             end=end,
         )
-        rates = rate_provider.download_rates(rate_request)
+        rates = _tag_rate_frame(
+            rate_provider.download_rates(rate_request),
+            source_event_id=rate_event_id,
+        )
 
         secondary_download: IncrementalPriceDownload | None = None
+        secondary_existing_event: _SourceEventDefinition | None = None
+        secondary_live_event_id: str | None = None
         if secondary_price_provider is not None:
+            (
+                secondary_source_id,
+                _secondary_provider_name,
+                _secondary_endpoint,
+            ) = _price_provider_metadata(secondary_price_provider)
+            secondary_live_event_id = _source_event_id(
+                "secondary_prices",
+                "primary_live",
+                secondary_source_id,
+            )
+            secondary_existing_event = _existing_source_event_definition(
+                artifact_role="secondary_prices",
+                snapshot=secondary_snapshot,
+                output_dir=output_dir,
+                publication=publication_base,
+                legacy_manifest=legacy_manifest_snapshot,
+            )
             secondary_tickers = _supported_price_tickers(secondary_price_provider, price_tickers)
             secondary_download = _download_incremental_prices(
                 provider=secondary_price_provider,
@@ -253,14 +445,16 @@ def download_daily_data(
                     end=end,
                     interval="1d",
                 ),
-                existing_path=secondary_prices_path_target,
+                existing_snapshot=secondary_snapshot,
+                existing_source_event_id=(
+                    None
+                    if secondary_existing_event is None
+                    else secondary_existing_event.source_event_id
+                ),
+                live_source_event_id=secondary_live_event_id,
                 marketstack_tail_catch_up=marketstack_tail_catch_up,
             )
 
-    prices_path = cache.write_prices(prices)
-    rates_path = cache.write_rates(rates)
-    secondary_prices_path: Path | None = None
-    secondary_price_rows = 0
     request_cache_summaries = tuple(_request_cache_summary_records(request_cache_events))
     request_budget_statuses = tuple(
         status
@@ -271,69 +465,169 @@ def download_daily_data(
         )
         if status is not None
     )
-    manifest_records = [
-        _manifest_record_for_prices(
-            price_provider,
-            price_request,
-            prices_path,
-            len(primary_download.prices),
-            incremental_download=primary_download,
-            request_cache_summaries=request_cache_summaries,
-        ),
-        _manifest_record_for_rates(
+    price_event_definitions: list[_SourceEventDefinition] = []
+    if primary_existing_event is not None:
+        price_event_definitions.append(primary_existing_event)
+    if primary_download.fetch_windows or primary_existing_event is None:
+        price_event_definitions.append(
+            _SourceEventDefinition(
+                source_event_id=primary_live_event_id,
+                artifact_role="prices",
+                source_kind=_LIVE_PROVIDER,
+                source_id=price_source_id,
+                provider=price_provider_name,
+                endpoint=price_endpoint,
+                request_parameters=_price_request_parameters(
+                    price_provider,
+                    price_request,
+                    incremental_download=primary_download,
+                    request_cache_summaries=request_cache_summaries,
+                ),
+            )
+        )
+    if (
+        vix_price_provider is not None
+        and vix_request is not None
+        and vix_download is not None
+        and vix_live_event_id is not None
+        and vix_download.fetch_windows
+    ):
+        vix_source_id, vix_provider_name, vix_endpoint = _price_provider_metadata(
+            vix_price_provider
+        )
+        price_event_definitions.append(
+            _SourceEventDefinition(
+                source_event_id=vix_live_event_id,
+                artifact_role="prices",
+                source_kind=_LIVE_PROVIDER,
+                source_id=vix_source_id,
+                provider=vix_provider_name,
+                endpoint=vix_endpoint,
+                request_parameters=_price_request_parameters(
+                    vix_price_provider,
+                    vix_request,
+                    incremental_download=vix_download,
+                    request_cache_summaries=request_cache_summaries,
+                ),
+            )
+        )
+    price_sources = _source_bindings_for_frame(
+        prices,
+        artifact_role="prices",
+        identity_column="ticker",
+        events=_unique_source_event_definitions(price_event_definitions),
+    )
+    rate_event = _SourceEventDefinition(
+        source_event_id=rate_event_id,
+        artifact_role="rates",
+        source_kind=_LIVE_PROVIDER,
+        source_id=rate_source_id,
+        provider=rate_provider_name,
+        endpoint=rate_endpoint,
+        request_parameters=_rate_request_parameters(
             rate_provider,
             rate_request,
-            rates_path,
-            len(rates),
             request_cache_summaries=request_cache_summaries,
         ),
+    )
+    source_bindings = [
+        *price_sources,
+        *_source_bindings_for_frame(
+            rates,
+            artifact_role="rates",
+            identity_column="series",
+            events=(rate_event,),
+        ),
     ]
-    if vix_price_provider is not None and vix_request is not None and vix_download is not None:
-        manifest_records.append(
-            _manifest_record_for_prices(
-                vix_price_provider,
-                vix_request,
-                prices_path,
-                len(vix_download.prices),
-                incremental_download=vix_download,
-                request_cache_summaries=request_cache_summaries,
-            )
-        )
-
-    if secondary_price_provider is not None and secondary_download is not None:
-        secondary_prices_path = cache.write_prices(
-            secondary_download.prices,
-            filename="prices_marketstack_daily.csv",
+    artifacts = [
+        DownloadArtifactCandidate(
+            role="prices",
+            filename="prices_daily.csv",
+            content=_csv_bytes(_without_provenance_column(prices)),
+            row_count=len(prices),
+            source_event_ids=tuple(sorted(item.source_event_id for item in price_sources)),
+        ),
+        DownloadArtifactCandidate(
+            role="rates",
+            filename="rates_daily.csv",
+            content=_csv_bytes(_without_provenance_column(rates)),
+            row_count=len(rates),
+            source_event_ids=(source_bindings[-1].source_event_id,),
+        ),
+    ]
+    secondary_price_rows = 0
+    if (
+        secondary_price_provider is not None
+        and secondary_download is not None
+        and secondary_live_event_id is not None
+    ):
+        secondary_source_id, secondary_provider_name, secondary_endpoint = _price_provider_metadata(
+            secondary_price_provider
         )
         secondary_price_rows = len(secondary_download.prices)
-        manifest_records.append(
-            _manifest_record_for_prices(
-                secondary_price_provider,
-                price_request,
-                secondary_prices_path,
-                secondary_price_rows,
-                incremental_download=secondary_download,
-                request_cache_summaries=request_cache_summaries,
+        secondary_events: list[_SourceEventDefinition] = []
+        if secondary_existing_event is not None:
+            secondary_events.append(secondary_existing_event)
+        if secondary_download.fetch_windows or secondary_existing_event is None:
+            secondary_events.append(
+                _SourceEventDefinition(
+                    source_event_id=secondary_live_event_id,
+                    artifact_role="secondary_prices",
+                    source_kind=_LIVE_PROVIDER,
+                    source_id=secondary_source_id,
+                    provider=secondary_provider_name,
+                    endpoint=secondary_endpoint,
+                    request_parameters=_price_request_parameters(
+                        secondary_price_provider,
+                        price_request,
+                        incremental_download=secondary_download,
+                        request_cache_summaries=request_cache_summaries,
+                    ),
+                )
+            )
+        secondary_sources = _source_bindings_for_frame(
+            secondary_download.prices,
+            artifact_role="secondary_prices",
+            identity_column="ticker",
+            events=_unique_source_event_definitions(secondary_events),
+        )
+        source_bindings.extend(secondary_sources)
+        artifacts.append(
+            DownloadArtifactCandidate(
+                role="secondary_prices",
+                filename="prices_marketstack_daily.csv",
+                content=_csv_bytes(_without_provenance_column(secondary_download.prices)),
+                row_count=secondary_price_rows,
+                source_event_ids=tuple(sorted(item.source_event_id for item in secondary_sources)),
             )
         )
 
-    manifest_path = write_download_manifest(
+    publication = publish_download_transaction(
         output_dir=output_dir,
-        records=tuple(manifest_records),
+        requested_start=start,
+        requested_end=end,
+        artifacts=tuple(artifacts),
+        source_bindings=tuple(source_bindings),
+        legacy_bootstrap_precondition=legacy_bootstrap_precondition,
     )
-
     return DataDownloadSummary(
-        prices_path=prices_path,
-        rates_path=rates_path,
-        manifest_path=manifest_path,
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        manifest_path=publication.legacy_manifest_path,
         price_rows=len(prices),
         rate_rows=len(rates),
         price_tickers=tuple(price_tickers),
         rate_series=tuple(rate_series),
-        secondary_prices_path=secondary_prices_path,
+        secondary_prices_path=publication.legacy_secondary_prices_path,
         secondary_price_rows=secondary_price_rows,
         request_cache_summaries=request_cache_summaries,
         request_budget_statuses=request_budget_statuses,
+        publication_transaction_id=publication.transaction_id,
+        publication_manifest_path=publication.transaction_manifest_path,
+        publication_discovery_path=publication.discovery_pointer_path,
+        publication_atomicity_scope=publication.atomicity_scope,
+        legacy_projection_atomicity=publication.legacy_projection_atomicity,
+        consumer_cutover_allowed=publication.consumer_cutover_allowed,
     )
 
 
@@ -341,17 +635,23 @@ def _download_incremental_prices(
     *,
     provider: PriceDataProvider,
     request: PriceRequest,
-    existing_path: Path,
+    existing_snapshot: _ExistingPriceCacheSnapshot,
+    existing_source_event_id: str | None,
+    live_source_event_id: str,
     marketstack_tail_catch_up: bool = False,
 ) -> IncrementalPriceDownload:
     supported_tickers = _supported_price_tickers(provider, request.tickers)
     skipped_tickers = tuple(ticker for ticker in request.tickers if ticker not in supported_tickers)
-    existing = _read_existing_price_cache(
-        existing_path,
+    existing = _filter_existing_price_cache(
+        existing_snapshot.frame,
         tickers=supported_tickers,
         start=request.start,
         end=request.end,
     )
+    if not existing.empty:
+        if existing_source_event_id is None:
+            raise ValueError("Existing price rows require an immediate source event")
+        existing[_PROVENANCE_EVENT_COLUMN] = existing_source_event_id
     fetch_windows = _price_fetch_windows(
         existing,
         tickers=supported_tickers,
@@ -375,6 +675,8 @@ def _download_incremental_prices(
                 interval=request.interval,
             )
         )
+        fetched = fetched.copy()
+        fetched[_PROVENANCE_EVENT_COLUMN] = live_source_event_id
         fetched_frames.append(fetched)
 
     prices = _merge_price_frames(
@@ -388,6 +690,16 @@ def _download_incremental_prices(
         supported_tickers=supported_tickers,
         skipped_tickers=skipped_tickers,
         fetch_windows=fetch_windows,
+        fetched_tickers=tuple(
+            sorted(
+                {
+                    str(ticker)
+                    for frame in fetched_frames
+                    if "ticker" in frame
+                    for ticker in frame["ticker"].dropna().unique()
+                }
+            )
+        ),
         reused_row_count=len(existing),
         fetched_row_count=sum(len(frame) for frame in fetched_frames),
         output_row_count=len(prices),
@@ -405,9 +717,7 @@ def _supported_price_tickers(
         )
     if isinstance(provider, MarketstackPriceProvider):
         return tuple(
-            ticker
-            for ticker in tickers
-            if provider.symbol_aliases.get(ticker, ticker) is not None
+            ticker for ticker in tickers if provider.symbol_aliases.get(ticker, ticker) is not None
         )
     if isinstance(provider, CboeVixPriceProvider):
         return tuple(ticker for ticker in tickers if ticker == provider.ticker)
@@ -415,18 +725,51 @@ def _supported_price_tickers(
 
 
 def _read_existing_price_cache(
-    path: Path,
+    path: Path | None,
     *,
     tickers: tuple[str, ...],
     start: date,
     end: date,
 ) -> pd.DataFrame:
-    if not tickers:
-        return _empty_price_frame()
-    if not path.exists():
-        return _empty_price_frame()
+    snapshot = _capture_existing_price_cache(path, required=False)
+    return _filter_existing_price_cache(
+        snapshot.frame,
+        tickers=tickers,
+        start=start,
+        end=end,
+    )
+
+
+def _capture_existing_price_cache(
+    path: Path | None,
+    *,
+    required: bool,
+) -> _ExistingPriceCacheSnapshot:
+    if path is None:
+        if required:
+            raise ValueError("Canonical price cache path is missing")
+        return _empty_existing_price_cache_snapshot()
     try:
-        frame = pd.read_csv(path)
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        if required:
+            raise ValueError(f"Canonical price cache is missing: {path}") from None
+        return _empty_existing_price_cache_snapshot(path=path)
+    return _existing_price_cache_snapshot_from_raw(path, raw, required=required)
+
+
+def _existing_price_cache_snapshot_from_raw(
+    path: Path,
+    raw: bytes | None,
+    *,
+    required: bool,
+) -> _ExistingPriceCacheSnapshot:
+    if raw is None:
+        if required:
+            raise ValueError(f"Canonical price cache is missing: {path}")
+        return _empty_existing_price_cache_snapshot(path=path)
+    try:
+        frame = pd.read_csv(io.BytesIO(raw))
     except Exception as exc:
         raise ValueError(f"Existing price cache is unreadable: {path}") from exc
     missing = {"date", "ticker"} - set(frame.columns)
@@ -434,6 +777,41 @@ def _read_existing_price_cache(
         raise ValueError(
             "Existing price cache missing required columns: " + ", ".join(sorted(missing))
         )
+    if _PROVENANCE_EVENT_COLUMN in frame.columns:
+        raise ValueError("Existing price cache contains the reserved provenance column")
+    return _ExistingPriceCacheSnapshot(
+        path=path,
+        raw=raw,
+        frame=frame,
+        sha256=sha256_bytes(raw),
+        size_bytes=len(raw),
+        row_count=len(frame),
+    )
+
+
+def _empty_existing_price_cache_snapshot(
+    *,
+    path: Path | None = None,
+) -> _ExistingPriceCacheSnapshot:
+    return _ExistingPriceCacheSnapshot(
+        path=path,
+        raw=None,
+        frame=_empty_price_frame(),
+        sha256=None,
+        size_bytes=None,
+        row_count=None,
+    )
+
+
+def _filter_existing_price_cache(
+    frame: pd.DataFrame,
+    *,
+    tickers: tuple[str, ...],
+    start: date,
+    end: date,
+) -> pd.DataFrame:
+    if not tickers:
+        return _empty_price_frame()
     filtered = frame.loc[frame["ticker"].astype(str).isin(tickers)].copy()
     if filtered.empty:
         return _empty_price_frame()
@@ -444,10 +822,349 @@ def _read_existing_price_cache(
             f"Existing price cache has {invalid_count} invalid date values for requested tickers"
         )
     filtered["date"] = parsed_dates.dt.strftime("%Y-%m-%d")
-    filtered = filtered.loc[
-        (parsed_dates.dt.date >= start) & (parsed_dates.dt.date <= end)
-    ].copy()
+    filtered = filtered.loc[(parsed_dates.dt.date >= start) & (parsed_dates.dt.date <= end)].copy()
     return _normalize_price_frame_columns(filtered)
+
+
+def _verify_canonical_cache_snapshot(
+    snapshot: _ExistingPriceCacheSnapshot,
+    *,
+    publication: ValidatedDownloadPublication,
+    artifact_role: str,
+) -> None:
+    expected_digest = publication.artifact_sha256.get(artifact_role)
+    expected_rows = publication.artifact_row_count.get(artifact_role)
+    if (
+        snapshot.raw is None
+        or snapshot.sha256 != expected_digest
+        or snapshot.row_count != expected_rows
+    ):
+        raise DownloadPublicationIntegrityError(
+            "DOWNLOAD_PREDECESSOR_BINDING_MISMATCH",
+            f"canonical {artifact_role} bytes differ from the validated predecessor",
+            path=snapshot.path,
+        )
+
+
+def _legacy_manifest_snapshot_from_raw(raw: bytes | None) -> _LegacyManifestSnapshot:
+    if raw is None:
+        return _empty_legacy_manifest_snapshot()
+    digest = sha256_bytes(raw)
+    size = len(raw)
+    try:
+        reader = csv.DictReader(io.StringIO(raw.decode("utf-8-sig"), newline=""))
+        required = {"output_path", "checksum_sha256", "row_count"}
+        if not required.issubset(reader.fieldnames or ()):
+            raise ValueError("legacy manifest required columns are missing")
+        records = tuple(
+            {str(key): "" if value is None else str(value) for key, value in row.items()}
+            for row in reader
+        )
+    except (UnicodeError, csv.Error, ValueError):
+        return _LegacyManifestSnapshot(
+            raw=raw,
+            sha256=digest,
+            size_bytes=size,
+            row_count=None,
+            records=None,
+        )
+    return _LegacyManifestSnapshot(
+        raw=raw,
+        sha256=digest,
+        size_bytes=size,
+        row_count=len(records),
+        records=records,
+    )
+
+
+def _read_legacy_bootstrap_artifact(
+    *,
+    root: Path,
+    relative_path: str,
+) -> bytes | None:
+    path = root / relative_path
+    if not os.path.lexists(path):
+        return None
+    try:
+        return read_contained_artifact_bytes(
+            root=root,
+            relative_path=relative_path,
+        )
+    except DataPublicationError as exc:
+        raise DownloadPublicationIntegrityError(
+            "DOWNLOAD_LEGACY_BOOTSTRAP_INPUT_INVALID",
+            str(exc),
+            path=getattr(exc, "path", path),
+        ) from exc
+
+
+def _build_legacy_bootstrap_precondition(
+    *,
+    prices_raw: bytes | None,
+    secondary_prices_raw: bytes | None,
+    manifest_raw: bytes | None,
+) -> DownloadLegacyBootstrapPrecondition:
+    members: list[DownloadLegacyFilePrecondition] = []
+    for relative_path, content in (
+        ("prices_daily.csv", prices_raw),
+        ("prices_marketstack_daily.csv", secondary_prices_raw),
+        ("download_manifest.csv", manifest_raw),
+    ):
+        members.append(
+            DownloadLegacyFilePrecondition(
+                relative_path=relative_path,
+                expected_exists=content is not None,
+                expected_content=content,
+                expected_sha256=None if content is None else sha256_bytes(content),
+                expected_size_bytes=None if content is None else len(content),
+            )
+        )
+    return DownloadLegacyBootstrapPrecondition(members=tuple(members))
+
+
+def _empty_legacy_manifest_snapshot() -> _LegacyManifestSnapshot:
+    return _LegacyManifestSnapshot(
+        raw=None,
+        sha256=None,
+        size_bytes=None,
+        row_count=None,
+        records=None,
+    )
+
+
+def _legacy_manifest_binding_status(
+    manifest: _LegacyManifestSnapshot,
+    *,
+    cache_filename: str,
+    cache_sha256: str,
+    cache_row_count: int,
+) -> str:
+    if manifest.raw is None:
+        return "MISSING"
+    if manifest.records is None:
+        return "UNREADABLE"
+    candidates = tuple(
+        row
+        for row in manifest.records
+        if str(row.get("output_path", "")).replace("\\", "/").rsplit("/", 1)[-1] == cache_filename
+    )
+    if not candidates:
+        return "NO_PATH_MATCH"
+    checksum_matches = tuple(
+        row for row in candidates if row.get("checksum_sha256") == cache_sha256
+    )
+    if not checksum_matches:
+        return "CHECKSUM_MISMATCH"
+    for row in checksum_matches:
+        try:
+            observed_rows = int(str(row.get("row_count", "")))
+        except ValueError:
+            continue
+        if observed_rows == cache_row_count:
+            return "MATCHED"
+    return "ROW_COUNT_MISMATCH"
+
+
+def _existing_source_event_definition(
+    *,
+    artifact_role: str,
+    snapshot: _ExistingPriceCacheSnapshot,
+    output_dir: Path,
+    publication: ValidatedDownloadPublication | None,
+    legacy_manifest: _LegacyManifestSnapshot,
+) -> _SourceEventDefinition | None:
+    if snapshot.raw is None:
+        return None
+    if (
+        snapshot.path is None
+        or snapshot.sha256 is None
+        or snapshot.size_bytes is None
+        or snapshot.row_count is None
+    ):
+        raise ValueError("Existing cache capture is incomplete")
+    if publication is not None:
+        event_id = _source_event_id(
+            artifact_role,
+            "canonical_predecessor",
+            publication.transaction_id,
+        )
+        try:
+            immutable_path = snapshot.path.relative_to(output_dir).as_posix()
+        except ValueError:
+            immutable_path = snapshot.path.as_posix()
+        try:
+            transaction_path = publication.transaction_manifest_path.relative_to(
+                output_dir
+            ).as_posix()
+        except ValueError:
+            transaction_path = publication.transaction_manifest_path.as_posix()
+        return _SourceEventDefinition(
+            source_event_id=event_id,
+            artifact_role=artifact_role,
+            source_kind=_CANONICAL_PREDECESSOR_REUSE,
+            source_id="canonical_predecessor_reuse",
+            provider="AITradingSystem canonical download publication",
+            endpoint=immutable_path,
+            request_parameters={
+                "predecessor_transaction_id": publication.transaction_id,
+                "predecessor_transaction_path": transaction_path,
+                "predecessor_transaction_sha256": (publication.transaction_manifest_sha256),
+                "predecessor_discovery_pointer_sha256": (publication.discovery_pointer_sha256),
+                "predecessor_artifact_role": artifact_role,
+                "predecessor_artifact_sha256": publication.artifact_sha256[artifact_role],
+                "predecessor_artifact_row_count": publication.artifact_row_count[artifact_role],
+                "predecessor_artifact_path": immutable_path,
+                "lineage_scope": "IMMEDIATE_PREDECESSOR_ONLY",
+                "raw_provider_provenance": False,
+                "origin_lineage_complete": False,
+                "origin_status": "CANONICAL_IMMEDIATE_PREDECESSOR",
+                "data_quality_provenance": False,
+            },
+        )
+    cache_filename = snapshot.path.name
+    manifest_status = _legacy_manifest_binding_status(
+        legacy_manifest,
+        cache_filename=cache_filename,
+        cache_sha256=snapshot.sha256,
+        cache_row_count=snapshot.row_count,
+    )
+    event_id = _source_event_id(
+        artifact_role,
+        "legacy_local_cache_import",
+        snapshot.sha256[:16],
+    )
+    return _SourceEventDefinition(
+        source_event_id=event_id,
+        artifact_role=artifact_role,
+        source_kind=_LEGACY_LOCAL_CACHE_IMPORT,
+        source_id="legacy_local_cache_import",
+        provider="Local filesystem",
+        endpoint=cache_filename,
+        request_parameters={
+            "cache_relative_path": cache_filename,
+            "cache_sha256": snapshot.sha256,
+            "cache_size_bytes": snapshot.size_bytes,
+            "cache_row_count": snapshot.row_count,
+            "cache_capture_mode": "READ_ONCE_BYTES_THEN_PARSE",
+            "manifest_relative_path": "download_manifest.csv",
+            "manifest_sha256": legacy_manifest.sha256,
+            "manifest_size_bytes": legacy_manifest.size_bytes,
+            "manifest_row_count": legacy_manifest.row_count,
+            "manifest_binding_status": manifest_status,
+            "manifest_provider_provenance_accepted": False,
+            "raw_provider_provenance": False,
+            "origin_lineage_complete": False,
+            "origin_status": "OPAQUE_LEGACY",
+            "data_quality_provenance": False,
+        },
+        replay_inputs=(
+            DownloadReplayInputCandidate(
+                input_role="legacy_local_cache_bytes",
+                filename=f"{artifact_role}_legacy_cache_input.csv",
+                content=snapshot.raw,
+                row_count=snapshot.row_count,
+            ),
+        ),
+    )
+
+
+def _source_event_id(artifact_role: str, lane: str, source_id: str) -> str:
+    return f"{artifact_role}:{lane}:{source_id}"
+
+
+def _unique_source_event_definitions(
+    events: list[_SourceEventDefinition],
+) -> tuple[_SourceEventDefinition, ...]:
+    by_id: dict[str, _SourceEventDefinition] = {}
+    for event in events:
+        previous = by_id.get(event.source_event_id)
+        if previous is not None and previous != event:
+            raise ValueError(f"Conflicting source event definition: {event.source_event_id}")
+        by_id[event.source_event_id] = event
+    return tuple(by_id[event_id] for event_id in sorted(by_id))
+
+
+def _tag_rate_frame(
+    frame: pd.DataFrame,
+    *,
+    source_event_id: str,
+) -> pd.DataFrame:
+    tagged = frame.copy()
+    if "date" in tagged:
+        parsed_dates = pd.to_datetime(tagged["date"], errors="coerce")
+        if bool(parsed_dates.isna().any()):
+            raise ValueError("Rate download contains invalid date values")
+        tagged["date"] = parsed_dates.dt.strftime("%Y-%m-%d")
+    if "series" in tagged:
+        tagged["series"] = tagged["series"].astype(str)
+    tagged[_PROVENANCE_EVENT_COLUMN] = source_event_id
+    return tagged
+
+
+def _source_bindings_for_frame(
+    frame: pd.DataFrame,
+    *,
+    artifact_role: str,
+    identity_column: str,
+    events: tuple[_SourceEventDefinition, ...],
+) -> tuple[DownloadSourceBinding, ...]:
+    if not events or any(event.artifact_role != artifact_role for event in events):
+        raise ValueError(f"Invalid source events for {artifact_role}")
+    event_ids = {event.source_event_id for event in events}
+    if len(event_ids) != len(events):
+        raise ValueError(f"Duplicate source event ids for {artifact_role}")
+    winners: dict[str, list[tuple[str, str]]] = {event.source_event_id: [] for event in events}
+    observed_keys: set[tuple[str, str]] = set()
+    if not frame.empty:
+        required = {identity_column, "date", _PROVENANCE_EVENT_COLUMN}
+        missing = required - set(frame.columns)
+        if missing:
+            raise ValueError(f"{artifact_role} frame missing provenance columns: {sorted(missing)}")
+        for identity, raw_date, source_event_id in frame[
+            [identity_column, "date", _PROVENANCE_EVENT_COLUMN]
+        ].itertuples(index=False, name=None):
+            if pd.isna(identity) or pd.isna(raw_date) or pd.isna(source_event_id):
+                raise ValueError(f"{artifact_role} frame has null provenance key")
+            event_id = str(source_event_id)
+            if event_id not in event_ids:
+                raise ValueError(f"{artifact_role} frame has unknown source event: {event_id}")
+            parsed_date = pd.to_datetime(raw_date, errors="coerce")
+            if pd.isna(parsed_date):
+                raise ValueError(f"{artifact_role} frame has invalid row-key date")
+            key = (str(identity), parsed_date.date().isoformat())
+            if key in observed_keys:
+                raise ValueError(f"{artifact_role} frame has duplicate row key: {key}")
+            observed_keys.add(key)
+            winners[event_id].append(key)
+    remainder_event_id = min(
+        event_ids,
+        key=lambda event_id: (-len(winners[event_id]), event_id),
+    )
+    bindings = []
+    for event in events:
+        winning_keys = tuple(sorted(winners[event.source_event_id]))
+        bindings.append(
+            DownloadSourceBinding(
+                source_event_id=event.source_event_id,
+                artifact_role=artifact_role,
+                source_kind=event.source_kind,
+                source_id=event.source_id,
+                provider=event.provider,
+                endpoint=event.endpoint,
+                request_parameters=event.request_parameters,
+                winning_row_count=len(winning_keys),
+                allocation_mode=(
+                    "REMAINDER" if event.source_event_id == remainder_event_id else "EXPLICIT_KEYS"
+                ),
+                winning_row_keys=winning_keys,
+                replay_inputs=event.replay_inputs,
+            )
+        )
+    return tuple(sorted(bindings, key=lambda item: item.source_event_id))
+
+
+def _without_provenance_column(frame: pd.DataFrame) -> pd.DataFrame:
+    return frame.drop(columns=[_PROVENANCE_EVENT_COLUMN], errors="ignore")
 
 
 def _price_fetch_windows(
@@ -596,9 +1313,7 @@ def _marketstack_fetch_windows_and_budget_status(
                 "catch_up_budget_profile": _MARKETSTACK_TAIL_CATCH_UP_PROFILE,
                 "original_fetch_windows": [window.to_payload() for window in fetch_windows],
                 "split_fetch_windows": [window.to_payload() for window in split_windows],
-                "original_violation_reasons": _budget_violation_reasons(
-                    request_budget_status
-                ),
+                "original_violation_reasons": _budget_violation_reasons(request_budget_status),
             }
         if (
             catch_up_status is not None
@@ -630,9 +1345,7 @@ def _marketstack_quota_cycle_reset_status(
     cycle_policy = policy.marketstack.eod_daily_prices.quota_cycle_reset
     if not cycle_policy.enabled:
         return None
-    observed_at = _parse_quota_observed_at(
-        request_budget_status.get("latest_quota_observed_at")
-    )
+    observed_at = _parse_quota_observed_at(request_budget_status.get("latest_quota_observed_at"))
     if observed_at is None:
         return None
     cycle_start, next_cycle_start = _marketstack_billing_cycle_bounds(
@@ -644,7 +1357,8 @@ def _marketstack_quota_cycle_reset_status(
     if not fetch_windows or not all(window.start > request_start for window in fetch_windows):
         return None
 
-    estimated_units = int(request_budget_status.get("estimated_increment_usage") or 0)
+    estimated_usage: Any = request_budget_status.get("estimated_increment_usage")
+    estimated_units = int(estimated_usage or 0)
     window_calendar_days = tuple(
         max(1, (window.end - window.start).days + 1) for window in fetch_windows
     )
@@ -655,10 +1369,7 @@ def _marketstack_quota_cycle_reset_status(
         violation_reasons.append("estimated_usage_exceeds_quota_cycle_reset_limit")
     if len(fetch_windows) > cycle_policy.max_fetch_window_count:
         violation_reasons.append("fetch_window_count_exceeds_quota_cycle_reset_limit")
-    if any(
-        days > cycle_policy.max_calendar_days_per_window
-        for days in window_calendar_days
-    ):
+    if any(days > cycle_policy.max_calendar_days_per_window for days in window_calendar_days):
         violation_reasons.append("calendar_window_exceeds_quota_cycle_reset_limit")
 
     approved = not violation_reasons
@@ -666,9 +1377,7 @@ def _marketstack_quota_cycle_reset_status(
     payload.update(
         {
             "budget_profile": _MARKETSTACK_QUOTA_CYCLE_RESET_PROFILE,
-            "status": (
-                cycle_policy.allowed_status if approved else _MARKETSTACK_BLOCKED_STATUS
-            ),
+            "status": (cycle_policy.allowed_status if approved else _MARKETSTACK_BLOCKED_STATUS),
             "quota_cycle_reset": {
                 "approved": approved,
                 "approval_profile": _MARKETSTACK_QUOTA_CYCLE_RESET_PROFILE,
@@ -686,13 +1395,9 @@ def _marketstack_quota_cycle_reset_status(
                 "stale_quota_remaining": request_budget_status.get("quota_remaining"),
                 "estimated_increment_usage": estimated_units,
                 "fetch_window_count": len(fetch_windows),
-                "max_estimated_increment_usage": (
-                    cycle_policy.max_estimated_increment_usage
-                ),
+                "max_estimated_increment_usage": (cycle_policy.max_estimated_increment_usage),
                 "max_fetch_window_count": cycle_policy.max_fetch_window_count,
-                "max_calendar_days_per_window": (
-                    cycle_policy.max_calendar_days_per_window
-                ),
+                "max_calendar_days_per_window": (cycle_policy.max_calendar_days_per_window),
                 "window_calendar_days": list(window_calendar_days),
                 "violation_reasons": violation_reasons,
                 "reason": cycle_policy.reason,
@@ -893,9 +1598,7 @@ def _marketstack_owner_approved_budget_status(
         violation_reasons.append("estimated_usage_exceeds_owner_approved_limit")
     quota_shortfall = max(0, estimated_units - quota_remaining)
     quota_overage_ratio = (
-        None
-        if quota_limit is None or quota_limit <= 0
-        else quota_shortfall / quota_limit
+        None if quota_limit is None or quota_limit <= 0 else quota_shortfall / quota_limit
     )
     if quota_overage_ratio is None:
         violation_reasons.append("quota_limit_missing_for_owner_approved_overage")
@@ -1229,16 +1932,14 @@ def write_download_manifest(
     return output_path
 
 
-def _manifest_record_for_prices(
+def _price_request_parameters(
     provider: PriceDataProvider,
     request: PriceRequest,
-    output_path: Path,
-    row_count: int,
     *,
     incremental_download: IncrementalPriceDownload | None = None,
     request_cache_summaries: tuple[dict[str, object], ...] = (),
 ) -> dict[str, object]:
-    source_id, provider_name, endpoint = _price_provider_metadata(provider)
+    _, provider_name, _ = _price_provider_metadata(provider)
     request_parameters: dict[str, object] = {
         "tickers": request.tickers,
         "start": request.start.isoformat(),
@@ -1253,9 +1954,7 @@ def _manifest_record_for_prices(
             "mode": "coverage_gap",
             "supported_tickers": list(incremental_download.supported_tickers),
             "skipped_tickers": list(incremental_download.skipped_tickers),
-            "fetch_windows": [
-                window.to_payload() for window in incremental_download.fetch_windows
-            ],
+            "fetch_windows": [window.to_payload() for window in incremental_download.fetch_windows],
             "fetch_window_count": len(incremental_download.fetch_windows),
             "reused_row_count": incremental_download.reused_row_count,
             "fetched_row_count": incremental_download.fetched_row_count,
@@ -1265,25 +1964,16 @@ def _manifest_record_for_prices(
     cache_summaries = _cache_summaries_for_provider(request_cache_summaries, provider_name)
     if cache_summaries:
         request_parameters["external_request_cache_summary"] = cache_summaries
-    return _manifest_record(
-        source_id=source_id,
-        provider=provider_name,
-        endpoint=endpoint,
-        request_parameters=request_parameters,
-        output_path=output_path,
-        row_count=row_count,
-    )
+    return request_parameters
 
 
-def _manifest_record_for_rates(
+def _rate_request_parameters(
     provider: RateDataProvider,
     request: RateRequest,
-    output_path: Path,
-    row_count: int,
     *,
     request_cache_summaries: tuple[dict[str, object], ...] = (),
 ) -> dict[str, object]:
-    source_id, provider_name, endpoint = _rate_provider_metadata(provider)
+    _, provider_name, _ = _rate_provider_metadata(provider)
     request_parameters: dict[str, object] = {
         "series_ids": request.series_ids,
         "start": request.start.isoformat(),
@@ -1292,38 +1982,7 @@ def _manifest_record_for_rates(
     cache_summaries = _cache_summaries_for_provider(request_cache_summaries, provider_name)
     if cache_summaries:
         request_parameters["external_request_cache_summary"] = cache_summaries
-    return _manifest_record(
-        source_id=source_id,
-        provider=provider_name,
-        endpoint=endpoint,
-        request_parameters=request_parameters,
-        output_path=output_path,
-        row_count=row_count,
-    )
-
-
-def _manifest_record(
-    source_id: str,
-    provider: str,
-    endpoint: str,
-    request_parameters: dict[str, object],
-    output_path: Path,
-    row_count: int,
-) -> dict[str, object]:
-    return {
-        "downloaded_at": datetime.now(tz=UTC).isoformat(),
-        "source_id": source_id,
-        "provider": provider,
-        "endpoint": endpoint,
-        "request_parameters": json.dumps(
-            request_parameters,
-            ensure_ascii=False,
-            sort_keys=True,
-        ),
-        "output_path": str(output_path),
-        "row_count": row_count,
-        "checksum_sha256": _sha256_file(output_path),
-    }
+    return request_parameters
 
 
 def _price_provider_metadata(provider: PriceDataProvider) -> tuple[str, str, str]:
@@ -1365,9 +2024,5 @@ def _source_id_from_provider(provider_name: str) -> str:
     return normalized or "unknown_provider"
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as file:
-        for chunk in iter(lambda: file.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+def _csv_bytes(frame: pd.DataFrame) -> bytes:
+    return frame.to_csv(index=False, lineterminator="\n").encode("utf-8")

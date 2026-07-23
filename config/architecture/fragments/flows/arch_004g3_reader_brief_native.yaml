@@ -1,0 +1,22 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.arch_004g3_reader_brief_native
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+current_state_ratchet_id: arch_004g3_reader_brief_native_current.v1
+source: existing_decision_snapshot_dq_pit_facts
+stages:
+  - pure_compatibility_projection
+  - typed_report_section_provider
+  - coordinator_consumer_cut_in
+compatibility_flow_entry_required: true
+generated_source_of_truth_active: false
+section_id: data_quality_and_pit
+domain_implementation_complete: true
+consumer_cut_in_owner: architecture_coordinator
+consumer_cut_in_complete: true
+consumer_cut_in_gate: reader_brief_projector_and_owner_daily_provider_atomic_cut_in
+reporting_layer_recompute_allowed: false
+html_renderer_migrated: false
+production_effect: none
+broker_action: none

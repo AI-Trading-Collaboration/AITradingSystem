@@ -56,6 +56,12 @@ def _dispatch(args: list[str]) -> None:
     if args[:1] == ["validate-data"]:
         data_cache_cli.validate_data(
             as_of=_option(args, "--as-of"),
+            execution_profile=_option(
+                args,
+                "--execution-profile",
+                data_cache_cli.AUTO_DATA_QUALITY_EXECUTION_PROFILE_ID,
+            )
+            or data_cache_cli.AUTO_DATA_QUALITY_EXECUTION_PROFILE_ID,
             full_universe=_flag(args, "--full-universe"),
         )
         return

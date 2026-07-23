@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import hashlib
 import os
 import subprocess
@@ -19,6 +20,12 @@ from ai_trading_system.contracts.data_quality_execution import (
     DataQualityValidatorBinding,
 )
 from ai_trading_system.data import immutable_publish, quality, quality_execution
+from ai_trading_system.data.download_publication import (
+    DownloadArtifactCandidate,
+    DownloadPublicationIntegrityError,
+    DownloadSourceBinding,
+    publish_download_transaction,
+)
 from ai_trading_system.data.quality import (
     DataFileSummary,
     DataQualityIssue,
@@ -69,14 +76,16 @@ def execution_fixture(tmp_path: Path) -> ExecutionFixture:
     rates_path.write_text(RATE_HEADER + RATE_ROW, encoding="utf-8")
     policy_path.write_text(_policy_yaml(), encoding="utf-8")
     _copy_validator_sources(root)
-    _write_manifest(
-        manifest_path,
-        prices_sha=_sha256(prices_path),
-        rates_sha=_sha256(rates_path),
+    _publish_execution_cache(
+        root,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_start=AS_OF,
+        requested_end=AS_OF,
     )
     request = CanonicalDataQualityExecutionRequest(
         as_of=AS_OF,
-        requested_window=DataQualityDateWindow(date(2021, 2, 22), AS_OF),
+        requested_window=DataQualityDateWindow(AS_OF, AS_OF),
         prices_path=Path("data/raw/prices_daily.csv"),
         rates_path=Path("data/raw/rates_daily.csv"),
         manifest_path=Path("data/raw/download_manifest.csv"),
@@ -361,16 +370,22 @@ def test_runner_discloses_actual_common_window_from_two_day_captured_inputs(
         RATE_HEADER + RATE_ROW_EARLIER + RATE_ROW_PREVIOUS,
         encoding="utf-8",
     )
-    _write_manifest(
-        execution_fixture.manifest_path,
-        prices_sha=_sha256(execution_fixture.prices_path),
-        rates_sha=_sha256(execution_fixture.rates_path),
-        prices_rows=2,
-        rates_rows=2,
+    requested_start = date(2026, 7, 22)
+    _publish_execution_cache(
+        execution_fixture.root,
+        prices_path=execution_fixture.prices_path,
+        rates_path=execution_fixture.rates_path,
+        requested_start=requested_start,
+        requested_end=AS_OF,
+        published_at=ENDED_AT,
+    )
+    request = replace(
+        execution_fixture.request,
+        requested_window=DataQualityDateWindow(requested_start, AS_OF),
     )
 
     result = run_canonical_data_quality_execution(
-        execution_fixture.request,
+        request,
         project_root=execution_fixture.root,
     )
 
@@ -387,7 +402,8 @@ def test_explicit_evaluated_window_mismatch_materializes_fail_receipt_with_actua
     _install_report_spy(monkeypatch, status="PASS")
     request = replace(
         execution_fixture.request,
-        evaluated_window=execution_fixture.request.requested_window,
+        requested_window=DataQualityDateWindow(date(2026, 7, 22), AS_OF),
+        evaluated_window=DataQualityDateWindow(date(2026, 7, 22), AS_OF),
     )
 
     result = run_canonical_data_quality_execution(request, project_root=execution_fixture.root)
@@ -681,6 +697,100 @@ def test_runner_binds_validator_and_manifest_to_single_captured_input_bytes(
         )
 
 
+def test_runner_resolves_canonical_publication_once_on_success(
+    execution_fixture: ExecutionFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = 0
+    real_resolver = quality.resolve_download_publication_if_present
+
+    def counted_resolver(*, output_dir: Path):
+        nonlocal calls
+        calls += 1
+        return real_resolver(output_dir=output_dir)
+
+    monkeypatch.setattr(
+        quality,
+        "resolve_download_publication_if_present",
+        counted_resolver,
+    )
+
+    result = run_canonical_data_quality_execution(
+        execution_fixture.request,
+        project_root=execution_fixture.root,
+    )
+
+    assert calls == 1
+    assert result.receipt.report.status == "PASS"
+
+
+def test_runner_preserves_first_invalid_publication_observation_without_retry(
+    execution_fixture: ExecutionFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = 0
+    real_resolver = quality.resolve_download_publication_if_present
+
+    def invalid_then_valid(*, output_dir: Path):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise DownloadPublicationIntegrityError(
+                "DOWNLOAD_DISCOVERY_INVALID",
+                "controlled first observation failure",
+                path=output_dir / ".download_publications/current/download_composite.json",
+            )
+        return real_resolver(output_dir=output_dir)
+
+    monkeypatch.setattr(
+        quality,
+        "resolve_download_publication_if_present",
+        invalid_then_valid,
+    )
+
+    result = run_canonical_data_quality_execution(
+        execution_fixture.request,
+        project_root=execution_fixture.root,
+    )
+
+    assert calls == 1
+    assert result.receipt.report.status == "FAIL"
+    assert "download_publication_invalid" in result.receipt.report.blocking_issue_codes
+
+
+def test_runner_preserves_first_absent_publication_observation_without_retry(
+    execution_fixture: ExecutionFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = 0
+    real_resolver = quality.resolve_download_publication_if_present
+
+    def absent_then_present(*, output_dir: Path):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return None
+        return real_resolver(output_dir=output_dir)
+
+    monkeypatch.setattr(
+        quality,
+        "resolve_download_publication_if_present",
+        absent_then_present,
+    )
+
+    result = run_canonical_data_quality_execution(
+        execution_fixture.request,
+        project_root=execution_fixture.root,
+    )
+
+    assert calls == 1
+    assert result.receipt.report.status == "FAIL"
+    assert (
+        "download_publication_required_for_requested_window"
+        in result.receipt.report.blocking_issue_codes
+    )
+
+
 def test_direct_validator_reads_each_supplied_file_bytes_once(
     execution_fixture: ExecutionFixture,
     monkeypatch: pytest.MonkeyPatch,
@@ -948,6 +1058,84 @@ def _copy_validator_sources(root: Path) -> None:
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((PROJECT_ROOT / relative).read_bytes())
+
+
+def _publish_execution_cache(
+    root: Path,
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    requested_start: date,
+    requested_end: date,
+    published_at: datetime = STARTED_AT,
+) -> None:
+    prices_raw = prices_path.read_bytes()
+    rates_raw = rates_path.read_bytes()
+    price_keys = _csv_row_keys(prices_raw, identity_column="ticker")
+    rate_keys = _csv_row_keys(rates_raw, identity_column="series")
+    publish_download_transaction(
+        output_dir=root / "data/raw",
+        requested_start=requested_start,
+        requested_end=requested_end,
+        published_at=published_at,
+        artifacts=(
+            DownloadArtifactCandidate(
+                role="prices",
+                filename="prices_daily.csv",
+                content=prices_raw,
+                row_count=len(price_keys),
+                source_event_ids=("prices:execution_fixture",),
+            ),
+            DownloadArtifactCandidate(
+                role="rates",
+                filename="rates_daily.csv",
+                content=rates_raw,
+                row_count=len(rate_keys),
+                source_event_ids=("rates:execution_fixture",),
+            ),
+        ),
+        source_bindings=(
+            DownloadSourceBinding(
+                source_event_id="prices:execution_fixture",
+                artifact_role="prices",
+                source_kind="LIVE_PROVIDER",
+                source_id="execution_fixture_prices",
+                provider="execution_fixture",
+                endpoint="prices",
+                request_parameters={
+                    "start": requested_start.isoformat(),
+                    "end": requested_end.isoformat(),
+                },
+                winning_row_count=len(price_keys),
+                allocation_mode="REMAINDER",
+                winning_row_keys=price_keys,
+            ),
+            DownloadSourceBinding(
+                source_event_id="rates:execution_fixture",
+                artifact_role="rates",
+                source_kind="LIVE_PROVIDER",
+                source_id="execution_fixture_rates",
+                provider="execution_fixture",
+                endpoint="rates",
+                request_parameters={
+                    "start": requested_start.isoformat(),
+                    "end": requested_end.isoformat(),
+                },
+                winning_row_count=len(rate_keys),
+                allocation_mode="REMAINDER",
+                winning_row_keys=rate_keys,
+            ),
+        ),
+    )
+
+
+def _csv_row_keys(
+    content: bytes,
+    *,
+    identity_column: str,
+) -> tuple[tuple[str, str], ...]:
+    rows = csv.DictReader(content.decode("utf-8").splitlines())
+    return tuple(sorted((str(row[identity_column]), str(row["date"])) for row in rows))
 
 
 def _write_manifest(

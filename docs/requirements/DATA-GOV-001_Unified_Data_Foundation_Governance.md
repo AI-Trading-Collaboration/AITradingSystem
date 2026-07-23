@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0B1_S2_COMPLETE_WAVE14_S0_IN_PROGRESS`
+- current phase：`D0B2_DOMAIN_COMPLETE_WAVE14_S2_FORMAL_EXIT`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -113,7 +113,9 @@ D0B 按 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consu
 D0C 负责运行耐久性与可恢复性：跨进程 writer/reader/lock matrix、power-loss/crash-point rehearsal、
 file + parent-directory durable commit、retention/reference-safe GC、forward-only/manual/config backup 与
 restore 演练。D0A 的逻辑原子性与线程级测试不能替代 D0C；在 D0C 通过前不得声称 power-loss durable
-或 backup/restore 已闭环。
+或 backup/restore 已闭环。D0C还要把publication replay input的`row_count`从当前metadata自洽校验升级为
+基于immutable CSV bytes的重新计算，并加入content/metadata mismatch负例；该P2缺口不降低Wave14
+artifact/source SHA、size、transaction和manifest语义绑定门禁，但在长期replay完整性关闭前不得省略。
 
 ### D1：P1 统一运行时与可重放 lineage
 
@@ -162,6 +164,14 @@ restore 演练。D0A 的逻辑原子性与线程级测试不能替代 D0C；在 
 
 ## 状态记录
 
+- 2026-07-24：D0B2 domain完成staged immutable composite publication、完整文件级manifest、
+  exact final-row-key到immediate-source-event allocation、canonical predecessor/legacy replay binding及
+  calendar/coverage/internal-gap/finite gate。两轮审计后已修复secondary retirement、relative output root、
+  canonical INVALID隐式retry、manifest current-generation semantic binding、legacy root-contained/no-follow
+  capture，以及外围复核到pointer replace的TOCTOU：exact legacy precondition现在在同一dataset lock内、
+  validated snapshot后且atomic pointer replace前重验。combined focused=`180 passed / 1 skipped`，
+  独立复核=`136 passed / 1 skipped`且无新增P0/P1。当前等待Wave14 shared/generated/compatibility/
+  formal/final Full，D0B3 consumer authorization、production与broker继续关闭。
 - 2026-07-23：Wave13 closeout commit
   `e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已推送；Wave14 S0.1开始。D0B2 exact domain
   scope固定为`data/download.py`、新`data/download_publication.py`、`data/quality.py`及三份专属测试；

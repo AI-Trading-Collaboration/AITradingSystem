@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import io
 import json
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
@@ -18,7 +19,16 @@ from ai_trading_system.config import (
     PriceQualityConfig,
     RateQualityConfig,
 )
+from ai_trading_system.data.download_publication import (
+    DownloadPublicationError,
+    ValidatedDownloadPublication,
+    resolve_download_publication_if_present,
+)
 from ai_trading_system.platform.artifacts import write_markdown_atomic
+from ai_trading_system.trading_calendar import (
+    NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE,
+    is_us_equity_trading_day,
+)
 
 PRICE_REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 RATE_REQUIRED_COLUMNS = ("date", "series", "value")
@@ -38,6 +48,61 @@ class Severity(StrEnum):
     INFO = "INFO"
     ERROR = "ERROR"
     WARNING = "WARNING"
+
+
+class DownloadPublicationResolutionStatus(StrEnum):
+    PRESENT = "PRESENT"
+    ABSENT = "ABSENT"
+    INVALID = "INVALID"
+
+
+@dataclass(frozen=True)
+class DownloadPublicationResolution:
+    """One fail-closed observation of the canonical download pointer."""
+
+    status: DownloadPublicationResolutionStatus
+    publication: ValidatedDownloadPublication | None = None
+    error: DownloadPublicationError | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.status, DownloadPublicationResolutionStatus):
+            raise TypeError("status must be DownloadPublicationResolutionStatus")
+        if self.status == DownloadPublicationResolutionStatus.PRESENT:
+            if (
+                not isinstance(self.publication, ValidatedDownloadPublication)
+                or self.error is not None
+            ):
+                raise ValueError("PRESENT requires publication and forbids error")
+            return
+        if self.status == DownloadPublicationResolutionStatus.ABSENT:
+            if self.publication is not None or self.error is not None:
+                raise ValueError("ABSENT forbids publication and error")
+            return
+        if self.publication is not None or not isinstance(self.error, DownloadPublicationError):
+            raise ValueError("INVALID requires error and forbids publication")
+
+
+def resolve_download_publication_observation(
+    *,
+    output_dir: Path,
+) -> DownloadPublicationResolution:
+    """Resolve canonical publication exactly once and retain an invalid observation."""
+
+    try:
+        publication = resolve_download_publication_if_present(output_dir=output_dir)
+    except DownloadPublicationError as exc:
+        return DownloadPublicationResolution(
+            status=DownloadPublicationResolutionStatus.INVALID,
+            error=exc,
+        )
+    if publication is None:
+        return DownloadPublicationResolution(
+            status=DownloadPublicationResolutionStatus.ABSENT,
+        )
+    return DownloadPublicationResolution(
+        status=DownloadPublicationResolutionStatus.PRESENT,
+        publication=publication,
+    )
 
 
 @dataclass(frozen=True)
@@ -124,6 +189,9 @@ class DataQualityReport:
     rate_consistency_start_date: date | None = None
     marketstack_reconciliation_records: tuple[MarketstackReconciliationRecord, ...] = ()
     issues: tuple[DataQualityIssue, ...] = field(default_factory=tuple)
+    requested_window_start: date | None = None
+    requested_window_end: date | None = None
+    market_calendar_source: str = NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE
 
     @property
     def error_count(self) -> int:
@@ -163,9 +231,16 @@ def validate_data_cache(
     require_secondary_prices: bool = False,
     *,
     file_snapshots: Mapping[str, DataFileSnapshot] | None = None,
+    requested_window: tuple[date, date] | None = None,
+    download_publication_resolution: DownloadPublicationResolution | None = None,
 ) -> DataQualityReport:
     issues: list[DataQualityIssue] = []
     marketstack_reconciliation_records: tuple[MarketstackReconciliationRecord, ...] = ()
+    explicit_requested_window = _validate_requested_window(
+        requested_window,
+        as_of=as_of,
+        issues=issues,
+    )
 
     input_paths = {"prices": prices_path, "rates": rates_path}
     if manifest_path is not None:
@@ -187,17 +262,82 @@ def validate_data_cache(
         issues,
         required=require_secondary_prices,
     )
-    manifest_summary = (
-        _validate_download_manifest(
+    manifest_summary: DataFileSummary | None = None
+    manifest_requested_window: tuple[date, date] | None = None
+    if download_publication_resolution is not None and not isinstance(
+        download_publication_resolution,
+        DownloadPublicationResolution,
+    ):
+        raise TypeError("download_publication_resolution must be DownloadPublicationResolution")
+    canonical_publication: ValidatedDownloadPublication | None = None
+    if manifest_path is not None:
+        if explicit_requested_window is not None:
+            resolution = download_publication_resolution
+            if resolution is None:
+                resolution = resolve_download_publication_observation(
+                    output_dir=manifest_path.parent
+                )
+            if resolution.status == DownloadPublicationResolutionStatus.PRESENT:
+                canonical_publication = resolution.publication
+            elif resolution.status == DownloadPublicationResolutionStatus.INVALID:
+                issues.append(
+                    DataQualityIssue(
+                        Severity.ERROR,
+                        "download_publication_invalid",
+                        ("canonical download publication 无法验证：" f"{resolution.error}"),
+                        source="下载审计清单",
+                    )
+                )
+            if canonical_publication is None:
+                issues.append(
+                    DataQualityIssue(
+                        Severity.ERROR,
+                        "download_publication_required_for_requested_window",
+                        (
+                            "显式 requested_window 必须由 canonical typed download "
+                            "publication 绑定；legacy manifest 不能单独证明 atomic composite。"
+                        ),
+                        source="下载审计清单",
+                    )
+                )
+        manifest_summary, manifest_requested_window = _validate_download_manifest(
             snapshots["manifest"],
             price_summary=price_summary,
             rate_summary=rate_summary,
             secondary_price_summary=secondary_price_summary,
             issues=issues,
+            canonical_publication=canonical_publication,
         )
-        if manifest_path is not None
-        else None
-    )
+    elif explicit_requested_window is not None:
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "download_manifest_required_for_requested_window",
+                (
+                    "显式 requested_window 必须绑定 manifest 或 canonical typed "
+                    "download publication。"
+                ),
+                source="下载审计清单",
+            )
+        )
+    reported_requested_window = explicit_requested_window
+    if (
+        explicit_requested_window is not None
+        and manifest_requested_window is not None
+        and explicit_requested_window != manifest_requested_window
+    ):
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "download_manifest_requested_window_mismatch",
+                (
+                    "显式 requested_window 与当前 artifact 的 manifest window 不一致："
+                    f"explicit={_window_text(explicit_requested_window)}；"
+                    f"manifest={_window_text(manifest_requested_window)}"
+                ),
+                source="下载审计清单",
+            )
+        )
     backtest_manifest_context = _load_backtest_manifest_context(
         None if backtest_manifest_path is None else snapshots["backtest_manifest"]
     )
@@ -213,6 +353,7 @@ def validate_data_cache(
             source="价格主源",
             prices_path=prices_path,
             backtest_manifest_context=backtest_manifest_context,
+            requested_window=explicit_requested_window,
         )
 
     if secondary_prices is not None and secondary_price_summary is not None:
@@ -229,6 +370,7 @@ def validate_data_cache(
             issues,
             source="第二行情源 Marketstack",
             error_severity=_secondary_price_self_check_error_severity(quality_config),
+            requested_window=explicit_requested_window,
         )
         if prices is not None:
             marketstack_reconciliation_records = _check_secondary_price_reconciliation(
@@ -248,6 +390,7 @@ def validate_data_cache(
             quality_config,
             as_of,
             issues,
+            requested_window=explicit_requested_window,
         )
 
     return DataQualityReport(
@@ -261,6 +404,12 @@ def validate_data_cache(
         manifest_summary=manifest_summary,
         price_consistency_start_date=quality_config.prices.consistency_start_date,
         rate_consistency_start_date=quality_config.rates.consistency_start_date,
+        requested_window_start=(
+            None if reported_requested_window is None else reported_requested_window[0]
+        ),
+        requested_window_end=(
+            None if reported_requested_window is None else reported_requested_window[1]
+        ),
         marketstack_reconciliation_records=marketstack_reconciliation_records,
         issues=tuple(issues),
     )
@@ -298,6 +447,16 @@ def render_data_quality_report(report: DataQualityReport) -> str:
         f"- FRED 宏观序列：{', '.join(report.expected_rate_series)}",
         f"- 价格一致性检查起点：{_consistency_start_label(report)}",
         f"- 宏观变化检查起点：{_rate_consistency_start_label(report)}",
+        *(
+            [
+                f"- Requested window：{_requested_window_label(report)}",
+                f"- 市场日历口径：{report.market_calendar_source}",
+                "- 市场日历限制：规则日历不包含未预先编码的临时休市；"
+                "此类事件必须通过受治理的 calendar 更新处理。",
+            ]
+            if report.requested_window_start is not None and report.requested_window_end is not None
+            else []
+        ),
         "",
         "## 问题",
         "",
@@ -372,6 +531,67 @@ def write_marketstack_reconciliation_csv(
 
 def default_quality_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"data_quality_{as_of.isoformat()}.md"
+
+
+def _validate_requested_window(
+    value: tuple[date, date] | None,
+    *,
+    as_of: date,
+    issues: list[DataQualityIssue],
+) -> tuple[date, date] | None:
+    if value is None:
+        return None
+    if (
+        not isinstance(value, tuple)
+        or len(value) != 2
+        or any(not isinstance(item, date) or isinstance(item, datetime) for item in value)
+    ):
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "DQ_WINDOW_INVALID",
+                "requested_window 必须是两个 date 组成的 (start, end)。",
+                source="数据质量执行窗口",
+            )
+        )
+        return None
+    start, end = value
+    if start > end or end > as_of:
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "DQ_WINDOW_INVALID",
+                (
+                    "requested_window 必须满足 start <= end <= as_of："
+                    f"window={_window_text(value)}；as_of={as_of.isoformat()}"
+                ),
+                source="数据质量执行窗口",
+            )
+        )
+        return None
+    if not _us_equity_trading_days(start, end):
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "DQ_WINDOW_NO_TRADING_SESSION",
+                (
+                    "requested_window 在当前 US equity market calendar 下不包含任何 "
+                    "trading session。"
+                ),
+                source="数据质量执行窗口",
+            )
+        )
+    return value
+
+
+def _window_text(value: tuple[date, date]) -> str:
+    return f"{value[0].isoformat()}..{value[1].isoformat()}"
+
+
+def _requested_window_label(report: DataQualityReport) -> str:
+    if report.requested_window_start is None or report.requested_window_end is None:
+        return "未显式绑定（legacy compatibility）"
+    return _window_text((report.requested_window_start, report.requested_window_end))
 
 
 def _validated_file_snapshots(
@@ -505,42 +725,45 @@ def _validate_download_manifest(
     rate_summary: DataFileSummary,
     secondary_price_summary: DataFileSummary | None,
     issues: list[DataQualityIssue],
-) -> DataFileSummary:
+    *,
+    canonical_publication: ValidatedDownloadPublication | None,
+) -> tuple[DataFileSummary, tuple[date, date] | None]:
     path = snapshot.path
+    severity = Severity.ERROR if canonical_publication is not None else Severity.WARNING
     if not snapshot.exists:
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                severity,
                 "download_manifest_missing",
                 f"下载审计清单不存在：{path}。请重新执行 download-data 生成审计记录。",
                 source="下载审计清单",
             )
         )
-        return DataFileSummary(path=path, exists=False)
+        return DataFileSummary(path=path, exists=False), None
 
     if snapshot.content is None:
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                severity,
                 "download_manifest_unreadable",
                 f"下载审计清单无法读取：{snapshot.read_error or 'unknown error'}",
                 source="下载审计清单",
             )
         )
-        return DataFileSummary(path=path, exists=True)
+        return DataFileSummary(path=path, exists=True), None
 
     try:
         manifest = pd.read_csv(io.BytesIO(snapshot.content))
     except Exception as exc:
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                severity,
                 "download_manifest_unreadable",
                 f"下载审计清单无法按 CSV 读取：{exc}",
                 source="下载审计清单",
             )
         )
-        return DataFileSummary(path=path, exists=True, sha256=snapshot.sha256)
+        return DataFileSummary(path=path, exists=True, sha256=snapshot.sha256), None
 
     summary = DataFileSummary(
         path=path,
@@ -552,13 +775,27 @@ def _validate_download_manifest(
     if missing_columns:
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                severity,
                 "manifest_missing_columns",
                 f"下载审计清单缺少必需字段：{', '.join(missing_columns)}",
                 source="下载审计清单",
             )
         )
-        return summary
+        return summary, None
+
+    if canonical_publication is not None:
+        _check_canonical_download_binding(
+            canonical=canonical_publication,
+            manifest_summary=summary,
+            price_summary=price_summary,
+            rate_summary=rate_summary,
+            secondary_price_summary=secondary_price_summary,
+            issues=issues,
+        )
+        return (
+            summary,
+            (canonical_publication.requested_start, canonical_publication.requested_end),
+        )
 
     if _manifest_has_current_reconstructed_record(
         manifest,
@@ -585,7 +822,74 @@ def _validate_download_manifest(
             "secondary_prices",
             issues,
         )
-    return summary
+    return summary, None
+
+
+def _check_canonical_download_binding(
+    *,
+    canonical: ValidatedDownloadPublication,
+    manifest_summary: DataFileSummary,
+    price_summary: DataFileSummary,
+    rate_summary: DataFileSummary,
+    secondary_price_summary: DataFileSummary | None,
+    issues: list[DataQualityIssue],
+) -> None:
+    bindings: tuple[tuple[str, DataFileSummary, Path | None], ...] = (
+        ("prices", price_summary, canonical.legacy_prices_path),
+        ("rates", rate_summary, canonical.legacy_rates_path),
+        *(
+            (
+                (
+                    "secondary_prices",
+                    secondary_price_summary,
+                    canonical.legacy_secondary_prices_path,
+                ),
+            )
+            if secondary_price_summary is not None
+            else ()
+        ),
+    )
+    for role, summary, expected_path in bindings:
+        expected_sha = canonical.artifact_sha256.get(role)
+        expected_rows = canonical.artifact_row_count.get(role)
+        if (
+            expected_path is None
+            or expected_sha is None
+            or expected_rows is None
+            or summary.path.resolve(strict=False) != expected_path.resolve(strict=False)
+            or summary.sha256 != expected_sha
+            or summary.rows != expected_rows
+        ):
+            issues.append(
+                DataQualityIssue(
+                    Severity.ERROR,
+                    f"{role}_download_publication_binding_mismatch",
+                    (
+                        "当前输入未精确绑定 canonical transaction 的 role/path/sha256/"
+                        f"row_count：transaction={canonical.transaction_id}"
+                    ),
+                    sample=str(summary.path),
+                    source="下载审计清单",
+                )
+            )
+    if (
+        manifest_summary.path.resolve(strict=False)
+        != canonical.legacy_manifest_path.resolve(strict=False)
+        or manifest_summary.sha256 != canonical.manifest_sha256
+        or manifest_summary.rows != canonical.manifest_row_count
+    ):
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "download_manifest_canonical_binding_mismatch",
+                (
+                    "当前 manifest 未精确绑定 canonical transaction 的 "
+                    f"path/sha256/row_count：transaction={canonical.transaction_id}"
+                ),
+                sample=str(manifest_summary.path),
+                source="下载审计清单",
+            )
+        )
 
 
 def _manifest_has_current_reconstructed_record(
@@ -612,7 +916,9 @@ def _manifest_row_is_reconstructed(row: pd.Series) -> bool:
         parsed = json.loads(value)
     except (TypeError, ValueError):
         return False
-    return isinstance(parsed, dict) and parsed.get("provenance_status") == "RECONSTRUCTED_MANIFEST"
+    return isinstance(parsed, dict) and parsed.get("provenance_status") == (
+        "RECONSTRUCTED_MANIFEST"
+    )
 
 
 def _check_manifest_covers_file(
@@ -654,6 +960,7 @@ def _validate_prices(
     error_severity: Severity = Severity.ERROR,
     prices_path: Path | None = None,
     backtest_manifest_context: dict[str, Any] | None = None,
+    requested_window: tuple[date, date] | None = None,
 ) -> DataFileSummary:
     if prices.empty:
         issues.append(
@@ -699,7 +1006,24 @@ def _validate_prices(
         issues,
         source=source,
         error_severity=error_severity,
+        check_finite=requested_window is not None,
     )
+    if requested_window is not None:
+        _check_price_market_calendar_dates(
+            frame,
+            requested_window=requested_window,
+            issues=issues,
+            source=source,
+            severity=error_severity,
+        )
+        _check_price_requested_window(
+            frame,
+            expected_tickers=expected_tickers,
+            requested_window=requested_window,
+            issues=issues,
+            source=source,
+            severity=error_severity,
+        )
     _check_price_staleness(
         frame,
         expected_tickers,
@@ -722,6 +1046,8 @@ def _validate_rates(
     quality_config: DataQualityConfig,
     as_of: date,
     issues: list[DataQualityIssue],
+    *,
+    requested_window: tuple[date, date] | None = None,
 ) -> DataFileSummary:
     if rates.empty:
         issues.append(
@@ -768,6 +1094,22 @@ def _validate_rates(
                 source="FRED 宏观序列",
             )
         )
+    if requested_window is not None:
+        non_finite_values = frame["_value"].notna() & ~frame["_value"].map(_is_finite_numeric)
+        if non_finite_values.any():
+            issues.append(
+                DataQualityIssue(
+                    Severity.ERROR,
+                    "rates_non_finite_value",
+                    "FRED 宏观序列包含 Infinity 或其他 non-finite 数值。",
+                    rows=int(non_finite_values.sum()),
+                    sample=_sample_rows(
+                        frame.loc[non_finite_values],
+                        ["date", "series", "value"],
+                    ),
+                    source="FRED 宏观序列",
+                )
+            )
 
     _check_duplicate_keys(frame, ["date", "series"], "rates", issues, source="FRED 宏观序列")
     _check_expected_values(
@@ -897,6 +1239,108 @@ def _check_expected_price_tickers(
         )
 
 
+def _check_price_market_calendar_dates(
+    frame: pd.DataFrame,
+    requested_window: tuple[date, date],
+    issues: list[DataQualityIssue],
+    *,
+    source: str,
+    severity: Severity,
+) -> None:
+    start, end = requested_window
+    observed_dates = {
+        value.date()
+        for value in frame.loc[frame["_date"].notna(), "_date"]
+        if start <= value.date() <= end
+    }
+    non_sessions = sorted(value for value in observed_dates if not is_us_equity_trading_day(value))
+    if not non_sessions:
+        return
+    issues.append(
+        DataQualityIssue(
+            severity,
+            "prices_non_market_session_date",
+            "价格数据包含规则日历认定的非 US equity trading session 日期。",
+            rows=len(non_sessions),
+            sample=", ".join(value.isoformat() for value in non_sessions[:10]),
+            source=source,
+        )
+    )
+
+
+def _check_price_requested_window(
+    frame: pd.DataFrame,
+    *,
+    expected_tickers: list[str],
+    requested_window: tuple[date, date],
+    issues: list[DataQualityIssue],
+    source: str,
+    severity: Severity,
+) -> None:
+    start, end = requested_window
+    expected_sessions = _us_equity_trading_days(start, end)
+    if not expected_sessions:
+        return
+    valid = frame.loc[frame["_date"].notna(), ["ticker", "_date"]].copy()
+    valid["_session_date"] = valid["_date"].map(lambda value: value.date())
+    valid = valid.loc[
+        valid["_session_date"].map(lambda value: start <= value <= end)
+        & valid["_session_date"].map(is_us_equity_trading_day)
+    ]
+    boundary_missing: list[str] = []
+    internal_missing: list[str] = []
+    expected_set = set(expected_sessions)
+    for ticker in expected_tickers:
+        observed = set(valid.loc[valid["ticker"].astype(str) == ticker, "_session_date"].tolist())
+        missing = expected_set - observed
+        if not missing:
+            continue
+        if observed:
+            first_observed = min(observed)
+            last_observed = max(observed)
+            internal = {value for value in missing if first_observed < value < last_observed}
+        else:
+            internal = set()
+        boundary = missing - internal
+        internal_missing.extend(f"{ticker}:{value.isoformat()}" for value in sorted(internal))
+        boundary_missing.extend(f"{ticker}:{value.isoformat()}" for value in sorted(boundary))
+    if boundary_missing:
+        issues.append(
+            DataQualityIssue(
+                severity,
+                "prices_requested_window_coverage_missing",
+                (
+                    "价格数据未逐 ticker 完整覆盖 requested window 内的 US equity "
+                    "trading sessions。"
+                ),
+                rows=len(boundary_missing),
+                sample=", ".join(boundary_missing[:10]),
+                source=source,
+            )
+        )
+    if internal_missing:
+        issues.append(
+            DataQualityIssue(
+                severity,
+                "prices_internal_trading_day_gap",
+                "价格数据在逐 ticker requested window 覆盖内部存在 trading-session gap。",
+                rows=len(internal_missing),
+                sample=", ".join(internal_missing[:10]),
+                source=source,
+            )
+        )
+
+
+def _us_equity_trading_days(start: date, end: date) -> tuple[date, ...]:
+    values: list[date] = []
+    current = start
+    while current <= end:
+        if is_us_equity_trading_day(current):
+            values.append(current)
+        current += timedelta(days=1)
+    return tuple(values)
+
+
 def _manifest_context_error_code(
     ticker: str,
     backtest_manifest_context: dict[str, Any],
@@ -963,10 +1407,27 @@ def _check_price_numeric_rules(
     *,
     source: str,
     error_severity: Severity,
+    check_finite: bool,
 ) -> None:
     numeric_columns = ["open", "high", "low", "close", "adj_close", "volume"]
     for column in numeric_columns:
         frame[f"_{column}"] = pd.to_numeric(frame[column], errors="coerce")
+        if check_finite:
+            non_finite = frame[f"_{column}"].notna() & ~frame[f"_{column}"].map(_is_finite_numeric)
+            if non_finite.any():
+                issues.append(
+                    DataQualityIssue(
+                        error_severity,
+                        f"prices_non_finite_{column}",
+                        f"价格数据的 {column} 包含 Infinity 或其他 non-finite 数值。",
+                        rows=int(non_finite.sum()),
+                        sample=_sample_rows(
+                            frame.loc[non_finite],
+                            ["date", "ticker", column],
+                        ),
+                        source=source,
+                    )
+                )
 
     required_numeric = ["open", "high", "low", "close", "adj_close"]
     for column in required_numeric:
@@ -1769,6 +2230,13 @@ def _optional_float(value: object) -> float | None:
         return float(cast(Any, value))
     except (TypeError, ValueError):
         return None
+
+
+def _is_finite_numeric(value: object) -> bool:
+    try:
+        return math.isfinite(float(cast(Any, value)))
+    except (TypeError, ValueError, OverflowError):
+        return False
 
 
 def _suspicious_price_return_threshold(ticker: str, config: PriceQualityConfig) -> float:

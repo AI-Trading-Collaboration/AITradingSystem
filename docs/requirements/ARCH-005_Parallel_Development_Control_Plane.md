@@ -1,6 +1,6 @@
 # ARCH-005 Parallel Development Control Plane
 
-最后更新：2026-07-22
+最后更新：2026-07-24
 
 ## 任务信息
 
@@ -15,6 +15,9 @@
 - pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
 - integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已获
   owner 窄授权并由 Wave 7 首次真实执行 PASS；S5 canonical cutover 尚未授权
+- current safety follow-up：Wave14暴露同一checkout计划外task/automation第二writer风险；
+  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已登记为`P0/PROPOSED`，不打断Wave14，
+  建议在Wave14 closeout后、Wave15 assignment前经owner确认推进窄版S0/S1
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
 
@@ -70,6 +73,27 @@ helper、降低门禁或用 stale artifact 提升表面吞吐。
 main 分叉、非 fast-forward、无远端权限或 push rejection 任一出现都 fail closed 并报告；不得自动
 rebase、建立 merge commit、force-push、删除用户改动或绕过门禁。S4C 不授权 PR 自动创建、S5
 source-of-truth cutover、ARCH-004 G2.5、策略 search/promotion、production 或 broker action。
+
+### S4D Shared Checkout Write Lease Guard（PROPOSED）
+
+Wave14真实证明现有“worker owned paths + coordinator单写”只能约束同一计划内的worker，不能阻止
+另一个Codex task或daily automation在同一checkout读取半写状态、发起provider/cache mutation或成为
+第二writer。完整需求见
+`docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。
+
+S4D建议顺序固定为：
+
+1. Wave14 S2 formal/final Full、归属、commit/push先完整闭合；
+2. owner明确把S4D从`PROPOSED`转为可执行状态；
+3. S0冻结workspace identity、operation class、owned/shared intent与路径冲突矩阵；
+4. S1复用现有ARCH-005 conflict/lease和operations run-control primitives，实现atomic
+   acquire/release、heartbeat/expiry/replay及mutation/daily的pre-import/pre-provider gate；
+5. 从S4D最终HEAD重新生成Wave15 exact requirement/readiness。
+
+S4D必须path/operation-aware：重叠shared writer恰好一个成功，机械互斥domain仍可并行；不得建立
+第三套lock authority，也不得退化为永久全仓串行锁。S2中纯观测telemetry可以随Wave15异步积累，但
+任何仍改变shared execution entry的工作必须先通过适用formal gate。S4D不是S5，不切换task-register
+source-of-truth，不授权production或broker。
 
 ## 决策
 
@@ -500,6 +524,8 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 - 在至少两个真实 S4B 批次后，是否有证据把两个 domain worker 扩为三个；
 - Wave14 `D0B2 + bounded G3` 与Wave15 `D0B3 + G4B first consumer`的真实冲突、返工及
   coordinator-wait telemetry是否支持继续保持双domain worker；
+- S4D narrow guard的等待时间、false block、lease expiry、unattributed dirty与同checkout
+  operations阻断telemetry，是否证明当前瓶颈来自shared mutation safety而不是task source；
 - S6 throughput、queue age、conflict/rework 与 coordinator wait telemetry 的长期 read model；
 - S5 后 canonical event 写入采用一事件一文件还是 task-local append-only stream。
 
@@ -509,6 +535,12 @@ validated-main integration 授权；任何扩大 lane capacity、切换 source-o
 历史G2.5 rehearsal或“双线默认”推断。
 
 ## 状态记录
+
+- 2026-07-24：Wave14集成期间另一个Codex daily automation在同一checkout读取D0B2/G3中间状态并
+  修改CLI/DQ/shared文档，主coordinator通过任务消息才停止第二writer。未发生未授权commit/push、
+  weights或broker action，但事件证明S4C candidate集成门禁不能替代checkout运行前门禁。新增
+  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`为`P0/PROPOSED`；不扩大Wave14范围，建议其
+  closeout后、Wave15前经owner确认执行narrow S0/S1，`production_effect=none`。
 
 - 2026-07-22：S4C 首个真实批次已完成。候选分支最终提交=`80ffc28c273ff4e3a2d8a50ebe165ea2e7441a45`，
   fetch 后相对 `origin/main@0fc316e5` 为 `0 behind/6 ahead`；归属工作区 clean、active lease=0，

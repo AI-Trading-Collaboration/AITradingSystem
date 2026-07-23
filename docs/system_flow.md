@@ -268,6 +268,46 @@ prices/rates/Marketstack当前SHA均已有manifest匹配，但现有download pat
 manifest，且composite binding、market-calendar、requested-window coverage/internal-gap和finite gate未闭合。
 这些结构修复保留给D0B2；不得因当前恰好匹配而降级门禁或提前授权consumer。
 
+Wave14 S1的D0B2现把下载结果改为staged immutable composite publication。Producer先在内存中完成
+merged prices、rates与可选secondary prices，并为每个artifact冻结完整bytes、size、full row count及
+source-event ids；FMP、Cboe、FRED、Marketstack与既有cache分别记录winning row keys、allocation mode、
+request parameters和可重放输入。`publish_download_transaction`把content-addressed members、完整文件级
+`download_manifest.csv`和`download_publication_transaction.v1`全部验证后，先用同一个
+current-generation semantic validator逐字段核对manifest末尾每个artifact role与transaction中的
+artifact/source-event/requested-window/replay binding，再复用D0A只在最后原子替换
+`data/raw/.download_publications/current/download_composite.json`。固定路径CSV/manifest在canonical
+commit之后才投影，明确是`COMPATIBILITY_ONLY / NOT_GUARANTEED`；projection失败会报告pointer已提交状态，
+不得把部分fixed-path写入误报为未提交。Resolver会对immutable manifest bytes再次执行同一semantic
+validator；首次bootstrap读取既有prices/secondary/manifest时也必须走root-contained/no-follow reader，
+在provider调用前拒绝symlink、junction/reparse或root escape。外围捕获的三项legacy输入还会形成
+exact existence/bytes/SHA/size precondition，在同一dataset lock内、validated snapshot之后且atomic
+pointer replace之前再次通过root-contained/no-follow reader验证；regular replacement、link swap或
+callback异常必须在pointer前fail closed，不能用旧source binding提交新prefix。
+
+带显式requested window的canonical DQ会在captured input bytes之前锁定已验证publication，再以同一组
+captured bytes执行唯一一次validator并核对role/path/SHA/full row count、canonical manifest与publication
+window。主/第二价格源按NYSE regular sessions检查requested-window coverage与per-ticker internal gap，
+prices/rates同时拒绝NaN/Inf；canonical pointer、immutable member、source allocation、manifest、
+legacy projection或window任一不一致均在receipt/downstream前fail closed。`cli_direct`必须保留scheduler
+显式传入的`--execution-profile daily_default.v1`，不能把daily receipt降为`manual.v1`。该阶段仍固定
+`consumer_cutover_allowed=false`、`production_effect=none`，不授权production/active-shadow weights或
+broker/trading action。
+
+```mermaid
+flowchart LR
+    SRC["Provider responses + existing canonical generation"] --> MERGE["In-memory merge + winning-row source bindings"]
+    MERGE --> MEMBERS["Immutable prices / rates / secondary members"]
+    MEMBERS --> TXN["Composite transaction + full-file manifest"]
+    TXN --> PTR2["Atomic current/download_composite.json"]
+    PTR2 --> PROJ["Compatibility fixed-path projection"]
+    PTR2 --> CAP["Resolve canonical publication, then capture input bytes"]
+    CAP --> GATE["Calendar / coverage / gap / finite + exact SHA/row/source/window gate"]
+    GATE --> RECEIPT["Canonical DQ receipt + daily_default discovery"]
+    PROJ -->|"drift"| STOP2["Fail closed"]
+    GATE -->|"mismatch"| STOP2
+    RECEIPT -.-> SAFE2["No consumer cutover / production / broker"]
+```
+
 GOV-006 N0 为 task portfolio 建立只读 normalization 链。strict reviewed policy 与当前真实 Git HEAD
 输入 producer；producer 通过 ARCH-005 legacy registry parser 读取 main、supplemental、deferred 三个
 active sections 及 completed register，先做全局 task-id 分区，再逐条核对 expected source/status、
@@ -707,7 +747,30 @@ profile/as-of隔离pointer定位receipt，经过public strict verifier与daily `
 typed preflight的机械投影，不得自行把裸`PASS + evidence_id`解释为证明；两种plan均不执行命令、不cutover、
 不产生production或broker effect。
 
-ARCH-004F3 建立三层typed reporting kernel：`config/reporting/reporting_architecture.yaml`冻结Owner Daily Brief最多10个core section、owner queue必须typed `DUE + actionable`、Research Review Pack不得auto-tune或把proposal当adoption、Report Audit Index必须覆盖全部registry与legacy-unclassified、Reader Brief native cut-in=false/additive-only/no-recompute/no-production/no-broker。旧`build_reader_brief_payload`仍先生成兼容payload/JSON/HTML；随后`platform.reporting.owner_daily`只读该payload并按固定source keys投影`section provider -> OwnerDailyBriefViewModel -> JSON/HTML sidecar`，`reports reader-brief`和daily-run都写`owner_daily_brief_YYYY-MM-DD.*`，canonical run到legacy目录的mirror显式包含这两项，不替换旧path/schema/status。`ResearchLifecycleRecord -> ResearchReviewItem -> ResearchReviewPackViewModel -> JSON/Markdown`只传播observation/evidence/review/preregistration/validation/owner decision，未通过validation+人工owner decision的proposal永不显示为adopted。legacy registry adapter把1,358项逐项转为typed或`AUDIT_INDEX_LIMITED_UNCLASSIFIED` assessment，platform audit renderer只消费typed catalog，0 silent drop。`platform.reporting.inventory`继续冻结`reader_brief.py` 29,027行/366函数、registry 1,358项/689项effect gap；F3新增Owner/Research/Audit三组report/artifact/flow fragments后report fragment为4、全部仍是shadow source，native Reader Brief cut-in与legacy删除留给ARCH-004G/H并以parity gate控制。
+ARCH-004F3 建立三层typed reporting kernel：`config/reporting/reporting_architecture.yaml`冻结Owner Daily Brief最多10个core section、owner queue必须typed `DUE + actionable`、Research Review Pack不得auto-tune或把proposal当adoption、Report Audit Index必须覆盖全部registry与legacy-unclassified、Reader Brief native cut-in=false/additive-only/no-recompute/no-production/no-broker。旧`build_reader_brief_payload`仍先生成兼容payload/JSON/HTML；随后`platform.reporting.owner_daily`只读该payload并按固定source keys投影`section provider -> OwnerDailyBriefViewModel -> JSON/HTML sidecar`，`reports reader-brief`和daily-run都写`owner_daily_brief_YYYY-MM-DD.*`，canonical run到legacy目录的mirror显式包含这两项，不替换旧path/schema/status。`ResearchLifecycleRecord -> ResearchReviewItem -> ResearchReviewPackViewModel -> JSON/Markdown`只传播observation/evidence/review/preregistration/validation/owner decision，未通过validation+人工owner decision的proposal永不显示为adopted。legacy registry adapter把1,360项逐项转为typed或`AUDIT_INDEX_LIMITED_UNCLASSIFIED` assessment，platform audit renderer只消费typed catalog，0 silent drop。历史`platform.reporting.inventory`按raw SHA冻结`reader_brief.py` 29,053行/367函数、registry 1,360项/689项effect gap；F3新增Owner/Research/Audit三组report/artifact/flow fragments后report fragment为4、全部仍是shadow source，native Reader Brief cut-in与legacy删除留给ARCH-004G/H并以parity gate控制。
+
+ARCH-004G3首个bounded native slice只迁移`data_quality_and_pit`：既有Decision Snapshot、daily decision
+summary与report-index facts先由
+`platform.reporting.reader_brief_native.project_data_quality_pit_safety`做19字段pure compatibility
+projection，再由`provide_data_quality_and_pit_section`按冻结的3个source keys生成typed
+`ReportSectionViewModel`。Reader Brief删除本地builder并只调用native projector；Owner Daily把该section
+从generic provider切到native provider，其余9个core section保持generic兼容投影。任一nested
+DQ/PIT source的FAIL/BLOCKED/REVIEW_REQUIRED必须聚合为BLOCKED，未知或缺status保持LIMITED；报告层
+不访问provider/cache，不重算DQ、score、position、backtest、threshold或结论。旧Reader Brief与Owner
+Daily的path/schema/status/JSON/HTML bytes继续由parity gate保护，HTML renderer本slice不迁移。
+Wave14追加`arch_004g3_reader_brief_native_current.v1` current-state ratchet：历史F3 inventory整文件
+raw SHA保持immutable，当前`reader_brief.py`精确冻结为29,005行/366函数及source SHA，Owner Daily
+精确为1个native+9个generic provider、report fragments为5且active source-of-truth仍为0；任一source、
+结构计数或fragment漂移都必须fail closed，不能再用`<`/`<=`宽松规模目标替代当前证据。
+
+```mermaid
+flowchart LR
+    F["Existing Decision Snapshot + DQ/PIT/report-index facts"] --> P["Native 19-field pure compatibility projector"]
+    P --> S["Typed data_quality_and_pit section provider"]
+    S --> O["Owner Daily 1 native + 9 generic sections"]
+    P --> R["Legacy Reader Brief payload / JSON / HTML parity"]
+    S -.-> N["No provider read / DQ-score-position recompute"]
+```
 
 ARCH-004G0 建立真实减法的控制入口：`config/architecture/arch_004g_deprecation_policy.yaml`统一`EXPERIMENTAL -> ACTIVE -> DEPRECATED -> FROZEN -> REMOVED`，每个target必须声明owner、replacement及其真实状态、compatibility window、sunset condition、usage evidence和12项removal gate；unknown reachability永不视为ready，code removal与historical artifact retention分离，G0禁止runtime删除。`platform.architecture.deprecation` deterministic扫描priority surface的文件/行数/bytes/hash/AST functions/classes/CLI decorators、direct static import、test与docs/config保守引用、direct-writer ratchet、legacy adapter和dynamic wrapper配对，并与`inputs/architecture/arch_004g_deprecation_inventory.yaml`逐字段比对。当前9个target为6 ACTIVE/3 DEPRECATED、removal-ready=0；ETF CLI=37,604行/993 commands，Reader Brief=29,027行，99个dynamic wrapper中48个存在`research_quality`名称对应。后续G1～G6只有在slice parity与reachability证据闭合后才能迁移状态，不能以行数目标批量删除。
 

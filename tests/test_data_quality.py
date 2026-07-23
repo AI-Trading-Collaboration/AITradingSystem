@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
 
@@ -12,6 +12,13 @@ from ai_trading_system.cli import app
 from ai_trading_system.cli_commands import data_cache as data_cache_cli
 from ai_trading_system.config import PROJECT_ROOT as REAL_PROJECT_ROOT
 from ai_trading_system.config import configured_price_tickers, load_data_quality, load_universe
+from ai_trading_system.data import quality as quality_module
+from ai_trading_system.data.download_publication import (
+    DownloadArtifactCandidate,
+    DownloadSourceBinding,
+    ValidatedDownloadPublication,
+    publish_download_transaction,
+)
 from ai_trading_system.data.quality import (
     DataQualityReport,
     Severity,
@@ -19,6 +26,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 
 def test_validate_data_cache_passes_clean_data(tmp_path: Path) -> None:
@@ -294,7 +302,53 @@ def test_render_and_write_data_quality_report(tmp_path: Path) -> None:
     output_path = write_data_quality_report(report, tmp_path / "report.md")
 
     assert "- 状态：PASS" in markdown
+    assert "Requested window" not in markdown
+    assert "市场日历口径" not in markdown
     assert output_path.read_text(encoding="utf-8") == markdown
+
+
+def test_legacy_validation_does_not_resolve_canonical_publication(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    manifest_path = tmp_path / "download_manifest.csv"
+    prices_row = _manifest_row("prices", prices_path)
+    prices_row["request_parameters"] = json.dumps(
+        {
+            "requested_window": {
+                "start": "2021-02-22",
+                "end": "2026-04-30",
+            }
+        }
+    )
+    pd.DataFrame(
+        [
+            prices_row,
+            _manifest_row("rates", rates_path),
+        ]
+    ).to_csv(manifest_path, index=False)
+
+    def unexpected_resolve(*args, **kwargs):
+        raise AssertionError("legacy validation must not resolve canonical publication")
+
+    monkeypatch.setattr(
+        quality_module,
+        "resolve_download_publication_if_present",
+        unexpected_resolve,
+    )
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        manifest_path=manifest_path,
+    )
+
+    assert report.status == "PASS"
 
 
 def test_validate_data_cache_checks_download_manifest(tmp_path: Path) -> None:
@@ -324,6 +378,379 @@ def test_validate_data_cache_checks_download_manifest(tmp_path: Path) -> None:
     assert "下载审计清单" in markdown
     assert "价格一致性检查起点：2021-02-22" in markdown
     assert "宏观变化检查起点：2021-02-22" in markdown
+
+
+def test_explicit_window_uses_canonical_publication_binding(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+    markdown = render_data_quality_report(report)
+
+    assert report.status == "PASS"
+    assert report.requested_window_start == date(2026, 4, 29)
+    assert report.requested_window_end == date(2026, 4, 30)
+    assert "Requested window：2026-04-29..2026-04-30" in markdown
+    assert "市场日历口径" in markdown
+
+
+def test_explicit_window_rejects_legacy_manifest_without_canonical_pointer(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    manifest_path = tmp_path / "download_manifest.csv"
+    pd.DataFrame(
+        [
+            _manifest_row("prices", prices_path),
+            _manifest_row("rates", rates_path),
+        ]
+    ).to_csv(manifest_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert report.status == "FAIL"
+    assert "download_publication_required_for_requested_window" in _issue_codes(report)
+
+
+def test_explicit_window_maps_invalid_canonical_pointer_to_quality_error(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    manifest_path = tmp_path / "download_manifest.csv"
+    pd.DataFrame(
+        [
+            _manifest_row("prices", prices_path),
+            _manifest_row("rates", rates_path),
+        ]
+    ).to_csv(manifest_path, index=False)
+    pointer_path = tmp_path / ".download_publications/current/download_composite.json"
+    pointer_path.parent.mkdir(parents=True)
+    pointer_path.write_bytes(b"{}\n")
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert report.status == "FAIL"
+    assert "download_publication_invalid" in _issue_codes(report)
+
+
+def test_explicit_window_detects_per_ticker_boundary_gap(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    _write_price_dates(prices_path, ("2026-04-30",))
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert "prices_requested_window_coverage_missing" in _issue_codes(report)
+    assert "prices_internal_trading_day_gap" not in _issue_codes(report)
+
+
+def test_explicit_window_detects_per_ticker_internal_session_gap(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    _write_price_dates(prices_path, ("2026-04-28", "2026-04-30"))
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_start=date(2026, 4, 28),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 28), date(2026, 4, 30)),
+    )
+
+    assert "prices_internal_trading_day_gap" in _issue_codes(report)
+    assert "prices_requested_window_coverage_missing" not in _issue_codes(report)
+
+
+def test_explicit_window_ignores_weekend_and_market_holiday_gaps(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    _write_price_dates(prices_path, ("2026-05-22", "2026-05-26"))
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_start=date(2026, 5, 22),
+        requested_end=date(2026, 5, 26),
+        published_at=datetime(2026, 5, 27, tzinfo=UTC),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=[],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 26),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 5, 22), date(2026, 5, 26)),
+    )
+
+    assert not {
+        "prices_requested_window_coverage_missing",
+        "prices_internal_trading_day_gap",
+        "prices_non_market_session_date",
+    } & _issue_codes(report)
+
+
+def test_explicit_window_rejects_window_without_trading_session(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    _write_price_dates(prices_path, ("2026-05-22",))
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_start=date(2026, 5, 23),
+        requested_end=date(2026, 5, 24),
+        published_at=datetime(2026, 5, 24, 12, tzinfo=UTC),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=[],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 24),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 5, 23), date(2026, 5, 24)),
+    )
+
+    assert "DQ_WINDOW_NO_TRADING_SESSION" in _issue_codes(report)
+
+
+def test_explicit_window_rejects_distinct_non_market_session_date(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    _write_price_dates(
+        prices_path,
+        ("2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02"),
+    )
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_end=date(2026, 5, 2),
+        published_at=datetime(2026, 5, 2, 12, tzinfo=UTC),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=[],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 5, 2)),
+    )
+
+    issue = next(item for item in report.issues if item.code == "prices_non_market_session_date")
+    assert issue.rows == 1
+    assert issue.sample == "2026-05-02"
+
+
+def test_explicit_window_rejects_non_finite_price_and_rate_values(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    prices = pd.read_csv(prices_path)
+    prices["volume"] = prices["volume"].astype(float)
+    prices.loc[0, "volume"] = float("inf")
+    prices.to_csv(prices_path, index=False)
+    rates = pd.read_csv(rates_path)
+    rates.loc[0, "value"] = float("inf")
+    rates.to_csv(rates_path, index=False)
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert {
+        "prices_non_finite_volume",
+        "rates_non_finite_value",
+    }.issubset(_issue_codes(report))
+
+
+def test_explicit_window_uses_current_generation_with_duplicate_history(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    first = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    current = _publish_quality_cache(
+        tmp_path,
+        prices_path=first.legacy_prices_path,
+        rates_path=first.legacy_rates_path,
+        published_at=datetime(2026, 5, 1, 0, 1, tzinfo=UTC),
+    )
+
+    report = validate_data_cache(
+        prices_path=current.legacy_prices_path,
+        rates_path=current.legacy_rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=current.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert current.transaction_id != first.transaction_id
+    assert current.manifest_row_count == 4
+    assert report.status == "PASS"
+
+
+def test_explicit_window_rejects_path_sha_and_row_binding_mismatch(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    alternate_prices = tmp_path / "alternate_prices.csv"
+    alternate_prices.write_bytes(publication.legacy_prices_path.read_bytes())
+
+    path_report = validate_data_cache(
+        prices_path=alternate_prices,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    tampered = pd.read_csv(publication.legacy_prices_path)
+    tampered = pd.concat([tampered, tampered.iloc[[0]].assign(date="2026-04-28")])
+    tampered.to_csv(publication.legacy_prices_path, index=False)
+    bytes_report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert "prices_download_publication_binding_mismatch" in _issue_codes(path_report)
+    assert "prices_download_publication_binding_mismatch" in _issue_codes(bytes_report)
+
+
+def test_optional_secondary_window_and_finite_issues_follow_config_severity(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["MSFT"])
+    secondary_path = tmp_path / "secondary_input.csv"
+    _write_price_dates(secondary_path, ("2026-04-30",))
+    secondary = pd.read_csv(secondary_path)
+    secondary["volume"] = secondary["volume"].astype(float)
+    secondary.loc[0, "volume"] = float("inf")
+    secondary.to_csv(secondary_path, index=False)
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        secondary_prices_path=secondary_path,
+    )
+    assert publication.legacy_secondary_prices_path is not None
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        secondary_prices_path=publication.legacy_secondary_prices_path,
+        expected_price_tickers=["MSFT"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    secondary_issues = {
+        issue.code: issue.severity
+        for issue in report.issues
+        if issue.source == "第二行情源 Marketstack"
+    }
+    assert secondary_issues["prices_requested_window_coverage_missing"] is Severity.INFO
+    assert secondary_issues["prices_non_finite_volume"] is Severity.INFO
 
 
 def test_validate_data_cache_ignores_stale_reconstructed_manifest_rows(
@@ -899,6 +1326,133 @@ def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path, monkeypatc
     assert "Canonicalreceipt" in "".join(result.output.split())
 
 
+def _publish_quality_cache(
+    root: Path,
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    secondary_prices_path: Path | None = None,
+    requested_start: date = date(2026, 4, 29),
+    requested_end: date = date(2026, 4, 30),
+    published_at: datetime = datetime(2026, 5, 1, tzinfo=UTC),
+) -> ValidatedDownloadPublication:
+    prices_raw = prices_path.read_bytes()
+    rates_raw = rates_path.read_bytes()
+    price_rows = len(pd.read_csv(prices_path))
+    rate_rows = len(pd.read_csv(rates_path))
+    artifacts = [
+        DownloadArtifactCandidate(
+            role="prices",
+            filename="prices_daily.csv",
+            content=prices_raw,
+            row_count=price_rows,
+            source_event_ids=("prices:quality_prices",),
+        ),
+        DownloadArtifactCandidate(
+            role="rates",
+            filename="rates_daily.csv",
+            content=rates_raw,
+            row_count=rate_rows,
+            source_event_ids=("rates:quality_rates",),
+        ),
+    ]
+    sources = [
+        DownloadSourceBinding(
+            source_event_id="prices:quality_prices",
+            artifact_role="prices",
+            source_kind="LIVE_PROVIDER",
+            source_id="quality_prices",
+            provider="quality_fixture",
+            endpoint="prices",
+            request_parameters={
+                "start": requested_start.isoformat(),
+                "end": requested_end.isoformat(),
+            },
+            winning_row_count=price_rows,
+            allocation_mode="REMAINDER",
+            winning_row_keys=_quality_row_keys(prices_path, "ticker"),
+        ),
+        DownloadSourceBinding(
+            source_event_id="rates:quality_rates",
+            artifact_role="rates",
+            source_kind="LIVE_PROVIDER",
+            source_id="quality_rates",
+            provider="quality_fixture",
+            endpoint="rates",
+            request_parameters={
+                "start": requested_start.isoformat(),
+                "end": requested_end.isoformat(),
+            },
+            winning_row_count=rate_rows,
+            allocation_mode="REMAINDER",
+            winning_row_keys=_quality_row_keys(rates_path, "series"),
+        ),
+    ]
+    if secondary_prices_path is not None:
+        secondary_raw = secondary_prices_path.read_bytes()
+        secondary_rows = len(pd.read_csv(secondary_prices_path))
+        artifacts.append(
+            DownloadArtifactCandidate(
+                role="secondary_prices",
+                filename="prices_marketstack_daily.csv",
+                content=secondary_raw,
+                row_count=secondary_rows,
+                source_event_ids=("secondary:quality_secondary",),
+            )
+        )
+        sources.append(
+            DownloadSourceBinding(
+                source_event_id="secondary:quality_secondary",
+                artifact_role="secondary_prices",
+                source_kind="LIVE_PROVIDER",
+                source_id="quality_secondary",
+                provider="quality_fixture",
+                endpoint="secondary_prices",
+                request_parameters={
+                    "start": requested_start.isoformat(),
+                    "end": requested_end.isoformat(),
+                },
+                winning_row_count=secondary_rows,
+                allocation_mode="REMAINDER",
+                winning_row_keys=_quality_row_keys(secondary_prices_path, "ticker"),
+            )
+        )
+    return publish_download_transaction(
+        output_dir=root,
+        requested_start=requested_start,
+        requested_end=requested_end,
+        published_at=published_at,
+        artifacts=tuple(artifacts),
+        source_bindings=tuple(sources),
+    )
+
+
+def _quality_row_keys(
+    path: Path,
+    identity_column: str,
+) -> tuple[tuple[str, str], ...]:
+    frame = pd.read_csv(path, dtype={"date": str, identity_column: str})
+    return tuple(
+        sorted(
+            (str(row[identity_column]), str(row["date"])) for row in frame.to_dict(orient="records")
+        )
+    )
+
+
+def _write_price_dates(
+    prices_path: Path,
+    values: tuple[str, ...],
+    *,
+    tickers: tuple[str, ...] = ("MSFT",),
+) -> None:
+    rows = [
+        _price_row(value, ticker, 100.0, 102.0, 99.0, 101.0, 101.0, 1000)
+        for ticker in tickers
+        for value in values
+    ]
+    pd.DataFrame(rows).to_csv(prices_path, index=False)
+
+
 def _write_valid_cache(
     tmp_path: Path,
     tickers: list[str] | None = None,
@@ -980,6 +1534,10 @@ def _prepare_canonical_cli_project(
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((REAL_PROJECT_ROOT / relative).read_bytes())
+    _expand_cli_price_history(prices_path)
+    secondary_prices_path = prices_path.parent / "prices_marketstack_daily.csv"
+    if secondary_prices_path.is_file():
+        secondary_prices_path.write_bytes(prices_path.read_bytes())
     manifest_rows = [
         {
             "downloaded_at": "2026-05-02T00:00:00+00:00",
@@ -1002,7 +1560,6 @@ def _prepare_canonical_cli_project(
             "checksum_sha256": _sha256_file(rates_path),
         },
     ]
-    secondary_prices_path = prices_path.parent / "prices_marketstack_daily.csv"
     if secondary_prices_path.is_file():
         manifest_rows.append(
             {
@@ -1018,6 +1575,36 @@ def _prepare_canonical_cli_project(
         )
     manifest = pd.DataFrame(manifest_rows)
     manifest.to_csv(prices_path.parent / "download_manifest.csv", index=False)
+    _publish_quality_cache(
+        prices_path.parent,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        secondary_prices_path=(secondary_prices_path if secondary_prices_path.is_file() else None),
+        requested_start=date(2021, 2, 22),
+        requested_end=date(2026, 5, 2),
+        published_at=datetime(2026, 5, 2, 12, tzinfo=UTC),
+    )
+
+
+def _expand_cli_price_history(prices_path: Path) -> None:
+    source = pd.read_csv(prices_path)
+    templates = {
+        str(ticker): rows.iloc[-1].to_dict()
+        for ticker, rows in source.groupby(source["ticker"].astype(str), sort=True)
+    }
+    sessions = tuple(
+        current.date()
+        for current in pd.date_range(date(2021, 2, 22), date(2026, 5, 2), freq="D")
+        if is_us_equity_trading_day(current.date())
+    )
+    rows = []
+    for ticker, template in templates.items():
+        for session in sessions:
+            row = dict(template)
+            row["date"] = session.isoformat()
+            row["ticker"] = ticker
+            rows.append(row)
+    pd.DataFrame(rows, columns=source.columns).to_csv(prices_path, index=False)
 
 
 def _price_row(
@@ -1062,7 +1649,7 @@ def _manifest_row(source_id: str, output_path: Path) -> dict[str, object]:
         "endpoint": "test",
         "request_parameters": "{}",
         "output_path": str(output_path),
-        "row_count": 1,
+        "row_count": len(pd.read_csv(output_path)),
         "checksum_sha256": _sha256_file(output_path),
     }
 

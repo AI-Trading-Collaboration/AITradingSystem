@@ -19,6 +19,12 @@ from ai_trading_system.platform.reporting.owner_daily import (
     render_owner_daily_brief_html,
     write_owner_daily_brief_sidecars,
 )
+from ai_trading_system.platform.reporting.reader_brief_native import (
+    DATA_QUALITY_AND_PIT_SECTION_ID,
+    DATA_QUALITY_AND_PIT_SOURCE_KEYS,
+    project_data_quality_pit_safety,
+    provide_data_quality_and_pit_section,
+)
 from ai_trading_system.platform.reporting.research_review import (
     build_research_review_pack,
     render_research_review_pack_markdown,
@@ -44,6 +50,10 @@ __all__ = [
     "default_owner_daily_brief_json_path",
     "render_owner_daily_brief_html",
     "write_owner_daily_brief_sidecars",
+    "DATA_QUALITY_AND_PIT_SECTION_ID",
+    "DATA_QUALITY_AND_PIT_SOURCE_KEYS",
+    "project_data_quality_pit_safety",
+    "provide_data_quality_and_pit_section",
     "build_research_review_pack",
     "render_research_review_pack_markdown",
     "write_research_review_pack",

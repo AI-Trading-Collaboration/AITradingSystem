@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import html
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -20,6 +20,10 @@ from ai_trading_system.platform.reporting.inventory import (
     ReportingArchitecturePolicy,
     load_reporting_architecture_policy,
 )
+from ai_trading_system.platform.reporting.reader_brief_native import (
+    DATA_QUALITY_AND_PIT_SECTION_ID,
+    provide_data_quality_and_pit_section,
+)
 
 _PASS_STATES = {"PASS", "READY", "AVAILABLE", "OK", "COMPLETE", "DONE"}
 _BLOCKED_STATES = {"BLOCKED", "FAILED", "FAIL", "ERROR", "UNSAFE"}
@@ -32,17 +36,15 @@ def build_owner_daily_brief_view_model(
     generated_at: datetime | None = None,
 ) -> OwnerDailyBriefViewModel:
     resolved_policy = policy or load_reporting_architecture_policy()
-    sections = tuple(
-        _provide_legacy_payload_section(
-            legacy_payload,
-            spec=_section_spec(
-                section_id=item.section_id,
-                source_keys=item.source_keys,
-                order=index,
-            ),
+    specs = tuple(
+        _section_spec(
+            section_id=item.section_id,
+            source_keys=item.source_keys,
+            order=index,
         )
         for index, item in enumerate(resolved_policy.core_sections, start=1)
     )
+    sections = tuple(_section_provider(spec)(legacy_payload, spec=spec) for spec in specs)
     queue = _typed_owner_queue(legacy_payload.get("owner_action_queue"))
     timestamp = generated_at or _payload_generated_at(legacy_payload)
     status = _aggregate_status(tuple(item.status for item in sections))
@@ -122,19 +124,35 @@ def write_owner_daily_brief_sidecars(
 def _section_spec(
     *, section_id: str, source_keys: tuple[str, ...], order: int
 ) -> ReportSectionSpec:
+    provider = (
+        EntrypointRef(
+            module="ai_trading_system.platform.reporting.reader_brief_native",
+            callable_name="provide_data_quality_and_pit_section",
+        )
+        if section_id == DATA_QUALITY_AND_PIT_SECTION_ID
+        else EntrypointRef(
+            module="ai_trading_system.platform.reporting.owner_daily",
+            callable_name="_provide_legacy_payload_section",
+        )
+    )
     return ReportSectionSpec(
         section_id=section_id,
         title=section_id.replace("_", " ").title(),
         owner="reporting_governance",
         reader_tier=ReaderTier.OWNER_DAILY_BRIEF,
-        provider=EntrypointRef(
-            module="ai_trading_system.platform.reporting.owner_daily",
-            callable_name="_provide_legacy_payload_section",
-        ),
+        provider=provider,
         provider_version="1.0.0",
         source_keys=source_keys,
         core_order=order,
     )
+
+
+def _section_provider(
+    spec: ReportSectionSpec,
+) -> Callable[..., ReportSectionViewModel]:
+    if spec.section_id == DATA_QUALITY_AND_PIT_SECTION_ID:
+        return provide_data_quality_and_pit_section
+    return _provide_legacy_payload_section
 
 
 def _provide_legacy_payload_section(
@@ -157,11 +175,7 @@ def _provide_legacy_payload_section(
         (value for _, value in facts if value not in {"MISSING", "AVAILABLE", "UNKNOWN"}),
         f"{spec.section_id}: {status.value}",
     )
-    caveats = (
-        ("缺少source keys：" + ",".join(missing),)
-        if missing
-        else ()
-    )
+    caveats = ("缺少source keys：" + ",".join(missing),) if missing else ()
     return ReportSectionViewModel(
         section_spec_id=spec.spec_id,
         section_id=spec.section_id,

@@ -1,13 +1,13 @@
 # ARCH-004 Wave14 D0B2 + G3 Parallel Readiness
 
-最后更新：2026-07-23
+最后更新：2026-07-24
 
 ## 基本信息
 
 - task id：`ARCH-004W14_D0B2_G3_PARALLEL_READINESS`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`IN_PROGRESS`（current stage=`S0_1_REUSABLE_READINESS_INFRA`）
+- status：`IN_PROGRESS`（current stage=`S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`）
 - owner：architecture coordinator
 - source wave：Wave13 `GOV-006 N1` formal closeout
 - source wave base commit：`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`
@@ -30,10 +30,13 @@ machine-level dispatch 始终保持关闭。
 
 1. Wave14 S0：冻结并验证可执行入口；
 2. Wave14：并行实现 D0B2 与首个 bounded G3 native slice；
-3. Wave15：D0B3 + G4B first consumer，并完成 G3 close/readiness；
-4. G5 + D0C/D1，随后 G6 decision-sensitive characterization；
-5. G7 -> H cutover/removal；
-6. contracts 稳定后才推进 Knowledge、Publishing 与只读 UX。
+3. Wave14 closeout后、Wave15 assignment前：经owner确认后推进
+   `ARCH-005S4D` narrow S0/S1 checkout writer/operations lease guard；
+4. Wave15：从S4D最终HEAD生成exact readiness，推进D0B3 + G4B first consumer，并完成
+   G3 close/readiness；
+5. G5 + D0C/D1，随后 G6 decision-sensitive characterization；
+6. G7 -> H cutover/removal；
+7. contracts 稳定后才推进 Knowledge、Publishing 与只读 UX。
 
 策略 A 已关闭。策略 B/C、新候选、prospective、paper-shadow、promotion、production 和 broker 不因本
 readiness 自动开放。
@@ -214,6 +217,26 @@ Coordinator按冻结顺序集成 shared contracts/config/exports、Reader Brief/
 catalog、task requirements、generated manifests、compatibility baseline 与 deprecation inventory。
 Domain worker不得并发编辑这些路径。
 
+#### S1 后发现的 coordinator scope amendment
+
+真实 `daily-run` 证明 `ops_daily._execution_command` 会把
+`aits validate-data ... --execution-profile daily_default.v1` 转换为
+`python -m ai_trading_system.cli_direct ...`。S0 policy冻结了泛化的CLI wiring与
+`cli_commands/data_cache.py`，但漏列真正执行的direct dispatcher，导致profile在边界被丢弃并被
+`auto + explicit --as-of`解析为`manual.v1`。
+
+该缺口按owner“继续修复”指令作为最小coordinator incident fix纳入：
+
+- `src/ai_trading_system/cli_direct.py`
+- `tests/test_cli_direct.py`
+
+历史S0 policy/evidence carrier `39a3ea730`保持不可变，不回写或伪造当时scope；新增
+`config/architecture/arch_004_wave14_d0b2_g3_scope_amendment.yaml`绑定source carrier、owner指令、
+exact新增路径、其自身governance artifact/test路径、原因和安全边界。改动只恢复既有daily profile的
+原样传播；无profile时仍传`auto`，显式
+`--as-of`继续解析为`manual.v1`。当前代码变更本身`production_effect=none`；未来正常daily执行会按既有
+设计写本地content-addressed DQ receipt/discovery，不授权consumer cutover、weights、production或broker。
+
 验证按风险分层：
 
 - 每个 domain 先跑自己的 focused + static；
@@ -320,6 +343,43 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
 
 ## 进展记录
 
+- 2026-07-24：D0B2第二轮独立审查发现的publication临界区P1已关闭。外围捕获的legacy
+  prices/secondary/manifest存在性、exact bytes、SHA-256与size现在组成typed pre-commit condition，
+  由`publish_immutable_snapshot`在同一dataset lock内、validated snapshot之后且atomic pointer
+  replace之前通过root-contained/no-follow读取重验；manifest historical prefix只使用捕获时的exact
+  bytes。regular manifest replacement、prices link replacement与callback异常均fail closed为零pointer/
+  零publication，authority、staging与dataset lock在异常后可释放并允许同dataset再次成功发布。
+  combined focused=`180 passed / 1 skipped`；独立复核=`136 passed / 1 skipped`、关键race/callback
+  `4 passed`且未发现新增P0/P1。该结果只关闭domain code blocker；generated/compatibility/formal tiers与
+  唯一final Full仍须闭合后才能通过phase exit。
+- 2026-07-24：phase-exit独立审计未发现P0，但发现三个不能带入formal gate的P1：
+  manifest只有bytes/header/row-count外壳校验而缺current-generation transaction语义绑定；首次legacy
+  cache bootstrap可跟随leaf symlink/reparse读取root外bytes；G3只用`<`/`<=`宽松规模ratchet且artifact
+  fragment被本地exclude忽略。D0B2因此增加publisher precommit/resolver共用semantic validator、
+  normalized source-binding copy和root-contained/no-follow bootstrap；G3增加历史F3 raw SHA与当前
+  Reader Brief source SHA/29,005 LOC/366 functions、native/generic=`1/9`、fragments=`5/0 active`
+  exact ratchet及字段级漂移负例。Ignored artifact fragment必须在clean candidate显式force-add并由
+  `git ls-files`/clean-clone验证。上述修复完成focused/static后仍只代表code gate，generated/formal/
+  final Full尚未闭合。
+- 2026-07-23：两个domain实现与首轮独立审计完成。D0B2在修复secondary
+  present→absent retirement、relative `output_dir` predecessor path及canonical INVALID隐式二次解析后，
+  combined data focused=`156 passed`，Black/Ruff/strict mypy PASS；G3独立审计确认native
+  `data_quality_and_pit` provider、legacy 19字段parity、native/generic=`1/9`及LOC/function ratchet均无
+  P0/P1。当前进入S2 shared integration；final generated state、formal tiers与唯一Wave14 Full尚未完成。
+
+后续非Wave14 release blocker已归入现有长期任务：DATA-GOV D0C重算immutable replay-input CSV
+`row_count`；G3后续slice增加代表性完整Reader Brief JSON/HTML before/after golden parity；Wave15
+G4B first-consumer requirement补一条真实`ops_daily -> cli_direct -> daily discovery`跨层回归。
+- 2026-07-23：S0 exact readiness carrier 已以 `39a3ea730` 普通推送并使
+  `main == origin/main`；project owner 随后明确要求继续修复本次真实
+  `DQ_INPUT_ROW_COUNT_MISMATCH`。Coordinator 据此完成 manual assignment：
+  D0B2 data lane 只写本需求冻结的 3 个 data modules / 3 个 focused tests，
+  bounded G3 reporting lane 只写其 native reporting owned paths；两域保持
+  `shared_paths=[]`，shared docs/config/exports、最终 daily-run 和 formal gate
+  仍由 coordinator 单写。验收必须由真实 composite publication 让最终文件的
+  checksum、size、full row count 与 source-event provenance 同时可验证，并保持
+  mismatch fail closed；不得手工修 manifest、降级 warning、启用 consumer cutover、
+  production 或 broker。
 - 2026-07-23：Wave13 closeout commit
   `e2da21894ea8e8921a86c6c1b48d7b191f0f142c` 已普通推送；实时 `git fetch --prune origin`
   成功，随后本地 `HEAD`、`FETCH_HEAD` 与 `origin/main`均为该commit。主工作区只保留既有无关

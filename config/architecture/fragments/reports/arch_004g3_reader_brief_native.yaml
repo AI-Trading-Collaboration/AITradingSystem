@@ -1,0 +1,36 @@
+schema_version: arch_004e_report_fragment.v1
+fragment_id: report.arch_004g3_reader_brief_native
+fragment_kind: report
+owner: reporting_platform
+target_id: report_registry
+current_state_ratchet_id: arch_004g3_reader_brief_native_current.v1
+report_id: reader_brief
+spec_path: config/reporting/reporting_architecture.yaml
+compatibility_registry_entry_required: true
+generated_source_of_truth_active: false
+section_id: data_quality_and_pit
+section_provider: ai_trading_system.platform.reporting.reader_brief_native.provide_data_quality_and_pit_section
+provider_version: 1.0.0
+domain_implementation_complete: true
+legacy_json_html_parity_required: true
+consumer_cut_in_complete: true
+consumer_cut_in_gate: reader_brief_projector_and_owner_daily_provider_atomic_cut_in
+current_state_ratchet:
+  historical_f3_inventory:
+    path: inputs/architecture/arch_004f3_reporting_inventory.yaml
+    inventory_id: reporting_inventory_9f39c169eda16e98097c
+    raw_sha256: 1804dcd6392f692c8e24c592f19888219f30f8b11405ec3eb1f3b05b8d918e06
+    immutable: true
+  reader_brief_source:
+    path: src/ai_trading_system/reports/reader_brief.py
+    sha256: b2a089e8b4995f31e982f4a5b0ba9446038e1f617610db8ba04b1b0521b5ba8e
+    line_count: 29005
+    top_level_function_count: 366
+  owner_daily_core_sections:
+    total_count: 10
+    native_count: 1
+    generic_count: 9
+  report_fragments:
+    total_count: 5
+    active_source_of_truth_count: 0
+production_effect: none

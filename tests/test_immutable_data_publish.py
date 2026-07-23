@@ -135,6 +135,88 @@ def test_publish_stages_separate_immutable_evidence_then_moves_current(tmp_path:
     ]
 
 
+def test_pre_commit_validator_runs_after_snapshot_validation_before_pointer_replace(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = b"date,ticker,close\n2026-07-22,QQQ,555.00\n"
+    request, _ = _case(
+        tmp_path,
+        payload,
+        run_id="run-pre-commit-order",
+        generated_at=GENERATED_AT,
+    )
+    current_path = tmp_path / "store/current" / f"{DATASET_ID}.json"
+    events: list[str] = []
+    original_validate = publish_module._validated_snapshot
+    original_commit = publish_module._commit_current_atomic
+
+    def record_validation(*args: Any, **kwargs: Any):
+        result = original_validate(*args, **kwargs)
+        events.append("validated")
+        return result
+
+    def record_commit(*args: Any, **kwargs: Any):
+        events.append("commit")
+        return original_commit(*args, **kwargs)
+
+    def validate_external_precondition() -> None:
+        assert events == ["validated"]
+        assert not current_path.exists()
+        events.append("pre_commit_validator")
+
+    monkeypatch.setattr(publish_module, "_validated_snapshot", record_validation)
+    monkeypatch.setattr(publish_module, "_commit_current_atomic", record_commit)
+
+    publish_immutable_snapshot(
+        store_root=tmp_path / "store",
+        evidence_root=tmp_path,
+        request=request,
+        payload=payload,
+        pre_commit_validator=validate_external_precondition,
+    )
+
+    assert events == ["validated", "pre_commit_validator", "commit"]
+    assert current_path.is_file()
+
+
+def test_pre_commit_validator_failure_keeps_current_pointer_absent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = b"date,ticker,close\n2026-07-22,QQQ,555.00\n"
+    request, _ = _case(
+        tmp_path,
+        payload,
+        run_id="run-pre-commit-rejected",
+        generated_at=GENERATED_AT,
+    )
+    commit_calls = 0
+    original_commit = publish_module._commit_current_atomic
+
+    def record_commit(*args: Any, **kwargs: Any):
+        nonlocal commit_calls
+        commit_calls += 1
+        return original_commit(*args, **kwargs)
+
+    def reject_candidate() -> None:
+        raise RuntimeError("external precondition changed")
+
+    monkeypatch.setattr(publish_module, "_commit_current_atomic", record_commit)
+
+    with pytest.raises(RuntimeError, match="external precondition changed"):
+        publish_immutable_snapshot(
+            store_root=tmp_path / "store",
+            evidence_root=tmp_path,
+            request=request,
+            payload=payload,
+            pre_commit_validator=reject_candidate,
+        )
+
+    assert commit_calls == 0
+    assert not (tmp_path / "store/current" / f"{DATASET_ID}.json").exists()
+
+
 @pytest.mark.parametrize(
     ("report_overrides", "match"),
     (

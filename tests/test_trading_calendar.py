@@ -34,6 +34,24 @@ def test_us_equity_calendar_covers_regular_2026_holidays() -> None:
     assert not is_us_equity_trading_day(date(2026, 11, 26))
 
 
+def test_juneteenth_closure_starts_in_2022_without_rewriting_2021_history() -> None:
+    assert date(2021, 6, 18) not in us_equity_full_day_holidays(2021)
+    assert is_us_equity_trading_day(date(2021, 6, 18))
+    assert us_equity_market_session(date(2021, 6, 18)).session_status == "TRADING_DAY"
+
+    assert us_equity_full_day_holidays(2022)[date(2022, 6, 20)] == (
+        "Juneteenth National Independence Day"
+    )
+    assert not is_us_equity_trading_day(date(2022, 6, 20))
+
+
+def test_primary_research_window_start_is_a_regular_trading_day() -> None:
+    session = us_equity_market_session(date(2021, 2, 22))
+
+    assert session.session_status == "TRADING_DAY"
+    assert session.is_trading_day is True
+
+
 def test_previous_trading_day_skips_holiday_weekend() -> None:
     assert previous_us_equity_trading_day(date(2026, 7, 6)) == date(2026, 7, 2)
 

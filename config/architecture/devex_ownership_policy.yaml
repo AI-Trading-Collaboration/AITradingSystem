@@ -90,8 +90,54 @@ module_rules:
     public_contract: true
     test_globs: [tests/test_core_contracts.py]
     validation_tiers: [architecture-fitness, fast-unit]
-  - rule_id: platform
-    path_prefix: src/ai_trading_system/platform/
+  - rule_id: platform_reporting
+    path_prefix: src/ai_trading_system/platform/reporting/
+    owner_profile: reporting
+    layer: platform
+    category: reporting_services
+    public_contract: true
+    test_globs:
+      - tests/test_arch_004f3_*.py
+      - tests/test_arch_004g3_*.py
+      - tests/test_reader_brief*.py
+      - tests/test_report*.py
+    validation_tiers: [architecture-fitness, contract-validation, report-validation]
+  - rule_id: platform_architecture
+    path_prefix: src/ai_trading_system/platform/architecture/
+    owner_profile: platform
+    layer: platform
+    category: architecture_platform_services
+    public_contract: true
+    test_globs: [tests/test_arch_004c_*.py, tests/test_arch_004e_*.py, tests/test_arch_005*.py]
+    validation_tiers: [architecture-fitness, contract-validation]
+  - rule_id: platform_artifacts
+    path_prefix: src/ai_trading_system/platform/artifacts/
+    owner_profile: platform
+    layer: platform
+    category: artifact_platform_services
+    public_contract: true
+    test_globs: [tests/test_arch_004c_*.py, tests/test_arch_004e_*.py, tests/test_arch_005*.py]
+    validation_tiers: [architecture-fitness, contract-validation]
+  - rule_id: platform_config
+    path_prefix: src/ai_trading_system/platform/config/
+    owner_profile: platform
+    layer: platform
+    category: config_platform_services
+    public_contract: true
+    test_globs: [tests/test_arch_004c_*.py, tests/test_arch_004e_*.py, tests/test_arch_005*.py]
+    validation_tiers: [architecture-fitness, contract-validation]
+  - rule_id: platform_operations
+    path_prefix: src/ai_trading_system/platform/operations/
+    owner_profile: platform
+    layer: platform
+    category: operations_platform_services
+    public_contract: true
+    test_globs: [tests/test_arch_004c_*.py, tests/test_arch_004e_*.py, tests/test_arch_005*.py]
+    validation_tiers: [architecture-fitness, contract-validation]
+  - rule_id: platform_root
+    exact_paths:
+      - src/ai_trading_system/platform/__init__.py
+      - src/ai_trading_system/platform/validation_trigger_provenance.py
     owner_profile: platform
     layer: platform
     category: platform_services
@@ -123,6 +169,16 @@ module_rules:
     public_contract: true
     test_globs: [tests/test_report*.py, tests/test_reader_brief*.py]
     validation_tiers: [report-validation, contract-validation]
+  - rule_id: cli_entrypoints
+    exact_paths:
+      - src/ai_trading_system/cli.py
+      - src/ai_trading_system/cli_direct.py
+    owner_profile: platform
+    layer: interface
+    category: cli_entrypoints
+    public_contract: true
+    test_globs: [tests/test_cli*.py, tests/test_etf_cli_aliases.py]
+    validation_tiers: [fast-unit, contract-validation]
   - rule_id: cli_commands
     path_prefix: src/ai_trading_system/cli_commands/
     owner_profile: platform

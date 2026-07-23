@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -26,18 +27,54 @@ from ai_trading_system.legacy.reporting_catalog_adapter import (
     assess_report_registry_catalog,
 )
 from ai_trading_system.platform.reporting import (
+    DEFAULT_REPORTING_INVENTORY_PATH,
     ReportingArchitectureError,
+    ReportingArchitectureInventory,
     assert_frozen_reporting_inventory,
     build_owner_daily_brief_view_model,
     build_report_audit_index,
     build_research_review_pack,
     load_reporting_architecture_policy,
+    provide_data_quality_and_pit_section,
     render_owner_daily_brief_html,
     scan_reporting_architecture,
     write_owner_daily_brief_sidecars,
     write_report_audit_index,
     write_research_review_pack,
 )
+from ai_trading_system.platform.reporting import owner_daily as owner_daily_module
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
+WAVE14_G3_REPORT_FRAGMENT_PATH = Path(
+    "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml"
+)
+
+
+def _wave14_current_state_ratchet() -> dict[str, object]:
+    fragment = safe_load_yaml_path(WAVE14_G3_REPORT_FRAGMENT_PATH)
+    assert isinstance(fragment, dict)
+    ratchet = fragment.get("current_state_ratchet")
+    assert isinstance(ratchet, dict)
+    return ratchet
+
+
+def _assert_wave14_current_reader_brief_ratchet(
+    inventory: ReportingArchitectureInventory,
+    ratchet: dict[str, object],
+) -> None:
+    expected = ratchet.get("reader_brief_source")
+    assert isinstance(expected, dict)
+    observed = {
+        "path": inventory.reader_brief_path,
+        "sha256": inventory.reader_brief_sha256,
+        "line_count": inventory.reader_brief_line_count,
+        "top_level_function_count": inventory.reader_brief_top_level_function_count,
+    }
+    if observed != expected:
+        raise ReportingArchitectureError(
+            "REPORTING_WAVE14_CURRENT_STATE_DRIFT",
+            f"expected={expected!r} observed={observed!r}",
+        )
 
 
 def test_reporting_architecture_policy_freezes_three_tier_safety_boundary() -> None:
@@ -72,11 +109,38 @@ def test_reporting_architecture_policy_freezes_three_tier_safety_boundary() -> N
     assert policy.broker_action == "none"
 
 
-def test_reporting_inventory_matches_frozen_f3_baseline() -> None:
-    inventory = scan_reporting_architecture()
+def test_reporting_inventory_preserves_f3_baseline_and_applies_wave14_ratchet() -> None:
+    frozen = safe_load_yaml_path(DEFAULT_REPORTING_INVENTORY_PATH)
+    assert isinstance(frozen, dict)
+    frozen_raw_sha256 = hashlib.sha256(DEFAULT_REPORTING_INVENTORY_PATH.read_bytes()).hexdigest()
+    assert frozen_raw_sha256 == "1804dcd6392f692c8e24c592f19888219f30f8b11405ec3eb1f3b05b8d918e06"
+    ratchet = _wave14_current_state_ratchet()
+    frozen_reader = frozen["reader_brief"]
+    frozen_fragments = frozen["generated_report_fragments"]
+    assert isinstance(frozen_reader, dict)
+    assert isinstance(frozen_fragments, dict)
+    assert frozen["inventory_id"] == "reporting_inventory_9f39c169eda16e98097c"
+    assert frozen_reader == {
+        "path": "src/ai_trading_system/reports/reader_brief.py",
+        "sha256": "c7e984900be4826cf5621b63e26fd7e6c6f31efe633360cf611db1b954e05cdc",
+        "line_count": 29053,
+        "top_level_function_count": 367,
+    }
+    assert frozen_fragments == {
+        "root": "config/architecture/fragments/reports",
+        "fragment_count": 4,
+        "active_source_of_truth_count": 0,
+    }
+    assert ratchet["historical_f3_inventory"] == {
+        "path": "inputs/architecture/arch_004f3_reporting_inventory.yaml",
+        "inventory_id": "reporting_inventory_9f39c169eda16e98097c",
+        "raw_sha256": frozen_raw_sha256,
+        "immutable": True,
+    }
 
-    assert inventory.reader_brief_line_count == 29053
-    assert inventory.reader_brief_top_level_function_count == 367
+    inventory = scan_reporting_architecture()
+    _assert_wave14_current_reader_brief_ratchet(inventory, ratchet)
+
     assert inventory.report_registry_entry_count == 1360
     assert inventory.explicit_production_effect_count == 671
     assert inventory.missing_explicit_production_effect_count == 689
@@ -104,10 +168,97 @@ def test_reporting_inventory_matches_frozen_f3_baseline() -> None:
         "reviewer": 371,
         "system": 1,
     }
-    assert inventory.report_fragment_count == 4
-    assert inventory.active_report_fragment_count == 0
+    assert ratchet["report_fragments"] == {
+        "total_count": 5,
+        "active_source_of_truth_count": 0,
+    }
+    report_fragments = ratchet["report_fragments"]
+    assert isinstance(report_fragments, dict)
+    assert inventory.report_fragment_count == report_fragments["total_count"]
+    assert (
+        inventory.active_report_fragment_count == report_fragments["active_source_of_truth_count"]
+    )
     assert inventory.legacy_unclassified_entry_count == 1360
-    assert_frozen_reporting_inventory(inventory)
+
+
+def _ratchet_with_reader_brief_expected(
+    *,
+    path: str,
+    sha256: str,
+    line_count: int,
+    top_level_function_count: int,
+) -> dict[str, object]:
+    ratchet = dict(_wave14_current_state_ratchet())
+    ratchet["reader_brief_source"] = {
+        "path": path,
+        "sha256": sha256,
+        "line_count": line_count,
+        "top_level_function_count": top_level_function_count,
+    }
+    return ratchet
+
+
+def test_wave14_current_reader_brief_ratchet_rejects_sha_only_content_drift(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "reader_brief.py"
+    current = Path("src/ai_trading_system/reports/reader_brief.py").read_bytes()
+    assert current.endswith(b"\n")
+    source.write_bytes(current[:-1] + b" \n")
+    inventory = scan_reporting_architecture(reader_brief_path=source)
+    ratchet = _wave14_current_state_ratchet()
+    current_expected = ratchet["reader_brief_source"]
+    assert isinstance(current_expected, dict)
+    assert inventory.reader_brief_sha256 != current_expected["sha256"]
+    assert inventory.reader_brief_line_count == current_expected["line_count"]
+    assert (
+        inventory.reader_brief_top_level_function_count
+        == current_expected["top_level_function_count"]
+    )
+    tmp_expected = _ratchet_with_reader_brief_expected(
+        path=inventory.reader_brief_path,
+        sha256=str(current_expected["sha256"]),
+        line_count=inventory.reader_brief_line_count,
+        top_level_function_count=inventory.reader_brief_top_level_function_count,
+    )
+
+    with pytest.raises(
+        ReportingArchitectureError,
+        match="REPORTING_WAVE14_CURRENT_STATE_DRIFT",
+    ):
+        _assert_wave14_current_reader_brief_ratchet(inventory, tmp_expected)
+
+
+@pytest.mark.parametrize(
+    "drift_field",
+    ["line_count", "top_level_function_count"],
+)
+def test_wave14_current_reader_brief_ratchet_rejects_structural_field_drift_independently(
+    tmp_path: Path,
+    drift_field: str,
+) -> None:
+    source = tmp_path / "reader_brief.py"
+    source.write_text("def build():\n    return {}\n", encoding="utf-8")
+    inventory = scan_reporting_architecture(reader_brief_path=source)
+    observed = {
+        "path": inventory.reader_brief_path,
+        "sha256": inventory.reader_brief_sha256,
+        "line_count": inventory.reader_brief_line_count,
+        "top_level_function_count": inventory.reader_brief_top_level_function_count,
+    }
+    expected = dict(observed)
+    expected_value = expected[drift_field]
+    assert isinstance(expected_value, int)
+    expected[drift_field] = expected_value + 1
+    assert {field for field, value in observed.items() if value != expected[field]} == {drift_field}
+    ratchet = dict(_wave14_current_state_ratchet())
+    ratchet["reader_brief_source"] = expected
+
+    with pytest.raises(
+        ReportingArchitectureError,
+        match="REPORTING_WAVE14_CURRENT_STATE_DRIFT",
+    ):
+        _assert_wave14_current_reader_brief_ratchet(inventory, ratchet)
 
 
 def test_reporting_inventory_detects_reader_brief_drift(tmp_path: Path) -> None:
@@ -275,19 +426,55 @@ def _legacy_reader_payload() -> dict[str, object]:
     }
 
 
-def test_owner_daily_provider_builds_fixed_ten_sections_without_recomputing() -> None:
+def test_owner_daily_provider_builds_fixed_ten_sections_without_recomputing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     payload = _legacy_reader_payload()
+    ratchet = _wave14_current_state_ratchet()
+    core_sections = ratchet["owner_daily_core_sections"]
+    assert isinstance(core_sections, dict)
+    calls = {"native": 0, "generic": 0}
+    original_native = provide_data_quality_and_pit_section
+    original_generic = owner_daily_module._provide_legacy_payload_section
+
+    def counted_native(*args: object, **kwargs: object) -> ReportSectionViewModel:
+        calls["native"] += 1
+        return original_native(*args, **kwargs)  # type: ignore[arg-type]
+
+    def counted_generic(*args: object, **kwargs: object) -> ReportSectionViewModel:
+        calls["generic"] += 1
+        return original_generic(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(
+        owner_daily_module,
+        "provide_data_quality_and_pit_section",
+        counted_native,
+    )
+    monkeypatch.setattr(
+        owner_daily_module,
+        "_provide_legacy_payload_section",
+        counted_generic,
+    )
     view = build_owner_daily_brief_view_model(
         payload,
         generated_at=datetime(2026, 7, 11, 9, 0, tzinfo=UTC),
     )
 
-    assert len(view.sections) == 10
+    assert len(view.sections) == core_sections["total_count"]
     assert tuple(item.section_id for item in view.sections) == tuple(
         item.section_id for item in load_reporting_architecture_policy().core_sections
     )
     assert view.owner_queue == ()
-    assert render_owner_daily_brief_html(view).count('data-section-id="') == 10
+    assert (
+        render_owner_daily_brief_html(view).count('data-section-id="')
+        == core_sections["total_count"]
+    )
+    assert calls == {
+        "native": core_sections["native_count"],
+        "generic": core_sections["generic_count"],
+    }
+    dq_section = next(item for item in view.sections if item.section_id == "data_quality_and_pit")
+    assert dq_section.section_spec_id
     assert payload == _legacy_reader_payload()
 
 

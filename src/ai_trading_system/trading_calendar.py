@@ -7,7 +7,8 @@ from zoneinfo import ZoneInfo
 NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE = (
     "NYSE regular full-day holiday rules: weekends, New Year's Day, "
     "Martin Luther King Jr. Day, Washington's Birthday, Good Friday, "
-    "Memorial Day, Juneteenth, Independence Day, Labor Day, Thanksgiving Day, "
+    "Memorial Day, Juneteenth (2022 onward), Independence Day, Labor Day, "
+    "Thanksgiving Day, "
     "and Christmas Day. Does not include unscheduled special closures."
 )
 NYSE_PARTIAL_TRADING_DAY_CALENDAR_SOURCE = (
@@ -20,6 +21,8 @@ US_EQUITY_REGULAR_CLOSE_TIME = time(16, 0)
 US_EQUITY_PARTIAL_CLOSE_TIME = time(13, 0)
 US_EQUITY_DEFAULT_POST_CLOSE_BUFFER = timedelta(minutes=30)
 DATA_QUALITY_DEFAULT_PROVIDER_READY_BUFFER = timedelta(hours=3)
+# NYSE first observed Juneteenth as a full-day market holiday in 2022.
+NYSE_JUNETEENTH_FIRST_FULL_DAY_CLOSURE_YEAR = 2022
 
 
 @dataclass(frozen=True)
@@ -167,18 +170,20 @@ def us_equity_partial_trading_days(year: int) -> dict[date, str]:
 
 
 def _regular_holiday_dates(year: int) -> tuple[tuple[date, str], ...]:
-    return (
+    holidays = [
         (date(year, 1, 1), "New Year's Day"),
         (_nth_weekday(year, 1, 0, 3), "Martin Luther King Jr. Day"),
         (_nth_weekday(year, 2, 0, 3), "Washington's Birthday"),
         (_easter_sunday(year) - timedelta(days=2), "Good Friday"),
         (_last_weekday(year, 5, 0), "Memorial Day"),
-        (date(year, 6, 19), "Juneteenth National Independence Day"),
         (date(year, 7, 4), "Independence Day"),
         (_nth_weekday(year, 9, 0, 1), "Labor Day"),
         (_nth_weekday(year, 11, 3, 4), "Thanksgiving Day"),
         (date(year, 12, 25), "Christmas Day"),
-    )
+    ]
+    if year >= NYSE_JUNETEENTH_FIRST_FULL_DAY_CLOSURE_YEAR:
+        holidays.append((date(year, 6, 19), "Juneteenth National Independence Day"))
+    return tuple(holidays)
 
 
 def _observed_fixed_holiday(value: date, holiday_name: str) -> date | None:

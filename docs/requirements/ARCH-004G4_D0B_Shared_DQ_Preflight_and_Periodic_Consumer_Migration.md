@@ -9,7 +9,7 @@
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`、`DATA-GOV-001`
 - priority：`P0`
 - status：`COMPLETE_WAVE12_S2`（G4 overall=`VALIDATING`；DATA-GOV overall=`IN_PROGRESS`）
-- current roadmap：`WAVE13_N1_PUSHED_WAVE14_S0_IN_PROGRESS_THEN_D0B2_BOUNDED_G3`
+- current roadmap：`WAVE14_S2_D0B2_G3_SHARED_INTEGRATION`
 - owners：architecture coordinator / operations platform worker / data platform worker
 - source phase：`G2_5_COMPLETE_G4_D0B_NEXT`
 - source base：`12b1fb86369f146c9ef1c7ac54872eb8150ed791`
@@ -254,6 +254,30 @@ domain final integration 混合。
 
 ## 状态记录
 
+- 2026-07-24：D0B2第二轮publication TOCTOU已由同一dataset lock内、validated snapshot之后且
+  atomic pointer replace之前的typed legacy precondition关闭；prices/secondary/manifest的存在性、
+  exact bytes、SHA、size及no-follow containment都会重验，regular/link replacement与callback异常均
+  零pointer。combined focused=`180 passed / 1 skipped`，独立复核=`136 passed / 1 skipped`且无新增
+  P0/P1；仍须通过Wave14 generated/compatibility/formal/final Full，不能提前授权D0B3 consumer。
+- 2026-07-24：Wave14 closeout audit把publisher/resolver的manifest current-generation semantic
+  binding和legacy bootstrap root-contained/no-follow读取列为D0B2 release blockers并进入修复；
+  `ops_daily -> cli_direct -> daily discovery`真实跨层回归作为Wave15 G4B first-consumer验收补充，
+  不在本wave扩大consumer cutover。D0B2 formal/full未PASS前，本需求不得把domain focused解释为
+  phase exit。
+- 2026-07-23：D0B2 domain focused与两轮审计缺口已收口，进入Wave14 S2。Canonical runner
+  现在只观察一次download publication tri-state；首次`INVALID`必须进入DQ blocker，不能通过隐式retry被
+  第二次成功掩盖。`cli_direct` profile传播作为真实daily incident发现的最小coordinator scope amendment
+  单独绑定，历史S0 carrier不重写。Final generated/formal/Full尚待完成，consumer cutover继续关闭。
+- 2026-07-23：owner 在真实 `aits ops daily-run` 以
+  `DQ_INPUT_ROW_COUNT_MISMATCH` fail closed 后明确要求继续修复；Wave14 S0
+  carrier `39a3ea730` 已推送，D0B2 data lane 与 bounded G3 lane 因此进入
+  manual-assigned S1。D0B2 必须把 FMP/Cboe immediate source-event 分区与
+  54,610-row merged `prices_daily.csv` 收敛为同一 staged immutable composite
+  publication，由 canonical full-file manifest record 绑定最终 bytes/row count，
+  source-event records 保留分源 winning-row provenance；strict DQ 必须从该
+  publication 验证并在任何 drift/mismatch 前零下游输出。Coordinator 将在 domain
+  focused PASS 后接 shared CLI/profile/discovery、flow/catalog/register 与真实
+  daily-run；consumer cutover、production、weights 与 broker 继续关闭。
 - 2026-07-23：首次 formal Full=`6824 passed / 1 failed / 3 skipped / 643 warnings / 1103.75s`，
   相对上一基线 `1106.60s` 无整体性能回退。唯一失败不是运行实现或用户 research 文档，而是
   `config/data_quality.yaml` 的 reviewed governance 使已关闭 TRADING-2452 package 对 live policy

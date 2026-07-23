@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 from copy import deepcopy
 from functools import cache
@@ -10,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from ai_trading_system.yaml_loader import safe_load_yaml_path
+from ai_trading_system.yaml_loader import safe_load_yaml_path, safe_load_yaml_text
 
 POLICY_PATH = Path("config/architecture/arch_004_refactor_policy.yaml")
 RECONCILIATION_PATH = Path("inputs/architecture/arch_004_predecessor_reconciliation.yaml")
@@ -101,6 +102,64 @@ WAVE14_S0_1_HISTORICAL_PREFIX_SHA256 = (
 )
 WAVE14_S0_1_EXPECTED_SOURCE_COUNT = 85
 WAVE14_S0_1_EXPECTED_SUPERSEDED_SOURCE_COUNT = 68
+WAVE14_S2_SECTION = "phase_arch_004_wave14_s2_shared_integration_and_formal_exit"
+WAVE14_S2_BASE_COMMIT = "39a3ea7306a3937beda835020df4d8419c1cbbdf"
+WAVE14_S2_BASELINE_GIT_BLOB = "1c2f3980ccee17db62ab10feb886b5f45bf2e588"
+WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT = 1_222_368
+WAVE14_S2_HISTORICAL_PREFIX_SHA256 = (
+    "8a7b53764da4839ed0c06524ffde445c85befe10af588865c9cb93601b0a09c9"
+)
+WAVE14_S2_PROHIBITED_USER_PATH = "docs/research/growth_tilt_owner_diagnosis_pack.md"
+WAVE14_S2_PRE_FULL_REQUIRED_TIERS = (
+    "combined_focused",
+    "static",
+    "report_validation",
+    "architecture_fitness",
+    "contract_validation",
+    "integration",
+    "reproducibility",
+)
+WAVE14_S2_POST_FULL_REQUIRED_TIERS = (
+    "focused",
+    "architecture_fitness",
+    "contract_validation",
+    "integration",
+    "reproducibility",
+)
+WAVE14_S2_ACTIVE_TASK_SHADOW_PATH = (
+    "registry/development_tasks_shadow/active/d4/"
+    "d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml"
+)
+WAVE14_S2_COMPLETED_TASK_SHADOW_PATH = (
+    "registry/development_tasks_shadow/completed/d4/"
+    "d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml"
+)
+WAVE14_S2_APPROVED_POST_FULL_EVIDENCE_ONLY_PATHS = frozenset(
+    {
+        "config/architecture/arch_004_refactor_policy.yaml",
+        "docs/architecture/dual_lane_development_operating_model.md",
+        "docs/operations/operations_runbook.md",
+        (
+            "docs/requirements/"
+            "ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md"
+        ),
+        "docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md",
+        ("docs/requirements/" "ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md"),
+        "docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md",
+        "docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md",
+        "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",
+        "docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        WAVE11_BASELINE_REPOSITORY_PATH,
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        WAVE14_S2_ACTIVE_TASK_SHADOW_PATH,
+        WAVE14_S2_COMPLETED_TASK_SHADOW_PATH,
+    }
+)
 
 
 @cache
@@ -181,6 +240,23 @@ def _wave14_s0_1_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == WAVE14_S0_1_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _wave14_s2_base_baseline_blob() -> bytes:
+    object_name = f"{WAVE14_S2_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == WAVE14_S2_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -279,6 +355,25 @@ def _assert_wave14_s0_1_historical_prefix_immutable(
     assert current_bytes.count(expected_marker) == 1
 
 
+def _assert_wave14_s2_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == WAVE14_S2_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert (
+        historical_prefix == base_blob
+    ), "Wave14 S2 historical prefix differs from the immutable S0 carrier blob"
+    assert hashlib.sha256(historical_prefix).hexdigest() == WAVE14_S2_HISTORICAL_PREFIX_SHA256
+    wave14_s2_suffix = current_bytes[WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{WAVE14_S2_SECTION}:\n".encode()
+    assert wave14_s2_suffix.startswith(
+        expected_marker
+    ), "Wave14 S2 must be appended after the exact S0 carrier blob"
+    assert current_bytes.count(expected_marker) == 1
+
+
 def _wave11_portable_artifact_identity(attempt: dict[str, Any]) -> tuple[str, str]:
     artifact = attempt.get("artifact")
     assert isinstance(artifact, dict), "executed attempt requires portable artifact evidence"
@@ -352,6 +447,130 @@ def _assert_wave11_full_attempt_chain(attempts: list[dict[str, Any]]) -> None:
         artifact_hashes.add(artifact_sha256)
 
 
+def _assert_portable_repository_relative_path(path: object) -> str:
+    assert isinstance(path, str) and path, "path must be a non-empty string"
+    assert "\\" not in path, "path must use portable POSIX separators"
+    assert "\n" not in path and "\r" not in path, "path must be one physical line"
+    assert not path.startswith("/"), "path must be repository-relative"
+    assert not re.match(r"^[A-Za-z]:", path), "path must not be drive-qualified"
+    assert not any(token in path for token in ("*", "?", "[")), "path must be exact, not a glob"
+    parts = path.split("/")
+    assert all(
+        part not in {"", ".", ".."} for part in parts
+    ), "path must be normalized and cannot escape the repository"
+    return path
+
+
+def _wave14_s2_portable_full_artifact(
+    attempt: dict[str, Any],
+) -> tuple[str, str]:
+    artifact = attempt.get("artifact")
+    assert isinstance(artifact, dict), "executed Full attempt requires artifact evidence"
+    assert set(artifact) == {
+        "path",
+        "sha256",
+        "size_bytes",
+        "passed",
+        "failed",
+        "skipped",
+    }
+    artifact_path = _assert_portable_repository_relative_path(artifact["path"])
+    assert artifact_path.startswith("outputs/validation_runtime/full_")
+    assert artifact_path.endswith("/test_runtime_summary.json")
+    artifact_sha256 = artifact["sha256"]
+    assert isinstance(artifact_sha256, str)
+    assert re.fullmatch(r"[0-9a-f]{64}", artifact_sha256)
+    assert type(artifact["size_bytes"]) is int and artifact["size_bytes"] > 0
+    assert type(artifact["passed"]) is int and artifact["passed"] > 0
+    assert type(artifact["failed"]) is int and artifact["failed"] >= 0
+    assert type(artifact["skipped"]) is int and artifact["skipped"] >= 0
+    return artifact_path, artifact_sha256
+
+
+def _assert_wave14_s2_full_attempt_chain(
+    full_validation: dict[str, Any],
+) -> list[dict[str, Any]]:
+    assert full_validation["required"] is True
+    assert full_validation["attempts_append_only"] is True
+    assert full_validation["executed_attempts_may_be_removed_or_overwritten"] is False
+    assert full_validation["post_pass_repeat_full_allowed"] is False
+    run_count = full_validation["run_count"]
+    assert type(run_count) is int and run_count >= 0
+
+    attempts = full_validation["attempts"]
+    assert isinstance(attempts, list) and attempts
+    attempt_ids = [attempt.get("attempt_id") for attempt in attempts]
+    assert attempt_ids == [
+        f"wave14_s2_full_{ordinal}" for ordinal in range(1, len(attempts) + 1)
+    ], "Full attempt ids must preserve their append-only ordinal chain"
+
+    artifact_paths: set[str] = set()
+    artifact_hashes: set[str] = set()
+    executed_count = 0
+    for index, attempt in enumerate(attempts):
+        assert isinstance(attempt, dict)
+        is_latest = index == len(attempts) - 1
+        assert attempt["required"] is True
+        if index == 0:
+            assert attempt["role"] == "INITIAL_FORMAL_GATE"
+            assert "replaces_attempt_id" not in attempt
+        else:
+            previous = attempts[index - 1]
+            assert attempt["role"] == "FAILURE_FIX_REPLACEMENT"
+            assert (
+                previous["status"] == "FAIL"
+            ), "a replacement attempt may only follow the immediately preceding failure"
+            assert attempt.get("replaces_attempt_id") == previous["attempt_id"]
+
+        status = attempt["status"]
+        if is_latest:
+            assert status in {"PENDING", "PASS"}
+        else:
+            assert status == "FAIL", "all non-latest Full attempts must remain failures"
+
+        if status == "PENDING":
+            assert not {
+                "artifact",
+                "tested_commit",
+                "tested_tree",
+                "tested_section_status",
+                "full_sensitive_source_manifest_sha256",
+            }.intersection(attempt)
+            continue
+
+        executed_count += 1
+        assert status in {"FAIL", "PASS"}
+        artifact_path, artifact_sha256 = _wave14_s2_portable_full_artifact(attempt)
+        if status == "PASS":
+            assert attempt["artifact"]["failed"] == 0
+        else:
+            assert attempt["artifact"]["failed"] > 0
+        assert artifact_path not in artifact_paths
+        assert artifact_sha256 not in artifact_hashes
+        artifact_paths.add(artifact_path)
+        artifact_hashes.add(artifact_sha256)
+
+        tested_commit = attempt.get("tested_commit")
+        tested_tree = attempt.get("tested_tree")
+        assert attempt.get("tested_section_status") == "VALIDATING_WAVE14_S2"
+        source_manifest_sha256 = attempt.get("full_sensitive_source_manifest_sha256")
+        assert isinstance(tested_commit, str) and re.fullmatch(r"[0-9a-f]{40}", tested_commit)
+        assert isinstance(tested_tree, str) and re.fullmatch(r"[0-9a-f]{40}", tested_tree)
+        assert isinstance(source_manifest_sha256, str) and re.fullmatch(
+            r"[0-9a-f]{64}", source_manifest_sha256
+        )
+
+    assert run_count == executed_count, "run_count must equal executed, non-PENDING attempts"
+    latest_status = attempts[-1]["status"]
+    if latest_status == "PENDING":
+        assert full_validation["status"] == "PENDING"
+    elif executed_count == 1:
+        assert full_validation["status"] == "PASS"
+    else:
+        assert full_validation["status"] == "PASS_AFTER_FAILURE_FIX"
+    return attempts
+
+
 @cache
 def _assert_current_wave11_historical_prefix_immutable() -> None:
     _assert_wave11_historical_prefix_immutable(
@@ -389,6 +608,14 @@ def _assert_current_wave14_s0_1_historical_prefix_immutable() -> None:
     _assert_wave14_s0_1_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _wave14_s0_1_base_baseline_blob(),
+    )
+
+
+@cache
+def _assert_current_wave14_s2_historical_prefix_immutable() -> None:
+    _assert_wave14_s2_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _wave14_s2_base_baseline_blob(),
     )
 
 
@@ -449,6 +676,16 @@ def _wave14_s0_1_superseded_live_source_paths() -> frozenset[str]:
     return frozenset(str(path) for path in paths)
 
 
+@cache
+def _wave14_s2_superseded_live_source_paths() -> frozenset[str]:
+    _assert_current_wave14_s2_historical_prefix_immutable()
+    baseline = _compatibility_baseline()
+    wave14 = baseline[WAVE14_S2_SECTION]
+    paths = wave14["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
 def _raw_source_sha256(source: dict[str, object]) -> str:
     path = str(source["path"])
     normalization = source.get("hash_normalization")
@@ -490,6 +727,300 @@ def _source_sha256_at_commit(source: dict[str, object], commit: str) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _source_sha256s_at_commit(
+    sources: list[dict[str, object]],
+    commit: str,
+) -> dict[str, str]:
+    object_names: list[str] = []
+    for source in sources:
+        path = _assert_portable_repository_relative_path(source["path"])
+        object_names.append(f"{commit}:{path}")
+    batch_input = ("\n".join(object_names) + "\n").encode("utf-8")
+    output = subprocess.run(
+        ["git", "cat-file", "--batch"],
+        input=batch_input,
+        check=True,
+        capture_output=True,
+    ).stdout
+
+    offset = 0
+    hashes: dict[str, str] = {}
+    for source in sources:
+        header_end = output.index(b"\n", offset)
+        header = output[offset:header_end]
+        offset = header_end + 1
+        header_parts = header.rsplit(b" ", 2)
+        assert len(header_parts) == 3 and header_parts[1] == b"blob"
+        size = int(header_parts[2])
+        payload = output[offset : offset + size]
+        assert len(payload) == size
+        offset += size
+        assert output[offset : offset + 1] == b"\n"
+        offset += 1
+
+        normalization = source.get("hash_normalization")
+        if normalization == "git_eol_lf":
+            payload = payload.replace(b"\r\n", b"\n")
+        elif normalization is not None:
+            raise AssertionError(f"unsupported hash normalization: {normalization}")
+        hashes[str(source["path"])] = hashlib.sha256(payload).hexdigest()
+    assert offset == len(output)
+    assert len(hashes) == len(sources)
+    return hashes
+
+
+def _assert_wave14_s2_formal_tiers(
+    validation: dict[str, Any],
+    *,
+    phase_complete: bool,
+) -> None:
+    required = validation["required_formal_tiers"]
+    assert required == {
+        "pre_full": list(WAVE14_S2_PRE_FULL_REQUIRED_TIERS),
+        "post_full": list(WAVE14_S2_POST_FULL_REQUIRED_TIERS),
+    }
+    tier_groups = {
+        "pre_full": validation["pre_full_formal_tiers"],
+        "post_full": validation["post_full_formal_tiers"],
+    }
+    for group_name, required_names in (
+        ("pre_full", WAVE14_S2_PRE_FULL_REQUIRED_TIERS),
+        ("post_full", WAVE14_S2_POST_FULL_REQUIRED_TIERS),
+    ):
+        tiers = tier_groups[group_name]
+        assert isinstance(tiers, dict)
+        assert tuple(tiers) == required_names
+        for tier_name, tier in tiers.items():
+            assert isinstance(tier, dict)
+            assert tier["required"] is True
+            if phase_complete:
+                assert tier["status"] == "PASS", f"COMPLETE requires {group_name}.{tier_name} PASS"
+            else:
+                assert tier["status"] in {"PENDING", "PASS"}
+            if tier["status"] == "PASS":
+                assert type(tier["passed"]) is int and tier["passed"] > 0
+                assert type(tier["failed"]) is int and tier["failed"] == 0
+
+
+def _assert_wave14_s2_all_sources_tracked(source_paths: list[str]) -> None:
+    for path in source_paths:
+        portable_path = _assert_portable_repository_relative_path(path)
+        result = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "-z", "--", portable_path],
+            check=False,
+            capture_output=True,
+        )
+        assert result.returncode == 0, f"Wave14 S2 source must be Git-tracked: {path}"
+        assert result.stdout == portable_path.encode() + b"\0"
+
+
+def _wave14_s2_source_manifest_sha256(
+    sources: list[dict[str, object]],
+) -> str:
+    manifest_records: list[dict[str, object]] = []
+    for source in sorted(sources, key=lambda item: str(item["path"])):
+        record: dict[str, object] = {
+            "path": str(source["path"]),
+            "sha256": str(source["sha256"]),
+        }
+        normalization = source.get("hash_normalization")
+        if normalization is not None:
+            record["hash_normalization"] = normalization
+        manifest_records.append(record)
+    canonical_payload = json.dumps(
+        manifest_records,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
+    return hashlib.sha256(canonical_payload).hexdigest()
+
+
+def _wave14_s2_git_tree(commit: str) -> str:
+    object_check = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        check=False,
+        capture_output=True,
+    )
+    assert object_check.returncode == 0, "tested_commit must resolve to a Git commit"
+    return subprocess.run(
+        ["git", "rev-parse", f"{commit}^{{tree}}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _wave14_s2_section_at_commit(commit: str) -> dict[str, Any]:
+    payload = subprocess.run(
+        ["git", "show", f"{commit}:{WAVE11_BASELINE_REPOSITORY_PATH}"],
+        check=True,
+        capture_output=True,
+    ).stdout.decode("utf-8")
+    baseline = safe_load_yaml_text(payload)
+    assert isinstance(baseline, dict)
+    section = baseline.get(WAVE14_S2_SECTION)
+    assert isinstance(section, dict), "tested candidate must contain the Wave14 S2 section"
+    return section
+
+
+def _wave14_s2_changed_paths_since(tested_commit: str) -> frozenset[str]:
+    protected_exclude = ":(top,literal,exclude)" + WAVE14_S2_PROHIBITED_USER_PATH
+    tracked = subprocess.run(
+        [
+            "git",
+            "diff",
+            "--name-only",
+            "--no-renames",
+            "-z",
+            tested_commit,
+            "--",
+            ".",
+            protected_exclude,
+        ],
+        check=True,
+        capture_output=True,
+    ).stdout
+    untracked = subprocess.run(
+        [
+            "git",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z",
+            "--",
+            ".",
+            protected_exclude,
+        ],
+        check=True,
+        capture_output=True,
+    ).stdout
+    paths = {path.decode("utf-8") for path in (tracked + untracked).split(b"\0") if path}
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in paths
+    return frozenset(paths)
+
+
+def _assert_wave14_s2_final_full_evidence(
+    wave14: dict[str, Any],
+    sources: list[dict[str, object]],
+    approved_post_full_paths: frozenset[str],
+) -> None:
+    validation = wave14["validation"]
+    final_attempts = _assert_wave14_s2_full_attempt_chain(validation["full_validation"])
+    final_attempt = final_attempts[-1]
+    assert final_attempt["status"] == "PASS"
+    tested_commit = final_attempt["tested_commit"]
+    tested_tree = final_attempt["tested_tree"]
+    assert _wave14_s2_git_tree(tested_commit) == tested_tree
+    assert (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", tested_commit, "HEAD"],
+            check=False,
+            capture_output=True,
+        ).returncode
+        == 0
+    ), "the Full-tested candidate must be an ancestor of the final state"
+
+    candidate = _wave14_s2_section_at_commit(tested_commit)
+    assert candidate["status"] == "VALIDATING_WAVE14_S2"
+    assert candidate["source_hash_status"] == "PRE_FULL_TRACKED_STATE_FRESH"
+    candidate_policy_payload = subprocess.run(
+        ["git", "show", f"{tested_commit}:{POLICY_PATH.as_posix()}"],
+        check=True,
+        capture_output=True,
+    ).stdout.decode("utf-8")
+    candidate_policy = safe_load_yaml_text(candidate_policy_payload)
+    assert isinstance(candidate_policy, dict)
+    candidate_coordination = candidate_policy["phase_g_execution"]["current_coordination_wave"]
+    assert candidate_coordination["compatibility_status"] == "VALIDATING_WAVE14_S2"
+    assert candidate_coordination["status"] == "S2_IN_PROGRESS"
+    candidate_validation = candidate["validation"]
+    _assert_wave14_s2_formal_tiers(candidate_validation, phase_complete=False)
+    assert all(
+        tier["status"] == "PENDING"
+        for tier in candidate_validation["pre_full_formal_tiers"].values()
+    ), "the immutable candidate cannot self-claim validation that runs after its commit"
+    assert all(
+        tier["status"] == "PENDING"
+        for tier in candidate_validation["post_full_formal_tiers"].values()
+    )
+    candidate_attempts = _assert_wave14_s2_full_attempt_chain(
+        candidate_validation["full_validation"]
+    )
+    assert candidate_attempts[-1]["status"] == "PENDING"
+    assert len(candidate_attempts) == len(final_attempts)
+    assert (
+        candidate_attempts[:-1] == final_attempts[:-1]
+    ), "executed Full history before the tested attempt must remain byte-equivalent"
+    for identity_key in ("attempt_id", "role", "required", "replaces_attempt_id"):
+        if identity_key in candidate_attempts[-1] or identity_key in final_attempt:
+            assert candidate_attempts[-1].get(identity_key) == final_attempt.get(identity_key)
+    assert candidate_validation["full_validation"]["run_count"] + 1 == (
+        validation["full_validation"]["run_count"]
+    )
+
+    for tier in validation["pre_full_formal_tiers"].values():
+        assert tier["tested_commit"] == tested_commit
+        assert tier["tested_tree"] == tested_tree
+
+    final_source_by_path = {str(source["path"]): source for source in sources}
+    candidate_sources = candidate["sources"]
+    assert isinstance(candidate_sources, list)
+    candidate_source_by_path = {str(source["path"]): source for source in candidate_sources}
+    assert len(candidate_source_by_path) == len(candidate_sources)
+    candidate_source_paths = set(candidate_source_by_path)
+    sensitive_paths = wave14["full_sensitive_sources"]
+    assert candidate["full_sensitive_sources"] == sensitive_paths
+    assert set(sensitive_paths) == candidate_source_paths - (
+        approved_post_full_paths & candidate_source_paths
+    )
+    assert sensitive_paths
+    sensitive_source_records = [final_source_by_path[path] for path in sensitive_paths]
+    tested_source_sha256s = _source_sha256s_at_commit(
+        sensitive_source_records,
+        tested_commit,
+    )
+    for path in sensitive_paths:
+        final_source = final_source_by_path[path]
+        candidate_source = candidate_source_by_path[path]
+        assert (
+            candidate_source == final_source
+        ), f"Full-sensitive source record changed after Full: {path}"
+        assert tested_source_sha256s[path] == final_source["sha256"], path
+    assert final_attempt["full_sensitive_source_manifest_sha256"] == (
+        _wave14_s2_source_manifest_sha256(sensitive_source_records)
+    )
+
+    assert candidate["post_full_evidence_only_paths"] == sorted(approved_post_full_paths)
+    assert candidate["removed_live_source_paths"] == []
+    for removed_path in wave14["removed_live_source_paths"]:
+        assert (
+            subprocess.run(
+                ["git", "cat-file", "-e", f"{tested_commit}:{removed_path}"],
+                check=False,
+                capture_output=True,
+            ).returncode
+            == 0
+        ), "governed removal must have existed in the tested candidate"
+    candidate_post_full = candidate_validation["post_full_closeout"]
+    assert candidate_post_full["status"] == "PENDING"
+    assert candidate_post_full["changed_paths"] == []
+    assert candidate_post_full["full_sensitive_sources_unchanged"] is False
+    assert candidate_post_full["changed_paths_are_evidence_only"] is False
+    assert candidate_post_full["full_rerun_required"] is False
+
+    final_post_full = validation["post_full_closeout"]
+    observed_changed_paths = _wave14_s2_changed_paths_since(tested_commit)
+    recorded_changed_paths = final_post_full["changed_paths"]
+    assert recorded_changed_paths == sorted(observed_changed_paths)
+    assert observed_changed_paths
+    assert observed_changed_paths <= approved_post_full_paths
+    assert final_post_full["status"] == "PASS"
+    assert final_post_full["full_sensitive_sources_unchanged"] is True
+    assert final_post_full["changed_paths_are_evidence_only"] is True
+    assert final_post_full["full_rerun_required"] is False
+
+
 @cache
 def _normalization_migrations_before(
     stop_section: str,
@@ -520,7 +1051,11 @@ def _source_matches_checkout(
     source: dict[str, object],
     normalization_migrations: dict[str, tuple[dict[str, object], ...]],
 ) -> bool:
-    if _raw_source_sha256(source) == str(source["sha256"]):
+    try:
+        source_sha256 = _raw_source_sha256(source)
+    except FileNotFoundError:
+        return False
+    if source_sha256 == str(source["sha256"]):
         return True
     return any(
         str(source["sha256"]) == str(migration["previous_worktree_sha256"])
@@ -580,12 +1115,21 @@ def _wave14_s0_1_prior_active_source_mismatches() -> frozenset[str]:
     return _prior_active_source_mismatches(WAVE14_S0_1_SECTION)
 
 
+@cache
+def _wave14_s2_prior_active_source_mismatches() -> frozenset[str]:
+    return _prior_active_source_mismatches(WAVE14_S2_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if WAVE14_S0_1_SECTION in baseline:
+    if WAVE14_S2_SECTION in baseline:
+        superseded_paths = _wave14_s2_superseded_live_source_paths()
+        assert _wave14_s2_prior_active_source_mismatches() == superseded_paths
+        authority_section = WAVE14_S2_SECTION
+    elif WAVE14_S0_1_SECTION in baseline:
         superseded_paths = _wave14_s0_1_superseded_live_source_paths()
         assert _wave14_s0_1_prior_active_source_mismatches() == superseded_paths
         authority_section = WAVE14_S0_1_SECTION
@@ -636,6 +1180,20 @@ def test_checkout_hash_migration_equivalence_is_cross_checkout_and_fail_closed(
 
 def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety() -> None:
     policy = safe_load_yaml_path(POLICY_PATH)
+    baseline = _compatibility_baseline()
+    wave14_s2 = baseline.get(WAVE14_S2_SECTION)
+    wave14_s2_status = (
+        wave14_s2["status"] if isinstance(wave14_s2, dict) else "VALIDATING_WAVE14_S2"
+    )
+    assert wave14_s2_status in {"VALIDATING_WAVE14_S2", "COMPLETE_WAVE14_S2"}
+    expected_coordination_status = {
+        "VALIDATING_WAVE14_S2": "S2_IN_PROGRESS",
+        "COMPLETE_WAVE14_S2": ("S2_COMPLETE_AWAITING_ARCH_005S4D_OWNER_AUTHORIZATION"),
+    }[wave14_s2_status]
+    expected_g3_status = {
+        "VALIDATING_WAVE14_S2": "IN_PROGRESS_FIRST_NATIVE_SLICE_VALIDATING",
+        "COMPLETE_WAVE14_S2": "IN_PROGRESS_FIRST_NATIVE_SLICE_COMPLETE",
+    }[wave14_s2_status]
 
     assert policy["schema_version"] == "arch_004_refactor_policy.v1"
     assert policy["status"] == "phase_g_in_progress"
@@ -840,7 +1398,7 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["stages"]["G0_inventory_deprecation_policy_and_removal_gate"] == ("COMPLETE")
     assert phase_g["stages"]["G1_shared_platform_helper_migration"] == "COMPLETE"
     assert phase_g["stages"]["G2_interfaces_and_etf_cli_migration"] == "COMPLETE"
-    assert phase_g["stages"]["G3_reporting_native_migration"] == "NOT_STARTED"
+    assert phase_g["stages"]["G3_reporting_native_migration"] == expected_g3_status
     assert phase_g["stages"]["G4_operations_consumer_migration"] == ("VALIDATING_CADENCE_PENDING")
     assert phase_g["permanent_dual_track_allowed"] is False
     assert phase_g["runtime_removal_allowed_in_g0"] is False
@@ -848,14 +1406,18 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     assert phase_g["historical_artifact_deletion_allowed"] is False
     coordination_wave = phase_g["current_coordination_wave"]
     assert coordination_wave["wave_id"] == "WAVE14_D0B2_BOUNDED_G3"
-    assert coordination_wave["current_phase"] == "WAVE14_S0_1_REUSABLE_READINESS_INFRA"
-    assert coordination_wave["status"] == "S0_IN_PROGRESS"
+    assert coordination_wave["current_phase"] == ("WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT")
+    assert coordination_wave["status"] == expected_coordination_status
+    assert coordination_wave["compatibility_status"] == wave14_s2_status
     assert coordination_wave["task_id"] == "ARCH-004W14_D0B2_G3_PARALLEL_READINESS"
     assert (
         coordination_wave["source_wave_closeout_commit"]
         == "e2da21894ea8e8921a86c6c1b48d7b191f0f142c"
     )
     assert coordination_wave["source_wave_tree"] == "73ba7a3830cbc47ccb6dbfb3488eeed5431653c2"
+    assert (
+        coordination_wave["wave14_s0_carrier_commit"] == "39a3ea7306a3937beda835020df4d8419c1cbbdf"
+    )
     assert coordination_wave["historical_base_commit"] == WAVE12_CLOSEOUT_COMMIT
     assert coordination_wave["application_commit"] == WAVE13_BASE_COMMIT
     assert (
@@ -896,11 +1458,11 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
         "g4c_cadence_observation_async": True,
         "prior_g2_5_rehearsal_is_dispatch_authority": False,
         "final_head_manifest_required": True,
-        "s0_contract_readiness_status": "IN_PROGRESS_INFRA",
+        "s0_contract_readiness_status": "PASS",
         "next_slice_unblocked": False,
     }
     assert coordination_wave["strategy_logic_changed"] is False
-    assert coordination_wave["data_or_runtime_changed"] is False
+    assert coordination_wave["data_or_runtime_changed"] is True
     assert coordination_wave["broker_action"] == "none"
     assert coordination_wave["production_effect"] == "none"
     assert phase_g["g0_evidence"] == {
@@ -1798,7 +2360,7 @@ def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
 def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority() -> None:
     _assert_current_docs_gov_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == WAVE14_S0_1_SECTION
+    assert next(reversed(baseline)) == WAVE14_S2_SECTION
     docs_gov = baseline[DOCS_GOV_SECTION]
 
     assert docs_gov["schema_version"] == "docs_gov_001_freshness_closeout.v1"
@@ -1863,7 +2425,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
     # section proves that its own supersession set remains covered while the
     # newest section is the exhaustive current-live authority.
     assert _wave12_superseded_live_source_paths() <= docs_gov_live_mismatches
-    assert docs_gov_live_mismatches <= _wave14_s0_1_superseded_live_source_paths()
+    assert docs_gov_live_mismatches <= _wave14_s2_superseded_live_source_paths()
 
     sources = docs_gov["sources"]
     source_paths = [str(source["path"]) for source in sources]
@@ -1897,7 +2459,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
 def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave12_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == WAVE14_S0_1_SECTION
+    assert next(reversed(baseline)) == WAVE14_S2_SECTION
     wave12 = baseline[WAVE12_SECTION]
 
     assert wave12["schema_version"] == "arch_004_wave12_g4_d0b_s2_closeout.v1"
@@ -1938,7 +2500,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     superseded = set(wave12["superseded_live_source_paths"])
     wave12_live_mismatches = _wave12_prior_active_source_mismatches()
     assert superseded <= wave12_live_mismatches
-    assert wave12_live_mismatches <= _wave14_s0_1_superseded_live_source_paths()
+    assert wave12_live_mismatches <= _wave14_s2_superseded_live_source_paths()
     assert wave12["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE12-S2",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -1981,7 +2543,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
 def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> None:
     _assert_current_wave13_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == WAVE14_S0_1_SECTION
+    assert next(reversed(baseline)) == WAVE14_S2_SECTION
     wave13 = baseline[WAVE13_SECTION]
 
     assert wave13["schema_version"] == "arch_004_wave13_gov006_n1_closeout.v1"
@@ -2180,7 +2742,7 @@ def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> No
     superseded = set(wave13["superseded_live_source_paths"])
     wave13_live_mismatches = _wave13_prior_active_source_mismatches()
     assert superseded <= wave13_live_mismatches
-    assert wave13_live_mismatches <= _wave14_s0_1_superseded_live_source_paths()
+    assert wave13_live_mismatches <= _wave14_s2_superseded_live_source_paths()
     assert wave13["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE13-GOV006-N1",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -2234,10 +2796,12 @@ def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> No
     assert wave13["safety"]["production_effect"] == "none"
 
 
-def test_arch_004_wave14_s0_1_is_append_only_current_hash_authority() -> None:
+def test_arch_004_wave14_s0_1_is_immutable_historical_hash_authority() -> None:
     _assert_current_wave14_s0_1_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == WAVE14_S0_1_SECTION
+    section_ids = list(baseline)
+    assert section_ids.index(WAVE14_S0_1_SECTION) < section_ids.index(WAVE14_S2_SECTION)
+    assert next(reversed(baseline)) == WAVE14_S2_SECTION
     wave14 = baseline[WAVE14_S0_1_SECTION]
 
     assert wave14["schema_version"] == ("arch_004_wave14_s0_1_readiness_infrastructure.v1")
@@ -2351,7 +2915,9 @@ def test_arch_004_wave14_s0_1_is_append_only_current_hash_authority() -> None:
     }
 
     superseded = set(wave14["superseded_live_source_paths"])
-    assert superseded == _wave14_s0_1_prior_active_source_mismatches()
+    observed_live_mismatches = _wave14_s0_1_prior_active_source_mismatches()
+    assert superseded <= observed_live_mismatches
+    assert observed_live_mismatches <= _wave14_s2_superseded_live_source_paths()
     assert len(superseded) == WAVE14_S0_1_EXPECTED_SUPERSEDED_SOURCE_COUNT
     assert wave14["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE14-S0.1",
@@ -2413,7 +2979,9 @@ def test_arch_004_wave14_s0_1_is_append_only_current_hash_authority() -> None:
     prohibited_user_path = "docs/research/growth_tilt_owner_diagnosis_pack.md"
     assert prohibited_user_path not in source_paths
     for source in sources:
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256_at_commit(source, WAVE14_S2_BASE_COMMIT) == source["sha256"], source[
+            "path"
+        ]
     assert wave14["source_hash_status"] == "FINAL_TRACKED_STATE_FRESH"
 
     assert wave14["worktree_attribution"] == {
@@ -2446,6 +3014,393 @@ def test_arch_004_wave14_s0_1_rejects_historical_prefix_tamper() -> None:
             bytes(tampered),
             base_blob,
         )
+
+
+def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
+    _assert_current_wave14_s2_historical_prefix_immutable()
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == WAVE14_S2_SECTION
+    wave14 = baseline[WAVE14_S2_SECTION]
+
+    status = wave14["status"]
+    assert status in {"VALIDATING_WAVE14_S2", "COMPLETE_WAVE14_S2"}
+    assert wave14["schema_version"] == ("arch_004_wave14_s2_shared_integration_and_formal_exit.v1")
+    assert wave14["boundary_id"] == "ARCH-004-WAVE14-S2"
+    assert wave14["task_ids"] == ["ARCH-004W14_D0B2_G3_PARALLEL_READINESS"]
+    assert wave14["prior_sections_immutability"] == {
+        "source_commit": WAVE14_S2_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": WAVE14_S2_BASELINE_GIT_BLOB,
+        "raw_byte_count": WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": WAVE14_S2_HISTORICAL_PREFIX_SHA256,
+        "append_offset": WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert wave14["research_window"] == {
+        "default_start": "2021-02-22",
+        "legacy_2022_default_active": False,
+    }
+    assert wave14["lineage"] == {
+        "source_wave_s0_carrier_commit": WAVE14_S2_BASE_COMMIT,
+        "source_wave_s0_carrier_is_ancestor_of_validation_head": True,
+    }
+    assert (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", WAVE14_S2_BASE_COMMIT, "HEAD"],
+            check=False,
+        ).returncode
+        == 0
+    )
+
+    superseded = set(wave14["superseded_live_source_paths"])
+    assert superseded == _wave14_s2_prior_active_source_mismatches()
+    assert wave14["supersession"] == {
+        "superseded_by_phase": "ARCH-004-WAVE14-S2",
+        "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
+        "historical_hashes_rewritten": False,
+        "current_hash_authority": f"{WAVE14_S2_SECTION}.sources",
+    }
+
+    sources = wave14["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    wave14_s0_source_paths = {
+        str(source["path"]) for source in baseline[WAVE14_S0_1_SECTION]["sources"]
+    }
+    wave14_s2_new_source_paths = {
+        "config/architecture/arch_004_wave14_d0b2_g3_scope_amendment.yaml",
+        "config/architecture/devex_ownership_policy.yaml",
+        ("config/architecture/fragments/artifacts/" "arch_004g3_reader_brief_native.yaml"),
+        "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml",
+        "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml",
+        "docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md",
+        "src/ai_trading_system/cli_direct.py",
+        "src/ai_trading_system/data/__init__.py",
+        "src/ai_trading_system/data/download.py",
+        "src/ai_trading_system/data/download_publication.py",
+        "src/ai_trading_system/data/quality_execution.py",
+        "src/ai_trading_system/platform/reporting/__init__.py",
+        "src/ai_trading_system/platform/reporting/owner_daily.py",
+        "src/ai_trading_system/platform/reporting/reader_brief_native.py",
+        "src/ai_trading_system/reports/reader_brief.py",
+        "src/ai_trading_system/trading_calendar.py",
+        "tests/test_arch_004_wave14_scope_amendment.py",
+        "tests/test_arch_004f3_reporting_architecture.py",
+        "tests/test_arch_004g3_reporting_native_migration.py",
+        "tests/test_cli_direct.py",
+        "tests/test_data_download.py",
+        "tests/test_data_download_publication.py",
+        "tests/test_data_quality.py",
+        "tests/test_data_quality_execution.py",
+        "tests/test_immutable_data_publish.py",
+        "tests/test_trading_calendar.py",
+    }
+    generated_new_source_paths = set(wave14["generated_new_source_paths"])
+    assert generated_new_source_paths <= set(source_paths)
+    assert all(
+        path.startswith(
+            (
+                "registry/development_tasks_shadow/active/",
+                "registry/development_tasks_shadow/completed/",
+            )
+        )
+        and path.endswith(".yaml")
+        for path in generated_new_source_paths
+    )
+    removed_live_source_paths = set(wave14["removed_live_source_paths"])
+    expected_removed_live_source_paths = (
+        {WAVE14_S2_ACTIVE_TASK_SHADOW_PATH} if status == "COMPLETE_WAVE14_S2" else set()
+    )
+    assert removed_live_source_paths == expected_removed_live_source_paths
+    assert removed_live_source_paths <= wave14_s0_source_paths
+    assert removed_live_source_paths.isdisjoint(source_paths)
+    assert all(
+        path.startswith("registry/development_tasks_shadow/active/") and path.endswith(".yaml")
+        for path in removed_live_source_paths
+    )
+    assert wave14["removal_authority"] == {
+        "schema_version": "compatibility_source_removal.v1",
+        "removed_path_state": "ABSENT_FROM_CURRENT_TREE",
+        "historical_source_records_preserved": True,
+        "current_sources_exclude_removed_paths": True,
+    }
+    assert set(source_paths) == (
+        (wave14_s0_source_paths - removed_live_source_paths)
+        | wave14_s2_new_source_paths
+        | generated_new_source_paths
+    )
+    assert removed_live_source_paths <= superseded
+    assert superseded <= set(source_paths) | removed_live_source_paths
+    if status == "COMPLETE_WAVE14_S2":
+        assert WAVE14_S2_COMPLETED_TASK_SHADOW_PATH in source_paths
+        assert not Path(WAVE14_S2_ACTIVE_TASK_SHADOW_PATH).exists()
+        assert (
+            subprocess.run(
+                [
+                    "git",
+                    "ls-files",
+                    "--error-unmatch",
+                    "--",
+                    WAVE14_S2_ACTIVE_TASK_SHADOW_PATH,
+                ],
+                check=False,
+                capture_output=True,
+            ).returncode
+            != 0
+        )
+    else:
+        assert WAVE14_S2_ACTIVE_TASK_SHADOW_PATH in source_paths
+        assert WAVE14_S2_COMPLETED_TASK_SHADOW_PATH not in source_paths
+
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    assert "tests/test_immutable_data_publish.py" in source_paths
+    assert "tests/test_immutable_publish.py" not in source_paths
+    _assert_wave14_s2_all_sources_tracked(source_paths)
+    for source in sources:
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    full_sensitive_sources = wave14["full_sensitive_sources"]
+    assert isinstance(full_sensitive_sources, list)
+    assert full_sensitive_sources == sorted(full_sensitive_sources)
+    assert full_sensitive_sources
+    assert len(full_sensitive_sources) == len(set(full_sensitive_sources))
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in full_sensitive_sources
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in full_sensitive_sources
+
+    post_full_paths = wave14["post_full_evidence_only_paths"]
+    assert isinstance(post_full_paths, list)
+    assert len(WAVE14_S2_APPROVED_POST_FULL_EVIDENCE_ONLY_PATHS) == 19
+    assert post_full_paths == sorted(WAVE14_S2_APPROVED_POST_FULL_EVIDENCE_ONLY_PATHS)
+    assert len(post_full_paths) == len(set(post_full_paths))
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in post_full_paths
+    assert not any(path.startswith(("src/", "tests/")) for path in post_full_paths)
+    for path in post_full_paths:
+        assert _assert_portable_repository_relative_path(path) == path
+    assert set(full_sensitive_sources) == set(source_paths) - (
+        set(post_full_paths) & set(source_paths)
+    )
+    assert not set(full_sensitive_sources).intersection(post_full_paths)
+
+    generated_state = wave14["generated_state"]
+    assert generated_state["status"] == "PASS"
+    assert generated_state["module_count"] > 0
+    assert generated_state["test_file_count"] > 0
+    assert generated_state["direct_writer_current_count"] >= 0
+    assert generated_state["direct_writer_violation_count"] == 0
+    assert generated_state["aggregate_fragment_count"] > 0
+    assert generated_state["active_task_count"] > 0
+    assert generated_state["completed_task_count"] > 0
+    assert generated_state["total_task_count"] == (
+        generated_state["active_task_count"] + generated_state["completed_task_count"]
+    )
+    assert generated_state["task_registry_shadow_byte_identical"] is True
+
+    validation = wave14["validation"]
+    phase_complete = status == "COMPLETE_WAVE14_S2"
+    _assert_wave14_s2_formal_tiers(validation, phase_complete=phase_complete)
+    full_validation = validation["full_validation"]
+    post_full = validation["post_full_closeout"]
+    attempts = _assert_wave14_s2_full_attempt_chain(full_validation)
+    if status == "VALIDATING_WAVE14_S2":
+        assert wave14["source_hash_status"] == "PRE_FULL_TRACKED_STATE_FRESH"
+        assert attempts[-1]["status"] == "PENDING"
+        assert post_full == {
+            "status": "PENDING",
+            "changed_paths": [],
+            "full_sensitive_sources_unchanged": False,
+            "changed_paths_are_evidence_only": False,
+            "full_rerun_required": False,
+        }
+    else:
+        assert wave14["source_hash_status"] == "FINAL_TRACKED_STATE_FRESH"
+        assert attempts[-1]["status"] == "PASS"
+        _assert_wave14_s2_final_full_evidence(
+            wave14,
+            sources,
+            WAVE14_S2_APPROVED_POST_FULL_EVIDENCE_ONLY_PATHS,
+        )
+
+    assert wave14["roadmap"] == {
+        "current_phase": "WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT",
+        "next_phase": "ARCH-005S4D_OWNER_AUTHORIZATION_GATE",
+        "next_slice_unblocked": False,
+        "automatic_dispatch_enabled": False,
+        "wave15_assignment_allowed": False,
+    }
+    assert wave14["worktree_attribution"] == {
+        "known_unrelated_worktree_files": [WAVE14_S2_PROHIBITED_USER_PATH],
+        "active_shared_path_lease_count": 0,
+    }
+    assert wave14["safety"] == {
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "investment_interpretation_changed": False,
+        "backtest_or_search_executed": False,
+        "data_or_runtime_changed": True,
+        "paper_shadow_or_portfolio_mutated": False,
+        "data_consumer_cutover_performed": False,
+        "automatic_command_dispatch_enabled": False,
+        "order_or_broker_action": "none",
+        "production_effect": "none",
+    }
+
+
+def test_arch_004_wave14_s2_rejects_historical_prefix_tamper() -> None:
+    base_blob = _wave14_s2_base_baseline_blob()
+    valid_append = base_blob + f"\n{WAVE14_S2_SECTION}:\n  status: TEST_ONLY\n".encode()
+    _assert_wave14_s2_historical_prefix_immutable(valid_append, base_blob)
+
+    tampered = bytearray(valid_append)
+    tampered[WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_wave14_s2_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_arch_004_wave14_s2_full_attempt_chain_is_append_only_and_strict() -> None:
+    pending = {
+        "required": True,
+        "status": "PENDING",
+        "run_count": 0,
+        "attempts_append_only": True,
+        "executed_attempts_may_be_removed_or_overwritten": False,
+        "post_pass_repeat_full_allowed": False,
+        "attempts": [
+            {
+                "attempt_id": "wave14_s2_full_1",
+                "role": "INITIAL_FORMAL_GATE",
+                "required": True,
+                "status": "PENDING",
+            }
+        ],
+    }
+    _assert_wave14_s2_full_attempt_chain(pending)
+
+    failed_then_pending = deepcopy(pending)
+    failed_attempt = failed_then_pending["attempts"][0]
+    failed_attempt.update(
+        {
+            "status": "FAIL",
+            "tested_section_status": "VALIDATING_WAVE14_S2",
+            "tested_commit": "1" * 40,
+            "tested_tree": "2" * 40,
+            "full_sensitive_source_manifest_sha256": "3" * 64,
+            "artifact": {
+                "path": (
+                    "outputs/validation_runtime/full_20260724T000001Z/" "test_runtime_summary.json"
+                ),
+                "sha256": "4" * 64,
+                "size_bytes": 101,
+                "passed": 10,
+                "failed": 1,
+                "skipped": 0,
+            },
+        }
+    )
+    failed_then_pending["run_count"] = 1
+    failed_then_pending["attempts"].append(
+        {
+            "attempt_id": "wave14_s2_full_2",
+            "role": "FAILURE_FIX_REPLACEMENT",
+            "required": True,
+            "status": "PENDING",
+            "replaces_attempt_id": "wave14_s2_full_1",
+        }
+    )
+    _assert_wave14_s2_full_attempt_chain(failed_then_pending)
+
+    failed_then_passed = deepcopy(failed_then_pending)
+    passed_attempt = failed_then_passed["attempts"][-1]
+    passed_attempt.update(
+        {
+            "status": "PASS",
+            "tested_section_status": "VALIDATING_WAVE14_S2",
+            "tested_commit": "5" * 40,
+            "tested_tree": "6" * 40,
+            "full_sensitive_source_manifest_sha256": "7" * 64,
+            "artifact": {
+                "path": (
+                    "outputs/validation_runtime/full_20260724T000002Z/" "test_runtime_summary.json"
+                ),
+                "sha256": "8" * 64,
+                "size_bytes": 202,
+                "passed": 20,
+                "failed": 0,
+                "skipped": 1,
+            },
+        }
+    )
+    failed_then_passed["status"] = "PASS_AFTER_FAILURE_FIX"
+    failed_then_passed["run_count"] = 2
+    _assert_wave14_s2_full_attempt_chain(failed_then_passed)
+
+    invalid_cases = []
+    wrong_count = deepcopy(failed_then_passed)
+    wrong_count["run_count"] = 1
+    invalid_cases.append(wrong_count)
+    boolean_failed = deepcopy(failed_then_passed)
+    boolean_failed["attempts"][-1]["artifact"]["failed"] = False
+    invalid_cases.append(boolean_failed)
+    missing_failed = deepcopy(failed_then_passed)
+    del missing_failed["attempts"][-1]["artifact"]["failed"]
+    invalid_cases.append(missing_failed)
+    absolute_artifact = deepcopy(failed_then_passed)
+    absolute_artifact["attempts"][-1]["artifact"][
+        "path"
+    ] = "C:/outputs/validation_runtime/full_bad/test_runtime_summary.json"
+    invalid_cases.append(absolute_artifact)
+    wrong_parent = deepcopy(failed_then_pending)
+    wrong_parent["attempts"][-1]["replaces_attempt_id"] = "unrelated"
+    invalid_cases.append(wrong_parent)
+    reused_artifact_path = deepcopy(failed_then_passed)
+    reused_artifact_path["attempts"][-1]["artifact"]["path"] = reused_artifact_path["attempts"][0][
+        "artifact"
+    ]["path"]
+    invalid_cases.append(reused_artifact_path)
+    reused_artifact_hash = deepcopy(failed_then_passed)
+    reused_artifact_hash["attempts"][-1]["artifact"]["sha256"] = reused_artifact_hash["attempts"][
+        0
+    ]["artifact"]["sha256"]
+    invalid_cases.append(reused_artifact_hash)
+    deleted_failure = deepcopy(failed_then_passed)
+    deleted_failure["attempts"] = [deleted_failure["attempts"][-1]]
+    deleted_failure["run_count"] = 1
+    deleted_failure["status"] = "PASS"
+    invalid_cases.append(deleted_failure)
+
+    for invalid in invalid_cases:
+        with pytest.raises((AssertionError, KeyError)):
+            _assert_wave14_s2_full_attempt_chain(invalid)
+
+
+def test_arch_004_wave14_s2_complete_requires_every_formal_tier_pass() -> None:
+    validation = {
+        "required_formal_tiers": {
+            "pre_full": list(WAVE14_S2_PRE_FULL_REQUIRED_TIERS),
+            "post_full": list(WAVE14_S2_POST_FULL_REQUIRED_TIERS),
+        },
+        "pre_full_formal_tiers": {
+            name: {"required": True, "status": "PASS", "passed": 1, "failed": 0}
+            for name in WAVE14_S2_PRE_FULL_REQUIRED_TIERS
+        },
+        "post_full_formal_tiers": {
+            name: {"required": True, "status": "PASS", "passed": 1, "failed": 0}
+            for name in WAVE14_S2_POST_FULL_REQUIRED_TIERS
+        },
+    }
+    _assert_wave14_s2_formal_tiers(validation, phase_complete=True)
+    for group_name, tier_names in (
+        ("pre_full_formal_tiers", WAVE14_S2_PRE_FULL_REQUIRED_TIERS),
+        ("post_full_formal_tiers", WAVE14_S2_POST_FULL_REQUIRED_TIERS),
+    ):
+        for tier_name in tier_names:
+            incomplete = deepcopy(validation)
+            incomplete[group_name][tier_name]["status"] = "PENDING"
+            with pytest.raises(AssertionError, match="COMPLETE requires"):
+                _assert_wave14_s2_formal_tiers(incomplete, phase_complete=True)
 
 
 def test_arch_004_wave13_rejects_historical_prefix_tamper() -> None:

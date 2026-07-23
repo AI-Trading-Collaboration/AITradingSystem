@@ -1,0 +1,67 @@
+schema_version: architecture_wave_scope_amendment.v1
+amendment_id: ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE
+wave: ARCH-004-WAVE14
+status: APPROVED_IMPLEMENTED_PENDING_FORMAL_EXIT
+owner: architecture_coordinator
+source_carrier:
+  commit: 39a3ea7306a3937beda835020df4d8419c1cbbdf
+  policy:
+    path: config/architecture/arch_004_wave14_d0b2_g3_readiness.yaml
+    git_blob_sha1: bd1bdc9a47d0a94dcf6fd778693dbb8c85749f31
+  evidence:
+    path: inputs/architecture/arch_004_wave14_d0b2_g3_parallel_readiness.json
+    git_blob_sha1: 0c722254579e17596931fc86389b9f88e23e2a7c
+  mutation_allowed: false
+authorization:
+  kind: PROJECT_OWNER_INCIDENT_FIX
+  source_thread_id: 019f8c61-8f67-7342-aae5-6abe8cab26d0
+  instruction: 最好继续修复
+  authorized_on: 2026-07-23
+incident:
+  observed_as_of: 2026-07-22
+  daily_run_status: FAILED
+  primary_blocker: DQ_INPUT_ROW_COUNT_MISMATCH
+  secondary_finding: DAILY_EXECUTION_PROFILE_DROPPED_BY_DIRECT_DISPATCHER
+  intended_command:
+    - aits
+    - validate-data
+    - --as-of
+    - YYYY-MM-DD
+    - --execution-profile
+    - daily_default.v1
+  actual_boundary: python -m ai_trading_system.cli_direct
+  prior_effect: explicit profile was discarded and auto plus explicit as-of resolved to manual.v1
+scope:
+  lane_role: COORDINATOR
+  exact_added_paths:
+    - src/ai_trading_system/cli_direct.py
+    - tests/test_cli_direct.py
+  governance_artifact_paths:
+    - config/architecture/arch_004_wave14_d0b2_g3_scope_amendment.yaml
+    - tests/test_arch_004_wave14_scope_amendment.py
+  domain_owned_paths_changed: false
+  shared_writer_count: 1
+behavior:
+  explicit_profile_forwarded_unchanged: true
+  missing_profile_forwarded_as: auto
+  explicit_as_of_without_profile_resolves_to: manual.v1
+  daily_default_shape_revalidated_by_data_cache_cli: true
+  implicit_retry_allowed: false
+safety:
+  current_change_production_effect: none
+  future_runtime_effect: INTENDED_LOCAL_DQ_RECEIPT_AND_DISCOVERY_ONLY
+  consumer_cutover_allowed: false
+  task_source_cutover_allowed: false
+  strategy_logic_changed: false
+  strategy_threshold_changed: false
+  investment_interpretation_changed: false
+  paper_shadow_or_portfolio_mutated: false
+  order_or_broker_action: none
+validation_required:
+  - focused
+  - static
+  - architecture
+  - contract
+  - integration
+  - reproducibility
+  - full

@@ -10,7 +10,7 @@ import re
 import stat
 import sys
 import time
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import ExitStack, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
@@ -431,6 +431,7 @@ def publish_immutable_snapshot(
     request: SnapshotPublishRequest,
     payload: bytes,
     current_precondition: CurrentPointerPrecondition | None = None,
+    pre_commit_validator: Callable[[], None] | None = None,
     lock_timeout_seconds: float = DEFAULT_LOCK_TIMEOUT_SECONDS,
     lock_poll_seconds: float = DEFAULT_LOCK_POLL_SECONDS,
 ) -> SnapshotPublishResult:
@@ -439,6 +440,8 @@ def publish_immutable_snapshot(
     _validate_request(request)
     if not isinstance(payload, bytes):
         raise TypeError("payload must be bytes")
+    if pre_commit_validator is not None and not callable(pre_commit_validator):
+        raise TypeError("pre_commit_validator must be callable")
     for value, name in (
         (lock_timeout_seconds, "lock_timeout_seconds"),
         (lock_poll_seconds, "lock_poll_seconds"),
@@ -614,6 +617,8 @@ def publish_immutable_snapshot(
                 envelope=envelope,
                 paths=paths,
             )
+            if pre_commit_validator is not None:
+                _run_external_pre_commit_validator(pre_commit_validator)
             _, commit_warnings = _commit_current_atomic(
                 root,
                 current_path,
@@ -637,6 +642,20 @@ def publish_immutable_snapshot(
         post_commit_cleanup_status="PASS_WITH_WARNINGS" if warnings else "PASS",
         post_commit_cleanup_warnings=warnings,
     )
+
+
+def _run_external_pre_commit_validator(validator: Callable[[], None]) -> None:
+    """Run a trusted external CAS check without borrowing the store-root authority."""
+
+    active = _ACTIVE_ROOT_BINDING.get()
+    if active is None:
+        validator()
+        return
+    token = _ACTIVE_ROOT_BINDING.set(None)
+    try:
+        validator()
+    finally:
+        _ACTIVE_ROOT_BINDING.reset(token)
 
 
 def validate_current_snapshot(

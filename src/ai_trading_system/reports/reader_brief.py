@@ -11,6 +11,9 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START
+from ai_trading_system.platform.reporting.reader_brief_native import (
+    project_data_quality_pit_safety,
+)
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -319,7 +322,7 @@ def build_reader_brief_payload(
         missing_artifact_impact=missing_artifact_impact,
         decision=executive_decision,
     )
-    data_quality_pit_safety = _data_quality_pit_safety(
+    data_quality_pit_safety = project_data_quality_pit_safety(
         as_of=as_of,
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -11209,57 +11212,6 @@ def _binding_gate_ladder(
         "status": "AVAILABLE" if rows else "MISSING",
         "binding_gate_id": binding_id,
         "gates": rows,
-    }
-
-
-def _data_quality_pit_safety(
-    *,
-    as_of: date,
-    snapshot: Mapping[str, Any],
-    daily_decision_summary: Mapping[str, Any],
-    report_index_summary: Mapping[str, Any],
-) -> dict[str, Any]:
-    quality = _mapping(snapshot.get("quality"))
-    data_gate = _mapping(daily_decision_summary.get("data_gate"))
-    data_gate_status = _text(data_gate.get("status"), _quality_status(snapshot))
-    signal_date = _text(snapshot.get("signal_date"), as_of.isoformat())
-    future_data_status = (
-        "PASS"
-        if _leading_status(data_gate_status).upper() in {"PASS", "PASS_WITH_WARNINGS"}
-        else "REVIEW_REQUIRED"
-    )
-    return {
-        "as_of_date": signal_date,
-        "decision_snapshot_id": _text(snapshot.get("snapshot_id"), "UNKNOWN"),
-        "data_gate_status": data_gate_status,
-        "market_data_status": _text(quality.get("market_data_status"), "UNKNOWN"),
-        "market_data_latest_date": _text(
-            quality.get("market_data_latest_date"),
-            _text(quality.get("latest_market_data_date"), "UNKNOWN_IN_SNAPSHOT"),
-        ),
-        "market_data_error_count": _text(quality.get("market_data_error_count"), "UNKNOWN"),
-        "market_data_warning_count": _text(quality.get("market_data_warning_count"), "UNKNOWN"),
-        "feature_status": _text(quality.get("feature_status"), "UNKNOWN"),
-        "sec_feature_status": _text(quality.get("sec_feature_status"), "UNKNOWN"),
-        "sec_data_latest_filing": _text(
-            quality.get("sec_data_latest_filing"),
-            _text(quality.get("latest_sec_filing"), "UNKNOWN_IN_SNAPSHOT"),
-        ),
-        "fmp_valuation_snapshot_timestamp": _text(
-            quality.get("fmp_valuation_snapshot_timestamp"),
-            _text(quality.get("latest_fmp_valuation_timestamp"), "UNKNOWN_IN_SNAPSHOT"),
-        ),
-        "future_data_check": future_data_status,
-        "carried_forward_fields": _texts(quality.get("carried_forward_fields")),
-        "stale_fields": _texts(quality.get("stale_fields")),
-        "blocking_reasons": _texts(data_gate.get("blocking_reasons")),
-        "stale_report_count": report_index_summary.get("stale_count"),
-        "missing_report_count": report_index_summary.get("missing_count"),
-        "pit_visibility_note": (
-            "UNKNOWN_IN_SNAPSHOT 表示该源的可见时间未在当前 decision snapshot 明确披露；"
-            "不得据此补造 PIT 结论。"
-        ),
-        "production_effect": PRODUCTION_EFFECT,
     }
 
 

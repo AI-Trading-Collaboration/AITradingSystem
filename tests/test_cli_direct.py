@@ -591,7 +591,18 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch, tmp_path: Pa
     monkeypatch.setattr(cli_direct.sec_pit_cli, "shadow_observe_command", fake_shadow_observe)
     monkeypatch.setattr(cli_direct.sec_pit_cli, "shadow_monitor_command", fake_shadow_monitor)
 
-    assert cli_direct.main(["validate-data", "--as-of", "2026-05-13"]) == 0
+    assert (
+        cli_direct.main(
+            [
+                "validate-data",
+                "--as-of",
+                "2026-05-13",
+                "--execution-profile",
+                "daily_default.v1",
+            ]
+        )
+        == 0
+    )
     assert cli_direct.main(["pit-snapshots", "build-manifest", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["pit-snapshots", "validate", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["docs", "report-contract", "--latest"]) == 0
@@ -617,7 +628,14 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch, tmp_path: Pa
     assert cli_direct.main(["sec-pit", "shadow-monitor", "--latest", "--as-of", "2026-05-13"]) == 0
 
     assert calls == [
-        ("validate_data", {"as_of": "2026-05-13", "full_universe": False}),
+        (
+            "validate_data",
+            {
+                "as_of": "2026-05-13",
+                "execution_profile": "daily_default.v1",
+                "full_universe": False,
+            },
+        ),
         ("build_manifest", {"as_of": "2026-05-13"}),
         ("validate_pit", {"as_of": "2026-05-13"}),
         ("docs_contract", {"as_of": None, "latest": True}),
@@ -633,6 +651,42 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch, tmp_path: Pa
         ),
         ("shadow_observe", {"start": None, "end": "2026-05-13", "latest": True}),
         ("shadow_monitor", {"as_of": "2026-05-13", "latest": True}),
+    ]
+
+
+def test_cli_direct_validate_data_preserves_profile_default_and_override(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_validate_data(**kwargs: object) -> None:
+        calls.append(kwargs)
+
+    monkeypatch.setattr(cli_direct.data_cache_cli, "validate_data", fake_validate_data)
+
+    assert cli_direct.main(["validate-data", "--as-of", "2026-05-13"]) == 0
+    assert (
+        cli_direct.main(
+            [
+                "validate-data",
+                "--as-of",
+                "2026-05-13",
+                "--execution-profile",
+                "manual.v1",
+            ]
+        )
+        == 0
+    )
+
+    assert calls == [
+        {
+            "as_of": "2026-05-13",
+            "execution_profile": cli_direct.data_cache_cli.AUTO_DATA_QUALITY_EXECUTION_PROFILE_ID,
+            "full_universe": False,
+        },
+        {
+            "as_of": "2026-05-13",
+            "execution_profile": "manual.v1",
+            "full_universe": False,
+        },
     ]
 
 

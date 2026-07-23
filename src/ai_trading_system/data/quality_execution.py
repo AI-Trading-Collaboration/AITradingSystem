@@ -47,9 +47,11 @@ from ai_trading_system.data.quality import (
     DataFileSummary,
     DataQualityIssue,
     DataQualityReport,
+    DownloadPublicationResolution,
     Severity,
     capture_data_file_snapshots,
     render_data_quality_report,
+    resolve_download_publication_observation,
     validate_data_cache,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_text
@@ -283,6 +285,9 @@ def run_canonical_data_quality_execution(
     policy = load_reviewed_data_quality_policy(request.policy_path, project_root=root)
     request_paths = _resolve_request_paths(request, root)
     execution_profile = _build_execution_profile_binding(request, request_paths, root)
+    download_publication_resolution: DownloadPublicationResolution = (
+        resolve_download_publication_observation(output_dir=request_paths["manifest"][1].parent)
+    )
     file_snapshots = capture_data_file_snapshots(
         {role: path for role, (_, path) in request_paths.items()}
     )
@@ -290,8 +295,9 @@ def run_canonical_data_quality_execution(
     validator_binding = _validator_binding(validator_sources)
     started_at = _utc_now()
 
-    # D0B1 intentionally has exactly one validator call. All bindings below are
-    # mechanically projected from that returned report and its actual source bytes.
+    # The canonical runner intentionally has exactly one validator call. All
+    # bindings below are mechanically projected from that returned report and
+    # its actual source bytes.
     report = validate_data_cache(
         prices_path=request_paths["prices"][1],
         rates_path=request_paths["rates"][1],
@@ -312,6 +318,11 @@ def run_canonical_data_quality_execution(
         ),
         require_secondary_prices=request.require_secondary_prices,
         file_snapshots=file_snapshots,
+        requested_window=(
+            request.requested_window.start,
+            request.requested_window.end,
+        ),
+        download_publication_resolution=download_publication_resolution,
     )
 
     manifest = _read_manifest_rows(

@@ -7,7 +7,7 @@
 - task id：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`IN_PROGRESS`（current phase=`WAVE14_S0_1_REUSABLE_READINESS_INFRA`）
+- status：`IN_PROGRESS`（current phase=`WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`）
 - owner：architecture coordinator / 各 domain owner
 - dependency：ARCH-004F1、F2、F3 `DONE`
 - production effect：`none`
@@ -205,6 +205,12 @@ fixture parity；真实 cadence evidence 在 G4C 异步观察，不占用 domain
 
 ## 状态记录
 
+- 2026-07-24：Wave14 S0 carrier=`39a3ea730`已推送，D0B2与bounded G3完成domain实现及独立
+  审计。D0B2第二轮TOCTOU已由同一dataset lock内的typed pre-commit validator关闭，combined
+  focused=`180 passed / 1 skipped`且静态PASS，独立复核无新增P0/P1；G3 native/generic=`1/9`、Reader Brief
+  29,005 LOC/366 functions并保持legacy contract parity。真实daily的direct profile缺口通过
+  `ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`追加治理；历史S0 artifacts不修改。当前进入S2
+  shared/generated/formal exit，G5、cutover、production和broker仍未授权。
 - 2026-07-23：Wave13 closeout commit
   `e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已普通推送，Wave14进入
   `S0_1_REUSABLE_READINESS_INFRA`。S0采用B/C/D非自引用提交模型并从C的

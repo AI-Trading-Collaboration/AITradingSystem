@@ -614,7 +614,7 @@ phase_g_execution:
     G0_inventory_deprecation_policy_and_removal_gate: COMPLETE
     G1_shared_platform_helper_migration: COMPLETE
     G2_interfaces_and_etf_cli_migration: COMPLETE
-    G3_reporting_native_migration: NOT_STARTED
+    G3_reporting_native_migration: IN_PROGRESS_FIRST_NATIVE_SLICE_VALIDATING
     G4_operations_consumer_migration: VALIDATING_CADENCE_PENDING
     G5_research_wrapper_migration: NOT_STARTED
     G6_portfolio_decision_sensitive_migration: NOT_STARTED
@@ -628,11 +628,13 @@ phase_g_execution:
   next_phase_unblocked: false
   current_coordination_wave:
     wave_id: WAVE14_D0B2_BOUNDED_G3
-    current_phase: WAVE14_S0_1_REUSABLE_READINESS_INFRA
-    status: S0_IN_PROGRESS
+    current_phase: WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT
+    status: S2_IN_PROGRESS
+    compatibility_status: VALIDATING_WAVE14_S2
     task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
     source_wave_closeout_commit: e2da21894ea8e8921a86c6c1b48d7b191f0f142c
     source_wave_tree: 73ba7a3830cbc47ccb6dbfb3488eeed5431653c2
+    wave14_s0_carrier_commit: 39a3ea7306a3937beda835020df4d8419c1cbbdf
     historical_base_commit: 02f9492a1975440240cb65f761d2cf544a5a875e
     application_commit: 58ee6a80b5a04ff68a97a96d36b575ae8391f657
     dry_run_manifest_id: gov_006_decision_manifest_3fb5f2a038eca2361179
@@ -658,7 +660,7 @@ phase_g_execution:
       dispatch_allowed: false
       prior_g2_5_rehearsal_is_dispatch_authority: false
       final_head_manifest_required: true
-      s0_contract_readiness_status: IN_PROGRESS_INFRA
+      s0_contract_readiness_status: PASS
       next_slice_unblocked: false
       data_task: DATA-GOV-001_D0B2
       reporting_task: ARCH-004G3_REPORTING_NATIVE_MIGRATION
@@ -666,7 +668,7 @@ phase_g_execution:
       shared_paths_coordinator_only: true
       g4c_cadence_observation_async: true
     strategy_logic_changed: false
-    data_or_runtime_changed: false
+    data_or_runtime_changed: true
     broker_action: none
     production_effect: none
   g0_evidence:
