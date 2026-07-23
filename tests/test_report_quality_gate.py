@@ -155,6 +155,92 @@ def test_report_quality_gate_cli_writes_json_and_markdown(tmp_path: Path) -> Non
     assert markdown_output.exists()
 
 
+def test_report_quality_gate_cli_keeps_warning_status_non_blocking(tmp_path: Path) -> None:
+    report_path = tmp_path / "thin_report.json"
+    _write_json(
+        report_path,
+        {
+            "report_type": "thin_report",
+            "status": "PASS",
+            "production_effect": "none",
+            "source_artifacts": [{"path": "input.json"}],
+            "safety_boundary": {"production_effect": "none"},
+        },
+    )
+    index_path = tmp_path / "report_index_2026-05-04.json"
+    brief_path = tmp_path / "reader_brief_2026-05-04.json"
+    json_output = tmp_path / "report_quality_gate_2026-05-04.json"
+    markdown_output = tmp_path / "report_quality_gate_2026-05-04.md"
+    _write_json(index_path, _report_index(report_path))
+    _write_json(brief_path, _complete_reader_brief_payload())
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "quality-gate",
+            "--date",
+            RUN_DATE.isoformat(),
+            "--project-root",
+            str(tmp_path),
+            "--report-index-path",
+            str(index_path),
+            "--reader-brief-json-path",
+            str(brief_path),
+            "--json-output-path",
+            str(json_output),
+            "--markdown-output-path",
+            str(markdown_output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(json_output.read_text(encoding="utf-8"))
+    assert payload["report_quality_status"] == "PASS_WITH_WARNINGS"
+    assert markdown_output.exists()
+
+
+def test_report_quality_gate_cli_fails_after_writing_failure_artifacts(
+    tmp_path: Path,
+) -> None:
+    report_path = _write_complete_report(
+        tmp_path / "unsafe_report.json",
+        production_effect="mutates",
+    )
+    index_path = tmp_path / "report_index_2026-05-04.json"
+    brief_path = tmp_path / "reader_brief_2026-05-04.json"
+    json_output = tmp_path / "report_quality_gate_2026-05-04.json"
+    markdown_output = tmp_path / "report_quality_gate_2026-05-04.md"
+    _write_json(index_path, _report_index(report_path, production_effect="mutates"))
+    _write_json(brief_path, _complete_reader_brief_payload())
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "quality-gate",
+            "--date",
+            RUN_DATE.isoformat(),
+            "--project-root",
+            str(tmp_path),
+            "--report-index-path",
+            str(index_path),
+            "--reader-brief-json-path",
+            str(brief_path),
+            "--json-output-path",
+            str(json_output),
+            "--markdown-output-path",
+            str(markdown_output),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Report quality gate：FAIL" in result.output
+    payload = json.loads(json_output.read_text(encoding="utf-8"))
+    assert payload["report_quality_status"] == "FAIL"
+    assert markdown_output.exists()
+
+
 def test_report_quality_gate_registry_and_reader_brief_summary(tmp_path: Path) -> None:
     registry = load_report_registry(DEFAULT_REPORT_REGISTRY_PATH)
     assert any(item["report_id"] == "report_quality_gate" for item in registry["reports"])

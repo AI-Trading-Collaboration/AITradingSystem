@@ -1980,3 +1980,9 @@ YYYY-MM-DD: 从 <旧状态> 改为 <新状态>，原因：<触发条件、实现
   `docs/task_register_completed.md`；其 reviewed scope amendment exact id
   `ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE` 保留在此非任务索引中，供历史合同和定位入口使用。
   本索引不表示任务重新激活，权威状态仍为 `DONE`。
+
+## OPS-067 当前修复
+
+|ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
+|---|---|---|---|---|---|---|---|
+|OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION|Operations / canonical Reader Brief and report quality fail-closed finalization|P0|IN_PROGRESS|operations platform owner + reporting domain owner；当前并行实现后由 architecture coordinator 集成|详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Wave14 S2 后置 final-tree 审计确认 `report_quality_status=FAIL` 与 Reader Brief `status=FAILED` 可因 CLI rc=0、daily 未读 quality artifact、post-run refresh 晚于 run-control terminal PASS 而形成 false PASS；必须在新的 provider-ready canonical daily run 前直接修复。进程 kill、断电、级联存储失败下的 state/manifest 跨文件 durability 继续依赖既有 DATA-GOV D0C，不在本 slice 冒充完成。|Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization 全部 fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次 finalization quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；可捕获异常的 state/ledger/CLI/bundle 无 false PASS；focused/architecture/contract/integration/reproducibility/Full PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。|2026-07-24：新增并进入 `IN_PROGRESS`；不通过 standalone 命令或人工 JSON 复核冒充 canonical gate，不写 production/active-shadow weights，不触发 broker/order/trading。2026-07-24：审查明确 ordinary exception compensation 与 DATA-GOV D0C power-loss durability 的边界。|

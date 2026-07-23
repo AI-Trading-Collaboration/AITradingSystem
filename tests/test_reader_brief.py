@@ -839,6 +839,120 @@ def test_reports_validate_reader_brief_cli_writes_quality_outputs(tmp_path: Path
     assert quality_payload["report_type"] == "reader_brief_quality"
 
 
+def test_validate_reader_brief_cli_keeps_warning_status_non_blocking(tmp_path: Path) -> None:
+    reader_json = tmp_path / "reader_brief_2026-05-04.json"
+    reader_html = tmp_path / "reader_brief_2026-05-04.html"
+    quality_json = tmp_path / "reader_brief_quality_2026-05-04.json"
+    quality_md = tmp_path / "reader_brief_quality_2026-05-04.md"
+    _write_reader_brief_quality_source(reader_json, status="PASS_WITH_WARNINGS")
+    reader_html.write_text("<html><body>Reader Brief</body></html>", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "validate-reader-brief",
+            "--date",
+            "2026-05-04",
+            "--reports-dir",
+            str(tmp_path),
+            "--reader-brief-json-path",
+            str(reader_json),
+            "--reader-brief-html-path",
+            str(reader_html),
+            "--json-output-path",
+            str(quality_json),
+            "--markdown-output-path",
+            str(quality_md),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Reader Brief quality：PASS_WITH_WARNINGS" in result.output
+    payload = json.loads(quality_json.read_text(encoding="utf-8"))
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert quality_md.exists()
+
+
+def test_validate_reader_brief_cli_fails_after_writing_failure_artifacts(
+    tmp_path: Path,
+) -> None:
+    reader_json = tmp_path / "reader_brief_2026-05-04.json"
+    reader_html = tmp_path / "reader_brief_2026-05-04.html"
+    quality_json = tmp_path / "reader_brief_quality_2026-05-04.json"
+    quality_md = tmp_path / "reader_brief_quality_2026-05-04.md"
+    _write_reader_brief_quality_source(reader_json, status="FAILED")
+    reader_html.write_text("<html><body>Reader Brief</body></html>", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "validate-reader-brief",
+            "--date",
+            "2026-05-04",
+            "--reports-dir",
+            str(tmp_path),
+            "--reader-brief-json-path",
+            str(reader_json),
+            "--reader-brief-html-path",
+            str(reader_html),
+            "--json-output-path",
+            str(quality_json),
+            "--markdown-output-path",
+            str(quality_md),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Reader Brief quality：FAILED" in result.output
+    payload = json.loads(quality_json.read_text(encoding="utf-8"))
+    assert payload["status"] == "FAILED"
+    assert quality_md.exists()
+
+
+def _write_reader_brief_quality_source(path: Path, *, status: str) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "reader_brief",
+                "as_of": "2026-05-04",
+                "status": status,
+                "production_effect": "none",
+                "narrative_executive_summary": {"today_conclusion": "继续观察。"},
+                "status_panel": {
+                    "build_status": status,
+                    "decision_usability": "USABLE",
+                    "research_promotion_status": "NOT_PROMOTABLE",
+                },
+                "action_checklist": [{"recommended_next_action": "manual_review"}],
+                "executive_decision": {
+                    "not_trade_instruction": True,
+                    "recommended_action": "manual_review",
+                },
+                "missing_limited_artifact_impact": {
+                    "status": "OK",
+                    "blocking_count": 0,
+                    "important_count": 0,
+                    "items": [],
+                },
+                "manual_review_queue": {
+                    "groups": [{"severity": "INFO", "items": []}],
+                    "items": [],
+                    "top_items": [],
+                },
+                "contribution_summary": {"status": "AVAILABLE"},
+                "market_situation_snapshot": {"market_price_panel_status": "PASS"},
+                "report_navigation_groups": {"groups": [{"group_id": "core"}]},
+                "warnings": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+
 def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
     snapshot_path = _write_decision_snapshot(tmp_path)
     calculation_explainers_path = tmp_path / "calculation_explainers_2026-05-04.json"

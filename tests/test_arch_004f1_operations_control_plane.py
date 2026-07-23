@@ -124,6 +124,37 @@ def _write_daily_pass_status_artifacts(plan) -> None:
             path = step.produced_paths[index]
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("# Test\n\n- 状态：PASS\n", encoding="utf-8")
+        if step.step_id == "report_quality_gate":
+            path = step.produced_paths[0]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "report_type": "report_quality_gate",
+                        "as_of": plan.as_of.isoformat(),
+                        "production_effect": "none",
+                        "status": "PASS",
+                        "report_quality_status": "PASS",
+                    }
+                ),
+                encoding="utf-8",
+            )
+        elif step.step_id == "validate_reader_brief":
+            path = step.produced_paths[0]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "report_type": "reader_brief_quality",
+                        "as_of": plan.as_of.isoformat(),
+                        "production_effect": "none",
+                        "status": "OK",
+                    }
+                ),
+                encoding="utf-8",
+            )
 
 
 def _execution_state_path(state_root: Path) -> Path:
@@ -377,6 +408,8 @@ def test_periodic_manual_dispatch_uses_runtime_control_and_blocks_duplicate(
         json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
     )
     assert state["status"] == "PASS"
+    assert ledger.run_status is CanonicalStatus.PASS
+    assert ledger.run_blocker_codes == ()
     assert ledger.entry("weekly_backtest").status is CanonicalStatus.PASS
 
 
@@ -1216,6 +1249,167 @@ def test_controlled_daily_executor_writes_terminal_state_and_blocks_duplicate(
     assert {entry.step_id: entry.status for entry in ledger.entries} == expected_ledger_statuses
     assert duplicate.status == "RUN_CONTROL_ALREADY_COMPLETE"
     assert len(calls) == first_call_count
+
+
+def test_controlled_daily_executor_holds_lease_until_completion_callback(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    control_root = tmp_path / "control"
+    observed: dict[str, object] = {}
+
+    def runner(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    def completion_callback(report) -> None:
+        state = json.loads(
+            _execution_state_path(control_root / "states").read_text(encoding="utf-8")
+        )
+        observed["report_status"] = report.status
+        observed["state_status"] = state["status"]
+        observed["lock_count"] = len(tuple((control_root / "locks").glob("*/owner.json")))
+
+    report = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="completion_pass",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        run_control_root=control_root,
+        completion_callback=completion_callback,
+    )
+
+    state = json.loads(_execution_state_path(control_root / "states").read_text(encoding="utf-8"))
+    assert report.status == "PASS"
+    assert observed == {
+        "report_status": "PASS",
+        "state_status": "RUNNING",
+        "lock_count": 1,
+    }
+    assert state["status"] == "PASS"
+    assert tuple((control_root / "locks").glob("*/owner.json")) == ()
+
+
+def test_controlled_daily_executor_finalization_failure_cannot_write_terminal_pass(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    control_root = tmp_path / "control"
+
+    def runner(command, **kwargs):
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    class FinalizationFailure(RuntimeError):
+        code = "FINAL_READER_BRIEF_QUALITY_FAILED"
+
+    def completion_callback(report) -> None:
+        raise FinalizationFailure("final Reader Brief quality status=FAILED")
+
+    report = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="completion_failed",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        run_control_root=control_root,
+        completion_callback=completion_callback,
+    )
+
+    state = json.loads(_execution_state_path(control_root / "states").read_text(encoding="utf-8"))
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(control_root / "states").read_text(encoding="utf-8"))
+    )
+    assert report.status == "FAIL_FINALIZATION"
+    assert report.failed_step is not None
+    assert report.failed_step.step_id == "canonical_finalization"
+    assert "FINAL_READER_BRIEF_QUALITY_FAILED" in (report.failed_step.error or "")
+    assert report.failed_step.diagnostic_path is not None
+    assert report.failed_step.diagnostic_path.exists()
+    assert state["status"] == "FAILED"
+    assert state["blocker_codes"] == ["DAILY_RUN_FAIL_FINALIZATION"]
+    assert ledger.run_status is CanonicalStatus.FAILED
+    assert ledger.run_blocker_codes == ("DAILY_RUN_FAIL_FINALIZATION",)
+    assert all(
+        entry.status in {CanonicalStatus.PASS, CanonicalStatus.SKIPPED} for entry in ledger.entries
+    )
+    assert tuple((control_root / "locks").glob("*/owner.json")) == ()
+
+
+def test_controlled_daily_executor_compensates_terminal_pass_write_failure(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(daily_cut_in=True),
+    )
+    original_write_state = control._write_state
+    terminal_failures: list[str] = []
+
+    def fail_pass_state_write(state, spec) -> None:
+        if state.status is CanonicalStatus.PASS:
+            raise OSError("injected terminal PASS state write failure")
+        original_write_state(state, spec)
+
+    class TerminalCompensation(RuntimeError):
+        pass
+
+    def terminal_failure_callback(report, exc: Exception) -> None:
+        terminal_failures.append(f"{report.status}:{type(exc).__name__}")
+        raise TerminalCompensation("bundle/evidence downgraded before propagation")
+
+    monkeypatch.setattr(control, "_write_state", fail_pass_state_write)
+
+    with pytest.raises(TerminalCompensation):
+        run_daily_ops_plan_controlled(
+            plan,
+            project_root=tmp_path,
+            env=_daily_env(),
+            runner=lambda command, **kwargs: subprocess.CompletedProcess(
+                command, 0, stdout="", stderr=""
+            ),
+            run_id="terminal_pass_write_failed",
+            visibility_check_date=as_of,
+            visibility_latest_completed_trading_day=as_of,
+            runtime_control=control,
+            completion_callback=lambda report: None,
+            terminal_failure_callback=terminal_failure_callback,
+        )
+
+    state_root = tmp_path / "control" / "states"
+    state = json.loads(_execution_state_path(state_root).read_text(encoding="utf-8"))
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
+    )
+    assert terminal_failures == ["PASS:OSError"]
+    assert state["status"] == "FAILED"
+    assert state["blocker_codes"] == ["UNHANDLED_DAILY_EXECUTOR_EXCEPTION"]
+    assert ledger.run_status is CanonicalStatus.FAILED
+    assert ledger.run_blocker_codes == ("UNHANDLED_DAILY_EXECUTOR_EXCEPTION",)
+    assert tuple((control.root / "locks").glob("*/owner.json")) == ()
 
 
 def test_controlled_daily_executor_resumes_without_repeating_completed_step(

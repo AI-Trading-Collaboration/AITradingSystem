@@ -84,6 +84,10 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     canonical_order_intent_candidates_json = (
         paths.reports_dir / "order_intent_candidates_2026-05-06.json"
     )
+    canonical_reader_quality_json = paths.reports_dir / "reader_brief_quality_2026-05-06.json"
+    canonical_reader_quality_md = paths.reports_dir / "reader_brief_quality_2026-05-06.md"
+    canonical_report_quality_json = paths.reports_dir / "report_quality_gate_2026-05-06.json"
+    canonical_report_quality_md = paths.reports_dir / "report_quality_gate_2026-05-06.md"
     input_path = tmp_path / "data" / "raw" / "prices_daily.csv"
     config_path = tmp_path / "config" / "scheduled_tasks.yaml"
     for path, text in (
@@ -100,6 +104,16 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
             canonical_order_intent_candidates_json,
             '{"report_type": "order_intent_candidates"}\n',
         ),
+        (
+            canonical_reader_quality_json,
+            '{"report_type": "reader_brief_quality"}\n',
+        ),
+        (canonical_reader_quality_md, "# reader quality\n"),
+        (
+            canonical_report_quality_json,
+            '{"report_type": "report_quality_gate"}\n',
+        ),
+        (canonical_report_quality_md, "# report quality\n"),
         (input_path, "date,ticker,close\n2026-05-06,NVDA,1\n"),
         (config_path, "schema_version: 1\n"),
     ):
@@ -154,6 +168,18 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     assert (legacy_reports_dir / "order_intent_candidates_2026-05-06.json").read_text(
         encoding="utf-8"
     ) == '{"report_type": "order_intent_candidates"}\n'
+    assert (legacy_reports_dir / "reader_brief_quality_2026-05-06.json").read_bytes() == (
+        canonical_reader_quality_json.read_bytes()
+    )
+    assert (legacy_reports_dir / "reader_brief_quality_2026-05-06.md").read_bytes() == (
+        canonical_reader_quality_md.read_bytes()
+    )
+    assert (legacy_reports_dir / "report_quality_gate_2026-05-06.json").read_bytes() == (
+        canonical_report_quality_json.read_bytes()
+    )
+    assert (legacy_reports_dir / "report_quality_gate_2026-05-06.md").read_bytes() == (
+        canonical_report_quality_md.read_bytes()
+    )
     manifest_text = manifest_path.read_text(encoding="utf-8")
     manifest = json.loads(manifest_text)
     expected_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
@@ -207,9 +233,11 @@ def test_mirror_legacy_reports_to_run_ignores_stale_same_date_outputs(
     legacy_reports_dir = tmp_path / "outputs" / "reports"
     stale_dashboard = legacy_reports_dir / "evidence_dashboard_2026-05-10.html"
     fresh_health = legacy_reports_dir / "pipeline_health_2026-05-10.md"
+    fresh_but_not_due_reader = legacy_reports_dir / "reader_brief_2026-05-10.json"
     for path, text in (
         (stale_dashboard, "<html>old dashboard</html>\n"),
         (fresh_health, "# current health\n"),
+        (fresh_but_not_due_reader, '{"status":"OK"}\n'),
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
@@ -217,14 +245,20 @@ def test_mirror_legacy_reports_to_run_ignores_stale_same_date_outputs(
     run_started_at = datetime(2026, 5, 10, 16, 0, tzinfo=UTC)
     os.utime(stale_dashboard, (run_started_at.timestamp() - 10, run_started_at.timestamp() - 10))
     os.utime(fresh_health, (run_started_at.timestamp() + 10, run_started_at.timestamp() + 10))
+    os.utime(
+        fresh_but_not_due_reader,
+        (run_started_at.timestamp() + 10, run_started_at.timestamp() + 10),
+    )
 
     copied = mirror_legacy_reports_to_run(
         as_of=date(2026, 5, 10),
         legacy_reports_dir=legacy_reports_dir,
         paths=paths,
         min_modified_at=run_started_at,
+        excluded_name_prefixes=("reader_brief_",),
     )
 
     assert paths.reports_dir / "pipeline_health_2026-05-10.md" in copied
     assert (paths.reports_dir / "pipeline_health_2026-05-10.md").exists()
     assert not (paths.reports_dir / "evidence_dashboard_2026-05-10.html").exists()
+    assert not (paths.reports_dir / "reader_brief_2026-05-10.json").exists()

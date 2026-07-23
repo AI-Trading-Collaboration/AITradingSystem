@@ -1,22 +1,26 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 import ai_trading_system.cli_commands.ops as ops_cli
 from ai_trading_system.cli import app
 from ai_trading_system.core import ProductionEffect
 from ai_trading_system.ops_daily import (
+    DailyOpsArtifactDigest,
     DailyOpsPlan,
     DailyOpsRunMetadata,
     DailyOpsRunReport,
     DailyOpsStep,
     DailyOpsStepResult,
     _execution_command,
+    _post_step_artifact_status_error,
     _purge_source_pycache_dirs,
     build_daily_ops_plan,
     daily_ops_run_metadata_path_for_report,
@@ -203,6 +207,7 @@ def test_daily_ops_run_injects_risk_event_openai_visibility_cutoff(
                 continue
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("- 状态：PASS\n", encoding="utf-8")
+    _write_daily_quality_artifacts(plan)
 
     calls: list[tuple[str, ...]] = []
 
@@ -674,6 +679,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
             "# 数据质量\n\n- 状态：PASS\n- 错误数：0\n- 警告数：0\n",
             encoding="utf-8",
         )
+        data_quality_path = reports_dir / "data_quality_2026-05-06.md"
         (reports_dir / "download_data_diagnostics_2026-05-06.md").write_text(
             "# 下载诊断\n\n- 状态：PASS\n",
             encoding="utf-8",
@@ -688,6 +694,20 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
                     "claims": [],
                     "dataset_refs": [],
                     "quality_refs": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        (reports_dir / "report_index_2026-05-06.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "report_type": "report_index",
+                    "as_of": "2026-05-06",
+                    "status": "PASS",
+                    "production_effect": "none",
+                    "reports": [],
+                    "summary": {"report_count": 0},
                 }
             ),
             encoding="utf-8",
@@ -756,7 +776,34 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
                 for result in step_results
             ),
             pre_run_input_artifacts=(),
-            produced_artifacts=(),
+            produced_artifacts=(
+                DailyOpsArtifactDigest(
+                    path=data_quality_path,
+                    exists=True,
+                    artifact_type="file",
+                    sha256=hashlib.sha256(data_quality_path.read_bytes()).hexdigest(),
+                    size_bytes=data_quality_path.stat().st_size,
+                    file_count=None,
+                ),
+                *tuple(
+                    DailyOpsArtifactDigest(
+                        path=reports_dir / filename,
+                        exists=False,
+                        artifact_type="missing",
+                        sha256=None,
+                        size_bytes=None,
+                        file_count=None,
+                    )
+                    for filename in (
+                        "reader_brief_2026-05-06.json",
+                        "reader_brief_2026-05-06.html",
+                        "reader_brief_quality_2026-05-06.json",
+                        "reader_brief_quality_2026-05-06.md",
+                        "report_quality_gate_2026-05-06.json",
+                        "report_quality_gate_2026-05-06.md",
+                    )
+                ),
+            ),
         )
         return DailyOpsRunReport(
             plan=plan,
@@ -770,6 +817,15 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(ops_cli, "DEFAULT_DECISION_SNAPSHOT_DIR", snapshot_dir)
     monkeypatch.setattr(ops_cli, "run_daily_ops_plan", fake_run_daily_ops_plan)
+    original_write_json_atomic = ops_cli.write_json_atomic
+    manifest_statuses: list[str] = []
+
+    def record_manifest_status(path: Path, payload, **kwargs):
+        if path.name == "manifest.json":
+            manifest_statuses.append(str(payload.get("status")))
+        return original_write_json_atomic(path, payload, **kwargs)
+
+    monkeypatch.setattr(ops_cli, "write_json_atomic", record_manifest_status)
 
     result = CliRunner().invoke(
         app,
@@ -793,6 +849,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     )
 
     assert result.exit_code == 0, result.output
+    assert manifest_statuses == ["FINALIZING", "PASS"]
     assert "每日任务" in result.output
     assert "Dashboard" in result.output
     task_dashboard = next(run_output_root.rglob("reports/daily_task_dashboard_2026-05-06.html"))
@@ -812,6 +869,14 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     reader_brief_quality_json = next(
         run_output_root.rglob("reports/reader_brief_quality_2026-05-06.json")
     )
+    report_quality_json = next(run_output_root.rglob("reports/report_quality_gate_2026-05-06.json"))
+    finalization_evidence_json = next(
+        run_output_root.rglob("reports/daily_ops_finalization_2026-05-06.json")
+    )
+    run_metadata_json = next(
+        run_output_root.rglob("metadata/daily_ops_run_metadata_2026-05-06.json")
+    )
+    run_manifest_json = next(run_output_root.rglob("manifest.json"))
     canonical_trace = next(run_output_root.rglob("traces/daily_score_2026-05-06_trace.json"))
     periodic_plan_json = next(
         run_output_root.rglob("metadata/periodic_operations_plan_2026-05-06.json")
@@ -823,6 +888,8 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert reader_brief_json.exists()
     assert owner_daily_brief_json.exists()
     assert reader_brief_quality_json.exists()
+    assert report_quality_json.exists()
+    assert finalization_evidence_json.exists()
     assert canonical_trace.exists()
     assert periodic_plan_json.exists()
     assert "关键结论总览" in task_dashboard.read_text(encoding="utf-8")
@@ -869,6 +936,77 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert len(periodic_plan["entries"]) == 41
     assert periodic_plan["automatic_command_dispatch_enabled"] is False
     assert all(entry["command_executed"] is False for entry in periodic_plan["entries"])
+
+    legacy_reports_dir = tmp_path / "outputs" / "reports"
+    for filename in (
+        "reader_brief_2026-05-06.json",
+        "reader_brief_2026-05-06.html",
+        "reader_brief_quality_2026-05-06.json",
+        "reader_brief_quality_2026-05-06.md",
+        "report_quality_gate_2026-05-06.json",
+        "report_quality_gate_2026-05-06.md",
+    ):
+        canonical_path = reader_brief_json.parent / filename
+        legacy_path = legacy_reports_dir / filename
+        assert legacy_path.read_bytes() == canonical_path.read_bytes()
+
+    metadata_payload = json.loads(run_metadata_json.read_text(encoding="utf-8"))
+    metadata_artifacts = {
+        Path(record["path"]): record for record in metadata_payload["produced_artifacts"]
+    }
+    assert set(metadata_artifacts) == {legacy_reports_dir / "data_quality_2026-05-06.md"}
+    for filename in (
+        "reader_brief_2026-05-06.json",
+        "reader_brief_2026-05-06.html",
+        "reader_brief_quality_2026-05-06.json",
+        "reader_brief_quality_2026-05-06.md",
+        "report_quality_gate_2026-05-06.json",
+        "report_quality_gate_2026-05-06.md",
+    ):
+        assert legacy_reports_dir / filename not in metadata_artifacts
+
+    finalization_payload = json.loads(finalization_evidence_json.read_text(encoding="utf-8"))
+    assert finalization_payload["status"] in {"PASS", "PASS_WITH_WARNINGS"}
+    assert finalization_payload["production_effect"] == "none"
+    final_reader_binding = finalization_payload["final_reader_brief_bytes"]
+    for key, path in (
+        ("reader_brief_json", reader_brief_json),
+        ("reader_brief_html", reader_brief_json.with_suffix(".html")),
+    ):
+        content = path.read_bytes()
+        assert final_reader_binding[key]["sha256"] == hashlib.sha256(content).hexdigest()
+        assert final_reader_binding[key]["size_bytes"] == len(content)
+
+    manifest_payload = json.loads(run_manifest_json.read_text(encoding="utf-8"))
+    assert manifest_payload["status"] == "PASS"
+    decision_source_checksums = decision_summary["checksums"]
+    assert (
+        decision_source_checksums["daily_ops_metadata"]
+        == hashlib.sha256(run_metadata_json.read_bytes()).hexdigest()
+    )
+    output_records = {
+        Path(record["path"]): record for record in manifest_payload["output_artifacts"]
+    }
+    legacy_output_records = {
+        Path(record["path"]): record for record in manifest_payload["legacy_output_artifacts"]
+    }
+    finalization_record = output_records[finalization_evidence_json]
+    finalization_bytes = finalization_evidence_json.read_bytes()
+    assert finalization_record["sha256"] == hashlib.sha256(finalization_bytes).hexdigest()
+    assert finalization_record["size_bytes"] == len(finalization_bytes)
+    for filename in (
+        "reader_brief_2026-05-06.json",
+        "reader_brief_2026-05-06.html",
+        "reader_brief_quality_2026-05-06.json",
+        "reader_brief_quality_2026-05-06.md",
+        "report_quality_gate_2026-05-06.json",
+        "report_quality_gate_2026-05-06.md",
+    ):
+        legacy_path = legacy_reports_dir / filename
+        legacy_bytes = legacy_path.read_bytes()
+        manifest_record = legacy_output_records[legacy_path]
+        assert manifest_record["sha256"] == hashlib.sha256(legacy_bytes).hexdigest()
+        assert manifest_record["size_bytes"] == len(legacy_bytes)
 
 
 def test_daily_ops_plan_cli_can_fail_on_missing_env(tmp_path: Path) -> None:
@@ -1457,6 +1595,7 @@ def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
         for path in status_paths:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("- 状态：PASS\n", encoding="utf-8")
+    _write_daily_quality_artifacts(plan)
 
     def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(
@@ -1505,6 +1644,7 @@ def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) 
         for path in status_paths:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("- 状态：PASS\n", encoding="utf-8")
+    _write_daily_quality_artifacts(plan)
 
     def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(
@@ -1596,6 +1736,269 @@ def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> 
         validate_step.command[1:],
         pit_step.command[1:],
     ]
+
+
+def test_daily_ops_report_quality_json_status_gate_accepts_only_canonical_successes(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "report_quality_gate_2026-05-06.json"
+    step = _quality_artifact_step("report_quality_gate", path)
+
+    for status in ("PASS", "PASS_WITH_WARNINGS"):
+        _write_quality_artifact(
+            path,
+            as_of="2026-05-06",
+            status_field="report_quality_status",
+            status=status,
+        )
+        assert _post_step_artifact_status_error(step) is None
+
+    for status in ("FAIL", "FAILED", "UNKNOWN", "OK", "LIMITED_READER_CONTEXT"):
+        _write_quality_artifact(
+            path,
+            as_of="2026-05-06",
+            status_field="report_quality_status",
+            status=status,
+        )
+        assert _post_step_artifact_status_error(step) is not None
+
+
+def test_daily_ops_reader_brief_quality_json_gate_allows_limited_context(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "reader_brief_quality_2026-05-06.json"
+    step = _quality_artifact_step("validate_reader_brief", path)
+
+    for status in ("OK", "PASS_WITH_WARNINGS", "LIMITED_READER_CONTEXT"):
+        _write_quality_artifact(
+            path,
+            as_of="2026-05-06",
+            status_field="status",
+            status=status,
+        )
+        assert _post_step_artifact_status_error(step) is None
+
+    for status in ("FAIL", "FAILED", "UNKNOWN", "PASS"):
+        _write_quality_artifact(
+            path,
+            as_of="2026-05-06",
+            status_field="status",
+            status=status,
+        )
+        assert _post_step_artifact_status_error(step) is not None
+
+
+@pytest.mark.parametrize("schema_version", [True, 1.0, "1"])
+@pytest.mark.parametrize(
+    ("step_id", "artifact_name", "status_field", "status"),
+    [
+        ("report_quality_gate", "report_quality_gate", "report_quality_status", "PASS"),
+        ("validate_reader_brief", "reader_brief_quality", "status", "OK"),
+    ],
+)
+def test_daily_ops_quality_json_gate_requires_exact_integer_schema_version(
+    tmp_path: Path,
+    schema_version: object,
+    step_id: str,
+    artifact_name: str,
+    status_field: str,
+    status: str,
+) -> None:
+    path = tmp_path / f"{artifact_name}_2026-05-06.json"
+    step = _quality_artifact_step(step_id, path)
+    _write_quality_artifact(
+        path,
+        as_of="2026-05-06",
+        status_field=status_field,
+        status=status,
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["schema_version"] = schema_version
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert "artifact_status_schema_invalid" in (_post_step_artifact_status_error(step) or "")
+
+
+def test_daily_ops_json_status_gate_fails_closed_on_missing_invalid_or_tampered_artifact(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "report_quality_gate_2026-05-06.json"
+    step = _quality_artifact_step("report_quality_gate", path)
+
+    assert "artifact_status_missing" in (_post_step_artifact_status_error(step) or "")
+
+    path.write_text("{not-json", encoding="utf-8")
+    assert "artifact_status_invalid_json" in (_post_step_artifact_status_error(step) or "")
+
+    path.write_text(
+        '{"as_of":"2026-05-06","as_of":"2026-05-06",'
+        '"production_effect":"none","report_quality_status":"PASS"}',
+        encoding="utf-8",
+    )
+    assert "artifact_status_invalid_json" in (_post_step_artifact_status_error(step) or "")
+
+    path.write_text(
+        '{"schema_version":1,"report_type":"report_quality_gate",'
+        '"as_of":"2026-05-06","production_effect":"none",'
+        '"status":"PASS","report_quality_status":"PASS","value":NaN}',
+        encoding="utf-8",
+    )
+    assert "artifact_status_invalid_json" in (_post_step_artifact_status_error(step) or "")
+
+    _write_quality_artifact(
+        path,
+        as_of="2026-05-06",
+        status_field="report_quality_status",
+        status="PASS",
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["schema_version"] = 2
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert "artifact_status_schema_invalid" in (_post_step_artifact_status_error(step) or "")
+
+    payload["schema_version"] = 1
+    payload["report_type"] = "reader_brief_quality"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert "artifact_status_report_type_invalid" in (_post_step_artifact_status_error(step) or "")
+
+    payload["report_type"] = "report_quality_gate"
+    payload["status"] = "PASS_WITH_WARNINGS"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert "artifact_status_inconsistent" in (_post_step_artifact_status_error(step) or "")
+
+    _write_quality_artifact(
+        path,
+        as_of="2026-05-05",
+        status_field="report_quality_status",
+        status="PASS",
+    )
+    assert "artifact_status_as_of_mismatch" in (_post_step_artifact_status_error(step) or "")
+
+    _write_quality_artifact(
+        path,
+        as_of="2026-05-06",
+        status_field="report_quality_status",
+        status="PASS",
+        production_effect="mutates",
+    )
+    assert "artifact_status_production_effect_invalid" in (
+        _post_step_artifact_status_error(step) or ""
+    )
+
+    _write_quality_artifact(
+        path,
+        as_of="2026-05-06",
+        status_field="report_quality_status",
+        status=None,
+    )
+    assert "artifact_status_unknown" in (_post_step_artifact_status_error(step) or "")
+
+
+def test_daily_ops_json_status_failure_blocks_downstream_and_writes_diagnostic(
+    tmp_path: Path,
+) -> None:
+    quality_path = tmp_path / "reports" / "report_quality_gate_2026-05-06.json"
+    quality_step = _quality_artifact_step("report_quality_gate", quality_path)
+    downstream_step = DailyOpsStep(
+        step_id="validate_reader_brief",
+        title="校验 Reader Brief",
+        command=("aits", "reports", "validate-reader-brief", "--latest"),
+        required_env_vars=(),
+        produced_paths=(tmp_path / "reports" / "reader_brief_quality_2026-05-06.json",),
+        quality_gate="test",
+        blocks_downstream=True,
+    )
+    plan = DailyOpsPlan(
+        as_of=date(2026, 5, 6),
+        generated_at=datetime(2026, 5, 6, 20, 0, tzinfo=UTC),
+        steps=(quality_step, downstream_step),
+        market_session=us_equity_market_session(date(2026, 5, 6)),
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        _write_quality_artifact(
+            quality_path,
+            as_of="2026-05-06",
+            status_field="report_quality_status",
+            status="FAIL",
+        )
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={},
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+        visibility_latest_completed_trading_day=date(2026, 5, 6),
+    )
+
+    assert report.status == "FAIL"
+    assert report.failed_step is not None
+    assert report.failed_step.step_id == "report_quality_gate"
+    assert "artifact_status_failed" in (report.failed_step.error or "")
+    assert report.failed_step.diagnostic_path is not None
+    assert report.failed_step.diagnostic_path.exists()
+    assert len(calls) == 1
+
+
+def _quality_artifact_step(step_id: str, path: Path) -> DailyOpsStep:
+    return DailyOpsStep(
+        step_id=step_id,
+        title=step_id,
+        command=("aits", "reports", step_id),
+        required_env_vars=(),
+        produced_paths=(path,),
+        quality_gate="test",
+        blocks_downstream=True,
+    )
+
+
+def _write_quality_artifact(
+    path: Path,
+    *,
+    as_of: str,
+    status_field: str,
+    status: object,
+    production_effect: str = "none",
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    report_type = (
+        "report_quality_gate" if status_field == "report_quality_status" else "reader_brief_quality"
+    )
+    payload = {
+        "schema_version": 1,
+        "report_type": report_type,
+        "as_of": as_of,
+        "production_effect": production_effect,
+        status_field: status,
+    }
+    if status_field == "report_quality_status":
+        payload["status"] = status
+    path.write_text(
+        json.dumps(payload),
+        encoding="utf-8",
+    )
+
+
+def _write_daily_quality_artifacts(plan: DailyOpsPlan) -> None:
+    for step in plan.steps:
+        if step.step_id == "report_quality_gate":
+            _write_quality_artifact(
+                step.produced_paths[0],
+                as_of=plan.as_of.isoformat(),
+                status_field="report_quality_status",
+                status="PASS",
+            )
+        elif step.step_id == "validate_reader_brief":
+            _write_quality_artifact(
+                step.produced_paths[0],
+                as_of=plan.as_of.isoformat(),
+                status_field="status",
+                status="OK",
+            )
 
 
 def _write_price_cache(path: Path, latest_date: str) -> None:

@@ -197,8 +197,15 @@ def test_run_ledger_enforces_dependencies_quality_and_round_trip() -> None:
     )
     ledger = ledger.with_entry(spec, report)
 
-    restored = RunLedger.from_dict(ledger.to_dict())
+    legacy_payload = ledger.to_dict()
+    legacy_ledger_id = ledger.ledger_id
+    assert "run_status" not in legacy_payload
+    assert "run_blocker_codes" not in legacy_payload
+
+    restored = RunLedger.from_dict(legacy_payload)
     assert restored == ledger
+    assert restored.to_dict() == legacy_payload
+    assert restored.ledger_id == legacy_ledger_id
     assert restored.entry("daily_reports").status is CanonicalStatus.PASS
 
 

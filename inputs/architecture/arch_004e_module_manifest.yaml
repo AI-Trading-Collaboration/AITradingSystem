@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1007
+module_count: 1008
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -1139,7 +1139,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.ops
   path: src/ai_trading_system/cli_commands/ops.py
-  sha256: 9c541ecf4dd2035d3bc9b1769ccc2452183f92010a2b621df0ea2b44def8617a
+  sha256: 1f1b56bea514ace012b6dfb791c80aa908f14ae8b77a305464bc62bece6f9642
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1293,7 +1293,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.reports
   path: src/ai_trading_system/cli_commands/reports.py
-  sha256: 45f5dbd74ac86b0c4e36a4f162bc01c8a51d88620e26d82c58187134bd5753c8
+  sha256: 383739df2dd752d157978bdb49c55815e8cde44e0c65d4ba8e7f9052316f9e6d
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -2301,7 +2301,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.workflow
   path: src/ai_trading_system/contracts/workflow.py
-  sha256: 49745997548b6c7d13a46ae4a7b04d2e182f33db821cf01f1241d19db7bb39dd
+  sha256: f660407fc02d97b7265b168bd9e551de322f2e8d5966282d7ae9d3cc29281881
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -13704,7 +13704,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_daily
   path: src/ai_trading_system/ops_daily.py
-  sha256: ab054ef5ccc9a97d073386fccd709ba1cb041df8a3a9019de82ce83294d20060
+  sha256: b0733adeeb2363e623ad565f99a1384df875b3e054372945999161c7d2e5ea5a
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -14318,7 +14318,30 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.__init__
   path: src/ai_trading_system/platform/artifacts/__init__.py
-  sha256: 2dd437cbb9918836bd05e297300e3c46158fd46f96f3603d625f3ef8de0348ee
+  sha256: ebe77bd6d221318e3174945557637083401380b8e82663687676b75214f1d0c4
+  rule_id: platform_artifacts
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: artifact_platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.artifacts.json_contract
+  path: src/ai_trading_system/platform/artifacts/json_contract.py
+  sha256: def57c9040fa21789b2e394628dbfbd17a9bcbfe732825c62ef61619c7cff9f6
   rule_id: platform_artifacts
   owner_profile: platform
   owners:
@@ -14525,7 +14548,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.operations.runtime_control
   path: src/ai_trading_system/platform/operations/runtime_control.py
-  sha256: b4bc48f95fb75ee7e6952ce9f1f0267be423edd2070f2be34c494a73de40deef
+  sha256: 7ab062df232147bf5473cd6b05b43021fb8dffbfebd8a77a0f1fa8fc6f6b3703
   rule_id: platform_operations
   owner_profile: platform
   owners:
@@ -17947,7 +17970,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.run_artifacts
   path: src/ai_trading_system/run_artifacts.py
-  sha256: a09141141fefc14fe67311193156fd05d06d626aef6cf71bb01b12f01d2d0da2
+  sha256: 93c4afb165f40dad8bd5cb07f3b5e7dcb87dd7ccf7a07947022ba540cf4a7c72
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

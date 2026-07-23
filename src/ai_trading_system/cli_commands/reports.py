@@ -1954,6 +1954,8 @@ def validate_reader_brief_command(
         f"failed：{payload['summary']['failed_check_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
+    if payload["status"] == "FAILED":
+        raise typer.Exit(code=1)
 
 
 @reports_app.command("reader-brief-consistency")
@@ -11429,6 +11431,8 @@ def report_quality_gate_command(
         f"warnings：{summary['warning_quality_issue_count']}；"
         f"production_effect={payload['production_effect']}；只读校验"
     )
+    if payload["report_quality_status"] == "FAIL":
+        raise typer.Exit(code=1)
 
 
 @reports_app.command("score-change-attribution")

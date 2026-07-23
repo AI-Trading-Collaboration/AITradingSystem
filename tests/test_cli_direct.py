@@ -5,6 +5,8 @@ import shlex
 from pathlib import Path
 from types import SimpleNamespace
 
+import typer
+
 from ai_trading_system import cli_direct
 from ai_trading_system.scheduled_tasks import load_scheduled_tasks_config
 
@@ -806,6 +808,17 @@ def test_cli_direct_dispatches_validate_reader_brief(monkeypatch) -> None:
     ]
 
 
+def test_cli_direct_propagates_reader_brief_quality_failure_exit(monkeypatch) -> None:
+    def fake_validate_reader_brief(**kwargs: object) -> None:
+        raise typer.Exit(code=1)
+
+    monkeypatch.setattr(
+        cli_direct.reports_cli, "validate_reader_brief_command", fake_validate_reader_brief
+    )
+
+    assert cli_direct.main(["reports", "validate-reader-brief", "--date", "2026-05-13"]) == 1
+
+
 def test_cli_direct_dispatches_report_quality_gate(monkeypatch) -> None:
     calls: list[dict[str, object]] = []
 
@@ -823,6 +836,17 @@ def test_cli_direct_dispatches_report_quality_gate(monkeypatch) -> None:
         {"as_of": "2026-05-13", "latest": False},
         {"as_of": None, "latest": True},
     ]
+
+
+def test_cli_direct_propagates_report_quality_failure_exit(monkeypatch) -> None:
+    def fake_report_quality_gate(**kwargs: object) -> None:
+        raise typer.Exit(code=1)
+
+    monkeypatch.setattr(
+        cli_direct.reports_cli, "report_quality_gate_command", fake_report_quality_gate
+    )
+
+    assert cli_direct.main(["reports", "quality-gate", "--date", "2026-05-13"]) == 1
 
 
 def test_cli_direct_dispatches_artifact_lineage(monkeypatch) -> None:

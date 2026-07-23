@@ -1,0 +1,128 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+  title: null
+  domain: Operations / canonical Reader Brief and report quality fail-closed finalization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations platform owner + reporting domain owner；当前并行实现后由 architecture
+    coordinator 集成
+  requirement_refs:
+  - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Wave14
+    S2 后置 final-tree 审计确认 `report_quality_status=FAIL` 与 Reader Brief `status=FAILED`
+    可因 CLI rc=0、daily 未读 quality artifact、post-run refresh 晚于 run-control terminal
+    PASS 而形成 false PASS；必须在新的 provider-ready canonical daily run 前直接修复。进程 kill、断电、级联存储失败下的
+    state/manifest 跨文件 durability 继续依赖既有 DATA-GOV D0C，不在本 slice 冒充完成。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
+      全部 fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次
+      finalization quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；可捕获异常的
+      state/ledger/CLI/bundle 无 false PASS；focused/architecture/contract/integration/reproducibility/Full
+      PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1988
+    row_sha256: 91638be820db7b9c494414c8bfd9db995a8d4176ed134c9643a7de95d8c26934
+    cell_count: 8
+    all_cells:
+    - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+    - Operations / canonical Reader Brief and report quality fail-closed finalization
+    - P0
+    - IN_PROGRESS
+    - operations platform owner + reporting domain owner；当前并行实现后由 architecture coordinator
+      集成
+    - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Wave14
+      S2 后置 final-tree 审计确认 `report_quality_status=FAIL` 与 Reader Brief `status=FAILED`
+      可因 CLI rc=0、daily 未读 quality artifact、post-run refresh 晚于 run-control terminal
+      PASS 而形成 false PASS；必须在新的 provider-ready canonical daily run 前直接修复。进程 kill、断电、级联存储失败下的
+      state/manifest 跨文件 durability 继续依赖既有 DATA-GOV D0C，不在本 slice 冒充完成。
+    - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
+      全部 fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次
+      finalization quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；可捕获异常的
+      state/ledger/CLI/bundle 无 false PASS；focused/architecture/contract/integration/reproducibility/Full
+      PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。
+    - 2026-07-24：新增并进入 `IN_PROGRESS`；不通过 standalone 命令或人工 JSON 复核冒充 canonical gate，不写
+      production/active-shadow weights，不触发 broker/order/trading。2026-07-24：审查明确 ordinary
+      exception compensation 与 DATA-GOV D0C power-loss durability 的边界。
+    raw_line: '|OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION|Operations /
+      canonical Reader Brief and report quality fail-closed finalization|P0|IN_PROGRESS|operations
+      platform owner + reporting domain owner；当前并行实现后由 architecture coordinator 集成|详见
+      `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Wave14
+      S2 后置 final-tree 审计确认 `report_quality_status=FAIL` 与 Reader Brief `status=FAILED`
+      可因 CLI rc=0、daily 未读 quality artifact、post-run refresh 晚于 run-control terminal
+      PASS 而形成 false PASS；必须在新的 provider-ready canonical daily run 前直接修复。进程 kill、断电、级联存储失败下的
+      state/manifest 跨文件 durability 继续依赖既有 DATA-GOV D0C，不在本 slice 冒充完成。|Report quality
+      `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization 全部 fail closed；`LIMITED_READER_CONTEXT`
+      保持可接受但显式披露；最终 Reader Brief bytes 由同次 finalization quality evidence 覆盖；manifest
+      经`FINALIZING`两阶段 closure 后才可 PASS；可捕获异常的 state/ledger/CLI/bundle 无 false PASS；focused/architecture/contract/integration/reproducibility/Full
+      PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。|2026-07-24：新增并进入
+      `IN_PROGRESS`；不通过 standalone 命令或人工 JSON 复核冒充 canonical gate，不写 production/active-shadow
+      weights，不触发 broker/order/trading。2026-07-24：审查明确 ordinary exception compensation
+      与 DATA-GOV D0C power-loss durability 的边界。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-91638be820db7b9c494414c8
+  task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: operations platform owner + reporting domain owner；当前并行实现后由 architecture
+      coordinator 集成
+    notes: 2026-07-24：新增并进入 `IN_PROGRESS`；不通过 standalone 命令或人工 JSON 复核冒充 canonical
+      gate，不写 production/active-shadow weights，不触发 broker/order/trading。2026-07-24：审查明确
+      ordinary exception compensation 与 DATA-GOV D0C power-loss durability 的边界。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:91638be820db7b9c494414c8bfd9db995a8d4176ed134c9643a7de95d8c26934
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+  - Operations / canonical Reader Brief and report quality fail-closed finalization
+  - P0
+  - IN_PROGRESS
+  - operations platform owner + reporting domain owner；当前并行实现后由 architecture coordinator
+    集成
+  - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Wave14
+    S2 后置 final-tree 审计确认 `report_quality_status=FAIL` 与 Reader Brief `status=FAILED`
+    可因 CLI rc=0、daily 未读 quality artifact、post-run refresh 晚于 run-control terminal
+    PASS 而形成 false PASS；必须在新的 provider-ready canonical daily run 前直接修复。进程 kill、断电、级联存储失败下的
+    state/manifest 跨文件 durability 继续依赖既有 DATA-GOV D0C，不在本 slice 冒充完成。
+  - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization 全部
+    fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次 finalization
+    quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；可捕获异常的 state/ledger/CLI/bundle
+    无 false PASS；focused/architecture/contract/integration/reproducibility/Full PASS；旧
+    2026-07-22 state/ledger byte-identical；`production_effect=none`。
+  - 2026-07-24：新增并进入 `IN_PROGRESS`；不通过 standalone 命令或人工 JSON 复核冒充 canonical gate，不写
+    production/active-shadow weights，不触发 broker/order/trading。2026-07-24：审查明确 ordinary
+    exception compensation 与 DATA-GOV D0C power-loss durability 的边界。
+  docs_links:
+  - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
+  terminal: false
+  raw_row_sha256: 91638be820db7b9c494414c8bfd9db995a8d4176ed134c9643a7de95d8c26934
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4625a301afebc3919207734f283d39b27b32e0e563f24997407ca7bddfcd5403

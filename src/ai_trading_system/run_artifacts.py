@@ -155,6 +155,14 @@ def mirror_canonical_daily_ops_outputs_to_legacy(
             paths.reports_dir / f"reader_brief_quality_{as_of_text}.md",
             legacy_reports_dir / f"reader_brief_quality_{as_of_text}.md",
         ),
+        (
+            paths.reports_dir / f"report_quality_gate_{as_of_text}.json",
+            legacy_reports_dir / f"report_quality_gate_{as_of_text}.json",
+        ),
+        (
+            paths.reports_dir / f"report_quality_gate_{as_of_text}.md",
+            legacy_reports_dir / f"report_quality_gate_{as_of_text}.md",
+        ),
     )
     mirrored: list[Path] = []
     for source, destination in pairs:
@@ -169,14 +177,18 @@ def mirror_legacy_reports_to_run(
     legacy_reports_dir: Path,
     paths: RunArtifactPaths,
     min_modified_at: datetime | None = None,
+    excluded_name_prefixes: Iterable[str] = (),
 ) -> tuple[Path, ...]:
     if not legacy_reports_dir.exists():
         return ()
     min_modified_timestamp = None if min_modified_at is None else min_modified_at.timestamp()
+    excluded_prefixes = tuple(str(item) for item in excluded_name_prefixes if str(item))
     as_of_text = as_of.isoformat()
     mirrored: list[Path] = []
     for source in sorted(legacy_reports_dir.rglob("*")):
         if not source.is_file() or as_of_text not in source.name:
+            continue
+        if excluded_prefixes and source.name.startswith(excluded_prefixes):
             continue
         if min_modified_timestamp is not None:
             try:

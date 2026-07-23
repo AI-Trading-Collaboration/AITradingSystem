@@ -1,0 +1,140 @@
+# OPS-067 Reader Brief / Report Quality Fail-Closed Finalization
+
+最后更新：2026-07-24
+
+状态：`IN_PROGRESS`
+
+稳定任务 ID：`OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION`
+
+## 背景
+
+2026-07-24 在 Wave14 S2 后置 canonical daily ops 修复验收的最终树预检中发现：
+
+- `aits reports quality-gate` 即使生成 `report_quality_status=FAIL` 仍返回 0；
+- `aits reports validate-reader-brief` 即使生成 `status=FAILED` 仍返回 0；
+- daily runner 只看进程返回码，且 `_post_step_artifact_status_error` 尚未读取这两个
+  quality artifact，因此可能把真实质量失败登记为 step PASS；
+- controlled daily 在 step ledger 已完成后才生成 daily task dashboard、decision summary，
+  并重写 canonical Reader Brief。重写后的最终 Reader Brief bytes 未被原
+  `report_quality_gate` 覆盖，最终 `reader_brief_quality` 也未参与 run-control terminal
+  decision。
+
+这会使 canonical state、ledger、bundle 与最终读者报告质量结论不一致，不能通过事后人工
+查看 JSON 来替代 fail-closed 控制。
+
+## 状态语义
+
+本任务只收紧明确失败，不改变既有受限状态的业务含义：
+
+- Report quality：`PASS`、`PASS_WITH_WARNINGS` 可继续；`FAIL` 必须失败。
+- Reader Brief quality：`OK`、`PASS_WITH_WARNINGS`、`LIMITED_READER_CONTEXT`
+  可继续并在最终交付中明确披露；`FAILED` 必须失败。
+- `LIMITED_READER_CONTEXT` 表示执行成功但证据上下文受限，不得被泛化成 CLI 失败。
+- 所有输出保持 `production_effect=none`，不得写 production weights、active shadow
+  weights，不得触发 broker/order/trading。
+
+## 实现步骤
+
+### S0：CLI fail-closed
+
+1. `reports quality-gate` 在写出 JSON/Markdown 后遇到 `FAIL` 返回非零。
+2. `reports validate-reader-brief` 在写出 JSON/Markdown 后遇到 `FAILED` 返回非零。
+3. `cli_direct` 保持原参数传播，并把上述非零语义传回 daily runner。
+
+### S1：daily step artifact gate
+
+1. `report_quality_gate` 读取其 canonical JSON，严格允许
+   `PASS` / `PASS_WITH_WARNINGS`。
+2. `validate_reader_brief` 读取其 canonical JSON，严格允许
+   `OK` / `PASS_WITH_WARNINGS` / `LIMITED_READER_CONTEXT`。
+3. 两类 JSON 使用同一 strict loader：拒绝 duplicate key、`NaN`、`Infinity`、
+   `-Infinity`、非法 UTF-8 与非法 JSON；根对象必须是 mapping。
+4. `schema_version` 必须是 exact integer `1`，不能用 `true`、`1.0` 或字符串 `"1"`
+   冒充；`report_type`、由文件名解析出的 `as_of`、`production_effect=none` 和状态字段
+   必须相互一致。Report quality 的 `status` 还必须与
+   `report_quality_status` 完全一致。
+5. 缺文件、路径/日期不匹配、契约不完整、未知状态、bytes tamper 或明确失败均生成
+   typed diagnostic，并阻断下游。
+
+### S2：canonical finalization gate
+
+1. controlled run 在 active run-control lease 内完成 executor steps 后进入
+   finalization；释放 lease、写 terminal PASS 之前必须完成 current-run daily report、
+   periodic plan、dashboard、decision summary、blocked-only order intent、最终
+   Reader Brief refresh、两类最终质量校验及 finalization evidence。
+2. executor metadata 在 finalization 前冻结。会被 finalization 重写的
+   Reader Brief、Owner Daily Brief、Report quality 与 Reader Brief quality legacy
+   paths 不再列入 `metadata.produced_artifacts`；metadata 此后不重写，decision summary
+   绑定这份稳定 metadata 的 SHA256。上述最终可变产物的 exact identity 由
+   finalization evidence 与 bundle manifest 接管，避免 metadata checksum 自循环或
+   decision summary 引用 stale metadata。
+3. 最终 Reader Brief JSON/HTML 的 path、SHA256、size 形成同一个
+   `final_reader_brief_bytes.v1` binding，并同时写入 Report quality、Reader Brief
+   quality 和 finalization evidence；四份 quality JSON/Markdown 及 canonical/legacy
+   mirror 也必须逐文件 same-byte 绑定。旧的 pre-refresh gate、相同文件名或子命令
+   rc=0 都不得冒充最终 bytes 的证明。
+4. bundle manifest 使用两阶段发布：先原子写 `status=FINALIZING`，对磁盘上的
+   evidence、最终 Reader Brief、quality artifacts、metadata checksum、
+   canonical/legacy mirrors 和 manifest artifact identities 执行 closure validation；
+   再对拟发布的最终 `PASS` / `PASS_WITH_SKIPS` manifest 执行同一 closure validation，
+   通过后才原子替换 manifest，并允许 run-control terminal PASS。
+   `FINALIZING` 只是中间发布状态，不能被消费者解释为成功。
+5. finalization、closure、manifest 写入或 terminal PASS state 写入出现可捕获异常时，
+   evidence 与 manifest 必须执行补偿降级，state/CLI 必须失败并记录 typed blocker。
+   closure 前只允许发布 `FINALIZING`，因此即使失败记录本身再次写失败，也不能遗留
+   closure 未通过的 PASS bundle。
+6. `run_ledger.v1` 增加可向后兼容的顶层 `run_status` 与
+   `run_blocker_codes`。历史 payload 可继续缺省这两个字段，但新运行的消费者必须读取
+   顶层 run outcome；finalization 发生在既有 workflow entries 之后，因此即使所有
+   entries 都是 `PASS` / `SKIPPED`，顶层 `run_status=FAILED` 仍代表整次运行失败。
+   消费者不得只聚合 `entries` 推断 whole-run PASS；旧 ledger 缺少顶层 outcome 时必须
+   与 canonical state 对照。
+7. 成功路径保持现有 artifact 路径、Reader Brief schema、受限状态语义和只读边界；
+   全链固定 `production_effect=none`，不写 production weights、active shadow
+   weights，不允许 broker/order/trading。
+8. 本 slice 不把多个独立文件声明为 power-loss atomic：terminal state 与最终 manifest
+   之间的进程 kill、断电、磁盘级联写失败及恢复演练仍归现有 DATA-GOV D0C
+   crash-durability/backup-restore 工作。当前验收证明正常执行与可捕获异常的补偿语义，
+   不替代 D0C。
+
+### S3：文档、兼容与验收
+
+1. 更新 operations runbook 与 `docs/system_flow.md`。
+2. 刷新 module/test manifests、compatibility baseline 与相关 source hashes。
+3. 在最终提交树运行 focused、architecture、contract、integration、
+   reproducibility 和任务风险相称的 Full validation。
+4. 正式运营验收只能通过 `aits ops daily-run`；不得用 standalone 命令拼装伪 PASS。
+
+## 验收标准
+
+- CLI 对 Report quality `FAIL`、Reader Brief quality `FAILED` 返回非零，且产物仍可审计。
+- `LIMITED_READER_CONTEXT` 仍返回 0，并在 dashboard/Reader Brief/最终交付中披露。
+- daily step 对缺失、tamper、日期不匹配、未知状态和明确失败 fail closed。
+- strict JSON 对 duplicate key、non-finite constant 和非 exact-integer
+  `schema_version=1` fail closed。
+- post-run canonical Reader Brief 的最终 bytes 由同一次 finalization quality evidence
+  覆盖；run-control 只有在 finalization 成功后才可 terminal PASS。
+- `FINALIZING` manifest 和拟发布最终 manifest 均通过 closure validation，最终
+  manifest、finalization evidence、两类 quality artifacts、metadata checksum 与
+  canonical/legacy mirrors 的 path/SHA256/size 一致。
+- metadata 不再声称拥有 finalization 后会重写的产物；这些产物由 finalization
+  evidence 与 manifest 给出最终身份。
+- 失败注入证明 state、ledger 顶层 outcome、CLI 与 bundle 不会出现 false PASS；
+  任意消费者都不能只凭 ledger entries 判定整次运行成功。
+- 对进程 kill、断电与级联存储故障不声称 power-loss durable；该非本 slice 退出门禁的
+  长期缺口由 DATA-GOV D0C 继续跟踪。
+- 旧 2026-07-22 FAILED state/ledger 保持 byte-identical。
+- `production_effect=none`；无 production/active-shadow weight、broker/order/trading
+  mutation。
+
+## 进展
+
+- 2026-07-24：任务新增并进入 `IN_PROGRESS`。根因来自 Wave14 S2 后置 daily ops
+  验收的 final-tree 只读审计；未通过人工查看 JSON 绕过，先直接修复再执行新的
+  provider-ready canonical daily run。
+- 2026-07-24：设计收紧为 strict JSON + exact-integer schema、稳定 executor metadata
+  与 finalization-owned identities 分离、`FINALIZING -> closure -> final manifest`
+  两阶段发布，并为 `run_ledger.v1` 增加顶层 whole-run outcome；仍等待最终树的正式
+  validation 与 canonical daily-run 验收，状态保持 `IN_PROGRESS`。
+- 2026-07-24：审查明确区分“可捕获异常补偿”与“跨文件 power-loss durability”；
+  后者继续归 DATA-GOV D0C，不在 OPS-067 中以临时 workaround 或口头说明冒充闭环。

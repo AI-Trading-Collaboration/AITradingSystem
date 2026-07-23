@@ -412,6 +412,8 @@ class RunLedger:
     as_of: date
     created_at: datetime
     entries: tuple[RunLedgerEntry, ...]
+    run_status: CanonicalStatus | None = None
+    run_blocker_codes: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for value, field in (
@@ -424,6 +426,12 @@ class RunLedger:
         step_ids = [entry.step_id for entry in self.entries]
         if len(step_ids) != len(set(step_ids)):
             raise WorkflowContractError("DUPLICATE_LEDGER_STEP", self.run_id)
+        blockers = tuple(sorted(set(self.run_blocker_codes)))
+        object.__setattr__(self, "run_blocker_codes", blockers)
+        if self.run_status in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED} and not blockers:
+            raise WorkflowContractError("RUN_LEDGER_BLOCKER_REQUIRED", self.run_id)
+        if self.run_status not in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED} and blockers:
+            raise WorkflowContractError("RUN_LEDGER_BLOCKER_STATUS_INVALID", self.run_id)
 
     @classmethod
     def initialize(
@@ -493,6 +501,9 @@ class RunLedger:
             "created_at": self.created_at.isoformat(),
             "entries": [entry.to_dict() for entry in self.entries],
         }
+        if self.run_status is not None:
+            payload["run_status"] = self.run_status.value
+            payload["run_blocker_codes"] = list(self.run_blocker_codes)
         return {"ledger_id": self.ledger_id, **payload} if include_id else payload
 
     @classmethod
@@ -507,6 +518,12 @@ class RunLedger:
                 RunLedgerEntry.from_dict(_mapping(item, "entry"))
                 for item in _list(payload, "entries")
             ),
+            run_status=(
+                None
+                if payload.get("run_status") is None
+                else CanonicalStatus(str(payload.get("run_status")))
+            ),
+            run_blocker_codes=tuple(str(item) for item in _list(payload, "run_blocker_codes")),
         )
         supplied_id = payload.get("ledger_id")
         if supplied_id is not None and str(supplied_id) != ledger.ledger_id:

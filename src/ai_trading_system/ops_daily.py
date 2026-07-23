@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -66,7 +66,11 @@ from ai_trading_system.official_policy_sources import (
 )
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
-from ai_trading_system.platform.artifacts import write_json_atomic
+from ai_trading_system.platform.artifacts import (
+    StrictJsonContractError,
+    load_strict_json_path,
+    write_json_atomic,
+)
 from ai_trading_system.platform.operations import (
     DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
     OperationsRunControl,
@@ -280,6 +284,8 @@ class DailyOpsRunReport:
 
 
 DailyOpsCommandRunner = subprocess.run
+DailyOpsCompletionCallback = Callable[[DailyOpsRunReport], None]
+DailyOpsTerminalFailureCallback = Callable[[DailyOpsRunReport, Exception], None]
 
 
 class DailyOpsExecutionObserver(Protocol):
@@ -1804,6 +1810,8 @@ def run_daily_ops_plan_controlled(
     run_control_root: Path | None = None,
     scheduled_tasks_path: Path = DEFAULT_SCHEDULED_TASKS_CONFIG_PATH,
     runtime_control_policy_path: Path = DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
+    completion_callback: DailyOpsCompletionCallback | None = None,
+    terminal_failure_callback: DailyOpsTerminalFailureCallback | None = None,
 ) -> DailyOpsRunReport:
     policy = (
         runtime_control.policy
@@ -1811,7 +1819,7 @@ def run_daily_ops_plan_controlled(
         else load_operations_runtime_control_policy(runtime_control_policy_path)
     )
     if not policy.legacy_daily_executor_cut_in_enabled:
-        return run_daily_ops_plan(
+        report = run_daily_ops_plan(
             plan,
             project_root=project_root,
             env=env,
@@ -1821,6 +1829,14 @@ def run_daily_ops_plan_controlled(
             diagnostics_dir=diagnostics_dir,
             visibility_check_date=visibility_check_date,
             visibility_latest_completed_trading_day=(visibility_latest_completed_trading_day),
+        )
+        return _apply_daily_ops_completion_callback(
+            report,
+            completion_callback=completion_callback,
+            project_root=project_root,
+            env=env,
+            diagnostics_dir=diagnostics_dir,
+            run_id=run_id,
         )
     if not stop_on_failure:
         raise ValueError("canonical daily runtime control requires stop_on_failure=true")
@@ -1888,9 +1904,22 @@ def run_daily_ops_plan_controlled(
             visibility_latest_completed_trading_day=(visibility_latest_completed_trading_day),
             execution_observer=observer,
         )
+        report = _apply_daily_ops_completion_callback(
+            report,
+            completion_callback=completion_callback,
+            project_root=project_root,
+            env=env,
+            diagnostics_dir=diagnostics_dir,
+            run_id=resolved_run_id,
+        )
         if not acquisition.lease.released:
             if report.status in {"PASS", "PASS_WITH_SKIPS"}:
-                acquisition.lease.finish(CanonicalStatus.PASS)
+                try:
+                    acquisition.lease.finish(CanonicalStatus.PASS)
+                except Exception as exc:
+                    if terminal_failure_callback is not None:
+                        terminal_failure_callback(report, exc)
+                    raise
             elif report.status.startswith("BLOCKED"):
                 acquisition.lease.finish(
                     CanonicalStatus.BLOCKED,
@@ -1909,6 +1938,106 @@ def run_daily_ops_plan_controlled(
                 blocker_codes=("UNHANDLED_DAILY_EXECUTOR_EXCEPTION",),
             )
         raise
+
+
+def _apply_daily_ops_completion_callback(
+    report: DailyOpsRunReport,
+    *,
+    completion_callback: DailyOpsCompletionCallback | None,
+    project_root: Path,
+    env: Mapping[str, str] | None,
+    diagnostics_dir: Path | None,
+    run_id: str | None,
+) -> DailyOpsRunReport:
+    if completion_callback is None or report.status not in {"PASS", "PASS_WITH_SKIPS"}:
+        return report
+    finalization_started = datetime.now(tz=UTC)
+    try:
+        completion_callback(report)
+    except Exception as exc:
+        finalization_ended = datetime.now(tz=UTC)
+        checked_env = dict(os.environ if env is None else env)
+        error_code = _daily_ops_completion_error_code(exc)
+        error = f"{error_code}: {type(exc).__name__}: {exc}"
+        finalization_step = DailyOpsStep(
+            step_id="canonical_finalization",
+            title="Canonical daily finalization gate",
+            command=(),
+            required_env_vars=(),
+            produced_paths=(),
+            quality_gate=(
+                "current-run dashboard、decision summary、最终 Reader Brief、"
+                "report quality、Reader Brief quality 和 bundle manifest 必须在"
+                "run-control terminal PASS 前完成。"
+            ),
+            blocks_downstream=True,
+            input_visibility="readonly",
+        )
+        resolved_diagnostics_dir = (
+            diagnostics_dir
+            if diagnostics_dir is not None
+            else project_root / "outputs" / "reports" / "diagnostics" / "daily_ops"
+        )
+        diagnostic_path = _write_step_failure_diagnostic(
+            step=finalization_step,
+            as_of=report.plan.as_of,
+            started_at=finalization_started,
+            ended_at=finalization_ended,
+            return_code=None,
+            stdout_text="",
+            stderr_text="",
+            error=error,
+            env=checked_env,
+            diagnostics_dir=resolved_diagnostics_dir,
+        )
+        finalization_result = DailyOpsStepResult(
+            step_id=finalization_step.step_id,
+            title=finalization_step.title,
+            command=(),
+            status="FAIL",
+            return_code=None,
+            started_at=finalization_started,
+            ended_at=finalization_ended,
+            duration_seconds=(finalization_ended - finalization_started).total_seconds(),
+            produced_paths=(),
+            blocks_downstream=True,
+            error=error,
+            diagnostic_path=diagnostic_path,
+        )
+        results = (*report.step_results, finalization_result)
+        pre_run_inputs = () if report.metadata is None else report.metadata.pre_run_input_artifacts
+        return replace(
+            report,
+            finished_at=finalization_ended,
+            status="FAIL_FINALIZATION",
+            step_results=results,
+            metadata=_build_daily_ops_run_metadata(
+                plan=report.plan,
+                project_root=project_root,
+                env=checked_env,
+                results=results,
+                started_at=report.started_at,
+                finished_at=finalization_ended,
+                status="FAIL_FINALIZATION",
+                pre_run_input_artifacts=pre_run_inputs,
+                run_id=run_id,
+                visibility_issues=report.visibility_issues,
+            ),
+        )
+    return report
+
+
+def _daily_ops_completion_error_code(exc: Exception) -> str:
+    code = getattr(exc, "code", None)
+    if (
+        isinstance(code, str)
+        and code
+        and all(
+            character.isupper() or character.isdigit() or character == "_" for character in code
+        )
+    ):
+        return code
+    return "DAILY_CANONICAL_FINALIZATION_FAILED"
 
 
 def _daily_run_control_nonexecution_report(
@@ -2942,6 +3071,32 @@ def _text_sha256(value: str) -> str:
 
 
 def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
+    json_status_contract = {
+        "report_quality_gate": (
+            0,
+            "report_quality_gate",
+            "report_quality_status",
+            frozenset({"PASS", "PASS_WITH_WARNINGS"}),
+        ),
+        "validate_reader_brief": (
+            0,
+            "reader_brief_quality",
+            "status",
+            frozenset({"OK", "PASS_WITH_WARNINGS", "LIMITED_READER_CONTEXT"}),
+        ),
+    }.get(step.step_id)
+    if json_status_contract is not None:
+        index, artifact_name, status_field, allowed_statuses = json_status_contract
+        if index >= len(step.produced_paths):
+            return f"artifact_status_path_missing: {step.step_id}[{index}]"
+        return _json_status_artifact_error(
+            step_id=step.step_id,
+            path=step.produced_paths[index],
+            artifact_name=artifact_name,
+            status_field=status_field,
+            allowed_statuses=allowed_statuses,
+        )
+
     status_report_indexes = {
         "official_policy_sources": (2,),
         "validate_data": (0,),
@@ -2965,6 +3120,75 @@ def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
         if not status.startswith("PASS"):
             return f"artifact_status_failed: {path} status={status}"
     return None
+
+
+def _json_status_artifact_error(
+    *,
+    step_id: str,
+    path: Path,
+    artifact_name: str,
+    status_field: str,
+    allowed_statuses: frozenset[str],
+) -> str | None:
+    if not path.exists() or not path.is_file():
+        return f"artifact_status_missing: {path}"
+    expected_as_of = _dated_json_artifact_as_of(path, artifact_name=artifact_name)
+    if expected_as_of is None:
+        return f"artifact_status_path_invalid: {step_id} path={path}"
+    try:
+        payload = load_strict_json_path(path)
+    except StrictJsonContractError as exc:
+        return f"artifact_status_invalid_json: {path} error={type(exc).__name__}"
+    if not isinstance(payload, Mapping):
+        return f"artifact_status_invalid_json: {path} root_type={type(payload).__name__}"
+    schema_version = payload.get("schema_version")
+    if type(schema_version) is not int or schema_version != 1:
+        return (
+            f"artifact_status_schema_invalid: {path} "
+            f"expected=integer:1 actual={schema_version!r}"
+        )
+    if payload.get("report_type") != artifact_name:
+        return (
+            f"artifact_status_report_type_invalid: {path} "
+            f"expected={artifact_name!r} actual={payload.get('report_type')!r}"
+        )
+
+    artifact_as_of = payload.get("as_of")
+    if artifact_as_of != expected_as_of:
+        return (
+            f"artifact_status_as_of_mismatch: {path} "
+            f"expected={expected_as_of} actual={artifact_as_of!r}"
+        )
+    production_effect = payload.get("production_effect")
+    if production_effect != ProductionEffect.NONE.value:
+        return (
+            f"artifact_status_production_effect_invalid: {path} "
+            f"expected={ProductionEffect.NONE.value} actual={production_effect!r}"
+        )
+
+    status = payload.get(status_field)
+    if artifact_name == "report_quality_gate" and payload.get("status") != status:
+        return (
+            f"artifact_status_inconsistent: {path} "
+            f"status={payload.get('status')!r} report_quality_status={status!r}"
+        )
+    if status in {"FAIL", "FAILED"}:
+        return f"artifact_status_failed: {path} status={status}"
+    if not isinstance(status, str) or status not in allowed_statuses:
+        return f"artifact_status_unknown: {path} status={status!r}"
+    return None
+
+
+def _dated_json_artifact_as_of(path: Path, *, artifact_name: str) -> str | None:
+    prefix = f"{artifact_name}_"
+    if path.suffix != ".json" or not path.stem.startswith(prefix):
+        return None
+    as_of_text = path.stem.removeprefix(prefix)
+    try:
+        parsed = date.fromisoformat(as_of_text)
+    except ValueError:
+        return None
+    return as_of_text if parsed.isoformat() == as_of_text else None
 
 
 def _read_markdown_status(path: Path) -> str | None:

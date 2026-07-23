@@ -749,6 +749,37 @@ ARCH-004F1.3 新增尚未cut-in legacy daily executor的canonical runtime-contro
 
 ARCH-004F1.4 已把上述控制层切入唯一 daily CLI 路径：`aits ops daily-run` 先从market-session activated schedule生成同一`WorkflowSpec`，再按`workflow/spec/as_of`获取lease，最后由受控adapter调用原`run_daily_ops_plan` façade。Observer把legacy step事件映射为canonical start/PASS/SKIPPED/FAILED；resume只跳过此前PASS步骤，重复完成、并发、run/step attempt耗尽在调用runner前返回显式control status。每次`operations_execution_state.v1`原子更新旁都写`*.run_ledger.json`：PASS与SKIPPED都满足后续依赖，实际失败步骤为FAILED，其后未运行步骤为BLOCKED；因此`validate_data`失败会留下`download_data=PASS / validate_data=FAILED / score_daily=BLOCKED`且不执行score。Trading-day、closed-market、resume、duplicate、concurrent与failure fixtures均保留旧DailyOpsStepResult/report contract；CLI对已完成duplicate安全返回，对control blocker fail closed，不生成误导性dashboard/Reader Brief refresh。Runtime policy现为`legacy_daily_executor_cut_in_enabled=true`，但`non_daily_dispatch_enabled=false`，所以F1.5前weekly/biweekly/monthly仍不会自动运行，也不改变DQ、score、weight、paper-shadow、production或broker边界。
 
+OPS-067 在这条 controlled path 上增加 canonical finalization hard gate。普通 steps 全部完成后，
+lease 仍保持 active；系统冻结 executor metadata，生成 current-run dashboard、daily decision
+summary、blocked-only order intent candidates 和最终 Reader Brief，再对最终 Reader Brief bytes
+重跑 report quality 与 Reader Brief quality。严格契约拒绝 duplicate key、non-finite JSON、
+非 exact-integer schema、错误 report type/as-of/status/production effect；闭市/not-due bundle 也
+拒绝同日 stale Reader/quality。manifest 先以非成功 `FINALIZING` 发布，closure 同时校验 evidence、
+完整 canonical/legacy outputs、metadata checksum、最终 Reader/quality bytes 和拟发布最终 payload，
+通过后才替换为 `PASS/PASS_WITH_SKIPS`。Report quality `FAIL`、Reader Brief quality `FAILED`、
+artifact missing/invalid/drift 或 finalization exception 都使 state/CLI fail closed；
+`PASS_WITH_WARNINGS` 与 `LIMITED_READER_CONTEXT` 可完成但必须披露。执行 ledger 以顶层
+`run_status/run_blocker_codes` 表达 whole-run outcome，不能只聚合 entries。可捕获异常执行补偿
+降级；process-kill/power-loss 跨文件耐久性仍归 DATA-GOV D0C。该 gate 固定
+`production_effect=none`，不写 production/active-shadow weights，不触发 broker/order/trading。
+
+```mermaid
+flowchart LR
+    T["daily steps PASS / PASS_WITH_SKIPS"] --> L["run-control lease remains active"]
+    L --> O["current-run dashboard + decision summary + blocked-only order intent"]
+    O --> B["refresh final Reader Brief JSON / HTML"]
+    B --> Q["report quality + Reader Brief quality<br/>bind exact final bytes SHA / size"]
+    Q --> E["daily_ops_finalization evidence"]
+    E --> M0["publish manifest status=FINALIZING"]
+    M0 --> C["closure: evidence + all bytes + candidate final payload"]
+    C --> M1["atomically publish PASS / PASS_WITH_SKIPS manifest"]
+    M1 --> P["terminal PASS + release lease"]
+    Q -->|"FAIL / FAILED / invalid / drift"| F["FAIL_FINALIZATION + diagnostic + FAILED state"]
+    C -->|"invalid / missing / drift"| F
+    F -.-> S["production_effect=none / no weights / no broker"]
+    P -.-> S
+```
+
 ARCH-004F1.5 将41个non-daily登记项收敛到typed periodic control，而没有把它们拼成一个会互相拖累的串行DAG。`config/operations/periodic_control.yaml`为weekly、biweekly、monthly、ad-hoc分别治理period-end/2-week anchor/explicit-trigger、daily/DQ/artifact/owner evidence和dispatch mode；legacy adapter为每个task生成独立one-step WorkflowSpec。`daily-run`完成或读取duplicate PASS后，在canonical run metadata中写`periodic_operations_plan.v1`：每项都包含原command template、WorkflowSpec、DueResolution和non-executing RunLedger；weekly/monthly以美股下个交易日是否跨周/月判断period end，biweekly锚点为reviewed 2026-07-10，ad-hoc默认未触发。缺DQ evidence id、source artifact ids或owner decision的due项为BLOCKED，非period-end/event未触发为NOT_DUE，均不改变daily PASS。人工`aits ops periodic-dispatch`必须显式选择task并提供daily/DQ status、DQ evidence、source artifacts、owner decision与confirm flag；只接受governed `aits`/`python scripts/`前缀，`{...}`、`<...>`或自然语言checkpoint在runner前BLOCKED。可执行项复用F1.3 lock/idempotency/attempt与terminal state/ledger，duplicate PASS不重跑、失败后attempt exhausted。Runtime non-daily lease已开启，但policy `automatic_command_dispatch_enabled=false`，所以唯一外部scheduler仍是daily-run且只自动评估，不会自动跑weekly/monthly/research，也不自动调参、改权重、promotion、paper-shadow、production或broker。
 
 W12-S2在F1.5之上增加`native_periodic_consumer_parity_plan.v1`，但不改变上述dispatch边界。Native plan只从

@@ -580,7 +580,15 @@ def _execution_ledger(*, state: OperationsExecutionState, spec: WorkflowSpec) ->
                     blocker_codes=terminal_blocker,
                 ),
             )
-    return ledger
+    return replace(
+        ledger,
+        run_status=state.status,
+        run_blocker_codes=(
+            state.blocker_codes
+            if state.status in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED}
+            else ()
+        ),
+    )
 
 
 def _failed_step_id(*, state: OperationsExecutionState, spec: WorkflowSpec) -> str | None:
