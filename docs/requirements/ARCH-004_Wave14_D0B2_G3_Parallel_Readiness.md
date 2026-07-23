@@ -343,6 +343,32 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
 
 ## 进展记录
 
+- 2026-07-24：G2.5 historical ownership replay缺口已按两层语义关闭。live builder仅接受
+  policy冻结的`current_owner_profile`或`canonical_owner_profile`，迁到canonical后
+  `ownership_transition_required=false`；missing/unknown/第三owner仍fail closed。tracked
+  ancestor evidence若与direct-child carrier blob逐字节一致，则先从carrier commit归档重放
+  policy、module/test manifests与ownership snapshot，`source_base_commit`只承担lineage和
+  change-manifest base语义；非carrier/synthetic evidence仍保留live reproducibility路径。
+  新增回归覆盖canonical迁移、unknown/第三owner、carrier-first隔离live drift及carrier snapshot
+  owner drift，G2.5 focused=`35 passed`，Black/Ruff/strict mypy/diff-check均PASS。代码、测试和
+  本进展记录将先原子提交，再生成替代C3的新fixed-point candidate；正式architecture tier与后续
+  tiers尚未重跑，唯一Full仍未启动。
+- 2026-07-24：第二层carrier修复与fixed point形成candidate C3
+  `f515d3d18fc8f54daadeecba2c3da7488873fb55`、tree
+  `ca51855efa8efeb1939a90c87e50234c8e134349`；独立sparse formal clone保持branch=`main`、
+  `origin/main=39a3ea730`、受保护文档未物化，combined focused=`360 passed / 1 skipped`。
+  Static按lane-local/scoped contract执行：Ruff覆盖全部26个changed Python paths，Black覆盖25个
+  非legacy-format-debt paths，strict mypy覆盖11个typed source paths；`reader_brief.py`与
+  `cli_direct.py`的全文件Black/mypy debt在source base已存在，本slice用Ruff、py_compile、行为/
+  parity与exact source ratchet阻止新增回退，不以约2,500行格式化churn破坏bounded G3 exit。
+  formal report-validation=`55 passed`；随后architecture-fitness fail closed为
+  `551 passed / 4 failed / 4 errors`。共同根因是历史G2.5 readiness在descendant HEAD重建
+  ownership snapshot时仍读取live Wave14 DevEx manifest，再用G2.5冻结期的`platform` owner检查已合法
+  迁为`reporting`的`platform/reporting/audit_index.py`。修复必须从G2.5 carrier snapshot
+  重放ownership，source base只作为lineage/change-manifest base，不能把当前owner改回platform、
+  改写历史policy/evidence或跳过unknown/真实snapshot
+  drift。architecture失败artifact已保留；contract/integration/reproducibility与唯一Full均未启动，
+  candidate C3将被修复后的新fixed point取代。
 - 2026-07-24：首轮 descendant-aware 修复后的candidate C2
   `05bb0e2100785f25d2c22c88202b8b7eee6ced39`再次在pre-Full combined focused
   fail closed：`357 passed / 1 skipped / 2 failed`。其一是coordinator压缩task-register行时误删

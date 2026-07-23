@@ -119,6 +119,70 @@ def test_policy_binds_complete_tracked_validation_bundle(policy) -> None:
     assert all(content.count(b"\r\n") > 0 for content in frozen.values())
 
 
+def test_live_ownership_snapshot_accepts_completed_canonical_transitions(
+    evidence: dict[str, object],
+) -> None:
+    tracked = json.loads(
+        (PROJECT_ROOT / "inputs/architecture/arch_004g2_5_parallel_readiness.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    migrated_paths = {
+        "src/ai_trading_system/platform/reporting/audit_index.py",
+        "src/ai_trading_system/platform/reporting/owner_daily.py",
+        "src/ai_trading_system/platform/reporting/research_review.py",
+    }
+
+    def source_rows(payload: dict[str, object]) -> dict[str, dict[str, object]]:
+        return {
+            row["path"]: row
+            for domain in payload["ownership_snapshot"]["domains"]
+            for row in domain["source_inventory"]
+        }
+
+    historical = source_rows(tracked)
+    current = source_rows(evidence)
+    assert all(historical[path]["current_owner_profile"] == "platform" for path in migrated_paths)
+    assert all(historical[path]["ownership_transition_required"] is True for path in migrated_paths)
+    assert all(current[path]["current_owner_profile"] == "reporting" for path in migrated_paths)
+    assert all(current[path]["ownership_transition_required"] is False for path in migrated_paths)
+
+
+@pytest.mark.parametrize(
+    ("mode", "code"),
+    [
+        ("unknown", "SOURCE_OWNER_UNKNOWN"),
+        ("third_owner", "SOURCE_OWNER_DRIFT"),
+    ],
+)
+def test_ownership_snapshot_rejects_unknown_or_third_owner(
+    monkeypatch: pytest.MonkeyPatch,
+    policy,
+    mode: str,
+    code: str,
+) -> None:
+    original = readiness_module.build_module_manifest
+
+    def drifted_manifest(**kwargs):
+        payload = copy.deepcopy(original(**kwargs))
+        target = "src/ai_trading_system/platform/reporting/audit_index.py"
+        if mode == "unknown":
+            payload["modules"] = [row for row in payload["modules"] if row["path"] != target]
+        else:
+            next(row for row in payload["modules"] if row["path"] == target)[
+                "owner_profile"
+            ] = "operations"
+        return payload
+
+    monkeypatch.setattr(readiness_module, "build_module_manifest", drifted_manifest)
+    with pytest.raises(G25ReadinessError, match=code):
+        readiness_module.build_ownership_snapshot(
+            project_root=PROJECT_ROOT,
+            policy=policy,
+            current_base_commit=BASE_COMMIT,
+        )
+
+
 @pytest.mark.parametrize(
     ("mutation", "code"),
     [
@@ -507,6 +571,31 @@ def test_tracked_evidence_preserves_non_production_and_legacy_truth_source() -> 
     assert payload["broker_action"] == "none"
 
 
+def test_tracked_evidence_replays_carrier_before_live_owner_validation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = PROJECT_ROOT / "inputs/architecture/arch_004g2_5_parallel_readiness.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    original = readiness_module._build_g2_5_readiness_evidence
+
+    def reject_live_snapshot(**kwargs):
+        if Path(kwargs["project_root"]).resolve() == PROJECT_ROOT:
+            raise G25ReadinessError("SOURCE_OWNER_DRIFT", "synthetic future live owner")
+        return original(**kwargs)
+
+    monkeypatch.setattr(
+        readiness_module,
+        "_build_g2_5_readiness_evidence",
+        reject_live_snapshot,
+    )
+    validate_g2_5_readiness_evidence(
+        payload,
+        project_root=PROJECT_ROOT,
+        current_base_commit=BASE_COMMIT,
+        policy_path=PROJECT_ROOT / DEFAULT_POLICY_PATH,
+    )
+
+
 def test_tracked_evidence_rejects_rechecksummed_carrier_blob_tamper() -> None:
     path = PROJECT_ROOT / "inputs/architecture/arch_004g2_5_parallel_readiness.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -534,6 +623,36 @@ def test_tracked_evidence_rejects_non_reproducible_carrier_snapshot(
     )
 
     with pytest.raises(G25ReadinessError, match="EVIDENCE_REPRODUCIBILITY_DRIFT"):
+        validate_g2_5_readiness_evidence(
+            payload,
+            project_root=PROJECT_ROOT,
+            current_base_commit=BASE_COMMIT,
+            policy_path=PROJECT_ROOT / DEFAULT_POLICY_PATH,
+        )
+
+
+def test_tracked_evidence_rejects_carrier_snapshot_owner_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = PROJECT_ROOT / "inputs/architecture/arch_004g2_5_parallel_readiness.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    original = readiness_module.build_module_manifest
+
+    def drifted_carrier_manifest(**kwargs):
+        manifest = copy.deepcopy(original(**kwargs))
+        if Path(kwargs["project_root"]).resolve() != PROJECT_ROOT:
+            target = "src/ai_trading_system/platform/reporting/audit_index.py"
+            next(row for row in manifest["modules"] if row["path"] == target)[
+                "owner_profile"
+            ] = "operations"
+        return manifest
+
+    monkeypatch.setattr(
+        readiness_module,
+        "build_module_manifest",
+        drifted_carrier_manifest,
+    )
+    with pytest.raises(G25ReadinessError, match="SOURCE_OWNER_DRIFT"):
         validate_g2_5_readiness_evidence(
             payload,
             project_root=PROJECT_ROOT,

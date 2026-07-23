@@ -448,9 +448,12 @@ def build_ownership_snapshot(
             expected = _text(source["current_owner_profile"], "current_owner_profile")
             if actual is None:
                 raise G25ReadinessError("SOURCE_OWNER_UNKNOWN", path)
-            if actual != expected:
-                raise G25ReadinessError("SOURCE_OWNER_DRIFT", f"{path}:{expected}->{actual}")
             canonical = _text(source["canonical_owner_profile"], "canonical_owner_profile")
+            if actual not in {expected, canonical}:
+                raise G25ReadinessError(
+                    "SOURCE_OWNER_DRIFT",
+                    f"{path}:allowed={sorted({expected, canonical})} actual={actual}",
+                )
             source_rows.append(
                 {
                     "path": path,
@@ -849,6 +852,38 @@ def validate_g2_5_readiness_evidence(
         raise G25ReadinessError(
             "SOURCE_BASE_NOT_ANCESTOR", f"source={source_base} head={actual_head}"
         )
+    evidence_path = DEFAULT_EVIDENCE_PATH.as_posix()
+    carrier: str | None = None
+    carrier_blob: bytes | None = None
+    carrier_blob_error: G25ReadinessError | None = None
+    if source_base != actual_head:
+        carrier = _first_parent_direct_child(
+            project_root=root,
+            source_base_commit=source_base,
+            current_head_commit=actual_head,
+        )
+        try:
+            carrier_blob = _git_blob(root, carrier, evidence_path)
+        except G25ReadinessError as exc:
+            if exc.code != "GIT_BLOB_UNAVAILABLE":
+                raise
+            carrier_blob_error = exc
+        if carrier_blob == canonical_json_bytes(dict(payload)):
+            resolved_policy = policy_path if policy_path.is_absolute() else root / policy_path
+            policy_portable = _relative(resolved_policy, root)
+            with _g2_5_carrier_snapshot(root, carrier) as snapshot_root:
+                expected = _build_g2_5_readiness_evidence(
+                    project_root=snapshot_root,
+                    source_base_commit=source_base,
+                    policy_path=snapshot_root / policy_portable,
+                    git_project_root=root,
+                )
+            if dict(payload) != expected:
+                raise G25ReadinessError(
+                    "EVIDENCE_REPRODUCIBILITY_DRIFT",
+                    f"carrier snapshot={carrier}",
+                )
+            return
     expected = _build_g2_5_readiness_evidence(
         project_root=root,
         source_base_commit=source_base,
@@ -856,32 +891,23 @@ def validate_g2_5_readiness_evidence(
     )
     if dict(payload) == expected:
         return
-    carrier = _first_parent_direct_child(
-        project_root=root,
-        source_base_commit=source_base,
-        current_head_commit=actual_head,
-    )
-    evidence_path = DEFAULT_EVIDENCE_PATH.as_posix()
-    carrier_blob = _git_blob(root, carrier, evidence_path)
+    if carrier is None:
+        carrier = _first_parent_direct_child(
+            project_root=root,
+            source_base_commit=source_base,
+            current_head_commit=actual_head,
+        )
+    if carrier_blob_error is not None:
+        raise carrier_blob_error
     if carrier_blob != canonical_json_bytes(dict(payload)):
         raise G25ReadinessError(
             "EVIDENCE_CARRIER_BLOB_DRIFT",
             f"carrier={carrier} path={evidence_path}",
         )
-    resolved_policy = policy_path if policy_path.is_absolute() else root / policy_path
-    policy_portable = _relative(resolved_policy, root)
-    with _g2_5_carrier_snapshot(root, carrier) as snapshot_root:
-        expected = _build_g2_5_readiness_evidence(
-            project_root=snapshot_root,
-            source_base_commit=source_base,
-            policy_path=snapshot_root / policy_portable,
-            git_project_root=root,
-        )
-    if dict(payload) != expected:
-        raise G25ReadinessError(
-            "EVIDENCE_REPRODUCIBILITY_DRIFT",
-            f"carrier snapshot={carrier}",
-        )
+    raise G25ReadinessError(
+        "EVIDENCE_REPRODUCIBILITY_DRIFT",
+        f"carrier snapshot={carrier}",
+    )
 
 
 def write_g2_5_readiness_evidence(
