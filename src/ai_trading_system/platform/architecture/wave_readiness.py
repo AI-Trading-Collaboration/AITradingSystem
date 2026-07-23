@@ -897,11 +897,6 @@ def _validate_carrier_state(
         lane_commit=lane_commit,
         head=carrier,
     )
-    _validate_carrier_dependency_blobs(
-        project_root=project_root,
-        lane_commit=carrier,
-        head=head,
-    )
     _assert_carrier_blob_matches(
         project_root=project_root,
         head=carrier,
@@ -915,20 +910,6 @@ def _validate_carrier_state(
     _assert_carrier_blob_matches(
         project_root=project_root,
         head=carrier,
-        path=evidence_portable,
-        local_bytes=evidence_bytes,
-        label="EVIDENCE",
-    )
-    _assert_carrier_blob_matches(
-        project_root=project_root,
-        head=head,
-        path=policy_portable,
-        local_bytes=policy_path.read_bytes(),
-        label="POLICY",
-    )
-    _assert_carrier_blob_matches(
-        project_root=project_root,
-        head=head,
         path=evidence_portable,
         local_bytes=evidence_bytes,
         label="EVIDENCE",
@@ -1135,17 +1116,11 @@ def _materialize_evidence(
                 (f"C={lane_commit} HEAD={head} FETCH_HEAD={fetch_head} " f"{remote_ref}={remote}"),
             )
     else:
-        for label, commit in (("HEAD", head), (remote_ref, remote)):
-            if not git_is_ancestor(project_root, lane_commit, commit):
-                raise WaveReadinessError(
-                    "CARRIER_ANCESTRY",
-                    f"C={lane_commit} {label}={commit}",
-                )
-        if head != remote:
-            raise WaveReadinessError(
-                "CARRIER_PUSH_DRIFT",
-                f"HEAD={head} {remote_ref}={remote}",
-            )
+        _validate_carrier_commit(
+            project_root=project_root,
+            lane_commit=lane_commit,
+            remote_ref=remote_ref,
+        )
 
     guard_result = assert_worktree_guard(
         project_root=project_root,

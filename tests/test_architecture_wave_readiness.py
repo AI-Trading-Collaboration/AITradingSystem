@@ -655,7 +655,72 @@ def test_carrier_requires_pushed_proper_descendant_and_tracked_bytes(
     assert caught.value.code == "CARRIER_PUSH_DRIFT"
 
 
-def test_carrier_dependency_change_is_rejected(tmp_path: Path) -> None:
+def test_carrier_replay_binds_dependencies_to_d_not_local_descendant(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, commit_c = _init_repo(tmp_path)
+    _run_git(tmp_path, "config", "core.autocrlf", "false")
+    policy_path = tmp_path / "config/architecture/wave-readiness.yaml"
+    evidence_path = tmp_path / "inputs/architecture/wave-readiness.json"
+    policy_path.parent.mkdir(parents=True)
+    evidence_path.parent.mkdir(parents=True)
+    policy_path.write_text("status: fixture\n", encoding="utf-8")
+    evidence_bytes = b'{"fixture":"carrier"}\n'
+    evidence_path.write_bytes(evidence_bytes)
+    _run_git(tmp_path, "add", "config", "inputs")
+    _run_git(tmp_path, "commit", "-m", "D carrier")
+    commit_d = _run_git(tmp_path, "rev-parse", "HEAD")
+    _run_git(
+        tmp_path,
+        "update-ref",
+        "refs/remotes/origin/main",
+        commit_d,
+    )
+
+    replay_dependency = tmp_path / "src/replay_dependency.py"
+    replay_dependency.write_text("VALUE = 2\n", encoding="utf-8")
+    _run_git(tmp_path, "commit", "-am", "E local validator descendant")
+    commit_e = _run_git(tmp_path, "rev-parse", "HEAD")
+    assert git_is_ancestor(tmp_path, commit_d, commit_e)
+
+    policy_portable = "config/architecture/wave-readiness.yaml"
+    evidence_portable = "inputs/architecture/wave-readiness.json"
+    policy: dict[str, Any] = {
+        "lane_base": {
+            "commit": commit_c,
+            "remote_ref": "origin/main",
+        },
+        "worktree_guard": {
+            "pending_output_paths": [policy_portable, evidence_portable],
+        },
+    }
+    evidence: dict[str, Any] = {
+        "policy_binding": {
+            "path": policy_portable,
+        },
+    }
+    monkeypatch.setattr(
+        wave_readiness,
+        "_REPLAY_DEPENDENCY_PATHS",
+        frozenset({"src/replay_dependency.py"}),
+    )
+    monkeypatch.setattr(
+        wave_readiness,
+        "canonical_evidence_bytes",
+        lambda _: evidence_bytes,
+    )
+
+    wave_readiness._validate_carrier_state(
+        project_root=tmp_path,
+        policy=policy,
+        policy_path=policy_path,
+        evidence_path=evidence_path,
+        evidence=evidence,
+    )
+
+
+def test_carrier_dependency_change_in_d_is_rejected(tmp_path: Path) -> None:
     _, commit_c = _init_repo(tmp_path)
     dependency_path = tmp_path / "src/replay_dependency.py"
     dependency_path.write_text("VALUE = 2\n", encoding="utf-8")

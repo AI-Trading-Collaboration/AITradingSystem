@@ -343,6 +343,17 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
 
 ## 进展记录
 
+- 2026-07-24：首轮 descendant-aware 修复后的candidate C2
+  `05bb0e2100785f25d2c22c88202b8b7eee6ced39`再次在pre-Full combined focused
+  fail closed：`357 passed / 1 skipped / 2 failed`。其一是coordinator压缩task-register行时误删
+  `ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE` exact引用，恢复后scope-amendment focused=`3 passed`；
+  其二是carrier commit角色仍不完整——ancestry已允许remote carrier `D`为local `HEAD`祖先，但历史
+  dependency/blob不变性仍错误比较`D -> local HEAD`，因此validator自身的合法后继修复被判为历史
+  carrier漂移。durable fix现将carrier diff、dependency及policy/evidence blob统一绑定lane的
+  direct-child `D`，local `HEAD`只承担remote ancestry/lineage；`D`内dependency drift仍必须失败，
+  `remote=D / local E`后继修改replay dependency必须PASS。focused=`39 passed`、Black/Ruff/strict
+  mypy/diff-check均PASS。C2继续被新fixed-point candidate取代，完整combined/static/formal tiers通过前
+  不运行唯一final Full；所有失败证据与`next_slice_unblocked=false`继续保留。
 - 2026-07-24：S2 shared/generated/compatibility fixed point 已完成首轮闭合：
   task registry=`407 active / 487 completed / 894 total`且 consumer view byte-identical，
   DevEx=`1007 modules / 1172 tests / 18 aggregate fragments / 856 direct writers /
