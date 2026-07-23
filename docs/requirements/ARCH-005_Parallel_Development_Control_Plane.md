@@ -16,8 +16,8 @@
 - integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已获
   owner 窄授权并由 Wave 7 首次真实执行 PASS；S5 canonical cutover 尚未授权
 - current safety follow-up：Wave14暴露同一checkout计划外task/automation第二writer风险；
-  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已登记为`P0/PROPOSED`，不打断Wave14，
-  建议在Wave14 closeout后、Wave15 assignment前经owner确认推进窄版S0/S1
+  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已登记为`P0/PROPOSED`。Wave14 S2 formal exit
+  已完成，当前停在S4D owner authorization gate；Wave15 assignment前仍须经owner确认推进窄版S0/S1
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
 
@@ -536,6 +536,10 @@ validated-main integration 授权；任何扩大 lane capacity、切换 source-o
 
 ## 状态记录
 
+- 2026-07-24：Wave14 S2已以replacement Full=`7007 passed / 4 skipped`及post-Full
+  evidence-only gates完成，S4D dependency转为`satisfied`，但task仍保持`P0/PROPOSED`。
+  `next_slice_unblocked=false`；只有owner明确授权窄版S0/S1后才可实现，且Wave15 exact readiness
+  必须从S4D最终HEAD重建。该状态不授权S5、自动task mutation、production或broker。
 - 2026-07-24：Wave14集成期间另一个Codex daily automation在同一checkout读取D0B2/G3中间状态并
   修改CLI/DQ/shared文档，主coordinator通过任务消息才停止第二writer。未发生未授权commit/push、
   weights或broker action，但事件证明S4C candidate集成门禁不能替代checkout运行前门禁。新增

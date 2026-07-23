@@ -6,14 +6,14 @@
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`IN_PROGRESS`（current phase=`WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`）
+- 当前状态：`IN_PROGRESS`（current phase=`WAVE14_S2_COMPLETE_AWAITING_ARCH_005S4D_OWNER_AUTHORIZATION`）
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
 - 默认 production effect：`none`
 - 正式前序任务：`ARCH-001`、`ARCH-002`、`ARCH-003`、`TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN`
 - 后续执行任务：`ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION`、`ARCH-004G3_REPORTING_NATIVE_MIGRATION`、`ARCH-004G5_RESEARCH_WRAPPER_MIGRATION`、`ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL`
-- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0～S4C已形成validated coordinator closeout baseline；G2.4 handoff、G2.5、Wave12、Wave13与Wave14 S0 carrier均已PASS并推送。Wave14的D0B2与bounded G3已按exact domain ownership完成，当前进入S2 shared integration/formal exit；真实daily发现的direct CLI profile丢失由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`单独append-only治理，不回写历史S0 evidence。另一个Codex task/daily automation在同checkout成为第二writer的风险已登记`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`，建议Wave14后、Wave15前实施窄版guard。Machine dispatch/lease、S5、H、G5、策略研究、consumer cutover、promotion、broker与production dispatch仍未自动开放
+- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0～S4C已形成validated coordinator closeout baseline；G2.4 handoff、G2.5、Wave12、Wave13与Wave14 S0 carrier均已PASS并推送。Wave14的D0B2与bounded G3已按exact domain ownership完成，C7 replacement Full=`7007 passed / 4 skipped`且post-Full evidence-only gates闭合，当前停在S4D owner authorization gate；真实daily发现的direct CLI profile丢失由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`单独append-only治理，不回写历史S0 evidence。另一个Codex task/daily automation在同checkout成为第二writer的风险已登记`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`，建议Wave14后、Wave15前实施窄版guard。Machine dispatch/lease、S5、H、G5、策略研究、consumer cutover、promotion、broker与production dispatch仍未自动开放
 
 ## Owner Intent
 
@@ -761,6 +761,11 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
   provenance的failure-fix Full=`6844 passed / 3 skipped / 643 warnings / 1340.11s` PASS。
   current phase转`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`；`next_slice_unblocked=false`保持，
   closeout提交推送后必须先从最终HEAD通过Wave14 S0，才允许D0B2+bounded G3并行派发。
+- 2026-07-24：Wave14 S2正式完成：C7 replacement Full=`7007 passed / 4 skipped /
+  643 warnings / 1077.52s`，post-Full evidence-only focused/architecture/contract/
+  integration/reproducibility全部PASS，generated state=`1007 modules / 1172 tests /
+  18 fragments / 856 writers / 0 violations / 406 active / 488 completed`。ARCH-004 parent
+  仍`IN_PROGRESS`；下一关键门为S4D owner authorization，Wave15/G5/H/策略研究均未自动启动。
 - 2026-07-24：Wave14 S0 carrier=`39a3ea730`保持不可变，D0B2与bounded G3 domain实现均已完成。
   D0B2第二轮publication TOCTOU已由同一dataset lock内、validated snapshot后且atomic pointer replace前
   的typed pre-commit validator关闭；combined focused=`180 passed / 1 skipped`，独立复核未发现新增

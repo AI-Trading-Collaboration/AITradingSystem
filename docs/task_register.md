@@ -1953,7 +1953,6 @@ ARCH-005 S0与G2.5仍锁定，`production_effect=none`。
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
-|ARCH-004W14_D0B2_G3_PARALLEL_READINESS|Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit|P0|IN_PROGRESS|architecture coordinator；C5两项combined blocker已最小修复，正在重建replacement candidate fixed point|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Scope amendment exact id=`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`；C4=`c50147420` initial Full=`6978 passed / 29 failed / 4 skipped`。首轮fixture/root-writer修复组合=`81 passed`且canonical快照不变；C5 clean clone另暴露candidate audit仍依赖未跟踪baseline artifact。不得放宽断言、使用主工作区untracked产物、guard ignore、串行替代或删除失败attempt绕过。|candidate audit改为显式deterministic fixture并在clean clone独立/并行PASS；compatibility append-only保留attempt 1 artifact/hash/tree/source manifest及replacement PENDING；重建generated fixed point、重跑全部pre-Full门及failure-fix Full PASS；post-Full evidence-only closeout；dispatch/lease/cutover/production/broker全false/none。|2026-07-24：C5=`bfe55f44a` combined focused=`474 passed / 2 failed / 1 skipped`；两项blocker现已本地组合=`6 passed`，未改production或放宽schema断言。新candidate与全部pre-Full门通过前replacement Full仍未授权运行，`next_slice_unblocked=false`。|
 
 ## 更新模板
 
@@ -1974,3 +1973,10 @@ ID:
 ```text
 YYYY-MM-DD: 从 <旧状态> 改为 <新状态>，原因：<触发条件、实现范围、验证结果或 blocker>。
 ```
+
+## 归档兼容索引
+
+- `ARCH-004W14_D0B2_G3_PARALLEL_READINESS` 已归档至
+  `docs/task_register_completed.md`；其 reviewed scope amendment exact id
+  `ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE` 保留在此非任务索引中，供历史合同和定位入口使用。
+  本索引不表示任务重新激活，权威状态仍为 `DONE`。

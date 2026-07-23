@@ -7,7 +7,7 @@
 - task id：`ARCH-004W14_D0B2_G3_PARALLEL_READINESS`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`IN_PROGRESS`（current stage=`S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`）
+- status：`DONE`（current stage=`S2_COMPLETE_AWAITING_ARCH_005S4D_OWNER_AUTHORIZATION`）
 - owner：architecture coordinator
 - source wave：Wave13 `GOV-006 N1` formal closeout
 - source wave base commit：`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`
@@ -343,6 +343,20 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
 
 ## 进展记录
 
+- 2026-07-24：Wave14 S2 phase exit 完成。Full-tested candidate
+  `66c5ec7457acf3a4e1b03f3138b34ab528ad53e3` / tree
+  `a4144fd9d3f0f58ac51d594c0b66f9a0fb03b9e3`先通过combined focused=`476 passed /
+  1 skipped`、Ruff 45 files、Black 43 files、strict mypy 13 typed sources、
+  report/architecture/contract/integration/reproducibility=`55/564/266/983/23 passed`。
+  Append-only attempt 1 `6978 passed / 29 failed / 4 skipped`完整保留；replacement Full
+  `full_20260723T200633Z`为`7007 passed / 4 skipped / 643 warnings / 1077.52s`，
+  parent provenance、127个Full-sensitive source records及manifest
+  `e4c9f41d3594be635946b8e547ed3ef993c6d6d1f2caea067201cf33e61bc095`均PASS。
+  Post-Full只迁移本task的active/completed shadow并更新approved evidence-only paths；
+  final generated state=`1007 modules / 1172 tests / 18 fragments / 856 writers /
+  0 violations / 406 active / 488 completed / 894 total`，required post-Full gates再次PASS。
+  `next_slice_unblocked=false`，停在`ARCH-005S4D_OWNER_AUTHORIZATION_GATE`；D0B3、
+  Wave15、G5/H、策略研究、consumer cutover、weights、production与broker均未自动开放。
 - 2026-07-24：C5的两项combined focused blocker已在主工作区完成最小修复。Task register恢复并由既有
   回归锁定scope amendment exact id；candidate audit对全部整文件测试autouse一个tmp
   schema-incompatible baseline CSV并显式替换读取路径，不再因主工作区是否存在untracked prediction

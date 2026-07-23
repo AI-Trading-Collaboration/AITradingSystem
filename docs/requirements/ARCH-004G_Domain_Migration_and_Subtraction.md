@@ -1,13 +1,13 @@
 # ARCH-004G Domain Migration 与减法波次
 
-最后更新：2026-07-23
+最后更新：2026-07-24
 
 ## 任务信息
 
 - task id：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`IN_PROGRESS`（current phase=`WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`）
+- status：`IN_PROGRESS`（current phase=`WAVE14_S2_COMPLETE_AWAITING_ARCH_005S4D_OWNER_AUTHORIZATION`）
 - owner：architecture coordinator / 各 domain owner
 - dependency：ARCH-004F1、F2、F3 `DONE`
 - production effect：`none`
@@ -205,6 +205,10 @@ fixture parity；真实 cadence evidence 在 G4C 异步观察，不占用 domain
 
 ## 状态记录
 
+- 2026-07-24：Wave14 S2 phase exit=`COMPLETE`。C7 replacement Full=`7007 passed /
+  4 skipped / 643 warnings / 1077.52s`，post-Full evidence-only gates再次PASS；G3首个
+  native `data_quality_and_pit` slice转为`COMPLETE`，G3 overall仍`IN_PROGRESS`。当前停在
+  `ARCH-005S4D_OWNER_AUTHORIZATION_GATE`，不自动进入Wave15、G5、G6/G7/H或策略研究。
 - 2026-07-24：Wave14 S0 carrier=`39a3ea730`已推送，D0B2与bounded G3完成domain实现及独立
   审计。D0B2第二轮TOCTOU已由同一dataset lock内的typed pre-commit validator关闭，combined
   focused=`180 passed / 1 skipped`且静态PASS，独立复核无新增P0/P1；G3 native/generic=`1/9`、Reader Brief

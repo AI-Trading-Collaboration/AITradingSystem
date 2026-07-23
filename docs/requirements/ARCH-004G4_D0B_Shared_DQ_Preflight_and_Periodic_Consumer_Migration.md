@@ -1,6 +1,6 @@
 # ARCH-004G4 + DATA-GOV D0B 共享 DQ Preflight 与周期 Consumer 迁移
 
-最后更新：2026-07-23
+最后更新：2026-07-24
 
 ## 任务信息
 
@@ -9,7 +9,7 @@
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`、`DATA-GOV-001`
 - priority：`P0`
 - status：`COMPLETE_WAVE12_S2`（G4 overall=`VALIDATING`；DATA-GOV overall=`IN_PROGRESS`）
-- current roadmap：`WAVE14_S2_D0B2_G3_SHARED_INTEGRATION`
+- current roadmap：`WAVE14_S2_COMPLETE_D0B2_FORMAL_PASS_D0B3_NOT_AUTHORIZED`
 - owners：architecture coordinator / operations platform worker / data platform worker
 - source phase：`G2_5_COMPLETE_G4_D0B_NEXT`
 - source base：`12b1fb86369f146c9ef1c7ac54872eb8150ed791`
@@ -254,6 +254,11 @@ domain final integration 混合。
 
 ## 状态记录
 
+- 2026-07-24：D0B2随Wave14 S2正式闭合。C7 replacement Full=`7007 passed / 4 skipped /
+  643 warnings / 1077.52s`，post-Full focused/architecture/contract/integration/
+  reproducibility再次PASS；composite publication、strict calendar/coverage/gap/finite gate、
+  same-byte capture与daily-default profile传播进入正式基线。D0B3及任何consumer cutover仍未授权；
+  下一步先完成canonical daily-run运营验收与S4D owner authorization，`production_effect=none`。
 - 2026-07-24：D0B2第二轮publication TOCTOU已由同一dataset lock内、validated snapshot之后且
   atomic pointer replace之前的typed legacy precondition关闭；prices/secondary/manifest的存在性、
   exact bytes、SHA、size及no-follow containment都会重验，regular/link replacement与callback异常均

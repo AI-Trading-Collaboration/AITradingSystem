@@ -1,0 +1,104 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+  title: null
+  domain: Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：决定是否授权ARCH-005S4D窄版S0/S1；Wave15仍未解锁
+  requirement_refs:
+  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Scope
+    amendment=`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`；Full-tested candidate=`66c5ec7457acf3a4e1b03f3138b34ab528ad53e3`。Append-only
+    attempt 1=`6978 passed / 29 failed / 4 skipped`完整保留；replacement Full=`7007 passed
+    / 4 skipped / 643 warnings / 1077.52s`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: D0B2 composite publication与strict DQ、首个G3 native report slice、generated/compatibility/deprecation、pre-Full与post-Full
+      required gates全部PASS；127个Full-sensitive sources逐byte不变；task shadow=`406 active
+      / 488 completed / 894 total`且byte-identical；dispatch/lease/cutover/production/broker均false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 504
+    row_sha256: aa7578747f4d9946dd8264dacadeb917c511b1b9ff63be0f93647720ce00e2e3
+    cell_count: 8
+    all_cells:
+    - ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+    - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit
+    - P0
+    - DONE
+    - project owner：决定是否授权ARCH-005S4D窄版S0/S1；Wave15仍未解锁
+    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Scope amendment=`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`；Full-tested
+      candidate=`66c5ec7457acf3a4e1b03f3138b34ab528ad53e3`。Append-only attempt 1=`6978
+      passed / 29 failed / 4 skipped`完整保留；replacement Full=`7007 passed / 4 skipped
+      / 643 warnings / 1077.52s`。
+    - D0B2 composite publication与strict DQ、首个G3 native report slice、generated/compatibility/deprecation、pre-Full与post-Full
+      required gates全部PASS；127个Full-sensitive sources逐byte不变；task shadow=`406 active
+      / 488 completed / 894 total`且byte-identical；dispatch/lease/cutover/production/broker均false/none。
+    - 2026-07-24：Wave14 S2 phase exit完成并归档。Full artifact=`outputs/validation_runtime/full_20260723T200633Z/test_runtime_summary.json`，SHA256=`5ada4ca2423e8d3e0b4e1f06fd21bc09e424b3cf258c120e605c2d9c75d06907`；`next_slice_unblocked=false`，当前停在`ARCH-005S4D_OWNER_AUTHORIZATION_GATE`。
+    raw_line: '|ARCH-004W14_D0B2_G3_PARALLEL_READINESS|Architecture / Wave14 D0B2
+      + bounded G3 exact parallel entry and exit|P0|DONE|project owner：决定是否授权ARCH-005S4D窄版S0/S1；Wave15仍未解锁|详见
+      `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Scope amendment=`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`；Full-tested
+      candidate=`66c5ec7457acf3a4e1b03f3138b34ab528ad53e3`。Append-only attempt 1=`6978
+      passed / 29 failed / 4 skipped`完整保留；replacement Full=`7007 passed / 4 skipped
+      / 643 warnings / 1077.52s`。|D0B2 composite publication与strict DQ、首个G3 native
+      report slice、generated/compatibility/deprecation、pre-Full与post-Full required
+      gates全部PASS；127个Full-sensitive sources逐byte不变；task shadow=`406 active / 488
+      completed / 894 total`且byte-identical；dispatch/lease/cutover/production/broker均false/none。|2026-07-24：Wave14
+      S2 phase exit完成并归档。Full artifact=`outputs/validation_runtime/full_20260723T200633Z/test_runtime_summary.json`，SHA256=`5ada4ca2423e8d3e0b4e1f06fd21bc09e424b3cf258c120e605c2d9c75d06907`；`next_slice_unblocked=false`，当前停在`ARCH-005S4D_OWNER_AUTHORIZATION_GATE`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-aa7578747f4d9946dd8264da
+  task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: project owner：决定是否授权ARCH-005S4D窄版S0/S1；Wave15仍未解锁
+    notes: 2026-07-24：Wave14 S2 phase exit完成并归档。Full artifact=`outputs/validation_runtime/full_20260723T200633Z/test_runtime_summary.json`，SHA256=`5ada4ca2423e8d3e0b4e1f06fd21bc09e424b3cf258c120e605c2d9c75d06907`；`next_slice_unblocked=false`，当前停在`ARCH-005S4D_OWNER_AUTHORIZATION_GATE`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:aa7578747f4d9946dd8264dacadeb917c511b1b9ff63be0f93647720ce00e2e3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+  - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit
+  - P0
+  - DONE
+  - project owner：决定是否授权ARCH-005S4D窄版S0/S1；Wave15仍未解锁
+  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Scope amendment=`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`；Full-tested
+    candidate=`66c5ec7457acf3a4e1b03f3138b34ab528ad53e3`。Append-only attempt 1=`6978
+    passed / 29 failed / 4 skipped`完整保留；replacement Full=`7007 passed / 4 skipped
+    / 643 warnings / 1077.52s`。
+  - D0B2 composite publication与strict DQ、首个G3 native report slice、generated/compatibility/deprecation、pre-Full与post-Full
+    required gates全部PASS；127个Full-sensitive sources逐byte不变；task shadow=`406 active
+    / 488 completed / 894 total`且byte-identical；dispatch/lease/cutover/production/broker均false/none。
+  - 2026-07-24：Wave14 S2 phase exit完成并归档。Full artifact=`outputs/validation_runtime/full_20260723T200633Z/test_runtime_summary.json`，SHA256=`5ada4ca2423e8d3e0b4e1f06fd21bc09e424b3cf258c120e605c2d9c75d06907`；`next_slice_unblocked=false`，当前停在`ARCH-005S4D_OWNER_AUTHORIZATION_GATE`。
+  docs_links:
+  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  terminal: true
+  raw_row_sha256: aa7578747f4d9946dd8264dacadeb917c511b1b9ff63be0f93647720ce00e2e3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d05356ea0908a4cf6099249b49c13fdb1b7e787964a8ff42a3ef7b17d74da9ba
