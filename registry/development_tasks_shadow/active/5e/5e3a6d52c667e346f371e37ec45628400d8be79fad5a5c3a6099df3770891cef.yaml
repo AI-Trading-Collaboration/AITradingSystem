@@ -11,8 +11,9 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture/governance coordinator；Wave13 N1已应用，完成commit-bound closeout与formal
-    gate后dispatch Wave14 D0B2+bounded G3
+  next_owner: architecture/governance coordinator；Wave13 N1 formal gate已PASS，完成closeout
+    commit/push后从最终HEAD冻结Wave14 S0 exact manifests/ownership/readiness；S0 PASS后dispatch
+    D0B2+bounded G3
   requirement_refs:
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
@@ -21,8 +22,9 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-    handoff、ARCH-005 S0～S4B、G2.5以及Wave12 G4A+D0B1/S2均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
-    decision并重建任务池，当前等待commit-bound closeout与formal gate；PASS/push后才开放D0B2与G3，G5继续等待G3共享contract稳定。
+    handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
+    decision并重建任务池；closeout push后先完成新的Wave14 S0 contract/readiness，S0 PASS后才开放D0B2与G3，旧G2.5
+    rehearsal不可复用为授权；G5继续等待G3共享contract稳定。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 保持既有控制面、domain迁移与安全边界；依次完成task portfolio归一化、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H
@@ -34,42 +36,48 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1569
-    row_sha256: 2ca2bfc8097bf5e1dda011e8f89c4efcbe03f7ac2f54cbde09f65daee433266c
+    row_sha256: b155d4888698f6e66322808cc9dfb7d6055d6ed435e8c3463ec42983e7406915
     cell_count: 8
     all_cells:
     - ARCH-004
     - Architecture / post-freeze architecture v2 after TRADING-2438N
     - P0
     - IN_PROGRESS
-    - architecture/governance coordinator；Wave13 N1已应用，完成commit-bound closeout与formal
-      gate后dispatch Wave14 D0B2+bounded G3
+    - architecture/governance coordinator；Wave13 N1 formal gate已PASS，完成closeout commit/push后从最终HEAD冻结Wave14
+      S0 exact manifests/ownership/readiness；S0 PASS后dispatch D0B2+bounded G3
     - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-      handoff、ARCH-005 S0～S4B、G2.5以及Wave12 G4A+D0B1/S2均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
-      decision并重建任务池，当前等待commit-bound closeout与formal gate；PASS/push后才开放D0B2与G3，G5继续等待G3共享contract稳定。
+      handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
+      decision并重建任务池；closeout push后先完成新的Wave14 S0 contract/readiness，S0 PASS后才开放D0B2与G3，旧G2.5
+      rehearsal不可复用为授权；G5继续等待G3共享contract稳定。
     - 保持既有控制面、domain迁移与安全边界；依次完成task portfolio归一化、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H
       closeout；每波最多两个互不重叠domain worker、shared-path单写、一次final Full，并通过cadence parity、clean-clone、reproducibility、parallel
       pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
     - 2026-07-23：Wave13 N1 application=`18 DONE / 12 DROPPED`，queue=`405 active /
-      487 completed`，current phase=`WAVE13_GOV006_N1_APPLIED_CLOSEOUT_PENDING`。长期顺序：Wave13
-      N1→Wave14 D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C
+      487 completed`；initial focused/architecture/contract/reproducibility=`124/527/266/23
+      passed`，final tracked-state focused=`194 passed`，failure-fix Full=`6844 passed
+      / 3 skipped / 1340.11s`。current phase=`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`，`next_slice_unblocked=false`；长期顺序：closeout
+      push→Wave14 S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C
       cadence异步积累。Strategy A关闭，B/C和新研究需独立显式授权。
     raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|IN_PROGRESS|architecture/governance
-      coordinator；Wave13 N1已应用，完成commit-bound closeout与formal gate后dispatch Wave14
-      D0B2+bounded G3|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-      handoff、ARCH-005 S0～S4B、G2.5以及Wave12 G4A+D0B1/S2均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
-      decision并重建任务池，当前等待commit-bound closeout与formal gate；PASS/push后才开放D0B2与G3，G5继续等待G3共享contract稳定。|保持既有控制面、domain迁移与安全边界；依次完成task
-      portfolio归一化、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H closeout；每波最多两个互不重叠domain
-      worker、shared-path单写、一次final Full，并通过cadence parity、clean-clone、reproducibility、parallel
-      pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。|2026-07-23：Wave13
-      N1 application=`18 DONE / 12 DROPPED`，queue=`405 active / 487 completed`，current
-      phase=`WAVE13_GOV006_N1_APPLIED_CLOSEOUT_PENDING`。长期顺序：Wave13 N1→Wave14 D0B2+G3→Wave15
-      D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C cadence异步积累。Strategy
-      A关闭，B/C和新研究需独立显式授权。|'
+      coordinator；Wave13 N1 formal gate已PASS，完成closeout commit/push后从最终HEAD冻结Wave14
+      S0 exact manifests/ownership/readiness；S0 PASS后dispatch D0B2+bounded G3|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
+      handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
+      decision并重建任务池；closeout push后先完成新的Wave14 S0 contract/readiness，S0 PASS后才开放D0B2与G3，旧G2.5
+      rehearsal不可复用为授权；G5继续等待G3共享contract稳定。|保持既有控制面、domain迁移与安全边界；依次完成task portfolio归一化、D0B2/G3、D0B3/G4B、G5、G6
+      characterization与G7/H closeout；每波最多两个互不重叠domain worker、shared-path单写、一次final
+      Full，并通过cadence parity、clean-clone、reproducibility、parallel pytest和architecture
+      fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。|2026-07-23：Wave13
+      N1 application=`18 DONE / 12 DROPPED`，queue=`405 active / 487 completed`；initial
+      focused/architecture/contract/reproducibility=`124/527/266/23 passed`，final
+      tracked-state focused=`194 passed`，failure-fix Full=`6844 passed / 3 skipped
+      / 1340.11s`。current phase=`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`，`next_slice_unblocked=false`；长期顺序：closeout
+      push→Wave14 S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C
+      cadence异步积累。Strategy A关闭，B/C和新研究需独立显式授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-2ca2bfc8097bf5e1dda011e8
+  event_id: legacy-import-b155d4888698f6e66322808c
   task_id: ARCH-004
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -82,15 +90,18 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture/governance coordinator；Wave13 N1已应用，完成commit-bound closeout与formal
-      gate后dispatch Wave14 D0B2+bounded G3
+    next_owner: architecture/governance coordinator；Wave13 N1 formal gate已PASS，完成closeout
+      commit/push后从最终HEAD冻结Wave14 S0 exact manifests/ownership/readiness；S0 PASS后dispatch
+      D0B2+bounded G3
     notes: 2026-07-23：Wave13 N1 application=`18 DONE / 12 DROPPED`，queue=`405 active
-      / 487 completed`，current phase=`WAVE13_GOV006_N1_APPLIED_CLOSEOUT_PENDING`。长期顺序：Wave13
-      N1→Wave14 D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C
+      / 487 completed`；initial focused/architecture/contract/reproducibility=`124/527/266/23
+      passed`，final tracked-state focused=`194 passed`，failure-fix Full=`6844 passed
+      / 3 skipped / 1340.11s`。current phase=`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`，`next_slice_unblocked=false`；长期顺序：closeout
+      push→Wave14 S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C
       cadence异步积累。Strategy A关闭，B/C和新研究需独立显式授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:2ca2bfc8097bf5e1dda011e8f89c4efcbe03f7ac2f54cbde09f65daee433266c
+  - sha256:b155d4888698f6e66322808cc9dfb7d6055d6ed435e8c3463ec42983e7406915
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -98,23 +109,26 @@ projection:
   - Architecture / post-freeze architecture v2 after TRADING-2438N
   - P0
   - IN_PROGRESS
-  - architecture/governance coordinator；Wave13 N1已应用，完成commit-bound closeout与formal
-    gate后dispatch Wave14 D0B2+bounded G3
+  - architecture/governance coordinator；Wave13 N1 formal gate已PASS，完成closeout commit/push后从最终HEAD冻结Wave14
+    S0 exact manifests/ownership/readiness；S0 PASS后dispatch D0B2+bounded G3
   - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md`。G2.4、bootstrap
-    handoff、ARCH-005 S0～S4B、G2.5以及Wave12 G4A+D0B1/S2均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
-    decision并重建任务池，当前等待commit-bound closeout与formal gate；PASS/push后才开放D0B2与G3，G5继续等待G3共享contract稳定。
+    handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；G4转VALIDATING、D0B2/G3尚未dispatch。N1已应用30条高置信terminal
+    decision并重建任务池；closeout push后先完成新的Wave14 S0 contract/readiness，S0 PASS后才开放D0B2与G3，旧G2.5
+    rehearsal不可复用为授权；G5继续等待G3共享contract稳定。
   - 保持既有控制面、domain迁移与安全边界；依次完成task portfolio归一化、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H
     closeout；每波最多两个互不重叠domain worker、shared-path单写、一次final Full，并通过cadence parity、clean-clone、reproducibility、parallel
     pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
   - 2026-07-23：Wave13 N1 application=`18 DONE / 12 DROPPED`，queue=`405 active / 487
-    completed`，current phase=`WAVE13_GOV006_N1_APPLIED_CLOSEOUT_PENDING`。长期顺序：Wave13
-    N1→Wave14 D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C
+    completed`；initial focused/architecture/contract/reproducibility=`124/527/266/23
+    passed`，final tracked-state focused=`194 passed`，failure-fix Full=`6844 passed
+    / 3 skipped / 1340.11s`。current phase=`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`，`next_slice_unblocked=false`；长期顺序：closeout
+    push→Wave14 S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C
     cadence异步积累。Strategy A关闭，B/C和新研究需独立显式授权。
   docs_links:
   - docs/requirements/ARCH-004G2_Interfaces_and_ETF_CLI_Migration.md
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   terminal: false
-  raw_row_sha256: 2ca2bfc8097bf5e1dda011e8f89c4efcbe03f7ac2f54cbde09f65daee433266c
+  raw_row_sha256: b155d4888698f6e66322808cc9dfb7d6055d6ed435e8c3463ec42983e7406915
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 14d7b2fba2200e1d1619306d0c8112082a129300fe85f347777dd09999c89ffd
+fragment_checksum: fb9a57ea28e6727a98868518f142266b488e9e9e0d5bcdcfbb77160b1c63c332

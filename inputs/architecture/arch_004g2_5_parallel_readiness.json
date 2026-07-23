@@ -4,7 +4,7 @@
   "broker_action": "none",
   "change_manifests": [
     {
-      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
       "change_id": "arch-004-g2-5-01-g4-operations",
       "contract_claims": [
         {
@@ -47,7 +47,7 @@
       "task_id": "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION"
     },
     {
-      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
       "change_id": "arch-004-g2-5-02-g3-reporting",
       "contract_claims": [
         {
@@ -86,7 +86,7 @@
       "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
     },
     {
-      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
       "change_id": "arch-004-g2-5-03-g5-research-wrapper",
       "contract_claims": [
         {
@@ -130,7 +130,7 @@
       "task_id": "ARCH-004G5_RESEARCH_WRAPPER_MIGRATION"
     },
     {
-      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
       "change_id": "arch-004-g2-5-integration-coordinator",
       "contract_claims": [],
       "lane_role": "COORDINATOR",
@@ -545,13 +545,13 @@
         "target_id": "system_flow"
       }
     ],
-    "preview_id": "g2-5-fragment-a4e075a6ef22b8411d60",
+    "preview_id": "g2-5-fragment-554e12a592abe791603a",
     "production_effect": "none",
     "schema_version": "arch_004_g2_5_fragment_preview.v1",
     "source_of_truth_diffs": [
       {
         "current_path": "docs/artifact_catalog.md",
-        "current_sha256": "5a435fd457299542b088f916d7bb3d0a4e44f4e2e92ff9e81f24696c54f372c4",
+        "current_sha256": "03fa55fb5338bdbdce2aaca6508e094ee004888391a0e231aba7a6a4d87460e7",
         "preview_fragment_ids": [
           "artifact.arch_004g3_reader_brief_native",
           "artifact.arch_004g4_periodic_consumers",
@@ -581,7 +581,7 @@
       },
       {
         "current_path": "docs/system_flow.md",
-        "current_sha256": "2120c38e8fd808c2ccc92201909123d6bd440af253d8051bfc38ee019e2f5c5e",
+        "current_sha256": "c03b3fcfdba6bee1915d284bacea3131f53482f34185f809796ad8fec3c35530",
         "preview_fragment_ids": [
           "flow.arch_004g3_reader_brief_native",
           "flow.arch_004g4_periodic_consumers",
@@ -642,29 +642,29 @@
     "lane_plan": {
       "blocking_issues": [],
       "conflicts": [],
-      "current_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "current_base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
       "dispatch_allowed": false,
       "lease_acquisition_allowed": false,
       "manifest_sha256": [
         {
           "change_id": "arch-004-g2-5-01-g4-operations",
-          "sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c"
+          "sha256": "97186b5a847f9593e83923927fc1a10c3e5ab3f1d37599bd491e30d17b4b89c4"
         },
         {
           "change_id": "arch-004-g2-5-02-g3-reporting",
-          "sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58"
+          "sha256": "abac37ed2fa2dca368d6693fdfaf74017822a74b90cb2a71ea299b014ecf83c4"
         },
         {
           "change_id": "arch-004-g2-5-03-g5-research-wrapper",
-          "sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b"
+          "sha256": "2f87a4b74d59cf8e8882d213b3d8f3b671cac8f40781ea83c349d65479de03fb"
         },
         {
           "change_id": "arch-004-g2-5-integration-coordinator",
-          "sha256": "90b9e7c642ed49d1226fdde5797c79a2d0ab6bf5d41d7402579df41df468ce29"
+          "sha256": "dd3a27bd17a4204b9e381b37e80a8245115ddf4f8de502fec134c35e3483c6bc"
         }
       ],
       "max_parallel_domain_lanes": 2,
-      "plan_id": "lane-plan-2fcad04ceac530d9d13d",
+      "plan_id": "lane-plan-8a2efc144c5a14c7a24b",
       "production_effect": "none",
       "schema_version": "lane_plan.v1",
       "status": "PASS",
@@ -675,12 +675,12 @@
             {
               "change_id": "arch-004-g2-5-01-g4-operations",
               "lane_id": "domain-01",
-              "manifest_sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c"
+              "manifest_sha256": "97186b5a847f9593e83923927fc1a10c3e5ab3f1d37599bd491e30d17b4b89c4"
             },
             {
               "change_id": "arch-004-g2-5-02-g3-reporting",
               "lane_id": "domain-02",
-              "manifest_sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58"
+              "manifest_sha256": "abac37ed2fa2dca368d6693fdfaf74017822a74b90cb2a71ea299b014ecf83c4"
             }
           ],
           "kind": "DOMAIN",
@@ -691,7 +691,7 @@
             {
               "change_id": "arch-004-g2-5-03-g5-research-wrapper",
               "lane_id": "domain-01",
-              "manifest_sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b"
+              "manifest_sha256": "2f87a4b74d59cf8e8882d213b3d8f3b671cac8f40781ea83c349d65479de03fb"
             }
           ],
           "kind": "DOMAIN",
@@ -702,7 +702,7 @@
             {
               "change_id": "arch-004-g2-5-integration-coordinator",
               "lane_id": "integration-coordinator",
-              "manifest_sha256": "90b9e7c642ed49d1226fdde5797c79a2d0ab6bf5d41d7402579df41df468ce29"
+              "manifest_sha256": "dd3a27bd17a4204b9e381b37e80a8245115ddf4f8de502fec134c35e3483c6bc"
             }
           ],
           "kind": "COORDINATOR",
@@ -1037,8 +1037,8 @@
     "production_effect": "none",
     "schema_version": "arch_004_g2_5_ownership_snapshot.v1",
     "shared_path_worker_owner_count": 0,
-    "snapshot_id": "g2-5-ownership-00270f3c80e632718346",
-    "source_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+    "snapshot_id": "g2-5-ownership-2610ada536d560d005f4",
+    "source_base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
     "source_phase": "ARCH-004G2.4",
     "status": "PASS",
     "unknown_owner_count": 0
@@ -1058,9 +1058,9 @@
     "status": "OWNER_RESUMED_IMPLEMENTATION_GATE"
   },
   "production_effect": "none",
-  "report_checksum": "5d853575cb9ad0f99b671bfb95abd2fda017ba0224c8df1cf4b54a089e0e3b8e",
+  "report_checksum": "d8e84b1fc75c1c60d3f85af6e049437f55e2b84aeba89201bdeca87abdb0b4ba",
   "schema_version": "arch_004_g2_5_readiness_rehearsal.v1",
-  "source_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+  "source_base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
   "source_gate": {
     "broker_action": "none",
     "canonical_handoff_validation": "PASS",
@@ -1099,7 +1099,7 @@
       "handoff_base_is_ancestor_of_handoff_head": true,
       "handoff_head_commit": "152f2d332b174018ad9fca2ecb568469eaeaf0f8",
       "handoff_head_is_ancestor_of_source_base": true,
-      "source_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "source_base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
       "status": "PASS"
     },
     "handoff": {
@@ -1143,8 +1143,8 @@
     ],
     "broker_action": "none",
     "capacity": 2,
-    "current_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
-    "decision_id": "scheduler-decision-6548bad75bc8ee679c5a",
+    "current_base_commit": "58ee6a80b5a04ff68a97a96d36b575ae8391f657",
+    "decision_id": "scheduler-decision-84aae72bdbb54e24fd37",
     "dispatch_allowed": false,
     "fixture_status": "PASS",
     "lease_acquisition_allowed": false,
@@ -1152,7 +1152,7 @@
     "not_selected": [
       {
         "change_id": "arch-004-g2-5-03-g5-research-wrapper",
-        "manifest_sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b",
+        "manifest_sha256": "2f87a4b74d59cf8e8882d213b3d8f3b671cac8f40781ea83c349d65479de03fb",
         "reason_codes": [
           "DOMAIN_CAPACITY_REACHED"
         ],
@@ -1167,7 +1167,7 @@
         "dependency_checks": [],
         "dispatch_allowed": false,
         "lease_acquisition_allowed": false,
-        "manifest_sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c",
+        "manifest_sha256": "97186b5a847f9593e83923927fc1a10c3e5ab3f1d37599bd491e30d17b4b89c4",
         "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
         "production_effect": "none",
         "reason_codes": [
@@ -1183,7 +1183,7 @@
         "dependency_checks": [],
         "dispatch_allowed": false,
         "lease_acquisition_allowed": false,
-        "manifest_sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58",
+        "manifest_sha256": "abac37ed2fa2dca368d6693fdfaf74017822a74b90cb2a71ea299b014ecf83c4",
         "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
         "production_effect": "none",
         "reason_codes": [
@@ -1199,7 +1199,7 @@
         "dependency_checks": [],
         "dispatch_allowed": false,
         "lease_acquisition_allowed": false,
-        "manifest_sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b",
+        "manifest_sha256": "2f87a4b74d59cf8e8882d213b3d8f3b671cac8f40781ea83c349d65479de03fb",
         "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
         "production_effect": "none",
         "reason_codes": [
@@ -1220,7 +1220,7 @@
       {
         "change_id": "arch-004-g2-5-01-g4-operations",
         "lane_id": "domain-01",
-        "manifest_sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c",
+        "manifest_sha256": "97186b5a847f9593e83923927fc1a10c3e5ab3f1d37599bd491e30d17b4b89c4",
         "reason_codes": [
           "SELECTED_READY_NON_CONFLICTING"
         ],
@@ -1229,14 +1229,14 @@
       {
         "change_id": "arch-004-g2-5-02-g3-reporting",
         "lane_id": "domain-02",
-        "manifest_sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58",
+        "manifest_sha256": "abac37ed2fa2dca368d6693fdfaf74017822a74b90cb2a71ea299b014ecf83c4",
         "reason_codes": [
           "SELECTED_READY_NON_CONFLICTING"
         ],
         "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
       }
     ],
-    "snapshot_sha256": "e351f91419dadadfa60d73f76fe061b6b5c3584a83b0d61317c6560ea4c88bd3",
+    "snapshot_sha256": "cea1c97357057096c63f088728dc6d5b906982111e47a8688125ebc4c13504b0",
     "source_of_truth": "LEGACY_MARKDOWN_ONLY",
     "status": "PASS",
     "task_governance_status_mutated": false

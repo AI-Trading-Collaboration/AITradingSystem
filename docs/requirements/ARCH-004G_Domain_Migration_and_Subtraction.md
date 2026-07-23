@@ -7,7 +7,7 @@
 - task id：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`IN_PROGRESS`（current phase=`WAVE12_COMPLETE_WAVE13_GOV006_N1_NEXT`）
+- status：`IN_PROGRESS`（current phase=`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`）
 - owner：architecture coordinator / 各 domain owner
 - dependency：ARCH-004F1、F2、F3 `DONE`
 - production effect：`none`
@@ -117,7 +117,7 @@ G2.5 正式门禁通过后的优先顺序固定为：
 |---|---|---|---|
 |已完成|G2.5 readiness + shared integration|DATA-GOV D0A immutable publish|并行切分、不可变发布与正式门禁均已闭合；GOV-006 N0 formal complete，但未自动启动 N1。|
 |已完成|G4A Operations parity|DATA-GOV D0B1 canonical DQ evidence + S2 shared integration|最小 shared DQ preflight、CLI/daily typed receipt、2/2/1 nonexecuting parity 与正式门均已闭合；G4 转 `VALIDATING`，consumer cutover 仍关闭。|
-|当前下一批|GOV-006 N1 coordinator-only task normalization|无并行 domain lane|先应用30条高置信terminal decision并重建task views，消除435条active中的状态噪声，再从真实未完成集合派发。|
+|formal complete / push boundary|GOV-006 N1 coordinator-only task normalization|无并行 domain lane|30条高置信terminal decision已应用为18 DONE/12 DROPPED并由commit-bound artifact及formal gate证明；closeout提交推送后，从最终N1 HEAD冻结新的Wave14 exact manifests、ownership与readiness；S0 contract/readiness PASS后才派发，旧G2.5 rehearsal不可复用为授权。|
 |Wave14|G3 Reporting Native Migration|DATA-GOV D0B2 rule/manifest completeness|报告消费已稳定的 typed status/DQ/artifact contracts；数据线修复真实 manifest、calendar freshness、coverage/gap/finite，两域实现路径不相交。|
 |后续|G5 Research Wrapper Migration|DATA-GOV D0C/D1 lifecycle、lineage、backup|研究 wrapper 在数据 lineage/DQ 契约稳定后迁移；不得夹带策略搜索或阈值调优。|
 |长期|G6 characterization 与敏感迁移 → G7 closeout|DATA-GOV D2 workload-driven storage|投资解释敏感面最后迁；storage 方案只由 workload/parity/rollback evidence 决定。|
@@ -204,6 +204,12 @@ fixture parity；真实 cadence evidence 在 G4C 异步观察，不占用 domain
 
 ## 状态记录
 
+- 2026-07-23：Wave13 GOV-006 N1 formal exit PASS。initial
+  focused/architecture/contract/reproducibility=`124/527/266/23 passed`，final tracked-state focused=
+  `194 passed`；自然Full保留`6843 passed / 1 failed / 3 skipped`，修复已归档任务的旧active
+  register断言后，failure-fix Full=`6844 passed / 3 skipped / 643 warnings / 1340.11s`。current phase=
+  `WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`；提交推送前不生成Wave14 authority，推送后也必须先由
+  coordinator从最终HEAD通过S0 manifests/ownership/readiness，D0B2+bounded G3仍未dispatch。
 - 2026-07-23：Wave12 S2 phase exit PASS，current phase 转为
   `WAVE12_COMPLETE_WAVE13_GOV006_N1_NEXT`。combined focused=`246 passed / 1 skipped`，最终
   architecture/contract/reproducibility/integration=`525/266/23/983 passed`，failure-fix Full=

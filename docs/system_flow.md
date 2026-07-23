@@ -133,19 +133,21 @@ flowchart LR
     P --> N["No dispatch / lease / merge / production"]
 ```
 
-上图的 G4+G3 只是 architecture-owned path 的双 worker readiness fixture，不是自动 dispatch queue。
-项目级当前执行批次只有 `ARCH-004G4 + DATA-GOV-001 D0B`：Wave12 S0 已冻结 shared DQ
-receipt/preflight、当前 base、ownership 与 change manifests并通过formal contract gate；G4A与D0B1分别完成
-focused验证并进入`W12_S2_SHARED_INTEGRATION`。G3/G5保持`PROPOSED`、尚未dispatch。G3只能在G4进入
-cadence等待或D0B集成释放capacity后启动，避免超过“最多两个domain worker以及一个coordinator”的边界。
-S2仍是shared wiring/formal validation，不开放automatic dispatch、consumer cutover、production或broker。
+上图的 G4+G3 只是 architecture-owned path 的历史双 worker readiness fixture，不是当前 dispatch queue
+或执行授权。Wave12 G4A+D0B1/S2 与Wave13 `GOV-006 N1` formal gate均已通过；N1 closeout
+commit/push完成前，G3/G5保持`PROPOSED`、D0B2尚未dispatch。推送后coordinator必须从最终HEAD
+生成新的Wave14 exact manifests、ownership与readiness；
+Wave14 S0 contract/readiness PASS后才允许两个domain worker并行执行D0B2与bounded G3。旧G2.5
+rehearsal不可复用为dispatch authority；G4C只异步积累cadence evidence，G5继续等待G3 contract稳定。
+全程不开放automatic dispatch、consumer cutover、production或broker。
 
 ```mermaid
 flowchart LR
-    G2["G2.5 DONE"] --> NEXT["Current: W12-S2 shared integration"]
-    G2 -.-> G3["G3 PROPOSED / not dispatched"]
-    G2 -.-> G5["G5 PROPOSED / not dispatched"]
-    NEXT -.-> NP["Manual coordinator assignment only<br/>No automatic dispatch / cutover / production effect"]
+    W12["Wave12 G4A + D0B1/S2 PASS"] --> N1["Formal complete: Wave13 GOV-006 N1"]
+    N1 --> S0["After closeout commit/push:<br/>new Wave14 S0 manifests/readiness"]
+    S0 -->|"S0 PASS only"| W14["D0B2 + bounded G3<br/>max two domain workers"]
+    S0 -.-> G5["G5 PROPOSED / waits for G3 contract"]
+    W14 -.-> NP["Coordinator shared-path single writer<br/>No automatic dispatch / cutover / production effect"]
 ```
 
 DATA-GOV-001 D0A 已在 Wave 11 完成 formal PASS 并标记 `DONE`，但 DATA-GOV parent program 仍为
@@ -240,10 +242,11 @@ G4矩阵固定为producer observation `daily_validate_data`，以及4个verified
 `daily_score_daily`、`weekly_backtest`、`weekly_research_governance_summary_review`、
 `monthly_data_source_coverage_review`。`native_periodic_consumer_parity_plan.v1`只演练date/condition、lock、
 duplicate、retry/resume、typed DQ blocker与artifact lineage；`periodic_operations_plan.v1`只保留从typed
-preflight机械投影的兼容preview。当前D0B1 focused=`20 passed`、G4A focused=`24 passed`，但S2 formal exit
-尚未完成。真实`data/raw/prices_daily.csv` SHA-256仍未被`download_manifest.csv`当前记录覆盖，strict gate必须
-输出`DQ_MANIFEST_CURRENT_CHECKSUM_MISSING`；该download/publish/manifest transaction修复保留给D0B2，
-不得降级为warning、伪造source id或借pointer绕过。
+preflight机械投影的兼容preview。D0B1 focused=`20 passed`、G4A focused=`24 passed`，Wave12 S2 formal
+exit已PASS。Wave12观察到的prices checksum缺失实例保留为严格门禁历史证据；Wave13现场复核时
+prices/rates/Marketstack当前SHA均已有manifest匹配，但现有download path仍先覆盖数据CSV、最后更新
+manifest，且composite binding、market-calendar、requested-window coverage/internal-gap和finite gate未闭合。
+这些结构修复保留给D0B2；不得因当前恰好匹配而降级门禁或提前授权consumer。
 
 GOV-006 N0 为 task portfolio 建立只读 normalization 链。strict reviewed policy 与当前真实 Git HEAD
 输入 producer；producer 通过 ARCH-005 legacy registry parser 读取 main、supplemental、deferred 三个
@@ -253,11 +256,21 @@ task-own acceptance、remaining work 与 typed successor closure。输出
 431 条 active、455 条 completed inventory、policy raw/canonical hash、完整 manifest hash 与 base commit。
 validator 在当前 HEAD 等于或后继于 base 时用同一 frozen base 重建 bytes；unknown/non-ancestor Git、
 duplicate policy key、policy/register/successor drift 均 fail closed。N0 已随 Wave 11 formal PASS 标记
-`DONE`，但 GOV-006 parent program 仍为 `IN_PROGRESS`。30 条 disposition 仍只是 dry-run，
-`automatic_apply_allowed=false`，没有自动 apply lifecycle 迁移。本次 closeout 归档 G2 并登记 G4/G3/G5
-及三项 maintenance follow-up 后，最终 task source-of-truth 为 436 条 active、456 条 completed；所有
-shadow facts、manifest 与 source hashes 必须绑定该最终 tree 重新生成。N1 仍由 coordinator 单写并重新
-执行正式验证。
+`DONE`，但 GOV-006 parent program 仍为 `IN_PROGRESS`。N1由coordinator把30条reviewed disposition应用为
+18 `DONE`/12 `DROPPED`，application commit=`58ee6a80b5a04ff68a97a96d36b575ae8391f657`。
+`gov_006_portfolio_normalization_applied_closeout.v1`从Wave12 base与application commit的Git blobs重放
+before/after，证明active/completed=`435/457 -> 405/487`、总数892、非目标任务无partition/priority/status
+漂移、30个原物理行空槽保留；closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`。
+对应入口为
+`python scripts/governance_task_portfolio_normalization.py generate-applied --application-commit <full-sha>`
+与`validate-applied`，产物固定
+`inputs/governance/gov_006_wave1_applied_closeout.json`；短SHA、unknown/non-ancestor commit、register或
+审计suffix tamper均fail closed。
+`automatic_apply_allowed=false`、Markdown仍是唯一可写事实源。N1 formal gate已PASS；closeout最终
+commit/push前不开放Wave14，push后也必须先从最终HEAD通过新的Wave14 S0
+manifests/ownership/readiness，旧G2.5 rehearsal不可作为dispatch authority。自然Full父运行=
+`6843 passed / 1 failed / 3 skipped / 1345.61s`，修复terminal任务旧断言后failure-fix Full=
+`6844 passed / 3 skipped / 643 warnings / 1340.11s`，两个attempt均保留在append-only证据链。
 
 TRADING-2446～2448 在 ARCH-005 S0/S1 后新增独立 strategy research restart R0～R2
 evidence-closure lane，不恢复 ARCH-004 G2.5，也不启动 candidate promotion。
@@ -911,6 +924,14 @@ ENG-VAL-001 后，`python scripts/run_validation_tier.py <tier> --write-runtime-
 ARCH-004G2 S3G 后，`full` tier 仍固定执行完整 pytest node set、`-n 16 --dist loadfile`，并保持每个测试文件内部的原始 node 顺序；只在文件分配层读取 tracked `inputs/architecture/arch_004g2_full_duration_profile.yaml`，按历史文件耗时降序进行稳定排序，并通过命令末尾的 `--no-loadscope-reorder` 禁止 pytest-xdist 再按文件 node 数量覆盖该顺序。v1 loader继续兼容旧`PARTIAL_SEED`，当前tracked manifest升级为`status=COMPLETE`，精确绑定`full_20260718T004439Z`的`6,248 nodes / 1,068 files / 15,830.64 worker-s`、source artifact SHA、collection ordered/set SHA、file-set/file-row SHA、逐文件node count和预期新调度ordered SHA。每个worker只在当前collection与上述node/file全集、逐文件count、16 workers、`loadfile`和disabled loadscope reorder全部一致时应用`complete_full_duration_descending_stable`；缺失、重复、stale collection、hash/count/order、worker或dist不匹配均显式回退到stock-compatible loadfile test-count order，并记录非空fallback reason。Controller在sidecar构建时独立重算同一coverage，runner strict reader再把raw manifest SHA/metadata、generated full test manifest文件全集、runtime collection、逐文件count与调度顺序做第三次交叉复核；不能只相信worker声明或启动参数。pytest exit status仍是测试结果权威，sidecar中的`pytest_exitstatus`必须为non-bool int且与runner subprocess exit完全一致；fallback、coverage未验证、最终顺序未验证、exit mismatch、required phase/active worker/collection telemetry不完整或sidecar写入失败均令`performance_evidence_status=FAIL`，且不得覆盖pytest exit。带`--write-runtime-artifact`的`full`另写独立`test_runtime_profile.json`，记录manifest status、tracked/matched file/node coverage、source hashes、各worker collection identity、完整node phase、文件/worker aggregates、internal idle和tail idle；summary/Reader Brief只嵌入coverage、scheduler/fallback和tail-idle小摘要。COMPLETE只表示duration输入覆盖完整，不等于长期性能目标完成；因三份profile集合并非全同且仍缺complete peak-memory/read-amplification evidence，继续固定`stable_full_improvement_claimed=false`。该调度与telemetry链只优化工程验证，`production_effect=none`，不是投资研究、promotion、paper-shadow、production或broker/order证据。
 
 S3G自然边界full的exact contract与调度证据均PASS，但raw wall/worker busy/file P99相对source profile分别回退约`21.02%/24.49%/29.07%`；同一批调度又把worker busy CV从`1.529%`降到`0.00619%`、tail idle total从`460.495s`降到`0.177s`。因此当前duration-only COMPLETE policy只作为pilot：保留exact coverage、deterministic order、strict reader与fail-closed fallback，不把它声明为raw性能赢家，也不以异常慢run刷新duration权重。后续resource-aware stagger/bucket必须在同commit受控比较中同时证明wall、worker busy与P99不回退，并保持CV/tail收益，才可替换当前pilot；日常研究不为性能计数空跑full。
+
+Wave13 GOV-006 N1 failure-fix Full 的 runtime profile 精确覆盖`6847 nodes / 1108 files / 16 workers`，
+profile/telemetry/performance/provenance均PASS；旧v23只匹配`1097/1108` files，最大/合计tail idle=
+`211.69s / 3042.92s`。因此tracked advisory seed已机械刷新为
+`arch_004g_wave13_full_duration_partial_seed` v24，raw SHA-256=
+`df1d10aeedcf8d572fa568e45a100d097aed2685a115c9ec8e1f7251517e2cfd`，精确绑定
+`1108 files / 6847 nodes`。`stable_full_improvement_claimed=false`保持；下一次自然Full才验证v24
+applied/no-fallback与尾部效果，本closeout不额外运行第三次Full。
 
 S3H只改变四个既有pytest调用点：Search Coverage Gap、No Promotion Review、Near Miss Candidates与Cash Buffer Attribution显式使用已治理的52-variant test-only complete-family前缀；该前缀仍覆盖8个required families并执行原DQ/PIT、source-lineage、snapshot/view-hash、content rebuild和tamper validator，production配置的80-variant initial batch及所有threshold/conclusion不变。Resource-aware调度本批仅做离线模型，因runtime sidecar尚无peak RSS/I/O/read-amplification而不改变当前COMPLETE pilot policy；`production_effect=none`。
 

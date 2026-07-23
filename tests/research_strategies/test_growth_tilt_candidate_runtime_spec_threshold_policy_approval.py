@@ -30,12 +30,8 @@ CANDIDATE_IDS = [
 OWNER_REVIEW_PATH = Path(
     "inputs/research_reviews/growth_tilt_candidate_runtime_spec_threshold_policy_review.yaml"
 )
-METRIC_CONTRACT_PATH = Path(
-    "config/research/growth_tilt_candidate_replay_metric_contract.yaml"
-)
-THRESHOLD_POLICY_PATH = Path(
-    "config/research/growth_tilt_candidate_pit_screening_policy.yaml"
-)
+METRIC_CONTRACT_PATH = Path("config/research/growth_tilt_candidate_replay_metric_contract.yaml")
+THRESHOLD_POLICY_PATH = Path("config/research/growth_tilt_candidate_pit_screening_policy.yaml")
 
 
 def test_tracked_owner_review_records_resolved_zero_approval_disposition() -> None:
@@ -143,15 +139,13 @@ def test_tracked_candidate_b_is_withdrawn_and_not_m2_eligible() -> None:
 def test_candidate_b_redefinition_cannot_add_more_than_one_persistence_step() -> None:
     review = _owner_review()
     review["candidate_reviews"][1] = _redefined_b_review_fixture()
-    review["candidate_reviews"][1]["redefinition"]["proposed_parameters"][
-        "maximum_added_steps"
-    ] = 2
+    review["candidate_reviews"][1]["redefinition"]["proposed_parameters"]["maximum_added_steps"] = 2
     payload = _build(review, _metric_contract(), _threshold_policy())
 
     assert payload["candidate_reviews"][1]["redefinition_ready"] is False
-    assert approval.CANDIDATE_REDEFINITION_INCOMPLETE in payload["candidate_reviews"][1][
-        "gap_codes"
-    ]
+    assert (
+        approval.CANDIDATE_REDEFINITION_INCOMPLETE in payload["candidate_reviews"][1]["gap_codes"]
+    )
 
 
 def test_candidate_a_redefinition_cannot_extend_beyond_one_active_step() -> None:
@@ -162,9 +156,9 @@ def test_candidate_a_redefinition_cannot_extend_beyond_one_active_step() -> None
     payload = _build(review, _metric_contract(), _threshold_policy())
 
     assert payload["candidate_reviews"][0]["redefinition_ready"] is False
-    assert approval.CANDIDATE_REDEFINITION_INCOMPLETE in payload["candidate_reviews"][0][
-        "gap_codes"
-    ]
+    assert (
+        approval.CANDIDATE_REDEFINITION_INCOMPLETE in payload["candidate_reviews"][0]["gap_codes"]
+    )
 
 
 def test_redefined_candidate_never_appears_in_approved_runtime_specs() -> None:
@@ -173,10 +167,7 @@ def test_redefined_candidate_never_appears_in_approved_runtime_specs() -> None:
 
     assert section["candidate_count"] == 2
     assert section["candidate_ids"] == CANDIDATE_IDS[:2]
-    assert all(
-        item["candidate_id"] != CANDIDATE_IDS[2]
-        for item in section["candidate_specs"]
-    )
+    assert all(item["candidate_id"] != CANDIDATE_IDS[2] for item in section["candidate_specs"])
 
 
 def test_runtime_owner_placeholder_blocks_only_the_affected_candidate() -> None:
@@ -213,9 +204,9 @@ def test_candidate_b_cannot_remove_confirmation() -> None:
 
 def test_operation_type_cannot_be_inferred_from_candidate_name() -> None:
     review, metric, policy = _complete_inputs()
-    review["candidate_reviews"][0]["runtime_spec"]["operation_type"] = (
-        "DEFENSIVE_SOFT_CONFIRMATION_GRACE"
-    )
+    review["candidate_reviews"][0]["runtime_spec"][
+        "operation_type"
+    ] = "DEFENSIVE_SOFT_CONFIRMATION_GRACE"
     payload = _build(review, metric, policy)
 
     assert payload["candidate_reviews"][0]["runtime_spec_ready"] is False
@@ -223,28 +214,24 @@ def test_operation_type_cannot_be_inferred_from_candidate_name() -> None:
 
 def test_executor_mapping_operation_must_match_runtime_operation() -> None:
     review, metric, policy = _complete_inputs()
-    review["candidate_reviews"][1]["executor_mapping"]["operation_type"] = (
-        "EARLY_REENTRY_PROVISIONAL_EXPOSURE"
-    )
+    review["candidate_reviews"][1]["executor_mapping"][
+        "operation_type"
+    ] = "EARLY_REENTRY_PROVISIONAL_EXPOSURE"
     payload = _build(review, metric, policy)
 
     assert payload["candidate_reviews"][1]["executor_mapping_ready"] is False
-    assert approval.EXECUTOR_MAPPING_INCOMPLETE in payload["candidate_reviews"][1][
-        "gap_codes"
-    ]
+    assert approval.EXECUTOR_MAPPING_INCOMPLETE in payload["candidate_reviews"][1]["gap_codes"]
 
 
 def test_runtime_spec_requires_inventory_ready_mapping_status() -> None:
     review, metric, policy = _complete_inputs()
-    review["candidate_reviews"][0]["runtime_spec"]["baseline_mapping_status"] = (
-        "BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING"
-    )
+    review["candidate_reviews"][0]["runtime_spec"][
+        "baseline_mapping_status"
+    ] = "BLOCKED_UNRESOLVED_BASELINE_RUNTIME_MAPPING"
     payload = _build(review, metric, policy)
 
     assert payload["candidate_reviews"][0]["runtime_spec_ready"] is False
-    assert approval.RUNTIME_SPEC_INCOMPLETE in payload["candidate_reviews"][0][
-        "gap_codes"
-    ]
+    assert approval.RUNTIME_SPEC_INCOMPLETE in payload["candidate_reviews"][0]["gap_codes"]
 
 
 def test_runtime_spec_requires_exact_complete_hard_veto_set() -> None:
@@ -260,9 +247,10 @@ def test_shared_metric_contract_requires_all_six_metrics_in_order() -> None:
     metric["metrics"].pop()
     payload = _build(review, metric, policy)
 
-    assert "metric_identity_or_order_mismatch" in payload[
-        "metric_contract_review_matrix"
-    ]["blocker_codes"]
+    assert (
+        "metric_identity_or_order_mismatch"
+        in payload["metric_contract_review_matrix"]["blocker_codes"]
+    )
     assert payload["status"] == approval.BLOCKED_STATUS
 
 
@@ -271,9 +259,10 @@ def test_shared_metric_contract_requires_preregistered_relative_delta_policy() -
     metric["relative_delta_epsilon_policy"]["use_epsilon_as_substitute_value"] = True
     payload = _build(review, metric, policy)
 
-    assert "relative_delta_epsilon_policy_unresolved" in payload[
-        "metric_contract_review_matrix"
-    ]["blocker_codes"]
+    assert (
+        "relative_delta_epsilon_policy_unresolved"
+        in payload["metric_contract_review_matrix"]["blocker_codes"]
+    )
 
 
 def test_empty_event_policy_must_be_explicit() -> None:
@@ -281,16 +270,14 @@ def test_empty_event_policy_must_be_explicit() -> None:
     metric["empty_event_policy"]["no_eligible_events"] = "ZERO_IMPROVEMENT"
     payload = _build(review, metric, policy)
 
-    assert "empty_event_policy_unresolved" in payload[
-        "metric_contract_review_matrix"
-    ]["blocker_codes"]
+    assert (
+        "empty_event_policy_unresolved" in payload["metric_contract_review_matrix"]["blocker_codes"]
+    )
 
 
 def test_event_metric_owner_fields_are_required() -> None:
     review, metric, policy = _complete_inputs()
-    target = next(
-        item for item in metric["metrics"] if item["metric_id"] == "false_risk_off_delta"
-    )
+    target = next(item for item in metric["metrics"] if item["metric_id"] == "false_risk_off_delta")
     target["owner_fields"]["evaluation_horizon_steps"] = None
     payload = _build(review, metric, policy)
     row = _metric_row(payload, "false_risk_off_delta")
@@ -304,9 +291,10 @@ def test_metric_runtime_provenance_is_required() -> None:
     metric["common_runtime_provenance_fields"].remove("numerator")
     payload = _build(review, metric, policy)
 
-    assert "metric_runtime_provenance_incomplete" in payload[
-        "metric_contract_review_matrix"
-    ]["blocker_codes"]
+    assert (
+        "metric_runtime_provenance_incomplete"
+        in payload["metric_contract_review_matrix"]["blocker_codes"]
+    )
 
 
 def test_screening_policy_requires_owner_preregistration() -> None:
@@ -315,9 +303,7 @@ def test_screening_policy_requires_owner_preregistration() -> None:
     policy["owner"] = "OWNER_MUST_SET"
     payload = _build(review, metric, policy)
 
-    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][
-        CANDIDATE_IDS[0]
-    ]
+    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][CANDIDATE_IDS[0]]
     assert "threshold_policy_not_owner_approved" in blockers
     assert "threshold_policy_owner_unresolved" in blockers
 
@@ -342,9 +328,7 @@ def test_screening_policy_requires_frozen_approval_provenance(
     policy[field] = value
     payload = _build(review, metric, policy)
 
-    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][
-        CANDIDATE_IDS[0]
-    ]
+    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][CANDIDATE_IDS[0]]
     assert expected_blocker in blockers
 
 
@@ -354,9 +338,7 @@ def test_screening_policy_requires_six_threshold_evaluations() -> None:
     candidate["thresholds"].pop()
     payload = _build(review, metric, policy)
 
-    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][
-        CANDIDATE_IDS[0]
-    ]
+    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][CANDIDATE_IDS[0]]
     assert "candidate_threshold_count_mismatch" in blockers
     assert "candidate_threshold_metric_set_mismatch" in blockers
 
@@ -366,9 +348,7 @@ def test_screening_policy_requires_minimum_five_primary_events() -> None:
     policy["readiness_gate"]["minimum_primary_event_count"] = 4
     payload = _build(review, metric, policy)
 
-    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][
-        CANDIDATE_IDS[0]
-    ]
+    blockers = payload["threshold_policy_review_matrix"]["blockers_by_candidate"][CANDIDATE_IDS[0]]
     assert "readiness_gate_minimum_primary_event_count_mismatch" in blockers
 
 
@@ -387,9 +367,10 @@ def test_null_nan_and_infinite_threshold_values_fail_closed(invalid: Any) -> Non
     policy["common_thresholds"][0]["value"] = invalid
     payload = _build(review, metric, policy)
 
-    assert approval.THRESHOLD_VALUE_INVALID in _threshold_row(
-        payload, CANDIDATE_IDS[0], "return_delta_vs_baseline"
-    )["gap_codes"]
+    assert (
+        approval.THRESHOLD_VALUE_INVALID
+        in _threshold_row(payload, CANDIDATE_IDS[0], "return_delta_vs_baseline")["gap_codes"]
+    )
     assert payload["status"] == approval.BLOCKED_STATUS
 
 
@@ -482,9 +463,7 @@ def test_dynamic_runner_writes_mixed_decision_artifacts(tmp_path: Path) -> None:
         "no_effect_boundary.json",
     ):
         assert (output_root / filename).exists()
-    assert (
-        docs_root / "growth_tilt_candidate_runtime_spec_threshold_policy_approval.md"
-    ).exists()
+    assert (docs_root / "growth_tilt_candidate_runtime_spec_threshold_policy_approval.md").exists()
 
 
 def test_dynamic_runner_strict_mode_rejects_missing_metric_contract(tmp_path: Path) -> None:
@@ -567,12 +546,18 @@ def test_registry_catalog_system_flow_and_task_register_are_aligned() -> None:
         item in Path("docs/system_flow.md").read_text(encoding="utf-8")
         for item in approval.REQUIRED_FLOW_REFERENCES
     )
-    task_register = Path("docs/task_register.md").read_text(encoding="utf-8")
-    assert "TRADING-2438M1A_GROWTH_TILT_OWNER_DECISION_FINALIZATION" in task_register
-    assert (
-        "TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL"
-        in task_register
-    )
+    active_register = Path("docs/task_register.md").read_text(encoding="utf-8")
+    completed_register = Path("docs/task_register_completed.md").read_text(encoding="utf-8")
+    for task_id in (
+        "TRADING-2438M1A_GROWTH_TILT_OWNER_DECISION_FINALIZATION",
+        "TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL",
+    ):
+        assert task_id not in active_register
+        matching_rows = [
+            line for line in completed_register.splitlines() if line.startswith(f"|{task_id}|")
+        ]
+        assert len(matching_rows) == 1
+        assert "|P0|DROPPED|" in matching_rows[0]
 
 
 def _build(
@@ -666,9 +651,7 @@ def _complete_inputs() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     metric["relative_delta_epsilon_policy"].update(
         {"status": "APPROVED", "owner": "fixture_policy_owner"}
     )
-    metric["empty_event_policy"].update(
-        {"status": "APPROVED", "owner": "fixture_policy_owner"}
-    )
+    metric["empty_event_policy"].update({"status": "APPROVED", "owner": "fixture_policy_owner"})
 
     policy = _threshold_policy()
     policy["policy_status"] = "APPROVED"
@@ -818,9 +801,7 @@ def _redefined_b_review_fixture() -> dict[str, Any]:
             "old_candidate_id": "false_risk_off_confirmation_relaxation",
             "proposed_candidate_id": "non_hard_defensive_entry_persistence_guard",
             "overlap_with": "BASELINE_NON_HARD_DEFENSIVE_ENTRY_REQUEST",
-            "old_semantics_rejected_reason": (
-                "NO_EXACTLY_ONE_CALLABLE_PIT_SOFT_CONFIRMATION"
-            ),
+            "old_semantics_rejected_reason": ("NO_EXACTLY_ONE_CALLABLE_PIT_SOFT_CONFIRMATION"),
             "new_candidate_role": "NON_HARD_DEFENSIVE_ENTRY_PERSISTENCE_GUARD",
             "changes_trigger_timing": True,
             "changes_ramp_speed": False,
@@ -828,12 +809,8 @@ def _redefined_b_review_fixture() -> dict[str, Any]:
             "changes_aggregate_non_hard_request_persistence": True,
             "rationale": "Test only the aggregate non-hard request persistence axis.",
             "proposed_parameters": {
-                "trigger_source": (
-                    "EXACT_BASELINE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST"
-                ),
-                "candidate_required_steps_expression": (
-                    "baseline_required_steps_plus_one"
-                ),
+                "trigger_source": ("EXACT_BASELINE_AGGREGATE_NON_HARD_DEFENSIVE_REQUEST"),
+                "candidate_required_steps_expression": ("baseline_required_steps_plus_one"),
                 "maximum_added_steps": 1,
                 "changes_soft_component": False,
                 "changes_aggregate_non_hard_request_persistence": True,
@@ -866,9 +843,7 @@ def _metric_row(payload: dict[str, Any], metric_id: str) -> dict[str, Any]:
     )
 
 
-def _threshold_row(
-    payload: dict[str, Any], candidate_id: str, metric_id: str
-) -> dict[str, Any]:
+def _threshold_row(payload: dict[str, Any], candidate_id: str, metric_id: str) -> dict[str, Any]:
     return next(
         item
         for item in payload["threshold_policy_review_matrix"]["rows"]
@@ -906,10 +881,6 @@ def _runner_sources(
         json.dumps({"reports": [{"report_id": approval.REPORT_TYPE}]}),
         encoding="utf-8",
     )
-    paths["catalog"].write_text(
-        "\n".join(approval.REQUIRED_CATALOG_REFERENCES), encoding="utf-8"
-    )
-    paths["flow"].write_text(
-        "\n".join(approval.REQUIRED_FLOW_REFERENCES), encoding="utf-8"
-    )
+    paths["catalog"].write_text("\n".join(approval.REQUIRED_CATALOG_REFERENCES), encoding="utf-8")
+    paths["flow"].write_text("\n".join(approval.REQUIRED_FLOW_REFERENCES), encoding="utf-8")
     return paths

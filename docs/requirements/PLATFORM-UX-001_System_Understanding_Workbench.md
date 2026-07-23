@@ -1,6 +1,6 @@
 # PLATFORM-UX-001 系统认知工作台
 
-最后更新：2026-07-12
+最后更新：2026-07-23
 
 ## 任务信息
 
@@ -8,7 +8,7 @@
 - priority：`P1`
 - status：`PROPOSED`
 - owner：project owner / architecture coordinator / reporting and UX owner
-- dependency：`KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE`、`PUBLISHING-001_MULTI_CARRIER_PUBLISHING`；完整 ARCH-004G2.4 handoff PASS -> ARCH-005 S0/S1 PASS -> 新显式恢复指令 -> ARCH-004G2.5 parallel readiness -> ARCH-004G3 native reporting；native cut-in 依赖 ARCH-004H
+- dependency：`KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE`、`PUBLISHING-001_MULTI_CARRIER_PUBLISHING`、稳定的ARCH-004G3 native reporting contract；只读inventory/prototype可在G3后评审，native cut-in依赖ARCH-004H
 - production effect：`none`
 
 ## 背景
@@ -102,5 +102,8 @@
 
 ## 状态记录
 
+- 2026-07-23：G2.4 handoff、ARCH-005 S0～S4B与G2.5已完成，不再作为未来开放依赖。当前真实
+  blocker收敛为G3结论链、Knowledge Object/Publishing contracts与ARCH-004H native cut-in；在这些
+  contract稳定前不实现产品UI或创建第二套事实源。
 - 2026-07-12：根据 owner 关于降低系统理解和使用成本的讨论登记为 `PROPOSED`。当前只记录需求和边界，不在 ARCH-004G2 在途迁移中实现 UI；下一步是 owner/architecture/reporting 共同复核 U0/U1 范围及与 G3/H 的切入时点。
 - 2026-07-12：根据最新三层架构讨论，将本任务明确收敛为 Publishing & Experience 的交互式客户端；其原有只读、deterministic、no-recompute 边界保留，知识对象、Obsidian 和多载体 publishing 由 KNOWLEDGE-001/PUBLISHING-001 承接。此前可能把工作台理解为完整知识系统的范围表述，以本次定位为准。

@@ -498,13 +498,15 @@ ARCH-004 coordinator 生成并验证 `arch_005_bootstrap_handoff.v1`。S0 冻结
 
 - S5 source-of-truth cutover 是否与 ARCH-004H 同一 wave 完成，以及最终 rollback owner；
 - 在至少两个真实 S4B 批次后，是否有证据把两个 domain worker 扩为三个；
-- ARCH-004 G2.5 的单独恢复授权与 G3/G4/G5 首批具体 wave；
+- Wave14 `D0B2 + bounded G3` 与Wave15 `D0B3 + G4B first consumer`的真实冲突、返工及
+  coordinator-wait telemetry是否支持继续保持双domain worker；
 - S6 throughput、queue age、conflict/rework 与 coordinator wait telemetry 的长期 read model；
 - S5 后 canonical event 写入采用一事件一文件还是 task-local append-only stream。
 
 这些问题不影响已闭合的 S0～S4A 与已采用的 S4B operating model。S4C 已获得上述窄范围
 validated-main integration 授权；任何扩大 lane capacity、切换 source-of-truth、扩大自动集成权限或
-恢复 G2.5 的决定仍必须单独授权，不能从“双线默认”推断。
+启动新的domain wave都必须通过该批从最终HEAD生成的exact manifests/ownership/readiness，不能从
+历史G2.5 rehearsal或“双线默认”推断。
 
 ## 状态记录
 

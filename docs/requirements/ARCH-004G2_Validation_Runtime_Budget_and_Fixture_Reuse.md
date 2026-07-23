@@ -11,24 +11,29 @@
 - dependency：G2.4 原子切片不得被打断；优先随正在迁移的 chain 分批治理
 - production effect：`none`
 
-## Wave12 Full 后续增量（2026-07-23）
+## Wave13 Full 后续增量（2026-07-23）
 
-Wave12 correctness 已以 failure-fix Full=`6825 passed / 3 skipped / 643 warnings / 1147.04s`通过。
-该单次 PASS 相对上一正式基线`1106.60s`慢`40.44s / 3.65%`，但相对失败父运行的最慢节点只慢
-`0.26%`、tail idle反而下降，当前证据不足以判定稳定性能回退。明确可归属的近期问题是 duration seed
-仅覆盖`1097/1108`个test files：11个untracked文件以0权重进入尾部，合计约`83.96 worker-s`，其中
-`tests/test_arch_004g4_operations_consumer_migration.py=25.03s`形成最终critical tail。
+Wave13 GOV-006 N1 correctness 已以 failure-fix Full=
+`6844 passed / 3 skipped / 643 warnings / 1340.11s`通过；其严格父运行为
+`6843 passed / 1 failed / 3 skipped / 1345.61s`。两个运行墙钟接近，唯一失败来自已归档任务仍被旧
+测试要求留在active register，修复没有形成新的性能回退证据。PASS profile精确覆盖
+`6847 nodes / 1108 files / 16 workers`，profile、telemetry、performance与provenance均PASS。
+
+本次可归属的调度风险是旧v23 seed只匹配`1097/1108`个test files；11个未跟踪文件进入稳定尾部，
+最大tail idle=`211.69s`、total tail idle=`3042.92s`。因此已从PASS profile机械刷新
+`arch_004g_wave13_full_duration_partial_seed` v24，精确覆盖`1108 files / 6847 nodes`，raw
+SHA-256=`df1d10aeedcf8d572fa568e45a100d097aed2685a115c9ec8e1f7251517e2cfd`。
+这只是advisory seed freshness，不是稳定Full提速结论。
 
 下一有界增量顺序冻结为：
 
-1. 以`outputs/validation_runtime/full_20260723T021214Z/test_runtime_profile.json`机械刷新 advisory
-   duration seed及source-bound contract，使1108个test files全部进入排序；不增加workers、不删测试、
-   不改变tier/gate或业务语义。
-2. 在下一自然Full验证scheduler applied/no-fallback、untracked slow-file不再形成末尾critical path，并
-   记录tail idle、worker CV与共同文件duration；单次结果不声明stable global improvement。
+1. 在下一次由业务/架构变更自然触发的Full验证v24 scheduler applied/no-fallback、tracked coverage与
+   尾部调度；本closeout不为性能比较额外运行第三次Full。
+2. 记录tail idle、worker CV、共同文件duration与collection drift；单次结果不声明stable global
+   improvement。
 3. 随后才为Smoothed真实producer/validator链增加调用级阶段计时与validation-session cache hit/miss；
    只有证明可消除重复计算且保留真实E2E/tamper/fail-closed覆盖，才允许选择有界fixture-reuse候选。
-4. 12/16/20 worker benchmark最后再做；当前16-worker active CV约`0.7%`，盲增worker不是首要杠杆。
+4. 12/16/20 worker benchmark最后再做；盲增worker不是首要杠杆。
 
 ## 问题与证据
 

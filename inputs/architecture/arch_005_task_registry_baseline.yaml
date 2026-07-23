@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1609993
-    sha256: 1e60a4e80c4481f5899d290b09c85a98ca97c17cac1fff3116d3538e8a374020
+    byte_count: 1611217
+    sha256: 968710a7c53992512991866b91f90fb7d8bad4e154bf8cbe7b6177a5bdc6cf84
     row_count: 405
     final_newline: true
     task_id_order_sha256: 0d69f53b0f65ee0732899c9f6580e7946f29739d3cbe75ef88eb007212e4e6c2
-    row_checksum_order_sha256: 03e0885e292c29730dfbee7a18c52df7c0e165ffa223af48f685abdff9c3e850
+    row_checksum_order_sha256: e729e3010c7c3518a9c8d6a14666199f0d509eb4952bda945dbc085e9a0a9408
     task_row_newline_counts:
       LF: 405
   - source: completed
@@ -132,7 +132,7 @@ inventory:
     VALIDATING: 267
   task_id_set_sha256: 3baa2b991dbfa20ac9a3cf409a0546c454df68ab7426830dc3fced7dda6fb688
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: ad85c53c300419fec2b5afe2217ee78ff49b0a58b04d0cf1e4eadee216b94ca7
+  owner_set_sha256: cff64b66d8bd5920c6e3fad7427201bbc599ea4786a76951cf907a16940f0a89
   docs_link_set_sha256: e1dd6f58d749fb37ff34f7bd7651d09fd2d49900bdcaa615b5f736a0730d0e3b
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -761,14 +761,14 @@ inventory:
   - task_id: ARCH-004
     source: active
     line_number: 1569
-    row_sha256: 2ca2bfc8097bf5e1dda011e8f89c4efcbe03f7ac2f54cbde09f65daee433266c
+    row_sha256: b155d4888698f6e66322808cc9dfb7d6055d6ed435e8c3463ec42983e7406915
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     source: active
     line_number: 1570
-    row_sha256: 998a5ad75d0c90b1a98ef95737854ed91c550985b0a90766ae4532149de3f75d
+    row_sha256: 9bd239cddfa86e2647f50e621cc6daf822774302a41a639cc8d9a5556c8dad4f
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -789,7 +789,7 @@ inventory:
   - task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
     source: active
     line_number: 1573
-    row_sha256: e8c41ddd53198f173dd427670f6704b26d18648d4d068a451218da9983f0f9f2
+    row_sha256: 96f320ab9eca17518aaff8246e79a4cf1ab9a2a7d1e916711cf0a4f9677ebb7f
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -2917,7 +2917,7 @@ inventory:
   - task_id: GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
     source: active
     line_number: 1935
-    row_sha256: 9dd5781ee7da307473760254411df891b3c6fdfc6189faf2c8a688eee6dd5a8e
+    row_sha256: ca2a3fa0f6104e4edb05ce1059d57a8ed3217bf05841106d1c6ce7a8e7388419
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -6385,7 +6385,7 @@ consumer_characterization:
   runtime_consumer_count: 9
   test_consumer_count: 117
   script_consumer_count: 2
-  consumer_set_sha256: bd386d93f55b43fbf5aa227450c6244299369272994078dc44edf0b32303aa8d
+  consumer_set_sha256: 9dd47bf4ade04de325797c0bf058e59a593840032b73b96005df5deebc18bc5c
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
     role: runtime
@@ -6736,7 +6736,8 @@ consumer_characterization:
     role: test
     targets:
     - docs/task_register.md
-    reference_count: 1
+    - docs/task_register_completed.md
+    reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
   - path: tests/research_strategies/test_growth_tilt_defensive_limited_adjustment_component_validation.py
     role: test
@@ -7100,7 +7101,7 @@ consumer_characterization:
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 4
+    reference_count: 6
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
     role: test
@@ -7211,4 +7212,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: f0b85cb611bcb2bb405cf667f65e0f46b6c01becfdb405f20987a00549b8ec25
+baseline_checksum: fa5148364aef906e1a38a6b2fed819536519a990fe80aee5370d6a61dd46fb0b

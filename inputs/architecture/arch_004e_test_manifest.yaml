@@ -1294,7 +1294,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_growth_tilt_candidate_runtime_spec_threshold_policy_approval
   path: tests/research_strategies/test_growth_tilt_candidate_runtime_spec_threshold_policy_approval.py
-  sha256: 8f1e0f045a4e4aa79f338c7a45dad742c04a47d47fc1644f66cc1babb057d9a6
+  sha256: 05a4b709b0846fb4de24fd162127a42938144a995118a784abba51829a409ba0
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7439,7 +7439,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: b71198e1e749bf46eabd6f4c4900ec8720427a20eb5848c6978728fb13ef24d4
+  sha256: 3e3897e461d16041ccc2ab2ae99eb70fe6afcd22a9a83dfec0b2d852290f7560
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -15853,7 +15853,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_validation_runtime_profile
   path: tests/test_validation_runtime_profile.py
-  sha256: f0de4781cde63870d0710d0e4b000a08a0598dec0e2c911893c4a8f9223a9e20
+  sha256: dfabd48cc790ba7a428d5633c6cb9c261b6c32936b81d148146674d410250433
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

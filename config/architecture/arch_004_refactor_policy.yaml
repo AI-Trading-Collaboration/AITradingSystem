@@ -615,7 +615,7 @@ phase_g_execution:
     G1_shared_platform_helper_migration: COMPLETE
     G2_interfaces_and_etf_cli_migration: COMPLETE
     G3_reporting_native_migration: NOT_STARTED
-    G4_operations_consumer_migration: IN_PROGRESS_W12_S2_SHARED_INTEGRATION
+    G4_operations_consumer_migration: VALIDATING_CADENCE_PENDING
     G5_research_wrapper_migration: NOT_STARTED
     G6_portfolio_decision_sensitive_migration: NOT_STARTED
     G7_closeout_and_h_handoff: NOT_STARTED
@@ -626,6 +626,47 @@ phase_g_execution:
   historical_artifact_deletion_allowed: false
   production_effect: none
   next_phase_unblocked: false
+  current_coordination_wave:
+    wave_id: WAVE13_GOV006_N1
+    current_phase: WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT
+    status: FORMAL_COMPLETE
+    task_id: GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
+    historical_base_commit: 02f9492a1975440240cb65f761d2cf544a5a875e
+    application_commit: 58ee6a80b5a04ff68a97a96d36b575ae8391f657
+    dry_run_manifest_id: gov_006_decision_manifest_3fb5f2a038eca2361179
+    applied_closeout_id: gov_006_applied_closeout_bdbfd433a72d5349ead9
+    applied_closeout_path: inputs/governance/gov_006_wave1_applied_closeout.json
+    applied_closeout_schema: gov_006_portfolio_normalization_applied_closeout.v1
+    applied_closeout_status: APPLIED_CLOSEOUT_READY
+    applied_closeout_validation: PASS
+    applied_closeout_canonical_sha256: bdbfd433a72d5349ead904a95ebba484b6051d9cdc029f091395d1f0988dc111
+    decision_count: 30
+    done_count: 18
+    dropped_count: 12
+    active_task_count_before: 435
+    active_task_count_after: 405
+    completed_task_count_before: 457
+    completed_task_count_after: 487
+    total_task_count: 892
+    automatic_apply_allowed: false
+    task_source_of_truth: LEGACY_MARKDOWN_ONLY
+    task_source_of_truth_cutover: false
+    next_wave:
+      wave_id: WAVE14_D0B2_BOUNDED_G3
+      dispatch_allowed: false
+      prior_g2_5_rehearsal_is_dispatch_authority: false
+      final_head_manifest_required: true
+      s0_contract_readiness_status: NOT_STARTED
+      next_slice_unblocked: false
+      data_task: DATA-GOV-001_D0B2
+      reporting_task: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+      max_active_domain_workers: 2
+      shared_paths_coordinator_only: true
+      g4c_cadence_observation_async: true
+    strategy_logic_changed: false
+    data_or_runtime_changed: false
+    broker_action: none
+    production_effect: none
   g0_evidence:
     policy_path: config/architecture/arch_004g_deprecation_policy.yaml
     inventory_path: inputs/architecture/arch_004g_deprecation_inventory.yaml

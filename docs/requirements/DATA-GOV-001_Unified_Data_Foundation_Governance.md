@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0B1_S2_COMPLETE_D0B2_AFTER_WAVE13`
+- current phase：`D0B1_S2_COMPLETE_D0B2_AFTER_WAVE14_S0`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -104,8 +104,9 @@ D0B 按 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consu
 - D0B1：新增独立 `data_quality_execution_receipt.v1` 与严格 verifier，绑定 reviewed policy、
   canonical validator、exact invocation、input/manifest/report bytes 和现有 evidence；即使 FAIL 也写
   immutable receipt，且 `consumer_cutover_allowed=false`；
-- D0B2：补齐 market-calendar freshness、逐 ticker coverage/internal gap、finite checks，并修复当前
-  prices checksum 未被 download manifest 覆盖的真实 source-binding blocker；
+- D0B2：补齐 market-calendar freshness、逐 ticker coverage/internal gap、finite checks，并把
+  download/publish/composite-manifest 更新收敛为单一事务；当前现场文件checksum已经可在manifest中匹配，
+  但该偶然一致不能证明下一次下载不会留下data/manifest中间态；
 - D0B3：把 verified receipt 与 publication companion attestation、reviewed per-consumer profile 绑定，
   只逐 consumer 授权，不翻转全局 cutover。
 
@@ -164,24 +165,31 @@ restore 演练。D0A 的逻辑原子性与线程级测试不能替代 D0C；在 
 - 2026-07-23：D0B1 与 Wave12 S2 formal exit PASS。最终 architecture/contract/reproducibility/
   integration=`525/266/23/983 passed`，failure-fix Full=`6825 passed / 3 skipped / 643 warnings /
   1147.04s`；canonical receipt/verifier、same-byte capture、actual window、profile/as-of pointer 与 daily
-  typed preflight 已闭合。DATA-GOV overall 保持 `IN_PROGRESS`；D0B2 在 Wave13 GOV-006 N1 后与 bounded
-  G3 并行，直接修复真实 manifest 并补 calendar freshness、coverage/internal gap、finite gate；
+  typed preflight 已闭合。DATA-GOV overall 保持 `IN_PROGRESS`；Wave13 GOV-006 N1 formal gate已PASS，
+  closeout commit/push后先基于最终HEAD通过Wave14 S0 contract/readiness，随后D0B2才与bounded G3并行，修复真实
+  download/publish/manifest事务并补calendar freshness、coverage/internal gap、finite gate；
   `consumer_cutover_allowed=false`、production/broker 均保持关闭。
+- 2026-07-23：Wave13 N1 closeout 前重新核对本地真实数据，prices/rates/Marketstack当前SHA均可在
+  `download_manifest.csv`中匹配；Wave12记录的checksum缺失实例已由后续合法refresh消失，但D0B2仍为
+  P0：当前下载实现会先覆盖数据CSV、最后再更新manifest，且composite row-count/source binding、
+  market-calendar、requested-window coverage、internal-gap与finite gate尚未闭合。不得把现场一致状态
+  解释为事务边界已完成。
 - 2026-07-23：D0B1/S2 pre-formal hardening 已关闭 same-byte capture、actual evaluated window、typed
   execution profile 以及 root-bound report/receipt/pointer/universe read-write 四类 P1；独立复核确认无
   剩余 P0/P1，combined focused=`246 passed / 1 skipped`。当前只进入 generated freshness 与 formal
-  gates；真实 prices manifest checksum blocker仍保留给D0B2，`consumer_cutover_allowed=false`。
+  gates；历史checksum缺失实例已经消失，但结构性transaction/composite binding缺口仍保留给D0B2，
+  `consumer_cutover_allowed=false`。
 - 2026-07-23：D0B1 canonical runner/verifier 与 chronology 加固通过 `20 passed`，并与 G4A 联合进入
   `W12_S2_SHARED_INTEGRATION`。S2 采用 profile/as-of 隔离的 atomic discovery pointer；pointer 只负责
-  发现 exact receipt，公开 verifier 才提供证明。当前 prices manifest checksum blocker 保留给 D0B2，
-  本阶段不得降级、伪造或提前授权 consumer cutover。
+  发现 exact receipt，公开 verifier 才提供证明。D0B2必须证明下一次download/publish/manifest更新的
+  原子性与composite binding，而不是依赖当前cache恰好匹配；本阶段不得提前授权consumer cutover。
 - 2026-07-23：Wave12 S0 shared contract/readiness 与 formal contract-validation PASS，D0B1 已获
   coordinator manual assignment，可与 G4A 在不相交路径并行实现。自动 dispatch、consumer cutover、
   production 与 broker 权限继续关闭；D0B worker 只能编辑 data-side execution module/focused tests。
 - 2026-07-23：Wave12 S0 开始，D0B 与 G4 进入共享 contract/readiness 冻结。D0B1 只新增可重算的
   execution receipt/verifier，不改写 D0A schema 或历史 false safety flags；D0B2/D0B3 分别负责规则完整性
-  与逐 consumer 授权。当前真实 prices checksum 未被 download manifest 覆盖，严格门禁必须以
-  `DQ_MANIFEST_CURRENT_CHECKSUM_MISSING` 阻断并修复，禁止降级或绕过。G4 只能消费 verifier 返回的
+  与逐 consumer 授权。该时点真实prices checksum缺失是不可变历史审计事实；当前refresh后SHA已匹配，
+  但严格门禁仍必须在任一未来不匹配或composite binding失败时阻断，禁止降级或绕过。G4只能消费verifier返回的
   typed preflight，不能继续信任裸 `PASS + evidence_id`，`production_effect=none`。
 - 2026-07-23：D0A 多轮审计加固的 implementation 已完成。bound-directory authority 已覆盖 POSIX
   parent `dir_fd` 相对 mutation 与 Windows root→parent 不共享 delete 的目录 handle；stage/current/link

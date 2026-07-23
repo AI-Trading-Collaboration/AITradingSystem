@@ -9,6 +9,7 @@
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`、`DATA-GOV-001`
 - priority：`P0`
 - status：`COMPLETE_WAVE12_S2`（G4 overall=`VALIDATING`；DATA-GOV overall=`IN_PROGRESS`）
+- current roadmap：`WAVE13_N1_FORMAL_COMPLETE_PUSH_THEN_WAVE14_S0_THEN_D0B2_BOUNDED_G3`
 - owners：architecture coordinator / operations platform worker / data platform worker
 - source phase：`G2_5_COMPLETE_G4_D0B_NEXT`
 - source base：`12b1fb86369f146c9ef1c7ac54872eb8150ed791`
@@ -166,10 +167,13 @@ G4A、D0B1 focused 与交叉审计通过后，S2 冻结以下集成语义：
 
 ## 当前真实数据 blocker
 
-只读审计发现当前 `data/raw/prices_daily.csv` 的 SHA-256 未被 `download_manifest.csv` 当前记录覆盖，
-而 rates 与 Marketstack checksum 有匹配。D0B 严格 source binding 启用后必须输出
-`DQ_MANIFEST_CURRENT_CHECKSUM_MISSING` 并阻断。D0B2 应直接修复 download/publish/manifest 事务并重跑
-`aits validate-data`；不得通过忽略该 input、伪造 source id 或降低为 warning 绕过。
+Wave12只读审计发现当时的 `data/raw/prices_daily.csv` SHA-256未被`download_manifest.csv`覆盖；该历史
+FAIL实例继续保留，证明strict source binding不能降级。Wave13 closeout前重新核对现场文件后，
+prices/rates/Marketstack当前SHA均已有manifest匹配，说明后续合法refresh消除了该具体checksum mismatch。
+但D0B2仍必须直接修复结构问题：现有download path先分别覆盖数据CSV，最后才更新manifest，无法保证
+data与manifest作为一个事务发布；composite row-count/source binding、market-calendar freshness、逐ticker
+requested-window coverage/internal gap和finite-value gate也尚未闭合。未来任一不匹配仍必须输出
+`DQ_MANIFEST_CURRENT_CHECKSUM_MISSING`或更精确typed blocker并停止；不得因当前恰好匹配而提前授权consumer。
 
 ## 并行所有权与共享租约
 
@@ -240,7 +244,8 @@ key 必须绑定 policy SHA、validator version/SHA、as-of 与全部 input chec
 - shared integration/formal gate：0.5～1 人日；
 - 两 worker 并行后预计墙钟约 3～5 个工作日。
 
-S2 已通过且 G4 转为 `VALIDATING`；在 Wave13 GOV-006 N1 收口后，operations worker 可释放给
+S2 已通过且 G4 转为 `VALIDATING`；Wave13 GOV-006 N1 formal gate已PASS，closeout提交并推送后必须先从最终HEAD冻结
+Wave14 exact manifests/ownership/readiness并通过S0，随后operations worker才可释放给
 G3 Reporting Native Migration；真实
 cadence observation 由计划任务证据链异步积累。G3 后再推进 G5，D0C/D1 的准确并行点在届时根据
 typed DQ、lineage 与 shared-path 冲突重新冻结。GOV-006 N1～N3 保持独立 coordinator 批次，不与
