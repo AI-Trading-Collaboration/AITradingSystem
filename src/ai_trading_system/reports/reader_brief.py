@@ -175,26 +175,34 @@ def build_reader_brief_payload(
     research_monthly_review_pack = _research_monthly_review_pack_summary(report_index)
     paper_shadow_promotion_board = _paper_shadow_promotion_board_summary(report_index)
     candidate_rejection_postmortem = _candidate_rejection_postmortem_summary(report_index)
-    decision_snapshot_lifecycle_policy = _decision_snapshot_lifecycle_policy_summary(report_index)
+    decision_snapshot_lifecycle_policy = _decision_snapshot_lifecycle_policy_summary(
+        report_index
+    )
     extended_shadow_observation_clock = _extended_shadow_observation_clock_summary(report_index)
     extended_shadow_protocol = _extended_shadow_protocol_summary(report_index)
     research_roadmap_dashboard = _research_roadmap_dashboard_summary(report_index)
-    research_governance_end_to_end_pack = _research_governance_end_to_end_pack_summary(report_index)
-    research_governance_recovery_pack = _research_governance_recovery_pack_summary(report_index)
-    decision_stage_governance_snapshot = _decision_stage_governance_snapshot_summary(report_index)
-    return_to_research_governance_snapshot = _return_to_research_governance_snapshot_summary(
+    research_governance_end_to_end_pack = _research_governance_end_to_end_pack_summary(
         report_index
+    )
+    research_governance_recovery_pack = _research_governance_recovery_pack_summary(
+        report_index
+    )
+    decision_stage_governance_snapshot = _decision_stage_governance_snapshot_summary(
+        report_index
+    )
+    return_to_research_governance_snapshot = (
+        _return_to_research_governance_snapshot_summary(report_index)
     )
     next_research_cycle_snapshot = _next_research_cycle_snapshot_summary(report_index)
     next_candidate_backfill = _next_candidate_backfill_summary(report_index)
-    next_candidate_stress_cost_benchmark = _next_candidate_stress_cost_benchmark_summary(
-        report_index
+    next_candidate_stress_cost_benchmark = (
+        _next_candidate_stress_cost_benchmark_summary(report_index)
     )
-    next_candidate_vs_returned_comparison = _next_candidate_vs_returned_comparison_summary(
-        report_index
+    next_candidate_vs_returned_comparison = (
+        _next_candidate_vs_returned_comparison_summary(report_index)
     )
-    next_candidate_signal_window_sensitivity = _next_candidate_signal_window_sensitivity_summary(
-        report_index
+    next_candidate_signal_window_sensitivity = (
+        _next_candidate_signal_window_sensitivity_summary(report_index)
     )
     next_candidate_research_gate = _next_candidate_research_gate_summary(report_index)
     next_candidate_owner_research_review_packet = (
@@ -202,8 +210,12 @@ def build_reader_brief_payload(
     )
     executable_binding_contract = _executable_binding_contract_summary(report_index)
     executable_signal_binding = _executable_signal_binding_summary(report_index)
-    executable_research_weight_binding = _executable_research_weight_binding_summary(report_index)
-    executable_binding_safety_audit = _executable_binding_safety_audit_summary(report_index)
+    executable_research_weight_binding = _executable_research_weight_binding_summary(
+        report_index
+    )
+    executable_binding_safety_audit = _executable_binding_safety_audit_summary(
+        report_index
+    )
     research_safety_boundary_audit = _research_safety_boundary_audit_summary(report_index)
     artifact_lineage_graph = _artifact_lineage_graph_summary(report_index)
     task_register_consistency = _task_register_consistency_summary(report_index)
@@ -381,7 +393,9 @@ def build_reader_brief_payload(
         "next_candidate_backfill": next_candidate_backfill,
         "next_candidate_stress_cost_benchmark": next_candidate_stress_cost_benchmark,
         "next_candidate_vs_returned_comparison": next_candidate_vs_returned_comparison,
-        "next_candidate_signal_window_sensitivity": (next_candidate_signal_window_sensitivity),
+        "next_candidate_signal_window_sensitivity": (
+            next_candidate_signal_window_sensitivity
+        ),
         "next_candidate_research_gate": next_candidate_research_gate,
         "next_candidate_owner_research_review_packet": (
             next_candidate_owner_research_review_packet
@@ -532,7 +546,10 @@ def build_reader_brief_quality_payload(
                     "research_promotion_status",
                 )
             )
-            or any(_text(executive_decision.get(key)) for key in ("action", "decision", "status")),
+            or any(
+                _text(executive_decision.get(key))
+                for key in ("action", "decision", "status")
+            ),
             "Reader Brief 披露清晰 decision/build/research 状态。",
         ),
         _quality_check(
@@ -709,21 +726,31 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     report_index = _mapping(payload.get("report_index_summary"))
     report_index_waiver_inventory = _mapping(payload.get("report_index_waiver_inventory"))
     reader_brief_consistency = _mapping(payload.get("reader_brief_consistency"))
-    production_boundary_static_scan = _mapping(payload.get("production_boundary_static_scan"))
+    production_boundary_static_scan = _mapping(
+        payload.get("production_boundary_static_scan")
+    )
     owner_review_template_v2 = _mapping(payload.get("owner_review_template_v2"))
     owner_decision_audit_log = _mapping(payload.get("owner_decision_audit_log"))
     research_monthly_review_pack = _mapping(payload.get("research_monthly_review_pack"))
     paper_shadow_promotion_board = _mapping(payload.get("paper_shadow_promotion_board"))
     candidate_rejection_postmortem = _mapping(payload.get("candidate_rejection_postmortem"))
-    decision_snapshot_lifecycle_policy = _mapping(payload.get("decision_snapshot_lifecycle_policy"))
-    extended_shadow_observation_clock = _mapping(payload.get("extended_shadow_observation_clock"))
+    decision_snapshot_lifecycle_policy = _mapping(
+        payload.get("decision_snapshot_lifecycle_policy")
+    )
+    extended_shadow_observation_clock = _mapping(
+        payload.get("extended_shadow_observation_clock")
+    )
     extended_shadow_protocol = _mapping(payload.get("extended_shadow_protocol"))
     research_roadmap_dashboard = _mapping(payload.get("research_roadmap_dashboard"))
     research_governance_end_to_end_pack = _mapping(
         payload.get("research_governance_end_to_end_pack")
     )
-    research_governance_recovery_pack = _mapping(payload.get("research_governance_recovery_pack"))
-    decision_stage_governance_snapshot = _mapping(payload.get("decision_stage_governance_snapshot"))
+    research_governance_recovery_pack = _mapping(
+        payload.get("research_governance_recovery_pack")
+    )
+    decision_stage_governance_snapshot = _mapping(
+        payload.get("decision_stage_governance_snapshot")
+    )
     return_to_research_governance_snapshot = _mapping(
         payload.get("return_to_research_governance_snapshot")
     )
@@ -744,9 +771,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     )
     executable_binding_contract = _mapping(payload.get("executable_binding_contract"))
     executable_signal_binding = _mapping(payload.get("executable_signal_binding"))
-    executable_research_weight_binding = _mapping(payload.get("executable_research_weight_binding"))
-    executable_binding_safety_audit = _mapping(payload.get("executable_binding_safety_audit"))
-    research_safety_boundary_audit = _mapping(payload.get("research_safety_boundary_audit"))
+    executable_research_weight_binding = _mapping(
+        payload.get("executable_research_weight_binding")
+    )
+    executable_binding_safety_audit = _mapping(
+        payload.get("executable_binding_safety_audit")
+    )
+    research_safety_boundary_audit = _mapping(
+        payload.get("research_safety_boundary_audit")
+    )
     artifact_lineage_graph = _mapping(payload.get("artifact_lineage_graph"))
     task_register_consistency = _mapping(payload.get("task_register_consistency"))
     report_quality_gate = _mapping(payload.get("report_quality_gate"))
@@ -1377,7 +1410,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", decision_snapshot_lifecycle_policy.get("status")),
                     (
                         "snapshot_lifecycle_status",
-                        decision_snapshot_lifecycle_policy.get("snapshot_lifecycle_status"),
+                        decision_snapshot_lifecycle_policy.get(
+                            "snapshot_lifecycle_status"
+                        ),
                     ),
                     (
                         "validation_status",
@@ -1401,7 +1436,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "latest_available_snapshot_date",
-                        decision_snapshot_lifecycle_policy.get("latest_available_snapshot_date"),
+                        decision_snapshot_lifecycle_policy.get(
+                            "latest_available_snapshot_date"
+                        ),
                     ),
                     (
                         "blocking_impact",
@@ -1568,7 +1605,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", research_governance_end_to_end_pack.get("status")),
                     (
                         "overall_governance_status",
-                        research_governance_end_to_end_pack.get("overall_governance_status"),
+                        research_governance_end_to_end_pack.get(
+                            "overall_governance_status"
+                        ),
                     ),
                     (
                         "validation_status",
@@ -1580,7 +1619,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "available_sources",
-                        research_governance_end_to_end_pack.get("available_source_count"),
+                        research_governance_end_to_end_pack.get(
+                            "available_source_count"
+                        ),
                     ),
                     (
                         "blockers",
@@ -1592,7 +1633,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "manual_review_items",
-                        research_governance_end_to_end_pack.get("manual_review_item_count"),
+                        research_governance_end_to_end_pack.get(
+                            "manual_review_item_count"
+                        ),
                     ),
                     (
                         "top_blocker",
@@ -1621,7 +1664,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", research_governance_recovery_pack.get("status")),
                     (
                         "recovery_governance_status",
-                        research_governance_recovery_pack.get("recovery_governance_status"),
+                        research_governance_recovery_pack.get(
+                            "recovery_governance_status"
+                        ),
                     ),
                     (
                         "validation_status",
@@ -1633,7 +1678,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "available_sources",
-                        research_governance_recovery_pack.get("available_source_count"),
+                        research_governance_recovery_pack.get(
+                            "available_source_count"
+                        ),
                     ),
                     (
                         "remaining_blockers",
@@ -1645,19 +1692,27 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "manual_review_items",
-                        research_governance_recovery_pack.get("manual_review_item_count"),
+                        research_governance_recovery_pack.get(
+                            "manual_review_item_count"
+                        ),
                     ),
                     (
                         "normal_paper_shadow_may_resume",
-                        research_governance_recovery_pack.get("normal_paper_shadow_may_resume"),
+                        research_governance_recovery_pack.get(
+                            "normal_paper_shadow_may_resume"
+                        ),
                     ),
                     (
                         "extended_shadow_remains_forbidden",
-                        research_governance_recovery_pack.get("extended_shadow_remains_forbidden"),
+                        research_governance_recovery_pack.get(
+                            "extended_shadow_remains_forbidden"
+                        ),
                     ),
                     (
                         "live_trading_remains_forbidden",
-                        research_governance_recovery_pack.get("live_trading_remains_forbidden"),
+                        research_governance_recovery_pack.get(
+                            "live_trading_remains_forbidden"
+                        ),
                     ),
                     (
                         "top_blocker",
@@ -1698,23 +1753,33 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "recommended_owner_action",
-                        decision_stage_governance_snapshot.get("recommended_owner_action"),
+                        decision_stage_governance_snapshot.get(
+                            "recommended_owner_action"
+                        ),
                     ),
                     (
                         "normal_shadow_may_resume",
-                        decision_stage_governance_snapshot.get("normal_shadow_may_resume"),
+                        decision_stage_governance_snapshot.get(
+                            "normal_shadow_may_resume"
+                        ),
                     ),
                     (
                         "extended_shadow_remains_forbidden",
-                        decision_stage_governance_snapshot.get("extended_shadow_remains_forbidden"),
+                        decision_stage_governance_snapshot.get(
+                            "extended_shadow_remains_forbidden"
+                        ),
                     ),
                     (
                         "live_trading_remains_forbidden",
-                        decision_stage_governance_snapshot.get("live_trading_remains_forbidden"),
+                        decision_stage_governance_snapshot.get(
+                            "live_trading_remains_forbidden"
+                        ),
                     ),
                     (
                         "owner_decision_append_allowed",
-                        decision_stage_governance_snapshot.get("owner_decision_append_allowed"),
+                        decision_stage_governance_snapshot.get(
+                            "owner_decision_append_allowed"
+                        ),
                     ),
                     (
                         "dry_run_written",
@@ -1746,7 +1811,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", return_to_research_governance_snapshot.get("status")),
                     (
                         "return_to_research_status",
-                        return_to_research_governance_snapshot.get("return_to_research_status"),
+                        return_to_research_governance_snapshot.get(
+                            "return_to_research_status"
+                        ),
                     ),
                     (
                         "candidate_status",
@@ -1758,19 +1825,27 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "normal_paper_shadow_active",
-                        return_to_research_governance_snapshot.get("normal_paper_shadow_active"),
+                        return_to_research_governance_snapshot.get(
+                            "normal_paper_shadow_active"
+                        ),
                     ),
                     (
                         "extended_shadow_allowed",
-                        return_to_research_governance_snapshot.get("extended_shadow_allowed"),
+                        return_to_research_governance_snapshot.get(
+                            "extended_shadow_allowed"
+                        ),
                     ),
                     (
                         "live_trading_allowed",
-                        return_to_research_governance_snapshot.get("live_trading_allowed"),
+                        return_to_research_governance_snapshot.get(
+                            "live_trading_allowed"
+                        ),
                     ),
                     (
                         "candidate_rejected",
-                        return_to_research_governance_snapshot.get("candidate_rejected"),
+                        return_to_research_governance_snapshot.get(
+                            "candidate_rejected"
+                        ),
                     ),
                     (
                         "hypothesis_count",
@@ -1778,7 +1853,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "next_candidate_id",
-                        return_to_research_governance_snapshot.get("next_candidate_id"),
+                        return_to_research_governance_snapshot.get(
+                            "next_candidate_id"
+                        ),
                     ),
                     (
                         "validation_status",
@@ -1794,7 +1871,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "production_effect",
-                        return_to_research_governance_snapshot.get("production_effect"),
+                        return_to_research_governance_snapshot.get(
+                            "production_effect"
+                        ),
                     ),
                 ]
             ),
@@ -1810,7 +1889,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", next_research_cycle_snapshot.get("status")),
                     (
                         "research_cycle_snapshot_status",
-                        next_research_cycle_snapshot.get("research_cycle_snapshot_status"),
+                        next_research_cycle_snapshot.get(
+                            "research_cycle_snapshot_status"
+                        ),
                     ),
                     (
                         "research_gate_decision",
@@ -1834,7 +1915,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_activation_allowed",
-                        next_research_cycle_snapshot.get("paper_shadow_activation_allowed"),
+                        next_research_cycle_snapshot.get(
+                            "paper_shadow_activation_allowed"
+                        ),
                     ),
                     (
                         "extended_shadow_allowed",
@@ -1846,7 +1929,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "official_target_weights_generated",
-                        next_research_cycle_snapshot.get("official_target_weights_generated"),
+                        next_research_cycle_snapshot.get(
+                            "official_target_weights_generated"
+                        ),
                     ),
                     (
                         "broker_order_allowed",
@@ -1923,27 +2008,39 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "cost_benchmark_status",
-                        next_candidate_stress_cost_benchmark.get("cost_benchmark_status"),
+                        next_candidate_stress_cost_benchmark.get(
+                            "cost_benchmark_status"
+                        ),
                     ),
                     (
                         "cost_survival_status",
-                        next_candidate_stress_cost_benchmark.get("cost_survival_status"),
+                        next_candidate_stress_cost_benchmark.get(
+                            "cost_survival_status"
+                        ),
                     ),
                     (
                         "benchmark_relative_status",
-                        next_candidate_stress_cost_benchmark.get("benchmark_relative_status"),
+                        next_candidate_stress_cost_benchmark.get(
+                            "benchmark_relative_status"
+                        ),
                     ),
                     (
                         "source_backfill_status",
-                        next_candidate_stress_cost_benchmark.get("source_backfill_status"),
+                        next_candidate_stress_cost_benchmark.get(
+                            "source_backfill_status"
+                        ),
                     ),
                     (
                         "stress_validation_status",
-                        next_candidate_stress_cost_benchmark.get("stress_validation_status"),
+                        next_candidate_stress_cost_benchmark.get(
+                            "stress_validation_status"
+                        ),
                     ),
                     (
                         "cost_validation_status",
-                        next_candidate_stress_cost_benchmark.get("cost_validation_status"),
+                        next_candidate_stress_cost_benchmark.get(
+                            "cost_validation_status"
+                        ),
                     ),
                     (
                         "major_blocker_count",
@@ -1987,11 +2084,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "real_metrics_available",
-                        next_candidate_vs_returned_comparison.get("real_metrics_available"),
+                        next_candidate_vs_returned_comparison.get(
+                            "real_metrics_available"
+                        ),
                     ),
                     (
                         "source_backfill_status",
-                        next_candidate_vs_returned_comparison.get("source_backfill_status"),
+                        next_candidate_vs_returned_comparison.get(
+                            "source_backfill_status"
+                        ),
                     ),
                     (
                         "stress_result",
@@ -1999,15 +2100,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "benchmark_relative_status",
-                        next_candidate_vs_returned_comparison.get("benchmark_relative_status"),
+                        next_candidate_vs_returned_comparison.get(
+                            "benchmark_relative_status"
+                        ),
                     ),
                     (
                         "repeated_failure_mode_count",
-                        next_candidate_vs_returned_comparison.get("repeated_failure_mode_count"),
+                        next_candidate_vs_returned_comparison.get(
+                            "repeated_failure_mode_count"
+                        ),
                     ),
                     (
                         "improved_metric_count",
-                        next_candidate_vs_returned_comparison.get("improved_metric_count"),
+                        next_candidate_vs_returned_comparison.get(
+                            "improved_metric_count"
+                        ),
                     ),
                     (
                         "mixed_metric_count",
@@ -2015,7 +2122,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "no_improvement_count",
-                        next_candidate_vs_returned_comparison.get("no_improvement_count"),
+                        next_candidate_vs_returned_comparison.get(
+                            "no_improvement_count"
+                        ),
                     ),
                     (
                         "validation_status",
@@ -2054,11 +2163,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "signal_validation_status",
-                        next_candidate_signal_window_sensitivity.get("signal_validation_status"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "signal_validation_status"
+                        ),
                     ),
                     (
                         "window_validation_status",
-                        next_candidate_signal_window_sensitivity.get("window_validation_status"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "window_validation_status"
+                        ),
                     ),
                     (
                         "source_signal_binding_status",
@@ -2068,15 +2181,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "source_backfill_status",
-                        next_candidate_signal_window_sensitivity.get("source_backfill_status"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "source_backfill_status"
+                        ),
                     ),
                     (
                         "signal_blocking_check_count",
-                        next_candidate_signal_window_sensitivity.get("signal_blocking_check_count"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "signal_blocking_check_count"
+                        ),
                     ),
                     (
                         "window_weak_split_count",
-                        next_candidate_signal_window_sensitivity.get("window_weak_split_count"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "window_weak_split_count"
+                        ),
                     ),
                     (
                         "window_partial_static_proxy_split_count",
@@ -2094,15 +2213,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "signal_detail_report",
-                        next_candidate_signal_window_sensitivity.get("signal_detail_report"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "signal_detail_report"
+                        ),
                     ),
                     (
                         "window_detail_report",
-                        next_candidate_signal_window_sensitivity.get("window_detail_report"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "window_detail_report"
+                        ),
                     ),
                     (
                         "production_effect",
-                        next_candidate_signal_window_sensitivity.get("production_effect"),
+                        next_candidate_signal_window_sensitivity.get(
+                            "production_effect"
+                        ),
                     ),
                 ]
             ),
@@ -2140,11 +2265,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("blocker_count", next_candidate_research_gate.get("blocker_count")),
                     (
                         "paper_shadow_activation_allowed",
-                        next_candidate_research_gate.get("paper_shadow_activation_allowed"),
+                        next_candidate_research_gate.get(
+                            "paper_shadow_activation_allowed"
+                        ),
                     ),
                     (
                         "official_target_weights_generated",
-                        next_candidate_research_gate.get("official_target_weights_generated"),
+                        next_candidate_research_gate.get(
+                            "official_target_weights_generated"
+                        ),
                     ),
                     (
                         "broker_order_allowed",
@@ -2170,7 +2299,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", next_candidate_owner_research_review_packet.get("status")),
                     (
                         "validation_status",
-                        next_candidate_owner_research_review_packet.get("validation_status"),
+                        next_candidate_owner_research_review_packet.get(
+                            "validation_status"
+                        ),
                     ),
                     (
                         "source_research_gate_decision",
@@ -2190,7 +2321,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "owner_decision_appended",
-                        next_candidate_owner_research_review_packet.get("owner_decision_appended"),
+                        next_candidate_owner_research_review_packet.get(
+                            "owner_decision_appended"
+                        ),
                     ),
                     (
                         "paper_shadow_activation_allowed",
@@ -2206,7 +2339,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "broker_order_allowed",
-                        next_candidate_owner_research_review_packet.get("broker_order_allowed"),
+                        next_candidate_owner_research_review_packet.get(
+                            "broker_order_allowed"
+                        ),
                     ),
                     (
                         "next_action",
@@ -2218,7 +2353,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "production_effect",
-                        next_candidate_owner_research_review_packet.get("production_effect"),
+                        next_candidate_owner_research_review_packet.get(
+                            "production_effect"
+                        ),
                     ),
                 ]
             ),
@@ -2341,7 +2478,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "hypothetical_research_weight_produced",
-                        executable_signal_binding.get("hypothetical_research_weight_produced"),
+                        executable_signal_binding.get(
+                            "hypothetical_research_weight_produced"
+                        ),
                     ),
                     (
                         "backfill_metrics_produced",
@@ -2373,7 +2512,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", executable_research_weight_binding.get("status")),
                     (
                         "research_weight_binding_status",
-                        executable_research_weight_binding.get("research_weight_binding_status"),
+                        executable_research_weight_binding.get(
+                            "research_weight_binding_status"
+                        ),
                     ),
                     (
                         "candidate_id",
@@ -2425,7 +2566,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "backfill_metrics_produced",
-                        executable_research_weight_binding.get("backfill_metrics_produced"),
+                        executable_research_weight_binding.get(
+                            "backfill_metrics_produced"
+                        ),
                     ),
                     (
                         "next_action",
@@ -2437,7 +2580,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "validation_detail_report",
-                        executable_research_weight_binding.get("validation_detail_report"),
+                        executable_research_weight_binding.get(
+                            "validation_detail_report"
+                        ),
                     ),
                     (
                         "production_effect",
@@ -2478,19 +2623,27 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "failed_artifact_check_count",
-                        executable_binding_safety_audit.get("failed_artifact_check_count"),
+                        executable_binding_safety_audit.get(
+                            "failed_artifact_check_count"
+                        ),
                     ),
                     (
                         "static_scan_finding_count",
-                        executable_binding_safety_audit.get("static_scan_finding_count"),
+                        executable_binding_safety_audit.get(
+                            "static_scan_finding_count"
+                        ),
                     ),
                     (
                         "blocking_static_finding_count",
-                        executable_binding_safety_audit.get("blocking_static_finding_count"),
+                        executable_binding_safety_audit.get(
+                            "blocking_static_finding_count"
+                        ),
                     ),
                     (
                         "warning_static_finding_count",
-                        executable_binding_safety_audit.get("warning_static_finding_count"),
+                        executable_binding_safety_audit.get(
+                            "warning_static_finding_count"
+                        ),
                     ),
                     (
                         "validation_status",
@@ -2503,7 +2656,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "validation_detail_report",
-                        executable_binding_safety_audit.get("validation_detail_report"),
+                        executable_binding_safety_audit.get(
+                            "validation_detail_report"
+                        ),
                     ),
                     (
                         "production_effect",
@@ -2542,7 +2697,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_readiness_input",
-                        research_safety_boundary_audit.get("shadow_continuation_readiness_input"),
+                        research_safety_boundary_audit.get(
+                            "shadow_continuation_readiness_input"
+                        ),
                     ),
                     (
                         "promotion_board_input",
@@ -3583,7 +3740,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "evidence_status",
-                        etf_dynamic_v3_parameter_research.get("filtered_candidate_evidence_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_candidate_evidence_status"
+                        ),
                     ),
                     (
                         "primary_improvements",
@@ -3609,7 +3768,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "formalization_complexity",
-                        etf_dynamic_v3_parameter_research.get("median_regime_filter_complexity"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "median_regime_filter_complexity"
+                        ),
                     ),
                     (
                         "stress_backfill",
@@ -3631,11 +3792,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "drawdown_mismatch_status",
-                        etf_dynamic_v3_parameter_research.get("drawdown_mismatch_reduction_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_mismatch_reduction_status"
+                        ),
                     ),
                     (
                         "drawdown_mismatch_reduction_pct",
-                        etf_dynamic_v3_parameter_research.get("drawdown_mismatch_reduction_pct"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_mismatch_reduction_pct"
+                        ),
                     ),
                     (
                         "flip_rotation_reduction",
@@ -3659,7 +3824,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "filtered_candidate_ab_next_action",
-                        etf_dynamic_v3_parameter_research.get("filtered_candidate_ab_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "filtered_candidate_ab_next_action"
+                        ),
                     ),
                     (
                         "signal_gate_confirmation",
@@ -3699,7 +3866,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "owner_filtered_candidate_review",
-                        etf_dynamic_v3_parameter_research.get("owner_filtered_candidate_review_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "owner_filtered_candidate_review_id"
+                        ),
                     ),
                     (
                         "owner_filtered_candidate_action",
@@ -3717,11 +3886,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "formal_research_method_contract",
-                        etf_dynamic_v3_parameter_research.get("formal_research_method_contract_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "formal_research_method_contract_id"
+                        ),
                     ),
                     (
                         "formal_research_method_status",
-                        etf_dynamic_v3_parameter_research.get("formal_research_method_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "formal_research_method_status"
+                        ),
                     ),
                     (
                         "formal_research_method_promotion_state",
@@ -3743,11 +3916,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "promotion_threshold_calibration",
-                        etf_dynamic_v3_parameter_research.get("promotion_threshold_calibration_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_calibration_id"
+                        ),
                     ),
                     (
                         "promotion_threshold_policy",
-                        etf_dynamic_v3_parameter_research.get("promotion_threshold_policy_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_threshold_policy_id"
+                        ),
                     ),
                     (
                         "promotion_threshold_interpretation",
@@ -3801,11 +3978,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_daily_observation",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_daily_observation_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_observation_id"
+                        ),
                     ),
                     (
                         "paper_shadow_daily_candidate",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_daily_candidate"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_candidate"
+                        ),
                     ),
                     (
                         "paper_shadow_daily_date",
@@ -3817,15 +3998,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_daily_signal",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_daily_signal_output"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_signal_output"
+                        ),
                     ),
                     (
                         "paper_shadow_daily_risk_state",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_daily_risk_state"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_risk_state"
+                        ),
                     ),
                     (
                         "paper_shadow_daily_next_action",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_daily_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_daily_next_action"
+                        ),
                     ),
                     (
                         "paper_shadow_daily_validation_status",
@@ -3835,27 +4022,39 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_drift_monitor",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_drift_monitor_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_monitor_id"
+                        ),
                     ),
                     (
                         "paper_shadow_drift_observation",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_drift_observation_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_observation_id"
+                        ),
                     ),
                     (
                         "paper_shadow_drift_severity",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_drift_severity"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_severity"
+                        ),
                     ),
                     (
                         "paper_shadow_drift_blocking_count",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_drift_blocking_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_blocking_count"
+                        ),
                     ),
                     (
                         "paper_shadow_drift_warning_count",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_drift_warning_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_warning_count"
+                        ),
                     ),
                     (
                         "paper_shadow_drift_next_action",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_drift_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_drift_next_action"
+                        ),
                     ),
                     (
                         "paper_shadow_drift_validation_status",
@@ -3865,19 +4064,27 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_weekly_review",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_weekly_review_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_review_id"
+                        ),
                     ),
                     (
                         "paper_shadow_weekly_candidate",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_weekly_candidate"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_candidate"
+                        ),
                     ),
                     (
                         "paper_shadow_weekly_window",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_weekly_window"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_window"
+                        ),
                     ),
                     (
                         "paper_shadow_weekly_decision",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_weekly_decision"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_decision"
+                        ),
                     ),
                     (
                         "paper_shadow_weekly_coverage_classification",
@@ -3899,11 +4106,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_weekly_missing_inputs",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_weekly_missing_inputs"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_missing_inputs"
+                        ),
                     ),
                     (
                         "paper_shadow_weekly_drift_trend",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_weekly_drift_trend"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_weekly_drift_trend"
+                        ),
                     ),
                     (
                         "paper_shadow_weekly_validation_status",
@@ -3913,51 +4124,75 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "signal_input_completeness",
-                        etf_dynamic_v3_parameter_research.get("signal_input_completeness_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_completeness_id"
+                        ),
                     ),
                     (
                         "signal_input_status",
-                        etf_dynamic_v3_parameter_research.get("signal_input_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_status"
+                        ),
                     ),
                     (
                         "signal_input_blocking_count",
-                        etf_dynamic_v3_parameter_research.get("signal_input_blocking_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_blocking_count"
+                        ),
                     ),
                     (
                         "signal_input_warning_count",
-                        etf_dynamic_v3_parameter_research.get("signal_input_warning_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_warning_count"
+                        ),
                     ),
                     (
                         "signal_input_stale_files",
-                        etf_dynamic_v3_parameter_research.get("signal_input_stale_files"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_stale_files"
+                        ),
                     ),
                     (
                         "signal_input_next_action",
-                        etf_dynamic_v3_parameter_research.get("signal_input_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_next_action"
+                        ),
                     ),
                     (
                         "signal_input_validation_status",
-                        etf_dynamic_v3_parameter_research.get("signal_input_validation_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "signal_input_validation_status"
+                        ),
                     ),
                     (
                         "candidate_decision_ledger",
-                        etf_dynamic_v3_parameter_research.get("candidate_decision_ledger_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_ledger_id"
+                        ),
                     ),
                     (
                         "candidate_decision_candidate",
-                        etf_dynamic_v3_parameter_research.get("candidate_decision_candidate"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_candidate"
+                        ),
                     ),
                     (
                         "candidate_decision_final_decision",
-                        etf_dynamic_v3_parameter_research.get("candidate_decision_final_decision"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_final_decision"
+                        ),
                     ),
                     (
                         "candidate_decision_owner_action",
-                        etf_dynamic_v3_parameter_research.get("candidate_decision_owner_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_owner_action"
+                        ),
                     ),
                     (
                         "candidate_decision_next_action",
-                        etf_dynamic_v3_parameter_research.get("candidate_decision_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_decision_next_action"
+                        ),
                     ),
                     (
                         "candidate_decision_ledger_validation_status",
@@ -3967,11 +4202,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "evidence_staleness_monitor",
-                        etf_dynamic_v3_parameter_research.get("evidence_staleness_monitor_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_staleness_monitor_id"
+                        ),
                     ),
                     (
                         "evidence_freshness_status",
-                        etf_dynamic_v3_parameter_research.get("evidence_freshness_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_freshness_status"
+                        ),
                     ),
                     (
                         "evidence_coverage_status",
@@ -3995,7 +4234,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "evidence_freshness_reference_date",
-                        etf_dynamic_v3_parameter_research.get("evidence_freshness_reference_date"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_freshness_reference_date"
+                        ),
                     ),
                     (
                         "evidence_latest_complete_market_date",
@@ -4005,7 +4246,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "evidence_market_calendar_status",
-                        etf_dynamic_v3_parameter_research.get("evidence_market_calendar_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_market_calendar_status"
+                        ),
                     ),
                     (
                         "evidence_stale_artifacts",
@@ -4013,7 +4256,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "evidence_blocking_artifacts",
-                        etf_dynamic_v3_parameter_research.get("evidence_blocking_artifacts"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_blocking_artifacts"
+                        ),
                     ),
                     (
                         "evidence_missing_artifacts",
@@ -4021,15 +4266,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "evidence_next_refresh_action",
-                        etf_dynamic_v3_parameter_research.get("evidence_next_refresh_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_next_refresh_action"
+                        ),
                     ),
                     (
                         "evidence_safe_to_continue_shadow",
-                        etf_dynamic_v3_parameter_research.get("evidence_safe_to_continue_shadow"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_safe_to_continue_shadow"
+                        ),
                     ),
                     (
                         "evidence_safety_boundary_status",
-                        etf_dynamic_v3_parameter_research.get("evidence_safety_boundary_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "evidence_safety_boundary_status"
+                        ),
                     ),
                     (
                         "evidence_staleness_validation_status",
@@ -4039,11 +4290,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_continuation_readiness_id",
-                        etf_dynamic_v3_parameter_research.get("shadow_continuation_readiness_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_readiness_id"
+                        ),
                     ),
                     (
                         "shadow_continuation_readiness",
-                        etf_dynamic_v3_parameter_research.get("shadow_continuation_readiness"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_continuation_readiness"
+                        ),
                     ),
                     (
                         "shadow_continuation_safe_to_continue_shadow",
@@ -4107,11 +4362,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_health_id",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_health_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_id"
+                        ),
                     ),
                     (
                         "paper_shadow_health_status",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_health_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_status"
+                        ),
                     ),
                     (
                         "paper_shadow_health_safe_to_continue_shadow",
@@ -4151,7 +4410,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_health_drift_status",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_health_drift_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_drift_status"
+                        ),
                     ),
                     (
                         "paper_shadow_health_blocking_reasons",
@@ -4161,7 +4422,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "paper_shadow_health_warnings",
-                        etf_dynamic_v3_parameter_research.get("paper_shadow_health_warnings"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "paper_shadow_health_warnings"
+                        ),
                     ),
                     (
                         "paper_shadow_health_next_required_action",
@@ -4225,15 +4488,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_decision_comparison",
-                        etf_dynamic_v3_parameter_research.get("shadow_decision_comparison_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_comparison_id"
+                        ),
                     ),
                     (
                         "shadow_decision_comparison_status",
-                        etf_dynamic_v3_parameter_research.get("shadow_decision_comparison_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_comparison_status"
+                        ),
                     ),
                     (
                         "shadow_decision_changed",
-                        etf_dynamic_v3_parameter_research.get("shadow_decision_changed"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_changed"
+                        ),
                     ),
                     (
                         "shadow_decision_change_classification",
@@ -4243,15 +4512,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_decision_change_reason",
-                        etf_dynamic_v3_parameter_research.get("shadow_decision_change_reason"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_change_reason"
+                        ),
                     ),
                     (
                         "shadow_decision_previous_state",
-                        etf_dynamic_v3_parameter_research.get("shadow_decision_previous_state"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_previous_state"
+                        ),
                     ),
                     (
                         "shadow_decision_current_state",
-                        etf_dynamic_v3_parameter_research.get("shadow_decision_current_state"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_current_state"
+                        ),
                     ),
                     (
                         "shadow_decision_previous_safe_to_continue",
@@ -4273,23 +4548,33 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "shadow_decision_validation_status",
-                        etf_dynamic_v3_parameter_research.get("shadow_decision_validation_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_decision_validation_status"
+                        ),
                     ),
                     (
                         "cost_sensitivity_review",
-                        etf_dynamic_v3_parameter_research.get("cost_sensitivity_review_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_review_id"
+                        ),
                     ),
                     (
                         "cost_sensitivity_status",
-                        etf_dynamic_v3_parameter_research.get("cost_sensitivity_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_status"
+                        ),
                     ),
                     (
                         "cost_sensitivity_policy",
-                        etf_dynamic_v3_parameter_research.get("cost_sensitivity_policy"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_policy"
+                        ),
                     ),
                     (
                         "cost_sensitivity_turnover",
-                        etf_dynamic_v3_parameter_research.get("cost_sensitivity_turnover"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_turnover"
+                        ),
                     ),
                     (
                         "cost_sensitivity_gross_improvement_proxy",
@@ -4317,23 +4602,33 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "cost_sensitivity_validation_status",
-                        etf_dynamic_v3_parameter_research.get("cost_sensitivity_validation_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "cost_sensitivity_validation_status"
+                        ),
                     ),
                     (
                         "benchmark_baseline_control",
-                        etf_dynamic_v3_parameter_research.get("benchmark_baseline_control_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_control_id"
+                        ),
                     ),
                     (
                         "benchmark_baseline_status",
-                        etf_dynamic_v3_parameter_research.get("benchmark_baseline_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_status"
+                        ),
                     ),
                     (
                         "benchmark_baseline_policy",
-                        etf_dynamic_v3_parameter_research.get("benchmark_baseline_policy"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_policy"
+                        ),
                     ),
                     (
                         "benchmark_baseline_count",
-                        etf_dynamic_v3_parameter_research.get("benchmark_baseline_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_count"
+                        ),
                     ),
                     (
                         "benchmark_baseline_outperformed_count",
@@ -4355,11 +4650,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "benchmark_baseline_worst_delta",
-                        etf_dynamic_v3_parameter_research.get("benchmark_baseline_worst_delta"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_worst_delta"
+                        ),
                     ),
                     (
                         "benchmark_baseline_best_delta",
-                        etf_dynamic_v3_parameter_research.get("benchmark_baseline_best_delta"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "benchmark_baseline_best_delta"
+                        ),
                     ),
                     (
                         "benchmark_baseline_next_required_action",
@@ -4375,11 +4674,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "candidate_regression_replay",
-                        etf_dynamic_v3_parameter_research.get("candidate_regression_replay_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_replay_id"
+                        ),
                     ),
                     (
                         "candidate_regression_replay_status",
-                        etf_dynamic_v3_parameter_research.get("candidate_regression_replay_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_regression_replay_status"
+                        ),
                     ),
                     (
                         "candidate_regression_expected_behavior",
@@ -4419,15 +4722,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "stress_scenario_library",
-                        etf_dynamic_v3_parameter_research.get("stress_scenario_library_run_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_library_run_id"
+                        ),
                     ),
                     (
                         "stress_scenario_count",
-                        etf_dynamic_v3_parameter_research.get("stress_scenario_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_count"
+                        ),
                     ),
                     (
                         "stress_scenario_required_present",
-                        etf_dynamic_v3_parameter_research.get("stress_scenario_required_present"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_required_present"
+                        ),
                     ),
                     (
                         "stress_scenario_candidate_validation_use",
@@ -4437,11 +4746,15 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "stress_scenario_next_action",
-                        etf_dynamic_v3_parameter_research.get("stress_scenario_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_next_action"
+                        ),
                     ),
                     (
                         "stress_scenario_validation_status",
-                        etf_dynamic_v3_parameter_research.get("stress_scenario_validation_status"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "stress_scenario_validation_status"
+                        ),
                     ),
                     (
                         "drawdown_event_casebook",
@@ -4449,19 +4762,27 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "drawdown_casebook_event_count",
-                        etf_dynamic_v3_parameter_research.get("drawdown_casebook_event_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_event_count"
+                        ),
                     ),
                     (
                         "drawdown_casebook_worst_event",
-                        etf_dynamic_v3_parameter_research.get("drawdown_casebook_worst_event"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_worst_event"
+                        ),
                     ),
                     (
                         "drawdown_casebook_regime_coverage",
-                        etf_dynamic_v3_parameter_research.get("drawdown_casebook_regime_coverage"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_regime_coverage"
+                        ),
                     ),
                     (
                         "drawdown_casebook_next_action",
-                        etf_dynamic_v3_parameter_research.get("drawdown_casebook_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "drawdown_casebook_next_action"
+                        ),
                     ),
                     (
                         "drawdown_casebook_validation_status",
@@ -4471,27 +4792,39 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "flip_rotation_event_casebook",
-                        etf_dynamic_v3_parameter_research.get("flip_rotation_casebook_run_id"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_casebook_run_id"
+                        ),
                     ),
                     (
                         "flip_rotation_casebook_event_count",
-                        etf_dynamic_v3_parameter_research.get("flip_rotation_casebook_event_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_casebook_event_count"
+                        ),
                     ),
                     (
                         "flip_rotation_useful_count",
-                        etf_dynamic_v3_parameter_research.get("flip_rotation_useful_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_useful_count"
+                        ),
                     ),
                     (
                         "flip_rotation_false_positive_count",
-                        etf_dynamic_v3_parameter_research.get("flip_rotation_false_positive_count"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_false_positive_count"
+                        ),
                     ),
                     (
                         "flip_rotation_dominant_trigger",
-                        etf_dynamic_v3_parameter_research.get("flip_rotation_dominant_trigger"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_dominant_trigger"
+                        ),
                     ),
                     (
                         "flip_rotation_next_action",
-                        etf_dynamic_v3_parameter_research.get("flip_rotation_next_action"),
+                        etf_dynamic_v3_parameter_research.get(
+                            "flip_rotation_next_action"
+                        ),
                     ),
                     (
                         "flip_rotation_casebook_validation_status",
@@ -7372,7 +7705,9 @@ def _run_context(
     return {
         "as_of": as_of.isoformat(),
         "run_id": summary_run_id or _text(daily_task_dashboard.get("run_id"), "UNKNOWN"),
-        "market_regime": _text(market_regime.get("regime_id"), "unified_primary_2021"),
+        "market_regime": _text(
+            market_regime.get("regime_id"), "unified_primary_2021"
+        ),
         "market_regime_start": _text(market_regime.get("start_date"), PRIMARY_RESEARCH_START),
         "visibility_cutoff": _text(
             daily_task_dashboard.get("visibility_cutoff"),
@@ -8206,7 +8541,9 @@ def _research_monthly_review_pack_summary(report_index: Mapping[str, Any]) -> di
         "active_candidate_count": _int(summary.get("active_candidate_count")),
         "rejected_candidate_count": _int(summary.get("rejected_candidate_count")),
         "paper_shadow_candidate_count": _int(summary.get("paper_shadow_candidate_count")),
-        "needs_evidence_candidate_count": _int(summary.get("needs_evidence_candidate_count")),
+        "needs_evidence_candidate_count": _int(
+            summary.get("needs_evidence_candidate_count")
+        ),
         "major_blocker_count": _int(summary.get("major_blocker_count")),
         "major_warning_count": _int(summary.get("major_warning_count")),
         "safety_audit_status": _text(summary.get("safety_audit_status"), "UNKNOWN"),
@@ -8463,7 +8800,9 @@ def _decision_snapshot_lifecycle_policy_summary(report_index: Mapping[str, Any])
         "snapshot_path": _text(summary.get("snapshot_path")),
         "snapshot_exists": bool(summary.get("snapshot_exists")),
         "snapshot_signal_date": _text(summary.get("snapshot_signal_date")),
-        "latest_available_snapshot_date": _text(summary.get("latest_available_snapshot_date")),
+        "latest_available_snapshot_date": _text(
+            summary.get("latest_available_snapshot_date")
+        ),
         "market_session_status": _text(summary.get("market_session_status"), "UNKNOWN"),
         "blocking_impact": _text(summary.get("blocking_impact"), "UNKNOWN"),
         "invalid_reason_count": _int(summary.get("invalid_reason_count")),
@@ -8621,7 +8960,9 @@ def _extended_shadow_protocol_summary(report_index: Mapping[str, Any]) -> dict[s
         "validation_status": validation_status,
         "candidate_id": _text(summary.get("candidate_id"), _text(payload.get("candidate_id"))),
         "observed_trading_days": _int(summary.get("observed_trading_days")),
-        "minimum_observation_trading_days": _int(summary.get("minimum_observation_trading_days")),
+        "minimum_observation_trading_days": _int(
+            summary.get("minimum_observation_trading_days")
+        ),
         "check_count": _int(summary.get("check_count")),
         "passed_check_count": _int(summary.get("passed_check_count")),
         "blocked_check_count": _int(summary.get("blocked_check_count")),
@@ -8669,7 +9010,8 @@ def _missing_extended_shadow_protocol_summary(reason: str) -> dict[str, Any]:
         "validation_detail_report": "",
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
-            "extended_shadow_protocol artifact missing; run reports " "extended-shadow-protocol."
+            "extended_shadow_protocol artifact missing; run reports "
+            "extended-shadow-protocol."
         ),
         "limitation": reason,
     }
@@ -8898,9 +9240,15 @@ def _research_governance_recovery_pack_summary(
         "remaining_warning_count": _int(summary.get("remaining_warning_count")),
         "manual_review_item_count": _int(summary.get("manual_review_item_count")),
         "top_remaining_blocker": _text(summary.get("top_remaining_blocker"), "none"),
-        "normal_paper_shadow_may_resume": bool(summary.get("normal_paper_shadow_may_resume")),
-        "extended_shadow_remains_forbidden": bool(summary.get("extended_shadow_remains_forbidden")),
-        "live_trading_remains_forbidden": bool(summary.get("live_trading_remains_forbidden")),
+        "normal_paper_shadow_may_resume": bool(
+            summary.get("normal_paper_shadow_may_resume")
+        ),
+        "extended_shadow_remains_forbidden": bool(
+            summary.get("extended_shadow_remains_forbidden")
+        ),
+        "live_trading_remains_forbidden": bool(
+            summary.get("live_trading_remains_forbidden")
+        ),
         "next_action": _text(payload.get("next_action"), "MISSING"),
         "detail_report": "" if report_path is None else str(report_path),
         "validation_detail_report": "" if validation_path is None else str(validation_path),
@@ -8978,9 +9326,15 @@ def _decision_stage_governance_snapshot_summary(
             "MISSING",
         ),
         "normal_shadow_may_resume": bool(summary.get("normal_shadow_may_resume")),
-        "extended_shadow_remains_forbidden": bool(summary.get("extended_shadow_remains_forbidden")),
-        "live_trading_remains_forbidden": bool(summary.get("live_trading_remains_forbidden")),
-        "owner_decision_append_allowed": bool(summary.get("owner_decision_append_allowed")),
+        "extended_shadow_remains_forbidden": bool(
+            summary.get("extended_shadow_remains_forbidden")
+        ),
+        "live_trading_remains_forbidden": bool(
+            summary.get("live_trading_remains_forbidden")
+        ),
+        "owner_decision_append_allowed": bool(
+            summary.get("owner_decision_append_allowed")
+        ),
         "dry_run_written": bool(summary.get("dry_run_written")),
         "next_action": _text(payload.get("next_action"), "MISSING"),
         "detail_report": "" if report_path is None else str(report_path),
@@ -9156,10 +9510,14 @@ def _next_research_cycle_snapshot_summary(
         "requested_date_range": _text(summary.get("requested_date_range"), "MISSING"),
         "artifact_count": _int(summary.get("artifact_count")),
         "owner_packet_ready": bool(summary.get("owner_packet_ready")),
-        "paper_shadow_activation_allowed": bool(summary.get("paper_shadow_activation_allowed")),
+        "paper_shadow_activation_allowed": bool(
+            summary.get("paper_shadow_activation_allowed")
+        ),
         "extended_shadow_allowed": bool(summary.get("extended_shadow_allowed")),
         "live_trading_allowed": bool(summary.get("live_trading_allowed")),
-        "official_target_weights_generated": bool(summary.get("official_target_weights_generated")),
+        "official_target_weights_generated": bool(
+            summary.get("official_target_weights_generated")
+        ),
         "broker_order_allowed": bool(summary.get("broker_order_allowed")),
         "validation_status": validation_status,
         "next_action": _text(payload.get("next_action"), "MISSING"),
@@ -9292,7 +9650,8 @@ def _missing_next_candidate_backfill_summary(reason: str) -> dict[str, Any]:
         "validation_detail_report": "",
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
-            "next_candidate_backfill artifact missing; run reports " "next-candidate-backfill."
+            "next_candidate_backfill artifact missing; run reports "
+            "next-candidate-backfill."
         ),
         "limitation": reason,
     }
@@ -9389,12 +9748,12 @@ def _next_candidate_stress_cost_benchmark_summary(
         ),
         "stress_detail_report": "" if stress_path is None else str(stress_path),
         "cost_detail_report": "" if cost_path is None else str(cost_path),
-        "stress_validation_detail_report": (
-            "" if stress_validation_path is None else str(stress_validation_path)
-        ),
-        "cost_validation_detail_report": (
-            "" if cost_validation_path is None else str(cost_validation_path)
-        ),
+        "stress_validation_detail_report": ""
+        if stress_validation_path is None
+        else str(stress_validation_path),
+        "cost_validation_detail_report": ""
+        if cost_validation_path is None
+        else str(cost_validation_path),
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             f"stress={stress_status}; cost_benchmark={cost_status}; "
@@ -9483,7 +9842,9 @@ def _next_candidate_vs_returned_comparison_summary(
             summary.get("benchmark_relative_status"),
             "MISSING",
         ),
-        "repeated_failure_mode_count": _int(summary.get("repeated_failure_mode_count")),
+        "repeated_failure_mode_count": _int(
+            summary.get("repeated_failure_mode_count")
+        ),
         "improved_metric_count": _int(summary.get("improved_metric_count")),
         "mixed_metric_count": _int(summary.get("mixed_metric_count")),
         "no_improvement_count": _int(summary.get("no_improvement_count")),
@@ -9491,7 +9852,9 @@ def _next_candidate_vs_returned_comparison_summary(
         "validation_status": validation_status,
         "next_action": _text(payload.get("next_action"), "MISSING"),
         "detail_report": "" if report_path is None else str(report_path),
-        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "validation_detail_report": ""
+        if validation_path is None
+        else str(validation_path),
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             f"vs_returned={status}; repeated_failures="
@@ -9585,14 +9948,18 @@ def _next_candidate_signal_window_sensitivity_summary(
     signal_validation_status = _text(
         signal_validation_payload.get("status"),
         _text(
-            _mapping(signal_validation_payload.get("summary")).get("validation_status"),
+            _mapping(signal_validation_payload.get("summary")).get(
+                "validation_status"
+            ),
             "MISSING",
         ),
     )
     window_validation_status = _text(
         window_validation_payload.get("status"),
         _text(
-            _mapping(window_validation_payload.get("summary")).get("validation_status"),
+            _mapping(window_validation_payload.get("summary")).get(
+                "validation_status"
+            ),
             "MISSING",
         ),
     )
@@ -9615,13 +9982,17 @@ def _next_candidate_signal_window_sensitivity_summary(
             signal_summary.get("backfill_signal_completeness"),
             "MISSING",
         ),
-        "signal_blocking_check_count": _int(signal_summary.get("blocking_check_count")),
+        "signal_blocking_check_count": _int(
+            signal_summary.get("blocking_check_count")
+        ),
         "signal_warning_check_count": _int(signal_summary.get("warning_check_count")),
         "window_weak_split_count": _int(window_summary.get("weak_split_count")),
         "window_partial_static_proxy_split_count": _int(
             window_summary.get("partial_static_proxy_split_count")
         ),
-        "window_unavailable_split_count": _int(window_summary.get("unavailable_split_count")),
+        "window_unavailable_split_count": _int(
+            window_summary.get("unavailable_split_count")
+        ),
         "overfit_risk": _text(window_summary.get("overfit_risk"), "MISSING"),
         "next_action": _text(
             window_payload.get("next_action"),
@@ -9629,12 +10000,12 @@ def _next_candidate_signal_window_sensitivity_summary(
         ),
         "signal_detail_report": "" if signal_path is None else str(signal_path),
         "window_detail_report": "" if window_path is None else str(window_path),
-        "signal_validation_detail_report": (
-            "" if signal_validation_path is None else str(signal_validation_path)
-        ),
-        "window_validation_detail_report": (
-            "" if window_validation_path is None else str(window_validation_path)
-        ),
+        "signal_validation_detail_report": ""
+        if signal_validation_path is None
+        else str(signal_validation_path),
+        "window_validation_detail_report": ""
+        if window_validation_path is None
+        else str(window_validation_path),
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             f"signal={signal_status}; window={window_status}; "
@@ -9726,14 +10097,24 @@ def _next_candidate_research_gate_summary(
             "MISSING",
         ),
         "blocker_count": _int(summary.get("blocker_count")),
-        "strongest_positive_evidence_count": _int(summary.get("strongest_positive_evidence_count")),
-        "strongest_negative_evidence_count": _int(summary.get("strongest_negative_evidence_count")),
-        "paper_shadow_activation_allowed": bool(summary.get("paper_shadow_activation_allowed")),
-        "official_target_weights_generated": bool(summary.get("official_target_weights_generated")),
+        "strongest_positive_evidence_count": _int(
+            summary.get("strongest_positive_evidence_count")
+        ),
+        "strongest_negative_evidence_count": _int(
+            summary.get("strongest_negative_evidence_count")
+        ),
+        "paper_shadow_activation_allowed": bool(
+            summary.get("paper_shadow_activation_allowed")
+        ),
+        "official_target_weights_generated": bool(
+            summary.get("official_target_weights_generated")
+        ),
         "broker_order_allowed": bool(summary.get("broker_order_allowed")),
         "next_action": _text(payload.get("next_action"), "MISSING"),
         "detail_report": "" if report_path is None else str(report_path),
-        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "validation_detail_report": ""
+        if validation_path is None
+        else str(validation_path),
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             f"research_gate={status}; blockers={_int(summary.get('blocker_count'))}; "
@@ -9821,14 +10202,20 @@ def _next_candidate_owner_research_review_packet_summary(
         "option_count": _int(summary.get("option_count")),
         "owner_option_ids": _texts(summary.get("owner_option_ids")),
         "owner_decision_appended": bool(summary.get("owner_decision_appended")),
-        "paper_shadow_activation_allowed": bool(summary.get("paper_shadow_activation_allowed")),
+        "paper_shadow_activation_allowed": bool(
+            summary.get("paper_shadow_activation_allowed")
+        ),
         "extended_shadow_allowed": bool(summary.get("extended_shadow_allowed")),
         "live_trading_allowed": bool(summary.get("live_trading_allowed")),
-        "official_target_weights_generated": bool(summary.get("official_target_weights_generated")),
+        "official_target_weights_generated": bool(
+            summary.get("official_target_weights_generated")
+        ),
         "broker_order_allowed": bool(summary.get("broker_order_allowed")),
         "next_action": _text(payload.get("next_action"), "MISSING"),
         "detail_report": "" if report_path is None else str(report_path),
-        "validation_detail_report": "" if validation_path is None else str(validation_path),
+        "validation_detail_report": ""
+        if validation_path is None
+        else str(validation_path),
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
             f"owner_packet={_text(payload.get('status'), 'MISSING')}; "
@@ -9981,7 +10368,8 @@ def _executable_signal_binding_summary(
     payload = _read_optional_json(report_path)
     if not payload:
         return _missing_executable_signal_binding_summary(
-            "next_candidate_signal_binding artifact missing from report index " "latest pointer."
+            "next_candidate_signal_binding artifact missing from report index "
+            "latest pointer."
         )
     validation_path = _report_index_artifact_path(
         report_index,
@@ -10227,7 +10615,9 @@ def _executable_binding_safety_audit_summary(
         "warning_artifact_check_count": _int(summary.get("warning_artifact_check_count")),
         "static_scan_path_count": _int(summary.get("static_scan_path_count")),
         "static_scan_finding_count": _int(summary.get("static_scan_finding_count")),
-        "blocking_static_finding_count": _int(summary.get("blocking_static_finding_count")),
+        "blocking_static_finding_count": _int(
+            summary.get("blocking_static_finding_count")
+        ),
         "warning_static_finding_count": _int(summary.get("warning_static_finding_count")),
         "signal_binding_research_only": summary.get("signal_binding_research_only") is True,
         "weight_binding_hypothetical_only": (
@@ -10396,7 +10786,9 @@ def _artifact_lineage_graph_summary(report_index: Mapping[str, Any]) -> dict[str
         "node_count": _int(summary.get("node_count")),
         "available_node_count": _int(summary.get("available_node_count")),
         "required_family_count": _int(summary.get("required_family_count")),
-        "available_required_family_count": _int(summary.get("available_required_family_count")),
+        "available_required_family_count": _int(
+            summary.get("available_required_family_count")
+        ),
         "required_edge_count": _int(summary.get("required_edge_count")),
         "passing_required_edge_count": _int(summary.get("passing_required_edge_count")),
         "blocking_issue_count": _int(summary.get("blocking_issue_count")),
@@ -10513,7 +10905,8 @@ def _missing_task_register_consistency_summary(reason: str) -> dict[str, Any]:
         "validation_detail_report": "",
         "production_effect": PRODUCTION_EFFECT,
         "summary_sentence": (
-            "task_register_consistency artifact missing; run reports " "task-register-consistency."
+            "task_register_consistency artifact missing; run reports "
+            "task-register-consistency."
         ),
         "limitation": reason,
     }
@@ -11017,8 +11410,10 @@ def _data_source_fallback_policy_summary(report_index: Mapping[str, Any]) -> dic
         "fallback_unavailable_count": summary.get("fallback_unavailable_count", 0),
         "blocked_no_valid_source_count": summary.get("blocked_no_valid_source_count", 0),
         "blocking_source_count": summary.get("blocking_source_count", 0),
-        "fallback_used_sources": ", ".join(_texts(summary.get("fallback_used_sources"))) or "none",
-        "blocking_data_types": ", ".join(_texts(summary.get("blocking_data_types"))) or "none",
+        "fallback_used_sources": ", ".join(_texts(summary.get("fallback_used_sources")))
+        or "none",
+        "blocking_data_types": ", ".join(_texts(summary.get("blocking_data_types")))
+        or "none",
         "next_action": _text(summary.get("next_action"), "UNKNOWN"),
         "safety_status": safety_status,
         "report_path": str(report_path),
@@ -11060,10 +11455,14 @@ def _cache_catalog_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
         )
     report_path = _report_index_artifact_path(report_index, "cache_catalog")
     if report_path is None:
-        return _missing_cache_catalog_summary("cache_catalog artifact missing from report_index.")
+        return _missing_cache_catalog_summary(
+            "cache_catalog artifact missing from report_index."
+        )
     payload = _read_optional_json(report_path)
     if not payload:
-        return _missing_cache_catalog_summary(f"cache_catalog JSON unreadable: {report_path}")
+        return _missing_cache_catalog_summary(
+            f"cache_catalog JSON unreadable: {report_path}"
+        )
     summary = _mapping(payload.get("summary"))
     safety = _mapping(payload.get("safety_boundary"))
     blocking_ids = _texts(summary.get("blocking_entry_ids"))
@@ -18462,7 +18861,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         if formal_research_method_contract_path is not None
         else None
     )
-    promotion_threshold_manifest = _read_optional_json(promotion_threshold_calibration_path)
+    promotion_threshold_manifest = _read_optional_json(
+        promotion_threshold_calibration_path
+    )
     promotion_threshold_report = _read_optional_json(
         promotion_threshold_calibration_path.parent
         / "promotion_gate_threshold_calibration_report.json"
@@ -18470,7 +18871,8 @@ def _etf_dynamic_v3_parameter_research_summary(
         else None
     )
     promotion_threshold_validation = _read_optional_json(
-        promotion_threshold_calibration_path.parent / "promotion_gate_threshold_validation.json"
+        promotion_threshold_calibration_path.parent
+        / "promotion_gate_threshold_validation.json"
         if promotion_threshold_calibration_path is not None
         else None
     )
@@ -18525,7 +18927,8 @@ def _etf_dynamic_v3_parameter_research_summary(
         else None
     )
     signal_input_completeness_validation = _read_optional_json(
-        signal_input_completeness_path.parent / "signal_input_completeness_validation.json"
+        signal_input_completeness_path.parent
+        / "signal_input_completeness_validation.json"
         if signal_input_completeness_path is not None
         else None
     )
@@ -18553,12 +18956,14 @@ def _etf_dynamic_v3_parameter_research_summary(
     )
     shadow_continuation_manifest = _read_optional_json(shadow_continuation_readiness_path)
     shadow_continuation_report = _read_optional_json(
-        shadow_continuation_readiness_path.parent / "shadow_continuation_readiness_report.json"
+        shadow_continuation_readiness_path.parent
+        / "shadow_continuation_readiness_report.json"
         if shadow_continuation_readiness_path is not None
         else None
     )
     shadow_continuation_validation = _read_optional_json(
-        shadow_continuation_readiness_path.parent / "shadow_continuation_readiness_validation.json"
+        shadow_continuation_readiness_path.parent
+        / "shadow_continuation_readiness_validation.json"
         if shadow_continuation_readiness_path is not None
         else None
     )
@@ -18573,7 +18978,9 @@ def _etf_dynamic_v3_parameter_research_summary(
         if paper_shadow_health_path is not None
         else None
     )
-    paper_shadow_outcome_manifest = _read_optional_json(paper_shadow_outcome_attribution_path)
+    paper_shadow_outcome_manifest = _read_optional_json(
+        paper_shadow_outcome_attribution_path
+    )
     paper_shadow_outcome_report = _read_optional_json(
         paper_shadow_outcome_attribution_path.parent
         / "paper_shadow_outcome_attribution_report.json"
@@ -18586,14 +18993,18 @@ def _etf_dynamic_v3_parameter_research_summary(
         if paper_shadow_outcome_attribution_path is not None
         else None
     )
-    shadow_decision_comparison_manifest = _read_optional_json(shadow_decision_comparison_path)
+    shadow_decision_comparison_manifest = _read_optional_json(
+        shadow_decision_comparison_path
+    )
     shadow_decision_comparison_report = _read_optional_json(
-        shadow_decision_comparison_path.parent / "shadow_decision_comparison_report.json"
+        shadow_decision_comparison_path.parent
+        / "shadow_decision_comparison_report.json"
         if shadow_decision_comparison_path is not None
         else None
     )
     shadow_decision_comparison_validation = _read_optional_json(
-        shadow_decision_comparison_path.parent / "shadow_decision_comparison_validation.json"
+        shadow_decision_comparison_path.parent
+        / "shadow_decision_comparison_validation.json"
         if shadow_decision_comparison_path is not None
         else None
     )
@@ -18619,19 +19030,25 @@ def _etf_dynamic_v3_parameter_research_summary(
         if benchmark_baseline_control_path is not None
         else None
     )
-    benchmark_baseline_summary = _mapping(benchmark_baseline_control.get("comparison_summary"))
+    benchmark_baseline_summary = _mapping(
+        benchmark_baseline_control.get("comparison_summary")
+    )
     candidate_regression_manifest = _read_optional_json(candidate_regression_replay_path)
     candidate_regression_replay = _read_optional_json(
-        candidate_regression_replay_path.parent / "candidate_regression_replay_report.json"
+        candidate_regression_replay_path.parent
+        / "candidate_regression_replay_report.json"
         if candidate_regression_replay_path is not None
         else None
     )
     candidate_regression_validation = _read_optional_json(
-        candidate_regression_replay_path.parent / "candidate_regression_replay_validation.json"
+        candidate_regression_replay_path.parent
+        / "candidate_regression_replay_validation.json"
         if candidate_regression_replay_path is not None
         else None
     )
-    candidate_regression_summary = _mapping(candidate_regression_replay.get("comparison_summary"))
+    candidate_regression_summary = _mapping(
+        candidate_regression_replay.get("comparison_summary")
+    )
     stress_scenario_manifest = _read_optional_json(stress_scenario_library_path)
     stress_scenario_library = _read_optional_json(
         stress_scenario_library_path.parent / "stress_scenario_library.json"
@@ -18661,7 +19078,8 @@ def _etf_dynamic_v3_parameter_research_summary(
         else None
     )
     flip_rotation_casebook_validation = _read_optional_json(
-        flip_rotation_event_casebook_path.parent / "flip_rotation_event_casebook_validation.json"
+        flip_rotation_event_casebook_path.parent
+        / "flip_rotation_event_casebook_validation.json"
         if flip_rotation_event_casebook_path is not None
         else None
     )
@@ -18929,7 +19347,9 @@ def _etf_dynamic_v3_parameter_research_summary(
     signal_gate_confirmation_target_count = len(
         _records(signal_gate_confirmation_targets.get("targets"))
     )
-    paper_shadow_daily_review = _mapping(paper_shadow_daily_observation.get("daily_review"))
+    paper_shadow_daily_review = _mapping(
+        paper_shadow_daily_observation.get("daily_review")
+    )
     paper_shadow_weekly_summary = _mapping(paper_shadow_weekly_review.get("summary"))
     paper_shadow_weekly_window = (
         f"{paper_shadow_weekly_review.get('week_start')}.."
@@ -18948,7 +19368,8 @@ def _etf_dynamic_v3_parameter_research_summary(
         else "MISSING"
     )
     paper_shadow_weekly_missing_inputs = (
-        ", ".join(_texts(paper_shadow_weekly_summary.get("missing_input_artifacts"))) or "none"
+        ", ".join(_texts(paper_shadow_weekly_summary.get("missing_input_artifacts")))
+        or "none"
     )
     signal_filter_payloads = (
         signal_failure_taxonomy_manifest,
@@ -20096,21 +20517,30 @@ def _etf_dynamic_v3_parameter_research_summary(
             or "none"
         ),
         "signal_input_stale_files": (
-            ", ".join(_texts(signal_input_completeness_report.get("stale_signal_files"))) or "none"
+            ", ".join(_texts(signal_input_completeness_report.get("stale_signal_files")))
+            or "none"
         ),
         "signal_input_schema_issues": (
-            ", ".join(_texts(signal_input_completeness_report.get("incompatible_schema_inputs")))
+            ", ".join(
+                _texts(signal_input_completeness_report.get("incompatible_schema_inputs"))
+            )
             or "none"
         ),
         "signal_input_partial_coverage": (
             ", ".join(
-                _texts(signal_input_completeness_report.get("partial_market_coverage_inputs"))
+                _texts(
+                    signal_input_completeness_report.get("partial_market_coverage_inputs")
+                )
             )
             or "none"
         ),
         "signal_input_missing_required_columns": (
             ", ".join(
-                _texts(signal_input_completeness_report.get("missing_required_feature_columns"))
+                _texts(
+                    signal_input_completeness_report.get(
+                        "missing_required_feature_columns"
+                    )
+                )
             )
             or "none"
         ),
@@ -20214,13 +20644,16 @@ def _etf_dynamic_v3_parameter_research_summary(
             "MISSING",
         ),
         "evidence_stale_artifacts": (
-            ", ".join(_texts(evidence_staleness_report.get("stale_artifacts"))) or "none"
+            ", ".join(_texts(evidence_staleness_report.get("stale_artifacts")))
+            or "none"
         ),
         "evidence_blocking_artifacts": (
-            ", ".join(_texts(evidence_staleness_report.get("blocking_artifacts"))) or "none"
+            ", ".join(_texts(evidence_staleness_report.get("blocking_artifacts")))
+            or "none"
         ),
         "evidence_missing_artifacts": (
-            ", ".join(_texts(evidence_staleness_report.get("missing_artifacts"))) or "none"
+            ", ".join(_texts(evidence_staleness_report.get("missing_artifacts")))
+            or "none"
         ),
         "evidence_next_refresh_action": _text(
             evidence_staleness_report.get("next_refresh_action"),
@@ -20251,13 +20684,16 @@ def _etf_dynamic_v3_parameter_research_summary(
             "MISSING",
         ),
         "shadow_continuation_missing_artifacts": (
-            ", ".join(_texts(shadow_continuation_report.get("missing_artifacts"))) or "none"
+            ", ".join(_texts(shadow_continuation_report.get("missing_artifacts")))
+            or "none"
         ),
         "shadow_continuation_blocking_artifacts": (
-            ", ".join(_texts(shadow_continuation_report.get("blocking_artifacts"))) or "none"
+            ", ".join(_texts(shadow_continuation_report.get("blocking_artifacts")))
+            or "none"
         ),
         "shadow_continuation_stale_artifacts": (
-            ", ".join(_texts(shadow_continuation_report.get("stale_artifacts"))) or "none"
+            ", ".join(_texts(shadow_continuation_report.get("stale_artifacts")))
+            or "none"
         ),
         "shadow_continuation_coverage_status": _text(
             shadow_continuation_report.get("coverage_status"),
@@ -20320,7 +20756,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             "MISSING",
         ),
         "paper_shadow_health_blocking_reasons": (
-            ", ".join(_texts(paper_shadow_health_report.get("blocking_reasons"))) or "none"
+            ", ".join(_texts(paper_shadow_health_report.get("blocking_reasons")))
+            or "none"
         ),
         "paper_shadow_health_warnings": (
             ", ".join(_texts(paper_shadow_health_report.get("warnings"))) or "none"
@@ -20571,7 +21008,8 @@ def _etf_dynamic_v3_parameter_research_summary(
             "MISSING",
         ),
         "drawdown_casebook_regime_coverage": (
-            ", ".join(_texts(drawdown_event_casebook.get("regime_coverage"))) or "MISSING"
+            ", ".join(_texts(drawdown_event_casebook.get("regime_coverage")))
+            or "MISSING"
         ),
         "drawdown_casebook_next_action": _text(
             drawdown_event_casebook.get("next_review_action"),
@@ -20796,19 +21234,29 @@ def _etf_dynamic_v3_parameter_research_summary(
             "" if paper_shadow_daily_path is None else str(paper_shadow_daily_path)
         ),
         "paper_shadow_drift_monitor": (
-            "" if paper_shadow_drift_monitor_path is None else str(paper_shadow_drift_monitor_path)
+            ""
+            if paper_shadow_drift_monitor_path is None
+            else str(paper_shadow_drift_monitor_path)
         ),
         "paper_shadow_weekly_review": (
-            "" if paper_shadow_weekly_review_path is None else str(paper_shadow_weekly_review_path)
+            ""
+            if paper_shadow_weekly_review_path is None
+            else str(paper_shadow_weekly_review_path)
         ),
         "signal_input_completeness": (
-            "" if signal_input_completeness_path is None else str(signal_input_completeness_path)
+            ""
+            if signal_input_completeness_path is None
+            else str(signal_input_completeness_path)
         ),
         "candidate_decision_ledger": (
-            "" if candidate_decision_ledger_path is None else str(candidate_decision_ledger_path)
+            ""
+            if candidate_decision_ledger_path is None
+            else str(candidate_decision_ledger_path)
         ),
         "evidence_staleness_monitor": (
-            "" if evidence_staleness_monitor_path is None else str(evidence_staleness_monitor_path)
+            ""
+            if evidence_staleness_monitor_path is None
+            else str(evidence_staleness_monitor_path)
         ),
         "shadow_continuation_readiness_report": (
             ""
@@ -20824,13 +21272,19 @@ def _etf_dynamic_v3_parameter_research_summary(
             else str(paper_shadow_outcome_attribution_path)
         ),
         "shadow_decision_comparison": (
-            "" if shadow_decision_comparison_path is None else str(shadow_decision_comparison_path)
+            ""
+            if shadow_decision_comparison_path is None
+            else str(shadow_decision_comparison_path)
         ),
         "cost_sensitivity_review": (
-            "" if cost_sensitivity_review_path is None else str(cost_sensitivity_review_path)
+            ""
+            if cost_sensitivity_review_path is None
+            else str(cost_sensitivity_review_path)
         ),
         "benchmark_baseline_control": (
-            "" if benchmark_baseline_control_path is None else str(benchmark_baseline_control_path)
+            ""
+            if benchmark_baseline_control_path is None
+            else str(benchmark_baseline_control_path)
         ),
         "candidate_regression_replay": (
             ""
@@ -20838,10 +21292,14 @@ def _etf_dynamic_v3_parameter_research_summary(
             else str(candidate_regression_replay_path)
         ),
         "stress_scenario_library": (
-            "" if stress_scenario_library_path is None else str(stress_scenario_library_path)
+            ""
+            if stress_scenario_library_path is None
+            else str(stress_scenario_library_path)
         ),
         "drawdown_event_casebook": (
-            "" if drawdown_event_casebook_path is None else str(drawdown_event_casebook_path)
+            ""
+            if drawdown_event_casebook_path is None
+            else str(drawdown_event_casebook_path)
         ),
         "flip_rotation_event_casebook": (
             ""
@@ -25860,7 +26318,9 @@ def _score_change_narrative(
     driver_text = (
         f"主要正向来自 {', '.join(positive[:2])}"
         if positive and delta >= 0
-        else f"主要拖累来自 {', '.join(negative[:2])}" if negative else "主要驱动未充分披露"
+        else f"主要拖累来自 {', '.join(negative[:2])}"
+        if negative
+        else "主要驱动未充分披露"
     )
     binding = _text(decision.get("binding_gate_label"), "UNKNOWN")
     if position_delta is None:

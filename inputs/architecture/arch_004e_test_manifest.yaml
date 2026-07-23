@@ -9567,7 +9567,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_dual_forward_aging
   path: tests/test_dual_forward_aging.py
-  sha256: 7752f5665f9fa4ce737eb687c325b3d911e2f05c18f51deaaba4247006f7c955
+  sha256: fa92f30d3daae4ae6c4905bbd6161a83848dc186b8bcda36f084e784c2f75cf9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -10961,7 +10961,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_external_validation
   path: tests/test_external_validation.py
-  sha256: 496737f0a5a0fa2c7cf06fc7283303de4c6f49a1a5278e967022ca17bea66630
+  sha256: 1bed03700123cae48663994393bc3e21adb91ab1219650e4c95c99affc5fad9b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
