@@ -3414,7 +3414,7 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     }
 
     superseded = set(ops_067["superseded_live_source_paths"])
-    assert len(superseded) == 95
+    assert len(superseded) == 96
     assert superseded == _ops_067_prior_active_source_mismatches()
     assert ops_067["supersession"] == {
         "superseded_by_phase": "OPS-067",
@@ -3443,11 +3443,12 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
         "tests/test_reader_brief.py",
         "tests/test_report_quality_gate.py",
         "tests/test_run_artifacts.py",
+        "tests/test_scheduled_tasks.py",
     }
     assert set(ops_067["new_source_paths"]) == expected_new_source_paths
     sources = ops_067["sources"]
     source_paths = [str(source["path"]) for source in sources]
-    assert len(source_paths) == 158
+    assert len(source_paths) == 159
     assert len(source_paths) == len(set(source_paths))
     wave14_source_paths = {str(source["path"]) for source in baseline[WAVE14_S2_SECTION]["sources"]}
     assert set(source_paths) == wave14_source_paths | expected_new_source_paths

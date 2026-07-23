@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from datetime import date
 from pathlib import Path
@@ -243,10 +244,31 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
     _write_status(
         next(step for step in plan.steps if step.step_id == "pipeline_health").produced_paths[0]
     )
+    quality_gate_path = next(
+        step for step in plan.steps if step.step_id == "report_quality_gate"
+    ).produced_paths[0]
+    reader_brief_quality_path = next(
+        step for step in plan.steps if step.step_id == "validate_reader_brief"
+    ).produced_paths[0]
     calls: list[tuple[str, ...]] = []
 
     def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
-        calls.append(command[3:])
+        args = command[3:]
+        calls.append(args)
+        if args == ("reports", "quality-gate", "--latest"):
+            _write_json_status(
+                quality_gate_path,
+                report_type="report_quality_gate",
+                status_field="report_quality_status",
+                status="PASS",
+            )
+        elif args == ("reports", "validate-reader-brief", "--latest"):
+            _write_json_status(
+                reader_brief_quality_path,
+                report_type="reader_brief_quality",
+                status_field="status",
+                status="OK",
+            )
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
     report = run_daily_ops_plan(
@@ -304,3 +326,23 @@ def _write_price_cache(path: Path, latest_date: str) -> None:
 def _write_status(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("- 状态：PASS\n", encoding="utf-8")
+
+
+def _write_json_status(
+    path: Path,
+    *,
+    report_type: str,
+    status_field: str,
+    status: str,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload: dict[str, object] = {
+        "schema_version": 1,
+        "report_type": report_type,
+        "as_of": "2026-05-06",
+        "production_effect": "none",
+        status_field: status,
+    }
+    if report_type == "report_quality_gate":
+        payload["status"] = status
+    path.write_text(json.dumps(payload), encoding="utf-8")
