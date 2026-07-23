@@ -19661,17 +19661,63 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     remaining_owner: DATA-GOV D0C
   validation:
     focused:
-      status: PENDING
+      status: PASS
+      passed: 36
+      failed: 0
+      tested_commit: ada1f7bc33776f4f4ec3db698c24e6c34775d0fb
+      tested_tree: 65af3adf7bb1d60e6b8f53704362a212f1a6737b
+      scope: OPS-067 delta compatibility/deprecation/scheduler fixture
     static:
-      status: PENDING
+      status: PASS
+      tested_commit: ada1f7bc33776f4f4ec3db698c24e6c34775d0fb
+      tested_tree: 65af3adf7bb1d60e6b8f53704362a212f1a6737b
+      devex_validate: PASS
+      ruff_changed_tests: PASS
+      black_changed_tests: PASS
     architecture_fitness:
-      status: PENDING
+      status: PASS
+      passed: 569
+      failed: 0
+      elapsed_seconds: 107.75
+      tested_commit: ada1f7bc33776f4f4ec3db698c24e6c34775d0fb
+      tested_tree: 65af3adf7bb1d60e6b8f53704362a212f1a6737b
+      artifact:
+        path: outputs/validation_runtime/architecture-fitness_20260723T234451Z/test_runtime_summary.json
+        sha256: e69163219d54444e6318329a90df34a3778bdd331da2f69ef1ab29ed798a4312
+        size_bytes: 31114
     contract_validation:
-      status: PENDING
+      status: PASS
+      passed: 268
+      failed: 0
+      elapsed_seconds: 119.99
+      tested_commit: ada1f7bc33776f4f4ec3db698c24e6c34775d0fb
+      tested_tree: 65af3adf7bb1d60e6b8f53704362a212f1a6737b
+      artifact:
+        path: outputs/validation_runtime/contract-validation_20260723T234644Z/test_runtime_summary.json
+        sha256: 1ceed667723fa6e7dfa985a0a0053f149b95c91d81ede08b51ef08dea5a1d054
+        size_bytes: 29650
     integration:
-      status: PENDING
+      status: PASS
+      passed: 993
+      failed: 0
+      elapsed_seconds: 50.59
+      tested_commit: ada1f7bc33776f4f4ec3db698c24e6c34775d0fb
+      tested_tree: 65af3adf7bb1d60e6b8f53704362a212f1a6737b
+      artifact:
+        path: outputs/validation_runtime/integration_20260723T234848Z/test_runtime_summary.json
+        sha256: 3d6afa89f967b9f955b1ae788d7b133ce64a6ddaac345ae2c33c163391a768b5
+        size_bytes: 23228
     reproducibility:
-      status: PENDING
+      status: PASS
+      passed: 23
+      failed: 0
+      elapsed_seconds: 17.31
+      tested_commit: ada1f7bc33776f4f4ec3db698c24e6c34775d0fb
+      tested_tree: 65af3adf7bb1d60e6b8f53704362a212f1a6737b
+      artifact:
+        path: outputs/validation_runtime/reproducibility_20260723T234944Z/test_runtime_summary.json
+        sha256: e1ebff353d39190cf2c3951d3cd4052b66a9e7db3559e85028ee4a9e0ed29d76
+        size_bytes: 10343
     full:
       status: PENDING
     canonical_daily_acceptance:
@@ -19873,7 +19919,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 662c63c365262bf0b3c1f594ab27d5ad08ca6e1a3f94512126748f83b8c2519a
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
-    sha256: 6c231bb1048f1f30e4e7d001cb66cee9bbed9144958fcc8fd62aeb052fcc7398
+    sha256: 1801d4ad001c2b230540b7eb7788195003866c6c9e6da45c3da388961625fae4
     hash_normalization: git_eol_lf
   - path: docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md
     sha256: af715c13837ee6d22c5ba0ff4987af52eb5fa084bd52436b7e9a0fa5aed08902
@@ -19912,7 +19958,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 7bfcafb7b476b494c230aa97faac758bc103bd6ad5ded4a1faf9595f6deb89a4
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: c5e1ea12e277760ba404a6ac044fc253c66ce0920bb12a319abcbb86eeec1433
+    sha256: 2a28aaacb5df7f75dc6e7b7312bc5e60d96f5a2b67c4d286de62e6164eb17cb0
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: fade9904deb3a6c7b613e0353b81b0a6b80610ebb73d0adbde07ffef7807262f
@@ -19939,10 +19985,10 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: ad10e94a6f74e0ec0b3bbee671f5a70146f138b1aa731fb413fc6c15e971f292
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 7b3a13d5a16a023a4ec0692044cb68dff11732e0d25806be219a056e6ba3e163
+    sha256: 6f1b1b69023d2145f3fd834e807bdf0e5a87d1f490136e918f384bbbabc93efa
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: c590db8ab5fdd62dafcd3030a35eb2f253cd6bb5b89277b2cf535e4e931a7b32
+    sha256: 8b647e067897c67df83cf96785622a3d79636e29370527240547d2982b279a7a
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_applied_closeout.json
     sha256: f8ea35968cfc0ad206904009ac0f78cf75b4eadba8acf87d326a4459469be386
@@ -19981,7 +20027,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: cd61079eb75b92c859403314c12195b7044873d0eee44e49e10bc36253d63779
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
-    sha256: 77608cd85eba203d1925c022ac59643b931c94b7cf6fd863543c0522ff730d8f
+    sha256: 3a3bb2ba3e9b1fc12ddecae06b6390fd646825817198c361028085d4c10d7278
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
     sha256: a23af0687fb17f46543bfabbf2368ad675314a2bec801ec5d93dbd50eb5ab847

@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: ab7c7e6b765e5decb6ab73ade8d482731ef1e757cd02aa443ddb7dd285749898
+baseline_checksum: 42068b108c0e888ee165d0b12a62752ac5c76a4c9d4953d1c073d09a7ca87853
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 895
 fragment_count: 895
@@ -563,8 +563,8 @@ fragments:
   fragment_checksum: 0af72431dc86e23519ef864e0609ce0979dd6f81bed42cc12c332bdc84b43e53
 - task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
   path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
-  file_sha256: 77608cd85eba203d1925c022ac59643b931c94b7cf6fd863543c0522ff730d8f
-  fragment_checksum: 4625a301afebc3919207734f283d39b27b32e0e563f24997407ca7bddfcd5403
+  file_sha256: 3a3bb2ba3e9b1fc12ddecae06b6390fd646825817198c361028085d4c10d7278
+  fragment_checksum: 92e79d73278c69fe27cc06cf61b8923294482433cd54dc963676e3a92c3c1553
 - task_id: PIT-001
   path: registry/development_tasks_shadow/active/6b/6bcf100bd2ed48230eec76b5a35417a9a97dd5c4abb4de3c8f63dd936d77d1c5.yaml
   file_sha256: 287d89ebc7349a735aaefda240c62d7bcccf4a7c01833e621d76d83a312ed38b
@@ -3605,8 +3605,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: c5e1ea12e277760ba404a6ac044fc253c66ce0920bb12a319abcbb86eeec1433
-  rendered_sha256: c5e1ea12e277760ba404a6ac044fc253c66ce0920bb12a319abcbb86eeec1433
+  source_sha256: 2a28aaacb5df7f75dc6e7b7312bc5e60d96f5a2b67c4d286de62e6164eb17cb0
+  rendered_sha256: 2a28aaacb5df7f75dc6e7b7312bc5e60d96f5a2b67c4d286de62e6164eb17cb0
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3628,4 +3628,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 0251b8348d0d87b0069e0ff3369652a6d3cbc7022da5ea4d186c3fce8f76b961
+index_checksum: d30bba0d236562e87609bcb924e00ec538a52fca5b21a036c966ce73b8a3aa9c

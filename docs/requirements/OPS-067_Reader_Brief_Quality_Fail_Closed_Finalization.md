@@ -138,3 +138,11 @@
   validation 与 canonical daily-run 验收，状态保持 `IN_PROGRESS`。
 - 2026-07-24：审查明确区分“可捕获异常补偿”与“跨文件 power-loss durability”；
   后者继续归 DATA-GOV D0C，不在 OPS-067 中以临时 workaround 或口头说明冒充闭环。
+- 2026-07-24：实现候选已落在 `8fb33e5c`，scheduler strict-artifact fixture 与
+  compatibility authority 闭合修正在 `ada1f7bc`；候选 tree
+  `65af3adf7bb1d60e6b8f53704362a212f1a6737b` 上的 architecture
+  `569 passed / 107.75s`、contract `268 passed / 119.99s`、integration
+  `993 passed / 50.59s`、reproducibility `23 passed / 17.31s` 均为 PASS，
+  delta focused `36 passed`，DevEx/Ruff/Black 均为 PASS。状态仍为
+  `IN_PROGRESS`：还必须在证据写回后的最终候选上通过 Full 与 post-Full gates，
+  推送稳定后再只用 canonical `aits ops daily-run` 完成运营验收。
