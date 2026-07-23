@@ -1469,7 +1469,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_external_validation
   path: src/ai_trading_system/cli_commands/research_external_validation.py
-  sha256: 69b4d54fba45937a53c2126411f3f700ee9e31df849b927e22b27cc57389f2a9
+  sha256: dab77216b6917fdb72cd73248e57aead04c5f4a8448891c9bf96bc646569d93a
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -1579,7 +1579,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_trends
   path: src/ai_trading_system/cli_commands/research_trends.py
-  sha256: 8fcf6f45b358ba9a577aa32f57ee6683a14d41a836d55e2223e7609df2d10a31
+  sha256: 269165f010a74b0b06cc2f1564e6b3acd7fa36d15ece3c5898aeb657271aba49
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -5103,7 +5103,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.equal_risk_growth_tilt
   path: src/ai_trading_system/equal_risk_growth_tilt.py
-  sha256: 780dd829f0fbfe4524a3196ce706753609165f9378dc34010ac0577b0f39afb4
+  sha256: edeab234fa8bd411d36239aa817d113b4e1a9f47d741dda9981634e57f01e4c0
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -8259,7 +8259,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.external_validation
   path: src/ai_trading_system/external_validation.py
-  sha256: 0e21a489e5bf07d96d6b0cb6f37661bf7ddd26158ab70282f5950df879a94675
+  sha256: 34c113d49a7239f5632b4823f8242395e6c4b803f3ea2f03b2d0b9905c5d4c14
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -16091,7 +16091,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.research_campaign
   path: src/ai_trading_system/research_campaign.py
-  sha256: 5b6c1af4a3d967ff4afb3875162a222cc12f3b9679d6eb7d5040afc152008822
+  sha256: 988857f98952efb7323ca272bf1c00b82db280130bbdbe82052b551e0c521c91
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

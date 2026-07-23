@@ -18734,7 +18734,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     direct_writer_current_count: 856
     direct_writer_violation_count: 0
     aggregate_fragment_count: 18
-    deprecation_inventory_id: arch_004g_deprecation_inventory_4d2c24a07efaf6ebc3a7
+    deprecation_inventory_id: arch_004g_deprecation_inventory_1c168ef4988c0649cf01
     active_task_count: 407
     completed_task_count: 487
     total_task_count: 894
@@ -18804,13 +18804,29 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
       attempts_append_only: true
       executed_attempts_may_be_removed_or_overwritten: false
       post_pass_repeat_full_allowed: false
-      run_count: 0
+      run_count: 1
       status: PENDING
       attempts:
       - attempt_id: wave14_s2_full_1
         role: INITIAL_FORMAL_GATE
         required: true
+        status: FAIL
+        tested_section_status: VALIDATING_WAVE14_S2
+        tested_commit: c501474200f64fa7d77f33d4a56879881bb53cc1
+        tested_tree: bfdd8db1f0fec3c450bdba6c4c42f338f590abc5
+        full_sensitive_source_manifest_sha256: 6dd532cbbb613143f5c3d41ac20732ced5a330917cf40946b3d36cdb52294f6b
+        artifact:
+          path: outputs/validation_runtime/full_20260723T182126Z/test_runtime_summary.json
+          sha256: 95531c46a7112deb255065d1595f680032d134d2c6bd1f87155e9a86f22fdd73
+          size_bytes: 27786
+          passed: 6978
+          failed: 29
+          skipped: 4
+      - attempt_id: wave14_s2_full_2
+        role: FAILURE_FIX_REPLACEMENT
+        required: true
         status: PENDING
+        replaces_attempt_id: wave14_s2_full_1
     post_full_closeout:
       status: PENDING
       changed_paths: []
@@ -18908,7 +18924,9 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
   - tests/test_immutable_data_publish.py
   - tests/test_ops_daily.py
   - tests/test_trading2452_architecture_contract.py
+  - tests/test_trading2453_constraint_hit_diagnosis.py
   - tests/test_trading_calendar.py
+  - tests/test_two_layer_boundary_contract.py
   - tests/test_validation_runtime_profile.py
   generated_new_source_paths:
   - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
@@ -18980,7 +18998,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 0fe442b1173f4b562cf90dc62b1bef15d9bd5c7df2cc0adfa94f89529aa8128d
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
-    sha256: 47cf4cfd820dbeedb2c70d6e5bd45411d22c28e1a197fc8bf8d18563dfa1e503
+    sha256: 66bb905048f2d530a8238c3348a7a36174b6574883eccdf4548143fb181e0eb1
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
     sha256: 9726659eeabcabdadcb0c58327adce9974bce7fd58fd83cf2ef7ebb2f57e72d8
@@ -19028,25 +19046,25 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 2d704b55e48ba594ae10bac4fe31720de383deebc848777d312c488fa89b3103
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
-    sha256: 974752e849010e995230a97761420e81e97e892076b8c9ab3aa522ce03111e61
+    sha256: a46bdcce5ea78dccdb95d5a572616ac79b3323428dbc9ae30451fa6621a9c69a
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: db725e88218aa3d903a831e07d5f6f317a97405e51051b009b8c06bbcadea656
+    sha256: 3e4a7b18e79b04ac4b62703b8e7a85e7fe15fc96f2c3e9d0a2e190251e3c8026
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: 310a374cf2ddf9231a407204b9d41d8d48e99a309111258f21362922b6061eeb
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-    sha256: 441e3d790e558e175a2ee35462185c5a3450ea899bda353ae5f386bd009793f7
+    sha256: 425f564bdfd32de3667d9c978ffb572c64ef709b0b81b6f5459a4136b3bf76aa
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_architecture_fitness.yaml
     sha256: d37306ada2e8b6d170465033bbc4cc8746c75922c5e6fb8e4cad0de27208a391
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
-    sha256: f4caf9d291ca5eecf4b39cbc82244346c0f6e5c9621499595e91ab450491b8c4
+    sha256: 533301feb7fe81331f9058d607b7a1a9f97bf0c9272049129f689411d58d061d
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 7d552046b4982cfc97cfa684d5927f5abf806e57b4df7bf0b37bdf48d9f6f5fe
+    sha256: f8033be98a6c5976b3c119b58756648f5b7aee30ea87d299999a2bd39f3c3993
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -19055,13 +19073,13 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: df1d10aeedcf8d572fa568e45a100d097aed2685a115c9ec8e1f7251517e2cfd
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
-    sha256: f2ff2d3a0dd9664da632585a75ec7a047d8c3ba813b07260d3f22dd667d0ab49
+    sha256: c37689d00e3813a1385faa405aa86e7d06e326c80edbcccab5401c0b1c98152c
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: c3df577811af429879a02171f416df9a372c5e34546debd748cefe984b41a6b5
+    sha256: e97e8fbc01a2baf9633f03ca2ceb4a1ab1964660a70d7ca6d765bde8b259c5f3
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 1da6d637ad0c4089e8ba377cf69a66b8805c4adda8f86850feec2136bdf51e26
+    sha256: 7bb0ea3f4a5f92a6a529ec697beb1dba62cc19dba02da92b41edbf99dcfc891b
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_applied_closeout.json
     sha256: f8ea35968cfc0ad206904009ac0f78cf75b4eadba8acf87d326a4459469be386
@@ -19100,7 +19118,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: cd61079eb75b92c859403314c12195b7044873d0eee44e49e10bc36253d63779
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
-    sha256: cb772a54f59f0ccae838bdbdbbc77efef6c2c6662f51ae910283891cee7a0d45
+    sha256: 5e7b99a39bca4d7431e3bb350ae2d5283b180eac719a840f011c5e9321409159
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
     sha256: a23af0687fb17f46543bfabbf2368ad675314a2bec801ec5d93dbd50eb5ab847
@@ -19196,7 +19214,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: cb2aae6e33e040b7cf0544d22965c7c6fb3f35a3abd02eb3d808cad3e539c4a4
+    sha256: 7c2430a8c344b9fe257228b92cd4b5890931f50065184fa3b8f72bc7bf848cd1
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_wave14_d0b2_g3_readiness.py
     sha256: effe2292ddef5a9d7aae930ad0510948bb0aa645650a4686aed506103deb4efb
@@ -19211,7 +19229,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 533bc16d1d6343382f04b4ef5ee838de2e25abd8e756f1b5551cecdaf0eb30c8
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004g_deprecation.py
-    sha256: fe285b59e557b7f02eedb0b2ea4a4cd78fdd96d304fe0ee3162ec668cc587b1c
+    sha256: 8e3ed0223c074165802d08d56babd78c88261510258003859227af7557bbfd2f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_005_bootstrap_handoff.py
     sha256: 3c047c554716d22f5b2e5cc85932f4f87305d86dec71b71a2aaedd1f9cd0d776
@@ -19254,6 +19272,93 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     hash_normalization: git_eol_lf
   - path: tests/test_validation_runtime_profile.py
     sha256: dfabd48cc790ba7a428d5633c6cb9c261b6c32936b81d148146674d410250433
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/cli_commands/research_external_validation.py
+    sha256: dab77216b6917fdb72cd73248e57aead04c5f4a8448891c9bf96bc646569d93a
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/cli_commands/research_trends.py
+    sha256: 269165f010a74b0b06cc2f1564e6b3acd7fa36d15ece3c5898aeb657271aba49
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/equal_risk_growth_tilt.py
+    sha256: edeab234fa8bd411d36239aa817d113b4e1a9f47d741dda9981634e57f01e4c0
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/external_validation.py
+    sha256: 34c113d49a7239f5632b4823f8242395e6c4b803f3ea2f03b2d0b9905c5d4c14
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/research_campaign.py
+    sha256: 988857f98952efb7323ca272bf1c00b82db280130bbdbe82052b551e0c521c91
+    hash_normalization: git_eol_lf
+  - path: tests/fixtures/growth_tilt_baseline_contract_adapters/baseline_exposure_unit_inventory.json
+    sha256: a54bc16200a0d1f5b345c3e6ff408b73970a6b4f6c0f237ac0ad0e32d456183b
+    hash_normalization: git_eol_lf
+  - path: tests/fixtures/growth_tilt_baseline_contract_adapters/baseline_signal_inventory.json
+    sha256: c6d3cc5f9fddbea103c4e99f4e7f9d00796e8342438df4b9aa1c68c874ea3b5e
+    hash_normalization: git_eol_lf
+  - path: tests/fixtures/growth_tilt_baseline_contract_adapters/growth_tilt_hard_veto_resolution_matrix.json
+    sha256: 6817fb99f03d6dda55ebef60d5344b6373b009e36c77bfe55a45b080cee7a0be
+    hash_normalization: git_eol_lf
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/data_quality_gate.json.gz
+    sha256: f334cf040ba1ab7c15c9528cd413a649a006552631bee63641bb3a5898b95a97
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/data_quality_gate.md.gz
+    sha256: 651a2402d28e3018d691102377ac9b3a8c9e7d5d01ef96b8be2ce0e83dc0afdd
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/effective_windows.json.gz
+    sha256: 81bbeeeca001f3578a878515174e77877d6cd4883b29895a7e6338d834c08e50
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/evaluator_manifest.json.gz
+    sha256: 0b0718ab384e25c64a886f09488cf703147406160cee04ac4d19e2d5848f3fc4
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/evaluator_runtime_telemetry.json.gz
+    sha256: bc7d695a2a3b479d6b08e1fb15a5a8e43912d596ee9f03100af1c773488672c9
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/evaluator_validation.json.gz
+    sha256: e152a2eab174df58d01d753bb1b6293a74746c23459c73e3c11154fb2a5a5c06
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/historical_seen_report.json.gz
+    sha256: 91757c011419a89a892486abe5b00492fd91a9b2a69c22ff76876d5a33630c7d
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/historical_seen_report.md.gz
+    sha256: 27ed76144cb84613c1e09c98e1cde05f6a9c19b505439028e2109728c078e4c1
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/recent_known_diagnostics.jsonl
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    hash_normalization: git_eol_lf
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/test_evaluations.jsonl
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    hash_normalization: git_eol_lf
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/train_evaluations.jsonl.gz
+    sha256: 132f248ceaa9da036ac43fbbbd23193aa52055c150f6b6d7cdda7996413fa685
+  - path: tests/fixtures/trading2453_constraint_hit_diagnosis/train_selections.jsonl
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_growth_tilt_baseline_contract_adapters.py
+    sha256: 1a849229cd2db6f8a6ad7009fbd3acbea55a8e3593c34d3b07c866596d4ed15b
+    hash_normalization: git_eol_lf
+  - path: tests/research_trends/test_first_layer_candidate_generators_regenerate_cli.py
+    sha256: b7e898e6c7ae7c21e3a9f11dd04ca8d707a64c4caad5e2b4351ad3a8cea30398
+    hash_normalization: git_eol_lf
+  - path: tests/research_trends/test_regenerated_candidate_actual_path_validation_cli.py
+    sha256: d6ec40e9a15f91e31a488975ae9690126784b17407272a7244c635831404cf78
+    hash_normalization: git_eol_lf
+  - path: tests/test_candidate_signal_prediction_artifact_audit.py
+    sha256: 5715326efc6498c2cd99409d74d97d92ec743739ccdec6caccfc4dc8276e3cad
+    hash_normalization: git_eol_lf
+  - path: tests/test_dual_forward_aging.py
+    sha256: 7752f5665f9fa4ce737eb687c325b3d911e2f05c18f51deaaba4247006f7c955
+    hash_normalization: git_eol_lf
+  - path: tests/test_external_validation.py
+    sha256: 496737f0a5a0fa2c7cf06fc7283303de4c6f49a1a5278e967022ca17bea66630
+    hash_normalization: git_eol_lf
+  - path: tests/test_first_layer_gate_policy_v2_reconciliation.py
+    sha256: 487d62607e94af54881036bce058b1690c37b665cecc253dfcde6979a949bc5c
+    hash_normalization: git_eol_lf
+  - path: tests/test_research_campaign.py
+    sha256: 816ca833583821d421c3793442c843a10baa68b845a9e1ee6dce101e4e1a1978
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2453_constraint_hit_diagnosis.py
+    sha256: 4e07fc1ea026ddfb202c37d24a2da86a939294a7c3c18468fff02f64d694c05a
+    hash_normalization: git_eol_lf
+  - path: tests/test_two_layer_boundary_contract.py
+    sha256: 0104f2a5e8a19513ef8bb655f431d27b2678822fe598b8495bb34907e94b1a62
+    hash_normalization: git_eol_lf
+  - path: tests/trading_engine/test_full_signal_limited_backtest.py
+    sha256: bb74895907dc2868b52e76b5ebcde68da7d0e296869cfd710426f94e7a8cd19d
+    hash_normalization: git_eol_lf
+  - path: tests/trading_engine/test_price_history_repair.py
+    sha256: 659ccb495c8fc57a8be0b6bedc0620ff73d25fd604d36182e06520b74d974c99
     hash_normalization: git_eol_lf
   full_sensitive_sources:
   - .github/workflows/ci.yml
@@ -19305,6 +19410,8 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
   - scripts/governance_task_portfolio_normalization.py
   - src/ai_trading_system/cli_commands/data_cache.py
   - src/ai_trading_system/cli_commands/ops.py
+  - src/ai_trading_system/cli_commands/research_external_validation.py
+  - src/ai_trading_system/cli_commands/research_trends.py
   - src/ai_trading_system/cli_direct.py
   - src/ai_trading_system/config.py
   - src/ai_trading_system/contracts/__init__.py
@@ -19315,6 +19422,8 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
   - src/ai_trading_system/data/quality.py
   - src/ai_trading_system/data/quality_execution.py
   - src/ai_trading_system/data_refresh_audit.py
+  - src/ai_trading_system/equal_risk_growth_tilt.py
+  - src/ai_trading_system/external_validation.py
   - src/ai_trading_system/ops_daily.py
   - src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
   - src/ai_trading_system/platform/architecture/bootstrap_handoff.py
@@ -19328,8 +19437,27 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
   - src/ai_trading_system/platform/reporting/owner_daily.py
   - src/ai_trading_system/platform/reporting/reader_brief_native.py
   - src/ai_trading_system/reports/reader_brief.py
+  - src/ai_trading_system/research_campaign.py
   - src/ai_trading_system/trading_calendar.py
+  - tests/fixtures/growth_tilt_baseline_contract_adapters/baseline_exposure_unit_inventory.json
+  - tests/fixtures/growth_tilt_baseline_contract_adapters/baseline_signal_inventory.json
+  - tests/fixtures/growth_tilt_baseline_contract_adapters/growth_tilt_hard_veto_resolution_matrix.json
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/data_quality_gate.json.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/data_quality_gate.md.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/effective_windows.json.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/evaluator_manifest.json.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/evaluator_runtime_telemetry.json.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/evaluator_validation.json.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/historical_seen_report.json.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/historical_seen_report.md.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/recent_known_diagnostics.jsonl
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/test_evaluations.jsonl
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/train_evaluations.jsonl.gz
+  - tests/fixtures/trading2453_constraint_hit_diagnosis/train_selections.jsonl
+  - tests/research_strategies/test_growth_tilt_baseline_contract_adapters.py
   - tests/research_strategies/test_growth_tilt_candidate_runtime_spec_threshold_policy_approval.py
+  - tests/research_trends/test_first_layer_candidate_generators_regenerate_cli.py
+  - tests/research_trends/test_regenerated_candidate_actual_path_validation_cli.py
   - tests/test_arch_004_g2_5_readiness.py
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004_wave14_d0b2_g3_readiness.py
@@ -19339,18 +19467,27 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_005_bootstrap_handoff.py
   - tests/test_architecture_wave_readiness.py
+  - tests/test_candidate_signal_prediction_artifact_audit.py
   - tests/test_cli_direct.py
   - tests/test_data_download.py
   - tests/test_data_download_publication.py
   - tests/test_data_quality.py
   - tests/test_data_quality_execution.py
+  - tests/test_dual_forward_aging.py
   - tests/test_dynamic_v3_clean_selection_trading2452.py
+  - tests/test_external_validation.py
+  - tests/test_first_layer_gate_policy_v2_reconciliation.py
   - tests/test_gov_006_task_portfolio_normalization.py
   - tests/test_immutable_data_publish.py
   - tests/test_ops_daily.py
+  - tests/test_research_campaign.py
   - tests/test_trading2452_architecture_contract.py
+  - tests/test_trading2453_constraint_hit_diagnosis.py
   - tests/test_trading_calendar.py
+  - tests/test_two_layer_boundary_contract.py
   - tests/test_validation_runtime_profile.py
+  - tests/trading_engine/test_full_signal_limited_backtest.py
+  - tests/trading_engine/test_price_history_repair.py
   post_full_evidence_only_paths:
   - config/architecture/arch_004_refactor_policy.yaml
   - docs/architecture/dual_lane_development_operating_model.md

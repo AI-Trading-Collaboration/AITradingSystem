@@ -11,59 +11,62 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture coordinator；G2.5 replay修复focused/static已PASS，正在生成替代C3的新fixed
-    point
+  next_owner: architecture coordinator；clean-clone fixture/root-writer根因已修复，正在形成failure-fix
+    replacement candidate fixed point
   requirement_refs:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。S0
-    carrier=`39a3ea730`保持不可变；D0B2/G3与`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`已完成。tracked历史证据现按exact
-    direct-child carrier snapshot优先回放，source base仅承担lineage/change-manifest base；live
-    builder只接受reviewed current/canonical双态，unknown/第三owner仍fail closed。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。C4=`c50147420`
+    pre-Full全部PASS；initial Full=`6978 passed / 29 failed / 4 skipped`。失败集中于research测试依赖未跟踪cache/report产物，以及Full其他文件写repository
+    root后污染exact worktree guard；不得以主工作区untracked产物、guard ignore、串行替代或删除失败attempt绕过。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 重新闭合generated/compatibility/deprecation；combined focused、lane-local static、report/architecture/contract/integration/reproducibility及唯一final
-      Full PASS；known-unrelated文档始终不物化/不读取；dispatch/lease/cutover/task mutation/production/broker全false/none。
+    text: 相关失败组改为显式committed fixture或tmp/per-worker root并可在clean clone独立/并行PASS；compatibility
+      append-only保留attempt 1 artifact/hash/tree/source manifest并追加replacement PENDING；重建fixed
+      point、重跑全部pre-Full门及failure-fix Full PASS；post-Full evidence-only closeout；dispatch/lease/cutover/production/broker全false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1956
-    row_sha256: 06f5f5823a72734445dffb3fca5e0447f2c16c6e3533a5305a3da0ce94f1657e
+    row_sha256: 7251e3740a8348ef8e4628e77269c325a007f4f518bf01934e5cb6eb134bd577
     cell_count: 8
     all_cells:
     - ARCH-004W14_D0B2_G3_PARALLEL_READINESS
     - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit
     - P0
     - IN_PROGRESS
-    - architecture coordinator；G2.5 replay修复focused/static已PASS，正在生成替代C3的新fixed point
-    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。S0 carrier=`39a3ea730`保持不可变；D0B2/G3与`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`已完成。tracked历史证据现按exact
-      direct-child carrier snapshot优先回放，source base仅承担lineage/change-manifest base；live
-      builder只接受reviewed current/canonical双态，unknown/第三owner仍fail closed。
-    - 重新闭合generated/compatibility/deprecation；combined focused、lane-local static、report/architecture/contract/integration/reproducibility及唯一final
-      Full PASS；known-unrelated文档始终不物化/不读取；dispatch/lease/cutover/task mutation/production/broker全false/none。
-    - 2026-07-24：C3 combined=`360 passed / 1 skipped`、report=`55 passed`；architecture正式attempt因historical/live
-      ownership角色混用fail closed=`551 passed / 4 failed / 4 errors`。失败artifact保留；修复新增回归后G2.5
-      focused=`35 passed`且Black/Ruff/strict mypy/diff-check PASS。新candidate尚未生成，后续formal/Full未启动，`next_slice_unblocked=false`。
+    - architecture coordinator；clean-clone fixture/root-writer根因已修复，正在形成failure-fix
+      replacement candidate fixed point
+    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。C4=`c50147420`
+      pre-Full全部PASS；initial Full=`6978 passed / 29 failed / 4 skipped`。失败集中于research测试依赖未跟踪cache/report产物，以及Full其他文件写repository
+      root后污染exact worktree guard；不得以主工作区untracked产物、guard ignore、串行替代或删除失败attempt绕过。
+    - 相关失败组改为显式committed fixture或tmp/per-worker root并可在clean clone独立/并行PASS；compatibility
+      append-only保留attempt 1 artifact/hash/tree/source manifest并追加replacement PENDING；重建fixed
+      point、重跑全部pre-Full门及failure-fix Full PASS；post-Full evidence-only closeout；dispatch/lease/cutover/production/broker全false/none。
+    - 2026-07-24：12个完整相关测试文件组合=`81 passed / 35.51s`，四组canonical ignored roots与3份tracked
+      regenerated Markdown前后快照不变；production默认、strict DQ、研究计算和阈值未改。下一步只生成attempt1 FAIL
+      + attempt2 PENDING的新fixed point并重跑全部pre-Full门，replacement Full仍未授权运行，`next_slice_unblocked=false`。
     raw_line: '|ARCH-004W14_D0B2_G3_PARALLEL_READINESS|Architecture / Wave14 D0B2
-      + bounded G3 exact parallel entry and exit|P0|IN_PROGRESS|architecture coordinator；G2.5
-      replay修复focused/static已PASS，正在生成替代C3的新fixed point|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。S0
-      carrier=`39a3ea730`保持不可变；D0B2/G3与`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`已完成。tracked历史证据现按exact
-      direct-child carrier snapshot优先回放，source base仅承担lineage/change-manifest base；live
-      builder只接受reviewed current/canonical双态，unknown/第三owner仍fail closed。|重新闭合generated/compatibility/deprecation；combined
-      focused、lane-local static、report/architecture/contract/integration/reproducibility及唯一final
-      Full PASS；known-unrelated文档始终不物化/不读取；dispatch/lease/cutover/task mutation/production/broker全false/none。|2026-07-24：C3
-      combined=`360 passed / 1 skipped`、report=`55 passed`；architecture正式attempt因historical/live
-      ownership角色混用fail closed=`551 passed / 4 failed / 4 errors`。失败artifact保留；修复新增回归后G2.5
-      focused=`35 passed`且Black/Ruff/strict mypy/diff-check PASS。新candidate尚未生成，后续formal/Full未启动，`next_slice_unblocked=false`。|'
+      + bounded G3 exact parallel entry and exit|P0|IN_PROGRESS|architecture coordinator；clean-clone
+      fixture/root-writer根因已修复，正在形成failure-fix replacement candidate fixed point|详见
+      `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。C4=`c50147420`
+      pre-Full全部PASS；initial Full=`6978 passed / 29 failed / 4 skipped`。失败集中于research测试依赖未跟踪cache/report产物，以及Full其他文件写repository
+      root后污染exact worktree guard；不得以主工作区untracked产物、guard ignore、串行替代或删除失败attempt绕过。|相关失败组改为显式committed
+      fixture或tmp/per-worker root并可在clean clone独立/并行PASS；compatibility append-only保留attempt
+      1 artifact/hash/tree/source manifest并追加replacement PENDING；重建fixed point、重跑全部pre-Full门及failure-fix
+      Full PASS；post-Full evidence-only closeout；dispatch/lease/cutover/production/broker全false/none。|2026-07-24：12个完整相关测试文件组合=`81
+      passed / 35.51s`，四组canonical ignored roots与3份tracked regenerated Markdown前后快照不变；production默认、strict
+      DQ、研究计算和阈值未改。下一步只生成attempt1 FAIL + attempt2 PENDING的新fixed point并重跑全部pre-Full门，replacement
+      Full仍未授权运行，`next_slice_unblocked=false`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-06f5f5823a72734445dffb3f
+  event_id: legacy-import-7251e3740a8348ef8e4628e7
   task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -76,14 +79,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture coordinator；G2.5 replay修复focused/static已PASS，正在生成替代C3的新fixed
-      point
-    notes: 2026-07-24：C3 combined=`360 passed / 1 skipped`、report=`55 passed`；architecture正式attempt因historical/live
-      ownership角色混用fail closed=`551 passed / 4 failed / 4 errors`。失败artifact保留；修复新增回归后G2.5
-      focused=`35 passed`且Black/Ruff/strict mypy/diff-check PASS。新candidate尚未生成，后续formal/Full未启动，`next_slice_unblocked=false`。
+    next_owner: architecture coordinator；clean-clone fixture/root-writer根因已修复，正在形成failure-fix
+      replacement candidate fixed point
+    notes: 2026-07-24：12个完整相关测试文件组合=`81 passed / 35.51s`，四组canonical ignored roots与3份tracked
+      regenerated Markdown前后快照不变；production默认、strict DQ、研究计算和阈值未改。下一步只生成attempt1 FAIL
+      + attempt2 PENDING的新fixed point并重跑全部pre-Full门，replacement Full仍未授权运行，`next_slice_unblocked=false`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:06f5f5823a72734445dffb3fca5e0447f2c16c6e3533a5305a3da0ce94f1657e
+  - sha256:7251e3740a8348ef8e4628e77269c325a007f4f518bf01934e5cb6eb134bd577
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -91,18 +94,20 @@ projection:
   - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit
   - P0
   - IN_PROGRESS
-  - architecture coordinator；G2.5 replay修复focused/static已PASS，正在生成替代C3的新fixed point
-  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。S0 carrier=`39a3ea730`保持不可变；D0B2/G3与`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`已完成。tracked历史证据现按exact
-    direct-child carrier snapshot优先回放，source base仅承担lineage/change-manifest base；live
-    builder只接受reviewed current/canonical双态，unknown/第三owner仍fail closed。
-  - 重新闭合generated/compatibility/deprecation；combined focused、lane-local static、report/architecture/contract/integration/reproducibility及唯一final
-    Full PASS；known-unrelated文档始终不物化/不读取；dispatch/lease/cutover/task mutation/production/broker全false/none。
-  - 2026-07-24：C3 combined=`360 passed / 1 skipped`、report=`55 passed`；architecture正式attempt因historical/live
-    ownership角色混用fail closed=`551 passed / 4 failed / 4 errors`。失败artifact保留；修复新增回归后G2.5
-    focused=`35 passed`且Black/Ruff/strict mypy/diff-check PASS。新candidate尚未生成，后续formal/Full未启动，`next_slice_unblocked=false`。
+  - architecture coordinator；clean-clone fixture/root-writer根因已修复，正在形成failure-fix
+    replacement candidate fixed point
+  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。C4=`c50147420`
+    pre-Full全部PASS；initial Full=`6978 passed / 29 failed / 4 skipped`。失败集中于research测试依赖未跟踪cache/report产物，以及Full其他文件写repository
+    root后污染exact worktree guard；不得以主工作区untracked产物、guard ignore、串行替代或删除失败attempt绕过。
+  - 相关失败组改为显式committed fixture或tmp/per-worker root并可在clean clone独立/并行PASS；compatibility
+    append-only保留attempt 1 artifact/hash/tree/source manifest并追加replacement PENDING；重建fixed
+    point、重跑全部pre-Full门及failure-fix Full PASS；post-Full evidence-only closeout；dispatch/lease/cutover/production/broker全false/none。
+  - 2026-07-24：12个完整相关测试文件组合=`81 passed / 35.51s`，四组canonical ignored roots与3份tracked
+    regenerated Markdown前后快照不变；production默认、strict DQ、研究计算和阈值未改。下一步只生成attempt1 FAIL
+    + attempt2 PENDING的新fixed point并重跑全部pre-Full门，replacement Full仍未授权运行，`next_slice_unblocked=false`。
   docs_links:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 06f5f5823a72734445dffb3fca5e0447f2c16c6e3533a5305a3da0ce94f1657e
+  raw_row_sha256: 7251e3740a8348ef8e4628e77269c325a007f4f518bf01934e5cb6eb134bd577
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 163e02a034dcd5d10d4f263783ba99a1ffd0f85b220360a3c1407224c05b4bab
+fragment_checksum: f38c51c570eab255528730cff7d725c15c62d5f58a942d0a822fb84701495318

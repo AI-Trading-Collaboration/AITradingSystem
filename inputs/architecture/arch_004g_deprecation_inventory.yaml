@@ -1,4 +1,4 @@
-inventory_id: arch_004g_deprecation_inventory_4d2c24a07efaf6ebc3a7
+inventory_id: arch_004g_deprecation_inventory_1c168ef4988c0649cf01
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
@@ -60,7 +60,7 @@ surfaces:
   top_level_class_count: 0
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 1
-  test_reference_file_count: 318
+  test_reference_file_count: 319
   docs_config_reference_file_count: 123
   required_removal_gate_count: 12
   removal_ready: false
