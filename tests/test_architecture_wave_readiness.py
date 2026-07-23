@@ -12,6 +12,8 @@ import pytest
 
 from ai_trading_system.platform.architecture import wave_readiness
 from ai_trading_system.platform.architecture.task_registry_shadow import (
+    ACTIVE_REGISTER_PATH,
+    COMPLETED_REGISTER_PATH,
     SHADOW_FRAGMENT_SCHEMA_VERSION,
     SHADOW_REGISTRY_ROOT,
 )
@@ -513,7 +515,7 @@ def test_git_helpers_bind_blob_tree_refs_and_ancestry(tmp_path: Path) -> None:
 def test_carrier_requires_pushed_proper_descendant_and_tracked_bytes(
     tmp_path: Path,
 ) -> None:
-    _, commit_c = _init_repo(tmp_path)
+    commit_b, commit_c = _init_repo(tmp_path)
     _run_git(
         tmp_path,
         "update-ref",
@@ -594,12 +596,6 @@ def test_carrier_requires_pushed_proper_descendant_and_tracked_bytes(
     _run_git(tmp_path, "add", "docs/later.md")
     _run_git(tmp_path, "commit", "-m", "E unrelated descendant")
     commit_e = _run_git(tmp_path, "rev-parse", "HEAD")
-    _run_git(
-        tmp_path,
-        "update-ref",
-        "refs/remotes/origin/main",
-        commit_e,
-    )
     assert (
         wave_readiness._validate_carrier_commit(
             project_root=tmp_path,
@@ -622,6 +618,41 @@ def test_carrier_requires_pushed_proper_descendant_and_tracked_bytes(
         head=commit_d,
         allowed_paths=carrier_paths,
     )
+    _run_git(
+        tmp_path,
+        "update-ref",
+        "refs/remotes/origin/main",
+        commit_b,
+    )
+    with pytest.raises(WaveReadinessError) as caught:
+        wave_readiness._validate_carrier_commit(
+            project_root=tmp_path,
+            lane_commit=commit_c,
+            remote_ref="origin/main",
+        )
+    assert caught.value.code == "CARRIER_PUSH_DRIFT"
+
+    _run_git(tmp_path, "checkout", "-b", "remote-divergence", commit_d)
+    divergent_doc = tmp_path / "docs/remote-divergence.md"
+    divergent_doc.parent.mkdir()
+    divergent_doc.write_text("remote-only successor\n", encoding="utf-8")
+    _run_git(tmp_path, "add", "docs/remote-divergence.md")
+    _run_git(tmp_path, "commit", "-m", "remote divergent successor")
+    divergent_remote = _run_git(tmp_path, "rev-parse", "HEAD")
+    _run_git(
+        tmp_path,
+        "update-ref",
+        "refs/remotes/origin/main",
+        divergent_remote,
+    )
+    _run_git(tmp_path, "checkout", "main")
+    with pytest.raises(WaveReadinessError) as caught:
+        wave_readiness._validate_carrier_commit(
+            project_root=tmp_path,
+            lane_commit=commit_c,
+            remote_ref="origin/main",
+        )
+    assert caught.value.code == "CARRIER_PUSH_DRIFT"
 
 
 def test_carrier_dependency_change_is_rejected(tmp_path: Path) -> None:
@@ -783,8 +814,8 @@ def test_snapshot_archive_paths_use_only_replay_consumed_roots(tmp_path: Path) -
     assert "config/architecture/fragments/reports" not in paths
     assert "config/architecture/devex-ownership.yaml" in paths
     assert "docs/current.md" in paths
-    assert wave_readiness.ACTIVE_REGISTER_PATH in paths
-    assert wave_readiness.COMPLETED_REGISTER_PATH in paths
+    assert ACTIVE_REGISTER_PATH in paths
+    assert COMPLETED_REGISTER_PATH in paths
     assert not any(
         left != right and right.startswith(f"{left}/") for left in paths for right in paths
     )

@@ -343,6 +343,19 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
 
 ## 进展记录
 
+- 2026-07-24：S2 shared/generated/compatibility fixed point 已完成首轮闭合：
+  task registry=`407 active / 487 completed / 894 total`且 consumer view byte-identical，
+  DevEx=`1007 modules / 1172 tests / 18 aggregate fragments / 856 direct writers /
+  0 violations`，deprecation inventory 在两轮生成间 byte-stable；compatibility S2 suffix
+  已冻结 112 个 normalized source records、85 个 superseded authority paths、95 个
+  Full-sensitive paths与19个 post-Full evidence-only allowlist paths。candidate C
+  `4235590dff21f02492edd3408474b02915c501bf`上的 pre-Full combined focused 为
+  `342 passed / 1 skipped / 1 failed`；唯一失败不是domain实现回退，而是历史S0 readiness
+  replay仍把“远端已持有carrier、local HEAD为其合法后继”错误判为`HEAD != origin/main`。
+  本阶段不通过提前推送未验证candidate绕过该门禁；正在把carrier判定修正为显式ancestry语义，
+  同时保留未推送carrier、remote/lane无祖先关系及local/remote分叉的fail-closed负例。原candidate
+  将由修复后的新candidate取代，修复、generated/source-hash fixed point及全部pre-Full tiers通过前
+  不启动唯一final Full；`next_slice_unblocked=false`、`production_effect=none`保持不变。
 - 2026-07-24：D0B2第二轮独立审查发现的publication临界区P1已关闭。外围捕获的legacy
   prices/secondary/manifest存在性、exact bytes、SHA-256与size现在组成typed pre-commit condition，
   由`publish_immutable_snapshot`在同一dataset lock内、validated snapshot之后且atomic pointer

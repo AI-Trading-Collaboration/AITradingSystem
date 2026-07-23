@@ -945,17 +945,21 @@ def _validate_carrier_commit(
     validated_remote_ref = _remote_ref(remote_ref, "remote_ref")
     head = git_resolve_ref(project_root, "HEAD")
     remote = _git_resolve_remote_tracking_ref(project_root, validated_remote_ref)
-    if head != remote:
-        raise WaveReadinessError(
-            "CARRIER_PUSH_DRIFT",
-            f"HEAD={head} {validated_remote_ref}={remote}",
-        )
     if head == validated_lane_commit or not git_is_ancestor(
         project_root, validated_lane_commit, head
     ):
         raise WaveReadinessError(
             "CARRIER_COMMIT_REQUIRED",
             f"C={validated_lane_commit} HEAD={head}",
+        )
+    if (
+        remote == validated_lane_commit
+        or not git_is_ancestor(project_root, validated_lane_commit, remote)
+        or not git_is_ancestor(project_root, remote, head)
+    ):
+        raise WaveReadinessError(
+            "CARRIER_PUSH_DRIFT",
+            f"HEAD={head} {validated_remote_ref}={remote}",
         )
     return head
 
