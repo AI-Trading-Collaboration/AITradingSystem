@@ -378,3 +378,25 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
   SHA256=`ed93506bb131b8e09ab9c587a9ec84c9e676abe40407d541280fe86b892e7da1`、
   size=`28282`。两份artifact已复制回canonical ignored runtime目录并保持byte-identical；仍需刷新
   post-evidence manifests/task registry/source hashes并复验后，才可形成并推送真实carrier C。
+- 2026-07-23：carrier C1=`6a498f60993569e48afc4fd6597fdb6b515e17b8`已普通推送；
+  首次真实S0.2 build继续fail closed暴露commit snapshot root与task baseline消费者扫描合同不一致：
+  baseline按`src/tests/scripts`扫描129个consumer，但snapshot只归档`src/tests`，机械重放为127，
+  缺少`generate_qqq_plus_growth_closeout_artifacts.py`与`run_clean_clone_release_acceptance.py`。
+  最终lane base C因此增加`scripts` scan root与回归断言后重新验证/推送，D仍精确只承载两份artifact。
+  同次build还发现历史compatibility baseline的G2.4BR冻结前缀含duplicate key；该前缀受byte
+  immutability保护，不得回写。S0.2将B/C compatibility都按exact raw Git-blob SHA绑定，并另以C的
+  `arch_004e_architecture_fitness.v1/PASS`承担当前结构化语义权威；未来若治理须新增v2 normalization
+  overlay，不得改写v1历史bytes。当前无domain assignment、dispatch、lease、cutover、production或broker
+  副作用。
+- 2026-07-23：修复`scripts` snapshot root后的safe-C2 candidate=
+  `7b31a3dba480383fbc9a6fc1e118b3b52fb5e78d`，validation-only safe snapshot=
+  `c5873ae1a6f4b85cf9c71cc5a5bdcec0a4e1093b`，受保护文档未物化。Black、Ruff、fresh strict
+  mypy、focused/freshness/deprecation与registry/DevEx验证均PASS；正式architecture=
+  `534 passed / 68.64s`，artifact=`architecture-fitness_20260723T112455Z`、
+  SHA256=`3d9879036752fec7d04357ac66c8b47c82b05fb2cee486010e3d558b7abe344c`、
+  size=`27602`；正式contract=`266 passed / 138.53s`，
+  artifact=`contract-validation_20260723T112604Z`、
+  SHA256=`b6eca48edb84c5926a680c1b970745d6a67915494a817cd7d5f733ecd12bb856`、
+  size=`27259`。两份runtime目录已逐文件复制回canonical ignored路径并验证byte-identical；
+  当前只剩post-evidence generated state/source hash复验、最终C2提交推送与S0.2 exact carrier D，
+  整个S0仍未PASS。

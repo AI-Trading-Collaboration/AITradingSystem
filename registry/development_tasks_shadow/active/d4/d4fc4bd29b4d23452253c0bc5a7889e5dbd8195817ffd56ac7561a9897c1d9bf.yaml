@@ -11,25 +11,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2
-    exact policy/evidence；S0 PASS前不得分配domain worker
+  next_owner: architecture coordinator；完成最终lane-base C2的post-evidence freshness、提交推送，再从已推送C2生成S0.2
+    exact policy/evidence carrier D；S0 PASS前不得分配domain worker
   requirement_refs:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
-    source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
-    exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
-    replay、manual no-lease authority和lane plan。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`；C承载reusable
+    generator/docs/fresh generated state与C/D双态测试；D相对C精确只承载policy/evidence两份artifact。C1=`6a498f60993569e48afc4fd6597fdb6b515e17b8`已推送；首次S0.2
+    build正确发现snapshot遗漏`scripts` consumer，C2只补该root、回归合同及相应fresh evidence。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；validate时C必须是carrier
-      D的proper ancestor且policy/evidence必须为D中byte-identical tracked blobs、D相对C的first-parent
-      diff精确等于两份artifact；module/test/aggregate manifests与task shadow从C最小allowlist
-      snapshot重建相等且fragment set exact；主工作区status对known-unrelated使用literal exclude且snapshot禁止物化该路径；lane
-      plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output collision；known
-      unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+    text: 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；D为C first-parent直接子提交且`C..D`精确两份artifact；module/test/aggregate
+      manifests、task shadow、compatibility/deprecation/source hashes从最小snapshot重建fresh；known-unrelated文档不读取、不物化、不提交；lane
+      plan=`DOMAIN(2)->COORDINATOR(1)`；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
       mutation/production/broker全false/none；focused/static/architecture/contract PASS。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
@@ -37,66 +33,51 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1938
-    row_sha256: 12b8384d4886cd65fe95fbec54bb1decbf6b4ae11ef4f9c485adfa8b09a394ac
+    row_sha256: 58c2dbd90cd2ac64e970313186a01a1be936627641a191e62261adb3f34c004c
     cell_count: 8
     all_cells:
     - ARCH-004W14_D0B2_G3_PARALLEL_READINESS
     - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry gate
     - P0
     - IN_PROGRESS
-    - architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2 exact policy/evidence；S0
-      PASS前不得分配domain worker
-    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
-      source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
-      exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
-      replay、manual no-lease authority和lane plan。
-    - 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；validate时C必须是carrier
-      D的proper ancestor且policy/evidence必须为D中byte-identical tracked blobs、D相对C的first-parent
-      diff精确等于两份artifact；module/test/aggregate manifests与task shadow从C最小allowlist
-      snapshot重建相等且fragment set exact；主工作区status对known-unrelated使用literal exclude且snapshot禁止物化该路径；lane
-      plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output collision；known
-      unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+    - architecture coordinator；完成最终lane-base C2的post-evidence freshness、提交推送，再从已推送C2生成S0.2
+      exact policy/evidence carrier D；S0 PASS前不得分配domain worker
+    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`；C承载reusable
+      generator/docs/fresh generated state与C/D双态测试；D相对C精确只承载policy/evidence两份artifact。C1=`6a498f60993569e48afc4fd6597fdb6b515e17b8`已推送；首次S0.2
+      build正确发现snapshot遗漏`scripts` consumer，C2只补该root、回归合同及相应fresh evidence。
+    - 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；D为C first-parent直接子提交且`C..D`精确两份artifact；module/test/aggregate
+      manifests、task shadow、compatibility/deprecation/source hashes从最小snapshot重建fresh；known-unrelated文档不读取、不物化、不提交；lane
+      plan=`DOMAIN(2)->COORDINATOR(1)`；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
       mutation/production/broker全false/none；focused/static/architecture/contract PASS。
-    - 2026-07-23：S0.1 producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38
-      generic readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
-      modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
-      active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
-      architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
-      exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
-      candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
-      passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
-      safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
-      passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
-      generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
+    - 2026-07-23：C2 safe candidate=`7b31a3dba480383fbc9a6fc1e118b3b52fb5e78d`、validation-only
+      safe snapshot=`c5873ae1a6f4b85cf9c71cc5a5bdcec0a4e1093b`；Black/Ruff/fresh mypy、focused/freshness/deprecation、registry/DevEx均PASS。正式architecture=`534
+      passed / 68.64s`，artifact=`architecture-fitness_20260723T112455Z`、SHA256=`3d987903...be344c`、size=`27602`；contract=`266
+      passed / 138.53s`，artifact=`contract-validation_20260723T112604Z`、SHA256=`b6eca48e...bb856`、size=`27259`。历史compatibility
+      duplicate key位于immutable prefix，保持raw bytes并使用raw Git-blob binding + current
+      architecture-fitness structured binding。当前仅剩C2 post-evidence freshness/提交推送与S0.2
+      D；整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
     raw_line: '|ARCH-004W14_D0B2_G3_PARALLEL_READINESS|Architecture / Wave14 D0B2
-      + bounded G3 exact parallel entry gate|P0|IN_PROGRESS|architecture coordinator；先完成S0.1
-      reusable infra并推送commit C，再从C生成S0.2 exact policy/evidence；S0 PASS前不得分配domain
-      worker|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
-      source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
-      exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
-      replay、manual no-lease authority和lane plan。|两次build byte-identical；B ancestor
-      C；build时HEAD=origin/main=C；validate时C必须是carrier D的proper ancestor且policy/evidence必须为D中byte-identical
-      tracked blobs、D相对C的first-parent diff精确等于两份artifact；module/test/aggregate manifests与task
-      shadow从C最小allowlist snapshot重建相等且fragment set exact；主工作区status对known-unrelated使用literal
-      exclude且snapshot禁止物化该路径；lane plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output
-      collision；known unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
-      mutation/production/broker全false/none；focused/static/architecture/contract PASS。|2026-07-23：S0.1
-      producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38 generic
-      readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
-      modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
-      active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
-      architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
-      exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
-      candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
-      passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
-      safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
-      passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
-      generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。|'
+      + bounded G3 exact parallel entry gate|P0|IN_PROGRESS|architecture coordinator；完成最终lane-base
+      C2的post-evidence freshness、提交推送，再从已推送C2生成S0.2 exact policy/evidence carrier
+      D；S0 PASS前不得分配domain worker|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`；C承载reusable
+      generator/docs/fresh generated state与C/D双态测试；D相对C精确只承载policy/evidence两份artifact。C1=`6a498f60993569e48afc4fd6597fdb6b515e17b8`已推送；首次S0.2
+      build正确发现snapshot遗漏`scripts` consumer，C2只补该root、回归合同及相应fresh evidence。|两次build
+      byte-identical；B ancestor C；build时HEAD=origin/main=C；D为C first-parent直接子提交且`C..D`精确两份artifact；module/test/aggregate
+      manifests、task shadow、compatibility/deprecation/source hashes从最小snapshot重建fresh；known-unrelated文档不读取、不物化、不提交；lane
+      plan=`DOMAIN(2)->COORDINATOR(1)`；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+      mutation/production/broker全false/none；focused/static/architecture/contract PASS。|2026-07-23：C2
+      safe candidate=`7b31a3dba480383fbc9a6fc1e118b3b52fb5e78d`、validation-only safe
+      snapshot=`c5873ae1a6f4b85cf9c71cc5a5bdcec0a4e1093b`；Black/Ruff/fresh mypy、focused/freshness/deprecation、registry/DevEx均PASS。正式architecture=`534
+      passed / 68.64s`，artifact=`architecture-fitness_20260723T112455Z`、SHA256=`3d987903...be344c`、size=`27602`；contract=`266
+      passed / 138.53s`，artifact=`contract-validation_20260723T112604Z`、SHA256=`b6eca48e...bb856`、size=`27259`。历史compatibility
+      duplicate key位于immutable prefix，保持raw bytes并使用raw Git-blob binding + current
+      architecture-fitness structured binding。当前仅剩C2 post-evidence freshness/提交推送与S0.2
+      D；整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-12b8384d4886cd65fe95fbec
+  event_id: legacy-import-58c2dbd90cd2ac64e9703131
   task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -109,22 +90,18 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2
-      exact policy/evidence；S0 PASS前不得分配domain worker
-    notes: 2026-07-23：S0.1 producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38
-      generic readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
-      modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
-      active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
-      architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
-      exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
-      candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
-      passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
-      safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
-      passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
-      generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
+    next_owner: architecture coordinator；完成最终lane-base C2的post-evidence freshness、提交推送，再从已推送C2生成S0.2
+      exact policy/evidence carrier D；S0 PASS前不得分配domain worker
+    notes: 2026-07-23：C2 safe candidate=`7b31a3dba480383fbc9a6fc1e118b3b52fb5e78d`、validation-only
+      safe snapshot=`c5873ae1a6f4b85cf9c71cc5a5bdcec0a4e1093b`；Black/Ruff/fresh mypy、focused/freshness/deprecation、registry/DevEx均PASS。正式architecture=`534
+      passed / 68.64s`，artifact=`architecture-fitness_20260723T112455Z`、SHA256=`3d987903...be344c`、size=`27602`；contract=`266
+      passed / 138.53s`，artifact=`contract-validation_20260723T112604Z`、SHA256=`b6eca48e...bb856`、size=`27259`。历史compatibility
+      duplicate key位于immutable prefix，保持raw bytes并使用raw Git-blob binding + current
+      architecture-fitness structured binding。当前仅剩C2 post-evidence freshness/提交推送与S0.2
+      D；整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:12b8384d4886cd65fe95fbec54bb1decbf6b4ae11ef4f9c485adfa8b09a394ac
+  - sha256:58c2dbd90cd2ac64e970313186a01a1be936627641a191e62261adb3f34c004c
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -132,32 +109,24 @@ projection:
   - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry gate
   - P0
   - IN_PROGRESS
-  - architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2 exact policy/evidence；S0
-    PASS前不得分配domain worker
-  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
-    source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
-    exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
-    replay、manual no-lease authority和lane plan。
-  - 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；validate时C必须是carrier
-    D的proper ancestor且policy/evidence必须为D中byte-identical tracked blobs、D相对C的first-parent
-    diff精确等于两份artifact；module/test/aggregate manifests与task shadow从C最小allowlist snapshot重建相等且fragment
-    set exact；主工作区status对known-unrelated使用literal exclude且snapshot禁止物化该路径；lane plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output
-    collision；known unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+  - architecture coordinator；完成最终lane-base C2的post-evidence freshness、提交推送，再从已推送C2生成S0.2
+    exact policy/evidence carrier D；S0 PASS前不得分配domain worker
+  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`；C承载reusable
+    generator/docs/fresh generated state与C/D双态测试；D相对C精确只承载policy/evidence两份artifact。C1=`6a498f60993569e48afc4fd6597fdb6b515e17b8`已推送；首次S0.2
+    build正确发现snapshot遗漏`scripts` consumer，C2只补该root、回归合同及相应fresh evidence。
+  - 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；D为C first-parent直接子提交且`C..D`精确两份artifact；module/test/aggregate
+    manifests、task shadow、compatibility/deprecation/source hashes从最小snapshot重建fresh；known-unrelated文档不读取、不物化、不提交；lane
+    plan=`DOMAIN(2)->COORDINATOR(1)`；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
     mutation/production/broker全false/none；focused/static/architecture/contract PASS。
-  - 2026-07-23：S0.1 producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38
-    generic readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
-    modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
-    active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
-    architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
-    exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
-    candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
-    passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
-    safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
-    passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
-    generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
+  - 2026-07-23：C2 safe candidate=`7b31a3dba480383fbc9a6fc1e118b3b52fb5e78d`、validation-only
+    safe snapshot=`c5873ae1a6f4b85cf9c71cc5a5bdcec0a4e1093b`；Black/Ruff/fresh mypy、focused/freshness/deprecation、registry/DevEx均PASS。正式architecture=`534
+    passed / 68.64s`，artifact=`architecture-fitness_20260723T112455Z`、SHA256=`3d987903...be344c`、size=`27602`；contract=`266
+    passed / 138.53s`，artifact=`contract-validation_20260723T112604Z`、SHA256=`b6eca48e...bb856`、size=`27259`。历史compatibility
+    duplicate key位于immutable prefix，保持raw bytes并使用raw Git-blob binding + current architecture-fitness
+    structured binding。当前仅剩C2 post-evidence freshness/提交推送与S0.2 D；整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
   docs_links:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 12b8384d4886cd65fe95fbec54bb1decbf6b4ae11ef4f9c485adfa8b09a394ac
+  raw_row_sha256: 58c2dbd90cd2ac64e970313186a01a1be936627641a191e62261adb3f34c004c
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 83788f1ad7894234395288ab61b44cb0cbbba63d068f64f64eed8d9af7b0e68c
+fragment_checksum: 694f08cd13e15988c2c690116cdde9ea06a62852cd38b0082afbacbfe7faac0d

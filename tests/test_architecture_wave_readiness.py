@@ -777,7 +777,7 @@ def test_snapshot_archive_paths_use_only_replay_consumed_roots(tmp_path: Path) -
 
     assert "src/ai_trading_system" in paths
     assert "tests" in paths
-    assert "scripts" not in paths
+    assert "scripts" in paths
     assert "src" not in paths
     assert "config/architecture/fragments" in paths
     assert "config/architecture/fragments/reports" not in paths

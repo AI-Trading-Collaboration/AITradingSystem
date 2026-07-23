@@ -2315,30 +2315,30 @@ def test_arch_004_wave14_s0_1_is_append_only_current_hash_authority() -> None:
             "status": "PASS",
             "passed": 534,
             "failed": 0,
-            "elapsed_seconds": 64.75,
+            "elapsed_seconds": 68.64,
             "artifact": {
                 "path": (
                     "outputs/validation_runtime/"
-                    "architecture-fitness_20260723T103603Z/"
+                    "architecture-fitness_20260723T112455Z/"
                     "test_runtime_summary.json"
                 ),
-                "sha256": ("4022c3b1d7910c0762fbbf706a64e8c2a40079261498c7428d0a86e749c43f34"),
-                "size_bytes": 28626,
+                "sha256": ("3d9879036752fec7d04357ac66c8b47c82b05fb2cee486010e3d558b7abe344c"),
+                "size_bytes": 27602,
             },
         },
         "contract_validation": {
             "status": "PASS",
             "passed": 266,
             "failed": 0,
-            "elapsed_seconds": 137.59,
+            "elapsed_seconds": 138.53,
             "artifact": {
                 "path": (
                     "outputs/validation_runtime/"
-                    "contract-validation_20260723T103714Z/"
+                    "contract-validation_20260723T112604Z/"
                     "test_runtime_summary.json"
                 ),
-                "sha256": ("ed93506bb131b8e09ab9c587a9ec84c9e676abe40407d541280fe86b892e7da1"),
-                "size_bytes": 28282,
+                "sha256": ("b6eca48edb84c5926a680c1b970745d6a67915494a817cd7d5f733ecd12bb856"),
+                "size_bytes": 27259,
             },
         },
         "full_validation": {

@@ -73,7 +73,7 @@ _WINDOWS_RESERVED_NAMES = frozenset(
     }
 )
 _ALLOWED_TAR_MEMBER_TYPES = frozenset({tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE})
-_SNAPSHOT_SCAN_ROOTS = ("src/ai_trading_system", "tests")
+_SNAPSHOT_SCAN_ROOTS = ("scripts", "src/ai_trading_system", "tests")
 
 _POLICY_KEYS = frozenset(
     {

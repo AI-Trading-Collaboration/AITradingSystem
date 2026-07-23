@@ -143,7 +143,9 @@ B/C/D非自引用模型：B是Wave13 source base；C先承载通用readiness gen
 generated state以及C/D双态exact test并推送；D再精确只承载policy/evidence pair，D0B2、G3与
 coordinator三份`change_manifest.v1`是这两份artifact中的内嵌绑定，不是D中的独立路径。Bindings由
 exact Git blobs核对；generated state不物化整个C tree，
-只从`GIT_ARCHIVE_C_ALLOWLIST_ONLY`最小归档重放module/test/aggregate manifests与task shadows，
+只从`GIT_ARCHIVE_C_ALLOWLIST_ONLY`最小归档重放module/test/aggregate manifests与task shadows；其中
+task baseline的consumer characterization会扫描`src/tests/scripts`，因此三类scan root必须同时进入
+commit snapshot，缺任一root都按replay drift阻断，
 evidence同时冻结canonical archive paths和known-unrelated excluded paths并验证二者无路径碰撞。
 build要求`HEAD=origin/main=C`；首次S0 exit validation要求`HEAD=origin/main=D`、`D`是`C`的
 first-parent直接子提交，且policy/evidence都是D中byte-identical tracked blobs，`C..D`无第三个路径。
@@ -153,7 +155,9 @@ first-parent直接子提交，且policy/evidence都是D中byte-identical tracked
 人工assignment；不创建lease namespace，也不开放automatic dispatch、consumer cutover、production或
 broker。compatibility checkout hash只在后续`git_eol_lf`记录同时绑定canonical SHA与
 `previous_worktree_sha256`且当前normalized bytes仍匹配时承认旧raw hash等价；真实内容漂移继续fail
-closed。G4C只异步积累cadence evidence，G5继续等待G3 contract稳定。
+closed。冻结历史compatibility baseline若含不可回写的legacy YAML歧义，只承担exact raw Git-blob
+lineage binding，当前结构化PASS由同一C的`arch_004e_architecture_fitness.v1`承担；不得以宽松解析
+伪造semantic PASS，也不得改写历史prefix。G4C只异步积累cadence evidence，G5继续等待G3 contract稳定。
 
 ```mermaid
 flowchart LR

@@ -14269,7 +14269,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.wave_readiness
   path: src/ai_trading_system/platform/architecture/wave_readiness.py
-  sha256: b655f3228f93a7b177124d327ae69b7b362c51e2051b60d3a5d8ae406b03093c
+  sha256: f2de65dc84a40b60f720243d31ac38d2cd4f59a51b720545c1a41c07bd8f4cea
   rule_id: platform
   owner_profile: platform
   owners:
