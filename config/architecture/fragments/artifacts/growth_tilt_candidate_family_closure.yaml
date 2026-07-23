@@ -1,0 +1,13 @@
+schema_version: arch_004e_artifact_fragment.v1
+fragment_id: artifact.growth_tilt_candidate_family_closure
+fragment_kind: artifact
+owner: research_governance
+target_id: artifact_catalog
+artifact_family: growth_tilt_candidate_family_closure
+spec_path: config/research/experiments/growth_tilt_candidate_family_closure.yaml
+additive_sidecars:
+  - artifact_envelope.v1
+  - run_ledger.v1
+  - research_lifecycle.v1
+compatibility_catalog_entry_required: true
+generated_source_of_truth_active: false

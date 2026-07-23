@@ -236,6 +236,7 @@ def build_shadow_scheduler_decision(
     selected_tasks: list[TaskControlRecord] = []
     selected: list[dict[str, object]] = []
     not_selected: list[dict[str, object]] = []
+    not_selected_change_ids: list[str] = []
     for task in ordered:
         decision = readiness_by_change[task.manifest.change_id]
         reasons: list[str] = []
@@ -261,6 +262,7 @@ def build_shadow_scheduler_decision(
                     "manifest_sha256": task.manifest.sha256,
                 }
             )
+            not_selected_change_ids.append(task.manifest.change_id)
             continue
         selected_tasks.append(task)
         selected.append(
@@ -290,7 +292,7 @@ def build_shadow_scheduler_decision(
         capacity=policy.max_parallel_domain_lanes,
         selected=tuple(selected),
         not_selected=tuple(not_selected),
-        alternatives=tuple(row["change_id"] for row in not_selected),
+        alternatives=tuple(not_selected_change_ids),
         readiness=readiness,
         active_lease_ids=tuple(sorted(lease.lease_id for lease in active_leases)),
     )

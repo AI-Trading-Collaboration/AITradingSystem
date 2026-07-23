@@ -5,6 +5,7 @@ import copy
 import hashlib
 import json
 import subprocess
+from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
@@ -477,8 +478,14 @@ def test_tracked_evidence_preserves_non_production_and_legacy_truth_source() -> 
         policy_path=PROJECT_ROOT / DEFAULT_POLICY_PATH,
     )
 
+    carrier = readiness_module._first_parent_direct_child(
+        project_root=PROJECT_ROOT,
+        source_base_commit=payload["source_base_commit"],
+        current_head_commit=BASE_COMMIT,
+    )
     assert payload["status"] == "PASS"
     assert _is_ancestor(payload["source_base_commit"], BASE_COMMIT)
+    assert _commit_ref(f"{carrier}^1") == payload["source_base_commit"]
     assert payload["source_gate"]["canonical_handoff_validation"] == "PASS"
     assert payload["source_gate"]["git_lineage"]["status"] == "PASS"
     assert payload["source_gate"]["validation_bundle"]["complete"] is True
@@ -498,3 +505,70 @@ def test_tracked_evidence_preserves_non_production_and_legacy_truth_source() -> 
     assert payload["aggregate_source_of_truth_changed"] is False
     assert payload["production_effect"] == "none"
     assert payload["broker_action"] == "none"
+
+
+def test_tracked_evidence_rejects_rechecksummed_carrier_blob_tamper() -> None:
+    path = PROJECT_ROOT / "inputs/architecture/arch_004g2_5_parallel_readiness.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["source_of_truth"] = "TAMPERED_LEGACY_MARKDOWN_ONLY"
+    payload["report_checksum"] = _report_checksum(payload)
+
+    with pytest.raises(G25ReadinessError, match="EVIDENCE_CARRIER_BLOB_DRIFT"):
+        validate_g2_5_readiness_evidence(
+            payload,
+            project_root=PROJECT_ROOT,
+            current_base_commit=BASE_COMMIT,
+            policy_path=PROJECT_ROOT / DEFAULT_POLICY_PATH,
+        )
+
+
+def test_tracked_evidence_rejects_non_reproducible_carrier_snapshot(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = PROJECT_ROOT / "inputs/architecture/arch_004g2_5_parallel_readiness.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    monkeypatch.setattr(
+        readiness_module,
+        "_g2_5_carrier_snapshot",
+        lambda *_args, **_kwargs: nullcontext(PROJECT_ROOT),
+    )
+
+    with pytest.raises(G25ReadinessError, match="EVIDENCE_REPRODUCIBILITY_DRIFT"):
+        validate_g2_5_readiness_evidence(
+            payload,
+            project_root=PROJECT_ROOT,
+            current_base_commit=BASE_COMMIT,
+            policy_path=PROJECT_ROOT / DEFAULT_POLICY_PATH,
+        )
+
+
+def test_carrier_locator_rejects_non_direct_first_parent_child(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_base = "1" * 40
+    carrier = "2" * 40
+    wrong_parent = "3" * 40
+    responses = iter(
+        (
+            subprocess.CompletedProcess(
+                args=["git", "rev-list"],
+                returncode=0,
+                stdout=f"{carrier}\n".encode(),
+                stderr=b"",
+            ),
+            subprocess.CompletedProcess(
+                args=["git", "rev-parse"],
+                returncode=0,
+                stdout=f"{wrong_parent}\n".encode(),
+                stderr=b"",
+            ),
+        )
+    )
+    monkeypatch.setattr(readiness_module, "_git_process", lambda *_args: next(responses))
+
+    with pytest.raises(G25ReadinessError, match="EVIDENCE_CARRIER_DIRECT_CHILD_REQUIRED"):
+        readiness_module._first_parent_direct_child(
+            project_root=PROJECT_ROOT,
+            source_base_commit=source_base,
+            current_head_commit="4" * 40,
+        )

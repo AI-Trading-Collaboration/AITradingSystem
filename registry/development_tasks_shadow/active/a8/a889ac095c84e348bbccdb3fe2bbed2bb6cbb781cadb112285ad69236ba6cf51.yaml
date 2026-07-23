@@ -11,8 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: governance coordinator；N1 formal与compatibility freshness均已闭合，执行closeout
-    commit/push；N2/N3在后续clean integration boundary推进
+  next_owner: governance coordinator；N1 formal/compatibility/closeout commit与普通push均已闭合；N2/N3只在后续clean
+    integration boundary推进
   requirement_refs:
   - docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md
   module_ids: []
@@ -20,7 +20,8 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0冻结Wave12
     HEAD上的30-decision dry-run；N1已应用18 DONE/12 DROPPED，application commit=`58ee6a80b5a04ff68a97a96d36b575ae8391f657`，applied
-    closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`。formal gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。
+    closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`，最终closeout commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已推送。formal
+    gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；风险priority与执行顺序分离，调度按critical-path
@@ -33,42 +34,44 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1935
-    row_sha256: ca2a3fa0f6104e4edb05ce1059d57a8ed3217bf05841106d1c6ce7a8e7388419
+    row_sha256: 74b9be7e11225ec8fc2cdd9bb80d82e5c3f98db6e153c0be48ce85b776c171ba
     cell_count: 8
     all_cells:
     - GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
     - Governance / active task lifecycle and priority reconciliation
     - P0
     - IN_PROGRESS
-    - governance coordinator；N1 formal与compatibility freshness均已闭合，执行closeout commit/push；N2/N3在后续clean
+    - governance coordinator；N1 formal/compatibility/closeout commit与普通push均已闭合；N2/N3只在后续clean
       integration boundary推进
     - 详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0冻结Wave12
       HEAD上的30-decision dry-run；N1已应用18 DONE/12 DROPPED，application commit=`58ee6a80b5a04ff68a97a96d36b575ae8391f657`，applied
-      closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`。formal gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。
+      closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`，最终closeout commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已推送。formal
+      gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。
     - 实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；风险priority与执行顺序分离，调度按critical-path
       gate→actionability→correctness/DQ risk→unblock value→waiting condition→family
       rank；ARCH-005 shadow/compatibility views byte-identical，task consistency/docs/architecture/contract/required
       Full PASS；`production_effect=none`。
     - 2026-07-23：N1 active/completed=`435/457 -> 405/487`、P0=`269 -> 241`；focused/architecture/contract/reproducibility=`194/527/266/23
-      passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。当前为`N1_FORMAL_COMPLETE_WAVE14_S0_NEXT`，closeout
-      push前不开放Wave14；`automatic_apply_allowed=false`、`production_effect=none`。
+      passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。N1正式关闭并释放关键路径给Wave14
+      S0；N2/N3未自动启动，`automatic_apply_allowed=false`、`production_effect=none`。
     raw_line: '|GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION|Governance / active task
       lifecycle and priority reconciliation|P0|IN_PROGRESS|governance coordinator；N1
-      formal与compatibility freshness均已闭合，执行closeout commit/push；N2/N3在后续clean integration
-      boundary推进|详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0冻结Wave12
+      formal/compatibility/closeout commit与普通push均已闭合；N2/N3只在后续clean integration boundary推进|详见
+      `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0冻结Wave12
       HEAD上的30-decision dry-run；N1已应用18 DONE/12 DROPPED，application commit=`58ee6a80b5a04ff68a97a96d36b575ae8391f657`，applied
-      closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`。formal gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。|实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；风险priority与执行顺序分离，调度按critical-path
+      closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`，最终closeout commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已推送。formal
+      gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。|实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；风险priority与执行顺序分离，调度按critical-path
       gate→actionability→correctness/DQ risk→unblock value→waiting condition→family
       rank；ARCH-005 shadow/compatibility views byte-identical，task consistency/docs/architecture/contract/required
       Full PASS；`production_effect=none`。|2026-07-23：N1 active/completed=`435/457
       -> 405/487`、P0=`269 -> 241`；focused/architecture/contract/reproducibility=`194/527/266/23
-      passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。当前为`N1_FORMAL_COMPLETE_WAVE14_S0_NEXT`，closeout
-      push前不开放Wave14；`automatic_apply_allowed=false`、`production_effect=none`。|'
+      passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。N1正式关闭并释放关键路径给Wave14
+      S0；N2/N3未自动启动，`automatic_apply_allowed=false`、`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-ca2a3fa0f6104e4edb05ce10
+  event_id: legacy-import-74b9be7e11225ec8fc2cdd9b
   task_id: GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -81,14 +84,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: governance coordinator；N1 formal与compatibility freshness均已闭合，执行closeout
-      commit/push；N2/N3在后续clean integration boundary推进
+    next_owner: governance coordinator；N1 formal/compatibility/closeout commit与普通push均已闭合；N2/N3只在后续clean
+      integration boundary推进
     notes: 2026-07-23：N1 active/completed=`435/457 -> 405/487`、P0=`269 -> 241`；focused/architecture/contract/reproducibility=`194/527/266/23
-      passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。当前为`N1_FORMAL_COMPLETE_WAVE14_S0_NEXT`，closeout
-      push前不开放Wave14；`automatic_apply_allowed=false`、`production_effect=none`。
+      passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。N1正式关闭并释放关键路径给Wave14
+      S0；N2/N3未自动启动，`automatic_apply_allowed=false`、`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:ca2a3fa0f6104e4edb05ce1059d57a8ed3217bf05841106d1c6ce7a8e7388419
+  - sha256:74b9be7e11225ec8fc2cdd9bb80d82e5c3f98db6e153c0be48ce85b776c171ba
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -96,21 +99,22 @@ projection:
   - Governance / active task lifecycle and priority reconciliation
   - P0
   - IN_PROGRESS
-  - governance coordinator；N1 formal与compatibility freshness均已闭合，执行closeout commit/push；N2/N3在后续clean
+  - governance coordinator；N1 formal/compatibility/closeout commit与普通push均已闭合；N2/N3只在后续clean
     integration boundary推进
   - 详见 `docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md`。N0冻结Wave12
     HEAD上的30-decision dry-run；N1已应用18 DONE/12 DROPPED，application commit=`58ee6a80b5a04ff68a97a96d36b575ae8391f657`，applied
-    closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`。formal gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。
+    closeout id=`gov_006_applied_closeout_bdbfd433a72d5349ead9`，最终closeout commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已推送。formal
+    gate PASS但不按数量目标声称整个GOV-006完成；N2按等待条件/任务族收敛，N3继续清理当前路线语义。
   - 实现完成、等待时间、等待owner、被权威后继关闭和真实可开发任务使用明确状态；terminal行只在completed；风险priority与执行顺序分离，调度按critical-path
     gate→actionability→correctness/DQ risk→unblock value→waiting condition→family
     rank；ARCH-005 shadow/compatibility views byte-identical，task consistency/docs/architecture/contract/required
     Full PASS；`production_effect=none`。
   - 2026-07-23：N1 active/completed=`435/457 -> 405/487`、P0=`269 -> 241`；focused/architecture/contract/reproducibility=`194/527/266/23
-    passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。当前为`N1_FORMAL_COMPLETE_WAVE14_S0_NEXT`，closeout
-    push前不开放Wave14；`automatic_apply_allowed=false`、`production_effect=none`。
+    passed`，failure-fix Full=`6844 passed / 3 skipped / 1340.11s`。N1正式关闭并释放关键路径给Wave14
+    S0；N2/N3未自动启动，`automatic_apply_allowed=false`、`production_effect=none`。
   docs_links:
   - docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md
   terminal: false
-  raw_row_sha256: ca2a3fa0f6104e4edb05ce1059d57a8ed3217bf05841106d1c6ce7a8e7388419
+  raw_row_sha256: 74b9be7e11225ec8fc2cdd9bb80d82e5c3f98db6e153c0be48ce85b776c171ba
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 5cbd2dbdf6fa7b8d217ebf3aae293e586655e554ba375145a1380a3f3951b1a6
+fragment_checksum: c40a23c811e2098fe3ea9eed5d5d5e18726211d11ff64f81db5634e7a92aa88f

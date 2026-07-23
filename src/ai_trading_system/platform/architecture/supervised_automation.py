@@ -18,6 +18,7 @@ from typing import Any
 from ai_trading_system.platform.architecture.parallel_control import ParallelControlError
 from ai_trading_system.platform.architecture.parallel_control_kernel import (
     FileExecutionLeaseStore,
+    LeaseAcquisition,
     ParallelControlPolicy,
     TaskControlRecord,
     parse_task_dependency,
@@ -590,7 +591,7 @@ class SupervisedAutomationController:
             observed_statuses={},
         )
         typed_readiness = {row.change_id: row for row in audit.decision.readiness}
-        acquisitions: dict[str, object] = {}
+        acquisitions: dict[str, LeaseAcquisition] = {}
         for binding in spec.workers:
             if binding.change_id not in readiness_by_change:
                 raise ParallelControlError("SUPERVISED_READINESS", binding.change_id)
@@ -1250,8 +1251,12 @@ def _terminate_process_tree(process: subprocess.Popen[bytes]) -> None:
             stderr=subprocess.DEVNULL,
         )
     else:
+        kill_process_group: object = getattr(os, "killpg", None)
+        sigkill: object = getattr(signal, "SIGKILL", None)
+        if not callable(kill_process_group) or not isinstance(sigkill, int):
+            raise RuntimeError("POSIX process-group termination is unavailable")
         try:
-            os.killpg(process.pid, signal.SIGKILL)
+            kill_process_group(process.pid, sigkill)
         except ProcessLookupError:
             pass
     if process.poll() is None:

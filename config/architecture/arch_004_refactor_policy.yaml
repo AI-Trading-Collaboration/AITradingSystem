@@ -627,10 +627,12 @@ phase_g_execution:
   production_effect: none
   next_phase_unblocked: false
   current_coordination_wave:
-    wave_id: WAVE13_GOV006_N1
-    current_phase: WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT
-    status: FORMAL_COMPLETE
-    task_id: GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
+    wave_id: WAVE14_D0B2_BOUNDED_G3
+    current_phase: WAVE14_S0_1_REUSABLE_READINESS_INFRA
+    status: S0_IN_PROGRESS
+    task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+    source_wave_closeout_commit: e2da21894ea8e8921a86c6c1b48d7b191f0f142c
+    source_wave_tree: 73ba7a3830cbc47ccb6dbfb3488eeed5431653c2
     historical_base_commit: 02f9492a1975440240cb65f761d2cf544a5a875e
     application_commit: 58ee6a80b5a04ff68a97a96d36b575ae8391f657
     dry_run_manifest_id: gov_006_decision_manifest_3fb5f2a038eca2361179
@@ -656,7 +658,7 @@ phase_g_execution:
       dispatch_allowed: false
       prior_g2_5_rehearsal_is_dispatch_authority: false
       final_head_manifest_required: true
-      s0_contract_readiness_status: NOT_STARTED
+      s0_contract_readiness_status: IN_PROGRESS_INFRA
       next_slice_unblocked: false
       data_task: DATA-GOV-001_D0B2
       reporting_task: ARCH-004G3_REPORTING_NATIVE_MIGRATION

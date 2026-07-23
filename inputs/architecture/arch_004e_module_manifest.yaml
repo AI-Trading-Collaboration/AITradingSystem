@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 source_root: src/ai_trading_system
-module_count: 1004
+module_count: 1005
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -13924,7 +13924,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.arch_004_g2_5_readiness
   path: src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
-  sha256: 8f9276f798608091938b48c246e648bb0f2def902faf20d0ed7566633d30bc0f
+  sha256: 5dbd9f08065c726b8a425b63f7f70615b00db7d7227284030bbb2373f4638472
   rule_id: platform
   owner_profile: platform
   owners:
@@ -13993,7 +13993,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.cli_contract
   path: src/ai_trading_system/platform/architecture/cli_contract.py
-  sha256: e7c321bd94306fd27fd5e0d873d8c1bc01935289b56b90963af280c650310719
+  sha256: 46d8955c85c8821683d05fd692008f2218aef973a160cadbe271df9b4e755b02
   rule_id: platform
   owner_profile: platform
   owners:
@@ -14131,7 +14131,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_kernel
   path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py
-  sha256: b32b1200be2fa80e7c4d473954f5edbd29df4018ac081ccd953f8ce7f8fa3e86
+  sha256: d51d429927f01c4283a97a26cba10e7382b75540a737f3806eb01982e0e461b2
   rule_id: platform
   owner_profile: platform
   owners:
@@ -14154,7 +14154,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_scheduler
   path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py
-  sha256: 2a633691025e9fd437e2cd83e254390eaac4b182308e9d1aff929fecf942ab2e
+  sha256: 14fa26079e5a8e3b5ae10599fef4691da0d7b09bcb9b2533e9606816c58b731e
   rule_id: platform
   owner_profile: platform
   owners:
@@ -14200,7 +14200,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.supervised_automation
   path: src/ai_trading_system/platform/architecture/supervised_automation.py
-  sha256: ee152e1c40fcf2148470cf8f0b6212d0a16d48694b97111e24de5e639615224a
+  sha256: 4895f821433683a68dca3407445f1abbc37a9783f1db0865bac19aa8c41e27be
   rule_id: platform
   owner_profile: platform
   owners:
@@ -14247,6 +14247,29 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.task_registry_shadow
   path: src/ai_trading_system/platform/architecture/task_registry_shadow.py
   sha256: 51bf9e29da99d108982e4abb14bc3d3ffe35b7d6545146cf9577efbceaf144f6
+  rule_id: platform
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.wave_readiness
+  path: src/ai_trading_system/platform/architecture/wave_readiness.py
+  sha256: b655f3228f93a7b177124d327ae69b7b362c51e2051b60d3a5d8ae406b03093c
   rule_id: platform
   owner_profile: platform
   owners:

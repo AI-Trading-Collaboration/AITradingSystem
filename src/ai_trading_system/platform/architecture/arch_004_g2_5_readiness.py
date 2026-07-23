@@ -7,7 +7,10 @@ import hashlib
 import json
 import re
 import subprocess
-from collections.abc import Mapping, Sequence
+import tarfile
+import tempfile
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -41,7 +44,11 @@ from ai_trading_system.platform.architecture.parallel_control_scheduler import (
     PilotSpec,
     build_shadow_scheduler_decision,
 )
-from ai_trading_system.platform.artifacts import write_json_atomic
+from ai_trading_system.platform.architecture.wave_readiness import (
+    WaveReadinessError,
+    extract_validated_archive,
+)
+from ai_trading_system.platform.artifacts import canonical_json_bytes, write_json_atomic
 
 POLICY_SCHEMA_VERSION = "arch_004_g2_5_readiness_policy.v1"
 OWNERSHIP_SNAPSHOT_SCHEMA_VERSION = "arch_004_g2_5_ownership_snapshot.v1"
@@ -51,6 +58,17 @@ VALIDATION_BUNDLE_SCHEMA_VERSION = "arch_005_bootstrap_validation_bundle.v1"
 DEFAULT_PROJECT_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_POLICY_PATH = Path("config/architecture/arch_004_g2_5_readiness.yaml")
 DEFAULT_EVIDENCE_PATH = Path("inputs/architecture/arch_004g2_5_parallel_readiness.json")
+GENERATOR_SOURCE_PATH = Path(
+    "src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py"
+)
+_CARRIER_SNAPSHOT_PATHS = (
+    "config",
+    "docs/artifact_catalog.md",
+    "docs/system_flow.md",
+    "inputs/architecture",
+    "src/ai_trading_system",
+    "tests",
+)
 DEFAULT_HANDOFF_PATH = Path("inputs/architecture/arch_005_bootstrap_handoff.yaml")
 DEFAULT_VALIDATION_BUNDLE_PATH = Path(
     "inputs/architecture/arch_005_bootstrap_validation_bundle.json"
@@ -720,8 +738,10 @@ def _build_g2_5_readiness_evidence(
     project_root: Path,
     source_base_commit: str,
     policy_path: Path,
+    git_project_root: Path | None = None,
 ) -> dict[str, object]:
     root = project_root.resolve()
+    git_root = (git_project_root or root).resolve()
     base = _commit(source_base_commit)
     resolved_policy = policy_path if policy_path.is_absolute() else root / policy_path
     policy = load_g2_5_readiness_policy(resolved_policy)
@@ -739,6 +759,7 @@ def _build_g2_5_readiness_evidence(
     control_policy = load_parallel_control_policy(control_policy_path)
     if control_policy.max_parallel_domain_lanes != policy.max_active_domain_workers:
         raise G25ReadinessError("CONTROL_PLANE_CAPACITY_DRIFT", control_policy.policy_version)
+    generator_path = _repo_file(root, GENERATOR_SOURCE_PATH.as_posix())
     body: dict[str, object] = {
         "schema_version": REHEARSAL_SCHEMA_VERSION,
         "status": "PASS",
@@ -758,10 +779,10 @@ def _build_g2_5_readiness_evidence(
             "source_of_truth": control_policy.source_of_truth,
         },
         "generator_source": {
-            "path": _relative(Path(__file__), root),
-            "sha256": _sha256_path(Path(__file__).resolve()),
+            "path": GENERATOR_SOURCE_PATH.as_posix(),
+            "sha256": _sha256_path(generator_path),
         },
-        "source_gate": _source_gate(root, policy, base),
+        "source_gate": _source_gate(root, policy, base, git_project_root=git_root),
         "source_base_commit": base,
         "ownership_snapshot": build_ownership_snapshot(
             project_root=root, policy=policy, current_base_commit=base
@@ -833,8 +854,34 @@ def validate_g2_5_readiness_evidence(
         source_base_commit=source_base,
         policy_path=policy_path,
     )
+    if dict(payload) == expected:
+        return
+    carrier = _first_parent_direct_child(
+        project_root=root,
+        source_base_commit=source_base,
+        current_head_commit=actual_head,
+    )
+    evidence_path = DEFAULT_EVIDENCE_PATH.as_posix()
+    carrier_blob = _git_blob(root, carrier, evidence_path)
+    if carrier_blob != canonical_json_bytes(dict(payload)):
+        raise G25ReadinessError(
+            "EVIDENCE_CARRIER_BLOB_DRIFT",
+            f"carrier={carrier} path={evidence_path}",
+        )
+    resolved_policy = policy_path if policy_path.is_absolute() else root / policy_path
+    policy_portable = _relative(resolved_policy, root)
+    with _g2_5_carrier_snapshot(root, carrier) as snapshot_root:
+        expected = _build_g2_5_readiness_evidence(
+            project_root=snapshot_root,
+            source_base_commit=source_base,
+            policy_path=snapshot_root / policy_portable,
+            git_project_root=root,
+        )
     if dict(payload) != expected:
-        raise G25ReadinessError("EVIDENCE_REPRODUCIBILITY_DRIFT", "deterministic rebuild")
+        raise G25ReadinessError(
+            "EVIDENCE_REPRODUCIBILITY_DRIFT",
+            f"carrier snapshot={carrier}",
+        )
 
 
 def write_g2_5_readiness_evidence(
@@ -947,8 +994,13 @@ def _validate_safety(safety: Mapping[str, Any]) -> None:
 
 
 def _source_gate(
-    root: Path, policy: G25ReadinessPolicy, source_base_commit: str
+    root: Path,
+    policy: G25ReadinessPolicy,
+    source_base_commit: str,
+    *,
+    git_project_root: Path | None = None,
 ) -> dict[str, object]:
+    git_root = (git_project_root or root).resolve()
     handoff_path = _repo_file(root, policy.source_handoff_path)
     matrix_path = _repo_file(root, policy.migration_matrix_path)
     bundle_path = _repo_file(root, policy.source_validation_bundle_path)
@@ -959,14 +1011,14 @@ def _source_gate(
     handoff_head = _commit(handoff.get("head_commit"))
     handoff_branch = _text(handoff.get("branch"), "handoff.branch")
     for label, commit in (("base", handoff_base), ("head", handoff_head)):
-        if not _git_commit_exists(root, commit):
+        if not _git_commit_exists(git_root, commit):
             raise G25ReadinessError(f"HANDOFF_{label.upper()}_UNKNOWN", commit)
-    if not _git_is_ancestor(root, handoff_base, handoff_head):
+    if not _git_is_ancestor(git_root, handoff_base, handoff_head):
         raise G25ReadinessError(
             "HANDOFF_BASE_HEAD_LINEAGE",
             f"base={handoff_base} head={handoff_head}",
         )
-    if not _git_is_ancestor(root, handoff_head, source_base):
+    if not _git_is_ancestor(git_root, handoff_head, source_base):
         raise G25ReadinessError(
             "HANDOFF_HEAD_SOURCE_BASE_LINEAGE",
             f"handoff_head={handoff_head} source_base={source_base}",
@@ -984,7 +1036,7 @@ def _source_gate(
     if len(frozen_paths) != 6:
         raise G25ReadinessError("HANDOFF_FROZEN_SOURCE_SET", str(sorted(frozen_paths)))
     frozen_tracked_files = {
-        path: _git_blob(root, handoff_head, path) for path in sorted(frozen_paths)
+        path: _git_blob(git_root, handoff_head, path) for path in sorted(frozen_paths)
     }
     frozen_validation_artifacts = load_source_validation_bundle(
         path=bundle_path,
@@ -1499,6 +1551,80 @@ def _exact(payload: Mapping[str, Any], expected: set[str], code: str) -> None:
         raise G25ReadinessError(
             code, f"missing={sorted(expected - actual)} unknown={sorted(actual - expected)}"
         )
+
+
+@contextmanager
+def _g2_5_carrier_snapshot(project_root: Path, commit: str) -> Iterator[Path]:
+    root = project_root.resolve()
+    validated_commit = _commit(commit)
+    with tempfile.TemporaryDirectory(prefix="aits-g2-5-readiness-") as raw_temp:
+        temp_root = Path(raw_temp)
+        archive_path = temp_root / "snapshot.tar"
+        result = _git_process(
+            root,
+            "archive",
+            "--format=tar",
+            f"--output={archive_path}",
+            validated_commit,
+            "--",
+            *_CARRIER_SNAPSHOT_PATHS,
+        )
+        if result.returncode != 0:
+            raise G25ReadinessError(
+                "EVIDENCE_CARRIER_SNAPSHOT_UNAVAILABLE",
+                _git_error(result),
+            )
+        snapshot_root = temp_root / "snapshot"
+        snapshot_root.mkdir()
+        try:
+            with tarfile.open(archive_path, mode="r:") as archive:
+                extract_validated_archive(archive, snapshot_root)
+        except (OSError, tarfile.TarError, WaveReadinessError) as exc:
+            raise G25ReadinessError(
+                "EVIDENCE_CARRIER_SNAPSHOT_INVALID",
+                str(exc),
+            ) from exc
+        yield snapshot_root
+
+
+def _first_parent_direct_child(
+    *,
+    project_root: Path,
+    source_base_commit: str,
+    current_head_commit: str,
+) -> str:
+    root = project_root.resolve()
+    source_base = _commit(source_base_commit)
+    current_head = _commit(current_head_commit)
+    result = _git_process(
+        root,
+        "rev-list",
+        "--first-parent",
+        "--reverse",
+        f"{source_base}..{current_head}",
+    )
+    if result.returncode != 0:
+        raise G25ReadinessError("EVIDENCE_CARRIER_LINEAGE_UNAVAILABLE", _git_error(result))
+    commits = [_commit(row) for row in result.stdout.decode("ascii").splitlines() if row]
+    if not commits:
+        raise G25ReadinessError(
+            "EVIDENCE_CARRIER_REQUIRED",
+            f"source_base={source_base} head={current_head}",
+        )
+    carrier = commits[0]
+    parent_result = _git_process(root, "rev-parse", "--verify", f"{carrier}^1")
+    if parent_result.returncode != 0:
+        raise G25ReadinessError(
+            "EVIDENCE_CARRIER_PARENT_UNAVAILABLE",
+            _git_error(parent_result),
+        )
+    parent = _commit(parent_result.stdout.decode("ascii").strip())
+    if parent != source_base:
+        raise G25ReadinessError(
+            "EVIDENCE_CARRIER_DIRECT_CHILD_REQUIRED",
+            f"source_base={source_base} carrier={carrier} carrier_parent={parent}",
+        )
+    return carrier
 
 
 def _git_head(root: Path) -> str:

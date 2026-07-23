@@ -1,0 +1,163 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+  title: null
+  domain: Architecture / Wave14 D0B2 + bounded G3 exact parallel entry gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2
+    exact policy/evidence；S0 PASS前不得分配domain worker
+  requirement_refs:
+  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
+    source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
+    exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
+    replay、manual no-lease authority和lane plan。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；validate时C必须是carrier
+      D的proper ancestor且policy/evidence必须为D中byte-identical tracked blobs、D相对C的first-parent
+      diff精确等于两份artifact；module/test/aggregate manifests与task shadow从C最小allowlist
+      snapshot重建相等且fragment set exact；主工作区status对known-unrelated使用literal exclude且snapshot禁止物化该路径；lane
+      plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output collision；known
+      unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+      mutation/production/broker全false/none；focused/static/architecture/contract PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1938
+    row_sha256: 12b8384d4886cd65fe95fbec54bb1decbf6b4ae11ef4f9c485adfa8b09a394ac
+    cell_count: 8
+    all_cells:
+    - ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+    - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry gate
+    - P0
+    - IN_PROGRESS
+    - architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2 exact policy/evidence；S0
+      PASS前不得分配domain worker
+    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
+      source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
+      exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
+      replay、manual no-lease authority和lane plan。
+    - 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；validate时C必须是carrier
+      D的proper ancestor且policy/evidence必须为D中byte-identical tracked blobs、D相对C的first-parent
+      diff精确等于两份artifact；module/test/aggregate manifests与task shadow从C最小allowlist
+      snapshot重建相等且fragment set exact；主工作区status对known-unrelated使用literal exclude且snapshot禁止物化该路径；lane
+      plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output collision；known
+      unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+      mutation/production/broker全false/none；focused/static/architecture/contract PASS。
+    - 2026-07-23：S0.1 producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38
+      generic readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
+      modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
+      active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
+      architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
+      exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
+      candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
+      passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
+      safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
+      passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
+      generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
+    raw_line: '|ARCH-004W14_D0B2_G3_PARALLEL_READINESS|Architecture / Wave14 D0B2
+      + bounded G3 exact parallel entry gate|P0|IN_PROGRESS|architecture coordinator；先完成S0.1
+      reusable infra并推送commit C，再从C生成S0.2 exact policy/evidence；S0 PASS前不得分配domain
+      worker|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
+      source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
+      exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
+      replay、manual no-lease authority和lane plan。|两次build byte-identical；B ancestor
+      C；build时HEAD=origin/main=C；validate时C必须是carrier D的proper ancestor且policy/evidence必须为D中byte-identical
+      tracked blobs、D相对C的first-parent diff精确等于两份artifact；module/test/aggregate manifests与task
+      shadow从C最小allowlist snapshot重建相等且fragment set exact；主工作区status对known-unrelated使用literal
+      exclude且snapshot禁止物化该路径；lane plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output
+      collision；known unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+      mutation/production/broker全false/none；focused/static/architecture/contract PASS。|2026-07-23：S0.1
+      producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38 generic
+      readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
+      modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
+      active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
+      architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
+      exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
+      candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
+      passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
+      safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
+      passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
+      generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-12b8384d4886cd65fe95fbec
+  task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2
+      exact policy/evidence；S0 PASS前不得分配domain worker
+    notes: 2026-07-23：S0.1 producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38
+      generic readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
+      modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
+      active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
+      architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
+      exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
+      candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
+      passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
+      safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
+      passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
+      generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:12b8384d4886cd65fe95fbec54bb1decbf6b4ae11ef4f9c485adfa8b09a394ac
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+  - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry gate
+  - P0
+  - IN_PROGRESS
+  - architecture coordinator；先完成S0.1 reusable infra并推送commit C，再从C生成S0.2 exact policy/evidence；S0
+    PASS前不得分配domain worker
+  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。采用B/C/D非自引用模型：B=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`为Wave13
+    source；C承载generator/docs/fresh generated state以及预置exact C/D dual-state test并先推送；D精确只承载policy/evidence两份artifact。S0冻结D0B2与G3
+    exact owned/shared paths、task/requirement/source hashes、`GIT_ARCHIVE_C_ALLOWLIST_ONLY`
+    replay、manual no-lease authority和lane plan。
+  - 两次build byte-identical；B ancestor C；build时HEAD=origin/main=C；validate时C必须是carrier
+    D的proper ancestor且policy/evidence必须为D中byte-identical tracked blobs、D相对C的first-parent
+    diff精确等于两份artifact；module/test/aggregate manifests与task shadow从C最小allowlist snapshot重建相等且fragment
+    set exact；主工作区status对known-unrelated使用literal exclude且snapshot禁止物化该路径；lane plan=`DOMAIN(2)->COORDINATOR(1)`；无path/contract/task配对或output
+    collision；known unrelated用户文档不读不改不提交；只开放coordinator manual assignment，dispatch/lease/merge/cutover/task
+    mutation/production/broker全false/none；focused/static/architecture/contract PASS。
+  - 2026-07-23：S0.1 producer/CLI、snapshot/C-D hardening与direct-writer ratchet已实现；focused=`38
+    generic readiness + 1 exact C/D dual-state + 30 G2.5 replay = 69 passed`，DevEx目标=`1005
+    modules / 1169 tests / 15 fragments / 856 writers / 0 violations`，task shadow=`406
+    active / 487 completed / 893 total`。DevEx拦截并修复新增direct writer；clean replay显式纳管一个长期受ignore但已被aggregate引用的491-byte
+    architecture fragment；EOL hash migration等价、历史G2.5 carrier replay、literal status
+    exclusion、minimal archive、forbidden-member/case collision均fail closed。首个safe-C
+    candidate的fresh strict mypy另暴露4个既有architecture依赖模块共11个portable类型错误；未用cache/follow-imports绕过，已做窄幅类型修复，Black/Ruff/mypy及S2/S3/S4/CLI回归=`169
+    passed`，Wave14 current source authority扩为85 paths。hardening前clean architecture=`533`、contract=`266`仅作rehearsal；final
+    safe-C snapshot=`7b6f5b6e9`已通过Black/Ruff/fresh mypy、expanded focused=`269`、architecture=`534
+    passed / 64.75s`与contract=`266 passed / 137.59s`，正式artifacts=`architecture-fitness_20260723T103603Z`/`contract-validation_20260723T103714Z`。当前待post-evidence
+    generated state/source hashes复验、commit C及普通push，整个S0仍未PASS，D0B2/G3未分配，`next_slice_unblocked=false`、`production_effect=none`。
+  docs_links:
+  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  terminal: false
+  raw_row_sha256: 12b8384d4886cd65fe95fbec54bb1decbf6b4ae11ef4f9c485adfa8b09a394ac
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 83788f1ad7894234395288ab61b44cb0cbbba63d068f64f64eed8d9af7b0e68c

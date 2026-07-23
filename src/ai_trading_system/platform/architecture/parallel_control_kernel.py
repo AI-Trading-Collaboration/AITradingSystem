@@ -9,7 +9,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ai_trading_system.platform.architecture.parallel_control import (
     ChangeManifest,
@@ -981,7 +981,7 @@ def _parse_lease_event(payload: Mapping[str, Any]) -> LeaseEvent:
             ResourceClaim(
                 kind=_text(_mapping(item, "resource").get("kind"), "kind"),
                 resource_id=_text(_mapping(item, "resource").get("resource_id"), "resource_id"),
-                access=ResourceAccess(_mapping(item, "resource").get("access")),
+                access=ResourceAccess(cast(str, _mapping(item, "resource").get("access"))),
             )
             for item in resource_payloads
         )

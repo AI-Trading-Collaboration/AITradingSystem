@@ -7,11 +7,12 @@
 - task id：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`
 - parent：`ARCH-004`
 - priority：`P0`
-- status：`IN_PROGRESS`（current phase=`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`）
+- status：`IN_PROGRESS`（current phase=`WAVE14_S0_1_REUSABLE_READINESS_INFRA`）
 - owner：architecture coordinator / 各 domain owner
 - dependency：ARCH-004F1、F2、F3 `DONE`
 - production effect：`none`
 - parallel readiness：`docs/requirements/ARCH-004G2_Parallel_Readiness_Gate.md`
+- Wave14 readiness：`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
 - G2.4 remaining execution：`docs/requirements/ARCH-004G2_Remaining_Phase_Efficiency_Execution_Plan.md`
 - H cutover plan：`docs/requirements/ARCH-004H_Cutover_and_Legacy_Removal.md`
 
@@ -204,6 +205,14 @@ fixture parity；真实 cadence evidence 在 G4C 异步观察，不占用 domain
 
 ## 状态记录
 
+- 2026-07-23：Wave13 closeout commit
+  `e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已普通推送，Wave14进入
+  `S0_1_REUSABLE_READINESS_INFRA`。S0采用B/C/D非自引用提交模型并从C的
+  `GIT_ARCHIVE_C_ALLOWLIST_ONLY`最小snapshot重放manifests与task shadows，source/task/requirement
+  bindings由exact Git blobs核对；known-unrelated路径由literal status exclude pathspec与archive
+  forbidden-member gate双重排除，不读取或物化其bytes。C预置C/D双态exact test，D精确只承载
+  policy/evidence；S0 PASS前仍不dispatch。G3首slice固定为`data_quality_and_pit` native provider，
+  D0B2与G3 exact domain写路径不交叉。
 - 2026-07-23：Wave13 GOV-006 N1 formal exit PASS。initial
   focused/architecture/contract/reproducibility=`124/527/266/23 passed`，final tracked-state focused=
   `194 passed`；自然Full保留`6843 passed / 1 failed / 3 skipped`，修复已归档任务的旧active

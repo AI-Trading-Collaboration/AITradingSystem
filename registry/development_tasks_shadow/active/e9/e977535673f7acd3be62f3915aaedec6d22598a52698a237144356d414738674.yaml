@@ -11,48 +11,59 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: reporting domain worker + architecture coordinator；等待G4/D0B typed status、DQ和artifact
-    contract稳定
-  requirement_refs: []
+  next_owner: reporting domain worker + architecture coordinator；已选入Wave14，但必须等待`ARCH-004W14_D0B2_G3_PARALLEL_READINESS`
+    S0 PASS后由coordinator manual assignment
+  requirement_refs:
+  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 迁移报告native consumer并梳理“数据→事实→解释→限制→结论”链；report
-    renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。首个bounded
+    slice固定为Owner Daily `data_quality_and_pit` native provider：domain只写新native module、专属test和3个fragments；coordinator随后单写Reader
+    Brief/Owner Daily cut-in。report renderer只消费既有canonical事实，不重算评分、阈值或策略结论。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 关键CLI/schema/artifact/Reader Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
-      Full PASS。
+    text: native core coverage `0→1/10`、generic provider `10→9`、legacy `_data_quality_pit_safety`定义`1→0`、top-level
+      functions `367→<=366`且LOC净降；PASS与MISSING/BLOCKED fixture的legacy JSON/HTML bytes/path/schema/status
+      parity；focused/report/architecture/contract及Wave final Full PASS。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1937
-    row_sha256: 49ec3a5b385ef097a19579e2676b2c1340efd7a4b8e212098824be99c81273dc
+    row_sha256: dd04fd3108c04bfeaa902f5ebb656c31cb33633803cc1d2566609c893bea621f
     cell_count: 8
     all_cells:
     - ARCH-004G3_REPORTING_NATIVE_MIGRATION
     - Architecture / Reporting native migration and readable conclusion chain
     - P1
     - PROPOSED
-    - reporting domain worker + architecture coordinator；等待G4/D0B typed status、DQ和artifact
-      contract稳定
-    - 迁移报告native consumer并梳理“数据→事实→解释→限制→结论”链；report renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。
-    - 关键CLI/schema/artifact/Reader Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
-      Full PASS。
-    - 2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。
+    - reporting domain worker + architecture coordinator；已选入Wave14，但必须等待`ARCH-004W14_D0B2_G3_PARALLEL_READINESS`
+      S0 PASS后由coordinator manual assignment
+    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。首个bounded
+      slice固定为Owner Daily `data_quality_and_pit` native provider：domain只写新native module、专属test和3个fragments；coordinator随后单写Reader
+      Brief/Owner Daily cut-in。report renderer只消费既有canonical事实，不重算评分、阈值或策略结论。
+    - native core coverage `0→1/10`、generic provider `10→9`、legacy `_data_quality_pit_safety`定义`1→0`、top-level
+      functions `367→<=366`且LOC净降；PASS与MISSING/BLOCKED fixture的legacy JSON/HTML bytes/path/schema/status
+      parity；focused/report/architecture/contract及Wave final Full PASS。
+    - 2026-07-23：只读审计确认该section只有一个49行legacy builder和一个caller，适合作为最低风险真实减法slice；当前仍未进行manual
+      assignment，`production_effect=none`。
     raw_line: '|ARCH-004G3_REPORTING_NATIVE_MIGRATION|Architecture / Reporting native
       migration and readable conclusion chain|P1|PROPOSED|reporting domain worker
-      + architecture coordinator；等待G4/D0B typed status、DQ和artifact contract稳定|迁移报告native
-      consumer并梳理“数据→事实→解释→限制→结论”链；report renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。|关键CLI/schema/artifact/Reader
-      Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
-      Full PASS。|2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。|'
+      + architecture coordinator；已选入Wave14，但必须等待`ARCH-004W14_D0B2_G3_PARALLEL_READINESS`
+      S0 PASS后由coordinator manual assignment|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。首个bounded
+      slice固定为Owner Daily `data_quality_and_pit` native provider：domain只写新native module、专属test和3个fragments；coordinator随后单写Reader
+      Brief/Owner Daily cut-in。report renderer只消费既有canonical事实，不重算评分、阈值或策略结论。|native
+      core coverage `0→1/10`、generic provider `10→9`、legacy `_data_quality_pit_safety`定义`1→0`、top-level
+      functions `367→<=366`且LOC净降；PASS与MISSING/BLOCKED fixture的legacy JSON/HTML bytes/path/schema/status
+      parity；focused/report/architecture/contract及Wave final Full PASS。|2026-07-23：只读审计确认该section只有一个49行legacy
+      builder和一个caller，适合作为最低风险真实减法slice；当前仍未进行manual assignment，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-49ec3a5b385ef097a19579e2
+  event_id: legacy-import-dd04fd3108c04bfeaa902f5e
   task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -65,12 +76,13 @@ initial_event:
   to_status: PROPOSED
   payload:
     priority: P1
-    next_owner: reporting domain worker + architecture coordinator；等待G4/D0B typed
-      status、DQ和artifact contract稳定
-    notes: 2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。
+    next_owner: reporting domain worker + architecture coordinator；已选入Wave14，但必须等待`ARCH-004W14_D0B2_G3_PARALLEL_READINESS`
+      S0 PASS后由coordinator manual assignment
+    notes: 2026-07-23：只读审计确认该section只有一个49行legacy builder和一个caller，适合作为最低风险真实减法slice；当前仍未进行manual
+      assignment，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:49ec3a5b385ef097a19579e2676b2c1340efd7a4b8e212098824be99c81273dc
+  - sha256:dd04fd3108c04bfeaa902f5ebb656c31cb33633803cc1d2566609c893bea621f
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -78,14 +90,19 @@ projection:
   - Architecture / Reporting native migration and readable conclusion chain
   - P1
   - PROPOSED
-  - reporting domain worker + architecture coordinator；等待G4/D0B typed status、DQ和artifact
-    contract稳定
-  - 迁移报告native consumer并梳理“数据→事实→解释→限制→结论”链；report renderer只消费canonical artifacts，不在报告层重算评分、阈值或策略结论。
-  - 关键CLI/schema/artifact/Reader Brief bytes或经reviewed版本化差异保持parity；DQ/PIT/window/policy/version/limitations可追溯；current/history不混淆；focused/report/architecture/contract/required
-    Full PASS。
-  - 2026-07-23：作为G4+D0B后的下一architecture slice登记；当前未启动。
-  docs_links: []
+  - reporting domain worker + architecture coordinator；已选入Wave14，但必须等待`ARCH-004W14_D0B2_G3_PARALLEL_READINESS`
+    S0 PASS后由coordinator manual assignment
+  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。首个bounded
+    slice固定为Owner Daily `data_quality_and_pit` native provider：domain只写新native module、专属test和3个fragments；coordinator随后单写Reader
+    Brief/Owner Daily cut-in。report renderer只消费既有canonical事实，不重算评分、阈值或策略结论。
+  - native core coverage `0→1/10`、generic provider `10→9`、legacy `_data_quality_pit_safety`定义`1→0`、top-level
+    functions `367→<=366`且LOC净降；PASS与MISSING/BLOCKED fixture的legacy JSON/HTML bytes/path/schema/status
+    parity；focused/report/architecture/contract及Wave final Full PASS。
+  - 2026-07-23：只读审计确认该section只有一个49行legacy builder和一个caller，适合作为最低风险真实减法slice；当前仍未进行manual
+    assignment，`production_effect=none`。
+  docs_links:
+  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 49ec3a5b385ef097a19579e2676b2c1340efd7a4b8e212098824be99c81273dc
+  raw_row_sha256: dd04fd3108c04bfeaa902f5ebb656c31cb33633803cc1d2566609c893bea621f
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 5c58af710708ad7822c498864ebdae666f52be4c683b5143de25456ac7be9f8d
+fragment_checksum: bf43f33ea7fc4cfadc561b76f813672ee2297e5f7076f2001713ef43f6d1c39f

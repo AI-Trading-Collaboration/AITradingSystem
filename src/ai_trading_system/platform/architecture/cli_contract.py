@@ -5,7 +5,7 @@ import json
 from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, NotRequired, TypedDict, cast
 
 import click
 import typer
@@ -14,6 +14,22 @@ from typer.main import get_command, get_command_name
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 CLI_CONTRACT_SCHEMA_VERSION = "arch_004g2_cli_contract.v1"
+
+
+class _CliTreeNode(TypedDict):
+    path: str
+    kind: str
+    name: str | None
+    help: str | None
+    short_help: str | None
+    epilog: str | None
+    hidden: bool
+    deprecated: bool
+    parameters: list[dict[str, object]]
+    invoke_without_command: NotRequired[bool]
+    no_args_is_help: NotRequired[bool]
+    chain: NotRequired[bool]
+    child_names: NotRequired[list[str]]
 
 
 class CliContractError(RuntimeError):
@@ -93,13 +109,13 @@ def _walk_click_tree(
     root: click.Command,
     *,
     project_root: Path,
-) -> list[dict[str, object]]:
-    rows: list[dict[str, object]] = []
+) -> list[_CliTreeNode]:
+    rows: list[_CliTreeNode] = []
 
     def visit(command: click.Command, path: tuple[str, ...]) -> None:
         command_path = " ".join(path) if path else "<root>"
         is_group = isinstance(command, click.Group)
-        row: dict[str, object] = {
+        row: _CliTreeNode = {
             "path": command_path,
             "kind": "group" if is_group else "command",
             "name": command.name,
@@ -109,20 +125,16 @@ def _walk_click_tree(
             "hidden": bool(command.hidden),
             "deprecated": bool(command.deprecated),
             "parameters": [
-                _parameter_contract(param, project_root=project_root)
-                for param in command.params
+                _parameter_contract(param, project_root=project_root) for param in command.params
             ],
         }
-        if is_group:
-            group = command
-            row.update(
-                invoke_without_command=bool(group.invoke_without_command),
-                no_args_is_help=bool(group.no_args_is_help),
-                chain=bool(group.chain),
-                child_names=sorted(group.commands),
-            )
+        if isinstance(command, click.Group):
+            row["invoke_without_command"] = bool(command.invoke_without_command)
+            row["no_args_is_help"] = bool(command.no_args_is_help)
+            row["chain"] = bool(command.chain)
+            row["child_names"] = sorted(command.commands)
         rows.append(row)
-        if is_group:
+        if isinstance(command, click.Group):
             for name, child in sorted(command.commands.items()):
                 visit(child, (*path, name))
 
@@ -224,7 +236,11 @@ def _registered_duplicate_paths(app: typer.Typer) -> tuple[list[str], int]:
             if count > 1:
                 duplicates.append(" ".join((*path, name)))
         for group in current.registered_groups:
-            visit(group.typer_instance, (*path, group.name or ""))
+            # ``registered_groups`` is populated by ``Typer.add_typer()``, whose
+            # public signature requires a Typer instance. TyperInfo also serves
+            # root metadata, so its broader model annotation includes None.
+            child = cast(typer.Typer, group.typer_instance)
+            visit(child, (*path, group.name or ""))
 
     visit(app, ())
     return duplicates, leaf_count

@@ -9,7 +9,7 @@
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`、`DATA-GOV-001`
 - priority：`P0`
 - status：`COMPLETE_WAVE12_S2`（G4 overall=`VALIDATING`；DATA-GOV overall=`IN_PROGRESS`）
-- current roadmap：`WAVE13_N1_FORMAL_COMPLETE_PUSH_THEN_WAVE14_S0_THEN_D0B2_BOUNDED_G3`
+- current roadmap：`WAVE13_N1_PUSHED_WAVE14_S0_IN_PROGRESS_THEN_D0B2_BOUNDED_G3`
 - owners：architecture coordinator / operations platform worker / data platform worker
 - source phase：`G2_5_COMPLETE_G4_D0B_NEXT`
 - source base：`12b1fb86369f146c9ef1c7ac54872eb8150ed791`
@@ -244,7 +244,8 @@ key 必须绑定 policy SHA、validator version/SHA、as-of 与全部 input chec
 - shared integration/formal gate：0.5～1 人日；
 - 两 worker 并行后预计墙钟约 3～5 个工作日。
 
-S2 已通过且 G4 转为 `VALIDATING`；Wave13 GOV-006 N1 formal gate已PASS，closeout提交并推送后必须先从最终HEAD冻结
+S2 已通过且 G4 转为 `VALIDATING`；Wave13 GOV-006 N1 formal gate与closeout push均已PASS，当前先按
+`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`冻结
 Wave14 exact manifests/ownership/readiness并通过S0，随后operations worker才可释放给
 G3 Reporting Native Migration；真实
 cadence observation 由计划任务证据链异步积累。G3 后再推进 G5，D0C/D1 的准确并行点在届时根据

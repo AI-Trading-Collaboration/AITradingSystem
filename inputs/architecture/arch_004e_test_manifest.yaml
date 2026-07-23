@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
 test_root: tests
-test_file_count: 1167
-test_count: 1108
+test_file_count: 1169
+test_count: 1110
 support_file_count: 59
 orphan_count: 0
 specific_overlap_count: 0
@@ -7421,7 +7421,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_arch_004_g2_5_readiness
   path: tests/test_arch_004_g2_5_readiness.py
-  sha256: f0f0b18ab416bfc0c9bbf0ab7f222fccfe52ad683a62ae5458d43efebf23e328
+  sha256: 90653c174ee47b42e90891e9994242197049c784eeaa1a83cecd8dee7f836e35
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7439,7 +7439,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 3e3897e461d16041ccc2ab2ae99eb70fe6afcd22a9a83dfec0b2d852290f7560
+  sha256: 3ab8ea2f9ac45170872355d859230a5b45ffa8f8b47d5c7fc5c0c8f1df34420e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7458,6 +7458,24 @@ tests:
 - test_id: tests.test_arch_004_wave12_g4_d0b_readiness
   path: tests/test_arch_004_wave12_g4_d0b_readiness.py
   sha256: 7ab69935b6cb2f04cd9684a2ef711109af6f64852e6133d7e3602c02075508f8
+  file_role: test
+  rule_id: architecture_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/contracts/
+  - src/ai_trading_system/platform/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.test_arch_004_wave14_d0b2_g3_readiness
+  path: tests/test_arch_004_wave14_d0b2_g3_readiness.py
+  sha256: effe2292ddef5a9d7aae930ad0510948bb0aa645650a4686aed506103deb4efb
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7745,7 +7763,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 099efaeb28138e36f518925d0df45aac355632031bc9ad72bfc9dcef400a6106
+  sha256: d344dbc17ced7b23c54050e9da680b931956bc855fe899a038480470fc36dfc3
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7891,6 +7909,22 @@ tests:
   suite: architecture-fitness
   covered_module_prefixes:
   - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_architecture_wave_readiness
+  path: tests/test_architecture_wave_readiness.py
+  sha256: 8f3e426cc79bd78b199a5807b8c4a0f4bcd02ea9e930e39ff981af6786919815
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
 - test_id: tests.test_artifact_lifecycle_inventory
   path: tests/test_artifact_lifecycle_inventory.py
   sha256: 223d95a2b4bf74ceb79b2ee3c1d54a6c0acccb13f0679d458754ef99cec7a21d

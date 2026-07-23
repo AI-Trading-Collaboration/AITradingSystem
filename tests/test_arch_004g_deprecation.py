@@ -32,6 +32,11 @@ WAVE12_S2_REPOSITORY_COUNTS = {
     "python_test_file_count": 1167,
     "direct_writer_current_count": 856,
 }
+WAVE14_S0_1_REPOSITORY_COUNTS = {
+    "python_module_count": 1005,
+    "python_test_file_count": 1169,
+    "direct_writer_current_count": 856,
+}
 WAVE11_FINAL_DOCS_CONFIG_REFERENCE_COUNTS = {
     "reader_brief_legacy_builder_renderer": 93,
     "operations_daily_legacy_facade": 27,
@@ -45,6 +50,12 @@ WAVE12_S0_DOCS_CONFIG_REFERENCE_COUNTS = {
     "operations_daily_legacy_facade": 29,
     "scheduled_tasks_legacy_facade": 27,
     "controlled_strategy_batch_god_module": 25,
+}
+WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
+    **WAVE12_S0_DOCS_CONFIG_REFERENCE_COUNTS,
+    # Wave14 S0.1 names the bounded G3 extraction target in its readiness
+    # requirement; this is governance reachability, not a new runtime caller.
+    "reader_brief_legacy_builder_renderer": 94,
 }
 
 
@@ -84,7 +95,7 @@ def test_g0_policy_freezes_lifecycle_targets_and_removal_safety() -> None:
 def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
-    repository_counts = WAVE12_S2_REPOSITORY_COUNTS
+    repository_counts = WAVE14_S0_1_REPOSITORY_COUNTS
 
     assert inventory.python_module_count == repository_counts["python_module_count"]
     assert inventory.python_test_file_count == repository_counts["python_test_file_count"]
@@ -106,7 +117,7 @@ def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     assert surfaces["dynamic_strategy_task_wrappers"].file_count == 99
     assert surfaces["dynamic_strategy_task_wrappers"].line_count == 88315
     assert surfaces["dynamic_strategy_task_wrappers"].top_level_function_count == 2114
-    for surface_id, expected_count in WAVE12_S0_DOCS_CONFIG_REFERENCE_COUNTS.items():
+    for surface_id, expected_count in WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS.items():
         assert surfaces[surface_id].docs_config_reference_file_count == expected_count
     assert all(not item.removal_ready for item in inventory.surfaces)
     assert all(len(item.open_gate_ids) == 12 for item in inventory.surfaces)

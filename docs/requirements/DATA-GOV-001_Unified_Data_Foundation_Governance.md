@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0B1_S2_COMPLETE_D0B2_AFTER_WAVE14_S0`
+- current phase：`D0B1_S2_COMPLETE_WAVE14_S0_IN_PROGRESS`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -162,6 +162,11 @@ restore 演练。D0A 的逻辑原子性与线程级测试不能替代 D0C；在 
 
 ## 状态记录
 
+- 2026-07-23：Wave13 closeout commit
+  `e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已推送；Wave14 S0.1开始。D0B2 exact domain
+  scope固定为`data/download.py`、新`data/download_publication.py`、`data/quality.py`及三份专属测试；
+  config、contracts、public exports、CLI、calendar和shared docs由coordinator单写。S0 PASS前不派发data
+  worker，不改变consumer cutover。
 - 2026-07-23：D0B1 与 Wave12 S2 formal exit PASS。最终 architecture/contract/reproducibility/
   integration=`525/266/23/983 passed`，failure-fix Full=`6825 passed / 3 skipped / 643 warnings /
   1147.04s`；canonical receipt/verifier、same-byte capture、actual window、profile/as-of pointer 与 daily

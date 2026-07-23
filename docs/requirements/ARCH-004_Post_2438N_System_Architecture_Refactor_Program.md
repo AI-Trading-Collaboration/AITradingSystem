@@ -6,14 +6,14 @@
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`IN_PROGRESS`（current phase=`WAVE13_GOV006_N1_COMPLETE_WAVE14_S0_NEXT`）
+- 当前状态：`IN_PROGRESS`（current phase=`WAVE14_S0_1_REUSABLE_READINESS_INFRA`）
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
 - 默认 production effect：`none`
 - 正式前序任务：`ARCH-001`、`ARCH-002`、`ARCH-003`、`TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN`
 - 后续执行任务：`ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION`、`ARCH-004G3_REPORTING_NATIVE_MIGRATION`、`ARCH-004G5_RESEARCH_WRAPPER_MIGRATION`、`ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL`
-- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0/S1已`BASELINE_DONE`；G2.4 phase exit与`arch_005_bootstrap_handoff.v1`均PASS并推送。handoff中的`next_slice_unblocked=false`作为历史证据保持不变；2026-07-23 owner通过新的显式指令恢复并完成G2.5。Wave12 G4A+D0B1、S2 shared integration 与 formal gate 已PASS；Wave13 `GOV-006 N1` 已把30条reviewed decision应用为18 `DONE`/12 `DROPPED`，application commit=`58ee6a80b5a04ff68a97a96d36b575ae8391f657`，commit-bound closeout、append-only compatibility与required formal gate均PASS。N1 closeout提交推送后必须先从最终HEAD生成新的Wave14 exact manifests、ownership与readiness，并通过Wave14 S0 contract/readiness；只有S0 PASS才允许派发`D0B2 + bounded G3`。历史G2.5 rehearsal不是dispatch authority。这不包含S5、H、G5、策略研究、consumer cutover、promotion、broker action或production dispatch
+- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0/S1已`BASELINE_DONE`；G2.4 phase exit与`arch_005_bootstrap_handoff.v1`均PASS并推送。handoff中的`next_slice_unblocked=false`作为历史证据保持不变；2026-07-23 owner通过新的显式指令恢复并完成G2.5。Wave12 G4A+D0B1、S2 shared integration 与 formal gate 已PASS；Wave13 `GOV-006 N1` 已把30条reviewed decision应用为18 `DONE`/12 `DROPPED`，application commit=`58ee6a80b5a04ff68a97a96d36b575ae8391f657`，commit-bound closeout、append-only compatibility与required formal gate均PASS，最终closeout commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已普通推送。当前按 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md` 的B/C/D非自引用模型实现Wave14 S0；只有exact contract/readiness PASS且carrier D推送后，才允许coordinator按冻结计划manual assignment `D0B2 + bounded G3`，machine dispatch/lease仍保持关闭。历史G2.5/Wave12 rehearsal不是本波dispatch authority。这不包含S5、H、G5、策略研究、consumer cutover、promotion、broker action或production dispatch
 
 ## Owner Intent
 
@@ -150,17 +150,19 @@ ARCH-004 不得重新创建另一套 status/doctor/inventory/release commands，
 后续不再按“最早登记的 P0”或单纯任务数量推进，而按正确性风险、后继解锁价值、可并行边界和
 等待成本排序。任一时点仍只有一个 integration coordinator 和最多两个 active domain worker；等待
 真实 cadence、owner 或外部数据的任务不占用开发 worker，但必须保留独立观察状态，不能伪装成已完成。
-GOV-006 N1已把30条high-confidence terminal decision应用并以commit-bound artifact证明：
-当前为`405 active / 487 completed`，active P0/P1/P2=`241/135/29`，status中`267 VALIDATING`、
-`100 BASELINE_DONE`。因此Wave13治理批次不是文档美化，而是下一轮准确dispatch、工作量估算和
-优先级可信度的前置条件；N2/N3仍需在后续clean integration boundary按小批证据继续收敛。
+GOV-006 N1已把30条high-confidence terminal decision应用并以commit-bound artifact证明。
+Wave13 closeout历史快照为`405 active / 487 completed / 892 total`，active P0/P1/P2=
+`241/135/29`，status中`267 VALIDATING`、`100 BASELINE_DONE`；登记Wave14准入任务后，
+carrier C当前generated state为`406 active / 487 completed / 893 total`。因此Wave13治理批次不是
+文档美化，而是下一轮准确dispatch、工作量估算和优先级可信度的前置条件；N2/N3仍需在后续
+clean integration boundary按小批证据继续收敛。
 
 | 顺序 | 优先级 | 工作包 | 目的与退出边界 |
 |---|---|---|---|
 | 1 | P0 / 已完成并归档 | `ARCH-004G2` readiness + `DATA-GOV-001 D0A` + `GOV-006 N0` | 已通过共同 formal gate：G2 requirement 转 `DONE`、D0A 与 N0 formal complete；ARCH-004、DATA-GOV-001 与 GOV-006 的 program-level 状态仍为 `IN_PROGRESS`。该结果不自动授权下一波 dispatch。 |
 | 2 | P0 / 已完成波次 | `ARCH-004G4` + `DATA-GOV-001 D0B1/S2` | Wave12 已完成最小shared DQ preflight interface、G4A=`24 passed`、D0B1=`20 passed`、canonical `aits validate-data` receipt、共享3小时provider-ready默认日期、`operations_as_of`/`data_quality_as_of`双日期、profile/as-of exact discovery pointer、strict verifier+daily step interval与1 producer/4 consumers nonexecuting sidecar。最终 Full=`6825 passed / 3 skipped / 1147.04s`。Wave12 checksum-missing实例保留为历史证据；当前SHA已匹配，但非原子publication、composite binding、calendar/coverage/gap/finite缺口仍留给D0B2。automatic dispatch、consumer cutover、production与broker继续关闭。 |
-| 3 | P0 / Wave13 组合治理 | `GOV-006 N1` high-confidence terminal reconciliation | coordinator已单写应用30条高置信decision并形成application commit与commit-bound closeout；compatibility与required formal gate已PASS，closeout提交推送后从最终N1 HEAD冻结Wave14 S0 manifest。N2/N3仍按小批证据推进，不做一次性大扫除。G4C真实cadence观察异步积累，不占开发worker。 |
-| 4 | P0/P1 / Wave14 双域 | `DATA-GOV D0B2` + bounded `ARCH-004G3` | Data lane修复download/publish/manifest事务并补market-calendar、coverage、internal-gap、finite-value gate；Reporting lane冻结首个native report slice，使presentation只投影canonical事实/解释/限制/结论。两lane不共享实现路径，coordinator最后统一接flow/catalog/manifests。 |
+| 3 | P0 / Wave13 组合治理 | `GOV-006 N1` high-confidence terminal reconciliation | coordinator已单写应用30条高置信decision并形成application commit与commit-bound closeout；compatibility、required formal gate、closeout commit与普通push均PASS。N2/N3仍按小批证据推进，不做一次性大扫除。G4C真实cadence观察异步积累，不占开发worker。 |
+| 4 | P0/P1 / Wave14 双域 | S0 readiness -> `DATA-GOV D0B2` + bounded `ARCH-004G3` | 当前先以B/C/D模型完成可复现S0：B为Wave13最终推送基线，C承载通用generator/docs/fresh generated state，D承载exact policy/evidence。S0 PASS后Data lane修复download/publish/manifest事务并补market-calendar、coverage、internal-gap、finite-value gate；Reporting lane先迁`data_quality_and_pit` native provider并执行legacy builder/LOC ratchet。两lane不共享实现路径，coordinator最后统一接flow/catalog/manifests。 |
 | 5 | P0/P1 / Wave15 受控采用 | `DATA-GOV D0B3` + `ARCH-004G4B` first consumer；并行完成G3 close/readiness | 只为一个明示consumer引入reviewed typed authorization profile并证明fail-closed parity，再逐个扩展；不做全量consumer切换。G3完成后才允许准备G5，避免research/report共同contract同时切换。 |
 | 6 | P1 / contract迁移 | `ARCH-004G5` + `DATA-GOV D0C/D1`；随后`ARCH-004G6` characterization | 把task-shaped research wrapper迁到`ExperimentSpec/plugin/lifecycle`，同时补data lifecycle、backup/restore、instance lineage、bitemporal adoption；物理存储先跑真实workload/parity/rollback基准。进入decision-sensitive迁移前先冻结scoring/position/PIT/DQ/cost/golden parity，结构迁移与策略调优严格分开。 |
 | 7 | P1/P2 / subtraction与closeout | `ARCH-004G7` -> `ARCH-004H`，以及证据支持后的 `DATA-GOV D2` | 统一deprecation/reachability/removal ledger后才允许小批cutover/removal；每批有rollback、历史artifact retention和clean-clone/Full证据，禁止新增抽象后长期保留双轨。 |
