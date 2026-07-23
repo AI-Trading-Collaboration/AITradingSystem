@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 from datetime import UTC, date, datetime, timedelta
+from hashlib import sha256
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -20,7 +21,6 @@ from ai_trading_system.data.quality import (
 )
 from ai_trading_system.dynamic_v3_clean_selection_trading2452 import (
     DEFAULT_PACKAGE_ROOT,
-    ELIGIBLE_STATUS,
     SAFETY,
     build_trading2452_package,
     validate_trading2452_package,
@@ -35,14 +35,30 @@ from ai_trading_system.dynamic_v3_trading2452_historical_evaluator import (
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 
-def test_trading2452_package_is_eligible_for_authorized_historical_seen_run() -> None:
+def test_trading2452_closed_package_stays_frozen_and_live_policy_drift_fails_closed() -> None:
+    manifest_path = DEFAULT_PACKAGE_ROOT / "package_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     validation = validate_trading2452_package()
 
-    assert validation["status"] == "PASS"
-    assert validation["failed_check_count"] == 0
-    assert validation["eligibility_status"] == ELIGIBLE_STATUS
-    assert validation["clean_run_authorized"] is True
-    assert validation["historical_replay_execution_allowed"] is True
+    assert manifest["package_id"] == "dynamic-v3-clean-trading2452_11991ac7965cfcd7aa18"
+    assert sha256(manifest_path.read_bytes()).hexdigest() == (
+        "8319cd55d727701a2ae57c556ac8bca2bbae06b2e6bc61d589b290520ff6c47f"
+    )
+    failed_checks = {
+        str(check["check_id"]) for check in validation["checks"] if not check["passed"]
+    }
+    assert validation["status"] == "FAIL"
+    assert validation["failed_check_count"] == 7
+    assert validation["eligibility_status"] == "BLOCKED_INVALID_TRADING2452_PACKAGE"
+    assert failed_checks == {
+        "selection_input_commitments_fresh",
+        "content_recomputed:research_context.json",
+        "content_recomputed:preregistration.json",
+        "content_recomputed:campaign.json",
+        "content_recomputed:source_contract.json",
+        "content_recomputed:eligibility.json",
+        "content_recomputed:package_manifest.json",
+    }
     assert validation["prospective_holdout_access_allowed"] is False
     assert validation["unbiased_oos_claim_allowed"] is False
     assert validation["production_effect"] == "none"

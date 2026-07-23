@@ -8,7 +8,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -17,6 +17,9 @@ from ai_trading_system.alerts import (
     default_pipeline_health_alert_report_path,
 )
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.contracts.data_quality_execution import (
+    DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+)
 from ai_trading_system.contracts.operations import OperationsRunDecision
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.core import (
@@ -28,6 +31,9 @@ from ai_trading_system.core import (
 )
 from ai_trading_system.data.download import default_download_failure_report_path
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.data.quality_execution_discovery import (
+    default_data_quality_execution_discovery_path,
+)
 from ai_trading_system.documentation_contract import (
     default_documentation_contract_json_path,
     default_documentation_contract_report_path,
@@ -108,7 +114,7 @@ from ai_trading_system.secret_hygiene import default_secret_scan_report_path
 from ai_trading_system.trading_calendar import (
     MarketSession,
     current_us_equity_market_date,
-    latest_completed_us_equity_trading_day,
+    resolve_default_data_quality_as_of,
     us_equity_market_session,
 )
 from ai_trading_system.trading_engine.market_data_freshness import (
@@ -285,9 +291,6 @@ class DailyOpsExecutionObserver(Protocol):
 
 
 _DIAGNOSTIC_TEXT_MAX_CHARS = 60_000
-DAILY_OPS_PROVIDER_READY_POST_CLOSE_BUFFER = timedelta(hours=3)
-# TRADING-1087: daily ops must wait for late same-day provider artifacts such as
-# the Cboe VIX full-history CSV before defaulting to the just-closed trading day.
 _DIAGNOSTIC_ENV_SECRET_TOKENS = (
     "KEY",
     "TOKEN",
@@ -325,10 +328,7 @@ def daily_ops_step_result_to_workflow_step_result(
 
 
 def resolve_daily_ops_default_as_of(observed_at: datetime | None = None) -> date:
-    return latest_completed_us_equity_trading_day(
-        observed_at,
-        post_close_buffer=DAILY_OPS_PROVIDER_READY_POST_CLOSE_BUFFER,
-    )
+    return resolve_default_data_quality_as_of(observed_at)
 
 
 def resolve_daily_ops_market_date(observed_at: datetime | None = None) -> date:
@@ -520,6 +520,10 @@ def build_daily_ops_plan(
         )
     )
     data_quality_report = default_quality_report_path(reports_dir, download_end)
+    data_quality_discovery_pointer = default_data_quality_execution_discovery_path(
+        download_end,
+        project_root=project_root,
+    )
     forward_dry_run_root = project_root / "outputs" / "forward_evidence" / "daily_archive"
     forward_dry_run_json = forward_dry_run_root / f"forward_evidence_dry_run_{as_of_text}.json"
     forward_dry_run_md = forward_dry_run_root / f"forward_evidence_dry_run_{as_of_text}.md"
@@ -653,9 +657,16 @@ def build_daily_ops_plan(
         DailyOpsStep(
             step_id="validate_data",
             title="校验市场和宏观缓存",
-            command=("aits", "validate-data", "--as-of", download_end.isoformat()),
+            command=(
+                "aits",
+                "validate-data",
+                "--as-of",
+                download_end.isoformat(),
+                "--execution-profile",
+                DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+            ),
             required_env_vars=(),
-            produced_paths=(data_quality_report,),
+            produced_paths=(data_quality_report, data_quality_discovery_pointer),
             quality_gate=(
                 "`aits validate-data` 是缓存市场/宏观数据进入技术特征、评分、"
                 "回测和报告链路前的强制质量门禁；失败时停止下游。"

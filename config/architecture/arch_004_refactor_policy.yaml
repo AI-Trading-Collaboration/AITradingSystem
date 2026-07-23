@@ -615,7 +615,7 @@ phase_g_execution:
     G1_shared_platform_helper_migration: COMPLETE
     G2_interfaces_and_etf_cli_migration: COMPLETE
     G3_reporting_native_migration: NOT_STARTED
-    G4_operations_consumer_migration: NOT_STARTED
+    G4_operations_consumer_migration: IN_PROGRESS_W12_S2_SHARED_INTEGRATION
     G5_research_wrapper_migration: NOT_STARTED
     G6_portfolio_decision_sensitive_migration: NOT_STARTED
     G7_closeout_and_h_handoff: NOT_STARTED
@@ -895,9 +895,12 @@ phase_g_execution:
       G2_5_freeze_deprecation_and_closeout: COMPLETE
     closeout_status: COMPLETE_FORMAL_GATES_PASS
     next_wave:
-      status: READY_NOT_DISPATCHED
+      status: IN_PROGRESS_W12_S2_SHARED_INTEGRATION
       architecture_stage: G4_operations_consumer_migration
       paired_task: DATA-GOV-001_D0B_CANONICAL_DQ_EVIDENCE
+      requirement_path: docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+      readiness_policy_path: config/architecture/arch_004_wave12_g4_d0b_readiness.yaml
+      readiness_artifact_path: inputs/architecture/arch_004_wave12_g4_d0b_parallel_readiness.json
       max_active_domain_workers: 2
       g3_dispatch_allowed: false
       g5_dispatch_allowed: false

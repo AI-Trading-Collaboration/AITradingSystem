@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 from hashlib import sha256
 from pathlib import Path
@@ -8,6 +9,8 @@ import pandas as pd
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.cli_commands import data_cache as data_cache_cli
+from ai_trading_system.config import PROJECT_ROOT as REAL_PROJECT_ROOT
 from ai_trading_system.config import configured_price_tickers, load_data_quality, load_universe
 from ai_trading_system.data.quality import (
     DataQualityReport,
@@ -634,11 +637,13 @@ def test_validate_data_cache_fails_missing_required_secondary_source(tmp_path: P
     assert "secondary_prices_file_missing" in _issue_codes(report)
 
 
-def test_validate_data_cli_writes_report(tmp_path: Path) -> None:
+def test_validate_data_cli_writes_report(tmp_path: Path, monkeypatch) -> None:
     prices_path, rates_path = _write_valid_cache(
         tmp_path,
         tickers=configured_price_tickers(load_universe()),
     )
+    _prepare_canonical_cli_project(tmp_path, prices_path=prices_path, rates_path=rates_path)
+    monkeypatch.setattr(data_cache_cli, "PROJECT_ROOT", tmp_path)
     output_path = tmp_path / "quality.md"
 
     result = CliRunner().invoke(
@@ -654,19 +659,222 @@ def test_validate_data_cli_writes_report(tmp_path: Path) -> None:
             "--output-path",
             str(output_path),
         ],
+        terminal_width=240,
     )
 
     assert result.exit_code == 0
     assert output_path.exists()
-    assert "数据质量状态：PASS_WITH_WARNINGS" in result.output
-    assert "download_manifest_missing" in output_path.read_text(encoding="utf-8")
+    assert "数据质量状态：PASS" in result.output
+    assert "Canonicalreceipt" in "".join(result.output.split())
+    assert "DQ discovery pointer：未发布" in result.output
+    assert list((tmp_path / "outputs/data_quality/executions").glob("*/receipt.json"))
+    audit_path = next(
+        (tmp_path / "artifacts/data_refresh_audit/validation").glob("validate_data_*.json")
+    )
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    assert audit["data_quality_execution"]["receipt_id"].startswith("dq_execution_")
+    assert audit["data_quality_execution"]["projection_only"] is True
 
 
-def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
+def test_validate_data_cli_explicit_as_of_auto_profile_does_not_publish_pointer(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    prices_path, rates_path = _write_daily_default_cli_cache(tmp_path)
+    _prepare_canonical_cli_project(tmp_path, prices_path=prices_path, rates_path=rates_path)
+    monkeypatch.setattr(data_cache_cli, "PROJECT_ROOT", tmp_path)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "validate-data",
+            "--prices-path",
+            "data/raw/prices_daily.csv",
+            "--rates-path",
+            "data/raw/rates_daily.csv",
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(tmp_path / "manual_quality.md"),
+        ],
+        terminal_width=240,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "DQ discovery pointer：未发布" in result.output
+    assert not (
+        tmp_path / "outputs/data_quality/executions/discovery/daily_default/2026-05-02/current.json"
+    ).exists()
+
+
+def test_validate_data_cli_explicit_daily_profile_uses_project_relative_inputs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    prices_path, rates_path = _write_daily_default_cli_cache(tmp_path)
+    _prepare_canonical_cli_project(tmp_path, prices_path=prices_path, rates_path=rates_path)
+    decoy_cwd = tmp_path / "unrelated_cwd"
+    decoy_raw = decoy_cwd / "data/raw"
+    decoy_raw.mkdir(parents=True)
+    (decoy_raw / "prices_daily.csv").write_text("invalid", encoding="utf-8")
+    (decoy_raw / "rates_daily.csv").write_text("invalid", encoding="utf-8")
+    monkeypatch.setattr(data_cache_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.chdir(decoy_cwd)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "validate-data",
+            "--prices-path",
+            "data/raw/prices_daily.csv",
+            "--rates-path",
+            "data/raw/rates_daily.csv",
+            "--as-of",
+            "2026-05-02",
+            "--execution-profile",
+            "daily_default.v1",
+            "--output-path",
+            str(tmp_path / "daily_quality.md"),
+        ],
+        terminal_width=240,
+    )
+
+    pointer_path = (
+        tmp_path / "outputs/data_quality/executions/discovery/daily_default/2026-05-02/current.json"
+    )
+    assert result.exit_code == 0, result.output
+    assert "未发布（非 daily_default profile）" not in result.output
+    assert pointer_path.is_file()
+
+
+def test_validate_data_cli_daily_profile_cannot_use_cwd_short_path_bypass(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    prices_path, rates_path = _write_daily_default_cli_cache(tmp_path)
+    _prepare_canonical_cli_project(tmp_path, prices_path=prices_path, rates_path=rates_path)
+    monkeypatch.setattr(data_cache_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.chdir(prices_path.parent)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "validate-data",
+            "--prices-path",
+            "prices_daily.csv",
+            "--rates-path",
+            "rates_daily.csv",
+            "--as-of",
+            "2026-05-02",
+            "--execution-profile",
+            "daily_default.v1",
+        ],
+        terminal_width=240,
+    )
+
+    assert result.exit_code == 2
+    assert "daily_default.v1" in result.output
+    assert not (
+        tmp_path / "outputs/data_quality/executions/discovery/daily_default/2026-05-02/current.json"
+    ).exists()
+
+
+def test_validate_data_cli_pointer_failure_does_not_publish_audit(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    prices_path, rates_path = _write_daily_default_cli_cache(tmp_path)
+    _prepare_canonical_cli_project(tmp_path, prices_path=prices_path, rates_path=rates_path)
+    monkeypatch.setattr(data_cache_cli, "PROJECT_ROOT", tmp_path)
+
+    def _fail_pointer_publish(*args, **kwargs):
+        raise data_cache_cli.DataQualityExecutionError(
+            "DQ_RECEIPT_ID_MISMATCH",
+            "injected pointer verification failure",
+        )
+
+    monkeypatch.setattr(
+        data_cache_cli,
+        "publish_default_data_quality_execution_discovery",
+        _fail_pointer_publish,
+    )
+    compatibility_report = tmp_path / "pointer_failure_quality.md"
+    result = CliRunner().invoke(
+        app,
+        [
+            "validate-data",
+            "--prices-path",
+            "data/raw/prices_daily.csv",
+            "--rates-path",
+            "data/raw/rates_daily.csv",
+            "--as-of",
+            "2026-05-02",
+            "--execution-profile",
+            "daily_default.v1",
+            "--output-path",
+            str(compatibility_report),
+        ],
+        terminal_width=240,
+    )
+
+    audit_dir = tmp_path / "artifacts/data_refresh_audit/validation"
+    assert result.exit_code == 1
+    assert "DQ_RECEIPT_ID_MISMATCH" in result.output
+    assert compatibility_report.is_file()
+    assert not audit_dir.exists()
+
+
+def test_validate_data_cli_tampered_execution_receipt_blocks_audit_projection(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     prices_path, rates_path = _write_valid_cache(
         tmp_path,
         tickers=configured_price_tickers(load_universe()),
     )
+    _prepare_canonical_cli_project(tmp_path, prices_path=prices_path, rates_path=rates_path)
+    monkeypatch.setattr(data_cache_cli, "PROJECT_ROOT", tmp_path)
+    write_audit_sidecar = data_cache_cli.write_validate_data_audit_sidecar
+
+    def _tamper_then_write_audit(**kwargs):
+        execution_result = kwargs["execution_result"]
+        execution_result.receipt_path.write_bytes(b"{}")
+        return write_audit_sidecar(**kwargs)
+
+    monkeypatch.setattr(
+        data_cache_cli,
+        "write_validate_data_audit_sidecar",
+        _tamper_then_write_audit,
+    )
+    result = CliRunner().invoke(
+        app,
+        [
+            "validate-data",
+            "--prices-path",
+            str(prices_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(tmp_path / "tampered_receipt_quality.md"),
+        ],
+        terminal_width=240,
+    )
+
+    audit_dir = tmp_path / "artifacts/data_refresh_audit/validation"
+    assert result.exit_code == 1
+    assert "DQ_RECEIPT_ID_MISMATCH" in result.output
+    assert not audit_dir.exists()
+
+
+def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path, monkeypatch) -> None:
+    prices_path, rates_path = _write_valid_cache(
+        tmp_path,
+        tickers=configured_price_tickers(load_universe()),
+    )
+    _prepare_canonical_cli_project(tmp_path, prices_path=prices_path, rates_path=rates_path)
+    monkeypatch.setattr(data_cache_cli, "PROJECT_ROOT", tmp_path)
     output_path = tmp_path / "quality.md"
 
     result = CliRunner().invoke(
@@ -682,11 +890,13 @@ def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
             "--output-path",
             str(output_path),
         ],
+        terminal_width=240,
     )
 
     assert result.exit_code == 1
     assert output_path.exists()
     assert "数据质量状态：FAIL" in result.output
+    assert "Canonicalreceipt" in "".join(result.output.split())
 
 
 def _write_valid_cache(
@@ -737,6 +947,77 @@ def _write_valid_cache(
     prices.to_csv(prices_path, index=False)
     rates.to_csv(rates_path, index=False)
     return prices_path, rates_path
+
+
+def _write_daily_default_cli_cache(root: Path) -> tuple[Path, Path]:
+    raw_dir = root / "data/raw"
+    raw_dir.mkdir(parents=True)
+    prices_path, rates_path = _write_valid_cache(
+        raw_dir,
+        tickers=configured_price_tickers(load_universe()),
+    )
+    pd.read_csv(prices_path).to_csv(raw_dir / "prices_marketstack_daily.csv", index=False)
+    return prices_path, rates_path
+
+
+def _prepare_canonical_cli_project(
+    root: Path,
+    *,
+    prices_path: Path,
+    rates_path: Path,
+) -> None:
+    policy_path = root / "config/data_quality.yaml"
+    policy_path.parent.mkdir(parents=True, exist_ok=True)
+    policy_path.write_bytes((REAL_PROJECT_ROOT / "config/data_quality.yaml").read_bytes())
+    (root / "config/universe.yaml").write_bytes(
+        (REAL_PROJECT_ROOT / "config/universe.yaml").read_bytes()
+    )
+    for relative in (
+        Path("src/ai_trading_system/data/immutable_publish.py"),
+        Path("src/ai_trading_system/data/quality_execution.py"),
+        Path("src/ai_trading_system/data/quality.py"),
+    ):
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((REAL_PROJECT_ROOT / relative).read_bytes())
+    manifest_rows = [
+        {
+            "downloaded_at": "2026-05-02T00:00:00+00:00",
+            "source_id": "fixture_prices",
+            "provider": "test",
+            "endpoint": "test",
+            "request_parameters": "{}",
+            "output_path": prices_path.relative_to(root).as_posix(),
+            "row_count": len(pd.read_csv(prices_path)),
+            "checksum_sha256": _sha256_file(prices_path),
+        },
+        {
+            "downloaded_at": "2026-05-02T00:00:00+00:00",
+            "source_id": "fixture_rates",
+            "provider": "test",
+            "endpoint": "test",
+            "request_parameters": "{}",
+            "output_path": rates_path.relative_to(root).as_posix(),
+            "row_count": len(pd.read_csv(rates_path)),
+            "checksum_sha256": _sha256_file(rates_path),
+        },
+    ]
+    secondary_prices_path = prices_path.parent / "prices_marketstack_daily.csv"
+    if secondary_prices_path.is_file():
+        manifest_rows.append(
+            {
+                "downloaded_at": "2026-05-02T00:00:00+00:00",
+                "source_id": "fixture_marketstack_prices",
+                "provider": "test",
+                "endpoint": "test",
+                "request_parameters": "{}",
+                "output_path": secondary_prices_path.relative_to(root).as_posix(),
+                "row_count": len(pd.read_csv(secondary_prices_path)),
+                "checksum_sha256": _sha256_file(secondary_prices_path),
+            }
+        )
+    manifest = pd.DataFrame(manifest_rows)
+    manifest.to_csv(prices_path.parent / "download_manifest.csv", index=False)
 
 
 def _price_row(

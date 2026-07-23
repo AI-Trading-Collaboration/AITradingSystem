@@ -4,7 +4,7 @@ import os
 import subprocess
 from datetime import UTC, date, datetime, time
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Protocol
 
 import typer
 from rich.console import Console
@@ -18,6 +18,10 @@ from ai_trading_system.cli_commands.risk_event_artifacts import (
     DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE,
 )
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.contracts.data_quality_execution import (
+    DataQualityExecutionContractError,
+    VerifiedDataQualityPreflight,
+)
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.daily_task_dashboard import (
     build_daily_task_dashboard_report,
@@ -29,6 +33,16 @@ from ai_trading_system.daily_task_dashboard import (
     write_daily_task_dashboard_json,
 )
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.data.quality_execution import (
+    DataQualityExecutionError,
+    verify_data_quality_execution_receipt,
+)
+from ai_trading_system.data.quality_execution_discovery import (
+    DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+    DiscoveredDataQualityExecution,
+    default_data_quality_execution_discovery_path,
+    load_default_data_quality_execution_discovery,
+)
 from ai_trading_system.decision_snapshots import (
     DEFAULT_DECISION_SNAPSHOT_DIR,
     default_decision_snapshot_path,
@@ -89,6 +103,13 @@ from ai_trading_system.platform.operations import (
     load_periodic_operations_control_policy,
     write_periodic_operations_plan,
 )
+from ai_trading_system.platform.operations.periodic_consumer_migration import (
+    DataQualityReceiptVerifier,
+    NativeConsumerExpectedContext,
+    build_native_periodic_consumer_parity_plan,
+    default_native_periodic_consumer_parity_plan_path,
+    write_native_periodic_consumer_parity_plan,
+)
 from ai_trading_system.platform.reporting import write_owner_daily_brief_sidecars
 from ai_trading_system.report_traceability import default_report_trace_bundle_path
 from ai_trading_system.reports.calculation_explainers import default_calculation_explainers_path
@@ -122,7 +143,10 @@ from ai_trading_system.run_artifacts import (
     validate_legacy_output_mode,
     write_run_manifest,
 )
-from ai_trading_system.scheduled_tasks import DEFAULT_SCHEDULED_TASKS_CONFIG_PATH
+from ai_trading_system.scheduled_tasks import (
+    DEFAULT_SCHEDULED_TASKS_CONFIG_PATH,
+    load_scheduled_tasks_config,
+)
 from ai_trading_system.scoring.daily import default_daily_score_report_path
 
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
@@ -760,6 +784,7 @@ def daily_ops_run_command(
     periodic_plan_path = _write_periodic_plan_from_daily_run(
         run_report=run_report,
         output_root=run_paths.metadata_dir,
+        project_root=PROJECT_ROOT,
     )
     if run_report.status.startswith("RUN_CONTROL_"):
         console.print(f"Canonical run control：{run_report.status}")
@@ -1031,9 +1056,111 @@ def _run_periodic_command(command: tuple[str, ...], *, cwd: Path) -> object:
     )
 
 
+_DAILY_DEFAULT_DATA_QUALITY_INPUT_ROLES = (
+    "prices",
+    "rates",
+    "secondary_prices",
+)
+_DAILY_VALIDATE_DATA_COMMAND_PREFIX = ("aits", "validate-data", "--as-of")
+
+
+class _DataQualityExecutionDiscoveryLoader(Protocol):
+    def __call__(
+        self,
+        as_of: date,
+        *,
+        project_root: Path = PROJECT_ROOT,
+    ) -> DiscoveredDataQualityExecution: ...
+
+
+class _StaticClock:
+    def __init__(self, value: datetime) -> None:
+        self._value = value
+
+    def now(self) -> datetime:
+        return self._value
+
+
+class _RejectedDataQualityReceiptVerifier:
+    def __init__(self, error: DataQualityExecutionError) -> None:
+        self._error = error
+
+    def __call__(
+        self,
+        receipt_path: Path,
+        *,
+        expected_as_of: date,
+        expected_policy_path: Path,
+        expected_input_roles: tuple[str, ...],
+        project_root: Path = PROJECT_ROOT,
+    ) -> VerifiedDataQualityPreflight:
+        del (
+            receipt_path,
+            expected_as_of,
+            expected_policy_path,
+            expected_input_roles,
+            project_root,
+        )
+        raise self._error
+
+
+class _PointerBoundDataQualityReceiptVerifier:
+    def __init__(
+        self,
+        *,
+        discovered: DiscoveredDataQualityExecution,
+        validate_started_at: datetime,
+        validate_ended_at: datetime,
+        delegate: DataQualityReceiptVerifier,
+    ) -> None:
+        self._discovered = discovered
+        self._validate_started_at = validate_started_at
+        self._validate_ended_at = validate_ended_at
+        self._delegate = delegate
+
+    def __call__(
+        self,
+        receipt_path: Path,
+        *,
+        expected_as_of: date,
+        expected_policy_path: Path,
+        expected_input_roles: tuple[str, ...],
+        project_root: Path = PROJECT_ROOT,
+    ) -> VerifiedDataQualityPreflight:
+        preflight = self._delegate(
+            receipt_path,
+            expected_as_of=expected_as_of,
+            expected_policy_path=expected_policy_path,
+            expected_input_roles=expected_input_roles,
+            project_root=project_root,
+        ).assert_strict_passed()
+        _validate_discovered_data_quality_preflight(
+            discovered=self._discovered,
+            preflight=preflight,
+            receipt_path=receipt_path,
+            expected_as_of=expected_as_of,
+            validate_started_at=self._validate_started_at,
+            validate_ended_at=self._validate_ended_at,
+            project_root=project_root,
+        )
+        return preflight
+
+
 def _write_periodic_plan_from_daily_run(
-    *, run_report: DailyOpsRunReport, output_root: Path
+    *,
+    run_report: DailyOpsRunReport,
+    output_root: Path,
+    project_root: Path = PROJECT_ROOT,
+    discovery_loader: _DataQualityExecutionDiscoveryLoader = (
+        load_default_data_quality_execution_discovery
+    ),
+    receipt_verifier: DataQualityReceiptVerifier = verify_data_quality_execution_receipt,
+    generated_at: datetime | None = None,
 ) -> Path:
+    resolved_generated_at = generated_at or datetime.now(tz=UTC)
+    if resolved_generated_at.tzinfo is None or resolved_generated_at.utcoffset() is None:
+        raise ValueError("generated_at must be timezone-aware")
+
     if run_report.status == "RUN_CONTROL_ALREADY_COMPLETE":
         daily_status = CanonicalStatus.PASS
     elif run_report.status in {"PASS", "PASS_WITH_SKIPS"}:
@@ -1044,30 +1171,312 @@ def _write_periodic_plan_from_daily_run(
         daily_status = CanonicalStatus.BLOCKED
     else:
         daily_status = CanonicalStatus.FAILED
-    validate_result = next(
-        (result for result in run_report.step_results if result.step_id == "validate_data"),
-        None,
+
+    data_quality_as_of, planned_command, command_error = _planned_daily_data_quality_as_of(
+        run_report
     )
-    data_quality_status = (
-        CanonicalStatus.PASS
-        if validate_result is not None and validate_result.status == "PASS"
-        else CanonicalStatus.FAILED if validate_result is not None else None
+    receipt_path = default_data_quality_execution_discovery_path(
+        data_quality_as_of,
+        project_root=project_root,
     )
-    generated_at = datetime.now(tz=UTC)
+    native_verifier: DataQualityReceiptVerifier
+    if command_error is not None:
+        native_verifier = _RejectedDataQualityReceiptVerifier(command_error)
+    else:
+        try:
+            validate_started_at, validate_ended_at = _current_validate_data_interval(
+                run_report,
+                expected_command=planned_command,
+            )
+            discovered = discovery_loader(data_quality_as_of, project_root=project_root)
+            receipt_path = discovered.receipt_path
+            native_verifier = _PointerBoundDataQualityReceiptVerifier(
+                discovered=discovered,
+                validate_started_at=validate_started_at,
+                validate_ended_at=validate_ended_at,
+                delegate=receipt_verifier,
+            )
+        except (DataQualityExecutionContractError, OSError) as exc:
+            native_verifier = _RejectedDataQualityReceiptVerifier(
+                _as_data_quality_execution_error(exc)
+            )
+
+    native_context = NativeConsumerExpectedContext(
+        as_of=run_report.plan.as_of,
+        data_quality_as_of=data_quality_as_of,
+        expected_policy_path=project_root / "config" / "data_quality.yaml",
+        expected_input_roles=_DAILY_DEFAULT_DATA_QUALITY_INPUT_ROLES,
+        daily_status=daily_status,
+        required_artifacts_ready=daily_status is CanonicalStatus.PASS,
+        source_artifact_ids=(),
+        owner_gate_approved=None,
+        owner_decision_id=None,
+    )
+    native_plan = build_native_periodic_consumer_parity_plan(
+        receipt_path,
+        expected_context=native_context,
+        scheduled=load_scheduled_tasks_config(),
+        verifier=native_verifier,
+        clock=_StaticClock(resolved_generated_at),
+        project_root=project_root,
+    )
+    write_native_periodic_consumer_parity_plan(
+        native_plan,
+        default_native_periodic_consumer_parity_plan_path(
+            run_report.plan.as_of,
+            output_root,
+        ),
+    )
+
+    data_quality_status = CanonicalStatus.FAILED
+    data_quality_evidence_id: str | None = None
+    source_artifact_ids: tuple[str, ...] = ()
+    if native_plan.status is CanonicalStatus.PASS:
+        native_resolution = native_plan.entry("daily_score_daily").due_resolution
+        if (
+            native_resolution.data_quality_evidence_id is not None
+            and native_resolution.source_artifact_ids
+        ):
+            data_quality_status = CanonicalStatus.PASS
+            data_quality_evidence_id = native_resolution.data_quality_evidence_id
+            source_artifact_ids = native_resolution.source_artifact_ids
+
     contexts = build_periodic_due_contexts_from_daily(
         as_of=run_report.plan.as_of,
         daily_status=daily_status,
         data_quality_status=data_quality_status,
+        data_quality_evidence_id=data_quality_evidence_id,
+        required_artifacts_ready=(
+            daily_status is CanonicalStatus.PASS and data_quality_status is CanonicalStatus.PASS
+        ),
+        source_artifact_ids=source_artifact_ids,
     )
     plan = build_periodic_operations_plan(
         as_of=run_report.plan.as_of,
-        generated_at=generated_at,
+        generated_at=resolved_generated_at,
         contexts=contexts,
     )
     return write_periodic_operations_plan(
         plan,
         default_periodic_operations_plan_path(output_root, run_report.plan.as_of),
     )
+
+
+def _planned_daily_data_quality_as_of(
+    run_report: DailyOpsRunReport,
+) -> tuple[date, tuple[str, ...], DataQualityExecutionError | None]:
+    fallback_as_of = (
+        run_report.plan.as_of
+        if run_report.plan.market_session.is_trading_day
+        else run_report.plan.market_session.previous_trading_day
+    )
+    step = next(
+        (item for item in run_report.plan.steps if item.step_id == "validate_data"),
+        None,
+    )
+    if step is None:
+        return (
+            fallback_as_of,
+            (),
+            DataQualityExecutionError(
+                "DQ_RECEIPT_FIELDS_INVALID",
+                "daily plan is missing the validate_data step",
+            ),
+        )
+    try:
+        parsed_as_of = _parse_daily_validate_data_as_of(step.command)
+    except DataQualityExecutionError as exc:
+        return fallback_as_of, step.command, exc
+    if parsed_as_of != fallback_as_of:
+        return (
+            fallback_as_of,
+            step.command,
+            DataQualityExecutionError(
+                "DQ_AS_OF_MISMATCH",
+                (f"expected={fallback_as_of.isoformat()} " f"actual={parsed_as_of.isoformat()}"),
+            ),
+        )
+    return parsed_as_of, step.command, None
+
+
+def _parse_daily_validate_data_as_of(command: tuple[str, ...]) -> date:
+    if (
+        len(command) != 6
+        or command[:3] != _DAILY_VALIDATE_DATA_COMMAND_PREFIX
+        or command[4:]
+        != (
+            "--execution-profile",
+            DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+        )
+    ):
+        raise DataQualityExecutionError(
+            "DQ_RECEIPT_FIELDS_INVALID",
+            (
+                "validate_data command must be exactly `aits validate-data --as-of "
+                "YYYY-MM-DD --execution-profile daily_default.v1`"
+            ),
+        )
+    try:
+        parsed = date.fromisoformat(command[3])
+    except ValueError as exc:
+        raise DataQualityExecutionError(
+            "DQ_AS_OF_MISMATCH",
+            f"invalid validate_data --as-of={command[3]!r}",
+        ) from exc
+    if parsed.isoformat() != command[3]:
+        raise DataQualityExecutionError(
+            "DQ_AS_OF_MISMATCH",
+            f"validate_data --as-of must be canonical ISO date: {command[3]!r}",
+        )
+    return parsed
+
+
+def _current_validate_data_interval(
+    run_report: DailyOpsRunReport,
+    *,
+    expected_command: tuple[str, ...],
+) -> tuple[datetime, datetime]:
+    if run_report.status == "RUN_CONTROL_ALREADY_COMPLETE":
+        raise DataQualityExecutionError(
+            "DQ_EXECUTION_CHRONOLOGY_INVALID",
+            "already-complete run control has no current validate_data execution interval",
+        )
+    result = next(
+        (item for item in run_report.step_results if item.step_id == "validate_data"),
+        None,
+    )
+    if result is None:
+        raise DataQualityExecutionError(
+            "DQ_RECEIPT_MISSING",
+            "current daily run has no validate_data result",
+        )
+    observed_as_of = _parse_daily_validate_data_as_of(result.command)
+    expected_as_of = _parse_daily_validate_data_as_of(expected_command)
+    if observed_as_of != expected_as_of or result.command != expected_command:
+        raise DataQualityExecutionError(
+            "DQ_AS_OF_MISMATCH",
+            "validate_data result command differs from the current daily plan",
+        )
+    if result.status != "PASS":
+        raise DataQualityExecutionError(
+            "DQ_EXECUTION_FAILED",
+            f"validate_data status={result.status}",
+        )
+    if result.started_at is None or result.ended_at is None:
+        raise DataQualityExecutionError(
+            "DQ_EXECUTION_CHRONOLOGY_INVALID",
+            "validate_data PASS is missing its current execution interval",
+        )
+    _require_aware_datetime(run_report.started_at, "daily_run.started_at")
+    _require_aware_datetime(run_report.finished_at, "daily_run.finished_at")
+    _require_aware_datetime(result.started_at, "validate_data.started_at")
+    _require_aware_datetime(result.ended_at, "validate_data.ended_at")
+    if not (
+        run_report.started_at <= result.started_at <= result.ended_at <= run_report.finished_at
+    ):
+        raise DataQualityExecutionError(
+            "DQ_EXECUTION_CHRONOLOGY_INVALID",
+            "validate_data interval is outside the current daily run interval",
+        )
+    return result.started_at, result.ended_at
+
+
+def _require_aware_datetime(value: datetime, field: str) -> None:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise DataQualityExecutionError(
+            "DQ_EXECUTION_CHRONOLOGY_INVALID",
+            f"{field} must be timezone-aware",
+        )
+
+
+def _validate_discovered_data_quality_preflight(
+    *,
+    discovered: DiscoveredDataQualityExecution,
+    preflight: VerifiedDataQualityPreflight,
+    receipt_path: Path,
+    expected_as_of: date,
+    validate_started_at: datetime,
+    validate_ended_at: datetime,
+    project_root: Path,
+) -> None:
+    pointer = discovered.pointer
+    root = project_root.resolve()
+    expected_pointer_path = default_data_quality_execution_discovery_path(
+        expected_as_of,
+        project_root=root,
+    )
+    if discovered.pointer_path.resolve() != expected_pointer_path.resolve():
+        raise DataQualityExecutionError(
+            "DQ_RECEIPT_ID_MISMATCH",
+            "discovery pointer path differs from the daily_default path",
+        )
+    if (
+        pointer.profile_id != DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID
+        or pointer.as_of != expected_as_of
+        or discovered.receipt.as_of != expected_as_of
+        or preflight.as_of != expected_as_of
+    ):
+        raise DataQualityExecutionError(
+            "DQ_AS_OF_MISMATCH",
+            "discovery, receipt, and preflight as_of values must match validate_data",
+        )
+    expected_receipt_path = (root / Path(pointer.receipt_path)).resolve()
+    try:
+        expected_receipt_path.relative_to(root)
+    except ValueError as exc:
+        raise DataQualityExecutionError(
+            "DQ_RECEIPT_ID_MISMATCH",
+            "discovery receipt path escapes project_root",
+        ) from exc
+    if (
+        receipt_path.resolve() != expected_receipt_path
+        or discovered.receipt_path.resolve() != expected_receipt_path
+        or preflight.receipt_path != pointer.receipt_path
+    ):
+        raise DataQualityExecutionError(
+            "DQ_RECEIPT_ID_MISMATCH",
+            "discovery and verified receipt paths differ",
+        )
+    if (
+        preflight.receipt_id != pointer.receipt_id
+        or discovered.receipt.receipt_id != pointer.receipt_id
+        or preflight.receipt_sha256 != pointer.receipt_sha256
+        or preflight.receipt_size_bytes != pointer.receipt_size_bytes
+    ):
+        raise DataQualityExecutionError(
+            "DQ_RECEIPT_ID_MISMATCH",
+            "discovery pointer identity differs from the verified preflight",
+        )
+    if (
+        discovered.receipt.started_at != preflight.receipt.started_at
+        or discovered.receipt.ended_at != preflight.receipt.ended_at
+    ):
+        raise DataQualityExecutionError(
+            "DQ_RECEIPT_ID_MISMATCH",
+            "discovered receipt lifecycle differs from the verified preflight",
+        )
+    _require_aware_datetime(pointer.published_at, "discovery.published_at")
+    _require_aware_datetime(preflight.receipt.started_at, "receipt.started_at")
+    _require_aware_datetime(preflight.receipt.ended_at, "receipt.ended_at")
+    if not (
+        validate_started_at
+        <= preflight.receipt.started_at
+        <= preflight.receipt.ended_at
+        <= pointer.published_at
+        <= validate_ended_at
+    ):
+        raise DataQualityExecutionError(
+            "DQ_EXECUTION_CHRONOLOGY_INVALID",
+            "receipt lifecycle and discovery publication must be inside validate_data",
+        )
+
+
+def _as_data_quality_execution_error(
+    exc: DataQualityExecutionContractError | OSError,
+) -> DataQualityExecutionError:
+    if isinstance(exc, DataQualityExecutionContractError):
+        return DataQualityExecutionError(exc.code, exc.message)
+    return DataQualityExecutionError("DQ_RECEIPT_MISSING", str(exc))
 
 
 def _daily_run_manifest_command(

@@ -54,7 +54,9 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`aits download-data --start 2018-01-01 --end 2026-05-06`" in markdown
     assert "download_data_diagnostics_2026-05-06.md" in markdown
     assert "失败时写入脱敏 download_data_diagnostics 报告" in markdown
-    assert "`aits validate-data --as-of 2026-05-06`" in markdown
+    assert (
+        "`aits validate-data --as-of 2026-05-06 --execution-profile daily_default.v1`" in markdown
+    )
     assert pit_command in markdown
     assert "`aits pit-snapshots build-manifest --as-of 2026-05-06`" in markdown
     assert "`aits pit-snapshots validate --as-of 2026-05-06`" in markdown
@@ -810,9 +812,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     reader_brief_quality_json = next(
         run_output_root.rglob("reports/reader_brief_quality_2026-05-06.json")
     )
-    canonical_trace = next(
-        run_output_root.rglob("traces/daily_score_2026-05-06_trace.json")
-    )
+    canonical_trace = next(run_output_root.rglob("traces/daily_score_2026-05-06_trace.json"))
     periodic_plan_json = next(
         run_output_root.rglob("metadata/periodic_operations_plan_2026-05-06.json")
     )
@@ -1065,6 +1065,8 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
         "validate-data",
         "--as-of",
         "2026-05-08",
+        "--execution-profile",
+        "daily_default.v1",
     )
     assert step_by_id["score_daily"].enabled is False
     assert step_by_id["score_daily"].required_env_vars == ()
@@ -1172,7 +1174,13 @@ def test_run_daily_ops_plan_stops_on_first_failed_command(tmp_path: Path) -> Non
     assert report.failed_step is not None
     assert report.failed_step.step_id == "sec_metrics"
     assert [call[3:] for call in calls] == [
-        ("validate-data", "--as-of", "2026-05-06"),
+        (
+            "validate-data",
+            "--as-of",
+            "2026-05-06",
+            "--execution-profile",
+            "daily_default.v1",
+        ),
         ("fundamentals", "download-sec-companyfacts"),
         ("fundamentals", "extract-sec-metrics", "--as-of", "2026-05-06"),
     ]
@@ -1415,7 +1423,13 @@ def test_run_daily_ops_plan_allows_explicit_current_closed_market_day(tmp_path: 
 
     assert calls
     assert report.failed_step is None or report.failed_step.step_id != "input_visibility"
-    assert calls[0][3:] == ("validate-data", "--as-of", "2026-05-08")
+    assert calls[0][3:] == (
+        "validate-data",
+        "--as-of",
+        "2026-05-08",
+        "--execution-profile",
+        "daily_default.v1",
+    )
     assert calls[1][3:6] == ("risk-events", "fetch-official-sources", "--as-of")
     assert calls[1][6] == "2026-05-10"
 

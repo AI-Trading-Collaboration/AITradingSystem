@@ -19,6 +19,7 @@ US_EQUITY_MARKET_TIMEZONE = ZoneInfo("America/New_York")
 US_EQUITY_REGULAR_CLOSE_TIME = time(16, 0)
 US_EQUITY_PARTIAL_CLOSE_TIME = time(13, 0)
 US_EQUITY_DEFAULT_POST_CLOSE_BUFFER = timedelta(minutes=30)
+DATA_QUALITY_DEFAULT_PROVIDER_READY_BUFFER = timedelta(hours=3)
 
 
 @dataclass(frozen=True)
@@ -124,6 +125,15 @@ def latest_completed_us_equity_trading_day(
         if market_now >= ready_at:
             return market_date
     return previous_us_equity_trading_day(market_date)
+
+
+def resolve_default_data_quality_as_of(observed_at: datetime | None = None) -> date:
+    """Resolve the latest completed U.S. session after the data-provider buffer."""
+
+    return latest_completed_us_equity_trading_day(
+        observed_at,
+        post_close_buffer=DATA_QUALITY_DEFAULT_PROVIDER_READY_BUFFER,
+    )
 
 
 def previous_us_equity_trading_day(value: date) -> date:

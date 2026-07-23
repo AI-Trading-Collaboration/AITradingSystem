@@ -17,6 +17,12 @@ from ai_trading_system.config import (
     load_data_quality,
     load_universe,
 )
+from ai_trading_system.contracts.data_quality_execution import (
+    DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+    MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID,
+    DataQualityDateWindow,
+    DataQualityExecutionContractError,
+)
 from ai_trading_system.data.download import (
     default_download_failure_report_path,
     download_daily_data,
@@ -25,21 +31,42 @@ from ai_trading_system.data.download import (
 from ai_trading_system.data.market_data import (
     FmpPriceProvider,
     MarketstackPriceProvider,
+    PriceDataProvider,
     YFinancePriceProvider,
 )
 from ai_trading_system.data.quality import (
     default_quality_report_path,
     marketstack_reconciliation_path,
-    validate_data_cache,
     write_data_quality_report,
+)
+from ai_trading_system.data.quality_execution import (
+    CanonicalDataQualityExecutionRequest,
+    DataQualityExecutionError,
+    run_canonical_data_quality_execution,
+)
+from ai_trading_system.data.quality_execution_discovery import (
+    publish_default_data_quality_execution_discovery,
 )
 from ai_trading_system.data_refresh_audit import write_validate_data_audit_sidecar
 from ai_trading_system.external_request_cache import (
     invalidate_external_request_cache,
     sanitize_diagnostic_text,
 )
+from ai_trading_system.trading_calendar import resolve_default_data_quality_as_of
 
 console = Console()
+
+# Project-level invariant from the reviewed Wave12 requirement and AGENTS.md.
+# A pre-primary historical as-of remains valid only as a bounded sensitivity date.
+DEFAULT_DATA_QUALITY_WINDOW_START = date(2021, 2, 22)
+AUTO_DATA_QUALITY_EXECUTION_PROFILE_ID = "auto"
+ALLOWED_DATA_QUALITY_EXECUTION_PROFILE_IDS = frozenset(
+    {
+        AUTO_DATA_QUALITY_EXECUTION_PROFILE_ID,
+        DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+        MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID,
+    }
+)
 
 
 def register_data_cache_commands(app: typer.Typer) -> None:
@@ -158,6 +185,7 @@ def download_data(
     start_date = _parse_date(start)
     end_date = _parse_date(end) if end else date.today()
     normalized_price_provider = price_provider.strip().lower()
+    primary_price_provider: PriceDataProvider
     if normalized_price_provider == "fmp":
         fmp_api_key = os.getenv(fmp_api_key_env, "")
         if not fmp_api_key:
@@ -273,8 +301,23 @@ def validate_data(
     / "rates_daily.csv",
     as_of: Annotated[
         str | None,
-        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+        typer.Option(
+            help=(
+                "校验日期，格式为 YYYY-MM-DD；默认最近已完成且已过 "
+                "provider-ready buffer 的美股交易日。"
+            )
+        ),
     ] = None,
+    execution_profile: Annotated[
+        str,
+        typer.Option(
+            "--execution-profile",
+            help=(
+                "执行 profile：auto、daily_default.v1 或 manual.v1；auto 在显式 "
+                "--as-of 时使用 manual.v1，仅默认输入的日常执行可自动使用 daily_default.v1。"
+            ),
+        ),
+    ] = AUTO_DATA_QUALITY_EXECUTION_PROFILE_ID,
     output_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 报告输出路径。"),
@@ -295,41 +338,108 @@ def validate_data(
     ] = None,
 ) -> None:
     """校验缓存数据并写入 Markdown 质量报告。"""
+    normalized_prices_path = _resolve_project_input_path(prices_path)
+    normalized_rates_path = _resolve_project_input_path(rates_path)
+    normalized_backtest_manifest_path = (
+        _resolve_project_input_path(backtest_manifest_path)
+        if backtest_manifest_path is not None
+        else None
+    )
+    resolved_execution_profile = _resolve_data_quality_execution_profile(
+        execution_profile=execution_profile,
+        as_of_was_explicit=as_of is not None,
+        prices_path=normalized_prices_path,
+        rates_path=normalized_rates_path,
+        full_universe=full_universe,
+        backtest_manifest_path=normalized_backtest_manifest_path,
+    )
     universe = load_universe()
     quality_config = load_data_quality()
-    validation_date = _parse_date(as_of) if as_of else date.today()
+    observed_at = datetime.now(tz=UTC)
+    validation_date = (
+        _parse_date(as_of) if as_of else resolve_default_data_quality_as_of(observed_at)
+    )
     report_path = output_path or default_quality_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         validation_date,
     )
 
-    started_at = datetime.now(tz=UTC)
-    report = validate_data_cache(
-        prices_path=prices_path,
-        rates_path=rates_path,
-        expected_price_tickers=configured_price_tickers(
-            universe,
-            include_full_ai_chain=full_universe,
-        ),
-        expected_rate_series=configured_rate_series(universe),
-        quality_config=quality_config,
-        as_of=validation_date,
-        manifest_path=_download_manifest_path(prices_path),
-        backtest_manifest_path=backtest_manifest_path,
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    consistency_starts = (
+        quality_config.prices.consistency_start_date or DEFAULT_DATA_QUALITY_WINDOW_START,
+        quality_config.rates.consistency_start_date or DEFAULT_DATA_QUALITY_WINDOW_START,
+        validation_date,
     )
-    write_data_quality_report(report, report_path)
-    audit_record_path = write_validate_data_audit_sidecar(
-        report=report,
-        report_path=report_path,
-        started_at=started_at,
-        ended_at=datetime.now(tz=UTC),
+    requested_window = DataQualityDateWindow(min(consistency_starts), validation_date)
+    require_secondary_prices = _requires_marketstack_prices(normalized_prices_path)
+    secondary_candidate = _marketstack_prices_path(normalized_prices_path)
+    secondary_prices_path = (
+        secondary_candidate if require_secondary_prices or secondary_candidate.is_file() else None
     )
+    try:
+        request = CanonicalDataQualityExecutionRequest(
+            as_of=validation_date,
+            requested_window=requested_window,
+            prices_path=normalized_prices_path,
+            rates_path=normalized_rates_path,
+            manifest_path=_download_manifest_path(normalized_prices_path),
+            expected_price_tickers=tuple(
+                configured_price_tickers(
+                    universe,
+                    include_full_ai_chain=full_universe,
+                )
+            ),
+            expected_rate_series=tuple(configured_rate_series(universe)),
+            secondary_prices_path=secondary_prices_path,
+            require_secondary_prices=require_secondary_prices,
+            backtest_manifest_path=normalized_backtest_manifest_path,
+            execution_profile_id=resolved_execution_profile,
+        )
+        execution = run_canonical_data_quality_execution(request, project_root=PROJECT_ROOT)
+    except DataQualityExecutionContractError as exc:
+        console.print(f"[red]数据质量执行失败：{exc.code}；{exc.message}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    report = execution.report
+    try:
+        write_data_quality_report(report, report_path)
+        discovery = (
+            publish_default_data_quality_execution_discovery(
+                execution,
+                project_root=PROJECT_ROOT,
+            )
+            if resolved_execution_profile == DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID
+            else None
+        )
+        audit_record_path = write_validate_data_audit_sidecar(
+            report=report,
+            report_path=report_path,
+            started_at=execution.receipt.started_at,
+            ended_at=execution.receipt.ended_at,
+            execution_result=execution,
+            output_dir=(PROJECT_ROOT / "artifacts" / "data_refresh_audit" / "validation"),
+        )
+    except (DataQualityExecutionError, OSError) as exc:
+        code = getattr(exc, "code", "DQ_RECEIPT_FIELDS_INVALID")
+        message = getattr(exc, "message", str(exc))
+        console.print(f"[red]数据质量证据发布失败：{code}；{message}[/red]")
+        raise typer.Exit(code=1) from exc
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(f"[{status_style}]数据质量状态：{report.status}[/{status_style}]")
-    console.print(f"报告：{report_path}")
+    console.print(f"兼容报告：{report_path}")
+    console.print(f"Canonical report：{execution.report_path}")
+    console.print(f"Canonical receipt：{execution.receipt_path}")
+    console.print(
+        "请求/评估窗口："
+        f"{execution.receipt.requested_window.start.isoformat()}.."
+        f"{execution.receipt.requested_window.end.isoformat()} / "
+        f"{execution.receipt.evaluated_window.start.isoformat()}.."
+        f"{execution.receipt.evaluated_window.end.isoformat()}"
+    )
+    if discovery is not None:
+        console.print(f"DQ discovery pointer：{discovery.pointer_path}")
+    else:
+        console.print("DQ discovery pointer：未发布（非 daily_default profile）")
     console.print(f"Data refresh audit record：{audit_record_path}")
     if report.marketstack_reconciliation_records:
         reconciliation_path = marketstack_reconciliation_path(report_path)
@@ -410,9 +520,68 @@ def _marketstack_prices_path(prices_path: Path) -> Path:
     return prices_path.parent / "prices_marketstack_daily.csv"
 
 
+def _resolve_project_input_path(path: Path) -> Path:
+    candidate = path if path.is_absolute() else PROJECT_ROOT / path
+    return candidate.resolve(strict=False)
+
+
 def _requires_marketstack_prices(prices_path: Path) -> bool:
     default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
     try:
         return prices_path.resolve() == default_prices_path.resolve()
     except OSError:
         return prices_path == default_prices_path
+
+
+def _is_daily_default_data_quality_profile(
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    full_universe: bool,
+    backtest_manifest_path: Path | None,
+) -> bool:
+    if full_universe or backtest_manifest_path is not None:
+        return False
+    expected_prices = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+    expected_rates = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
+    try:
+        return (
+            prices_path.resolve() == expected_prices.resolve()
+            and rates_path.resolve() == expected_rates.resolve()
+        )
+    except OSError:
+        return prices_path == expected_prices and rates_path == expected_rates
+
+
+def _resolve_data_quality_execution_profile(
+    *,
+    execution_profile: str,
+    as_of_was_explicit: bool,
+    prices_path: Path,
+    rates_path: Path,
+    full_universe: bool,
+    backtest_manifest_path: Path | None,
+) -> str:
+    normalized_profile = execution_profile.strip().lower()
+    if normalized_profile not in ALLOWED_DATA_QUALITY_EXECUTION_PROFILE_IDS:
+        allowed = ", ".join(sorted(ALLOWED_DATA_QUALITY_EXECUTION_PROFILE_IDS))
+        raise typer.BadParameter(f"execution profile 必须是以下值之一：{allowed}。")
+
+    is_daily_default_shape = _is_daily_default_data_quality_profile(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        full_universe=full_universe,
+        backtest_manifest_path=backtest_manifest_path,
+    )
+    if normalized_profile == DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID:
+        if not is_daily_default_shape:
+            raise typer.BadParameter(
+                "daily_default.v1 只允许默认 prices/rates、非 full-universe "
+                "且无 backtest manifest。"
+            )
+        return DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID
+    if normalized_profile == MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID:
+        return MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID
+    if not as_of_was_explicit and is_daily_default_shape:
+        return DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID
+    return MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID

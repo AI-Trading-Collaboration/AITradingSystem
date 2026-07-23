@@ -5,7 +5,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Literal, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ai_trading_system.platform.config import market_regimes as _market_regimes
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -727,7 +727,32 @@ class RateQualityConfig(BaseModel):
         return self
 
 
+class DataQualityGovernanceConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    policy_id: str = Field(min_length=1)
+    policy_version: str = Field(min_length=1)
+    status: Literal["REVIEWED"]
+    owner: str = Field(min_length=1)
+    role: Literal["data_quality"]
+    reviewed_at: date
+    rationale: str = Field(min_length=1)
+    review_condition: str = Field(min_length=1)
+
+    @field_validator("policy_id", "policy_version", "owner", "rationale", "review_condition")
+    @classmethod
+    def reject_surrounding_whitespace(cls, value: str) -> str:
+        if value != value.strip():
+            raise ValueError("data-quality governance text cannot contain surrounding whitespace")
+        return value
+
+
 class DataQualityConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # Legacy/test-local threshold configs may omit governance. Canonical D0B
+    # execution must require it explicitly instead of treating absence as reviewed.
+    governance: DataQualityGovernanceConfig | None = None
     prices: PriceQualityConfig
     rates: RateQualityConfig
 

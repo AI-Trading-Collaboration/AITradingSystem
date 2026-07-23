@@ -350,6 +350,80 @@ class _Publication:
     quality_report_bytes: bytes
 
 
+def write_contained_artifact_bytes(
+    *,
+    root: Path,
+    relative_path: str,
+    content: bytes,
+    immutable: bool,
+) -> ArtifactWriteResult:
+    """Atomically write through a root-bound directory chain without following links."""
+
+    if not isinstance(content, bytes) or not isinstance(immutable, bool):
+        raise TypeError("content must be bytes and immutable must be boolean")
+    try:
+        checked_root = root.resolve(strict=True)
+    except OSError as exc:
+        raise DataPublicationIntegrityError("ARTIFACT_ROOT_INVALID", str(exc), path=root) from exc
+    parts = _portable_parts(relative_path, "contained artifact")
+    path = checked_root.joinpath(*parts)
+    with _root_authority(checked_root):
+        with _bound_directory(
+            checked_root,
+            path.parent,
+            "contained artifact",
+            create=True,
+        ) as binding:
+            if _bound_path_exists(binding, path, "contained artifact"):
+                _bound_path_metadata(binding, path, "contained artifact")
+                if immutable:
+                    observed = _read_bound_bytes(binding, path, "contained immutable artifact")
+                    if observed != content:
+                        raise DataPublicationConflictError(
+                            "IMMUTABLE_ARTIFACT_COLLISION",
+                            "existing immutable bytes differ",
+                            path=path,
+                        )
+                    return ArtifactWriteResult(
+                        path=path,
+                        artifact_type=path.suffix.lower().lstrip(".") or "file",
+                        sha256=sha256_bytes(content),
+                        size_bytes=len(content),
+                    )
+            result = _write_bytes_atomic_bound(binding, path, content)
+            _verify_raw_bound(
+                binding,
+                path,
+                result.sha256,
+                result.size_bytes,
+                "ATOMIC_ARTIFACT_POST_WRITE_INVALID",
+            )
+            return result
+
+
+def read_contained_artifact_bytes(*, root: Path, relative_path: str) -> bytes:
+    """Read one regular file through a root-bound directory chain without following links."""
+
+    try:
+        checked_root = root.resolve(strict=True)
+    except OSError as exc:
+        raise DataPublicationIntegrityError("ARTIFACT_ROOT_INVALID", str(exc), path=root) from exc
+    parts = _portable_parts(relative_path, "contained artifact")
+    path = checked_root.joinpath(*parts)
+    with _root_authority(checked_root):
+        with _bound_directory(
+            checked_root,
+            path.parent,
+            "contained artifact",
+            create=False,
+        ) as binding:
+            if not _bound_path_exists(binding, path, "contained artifact"):
+                raise DataPublicationIntegrityError(
+                    "CONTAINED_ARTIFACT_MISSING", relative_path, path=path
+                )
+            return _read_bound_bytes(binding, path, "contained artifact")
+
+
 def publish_immutable_snapshot(
     *,
     store_root: Path,

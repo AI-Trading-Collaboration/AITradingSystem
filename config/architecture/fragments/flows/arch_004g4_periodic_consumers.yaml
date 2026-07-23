@@ -1,0 +1,56 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.arch_004g4_periodic_consumers
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: data_quality_execution_receipt.v1
+stages:
+  - public_receipt_verifier
+  - trigger_and_data_quality_date_binding
+  - strict_pass_preflight
+  - deterministic_calendar_and_condition_gate
+  - workflow_spec_and_due_resolution
+  - non_executing_shadow_plan
+  - atomic_non_executing_sidecar_materialization
+  - runtime_lock_retry_resume_parity
+  - in_memory_artifact_reference_observation
+compatibility_flow_entry_required: true
+generated_source_of_truth_active: false
+execution_mode: non_executing_parity
+automatic_non_daily_dispatch: false
+dispatch_authorized: false
+daily_controlled_automatic_is_metadata_only: true
+real_command_execution: false
+production_effect: none
+consumer_matrix:
+  daily_count: 2
+  weekly_count: 2
+  monthly_count: 1
+  receipt_producer_observation_count: 1
+  verified_receipt_consumer_count: 4
+  identities:
+    - daily_validate_data
+    - daily_score_daily
+    - weekly_backtest
+    - weekly_research_governance_summary_review
+    - monthly_data_source_coverage_review
+fail_closed_before_runtime_lock:
+  - DQ_RECEIPT_MISSING
+  - DQ_RECEIPT_ID_MISMATCH
+  - DQ_AS_OF_MISMATCH
+  - DQ_EXECUTION_FAILED
+  - DQ_WARNING_NOT_ALLOWED
+blocked_invariants:
+  applies_to: verified_receipt_consumers
+  runner_calls: 0
+  downstream_artifacts: 0
+lineage:
+  operations_trigger_date: as_of
+  receipt_validation_date: data_quality_as_of
+  producer_observation: daily_validate_data
+  producer_receipt_required_as_input: false
+  input: verified_data_quality_preflight.v1
+  workflow: workflow_spec.v1
+  due: operations_due_resolution.v1
+  observation: run_ledger.v1
+  output: native_periodic_consumer_parity_plan.v1

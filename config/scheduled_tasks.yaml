@@ -58,7 +58,7 @@ cadences:
       - task_id: daily_validate_data
         daily_plan_step_id: validate_data
         title: Validate cached market and macro data
-        command: aits validate-data --as-of {download_end}
+        command: aits validate-data --as-of {download_end} --execution-profile daily_default.v1
         command_contains:
           - aits
           - validate-data

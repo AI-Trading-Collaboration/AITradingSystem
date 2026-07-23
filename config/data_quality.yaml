@@ -1,3 +1,16 @@
+governance:
+  policy_id: DATA_QUALITY_CACHE_GATE
+  policy_version: data_quality_cache_gate.v1
+  status: REVIEWED
+  owner: data_platform_owner
+  role: data_quality
+  reviewed_at: 2026-07-23
+  rationale: >-
+    统一约束 aits validate-data 的价格、利率、下载清单和第二来源验证；整个原始文件的
+    SHA-256 是 D0B execution receipt 的 reviewed policy commitment。
+  review_condition: >-
+    阈值、研究窗口、输入角色、freshness/coverage 语义或 canonical validator 发生变化时必须重新评审并提升版本。
+
 prices:
   # 默认阈值用于股票和 ETF。波动率指数的单日变化天然更大，
   # 因此必须显式配置 ticker 级别覆盖，而不是放宽所有标的。

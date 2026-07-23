@@ -3,11 +3,14 @@ from __future__ import annotations
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
+import pytest
+
 from ai_trading_system.trading_calendar import (
     current_us_equity_market_date,
     is_us_equity_trading_day,
     latest_completed_us_equity_trading_day,
     previous_us_equity_trading_day,
+    resolve_default_data_quality_as_of,
     us_equity_full_day_holidays,
     us_equity_market_session,
     us_equity_partial_trading_days,
@@ -115,3 +118,33 @@ def test_latest_completed_trading_day_rejects_naive_datetime() -> None:
         assert "timezone-aware" in str(exc)
     else:
         raise AssertionError("expected timezone-aware validation")
+
+
+def test_default_data_quality_as_of_waits_for_three_hour_provider_buffer() -> None:
+    new_york = ZoneInfo("America/New_York")
+
+    assert resolve_default_data_quality_as_of(
+        datetime(2026, 5, 11, 18, 59, 59, tzinfo=new_york)
+    ) == date(2026, 5, 8)
+    assert resolve_default_data_quality_as_of(
+        datetime(2026, 5, 11, 19, 0, tzinfo=new_york)
+    ) == date(2026, 5, 11)
+
+
+def test_default_data_quality_as_of_uses_partial_close_and_market_holidays() -> None:
+    new_york = ZoneInfo("America/New_York")
+
+    assert resolve_default_data_quality_as_of(
+        datetime(2026, 11, 27, 15, 59, 59, tzinfo=new_york)
+    ) == date(2026, 11, 25)
+    assert resolve_default_data_quality_as_of(
+        datetime(2026, 11, 27, 16, 0, tzinfo=new_york)
+    ) == date(2026, 11, 27)
+    assert resolve_default_data_quality_as_of(datetime(2026, 7, 3, 20, 0, tzinfo=new_york)) == date(
+        2026, 7, 2
+    )
+
+
+def test_default_data_quality_as_of_rejects_naive_observed_at() -> None:
+    with pytest.raises(ValueError, match="timezone-aware"):
+        resolve_default_data_quality_as_of(datetime(2026, 5, 11, 19, 0))

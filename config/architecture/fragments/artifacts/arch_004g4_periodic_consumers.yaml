@@ -1,0 +1,92 @@
+schema_version: arch_004e_artifact_fragment.v1
+fragment_id: artifact.arch_004g4_periodic_consumers
+fragment_kind: artifact
+owner: system_operations
+target_id: artifact_catalog
+artifact_family: arch_004g4_periodic_consumer_parity
+spec_path: docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+additive_sidecars:
+  - data_quality_execution_receipt.v1
+  - verified_data_quality_preflight.v1
+  - native_periodic_consumer_parity_plan.v1
+  - workflow_spec.v1
+  - operations_shadow_plan.v1
+  - run_ledger.v1
+compatibility_catalog_entry_required: true
+generated_source_of_truth_active: false
+execution_mode: non_executing_parity
+automatic_dispatch_enabled: false
+dispatch_authorized: false
+dispatch_mode_semantics:
+  daily_value: CONTROLLED_AUTOMATIC
+  daily_value_role: legacy_and_future_parity_metadata_only
+  non_daily_value: MANUAL_ONLY
+  authorization_source: none_in_g4a
+production_effect: none
+broker_action: none
+consumer_matrix:
+  daily:
+    - id: daily_validate_data
+      data_quality_lineage_role: receipt_producer_observation
+    - id: daily_score_daily
+      data_quality_lineage_role: verified_receipt_consumer
+  weekly:
+    - id: weekly_backtest
+      data_quality_lineage_role: verified_receipt_consumer
+    - id: weekly_research_governance_summary_review
+      data_quality_lineage_role: verified_receipt_consumer
+  monthly:
+    - id: monthly_data_source_coverage_review
+      data_quality_lineage_role: verified_receipt_consumer
+typed_inputs:
+  - receipt_path
+  - as_of
+  - data_quality_as_of
+  - expected_policy_path
+  - expected_input_roles
+  - daily_status
+  - source_artifact_ids
+  - owner_decision_id
+typed_outputs:
+  - native_periodic_consumer_parity_plan.v1
+  - workflow_spec.v1
+  - operations_due_resolution.v1
+  - operations_shadow_plan.v1
+  - run_ledger.v1
+materialization:
+  default_root: outputs/run_control/periodic/plans
+  filename: native_periodic_consumer_parity_YYYY-MM-DD.json
+  writer: ai_trading_system.platform.artifacts.write_json_atomic
+  deterministic_to_dict: true
+  sidecar_only: true
+lineage:
+  source: data_quality_execution_receipt.v1
+  verifier: ai_trading_system.data.quality_execution.verify_data_quality_execution_receipt
+  sink: native_periodic_consumer_parity_plan.v1
+  strict_pass_required: true
+  warning_allowed: false
+  receipt_reverified_from_disk: true
+  date_binding:
+    operations_trigger: as_of
+    receipt_and_validate_command: data_quality_as_of
+    invariant: data_quality_as_of_lte_as_of_and_matches_latest_trading_day
+  producer_boundary:
+    task_id: daily_validate_data
+    receipt_required_as_input: false
+    requires_data_quality_due_gate: false
+  verified_receipt_consumers:
+    - daily_score_daily
+    - weekly_backtest
+    - weekly_research_governance_summary_review
+    - monthly_data_source_coverage_review
+legacy_caller_ratchet:
+  zero_new_callers: true
+  unreadable_or_unparseable_source: blocked
+  scan_coverage:
+    - ast.ImportFrom
+    - ast.Import
+    - importlib.import_module_static_literal
+    - __import___static_literal
+  expected_legacy_adapter_paths:
+    - src/ai_trading_system/legacy/periodic_operations_adapter.py
+    - src/ai_trading_system/legacy/scheduled_tasks_adapter.py

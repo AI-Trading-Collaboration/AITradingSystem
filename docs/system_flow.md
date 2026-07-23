@@ -134,16 +134,18 @@ flowchart LR
 ```
 
 上图的 G4+G3 只是 architecture-owned path 的双 worker readiness fixture，不是自动 dispatch queue。
-项目级实际下一批只有 `ARCH-004G4 + DATA-GOV-001 D0B`，两者为 `READY` 但尚未 dispatch；G3/G5
-保持 `PROPOSED`、尚未 dispatch。G3 只能在 G4 进入 cadence 等待或 D0B 集成释放 capacity 后启动，
-避免超过“最多两个 domain worker + 一个 coordinator”的边界。
+项目级当前执行批次只有 `ARCH-004G4 + DATA-GOV-001 D0B`：Wave12 S0 已冻结 shared DQ
+receipt/preflight、当前 base、ownership 与 change manifests并通过formal contract gate；G4A与D0B1分别完成
+focused验证并进入`W12_S2_SHARED_INTEGRATION`。G3/G5保持`PROPOSED`、尚未dispatch。G3只能在G4进入
+cadence等待或D0B集成释放capacity后启动，避免超过“最多两个domain worker以及一个coordinator”的边界。
+S2仍是shared wiring/formal validation，不开放automatic dispatch、consumer cutover、production或broker。
 
 ```mermaid
 flowchart LR
-    G2["G2.5 DONE"] --> NEXT["Actual next: G4 + D0B READY"]
+    G2["G2.5 DONE"] --> NEXT["Current: W12-S2 shared integration"]
     G2 -.-> G3["G3 PROPOSED / not dispatched"]
     G2 -.-> G5["G5 PROPOSED / not dispatched"]
-    NEXT -.-> NP["No automatic dispatch / production effect"]
+    NEXT -.-> NP["Manual coordinator assignment only<br/>No automatic dispatch / cutover / production effect"]
 ```
 
 DATA-GOV-001 D0A 已在 Wave 11 完成 formal PASS 并标记 `DONE`，但 DATA-GOV parent program 仍为
@@ -172,8 +174,10 @@ feature/score/backtest/report consumer；它验证并冻结 caller-supplied DQ e
 `store_acl_verified=false`、`consumer_cutover_allowed=false`、`crash_durability_verified=false` 与
 `same_principal_post_ack_mutation_protection=false`。因此 D0A 要求隔离写入 principal，但没有验证 store ACL，
 也不声称能阻止同 principal 在 acknowledgement 后修改或保证断电持久性。D0A `DONE` 不提升这些
-false flags；实际 canonical gate、policy SHA/registry 与首批 consumer cutover 属于下一 `READY` 切片
-D0B。跨进程矩阵、crash durability、retention/backup/restore 属于 D0C，不改变数据值、策略或
+false flags；实际 canonical gate、policy SHA/registry 与首批 consumer cutover 属于当前
+`IN_PROGRESS` 的 D0B program。D0B1 只建立 canonical execution receipt/verifier，D0B2 补齐规则与
+真实 manifest source binding，D0B3 才能按 reviewed per-consumer profile 逐项授权；任一前序子阶段
+通过都不构成全局 cutover。跨进程矩阵、crash durability、retention/backup/restore 属于 D0C，不改变数据值、策略或
 production/broker。
 
 ```mermaid
@@ -192,6 +196,54 @@ flowchart LR
     RB -->|"Unprovable"| IN["Fail closed: INDETERMINATE"]
     RD -.-> NC["No consumer cutover / production none"]
 ```
+
+W12-S2在D0A能力之上建立D0B1 canonical执行证据与G4 native consumer preflight。无显式`--as-of`时，
+direct `aits validate-data`与`aits ops daily-run`共用`America/New_York`最近已完成交易日和收盘后3小时
+provider-ready buffer；`operations_as_of`只用于scheduler/due/calendar，`data_quality_as_of`取daily plan中
+实际`validate-data`的`download_end`。交易日两者通常相同，休市日后者为上一交易日；receipt verifier只对
+`data_quality_as_of`做exact match。
+
+`aits validate-data`只调用一次canonical validator，并从同一组captured bytes生成校验、checksum与receipt，
+把reviewed policy、validator、含typed `execution_profile_id`与`config/universe.yaml` exact bytes/SHA的invocation、inputs、manifest、
+content-addressed report、requested window、required date-bearing inputs的actual evaluated intersection与现有
+`DataQualityEvidence`冻结到`outputs/data_quality/executions/{receipt_id}/receipt.json`。`daily-run`的
+`validate_data` step显式传`--execution-profile daily_default.v1`；direct CLI显式传`--as-of`时默认绑定
+`manual.v1`，因此不能覆盖daily pointer。Runner/verifier/publisher还会独立复核默认路径、required secondary、
+无backtest manifest及由bound universe config复算的core tickers/rates，防止direct API伪装profile。只有typed
+receipt证明`daily_default.v1`后才通过D0A root-bound descriptor writer原子发布
+`outputs/data_quality/executions/discovery/daily_default/{data_quality_as_of}/current.json`；pointer只承诺
+receipt id/path/SHA/size并负责发现，不提供PASS证明。Consumer必须按固定profile/as-of读取canonical pointer，
+核对exact receipt bytes，再调用公开strict verifier；还必须证明receipt的真实UTC
+`started_at/checked_at/ended_at`位于本次`validate_data` step interval内。`PASS_WITH_WARNINGS`、`FAIL`、
+pointer/receipt/source drift、symlink/junction或check/write TOCTOU containment逃逸、interval不一致都必须在runtime/downstream前阻断。
+
+```mermaid
+flowchart LR
+    DF["Shared default date<br/>America/New_York + 3h provider-ready"] --> OA["operations_as_of<br/>scheduler / due / calendar"]
+    DF --> VA["Direct validate-data default"]
+    OA -->|"trading day: same; closed market: prior session"| DQA["data_quality_as_of<br/>actual download_end"]
+    VA --> DQA
+    DQA --> PROF["Typed execution profile<br/>daily_default.v1 / manual.v1"]
+    PROF --> RUN["One canonical validator call<br/>same captured bytes"]
+    RUN --> REC["Immutable report + receipt<br/>policy / invocation / actual window / inputs / manifest / evidence"]
+    REC --> PTR["daily_default/{data_quality_as_of}/current.json<br/>discovery only"]
+    PTR --> VER["Exact path/SHA/size + public strict verifier"]
+    VER --> INT["Receipt UTC interval inside validate_data step interval"]
+    INT --> NAT["Native nonexecuting sidecar<br/>1 producer observation + 4 verified consumers"]
+    NAT --> LEG["Legacy periodic preview<br/>typed projection only"]
+    VER -->|"warning / fail / drift"| STOP["Block before downstream"]
+    NAT -.-> SAFE["No dispatch / cutover / production / broker"]
+    LEG -.-> SAFE
+```
+
+G4矩阵固定为producer observation `daily_validate_data`，以及4个verified consumers：
+`daily_score_daily`、`weekly_backtest`、`weekly_research_governance_summary_review`、
+`monthly_data_source_coverage_review`。`native_periodic_consumer_parity_plan.v1`只演练date/condition、lock、
+duplicate、retry/resume、typed DQ blocker与artifact lineage；`periodic_operations_plan.v1`只保留从typed
+preflight机械投影的兼容preview。当前D0B1 focused=`20 passed`、G4A focused=`24 passed`，但S2 formal exit
+尚未完成。真实`data/raw/prices_daily.csv` SHA-256仍未被`download_manifest.csv`当前记录覆盖，strict gate必须
+输出`DQ_MANIFEST_CURRENT_CHECKSUM_MISSING`；该download/publish/manifest transaction修复保留给D0B2，
+不得降级为warning、伪造source id或借pointer绕过。
 
 GOV-006 N0 为 task portfolio 建立只读 normalization 链。strict reviewed policy 与当前真实 Git HEAD
 输入 producer；producer 通过 ARCH-005 legacy registry parser 读取 main、supplemental、deferred 三个
@@ -615,6 +667,12 @@ ARCH-004F1.3 新增尚未cut-in legacy daily executor的canonical runtime-contro
 ARCH-004F1.4 已把上述控制层切入唯一 daily CLI 路径：`aits ops daily-run` 先从market-session activated schedule生成同一`WorkflowSpec`，再按`workflow/spec/as_of`获取lease，最后由受控adapter调用原`run_daily_ops_plan` façade。Observer把legacy step事件映射为canonical start/PASS/SKIPPED/FAILED；resume只跳过此前PASS步骤，重复完成、并发、run/step attempt耗尽在调用runner前返回显式control status。每次`operations_execution_state.v1`原子更新旁都写`*.run_ledger.json`：PASS与SKIPPED都满足后续依赖，实际失败步骤为FAILED，其后未运行步骤为BLOCKED；因此`validate_data`失败会留下`download_data=PASS / validate_data=FAILED / score_daily=BLOCKED`且不执行score。Trading-day、closed-market、resume、duplicate、concurrent与failure fixtures均保留旧DailyOpsStepResult/report contract；CLI对已完成duplicate安全返回，对control blocker fail closed，不生成误导性dashboard/Reader Brief refresh。Runtime policy现为`legacy_daily_executor_cut_in_enabled=true`，但`non_daily_dispatch_enabled=false`，所以F1.5前weekly/biweekly/monthly仍不会自动运行，也不改变DQ、score、weight、paper-shadow、production或broker边界。
 
 ARCH-004F1.5 将41个non-daily登记项收敛到typed periodic control，而没有把它们拼成一个会互相拖累的串行DAG。`config/operations/periodic_control.yaml`为weekly、biweekly、monthly、ad-hoc分别治理period-end/2-week anchor/explicit-trigger、daily/DQ/artifact/owner evidence和dispatch mode；legacy adapter为每个task生成独立one-step WorkflowSpec。`daily-run`完成或读取duplicate PASS后，在canonical run metadata中写`periodic_operations_plan.v1`：每项都包含原command template、WorkflowSpec、DueResolution和non-executing RunLedger；weekly/monthly以美股下个交易日是否跨周/月判断period end，biweekly锚点为reviewed 2026-07-10，ad-hoc默认未触发。缺DQ evidence id、source artifact ids或owner decision的due项为BLOCKED，非period-end/event未触发为NOT_DUE，均不改变daily PASS。人工`aits ops periodic-dispatch`必须显式选择task并提供daily/DQ status、DQ evidence、source artifacts、owner decision与confirm flag；只接受governed `aits`/`python scripts/`前缀，`{...}`、`<...>`或自然语言checkpoint在runner前BLOCKED。可执行项复用F1.3 lock/idempotency/attempt与terminal state/ledger，duplicate PASS不重跑、失败后attempt exhausted。Runtime non-daily lease已开启，但policy `automatic_command_dispatch_enabled=false`，所以唯一外部scheduler仍是daily-run且只自动评估，不会自动跑weekly/monthly/research，也不自动调参、改权重、promotion、paper-shadow、production或broker。
+
+W12-S2在F1.5之上增加`native_periodic_consumer_parity_plan.v1`，但不改变上述dispatch边界。Native plan只从
+profile/as-of隔离pointer定位receipt，经过public strict verifier与daily `validate_data`真实step interval检查后，
+为固定1 producer observation / 4 verified consumers生成nonexecuting sidecar。F1.5 legacy plan只能接收这份
+typed preflight的机械投影，不得自行把裸`PASS + evidence_id`解释为证明；两种plan均不执行命令、不cutover、
+不产生production或broker effect。
 
 ARCH-004F3 建立三层typed reporting kernel：`config/reporting/reporting_architecture.yaml`冻结Owner Daily Brief最多10个core section、owner queue必须typed `DUE + actionable`、Research Review Pack不得auto-tune或把proposal当adoption、Report Audit Index必须覆盖全部registry与legacy-unclassified、Reader Brief native cut-in=false/additive-only/no-recompute/no-production/no-broker。旧`build_reader_brief_payload`仍先生成兼容payload/JSON/HTML；随后`platform.reporting.owner_daily`只读该payload并按固定source keys投影`section provider -> OwnerDailyBriefViewModel -> JSON/HTML sidecar`，`reports reader-brief`和daily-run都写`owner_daily_brief_YYYY-MM-DD.*`，canonical run到legacy目录的mirror显式包含这两项，不替换旧path/schema/status。`ResearchLifecycleRecord -> ResearchReviewItem -> ResearchReviewPackViewModel -> JSON/Markdown`只传播observation/evidence/review/preregistration/validation/owner decision，未通过validation+人工owner decision的proposal永不显示为adopted。legacy registry adapter把1,358项逐项转为typed或`AUDIT_INDEX_LIMITED_UNCLASSIFIED` assessment，platform audit renderer只消费typed catalog，0 silent drop。`platform.reporting.inventory`继续冻结`reader_brief.py` 29,027行/366函数、registry 1,358项/689项effect gap；F3新增Owner/Research/Audit三组report/artifact/flow fragments后report fragment为4、全部仍是shadow source，native Reader Brief cut-in与legacy删除留给ARCH-004G/H并以parity gate控制。
 

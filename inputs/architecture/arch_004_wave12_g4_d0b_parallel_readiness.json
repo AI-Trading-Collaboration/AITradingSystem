@@ -1,0 +1,280 @@
+{
+  "assignment_control": {
+    "assignment_authority": "architecture_coordinator",
+    "automatic_command_dispatch": false,
+    "automatic_merge_by_artifact": false,
+    "lease_acquisition_by_artifact": false,
+    "worker_assignment_allowed_after_s0_pass": true
+  },
+  "automatic_merge_allowed": false,
+  "broker_action": "none",
+  "change_manifests": [
+    {
+      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "change_id": "arch-004-wave12-d0b1-dq-execution-receipt",
+      "contract_claims": [
+        {
+          "access": "READ",
+          "contract_id": "data_quality_evidence.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "data_quality_execution_receipt.v1",
+          "version": "v1"
+        }
+      ],
+      "lane_role": "DOMAIN",
+      "module_ids": [
+        "ai_trading_system.data.immutable_publish",
+        "ai_trading_system.data.quality",
+        "ai_trading_system.data.quality_execution"
+      ],
+      "owned_paths": [
+        "src/ai_trading_system/data/immutable_publish.py",
+        "src/ai_trading_system/data/quality.py",
+        "src/ai_trading_system/data/quality_execution.py",
+        "tests/test_data_quality_execution.py"
+      ],
+      "owner": "data_platform",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "contract-validation",
+        "focused",
+        "full"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [],
+      "task_id": "DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE"
+    },
+    {
+      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "change_id": "arch-004-wave12-g4a-periodic-parity",
+      "contract_claims": [
+        {
+          "access": "READ",
+          "contract_id": "data_quality_execution_receipt.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "run_ledger.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "workflow_spec.v1",
+          "version": "v1"
+        }
+      ],
+      "lane_role": "DOMAIN",
+      "module_ids": [
+        "ai_trading_system.platform.operations.periodic_consumer_migration"
+      ],
+      "owned_paths": [
+        "config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml",
+        "config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml",
+        "src/ai_trading_system/platform/operations/periodic_consumer_migration.py",
+        "tests/test_arch_004g4_operations_consumer_migration.py"
+      ],
+      "owner": "operations_platform",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "focused",
+        "full",
+        "integration"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [],
+      "task_id": "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION"
+    },
+    {
+      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+      "change_id": "arch-004-wave12-integration-coordinator",
+      "contract_claims": [],
+      "lane_role": "COORDINATOR",
+      "module_ids": [],
+      "owned_paths": [
+        "config/architecture/arch_004_wave12_g4_d0b_readiness.yaml",
+        "inputs/architecture/arch_004_wave12_g4_d0b_parallel_readiness.json",
+        "tests/test_arch_004_wave12_g4_d0b_readiness.py",
+        "tests/test_data_quality_execution_contract.py"
+      ],
+      "owner": "architecture_coordinator",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "full",
+        "integration"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [
+        "config/architecture/arch_004_refactor_policy.yaml",
+        "config/data_quality.yaml",
+        "config/operations/periodic_control.yaml",
+        "config/operations/runtime_control.yaml",
+        "config/report_registry.yaml",
+        "config/scheduled_tasks.yaml",
+        "docs/architecture/dual_lane_development_operating_model.md",
+        "docs/artifact_catalog.md",
+        "docs/operations/operations_runbook.md",
+        "docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md",
+        "docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md",
+        "docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md",
+        "docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        "inputs/architecture/arch_004_compatibility_baseline.yaml",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "src/ai_trading_system/cli.py",
+        "src/ai_trading_system/cli_commands/data_cache.py",
+        "src/ai_trading_system/cli_commands/ops.py",
+        "src/ai_trading_system/config.py",
+        "src/ai_trading_system/contracts/__init__.py",
+        "src/ai_trading_system/contracts/data_quality_execution.py",
+        "src/ai_trading_system/contracts/operations.py",
+        "src/ai_trading_system/data/__init__.py",
+        "src/ai_trading_system/data/quality_execution_discovery.py",
+        "src/ai_trading_system/data_refresh_audit.py",
+        "src/ai_trading_system/legacy/periodic_operations_adapter.py",
+        "src/ai_trading_system/legacy/scheduled_tasks_adapter.py",
+        "src/ai_trading_system/ops_daily.py",
+        "src/ai_trading_system/platform/operations/__init__.py",
+        "src/ai_trading_system/platform/operations/periodic_control.py",
+        "src/ai_trading_system/platform/operations/runtime_control.py",
+        "src/ai_trading_system/scheduled_tasks.py",
+        "src/ai_trading_system/trading_calendar.py",
+        "tests/test_arch_004g4_d0b_shared_integration.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_data_quality.py",
+        "tests/test_data_quality_execution_discovery.py",
+        "tests/test_ops_daily.py",
+        "tests/test_trading_calendar.py"
+      ],
+      "task_id": "ARCH-004_WAVE12_G4_D0B_READINESS"
+    }
+  ],
+  "dispatch_allowed": false,
+  "frozen_at": "2026-07-23",
+  "lane_plan": {
+    "blocking_issues": [],
+    "conflicts": [],
+    "current_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+    "dispatch_allowed": false,
+    "lease_acquisition_allowed": false,
+    "manifest_sha256": [
+      {
+        "change_id": "arch-004-wave12-d0b1-dq-execution-receipt",
+        "sha256": "c7661585b218fb26ec70b4bae136599b907224638f17ec64e91989db8e169681"
+      },
+      {
+        "change_id": "arch-004-wave12-g4a-periodic-parity",
+        "sha256": "308d2a9031fcaa76668b4b3b779ece94c8d13e4fd0c8bbac2132019da42fd63f"
+      },
+      {
+        "change_id": "arch-004-wave12-integration-coordinator",
+        "sha256": "daec63ece1e28e84c0527d57578bc278cd12f68414f6cd55d3369da36468dfbe"
+      }
+    ],
+    "max_parallel_domain_lanes": 2,
+    "plan_id": "lane-plan-bfbc7db1e91f53ffef24",
+    "production_effect": "none",
+    "schema_version": "lane_plan.v1",
+    "status": "PASS",
+    "task_registry_mutated": false,
+    "waves": [
+      {
+        "assignments": [
+          {
+            "change_id": "arch-004-wave12-d0b1-dq-execution-receipt",
+            "lane_id": "domain-01",
+            "manifest_sha256": "c7661585b218fb26ec70b4bae136599b907224638f17ec64e91989db8e169681"
+          },
+          {
+            "change_id": "arch-004-wave12-g4a-periodic-parity",
+            "lane_id": "domain-02",
+            "manifest_sha256": "308d2a9031fcaa76668b4b3b779ece94c8d13e4fd0c8bbac2132019da42fd63f"
+          }
+        ],
+        "kind": "DOMAIN",
+        "wave_id": "domain-wave-001"
+      },
+      {
+        "assignments": [
+          {
+            "change_id": "arch-004-wave12-integration-coordinator",
+            "lane_id": "integration-coordinator",
+            "manifest_sha256": "daec63ece1e28e84c0527d57578bc278cd12f68414f6cd55d3369da36468dfbe"
+          }
+        ],
+        "kind": "COORDINATOR",
+        "wave_id": "integration-wave-002"
+      }
+    ]
+  },
+  "lease_acquisition_allowed": false,
+  "not_selected_domain_ids": [
+    {
+      "domain_id": "G3_REPORTING_NATIVE",
+      "reason_code": "NOT_SELECTED_BY_WAVE12"
+    },
+    {
+      "domain_id": "G5_RESEARCH_WRAPPER",
+      "reason_code": "NOT_SELECTED_BY_WAVE12"
+    }
+  ],
+  "policy_path": "config/architecture/arch_004_wave12_g4_d0b_readiness.yaml",
+  "policy_sha256": "90aeb2457890e9576fa5e5e3ec9b48b4483591a36e873d25fbd2cf560cf2eded",
+  "production_effect": "none",
+  "readiness_sha256": "e86934e86237ecb66df96ffaf8f3fffe082886e7d658efd78aade0a8282175d3",
+  "safety": {
+    "automatic_command_dispatch_enabled": false,
+    "automatic_merge_allowed": false,
+    "broker_action": "none",
+    "consumer_cutover_allowed": false,
+    "dispatch_allowed": false,
+    "lease_acquisition_allowed": false,
+    "production_effect": "none",
+    "task_registry_mutation_allowed": false
+  },
+  "schema_version": "arch_004_wave12_g4_d0b_parallel_readiness.v1",
+  "selected_domain_ids": [
+    "G4A_PERIODIC_PARITY",
+    "D0B1_DQ_EXECUTION_RECEIPT"
+  ],
+  "source_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+  "source_bindings": {
+    "data_quality_policy": {
+      "path": "config/data_quality.yaml",
+      "policy_id": "DATA_QUALITY_CACHE_GATE",
+      "policy_version": "data_quality_cache_gate.v1",
+      "sha256": "c6a6b48cc8c9e715f2428f0062fe658297f388d7fec14624ebb32f7a78d7e948",
+      "status": "REVIEWED"
+    },
+    "shared_contract": {
+      "contract_id": "data_quality_execution_receipt.v1",
+      "path": "src/ai_trading_system/contracts/data_quality_execution.py",
+      "sha256": "91a72f561ecaddbb93eceba797bc0260c663dd2a02c964a82f9c55b49c677a37"
+    }
+  },
+  "source_phase": "G2_5_COMPLETE_G4_D0B_NEXT",
+  "status": "PASS",
+  "worktree_attribution": {
+    "active_shared_path_integration_count": 0,
+    "active_shared_path_lease_count": 0,
+    "active_shared_path_owner_count": 0,
+    "known_unrelated_worktree_files": [
+      "docs/research/growth_tilt_owner_diagnosis_pack.md"
+    ]
+  }
+}

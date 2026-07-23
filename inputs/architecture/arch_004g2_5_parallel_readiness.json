@@ -4,7 +4,7 @@
   "broker_action": "none",
   "change_manifests": [
     {
-      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
       "change_id": "arch-004-g2-5-01-g4-operations",
       "contract_claims": [
         {
@@ -47,7 +47,7 @@
       "task_id": "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION"
     },
     {
-      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
       "change_id": "arch-004-g2-5-02-g3-reporting",
       "contract_claims": [
         {
@@ -86,7 +86,7 @@
       "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
     },
     {
-      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
       "change_id": "arch-004-g2-5-03-g5-research-wrapper",
       "contract_claims": [
         {
@@ -130,7 +130,7 @@
       "task_id": "ARCH-004G5_RESEARCH_WRAPPER_MIGRATION"
     },
     {
-      "base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
       "change_id": "arch-004-g2-5-integration-coordinator",
       "contract_claims": [],
       "lane_role": "COORDINATOR",
@@ -545,13 +545,13 @@
         "target_id": "system_flow"
       }
     ],
-    "preview_id": "g2-5-fragment-84c75e481cfe134fdbe0",
+    "preview_id": "g2-5-fragment-a4e075a6ef22b8411d60",
     "production_effect": "none",
     "schema_version": "arch_004_g2_5_fragment_preview.v1",
     "source_of_truth_diffs": [
       {
         "current_path": "docs/artifact_catalog.md",
-        "current_sha256": "8e15b4f8b31d098a32fb22d3283fbd20ceb605f856ae92c4661eb540e3536f49",
+        "current_sha256": "5a435fd457299542b088f916d7bb3d0a4e44f4e2e92ff9e81f24696c54f372c4",
         "preview_fragment_ids": [
           "artifact.arch_004g3_reader_brief_native",
           "artifact.arch_004g4_periodic_consumers",
@@ -581,7 +581,7 @@
       },
       {
         "current_path": "docs/system_flow.md",
-        "current_sha256": "1bd72303d3474df29259cadaa5d1c29dbd7f8d2621b9eec7b088a0e023b68c62",
+        "current_sha256": "2120c38e8fd808c2ccc92201909123d6bd440af253d8051bfc38ee019e2f5c5e",
         "preview_fragment_ids": [
           "flow.arch_004g3_reader_brief_native",
           "flow.arch_004g4_periodic_consumers",
@@ -642,29 +642,29 @@
     "lane_plan": {
       "blocking_issues": [],
       "conflicts": [],
-      "current_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "current_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
       "dispatch_allowed": false,
       "lease_acquisition_allowed": false,
       "manifest_sha256": [
         {
           "change_id": "arch-004-g2-5-01-g4-operations",
-          "sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef"
+          "sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c"
         },
         {
           "change_id": "arch-004-g2-5-02-g3-reporting",
-          "sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30"
+          "sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58"
         },
         {
           "change_id": "arch-004-g2-5-03-g5-research-wrapper",
-          "sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7"
+          "sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b"
         },
         {
           "change_id": "arch-004-g2-5-integration-coordinator",
-          "sha256": "5f7973c86a295fa6d5737973815f9c914285ca6633160293f8b8ba79cd68b17c"
+          "sha256": "90b9e7c642ed49d1226fdde5797c79a2d0ab6bf5d41d7402579df41df468ce29"
         }
       ],
       "max_parallel_domain_lanes": 2,
-      "plan_id": "lane-plan-cf7e984c30d2bdc99bd1",
+      "plan_id": "lane-plan-2fcad04ceac530d9d13d",
       "production_effect": "none",
       "schema_version": "lane_plan.v1",
       "status": "PASS",
@@ -675,12 +675,12 @@
             {
               "change_id": "arch-004-g2-5-01-g4-operations",
               "lane_id": "domain-01",
-              "manifest_sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef"
+              "manifest_sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c"
             },
             {
               "change_id": "arch-004-g2-5-02-g3-reporting",
               "lane_id": "domain-02",
-              "manifest_sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30"
+              "manifest_sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58"
             }
           ],
           "kind": "DOMAIN",
@@ -691,7 +691,7 @@
             {
               "change_id": "arch-004-g2-5-03-g5-research-wrapper",
               "lane_id": "domain-01",
-              "manifest_sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7"
+              "manifest_sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b"
             }
           ],
           "kind": "DOMAIN",
@@ -702,7 +702,7 @@
             {
               "change_id": "arch-004-g2-5-integration-coordinator",
               "lane_id": "integration-coordinator",
-              "manifest_sha256": "5f7973c86a295fa6d5737973815f9c914285ca6633160293f8b8ba79cd68b17c"
+              "manifest_sha256": "90b9e7c642ed49d1226fdde5797c79a2d0ab6bf5d41d7402579df41df468ce29"
             }
           ],
           "kind": "COORDINATOR",
@@ -804,7 +804,7 @@
             "ownership_transition_required": true,
             "path": "src/ai_trading_system/ops_daily.py",
             "role": "legacy_periodic_entrypoint",
-            "sha256": "5a29b697ed8d394a655625f3181daf61a757d729070cca71912d3218a456efce"
+            "sha256": "ab054ef5ccc9a97d073386fccd709ba1cb041df8a3a9019de82ce83294d20060"
           },
           {
             "canonical_owner_profile": "operations",
@@ -1037,8 +1037,8 @@
     "production_effect": "none",
     "schema_version": "arch_004_g2_5_ownership_snapshot.v1",
     "shared_path_worker_owner_count": 0,
-    "snapshot_id": "g2-5-ownership-5b8e90efca321104c3b5",
-    "source_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+    "snapshot_id": "g2-5-ownership-00270f3c80e632718346",
+    "source_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
     "source_phase": "ARCH-004G2.4",
     "status": "PASS",
     "unknown_owner_count": 0
@@ -1058,9 +1058,9 @@
     "status": "OWNER_RESUMED_IMPLEMENTATION_GATE"
   },
   "production_effect": "none",
-  "report_checksum": "471b26c5f31c62098a5317aff4ab8c8a5d76274e1a052aeff89b3204ffc2d733",
+  "report_checksum": "5d853575cb9ad0f99b671bfb95abd2fda017ba0224c8df1cf4b54a089e0e3b8e",
   "schema_version": "arch_004_g2_5_readiness_rehearsal.v1",
-  "source_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+  "source_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
   "source_gate": {
     "broker_action": "none",
     "canonical_handoff_validation": "PASS",
@@ -1099,7 +1099,7 @@
       "handoff_base_is_ancestor_of_handoff_head": true,
       "handoff_head_commit": "152f2d332b174018ad9fca2ecb568469eaeaf0f8",
       "handoff_head_is_ancestor_of_source_base": true,
-      "source_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
+      "source_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
       "status": "PASS"
     },
     "handoff": {
@@ -1143,8 +1143,8 @@
     ],
     "broker_action": "none",
     "capacity": 2,
-    "current_base_commit": "6ee5903a929da593746e1459c055c8226cc21157",
-    "decision_id": "scheduler-decision-963ed9841c55954290da",
+    "current_base_commit": "12b1fb86369f146c9ef1c7ac54872eb8150ed791",
+    "decision_id": "scheduler-decision-6548bad75bc8ee679c5a",
     "dispatch_allowed": false,
     "fixture_status": "PASS",
     "lease_acquisition_allowed": false,
@@ -1152,7 +1152,7 @@
     "not_selected": [
       {
         "change_id": "arch-004-g2-5-03-g5-research-wrapper",
-        "manifest_sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7",
+        "manifest_sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b",
         "reason_codes": [
           "DOMAIN_CAPACITY_REACHED"
         ],
@@ -1167,7 +1167,7 @@
         "dependency_checks": [],
         "dispatch_allowed": false,
         "lease_acquisition_allowed": false,
-        "manifest_sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef",
+        "manifest_sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c",
         "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
         "production_effect": "none",
         "reason_codes": [
@@ -1183,7 +1183,7 @@
         "dependency_checks": [],
         "dispatch_allowed": false,
         "lease_acquisition_allowed": false,
-        "manifest_sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30",
+        "manifest_sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58",
         "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
         "production_effect": "none",
         "reason_codes": [
@@ -1199,7 +1199,7 @@
         "dependency_checks": [],
         "dispatch_allowed": false,
         "lease_acquisition_allowed": false,
-        "manifest_sha256": "c96eaed1bf1c97656b170d1b21821d1946ed760919f5244c086611b580d8a6c7",
+        "manifest_sha256": "cd5a2fedd0099d3630c7a4613b2ce2f4dd71adac7924503e9af1f51e50b8222b",
         "policy_version": "arch_005_s2_s4_controlled_parallelism@1.0.0",
         "production_effect": "none",
         "reason_codes": [
@@ -1220,7 +1220,7 @@
       {
         "change_id": "arch-004-g2-5-01-g4-operations",
         "lane_id": "domain-01",
-        "manifest_sha256": "cb18f41898481c03b8aaca8f155954d58d337a371b01d7ed0647f9d74e788fef",
+        "manifest_sha256": "a5e1df6b5817c20d5a264a405b7808c7a950050e10f0879d4257ffc0c818eb6c",
         "reason_codes": [
           "SELECTED_READY_NON_CONFLICTING"
         ],
@@ -1229,14 +1229,14 @@
       {
         "change_id": "arch-004-g2-5-02-g3-reporting",
         "lane_id": "domain-02",
-        "manifest_sha256": "0aac65ba96b8cdc59a9bb6b1e855d640ba22ebdf11f1de210285bba1f3596c30",
+        "manifest_sha256": "67be4ddde699bf0a9a40e8ec23afefde4ee8cdff1344ab168985322483ecee58",
         "reason_codes": [
           "SELECTED_READY_NON_CONFLICTING"
         ],
         "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
       }
     ],
-    "snapshot_sha256": "7c64c9227a110d89fe1b410bbe32c0448975cab703059c531f900b19900bb237",
+    "snapshot_sha256": "e351f91419dadadfa60d73f76fe061b6b5c3584a83b0d61317c6560ea4c88bd3",
     "source_of_truth": "LEGACY_MARKDOWN_ONLY",
     "status": "PASS",
     "task_governance_status_mutated": false

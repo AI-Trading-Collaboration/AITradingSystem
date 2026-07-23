@@ -16,6 +16,10 @@ from ai_trading_system.cache_catalog import (
 )
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
+from ai_trading_system.data.quality_execution import (
+    CanonicalDataQualityExecutionResult,
+    DataQualityExecutionError,
+)
 from ai_trading_system.data_source_fallback_policy import (
     DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     latest_data_source_fallback_policy_summary,
@@ -46,9 +50,7 @@ DATA_REFRESH_AUDIT_RECORD_TYPE = "data_refresh_audit_record"
 DATA_REFRESH_AUDIT_POLICY_VERSION = "data_refresh_audit_policy_v1"
 PRODUCTION_EFFECT = "none"
 
-DEFAULT_DATA_REFRESH_AUDIT_DIR = (
-    PROJECT_ROOT / "reports" / "data_governance" / "data_refresh_audit"
-)
+DEFAULT_DATA_REFRESH_AUDIT_DIR = PROJECT_ROOT / "reports" / "data_governance" / "data_refresh_audit"
 DEFAULT_VALIDATION_AUDIT_DIR = PROJECT_ROOT / "artifacts" / "data_refresh_audit" / "validation"
 LATEST_POINTER_NAME = "latest_data_refresh_audit.json"
 LATEST_VALIDATE_DATA_AUDIT_POINTER_NAME = "latest_validate_data_audit.json"
@@ -150,17 +152,13 @@ class DataRefreshAuditValidationReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == DataRefreshAuditIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == DataRefreshAuditIssueSeverity.ERROR
         )
 
     @property
     def warning_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == DataRefreshAuditIssueSeverity.WARNING
+            1 for issue in self.issues if issue.severity == DataRefreshAuditIssueSeverity.WARNING
         )
 
     @property
@@ -182,6 +180,7 @@ def write_validate_data_audit_sidecar(
     report_path: Path,
     started_at: datetime,
     ended_at: datetime,
+    execution_result: CanonicalDataQualityExecutionResult | None = None,
     output_dir: Path = DEFAULT_VALIDATION_AUDIT_DIR,
 ) -> Path:
     record = build_validate_data_audit_record(
@@ -189,6 +188,7 @@ def write_validate_data_audit_sidecar(
         report_path=report_path,
         started_at=started_at,
         ended_at=ended_at,
+        execution_result=execution_result,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     record_path = (
@@ -216,6 +216,7 @@ def build_validate_data_audit_record(
     report_path: Path,
     started_at: datetime,
     ended_at: datetime,
+    execution_result: CanonicalDataQualityExecutionResult | None = None,
 ) -> dict[str, Any]:
     summaries = _data_quality_summaries(report)
     checksum = _combined_checksum(
@@ -225,16 +226,47 @@ def build_validate_data_audit_record(
             if _text(summary.get("sha256"))
         ]
     )
-    row_counts = {
-        name: int(summary.get("rows") or 0)
-        for name, summary in summaries.items()
-    }
+    row_counts = {name: int(summary.get("rows") or 0) for name, summary in summaries.items()}
     record_count = sum(
         row_counts[name]
         for name in ("price_data", "secondary_price_data", "macro_rate_data")
         if name in row_counts
     )
     status = _data_quality_status_to_audit_status(report.status)
+    source_artifacts = [str(report_path)]
+    execution_projection: dict[str, Any] | None = None
+    if execution_result is not None:
+        receipt = execution_result.receipt
+        try:
+            receipt_bytes = execution_result.receipt_path.read_bytes()
+        except OSError as exc:
+            raise DataQualityExecutionError(
+                "DQ_RECEIPT_MISSING",
+                f"cannot read canonical receipt: {execution_result.receipt_path}",
+            ) from exc
+        if receipt_bytes != receipt.canonical_bytes:
+            raise DataQualityExecutionError(
+                "DQ_RECEIPT_ID_MISMATCH",
+                "audit projection receipt bytes differ from the canonical execution result",
+            )
+        execution_projection = {
+            "schema_version": receipt.schema_version,
+            "receipt_id": receipt.receipt_id,
+            "receipt_path": _project_relative_path(execution_result.receipt_path),
+            "receipt_sha256": sha256(receipt_bytes).hexdigest(),
+            "receipt_size_bytes": len(receipt_bytes),
+            "canonical_report_path": receipt.report.path,
+            "canonical_report_sha256": receipt.report.sha256,
+            "policy_id": receipt.policy.policy_id,
+            "policy_version": receipt.policy.policy_version,
+            "policy_path": receipt.policy.path,
+            "policy_sha256": receipt.policy.sha256,
+            "consumer_cutover_allowed": receipt.consumer_cutover_allowed,
+            "production_effect": receipt.production_effect,
+            "projection_only": True,
+        }
+        source_artifacts.extend([execution_projection["receipt_path"], receipt.report.path])
+
     record = {
         "schema_version": DATA_REFRESH_AUDIT_SCHEMA_VERSION,
         "record_type": DATA_REFRESH_AUDIT_RECORD_TYPE,
@@ -259,7 +291,7 @@ def build_validate_data_audit_record(
         "error_count": report.error_count,
         "info_count": report.info_count,
         "report_path": str(report_path),
-        "source_artifacts": [str(report_path)],
+        "source_artifacts": source_artifacts,
         "reason": _validation_reason(report),
         "quality_gate": {
             "command": "aits validate-data",
@@ -270,11 +302,19 @@ def build_validate_data_audit_record(
             "info_count": report.info_count,
         },
         "file_summaries": summaries,
+        "data_quality_execution": execution_projection,
         "production_effect": PRODUCTION_EFFECT,
         "safety_boundary": DATA_REFRESH_AUDIT_SAFETY,
     }
     record["audit_record_id"] = _audit_record_id(record)
     return record
+
+
+def _project_relative_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except (OSError, ValueError):
+        return str(path)
 
 
 def build_data_refresh_audit_payload(
@@ -398,12 +438,8 @@ def write_data_refresh_audit_artifact(
     write_json_atomic_without_trailing_newline(
         validation_json_path, validation_report_to_payload(validation)
     )
-    write_text_atomic(
-        validation_md_path, render_data_refresh_audit_validation_markdown(validation)
-    )
-    write_text_atomic(
-        reader_brief_path, render_data_refresh_audit_reader_brief(payload_with_paths)
-    )
+    write_text_atomic(validation_md_path, render_data_refresh_audit_validation_markdown(validation))
+    write_text_atomic(reader_brief_path, render_data_refresh_audit_reader_brief(payload_with_paths))
     _write_latest_pointer(output_dir=output_dir, payload=payload_with_paths, audit_path=audit_path)
     return {
         "artifact_dir": artifact_dir,
@@ -796,9 +832,7 @@ def _missing_market_refresh_record(
     session = us_equity_market_session(as_of)
     market_closed = not session.is_trading_day
     status = (
-        AUDIT_STATUS_SKIPPED_MARKET_CLOSED
-        if market_closed
-        else AUDIT_STATUS_SKIPPED_NO_NEW_DATA
+        AUDIT_STATUS_SKIPPED_MARKET_CLOSED if market_closed else AUDIT_STATUS_SKIPPED_NO_NEW_DATA
     )
     reason = (
         f"US equity market closed: {session.reason}"
@@ -969,11 +1003,7 @@ def _market_refresh_status_to_audit_status(
     remaining_limitations: Sequence[str],
 ) -> str:
     if status == REFRESH_OK:
-        return (
-            AUDIT_STATUS_SUCCESS_WITH_WARNINGS
-            if remaining_limitations
-            else AUDIT_STATUS_SUCCESS
-        )
+        return AUDIT_STATUS_SUCCESS_WITH_WARNINGS if remaining_limitations else AUDIT_STATUS_SUCCESS
     if status == REFRESH_PARTIAL:
         return AUDIT_STATUS_SUCCESS_WITH_WARNINGS
     if status in {REFRESH_NOT_NEEDED, REFRESH_SOURCE_DELAYED}:
@@ -1202,8 +1232,7 @@ def _check_records(
         if not _text(record.get("checksum")):
             severity = (
                 DataRefreshAuditIssueSeverity.WARNING
-                if status
-                in {AUDIT_STATUS_SKIPPED_MARKET_CLOSED, AUDIT_STATUS_SKIPPED_NO_NEW_DATA}
+                if status in {AUDIT_STATUS_SKIPPED_MARKET_CLOSED, AUDIT_STATUS_SKIPPED_NO_NEW_DATA}
                 else DataRefreshAuditIssueSeverity.ERROR
             )
             issues.append(

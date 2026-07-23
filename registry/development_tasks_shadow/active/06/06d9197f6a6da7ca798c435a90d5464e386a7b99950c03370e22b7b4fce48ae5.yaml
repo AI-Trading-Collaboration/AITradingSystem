@@ -11,54 +11,59 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Validation performance coordinator：从Wave 10 Full的Smoothed共同长尾选择下一有界候选
+  next_owner: Validation performance coordinator：Wave13 N1后先做Full duration seed freshness，再给Smoothed链增加阶段计时/cache
+    hit-miss
   requirement_refs:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W14E1将Layer1
-    constrained-search约174,717次重复20d component-return计算收敛为同context/panel的bounded schedule；identity/shape/column/date不一致回退legacy，不做context
-    cache。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。Wave12
+    PASS Full=`1147.04s`，相对`1106.60s`单次慢约3.65%，不足以判定稳定回退；当前seed只覆盖`1097/1108` files，11个untracked文件合计`83.96
+    worker-s`且最慢25.03s形成critical tail。Smoothed家族仍约占27.73% work，16 worker总体负载接近理想。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 原node/真实CLI/243 grid/公式与累加顺序/rounding/DQ/PIT/schema/status保持；专属equivalence/fallback/call-count、两次after与Formal
-      Full目标node改善通过；下一候选须独立baseline与退出门，`production_effect=none`。
+    text: 先以当前PASS profile机械刷新advisory duration seed并保持source-bound contract；下一自然Full验证applied/no-fallback与untracked
+      tail消失。随后只给Smoothed真实producer/validator链补调用级归因，再选择能保留原node、DQ/PIT、E2E/tamper/fail-closed语义的有界fixture
+      reuse；不过门即撤回。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1570
-    row_sha256: 0f7614c5fbdd7cc9b9d242cebbbc3b829dd0692edcd87cf9657e5101dddb9fbc
+    row_sha256: 998a5ad75d0c90b1a98ef95737854ed91c550985b0a90766ae4532149de3f75d
     cell_count: 8
     all_cells:
     - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
     - P1
     - IN_PROGRESS
-    - Validation performance coordinator：从Wave 10 Full的Smoothed共同长尾选择下一有界候选
-    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W14E1将Layer1
-      constrained-search约174,717次重复20d component-return计算收敛为同context/panel的bounded
-      schedule；identity/shape/column/date不一致回退legacy，不做context cache。
-    - 原node/真实CLI/243 grid/公式与累加顺序/rounding/DQ/PIT/schema/status保持；专属equivalence/fallback/call-count、两次after与Formal
-      Full目标node改善通过；下一候选须独立baseline与退出门，`production_effect=none`。
-    - 2026-07-22：W14E1=`RETAINED_EXIT_GATE_PASS`；isolated worst wall改善44.39%，Full目标call=`174.15→103.41s`。Full总wall=`1179.75s`比Wave
-      9慢8.98%，49个共同slowest中位慢6.18%、Smoothed链普遍慢14%～26%，故不声明global improvement并继续IN_PROGRESS。
+    - Validation performance coordinator：Wave13 N1后先做Full duration seed freshness，再给Smoothed链增加阶段计时/cache
+      hit-miss
+    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。Wave12
+      PASS Full=`1147.04s`，相对`1106.60s`单次慢约3.65%，不足以判定稳定回退；当前seed只覆盖`1097/1108` files，11个untracked文件合计`83.96
+      worker-s`且最慢25.03s形成critical tail。Smoothed家族仍约占27.73% work，16 worker总体负载接近理想。
+    - 先以当前PASS profile机械刷新advisory duration seed并保持source-bound contract；下一自然Full验证applied/no-fallback与untracked
+      tail消失。随后只给Smoothed真实producer/validator链补调用级归因，再选择能保留原node、DQ/PIT、E2E/tamper/fail-closed语义的有界fixture
+      reuse；不过门即撤回。
+    - 2026-07-23：correctness PASS但不声明稳定性能回退或提速；顺序固定为duration seed freshness→Smoothed阶段计时/cache观测→有证据才收敛重复full-chain
+      fixture→最后才比较12/16/20 workers；不删测试、不降低门禁，`production_effect=none`。
     raw_line: '|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture
       / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Validation
-      performance coordinator：从Wave 10 Full的Smoothed共同长尾选择下一有界候选|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W14E1将Layer1
-      constrained-search约174,717次重复20d component-return计算收敛为同context/panel的bounded
-      schedule；identity/shape/column/date不一致回退legacy，不做context cache。|原node/真实CLI/243
-      grid/公式与累加顺序/rounding/DQ/PIT/schema/status保持；专属equivalence/fallback/call-count、两次after与Formal
-      Full目标node改善通过；下一候选须独立baseline与退出门，`production_effect=none`。|2026-07-22：W14E1=`RETAINED_EXIT_GATE_PASS`；isolated
-      worst wall改善44.39%，Full目标call=`174.15→103.41s`。Full总wall=`1179.75s`比Wave 9慢8.98%，49个共同slowest中位慢6.18%、Smoothed链普遍慢14%～26%，故不声明global
-      improvement并继续IN_PROGRESS。|'
+      performance coordinator：Wave13 N1后先做Full duration seed freshness，再给Smoothed链增加阶段计时/cache
+      hit-miss|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。Wave12
+      PASS Full=`1147.04s`，相对`1106.60s`单次慢约3.65%，不足以判定稳定回退；当前seed只覆盖`1097/1108` files，11个untracked文件合计`83.96
+      worker-s`且最慢25.03s形成critical tail。Smoothed家族仍约占27.73% work，16 worker总体负载接近理想。|先以当前PASS
+      profile机械刷新advisory duration seed并保持source-bound contract；下一自然Full验证applied/no-fallback与untracked
+      tail消失。随后只给Smoothed真实producer/validator链补调用级归因，再选择能保留原node、DQ/PIT、E2E/tamper/fail-closed语义的有界fixture
+      reuse；不过门即撤回。|2026-07-23：correctness PASS但不声明稳定性能回退或提速；顺序固定为duration seed freshness→Smoothed阶段计时/cache观测→有证据才收敛重复full-chain
+      fixture→最后才比较12/16/20 workers；不删测试、不降低门禁，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-0f7614c5fbdd7cc9b9d242ce
+  event_id: legacy-import-998a5ad75d0c90b1a98ef957
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -71,12 +76,13 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: Validation performance coordinator：从Wave 10 Full的Smoothed共同长尾选择下一有界候选
-    notes: 2026-07-22：W14E1=`RETAINED_EXIT_GATE_PASS`；isolated worst wall改善44.39%，Full目标call=`174.15→103.41s`。Full总wall=`1179.75s`比Wave
-      9慢8.98%，49个共同slowest中位慢6.18%、Smoothed链普遍慢14%～26%，故不声明global improvement并继续IN_PROGRESS。
+    next_owner: Validation performance coordinator：Wave13 N1后先做Full duration seed
+      freshness，再给Smoothed链增加阶段计时/cache hit-miss
+    notes: 2026-07-23：correctness PASS但不声明稳定性能回退或提速；顺序固定为duration seed freshness→Smoothed阶段计时/cache观测→有证据才收敛重复full-chain
+      fixture→最后才比较12/16/20 workers；不删测试、不降低门禁，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:0f7614c5fbdd7cc9b9d242cebbbc3b829dd0692edcd87cf9657e5101dddb9fbc
+  - sha256:998a5ad75d0c90b1a98ef95737854ed91c550985b0a90766ae4532149de3f75d
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -84,17 +90,19 @@ projection:
   - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
   - P1
   - IN_PROGRESS
-  - Validation performance coordinator：从Wave 10 Full的Smoothed共同长尾选择下一有界候选
-  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。W14E1将Layer1
-    constrained-search约174,717次重复20d component-return计算收敛为同context/panel的bounded schedule；identity/shape/column/date不一致回退legacy，不做context
-    cache。
-  - 原node/真实CLI/243 grid/公式与累加顺序/rounding/DQ/PIT/schema/status保持；专属equivalence/fallback/call-count、两次after与Formal
-    Full目标node改善通过；下一候选须独立baseline与退出门，`production_effect=none`。
-  - 2026-07-22：W14E1=`RETAINED_EXIT_GATE_PASS`；isolated worst wall改善44.39%，Full目标call=`174.15→103.41s`。Full总wall=`1179.75s`比Wave
-    9慢8.98%，49个共同slowest中位慢6.18%、Smoothed链普遍慢14%～26%，故不声明global improvement并继续IN_PROGRESS。
+  - Validation performance coordinator：Wave13 N1后先做Full duration seed freshness，再给Smoothed链增加阶段计时/cache
+    hit-miss
+  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。Wave12
+    PASS Full=`1147.04s`，相对`1106.60s`单次慢约3.65%，不足以判定稳定回退；当前seed只覆盖`1097/1108` files，11个untracked文件合计`83.96
+    worker-s`且最慢25.03s形成critical tail。Smoothed家族仍约占27.73% work，16 worker总体负载接近理想。
+  - 先以当前PASS profile机械刷新advisory duration seed并保持source-bound contract；下一自然Full验证applied/no-fallback与untracked
+    tail消失。随后只给Smoothed真实producer/validator链补调用级归因，再选择能保留原node、DQ/PIT、E2E/tamper/fail-closed语义的有界fixture
+    reuse；不过门即撤回。
+  - 2026-07-23：correctness PASS但不声明稳定性能回退或提速；顺序固定为duration seed freshness→Smoothed阶段计时/cache观测→有证据才收敛重复full-chain
+    fixture→最后才比较12/16/20 workers；不删测试、不降低门禁，`production_effect=none`。
   docs_links:
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   terminal: false
-  raw_row_sha256: 0f7614c5fbdd7cc9b9d242cebbbc3b829dd0692edcd87cf9657e5101dddb9fbc
+  raw_row_sha256: 998a5ad75d0c90b1a98ef95737854ed91c550985b0a90766ae4532149de3f75d
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 5017297d3b2194d69aa2b90733c0f8c371f8bebc9ad7c9e59f1c6bf4221f64db
+fragment_checksum: 7dbd0a266b78da2045a4a32dadf045959567f621c6463d28399967eaf9c0095f

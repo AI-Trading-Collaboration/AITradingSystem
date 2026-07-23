@@ -6,14 +6,14 @@
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`IN_PROGRESS`（current phase=`G2_5_COMPLETE_G4_D0B_NEXT`）
+- 当前状态：`IN_PROGRESS`（current phase=`WAVE12_COMPLETE_WAVE13_GOV006_N1_NEXT`）
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
 - 默认 production effect：`none`
 - 正式前序任务：`ARCH-001`、`ARCH-002`、`ARCH-003`、`TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN`
 - 后续执行任务：`ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION`、`ARCH-004G3_REPORTING_NATIVE_MIGRATION`、`ARCH-004G5_RESEARCH_WRAPPER_MIGRATION`、`ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL`
-- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0/S1已`BASELINE_DONE`；G2.4 phase exit与`arch_005_bootstrap_handoff.v1`均PASS并推送。handoff中的`next_slice_unblocked=false`作为历史证据保持不变；2026-07-23 owner 通过新的显式指令恢复并完成 G2.5。当前 phase 为 `G2_5_COMPLETE_G4_D0B_NEXT`，只把 G4 + D0B 标记为下一可执行波次，尚未自动 dispatch；不包含 S5、H、策略研究、promotion、broker action 或 production dispatch
+- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0/S1已`BASELINE_DONE`；G2.4 phase exit与`arch_005_bootstrap_handoff.v1`均PASS并推送。handoff中的`next_slice_unblocked=false`作为历史证据保持不变；2026-07-23 owner通过新的显式指令恢复并完成G2.5。Wave12 G4A+D0B1、S2 shared integration 与 formal gate 已PASS；当前先进入 Wave13 `GOV-006 N1` coordinator-only 任务池归一化，再开放 Wave14 `D0B2 + bounded G3`。这不包含S5、H、G5、策略研究、consumer cutover、promotion、broker action或production dispatch
 
 ## Owner Intent
 
@@ -150,16 +150,33 @@ ARCH-004 不得重新创建另一套 status/doctor/inventory/release commands，
 后续不再按“最早登记的 P0”或单纯任务数量推进，而按正确性风险、后继解锁价值、可并行边界和
 等待成本排序。任一时点仍只有一个 integration coordinator 和最多两个 active domain worker；等待
 真实 cadence、owner 或外部数据的任务不占用开发 worker，但必须保留独立观察状态，不能伪装成已完成。
+当前GOV-006 N0可复算inventory为`435 active`，其中`269 P0`、`284 VALIDATING`、`100 BASELINE_DONE`；
+30条high-confidence terminal decision应用后，预期先降至`405 active / 241 P0`。因此Wave13治理批次不是
+文档美化，而是下一轮准确dispatch、工作量估算和优先级可信度的前置条件。
 
 | 顺序 | 优先级 | 工作包 | 目的与退出边界 |
 |---|---|---|---|
 | 1 | P0 / 已完成并归档 | `ARCH-004G2` readiness + `DATA-GOV-001 D0A` + `GOV-006 N0` | 已通过共同 formal gate：G2 requirement 转 `DONE`、D0A 与 N0 formal complete；ARCH-004、DATA-GOV-001 与 GOV-006 的 program-level 状态仍为 `IN_PROGRESS`。该结果不自动授权下一波 dispatch。 |
-| 2 | P0 / 当前下一可执行波次 | `ARCH-004G4` + `DATA-GOV-001 D0B` | coordinator 先冻结最小 shared DQ preflight interface、owner 与版本；D0B 只写 data-side evidence/provider binding，G4 只写 operations consumer adapter，root CLI/runbook/system flow/shared contract 由 coordinator 集成。G4 进入真实 cadence 等待后，可释放开发 slot；开始实现仍需按任务登记和 ownership/lease 约束显式 dispatch。 |
-| 3 | P1 / cadence 等待期 | `ARCH-004G3`，随后 `ARCH-004G5` | G3 收敛报告链，使 presentation 不再重算结论；G5 把 task-shaped research wrapper 迁到 `ExperimentSpec/plugin/lifecycle`。G5 是第二批，不能与共同 research contracts 的 coordinator 切换并发。 |
-| 4 | P0/P1 / 治理收敛 | `GOV-006 N1～N3` + validation runtime 有界长尾 | 逐批移动有 task-own evidence 的 terminal rows、分离 owner/external/time blockers、修正 active 语义；性能工作只处理可复现长尾并设置撤回门，不能用缩减验证换速度。 |
-| 5 | P1 / 敏感迁移前置 | `ARCH-004G6` characterization + `DATA-GOV D0C/D1` | 先冻结 scoring/position/PIT/DQ/cost/golden parity，再迁 portfolio/decision-sensitive surfaces；同步补 lifecycle、backup/restore、instance lineage 与 bitemporal adoption。结构迁移与策略调优分开。 |
-| 6 | P1/P2 / closeout | `ARCH-004G7` -> `ARCH-004H`，以及证据支持后的 `DATA-GOV D2` | 统一 deprecation/reachability/removal ledger 后才允许小批 cutover/removal；存储格式只依据真实 workload/parity/rollback 基准决定。 |
-| 7 | P2 / 产品化 | `KNOWLEDGE-001`、`PUBLISHING-001`、`PLATFORM-UX-001` | 在事实、claim/evidence 和报告 contracts 稳定后建设知识核心与多载体体验，避免 UI/文档层继续制造第二套结论。 |
+| 2 | P0 / 已完成波次 | `ARCH-004G4` + `DATA-GOV-001 D0B1/S2` | Wave12 已完成最小shared DQ preflight interface、G4A=`24 passed`、D0B1=`20 passed`、canonical `aits validate-data` receipt、共享3小时provider-ready默认日期、`operations_as_of`/`data_quality_as_of`双日期、profile/as-of exact discovery pointer、strict verifier+daily step interval与1 producer/4 consumers nonexecuting sidecar。最终 Full=`6825 passed / 3 skipped / 1147.04s`；真实prices manifest blocker留给D0B2，automatic dispatch、consumer cutover、production与broker继续关闭。 |
+| 3 | P0 / Wave13 组合治理 | `GOV-006 N1` high-confidence terminal reconciliation | 在Wave12 final tree提交后，由coordinator单写应用已具task-own evidence的30条高置信decision；重建task shadows/compatibility views并复核active/P0统计。先降低任务池噪声，再从真实未完成集合dispatch下一波；N2/N3仍按小批证据推进，不做一次性大扫除。G4C真实cadence观察异步积累，不占开发worker。 |
+| 4 | P0/P1 / Wave14 双域 | `DATA-GOV D0B2` + bounded `ARCH-004G3` | Data lane修复download/publish/manifest事务并补market-calendar、coverage、internal-gap、finite-value gate；Reporting lane冻结首个native report slice，使presentation只投影canonical事实/解释/限制/结论。两lane不共享实现路径，coordinator最后统一接flow/catalog/manifests。 |
+| 5 | P0/P1 / Wave15 受控采用 | `DATA-GOV D0B3` + `ARCH-004G4B` first consumer；并行完成G3 close/readiness | 只为一个明示consumer引入reviewed typed authorization profile并证明fail-closed parity，再逐个扩展；不做全量consumer切换。G3完成后才允许准备G5，避免research/report共同contract同时切换。 |
+| 6 | P1 / contract迁移 | `ARCH-004G5` + `DATA-GOV D0C/D1`；随后`ARCH-004G6` characterization | 把task-shaped research wrapper迁到`ExperimentSpec/plugin/lifecycle`，同时补data lifecycle、backup/restore、instance lineage、bitemporal adoption；物理存储先跑真实workload/parity/rollback基准。进入decision-sensitive迁移前先冻结scoring/position/PIT/DQ/cost/golden parity，结构迁移与策略调优严格分开。 |
+| 7 | P1/P2 / subtraction与closeout | `ARCH-004G7` -> `ARCH-004H`，以及证据支持后的 `DATA-GOV D2` | 统一deprecation/reachability/removal ledger后才允许小批cutover/removal；每批有rollback、历史artifact retention和clean-clone/Full证据，禁止新增抽象后长期保留双轨。 |
+| 8 | P2 / 知识与产品化 | `KNOWLEDGE-001`、`PUBLISHING-001`、`PLATFORM-UX-001` | 在事实、claim/evidence和报告contracts稳定后建设知识核心、多载体发布和只读理解工作台，避免UI/文档层制造第二套结论。 |
+
+### 长期能力建设方向
+
+| 方向 | 长期目标 | 近期可验证交付 |
+|---|---|---|
+| Data Foundation | 数据、source provenance、DQ、PIT、coverage、lineage与lifecycle形成统一事实底座 | D0B2/D0B3完成真实manifest事务、actual window与首个consumer adoption；D0C/D1再补retention/backup/bitemporal与storage benchmark |
+| Operations & Runtime | daily统一入口、长cadence条件编排、typed preflight、幂等恢复与可观测性 | G4B先迁一个consumer；G4C用真实cadence证据异步验证，不用等待时间阻塞domain worker |
+| Reporting & Knowledge | 固定“事实→解释→限制→结论”链，renderer不重算，current/history不混淆 | G3首个native report slice与parity；contract稳定后再启动Knowledge Object和publishing clients |
+| Research Lifecycle | 每个研究具备why/input/output/calculation/window/DQ/PIT/cost/holdout/limitations/optimization-space文档与可重放spec | G5只迁现有wrapper，不做新搜索；新策略任务必须独立预注册、可证伪并获owner授权 |
+| Decision-sensitive Core | scoring、position、portfolio与promotion迁移前有characterization/golden parity和rollback | G6先冻结行为，再迁实现；任何阈值或heuristic变化走reviewed policy，不夹带在架构重构中 |
+| Governance & Subtraction | task状态真实、owner清楚、重复逻辑持续退役、历史证据仍可追溯 | GOV-006 N1～N3小批归一化；G7/H按reachability和removal gate逐批减法 |
+| Engineering Efficiency | 最多两个互不重叠domain worker、shared-path单写、分层验证、一次final Full、性能异常可撤回 | 每波记录ownership/change manifest、tail runtime与cache/repeated-scan指标；优先消除共享等待和重复计算，不以减测试换速度 |
+| Product Experience | 用户能理解“现在是什么、为什么、证据如何、限制和下一步是什么” | 等G3/Knowledge contracts稳定后再做docs site、Reader Brief/Dashboard projection和只读交互工作台 |
 
 策略线保持独立授权边界：已关闭的 Strategy A package 不因工程 readiness 自动重开，B/C、新候选
 搜索、prospective access、paper-shadow、promotion、production 与 broker action 均需新任务和显式
@@ -709,3 +726,26 @@ Entry decision：`ARCH_004_PHASE_A_COMPLETE_PHASE_B_UNBLOCKED`。这只解锁 Se
   complete；ARCH-004 overall 仍为 `IN_PROGRESS`，current phase=`G2_5_COMPLETE_G4_D0B_NEXT`。
   G4 + D0B 仅为下一可执行波次且尚未自动 dispatch；G3/G5、N1、S5、H、策略研究、promotion、
   broker action 与 production 均未自动启动，`production_effect=none`。
+- 2026-07-23：Wave12 S0后，D0B1 canonical receipt/verifier focused=`20 passed`、G4A native
+  nonexecuting parity focused=`24 passed`，交叉审计关闭future timestamp抬升、receipt producer自依赖与
+  operations/DQ日期混用风险，current phase进入`W12_S2_SHARED_INTEGRATION`。S2固定无显式日期时
+  `aits validate-data`与daily-run共用America/New_York最近已完成交易日+3小时provider-ready buffer；
+  `operations_as_of`只负责scheduler/due/calendar，`data_quality_as_of`取实际`download_end`。Daily default
+  pointer固定`outputs/data_quality/executions/discovery/daily_default/{data_quality_as_of}/current.json`且只负责
+  发现；consumer必须校验pointer/receipt path/SHA/size、调用public strict verifier并确认receipt真实UTC interval
+  位于本次`validate_data` step interval内。Native sidecar固定1 producer observation+4 verified consumers，
+  legacy periodic preview仅typed projection；全程无dispatch/cutover/production/broker。
+- 2026-07-23：当前真实`data/raw/prices_daily.csv` SHA-256仍未被`data/raw/download_manifest.csv`覆盖，
+  strict gate必须输出`DQ_MANIFEST_CURRENT_CHECKSUM_MISSING`。该download/publish/manifest transaction修复
+  与market-calendar freshness、逐ticker coverage/internal gap、finite checks均留在D0B2；不得在S2降级、
+  伪造source id或借discovery pointer绕过。S2 formal exit仍需combined focused、architecture、contract、
+  integration、required Full与最终manifest/compatibility/hash freshness，故ARCH-004整体继续`IN_PROGRESS`。
+- 2026-07-23：Wave12 S2 已正式收口。combined focused=`246 passed / 1 skipped`；最终
+  architecture/contract/reproducibility/integration=`525/266/23/983 passed`。首次 Full=
+  `6824 passed / 1 failed / 3 skipped / 1103.75s`，暴露已关闭 TRADING-2452 package 对 live DQ policy
+  漂移的旧 eligibility 断言；冻结 package bytes/id 未改写，回归改为要求 re-execution fail closed。带 parent
+  provenance 的 failure-fix Full=`6825 passed / 3 skipped / 643 warnings / 1147.04s`。G4 转
+  `VALIDATING` 并异步积累 G4C cadence evidence；DATA-GOV 保持 `IN_PROGRESS`，D0B2 等待 Wave13
+  GOV-006 N1 后与 bounded G3 并行。ARCH-004 current phase 转为
+  `WAVE12_COMPLETE_WAVE13_GOV006_N1_NEXT`；策略 B/C、新研究、G5、consumer cutover、production 与
+  broker 均未自动授权。

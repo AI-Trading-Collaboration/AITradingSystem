@@ -33,16 +33,13 @@ DOCS_GOV_HISTORICAL_PREFIX_BYTE_COUNT = 1_151_797
 DOCS_GOV_HISTORICAL_PREFIX_SHA256 = (
     "b0085b51a4c2ff19ffa7257e5d01a49fbdd85e300b3a43e379bf2737f67682f5"
 )
-DOCS_GOV_SUPPORTING_DOC = (
-    "docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md"
-)
+DOCS_GOV_SUPPORTING_DOC = "docs/requirements/DOCS-GOV-001_Existing_Freshness_Metadata_Debt.md"
 DOCS_GOV_SOURCE_PATHS = frozenset(
     {
         "docs/requirements/ARCH-004F1_Operations_Control_Plane.md",
         "docs/requirements/ARCH-004F3_Reporting_Architecture.md",
         DOCS_GOV_SUPPORTING_DOC,
-        "docs/requirements/"
-        "TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md",
+        "docs/requirements/" "TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md",
         "docs/requirements/TRADING-111_to_113_Real_Research_Evidence_Closure.md",
         "docs/requirements/"
         "TRADING-141_to_145_Historical_Advisory_Replay_and_Backfilled_Outcome_Evaluation.md",
@@ -50,8 +47,7 @@ DOCS_GOV_SOURCE_PATHS = frozenset(
         "TRADING-146_to_150_Historical_Replay_Result_Diagnosis_and_Advisory_Rule_Calibration.md",
         "docs/requirements/"
         "TRADING-156_to_160_Outcome_Update_Loop_and_Rolling_Advisory_Evidence_Refresh.md",
-        "docs/requirements/"
-        "TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md",
+        "docs/requirements/" "TRADING-161_to_168_Backtest_Simulation_Advisory_Evaluation.md",
         "docs/requirements/"
         "TRADING-169_to_173_Simulation_Result_Interpretation_and_Advisory_Rule_Review.md",
         "docs/requirements/"
@@ -67,9 +63,13 @@ DOCS_GOV_SOURCE_PATHS = frozenset(
         "tests/test_trading2452_architecture_contract.py",
     }
 )
-DOCS_GOV_SUPERSEDED_LIVE_SOURCE_PATHS = DOCS_GOV_SOURCE_PATHS - {
-    DOCS_GOV_SUPPORTING_DOC
-}
+DOCS_GOV_SUPERSEDED_LIVE_SOURCE_PATHS = DOCS_GOV_SOURCE_PATHS - {DOCS_GOV_SUPPORTING_DOC}
+WAVE12_SECTION = "phase_arch_004_wave12_g4_d0b_s2"
+WAVE12_BASE_COMMIT = "12b1fb86369f146c9ef1c7ac54872eb8150ed791"
+WAVE12_BASELINE_GIT_BLOB = "43e39f378110325a3d40fdeebae2c1b2976bc40f"
+WAVE12_HISTORICAL_PREFIX_BYTE_COUNT = 1_158_058
+WAVE12_HISTORICAL_PREFIX_SHA256 = "98444bce4775733359a238a561be02e8e536418b33d6032af60abfddf7f2d512"
+WAVE12_READINESS_POLICY_PATH = Path("config/architecture/arch_004_wave12_g4_d0b_readiness.yaml")
 
 
 @cache
@@ -99,6 +99,23 @@ def _docs_gov_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == DOCS_GOV_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _wave12_base_baseline_blob() -> bytes:
+    object_name = f"{WAVE12_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == WAVE12_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -141,6 +158,23 @@ def _assert_docs_gov_historical_prefix_immutable(
     assert docs_gov_suffix.startswith(
         expected_marker
     ), "DOCS-GOV closeout must be appended after the exact Wave11 closeout blob"
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_wave12_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == WAVE12_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == WAVE12_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:WAVE12_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, "Wave12 historical prefix differs from its base blob"
+    assert hashlib.sha256(historical_prefix).hexdigest() == WAVE12_HISTORICAL_PREFIX_SHA256
+    wave12_suffix = current_bytes[WAVE12_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{WAVE12_SECTION}:\n".encode()
+    assert wave12_suffix.startswith(
+        expected_marker
+    ), "Wave12 closeout must be appended after the exact prior baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -234,6 +268,14 @@ def _assert_current_docs_gov_historical_prefix_immutable() -> None:
 
 
 @cache
+def _assert_current_wave12_historical_prefix_immutable() -> None:
+    _assert_wave12_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _wave12_base_baseline_blob(),
+    )
+
+
+@cache
 def _wave11_superseded_live_source_paths() -> frozenset[str]:
     _assert_current_wave11_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
@@ -249,6 +291,16 @@ def _docs_gov_superseded_live_source_paths() -> frozenset[str]:
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     docs_gov = baseline[DOCS_GOV_SECTION]
     paths = docs_gov["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _wave12_superseded_live_source_paths() -> frozenset[str]:
+    _assert_current_wave12_historical_prefix_immutable()
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    wave12 = baseline[WAVE12_SECTION]
+    paths = wave12["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -278,12 +330,11 @@ def _source_sha256_at_commit(source: dict[str, object], commit: str) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-@cache
-def _docs_gov_prior_active_source_mismatches() -> frozenset[str]:
+def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     mismatches: set[str] = set()
     for section_id, section in baseline.items():
-        if section_id == DOCS_GOV_SECTION:
+        if section_id == stop_section:
             break
         if not isinstance(section, dict):
             continue
@@ -309,6 +360,16 @@ def _docs_gov_prior_active_source_mismatches() -> frozenset[str]:
     return frozenset(mismatches)
 
 
+@cache
+def _docs_gov_prior_active_source_mismatches() -> frozenset[str]:
+    return _prior_active_source_mismatches(DOCS_GOV_SECTION)
+
+
+@cache
+def _wave12_prior_active_source_mismatches() -> frozenset[str]:
+    return _prior_active_source_mismatches(WAVE12_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
@@ -316,8 +377,9 @@ def _source_sha256(source: dict[str, object]) -> str:
     superseded_paths = (
         _wave11_superseded_live_source_paths()
         | _docs_gov_superseded_live_source_paths()
+        | _wave12_superseded_live_source_paths()
     )
-    assert _docs_gov_prior_active_source_mismatches() == superseded_paths
+    assert _wave12_prior_active_source_mismatches() == superseded_paths
     if str(source["path"]) in superseded_paths:
         return str(source["sha256"])
     return _raw_source_sha256(source)
@@ -672,9 +734,17 @@ def test_arch_004_phase_g_in_progress_policy_keeps_freeze_and_preserves_safety()
     }
     assert phase_g["g2_current_plan"]["closeout_status"] == ("COMPLETE_FORMAL_GATES_PASS")
     assert phase_g["g2_current_plan"]["next_wave"] == {
-        "status": "READY_NOT_DISPATCHED",
+        "status": "IN_PROGRESS_W12_S2_SHARED_INTEGRATION",
         "architecture_stage": "G4_operations_consumer_migration",
         "paired_task": "DATA-GOV-001_D0B_CANONICAL_DQ_EVIDENCE",
+        "requirement_path": (
+            "docs/requirements/"
+            "ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md"
+        ),
+        "readiness_policy_path": ("config/architecture/arch_004_wave12_g4_d0b_readiness.yaml"),
+        "readiness_artifact_path": (
+            "inputs/architecture/arch_004_wave12_g4_d0b_parallel_readiness.json"
+        ),
         "max_active_domain_workers": 2,
         "g3_dispatch_allowed": False,
         "g5_dispatch_allowed": False,
@@ -1309,9 +1379,9 @@ def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
         for source in sources
     )
     for source in sources:
-        assert (
-            _source_sha256_at_commit(source, DOCS_GOV_BASE_COMMIT) == source["sha256"]
-        ), source["path"]
+        assert _source_sha256_at_commit(source, DOCS_GOV_BASE_COMMIT) == source["sha256"], source[
+            "path"
+        ]
     validation = wave11["validation"]
     full_validation = validation["full_validation"]
     assert full_validation["attempts_append_only"] is True
@@ -1420,7 +1490,7 @@ def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
 def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority() -> None:
     _assert_current_docs_gov_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == DOCS_GOV_SECTION
+    assert next(reversed(baseline)) == WAVE12_SECTION
     docs_gov = baseline[DOCS_GOV_SECTION]
 
     assert docs_gov["schema_version"] == "docs_gov_001_freshness_closeout.v1"
@@ -1477,14 +1547,9 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
         "historical_hashes_rewritten": False,
         "current_hash_authority": f"{DOCS_GOV_SECTION}.sources",
     }
-    assert set(docs_gov["superseded_live_source_paths"]) == (
-        DOCS_GOV_SUPERSEDED_LIVE_SOURCE_PATHS
-    )
+    assert set(docs_gov["superseded_live_source_paths"]) == (DOCS_GOV_SUPERSEDED_LIVE_SOURCE_PATHS)
     assert len(docs_gov["superseded_live_source_paths"]) == 19
-    assert _docs_gov_prior_active_source_mismatches() == (
-        _wave11_superseded_live_source_paths()
-        | DOCS_GOV_SUPERSEDED_LIVE_SOURCE_PATHS
-    )
+    assert _docs_gov_prior_active_source_mismatches() == (_wave12_superseded_live_source_paths())
 
     sources = docs_gov["sources"]
     source_paths = [str(source["path"]) for source in sources]
@@ -1500,7 +1565,9 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
         for source in sources
     )
     for source in sources:
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256_at_commit(source, WAVE12_BASE_COMMIT) == source["sha256"], source[
+            "path"
+        ]
     assert docs_gov["source_hash_status"] == "FINAL_TRACKED_STATE_FRESH"
 
     assert docs_gov["safety"] == {
@@ -1508,6 +1575,86 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
         "runtime_behavior_changed": False,
         "strategy_or_investment_interpretation_changed": False,
         "data_backtest_or_provider_execution": False,
+        "order_or_broker_action": "none",
+        "production_effect": "none",
+    }
+
+
+def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
+    _assert_current_wave12_historical_prefix_immutable()
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == WAVE12_SECTION
+    wave12 = baseline[WAVE12_SECTION]
+
+    assert wave12["schema_version"] == "arch_004_wave12_g4_d0b_s2_closeout.v1"
+    assert wave12["status"] in {
+        "VALIDATING_FORMAL_GATE",
+        "COMPLETE_WAVE12_S2",
+    }
+    assert wave12["boundary_id"] == "ARCH-004-WAVE12-S2"
+    assert wave12["task_ids"] == [
+        "ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION",
+        "DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE",
+    ]
+    assert wave12["prior_sections_immutability"] == {
+        "source_commit": WAVE12_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": WAVE12_BASELINE_GIT_BLOB,
+        "raw_byte_count": WAVE12_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": WAVE12_HISTORICAL_PREFIX_SHA256,
+        "append_offset": WAVE12_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert wave12["research_window"] == {
+        "default_start": "2021-02-22",
+        "legacy_2022_default_active": False,
+    }
+    assert wave12["generated_state"] == {
+        "status": "PASS",
+        "module_count": 1004,
+        "test_file_count": 1167,
+        "direct_writer_current_count": 856,
+        "direct_writer_violation_count": 0,
+        "aggregate_fragment_count": 15,
+        "deprecation_inventory_id": "arch_004g_deprecation_inventory_9ed017c2820799618496",
+        "active_task_count": 435,
+        "completed_task_count": 457,
+    }
+
+    superseded = set(wave12["superseded_live_source_paths"])
+    assert superseded == _wave12_prior_active_source_mismatches()
+    assert wave12["supersession"] == {
+        "superseded_by_phase": "ARCH-004-WAVE12-S2",
+        "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
+        "historical_hashes_rewritten": False,
+        "current_hash_authority": f"{WAVE12_SECTION}.sources",
+    }
+
+    sources = wave12["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert superseded <= set(source_paths)
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert "docs/research/growth_tilt_owner_diagnosis_pack.md" not in source_paths
+    readiness = safe_load_yaml_path(WAVE12_READINESS_POLICY_PATH)
+    required_paths: set[str] = set()
+    for manifest in readiness["change_manifests"]:
+        required_paths.update(str(path) for path in manifest["owned_paths"])
+        required_paths.update(str(path) for path in manifest["shared_paths"])
+    required_paths.discard(WAVE11_BASELINE_REPOSITORY_PATH)
+    assert required_paths <= set(source_paths)
+    for source in sources:
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert wave12["source_hash_status"] == "FINAL_TRACKED_STATE_FRESH"
+
+    assert wave12["safety"] == {
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "investment_interpretation_changed": False,
+        "backtest_or_search_executed": False,
+        "paper_shadow_or_portfolio_mutated": False,
+        "data_consumer_cutover_performed": False,
+        "automatic_command_dispatch_enabled": False,
         "order_or_broker_action": "none",
         "production_effect": "none",
     }

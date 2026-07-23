@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import io
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from enum import StrEnum
@@ -56,6 +58,40 @@ class DataFileSummary:
     sha256: str | None = None
     min_date: date | None = None
     max_date: date | None = None
+
+
+@dataclass(frozen=True)
+class DataFileSnapshot:
+    """One immutable observation of a data-quality input path."""
+
+    path: Path
+    exists: bool
+    content: bytes | None
+    read_error: str | None = None
+
+    @property
+    def sha256(self) -> str | None:
+        return None if self.content is None else sha256(self.content).hexdigest()
+
+
+def capture_data_file_snapshots(paths: Mapping[str, Path]) -> dict[str, DataFileSnapshot]:
+    """Capture every distinct path once so parsing and bindings share identical bytes."""
+
+    captured: dict[Path, tuple[bool, bytes | None, str | None]] = {}
+    snapshots: dict[str, DataFileSnapshot] = {}
+    for role, path in paths.items():
+        resolved = path.resolve(strict=False)
+        observation = captured.get(resolved)
+        if observation is None:
+            try:
+                observation = (True, path.read_bytes(), None)
+            except FileNotFoundError:
+                observation = (False, None, None)
+            except OSError as exc:
+                observation = (path.exists(), None, str(exc))
+            captured[resolved] = observation
+        snapshots[role] = DataFileSnapshot(path, *observation)
+    return snapshots
 
 
 @dataclass(frozen=True)
@@ -125,20 +161,35 @@ def validate_data_cache(
     backtest_manifest_path: Path | None = None,
     secondary_prices_path: Path | None = None,
     require_secondary_prices: bool = False,
+    *,
+    file_snapshots: Mapping[str, DataFileSnapshot] | None = None,
 ) -> DataQualityReport:
     issues: list[DataQualityIssue] = []
     marketstack_reconciliation_records: tuple[MarketstackReconciliationRecord, ...] = ()
 
-    prices, price_summary = _read_csv(prices_path, issues, "prices")
-    rates, rate_summary = _read_csv(rates_path, issues, "rates")
+    input_paths = {"prices": prices_path, "rates": rates_path}
+    if manifest_path is not None:
+        input_paths["manifest"] = manifest_path
+    if backtest_manifest_path is not None:
+        input_paths["backtest_manifest"] = backtest_manifest_path
+    if secondary_prices_path is not None:
+        input_paths["secondary_prices"] = secondary_prices_path
+    snapshots = (
+        capture_data_file_snapshots(input_paths)
+        if file_snapshots is None
+        else _validated_file_snapshots(input_paths, file_snapshots)
+    )
+
+    prices, price_summary = _read_csv(snapshots["prices"], issues, "prices")
+    rates, rate_summary = _read_csv(snapshots["rates"], issues, "rates")
     secondary_prices, secondary_price_summary = _read_secondary_prices_csv(
-        secondary_prices_path,
+        None if secondary_prices_path is None else snapshots["secondary_prices"],
         issues,
         required=require_secondary_prices,
     )
     manifest_summary = (
         _validate_download_manifest(
-            manifest_path,
+            snapshots["manifest"],
             price_summary=price_summary,
             rate_summary=rate_summary,
             secondary_price_summary=secondary_price_summary,
@@ -147,7 +198,9 @@ def validate_data_cache(
         if manifest_path is not None
         else None
     )
-    backtest_manifest_context = _load_backtest_manifest_context(backtest_manifest_path)
+    backtest_manifest_context = _load_backtest_manifest_context(
+        None if backtest_manifest_path is None else snapshots["backtest_manifest"]
+    )
 
     if prices is not None:
         price_summary = _validate_prices(
@@ -321,12 +374,34 @@ def default_quality_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"data_quality_{as_of.isoformat()}.md"
 
 
+def _validated_file_snapshots(
+    paths: Mapping[str, Path],
+    snapshots: Mapping[str, DataFileSnapshot],
+) -> dict[str, DataFileSnapshot]:
+    expected_roles = set(paths)
+    if set(snapshots) != expected_roles:
+        raise ValueError(
+            "file_snapshots roles mismatch: "
+            f"expected={sorted(expected_roles)} actual={sorted(snapshots)}"
+        )
+    validated: dict[str, DataFileSnapshot] = {}
+    for role, path in paths.items():
+        snapshot = snapshots[role]
+        if not isinstance(snapshot, DataFileSnapshot):
+            raise TypeError(f"file_snapshots[{role!r}] must be DataFileSnapshot")
+        if snapshot.path.resolve(strict=False) != path.resolve(strict=False):
+            raise ValueError(f"file_snapshots[{role!r}] path mismatch")
+        validated[role] = snapshot
+    return validated
+
+
 def _read_csv(
-    path: Path,
+    snapshot: DataFileSnapshot,
     issues: list[DataQualityIssue],
     label: str,
 ) -> tuple[pd.DataFrame | None, DataFileSummary]:
-    if not path.exists():
+    path = snapshot.path
+    if not snapshot.exists:
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
@@ -337,8 +412,19 @@ def _read_csv(
         )
         return None, DataFileSummary(path=path, exists=False)
 
+    if snapshot.content is None:
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                f"{label}_file_unreadable",
+                f"{_data_label(label)}文件无法读取：{snapshot.read_error or 'unknown error'}",
+                source=_source_label(label),
+            )
+        )
+        return None, DataFileSummary(path=path, exists=True)
+
     try:
-        data = pd.read_csv(path)
+        data = pd.read_csv(io.BytesIO(snapshot.content))
     except Exception as exc:
         issues.append(
             DataQualityIssue(
@@ -348,25 +434,26 @@ def _read_csv(
                 source=_source_label(label),
             )
         )
-        return None, DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
+        return None, DataFileSummary(path=path, exists=True, sha256=snapshot.sha256)
 
     return data, DataFileSummary(
         path=path,
         exists=True,
         rows=len(data),
-        sha256=_file_sha256(path),
+        sha256=snapshot.sha256,
     )
 
 
 def _read_secondary_prices_csv(
-    path: Path | None,
+    snapshot: DataFileSnapshot | None,
     issues: list[DataQualityIssue],
     *,
     required: bool,
 ) -> tuple[pd.DataFrame | None, DataFileSummary | None]:
-    if path is None:
+    if snapshot is None:
         return None, None
-    if not path.exists():
+    path = snapshot.path
+    if not snapshot.exists:
         issues.append(
             DataQualityIssue(
                 Severity.ERROR if required else Severity.WARNING,
@@ -377,8 +464,22 @@ def _read_secondary_prices_csv(
         )
         return None, DataFileSummary(path=path, exists=False)
 
+    if snapshot.content is None:
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "secondary_prices_file_unreadable",
+                (
+                    "第二行情源 Marketstack 文件无法读取："
+                    f"{snapshot.read_error or 'unknown error'}"
+                ),
+                source="第二行情源 Marketstack",
+            )
+        )
+        return None, DataFileSummary(path=path, exists=True)
+
     try:
-        data = pd.read_csv(path)
+        data = pd.read_csv(io.BytesIO(snapshot.content))
     except Exception as exc:
         issues.append(
             DataQualityIssue(
@@ -388,24 +489,25 @@ def _read_secondary_prices_csv(
                 source="第二行情源 Marketstack",
             )
         )
-        return None, DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
+        return None, DataFileSummary(path=path, exists=True, sha256=snapshot.sha256)
 
     return data, DataFileSummary(
         path=path,
         exists=True,
         rows=len(data),
-        sha256=_file_sha256(path),
+        sha256=snapshot.sha256,
     )
 
 
 def _validate_download_manifest(
-    path: Path,
+    snapshot: DataFileSnapshot,
     price_summary: DataFileSummary,
     rate_summary: DataFileSummary,
     secondary_price_summary: DataFileSummary | None,
     issues: list[DataQualityIssue],
 ) -> DataFileSummary:
-    if not path.exists():
+    path = snapshot.path
+    if not snapshot.exists:
         issues.append(
             DataQualityIssue(
                 Severity.WARNING,
@@ -416,8 +518,19 @@ def _validate_download_manifest(
         )
         return DataFileSummary(path=path, exists=False)
 
+    if snapshot.content is None:
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "download_manifest_unreadable",
+                f"下载审计清单无法读取：{snapshot.read_error or 'unknown error'}",
+                source="下载审计清单",
+            )
+        )
+        return DataFileSummary(path=path, exists=True)
+
     try:
-        manifest = pd.read_csv(path)
+        manifest = pd.read_csv(io.BytesIO(snapshot.content))
     except Exception as exc:
         issues.append(
             DataQualityIssue(
@@ -427,13 +540,13 @@ def _validate_download_manifest(
                 source="下载审计清单",
             )
         )
-        return DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
+        return DataFileSummary(path=path, exists=True, sha256=snapshot.sha256)
 
     summary = DataFileSummary(
         path=path,
         exists=True,
         rows=len(manifest),
-        sha256=_file_sha256(path),
+        sha256=snapshot.sha256,
     )
     missing_columns = [column for column in MANIFEST_REQUIRED_COLUMNS if column not in manifest]
     if missing_columns:
@@ -801,12 +914,17 @@ def _manifest_context_error_code(
     return "MISSING_PRICE_SOURCE"
 
 
-def _load_backtest_manifest_context(path: Path | None) -> dict[str, Any] | None:
-    if path is None:
+def _load_backtest_manifest_context(
+    snapshot: DataFileSnapshot | None,
+) -> dict[str, Any] | None:
+    if snapshot is None:
         return None
+    path = snapshot.path
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        if snapshot.content is None:
+            raise ValueError(snapshot.read_error or "file is missing")
+        payload = json.loads(snapshot.content.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
         return {
             "path": str(path),
             "assets": [],
@@ -1905,14 +2023,6 @@ def _marketstack_reconciliation_section(report: DataQualityReport) -> list[str]:
             f"{_escape_markdown_table(record.evidence)} |"
         )
     return lines
-
-
-def _file_sha256(path: Path) -> str:
-    digest = sha256()
-    with path.open("rb") as file:
-        for chunk in iter(lambda: file.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _render_file_summary(label: str, summary: DataFileSummary) -> str:
