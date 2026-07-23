@@ -8507,7 +8507,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_candidate_signal_prediction_artifact_audit
   path: tests/test_candidate_signal_prediction_artifact_audit.py
-  sha256: 5715326efc6498c2cd99409d74d97d92ec743739ccdec6caccfc4dc8276e3cad
+  sha256: b157b201e18b0c324f0afe3a8a955e316ce2bfb68adb3f1dae93600480ec900e
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
