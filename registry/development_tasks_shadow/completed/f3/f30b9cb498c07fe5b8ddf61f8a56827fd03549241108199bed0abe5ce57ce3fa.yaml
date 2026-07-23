@@ -1,0 +1,131 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN
+  title: null
+  domain: Research trends / signal validity and aging runtime design
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2322_Signal_Validity_Aging_Runtime_Design.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2322_Signal_Validity_Aging_Runtime_Design.md`；依赖
+    TRADING-2321 risk-cap cooldown / decay design package 和 owner 附件 Signal Validity
+    / Aging Runtime Design；本批只设计 valid_from、valid_until、decay、staleness、trigger aging
+    和 release/restore rule runtime contract，不启动真实 runtime。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 已形成 signal validity aging runtime design summary、lifecycle contract、aging
+      rule matrix、trigger aging state matrix、release/restore rule matrix、runtime record
+      schema、safety boundary 和 research report；不得读取或写入 portfolio weights，不得生成 target
+      weight / rebalance / broker order，不得自动接日报生产链路、paper-shadow、production 或 broker。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 487
+    row_sha256: 79cf40a64c09a99beb3186406d7146a78ddf7c3c90966c70ab453158307797ac
+    cell_count: 8
+    all_cells:
+    - TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN
+    - Research trends / signal validity and aging runtime design
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2322_Signal_Validity_Aging_Runtime_Design.md`；依赖
+      TRADING-2321 risk-cap cooldown / decay design package 和 owner 附件 Signal Validity
+      / Aging Runtime Design；本批只设计 valid_from、valid_until、decay、staleness、trigger
+      aging 和 release/restore rule runtime contract，不启动真实 runtime。
+    - 已形成 signal validity aging runtime design summary、lifecycle contract、aging rule
+      matrix、trigger aging state matrix、release/restore rule matrix、runtime record
+      schema、safety boundary 和 research report；不得读取或写入 portfolio weights，不得生成 target
+      weight / rebalance / broker order，不得自动接日报生产链路、paper-shadow、production 或 broker。
+    - '2026-07-01: 根据 owner roadmap 和 TRADING-2321 design-only output 新增并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，验证通过
+      Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+      diff --check`；本命令不读取 cached market / macro data、runtime observe records 或 portfolio
+      data，因此 `aits validate-data` 不适用。 2026-07-23: GOV-006 N1 coordinator review
+      后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN|Research trends
+      / signal validity and aging runtime design|P0|DONE|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2322_Signal_Validity_Aging_Runtime_Design.md`；依赖
+      TRADING-2321 risk-cap cooldown / decay design package 和 owner 附件 Signal Validity
+      / Aging Runtime Design；本批只设计 valid_from、valid_until、decay、staleness、trigger
+      aging 和 release/restore rule runtime contract，不启动真实 runtime。|已形成 signal validity
+      aging runtime design summary、lifecycle contract、aging rule matrix、trigger aging
+      state matrix、release/restore rule matrix、runtime record schema、safety boundary
+      和 research report；不得读取或写入 portfolio weights，不得生成 target weight / rebalance /
+      broker order，不得自动接日报生产链路、paper-shadow、production 或 broker。|2026-07-01: 根据 owner
+      roadmap 和 TRADING-2321 design-only output 新增并进入 IN_PROGRESS；当前 worktree 有两个无关
+      research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；真实
+      run status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，验证通过
+      Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+      diff --check`；本命令不读取 cached market / macro data、runtime observe records 或 portfolio
+      data，因此 `aits validate-data` 不适用。 2026-07-23: GOV-006 N1 coordinator review
+      后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-79cf40a64c09a99beb318640
+  task_id: TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner roadmap 和 TRADING-2321 design-only output 新增并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，验证通过
+      Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+      diff --check`；本命令不读取 cached market / macro data、runtime observe records 或 portfolio
+      data，因此 `aits validate-data` 不适用。 2026-07-23: GOV-006 N1 coordinator review
+      后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:79cf40a64c09a99beb3186406d7146a78ddf7c3c90966c70ab453158307797ac
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2322_SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN
+  - Research trends / signal validity and aging runtime design
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2322_Signal_Validity_Aging_Runtime_Design.md`；依赖
+    TRADING-2321 risk-cap cooldown / decay design package 和 owner 附件 Signal Validity
+    / Aging Runtime Design；本批只设计 valid_from、valid_until、decay、staleness、trigger aging
+    和 release/restore rule runtime contract，不启动真实 runtime。
+  - 已形成 signal validity aging runtime design summary、lifecycle contract、aging rule
+    matrix、trigger aging state matrix、release/restore rule matrix、runtime record schema、safety
+    boundary 和 research report；不得读取或写入 portfolio weights，不得生成 target weight / rebalance
+    / broker order，不得自动接日报生产链路、paper-shadow、production 或 broker。
+  - '2026-07-01: 根据 owner roadmap 和 TRADING-2321 design-only output 新增并进入 IN_PROGRESS；当前
+    worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
+    VALIDATING；真实 run status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，验证通过
+    Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+    diff --check`；本命令不读取 cached market / macro data、runtime observe records 或 portfolio
+    data，因此 `aits validate-data` 不适用。 2026-07-23: GOV-006 N1 coordinator review 后按
+    OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links:
+  - docs/requirements/TRADING-2322_Signal_Validity_Aging_Runtime_Design.md
+  terminal: true
+  raw_row_sha256: 79cf40a64c09a99beb3186406d7146a78ddf7c3c90966c70ab453158307797ac
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2e704206cbc72453df19ca4b7b660d2700ff371a4d466440b4dddd8c936365d7

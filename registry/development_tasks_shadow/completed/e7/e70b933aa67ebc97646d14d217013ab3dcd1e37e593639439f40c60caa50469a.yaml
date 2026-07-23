@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+  title: null
+  domain: Research trends / risk-cap forward observe evidence accumulation extension
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md`；承接
+    TRADING-2293 next task recommendation 和 owner 附件 P0 mainline；本批已设计 `volatility_regime_scope_narrowed_risk_cap_v1`
+    observe-only evidence accumulation extension，不启动 runtime、不接日报生产链路、不生成 owner review
+    package、不做 paper-shadow/production/broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 形成 evidence accumulation extension plan、runtime contract、daily observe record
+      schema、trigger follow-up schema、storage layout、minimum observation windows、trigger
+      sample sufficiency handling、continue/extend/stop review criteria 和 safety boundary；所有
+      outputs 固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`、`runtime_started=false`、report
+      integration=`design_only`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 485
+    row_sha256: 45f8730a05ffcee6e790c0201ad570ad147430df5df4734e728c0e4f07a024d3
+    cell_count: 8
+    all_cells:
+    - TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+    - Research trends / risk-cap forward observe evidence accumulation extension
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md`；承接
+      TRADING-2293 next task recommendation 和 owner 附件 P0 mainline；本批已设计 `volatility_regime_scope_narrowed_risk_cap_v1`
+      observe-only evidence accumulation extension，不启动 runtime、不接日报生产链路、不生成 owner
+      review package、不做 paper-shadow/production/broker。
+    - 形成 evidence accumulation extension plan、runtime contract、daily observe record
+      schema、trigger follow-up schema、storage layout、minimum observation windows、trigger
+      sample sufficiency handling、continue/extend/stop review criteria 和 safety boundary；所有
+      outputs 固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`、`runtime_started=false`、report
+      integration=`design_only`。
+    - '2026-07-01: 根据 TRADING-2293 readiness output 和 owner 附件登记；该 mainline 与 TRADING-2307
+      execution cooldown/decay/cap mechanics 分离。2026-07-01: 转入 IN_PROGRESS；当前 worktree
+      已有两个 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并转入 VALIDATING；真实
+      run status=`FORWARD_OBSERVE_EVIDENCE_ACCUMULATION_PLAN_READY_PROMOTION_BLOCKED`，source
+      data quality=`PASS_WITH_WARNINGS`，sparse trigger route=`extend_observe`；验证通过新增
+      focused 4 passed、docs/registry/task-register focused 35 passed、Ruff、compileall、contract-validation
+      193 passed 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator review 后按
+      OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN|Research trends
+      / risk-cap forward observe evidence accumulation extension|P0|DONE|系统实现 + 项目
+      owner 后续复核|详见 `docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md`；承接
+      TRADING-2293 next task recommendation 和 owner 附件 P0 mainline；本批已设计 `volatility_regime_scope_narrowed_risk_cap_v1`
+      observe-only evidence accumulation extension，不启动 runtime、不接日报生产链路、不生成 owner
+      review package、不做 paper-shadow/production/broker。|形成 evidence accumulation extension
+      plan、runtime contract、daily observe record schema、trigger follow-up schema、storage
+      layout、minimum observation windows、trigger sample sufficiency handling、continue/extend/stop
+      review criteria 和 safety boundary；所有 outputs 固定 promotion/paper-shadow/production/broker
+      false/none、`forward_observe_started=false`、`runtime_started=false`、report integration=`design_only`。|2026-07-01:
+      根据 TRADING-2293 readiness output 和 owner 附件登记；该 mainline 与 TRADING-2307 execution
+      cooldown/decay/cap mechanics 分离。2026-07-01: 转入 IN_PROGRESS；当前 worktree 已有两个
+      research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并转入 VALIDATING；真实
+      run status=`FORWARD_OBSERVE_EVIDENCE_ACCUMULATION_PLAN_READY_PROMOTION_BLOCKED`，source
+      data quality=`PASS_WITH_WARNINGS`，sparse trigger route=`extend_observe`；验证通过新增
+      focused 4 passed、docs/registry/task-register focused 35 passed、Ruff、compileall、contract-validation
+      193 passed 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator review 后按
+      OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-45f8730a05ffcee6e790c020
+  task_id: TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 TRADING-2293 readiness output 和 owner 附件登记；该 mainline 与
+      TRADING-2307 execution cooldown/decay/cap mechanics 分离。2026-07-01: 转入 IN_PROGRESS；当前
+      worktree 已有两个 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并转入 VALIDATING；真实 run status=`FORWARD_OBSERVE_EVIDENCE_ACCUMULATION_PLAN_READY_PROMOTION_BLOCKED`，source
+      data quality=`PASS_WITH_WARNINGS`，sparse trigger route=`extend_observe`；验证通过新增
+      focused 4 passed、docs/registry/task-register focused 35 passed、Ruff、compileall、contract-validation
+      193 passed 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator review 后按
+      OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:45f8730a05ffcee6e790c0201ad570ad147430df5df4734e728c0e4f07a024d3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2294_EVIDENCE_ACCUMULATION_EXTENSION_PLAN
+  - Research trends / risk-cap forward observe evidence accumulation extension
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md`；承接
+    TRADING-2293 next task recommendation 和 owner 附件 P0 mainline；本批已设计 `volatility_regime_scope_narrowed_risk_cap_v1`
+    observe-only evidence accumulation extension，不启动 runtime、不接日报生产链路、不生成 owner review
+    package、不做 paper-shadow/production/broker。
+  - 形成 evidence accumulation extension plan、runtime contract、daily observe record
+    schema、trigger follow-up schema、storage layout、minimum observation windows、trigger
+    sample sufficiency handling、continue/extend/stop review criteria 和 safety boundary；所有
+    outputs 固定 promotion/paper-shadow/production/broker false/none、`forward_observe_started=false`、`runtime_started=false`、report
+    integration=`design_only`。
+  - '2026-07-01: 根据 TRADING-2293 readiness output 和 owner 附件登记；该 mainline 与 TRADING-2307
+    execution cooldown/decay/cap mechanics 分离。2026-07-01: 转入 IN_PROGRESS；当前 worktree
+    已有两个 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并转入 VALIDATING；真实
+    run status=`FORWARD_OBSERVE_EVIDENCE_ACCUMULATION_PLAN_READY_PROMOTION_BLOCKED`，source
+    data quality=`PASS_WITH_WARNINGS`，sparse trigger route=`extend_observe`；验证通过新增
+    focused 4 passed、docs/registry/task-register focused 35 passed、Ruff、compileall、contract-validation
+    193 passed 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator review 后按
+    OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links:
+  - docs/requirements/TRADING-2294_Evidence_Accumulation_Extension_Plan.md
+  terminal: true
+  raw_row_sha256: 45f8730a05ffcee6e790c0201ad570ad147430df5df4734e728c0e4f07a024d3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 283530c4c14f6121323eb95c5fe6b254e0bff4ee05fa5dbc0ba690dcaaf76960

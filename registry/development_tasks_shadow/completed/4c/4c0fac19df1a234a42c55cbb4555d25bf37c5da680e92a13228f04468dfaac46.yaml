@@ -1,0 +1,154 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-174
+  title: null
+  domain: Developer productivity/Full Pytest Runtime and Validation Tier Optimization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner 观察
+  requirement_refs:
+  - docs/requirements/TRADING-174_Full_Pytest_Runtime_and_Validation_Tier_Optimization.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-174_Full_Pytest_Runtime_and_Validation_Tier_Optimization.md`；baseline
+    分层验证入口、top slow tests 首轮压缩、默认 16 worker 并行 pytest 均已完成；`scripts/run_validation_tier.py`
+    默认使用 `pytest-xdist` 的 `-n 16 --dist loadfile`，保留 `--workers 1` 串行复现入口；CI full
+    test step 已改为调用同一 tier runner
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `pytest-xdist` dev dependency；validation tier runner、README、CI 和 runner
+      tests 已同步默认 16 worker 行为；`--print-only` / JSON summary 暴露 workers/dist；验证通过
+      runner tests 3 passed、fast tier 37 passed / 14.72 秒、dynamic-v3 tier 47 passed
+      / 61.22 秒、full tier 2314 passed / 642 warnings / 138.04 秒、ruff、compileall、docs
+      freshness、git diff check；并行验证未观察到 worker crash、latest pointer 竞争或 shared artifact
+      并发失败；后续继续观察 CI 和低核环境表现
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 501
+    row_sha256: 1a438774771a0a90602264f44a697e039ac40d116245375bd847277fc0bc783d
+    cell_count: 8
+    all_cells:
+    - TRADING-174
+    - Developer productivity/Full Pytest Runtime and Validation Tier Optimization
+    - P1
+    - DONE
+    - 系统验证 + 项目 owner 观察
+    - 详细拆解见 `docs/requirements/TRADING-174_Full_Pytest_Runtime_and_Validation_Tier_Optimization.md`；baseline
+      分层验证入口、top slow tests 首轮压缩、默认 16 worker 并行 pytest 均已完成；`scripts/run_validation_tier.py`
+      默认使用 `pytest-xdist` 的 `-n 16 --dist loadfile`，保留 `--workers 1` 串行复现入口；CI full
+      test step 已改为调用同一 tier runner
+    - 新增 `pytest-xdist` dev dependency；validation tier runner、README、CI 和 runner tests
+      已同步默认 16 worker 行为；`--print-only` / JSON summary 暴露 workers/dist；验证通过 runner
+      tests 3 passed、fast tier 37 passed / 14.72 秒、dynamic-v3 tier 47 passed / 61.22
+      秒、full tier 2314 passed / 642 warnings / 138.04 秒、ruff、compileall、docs freshness、git
+      diff check；并行验证未观察到 worker crash、latest pointer 竞争或 shared artifact 并发失败；后续继续观察
+      CI 和低核环境表现
+    - '2026-06-10: 新增并进入 IN_PROGRESS，原因：owner 明确要求优先处理 full pytest 超时以提升开发效率；本任务只优化验证反馈和可审计测试分层，不改变业务逻辑、数据质量
+      gate、scoring、backtest 或 report 结论。2026-06-10: baseline 完成并转入 VALIDATING，原因：全量测试不是挂死，主要是当前
+      suite 进入 18-20 分钟级；已提供可审计 scoped/full 分层入口并保留 full gate。2026-06-10: 重新进入 IN_PROGRESS，原因：owner
+      要求继续压缩 full runtime；本轮优先处理 top slow tests 的重复 fixture/真实评估路径。2026-06-10: 第二阶段完成并转回
+      VALIDATING；full runtime 从 17:56 降到 14:24，未跳过关键测试，full gate 仍完整执行。2026-06-10:
+      第三阶段进入 IN_PROGRESS，原因：owner 要求默认开八核并充分利用多核性能；本轮增加可审计并行执行入口并验证并发安全。2026-06-10:
+      第三阶段完成并转回 VALIDATING；默认 full gate 从串行 14:24 降到并行约 2:18，full gate 仍完整执行且保留串行复现。2026-06-15:
+      owner 要求把默认并行度从 8 worker 调整为 16 worker；本轮只更新 validation tier 默认参数、README、requirements
+      和 runner tests，不改变 full gate 覆盖范围或业务逻辑；focused runner tests 3 passed，`full --print-only`
+      确认默认命令为 `-n 16 --dist loadfile`。 2026-07-23: GOV-006 N1 coordinator review 后按
+      OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-174|Developer productivity/Full Pytest Runtime and Validation
+      Tier Optimization|P1|DONE|系统验证 + 项目 owner 观察|详细拆解见 `docs/requirements/TRADING-174_Full_Pytest_Runtime_and_Validation_Tier_Optimization.md`；baseline
+      分层验证入口、top slow tests 首轮压缩、默认 16 worker 并行 pytest 均已完成；`scripts/run_validation_tier.py`
+      默认使用 `pytest-xdist` 的 `-n 16 --dist loadfile`，保留 `--workers 1` 串行复现入口；CI full
+      test step 已改为调用同一 tier runner|新增 `pytest-xdist` dev dependency；validation tier
+      runner、README、CI 和 runner tests 已同步默认 16 worker 行为；`--print-only` / JSON summary
+      暴露 workers/dist；验证通过 runner tests 3 passed、fast tier 37 passed / 14.72 秒、dynamic-v3
+      tier 47 passed / 61.22 秒、full tier 2314 passed / 642 warnings / 138.04 秒、ruff、compileall、docs
+      freshness、git diff check；并行验证未观察到 worker crash、latest pointer 竞争或 shared artifact
+      并发失败；后续继续观察 CI 和低核环境表现|2026-06-10: 新增并进入 IN_PROGRESS，原因：owner 明确要求优先处理 full
+      pytest 超时以提升开发效率；本任务只优化验证反馈和可审计测试分层，不改变业务逻辑、数据质量 gate、scoring、backtest 或 report
+      结论。2026-06-10: baseline 完成并转入 VALIDATING，原因：全量测试不是挂死，主要是当前 suite 进入 18-20 分钟级；已提供可审计
+      scoped/full 分层入口并保留 full gate。2026-06-10: 重新进入 IN_PROGRESS，原因：owner 要求继续压缩 full
+      runtime；本轮优先处理 top slow tests 的重复 fixture/真实评估路径。2026-06-10: 第二阶段完成并转回 VALIDATING；full
+      runtime 从 17:56 降到 14:24，未跳过关键测试，full gate 仍完整执行。2026-06-10: 第三阶段进入 IN_PROGRESS，原因：owner
+      要求默认开八核并充分利用多核性能；本轮增加可审计并行执行入口并验证并发安全。2026-06-10: 第三阶段完成并转回 VALIDATING；默认 full
+      gate 从串行 14:24 降到并行约 2:18，full gate 仍完整执行且保留串行复现。2026-06-15: owner 要求把默认并行度从
+      8 worker 调整为 16 worker；本轮只更新 validation tier 默认参数、README、requirements 和 runner
+      tests，不改变 full gate 覆盖范围或业务逻辑；focused runner tests 3 passed，`full --print-only`
+      确认默认命令为 `-n 16 --dist loadfile`。 2026-07-23: GOV-006 N1 coordinator review 后按
+      OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1a438774771a0a90602264f4
+  task_id: TRADING-174
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证 + 项目 owner 观察
+    notes: '2026-06-10: 新增并进入 IN_PROGRESS，原因：owner 明确要求优先处理 full pytest 超时以提升开发效率；本任务只优化验证反馈和可审计测试分层，不改变业务逻辑、数据质量
+      gate、scoring、backtest 或 report 结论。2026-06-10: baseline 完成并转入 VALIDATING，原因：全量测试不是挂死，主要是当前
+      suite 进入 18-20 分钟级；已提供可审计 scoped/full 分层入口并保留 full gate。2026-06-10: 重新进入 IN_PROGRESS，原因：owner
+      要求继续压缩 full runtime；本轮优先处理 top slow tests 的重复 fixture/真实评估路径。2026-06-10: 第二阶段完成并转回
+      VALIDATING；full runtime 从 17:56 降到 14:24，未跳过关键测试，full gate 仍完整执行。2026-06-10:
+      第三阶段进入 IN_PROGRESS，原因：owner 要求默认开八核并充分利用多核性能；本轮增加可审计并行执行入口并验证并发安全。2026-06-10:
+      第三阶段完成并转回 VALIDATING；默认 full gate 从串行 14:24 降到并行约 2:18，full gate 仍完整执行且保留串行复现。2026-06-15:
+      owner 要求把默认并行度从 8 worker 调整为 16 worker；本轮只更新 validation tier 默认参数、README、requirements
+      和 runner tests，不改变 full gate 覆盖范围或业务逻辑；focused runner tests 3 passed，`full --print-only`
+      确认默认命令为 `-n 16 --dist loadfile`。 2026-07-23: GOV-006 N1 coordinator review 后按
+      OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1a438774771a0a90602264f44a697e039ac40d116245375bd847277fc0bc783d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-174
+  - Developer productivity/Full Pytest Runtime and Validation Tier Optimization
+  - P1
+  - DONE
+  - 系统验证 + 项目 owner 观察
+  - 详细拆解见 `docs/requirements/TRADING-174_Full_Pytest_Runtime_and_Validation_Tier_Optimization.md`；baseline
+    分层验证入口、top slow tests 首轮压缩、默认 16 worker 并行 pytest 均已完成；`scripts/run_validation_tier.py`
+    默认使用 `pytest-xdist` 的 `-n 16 --dist loadfile`，保留 `--workers 1` 串行复现入口；CI full
+    test step 已改为调用同一 tier runner
+  - 新增 `pytest-xdist` dev dependency；validation tier runner、README、CI 和 runner tests
+    已同步默认 16 worker 行为；`--print-only` / JSON summary 暴露 workers/dist；验证通过 runner tests
+    3 passed、fast tier 37 passed / 14.72 秒、dynamic-v3 tier 47 passed / 61.22 秒、full
+    tier 2314 passed / 642 warnings / 138.04 秒、ruff、compileall、docs freshness、git
+    diff check；并行验证未观察到 worker crash、latest pointer 竞争或 shared artifact 并发失败；后续继续观察
+    CI 和低核环境表现
+  - '2026-06-10: 新增并进入 IN_PROGRESS，原因：owner 明确要求优先处理 full pytest 超时以提升开发效率；本任务只优化验证反馈和可审计测试分层，不改变业务逻辑、数据质量
+    gate、scoring、backtest 或 report 结论。2026-06-10: baseline 完成并转入 VALIDATING，原因：全量测试不是挂死，主要是当前
+    suite 进入 18-20 分钟级；已提供可审计 scoped/full 分层入口并保留 full gate。2026-06-10: 重新进入 IN_PROGRESS，原因：owner
+    要求继续压缩 full runtime；本轮优先处理 top slow tests 的重复 fixture/真实评估路径。2026-06-10: 第二阶段完成并转回
+    VALIDATING；full runtime 从 17:56 降到 14:24，未跳过关键测试，full gate 仍完整执行。2026-06-10: 第三阶段进入
+    IN_PROGRESS，原因：owner 要求默认开八核并充分利用多核性能；本轮增加可审计并行执行入口并验证并发安全。2026-06-10: 第三阶段完成并转回
+    VALIDATING；默认 full gate 从串行 14:24 降到并行约 2:18，full gate 仍完整执行且保留串行复现。2026-06-15:
+    owner 要求把默认并行度从 8 worker 调整为 16 worker；本轮只更新 validation tier 默认参数、README、requirements
+    和 runner tests，不改变 full gate 覆盖范围或业务逻辑；focused runner tests 3 passed，`full --print-only`
+    确认默认命令为 `-n 16 --dist loadfile`。 2026-07-23: GOV-006 N1 coordinator review 后按
+    OWN_ACCEPTANCE_COMPLETE_RUNTIME_CONTINUATION_SEPARATE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links:
+  - docs/requirements/TRADING-174_Full_Pytest_Runtime_and_Validation_Tier_Optimization.md
+  terminal: true
+  raw_row_sha256: 1a438774771a0a90602264f44a697e039ac40d116245375bd847277fc0bc783d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: fea703a1a40d8e61b61938dbc482f2e25a30311b2018fb5f40683033fdc2c5ab

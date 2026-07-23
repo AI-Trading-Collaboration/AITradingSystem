@@ -1,0 +1,156 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+  title: null
+  domain: Research trends / high-intensity risk-cap forward observe plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan.md`；承接
+    TRADING-2333 high-intensity-only route。本批只读取 TRADING-2333 diagnostics outputs、TRADING-2332
+    prior validated dynamic dry-run context、2331 readiness / PIT caveat、2330 timestamp
+    remediation 和 2323 simulation policy context；不得重新执行 dry-run、修改 risk-cap / exposure-cap
+    policy、启动 runtime observe、生成交易指令或进入 paper-shadow / production / broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends high-intensity-risk-cap-forward-observe-plan`；生成
+      high-intensity forward observe plan summary、trigger selection criteria、threshold
+      candidate matrix、candidate backtest context、forward observe event schema、evidence
+      contract、actual-path outcome contract、manual-review boundary、false warning /
+      missed stress framework、stop / continue / archive rules、observe readiness checklist、2335
+      task route、安全边界和 research docs；真实 run `cap_binding_rate=0.455422`、`threshold_candidate_count=3`、`readiness_status=THRESHOLD_SELECTION_REQUIRED`、`overall_recommendation=HIGH_INTENSITY_ONLY_PLAN_READY_FOR_2335`，默认
+      route 到 `TRADING-2335_High_Intensity_Risk_Cap_Threshold_Selection`；所有 outputs
+      固定 runtime observe / promotion / paper-shadow / production / broker false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 498
+    row_sha256: 77a7b3f46f46ba0df39446b9a852ffb61a20dd585c1d412f02e20e20e6792af2
+    cell_count: 8
+    all_cells:
+    - TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+    - Research trends / high-intensity risk-cap forward observe plan
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan.md`；承接
+      TRADING-2333 high-intensity-only route。本批只读取 TRADING-2333 diagnostics outputs、TRADING-2332
+      prior validated dynamic dry-run context、2331 readiness / PIT caveat、2330 timestamp
+      remediation 和 2323 simulation policy context；不得重新执行 dry-run、修改 risk-cap / exposure-cap
+      policy、启动 runtime observe、生成交易指令或进入 paper-shadow / production / broker。
+    - 新增 `aits research trends high-intensity-risk-cap-forward-observe-plan`；生成 high-intensity
+      forward observe plan summary、trigger selection criteria、threshold candidate
+      matrix、candidate backtest context、forward observe event schema、evidence contract、actual-path
+      outcome contract、manual-review boundary、false warning / missed stress framework、stop
+      / continue / archive rules、observe readiness checklist、2335 task route、安全边界和
+      research docs；真实 run `cap_binding_rate=0.455422`、`threshold_candidate_count=3`、`readiness_status=THRESHOLD_SELECTION_REQUIRED`、`overall_recommendation=HIGH_INTENSITY_ONLY_PLAN_READY_FOR_2335`，默认
+      route 到 `TRADING-2335_High_Intensity_Risk_Cap_Threshold_Selection`；所有 outputs
+      固定 runtime observe / promotion / paper-shadow / production / broker false/none。
+    - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-04: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2334
+      artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated TRADING-2332 / TRADING-2333
+      artifacts。2026-07-04: 验证通过 Ruff、compileall、focused parallel pytest 16 passed、docs
+      freshness 513 docs PASS、documentation contract 1232 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4123 passed / 643 warnings 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator
+      review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN|Research
+      trends / high-intensity risk-cap forward observe plan|P0|DONE|系统实现 + 项目 owner
+      后续复核|详见 `docs/requirements/TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan.md`；承接
+      TRADING-2333 high-intensity-only route。本批只读取 TRADING-2333 diagnostics outputs、TRADING-2332
+      prior validated dynamic dry-run context、2331 readiness / PIT caveat、2330 timestamp
+      remediation 和 2323 simulation policy context；不得重新执行 dry-run、修改 risk-cap / exposure-cap
+      policy、启动 runtime observe、生成交易指令或进入 paper-shadow / production / broker。|新增 `aits
+      research trends high-intensity-risk-cap-forward-observe-plan`；生成 high-intensity
+      forward observe plan summary、trigger selection criteria、threshold candidate
+      matrix、candidate backtest context、forward observe event schema、evidence contract、actual-path
+      outcome contract、manual-review boundary、false warning / missed stress framework、stop
+      / continue / archive rules、observe readiness checklist、2335 task route、安全边界和
+      research docs；真实 run `cap_binding_rate=0.455422`、`threshold_candidate_count=3`、`readiness_status=THRESHOLD_SELECTION_REQUIRED`、`overall_recommendation=HIGH_INTENSITY_ONLY_PLAN_READY_FOR_2335`，默认
+      route 到 `TRADING-2335_High_Intensity_Risk_Cap_Threshold_Selection`；所有 outputs
+      固定 runtime observe / promotion / paper-shadow / production / broker false/none。|2026-07-04:
+      根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective
+      staging，不能混入无关改动。2026-07-04: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2334
+      artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated TRADING-2332 / TRADING-2333
+      artifacts。2026-07-04: 验证通过 Ruff、compileall、focused parallel pytest 16 passed、docs
+      freshness 513 docs PASS、documentation contract 1232 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4123 passed / 643 warnings 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator
+      review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-77a7b3f46f46ba0df39446b9
+  task_id: TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-04: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2334
+      artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated TRADING-2332 / TRADING-2333
+      artifacts。2026-07-04: 验证通过 Ruff、compileall、focused parallel pytest 16 passed、docs
+      freshness 513 docs PASS、documentation contract 1232 reports PASS、task-register
+      consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+      4123 passed / 643 warnings 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator
+      review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:77a7b3f46f46ba0df39446b9a852ffb61a20dd585c1d412f02e20e20e6792af2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2334_HIGH_INTENSITY_ONLY_RISK_CAP_FORWARD_OBSERVE_PLAN
+  - Research trends / high-intensity risk-cap forward observe plan
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan.md`；承接
+    TRADING-2333 high-intensity-only route。本批只读取 TRADING-2333 diagnostics outputs、TRADING-2332
+    prior validated dynamic dry-run context、2331 readiness / PIT caveat、2330 timestamp
+    remediation 和 2323 simulation policy context；不得重新执行 dry-run、修改 risk-cap / exposure-cap
+    policy、启动 runtime observe、生成交易指令或进入 paper-shadow / production / broker。
+  - 新增 `aits research trends high-intensity-risk-cap-forward-observe-plan`；生成 high-intensity
+    forward observe plan summary、trigger selection criteria、threshold candidate matrix、candidate
+    backtest context、forward observe event schema、evidence contract、actual-path outcome
+    contract、manual-review boundary、false warning / missed stress framework、stop /
+    continue / archive rules、observe readiness checklist、2335 task route、安全边界和 research
+    docs；真实 run `cap_binding_rate=0.455422`、`threshold_candidate_count=3`、`readiness_status=THRESHOLD_SELECTION_REQUIRED`、`overall_recommendation=HIGH_INTENSITY_ONLY_PLAN_READY_FOR_2335`，默认
+    route 到 `TRADING-2335_High_Intensity_Risk_Cap_Threshold_Selection`；所有 outputs
+    固定 runtime observe / promotion / paper-shadow / production / broker false/none。
+  - '2026-07-04: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+    selective staging，不能混入无关改动。2026-07-04: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2334
+    artifacts，`aits validate-data` 不适用，因为本任务只读取 prior validated TRADING-2332 / TRADING-2333
+    artifacts。2026-07-04: 验证通过 Ruff、compileall、focused parallel pytest 16 passed、docs
+    freshness 513 docs PASS、documentation contract 1232 reports PASS、task-register
+    consistency run/validate PASS、contract-validation 193 passed、full parallel pytest
+    4123 passed / 643 warnings 和 `git diff --check`。 2026-07-23: GOV-006 N1 coordinator
+    review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links:
+  - docs/requirements/TRADING-2334_High_Intensity_Only_Risk_Cap_Forward_Observe_Plan.md
+  terminal: true
+  raw_row_sha256: 77a7b3f46f46ba0df39446b9a852ffb61a20dd585c1d412f02e20e20e6792af2
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: f3dd690b3db95f9f6983604cf2a8d70e5a96be019c000ed3109fff50f8409e5c

@@ -49,8 +49,8 @@
       "DEFERRED": 3,
       "IN_PROGRESS": 4,
       "PROPOSED": 16,
-      "READY": 2,
-      "VALIDATING": 284
+      "READY": 1,
+      "VALIDATING": 285
     }
   },
   "decision_count": 30,
@@ -1427,7 +1427,7 @@
           ],
           "line": 1570,
           "path": "docs/task_register.md",
-          "sha256": "0f7614c5fbdd7cc9b9d242cebbbc3b829dd0692edcd87cf9657e5101dddb9fbc",
+          "sha256": "998a5ad75d0c90b1a98ef95737854ed91c550985b0a90766ae4532149de3f75d",
           "source": "active",
           "status": "IN_PROGRESS",
           "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
@@ -1464,7 +1464,7 @@
           ],
           "line": 1570,
           "path": "docs/task_register.md",
-          "sha256": "0f7614c5fbdd7cc9b9d242cebbbc3b829dd0692edcd87cf9657e5101dddb9fbc",
+          "sha256": "998a5ad75d0c90b1a98ef95737854ed91c550985b0a90766ae4532149de3f75d",
           "source": "active",
           "status": "IN_PROGRESS",
           "task_id": "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
@@ -1496,8 +1496,8 @@
       "task_id": "TRADING-849_CRLF_NORMALIZATION_CLEANUP"
     }
   ],
-  "manifest_id": "gov_006_decision_manifest_5bbdafd86334e2909887",
-  "manifest_sha256": "5bbdafd86334e2909887a27e1f783a163ec930c7b8f925667329119e55b565d5",
+  "manifest_id": "gov_006_decision_manifest_3fb5f2a038eca2361179",
+  "manifest_sha256": "3fb5f2a038eca2361179601d03bd6688c313544b42ece9f608bf9da25a88a537",
   "policy": {
     "authorization": {
       "authorized_by": "project_owner",
@@ -1528,8 +1528,8 @@
   "schema_version": "gov_006_portfolio_normalization_decision_manifest.v2",
   "source": {
     "active_path": "docs/task_register.md",
-    "active_sha256": "7e029259b55590e95c8b2a63551a9ef4096407a7f5f766e7235afb83ce162006",
-    "base_commit": "53c60c8e9351a0480987cd4ecdbd746a09e807cf",
+    "active_sha256": "ab77866fe3609c0b0987a9dfc50981cb4ea502364a04de552190a5d473696279",
+    "base_commit": "02f9492a1975440240cb65f761d2cf544a5a875e",
     "base_commit_rule": "CURRENT_COMMIT_MUST_EQUAL_OR_DESCEND_FROM_BASE_COMMIT",
     "completed_path": "docs/task_register_completed.md",
     "completed_sha256": "9d0efb26e95c4e387ec74356016d27f2aba54019e2fb344330e62336b0d93256"

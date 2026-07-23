@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -11,17 +12,24 @@ import pytest
 import yaml
 
 from ai_trading_system.platform.architecture.task_portfolio_normalization import (
+    APPLIED_CLOSEOUT_SCHEMA_VERSION,
     AUTHORIZATION_SCOPE,
     DECISION_REVIEW_SCOPE,
     POLICY_SCHEMA_VERSION,
     TaskPortfolioNormalizationError,
+    build_normalization_applied_closeout,
     build_normalization_decision_manifest,
     load_normalization_policy,
+    validate_historical_normalization_decision_manifest,
+    validate_normalization_applied_closeout,
     validate_normalization_decision_manifest,
 )
+from scripts import governance_task_portfolio_normalization as normalization_control
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REAL_POLICY_PATH = PROJECT_ROOT / "config/governance/gov_006_wave1_normalization.yaml"
+REAL_MANIFEST_PATH = PROJECT_ROOT / "inputs/governance/gov_006_wave1_decision_manifest.json"
+REAL_APPLIED_CLOSEOUT_PATH = PROJECT_ROOT / "inputs/governance/gov_006_wave1_applied_closeout.json"
 
 
 def _row(task_id: str, status: str) -> str:
@@ -29,6 +37,36 @@ def _row(task_id: str, status: str) -> str:
         f"|{task_id}|Governance / fixture|P1|{status}|fixture owner|"
         "next step|own acceptance complete|fixture evidence|\n"
     )
+
+
+def _applied_fixture_row(
+    *,
+    task_id: str,
+    actual_status: str,
+    target_status: str,
+    reason_code: str,
+    manifest_id: str,
+    mutation: str = "none",
+) -> str:
+    suffix_reason = f"{reason_code}_TAMPERED" if mutation == "audit_reason" else reason_code
+    suffix_manifest = (
+        "gov_006_decision_manifest_tampered" if mutation == "audit_manifest" else manifest_id
+    )
+    suffix_effect = "enabled" if mutation == "audit_effect" else "none"
+    suffix = (
+        f" 2026-07-23: GOV-006 N1 coordinator review 后按 {suffix_reason} "
+        f"转 {target_status} 并归档；manifest={suffix_manifest}；"
+        f"production_effect={suffix_effect}。"
+    )
+    if mutation == "audit_duplicate":
+        suffix += suffix
+    line = _row(task_id, actual_status)
+    if mutation == "rewritten_field":
+        line = line.replace(
+            "own acceptance complete",
+            "rewritten acceptance",
+        )
+    return f"{line[:-2]}{suffix}|\n"
 
 
 def _git(root: Path, *args: str, input_text: str | None = None) -> str:
@@ -49,7 +87,7 @@ def _head(root: Path) -> str:
 
 def _project(tmp_path: Path) -> Path:
     docs = tmp_path / "docs"
-    docs.mkdir()
+    docs.mkdir(parents=True)
     (docs / "task_register.md").write_text(
         "# Active\n\n"
         "## 当前任务\n\n"
@@ -73,11 +111,11 @@ def _project(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def _policy() -> dict[str, Any]:
+def _policy(*, wave_id: str = "GOV-006-WAVE1-TEST") -> dict[str, Any]:
     return {
         "schema_version": POLICY_SCHEMA_VERSION,
         "policy_id": "gov_006_wave1_normalization",
-        "wave_id": "GOV-006-WAVE1-TEST",
+        "wave_id": wave_id,
         "version": "2.0.0",
         "status": "GOVERNANCE_COORDINATOR_REVIEWED_WAVE1",
         "authorization": {
@@ -155,6 +193,138 @@ def _validate(
     )
 
 
+def _prepare_applied_project(
+    tmp_path: Path,
+    *,
+    mutation: str = "none",
+    wave_id: str = "GOV-006-WAVE1-TEST",
+) -> tuple[Path, dict[str, Any], Path, Path, str, dict[str, Any]]:
+    root = _project(tmp_path)
+    policy = _policy(wave_id=wave_id)
+    policy_path = _write_policy(root, policy)
+    _git(root, "add", str(policy_path.relative_to(root)))
+    _git(root, "commit", "-q", "-m", "freeze normalization policy")
+    dry_run = _build(root, policy, policy_path)
+    manifest_path = root / "inputs/governance/gov_006_wave1_decision_manifest.json"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_text(
+        json.dumps(dry_run, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    _git(root, "add", str(manifest_path.relative_to(root)))
+    _git(root, "commit", "-q", "-m", "freeze dry-run decision manifest")
+
+    active_path = root / "docs/task_register.md"
+    completed_path = root / "docs/task_register_completed.md"
+    active_lines = active_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    moved_ids = {"TASK-A", "TASK-B"}
+    if mutation == "missing_move":
+        moved_ids.remove("TASK-B")
+    rendered_active_lines: list[str] = []
+    for line in active_lines:
+        moved_task = next(
+            (task_id for task_id in moved_ids if line.startswith(f"|{task_id}|")),
+            None,
+        )
+        if moved_task is None:
+            rendered_active_lines.append(line)
+            continue
+        if mutation == "physical_line_removal":
+            continue
+        line_ending = "\n" if line.endswith("\n") else ""
+        if mutation == "nonblank_vacated" and moved_task == "TASK-A":
+            rendered_active_lines.append(f"<!-- GOV-006 vacated -->{line_ending}")
+        else:
+            rendered_active_lines.append(line_ending)
+    active_text = "".join(rendered_active_lines)
+    if mutation == "untargeted_status":
+        active_text = active_text.replace(
+            _row("TASK-D", "DEFERRED"),
+            _row("TASK-D", "READY"),
+        )
+    if mutation == "task_set":
+        active_text = active_text.replace(_row("TASK-D", "DEFERRED"), "")
+    active_path.write_text(active_text, encoding="utf-8")
+
+    completed_text = completed_path.read_text(encoding="utf-8")
+    decision_by_id = {str(decision["task_id"]): decision for decision in dry_run["decisions"]}
+    first_decision = decision_by_id["TASK-A"]
+    first_mutation = (
+        mutation
+        if mutation
+        in {
+            "audit_reason",
+            "audit_manifest",
+            "audit_effect",
+            "audit_duplicate",
+            "rewritten_field",
+        }
+        else "none"
+    )
+    completed_text += _applied_fixture_row(
+        task_id="TASK-A",
+        actual_status="DONE",
+        target_status=str(first_decision["target_status"]),
+        reason_code=str(first_decision["reason_code"]),
+        manifest_id=str(dry_run["manifest_id"]),
+        mutation=first_mutation,
+    )
+    if mutation != "missing_move":
+        second_decision = decision_by_id["TASK-B"]
+        completed_text += _applied_fixture_row(
+            task_id="TASK-B",
+            actual_status=("DONE" if mutation == "wrong_target_status" else "DROPPED"),
+            target_status=str(second_decision["target_status"]),
+            reason_code=str(second_decision["reason_code"]),
+            manifest_id=str(dry_run["manifest_id"]),
+        )
+    if mutation == "duplicate":
+        completed_text += _row("TASK-C", "DONE")
+    completed_path.write_text(completed_text, encoding="utf-8")
+    _git(
+        root,
+        "add",
+        str(active_path.relative_to(root)),
+        str(completed_path.relative_to(root)),
+    )
+    _git(root, "commit", "-q", "-m", "apply reviewed terminal decisions")
+    return root, policy, policy_path, manifest_path, _head(root), dry_run
+
+
+def _build_applied(
+    *,
+    root: Path,
+    policy: dict[str, Any],
+    policy_path: Path,
+    manifest_path: Path,
+    application_commit: str,
+) -> dict[str, Any]:
+    return build_normalization_applied_closeout(
+        project_root=root,
+        policy=policy,
+        policy_path=policy_path,
+        decision_manifest_path=manifest_path,
+        application_commit=application_commit,
+    )
+
+
+def _validate_applied(
+    payload: dict[str, Any],
+    *,
+    root: Path,
+    policy: dict[str, Any],
+    policy_path: Path,
+    manifest_path: Path,
+) -> None:
+    validate_normalization_applied_closeout(
+        payload,
+        project_root=root,
+        policy=policy,
+        policy_path=policy_path,
+        decision_manifest_path=manifest_path,
+    )
+
+
 def _refresh_manifest_hashes(payload: dict[str, Any]) -> None:
     material = copy.deepcopy(payload)
     material.pop("manifest_id", None)
@@ -168,6 +338,21 @@ def _refresh_manifest_hashes(payload: dict[str, Any]) -> None:
     manifest_sha256 = hashlib.sha256(encoded).hexdigest()
     payload["manifest_sha256"] = manifest_sha256
     payload["manifest_id"] = f"gov_006_decision_manifest_{manifest_sha256[:20]}"
+
+
+def _refresh_applied_hashes(payload: dict[str, Any]) -> None:
+    material = copy.deepcopy(payload)
+    material.pop("closeout_id", None)
+    material.pop("closeout_sha256", None)
+    encoded = json.dumps(
+        material,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    closeout_sha256 = hashlib.sha256(encoded).hexdigest()
+    payload["closeout_sha256"] = closeout_sha256
+    payload["closeout_id"] = f"gov_006_applied_closeout_{closeout_sha256[:20]}"
 
 
 def test_builds_deterministic_dry_run_with_bound_policy_and_typed_evidence(
@@ -405,6 +590,313 @@ def test_descendant_commit_validates_but_non_ancestor_fails(tmp_path: Path) -> N
     assert error.value.code == "BASE_COMMIT_NOT_ANCESTOR"
 
 
+def test_applied_closeout_replays_historical_dry_run_and_binds_application_commit(
+    tmp_path: Path,
+) -> None:
+    root, policy, policy_path, manifest_path, application_commit, dry_run = (
+        _prepare_applied_project(tmp_path)
+    )
+
+    validate_historical_normalization_decision_manifest(
+        dry_run,
+        project_root=root,
+        policy=policy,
+        policy_path=policy_path,
+    )
+    with pytest.raises(TaskPortfolioNormalizationError) as live_error:
+        _validate(
+            dry_run,
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+        )
+    assert live_error.value.code == "DECISION_TASK_NOT_ACTIVE"
+
+    closeout = _build_applied(
+        root=root,
+        policy=policy,
+        policy_path=policy_path,
+        manifest_path=manifest_path,
+        application_commit=application_commit,
+    )
+    _validate_applied(
+        closeout,
+        root=root,
+        policy=policy,
+        policy_path=policy_path,
+        manifest_path=manifest_path,
+    )
+
+    assert closeout["schema_version"] == APPLIED_CLOSEOUT_SCHEMA_VERSION
+    assert closeout["historical_dry_run"]["commit_bound_replay"] == "PASS"
+    assert closeout["lineage"]["application_commit"] == application_commit
+    assert closeout["before_inventory"]["active_task_count"] == 3
+    assert closeout["before_inventory"]["completed_task_count"] == 1
+    assert closeout["after_inventory"]["active_task_count"] == 1
+    assert closeout["after_inventory"]["completed_task_count"] == 3
+    assert closeout["after_inventory"]["total_task_count"] == 4
+    assert closeout["before_inventory"]["completed_status_counts"] == {"DONE": 1}
+    assert closeout["after_inventory"]["completed_status_counts"] == {
+        "DONE": 2,
+        "DROPPED": 1,
+    }
+    assert closeout["after_inventory"]["completed_priority_counts"] == {"P1": 3}
+    assert closeout["application"]["decision_count"] == 2
+    assert closeout["application"]["target_status_counts"] == {
+        "DONE": 1,
+        "DROPPED": 1,
+    }
+    assert {row["task_id"] for row in closeout["application"]["applied_decisions"]} == {
+        "TASK-A",
+        "TASK-B",
+    }
+    line_churn = closeout["application"]["line_churn"]
+    assert (
+        line_churn["before_active_physical_line_count"]
+        == line_churn["after_active_physical_line_count"]
+    )
+    assert line_churn["physical_line_count_preserved"] is True
+    assert line_churn["vacated_source_line_count"] == 2
+    assert line_churn["vacated_source_lines"] == [5, 9]
+    assert line_churn["vacated_source_lines_preserved_blank"] is True
+    assert closeout["safety"]["production_effect"] == "none"
+    assert closeout["safety"]["broker_action"] == "none"
+
+    (root / "descendant.txt").write_text("closeout descendant\n", encoding="utf-8")
+    _git(root, "add", "descendant.txt")
+    _git(root, "commit", "-q", "-m", "descendant validation commit")
+    _validate_applied(
+        closeout,
+        root=root,
+        policy=policy,
+        policy_path=policy_path,
+        manifest_path=manifest_path,
+    )
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_code"),
+    [
+        ("missing_move", "APPLIED_DECISION_NOT_COMPLETED"),
+        ("wrong_target_status", "APPLIED_TARGET_STATUS_DRIFT"),
+        (
+            "untargeted_status",
+            "UNTARGETED_PARTITION_PRIORITY_STATUS_DRIFT",
+        ),
+        ("duplicate", "DUPLICATE_TASK_ID"),
+        ("task_set", "APPLIED_TASK_SET_DRIFT"),
+        ("rewritten_field", "APPLIED_NON_STATUS_FIELD_DRIFT"),
+        ("audit_reason", "APPLIED_AUDIT_NOTE_DRIFT"),
+        ("audit_manifest", "APPLIED_AUDIT_NOTE_DRIFT"),
+        ("audit_effect", "APPLIED_AUDIT_NOTE_DRIFT"),
+        ("audit_duplicate", "APPLIED_AUDIT_NOTE_DRIFT"),
+        ("physical_line_removal", "APPLIED_ACTIVE_LINE_COUNT_DRIFT"),
+        ("nonblank_vacated", "APPLIED_VACATED_LINE_NOT_BLANK"),
+    ],
+)
+def test_applied_closeout_rejects_incomplete_or_expanded_application_scope(
+    tmp_path: Path,
+    mutation: str,
+    expected_code: str,
+) -> None:
+    root, policy, policy_path, manifest_path, application_commit, _ = _prepare_applied_project(
+        tmp_path, mutation=mutation
+    )
+
+    with pytest.raises(TaskPortfolioNormalizationError) as error:
+        _build_applied(
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+            manifest_path=manifest_path,
+            application_commit=application_commit,
+        )
+
+    assert error.value.code == expected_code
+
+
+def test_applied_closeout_rejects_unknown_and_non_ancestor_application_commits(
+    tmp_path: Path,
+) -> None:
+    root, policy, policy_path, manifest_path, _, _ = _prepare_applied_project(tmp_path)
+
+    with pytest.raises(TaskPortfolioNormalizationError) as unknown:
+        _build_applied(
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+            manifest_path=manifest_path,
+            application_commit="f" * 40,
+        )
+    assert unknown.value.code == "BASE_COMMIT_UNKNOWN"
+
+    tree = _git(root, "rev-parse", "HEAD^{tree}")
+    unrelated_commit = _git(root, "commit-tree", tree, "-m", "unrelated root")
+    with pytest.raises(TaskPortfolioNormalizationError) as non_ancestor:
+        _build_applied(
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+            manifest_path=manifest_path,
+            application_commit=unrelated_commit,
+        )
+    assert non_ancestor.value.code == "BASE_COMMIT_NOT_ANCESTOR"
+
+
+def test_applied_closeout_binds_dry_run_policy_application_blobs_and_safety(
+    tmp_path: Path,
+) -> None:
+    root, policy, policy_path, manifest_path, application_commit, dry_run = (
+        _prepare_applied_project(tmp_path)
+    )
+    closeout = _build_applied(
+        root=root,
+        policy=policy,
+        policy_path=policy_path,
+        manifest_path=manifest_path,
+        application_commit=application_commit,
+    )
+
+    tampered = copy.deepcopy(closeout)
+    tampered["source_hashes"]["after"]["active_sha256"] = "0" * 64
+    _refresh_applied_hashes(tampered)
+    with pytest.raises(TaskPortfolioNormalizationError) as application_drift:
+        _validate_applied(
+            tampered,
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+            manifest_path=manifest_path,
+        )
+    assert application_drift.value.code == "APPLIED_CLOSEOUT_SOURCE_DRIFT"
+
+    unsafe = copy.deepcopy(closeout)
+    unsafe["safety"]["production_effect"] = "enabled"
+    with pytest.raises(TaskPortfolioNormalizationError) as checksum:
+        _validate_applied(
+            unsafe,
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+            manifest_path=manifest_path,
+        )
+    assert checksum.value.code == "APPLIED_CLOSEOUT_SHA256"
+    _refresh_applied_hashes(unsafe)
+    with pytest.raises(TaskPortfolioNormalizationError) as safety_drift:
+        _validate_applied(
+            unsafe,
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+            manifest_path=manifest_path,
+        )
+    assert safety_drift.value.code == "APPLIED_CLOSEOUT_SOURCE_DRIFT"
+
+    manifest_path.write_text(
+        manifest_path.read_text(encoding="utf-8") + "\n",
+        encoding="utf-8",
+    )
+    policy_path.write_text(
+        policy_path.read_text(encoding="utf-8").replace(
+            "fixture decisions are reviewed by the governance coordinator",
+            "future live policy semantics",
+        ),
+        encoding="utf-8",
+    )
+    future_policy = load_normalization_policy(policy_path)
+    validate_historical_normalization_decision_manifest(
+        dry_run,
+        project_root=root,
+        policy=future_policy,
+        policy_path=policy_path,
+    )
+    _validate_applied(
+        closeout,
+        root=root,
+        policy=future_policy,
+        policy_path=policy_path,
+        manifest_path=manifest_path,
+    )
+
+
+def test_applied_closeout_cli_generates_and_validates_commit_bound_artifact(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root, _, policy_path, manifest_path, application_commit, _ = _prepare_applied_project(tmp_path)
+    applied_path = root / "inputs/governance/gov_006_wave1_applied_closeout.json"
+    monkeypatch.setattr(normalization_control, "PROJECT_ROOT", root)
+    monkeypatch.setattr(normalization_control, "POLICY_PATH", policy_path)
+    monkeypatch.setattr(normalization_control, "MANIFEST_PATH", manifest_path)
+    monkeypatch.setattr(
+        normalization_control,
+        "APPLIED_CLOSEOUT_PATH",
+        applied_path,
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "governance_task_portfolio_normalization.py",
+            "generate-applied",
+            "--application-commit",
+            application_commit,
+        ],
+    )
+
+    assert normalization_control.main() == 0
+    generated = json.loads(applied_path.read_text(encoding="utf-8"))
+    assert generated["lineage"]["application_commit"] == application_commit
+    assert '"mode": "APPLIED_CLOSEOUT"' in capsys.readouterr().out
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "governance_task_portfolio_normalization.py",
+            "validate-applied",
+        ],
+    )
+    assert normalization_control.main() == 0
+    assert '"status": "PASS"' in capsys.readouterr().out
+
+
+def test_applied_closeout_accepts_future_live_policy_and_rejects_non_thirty_real_wave(
+    tmp_path: Path,
+) -> None:
+    root, policy, policy_path, manifest_path, application_commit, _ = _prepare_applied_project(
+        tmp_path,
+        wave_id="GOV-006-WAVE1-HIGH-CONFIDENCE",
+    )
+    with pytest.raises(TaskPortfolioNormalizationError) as wrong_count:
+        _build_applied(
+            root=root,
+            policy=policy,
+            policy_path=policy_path,
+            manifest_path=manifest_path,
+            application_commit=application_commit,
+        )
+    assert wrong_count.value.code == "REAL_WAVE_DECISION_COUNT"
+
+    root2, policy2, policy_path2, manifest_path2, application_commit2, _ = _prepare_applied_project(
+        tmp_path / "policy-drift"
+    )
+    policy_path2.write_text(
+        policy_path2.read_text(encoding="utf-8") + "# policy drift\n",
+        encoding="utf-8",
+    )
+    changed_policy = load_normalization_policy(policy_path2)
+    future_replay = _build_applied(
+        root=root2,
+        policy=changed_policy,
+        policy_path=policy_path2,
+        manifest_path=manifest_path2,
+        application_commit=application_commit2,
+    )
+    assert future_replay["lineage"]["application_commit"] == application_commit2
+
+
 def test_unknown_base_commit_fails_closed_even_with_consistent_manifest_hash(
     tmp_path: Path,
 ) -> None:
@@ -435,12 +927,31 @@ def test_non_terminal_target_is_rejected(tmp_path: Path) -> None:
 
 def test_real_wave1_policy_builds_exactly_thirty_typed_decisions() -> None:
     policy = load_normalization_policy(REAL_POLICY_PATH)
-
-    payload = build_normalization_decision_manifest(
+    payload = json.loads(REAL_MANIFEST_PATH.read_text(encoding="utf-8"))
+    validate_historical_normalization_decision_manifest(
+        payload,
         project_root=PROJECT_ROOT,
         policy=policy,
         policy_path=REAL_POLICY_PATH,
     )
+    if REAL_APPLIED_CLOSEOUT_PATH.exists():
+        closeout = json.loads(REAL_APPLIED_CLOSEOUT_PATH.read_text(encoding="utf-8"))
+        validate_normalization_applied_closeout(
+            closeout,
+            project_root=PROJECT_ROOT,
+            policy=policy,
+            policy_path=REAL_POLICY_PATH,
+            decision_manifest_path=REAL_MANIFEST_PATH,
+        )
+        assert closeout["application"]["decision_count"] == 30
+        assert closeout["after_inventory"]["active_task_count"] == 405
+        assert closeout["after_inventory"]["completed_task_count"] == 487
+        assert closeout["after_inventory"]["completed_status_counts"] == {
+            "DONE": 475,
+            "DROPPED": 12,
+        }
+        assert closeout["application"]["line_churn"]["vacated_source_line_count"] == 30
+        assert closeout["application"]["line_churn"]["vacated_source_lines_preserved_blank"] is True
 
     assert payload["decision_count"] == 30
     decision_ids = {decision["task_id"] for decision in payload["decisions"]}

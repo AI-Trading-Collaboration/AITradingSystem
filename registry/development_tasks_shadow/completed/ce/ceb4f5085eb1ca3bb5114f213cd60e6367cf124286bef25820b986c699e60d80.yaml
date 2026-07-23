@@ -1,0 +1,145 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+  title: null
+  domain: Research trends / exposure-cap mechanics simulation readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2323_Exposure_Cap_Mechanics_Simulation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2323_Exposure_Cap_Mechanics_Simulation.md`；依赖
+    TRADING-2322 signal validity / aging runtime design package 和 owner 附件 Exposure-Cap
+    Mechanics Simulation。当前 2322 是 design-only，不提供 runtime observe records、calibrated
+    cap multiplier、portfolio exposure history、turnover history、post-trigger outcome
+    records 或 release / restore decisions；本批不得用 fake rows 或 subjective numeric assumptions
+    替代 simulation source data。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 已形成 exposure-cap mechanics simulation summary、metric contract、readiness
+      matrix、input requirement matrix、blocker report、safety boundary 和 research report；所有
+      outputs 固定 `source_blocked_no_simulation=true`、`simulation_executed=false`、`simulation_result_generated=false`、`runtime_records_consumed=false`、`portfolio_exposure_history_consumed=false`、`turnover_records_consumed=false`、`target_weight_generated=false`、`max_exposure_number_generated=false`、promotion
+      / paper-shadow / production / broker false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 488
+    row_sha256: a73094dd58793c3a7f2e43b6805319ef8dc487c4b9e18ba585e670a10e1ae7cf
+    cell_count: 8
+    all_cells:
+    - TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+    - Research trends / exposure-cap mechanics simulation readiness
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2323_Exposure_Cap_Mechanics_Simulation.md`；依赖
+      TRADING-2322 signal validity / aging runtime design package 和 owner 附件 Exposure-Cap
+      Mechanics Simulation。当前 2322 是 design-only，不提供 runtime observe records、calibrated
+      cap multiplier、portfolio exposure history、turnover history、post-trigger outcome
+      records 或 release / restore decisions；本批不得用 fake rows 或 subjective numeric assumptions
+      替代 simulation source data。
+    - 已形成 exposure-cap mechanics simulation summary、metric contract、readiness matrix、input
+      requirement matrix、blocker report、safety boundary 和 research report；所有 outputs
+      固定 `source_blocked_no_simulation=true`、`simulation_executed=false`、`simulation_result_generated=false`、`runtime_records_consumed=false`、`portfolio_exposure_history_consumed=false`、`turnover_records_consumed=false`、`target_weight_generated=false`、`max_exposure_number_generated=false`、promotion
+      / paper-shadow / production / broker false/none。
+    - '2026-07-01: 根据 owner roadmap 和 TRADING-2322 output 新增并进入 IN_PROGRESS；当前 worktree
+      有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入
+      VALIDATING；真实 run status=`EXPOSURE_CAP_MECHANICS_SIMULATION_SOURCE_BLOCKED_NOT_EXECUTED`，source
+      status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，simulation_objective_count=4，blocked_objective_count=4，input_requirement_count=20，blocker_count=24，metric_count=4；验证通过
+      Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+      diff --check`；本命令不读取 cached market data、runtime observe records、portfolio exposure
+      history、turnover records 或 post-trigger outcomes，因此 `aits validate-data` 不适用。
+      2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION|Research trends / exposure-cap
+      mechanics simulation readiness|P0|DONE|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2323_Exposure_Cap_Mechanics_Simulation.md`；依赖
+      TRADING-2322 signal validity / aging runtime design package 和 owner 附件 Exposure-Cap
+      Mechanics Simulation。当前 2322 是 design-only，不提供 runtime observe records、calibrated
+      cap multiplier、portfolio exposure history、turnover history、post-trigger outcome
+      records 或 release / restore decisions；本批不得用 fake rows 或 subjective numeric assumptions
+      替代 simulation source data。|已形成 exposure-cap mechanics simulation summary、metric
+      contract、readiness matrix、input requirement matrix、blocker report、safety boundary
+      和 research report；所有 outputs 固定 `source_blocked_no_simulation=true`、`simulation_executed=false`、`simulation_result_generated=false`、`runtime_records_consumed=false`、`portfolio_exposure_history_consumed=false`、`turnover_records_consumed=false`、`target_weight_generated=false`、`max_exposure_number_generated=false`、promotion
+      / paper-shadow / production / broker false/none。|2026-07-01: 根据 owner roadmap
+      和 TRADING-2322 output 新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_MECHANICS_SIMULATION_SOURCE_BLOCKED_NOT_EXECUTED`，source
+      status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，simulation_objective_count=4，blocked_objective_count=4，input_requirement_count=20，blocker_count=24，metric_count=4；验证通过
+      Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+      diff --check`；本命令不读取 cached market data、runtime observe records、portfolio exposure
+      history、turnover records 或 post-trigger outcomes，因此 `aits validate-data` 不适用。
+      2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a73094dd58793c3a7f2e43b6
+  task_id: TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-01: 根据 owner roadmap 和 TRADING-2322 output 新增并进入 IN_PROGRESS；当前
+      worktree 有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01:
+      实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_MECHANICS_SIMULATION_SOURCE_BLOCKED_NOT_EXECUTED`，source
+      status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，simulation_objective_count=4，blocked_objective_count=4，input_requirement_count=20，blocker_count=24，metric_count=4；验证通过
+      Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+      diff --check`；本命令不读取 cached market data、runtime observe records、portfolio exposure
+      history、turnover records 或 post-trigger outcomes，因此 `aits validate-data` 不适用。
+      2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a73094dd58793c3a7f2e43b6805319ef8dc487c4b9e18ba585e670a10e1ae7cf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2323_EXPOSURE_CAP_MECHANICS_SIMULATION
+  - Research trends / exposure-cap mechanics simulation readiness
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2323_Exposure_Cap_Mechanics_Simulation.md`；依赖 TRADING-2322
+    signal validity / aging runtime design package 和 owner 附件 Exposure-Cap Mechanics
+    Simulation。当前 2322 是 design-only，不提供 runtime observe records、calibrated cap multiplier、portfolio
+    exposure history、turnover history、post-trigger outcome records 或 release / restore
+    decisions；本批不得用 fake rows 或 subjective numeric assumptions 替代 simulation source
+    data。
+  - 已形成 exposure-cap mechanics simulation summary、metric contract、readiness matrix、input
+    requirement matrix、blocker report、safety boundary 和 research report；所有 outputs
+    固定 `source_blocked_no_simulation=true`、`simulation_executed=false`、`simulation_result_generated=false`、`runtime_records_consumed=false`、`portfolio_exposure_history_consumed=false`、`turnover_records_consumed=false`、`target_weight_generated=false`、`max_exposure_number_generated=false`、promotion
+    / paper-shadow / production / broker false/none。
+  - '2026-07-01: 根据 owner roadmap 和 TRADING-2322 output 新增并进入 IN_PROGRESS；当前 worktree
+    有两个无关 research 文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-01: 实现完成并进入 VALIDATING；真实
+    run status=`EXPOSURE_CAP_MECHANICS_SIMULATION_SOURCE_BLOCKED_NOT_EXECUTED`，source
+    status=`SIGNAL_VALIDITY_AGING_RUNTIME_DESIGN_READY_PROMOTION_BLOCKED`，simulation_objective_count=4，blocked_objective_count=4，input_requirement_count=20，blocker_count=24，metric_count=4；验证通过
+    Ruff、compileall、focused pytest、真实 CLI run、contract-validation 193 passed 和 `git
+    diff --check`；本命令不读取 cached market data、runtime observe records、portfolio exposure
+    history、turnover records 或 post-trigger outcomes，因此 `aits validate-data` 不适用。
+    2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+    转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links:
+  - docs/requirements/TRADING-2323_Exposure_Cap_Mechanics_Simulation.md
+  terminal: true
+  raw_row_sha256: a73094dd58793c3a7f2e43b6805319ef8dc487c4b9e18ba585e670a10e1ae7cf
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 2079d012b5a883a5dde44b4e478aef3a7a3d369a0b1ef41e2fa4cbf77bc9190d

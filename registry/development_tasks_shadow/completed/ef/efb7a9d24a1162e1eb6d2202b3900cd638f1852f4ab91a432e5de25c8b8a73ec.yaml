@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
+  title: null
+  domain: Strategy research / metric and threshold governance
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner / policy owner签署 metric 和 screening policy；系统写入 approval provenance
+    后复验
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已建立 `growth_tilt_candidate_replay_metric_contract_v1`
+    和 `growth_tilt_candidate_pit_screening_policy_v1`。M1C 已补齐 numerical epsilon=`1e-12`、minimum
+    semantic denominator=`1e-8`、小分母/empty-event fail-closed 语义、false-risk-off/missed-upside/whipsaw
+    event definitions 和稳定 owner=`research_governance`；首轮 numeric screening boundaries
+    未改变。contract/policy 仍保持 `PENDING_OWNER_PREREGISTRATION`，approved_at/commit/hash
+    为空，不能自动升级为 APPROVED。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每个 APPROVE candidate 有六项 unit-matched finite thresholds、owner/version/rationale/evidence/review/expiry；event_count<5、semantic
+      denominator<1e-8、null/NaN/Inf、unit mismatch、empty-event ambiguity、PIT/window/cost
+      mismatch均 BLOCKED；数值在 replay 前预注册且只用于首轮 screening；approval timestamp/full commit/SHA-256
+      和 result visibility=`NONE` 必须冻结。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 478
+    row_sha256: 21a9fa6d68bec127f995b07d8e1d19872352eab578c42019e2e8b746f43d1010
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
+    - Strategy research / metric and threshold governance
+    - P0
+    - DROPPED
+    - 项目 owner / policy owner签署 metric 和 screening policy；系统写入 approval provenance
+      后复验
+    - 已建立 `growth_tilt_candidate_replay_metric_contract_v1` 和 `growth_tilt_candidate_pit_screening_policy_v1`。M1C
+      已补齐 numerical epsilon=`1e-12`、minimum semantic denominator=`1e-8`、小分母/empty-event
+      fail-closed 语义、false-risk-off/missed-upside/whipsaw event definitions 和稳定 owner=`research_governance`；首轮
+      numeric screening boundaries 未改变。contract/policy 仍保持 `PENDING_OWNER_PREREGISTRATION`，approved_at/commit/hash
+      为空，不能自动升级为 APPROVED。
+    - 每个 APPROVE candidate 有六项 unit-matched finite thresholds、owner/version/rationale/evidence/review/expiry；event_count<5、semantic
+      denominator<1e-8、null/NaN/Inf、unit mismatch、empty-event ambiguity、PIT/window/cost
+      mismatch均 BLOCKED；数值在 replay 前预注册且只用于首轮 screening；approval timestamp/full commit/SHA-256
+      和 result visibility=`NONE` 必须冻结。
+    - '2026-07-10: M1C 完成 proposed contract semantics 和 validator hardening；真实 shared
+      metric/threshold readiness=`0/0`，剩余 blocker 仅 owner approval status 和 preregistration
+      provenance，不把待审批值视为历史验证、promotion 或 production policy。 2026-07-23: GOV-006 N1
+      coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED
+      并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL|Strategy
+      research / metric and threshold governance|P0|DROPPED|项目 owner / policy owner签署
+      metric 和 screening policy；系统写入 approval provenance 后复验|已建立 `growth_tilt_candidate_replay_metric_contract_v1`
+      和 `growth_tilt_candidate_pit_screening_policy_v1`。M1C 已补齐 numerical epsilon=`1e-12`、minimum
+      semantic denominator=`1e-8`、小分母/empty-event fail-closed 语义、false-risk-off/missed-upside/whipsaw
+      event definitions 和稳定 owner=`research_governance`；首轮 numeric screening boundaries
+      未改变。contract/policy 仍保持 `PENDING_OWNER_PREREGISTRATION`，approved_at/commit/hash
+      为空，不能自动升级为 APPROVED。|每个 APPROVE candidate 有六项 unit-matched finite thresholds、owner/version/rationale/evidence/review/expiry；event_count<5、semantic
+      denominator<1e-8、null/NaN/Inf、unit mismatch、empty-event ambiguity、PIT/window/cost
+      mismatch均 BLOCKED；数值在 replay 前预注册且只用于首轮 screening；approval timestamp/full commit/SHA-256
+      和 result visibility=`NONE` 必须冻结。|2026-07-10: M1C 完成 proposed contract semantics
+      和 validator hardening；真实 shared metric/threshold readiness=`0/0`，剩余 blocker
+      仅 owner approval status 和 preregistration provenance，不把待审批值视为历史验证、promotion
+      或 production policy。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+      转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-21a9fa6d68bec127f995b07d
+  task_id: TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DROPPED
+  payload:
+    priority: P0
+    next_owner: 项目 owner / policy owner签署 metric 和 screening policy；系统写入 approval
+      provenance 后复验
+    notes: '2026-07-10: M1C 完成 proposed contract semantics 和 validator hardening；真实
+      shared metric/threshold readiness=`0/0`，剩余 blocker 仅 owner approval status 和
+      preregistration provenance，不把待审批值视为历史验证、promotion 或 production policy。 2026-07-23:
+      GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+      转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:21a9fa6d68bec127f995b07d8e1d19872352eab578c42019e2e8b746f43d1010
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M1B_GROWTH_TILT_SHARED_METRIC_AND_SCREENING_POLICY_APPROVAL
+  - Strategy research / metric and threshold governance
+  - P0
+  - DROPPED
+  - 项目 owner / policy owner签署 metric 和 screening policy；系统写入 approval provenance 后复验
+  - 已建立 `growth_tilt_candidate_replay_metric_contract_v1` 和 `growth_tilt_candidate_pit_screening_policy_v1`。M1C
+    已补齐 numerical epsilon=`1e-12`、minimum semantic denominator=`1e-8`、小分母/empty-event
+    fail-closed 语义、false-risk-off/missed-upside/whipsaw event definitions 和稳定 owner=`research_governance`；首轮
+    numeric screening boundaries 未改变。contract/policy 仍保持 `PENDING_OWNER_PREREGISTRATION`，approved_at/commit/hash
+    为空，不能自动升级为 APPROVED。
+  - 每个 APPROVE candidate 有六项 unit-matched finite thresholds、owner/version/rationale/evidence/review/expiry；event_count<5、semantic
+    denominator<1e-8、null/NaN/Inf、unit mismatch、empty-event ambiguity、PIT/window/cost
+    mismatch均 BLOCKED；数值在 replay 前预注册且只用于首轮 screening；approval timestamp/full commit/SHA-256
+    和 result visibility=`NONE` 必须冻结。
+  - '2026-07-10: M1C 完成 proposed contract semantics 和 validator hardening；真实 shared
+    metric/threshold readiness=`0/0`，剩余 blocker 仅 owner approval status 和 preregistration
+    provenance，不把待审批值视为历史验证、promotion 或 production policy。 2026-07-23: GOV-006 N1
+    coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED
+    并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 21a9fa6d68bec127f995b07d8e1d19872352eab578c42019e2e8b746f43d1010
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7c1d588c62190c8c5e07b454b4d043d065df8740971809ea246b520e02932422

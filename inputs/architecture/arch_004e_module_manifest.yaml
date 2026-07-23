@@ -14223,7 +14223,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.task_portfolio_normalization
   path: src/ai_trading_system/platform/architecture/task_portfolio_normalization.py
-  sha256: 9effdc8dc17e996c8ec2dce30e879495bc46ca3abc29b4684e8fd2829fe718d2
+  sha256: 7cc728ff9adde611d012a08046e519602767aa86add7f01ac32cea5a98896d6d
   rule_id: platform
   owner_profile: platform
   owners:

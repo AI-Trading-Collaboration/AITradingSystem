@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR
+  title: null
+  domain: Strategy research / callable compute plane
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统完成验证后关闭；M2B 仅在 M1 owner gate 通过后绑定真实 replay
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已实现 research-only `GrowthTiltCandidateOverlayExecutor`，operation
+    types=`EARLY_REENTRY_PROVISIONAL_EXPOSURE`、`DEFENSIVE_SOFT_CONFIRMATION_GRACE`、second-approved
+    `POST_CONFIRMATION_RAMP_ACCELERATION`；只按 typed operation 分派，不解析 candidate name。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 相同 PIT inputs deterministic；每个 exposure delta 有 reason code；missing/placeholder/unmapped-veto/baseline
+      mismatch fail-closed；hard veto/expiry/rollback 回 baseline；A 不改 confirmed ramp/target，B
+      grace 仅一步且不绕 veto，C 未二次批准不得运行；无 production side effect。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 474
+    row_sha256: e5a4fe5ed6e8145646f3683f761a40c985a6383661c9deeb30d63c2003c7635e
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR
+    - Strategy research / callable compute plane
+    - P0
+    - DONE
+    - 系统完成验证后关闭；M2B 仅在 M1 owner gate 通过后绑定真实 replay
+    - 已实现 research-only `GrowthTiltCandidateOverlayExecutor`，operation types=`EARLY_REENTRY_PROVISIONAL_EXPOSURE`、`DEFENSIVE_SOFT_CONFIRMATION_GRACE`、second-approved
+      `POST_CONFIRMATION_RAMP_ACCELERATION`；只按 typed operation 分派，不解析 candidate name。
+    - 相同 PIT inputs deterministic；每个 exposure delta 有 reason code；missing/placeholder/unmapped-veto/baseline
+      mismatch fail-closed；hard veto/expiry/rollback 回 baseline；A 不改 confirmed ramp/target，B
+      grace 仅一步且不绕 veto，C 未二次批准不得运行；无 production side effect。
+    - '2026-07-10: implementation 与 34 项 executor tests 完成；combined M1/M2A focused
+      parallel pytest 69 passed。真实运行仍受 M1 six owner gaps 阻断，未调用 replay。 2026-07-23:
+      GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR|Strategy research
+      / callable compute plane|P0|DONE|系统完成验证后关闭；M2B 仅在 M1 owner gate 通过后绑定真实 replay|已实现
+      research-only `GrowthTiltCandidateOverlayExecutor`，operation types=`EARLY_REENTRY_PROVISIONAL_EXPOSURE`、`DEFENSIVE_SOFT_CONFIRMATION_GRACE`、second-approved
+      `POST_CONFIRMATION_RAMP_ACCELERATION`；只按 typed operation 分派，不解析 candidate name。|相同
+      PIT inputs deterministic；每个 exposure delta 有 reason code；missing/placeholder/unmapped-veto/baseline
+      mismatch fail-closed；hard veto/expiry/rollback 回 baseline；A 不改 confirmed ramp/target，B
+      grace 仅一步且不绕 veto，C 未二次批准不得运行；无 production side effect。|2026-07-10: implementation
+      与 34 项 executor tests 完成；combined M1/M2A focused parallel pytest 69 passed。真实运行仍受
+      M1 six owner gaps 阻断，未调用 replay。 2026-07-23: GOV-006 N1 coordinator review 后按
+      OWN_ACCEPTANCE_COMPLETE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e5a4fe5ed6e8145646f3683f
+  task_id: TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统完成验证后关闭；M2B 仅在 M1 owner gate 通过后绑定真实 replay
+    notes: '2026-07-10: implementation 与 34 项 executor tests 完成；combined M1/M2A focused
+      parallel pytest 69 passed。真实运行仍受 M1 six owner gaps 阻断，未调用 replay。 2026-07-23:
+      GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e5a4fe5ed6e8145646f3683f761a40c985a6383661c9deeb30d63c2003c7635e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M2A_GROWTH_TILT_TYPED_OVERLAY_EXECUTOR
+  - Strategy research / callable compute plane
+  - P0
+  - DONE
+  - 系统完成验证后关闭；M2B 仅在 M1 owner gate 通过后绑定真实 replay
+  - 已实现 research-only `GrowthTiltCandidateOverlayExecutor`，operation types=`EARLY_REENTRY_PROVISIONAL_EXPOSURE`、`DEFENSIVE_SOFT_CONFIRMATION_GRACE`、second-approved
+    `POST_CONFIRMATION_RAMP_ACCELERATION`；只按 typed operation 分派，不解析 candidate name。
+  - 相同 PIT inputs deterministic；每个 exposure delta 有 reason code；missing/placeholder/unmapped-veto/baseline
+    mismatch fail-closed；hard veto/expiry/rollback 回 baseline；A 不改 confirmed ramp/target，B
+    grace 仅一步且不绕 veto，C 未二次批准不得运行；无 production side effect。
+  - '2026-07-10: implementation 与 34 项 executor tests 完成；combined M1/M2A focused parallel
+    pytest 69 passed。真实运行仍受 M1 six owner gaps 阻断，未调用 replay。 2026-07-23: GOV-006 N1
+    coordinator review 后按 OWN_ACCEPTANCE_COMPLETE 转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: e5a4fe5ed6e8145646f3683f761a40c985a6383661c9deeb30d63c2003c7635e
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7502e7e20c96573707e834cbb4bcf90865fde07e6407804d8ccaf1166ed32316

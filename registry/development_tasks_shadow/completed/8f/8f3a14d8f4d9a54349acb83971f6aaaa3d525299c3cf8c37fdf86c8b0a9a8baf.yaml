@@ -1,0 +1,130 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+  title: null
+  domain: Research trends / exposure-cap diagnostics review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+    TRADING-2326 static ETF baseline source-bound dry-run outputs。本批只读取 prior validated
+    dry-run artifacts，不重新执行 simulation、不重新读取 cached market data、不修改 policy / baseline；必须
+    fail-closed 校验 2326 / 2325 / 2324 / 2323 artifacts、data-quality report、interpretation
+    boundary 和 safety fields。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends exposure-cap-vs-no-cap-diagnostics-review`；生成 cap-binding、exposure-reduction、return
+      / drawdown、turnover / cooldown、false-cost / missed-upside、downside-protection、period
+      attribution、policy sensitivity、dynamic baseline readiness、decision matrix、2328
+      route、diagnostics boundary 和 research docs；所有 outputs 固定 promotion/paper-shadow/production/broker
+      false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 492
+    row_sha256: ebf1942ee544dae0d6629f8288bab9d6abf246a937fd2e86a953fe19622698d5
+    cell_count: 8
+    all_cells:
+    - TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+    - Research trends / exposure-cap diagnostics review
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+      TRADING-2326 static ETF baseline source-bound dry-run outputs。本批只读取 prior validated
+      dry-run artifacts，不重新执行 simulation、不重新读取 cached market data、不修改 policy / baseline；必须
+      fail-closed 校验 2326 / 2325 / 2324 / 2323 artifacts、data-quality report、interpretation
+      boundary 和 safety fields。
+    - 新增 `aits research trends exposure-cap-vs-no-cap-diagnostics-review`；生成 cap-binding、exposure-reduction、return
+      / drawdown、turnover / cooldown、false-cost / missed-upside、downside-protection、period
+      attribution、policy sensitivity、dynamic baseline readiness、decision matrix、2328
+      route、diagnostics boundary 和 research docs；所有 outputs 固定 promotion/paper-shadow/production/broker
+      false/none。
+    - '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，cap_binding_rate=`0.441618`，return_proxy_delta=`-0.174103`，drawdown_proxy_delta=`0.06548`，overall_recommendation=`MOVE_TO_DYNAMIC_TARGET_BASELINE_PREPARATION`，next_task=`TRADING-2328_Dynamic_Target_Baseline_Preparation`；验证通过
+      focused pytest、Ruff、compileall、docs / contract / task-register gates、contract-validation
+      和 full validation。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW|Research trends
+      / exposure-cap diagnostics review|P0|DONE|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+      TRADING-2326 static ETF baseline source-bound dry-run outputs。本批只读取 prior validated
+      dry-run artifacts，不重新执行 simulation、不重新读取 cached market data、不修改 policy / baseline；必须
+      fail-closed 校验 2326 / 2325 / 2324 / 2323 artifacts、data-quality report、interpretation
+      boundary 和 safety fields。|新增 `aits research trends exposure-cap-vs-no-cap-diagnostics-review`；生成
+      cap-binding、exposure-reduction、return / drawdown、turnover / cooldown、false-cost
+      / missed-upside、downside-protection、period attribution、policy sensitivity、dynamic
+      baseline readiness、decision matrix、2328 route、diagnostics boundary 和 research
+      docs；所有 outputs 固定 promotion/paper-shadow/production/broker false/none。|2026-07-02:
+      根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须 selective
+      staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，cap_binding_rate=`0.441618`，return_proxy_delta=`-0.174103`，drawdown_proxy_delta=`0.06548`，overall_recommendation=`MOVE_TO_DYNAMIC_TARGET_BASELINE_PREPARATION`，next_task=`TRADING-2328_Dynamic_Target_Baseline_Preparation`；验证通过
+      focused pytest、Ruff、compileall、docs / contract / task-register gates、contract-validation
+      和 full validation。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-ebf1942ee544dae0d6629f82
+  task_id: TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，cap_binding_rate=`0.441618`，return_proxy_delta=`-0.174103`，drawdown_proxy_delta=`0.06548`，overall_recommendation=`MOVE_TO_DYNAMIC_TARGET_BASELINE_PREPARATION`，next_task=`TRADING-2328_Dynamic_Target_Baseline_Preparation`；验证通过
+      focused pytest、Ruff、compileall、docs / contract / task-register gates、contract-validation
+      和 full validation。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:ebf1942ee544dae0d6629f8288bab9d6abf246a937fd2e86a953fe19622698d5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2327_EXPOSURE_CAP_VS_NO_CAP_DIAGNOSTICS_REVIEW
+  - Research trends / exposure-cap diagnostics review
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md`；承接
+    TRADING-2326 static ETF baseline source-bound dry-run outputs。本批只读取 prior validated
+    dry-run artifacts，不重新执行 simulation、不重新读取 cached market data、不修改 policy / baseline；必须
+    fail-closed 校验 2326 / 2325 / 2324 / 2323 artifacts、data-quality report、interpretation
+    boundary 和 safety fields。
+  - 新增 `aits research trends exposure-cap-vs-no-cap-diagnostics-review`；生成 cap-binding、exposure-reduction、return
+    / drawdown、turnover / cooldown、false-cost / missed-upside、downside-protection、period
+    attribution、policy sensitivity、dynamic baseline readiness、decision matrix、2328
+    route、diagnostics boundary 和 research docs；所有 outputs 固定 promotion/paper-shadow/production/broker
+    false/none。
+  - '2026-07-02: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+    selective staging，不能混入无关改动。2026-07-02: 实现完成并进入 VALIDATING；真实 run status=`EXPOSURE_CAP_DIAGNOSTICS_REVIEW_READY_PROMOTION_BLOCKED`，data_quality_status=`PASS_WITH_WARNINGS`，cap_binding_rate=`0.441618`，return_proxy_delta=`-0.174103`，drawdown_proxy_delta=`0.06548`，overall_recommendation=`MOVE_TO_DYNAMIC_TARGET_BASELINE_PREPARATION`，next_task=`TRADING-2328_Dynamic_Target_Baseline_Preparation`；验证通过
+    focused pytest、Ruff、compileall、docs / contract / task-register gates、contract-validation
+    和 full validation。 2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_AND_SUCCESSOR_CONSUMED
+    转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links:
+  - docs/requirements/TRADING-2327_Exposure_Cap_vs_No_Cap_Diagnostics_Review.md
+  terminal: true
+  raw_row_sha256: ebf1942ee544dae0d6629f8288bab9d6abf246a937fd2e86a953fe19622698d5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ee6b6ff313e445a217d2f2c78d267d0a26ee6341f1287af946abdef3901dd6bd

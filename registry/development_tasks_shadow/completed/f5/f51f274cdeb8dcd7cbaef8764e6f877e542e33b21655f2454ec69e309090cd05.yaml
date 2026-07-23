@@ -1,0 +1,157 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+  title: null
+  domain: Research trends / exposure-cap dynamic target baseline dry-run readiness
+    with PIT caveat
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md`；承接
+    TRADING-2330 timestamp-remediated wrapper 已 route 到 2331。本批只检查 dynamic dry-run
+    前的 wrapper fields、PIT caveat、known-at / validity / latency / rebalance policy、risk-cap
+    timestamp alignment、market-data alignment、input contract 和 2332 route；不得执行 simulation
+    或生成交易指令。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends dynamic-target-baseline-dry-run-readiness-with-pit-caveat`；生成
+      readiness summary、gate checklist、PIT caveat acceptance、wrapper field validation、timestamp/risk-cap/market-data/policy
+      alignment matrix、input contract、data-quality precheck、interpretation boundary、2332
+      readiness matrix、2332 task route 和 research docs；真实 run `wrapper_record_count=2682`、wrapper
+      validation=`PASS_WITH_WARNINGS`、gate=`DYNAMIC_DRY_RUN_READY_WITH_PIT_CAVEAT`、`2332_allowed=true`、next
+      task=`TRADING-2332_Source_Bound_Exposure_Cap_Dry_Run_With_Dynamic_Target_Baseline`；所有
+      outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker
+      false/none，`PASS_WITH_WARNINGS` carry forward PIT / market-data / data-quality
+      caveat。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 496
+    row_sha256: 2531c4a200b8a533e61d83328598e1b7a5ec26725cc055b4080ae9dcdb9a7e98
+    cell_count: 8
+    all_cells:
+    - TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+    - Research trends / exposure-cap dynamic target baseline dry-run readiness with
+      PIT caveat
+    - P0
+    - DONE
+    - 系统实现 + 项目 owner 后续复核
+    - 详见 `docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md`；承接
+      TRADING-2330 timestamp-remediated wrapper 已 route 到 2331。本批只检查 dynamic dry-run
+      前的 wrapper fields、PIT caveat、known-at / validity / latency / rebalance policy、risk-cap
+      timestamp alignment、market-data alignment、input contract 和 2332 route；不得执行 simulation
+      或生成交易指令。
+    - 新增 `aits research trends dynamic-target-baseline-dry-run-readiness-with-pit-caveat`；生成
+      readiness summary、gate checklist、PIT caveat acceptance、wrapper field validation、timestamp/risk-cap/market-data/policy
+      alignment matrix、input contract、data-quality precheck、interpretation boundary、2332
+      readiness matrix、2332 task route 和 research docs；真实 run `wrapper_record_count=2682`、wrapper
+      validation=`PASS_WITH_WARNINGS`、gate=`DYNAMIC_DRY_RUN_READY_WITH_PIT_CAVEAT`、`2332_allowed=true`、next
+      task=`TRADING-2332_Source_Bound_Exposure_Cap_Dry_Run_With_Dynamic_Target_Baseline`；所有
+      outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker
+      false/none，`PASS_WITH_WARNINGS` carry forward PIT / market-data / data-quality
+      caveat。
+    - '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2331
+      artifacts，`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static config
+      和 wrapper artifacts。2026-07-03: 系统验证通过 focused pytest、Ruff、compileall、docs /
+      contract / task-register gates、contract-validation、full pytest 和 diff check。
+      2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT|Research
+      trends / exposure-cap dynamic target baseline dry-run readiness with PIT caveat|P0|DONE|系统实现
+      + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md`；承接
+      TRADING-2330 timestamp-remediated wrapper 已 route 到 2331。本批只检查 dynamic dry-run
+      前的 wrapper fields、PIT caveat、known-at / validity / latency / rebalance policy、risk-cap
+      timestamp alignment、market-data alignment、input contract 和 2332 route；不得执行 simulation
+      或生成交易指令。|新增 `aits research trends dynamic-target-baseline-dry-run-readiness-with-pit-caveat`；生成
+      readiness summary、gate checklist、PIT caveat acceptance、wrapper field validation、timestamp/risk-cap/market-data/policy
+      alignment matrix、input contract、data-quality precheck、interpretation boundary、2332
+      readiness matrix、2332 task route 和 research docs；真实 run `wrapper_record_count=2682`、wrapper
+      validation=`PASS_WITH_WARNINGS`、gate=`DYNAMIC_DRY_RUN_READY_WITH_PIT_CAVEAT`、`2332_allowed=true`、next
+      task=`TRADING-2332_Source_Bound_Exposure_Cap_Dry_Run_With_Dynamic_Target_Baseline`；所有
+      outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker
+      false/none，`PASS_WITH_WARNINGS` carry forward PIT / market-data / data-quality
+      caveat。|2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research
+      文档未提交改动，本任务必须 selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI
+      run 已生成 TRADING-2331 artifacts，`aits validate-data` 不适用，因为本任务只读取 prior research
+      outputs、static config 和 wrapper artifacts。2026-07-03: 系统验证通过 focused pytest、Ruff、compileall、docs
+      / contract / task-register gates、contract-validation、full pytest 和 diff check。
+      2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2531c4a200b8a533e61d8332
+  task_id: TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+      selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2331
+      artifacts，`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static config
+      和 wrapper artifacts。2026-07-03: 系统验证通过 focused pytest、Ruff、compileall、docs /
+      contract / task-register gates、contract-validation、full pytest 和 diff check。
+      2026-07-23: GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT
+      转 DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2531c4a200b8a533e61d83328598e1b7a5ec26725cc055b4080ae9dcdb9a7e98
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2331_DYNAMIC_TARGET_BASELINE_DRY_RUN_READINESS_WITH_PIT_CAVEAT
+  - Research trends / exposure-cap dynamic target baseline dry-run readiness with
+    PIT caveat
+  - P0
+  - DONE
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md`；承接
+    TRADING-2330 timestamp-remediated wrapper 已 route 到 2331。本批只检查 dynamic dry-run
+    前的 wrapper fields、PIT caveat、known-at / validity / latency / rebalance policy、risk-cap
+    timestamp alignment、market-data alignment、input contract 和 2332 route；不得执行 simulation
+    或生成交易指令。
+  - 新增 `aits research trends dynamic-target-baseline-dry-run-readiness-with-pit-caveat`；生成
+    readiness summary、gate checklist、PIT caveat acceptance、wrapper field validation、timestamp/risk-cap/market-data/policy
+    alignment matrix、input contract、data-quality precheck、interpretation boundary、2332
+    readiness matrix、2332 task route 和 research docs；真实 run `wrapper_record_count=2682`、wrapper
+    validation=`PASS_WITH_WARNINGS`、gate=`DYNAMIC_DRY_RUN_READY_WITH_PIT_CAVEAT`、`2332_allowed=true`、next
+    task=`TRADING-2332_Source_Bound_Exposure_Cap_Dry_Run_With_Dynamic_Target_Baseline`；所有
+    outputs 固定 `simulation_executed=false`、promotion/paper-shadow/production/broker
+    false/none，`PASS_WITH_WARNINGS` carry forward PIT / market-data / data-quality
+    caveat。
+  - '2026-07-03: 根据 owner 附件新增并进入 IN_PROGRESS；当前 worktree 有两个无关 research 文档未提交改动，本任务必须
+    selective staging，不能混入无关改动。2026-07-03: 实现完成并进入 VALIDATING；真实 CLI run 已生成 TRADING-2331
+    artifacts，`aits validate-data` 不适用，因为本任务只读取 prior research outputs、static config
+    和 wrapper artifacts。2026-07-03: 系统验证通过 focused pytest、Ruff、compileall、docs / contract
+    / task-register gates、contract-validation、full pytest 和 diff check。 2026-07-23:
+    GOV-006 N1 coordinator review 后按 OWN_ACCEPTANCE_COMPLETE_FAIL_CLOSED_RESULT 转
+    DONE 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links:
+  - docs/requirements/TRADING-2331_Dynamic_Target_Baseline_Dry_Run_Readiness_With_PIT_Caveat.md
+  terminal: true
+  raw_row_sha256: 2531c4a200b8a533e61d83328598e1b7a5ec26725cc055b4080ae9dcdb9a7e98
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6fd7ac445323556a9103213834b04f312da1d370e8aae88b235693526e21b6f9

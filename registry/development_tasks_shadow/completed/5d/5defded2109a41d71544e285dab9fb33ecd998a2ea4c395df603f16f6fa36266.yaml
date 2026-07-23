@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+  title: null
+  domain: Strategy research / approved-only replay orchestration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现；依赖 M1A/M1B/M2A
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 只读取 M1 validation 通过且 decision=APPROVE
+    的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data policy
+    运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: placeholder count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested`
+      等于真实 invocation；输出 required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+      3。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 480
+    row_sha256: 98c2909cedbf8f35803f776f3575f88ce7cfff7d8e84dda198d4b542659470dc
+    cell_count: 8
+    all_cells:
+    - TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+    - Strategy research / approved-only replay orchestration
+    - P0
+    - DROPPED
+    - 系统实现；依赖 M1A/M1B/M2A
+    - 只读取 M1 validation 通过且 decision=APPROVE 的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data
+      policy 运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。
+    - placeholder count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested`
+      等于真实 invocation；输出 required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+      3。
+    - '2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。 2026-07-23: GOV-006
+      N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED
+      并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING|Strategy research
+      / approved-only replay orchestration|P0|DROPPED|系统实现；依赖 M1A/M1B/M2A|只读取 M1 validation
+      通过且 decision=APPROVE 的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data
+      policy 运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。|placeholder
+      count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested` 等于真实 invocation；输出
+      required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+      3。|2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。 2026-07-23:
+      GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+      转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-98c2909cedbf8f35803f776f
+  task_id: TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DROPPED
+  payload:
+    priority: P0
+    next_owner: 系统实现；依赖 M1A/M1B/M2A
+    notes: '2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。 2026-07-23:
+      GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+      转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:98c2909cedbf8f35803f776f3575f88ce7cfff7d8e84dda198d4b542659470dc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438M2B_GROWTH_TILT_REAL_PIT_REPLAY_BINDING
+  - Strategy research / approved-only replay orchestration
+  - P0
+  - DROPPED
+  - 系统实现；依赖 M1A/M1B/M2A
+  - 只读取 M1 validation 通过且 decision=APPROVE 的 candidate；同 timeline/PIT snapshot/baseline/benchmark/cost/missing-data
+    policy 运行 baseline 与 overlay，持久化并 reload；REDEFINE/WITHDRAW/PENDING 不得调用 executor。
+  - placeholder count=0；baseline/candidate runner 均 invoked；`pit_candidates_tested`
+    等于真实 invocation；输出 required M2 artifacts 与 provenance；数据质量 gate 先通过；首轮允许 approved_count=2，不要求凑满
+    3。
+  - '2026-07-10: 等待 M1 mappings/policy 完整和 M2A callable executor。 2026-07-23: GOV-006
+    N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED
+    并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 98c2909cedbf8f35803f776f3575f88ce7cfff7d8e84dda198d4b542659470dc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 596dd76303fdd95af98d0679cbff378efbce747f4d39e9b109558b994e9ebc51

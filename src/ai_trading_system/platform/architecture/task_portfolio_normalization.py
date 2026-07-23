@@ -13,6 +13,8 @@ import yaml
 from yaml.nodes import MappingNode
 
 from ai_trading_system.platform.architecture.task_registry_shadow import (
+    ACTIVE_REGISTER_PATH,
+    COMPLETED_REGISTER_PATH,
     LegacyRegisterDocument,
     LegacyTaskRow,
     load_legacy_documents,
@@ -20,10 +22,14 @@ from ai_trading_system.platform.architecture.task_registry_shadow import (
 
 POLICY_SCHEMA_VERSION = "gov_006_portfolio_normalization_policy.v2"
 MANIFEST_SCHEMA_VERSION = "gov_006_portfolio_normalization_decision_manifest.v2"
+APPLIED_CLOSEOUT_SCHEMA_VERSION = "gov_006_portfolio_normalization_applied_closeout.v1"
 POLICY_ID = "gov_006_wave1_normalization"
 POLICY_STATUS = "GOVERNANCE_COORDINATOR_REVIEWED_WAVE1"
 AUTHORIZATION_SCOPE = "GOVERNANCE_TASK_AND_PARALLEL_EXECUTION_ONLY"
 DECISION_REVIEW_SCOPE = "EXACT_WAVE1_DECISIONS"
+APPLIED_CLOSEOUT_STATUS = "APPLIED_CLOSEOUT_READY"
+REAL_WAVE_ID = "GOV-006-WAVE1-HIGH-CONFIDENCE"
+REAL_WAVE_DECISION_COUNT = 30
 TERMINAL_STATUSES = frozenset({"DONE", "DROPPED"})
 SUCCESSOR_EVIDENCE_ROLES = frozenset(
     {"terminal_closure", "completed_consumer", "active_continuation"}
@@ -142,15 +148,22 @@ def _build_normalization_decision_manifest(
     policy: Mapping[str, Any],
     policy_path: Path,
     base_commit: str,
+    documents: Sequence[LegacyRegisterDocument] | None = None,
+    policy_raw: bytes | None = None,
 ) -> dict[str, Any]:
     root = project_root.resolve()
     metadata = _validate_policy(policy)
-    policy_binding = _policy_binding(root=root, path=policy_path, policy=policy)
+    policy_binding = _policy_binding(
+        root=root,
+        path=policy_path,
+        policy=policy,
+        raw=policy_raw,
+    )
     validated_base_commit = _commit_id(base_commit, "base_commit")
 
-    documents = load_legacy_documents(root)
-    active, completed = _partition_documents(documents)
-    all_rows = tuple(row for document in documents for row in document.rows)
+    resolved_documents = tuple(documents or load_legacy_documents(root))
+    active, completed = _partition_documents(resolved_documents)
+    all_rows = tuple(row for document in resolved_documents for row in document.rows)
     by_id = _unique_rows(all_rows)
     completed_ids = {row.task_id for row in completed.rows}
     specs = _sequence(policy.get("decisions"), "decisions")
@@ -278,19 +291,7 @@ def validate_normalization_decision_manifest(
     policy_path: Path,
 ) -> None:
     root = project_root.resolve()
-    if payload.get("schema_version") != MANIFEST_SCHEMA_VERSION:
-        raise TaskPortfolioNormalizationError("MANIFEST_SCHEMA", str(payload.get("schema_version")))
-    if payload.get("status") != "DRY_RUN_READY":
-        raise TaskPortfolioNormalizationError("MANIFEST_STATUS", str(payload.get("status")))
-    actual_sha256 = _required_text(payload.get("manifest_sha256"), "manifest_sha256")
-    expected_sha256 = _manifest_sha256(payload)
-    if actual_sha256 != expected_sha256:
-        raise TaskPortfolioNormalizationError("MANIFEST_SHA256", actual_sha256)
-    manifest_id = _required_text(payload.get("manifest_id"), "manifest_id")
-    if manifest_id != _manifest_id(expected_sha256):
-        raise TaskPortfolioNormalizationError("MANIFEST_ID", manifest_id)
-    source = _mapping(payload.get("source"), "source")
-    base_commit = _required_text(source.get("base_commit"), "base_commit")
+    base_commit = _validate_decision_manifest_integrity(payload)
     _validate_repository_base_commit(root=root, base_commit=base_commit)
     expected = _build_normalization_decision_manifest(
         project_root=root,
@@ -303,6 +304,474 @@ def validate_normalization_decision_manifest(
             "MANIFEST_SOURCE_DRIFT",
             "policy/register bytes or governed decisions no longer reproduce manifest",
         )
+
+
+def validate_historical_normalization_decision_manifest(
+    payload: Mapping[str, Any],
+    *,
+    project_root: Path,
+    policy: Mapping[str, Any],
+    policy_path: Path,
+) -> None:
+    """Replay a dry-run manifest against its exact committed source bytes.
+
+    N1 moves the governed rows out of the live active register.  The historical
+    decision evidence therefore cannot remain valid by reading the live files;
+    it must be replayed from the source commit recorded by the dry-run.
+    """
+
+    root = project_root.resolve()
+    base_commit = _validate_decision_manifest_integrity(payload)
+    _validate_repository_base_commit(root=root, base_commit=base_commit)
+    source = _mapping(payload.get("source"), "source")
+    active_path = _required_portable_repository_path(
+        source.get("active_path"),
+        field="source.active_path",
+        expected=ACTIVE_REGISTER_PATH,
+    )
+    completed_path = _required_portable_repository_path(
+        source.get("completed_path"),
+        field="source.completed_path",
+        expected=COMPLETED_REGISTER_PATH,
+    )
+    documents = (
+        _legacy_document_from_bytes(
+            _git_blob(root=root, commit=base_commit, path=active_path),
+            source="active",
+            source_path=active_path,
+        ),
+        _legacy_document_from_bytes(
+            _git_blob(root=root, commit=base_commit, path=completed_path),
+            source="completed",
+            source_path=completed_path,
+        ),
+    )
+    active, completed = _partition_documents(documents)
+    if active.sha256 != source.get("active_sha256"):
+        raise TaskPortfolioNormalizationError("HISTORICAL_ACTIVE_HASH_DRIFT", active_path)
+    if completed.sha256 != source.get("completed_sha256"):
+        raise TaskPortfolioNormalizationError("HISTORICAL_COMPLETED_HASH_DRIFT", completed_path)
+    policy_binding = _mapping(payload.get("policy"), "policy")
+    portable_policy_path = _project_path(
+        root=root,
+        path=policy_path,
+        field="policy_path",
+    )
+    if policy_binding.get("path") != portable_policy_path:
+        raise TaskPortfolioNormalizationError("HISTORICAL_POLICY_PATH_DRIFT", portable_policy_path)
+    committed_policy_raw = _git_blob(
+        root=root,
+        commit=base_commit,
+        path=portable_policy_path,
+    )
+    if hashlib.sha256(committed_policy_raw).hexdigest() != policy_binding.get("raw_sha256"):
+        raise TaskPortfolioNormalizationError("HISTORICAL_POLICY_HASH_DRIFT", portable_policy_path)
+    committed_policy = _parse_normalization_policy(
+        committed_policy_raw,
+        path=policy_path,
+    )
+    expected = _build_normalization_decision_manifest(
+        project_root=root,
+        policy=committed_policy,
+        policy_path=policy_path,
+        base_commit=base_commit,
+        documents=documents,
+        policy_raw=committed_policy_raw,
+    )
+    if dict(payload) != expected:
+        raise TaskPortfolioNormalizationError(
+            "HISTORICAL_MANIFEST_SOURCE_DRIFT",
+            "committed policy/register bytes do not reproduce the dry-run manifest",
+        )
+
+
+def _validate_decision_manifest_integrity(payload: Mapping[str, Any]) -> str:
+    if payload.get("schema_version") != MANIFEST_SCHEMA_VERSION:
+        raise TaskPortfolioNormalizationError("MANIFEST_SCHEMA", str(payload.get("schema_version")))
+    if payload.get("status") != "DRY_RUN_READY":
+        raise TaskPortfolioNormalizationError("MANIFEST_STATUS", str(payload.get("status")))
+    actual_sha256 = _required_text(payload.get("manifest_sha256"), "manifest_sha256")
+    expected_sha256 = _manifest_sha256(payload)
+    if actual_sha256 != expected_sha256:
+        raise TaskPortfolioNormalizationError("MANIFEST_SHA256", actual_sha256)
+    manifest_id = _required_text(payload.get("manifest_id"), "manifest_id")
+    if manifest_id != _manifest_id(expected_sha256):
+        raise TaskPortfolioNormalizationError("MANIFEST_ID", manifest_id)
+    source = _mapping(payload.get("source"), "source")
+    return _required_text(source.get("base_commit"), "base_commit")
+
+
+def build_normalization_applied_closeout(
+    *,
+    project_root: Path,
+    policy: Mapping[str, Any],
+    policy_path: Path,
+    decision_manifest_path: Path,
+    application_commit: str,
+) -> dict[str, Any]:
+    root = project_root.resolve()
+    payload = _build_normalization_applied_closeout(
+        project_root=root,
+        policy=policy,
+        policy_path=policy_path,
+        decision_manifest_path=decision_manifest_path,
+        application_commit=application_commit,
+    )
+    validate_normalization_applied_closeout(
+        payload,
+        project_root=root,
+        policy=policy,
+        policy_path=policy_path,
+        decision_manifest_path=decision_manifest_path,
+    )
+    return payload
+
+
+def validate_normalization_applied_closeout(
+    payload: Mapping[str, Any],
+    *,
+    project_root: Path,
+    policy: Mapping[str, Any],
+    policy_path: Path,
+    decision_manifest_path: Path,
+) -> None:
+    root = project_root.resolve()
+    if payload.get("schema_version") != APPLIED_CLOSEOUT_SCHEMA_VERSION:
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_CLOSEOUT_SCHEMA", str(payload.get("schema_version"))
+        )
+    if payload.get("status") != APPLIED_CLOSEOUT_STATUS:
+        raise TaskPortfolioNormalizationError("APPLIED_CLOSEOUT_STATUS", str(payload.get("status")))
+    actual_sha256 = _required_text(payload.get("closeout_sha256"), "closeout_sha256")
+    expected_sha256 = _applied_closeout_sha256(payload)
+    if actual_sha256 != expected_sha256:
+        raise TaskPortfolioNormalizationError("APPLIED_CLOSEOUT_SHA256", actual_sha256)
+    closeout_id = _required_text(payload.get("closeout_id"), "closeout_id")
+    if closeout_id != _applied_closeout_id(expected_sha256):
+        raise TaskPortfolioNormalizationError("APPLIED_CLOSEOUT_ID", closeout_id)
+    lineage = _mapping(payload.get("lineage"), "lineage")
+    application_commit = _required_text(
+        lineage.get("application_commit"), "lineage.application_commit"
+    )
+    expected = _build_normalization_applied_closeout(
+        project_root=root,
+        policy=policy,
+        policy_path=policy_path,
+        decision_manifest_path=decision_manifest_path,
+        application_commit=application_commit,
+    )
+    if dict(payload) != expected:
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_CLOSEOUT_SOURCE_DRIFT",
+            "historical dry-run or committed application state does not reproduce closeout",
+        )
+
+
+def _build_normalization_applied_closeout(
+    *,
+    project_root: Path,
+    policy: Mapping[str, Any],
+    policy_path: Path,
+    decision_manifest_path: Path,
+    application_commit: str,
+) -> dict[str, Any]:
+    root = project_root.resolve()
+    validated_application_commit = _commit_id(application_commit, "application_commit")
+    _validate_repository_base_commit(
+        root=root,
+        base_commit=validated_application_commit,
+    )
+    decision_manifest_portable = _project_path(
+        root=root,
+        path=decision_manifest_path,
+        field="decision_manifest_path",
+    )
+    dry_run_raw = _git_blob(
+        root=root,
+        commit=validated_application_commit,
+        path=decision_manifest_portable,
+    )
+    dry_run = _parse_json_mapping_bytes(
+        dry_run_raw,
+        path=decision_manifest_portable,
+        code="DECISION_MANIFEST_READ",
+    )
+    validate_historical_normalization_decision_manifest(
+        dry_run,
+        project_root=root,
+        policy=policy,
+        policy_path=policy_path,
+    )
+    dry_source = _mapping(dry_run.get("source"), "source")
+    historical_base_commit = _commit_id(dry_source.get("base_commit"), "historical_base_commit")
+    _validate_commit_ancestry(
+        root=root,
+        ancestor=historical_base_commit,
+        descendant=validated_application_commit,
+        code="APPLICATION_COMMIT_NOT_DESCENDANT",
+    )
+
+    policy_portable = _project_path(
+        root=root,
+        path=policy_path,
+        field="policy_path",
+    )
+    application_policy_raw = _git_blob(
+        root=root,
+        commit=validated_application_commit,
+        path=policy_portable,
+    )
+    policy_binding = _mapping(dry_run.get("policy"), "policy")
+    if hashlib.sha256(application_policy_raw).hexdigest() != policy_binding.get("raw_sha256"):
+        raise TaskPortfolioNormalizationError("APPLICATION_POLICY_DRIFT", policy_portable)
+
+    active_path = _required_portable_repository_path(
+        dry_source.get("active_path"),
+        field="source.active_path",
+        expected=ACTIVE_REGISTER_PATH,
+    )
+    completed_path = _required_portable_repository_path(
+        dry_source.get("completed_path"),
+        field="source.completed_path",
+        expected=COMPLETED_REGISTER_PATH,
+    )
+    before_documents = (
+        _legacy_document_from_bytes(
+            _git_blob(
+                root=root,
+                commit=historical_base_commit,
+                path=active_path,
+            ),
+            source="active",
+            source_path=active_path,
+        ),
+        _legacy_document_from_bytes(
+            _git_blob(
+                root=root,
+                commit=historical_base_commit,
+                path=completed_path,
+            ),
+            source="completed",
+            source_path=completed_path,
+        ),
+    )
+    after_documents = (
+        _legacy_document_from_bytes(
+            _git_blob(
+                root=root,
+                commit=validated_application_commit,
+                path=active_path,
+            ),
+            source="active",
+            source_path=active_path,
+        ),
+        _legacy_document_from_bytes(
+            _git_blob(
+                root=root,
+                commit=validated_application_commit,
+                path=completed_path,
+            ),
+            source="completed",
+            source_path=completed_path,
+        ),
+    )
+    before_rows = _unique_rows(tuple(row for document in before_documents for row in document.rows))
+    after_rows = _unique_rows(tuple(row for document in after_documents for row in document.rows))
+    if set(before_rows) != set(after_rows):
+        missing = sorted(set(before_rows) - set(after_rows))
+        added = sorted(set(after_rows) - set(before_rows))
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_TASK_SET_DRIFT",
+            f"missing={missing} added={added}",
+        )
+
+    raw_decisions = _sequence(dry_run.get("decisions"), "decisions")
+    decision_count = len(raw_decisions)
+    _validate_real_wave_decision_count(
+        wave_id=str(dry_run.get("wave_id", "")),
+        decision_count=decision_count,
+    )
+    dry_run_manifest_id = _required_text(dry_run.get("manifest_id"), "manifest_id")
+    decision_ids: set[str] = set()
+    vacated_source_lines: list[int] = []
+    applied_decisions: list[dict[str, Any]] = []
+    target_status_counts: Counter[str] = Counter()
+    for raw_decision in raw_decisions:
+        decision = _mapping(raw_decision, "decision")
+        task_id = _required_text(decision.get("task_id"), "decision.task_id")
+        if task_id in decision_ids:
+            raise TaskPortfolioNormalizationError("DUPLICATE_APPLIED_DECISION", task_id)
+        decision_ids.add(task_id)
+        before = before_rows[task_id]
+        after = after_rows[task_id]
+        if before.source != "active":
+            raise TaskPortfolioNormalizationError(
+                "APPLIED_DECISION_NOT_HISTORICALLY_ACTIVE", task_id
+            )
+        target_status = _required_text(decision.get("target_status"), "decision.target_status")
+        if after.source != "completed":
+            raise TaskPortfolioNormalizationError("APPLIED_DECISION_NOT_COMPLETED", task_id)
+        if after.projected_cells[3] != target_status:
+            raise TaskPortfolioNormalizationError(
+                "APPLIED_TARGET_STATUS_DRIFT",
+                f"{task_id}: expected={target_status} actual={after.projected_cells[3]}",
+            )
+        own_acceptance_refs = _sequence(
+            decision.get("own_acceptance_refs"), "decision.own_acceptance_refs"
+        )
+        if len(own_acceptance_refs) != 1:
+            raise TaskPortfolioNormalizationError("APPLIED_OWN_ACCEPTANCE_REF_COUNT", task_id)
+        own_ref = _mapping(own_acceptance_refs[0], "own_acceptance_ref")
+        if (
+            own_ref.get("source") != "active"
+            or own_ref.get("status") != before.projected_cells[3]
+            or own_ref.get("path") != before.source_path
+            or own_ref.get("line") != before.line_number
+            or own_ref.get("sha256") != before.row_sha256
+        ):
+            raise TaskPortfolioNormalizationError("APPLIED_OWN_ACCEPTANCE_REF_DRIFT", task_id)
+        vacated_source_lines.append(before.line_number)
+        reason_code = _required_text(decision.get("reason_code"), "decision.reason_code")
+        row_transition = _validate_applied_row_transition(
+            task_id=task_id,
+            before=before,
+            after=after,
+            target_status=target_status,
+            reason_code=reason_code,
+            manifest_id=dry_run_manifest_id,
+        )
+        target_status_counts[target_status] += 1
+        applied_decisions.append(
+            {
+                "task_id": task_id,
+                "target_status": target_status,
+                "reason_code": reason_code,
+                "before": _application_row_ref(before),
+                "after": _application_row_ref(after),
+                "row_transition": row_transition,
+                "active_absent_after": True,
+                "completed_present_after": True,
+                "production_effect": "none",
+            }
+        )
+
+    for task_id in sorted(set(before_rows) - decision_ids):
+        before = before_rows[task_id]
+        after = after_rows[task_id]
+        before_state = (
+            before.source,
+            before.projected_cells[2],
+            before.projected_cells[3],
+        )
+        after_state = (
+            after.source,
+            after.projected_cells[2],
+            after.projected_cells[3],
+        )
+        if before_state != after_state:
+            raise TaskPortfolioNormalizationError(
+                "UNTARGETED_PARTITION_PRIORITY_STATUS_DRIFT",
+                f"{task_id}: before={before_state} after={after_state}",
+            )
+
+    before_inventory = _normalization_inventory(before_documents)
+    after_inventory = _normalization_inventory(after_documents)
+    expected_after = _expected_after_inventory(
+        before_inventory=before_inventory,
+        decisions=applied_decisions,
+    )
+    if after_inventory != expected_after:
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_INVENTORY_DRIFT",
+            json.dumps(
+                {"expected": expected_after, "actual": after_inventory},
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
+        )
+
+    before_active, before_completed = _partition_documents(before_documents)
+    after_active, after_completed = _partition_documents(after_documents)
+    line_churn = _validate_active_line_churn(
+        before=before_active,
+        after=after_active,
+        vacated_source_lines=vacated_source_lines,
+        decision_count=decision_count,
+    )
+    payload: dict[str, Any] = {
+        "schema_version": APPLIED_CLOSEOUT_SCHEMA_VERSION,
+        "status": APPLIED_CLOSEOUT_STATUS,
+        "task_id": "GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION",
+        "wave_id": dry_run.get("wave_id"),
+        "historical_dry_run": {
+            "path": decision_manifest_portable,
+            "file_sha256": hashlib.sha256(dry_run_raw).hexdigest(),
+            "manifest_id": dry_run.get("manifest_id"),
+            "manifest_sha256": dry_run.get("manifest_sha256"),
+            "source_base_commit": historical_base_commit,
+            "status": dry_run.get("status"),
+            "decision_count": decision_count,
+            "commit_bound_replay": "PASS",
+        },
+        "lineage": {
+            "historical_base_commit": historical_base_commit,
+            "application_commit": validated_application_commit,
+            "historical_base_is_ancestor_of_application": True,
+            "application_commit_must_equal_or_be_ancestor_of_validation_head": True,
+        },
+        "policy": {
+            "path": policy_portable,
+            "raw_sha256": policy_binding.get("raw_sha256"),
+            "canonical_semantic_sha256": policy_binding.get("canonical_semantic_sha256"),
+            "decision_reviewer": "governance_coordinator",
+            "owner_exact_decisions_approved": False,
+        },
+        "source_hashes": {
+            "before": {
+                "active_path": active_path,
+                "active_sha256": before_active.sha256,
+                "completed_path": completed_path,
+                "completed_sha256": before_completed.sha256,
+            },
+            "after": {
+                "active_path": active_path,
+                "active_sha256": after_active.sha256,
+                "completed_path": completed_path,
+                "completed_sha256": after_completed.sha256,
+            },
+        },
+        "before_inventory": before_inventory,
+        "after_inventory": after_inventory,
+        "application": {
+            "action": "MOVE_ACTIVE_ROWS_TO_COMPLETED_REGISTER",
+            "decision_count": decision_count,
+            "target_status_counts": dict(sorted(target_status_counts.items())),
+            "applied_decisions": applied_decisions,
+            "line_churn": line_churn,
+            "untargeted_partition_priority_status_unchanged": True,
+            "task_id_set_conserved": True,
+            "total_task_count_conserved": True,
+        },
+        "apply_boundary": {
+            "automatic_apply_allowed": False,
+            "coordinator_only": True,
+            "task_source_of_truth": "LEGACY_MARKDOWN_ONLY",
+            "task_source_of_truth_cutover": False,
+            "application_commit_required": True,
+        },
+        "safety": {
+            "strategy_logic_change": False,
+            "data_or_runtime_change": False,
+            "scheduler_or_periodic_command_executed": False,
+            "paper_shadow_or_portfolio_mutated": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+    }
+    closeout_sha256 = _applied_closeout_sha256(payload)
+    payload["closeout_sha256"] = closeout_sha256
+    payload["closeout_id"] = _applied_closeout_id(closeout_sha256)
+    return payload
 
 
 def _parse_normalization_policy(raw: bytes, *, path: Path) -> dict[str, Any]:
@@ -379,23 +848,32 @@ def _validate_policy(policy: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _policy_binding(*, root: Path, path: Path, policy: Mapping[str, Any]) -> dict[str, Any]:
+def _policy_binding(
+    *,
+    root: Path,
+    path: Path,
+    policy: Mapping[str, Any],
+    raw: bytes | None = None,
+) -> dict[str, Any]:
     resolved = path.resolve()
     try:
         portable = resolved.relative_to(root).as_posix()
     except ValueError as exc:
         raise TaskPortfolioNormalizationError("POLICY_OUTSIDE_ROOT", str(path)) from exc
-    try:
-        raw = resolved.read_bytes()
-    except OSError as exc:
-        raise TaskPortfolioNormalizationError("POLICY_READ", portable) from exc
-    loaded = _parse_normalization_policy(raw, path=resolved)
+    if raw is None:
+        try:
+            source_raw = resolved.read_bytes()
+        except OSError as exc:
+            raise TaskPortfolioNormalizationError("POLICY_READ", portable) from exc
+    else:
+        source_raw = raw
+    loaded = _parse_normalization_policy(source_raw, path=resolved)
     if _canonical_json_bytes(loaded) != _canonical_json_bytes(policy):
         raise TaskPortfolioNormalizationError("POLICY_ARGUMENT_DRIFT", portable)
     metadata = _validate_policy(loaded)
     return {
         "path": portable,
-        "raw_sha256": hashlib.sha256(raw).hexdigest(),
+        "raw_sha256": hashlib.sha256(source_raw).hexdigest(),
         "canonical_semantic_sha256": hashlib.sha256(_canonical_json_bytes(loaded)).hexdigest(),
         "schema_version": metadata["schema_version"],
         "policy_id": metadata["policy_id"],
@@ -553,6 +1031,358 @@ def _row_ref(
     return result
 
 
+def _application_row_ref(row: LegacyTaskRow) -> dict[str, Any]:
+    return {
+        "source": row.source,
+        "path": row.source_path,
+        "line": row.line_number,
+        "status": row.projected_cells[3],
+        "priority": row.projected_cells[2],
+        "row_sha256": row.row_sha256,
+    }
+
+
+def _validate_applied_row_transition(
+    *,
+    task_id: str,
+    before: LegacyTaskRow,
+    after: LegacyTaskRow,
+    target_status: str,
+    reason_code: str,
+    manifest_id: str,
+) -> dict[str, Any]:
+    if len(after.cells) != len(before.cells):
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_ROW_CELL_COUNT_DRIFT",
+            f"{task_id}: before={len(before.cells)} after={len(after.cells)}",
+        )
+    if before.cells[:3] != after.cells[:3] or before.cells[4:-1] != after.cells[4:-1]:
+        raise TaskPortfolioNormalizationError("APPLIED_NON_STATUS_FIELD_DRIFT", task_id)
+    if after.cells[3] != target_status:
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_TARGET_STATUS_DRIFT",
+            f"{task_id}: expected={target_status} actual={after.cells[3]}",
+        )
+    expected_suffix = _applied_audit_note_suffix(
+        reason_code=reason_code,
+        target_status=target_status,
+        manifest_id=manifest_id,
+    )
+    actual_suffix = after.cells[-1][len(before.cells[-1]) :]
+    if (
+        not after.cells[-1].startswith(before.cells[-1])
+        or actual_suffix != expected_suffix
+        or actual_suffix.count(f"后按 {reason_code} 转 {target_status}") != 1
+        or actual_suffix.count(f"manifest={manifest_id}") != 1
+        or actual_suffix.count("production_effect=none") != 1
+    ):
+        raise TaskPortfolioNormalizationError("APPLIED_AUDIT_NOTE_DRIFT", task_id)
+    return {
+        "cell_count_preserved": True,
+        "all_non_status_fields_preserved": True,
+        "original_note_prefix_preserved": True,
+        "audit_note_suffix": expected_suffix,
+        "audit_note_suffix_sha256": hashlib.sha256(expected_suffix.encode("utf-8")).hexdigest(),
+        "reason_target_manifest_and_safety_exactly_once": True,
+    }
+
+
+def _applied_audit_note_suffix(
+    *,
+    reason_code: str,
+    target_status: str,
+    manifest_id: str,
+) -> str:
+    return (
+        f" 2026-07-23: GOV-006 N1 coordinator review 后按 {reason_code} "
+        f"转 {target_status} 并归档；manifest={manifest_id}；"
+        "production_effect=none。"
+    )
+
+
+def _validate_active_line_churn(
+    *,
+    before: LegacyRegisterDocument,
+    after: LegacyRegisterDocument,
+    vacated_source_lines: Sequence[int],
+    decision_count: int,
+) -> dict[str, Any]:
+    before_lines = before.raw_bytes.decode("utf-8").splitlines()
+    after_lines = after.raw_bytes.decode("utf-8").splitlines()
+    if len(before_lines) != len(after_lines):
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_ACTIVE_LINE_COUNT_DRIFT",
+            f"before={len(before_lines)} after={len(after_lines)}",
+        )
+    unique_lines = tuple(sorted(set(vacated_source_lines)))
+    if len(unique_lines) != decision_count:
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_VACATED_LINE_COUNT_DRIFT",
+            f"expected={decision_count} actual={len(unique_lines)}",
+        )
+    for line_number in unique_lines:
+        if line_number < 1 or line_number > len(after_lines):
+            raise TaskPortfolioNormalizationError(
+                "APPLIED_VACATED_LINE_OUT_OF_RANGE", str(line_number)
+            )
+        if after_lines[line_number - 1].strip():
+            raise TaskPortfolioNormalizationError(
+                "APPLIED_VACATED_LINE_NOT_BLANK", str(line_number)
+            )
+    return {
+        "before_active_physical_line_count": len(before_lines),
+        "after_active_physical_line_count": len(after_lines),
+        "physical_line_count_preserved": True,
+        "vacated_source_line_count": len(unique_lines),
+        "vacated_source_lines": list(unique_lines),
+        "vacated_source_lines_preserved_blank": True,
+    }
+
+
+def _normalization_inventory(
+    documents: Sequence[LegacyRegisterDocument],
+) -> dict[str, Any]:
+    active, completed = _partition_documents(documents)
+    all_rows = tuple(row for document in documents for row in document.rows)
+    _unique_rows(all_rows)
+    active_status_counts = Counter(row.projected_cells[3] for row in active.rows)
+    active_priority_counts = Counter(row.projected_cells[2] for row in active.rows)
+    completed_status_counts = Counter(row.projected_cells[3] for row in completed.rows)
+    completed_priority_counts = Counter(row.projected_cells[2] for row in completed.rows)
+    return {
+        "active_task_count": len(active.rows),
+        "completed_task_count": len(completed.rows),
+        "total_task_count": len(all_rows),
+        "active_status_counts": dict(sorted(active_status_counts.items())),
+        "active_priority_counts": dict(sorted(active_priority_counts.items())),
+        "completed_status_counts": dict(sorted(completed_status_counts.items())),
+        "completed_priority_counts": dict(sorted(completed_priority_counts.items())),
+    }
+
+
+def _expected_after_inventory(
+    *,
+    before_inventory: Mapping[str, Any],
+    decisions: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    status_counts = Counter(
+        {
+            str(key): _strict_integer(value, "before_inventory.active_status_counts")
+            for key, value in _mapping(
+                before_inventory.get("active_status_counts"),
+                "before_inventory.active_status_counts",
+            ).items()
+        }
+    )
+    priority_counts = Counter(
+        {
+            str(key): _strict_integer(value, "before_inventory.active_priority_counts")
+            for key, value in _mapping(
+                before_inventory.get("active_priority_counts"),
+                "before_inventory.active_priority_counts",
+            ).items()
+        }
+    )
+    completed_status_counts = Counter(
+        {
+            str(key): _strict_integer(value, "before_inventory.completed_status_counts")
+            for key, value in _mapping(
+                before_inventory.get("completed_status_counts"),
+                "before_inventory.completed_status_counts",
+            ).items()
+        }
+    )
+    completed_priority_counts = Counter(
+        {
+            str(key): _strict_integer(value, "before_inventory.completed_priority_counts")
+            for key, value in _mapping(
+                before_inventory.get("completed_priority_counts"),
+                "before_inventory.completed_priority_counts",
+            ).items()
+        }
+    )
+    for decision in decisions:
+        before = _mapping(decision.get("before"), "decision.before")
+        source_status = _required_text(before.get("status"), "decision.before.status")
+        priority = _required_text(before.get("priority"), "decision.before.priority")
+        target_status = _required_text(decision.get("target_status"), "decision.target_status")
+        status_counts[source_status] -= 1
+        priority_counts[priority] -= 1
+        completed_status_counts[target_status] += 1
+        completed_priority_counts[priority] += 1
+    if any(
+        value < 0
+        for value in (
+            *status_counts.values(),
+            *priority_counts.values(),
+            *completed_status_counts.values(),
+            *completed_priority_counts.values(),
+        )
+    ):
+        raise TaskPortfolioNormalizationError(
+            "APPLIED_INVENTORY_UNDERFLOW", "decision counts exceed before inventory"
+        )
+    active_before = _strict_integer(
+        before_inventory.get("active_task_count"),
+        "before_inventory.active_task_count",
+    )
+    completed_before = _strict_integer(
+        before_inventory.get("completed_task_count"),
+        "before_inventory.completed_task_count",
+    )
+    total_before = _strict_integer(
+        before_inventory.get("total_task_count"),
+        "before_inventory.total_task_count",
+    )
+    return {
+        "active_task_count": active_before - len(decisions),
+        "completed_task_count": completed_before + len(decisions),
+        "total_task_count": total_before,
+        "active_status_counts": dict(
+            sorted((key, value) for key, value in status_counts.items() if value)
+        ),
+        "active_priority_counts": dict(
+            sorted((key, value) for key, value in priority_counts.items() if value)
+        ),
+        "completed_status_counts": dict(
+            sorted((key, value) for key, value in completed_status_counts.items() if value)
+        ),
+        "completed_priority_counts": dict(
+            sorted((key, value) for key, value in completed_priority_counts.items() if value)
+        ),
+    }
+
+
+def _legacy_document_from_bytes(
+    raw: bytes,
+    *,
+    source: str,
+    source_path: str,
+) -> LegacyRegisterDocument:
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise TaskPortfolioNormalizationError("COMMITTED_REGISTER_NOT_UTF8", source_path) from exc
+    rows: list[LegacyTaskRow] = []
+    for line_number, physical_line in enumerate(text.splitlines(keepends=True), start=1):
+        raw_line, ending = _split_line_ending(physical_line)
+        cells = _legacy_cells(raw_line)
+        if cells is None:
+            continue
+        rows.append(
+            LegacyTaskRow(
+                source=source,
+                source_path=source_path,
+                line_number=line_number,
+                raw_line=raw_line,
+                line_ending=ending,
+                cells=cells,
+            )
+        )
+    return LegacyRegisterDocument(
+        source=source,
+        source_path=source_path,
+        raw_bytes=raw,
+        rows=tuple(rows),
+    )
+
+
+def _legacy_cells(line: str) -> tuple[str, ...] | None:
+    if not line.startswith("|") or line.startswith("|---") or line.startswith("|ID|"):
+        return None
+    cells = tuple(cell.strip() for cell in line.strip().strip("|").split("|"))
+    if len(cells) < 8 or not cells[0] or cells[0] == "---":
+        return None
+    return cells
+
+
+def _split_line_ending(line: str) -> tuple[str, str]:
+    if line.endswith("\r\n"):
+        return line[:-2], "\r\n"
+    if line.endswith("\n") or line.endswith("\r"):
+        return line[:-1], line[-1]
+    return line, ""
+
+
+def _parse_json_mapping_bytes(
+    raw: bytes,
+    *,
+    path: str,
+    code: str,
+) -> dict[str, Any]:
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise TaskPortfolioNormalizationError(f"{code}_INVALID", str(path)) from exc
+    if not isinstance(value, dict):
+        raise TaskPortfolioNormalizationError(f"{code}_MAPPING", str(path))
+    return value
+
+
+def _project_path(*, root: Path, path: Path, field: str) -> str:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError as exc:
+        raise TaskPortfolioNormalizationError("PATH_OUTSIDE_PROJECT", f"{field}={path}") from exc
+
+
+def _required_portable_repository_path(
+    value: object,
+    *,
+    field: str,
+    expected: str,
+) -> str:
+    path = _required_text(value, field).replace("\\", "/")
+    if path != expected:
+        raise TaskPortfolioNormalizationError(
+            "REGISTER_PATH_DRIFT", f"{field}: expected={expected} actual={path}"
+        )
+    return path
+
+
+def _git_blob(*, root: Path, commit: str, path: str) -> bytes:
+    completed = subprocess.run(
+        ["git", "show", f"{commit}:{path}"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise TaskPortfolioNormalizationError("COMMIT_PATH_READ", f"{commit}:{path}: {detail}")
+    return completed.stdout
+
+
+def _validate_commit_ancestry(
+    *,
+    root: Path,
+    ancestor: str,
+    descendant: str,
+    code: str,
+) -> None:
+    completed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode == 0:
+        return
+    if completed.returncode == 1:
+        raise TaskPortfolioNormalizationError(code, f"ancestor={ancestor} descendant={descendant}")
+    detail = completed.stderr.strip() or "git merge-base failed"
+    raise TaskPortfolioNormalizationError("GIT_ANCESTRY_CHECK", detail)
+
+
+def _validate_real_wave_decision_count(*, wave_id: str, decision_count: int) -> None:
+    if wave_id == REAL_WAVE_ID and decision_count != REAL_WAVE_DECISION_COUNT:
+        raise TaskPortfolioNormalizationError(
+            "REAL_WAVE_DECISION_COUNT",
+            f"expected={REAL_WAVE_DECISION_COUNT} actual={decision_count}",
+        )
+
+
 def _manifest_sha256(payload: Mapping[str, Any]) -> str:
     material = dict(payload)
     material.pop("manifest_id", None)
@@ -562,6 +1392,17 @@ def _manifest_sha256(payload: Mapping[str, Any]) -> str:
 
 def _manifest_id(manifest_sha256: str) -> str:
     return f"gov_006_decision_manifest_{manifest_sha256[:20]}"
+
+
+def _applied_closeout_sha256(payload: Mapping[str, Any]) -> str:
+    material = dict(payload)
+    material.pop("closeout_id", None)
+    material.pop("closeout_sha256", None)
+    return hashlib.sha256(_canonical_json_bytes(material)).hexdigest()
+
+
+def _applied_closeout_id(closeout_sha256: str) -> str:
+    return f"gov_006_applied_closeout_{closeout_sha256[:20]}"
 
 
 def _canonical_json_bytes(value: object) -> bytes:
@@ -610,6 +1451,12 @@ def _required_text(value: object, field: str) -> str:
     if not text:
         raise TaskPortfolioNormalizationError("REQUIRED_TEXT", field)
     return text
+
+
+def _strict_integer(value: object, field: str) -> int:
+    if type(value) is not int:
+        raise TaskPortfolioNormalizationError("EXPECTED_INTEGER", field)
+    return value
 
 
 def _exact_keys(value: Mapping[str, Any], *, expected: frozenset[str], field: str) -> None:
@@ -678,12 +1525,17 @@ def _commit_id(value: object, field: str) -> str:
 
 
 __all__ = [
+    "APPLIED_CLOSEOUT_SCHEMA_VERSION",
+    "APPLIED_CLOSEOUT_STATUS",
     "AUTHORIZATION_SCOPE",
     "DECISION_REVIEW_SCOPE",
     "MANIFEST_SCHEMA_VERSION",
     "POLICY_SCHEMA_VERSION",
     "TaskPortfolioNormalizationError",
+    "build_normalization_applied_closeout",
     "build_normalization_decision_manifest",
     "load_normalization_policy",
+    "validate_historical_normalization_decision_manifest",
+    "validate_normalization_applied_closeout",
     "validate_normalization_decision_manifest",
 ]

@@ -1,0 +1,94 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION
+  title: null
+  domain: Strategy research / post-replay owner route
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner + 系统证据解释；依赖 M3
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 按 PASS/FAIL/BLOCKED 和 C second-review
+    route 做 evidence interpretation；不自动 promotion。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: PASS 进入 owner evidence review；FAIL 按 primary improvement/risk breach 决定
+      targeted redesign 或 withdraw；BLOCKED 进入 exact remediation；C 只有 structural redefinition
+      + second approval 后可进入独立 replay wave。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 482
+    row_sha256: 73d926426e905ea7bdbeb698ba6fa88a84248856d57328b7dcab5eede2b2d126
+    cell_count: 8
+    all_cells:
+    - TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION
+    - Strategy research / post-replay owner route
+    - P0
+    - DROPPED
+    - 项目 owner + 系统证据解释；依赖 M3
+    - 按 PASS/FAIL/BLOCKED 和 C second-review route 做 evidence interpretation；不自动 promotion。
+    - PASS 进入 owner evidence review；FAIL 按 primary improvement/risk breach 决定 targeted
+      redesign 或 withdraw；BLOCKED 进入 exact remediation；C 只有 structural redefinition
+      + second approval 后可进入独立 replay wave。
+    - '2026-07-10: 等待 M3。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+      转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+    raw_line: '|TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION|Strategy
+      research / post-replay owner route|P0|DROPPED|项目 owner + 系统证据解释；依赖 M3|按 PASS/FAIL/BLOCKED
+      和 C second-review route 做 evidence interpretation；不自动 promotion。|PASS 进入 owner
+      evidence review；FAIL 按 primary improvement/risk breach 决定 targeted redesign
+      或 withdraw；BLOCKED 进入 exact remediation；C 只有 structural redefinition + second
+      approval 后可进入独立 replay wave。|2026-07-10: 等待 M3。 2026-07-23: GOV-006 N1 coordinator
+      review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE 转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-73d926426e905ea7bdbeb698
+  task_id: TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DROPPED
+  payload:
+    priority: P0
+    next_owner: 项目 owner + 系统证据解释；依赖 M3
+    notes: '2026-07-10: 等待 M3。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+      转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:73d926426e905ea7bdbeb698ba6fa88a84248856d57328b7dcab5eede2b2d126
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438N_GROWTH_TILT_POST_REPLAY_CANDIDATE_DISPOSITION
+  - Strategy research / post-replay owner route
+  - P0
+  - DROPPED
+  - 项目 owner + 系统证据解释；依赖 M3
+  - 按 PASS/FAIL/BLOCKED 和 C second-review route 做 evidence interpretation；不自动 promotion。
+  - PASS 进入 owner evidence review；FAIL 按 primary improvement/risk breach 决定 targeted
+    redesign 或 withdraw；BLOCKED 进入 exact remediation；C 只有 structural redefinition
+    + second approval 后可进入独立 replay wave。
+  - '2026-07-10: 等待 M3。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 73d926426e905ea7bdbeb698ba6fa88a84248856d57328b7dcab5eede2b2d126
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 0496de2a3ffd9d30617970706571c37246b786afe32fa8583fe94bbeb758c8d6
