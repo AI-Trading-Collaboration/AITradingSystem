@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
+from dynamic_v3_paper_tracking_helpers import write_market_cache
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.etf_portfolio import weight_research_unblock
 from ai_trading_system.research_campaign import (
     DEFAULT_MODULE_REGISTRY_PATH,
     CampaignSpec,
@@ -58,8 +61,32 @@ B3_SPEC = Path("docs/examples/research_campaigns/b3_slow_tilt_signal_precheck.ya
 
 
 @pytest.fixture(scope="module")
-def shared_b2_compute_cache() -> _B2ComputePayloadCache:
-    return _B2ComputePayloadCache()
+def shared_b2_compute_cache(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[_B2ComputePayloadCache]:
+    fixture_root = tmp_path_factory.mktemp("research_campaign_b2_compute")
+    prices_path, rates_path = write_market_cache(
+        fixture_root / "market_cache",
+        start="2022-01-03",
+        end="2026-06-30",
+    )
+    data_quality_output_dir = fixture_root / "data_quality"
+    data_quality_output_dir.mkdir(parents=True, exist_ok=True)
+    patcher = pytest.MonkeyPatch()
+    patcher.setattr(
+        weight_research_unblock,
+        "default_quality_report_path",
+        lambda _output_root, as_of: data_quality_output_dir
+        / f"b2_research_data_quality_{as_of.isoformat()}.md",
+    )
+    try:
+        yield _B2ComputePayloadCache(
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_output_dir=data_quality_output_dir,
+        )
+    finally:
+        patcher.undo()
 
 
 def test_b2_and_b3_sample_specs_validate() -> None:
@@ -153,6 +180,7 @@ def test_b2_stage_runner_uses_configured_compute_adapter(
     assert payload["result"]["stage"] == "TARGETED_EVIDENCE"
     assert Path(payload["result"]["json_path"]).exists()
     assert payload["safety_boundary"]["production_effect"] == "none"
+    _assert_isolated_b2_compute_fixture(shared_b2_compute_cache)
 
 
 def test_b3_signal_precheck_adapter_stays_signal_only_and_blocks_backfill(
@@ -180,6 +208,7 @@ def test_b3_signal_precheck_adapter_stays_signal_only_and_blocks_backfill(
 
 def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
     tmp_path: Path,
+    shared_b2_compute_cache: _B2ComputePayloadCache,
 ) -> None:
     initialize_campaign(spec_path=B2_SPEC, campaign_root=tmp_path)
     initialize_campaign(spec_path=B3_SPEC, campaign_root=tmp_path)
@@ -187,6 +216,7 @@ def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
     payload = write_campaign_control_plane_v1_validation_artifacts(
         campaign_root=tmp_path,
         output_root=tmp_path / "outputs",
+        b2_compute_cache=shared_b2_compute_cache,
     )
 
     assert payload["status"] == "RESEARCH_CAMPAIGN_CONTROL_PLANE_V1_READY_WITH_LIMITATIONS"
@@ -226,6 +256,11 @@ def test_campaign_control_plane_validation_pack_writes_expected_artifacts(
     for paths in payload["artifacts"].values():
         assert Path(paths["json_path"]).exists()
         assert Path(paths["markdown_path"]).exists()
+    _assert_isolated_b2_compute_fixture(shared_b2_compute_cache)
+    assert shared_b2_compute_cache.data_quality_output_dir is not None
+    assert (
+        shared_b2_compute_cache.data_quality_output_dir / "b2_full_diagnostic_data_quality.md"
+    ).exists()
 
 
 def test_b2_compute_parity_and_run_next_smoke_pass(
@@ -625,3 +660,14 @@ def test_campaign_cli_validate_and_init(tmp_path: Path) -> None:
 
 def _read_yaml(path: Path) -> dict[str, Any]:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def _assert_isolated_b2_compute_fixture(cache: _B2ComputePayloadCache) -> None:
+    assert cache.prices_path is not None
+    assert cache.rates_path is not None
+    assert cache.data_quality_output_dir is not None
+    assert cache.prices_path.parent == cache.rates_path.parent
+    assert not cache.data_quality_output_dir.resolve().is_relative_to(
+        (Path.cwd() / "outputs").resolve()
+    )
+    assert list(cache.data_quality_output_dir.glob("*.md"))

@@ -95,6 +95,7 @@ def test_external_validation_builders_reconcile_and_preserve_safety(
     prices_path, marketstack_path, rates_path, as_of = _write_external_validation_caches(tmp_path)
     growth_config_path = _write_small_growth_config(tmp_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "external_validation"
+    growth_output_root = tmp_path / "outputs" / "research_strategies" / "growth_components"
     docs_root = tmp_path / "docs" / "research"
     static_kwargs = {
         "prices_path": prices_path,
@@ -103,7 +104,11 @@ def test_external_validation_builders_reconcile_and_preserve_safety(
         "output_root": output_root,
         "as_of_date": as_of,
     }
-    data_kwargs = {**static_kwargs, "growth_config_path": growth_config_path}
+    data_kwargs = {
+        **static_kwargs,
+        "growth_config_path": growth_config_path,
+        "growth_output_root": growth_output_root,
+    }
 
     scope = run_external_validation_scope_contract(output_root=output_root)
     pending_static = run_static_baseline_external_reconciliation(**static_kwargs)
@@ -113,6 +118,7 @@ def test_external_validation_builders_reconcile_and_preserve_safety(
         external_records_path=external_records_path,
     )
     weight_export = run_strategy_weight_path_export(**data_kwargs)
+    assert (growth_output_root / "balanced_core_definition_lock.json").exists()
     replay = run_external_independent_return_replay(
         **data_kwargs,
         _weight_export_payload=weight_export,
@@ -237,6 +243,8 @@ def test_external_validation_builders_reconcile_and_preserve_safety(
             str(rates_path),
             "--growth-config",
             str(growth_config_path),
+            "--growth-output-root",
+            str(growth_output_root),
             "--as-of",
             as_of.isoformat(),
             "--output-root",
@@ -248,12 +256,14 @@ def test_external_validation_builders_reconcile_and_preserve_safety(
 
     assert result.exit_code == 0, result.output
     assert (output_root / "strategy_weight_path_export.json").exists()
+    assert (growth_output_root / "balanced_core_definition_lock.json").exists()
 
 
 def test_manual_external_evidence_signoff_builders_and_cli(tmp_path: Path) -> None:
     prices_path, marketstack_path, rates_path, as_of = _write_external_validation_caches(tmp_path)
     growth_config_path = _write_small_growth_config(tmp_path)
     output_root = tmp_path / "outputs" / "research_strategies" / "external_validation"
+    growth_output_root = tmp_path / "outputs" / "research_strategies" / "growth_components"
     docs_root = tmp_path / "docs" / "research"
     template_dir = tmp_path / "inputs" / "external_validation" / "manual_external_records"
     common = {
@@ -261,6 +271,7 @@ def test_manual_external_evidence_signoff_builders_and_cli(tmp_path: Path) -> No
         "marketstack_prices_path": marketstack_path,
         "rates_path": rates_path,
         "growth_config_path": growth_config_path,
+        "growth_output_root": growth_output_root,
         "output_root": output_root,
         "as_of_date": as_of,
         "end_date": as_of,
@@ -289,6 +300,7 @@ def test_manual_external_evidence_signoff_builders_and_cli(tmp_path: Path) -> No
     manual_records_path = _write_manual_external_records(tmp_path, pending_static, as_of)
     metric_signoff_path = _write_metric_convention_signoff(tmp_path)
     sgov_check = run_sgov_total_return_external_check(**common)
+    assert (growth_output_root / "balanced_core_definition_lock.json").exists()
     sgov_signoff_path = _write_sgov_convention_signoff(tmp_path, sgov_check)
     manual_input = run_static_baseline_external_manual_input_ingestion(
         output_root=output_root,

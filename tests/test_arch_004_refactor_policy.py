@@ -3074,26 +3074,67 @@ def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
         "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml",
         "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml",
         "docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md",
+        "src/ai_trading_system/cli_commands/research_external_validation.py",
+        "src/ai_trading_system/cli_commands/research_trends.py",
         "src/ai_trading_system/cli_direct.py",
         "src/ai_trading_system/data/__init__.py",
         "src/ai_trading_system/data/download.py",
         "src/ai_trading_system/data/download_publication.py",
         "src/ai_trading_system/data/quality_execution.py",
+        "src/ai_trading_system/equal_risk_growth_tilt.py",
+        "src/ai_trading_system/external_validation.py",
         "src/ai_trading_system/platform/reporting/__init__.py",
         "src/ai_trading_system/platform/reporting/owner_daily.py",
         "src/ai_trading_system/platform/reporting/reader_brief_native.py",
+        "src/ai_trading_system/research_campaign.py",
         "src/ai_trading_system/reports/reader_brief.py",
         "src/ai_trading_system/trading_calendar.py",
+        (
+            "tests/fixtures/growth_tilt_baseline_contract_adapters/"
+            "baseline_exposure_unit_inventory.json"
+        ),
+        ("tests/fixtures/growth_tilt_baseline_contract_adapters/" "baseline_signal_inventory.json"),
+        (
+            "tests/fixtures/growth_tilt_baseline_contract_adapters/"
+            "growth_tilt_hard_veto_resolution_matrix.json"
+        ),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "data_quality_gate.json.gz"),
+        "tests/fixtures/trading2453_constraint_hit_diagnosis/data_quality_gate.md.gz",
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "effective_windows.json.gz"),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "evaluator_manifest.json.gz"),
+        (
+            "tests/fixtures/trading2453_constraint_hit_diagnosis/"
+            "evaluator_runtime_telemetry.json.gz"
+        ),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "evaluator_validation.json.gz"),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "historical_seen_report.json.gz"),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "historical_seen_report.md.gz"),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "recent_known_diagnostics.jsonl"),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "test_evaluations.jsonl"),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "train_evaluations.jsonl.gz"),
+        ("tests/fixtures/trading2453_constraint_hit_diagnosis/" "train_selections.jsonl"),
+        ("tests/research_strategies/" "test_growth_tilt_baseline_contract_adapters.py"),
+        ("tests/research_trends/" "test_first_layer_candidate_generators_regenerate_cli.py"),
+        ("tests/research_trends/" "test_regenerated_candidate_actual_path_validation_cli.py"),
         "tests/test_arch_004_wave14_scope_amendment.py",
         "tests/test_arch_004f3_reporting_architecture.py",
         "tests/test_arch_004g3_reporting_native_migration.py",
+        "tests/test_candidate_signal_prediction_artifact_audit.py",
         "tests/test_cli_direct.py",
         "tests/test_data_download.py",
         "tests/test_data_download_publication.py",
         "tests/test_data_quality.py",
         "tests/test_data_quality_execution.py",
+        "tests/test_dual_forward_aging.py",
+        "tests/test_external_validation.py",
+        "tests/test_first_layer_gate_policy_v2_reconciliation.py",
         "tests/test_immutable_data_publish.py",
+        "tests/test_research_campaign.py",
+        "tests/test_trading2453_constraint_hit_diagnosis.py",
         "tests/test_trading_calendar.py",
+        "tests/test_two_layer_boundary_contract.py",
+        "tests/trading_engine/test_full_signal_limited_backtest.py",
+        "tests/trading_engine/test_price_history_repair.py",
     }
     generated_new_source_paths = set(wave14["generated_new_source_paths"])
     assert generated_new_source_paths <= set(source_paths)

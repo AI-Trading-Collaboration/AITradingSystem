@@ -23,21 +23,13 @@ from ai_trading_system.research_quality import (
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-OWNER_RESOLUTION_PATH = Path(
-    "inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml"
+FIXTURE_ROOT = (
+    Path(__file__).resolve().parents[1] / "fixtures" / "growth_tilt_baseline_contract_adapters"
 )
-HARD_VETO_MATRIX_PATH = Path(
-    "outputs/research_strategies/growth_tilt_baseline_contract_decision_pack/"
-    "growth_tilt_hard_veto_resolution_matrix.json"
-)
-SIGNAL_INVENTORY_PATH = Path(
-    "outputs/research_strategies/growth_tilt_owner_mapping_inventory/"
-    "baseline_signal_inventory.json"
-)
-EXPOSURE_INVENTORY_PATH = Path(
-    "outputs/research_strategies/growth_tilt_owner_mapping_inventory/"
-    "baseline_exposure_unit_inventory.json"
-)
+OWNER_RESOLUTION_PATH = Path("inputs/research_reviews/growth_tilt_owner_decision_resolution.yaml")
+HARD_VETO_MATRIX_PATH = FIXTURE_ROOT / "growth_tilt_hard_veto_resolution_matrix.json"
+SIGNAL_INVENTORY_PATH = FIXTURE_ROOT / "baseline_signal_inventory.json"
+EXPOSURE_INVENTORY_PATH = FIXTURE_ROOT / "baseline_exposure_unit_inventory.json"
 TRANSITION_SOURCE_PATH = Path(
     "inputs/research_reviews/growth_tilt_baseline_transition_trace_source.csv"
 )
@@ -63,13 +55,9 @@ def test_real_hard_veto_adapter_blocks_three_unresolved_components() -> None:
         "trend_break_veto",
     ]
     assert any(
-        "BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS" in item
-        for item in section["blocker_codes"]
+        "BLOCKED_AMBIGUOUS_GROWTH_ALLOWED_ALIAS" in item for item in section["blocker_codes"]
     )
-    assert any(
-        "BLOCKED_NO_CALLABLE_PRODUCER" in item
-        for item in section["blocker_codes"]
-    )
+    assert any("BLOCKED_NO_CALLABLE_PRODUCER" in item for item in section["blocker_codes"])
 
 
 def test_unresolved_hard_veto_aggregate_materializes_blocked_not_false() -> None:
@@ -338,6 +326,9 @@ def test_safety_boundary_records_no_runtime_or_candidate_behavior() -> None:
 
 def test_runner_writes_primary_four_sections_and_markdown(tmp_path: Path) -> None:
     payload = impl.run_growth_tilt_baseline_contract_adapters_readiness(
+        hard_veto_matrix_path=HARD_VETO_MATRIX_PATH,
+        signal_inventory_path=SIGNAL_INVENTORY_PATH,
+        exposure_inventory_path=EXPOSURE_INVENTORY_PATH,
         output_root=tmp_path / "outputs",
         docs_root=tmp_path / "docs",
         as_of_date=date(2026, 7, 10),
@@ -360,6 +351,8 @@ def test_runner_strict_mode_rejects_missing_hard_veto_matrix(tmp_path: Path) -> 
     with pytest.raises(ValueError, match="hard_veto_matrix missing"):
         impl.run_growth_tilt_baseline_contract_adapters_readiness(
             hard_veto_matrix_path=tmp_path / "missing.json",
+            signal_inventory_path=SIGNAL_INVENTORY_PATH,
+            exposure_inventory_path=EXPOSURE_INVENTORY_PATH,
             output_root=tmp_path / "outputs",
             docs_root=tmp_path / "docs",
             as_of_date=date(2026, 7, 10),
@@ -374,6 +367,12 @@ def test_cli_runs_adapter_readiness_without_replay(tmp_path: Path) -> None:
             "research",
             "strategies",
             "growth-tilt-baseline-contract-adapters-readiness",
+            "--hard-veto-matrix",
+            str(HARD_VETO_MATRIX_PATH),
+            "--signal-inventory",
+            str(SIGNAL_INVENTORY_PATH),
+            "--exposure-inventory",
+            str(EXPOSURE_INVENTORY_PATH),
             "--output-root",
             str(tmp_path / "outputs"),
             "--docs-root",
@@ -433,9 +432,7 @@ def _sources() -> dict[str, Any]:
         "owner_resolution": copy.deepcopy(safe_load_yaml_path(OWNER_RESOLUTION_PATH)),
         "hard_veto_matrix": json.loads(HARD_VETO_MATRIX_PATH.read_text(encoding="utf-8")),
         "signal_inventory": json.loads(SIGNAL_INVENTORY_PATH.read_text(encoding="utf-8")),
-        "exposure_inventory": json.loads(
-            EXPOSURE_INVENTORY_PATH.read_text(encoding="utf-8")
-        ),
+        "exposure_inventory": json.loads(EXPOSURE_INVENTORY_PATH.read_text(encoding="utf-8")),
         "transition_rows": transition_rows,
         "prediction_header_fields": prediction_header_fields,
     }

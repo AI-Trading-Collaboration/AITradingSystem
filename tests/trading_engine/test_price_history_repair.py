@@ -69,6 +69,7 @@ def test_repairs_missing_googl_price_history(tmp_path: Path) -> None:
     run = repair_backtest_price_history(
         as_of=fixture["as_of"],
         config_path=fixture["config_path"],
+        output_root=fixture["output_root"],
         symbols=("GOOGL",),
         price_provider=provider,
         price_only=True,
@@ -91,6 +92,7 @@ def test_repairs_brk_b_with_source_symbol_mapping(tmp_path: Path) -> None:
     run = repair_backtest_price_history(
         as_of=fixture["as_of"],
         config_path=fixture["config_path"],
+        output_root=fixture["output_root"],
         symbols=("BRK.B",),
         price_provider=provider,
         price_only=True,
@@ -115,6 +117,7 @@ def test_repairs_missing_sgov_price_history(tmp_path: Path) -> None:
     run = repair_backtest_price_history(
         as_of=fixture["as_of"],
         config_path=fixture["config_path"],
+        output_root=fixture["output_root"],
         symbols=("SGOV",),
         price_provider=provider,
         price_only=True,
@@ -135,6 +138,7 @@ def test_repair_is_idempotent_for_existing_symbol_dates(tmp_path: Path) -> None:
         repair_backtest_price_history(
             as_of=fixture["as_of"],
             config_path=fixture["config_path"],
+            output_root=fixture["output_root"],
             symbols=("GOOGL",),
             price_provider=provider,
             price_only=True,
@@ -159,6 +163,7 @@ def test_repair_reports_partial_failure_without_crashing(tmp_path: Path) -> None
     run = repair_backtest_price_history(
         as_of=fixture["as_of"],
         config_path=fixture["config_path"],
+        output_root=fixture["output_root"],
         symbols=("GOOGL", "BRK.B", "SGOV"),
         price_provider=provider,
         price_only=True,
@@ -178,6 +183,7 @@ def test_repair_asset_result_reports_missing_dates(tmp_path: Path) -> None:
     run = repair_backtest_price_history(
         as_of=fixture["as_of"],
         config_path=fixture["config_path"],
+        output_root=fixture["output_root"],
         symbols=("GOOGL",),
         price_provider=provider,
         price_only=True,
@@ -242,6 +248,7 @@ def _write_fixture(
         "config_path": config_path,
         "prices_path": prices_path,
         "manifest_path": manifest_path,
+        "output_root": output_root,
         "day_count": day_count,
         "repair_day_count": 5,
     }

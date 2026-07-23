@@ -22,6 +22,7 @@ def test_regenerated_candidate_actual_path_validation_cli_writes_outputs(
 ) -> None:
     fixture = build_regenerated_artifact_fixture(tmp_path)
     output_dir = tmp_path / "actual_path_validation"
+    docs_root = tmp_path / "actual_path_docs"
 
     result = CliRunner().invoke(
         app,
@@ -39,6 +40,8 @@ def test_regenerated_candidate_actual_path_validation_cli_writes_outputs(
             "5d,10d,20d",
             "--output-dir",
             str(output_dir),
+            "--docs-root",
+            str(docs_root),
             "--mode",
             "actual_path_validation",
             "--prices-path",
@@ -64,6 +67,12 @@ def test_regenerated_candidate_actual_path_validation_cli_writes_outputs(
     ]
     for filename in required:
         assert (output_dir / filename).exists()
+    for filename in (
+        "regenerated_candidate_actual_path_validation_report.md",
+        "regenerated_candidate_prediction_outcome_summary.md",
+        "regenerated_candidate_error_attribution_seed.md",
+    ):
+        assert (docs_root / filename).exists()
 
     summary = json.loads(
         (output_dir / "regenerated_candidate_actual_path_validation_summary.json").read_text(

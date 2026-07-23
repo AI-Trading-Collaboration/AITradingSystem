@@ -308,6 +308,16 @@ flowchart LR
     RECEIPT -.-> SAFE2["No consumer cutover / production / broker"]
 ```
 
+Wave14 S2 的 clean-clone failure-fix 还把测试期输出边界变为显式依赖：research campaign 的 B2
+compute cache 可注入 prices/rates 与 DQ report root；external-validation 的 data-dependent builder
+链统一传播 `growth_output_root`，相关 CLI 提供保留 canonical default 的
+`--growth-output-root`；`regenerated-candidate-actual-path-validation` 同样提供
+`--docs-root`并传给既有 runner。生产默认、严格 DQ gate、研究计算、threshold 和报告 schema 均不变；
+clean-clone/pytest 必须显式使用临时 root，不能再把 `growth_components`、backtest diagnostics、
+shadow dry-run 或 regenerated-candidate Markdown 写入 repository canonical paths。该边界只提升测试
+可移植性与 Full exact-worktree gate 的可审计性，`production_effect=none`，不改变 weights、策略结论或
+broker/trading action。
+
 GOV-006 N0 为 task portfolio 建立只读 normalization 链。strict reviewed policy 与当前真实 Git HEAD
 输入 producer；producer 通过 ARCH-005 legacy registry parser 读取 main、supplemental、deferred 三个
 active sections 及 completed register，先做全局 task-id 分区，再逐条核对 expected source/status、

@@ -2,16 +2,54 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
+from ai_trading_system import first_layer_proxy_challenger_experiments
 from ai_trading_system.candidate_signal_prediction_artifact_audit import (
     run_candidate_signal_prediction_artifact_audit_pack,
 )
 from ai_trading_system.cli_commands.research_trends import trends_app
 
 
+@pytest.fixture
+def strict_data_quality_calls(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> list[dict[str, object]]:
+    calls: list[dict[str, object]] = []
+
+    def _validate_cached_market_data(**kwargs: object) -> dict[str, object]:
+        calls.append(dict(kwargs))
+        return {
+            "status": "PASS",
+            "passed": True,
+            "checked_at": "2026-06-28T00:00:00+00:00",
+            "as_of": "2026-06-26",
+            "price_path": str(tmp_path / "prices_daily.csv"),
+            "rates_path": str(tmp_path / "rates_daily.csv"),
+            "secondary_prices_path": "",
+            "expected_price_tickers": ["QQQ", "SPY", "SMH", "SOXX"],
+            "expected_rate_series": [],
+            "price_row_count": 100,
+            "rate_row_count": 0,
+            "price_checksum": "pytest-fixture-prices",
+            "rate_checksum": "pytest-fixture-rates",
+            "warning_count": 0,
+            "error_count": 0,
+        }
+
+    monkeypatch.setattr(
+        first_layer_proxy_challenger_experiments,
+        "validate_cached_market_data",
+        _validate_cached_market_data,
+    )
+    return calls
+
+
 def test_candidate_artifact_audit_marks_inconclusive_rows_permanent(
     tmp_path: Path,
+    strict_data_quality_calls: list[dict[str, object]],
 ) -> None:
     payload = run_candidate_signal_prediction_artifact_audit_pack(
         output_root=tmp_path / "outputs",
@@ -28,6 +66,7 @@ def test_candidate_artifact_audit_marks_inconclusive_rows_permanent(
     assert payload["paper_shadow_allowed"] is False
     assert payload["production_allowed"] is False
     assert payload["broker_action"] == "none"
+    _assert_strict_data_quality_called(strict_data_quality_calls)
 
     rows = {row["candidate_id"]: row for row in payload["candidate_rows"]}
     assert set(rows) == {
@@ -45,6 +84,7 @@ def test_candidate_artifact_audit_marks_inconclusive_rows_permanent(
 
 def test_candidate_artifact_audit_baseline_source_is_schema_incompatible(
     tmp_path: Path,
+    strict_data_quality_calls: list[dict[str, object]],
 ) -> None:
     payload = run_candidate_signal_prediction_artifact_audit_pack(
         output_root=tmp_path / "outputs",
@@ -59,16 +99,19 @@ def test_candidate_artifact_audit_baseline_source_is_schema_incompatible(
     assert by_type["candidate_signal_series"]["gap_category"] == "schema_incompatible"
     assert by_type["candidate_prediction_artifact"]["gap_category"] == "schema_incompatible"
     assert by_type["registry_reference"]["gap_category"] == "registry_missing_reference"
-    assert (
-        "first_layer_composer_v2_predictions.csv"
-        in (by_type["candidate_prediction_artifact"]["evidence_paths"][0])
+    assert "first_layer_composer_v2_predictions.csv" in (
+        by_type["candidate_prediction_artifact"]["evidence_paths"][0]
     )
     assert by_type["registry_reference"]["evidence_paths"][0].endswith(
         "config\\report_registry.yaml"
     )
+    _assert_strict_data_quality_called(strict_data_quality_calls)
 
 
-def test_candidate_artifact_audit_outputs_and_cli_registration(tmp_path: Path) -> None:
+def test_candidate_artifact_audit_outputs_and_cli_registration(
+    tmp_path: Path,
+    strict_data_quality_calls: list[dict[str, object]],
+) -> None:
     payload = run_candidate_signal_prediction_artifact_audit_pack(
         output_root=tmp_path / "outputs",
         docs_root=tmp_path / "docs",
@@ -88,3 +131,10 @@ def test_candidate_artifact_audit_outputs_and_cli_registration(tmp_path: Path) -
 
     assert result.exit_code == 0
     assert "candidate-signal-prediction-artifact-audit" in result.output
+    _assert_strict_data_quality_called(strict_data_quality_calls)
+
+
+def _assert_strict_data_quality_called(calls: list[dict[str, object]]) -> None:
+    assert len(calls) == 1
+    assert calls[0]["expected_price_tickers"] == ["QQQ", "SPY", "SMH", "SOXX"]
+    assert calls[0]["expected_rate_series"] == ()

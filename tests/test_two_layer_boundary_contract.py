@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -29,9 +30,7 @@ _INDICATOR_ABLATION_SECONDARY_MATRIX_OUTPUTS = (
     "DEFAULT_SELECTION_MATRIX_PATH",
     "DEFAULT_FINAL_MATRIX_PATH",
 )
-_INDICATOR_ABLATION_SECONDARY_FEATURE_OUTPUTS = (
-    "DEFAULT_CHANNEL_FEATURE_SET_PATH",
-)
+_INDICATOR_ABLATION_SECONDARY_FEATURE_OUTPUTS = ("DEFAULT_CHANNEL_FEATURE_SET_PATH",)
 _INDICATOR_ABLATION_SECONDARY_MARKDOWN_OUTPUTS = (
     "DEFAULT_SCOPE_REVIEW_PATH",
     "DEFAULT_REGISTRY_VALIDATION_REVIEW_PATH",
@@ -124,6 +123,7 @@ def test_indicator_family_ablation_cli_writes_diagnostic_matrix(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    source_paths = _write_indicator_ablation_source_fixtures(tmp_path / "source_inputs")
     matrix_path = tmp_path / "indicator_family_ablation_matrix.yaml"
     review_path = tmp_path / "indicator_family_ablation_review.md"
     output_root = tmp_path / "outputs"
@@ -151,6 +151,14 @@ def test_indicator_family_ablation_cli_writes_diagnostic_matrix(
             str(review_path),
             "--output-root",
             str(output_root),
+            "--pit-feature-matrix",
+            str(source_paths["pit_feature_matrix"]),
+            "--labels-path",
+            str(source_paths["labels"]),
+            "--action-value-matrix",
+            str(source_paths["action_value_matrix"]),
+            "--action-value-summary",
+            str(source_paths["action_value_summary"]),
         ],
         env={"COLUMNS": "160"},
         terminal_width=160,
@@ -165,6 +173,42 @@ def test_indicator_family_ablation_cli_writes_diagnostic_matrix(
     assert review_path.exists()
     assert len(secondary_paths) == 28
     assert all(path.exists() for path in secondary_paths)
+
+
+def _write_indicator_ablation_source_fixtures(root: Path) -> dict[str, Path]:
+    root.mkdir(parents=True, exist_ok=True)
+    paths = {
+        "pit_feature_matrix": root / "pit_feature_matrix_v3.csv",
+        "labels": root / "upper_state_labels_v2.csv",
+        "action_value_matrix": root / "action_value_matrix_v2.csv",
+        "action_value_summary": root / "action_value_summary_v2.json",
+    }
+    paths["pit_feature_matrix"].write_text(
+        "research_window_id,date,known_at,available_at,decision_at,pit_status\n",
+        encoding="utf-8",
+    )
+    paths["labels"].write_text(
+        "research_window_id,date,horizon_days,do_not_de_risk_label,"
+        "stay_constructive_label,add_risk_label\n",
+        encoding="utf-8",
+    )
+    paths["action_value_matrix"].write_text(
+        "research_window_id,date,neutral_future_return,constructive_future_return,"
+        "risk_on_future_return,neutral_max_drawdown,constructive_max_drawdown,"
+        "risk_on_max_drawdown,constructive_return_delta_vs_neutral,"
+        "risk_on_return_delta_vs_neutral,max_stress_penalty\n",
+        encoding="utf-8",
+    )
+    paths["action_value_summary"].write_text(
+        json.dumps(
+            {
+                "status": "ACTION_VALUE_MATRIX_FIXTURE_READY",
+                "summary": {"data_quality_status": "PASS_WITH_WARNINGS"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    return paths
 
 
 def _signals_by_name(matrix: dict[str, object]) -> dict[str, dict[str, object]]:

@@ -4,7 +4,10 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from ai_trading_system import first_layer_gate_policy_v2_reconciliation
+from ai_trading_system import (
+    first_layer_gate_policy_v2_reconciliation,
+    first_layer_performance_gate_audit,
+)
 from ai_trading_system.cli_commands.research_trends import trends_app
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -15,7 +18,18 @@ def test_first_layer_gate_policy_v2_reconciliation_outputs_required_artifacts(
     run_pack = (
         first_layer_gate_policy_v2_reconciliation.run_first_layer_gate_policy_v2_reconciliation_pack
     )
-    payload = run_pack(output_root=tmp_path / "outputs", docs_root=tmp_path / "docs")
+    upstream = first_layer_performance_gate_audit.run_first_layer_performance_gate_audit_pack(
+        output_root=tmp_path / "upstream_outputs",
+        docs_root=tmp_path / "upstream_docs",
+    )
+    upstream_paths = upstream["artifact_paths"]
+    payload = run_pack(
+        recommended_gate_policy_path=Path(upstream_paths["recommended_gate_policy"]),
+        gate_ablation_matrix_path=Path(upstream_paths["gate_ablation_matrix"]),
+        threshold_sensitivity_path=Path(upstream_paths["threshold_sensitivity_report"]),
+        output_root=tmp_path / "outputs",
+        docs_root=tmp_path / "docs",
+    )
 
     artifact_paths = payload["artifact_paths"]
     gate_rows = {row["gate_id"]: row for row in payload["gate_policy_v2_rows"]}

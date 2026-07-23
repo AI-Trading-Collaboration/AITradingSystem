@@ -2,14 +2,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from ai_trading_system.trading_engine.parameters import shadow_backtest
 from ai_trading_system.trading_engine.signal_snapshots import run_signal_snapshot_build
 from trading_engine.test_shadow_parameter_backtest import _write_shadow_backtest_fixture
 
 
-def test_full_signal_backtest_limited_uses_signal_snapshot_scores(tmp_path: Path) -> None:
+def test_full_signal_backtest_limited_uses_signal_snapshot_scores(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fixture = _write_shadow_backtest_fixture(tmp_path, days=16, min_history_days=8)
     baseline_text = fixture["baseline_path"].read_text(encoding="utf-8")
+    monkeypatch.setattr(shadow_backtest, "PROJECT_ROOT", tmp_path)
     run_signal_snapshot_build(
         as_of=fixture["as_of"],
         config_path=fixture["config_path"],

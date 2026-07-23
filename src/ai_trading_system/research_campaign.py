@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from itertools import combinations
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
@@ -3956,34 +3956,35 @@ def write_campaign_control_plane_v1_validation_artifacts(
     campaign_root: Path = DEFAULT_CAMPAIGN_ROOT,
     output_root: Path = DEFAULT_CAMPAIGN_OUTPUT_ROOT,
     adapter_registry_path: Path = DEFAULT_STAGE_ADAPTER_REGISTRY_PATH,
+    b2_compute_cache: _B2ComputePayloadCache | None = None,
 ) -> dict[str, Any]:
     output_dir = output_root / "control_plane_v1_rc5_validation"
     output_dir.mkdir(parents=True, exist_ok=True)
-    b2_compute_cache = _B2ComputePayloadCache()
+    compute_cache = b2_compute_cache or _B2ComputePayloadCache()
     b2_compute_smoke = build_b2_compute_adapter_smoke_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
-        b2_compute_cache=b2_compute_cache,
+        b2_compute_cache=compute_cache,
     )
     b2_compute_parity = build_b2_compute_parity_validation(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         smoke_report=b2_compute_smoke,
-        b2_compute_cache=b2_compute_cache,
+        b2_compute_cache=compute_cache,
     )
     b2_full_compute = build_b2_full_diagnostic_compute_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
-        b2_compute_cache=b2_compute_cache,
+        b2_compute_cache=compute_cache,
     )
     b2_gate_compute = build_b2_gate_compute_report(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
-        b2_compute_cache=b2_compute_cache,
+        b2_compute_cache=compute_cache,
     )
     b2_full_parity = build_b2_campaign_full_parity_validation(
         campaign_root=campaign_root,
@@ -3992,20 +3993,20 @@ def write_campaign_control_plane_v1_validation_artifacts(
         targeted_parity=b2_compute_parity,
         full_compute=b2_full_compute,
         gate_compute=b2_gate_compute,
-        b2_compute_cache=b2_compute_cache,
+        b2_compute_cache=compute_cache,
     )
     b2_final_gate = build_campaign_b2_final_gate(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
-        b2_compute_cache=b2_compute_cache,
+        b2_compute_cache=compute_cache,
     )
     b2_owner_packet = build_campaign_b2_owner_review_packet(
         campaign_root=campaign_root,
         output_root=output_root,
         adapter_registry_path=adapter_registry_path,
         final_gate=b2_final_gate,
-        b2_compute_cache=b2_compute_cache,
+        b2_compute_cache=compute_cache,
     )
     post_b2_artifacts = _build_b2_post_campaign_validation_artifacts(campaign_root=campaign_root)
     payloads = {
@@ -4029,21 +4030,21 @@ def write_campaign_control_plane_v1_validation_artifacts(
             campaign_root=campaign_root,
             output_root=output_root,
             adapter_registry_path=adapter_registry_path,
-            b2_compute_cache=b2_compute_cache,
+            b2_compute_cache=compute_cache,
         ),
         "b2_campaign_full_parity_validation": b2_full_parity,
         "campaign_run_next_stage_smoke": build_campaign_run_next_stage_smoke_report(
             campaign_root=campaign_root,
             output_root=output_root,
             adapter_registry_path=adapter_registry_path,
-            b2_compute_cache=b2_compute_cache,
+            b2_compute_cache=compute_cache,
         ),
         "evidence_budget_forced_transition_report": (
             build_evidence_budget_forced_transition_report(
                 campaign_root=campaign_root,
                 output_root=output_root,
                 adapter_registry_path=adapter_registry_path,
-                b2_compute_cache=b2_compute_cache,
+                b2_compute_cache=compute_cache,
             )
         ),
         "campaign_evidence_budget_final_decision_drill": (
@@ -4051,7 +4052,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
                 campaign_root=campaign_root,
                 output_root=output_root,
                 adapter_registry_path=adapter_registry_path,
-                b2_compute_cache=b2_compute_cache,
+                b2_compute_cache=compute_cache,
             )
         ),
         "b3_signal_compute_adapter_smoke": build_b3_signal_compute_adapter_smoke_report(
@@ -4066,7 +4067,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
         "legacy_b2_runner_deprecation_readiness": (
             build_legacy_b2_runner_deprecation_readiness(
                 full_parity=b2_full_parity,
-                b2_compute_cache=b2_compute_cache,
+                b2_compute_cache=compute_cache,
             )
         ),
         "campaign_b2_next_action_freeze": build_campaign_b2_next_action_freeze(
@@ -4077,7 +4078,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
                 campaign_root=campaign_root,
                 output_root=output_root,
                 adapter_registry_path=adapter_registry_path,
-                b2_compute_cache=b2_compute_cache,
+                b2_compute_cache=compute_cache,
             )
         ),
         "campaign_b2_final_gate": b2_final_gate,
@@ -4088,7 +4089,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
             adapter_registry_path=adapter_registry_path,
             final_gate=b2_final_gate,
             owner_packet=b2_owner_packet,
-            b2_compute_cache=b2_compute_cache,
+            b2_compute_cache=compute_cache,
         ),
         **post_b2_artifacts,
     }
@@ -4098,7 +4099,7 @@ def write_campaign_control_plane_v1_validation_artifacts(
             output_root=output_root,
             adapter_registry_path=adapter_registry_path,
             precomputed_payloads=payloads,
-            b2_compute_cache=b2_compute_cache,
+            b2_compute_cache=compute_cache,
         )
     )
     written: dict[str, dict[str, str]] = {}
@@ -5388,14 +5389,27 @@ def _adapter_safety_metadata() -> dict[str, Any]:
 
 
 def _clone_payload_map(payloads: Mapping[str, Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
-    return json.loads(json.dumps(payloads))
+    cloned: object = json.loads(json.dumps(payloads))
+    if not isinstance(cloned, dict):
+        raise TypeError("B2 compute payload cache must contain a JSON object")
+    return cast(dict[str, dict[str, Any]], cloned)
 
 
 class _B2ComputePayloadCache:
     """Per-validation-run cache for expensive B2 research payload builders."""
 
-    def __init__(self, generated_at: datetime | None = None) -> None:
+    def __init__(
+        self,
+        generated_at: datetime | None = None,
+        *,
+        prices_path: Path | None = None,
+        rates_path: Path | None = None,
+        data_quality_output_dir: Path | None = None,
+    ) -> None:
         self.generated_at = generated_at or datetime.now(UTC)
+        self.prices_path = prices_path
+        self.rates_path = rates_path
+        self.data_quality_output_dir = data_quality_output_dir
         self._control_payloads: dict[str, dict[str, Any]] | None = None
         self._targeted_payloads: dict[str, dict[str, Any]] | None = None
         self._full_payloads: dict[str, dict[str, Any]] | None = None
@@ -5409,10 +5423,12 @@ class _B2ComputePayloadCache:
         )
 
         if self._control_payloads is None:
+            input_paths = self._input_path_kwargs()
             payloads, paths = run_b2_control_window_research(
                 output_dir=output_dir,
                 alias_dir=None,
                 generated_at=self.generated_at,
+                **input_paths,
             )
             self._control_payloads = _clone_payload_map(payloads)
             return payloads, paths
@@ -5433,10 +5449,12 @@ class _B2ComputePayloadCache:
         )
 
         if self._targeted_payloads is None:
+            input_paths = self._input_path_kwargs()
             payloads, paths = run_b2_targeted_evidence_research(
                 output_dir=output_dir,
                 alias_dir=None,
                 generated_at=self.generated_at,
+                **input_paths,
             )
             self._targeted_payloads = _clone_payload_map(payloads)
             return payloads, paths
@@ -5457,10 +5475,18 @@ class _B2ComputePayloadCache:
         )
 
         if self._full_payloads is None:
+            input_paths = self._input_path_kwargs()
+            data_quality_output_path = (
+                self.data_quality_output_dir / "b2_full_diagnostic_data_quality.md"
+                if self.data_quality_output_dir is not None
+                else None
+            )
             payloads, paths = run_b2_full_diagnostic_research(
                 output_dir=output_dir,
                 alias_dir=None,
                 generated_at=self.generated_at,
+                data_quality_output_path=data_quality_output_path,
+                **input_paths,
             )
             self._full_payloads = _clone_payload_map(payloads)
             return payloads, paths
@@ -5471,6 +5497,14 @@ class _B2ComputePayloadCache:
             alias_dir=None,
         )
         return payloads, paths
+
+    def _input_path_kwargs(self) -> dict[str, Path]:
+        paths: dict[str, Path] = {}
+        if self.prices_path is not None:
+            paths["prices_path"] = self.prices_path
+        if self.rates_path is not None:
+            paths["rates_path"] = self.rates_path
+        return paths
 
 
 def _adapter_safety_issues(payload: dict[str, Any], adapter_id: str) -> list[dict[str, Any]]:
@@ -7591,11 +7625,14 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 def _read_json(path: Path) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        payload: object = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise ResearchCampaignError(f"Cannot read JSON: {path}") from exc
     except json.JSONDecodeError as exc:
         raise ResearchCampaignError(f"Invalid JSON: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ResearchCampaignError(f"JSON root must be an object: {path}")
+    return cast(dict[str, Any], payload)
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:

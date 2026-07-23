@@ -1,0 +1,43 @@
+{
+  "baseline_exposure_unit_inventory": {
+    "exposure": {
+      "baseline_transition_caps": {
+        "QQQ_equivalent_exposure_max": 0.75,
+        "TQQQ_max_weight": 0.05,
+        "defensive_overlay_delta": {
+          "defensive_hold": {
+            "QQQ": -0.15,
+            "SGOV": 0.15,
+            "TQQQ": 0.0
+          },
+          "risk_off": {
+            "QQQ": -0.3,
+            "SGOV": 0.3,
+            "TQQQ": 0.0
+          }
+        },
+        "turnover_max": 0.25
+      },
+      "blocker_codes": [
+        "MINIMUM_EXPOSURE_INCREMENT_NOT_GOVERNED",
+        "GROWTH_TILT_BASELINE_SCALAR_EXPOSURE_BINDING_MISSING"
+      ],
+      "current_exposure_field": "current_weights -> derived QQQ equivalent",
+      "formula": "QQQ_weight + 3.0 * TQQQ_weight",
+      "formula_callable_runtime_source": true,
+      "maximum_value": 0.75,
+      "minimum_increment": null,
+      "scalar_binding_ready": false,
+      "target_exposure_field": "target_weights -> derived QQQ equivalent",
+      "unit": "QQQ_EQUIVALENT_EXPOSURE"
+    },
+    "schema_version": "growth_tilt_baseline_exposure_unit_inventory.v1",
+    "status": "GROWTH_TILT_OWNER_MAPPING_INVENTORY_READY_OWNER_REVIEW_REQUIRED"
+  },
+  "broker_action": "none",
+  "production_effect": "none",
+  "report_type": "baseline_exposure_unit_inventory",
+  "schema_version": "growth_tilt_baseline_exposure_unit_inventory.v1",
+  "status": "GROWTH_TILT_OWNER_MAPPING_INVENTORY_READY_OWNER_REVIEW_REQUIRED",
+  "task_id": "TRADING-2438M1C"
+}

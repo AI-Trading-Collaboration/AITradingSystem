@@ -1876,6 +1876,9 @@ from ai_trading_system.refined_candidate_local_edge_scope_review import (
     run_refined_candidate_local_edge_scope_review,
 )
 from ai_trading_system.regenerated_candidate_actual_path_validation import (
+    DEFAULT_DOCS_ROOT as DEFAULT_REGENERATED_ACTUAL_PATH_DOCS_ROOT,
+)
+from ai_trading_system.regenerated_candidate_actual_path_validation import (
     DEFAULT_INPUT_ROOT as DEFAULT_REGENERATED_ACTUAL_PATH_INPUT_ROOT,
 )
 from ai_trading_system.regenerated_candidate_actual_path_validation import (
@@ -3393,6 +3396,9 @@ def regenerated_candidate_actual_path_validation_command(
     horizons: Annotated[str, typer.Option("--horizons")],
     output_dir: Annotated[Path, typer.Option("--output-dir")],
     mode: Annotated[str, typer.Option("--mode")],
+    docs_root: Annotated[Path, typer.Option("--docs-root")] = (
+        DEFAULT_REGENERATED_ACTUAL_PATH_DOCS_ROOT
+    ),
     prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_REGENERATED_PRICES_PATH,
     rates_path: Annotated[Path, typer.Option("--rates-path")] = DEFAULT_REGENERATED_RATES_PATH,
     marketstack_prices_path: Annotated[
@@ -3405,6 +3411,7 @@ def regenerated_candidate_actual_path_validation_command(
         target_assets=target_assets,
         horizons=horizons,
         output_dir=output_dir or DEFAULT_REGENERATED_ACTUAL_PATH_OUTPUT_ROOT,
+        docs_root=docs_root,
         mode=mode,
         prices_path=prices_path,
         rates_path=rates_path,

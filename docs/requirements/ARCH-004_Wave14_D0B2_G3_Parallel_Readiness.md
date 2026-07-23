@@ -343,6 +343,35 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
 
 ## 进展记录
 
+- 2026-07-24：initial Full 的 clean-clone fixture/root-writer 修复已完成本地交叉验证。Research
+  campaign通过可注入prices/rates/DQ report root保留production默认与strict DQ；candidate audit、
+  first-layer regenerate/reconciliation、two-layer boundary改用deterministic tmp/upstream fixtures；
+  growth baseline与TRADING-2453改用tracked frozen fixtures。External-validation全链显式传播
+  `growth_output_root`，regenerated actual-path CLI显式传播`docs_root`；shadow dry-run和price repair
+  使用per-test tmp root。12个完整相关测试文件组合=`81 passed / 35.51s`，且对
+  `artifacts/backtest_snapshots`、`artifacts/data_quality`、`outputs/dry_runs/shadow_backtest`、
+  `outputs/research_strategies/growth_components`及3份canonical regenerated Markdown做前后SHA/size
+  快照，结果`CANONICAL_SNAPSHOT_UNCHANGED`。这只关闭实现根因；compatibility attempt 1 FAIL与
+  replacement PENDING、generated fixed point及全部pre-Full formal gates尚须绑定新candidate，
+  当前仍不得运行replacement Full。
+- 2026-07-24：candidate C4
+  `c501474200f64fa7d77f33d4a56879881bb53cc1`、tree
+  `bfdd8db1f0fec3c450bdba6c4c42f338f590abc5`在独立branch=`main` formal clone完成expanded
+  combined focused=`394 passed / 1 skipped`；Ruff覆盖28个changed Python paths，Black覆盖26个
+  非legacy-format-debt paths，scoped strict mypy覆盖12个显式source paths，完整import graph另暴露
+  base/HEAD byte-identical的`data/market_data.py`既存11项类型债务。正式report=`55 passed`、
+  architecture=`564 passed`、contract=`266 passed`、integration=`983 passed`、
+  reproducibility=`23 passed`后启动唯一initial Full。该Full真实fail closed为
+  `6,978 passed / 29 failed / 4 skipped / 642 warnings / 1,029.70s`，artifact=
+  `outputs/validation_runtime/full_20260723T182126Z/test_runtime_summary.json`、SHA-256=
+  `95531c46a7112deb255065d1595f680032d134d2c6bd1f87155e9a86f22fdd73`、size=`27,786 bytes`。
+  失败聚类为clean-clone中未声明的research cache/report fixture依赖，以及Full并行文件在repository
+  root写`artifacts/`、`outputs/`和3份research Markdown后污染Wave14 exact worktree guard；不是G2.5
+  ownership回归。当前进入failure-fix protocol：不得删除/覆盖attempt 1、不得把写入路径加入guard
+  ignore或复用主工作区untracked研究产物。下一candidate必须先让相关测试以显式fixture/tmp root独立
+  PASS，并在compatibility append-only记录attempt 1 FAIL与
+  `wave14_s2_full_2 / FAILURE_FIX_REPLACEMENT / PENDING`；重新闭合全部pre-Full门后才可执行replacement
+  Full。
 - 2026-07-24：G2.5 historical ownership replay缺口已按两层语义关闭。live builder仅接受
   policy冻结的`current_owner_profile`或`canonical_owner_profile`，迁到canonical后
   `ownership_transition_required=false`；missing/unknown/第三owner仍fail closed。tracked

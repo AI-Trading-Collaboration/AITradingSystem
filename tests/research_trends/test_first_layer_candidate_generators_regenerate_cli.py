@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from regenerated_candidate_test_helpers import write_price_fixture, write_rates_fixture
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -19,6 +20,8 @@ def test_first_layer_candidate_generators_regenerate_cli_is_registered() -> None
 def test_first_layer_candidate_generators_regenerate_cli_writes_artifacts(
     tmp_path: Path,
 ) -> None:
+    prices_path = write_price_fixture(tmp_path)
+    rates_path = write_rates_fixture(tmp_path)
     result = CliRunner().invoke(
         app,
         [
@@ -39,6 +42,12 @@ def test_first_layer_candidate_generators_regenerate_cli_writes_artifacts(
             str(tmp_path),
             "--mode",
             "regenerated_candidate_artifacts",
+            "--prices-path",
+            str(prices_path),
+            "--rates-path",
+            str(rates_path),
+            "--marketstack-prices-path",
+            str(tmp_path / "marketstack_prices_not_configured.csv"),
         ],
     )
 
@@ -56,9 +65,7 @@ def test_first_layer_candidate_generators_regenerate_cli_writes_artifacts(
             (candidate_dir / "validation_summary.json").read_text(encoding="utf-8")
         )
         artifact = json.loads(
-            (candidate_dir / "candidate_prediction_artifact.json").read_text(
-                encoding="utf-8"
-            )
+            (candidate_dir / "candidate_prediction_artifact.json").read_text(encoding="utf-8")
         )
         assert validation["status"] == "PASS"
         assert artifact["artifact_role"] == "regenerated_executable_candidate_artifact"
@@ -72,9 +79,7 @@ def test_first_layer_candidate_generators_regenerate_cli_writes_artifacts(
     run_summary = json.loads(
         (tmp_path / "regeneration_run_summary.json").read_text(encoding="utf-8")
     )
-    top_validation = json.loads(
-        (tmp_path / "validation_summary.json").read_text(encoding="utf-8")
-    )
+    top_validation = json.loads((tmp_path / "validation_summary.json").read_text(encoding="utf-8"))
     assert run_summary["candidate_count"] == 3
     assert run_summary["promotion_allowed"] is False
     assert run_summary["paper_shadow_allowed"] is False

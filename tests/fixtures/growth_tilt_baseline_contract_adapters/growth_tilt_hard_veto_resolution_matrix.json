@@ -1,0 +1,101 @@
+{
+  "broker_action": "none",
+  "hard_veto_resolution_matrix": {
+    "complete_baseline_set": false,
+    "components": [
+      {
+        "active_when": "growth_allowed is false",
+        "compiler_consumes_component": true,
+        "missing_policy": "BLOCKED_NOT_FALSE",
+        "not_applicable_rationale": null,
+        "output_path": "signal_state.risk_off_veto",
+        "pit_lineage_ref": null,
+        "priority": "BEFORE_CANDIDATE_OVERLAY",
+        "producer_callable": true,
+        "producer_entrypoint": "channel_specific_first_layer_v3._policy_compiler_dry_run",
+        "ready": false,
+        "required_by_baseline": true,
+        "resolution_status": "BLOCKED_NO_PIT_CONTRACT",
+        "semantic_role": "AMBIGUOUS_ALIAS_OF_GROWTH_ALLOWED_FALSE",
+        "veto_id": "risk_off_veto"
+      },
+      {
+        "active_when": "veto_reasons contains volatility_not_compressed or high_volatility_regime",
+        "compiler_consumes_component": true,
+        "missing_policy": "BLOCKED_NOT_FALSE",
+        "not_applicable_rationale": null,
+        "output_path": "signal_state.volatility_veto",
+        "pit_lineage_ref": "channel_specific_first_layer_v3_final_matrix.v1",
+        "priority": "BEFORE_CANDIDATE_OVERLAY",
+        "producer_callable": true,
+        "producer_entrypoint": "channel_specific_first_layer_v3._policy_compiler_dry_run",
+        "ready": true,
+        "required_by_baseline": true,
+        "resolution_status": "RESOLVED_CALLABLE",
+        "semantic_role": "VOLATILITY_RISK_ON_VETO_COMPONENT",
+        "veto_id": "volatility_veto"
+      },
+      {
+        "active_when": "signal_state.event_risk_veto is truthy",
+        "compiler_consumes_component": true,
+        "missing_policy": "BLOCKED_NOT_FALSE",
+        "not_applicable_rationale": null,
+        "output_path": "signal_state.event_risk_veto",
+        "pit_lineage_ref": null,
+        "priority": "BEFORE_CANDIDATE_OVERLAY",
+        "producer_callable": false,
+        "producer_entrypoint": null,
+        "ready": false,
+        "required_by_baseline": true,
+        "resolution_status": "BLOCKED_NO_PIT_CONTRACT",
+        "semantic_role": "DECLARED_BASELINE_HARD_VETO_WITHOUT_PRODUCER",
+        "veto_id": "event_risk_veto"
+      },
+      {
+        "active_when": "signal_state.trend_break_veto is truthy",
+        "compiler_consumes_component": true,
+        "missing_policy": "BLOCKED_NOT_FALSE",
+        "not_applicable_rationale": null,
+        "output_path": "signal_state.trend_break_veto",
+        "pit_lineage_ref": null,
+        "priority": "BEFORE_CANDIDATE_OVERLAY",
+        "producer_callable": false,
+        "producer_entrypoint": null,
+        "ready": false,
+        "required_by_baseline": true,
+        "resolution_status": "BLOCKED_NO_PIT_CONTRACT",
+        "semantic_role": "DECLARED_BASELINE_HARD_VETO_WITHOUT_PRODUCER",
+        "veto_id": "trend_break_veto"
+      },
+      {
+        "active_when": "true static guard in channel-v3 dry run",
+        "compiler_consumes_component": true,
+        "missing_policy": "BLOCKED_NOT_FALSE",
+        "not_applicable_rationale": null,
+        "output_path": "signal_state.tqqq_veto",
+        "pit_lineage_ref": "base_overlay_veto_policy_schema.v1",
+        "priority": "BEFORE_CANDIDATE_OVERLAY",
+        "producer_callable": true,
+        "producer_entrypoint": "channel_specific_first_layer_v3._policy_compiler_dry_run",
+        "ready": true,
+        "required_by_baseline": true,
+        "resolution_status": "RESOLVED_CALLABLE",
+        "semantic_role": "STATIC_NO_TQQQ_GUARD",
+        "veto_id": "tqqq_veto"
+      }
+    ],
+    "missing_evidence_policy": "BLOCKED_NOT_FALSE",
+    "schema_version": "growth_tilt_hard_veto_resolution_matrix.v1",
+    "status": "GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK_READY_OWNER_DECISIONS_REQUIRED",
+    "unresolved_component_ids": [
+      "risk_off_veto",
+      "event_risk_veto",
+      "trend_break_veto"
+    ]
+  },
+  "production_effect": "none",
+  "report_type": "hard_veto_resolution_matrix",
+  "schema_version": "growth_tilt_hard_veto_resolution_matrix.v1",
+  "status": "GROWTH_TILT_BASELINE_CONTRACT_DECISION_PACK_READY_OWNER_DECISIONS_REQUIRED",
+  "task_id": "TRADING-2438M1D1"
+}

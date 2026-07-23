@@ -67,7 +67,11 @@ def test_external_validation_gate_launches_balanced_core_after_validation(
         "output_root": external_root,
         "as_of_date": as_of,
     }
-    external_kwargs = {**static_kwargs, "growth_config_path": config_path}
+    external_kwargs = {
+        **static_kwargs,
+        "growth_config_path": config_path,
+        "growth_output_root": growth_root,
+    }
 
     scope = run_external_validation_scope_contract(output_root=external_root)
     pending_static = run_static_baseline_external_reconciliation(**static_kwargs)

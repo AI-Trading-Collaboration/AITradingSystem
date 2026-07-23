@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import gzip
 import json
 import shutil
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -10,8 +12,8 @@ from ai_trading_system.etf_portfolio import dynamic_v3_parameter_research as leg
 from ai_trading_system.trading2453_constraint_hit_diagnosis import (
     DEFAULT_PACKAGE_ROOT,
     DEFAULT_POLICY_PATH,
-    DEFAULT_RUN_DIR,
     DEFAULT_RUN_ID,
+    EXPECTED_RUN_HASHES,
     SAFETY,
     Trading2453ConstraintDiagnosisError,
     build_trading2453_diagnosis,
@@ -21,9 +23,49 @@ from ai_trading_system.trading2453_constraint_hit_diagnosis import (
     write_trading2453_diagnosis,
 )
 
+FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures" / "trading2453_constraint_hit_diagnosis"
 
-def test_s0_s3_recomputes_classifies_and_builds_owner_options() -> None:
-    bundle = build_trading2453_diagnosis()
+
+@pytest.fixture(scope="session")
+def trading2453_run_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    manifest_bytes = gzip.decompress(
+        FIXTURE_ROOT.joinpath("evaluator_manifest.json.gz").read_bytes()
+    )
+    assert sha256(manifest_bytes).hexdigest() == EXPECTED_RUN_HASHES["evaluator_manifest.json"]
+    manifest = json.loads(manifest_bytes)
+    expected_hashes = dict(EXPECTED_RUN_HASHES)
+    for filename, expected_hash in manifest["output_artifact_checksums"].items():
+        if filename in expected_hashes:
+            assert expected_hashes[filename] == expected_hash
+        expected_hashes[filename] = expected_hash
+
+    empty_file_hash = sha256(b"").hexdigest()
+    expected_fixture_files = {
+        filename if expected_hash == empty_file_hash else f"{filename}.gz"
+        for filename, expected_hash in expected_hashes.items()
+    }
+    actual_fixture_files = {path.name for path in FIXTURE_ROOT.iterdir() if path.is_file()}
+    assert actual_fixture_files == expected_fixture_files
+
+    run_dir = tmp_path_factory.mktemp("trading2453_frozen_run") / DEFAULT_RUN_ID
+    run_dir.mkdir()
+    for filename, expected_hash in sorted(expected_hashes.items()):
+        fixture_path = FIXTURE_ROOT / (
+            filename if expected_hash == empty_file_hash else f"{filename}.gz"
+        )
+        destination = run_dir / filename
+        fixture_bytes = fixture_path.read_bytes()
+        destination.write_bytes(
+            fixture_bytes if expected_hash == empty_file_hash else gzip.decompress(fixture_bytes)
+        )
+        assert sha256(destination.read_bytes()).hexdigest() == expected_hash
+    return run_dir
+
+
+def test_s0_s3_recomputes_classifies_and_builds_owner_options(
+    trading2453_run_dir: Path,
+) -> None:
+    bundle = build_trading2453_diagnosis(run_dir=trading2453_run_dir)
     report = bundle["attribution"]
     summary = report["recomputation_summary"]
 
@@ -140,9 +182,16 @@ def test_s0_s3_recomputes_classifies_and_builds_owner_options() -> None:
 
 
 @pytest.mark.parametrize("target", ["attribution_json", "owner_markdown"])
-def test_content_derived_validator_detects_output_tamper(tmp_path: Path, target: str) -> None:
+def test_content_derived_validator_detects_output_tamper(
+    tmp_path: Path,
+    target: str,
+    trading2453_run_dir: Path,
+) -> None:
     output_dir = tmp_path / "diagnosis"
-    result = write_trading2453_diagnosis(output_dir=output_dir)
+    result = write_trading2453_diagnosis(
+        output_dir=output_dir,
+        run_dir=trading2453_run_dir,
+    )
 
     assert result["validation"]["status"] == "PASS"
     if target == "attribution_json":
@@ -161,18 +210,30 @@ def test_content_derived_validator_detects_output_tamper(tmp_path: Path, target:
             encoding="utf-8",
         )
 
-    validation = validate_trading2453_diagnosis(output_dir=output_dir)
+    validation = validate_trading2453_diagnosis(
+        output_dir=output_dir,
+        run_dir=trading2453_run_dir,
+    )
 
     assert validation["status"] == "FAIL"
     assert validation["failed_check_count"] >= 1
 
 
-def test_validator_rejects_extra_stale_output_file(tmp_path: Path) -> None:
+def test_validator_rejects_extra_stale_output_file(
+    tmp_path: Path,
+    trading2453_run_dir: Path,
+) -> None:
     output_dir = tmp_path / "diagnosis"
-    write_trading2453_diagnosis(output_dir=output_dir)
+    write_trading2453_diagnosis(
+        output_dir=output_dir,
+        run_dir=trading2453_run_dir,
+    )
     (output_dir / "stale.json").write_text("{}\n", encoding="utf-8")
 
-    validation = validate_trading2453_diagnosis(output_dir=output_dir)
+    validation = validate_trading2453_diagnosis(
+        output_dir=output_dir,
+        run_dir=trading2453_run_dir,
+    )
 
     assert validation["status"] == "FAIL"
     inventory_check = next(
@@ -181,19 +242,28 @@ def test_validator_rejects_extra_stale_output_file(tmp_path: Path) -> None:
     assert inventory_check["passed"] is False
 
 
-def test_writer_rejects_nonempty_output_directory(tmp_path: Path) -> None:
+def test_writer_rejects_nonempty_output_directory(
+    tmp_path: Path,
+    trading2453_run_dir: Path,
+) -> None:
     output_dir = tmp_path / "diagnosis"
     output_dir.mkdir()
     (output_dir / "stale.json").write_text("{}\n", encoding="utf-8")
 
     with pytest.raises(Trading2453ConstraintDiagnosisError, match="absent or empty"):
-        write_trading2453_diagnosis(output_dir=output_dir)
+        write_trading2453_diagnosis(
+            output_dir=output_dir,
+            run_dir=trading2453_run_dir,
+        )
 
 
-def test_frozen_train_input_tamper_fails_closed(tmp_path: Path) -> None:
+def test_frozen_train_input_tamper_fails_closed(
+    tmp_path: Path,
+    trading2453_run_dir: Path,
+) -> None:
     run_dir = tmp_path / DEFAULT_RUN_ID
     package_root = tmp_path / "package"
-    shutil.copytree(DEFAULT_RUN_DIR, run_dir)
+    shutil.copytree(trading2453_run_dir, run_dir)
     shutil.copytree(DEFAULT_PACKAGE_ROOT, package_root)
     train_path = run_dir / "train_evaluations.jsonl"
     train_path.write_bytes(train_path.read_bytes() + b"\n")
@@ -202,9 +272,11 @@ def test_frozen_train_input_tamper_fails_closed(tmp_path: Path) -> None:
         build_trading2453_diagnosis(run_dir=run_dir, package_root=package_root)
 
 
-def test_row_recomputation_detects_gate_reason_semantic_tamper() -> None:
+def test_row_recomputation_detects_gate_reason_semantic_tamper(
+    trading2453_run_dir: Path,
+) -> None:
     row = json.loads(
-        DEFAULT_RUN_DIR.joinpath("train_evaluations.jsonl")
+        trading2453_run_dir.joinpath("train_evaluations.jsonl")
         .read_text(encoding="utf-8")
         .splitlines()[0]
     )

@@ -11,6 +11,7 @@ from rich.console import Console
 from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
 from ai_trading_system.equal_risk_growth_tilt import (
     DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
 )
 from ai_trading_system.external_validation import (
     DEFAULT_EXTERNAL_VALIDATION_MANUAL_EVIDENCE_MASTER_REVIEW_DOC_PATH,
@@ -110,6 +111,7 @@ def _make_output_command(
 def _make_data_command(
     builder: Callable[..., dict[str, object]], label: str
 ) -> Callable[..., None]:
+
     def command(
         prices_path: Annotated[Path, typer.Option("--prices-path")] = DEFAULT_PRICES_PATH,
         marketstack_prices_path: Annotated[
@@ -122,6 +124,9 @@ def _make_data_command(
         growth_config_path: Annotated[
             Path, typer.Option("--growth-config")
         ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+        growth_output_root: Annotated[
+            Path, typer.Option("--growth-output-root")
+        ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
         output_root: Annotated[Path, typer.Option("--output-root")] = (
             DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
         ),
@@ -136,6 +141,7 @@ def _make_data_command(
                 rates_path=rates_path,
                 simple_config_path=simple_config_path,
                 growth_config_path=growth_config_path,
+                growth_output_root=growth_output_root,
                 output_root=output_root,
                 as_of_date=_parse_optional_date(as_of),
                 start_date=_parse_optional_date(start_date) or PRIMARY_RESEARCH_START_DATE,
@@ -195,12 +201,13 @@ def strategies_static_baseline_reconciliation_final_check_command(
     growth_config_path: Annotated[
         Path, typer.Option("--growth-config")
     ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path, typer.Option("--growth-output-root")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
-    external_records_path: Annotated[
-        Path | None, typer.Option("--external-records-path")
-    ] = None,
+    external_records_path: Annotated[Path | None, typer.Option("--external-records-path")] = None,
     as_of: Annotated[str | None, typer.Option("--as-of")] = None,
     start_date: Annotated[str | None, typer.Option("--start-date")] = None,
     end_date: Annotated[str | None, typer.Option("--end-date")] = None,
@@ -212,6 +219,7 @@ def strategies_static_baseline_reconciliation_final_check_command(
             rates_path=rates_path,
             simple_config_path=simple_config_path,
             growth_config_path=growth_config_path,
+            growth_output_root=growth_output_root,
             output_root=output_root,
             external_records_path=external_records_path,
             as_of_date=_parse_optional_date(as_of),
@@ -338,6 +346,9 @@ def strategies_sgov_external_convention_signoff_command(
     growth_config_path: Annotated[
         Path, typer.Option("--growth-config")
     ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path, typer.Option("--growth-output-root")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
@@ -355,6 +366,7 @@ def strategies_sgov_external_convention_signoff_command(
             rates_path=rates_path,
             simple_config_path=simple_config_path,
             growth_config_path=growth_config_path,
+            growth_output_root=growth_output_root,
             output_root=output_root,
             signoff_path=signoff_path,
             as_of_date=_parse_optional_date(as_of),
@@ -377,6 +389,9 @@ def strategies_static_baseline_final_reconciliation_after_manual_input_command(
     growth_config_path: Annotated[
         Path, typer.Option("--growth-config")
     ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path, typer.Option("--growth-output-root")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
@@ -403,6 +418,7 @@ def strategies_static_baseline_final_reconciliation_after_manual_input_command(
             rates_path=rates_path,
             simple_config_path=simple_config_path,
             growth_config_path=growth_config_path,
+            growth_output_root=growth_output_root,
             output_root=output_root,
             input_yaml_path=input_yaml_path,
             input_csv_path=input_csv_path,
@@ -428,6 +444,9 @@ def strategies_external_validation_owner_report_command(
     growth_config_path: Annotated[
         Path, typer.Option("--growth-config")
     ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path, typer.Option("--growth-output-root")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
@@ -445,6 +464,7 @@ def strategies_external_validation_owner_report_command(
             rates_path=rates_path,
             simple_config_path=simple_config_path,
             growth_config_path=growth_config_path,
+            growth_output_root=growth_output_root,
             output_root=output_root,
             docs_path=docs_path,
             as_of_date=_parse_optional_date(as_of),
@@ -467,6 +487,9 @@ def strategies_external_validation_master_review_command(
     growth_config_path: Annotated[
         Path, typer.Option("--growth-config")
     ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path, typer.Option("--growth-output-root")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
@@ -487,6 +510,7 @@ def strategies_external_validation_master_review_command(
             rates_path=rates_path,
             simple_config_path=simple_config_path,
             growth_config_path=growth_config_path,
+            growth_output_root=growth_output_root,
             output_root=output_root,
             docs_path=docs_path,
             owner_docs_path=owner_docs_path,
@@ -510,6 +534,9 @@ def strategies_external_validation_manual_evidence_owner_signoff_command(
     growth_config_path: Annotated[
         Path, typer.Option("--growth-config")
     ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path, typer.Option("--growth-output-root")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
@@ -539,6 +566,7 @@ def strategies_external_validation_manual_evidence_owner_signoff_command(
             rates_path=rates_path,
             simple_config_path=simple_config_path,
             growth_config_path=growth_config_path,
+            growth_output_root=growth_output_root,
             output_root=output_root,
             docs_path=docs_path,
             input_yaml_path=input_yaml_path,
@@ -565,6 +593,9 @@ def strategies_external_validation_manual_evidence_master_review_command(
     growth_config_path: Annotated[
         Path, typer.Option("--growth-config")
     ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_CONFIG_PATH,
+    growth_output_root: Annotated[
+        Path, typer.Option("--growth-output-root")
+    ] = DEFAULT_EQUAL_RISK_GROWTH_TILT_OUTPUT_ROOT,
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
@@ -597,6 +628,7 @@ def strategies_external_validation_manual_evidence_master_review_command(
             rates_path=rates_path,
             simple_config_path=simple_config_path,
             growth_config_path=growth_config_path,
+            growth_output_root=growth_output_root,
             output_root=output_root,
             docs_path=docs_path,
             owner_docs_path=owner_docs_path,

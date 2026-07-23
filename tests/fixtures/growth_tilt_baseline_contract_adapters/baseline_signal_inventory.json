@@ -1,0 +1,159 @@
+{
+  "baseline_signal_inventory": {
+    "baseline": {
+      "binding_status": "BLOCKED_NO_GROWTH_TILT_BASELINE_RUNTIME_BINDING",
+      "channel_config_id": "channel_specific_first_layer_v3",
+      "composer_config_id": "first_layer_composer_v2",
+      "config_id": "base_overlay_veto_policy_schema_v1",
+      "config_version": "base_overlay_veto_policy_schema.v1",
+      "current_exposure_field": "current_weights -> QQQ + 3*TQQQ",
+      "decision_trace_schema_version": null,
+      "evaluation_cadence": "TRADING_DAY_ROW_OBSERVED_NOT_GOVERNED",
+      "exposure_unit": "QQQ_EQUIVALENT_EXPOSURE_QQQ_PLUS_3X_TQQQ",
+      "recovery_persistence_blocker": "No growth-tilt-bound baseline recovery persistence rule or versioned transition trace schema exists.",
+      "recovery_persistence_contract_ready": false,
+      "runtime_entrypoint": "ai_trading_system.two_layer_policy_compiler.compile_two_layer_policy",
+      "target_exposure_field": "target_weights -> QQQ + 3*TQQQ"
+    },
+    "eligible_recovery_signal_ids": [],
+    "schema_version": "growth_tilt_baseline_signal_inventory.v1",
+    "signals": [
+      {
+        "allowed_usage": [
+          "defensive_overlay_neutralization",
+          "late_re_risk_diagnostic"
+        ],
+        "baseline_consumption_ready": false,
+        "blocked_usage": [
+          "add_risk_allocation",
+          "growth_overlay",
+          "high_confidence_risk_on",
+          "promotion",
+          "paper_shadow",
+          "production",
+          "broker"
+        ],
+        "blocker_codes": [
+          "RECOVERY_PIT_LINEAGE_CONTRACT_MISSING",
+          "RECOVERY_BASELINE_CONSUMPTION_CONTRACT_MISSING",
+          "RECOVERY_PERSISTENCE_CONTRACT_MISSING"
+        ],
+        "callable_runtime_source": true,
+        "candidate_a_eligible": false,
+        "channel": "defensive",
+        "diagnostic_only": false,
+        "offline_selection_pass": false,
+        "offline_selection_role": "OFFLINE_SELECTION_RESULT_NOT_RUNTIME_VALUE",
+        "output_path": "outputs/research_trends/channel_specific_v3/channel_composer_v3_predictions.csv:re_risk_allowed_probability",
+        "output_path_resolved": true,
+        "pit_approved": false,
+        "pit_lineage_valid": false,
+        "producer_callable": true,
+        "selection_notes": [
+          "do_not_de_risk_pass is an offline selection result, not a runtime value",
+          "offline selection failure does not by itself invalidate the callable producer"
+        ],
+        "selection_status": "FAILED_FINAL_SELECTION",
+        "semantics_registered": true,
+        "signal_id": "re_risk_allowed_probability",
+        "source_family": "drawdown_recovery",
+        "threshold": 0.55
+      },
+      {
+        "allowed_usage": [
+          "defensive_overlay_neutralization",
+          "late_re_risk_diagnostic"
+        ],
+        "baseline_consumption_ready": false,
+        "blocked_usage": [
+          "add_risk_allocation",
+          "growth_overlay",
+          "high_confidence_risk_on",
+          "promotion",
+          "paper_shadow",
+          "production",
+          "broker"
+        ],
+        "blocker_codes": [],
+        "callable_runtime_source": true,
+        "candidate_a_eligible": false,
+        "channel": "defensive",
+        "diagnostic_only": false,
+        "offline_selection_pass": false,
+        "offline_selection_role": "OFFLINE_SELECTION_RESULT_NOT_RUNTIME_VALUE",
+        "output_path": "src/ai_trading_system/channel_specific_first_layer_v3.py:signal_state",
+        "output_path_resolved": true,
+        "pit_approved": false,
+        "pit_lineage_valid": false,
+        "producer_callable": true,
+        "selection_status": "FAILED_FINAL_SELECTION",
+        "semantics_registered": true,
+        "signal_id": "re_risk_allowed",
+        "source_family": "drawdown_recovery",
+        "threshold": 0.55
+      },
+      {
+        "allowed_usage": [
+          "risk_veto",
+          "growth_overlay_blocker",
+          "false_add_risk_reduction"
+        ],
+        "baseline_consumption_ready": true,
+        "blocked_usage": [
+          "standalone_allocation",
+          "return_boost",
+          "promotion",
+          "paper_shadow",
+          "production",
+          "broker"
+        ],
+        "blocker_codes": [],
+        "callable_runtime_source": true,
+        "candidate_a_eligible": false,
+        "channel": "risk_veto",
+        "diagnostic_only": false,
+        "offline_selection_pass": true,
+        "offline_selection_role": "OFFLINE_SELECTION_RESULT_NOT_RUNTIME_VALUE",
+        "output_path": "outputs/research_trends/channel_specific_v3/channel_composer_v3_predictions.csv:growth_allowed",
+        "output_path_resolved": true,
+        "pit_approved": true,
+        "pit_lineage_valid": true,
+        "producer_callable": true,
+        "selection_status": "PASS",
+        "semantics_registered": true,
+        "signal_id": "growth_allowed",
+        "source_family": "volatility_compression+rates_liquidity",
+        "threshold": 0.55
+      },
+      {
+        "allowed_usage": [],
+        "baseline_consumption_ready": true,
+        "blocked_usage": [],
+        "blocker_codes": [],
+        "callable_runtime_source": true,
+        "candidate_a_eligible": false,
+        "channel": "first_layer_state",
+        "diagnostic_only": null,
+        "offline_selection_pass": true,
+        "offline_selection_role": "OFFLINE_SELECTION_RESULT_NOT_RUNTIME_VALUE",
+        "output_path": "outputs/research_trends/models/first_layer_composer_v2_predictions.csv:trend_state",
+        "output_path_resolved": true,
+        "pit_approved": true,
+        "pit_lineage_valid": true,
+        "producer_callable": true,
+        "selection_status": "FROZEN_RESEARCH_BASELINE",
+        "semantics_registered": false,
+        "signal_id": "first_layer_composer_v2_trend_state",
+        "source_family": "multi_family_composer",
+        "threshold": null
+      }
+    ],
+    "status": "GROWTH_TILT_OWNER_MAPPING_INVENTORY_READY_OWNER_REVIEW_REQUIRED"
+  },
+  "broker_action": "none",
+  "production_effect": "none",
+  "report_type": "baseline_signal_inventory",
+  "schema_version": "growth_tilt_baseline_signal_inventory.v1",
+  "status": "GROWTH_TILT_OWNER_MAPPING_INVENTORY_READY_OWNER_REVIEW_REQUIRED",
+  "task_id": "TRADING-2438M1C"
+}
