@@ -359,15 +359,12 @@ def test_manual_external_evidence_signoff_builders_and_cli(tmp_path: Path) -> No
     assert Path(template["template_paths"]["guide"]).exists()
     assert runbook["status"] == "MANUAL_RUNBOOK_READY"
     assert manual_input["status"] == "MANUAL_EXTERNAL_INPUT_RECORDED"
-    assert {row["strategy_id"] for row in manual_input["valid_records"]} == set(
-        STATIC_BASELINE_IDS
-    )
+    assert {row["strategy_id"] for row in manual_input["valid_records"]} == set(STATIC_BASELINE_IDS)
     assert metric_signoff["status"] == "METRIC_CONVENTIONS_CONFIRMED"
     assert sgov_signoff["status"] == "SGOV_CONVENTION_CONFIRMED"
     assert final_reconciliation["status"] == "STATIC_BASELINE_MANUAL_RECONCILED"
     assert all(
-        row["within_tolerance"] is True
-        for row in final_reconciliation["reconciliation_rows"]
+        row["within_tolerance"] is True for row in final_reconciliation["reconciliation_rows"]
     )
     assert dynamic_support["status"] == "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE"
     assert qc_preflight["status"] == "QC_WEIGHT_PATH_PREFLIGHT_NEEDS_MANUAL_IMPLEMENTATION"
@@ -426,7 +423,7 @@ def test_single_asset_manual_external_record_accepts_no_rebalancing(
                         "external_tool": "Portfolio Visualizer",
                         "external_tool_url_or_name": "portfolio_visualizer_export_fixture",
                         "strategy_id": "100_qqq",
-                            "date_range_start": "2021-02-22",
+                        "date_range_start": "2021-02-22",
                         "date_range_end": "2026-06-25",
                         "asset_weights": {"QQQ": 1.0},
                         "rebalance_frequency": "No rebalancing",
@@ -452,7 +449,7 @@ def test_single_asset_manual_external_record_accepts_no_rebalancing(
                         "external_tool": "Portfolio Visualizer",
                         "external_tool_url_or_name": "portfolio_visualizer_export_fixture",
                         "strategy_id": "qqq_50_sgov_50",
-                            "date_range_start": "2021-02-22",
+                        "date_range_start": "2021-02-22",
                         "date_range_end": "2026-06-25",
                         "asset_weights": {"QQQ": 0.5, "SGOV": 0.5},
                         "rebalance_frequency": "No rebalancing",
@@ -469,7 +466,7 @@ def test_single_asset_manual_external_record_accepts_no_rebalancing(
                         "manual_notes": "multi-asset baselines must use monthly rebalance",
                         "owner": "test_owner",
                         "recorded_at": "2026-06-27T03:04:13+09:00",
-                    }
+                    },
                 ]
             },
             sort_keys=False,
@@ -521,12 +518,8 @@ def test_owner_recommendation_waits_for_metric_and_sgov_signoff_before_fix(
         _metric_signoff_payload={"status": "METRIC_CONVENTIONS_STILL_UNKNOWN"},
         _sgov_signoff_payload={"status": "SGOV_CONVENTION_STILL_UNKNOWN"},
         _final_reconciliation_payload={"status": "STATIC_BASELINE_MANUAL_MISMATCH"},
-        _dynamic_support_payload={
-            "status": "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE"
-        },
-        _qc_preflight_payload={
-            "status": "QC_WEIGHT_PATH_PREFLIGHT_NEEDS_MANUAL_IMPLEMENTATION"
-        },
+        _dynamic_support_payload={"status": "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE"},
+        _qc_preflight_payload={"status": "QC_WEIGHT_PATH_PREFLIGHT_NEEDS_MANUAL_IMPLEMENTATION"},
     )
 
     assert owner["owner_recommendation"] == "NEED_MORE_MANUAL_EVIDENCE"

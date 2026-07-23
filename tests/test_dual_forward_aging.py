@@ -51,9 +51,7 @@ from ai_trading_system.simple_baseline_portfolio_control import (
 def test_external_validation_gate_launches_balanced_core_after_validation(
     tmp_path: Path,
 ) -> None:
-    prices_path, marketstack_path, rates_path, as_of = _write_external_validation_caches(
-        tmp_path
-    )
+    prices_path, marketstack_path, rates_path, as_of = _write_external_validation_caches(tmp_path)
     config_path = _write_small_growth_config(tmp_path)
     external_root = tmp_path / "outputs" / "research_strategies" / "external_validation"
     growth_root = tmp_path / "outputs" / "research_strategies" / "growth_components"

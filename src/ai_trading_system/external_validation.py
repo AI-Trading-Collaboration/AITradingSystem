@@ -306,11 +306,7 @@ def run_static_baseline_external_reconciliation(
         reconciliation_rows=reconciliation_rows,
         data_quality=data_gate,
         blocking_reasons=blockers,
-        warning_reasons=[
-            "manual_external_records_missing"
-        ]
-        if missing_external
-        else [],
+        warning_reasons=["manual_external_records_missing"] if missing_external else [],
         report_registry_entry=_report_registry_entry(
             "static_baseline_external_reconciliation",
             "Static Baseline External Reconciliation",
@@ -900,9 +896,7 @@ def run_external_validation_difference_attribution(
         )
     requires_fix = [row for row in rows if row.get("requires_fix") is True]
     unexplained = [
-        row
-        for row in rows
-        if row.get("primary_difference_reason") == "internal_bug_suspected"
+        row for row in rows if row.get("primary_difference_reason") == "internal_bug_suspected"
     ]
     if requires_fix:
         status = "DIFFERENCE_REQUIRES_INTERNAL_FIX"
@@ -1128,9 +1122,9 @@ def run_external_validation_reader_brief_safe_preview(
     )
     preview = {
         "external_validation_status": master.get("status"),
-        "static_baseline_reconciliation_status": _mapping(
-            master.get("required_answers")
-        ).get("2_static_baseline_passed"),
+        "static_baseline_reconciliation_status": _mapping(master.get("required_answers")).get(
+            "2_static_baseline_passed"
+        ),
         "dynamic_replay_reconciliation_status": _mapping(master.get("required_answers")).get(
             "3_dynamic_weight_path_replay_passed"
         ),
@@ -2345,9 +2339,7 @@ def run_static_baseline_final_reconciliation_after_manual_input(
         reconciliation_rows=reconciliation_rows,
         data_quality=data_gate,
         blocking_reasons=blockers,
-        warning_reasons=_dedupe_text(
-            [str(row.get("difference_reason")) for row in warning_rows]
-        ),
+        warning_reasons=_dedupe_text([str(row.get("difference_reason")) for row in warning_rows]),
         source_statuses={
             "static_baseline_external_manual_input_ingestion": manual_input.get("status"),
             "external_platform_metric_convention_signoff": metric_signoff.get("status"),
@@ -2755,9 +2747,7 @@ def run_external_validation_manual_evidence_master_review(
             "KEEP_EXTERNAL_VALIDATION_RESEARCH_ONLY",
             "NO_PAPER_SHADOW_NO_PRODUCTION_NO_BROKER",
         ],
-        source_statuses={
-            "external_validation_manual_evidence_owner_signoff": owner.get("status")
-        },
+        source_statuses={"external_validation_manual_evidence_owner_signoff": owner.get("status")},
         source_artifacts=_artifact_paths_by_report(
             {"external_validation_manual_evidence_owner_signoff": owner}
         ),
@@ -3344,9 +3334,9 @@ def _normalize_manual_external_record(
         str(normalized.get("export_file_path") or "").strip()
         or str(normalized.get("screenshot_reference") or "").strip()
     )
-    normalized["sgov_convention"] = str(
-        normalized.get("price_or_total_return_policy") or "unknown"
-    ).strip().lower()
+    normalized["sgov_convention"] = (
+        str(normalized.get("price_or_total_return_policy") or "unknown").strip().lower()
+    )
     errors, warnings = _manual_record_validation_errors(
         normalized,
         start_date=start_date,
@@ -3515,9 +3505,7 @@ def _metric_convention_rows(
                     "platform_definition": raw.get("platform_definition", "unknown"),
                     "internal_definition": METRIC_INTERNAL_DEFINITIONS[metric_name],
                     "definition_match_status": raw.get("definition_match_status", "unknown"),
-                    "manual_confirmation_status": raw.get(
-                        "manual_confirmation_status", "unknown"
-                    ),
+                    "manual_confirmation_status": raw.get("manual_confirmation_status", "unknown"),
                     "difference_expected": _bool(raw.get("difference_expected", False)),
                     "owner_notes": raw.get("owner_notes", ""),
                 }
@@ -3695,8 +3683,7 @@ def _manual_owner_required_answers(
             "METRIC_CONVENTIONS_CONFIRMED",
             "METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS",
         },
-        "5_unexplained_difference_remaining": final_status
-        == "STATIC_BASELINE_MANUAL_MISMATCH",
+        "5_unexplained_difference_remaining": final_status == "STATIC_BASELINE_MANUAL_MISMATCH",
         "6_still_need_quantconnect_or_tradingview_replay": dynamic_support.get("status")
         == "DYNAMIC_EXTERNAL_SUPPORT_REQUIRES_CUSTOM_ENGINE"
         and qc_preflight.get("status") == "QC_WEIGHT_PATH_PREFLIGHT_NEEDS_MANUAL_IMPLEMENTATION",
@@ -3710,8 +3697,7 @@ def _manual_owner_required_answers(
             "METRIC_CONVENTIONS_CONFIRMED",
             "METRIC_CONVENTIONS_CONFIRMED_WITH_LIMITATIONS",
         }
-        and sgov_status
-        in {"SGOV_CONVENTION_CONFIRMED", "SGOV_CONVENTION_LIMITATION_ACCEPTED"},
+        and sgov_status in {"SGOV_CONVENTION_CONFIRMED", "SGOV_CONVENTION_LIMITATION_ACCEPTED"},
         "8_continue_no_paper_shadow_no_production_no_broker": True,
     }
 
@@ -3726,9 +3712,10 @@ def _manual_owner_recommendation(
     final_status = str(final_reconciliation.get("status"))
     if str(manual_input.get("status")) != "MANUAL_EXTERNAL_INPUT_RECORDED":
         return "NEED_MORE_MANUAL_EVIDENCE"
-    if str(metric_signoff.get("status")) == "METRIC_CONVENTIONS_STILL_UNKNOWN" or str(
-        sgov_signoff.get("status")
-    ) == "SGOV_CONVENTION_STILL_UNKNOWN":
+    if (
+        str(metric_signoff.get("status")) == "METRIC_CONVENTIONS_STILL_UNKNOWN"
+        or str(sgov_signoff.get("status")) == "SGOV_CONVENTION_STILL_UNKNOWN"
+    ):
         return "NEED_MORE_MANUAL_EVIDENCE"
     if final_status == "STATIC_BASELINE_MANUAL_MISMATCH":
         return "INTERNAL_FIX_REQUIRED"
@@ -3755,11 +3742,11 @@ def _manual_master_required_answers(owner: Mapping[str, Any]) -> dict[str, Any]:
         )
         is True,
         "4_static_baseline_final_reconciled": answers.get("2_static_baseline_aligned") is True,
-        "5_dynamic_weight_path_external_support_status": owner.get("source_statuses", {}).get(
-            "dynamic_weight_path_external_support_check"
-        )
-        if isinstance(owner.get("source_statuses"), Mapping)
-        else None,
+        "5_dynamic_weight_path_external_support_status": (
+            owner.get("source_statuses", {}).get("dynamic_weight_path_external_support_check")
+            if isinstance(owner.get("source_statuses"), Mapping)
+            else None
+        ),
         "6_quantconnect_weight_path_replay_needed": answers.get(
             "6_still_need_quantconnect_or_tradingview_replay"
         )
@@ -4002,9 +3989,11 @@ def _replay_reconciliation_row(
                 "replay_metric": replay.get(metric),
                 "metric_delta": delta,
                 "within_tolerance": abs(delta) <= tolerance,
-                "difference_reason": "within_tolerance"
-                if abs(delta) <= tolerance
-                else "independent_replay_delta_exceeds_tolerance",
+                "difference_reason": (
+                    "within_tolerance"
+                    if abs(delta) <= tolerance
+                    else "independent_replay_delta_exceeds_tolerance"
+                ),
             }
         )
     return {
@@ -4263,13 +4252,15 @@ def _owner_recommendation(sources: Mapping[str, Mapping[str, Any]]) -> str:
     answers = _owner_required_answers(sources)
     if answers["5_internal_calculation_fix_required"]:
         return "INTERNAL_BACKTEST_FIX_REQUIRED"
-    if sources["static"].get("status") == "STATIC_BASELINE_BLOCKED" or sources["replay"].get(
-        "status"
-    ) == "INDEPENDENT_REPLAY_BLOCKED":
+    if (
+        sources["static"].get("status") == "STATIC_BASELINE_BLOCKED"
+        or sources["replay"].get("status") == "INDEPENDENT_REPLAY_BLOCKED"
+    ):
         return "EXTERNAL_VALIDATION_BLOCKED"
-    if sources["static"].get("status") == "STATIC_BASELINE_RECONCILED" and sources[
-        "replay"
-    ].get("status") == "INDEPENDENT_REPLAY_MATCHED":
+    if (
+        sources["static"].get("status") == "STATIC_BASELINE_RECONCILED"
+        and sources["replay"].get("status") == "INDEPENDENT_REPLAY_MATCHED"
+    ):
         return "EXTERNAL_VALIDATION_ACCEPTED"
     if answers["6_internal_results_allowed_as_research_basis"]:
         return "EXTERNAL_VALIDATION_ACCEPTED_WITH_WARNINGS"
@@ -4291,9 +4282,7 @@ def _master_required_answers(owner: Mapping[str, Any]) -> dict[str, Any]:
         is True,
         "4_metric_differences_explainable": owner_answers.get("4_metric_definitions_aligned")
         is True,
-        "5_SGOV_total_return_proxy_acceptable": owner_answers.get(
-            "3_SGOV_total_return_explained"
-        )
+        "5_SGOV_total_return_proxy_acceptable": owner_answers.get("3_SGOV_total_return_explained")
         is True,
         "6_external_strategy_engine_full_replication_needed": owner_answers.get(
             "7_further_quantconnect_or_tradingview_needed"

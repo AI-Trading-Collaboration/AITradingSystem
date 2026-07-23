@@ -1841,15 +1841,17 @@ def build_b2_campaign_full_parity_validation(
         "campaign_id": campaign_id,
         "status": status,
         "checks": checks,
-        "explained_differences": [
-            (
-                "Campaign gate replaces legacy open-ended "
-                "B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE "
-                "with a defined evidence plan or owner override when budget is exhausted."
-            )
-        ]
-        if status.endswith("WITH_EXPLAINED_DIFFS")
-        else [],
+        "explained_differences": (
+            [
+                (
+                    "Campaign gate replaces legacy open-ended "
+                    "B2_ONLY_CONTINUE_WITH_MORE_TARGETED_EVIDENCE "
+                    "with a defined evidence plan or owner override when budget is exhausted."
+                )
+            ]
+            if status.endswith("WITH_EXPLAINED_DIFFS")
+            else []
+        ),
         "legacy_statuses": {
             "b2_full_diagnostic_with_control_windows": audited_full.get("status"),
             "b2_gate_v5": audited_gate.get("status"),
@@ -3684,8 +3686,7 @@ def build_campaign_control_plane_v1_validation_pack(
         "post_b2_campaign_program_snapshot",
     )
     if all(
-        isinstance(precomputed.get(artifact_id), Mapping)
-        for artifact_id in post_b2_artifact_ids
+        isinstance(precomputed.get(artifact_id), Mapping) for artifact_id in post_b2_artifact_ids
     ):
         post_b2_artifacts = {
             artifact_id: dict(precomputed[artifact_id]) for artifact_id in post_b2_artifact_ids
@@ -3878,28 +3879,30 @@ def build_campaign_control_plane_v1_validation_pack(
         "release_candidate": "rc5",
         "status": status,
         "checks": checks,
-        "limitations": [
-            "B3 remains signal-precheck only.",
-            "Some legacy task-specific CLI surfaces remain read-only compatibility inputs.",
-            (
-                "B2 Campaign compute now covers targeted/full/gate paths, but legacy B2 "
-                "task-specific runners stay available until owner deprecation review."
-            ),
-            (
-                "Gate decisions are research-only and may require owner override when "
-                "evidence budget is exhausted."
-            ),
-            (
-                "B2 finalization artifacts do not append owner decisions and keep "
-                "B4/B5/B6/v3/paper-shadow closed."
-            ),
-            (
-                "B2 post-campaign artifacts record return-to-design and archive the "
-                "current form, but new redesign RFCs remain design-only."
-            ),
-        ]
-        if status.endswith("READY_WITH_LIMITATIONS")
-        else [],
+        "limitations": (
+            [
+                "B3 remains signal-precheck only.",
+                "Some legacy task-specific CLI surfaces remain read-only compatibility inputs.",
+                (
+                    "B2 Campaign compute now covers targeted/full/gate paths, but legacy B2 "
+                    "task-specific runners stay available until owner deprecation review."
+                ),
+                (
+                    "Gate decisions are research-only and may require owner override when "
+                    "evidence budget is exhausted."
+                ),
+                (
+                    "B2 finalization artifacts do not append owner decisions and keep "
+                    "B4/B5/B6/v3/paper-shadow closed."
+                ),
+                (
+                    "B2 post-campaign artifacts record return-to-design and archive the "
+                    "current form, but new redesign RFCs remain design-only."
+                ),
+            ]
+            if status.endswith("READY_WITH_LIMITATIONS")
+            else []
+        ),
         "component_statuses": {
             "adapter_contract_validation": contract_validation["validation_status"],
             "b2_parity_map": parity_map["status"],
@@ -6245,9 +6248,11 @@ def _b2_targeted_compute_evidence_records(
         "MIXED" if compute_pass else "BLOCKED"
     )
     reason_codes = [
-        "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
-        if compute_pass
-        else "B2_TARGETED_EVIDENCE_COMPUTE_REVIEW_REQUIRED",
+        (
+            "B2_TARGETED_EVIDENCE_COMPUTE_PASS"
+            if compute_pass
+            else "B2_TARGETED_EVIDENCE_COMPUTE_REVIEW_REQUIRED"
+        ),
         "FAST_RISK_NOT_SUPPORTED",
         "SLOW_DRAWDOWN_SINGLE_WINDOW_ONLY",
         "REENTRY_LAG_SIGNAL_DRIVEN",
@@ -6521,9 +6526,11 @@ def _build_b2_gate_compute_payload(
         "schema_version": "1.0",
         "report_type": "b2_gate_compute",
         "campaign_id": spec.campaign_id,
-        "status": "B2_GATE_COMPUTE_PASS"
-        if decision != "GENERIC_NEEDS_MORE_EVIDENCE"
-        else "B2_GATE_COMPUTE_BLOCKED_WITH_REASON",
+        "status": (
+            "B2_GATE_COMPUTE_PASS"
+            if decision != "GENERIC_NEEDS_MORE_EVIDENCE"
+            else "B2_GATE_COMPUTE_BLOCKED_WITH_REASON"
+        ),
         "decision": decision,
         "campaign_outcome": campaign_outcome,
         "raw_gate_decision_outcome": gate["decision_outcome"],
@@ -6591,9 +6598,9 @@ def _b2_final_repeatability_tuning_review(result: dict[str, Any]) -> dict[str, A
     payloads = [payload for payload in (backfill, fast_risk) if payload]
     return {
         "parameter_tuning_applied": backfill.get("parameter_tuning_applied") if backfill else None,
-        "threshold_tuning_applied": fast_risk.get("threshold_tuning_applied")
-        if fast_risk
-        else None,
+        "threshold_tuning_applied": (
+            fast_risk.get("threshold_tuning_applied") if fast_risk else None
+        ),
         "holdout_accessed": any(payload.get("holdout_accessed") is True for payload in payloads),
         "forbidden_outputs_absent": all(
             payload.get("forbidden_outputs_absent") is not False for payload in payloads

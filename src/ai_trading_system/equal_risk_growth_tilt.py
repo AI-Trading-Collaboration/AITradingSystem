@@ -65,10 +65,7 @@ DEFAULT_BALANCED_CORE_LAUNCH_OWNER_REPORT_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "balanced_core_launch_owner_report.md"
 )
 DEFAULT_EXTERNAL_VALIDATION_BALANCED_CORE_LAUNCH_MASTER_REVIEW_DOC_PATH = (
-    PROJECT_ROOT
-    / "docs"
-    / "research"
-    / "external_validation_balanced_core_launch_master_review.md"
+    PROJECT_ROOT / "docs" / "research" / "external_validation_balanced_core_launch_master_review.md"
 )
 DEFAULT_DUAL_FORWARD_AGING_MONTHLY_MONITOR_CONTRACT_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "dual_forward_aging_monthly_monitor_contract.md"
@@ -82,9 +79,7 @@ DEFAULT_AI_REGIME_BACKTEST_START = (
 DEFENSIVE_PRIMARY_ID = "equal_risk_qqq_sgov"
 PRIMARY_QQQ_BENCHMARK_ID = "100_qqq"
 TQQQ_DAILY_LEVERAGE_MULTIPLIER = 3.0
-FOCUSED_GROWTH_TILT_CANDIDATE_ID = (
-    "equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1"
-)
+FOCUSED_GROWTH_TILT_CANDIDATE_ID = "equal_risk_growth_tilt_vol_target_v1_tv4_w120_q7_s1"
 
 SAFETY_BOUNDARY: dict[str, Any] = {
     "production_effect": "none",
@@ -173,11 +168,7 @@ def run_equal_risk_growth_tilt_objective_contract(
         )
         if field not in objective
     ]
-    status = (
-        "GROWTH_TILT_OBJECTIVE_BLOCKED"
-        if missing
-        else "GROWTH_TILT_OBJECTIVE_READY"
-    )
+    status = "GROWTH_TILT_OBJECTIVE_BLOCKED" if missing else "GROWTH_TILT_OBJECTIVE_READY"
     payload = _payload(
         report_type="equal_risk_growth_tilt_objective_contract",
         title="Equal-Risk Growth Tilt Objective Contract",
@@ -593,9 +584,8 @@ def run_equal_risk_vol_target_growth_tilt_search(
         extra_payload={"search_grid": grid},
     )
     if payload["status"] == "VOL_TARGET_GROWTH_TILT_FOUND" and any(
-        _float(row.get("drawdown_increase_vs_equal_risk")) > _candidate_limit(
-            config, "max_drawdown_increase_vs_equal_risk"
-        )
+        _float(row.get("drawdown_increase_vs_equal_risk"))
+        > _candidate_limit(config, "max_drawdown_increase_vs_equal_risk")
         for row in _records(payload.get("candidate_results"))
     ):
         payload["status"] = "VOL_TARGET_GROWTH_TILT_TOO_RISKY"
@@ -626,11 +616,7 @@ def run_equal_risk_growth_tilt_ranking_tiering(
     )
     config = _load_config(config_path)
     rows = _dedupe_candidates(
-        [
-            row
-            for source in searches.values()
-            for row in _records(source.get("candidate_results"))
-        ]
+        [row for source in searches.values() for row in _records(source.get("candidate_results"))]
     )
     for row in rows:
         row["candidate_tier"] = _candidate_tier(row, config)
@@ -662,9 +648,7 @@ def run_equal_risk_growth_tilt_ranking_tiering(
             **_safety_summary(),
         },
         top_by_return_edge_vs_equal_risk=_top(rows, "return_edge_vs_equal_risk"),
-        top_by_return_gap_reduction_vs_100_qqq=_top(
-            rows, "return_gap_reduction_vs_100_qqq"
-        ),
+        top_by_return_gap_reduction_vs_100_qqq=_top(rows, "return_gap_reduction_vs_100_qqq"),
         top_by_calmar=_top(rows, "calmar"),
         top_by_sharpe=_top(rows, "sharpe"),
         top_by_low_drawdown=_top(rows, "max_drawdown"),
@@ -716,8 +700,7 @@ def run_growth_tilt_beta_risk_budget_attribution(
     config = _load_config(config_path)
     attribution_rows = [_attribution_row(row, config) for row in rows]
     beta_explains = attribution_rows and all(
-        _float(row.get("beta_adjusted_return_edge")) <= 0.0
-        for row in attribution_rows
+        _float(row.get("beta_adjusted_return_edge")) <= 0.0 for row in attribution_rows
     )
     risk_budget_present = any(
         row.get("candidate_family") == "risk_budget_tilt"
@@ -901,16 +884,11 @@ def run_growth_tilt_cost_turnover_sensitivity(
     )
     config = _load_config(config_path)
     rows = _selected_ranked_candidates(ranking)
-    scenario_rows = [
-        scenario
-        for row in rows
-        for scenario in _cost_sensitivity_rows(row, config)
-    ]
+    scenario_rows = [scenario for row in rows for scenario in _cost_sensitivity_rows(row, config)]
     if _blocked_status(str(ranking.get("status"))):
         status = "GROWTH_TILT_COST_BLOCKED"
     elif any(
-        _float(row.get("turnover")) > _candidate_limit(config, "max_turnover")
-        for row in rows
+        _float(row.get("turnover")) > _candidate_limit(config, "max_turnover") for row in rows
     ):
         status = "GROWTH_TILT_TURNOVER_TOO_HIGH"
     elif any(
@@ -975,17 +953,11 @@ def run_equal_risk_growth_tilt_tradeoff_frontier(
     rows = _records(ranking.get("top_by_return_edge_vs_equal_risk"))
     frontier_candidates = [_frontier_role(row) for row in rows]
     useful_roles = {"BALANCED_CORE", "GROWTH_TILT_CANDIDATE", "GROWTH_CHALLENGER"}
-    useful = [
-        row
-        for row in frontier_candidates
-        if row["recommended_role"] in useful_roles
-    ]
+    useful = [row for row in frontier_candidates if row["recommended_role"] in useful_roles]
     status = (
         "TRADEOFF_FRONTIER_BLOCKED"
         if _blocked_status(str(ranking.get("status")))
-        else "TRADEOFF_FRONTIER_READY"
-        if useful
-        else "TRADEOFF_FRONTIER_NO_USEFUL_TILT"
+        else "TRADEOFF_FRONTIER_READY" if useful else "TRADEOFF_FRONTIER_NO_USEFUL_TILT"
     )
     payload = _payload(
         report_type="equal_risk_growth_tilt_tradeoff_frontier",
@@ -1001,9 +973,7 @@ def run_equal_risk_growth_tilt_tradeoff_frontier(
         return_vs_drawdown_frontier=_top(frontier_candidates, "annual_return"),
         return_vs_calmar_frontier=_top(frontier_candidates, "calmar"),
         return_vs_turnover_frontier=_top(frontier_candidates, "turnover", reverse=False),
-        defensive_to_balanced_transition_point=_first_role(
-            frontier_candidates, "BALANCED_CORE"
-        ),
+        defensive_to_balanced_transition_point=_first_role(frontier_candidates, "BALANCED_CORE"),
         balanced_to_growth_transition_point=_first_role(
             frontier_candidates, "GROWTH_TILT_CANDIDATE"
         ),
@@ -1103,7 +1073,8 @@ def run_growth_tilt_definition_lock_versioning(
     rows = [
         row
         for row in _selected_ranked_candidates(ranking)
-        if row.get("candidate_tier") in {
+        if row.get("candidate_tier")
+        in {
             "GROWTH_TILT_CANDIDATE",
             "GROWTH_CHALLENGER",
             "COMPONENT_READY_GROWTH",
@@ -1352,18 +1323,13 @@ def run_growth_tilt_owner_decision_pack(
     answers = {
         "1_most_valuable_growth_tilt_candidate": candidate.get("strategy_id"),
         "2_return_improvement_vs_equal_risk": candidate.get("return_edge_vs_equal_risk"),
-        "3_return_gap_vs_100_qqq_narrowed": _float(
-            candidate.get("return_gap_reduction_vs_100_qqq")
-        )
+        "3_return_gap_vs_100_qqq_narrowed": _float(candidate.get("return_gap_reduction_vs_100_qqq"))
         > 0.0,
         "4_is_only_higher_beta": attribution.get("status") == "BETA_EXPLAINS_MOST_TILT_EDGE",
         "5_drawdown_acceptable": not bool(gate.get("blocking_reasons")),
-        "6_only_ai_rally_effective": replay.get("status")
-        == "GROWTH_TILT_REGIME_CONCENTRATED",
+        "6_only_ai_rally_effective": replay.get("status") == "GROWTH_TILT_REGIME_CONCENTRATED",
         "7_cost_turnover_acceptable": cost.get("status") == "GROWTH_TILT_COST_ROBUST",
-        "8_forward_aging_watchlist_allowed_now": gate.get(
-            "forward_aging_watchlist_allowed"
-        ),
+        "8_forward_aging_watchlist_allowed_now": gate.get("forward_aging_watchlist_allowed"),
         "9_owner_review_forward_aging_watchlist_candidate": gate.get(
             "forward_aging_reviewable_after_owner_manual_review"
         ),
@@ -1756,16 +1722,12 @@ def run_growth_tilt_candidate_result_summary(
             "candidate_count": len(candidates),
             "rejected_count": len(rejected),
             "top_candidate": candidates[0]["strategy_id"] if candidates else None,
-            "top_candidate_family": (
-                candidates[0]["candidate_family"] if candidates else None
-            ),
+            "top_candidate_family": (candidates[0]["candidate_family"] if candidates else None),
             "data_quality_status": _payload_data_quality_status(ranking),
             **_safety_summary(),
         },
         top_by_return_edge_vs_equal_risk=_top(rows, "annual_return_edge_vs_equal_risk"),
-        top_by_return_gap_reduction_vs_100_qqq=_top(
-            rows, "return_gap_reduction_vs_100_qqq"
-        ),
+        top_by_return_gap_reduction_vs_100_qqq=_top(rows, "return_gap_reduction_vs_100_qqq"),
         top_by_calmar=_top(rows, "calmar"),
         top_by_sharpe=_top(rows, "sharpe"),
         top_by_low_drawdown=_top(rows, "max_drawdown"),
@@ -1943,9 +1905,7 @@ def run_growth_tilt_beta_adjusted_edge_review(
         summary={
             "strategy_id": candidate.get("strategy_id"),
             "net_edge_after_penalty": _round(net_edge),
-            "beta_adjusted_edge_minimum": _candidate_limit(
-                config, "beta_adjusted_edge_minimum"
-            ),
+            "beta_adjusted_edge_minimum": _candidate_limit(config, "beta_adjusted_edge_minimum"),
             **_safety_summary(),
         },
         **edge_row,
@@ -2016,9 +1976,7 @@ def run_growth_tilt_risk_return_frontier_review(
     )
     frontier_rows = benchmark_rows + growth_rows
     dominated = _dominated_frontier_rows(frontier_rows)
-    non_dominated = [
-        row for row in frontier_rows if row.get("strategy_id") not in dominated
-    ]
+    non_dominated = [row for row in frontier_rows if row.get("strategy_id") not in dominated]
     useful_growth = [
         row
         for row in non_dominated
@@ -2283,11 +2241,15 @@ def run_growth_tilt_vs_equal_risk_and_qqq_final_gate(
     elif tier_name in {"GROWTH_CHALLENGER", "COMPONENT_READY_GROWTH"} and not blocking_reasons:
         status = "GROWTH_TILT_TIER2_REVIEWABLE"
         highest_gate = "Tier 2 Gate"
-    elif tier_name in {
-        "GROWTH_TILT_CANDIDATE",
-        "GROWTH_CHALLENGER",
-        "COMPONENT_READY_GROWTH",
-    } and not blocking_reasons:
+    elif (
+        tier_name
+        in {
+            "GROWTH_TILT_CANDIDATE",
+            "GROWTH_CHALLENGER",
+            "COMPONENT_READY_GROWTH",
+        }
+        and not blocking_reasons
+    ):
         status = "GROWTH_TILT_TIER1_REVIEWABLE"
         highest_gate = "Tier 1 Gate"
     else:
@@ -2572,9 +2534,7 @@ def run_growth_tilt_owner_decision_pack_real_run(
             tier.get("highest_tier"), "COMPONENT_READY_GROWTH"
         ),
         "4_best_candidate": candidate.get("strategy_id"),
-        "5_return_improvement_vs_equal_risk": candidate.get(
-            "annual_return_edge_vs_equal_risk"
-        ),
+        "5_return_improvement_vs_equal_risk": candidate.get("annual_return_edge_vs_equal_risk"),
         "6_return_gap_vs_100_qqq": candidate.get("annual_return_gap_vs_100_qqq"),
         "7_return_lift_only_higher_beta": beta.get("status") == "BETA_EXPLAINS_EDGE",
         "8_risk_adjusted_metrics_and_turnover_acceptable": final_gate.get("status")
@@ -2583,9 +2543,7 @@ def run_growth_tilt_owner_decision_pack_real_run(
             "GROWTH_TILT_TIER2_REVIEWABLE",
             "GROWTH_TILT_COMPONENT_REVIEWABLE",
         },
-        "9_forward_aging_watchlist_review_allowed": bool(
-            watchlist.get("watchlist_allowed")
-        ),
+        "9_forward_aging_watchlist_review_allowed": bool(watchlist.get("watchlist_allowed")),
         "10_original_equal_risk_remains_defensive_primary": True,
         "11_continue_no_paper_shadow_no_production_no_broker": True,
     }
@@ -2819,8 +2777,7 @@ def run_growth_tilt_real_result_master_review(
         "4_candidate_forward_aging_reviewable": watchlist.get("status")
         == "GROWTH_TILT_WATCHLIST_REVIEWABLE",
         "5_edge_only_higher_beta": beta.get("status") == "BETA_EXPLAINS_EDGE",
-        "6_period_drawdown_cost_triage_stable": triage.get("status")
-        == "GROWTH_TILT_TRIAGE_PASS",
+        "6_period_drawdown_cost_triage_stable": triage.get("status") == "GROWTH_TILT_TRIAGE_PASS",
         "7_original_equal_risk_remains_defensive_primary": True,
         "8_controlled_growth_v2_remains_paused": True,
         "9_layer1_selector_remains_archived": True,
@@ -3102,9 +3059,7 @@ def run_vol_target_growth_tilt_local_sensitivity(
     )
     base_row = _focused_growth_tilt_candidate(summary)
     base_candidate = (
-        _candidate_from_row(base_row)
-        if base_row
-        else _default_focused_vol_target_candidate(config)
+        _candidate_from_row(base_row) if base_row else _default_focused_vol_target_candidate(config)
     )
     variants = _local_vol_target_variants(base_candidate, config)
     rows = _metric_rows(
@@ -3128,17 +3083,15 @@ def run_vol_target_growth_tilt_local_sensitivity(
         row
         for row in rows
         if row.get("variant_strategy_id") != base_candidate.get("strategy_id")
-        and abs(
-            _float(row.get("annual_return"))
-            - _float(base_result.get("annual_return"))
-        )
+        and abs(_float(row.get("annual_return")) - _float(base_result.get("annual_return")))
         <= material
     ]
     if not rows:
         status = "LOCAL_SENSITIVITY_BLOCKED"
-    elif _float(top.get("beta_adjusted_edge")) > _float(
-        base_result.get("beta_adjusted_edge")
-    ) + material:
+    elif (
+        _float(top.get("beta_adjusted_edge"))
+        > _float(base_result.get("beta_adjusted_edge")) + material
+    ):
         status = "LOCAL_VARIANT_IMPROVES_EDGE"
     elif stable_neighbors:
         status = "LOCAL_SENSITIVITY_STABLE"
@@ -3253,14 +3206,11 @@ def run_beta_adjusted_edge_methodology_audit(
     else:
         status = "BETA_METHOD_INCONCLUSIVE"
     answers = {
-        "1_current_non_material_edge_robust": status
-        == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
+        "1_current_non_material_edge_robust": status == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
         "2_alternative_reasonable_method_shows_stronger_edge": status
         == "BETA_METHOD_SHOWS_TIMING_EDGE",
-        "3_attribution_mouth_too_strict_possible": status
-        == "BETA_METHOD_INCONCLUSIVE",
-        "4_candidate_return_mostly_beta": status
-        == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
+        "3_attribution_mouth_too_strict_possible": status == "BETA_METHOD_INCONCLUSIVE",
+        "4_candidate_return_mostly_beta": status == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
         "5_independent_timing_or_risk_budget_contribution": any(
             _float(row.get("timing_edge")) > material
             or _float(row.get("vol_targeting_contribution")) > material
@@ -3400,8 +3350,7 @@ def run_growth_tilt_balanced_core_role_review(
             candidate_row.get("risk_adjusted_role_score")
         )
         > _float(qqq60.get("risk_adjusted_role_score")),
-        "3_not_growth_component_but_balanced_core": status
-        == "BALANCED_CORE_REVIEWABLE",
+        "3_not_growth_component_but_balanced_core": status == "BALANCED_CORE_REVIEWABLE",
         "4_need_independent_balanced_core_standard": True,
     }
     payload = _payload(
@@ -3496,8 +3445,7 @@ def run_growth_tilt_vs_equal_risk_missed_upside_review(
     else:
         status = "MISSED_UPSIDE_REDUCTION_NOT_WORTH_RISK"
     answers = {
-        "1_missed_upside_significantly_reduced": status
-        == "MISSED_UPSIDE_REDUCTION_MATERIAL",
+        "1_missed_upside_significantly_reduced": status == "MISSED_UPSIDE_REDUCTION_MATERIAL",
         "2_candidate_keeps_up_in_strong_trend": any(
             row.get("period") == "strong_trend_periods"
             and _float(row.get("missed_upside_vs_100_qqq_candidate"))
@@ -3810,15 +3758,13 @@ def run_growth_tilt_watchlist_reconsideration_gate(
         warning_reasons.append(f"role_status:{role.get('status')}")
     growth_watchlist = (
         missed.get("status") == "MISSED_UPSIDE_REDUCTION_MATERIAL"
-        and sensitivity.get("status")
-        in {"LOCAL_SENSITIVITY_STABLE", "LOCAL_VARIANT_IMPROVES_EDGE"}
+        and sensitivity.get("status") in {"LOCAL_SENSITIVITY_STABLE", "LOCAL_VARIANT_IMPROVES_EDGE"}
         and beta_method.get("status") == "BETA_METHOD_SHOWS_TIMING_EDGE"
         and not blockers
     )
     balanced_watchlist = (
         role.get("status") == "BALANCED_CORE_REVIEWABLE"
-        and sensitivity.get("status")
-        in {"LOCAL_SENSITIVITY_STABLE", "LOCAL_VARIANT_IMPROVES_EDGE"}
+        and sensitivity.get("status") in {"LOCAL_SENSITIVITY_STABLE", "LOCAL_VARIANT_IMPROVES_EDGE"}
         and not blockers
     )
     if blockers:
@@ -3841,9 +3787,7 @@ def run_growth_tilt_watchlist_reconsideration_gate(
         "GROWTH_TILT"
         if status == "GROWTH_TILT_WATCHLIST_RECONSIDERED_READY"
         else (
-            "BALANCED_CORE"
-            if status == "BALANCED_CORE_WATCHLIST_REVIEWABLE"
-            else "RESEARCH_ONLY"
+            "BALANCED_CORE" if status == "BALANCED_CORE_WATCHLIST_REVIEWABLE" else "RESEARCH_ONLY"
         )
     )
     payload = _payload(
@@ -4039,9 +3983,9 @@ def run_growth_tilt_owner_diagnosis_pack(
     payload = _payload(
         report_type="growth_tilt_owner_diagnosis_pack",
         title="Growth Tilt Owner Diagnosis Pack",
-        status="GROWTH_TILT_OWNER_DIAGNOSIS_PACK_READY"
-        if recommendation != "BLOCKED"
-        else "BLOCKED",
+        status=(
+            "GROWTH_TILT_OWNER_DIAGNOSIS_PACK_READY" if recommendation != "BLOCKED" else "BLOCKED"
+        ),
         summary={
             "owner_recommendation": recommendation,
             "candidate_strategy_id": deep.get("candidate_strategy_id"),
@@ -4243,8 +4187,7 @@ def run_growth_tilt_focused_diagnosis_master_review(
         == "BETA_METHOD_CONFIRMS_WEAK_EDGE",
         "4_timing_or_risk_budget_contribution_exists": beta_method.get("status")
         == "BETA_METHOD_SHOWS_TIMING_EDGE",
-        "5_more_suitable_as_balanced_core": role.get("status")
-        == "BALANCED_CORE_REVIEWABLE",
+        "5_more_suitable_as_balanced_core": role.get("status") == "BALANCED_CORE_REVIEWABLE",
         "6_watchlist_allowed": watchlist.get("watchlist_allowed") is True,
         "7_next_step_if_not_allowed": _focused_master_next_step(status),
         "8_equal_risk_remains_defensive_primary": True,
@@ -4275,9 +4218,7 @@ def run_growth_tilt_focused_diagnosis_master_review(
             "Growth Tilt Focused Diagnosis Master Review",
             "aits research strategies growth-tilt-focused-diagnosis-master-review",
             "growth_tilt_focused_diagnosis_master_review",
-            extra_artifact_globs=[
-                "docs/research/growth_tilt_focused_diagnosis_master_review.md"
-            ],
+            extra_artifact_globs=["docs/research/growth_tilt_focused_diagnosis_master_review.md"],
         ),
     )
     _write_pair(payload, output_root, payload["report_type"])
@@ -4317,8 +4258,7 @@ def run_balanced_core_watchlist_activation_contract(
         )
     )
     owner = dict(
-        _owner_payload
-        or _read_json_or_empty(output_root / "growth_tilt_owner_diagnosis_pack.json")
+        _owner_payload or _read_json_or_empty(output_root / "growth_tilt_owner_diagnosis_pack.json")
     )
     watchlist = dict(
         _watchlist_payload
@@ -4435,9 +4375,7 @@ def run_balanced_core_definition_lock(
         blocking_reasons.append("focused_candidate_missing")
     if candidate.get("strategy_id") != FOCUSED_GROWTH_TILT_CANDIDATE_ID:
         blocking_reasons.append("candidate_strategy_id_changed")
-    source_blockers = _focused_source_blockers(
-        {"growth_tilt_candidate_result_summary": summary}
-    )
+    source_blockers = _focused_source_blockers({"growth_tilt_candidate_result_summary": summary})
     blocking_reasons.extend(source_blockers)
     definition = (
         _balanced_core_definition(
@@ -5024,9 +4962,7 @@ def run_dual_forward_aging_comparator_panel(
             _attach_relative_fields(decision_rows, windows)
             rows.extend(decision_rows)
     any_matured = any(
-        row.get(f"matured_{window}d_return") is not None
-        for row in rows
-        for window in windows
+        row.get(f"matured_{window}d_return") is not None for row in rows for window in windows
     )
     if blockers:
         status = "DUAL_FORWARD_PANEL_BLOCKED"
@@ -5109,9 +5045,9 @@ def run_dual_forward_aging_reader_brief_safe_preview(
         "display_scope": "forward-aging research-only",
         "defensive_primary": DEFENSIVE_PRIMARY_ID,
         "balanced_core_candidate": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
-        "latest_observation_date": latest_observation_date.isoformat()
-        if latest_observation_date
-        else None,
+        "latest_observation_date": (
+            latest_observation_date.isoformat() if latest_observation_date else None
+        ),
         "matured_5d_count": maturity.get("matured_5d_count", 0),
         "matured_20d_count": maturity.get("matured_20d_count", 0),
         "scoreboard_status": maturity.get("scoreboard_status"),
@@ -5307,9 +5243,11 @@ def run_balanced_core_owner_launch_pack(
     payload = _payload(
         report_type="balanced_core_owner_launch_pack",
         title="Balanced Core Owner Launch Pack",
-        status="BALANCED_CORE_OWNER_LAUNCH_PACK_READY"
-        if recommendation == "BALANCED_CORE_FORWARD_AGING_LAUNCHED"
-        else "BALANCED_CORE_OWNER_LAUNCH_PACK_NEEDS_REVIEW",
+        status=(
+            "BALANCED_CORE_OWNER_LAUNCH_PACK_READY"
+            if recommendation == "BALANCED_CORE_FORWARD_AGING_LAUNCHED"
+            else "BALANCED_CORE_OWNER_LAUNCH_PACK_NEEDS_REVIEW"
+        ),
         summary={
             "owner_recommendation": recommendation,
             "candidate_strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
@@ -5706,8 +5644,8 @@ def run_balanced_core_first_observation_write_after_validation(
     ).get("external_validation_real_result_status_reader")
     enriched["launch_gate_status"] = launch_gate.get("status")
     enriched["preflight_status"] = preflight.get("status")
-    enriched["data_quality_status"] = (
-        observation.get("data_quality_status") or preflight.get("data_quality_status")
+    enriched["data_quality_status"] = observation.get("data_quality_status") or preflight.get(
+        "data_quality_status"
     )
     enriched["report_registry_entry"] = _report_registry_entry(
         "balanced_core_first_observation_write_after_validation",
@@ -5774,13 +5712,11 @@ def run_balanced_core_observation_idempotency_proof(
         definition_hash_preserved=idempotency.get("definition_hash_preserved"),
         comparator_weights_preserved=idempotency.get("original_fields_preserved"),
         external_validation_status_preserved=True,
-        duplicate_observation_created=False
-        if idempotency.get("duplicate_detected") is True
-        else None,
+        duplicate_observation_created=(
+            False if idempotency.get("duplicate_detected") is True else None
+        ),
         blocking_reasons=_records_to_text(idempotency.get("blocking_reasons")),
-        source_statuses={
-            "balanced_core_idempotency_duplicate_guard": idempotency.get("status")
-        },
+        source_statuses={"balanced_core_idempotency_duplicate_guard": idempotency.get("status")},
         source_artifacts=_artifact_paths_by_report(
             {"balanced_core_idempotency_duplicate_guard": idempotency}
         ),
@@ -6035,9 +5971,9 @@ def run_dual_forward_aging_reader_brief_safe_preview_after_launch(
         "display_scope": "forward-aging research-only",
         "defensive_primary": DEFENSIVE_PRIMARY_ID,
         "balanced_core_candidate": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
-        "latest_observation_date": latest_observation_date.isoformat()
-        if latest_observation_date
-        else None,
+        "latest_observation_date": (
+            latest_observation_date.isoformat() if latest_observation_date else None
+        ),
         "matured_counts": scoreboard.get("balanced_core_matured_counts", {}),
         "scoreboard_status": scoreboard.get("scoreboard_status"),
         "external_validation_status": launch_gate.get("status"),
@@ -6249,9 +6185,11 @@ def run_balanced_core_launch_owner_report(
     payload = _payload(
         report_type="balanced_core_launch_owner_report",
         title="Balanced Core Launch Owner Report",
-        status="BALANCED_CORE_LAUNCH_OWNER_REPORT_READY"
-        if recommendation != "BALANCED_CORE_LAUNCH_BLOCKED"
-        else "BALANCED_CORE_LAUNCH_OWNER_REPORT_BLOCKED",
+        status=(
+            "BALANCED_CORE_LAUNCH_OWNER_REPORT_READY"
+            if recommendation != "BALANCED_CORE_LAUNCH_BLOCKED"
+            else "BALANCED_CORE_LAUNCH_OWNER_REPORT_BLOCKED"
+        ),
         summary={
             "owner_recommendation": recommendation,
             "candidate_strategy_id": FOCUSED_GROWTH_TILT_CANDIDATE_ID,
@@ -6321,9 +6259,10 @@ def run_external_validation_balanced_core_launch_master_review(
         final_status = "EXTERNAL_VALIDATION_AND_BALANCED_CORE_LAUNCH_PASS"
     elif recommendation == "BALANCED_CORE_LAUNCH_WARN":
         final_status = "EXTERNAL_VALIDATION_AND_BALANCED_CORE_LAUNCH_WARN"
-    elif _mapping(owner.get("source_statuses")).get(
-        "external_validation_to_launch_gate"
-    ) == "EXTERNAL_VALIDATION_LAUNCH_GATE_BLOCKED":
+    elif (
+        _mapping(owner.get("source_statuses")).get("external_validation_to_launch_gate")
+        == "EXTERNAL_VALIDATION_LAUNCH_GATE_BLOCKED"
+    ):
         final_status = "BALANCED_CORE_LAUNCH_BLOCKED_BY_EXTERNAL_VALIDATION"
     else:
         final_status = "BALANCED_CORE_LAUNCH_BLOCKED"
@@ -6590,9 +6529,7 @@ def _metric_row(
         "average_tqqq_weight": _round(avg_weights.get("TQQQ")),
         "average_sgov_weight": _round(avg_weights.get("SGOV")),
         "average_weights": metrics.get("average_weights"),
-        "max_tqqq_weight": _round(
-            weights.get("TQQQ", pd.Series(0.0, index=weights.index)).max()
-        ),
+        "max_tqqq_weight": _round(weights.get("TQQQ", pd.Series(0.0, index=weights.index)).max()),
         "effective_qqq_beta": _round(beta),
         "effective_leverage": _round(effective_leverage),
         "cash_drag_reduction": _round(
@@ -6775,9 +6712,9 @@ def _missed_upside_weights(
 ) -> pd.DataFrame:
     base = _equal_risk_weights(prices, config)
     qqq_returns = prices["QQQ"].pct_change().fillna(0.0)
-    equal_returns = (
-        base.shift(1).ffill() * prices[["QQQ", "SGOV"]].pct_change().fillna(0.0)
-    ).sum(axis=1)
+    equal_returns = (base.shift(1).ffill() * prices[["QQQ", "SGOV"]].pct_change().fillna(0.0)).sum(
+        axis=1
+    )
     window = _int(_research_mapping(config, "missed_upside_policy").get("trailing_gap_window"), 60)
     qqq_trailing = (1.0 + qqq_returns).rolling(window).apply(math.prod, raw=False) - 1.0
     equal_trailing = (1.0 + equal_returns).rolling(window).apply(math.prod, raw=False) - 1.0
@@ -6991,9 +6928,7 @@ def _growth_tilt_real_cli_source_runs(
         (
             "growth_tilt_owner_decision_pack",
             "aits research strategies growth-tilt-owner-decision-pack",
-            lambda: run_growth_tilt_owner_decision_pack(
-                **data_kwargs, docs_path=owner_docs_path
-            ),
+            lambda: run_growth_tilt_owner_decision_pack(**data_kwargs, docs_path=owner_docs_path),
         ),
         (
             "growth_exploration_master_review",
@@ -7085,9 +7020,7 @@ def _growth_tilt_candidate_summary_row(row: Mapping[str, Any]) -> dict[str, Any]
         or row.get("return_edge_vs_equal_risk"),
         "annual_return_gap_vs_100_qqq": row.get("annual_return_gap_vs_100_qqq")
         or row.get("return_gap_vs_100_qqq"),
-        "return_gap_reduction_vs_100_qqq": row.get(
-            "return_gap_reduction_vs_100_qqq"
-        ),
+        "return_gap_reduction_vs_100_qqq": row.get("return_gap_reduction_vs_100_qqq"),
         "return_edge_vs_100_qqq": row.get("return_edge_vs_100_qqq"),
         "max_drawdown": row.get("max_drawdown"),
         "drawdown_increase_vs_equal_risk": row.get("drawdown_increase_vs_equal_risk"),
@@ -7729,18 +7662,17 @@ def _local_vol_target_variants(
 ) -> list[dict[str, Any]]:
     mode = str(base_candidate.get("target_vol_mode") or "equal_risk_plus")
     base_target = _float(
-        base_candidate.get("target_vol")
-        if mode == "absolute"
-        else base_candidate.get("target_vol_additive"),
+        (
+            base_candidate.get("target_vol")
+            if mode == "absolute"
+            else base_candidate.get("target_vol_additive")
+        ),
         0.04,
     )
     base_qqq_cap = _float(base_candidate.get("qqq_max_weight"), 0.70)
     base_sgov_floor = _float(base_candidate.get("sgov_min_weight"), 0.10)
     variants: list[dict[str, Any]] = []
-    target_values = [
-        max(base_target + delta, 0.0)
-        for delta in (-0.02, -0.01, 0.0, 0.01, 0.02)
-    ]
+    target_values = [max(base_target + delta, 0.0) for delta in (-0.02, -0.01, 0.0, 0.01, 0.02)]
     for target_value in target_values:
         for window in (60, 90, 120, 180):
             for qqq_cap in _dedupe_float_values(
@@ -7763,9 +7695,7 @@ def _local_vol_target_variants(
                                 strategy_suffix=suffix,
                                 target_vol_mode=mode,
                                 target_vol=target_value if mode == "absolute" else None,
-                                target_vol_additive=(
-                                    target_value if mode != "absolute" else None
-                                ),
+                                target_vol_additive=(target_value if mode != "absolute" else None),
                                 vol_lookback=window,
                                 qqq_max_weight=qqq_cap,
                                 sgov_min_weight=sgov_floor,
@@ -7795,23 +7725,16 @@ def _local_sensitivity_row(
 ) -> dict[str, Any]:
     policy = _mapping(row.get("policy_definition"))
     target_key = (
-        "target_vol"
-        if policy.get("target_vol_mode") == "absolute"
-        else "target_vol_additive"
+        "target_vol" if policy.get("target_vol_mode") == "absolute" else "target_vol_additive"
     )
     parameter_delta = {
-        target_key: _round(
-            _float(policy.get(target_key)) - _float(base_candidate.get(target_key))
-        ),
-        "vol_lookback": _int(policy.get("vol_lookback"))
-        - _int(base_candidate.get("vol_lookback")),
+        target_key: _round(_float(policy.get(target_key)) - _float(base_candidate.get(target_key))),
+        "vol_lookback": _int(policy.get("vol_lookback")) - _int(base_candidate.get("vol_lookback")),
         "qqq_cap": _round(
-            _float(policy.get("qqq_max_weight"))
-            - _float(base_candidate.get("qqq_max_weight"))
+            _float(policy.get("qqq_max_weight")) - _float(base_candidate.get("qqq_max_weight"))
         ),
         "sgov_floor": _round(
-            _float(policy.get("sgov_min_weight"))
-            - _float(base_candidate.get("sgov_min_weight"))
+            _float(policy.get("sgov_min_weight")) - _float(base_candidate.get("sgov_min_weight"))
         ),
         "rebalance": policy.get("rebalance_rule"),
     }
@@ -7837,9 +7760,7 @@ def _local_sensitivity_row(
             else ("top_10_local_variant" if rank <= 10 else "lower_ranked_local_variant")
         ),
         "local_robustness_score": _round(robustness_score),
-        "max_effective_qqq_beta_limit": _candidate_limit(
-            config, "max_effective_qqq_beta"
-        ),
+        "max_effective_qqq_beta_limit": _candidate_limit(config, "max_effective_qqq_beta"),
         **_safety_summary(),
     }
 
@@ -7880,9 +7801,10 @@ def _beta_methodology_rows(
     equal_beta = _beta(equal_returns, qqq_returns)
     qqq_return = _float(qqq_metrics.get("annual_return"))
     avg_weights = weights.mean().to_dict() if not weights.empty else {}
-    qqq_equiv = _float(avg_weights.get("QQQ")) + _float(
-        avg_weights.get("TQQQ")
-    ) * TQQQ_DAILY_LEVERAGE_MULTIPLIER
+    qqq_equiv = (
+        _float(avg_weights.get("QQQ"))
+        + _float(avg_weights.get("TQQQ")) * TQQQ_DAILY_LEVERAGE_MULTIPLIER
+    )
     beta_estimates = {
         "static_beta_adjustment": _beta(returns, qqq_returns),
         "rolling_60d_beta_adjustment": _rolling_beta_mean(returns, qqq_returns, 60),
@@ -7891,9 +7813,7 @@ def _beta_methodology_rows(
             returns, qqq_returns, prices, config
         ),
         "qqq_equivalent_exposure_adjustment": qqq_equiv,
-        "risk_budget_attribution_adjustment": _float(
-            candidate.get("effective_qqq_beta")
-        ),
+        "risk_budget_attribution_adjustment": _float(candidate.get("effective_qqq_beta")),
     }
     sgov_carry = _asset_contribution(
         weights,
@@ -7907,9 +7827,7 @@ def _beta_methodology_rows(
         beta_adjusted = raw_edge - max(estimate - equal_beta, 0.0) * qqq_return
         timing_edge = beta_adjusted - sgov_carry - rebalance_edge
         vol_targeting = (
-            timing_edge
-            if candidate.get("candidate_family") == "vol_target_growth_tilt"
-            else 0.0
+            timing_edge if candidate.get("candidate_family") == "vol_target_growth_tilt" else 0.0
         )
         rows.append(
             {
@@ -7932,8 +7850,10 @@ def _rolling_beta_mean(returns: pd.Series, benchmark: pd.Series, window: int) ->
     if aligned.empty:
         return 0.0
     aligned.columns = ["strategy", "benchmark"]
-    cov = aligned["strategy"].rolling(window, min_periods=max(10, window // 3)).cov(
-        aligned["benchmark"]
+    cov = (
+        aligned["strategy"]
+        .rolling(window, min_periods=max(10, window // 3))
+        .cov(aligned["benchmark"])
     )
     var = aligned["benchmark"].rolling(window, min_periods=max(10, window // 3)).var()
     beta = (cov / var.replace(0.0, math.nan)).dropna()
@@ -7968,9 +7888,7 @@ def _rebalance_contribution(
         if ticker in asset_returns:
             static_returns += _float(weight) * asset_returns[ticker]
     actual = _float(_series_metrics(returns, _annualization(config)).get("annual_return"))
-    static = _float(
-        _series_metrics(static_returns, _annualization(config)).get("annual_return")
-    )
+    static = _float(_series_metrics(static_returns, _annualization(config)).get("annual_return"))
     return actual - static
 
 
@@ -8013,16 +7931,11 @@ def _balanced_core_role_rows(
                 )
             )
         drawdown_gap = _round(
-            abs(_float(metrics.get("max_drawdown")))
-            - abs(_float(equal.get("max_drawdown")))
+            abs(_float(metrics.get("max_drawdown"))) - abs(_float(equal.get("max_drawdown")))
         )
-        return_gap = _round(
-            _float(qqq.get("annual_return")) - _float(metrics.get("annual_return"))
-        )
+        return_gap = _round(_float(qqq.get("annual_return")) - _float(metrics.get("annual_return")))
         role_score = (
-            _float(metrics.get("calmar"))
-            + _float(metrics.get("sharpe"))
-            - max(drawdown_gap, 0.0)
+            _float(metrics.get("calmar")) + _float(metrics.get("sharpe")) - max(drawdown_gap, 0.0)
         )
         rows.append(
             {
@@ -8090,12 +8003,9 @@ def _missed_upside_rows(
         equal_metrics = _series_metrics(
             _period_slice(equal_returns, period), _annualization(config)
         )
-        qqq_metrics = _series_metrics(
-            _period_slice(qqq_returns, period), _annualization(config)
-        )
+        qqq_metrics = _series_metrics(_period_slice(qqq_returns, period), _annualization(config))
         equal_missed = max(
-            _float(qqq_metrics.get("annual_return"))
-            - _float(equal_metrics.get("annual_return")),
+            _float(qqq_metrics.get("annual_return")) - _float(equal_metrics.get("annual_return")),
             0.0,
         )
         candidate_missed = max(
@@ -8342,10 +8252,8 @@ def _is_tier1_candidate(row: Mapping[str, Any], config: Mapping[str, Any]) -> bo
 def _is_tier2_candidate(row: Mapping[str, Any], config: Mapping[str, Any]) -> bool:
     gap_reduction = _float(row.get("return_gap_reduction_vs_100_qqq"))
     equal_edge = _float(row.get("return_edge_vs_equal_risk"))
-    close_to_qqq = (
-        gap_reduction > 0.0
-        and gap_reduction
-        >= abs(equal_edge) * _candidate_limit(config, "qqq_return_gap_close_ratio_for_challenger")
+    close_to_qqq = gap_reduction > 0.0 and gap_reduction >= abs(equal_edge) * _candidate_limit(
+        config, "qqq_return_gap_close_ratio_for_challenger"
     )
     return (
         _is_tier1_candidate(row, config)
@@ -8369,8 +8277,8 @@ def _attribution_row(row: Mapping[str, Any], config: Mapping[str, Any]) -> dict[
     beta_attr = _float(row.get("effective_qqq_beta")) * (
         annual - _float(row.get("beta_adjusted_return_edge"))
     )
-    tqqq_attr = _float(row.get("average_tqqq_weight")) * annual * (
-        TQQQ_DAILY_LEVERAGE_MULTIPLIER - 1.0
+    tqqq_attr = (
+        _float(row.get("average_tqqq_weight")) * annual * (TQQQ_DAILY_LEVERAGE_MULTIPLIER - 1.0)
     )
     sgov_attr = _float(row.get("average_sgov_weight")) * annual
     timing = annual - beta_attr - tqqq_attr - sgov_attr
@@ -8488,9 +8396,7 @@ def _cost_sensitivity_row(
         "latency_drag": _round(latency_drag),
         "turnover": row.get("turnover"),
         "switch_count": row.get("switch_count"),
-        "avg_holding_period": _round(
-            252.0 / max(_float(row.get("switch_count")), 1.0)
-        ),
+        "avg_holding_period": _round(252.0 / max(_float(row.get("switch_count")), 1.0)),
         "performance_degradation": _round(gross - net),
     }
 
@@ -8593,11 +8499,7 @@ def _owner_recommendation(
 
 
 def _source_blockers(sources: Mapping[str, Mapping[str, Any]]) -> list[str]:
-    return [
-        name
-        for name, source in sources.items()
-        if _blocked_status(str(source.get("status")))
-    ]
+    return [name for name, source in sources.items() if _blocked_status(str(source.get("status")))]
 
 
 def _master_next_task(
@@ -8708,9 +8610,9 @@ def _risk_on_mask(prices: pd.DataFrame, config: Mapping[str, Any]) -> pd.Series:
         _int(policy.get("realized_vol_window"), 20),
         _annualization(config),
     )
-    vol_threshold = vol.rolling(
-        _int(policy.get("realized_vol_percentile_window"), 252)
-    ).quantile(_float(policy.get("realized_vol_percentile_cutoff"), 0.80))
+    vol_threshold = vol.rolling(_int(policy.get("realized_vol_percentile_window"), 252)).quantile(
+        _float(policy.get("realized_vol_percentile_cutoff"), 0.80)
+    )
     high = prices["QQQ"].rolling(_rolling_high_window(config), min_periods=20).max().shift(1)
     drawdown = close / high - 1.0
     return (
@@ -8762,13 +8664,9 @@ def _apply_threshold_rebalance(weights: pd.DataFrame, band: float) -> pd.DataFra
 
 
 def _realized_vol(series: pd.Series, window: int, annualization: int) -> pd.Series:
-    return (
-        series.pct_change()
-        .rolling(window, min_periods=max(5, min(window, 20)))
-        .std(ddof=0)
-        .fillna(0.0)
-        * math.sqrt(annualization)
-    )
+    return series.pct_change().rolling(window, min_periods=max(5, min(window, 20))).std(
+        ddof=0
+    ).fillna(0.0) * math.sqrt(annualization)
 
 
 def _beta(returns: pd.Series, benchmark: pd.Series) -> float:
@@ -9156,10 +9054,7 @@ def _target_weights_at(
         return {"QQQ": 0.0, "TQQQ": 0.0, "SGOV": 0.0}
     eligible = weights.loc[pd.to_datetime(weights.index) <= pd.Timestamp(decision_date)]
     row = eligible.iloc[-1] if not eligible.empty else weights.iloc[-1]
-    result = {
-        ticker: _round(row.get(ticker, 0.0))
-        for ticker in ("QQQ", "TQQQ", "SGOV")
-    }
+    result = {ticker: _round(row.get(ticker, 0.0)) for ticker in ("QQQ", "TQQQ", "SGOV")}
     total = sum(result.values())
     if total > 0:
         result = {key: _round(value / total) for key, value in result.items()}
@@ -9344,9 +9239,7 @@ def _balanced_core_launch_owner_answers(
 ) -> dict[str, Any]:
     launch_gate = source_payloads["external_validation_to_launch_gate"]
     preflight = source_payloads["balanced_core_launch_preflight"]
-    observation = source_payloads[
-        "balanced_core_first_observation_write_after_validation"
-    ]
+    observation = source_payloads["balanced_core_first_observation_write_after_validation"]
     idempotency = source_payloads["balanced_core_observation_idempotency_proof"]
     panel = source_payloads["dual_forward_panel_after_launch"]
     scoreboard = source_payloads["dual_forward_aging_scoreboard_safety_review"]
@@ -9428,9 +9321,7 @@ def _external_validation_balanced_core_master_answers(
             "1_external_validation_passed_or_warn"
         )
         is True,
-        "2_static_baseline_passed": source_statuses.get(
-            "external_validation_to_launch_gate"
-        )
+        "2_static_baseline_passed": source_statuses.get("external_validation_to_launch_gate")
         in {
             "EXTERNAL_VALIDATION_LAUNCH_GATE_PASS",
             "EXTERNAL_VALIDATION_LAUNCH_GATE_WARN",
@@ -9441,8 +9332,7 @@ def _external_validation_balanced_core_master_answers(
             "3_first_observation_written"
         )
         is True,
-        "6_dual_forward_panel_available": owner_answers.get("5_dual_panel_generated")
-        is True,
+        "6_dual_forward_panel_available": owner_answers.get("5_dual_panel_generated") is True,
         "7_no_paper_shadow_no_production_no_broker": owner_answers.get(
             "8_no_paper_shadow_no_production_no_broker"
         )
@@ -9568,9 +9458,7 @@ def _relative_window_returns(
         value = row.get(key)
         base = baseline.get(key)
         result[f"{window}d"] = (
-            _round(_float(value) - _float(base))
-            if value is not None and base is not None
-            else None
+            _round(_float(value) - _float(base)) if value is not None and base is not None else None
         )
     return result
 
@@ -9598,8 +9486,7 @@ def _balanced_core_owner_launch_answers(
             "BALANCED_CORE_FIRST_OBSERVATION_WRITTEN",
             "BALANCED_CORE_OBSERVATION_ALREADY_EXISTS",
         },
-        "4_duplicate_guard_passed": idempotency.get("status")
-        == "BALANCED_CORE_IDEMPOTENCY_PASS",
+        "4_duplicate_guard_passed": idempotency.get("status") == "BALANCED_CORE_IDEMPOTENCY_PASS",
         "5_scoreboard_still_insufficient_or_pending": maturity.get("scoreboard_status")
         in {"INSUFFICIENT", "PENDING"},
         "6_dual_comparator_panel_generated": panel.get("status")
@@ -9608,8 +9495,7 @@ def _balanced_core_owner_launch_answers(
             "DUAL_FORWARD_PANEL_PENDING",
             "DUAL_FORWARD_PANEL_INSUFFICIENT",
         },
-        "7_reader_brief_preview_safe": reader_preview.get("status")
-        == "DUAL_READER_BRIEF_SAFE",
+        "7_reader_brief_preview_safe": reader_preview.get("status") == "DUAL_READER_BRIEF_SAFE",
         "8_paper_shadow_allowed_false": True,
         "9_production_allowed_false": True,
         "10_broker_action_none": True,
@@ -9622,9 +9508,7 @@ def _balanced_core_launch_blockers(
 ) -> list[str]:
     blockers = []
     expected = {
-        "balanced_core_watchlist_activation_contract": {
-            "BALANCED_CORE_WATCHLIST_CONTRACT_READY"
-        },
+        "balanced_core_watchlist_activation_contract": {"BALANCED_CORE_WATCHLIST_CONTRACT_READY"},
         "balanced_core_definition_lock": {"BALANCED_CORE_DEFINITION_LOCKED"},
         "balanced_core_first_observation_write": {
             "BALANCED_CORE_FIRST_OBSERVATION_WRITTEN",
@@ -9662,9 +9546,7 @@ def _dual_forward_master_answers(owner_launch: Mapping[str, Any]) -> dict[str, A
         )
         is True,
         "3_100_qqq_is_hard_benchmark": True,
-        "4_dual_comparator_panel_available": owner_answers.get(
-            "6_dual_comparator_panel_generated"
-        )
+        "4_dual_comparator_panel_available": owner_answers.get("6_dual_comparator_panel_generated")
         is True,
         "5_scoreboard_restrained_when_samples_insufficient": owner_answers.get(
             "5_scoreboard_still_insufficient_or_pending"
@@ -9715,8 +9597,7 @@ def _write_json_and_owner_doc(
     }
     json_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str)
-        + "\n",
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n",
         encoding="utf-8",
     )
     _write_owner_doc(payload, docs_path, title)

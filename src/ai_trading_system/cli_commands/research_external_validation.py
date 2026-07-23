@@ -166,9 +166,7 @@ def strategies_static_baseline_external_reconciliation_command(
     output_root: Annotated[Path, typer.Option("--output-root")] = (
         DEFAULT_EXTERNAL_VALIDATION_OUTPUT_ROOT
     ),
-    external_records_path: Annotated[
-        Path | None, typer.Option("--external-records-path")
-    ] = None,
+    external_records_path: Annotated[Path | None, typer.Option("--external-records-path")] = None,
     as_of: Annotated[str | None, typer.Option("--as-of")] = None,
     start_date: Annotated[str | None, typer.Option("--start-date")] = None,
     end_date: Annotated[str | None, typer.Option("--end-date")] = None,

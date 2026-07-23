@@ -4618,9 +4618,7 @@ def high_intensity_risk_cap_observe_only_runtime_dry_run_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-runtime-scheduler-integration-plan")
 def high_intensity_risk_cap_observe_only_runtime_scheduler_integration_plan_command(
     runtime_dry_run_dir: Annotated[
         Path, typer.Option("--runtime-dry-run-dir")
@@ -4718,9 +4716,7 @@ def high_intensity_risk_cap_observe_only_scheduler_dry_run_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-wiring-plan"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-wiring-plan")
 def high_intensity_risk_cap_observe_only_scheduler_wiring_plan_command(
     scheduler_dry_run_dir: Annotated[
         Path, typer.Option("--scheduler-dry-run-dir")
@@ -4769,9 +4765,7 @@ def high_intensity_risk_cap_observe_only_scheduler_wiring_plan_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-disabled-wiring"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-disabled-wiring")
 def high_intensity_risk_cap_observe_only_scheduler_disabled_wiring_command(
     wiring_plan_dir: Annotated[
         Path, typer.Option("--wiring-plan-dir")
@@ -4785,9 +4779,7 @@ def high_intensity_risk_cap_observe_only_scheduler_disabled_wiring_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_SCHEDULER_DISABLED_WIRING_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_disabled_wiring(
         wiring_plan_dir=wiring_plan_dir,
@@ -4802,9 +4794,7 @@ def high_intensity_risk_cap_observe_only_scheduler_disabled_wiring_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-smoke-dry-run"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-smoke-dry-run")
 def high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -4815,9 +4805,7 @@ def high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_SCHEDULER_SMOKE_DRY_RUN_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -4831,9 +4819,7 @@ def high_intensity_risk_cap_observe_only_scheduler_smoke_dry_run_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-manual-review-gate"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-manual-review-gate")
 def high_intensity_risk_cap_observe_only_scheduler_manual_review_gate_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -4847,9 +4833,7 @@ def high_intensity_risk_cap_observe_only_scheduler_manual_review_gate_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_MANUAL_GATE_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_MANUAL_GATE_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_MANUAL_GATE_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_manual_review_gate(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -4864,9 +4848,7 @@ def high_intensity_risk_cap_observe_only_scheduler_manual_review_gate_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-manual-run-dry-run"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-manual-run-dry-run")
 def high_intensity_risk_cap_observe_only_scheduler_manual_run_dry_run_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -4883,9 +4865,7 @@ def high_intensity_risk_cap_observe_only_scheduler_manual_run_dry_run_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_MANUAL_RUN_DRY_RUN_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_MANUAL_RUN_DRY_RUN_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_MANUAL_RUN_DRY_RUN_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_manual_run_dry_run(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -4901,9 +4881,7 @@ def high_intensity_risk_cap_observe_only_scheduler_manual_run_dry_run_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-manual-run-replay-validation"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-manual-run-replay-validation")
 def high_intensity_risk_cap_observe_only_scheduler_manual_run_replay_validation_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -4926,21 +4904,17 @@ def high_intensity_risk_cap_observe_only_scheduler_manual_run_replay_validation_
     replay_count: Annotated[
         int, typer.Option("--replay-count")
     ] = HIGH_INTENSITY_REPLAY_VALIDATION_COUNT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_REPLAY_VALIDATION_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_REPLAY_VALIDATION_MODE,
 ) -> None:
-    payload = (
-        run_high_intensity_risk_cap_observe_only_scheduler_manual_run_replay_validation(
-            disabled_wiring_dir=disabled_wiring_dir,
-            smoke_dry_run_dir=smoke_dry_run_dir,
-            manual_review_gate_dir=manual_review_gate_dir,
-            manual_run_dry_run_dir=manual_run_dry_run_dir,
-            output_dir=output_dir,
-            docs_root=docs_root,
-            replay_count=replay_count,
-            mode=mode,
-        )
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_manual_run_replay_validation(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        replay_count=replay_count,
+        mode=mode,
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler manual-run replay validation",
@@ -4971,9 +4945,7 @@ def high_intensity_risk_cap_observe_only_scheduler_audit_package_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_AUDIT_PACKAGE_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_AUDIT_PACKAGE_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_AUDIT_PACKAGE_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_audit_package(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -4991,9 +4963,7 @@ def high_intensity_risk_cap_observe_only_scheduler_audit_package_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-owner-review-decision"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-owner-review-decision")
 def high_intensity_risk_cap_observe_only_scheduler_owner_review_decision_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -5022,23 +4992,19 @@ def high_intensity_risk_cap_observe_only_scheduler_owner_review_decision_command
     owner_decision: Annotated[
         str, typer.Option("--owner-decision")
     ] = HIGH_INTENSITY_OWNER_DECISION_DEFAULT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_OWNER_DECISION_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_OWNER_DECISION_MODE,
 ) -> None:
-    payload = (
-        run_high_intensity_risk_cap_observe_only_scheduler_owner_review_decision(
-            disabled_wiring_dir=disabled_wiring_dir,
-            smoke_dry_run_dir=smoke_dry_run_dir,
-            manual_review_gate_dir=manual_review_gate_dir,
-            manual_run_dry_run_dir=manual_run_dry_run_dir,
-            replay_validation_dir=replay_validation_dir,
-            audit_package_dir=audit_package_dir,
-            output_dir=output_dir,
-            docs_root=docs_root,
-            owner_decision=owner_decision,
-            mode=mode,
-        )
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_owner_review_decision(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        owner_decision=owner_decision,
+        mode=mode,
     )
     _print_payload(
         "High-intensity risk-cap observe-only scheduler owner review decision",
@@ -5046,9 +5012,7 @@ def high_intensity_risk_cap_observe_only_scheduler_owner_review_decision_command
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-gap-closure-plan"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-gap-closure-plan")
 def high_intensity_risk_cap_observe_only_scheduler_gap_closure_plan_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -5077,9 +5041,7 @@ def high_intensity_risk_cap_observe_only_scheduler_gap_closure_plan_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_GAP_CLOSURE_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_GAP_CLOSURE_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_GAP_CLOSURE_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_gap_closure_plan(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -5099,9 +5061,7 @@ def high_intensity_risk_cap_observe_only_scheduler_gap_closure_plan_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-hardening-backlog"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-hardening-backlog")
 def high_intensity_risk_cap_observe_only_scheduler_hardening_backlog_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -5133,9 +5093,7 @@ def high_intensity_risk_cap_observe_only_scheduler_hardening_backlog_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_HARDENING_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_HARDENING_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_HARDENING_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_hardening_backlog(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -5156,9 +5114,7 @@ def high_intensity_risk_cap_observe_only_scheduler_hardening_backlog_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-scheduler-kill-switch-plan"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-scheduler-kill-switch-plan")
 def high_intensity_risk_cap_observe_only_scheduler_kill_switch_plan_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -5193,9 +5149,7 @@ def high_intensity_risk_cap_observe_only_scheduler_kill_switch_plan_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_KILL_SWITCH_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_KILL_SWITCH_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_KILL_SWITCH_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_scheduler_kill_switch_plan(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -5257,39 +5211,30 @@ def high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_p
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_IDEMPOTENCY_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_IDEMPOTENCY_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_IDEMPOTENCY_MODE,
 ) -> None:
-    payload = (
-        run_high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan(
-            disabled_wiring_dir=disabled_wiring_dir,
-            smoke_dry_run_dir=smoke_dry_run_dir,
-            manual_review_gate_dir=manual_review_gate_dir,
-            manual_run_dry_run_dir=manual_run_dry_run_dir,
-            replay_validation_dir=replay_validation_dir,
-            audit_package_dir=audit_package_dir,
-            owner_decision_dir=owner_decision_dir,
-            gap_closure_dir=gap_closure_dir,
-            hardening_backlog_dir=hardening_backlog_dir,
-            kill_switch_dir=kill_switch_dir,
-            output_dir=output_dir,
-            docs_root=docs_root,
-            mode=mode,
-        )
+    payload = run_high_intensity_risk_cap_observe_only_scheduler_idempotency_replay_contract_plan(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        owner_decision_dir=owner_decision_dir,
+        gap_closure_dir=gap_closure_dir,
+        hardening_backlog_dir=hardening_backlog_dir,
+        kill_switch_dir=kill_switch_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
     )
     _print_payload(
-        (
-            "High-intensity risk-cap observe-only scheduler idempotency "
-            "replay contract plan"
-        ),
+        ("High-intensity risk-cap observe-only scheduler idempotency " "replay contract plan"),
         payload,
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-event-append-contract-plan"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-event-append-contract-plan")
 def high_intensity_risk_cap_observe_only_event_append_contract_plan_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -5330,9 +5275,7 @@ def high_intensity_risk_cap_observe_only_event_append_contract_plan_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_EVENT_APPEND_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_EVENT_APPEND_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_EVENT_APPEND_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_event_append_contract_plan(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -5356,9 +5299,7 @@ def high_intensity_risk_cap_observe_only_event_append_contract_plan_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-outcome-binding-contract-plan"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-outcome-binding-contract-plan")
 def high_intensity_risk_cap_observe_only_outcome_binding_contract_plan_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -5402,9 +5343,7 @@ def high_intensity_risk_cap_observe_only_outcome_binding_contract_plan_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_OUTCOME_BINDING_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_OUTCOME_BINDING_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_OUTCOME_BINDING_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_outcome_binding_contract_plan(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -5476,9 +5415,7 @@ def high_intensity_risk_cap_observe_only_paper_shadow_scope_plan_command(
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_PAPER_SHADOW_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_PAPER_SHADOW_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_PAPER_SHADOW_MODE,
 ) -> None:
     payload = run_high_intensity_risk_cap_observe_only_paper_shadow_scope_plan(
         disabled_wiring_dir=disabled_wiring_dir,
@@ -5504,9 +5441,7 @@ def high_intensity_risk_cap_observe_only_paper_shadow_scope_plan_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-production-broker-hard-blocker-plan"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-production-broker-hard-blocker-plan")
 def high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
@@ -5556,30 +5491,26 @@ def high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan_com
     docs_root: Annotated[
         Path, typer.Option("--docs-root")
     ] = DEFAULT_HIGH_INTENSITY_PRODUCTION_BROKER_DOCS_ROOT,
-    mode: Annotated[
-        str, typer.Option("--mode")
-    ] = HIGH_INTENSITY_PRODUCTION_BROKER_MODE,
+    mode: Annotated[str, typer.Option("--mode")] = HIGH_INTENSITY_PRODUCTION_BROKER_MODE,
 ) -> None:
-    payload = (
-        run_high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan(
-            disabled_wiring_dir=disabled_wiring_dir,
-            smoke_dry_run_dir=smoke_dry_run_dir,
-            manual_review_gate_dir=manual_review_gate_dir,
-            manual_run_dry_run_dir=manual_run_dry_run_dir,
-            replay_validation_dir=replay_validation_dir,
-            audit_package_dir=audit_package_dir,
-            owner_decision_dir=owner_decision_dir,
-            gap_closure_dir=gap_closure_dir,
-            hardening_backlog_dir=hardening_backlog_dir,
-            kill_switch_dir=kill_switch_dir,
-            idempotency_replay_dir=idempotency_replay_dir,
-            event_append_dir=event_append_dir,
-            outcome_binding_dir=outcome_binding_dir,
-            paper_shadow_scope_dir=paper_shadow_scope_dir,
-            output_dir=output_dir,
-            docs_root=docs_root,
-            mode=mode,
-        )
+    payload = run_high_intensity_risk_cap_observe_only_production_broker_hard_blocker_plan(
+        disabled_wiring_dir=disabled_wiring_dir,
+        smoke_dry_run_dir=smoke_dry_run_dir,
+        manual_review_gate_dir=manual_review_gate_dir,
+        manual_run_dry_run_dir=manual_run_dry_run_dir,
+        replay_validation_dir=replay_validation_dir,
+        audit_package_dir=audit_package_dir,
+        owner_decision_dir=owner_decision_dir,
+        gap_closure_dir=gap_closure_dir,
+        hardening_backlog_dir=hardening_backlog_dir,
+        kill_switch_dir=kill_switch_dir,
+        idempotency_replay_dir=idempotency_replay_dir,
+        event_append_dir=event_append_dir,
+        outcome_binding_dir=outcome_binding_dir,
+        paper_shadow_scope_dir=paper_shadow_scope_dir,
+        output_dir=output_dir,
+        docs_root=docs_root,
+        mode=mode,
     )
     _print_payload(
         "High-intensity risk-cap observe-only production broker hard-blocker plan",
@@ -5668,9 +5599,7 @@ def high_intensity_risk_cap_observe_only_promotion_blocker_matrix_command(
     )
 
 
-@trends_app.command(
-    "high-intensity-risk-cap-observe-only-owner-decision-pause-checkpoint"
-)
+@trends_app.command("high-intensity-risk-cap-observe-only-owner-decision-pause-checkpoint")
 def high_intensity_risk_cap_observe_only_owner_decision_pause_checkpoint_command(
     disabled_wiring_dir: Annotated[
         Path, typer.Option("--disabled-wiring-dir")
