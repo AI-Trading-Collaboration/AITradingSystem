@@ -1,0 +1,366 @@
+schema_version: architecture_wave_readiness_policy.v1
+wave: ARCH-004-WAVE14
+gate: ARCH-004-WAVE14-S0
+status: SCOPE_FROZEN_NOT_DISPATCHED
+owner: architecture_coordinator
+source_wave:
+  wave_id: ARCH-004-WAVE13
+  commit: e2da21894ea8e8921a86c6c1b48d7b191f0f142c
+  tree_sha1: 73ba7a3830cbc47ccb6dbfb3488eeed5431653c2
+lane_base:
+  commit: 8eefe98a1eb66f4ae18589f911c69856e6162e35
+  tree_sha1: 27f7b6591f00b85a6255d366fc028e6563e5a3c7
+  branch: main
+  remote_ref: origin/main
+max_parallel_domain_lanes: 2
+selected_domains:
+  - domain_id: D0B2
+    change_id: arch-004-wave14-d0b2-data-foundation
+    task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  - domain_id: G3
+    change_id: arch-004-wave14-g3-reporting-native
+    task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+source_bindings:
+  - binding_id: architecture-fitness-lane-base-c
+    binding_kind: SOURCE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    blob_sha256: ac6c3e09b32bdfea634972f165a962f516f3144571238c2b0f1f882a79fd8a76
+    schema_version: arch_004e_architecture_fitness.v1
+    status: PASS
+  - binding_id: compatibility-lane-base-c
+    binding_kind: SOURCE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    blob_sha256: 8a7b53764da4839ed0c06524ffde445c85befe10af588865c9cb93601b0a09c9
+    schema_version: null
+    status: null
+  - binding_id: compatibility-source-wave-b
+    binding_kind: SOURCE
+    commit_role: SOURCE_WAVE
+    path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    blob_sha256: 44064dc305b5de0359dde26462601073fc3193003917c4ea1ce1f86a85dab490
+    schema_version: null
+    status: null
+  - binding_id: deprecation-inventory-lane-base-c
+    binding_kind: SOURCE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    blob_sha256: 482dfaef9eb3709587c9419e2eea123e069099e311cfcdb62b3e5fae4f7546cc
+    schema_version: arch_004g_deprecation_inventory.v1
+    status: null
+  - binding_id: devex-ownership-policy-lane-base-c
+    binding_kind: SOURCE
+    commit_role: LANE_BASE
+    path: config/architecture/devex_ownership_policy.yaml
+    blob_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
+    schema_version: arch_004e_devex_ownership_policy.v1
+    status: active_phase_e
+  - binding_id: generated-aggregate-lane-base-c
+    binding_kind: GENERATED_STATE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    blob_sha256: 68164de0888b73dcc4e2d01d54bc467898e23f712a9af02359333a517edaebc3
+    schema_version: arch_004e_aggregate_shadow_index.v1
+    status: SHADOW_COMPATIBILITY_PASS
+  - binding_id: generated-module-lane-base-c
+    binding_kind: GENERATED_STATE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_004e_module_manifest.yaml
+    blob_sha256: abcf856c604d34ab61e4b4d7765192537fc8ac16b55c93226872136a00db4e2a
+    schema_version: arch_004e_module_manifest.v1
+    status: PASS
+  - binding_id: generated-task-baseline-lane-base-c
+    binding_kind: GENERATED_STATE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    blob_sha256: adbe12154f5dec500bd1865600cb583913277254e5b563d3aa55ced163c0743c
+    schema_version: arch_005_task_registry_baseline.v1
+    status: PASS
+  - binding_id: generated-task-index-lane-base-c
+    binding_kind: GENERATED_STATE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_005_task_shadow_index.yaml
+    blob_sha256: 7ab6149c1b9b0504f63069be30bee21d8da0075f8308d812dc908af50cdb9247
+    schema_version: arch_005_task_shadow_index.v1
+    status: PASS
+  - binding_id: generated-test-lane-base-c
+    binding_kind: GENERATED_STATE
+    commit_role: LANE_BASE
+    path: inputs/architecture/arch_004e_test_manifest.yaml
+    blob_sha256: 928a483ea77c23bfd66752085a4c1c52602ff4669d771107dbf864a455d77c9c
+    schema_version: arch_004e_test_manifest.v1
+    status: PASS
+  - binding_id: requirement-arch004g4-d0b-lane-base-c
+    binding_kind: REQUIREMENT
+    commit_role: LANE_BASE
+    path: docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+    blob_sha256: 11bb15478fece633a93f28fa2f73d8ff9bef72b23f081892064f90547cf9eb49
+    schema_version: null
+    status: null
+  - binding_id: requirement-data-gov-lane-base-c
+    binding_kind: REQUIREMENT
+    commit_role: LANE_BASE
+    path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+    blob_sha256: 6dd1829972fe9075a1885ba72cdace3d1d226e3dc0c18e985c6675bb6862e004
+    schema_version: null
+    status: null
+  - binding_id: requirement-wave14-lane-base-c
+    binding_kind: REQUIREMENT
+    commit_role: LANE_BASE
+    path: docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+    blob_sha256: 4ea8f8f3b1979222f6be1ed10fc3ca2dcd719cddc525dddc8aede8fcd7357e6f
+    schema_version: null
+    status: null
+task_bindings:
+  - task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+    source_register_path: docs/task_register.md
+    source_register_blob_sha256: 49069dfab695ef37ea537a61ed0117a7c20108b037a3f5a1a905bba87c55821a
+    row_sha256: dd04fd3108c04bfeaa902f5ebb656c31cb33633803cc1d2566609c893bea621f
+    priority: P1
+    status: PROPOSED
+    shadow_fragment_path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
+    shadow_fragment_blob_sha256: 80e8ebb78bb48ec0f7cc539430405221f22b0c196c9577453ca689f6c128a131
+    shadow_fragment_schema_version: arch_005_task_shadow_fragment.v1
+    shadow_fragment_checksum: bf43f33ea7fc4cfadc561b76f813672ee2297e5f7076f2001713ef43f6d1c39f
+    requirement_paths:
+      - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  - task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+    source_register_path: docs/task_register.md
+    source_register_blob_sha256: 49069dfab695ef37ea537a61ed0117a7c20108b037a3f5a1a905bba87c55821a
+    row_sha256: 58c2dbd90cd2ac64e970313186a01a1be936627641a191e62261adb3f34c004c
+    priority: P0
+    status: IN_PROGRESS
+    shadow_fragment_path: registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
+    shadow_fragment_blob_sha256: 1e306f93571362882826f1e4ac19e6a1b277d90db31eca135cb0f1f106033b1c
+    shadow_fragment_schema_version: arch_005_task_shadow_fragment.v1
+    shadow_fragment_checksum: 694f08cd13e15988c2c690116cdde9ea06a62852cd38b0082afbacbfe7faac0d
+    requirement_paths:
+      - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  - task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+    source_register_path: docs/task_register.md
+    source_register_blob_sha256: 49069dfab695ef37ea537a61ed0117a7c20108b037a3f5a1a905bba87c55821a
+    row_sha256: b640c04df895a237c04cce1fb8b350757353c0592289de5cb9169eaf9f712947
+    priority: P0
+    status: IN_PROGRESS
+    shadow_fragment_path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
+    shadow_fragment_blob_sha256: 4134a8f34fd59546e2f36b70ccd460d81dc0f8120d3e0a107fc0eb658d48d52b
+    shadow_fragment_schema_version: arch_005_task_shadow_fragment.v1
+    shadow_fragment_checksum: 07345bd56fdc52f513859b29f488df71d1c80a312f77c2640274173157942b97
+    requirement_paths:
+      - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+      - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+      - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+generated_state:
+  ownership_policy_path: config/architecture/devex_ownership_policy.yaml
+  module_manifest_path: inputs/architecture/arch_004e_module_manifest.yaml
+  test_manifest_path: inputs/architecture/arch_004e_test_manifest.yaml
+  aggregate_index_path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  task_baseline_path: inputs/architecture/arch_005_task_registry_baseline.yaml
+  task_shadow_index_path: inputs/architecture/arch_005_task_shadow_index.yaml
+  task_fragment_root: registry/development_tasks_shadow
+change_manifests:
+  - schema_version: change_manifest.v1
+    change_id: arch-004-wave14-d0b2-data-foundation
+    task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+    lane_role: DOMAIN
+    base_commit: 8eefe98a1eb66f4ae18589f911c69856e6162e35
+    owner: data_platform
+    production_effect: none
+    owned_paths:
+      - src/ai_trading_system/data/download.py
+      - src/ai_trading_system/data/download_publication.py
+      - src/ai_trading_system/data/quality.py
+      - tests/test_data_download.py
+      - tests/test_data_download_publication.py
+      - tests/test_data_quality.py
+    shared_paths: []
+    module_ids:
+      - ai_trading_system.data.download
+      - ai_trading_system.data.download_publication
+      - ai_trading_system.data.quality
+    contract_claims:
+      - contract_id: data_quality_evidence.v1
+        version: v1
+        access: READ
+      - contract_id: data_quality_execution_receipt.v1
+        version: v1
+        access: READ
+      - contract_id: download_publication_transaction.v1
+        version: v1
+        access: WRITE
+    required_validation_tiers:
+      - architecture-fitness
+      - contract-validation
+      - focused
+      - full
+      - integration
+      - reproducibility
+  - schema_version: change_manifest.v1
+    change_id: arch-004-wave14-g3-reporting-native
+    task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+    lane_role: DOMAIN
+    base_commit: 8eefe98a1eb66f4ae18589f911c69856e6162e35
+    owner: reporting_platform
+    production_effect: none
+    owned_paths:
+      - config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml
+      - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
+      - config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml
+      - src/ai_trading_system/platform/reporting/reader_brief_native.py
+      - tests/test_arch_004g3_reporting_native_migration.py
+    shared_paths: []
+    module_ids:
+      - ai_trading_system.platform.reporting.reader_brief_native
+    contract_claims:
+      - contract_id: artifact_envelope.v1
+        version: v1
+        access: READ
+      - contract_id: report_spec.v1
+        version: v1
+        access: READ
+    required_validation_tiers:
+      - architecture-fitness
+      - contract-validation
+      - focused
+      - full
+      - integration
+      - report-validation
+      - reproducibility
+  - schema_version: change_manifest.v1
+    change_id: arch-004-wave14-integration-coordinator
+    task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+    lane_role: COORDINATOR
+    base_commit: 8eefe98a1eb66f4ae18589f911c69856e6162e35
+    owner: architecture_coordinator
+    production_effect: none
+    owned_paths: []
+    shared_paths:
+      - config/architecture/arch_004_refactor_policy.yaml
+      - config/architecture/devex_ownership_policy.yaml
+      - config/data_quality.yaml
+      - config/report_registry.yaml
+      - config/reporting/reporting_architecture.yaml
+      - docs/architecture/dual_lane_development_operating_model.md
+      - docs/artifact_catalog.md
+      - docs/operations/operations_runbook.md
+      - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+      - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+      - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+      - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+      - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+      - docs/system_flow.md
+      - docs/task_register.md
+      - docs/task_register_completed.md
+      - inputs/architecture/arch_004_compatibility_baseline.yaml
+      - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+      - inputs/architecture/arch_004e_architecture_fitness.yaml
+      - inputs/architecture/arch_004e_module_manifest.yaml
+      - inputs/architecture/arch_004e_test_manifest.yaml
+      - inputs/architecture/arch_004g_deprecation_inventory.yaml
+      - inputs/architecture/arch_005_task_registry_baseline.yaml
+      - inputs/architecture/arch_005_task_shadow_index.yaml
+      - src/ai_trading_system/cli.py
+      - src/ai_trading_system/cli_commands/data_cache.py
+      - src/ai_trading_system/config.py
+      - src/ai_trading_system/contracts/__init__.py
+      - src/ai_trading_system/contracts/artifact_envelope.py
+      - src/ai_trading_system/contracts/data_quality.py
+      - src/ai_trading_system/contracts/data_quality_execution.py
+      - src/ai_trading_system/contracts/report_spec.py
+      - src/ai_trading_system/data/__init__.py
+      - src/ai_trading_system/data/immutable_publish.py
+      - src/ai_trading_system/data/quality_execution.py
+      - src/ai_trading_system/data/quality_execution_discovery.py
+      - src/ai_trading_system/platform/reporting/__init__.py
+      - src/ai_trading_system/platform/reporting/owner_daily.py
+      - src/ai_trading_system/reports/reader_brief.py
+      - src/ai_trading_system/trading_calendar.py
+      - tests/test_arch_004f3_reporting_architecture.py
+      - tests/test_data_quality_execution.py
+      - tests/test_data_quality_execution_contract.py
+      - tests/test_reader_brief.py
+      - tests/test_trading_calendar.py
+    module_ids: []
+    contract_claims: []
+    required_validation_tiers:
+      - architecture-fitness
+      - contract-validation
+      - focused
+      - full
+      - integration
+      - report-validation
+      - reproducibility
+coordinator_only_paths:
+  - config/architecture/arch_004_refactor_policy.yaml
+  - config/architecture/devex_ownership_policy.yaml
+  - config/data_quality.yaml
+  - config/report_registry.yaml
+  - config/reporting/reporting_architecture.yaml
+  - docs/architecture/dual_lane_development_operating_model.md
+  - docs/artifact_catalog.md
+  - docs/operations/operations_runbook.md
+  - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004_compatibility_baseline.yaml
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - src/ai_trading_system/cli.py
+  - src/ai_trading_system/cli_commands/data_cache.py
+  - src/ai_trading_system/config.py
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/contracts/artifact_envelope.py
+  - src/ai_trading_system/contracts/data_quality.py
+  - src/ai_trading_system/contracts/data_quality_execution.py
+  - src/ai_trading_system/contracts/report_spec.py
+  - src/ai_trading_system/data/__init__.py
+  - src/ai_trading_system/data/immutable_publish.py
+  - src/ai_trading_system/data/quality_execution.py
+  - src/ai_trading_system/data/quality_execution_discovery.py
+  - src/ai_trading_system/platform/reporting/__init__.py
+  - src/ai_trading_system/platform/reporting/owner_daily.py
+  - src/ai_trading_system/reports/reader_brief.py
+  - src/ai_trading_system/trading_calendar.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_data_quality_execution.py
+  - tests/test_data_quality_execution_contract.py
+  - tests/test_reader_brief.py
+  - tests/test_trading_calendar.py
+worktree_guard:
+  known_unrelated_paths:
+    - docs/research/growth_tilt_owner_diagnosis_pack.md
+  pending_output_paths:
+    - config/architecture/arch_004_wave14_d0b2_g3_readiness.yaml
+    - inputs/architecture/arch_004_wave14_d0b2_g3_parallel_readiness.json
+lease_authority:
+  kind: NONE_AT_S0_MANUAL_ASSIGNMENT
+  lease_namespace_created: false
+  lease_acquisition_allowed: false
+  active_shared_path_lease_count: 0
+assignment_control:
+  mode: MANUAL_COORDINATOR_AFTER_CARRIER_PUSH
+  authority: architecture_coordinator
+  worker_assignment_allowed_after_s0_pass: true
+  carrier_commit_push_required: true
+  automatic_command_dispatch: false
+  automatic_merge: false
+safety:
+  dispatch_allowed: false
+  automatic_command_dispatch: false
+  lease_acquisition_allowed: false
+  automatic_merge_allowed: false
+  consumer_cutover_allowed: false
+  task_registry_mutation_allowed: false
+  production_effect: none
+  broker_action: none

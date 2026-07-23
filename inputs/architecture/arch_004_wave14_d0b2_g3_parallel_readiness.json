@@ -1,0 +1,540 @@
+{
+  "assignment_control": {
+    "authority": "architecture_coordinator",
+    "automatic_command_dispatch": false,
+    "automatic_merge": false,
+    "carrier_commit_push_required": true,
+    "mode": "MANUAL_COORDINATOR_AFTER_CARRIER_PUSH",
+    "worker_assignment_allowed_after_s0_pass": true
+  },
+  "change_manifests": [
+    {
+      "base_commit": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+      "change_id": "arch-004-wave14-d0b2-data-foundation",
+      "contract_claims": [
+        {
+          "access": "READ",
+          "contract_id": "data_quality_evidence.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "data_quality_execution_receipt.v1",
+          "version": "v1"
+        },
+        {
+          "access": "WRITE",
+          "contract_id": "download_publication_transaction.v1",
+          "version": "v1"
+        }
+      ],
+      "lane_role": "DOMAIN",
+      "module_ids": [
+        "ai_trading_system.data.download",
+        "ai_trading_system.data.download_publication",
+        "ai_trading_system.data.quality"
+      ],
+      "owned_paths": [
+        "src/ai_trading_system/data/download.py",
+        "src/ai_trading_system/data/download_publication.py",
+        "src/ai_trading_system/data/quality.py",
+        "tests/test_data_download.py",
+        "tests/test_data_download_publication.py",
+        "tests/test_data_quality.py"
+      ],
+      "owner": "data_platform",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "focused",
+        "full",
+        "integration",
+        "reproducibility"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [],
+      "task_id": "DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE"
+    },
+    {
+      "base_commit": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+      "change_id": "arch-004-wave14-g3-reporting-native",
+      "contract_claims": [
+        {
+          "access": "READ",
+          "contract_id": "artifact_envelope.v1",
+          "version": "v1"
+        },
+        {
+          "access": "READ",
+          "contract_id": "report_spec.v1",
+          "version": "v1"
+        }
+      ],
+      "lane_role": "DOMAIN",
+      "module_ids": [
+        "ai_trading_system.platform.reporting.reader_brief_native"
+      ],
+      "owned_paths": [
+        "config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml",
+        "config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml",
+        "config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml",
+        "src/ai_trading_system/platform/reporting/reader_brief_native.py",
+        "tests/test_arch_004g3_reporting_native_migration.py"
+      ],
+      "owner": "reporting_platform",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "focused",
+        "full",
+        "integration",
+        "report-validation",
+        "reproducibility"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [],
+      "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
+    },
+    {
+      "base_commit": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+      "change_id": "arch-004-wave14-integration-coordinator",
+      "contract_claims": [],
+      "lane_role": "COORDINATOR",
+      "module_ids": [],
+      "owned_paths": [],
+      "owner": "architecture_coordinator",
+      "production_effect": "none",
+      "required_validation_tiers": [
+        "architecture-fitness",
+        "contract-validation",
+        "focused",
+        "full",
+        "integration",
+        "report-validation",
+        "reproducibility"
+      ],
+      "schema_version": "change_manifest.v1",
+      "shared_paths": [
+        "config/architecture/arch_004_refactor_policy.yaml",
+        "config/architecture/devex_ownership_policy.yaml",
+        "config/data_quality.yaml",
+        "config/report_registry.yaml",
+        "config/reporting/reporting_architecture.yaml",
+        "docs/architecture/dual_lane_development_operating_model.md",
+        "docs/artifact_catalog.md",
+        "docs/operations/operations_runbook.md",
+        "docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md",
+        "docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md",
+        "docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md",
+        "docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md",
+        "docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        "inputs/architecture/arch_004_compatibility_baseline.yaml",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "src/ai_trading_system/cli.py",
+        "src/ai_trading_system/cli_commands/data_cache.py",
+        "src/ai_trading_system/config.py",
+        "src/ai_trading_system/contracts/__init__.py",
+        "src/ai_trading_system/contracts/artifact_envelope.py",
+        "src/ai_trading_system/contracts/data_quality.py",
+        "src/ai_trading_system/contracts/data_quality_execution.py",
+        "src/ai_trading_system/contracts/report_spec.py",
+        "src/ai_trading_system/data/__init__.py",
+        "src/ai_trading_system/data/immutable_publish.py",
+        "src/ai_trading_system/data/quality_execution.py",
+        "src/ai_trading_system/data/quality_execution_discovery.py",
+        "src/ai_trading_system/platform/reporting/__init__.py",
+        "src/ai_trading_system/platform/reporting/owner_daily.py",
+        "src/ai_trading_system/reports/reader_brief.py",
+        "src/ai_trading_system/trading_calendar.py",
+        "tests/test_arch_004f3_reporting_architecture.py",
+        "tests/test_data_quality_execution.py",
+        "tests/test_data_quality_execution_contract.py",
+        "tests/test_reader_brief.py",
+        "tests/test_trading_calendar.py"
+      ],
+      "task_id": "ARCH-004W14_D0B2_G3_PARALLEL_READINESS"
+    }
+  ],
+  "evidence_checksum": "aa0e8894c5c5c757522c37b7a59fef6a3543bafbaeacccab998020f45fe1eff2",
+  "gate": "ARCH-004-WAVE14-S0",
+  "generated_state_replay": {
+    "aggregate_index_rebuilt": true,
+    "artifacts": [
+      {
+        "blob_sha256": "68164de0888b73dcc4e2d01d54bc467898e23f712a9af02359333a517edaebc3",
+        "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "payload_sha256": "9cd09cad82781902cffa2136fe4fa18850c43d20e8279a948da2ad41ebe768fe",
+        "rebuilt_payload_sha256": "9cd09cad82781902cffa2136fe4fa18850c43d20e8279a948da2ad41ebe768fe",
+        "schema_version": "arch_004e_aggregate_shadow_index.v1",
+        "status": "SHADOW_COMPATIBILITY_PASS",
+        "tracked_payload_equal": true
+      },
+      {
+        "blob_sha256": "abcf856c604d34ab61e4b4d7765192537fc8ac16b55c93226872136a00db4e2a",
+        "path": "inputs/architecture/arch_004e_module_manifest.yaml",
+        "payload_sha256": "fdb9f46d30d54994e2b7354f7e21b5b4f73d71056081353e4d10f317a7a86b1d",
+        "rebuilt_payload_sha256": "fdb9f46d30d54994e2b7354f7e21b5b4f73d71056081353e4d10f317a7a86b1d",
+        "schema_version": "arch_004e_module_manifest.v1",
+        "status": "PASS",
+        "tracked_payload_equal": true
+      },
+      {
+        "blob_sha256": "928a483ea77c23bfd66752085a4c1c52602ff4669d771107dbf864a455d77c9c",
+        "path": "inputs/architecture/arch_004e_test_manifest.yaml",
+        "payload_sha256": "e83437d35e2b416b9fa82f23dd1e6f12748f3dfeeaa567b00b0a33c66dd4acaf",
+        "rebuilt_payload_sha256": "e83437d35e2b416b9fa82f23dd1e6f12748f3dfeeaa567b00b0a33c66dd4acaf",
+        "schema_version": "arch_004e_test_manifest.v1",
+        "status": "PASS",
+        "tracked_payload_equal": true
+      },
+      {
+        "blob_sha256": "adbe12154f5dec500bd1865600cb583913277254e5b563d3aa55ced163c0743c",
+        "path": "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "payload_sha256": "edb45d9b12e82c5ed6d47b093834373c8261e1efec5c18f5dd68dd73b7c7711d",
+        "rebuilt_payload_sha256": "edb45d9b12e82c5ed6d47b093834373c8261e1efec5c18f5dd68dd73b7c7711d",
+        "schema_version": "arch_005_task_registry_baseline.v1",
+        "status": "PASS",
+        "tracked_payload_equal": true
+      },
+      {
+        "blob_sha256": "7ab6149c1b9b0504f63069be30bee21d8da0075f8308d812dc908af50cdb9247",
+        "path": "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "payload_sha256": "5b07965e6d99e04d5107620a3bc5caac92dc2c46b463488cc3de67a115637ba6",
+        "rebuilt_payload_sha256": "5b07965e6d99e04d5107620a3bc5caac92dc2c46b463488cc3de67a115637ba6",
+        "schema_version": "arch_005_task_shadow_index.v1",
+        "status": "PASS",
+        "tracked_payload_equal": true
+      }
+    ],
+    "main_worktree_business_bytes_read": false,
+    "module_manifest_rebuilt": true,
+    "snapshot_archive_paths": [
+      "config/architecture/devex_ownership_policy.yaml",
+      "config/architecture/fragments",
+      "config/report_registry.yaml",
+      "docs/artifact_catalog.md",
+      "docs/system_flow.md",
+      "docs/task_register.md",
+      "docs/task_register_completed.md",
+      "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "inputs/architecture/arch_004e_module_manifest.yaml",
+      "inputs/architecture/arch_004e_test_manifest.yaml",
+      "inputs/architecture/arch_005_task_registry_baseline.yaml",
+      "inputs/architecture/arch_005_task_shadow_index.yaml",
+      "registry/development_tasks_shadow",
+      "scripts",
+      "src/ai_trading_system",
+      "tests"
+    ],
+    "snapshot_commit": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+    "snapshot_excluded_paths": [
+      "docs/research/growth_tilt_owner_diagnosis_pack.md"
+    ],
+    "snapshot_source": "GIT_ARCHIVE_C_ALLOWLIST_ONLY",
+    "snapshot_tree_sha1": "27f7b6591f00b85a6255d366fc028e6563e5a3c7",
+    "status": "PASS",
+    "task_baseline_rebuilt": true,
+    "task_fragment_count": 893,
+    "task_fragment_set_sha256": "b2f17616dad207cf839c2ca6b4f9392d853677e7bb6219184a7b158600602c63",
+    "task_shadow_index_rebuilt": true,
+    "test_manifest_rebuilt": true,
+    "tracked_payload_equality": true
+  },
+  "lane_base": {
+    "branch": "main",
+    "build_ref_state": {
+      "FETCH_HEAD": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+      "HEAD": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+      "remote": "8eefe98a1eb66f4ae18589f911c69856e6162e35"
+    },
+    "carrier_commit_recorded": false,
+    "commit": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+    "remote_ref": "origin/main",
+    "source_wave_is_ancestor": true,
+    "tree_sha1": "27f7b6591f00b85a6255d366fc028e6563e5a3c7"
+  },
+  "lane_plan": {
+    "blocking_issues": [],
+    "conflicts": [],
+    "current_base_commit": "8eefe98a1eb66f4ae18589f911c69856e6162e35",
+    "dispatch_allowed": false,
+    "lease_acquisition_allowed": false,
+    "manifest_sha256": [
+      {
+        "change_id": "arch-004-wave14-d0b2-data-foundation",
+        "sha256": "0f3092925cd53b2305aa5e2ee6532571b1de5543081edccf365fde4b4bdfd410"
+      },
+      {
+        "change_id": "arch-004-wave14-g3-reporting-native",
+        "sha256": "c33ca91c53f2d00a380cbf2938f82959dcc4e7e2d7df16c16bbf63240067f661"
+      },
+      {
+        "change_id": "arch-004-wave14-integration-coordinator",
+        "sha256": "f6f3dbdb8e5f2a9639dcc838528bb09da6d38d5f0052de492cb219055ef9db91"
+      }
+    ],
+    "max_parallel_domain_lanes": 2,
+    "plan_id": "lane-plan-dde79f96b1afbfb0b50a",
+    "production_effect": "none",
+    "schema_version": "lane_plan.v1",
+    "status": "PASS",
+    "task_registry_mutated": false,
+    "waves": [
+      {
+        "assignments": [
+          {
+            "change_id": "arch-004-wave14-d0b2-data-foundation",
+            "lane_id": "domain-01",
+            "manifest_sha256": "0f3092925cd53b2305aa5e2ee6532571b1de5543081edccf365fde4b4bdfd410"
+          },
+          {
+            "change_id": "arch-004-wave14-g3-reporting-native",
+            "lane_id": "domain-02",
+            "manifest_sha256": "c33ca91c53f2d00a380cbf2938f82959dcc4e7e2d7df16c16bbf63240067f661"
+          }
+        ],
+        "kind": "DOMAIN",
+        "wave_id": "domain-wave-001"
+      },
+      {
+        "assignments": [
+          {
+            "change_id": "arch-004-wave14-integration-coordinator",
+            "lane_id": "integration-coordinator",
+            "manifest_sha256": "f6f3dbdb8e5f2a9639dcc838528bb09da6d38d5f0052de492cb219055ef9db91"
+          }
+        ],
+        "kind": "COORDINATOR",
+        "wave_id": "integration-wave-002"
+      }
+    ]
+  },
+  "lease_authority": {
+    "active_shared_path_lease_count": 0,
+    "kind": "NONE_AT_S0_MANUAL_ASSIGNMENT",
+    "lease_acquisition_allowed": false,
+    "lease_namespace_created": false
+  },
+  "owner": "architecture_coordinator",
+  "policy_binding": {
+    "path": "config/architecture/arch_004_wave14_d0b2_g3_readiness.yaml",
+    "sha256": "f0b4b9d8959d7f49f0204225d207028f3a2116b7d7274958031a0daf7d7cc241"
+  },
+  "producer": {
+    "cli_blob_sha256": "3b56907ae3d6b4f33d4d6dd8665fde99d98f6974f9eeca7c07150fcfaad33173",
+    "cli_path": "scripts/architecture_wave_readiness.py",
+    "module_blob_sha256": "f2de65dc84a40b60f720243d31ac38d2cd4f59a51b720545c1a41c07bd8f4cea",
+    "module_path": "src/ai_trading_system/platform/architecture/wave_readiness.py",
+    "schema_version": "architecture_wave_readiness_producer.v1"
+  },
+  "safety": {
+    "automatic_command_dispatch": false,
+    "automatic_merge_allowed": false,
+    "broker_action": "none",
+    "consumer_cutover_allowed": false,
+    "dispatch_allowed": false,
+    "lease_acquisition_allowed": false,
+    "production_effect": "none",
+    "task_registry_mutation_allowed": false
+  },
+  "schema_version": "architecture_wave_parallel_readiness.v1",
+  "source_bindings": [
+    {
+      "binding_id": "architecture-fitness-lane-base-c",
+      "binding_kind": "SOURCE",
+      "blob_sha256": "ac6c3e09b32bdfea634972f165a962f516f3144571238c2b0f1f882a79fd8a76",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
+      "schema_version": "arch_004e_architecture_fitness.v1",
+      "status": "PASS"
+    },
+    {
+      "binding_id": "compatibility-lane-base-c",
+      "binding_kind": "SOURCE",
+      "blob_sha256": "8a7b53764da4839ed0c06524ffde445c85befe10af588865c9cb93601b0a09c9",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_004_compatibility_baseline.yaml",
+      "schema_version": null,
+      "status": null
+    },
+    {
+      "binding_id": "compatibility-source-wave-b",
+      "binding_kind": "SOURCE",
+      "blob_sha256": "44064dc305b5de0359dde26462601073fc3193003917c4ea1ce1f86a85dab490",
+      "commit_role": "SOURCE_WAVE",
+      "path": "inputs/architecture/arch_004_compatibility_baseline.yaml",
+      "schema_version": null,
+      "status": null
+    },
+    {
+      "binding_id": "deprecation-inventory-lane-base-c",
+      "binding_kind": "SOURCE",
+      "blob_sha256": "482dfaef9eb3709587c9419e2eea123e069099e311cfcdb62b3e5fae4f7546cc",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+      "schema_version": "arch_004g_deprecation_inventory.v1",
+      "status": null
+    },
+    {
+      "binding_id": "devex-ownership-policy-lane-base-c",
+      "binding_kind": "SOURCE",
+      "blob_sha256": "f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe",
+      "commit_role": "LANE_BASE",
+      "path": "config/architecture/devex_ownership_policy.yaml",
+      "schema_version": "arch_004e_devex_ownership_policy.v1",
+      "status": "active_phase_e"
+    },
+    {
+      "binding_id": "generated-aggregate-lane-base-c",
+      "binding_kind": "GENERATED_STATE",
+      "blob_sha256": "68164de0888b73dcc4e2d01d54bc467898e23f712a9af02359333a517edaebc3",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+      "schema_version": "arch_004e_aggregate_shadow_index.v1",
+      "status": "SHADOW_COMPATIBILITY_PASS"
+    },
+    {
+      "binding_id": "generated-module-lane-base-c",
+      "binding_kind": "GENERATED_STATE",
+      "blob_sha256": "abcf856c604d34ab61e4b4d7765192537fc8ac16b55c93226872136a00db4e2a",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_004e_module_manifest.yaml",
+      "schema_version": "arch_004e_module_manifest.v1",
+      "status": "PASS"
+    },
+    {
+      "binding_id": "generated-task-baseline-lane-base-c",
+      "binding_kind": "GENERATED_STATE",
+      "blob_sha256": "adbe12154f5dec500bd1865600cb583913277254e5b563d3aa55ced163c0743c",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_005_task_registry_baseline.yaml",
+      "schema_version": "arch_005_task_registry_baseline.v1",
+      "status": "PASS"
+    },
+    {
+      "binding_id": "generated-task-index-lane-base-c",
+      "binding_kind": "GENERATED_STATE",
+      "blob_sha256": "7ab6149c1b9b0504f63069be30bee21d8da0075f8308d812dc908af50cdb9247",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_005_task_shadow_index.yaml",
+      "schema_version": "arch_005_task_shadow_index.v1",
+      "status": "PASS"
+    },
+    {
+      "binding_id": "generated-test-lane-base-c",
+      "binding_kind": "GENERATED_STATE",
+      "blob_sha256": "928a483ea77c23bfd66752085a4c1c52602ff4669d771107dbf864a455d77c9c",
+      "commit_role": "LANE_BASE",
+      "path": "inputs/architecture/arch_004e_test_manifest.yaml",
+      "schema_version": "arch_004e_test_manifest.v1",
+      "status": "PASS"
+    },
+    {
+      "binding_id": "requirement-arch004g4-d0b-lane-base-c",
+      "binding_kind": "REQUIREMENT",
+      "blob_sha256": "11bb15478fece633a93f28fa2f73d8ff9bef72b23f081892064f90547cf9eb49",
+      "commit_role": "LANE_BASE",
+      "path": "docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md",
+      "schema_version": null,
+      "status": null
+    },
+    {
+      "binding_id": "requirement-data-gov-lane-base-c",
+      "binding_kind": "REQUIREMENT",
+      "blob_sha256": "6dd1829972fe9075a1885ba72cdace3d1d226e3dc0c18e985c6675bb6862e004",
+      "commit_role": "LANE_BASE",
+      "path": "docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md",
+      "schema_version": null,
+      "status": null
+    },
+    {
+      "binding_id": "requirement-wave14-lane-base-c",
+      "binding_kind": "REQUIREMENT",
+      "blob_sha256": "4ea8f8f3b1979222f6be1ed10fc3ca2dcd719cddc525dddc8aede8fcd7357e6f",
+      "commit_role": "LANE_BASE",
+      "path": "docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md",
+      "schema_version": null,
+      "status": null
+    }
+  ],
+  "source_wave": {
+    "commit": "e2da21894ea8e8921a86c6c1b48d7b191f0f142c",
+    "tree_sha1": "73ba7a3830cbc47ccb6dbfb3488eeed5431653c2",
+    "wave_id": "ARCH-004-WAVE13"
+  },
+  "status": "PASS",
+  "task_bindings": [
+    {
+      "priority": "P1",
+      "requirement_paths": [
+        "docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md"
+      ],
+      "row_sha256": "dd04fd3108c04bfeaa902f5ebb656c31cb33633803cc1d2566609c893bea621f",
+      "shadow_fragment_blob_sha256": "80e8ebb78bb48ec0f7cc539430405221f22b0c196c9577453ca689f6c128a131",
+      "shadow_fragment_checksum": "bf43f33ea7fc4cfadc561b76f813672ee2297e5f7076f2001713ef43f6d1c39f",
+      "shadow_fragment_path": "registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml",
+      "shadow_fragment_schema_version": "arch_005_task_shadow_fragment.v1",
+      "source_register_blob_sha256": "49069dfab695ef37ea537a61ed0117a7c20108b037a3f5a1a905bba87c55821a",
+      "source_register_path": "docs/task_register.md",
+      "status": "PROPOSED",
+      "task_id": "ARCH-004G3_REPORTING_NATIVE_MIGRATION"
+    },
+    {
+      "priority": "P0",
+      "requirement_paths": [
+        "docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md"
+      ],
+      "row_sha256": "58c2dbd90cd2ac64e970313186a01a1be936627641a191e62261adb3f34c004c",
+      "shadow_fragment_blob_sha256": "1e306f93571362882826f1e4ac19e6a1b277d90db31eca135cb0f1f106033b1c",
+      "shadow_fragment_checksum": "694f08cd13e15988c2c690116cdde9ea06a62852cd38b0082afbacbfe7faac0d",
+      "shadow_fragment_path": "registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml",
+      "shadow_fragment_schema_version": "arch_005_task_shadow_fragment.v1",
+      "source_register_blob_sha256": "49069dfab695ef37ea537a61ed0117a7c20108b037a3f5a1a905bba87c55821a",
+      "source_register_path": "docs/task_register.md",
+      "status": "IN_PROGRESS",
+      "task_id": "ARCH-004W14_D0B2_G3_PARALLEL_READINESS"
+    },
+    {
+      "priority": "P0",
+      "requirement_paths": [
+        "docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md",
+        "docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md",
+        "docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md"
+      ],
+      "row_sha256": "b640c04df895a237c04cce1fb8b350757353c0592289de5cb9169eaf9f712947",
+      "shadow_fragment_blob_sha256": "4134a8f34fd59546e2f36b70ccd460d81dc0f8120d3e0a107fc0eb658d48d52b",
+      "shadow_fragment_checksum": "07345bd56fdc52f513859b29f488df71d1c80a312f77c2640274173157942b97",
+      "shadow_fragment_path": "registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml",
+      "shadow_fragment_schema_version": "arch_005_task_shadow_fragment.v1",
+      "source_register_blob_sha256": "49069dfab695ef37ea537a61ed0117a7c20108b037a3f5a1a905bba87c55821a",
+      "source_register_path": "docs/task_register.md",
+      "status": "IN_PROGRESS",
+      "task_id": "DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE"
+    }
+  ],
+  "wave": "ARCH-004-WAVE14",
+  "worktree_guard": {
+    "known_unrelated_path_bytes_read": false,
+    "known_unrelated_paths": [
+      "docs/research/growth_tilt_owner_diagnosis_pack.md"
+    ],
+    "pending_output_paths": [
+      "config/architecture/arch_004_wave14_d0b2_g3_readiness.yaml",
+      "inputs/architecture/arch_004_wave14_d0b2_g3_parallel_readiness.json"
+    ],
+    "pending_output_presence_recorded": false,
+    "status": "PASS",
+    "unexpected_paths": []
+  }
+}
