@@ -11,20 +11,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture coordinator；S0 carrier已推送、两个domain实现及D0B2第二轮P1修复均完成，当前执行S2
-    shared/formal exit
+  next_owner: architecture coordinator；domain与shared/generated/compatibility首轮fixed
+    point已完成，正在关闭pre-Full历史carrier replay ancestry缺口
   requirement_refs:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。B/C/D非自引用S0
-    carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。真实daily发现`cli_direct`未在原exact
-    scope中，现由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE` append-only scope amendment治理，不回写历史evidence。
+    carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。candidate
+    C=`4235590d`的combined focused唯一失败是历史S0 validator错误要求local descendant HEAD等于已推送remote
+    carrier；不得以提前push未验证candidate绕过，须修复为remote/lane/local显式ancestry且保留divergence fail-closed。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 刷新flow/catalog/runbook/register、module/test/aggregate manifests、task shadows、compatibility
-      baseline与deprecation inventory；combined focused/static、report/architecture/contract/integration/reproducibility及唯一final
+    text: 修复carrier replay后重新闭合module/test/aggregate manifests、task shadows、compatibility
+      source hashes与deprecation byte stability；combined focused/static、report/architecture/contract/integration/reproducibility及唯一final
       Full PASS；known-unrelated文档始终exact exclude；dispatch/lease/automatic merge/cutover/task
       mutation/production/broker全false/none。
   production_effect: UNKNOWN_LEGACY
@@ -33,44 +34,47 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1956
-    row_sha256: 0ad03e55d0197cf07233c6838116f6e3d663cf343aaffd1e827d283297779f52
+    row_sha256: 527a355b927780ceed303fa91db34830f23c5f08dd60f8c133defeea86c5d406
     cell_count: 8
     all_cells:
     - ARCH-004W14_D0B2_G3_PARALLEL_READINESS
     - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit
     - P0
     - IN_PROGRESS
-    - architecture coordinator；S0 carrier已推送、两个domain实现及D0B2第二轮P1修复均完成，当前执行S2 shared/formal
-      exit
+    - architecture coordinator；domain与shared/generated/compatibility首轮fixed point已完成，正在关闭pre-Full历史carrier
+      replay ancestry缺口
     - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。B/C/D非自引用S0
-      carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。真实daily发现`cli_direct`未在原exact
-      scope中，现由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE` append-only scope amendment治理，不回写历史evidence。
-    - 刷新flow/catalog/runbook/register、module/test/aggregate manifests、task shadows、compatibility
-      baseline与deprecation inventory；combined focused/static、report/architecture/contract/integration/reproducibility及唯一final
+      carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。candidate
+      C=`4235590d`的combined focused唯一失败是历史S0 validator错误要求local descendant HEAD等于已推送remote
+      carrier；不得以提前push未验证candidate绕过，须修复为remote/lane/local显式ancestry且保留divergence
+      fail-closed。
+    - 修复carrier replay后重新闭合module/test/aggregate manifests、task shadows、compatibility
+      source hashes与deprecation byte stability；combined focused/static、report/architecture/contract/integration/reproducibility及唯一final
       Full PASS；known-unrelated文档始终exact exclude；dispatch/lease/automatic merge/cutover/task
       mutation/production/broker全false/none。
-    - 2026-07-24：首轮三个P1已修复；D0B2第二轮TOCTOU也已由同一dataset lock内、validated snapshot后/pointer
-      replace前的typed pre-commit validator关闭，regular/link replacement均fail closed。combined
-      focused=`180 passed / 1 skipped`，独立复核=`136 passed / 1 skipped`且无新增P0/P1。仍需scope
-      amendment/generated state/compatibility/formal tiers与唯一final Full，`next_slice_unblocked=false`。
+    - 2026-07-24：S2 fixed point达到task registry=`407/487/894`、DevEx=`1007 modules /
+      1172 tests / 18 fragments / 856 writers / 0 violations`，compatibility冻结112 sources、95
+      Full-sensitive及19 post-Full allowlist。pre-Full combined focused=`342 passed
+      / 1 skipped / 1 failed`；唯一失败已定位为historical replay validator语义缺口，durable fix在途，旧candidate将被取代且Full尚未启动；`next_slice_unblocked=false`。
     raw_line: '|ARCH-004W14_D0B2_G3_PARALLEL_READINESS|Architecture / Wave14 D0B2
-      + bounded G3 exact parallel entry and exit|P0|IN_PROGRESS|architecture coordinator；S0
-      carrier已推送、两个domain实现及D0B2第二轮P1修复均完成，当前执行S2 shared/formal exit|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。B/C/D非自引用S0
-      carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。真实daily发现`cli_direct`未在原exact
-      scope中，现由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE` append-only scope amendment治理，不回写历史evidence。|刷新flow/catalog/runbook/register、module/test/aggregate
-      manifests、task shadows、compatibility baseline与deprecation inventory；combined
-      focused/static、report/architecture/contract/integration/reproducibility及唯一final
+      + bounded G3 exact parallel entry and exit|P0|IN_PROGRESS|architecture coordinator；domain与shared/generated/compatibility首轮fixed
+      point已完成，正在关闭pre-Full历史carrier replay ancestry缺口|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。B/C/D非自引用S0
+      carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。candidate
+      C=`4235590d`的combined focused唯一失败是历史S0 validator错误要求local descendant HEAD等于已推送remote
+      carrier；不得以提前push未验证candidate绕过，须修复为remote/lane/local显式ancestry且保留divergence
+      fail-closed。|修复carrier replay后重新闭合module/test/aggregate manifests、task shadows、compatibility
+      source hashes与deprecation byte stability；combined focused/static、report/architecture/contract/integration/reproducibility及唯一final
       Full PASS；known-unrelated文档始终exact exclude；dispatch/lease/automatic merge/cutover/task
-      mutation/production/broker全false/none。|2026-07-24：首轮三个P1已修复；D0B2第二轮TOCTOU也已由同一dataset
-      lock内、validated snapshot后/pointer replace前的typed pre-commit validator关闭，regular/link
-      replacement均fail closed。combined focused=`180 passed / 1 skipped`，独立复核=`136
-      passed / 1 skipped`且无新增P0/P1。仍需scope amendment/generated state/compatibility/formal
-      tiers与唯一final Full，`next_slice_unblocked=false`。|'
+      mutation/production/broker全false/none。|2026-07-24：S2 fixed point达到task registry=`407/487/894`、DevEx=`1007
+      modules / 1172 tests / 18 fragments / 856 writers / 0 violations`，compatibility冻结112
+      sources、95 Full-sensitive及19 post-Full allowlist。pre-Full combined focused=`342
+      passed / 1 skipped / 1 failed`；唯一失败已定位为historical replay validator语义缺口，durable
+      fix在途，旧candidate将被取代且Full尚未启动；`next_slice_unblocked=false`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-0ad03e55d0197cf07233c683
+  event_id: legacy-import-527a355b927780ceed303fa9
   task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -83,15 +87,16 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture coordinator；S0 carrier已推送、两个domain实现及D0B2第二轮P1修复均完成，当前执行S2
-      shared/formal exit
-    notes: 2026-07-24：首轮三个P1已修复；D0B2第二轮TOCTOU也已由同一dataset lock内、validated snapshot后/pointer
-      replace前的typed pre-commit validator关闭，regular/link replacement均fail closed。combined
-      focused=`180 passed / 1 skipped`，独立复核=`136 passed / 1 skipped`且无新增P0/P1。仍需scope
-      amendment/generated state/compatibility/formal tiers与唯一final Full，`next_slice_unblocked=false`。
+    next_owner: architecture coordinator；domain与shared/generated/compatibility首轮fixed
+      point已完成，正在关闭pre-Full历史carrier replay ancestry缺口
+    notes: 2026-07-24：S2 fixed point达到task registry=`407/487/894`、DevEx=`1007 modules
+      / 1172 tests / 18 fragments / 856 writers / 0 violations`，compatibility冻结112
+      sources、95 Full-sensitive及19 post-Full allowlist。pre-Full combined focused=`342
+      passed / 1 skipped / 1 failed`；唯一失败已定位为historical replay validator语义缺口，durable
+      fix在途，旧candidate将被取代且Full尚未启动；`next_slice_unblocked=false`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:0ad03e55d0197cf07233c6838116f6e3d663cf343aaffd1e827d283297779f52
+  - sha256:527a355b927780ceed303fa91db34830f23c5f08dd60f8c133defeea86c5d406
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -99,22 +104,23 @@ projection:
   - Architecture / Wave14 D0B2 + bounded G3 exact parallel entry and exit
   - P0
   - IN_PROGRESS
-  - architecture coordinator；S0 carrier已推送、两个domain实现及D0B2第二轮P1修复均完成，当前执行S2 shared/formal
-    exit
+  - architecture coordinator；domain与shared/generated/compatibility首轮fixed point已完成，正在关闭pre-Full历史carrier
+    replay ancestry缺口
   - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。B/C/D非自引用S0
-    carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。真实daily发现`cli_direct`未在原exact
-    scope中，现由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE` append-only scope amendment治理，不回写历史evidence。
-  - 刷新flow/catalog/runbook/register、module/test/aggregate manifests、task shadows、compatibility
-    baseline与deprecation inventory；combined focused/static、report/architecture/contract/integration/reproducibility及唯一final
+    carrier=`39a3ea730`已PASS并保持不可变；D0B2/G3按`DOMAIN(2)->COORDINATOR(1)` exact ownership完成。candidate
+    C=`4235590d`的combined focused唯一失败是历史S0 validator错误要求local descendant HEAD等于已推送remote
+    carrier；不得以提前push未验证candidate绕过，须修复为remote/lane/local显式ancestry且保留divergence fail-closed。
+  - 修复carrier replay后重新闭合module/test/aggregate manifests、task shadows、compatibility
+    source hashes与deprecation byte stability；combined focused/static、report/architecture/contract/integration/reproducibility及唯一final
     Full PASS；known-unrelated文档始终exact exclude；dispatch/lease/automatic merge/cutover/task
     mutation/production/broker全false/none。
-  - 2026-07-24：首轮三个P1已修复；D0B2第二轮TOCTOU也已由同一dataset lock内、validated snapshot后/pointer
-    replace前的typed pre-commit validator关闭，regular/link replacement均fail closed。combined
-    focused=`180 passed / 1 skipped`，独立复核=`136 passed / 1 skipped`且无新增P0/P1。仍需scope
-    amendment/generated state/compatibility/formal tiers与唯一final Full，`next_slice_unblocked=false`。
+  - 2026-07-24：S2 fixed point达到task registry=`407/487/894`、DevEx=`1007 modules / 1172
+    tests / 18 fragments / 856 writers / 0 violations`，compatibility冻结112 sources、95
+    Full-sensitive及19 post-Full allowlist。pre-Full combined focused=`342 passed /
+    1 skipped / 1 failed`；唯一失败已定位为historical replay validator语义缺口，durable fix在途，旧candidate将被取代且Full尚未启动；`next_slice_unblocked=false`。
   docs_links:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 0ad03e55d0197cf07233c6838116f6e3d663cf343aaffd1e827d283297779f52
+  raw_row_sha256: 527a355b927780ceed303fa91db34830f23c5f08dd60f8c133defeea86c5d406
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 3c02cd14c3ec705e737c8670970f9badeb759119f9d0cbf5b9144da2fe0e2494
+fragment_checksum: bf4f64b599a531d466b9ef504b5cf84dd927d643464d9915b4b15192df731c79

@@ -18890,6 +18890,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
   - src/ai_trading_system/platform/architecture/parallel_control_scheduler.py
   - src/ai_trading_system/platform/architecture/supervised_automation.py
   - src/ai_trading_system/platform/architecture/task_portfolio_normalization.py
+  - src/ai_trading_system/platform/architecture/wave_readiness.py
   - src/ai_trading_system/platform/reporting/owner_daily.py
   - src/ai_trading_system/reports/reader_brief.py
   - src/ai_trading_system/trading_calendar.py
@@ -18897,6 +18898,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_005_bootstrap_handoff.py
+  - tests/test_architecture_wave_readiness.py
   - tests/test_cli_direct.py
   - tests/test_data_download.py
   - tests/test_data_quality.py
@@ -18978,7 +18980,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 0fe442b1173f4b562cf90dc62b1bef15d9bd5c7df2cc0adfa94f89529aa8128d
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
-    sha256: e5d683160ca30b59f9d1e7b8658c84087a08d76cf032e2cde80f2250e2da2938
+    sha256: ae7d944a5b912fbcec4f1152e28cd50d52fbf45eaa07fe3e1faff6ed5727202f
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
     sha256: 9726659eeabcabdadcb0c58327adce9974bce7fd58fd83cf2ef7ebb2f57e72d8
@@ -19029,7 +19031,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 974752e849010e995230a97761420e81e97e892076b8c9ab3aa522ce03111e61
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: e19e36b7a1077f93e546eddd8089cad0bad4e6a2150fb45cf58820315186ae9d
+    sha256: 09ce80a0c76124eb5f00468dfa1a7881193288fe218b25538c9d016cfa4272cc
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: 310a374cf2ddf9231a407204b9d41d8d48e99a309111258f21362922b6061eeb
@@ -19041,10 +19043,10 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: d37306ada2e8b6d170465033bbc4cc8746c75922c5e6fb8e4cad0de27208a391
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
-    sha256: acc1c975c90e09458aed4f6f1b63fa8d8fac66f8f705d788ce9d9839ac446a73
+    sha256: 4ed9f2c201acfdddd04bb779ecfd8de7e60983c19136568f956d443ad209ead0
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 736e5fd527cb8880eeaccdbf0a095bf7c0c85228bb040f695d69081c095667bb
+    sha256: b5d55db97cba90fcec4ee74b517e5195f62d825b1a9fe33576b2cfb06f9fc97d
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -19056,10 +19058,10 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: f2ff2d3a0dd9664da632585a75ec7a047d8c3ba813b07260d3f22dd667d0ab49
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 8c238822ea9f274fa0a0ff0cd42945a52af943ac130a56bc4c4b06102328d966
+    sha256: c9b288a130bc29c77a1b82cb5db13447a7453d476a346202646086f1e16ea55d
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 5b8578dace627859d7d21cb72b9d85983a8a6d7a1fe1e34bc75b633043fa6264
+    sha256: b8de498f53a150a3133de93025f18004647cac67c94abcab67e0d616557cf879
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_applied_closeout.json
     sha256: f8ea35968cfc0ad206904009ac0f78cf75b4eadba8acf87d326a4459469be386
@@ -19098,7 +19100,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: cd61079eb75b92c859403314c12195b7044873d0eee44e49e10bc36253d63779
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
-    sha256: 8ccdd97cbdef94f024cdda48269713b7cc9e1b87a52f72de5ae849ebdbaa2c61
+    sha256: 59cef78cd82985bb3ac7e5289a3dc0bb87e680f4a5cf3dc3c39ff358e18b5e3b
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
     sha256: a23af0687fb17f46543bfabbf2368ad675314a2bec801ec5d93dbd50eb5ab847
@@ -19170,7 +19172,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 7cc728ff9adde611d012a08046e519602767aa86add7f01ac32cea5a98896d6d
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/architecture/wave_readiness.py
-    sha256: f2de65dc84a40b60f720243d31ac38d2cd4f59a51b720545c1a41c07bd8f4cea
+    sha256: 58cf30230521f58743d451394d8b7269f06713b680830766fa3ce7520339f855
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/reporting/__init__.py
     sha256: 72a573bc79e8d98a77d884ca0f30e42976e75c6e148a47761306754cc462ad44
@@ -19215,7 +19217,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
     sha256: 3c047c554716d22f5b2e5cc85932f4f87305d86dec71b71a2aaedd1f9cd0d776
     hash_normalization: git_eol_lf
   - path: tests/test_architecture_wave_readiness.py
-    sha256: dadd88bd9856f21614a604421f68942cbba6d5ba943d190dd6e65264023bc2fc
+    sha256: 688d011baae24c68730e1d1c609113f5fb8e86fbf3a19cdfffbda6617e222c8f
     hash_normalization: git_eol_lf
   - path: tests/test_cli_direct.py
     sha256: dd05c767d2aa7a169a1cd798f1521405a57cee0fdd1cdd312d97906890efc223

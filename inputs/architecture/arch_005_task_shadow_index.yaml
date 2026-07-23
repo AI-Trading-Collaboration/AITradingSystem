@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: c1d8415cae27d6caeb8993a569ee1aa0082c329f68aff46e5ebde35c2c76ddbc
+baseline_checksum: b18a3722962d8ca21a15851af7d369e84b4091a3d2cdc3d2a168fd034fcaf9f0
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 894
 fragment_count: 894
@@ -79,8 +79,8 @@ fragments:
   fragment_checksum: d66c09d18f765a57863e9e51ebef721a6e4e78341727887fd3eb272ef28ec62b
 - task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
   path: registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
-  file_sha256: 8ccdd97cbdef94f024cdda48269713b7cc9e1b87a52f72de5ae849ebdbaa2c61
-  fragment_checksum: 3c02cd14c3ec705e737c8670970f9badeb759119f9d0cbf5b9144da2fe0e2494
+  file_sha256: 59cef78cd82985bb3ac7e5289a3dc0bb87e680f4a5cf3dc3c39ff358e18b5e3b
+  fragment_checksum: bf4f64b599a531d466b9ef504b5cf84dd927d643464d9915b4b15192df731c79
 - task_id: ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
   path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
   file_sha256: c92f9313ae9f67da65ac0252fea791e71712f42c2e0b698a3cd6d444b5980d70
@@ -3601,8 +3601,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: e19e36b7a1077f93e546eddd8089cad0bad4e6a2150fb45cf58820315186ae9d
-  rendered_sha256: e19e36b7a1077f93e546eddd8089cad0bad4e6a2150fb45cf58820315186ae9d
+  source_sha256: 09ce80a0c76124eb5f00468dfa1a7881193288fe218b25538c9d016cfa4272cc
+  rendered_sha256: 09ce80a0c76124eb5f00468dfa1a7881193288fe218b25538c9d016cfa4272cc
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3624,4 +3624,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: a734394ced3749eebb9140701d96e5580085c05cecc7ab3073ab762209394f48
+index_checksum: 5aa757f35ed0d210ae7327dbbdd021bff9d758ef5487324984aebc1a4d6da864
