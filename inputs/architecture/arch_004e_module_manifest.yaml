@@ -1,9 +1,9 @@
 schema_version: arch_004e_module_manifest.v1
 status: PASS
 policy_id: arch_004e_devex_ownership_policy
-policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
+policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1005
+module_count: 1007
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -700,22 +700,24 @@ modules:
 - module_id: src.ai_trading_system.cli
   path: src/ai_trading_system/cli.py
   sha256: 795ca21b67cb5b1eea94f28cccc760bf2d4f54a4b83e9522731164d6de732875
-  rule_id: root_modules_fallback
-  owner_profile: general
+  rule_id: cli_entrypoints
+  owner_profile: platform
   owners:
-    code_owner: system_engineering
+    code_owner: platform_engineering
     policy_owner: architecture_governance
     data_owner: data_governance
-    artifact_owner: system_reporting
-    runtime_owner: system_operations
-  layer: legacy_monolith
-  category: root_module_migration_debt
-  public_contract: false
-  deprecation_status: migrate_by_arch_004g_lane
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: interface
+  category: cli_entrypoints
+  public_contract: true
+  deprecation_status: active
   test_globs:
-  - tests/test_*.py
+  - tests/test_cli*.py
+  - tests/test_etf_cli_aliases.py
   validation_tiers:
   - fast-unit
+  - contract-validation
   shared_integration: true
 - module_id: src.ai_trading_system.cli_commands.__init__
   path: src/ai_trading_system/cli_commands/__init__.py
@@ -1951,23 +1953,25 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_direct
   path: src/ai_trading_system/cli_direct.py
-  sha256: 5d869a97dce41b1af9db67b0814e419ea764c8728e70c65c14b297f8d590d66a
-  rule_id: root_modules_fallback
-  owner_profile: general
+  sha256: 51f862ff11b6e3f37703066cc9de86a52e7f7f3a01dbf065bf9ddbe5a7867fe1
+  rule_id: cli_entrypoints
+  owner_profile: platform
   owners:
-    code_owner: system_engineering
+    code_owner: platform_engineering
     policy_owner: architecture_governance
     data_owner: data_governance
-    artifact_owner: system_reporting
-    runtime_owner: system_operations
-  layer: legacy_monolith
-  category: root_module_migration_debt
-  public_contract: false
-  deprecation_status: migrate_by_arch_004g_lane
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: interface
+  category: cli_entrypoints
+  public_contract: true
+  deprecation_status: active
   test_globs:
-  - tests/test_*.py
+  - tests/test_cli*.py
+  - tests/test_etf_cli_aliases.py
   validation_tiers:
   - fast-unit
+  - contract-validation
   shared_integration: false
 - module_id: src.ai_trading_system.conclusion_boundary
   path: src/ai_trading_system/conclusion_boundary.py
@@ -2483,7 +2487,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.__init__
   path: src/ai_trading_system/data/__init__.py
-  sha256: 88626ad2bf3dfaeaef127b26c4f788653027103e9b675b5ee3a0280acd7e813f
+  sha256: 4bdb48daa7476c840d3eea5855be7b3ae8471cfe7fc05e772524fbd1a42ef4de
   rule_id: data
   owner_profile: data
   owners:
@@ -2505,7 +2509,29 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.download
   path: src/ai_trading_system/data/download.py
-  sha256: 09072c856dbb5e97d8b91015b89cc5ac17400faa9aefc4da94b6881fb4311520
+  sha256: 3e1b4f819605c66009eb17afdb9a11f6c28635bc3f30ace354ba119f381eecd4
+  rule_id: data
+  owner_profile: data
+  owners:
+    code_owner: data_platform
+    policy_owner: data_governance
+    data_owner: data_governance
+    artifact_owner: data_governance
+    runtime_owner: data_operations
+  layer: domain
+  category: data_pipeline
+  public_contract: false
+  deprecation_status: active
+  test_globs:
+  - tests/test_data*.py
+  - tests/trading_engine/test_*data*.py
+  validation_tiers:
+  - fast-unit
+  - reproducibility
+  shared_integration: false
+- module_id: src.ai_trading_system.data.download_publication
+  path: src/ai_trading_system/data/download_publication.py
+  sha256: 3952e8d2201b7bf7d7f4f8b0173c03c1a68c04d3f091096b2290e4de05da56d4
   rule_id: data
   owner_profile: data
   owners:
@@ -2527,7 +2553,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.immutable_publish
   path: src/ai_trading_system/data/immutable_publish.py
-  sha256: fd91357262fc27f16c20876a836b4e0a145b2af1c6fd1439becc13a56071259b
+  sha256: 6fd4f239874f53bdd5121b492106820810923fd4dbf8276bae02176dce6224fc
   rule_id: data
   owner_profile: data
   owners:
@@ -2571,7 +2597,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.quality
   path: src/ai_trading_system/data/quality.py
-  sha256: b27668550f523433dcabed5f0e753ff7c37ba821e64624eb4731bbafa72afe16
+  sha256: 5ad84b9eb236eaf0d2a52651638661d1edd92d8276767b9391cce7de85eb3403
   rule_id: data
   owner_profile: data
   owners:
@@ -2593,7 +2619,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.quality_execution
   path: src/ai_trading_system/data/quality_execution.py
-  sha256: abffee8c204429f78555b6728205b5971772e7c1d9d93f37e22551cc2dae2b1d
+  sha256: b8c9fbf18c09aea5010d16c912b173fbb20ae062435bf1241b5adb64829f94b0
   rule_id: data
   owner_profile: data
   owners:
@@ -13879,7 +13905,7 @@ modules:
 - module_id: src.ai_trading_system.platform.__init__
   path: src/ai_trading_system/platform/__init__.py
   sha256: fc955bac81eb31f85978da9332095fd0ea970833ab51035e57323c19114bb0da
-  rule_id: platform
+  rule_id: platform_root
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -13902,7 +13928,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
   sha256: 050bf92d2d3dd2d8719a396de112c14af681532cc8e1c29e3417ff23c8449e76
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -13911,7 +13937,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -13925,7 +13951,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.arch_004_g2_5_readiness
   path: src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
   sha256: 5dbd9f08065c726b8a425b63f7f70615b00db7d7227284030bbb2373f4638472
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -13934,7 +13960,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -13948,7 +13974,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.bootstrap_handoff
   path: src/ai_trading_system/platform/architecture/bootstrap_handoff.py
   sha256: 04f2d9d7fb274f0907afaaf7e504aa8a148f6e311a4a329fb9c9eb0e8dae4570
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -13957,7 +13983,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -13971,7 +13997,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.callback_migration
   path: src/ai_trading_system/platform/architecture/callback_migration.py
   sha256: b09f41324414fa8e382c6a6c5c30e3f072fc1e89ffc29ffdf0d03e9bf4944ef4
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -13980,7 +14006,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -13994,7 +14020,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.cli_contract
   path: src/ai_trading_system/platform/architecture/cli_contract.py
   sha256: 46d8955c85c8821683d05fd692008f2218aef973a160cadbe271df9b4e755b02
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14003,7 +14029,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14017,7 +14043,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.dependency_gate
   path: src/ai_trading_system/platform/architecture/dependency_gate.py
   sha256: a06a13cb25038fb009e736249887577f8f234794856cf355268d82ab9e489a97
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14026,7 +14052,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14040,7 +14066,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.deprecation
   path: src/ai_trading_system/platform/architecture/deprecation.py
   sha256: 7e4c9ee89bd82ba6f7a4d2444908fc38deb5b35d29b02fdc9c00385968464bfd
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14049,7 +14075,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14063,7 +14089,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.devex
   path: src/ai_trading_system/platform/architecture/devex.py
   sha256: 12bd07e53bdf8c88d279bf80abdcd483ef9619c63c55b8ff0abb9cac0b792820
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14072,7 +14098,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14086,7 +14112,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.parallel_control
   path: src/ai_trading_system/platform/architecture/parallel_control.py
   sha256: d4a53fa3c25dc7de54b3819048c2651fb4349b6da1e470b9749fdc07ee5e83a6
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14095,7 +14121,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14109,7 +14135,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_dispatch
   path: src/ai_trading_system/platform/architecture/parallel_control_dispatch.py
   sha256: e444526e6bdaf15a6b6efd84eea1851ae239d2f2c04face162c5d8bf1cbdcf26
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14118,7 +14144,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14132,7 +14158,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_kernel
   path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py
   sha256: d51d429927f01c4283a97a26cba10e7382b75540a737f3806eb01982e0e461b2
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14141,7 +14167,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14155,7 +14181,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_scheduler
   path: src/ai_trading_system/platform/architecture/parallel_control_scheduler.py
   sha256: 14fa26079e5a8e3b5ae10599fef4691da0d7b09bcb9b2533e9606816c58b731e
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14164,7 +14190,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14178,7 +14204,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.scaffold
   path: src/ai_trading_system/platform/architecture/scaffold.py
   sha256: f6df60d5fac025ec7224d3048c9e2887bc610bde7ca7249ecb532efb9d723d03
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14187,7 +14213,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14201,7 +14227,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.supervised_automation
   path: src/ai_trading_system/platform/architecture/supervised_automation.py
   sha256: 4895f821433683a68dca3407445f1abbc37a9783f1db0865bac19aa8c41e27be
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14210,7 +14236,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14224,7 +14250,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.task_portfolio_normalization
   path: src/ai_trading_system/platform/architecture/task_portfolio_normalization.py
   sha256: 7cc728ff9adde611d012a08046e519602767aa86add7f01ac32cea5a98896d6d
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14233,7 +14259,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14247,7 +14273,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.task_registry_shadow
   path: src/ai_trading_system/platform/architecture/task_registry_shadow.py
   sha256: 51bf9e29da99d108982e4abb14bc3d3ffe35b7d6545146cf9577efbceaf144f6
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14256,7 +14282,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14270,7 +14296,7 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.wave_readiness
   path: src/ai_trading_system/platform/architecture/wave_readiness.py
   sha256: f2de65dc84a40b60f720243d31ac38d2cd4f59a51b720545c1a41c07bd8f4cea
-  rule_id: platform
+  rule_id: platform_architecture
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14279,7 +14305,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: architecture_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14293,7 +14319,7 @@ modules:
 - module_id: src.ai_trading_system.platform.artifacts.__init__
   path: src/ai_trading_system/platform/artifacts/__init__.py
   sha256: 2dd437cbb9918836bd05e297300e3c46158fd46f96f3603d625f3ef8de0348ee
-  rule_id: platform
+  rule_id: platform_artifacts
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14302,7 +14328,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: artifact_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14316,7 +14342,7 @@ modules:
 - module_id: src.ai_trading_system.platform.artifacts.validation_session
   path: src/ai_trading_system/platform/artifacts/validation_session.py
   sha256: 5d301ad10646bcede4f3e589839cc4d9c16ba83d6047d6d8e272cfd4dbc4a038
-  rule_id: platform
+  rule_id: platform_artifacts
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14325,7 +14351,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: artifact_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14339,7 +14365,7 @@ modules:
 - module_id: src.ai_trading_system.platform.artifacts.writer
   path: src/ai_trading_system/platform/artifacts/writer.py
   sha256: bebb16cecbd9d9e1059c68b9874b088aecaa2c4e888eb980391445b9f4341e82
-  rule_id: platform
+  rule_id: platform_artifacts
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14348,7 +14374,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: artifact_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14362,7 +14388,7 @@ modules:
 - module_id: src.ai_trading_system.platform.config.__init__
   path: src/ai_trading_system/platform/config/__init__.py
   sha256: b2948462d66e13f042344307fd804e5ce685883043074bd9e51083dce763656f
-  rule_id: platform
+  rule_id: platform_config
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14371,7 +14397,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: config_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14385,7 +14411,7 @@ modules:
 - module_id: src.ai_trading_system.platform.config.market_regimes
   path: src/ai_trading_system/platform/config/market_regimes.py
   sha256: d27e73cfd917e9a601860bc18ba2c1085e97c47b12a0e8c740158822d9fdf3ec
-  rule_id: platform
+  rule_id: platform_config
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14394,7 +14420,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: config_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14408,7 +14434,7 @@ modules:
 - module_id: src.ai_trading_system.platform.config.resolver
   path: src/ai_trading_system/platform/config/resolver.py
   sha256: e3d138aec5dc7556e41a15b893537ff4d948c02f696ee9b5e4c902e839475169
-  rule_id: platform
+  rule_id: platform_config
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14417,7 +14443,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: config_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14431,7 +14457,7 @@ modules:
 - module_id: src.ai_trading_system.platform.operations.__init__
   path: src/ai_trading_system/platform/operations/__init__.py
   sha256: fb4c80e3928c39f87e3290d35902353f5c0c8b93c508d8a3f5ecd91e9f6d9a0a
-  rule_id: platform
+  rule_id: platform_operations
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14440,7 +14466,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: operations_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14454,7 +14480,7 @@ modules:
 - module_id: src.ai_trading_system.platform.operations.periodic_consumer_migration
   path: src/ai_trading_system/platform/operations/periodic_consumer_migration.py
   sha256: 877629883ebd259c31eaaf687cf0834fc15b16e6776946c471d0769255c4f37e
-  rule_id: platform
+  rule_id: platform_operations
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14463,7 +14489,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: operations_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14477,7 +14503,7 @@ modules:
 - module_id: src.ai_trading_system.platform.operations.periodic_control
   path: src/ai_trading_system/platform/operations/periodic_control.py
   sha256: 3eb1892e187c28f98a47ecb5a361ff6a81bcbf5c1db6903161cfc753ea9bd3f3
-  rule_id: platform
+  rule_id: platform_operations
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14486,7 +14512,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: operations_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14500,7 +14526,7 @@ modules:
 - module_id: src.ai_trading_system.platform.operations.runtime_control
   path: src/ai_trading_system/platform/operations/runtime_control.py
   sha256: b4bc48f95fb75ee7e6952ce9f1f0267be423edd2070f2be34c494a73de40deef
-  rule_id: platform
+  rule_id: platform_operations
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -14509,7 +14535,7 @@ modules:
     artifact_owner: platform_io
     runtime_owner: platform_operations
   layer: platform
-  category: platform_services
+  category: operations_platform_services
   public_contract: true
   deprecation_status: active
   test_globs:
@@ -14522,123 +14548,158 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.reporting.__init__
   path: src/ai_trading_system/platform/reporting/__init__.py
-  sha256: e49d05e1a54d5a53fbab683cccd03b242ba7309cd830a1c7bdc731c5dfdfe6c3
-  rule_id: platform
-  owner_profile: platform
+  sha256: 72a573bc79e8d98a77d884ca0f30e42976e75c6e148a47761306754cc462ad44
+  rule_id: platform_reporting
+  owner_profile: reporting
   owners:
-    code_owner: platform_engineering
-    policy_owner: architecture_governance
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
     data_owner: data_governance
-    artifact_owner: platform_io
-    runtime_owner: platform_operations
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
   layer: platform
-  category: platform_services
+  category: reporting_services
   public_contract: true
   deprecation_status: active
   test_globs:
-  - tests/test_arch_004c_*.py
-  - tests/test_arch_004e_*.py
-  - tests/test_arch_005*.py
+  - tests/test_arch_004f3_*.py
+  - tests/test_arch_004g3_*.py
+  - tests/test_reader_brief*.py
+  - tests/test_report*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
+  - report-validation
   shared_integration: false
 - module_id: src.ai_trading_system.platform.reporting.audit_index
   path: src/ai_trading_system/platform/reporting/audit_index.py
   sha256: 3e1bfa40b20969be366e04c709d6a59e2795872b6742dcc45934f0dfafe7dbef
-  rule_id: platform
-  owner_profile: platform
+  rule_id: platform_reporting
+  owner_profile: reporting
   owners:
-    code_owner: platform_engineering
-    policy_owner: architecture_governance
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
     data_owner: data_governance
-    artifact_owner: platform_io
-    runtime_owner: platform_operations
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
   layer: platform
-  category: platform_services
+  category: reporting_services
   public_contract: true
   deprecation_status: active
   test_globs:
-  - tests/test_arch_004c_*.py
-  - tests/test_arch_004e_*.py
-  - tests/test_arch_005*.py
+  - tests/test_arch_004f3_*.py
+  - tests/test_arch_004g3_*.py
+  - tests/test_reader_brief*.py
+  - tests/test_report*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
+  - report-validation
   shared_integration: false
 - module_id: src.ai_trading_system.platform.reporting.inventory
   path: src/ai_trading_system/platform/reporting/inventory.py
   sha256: 9add76e2a2b6046432a2542594d0f15bd20d90960ae35a88d72554f81082fe12
-  rule_id: platform
-  owner_profile: platform
+  rule_id: platform_reporting
+  owner_profile: reporting
   owners:
-    code_owner: platform_engineering
-    policy_owner: architecture_governance
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
     data_owner: data_governance
-    artifact_owner: platform_io
-    runtime_owner: platform_operations
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
   layer: platform
-  category: platform_services
+  category: reporting_services
   public_contract: true
   deprecation_status: active
   test_globs:
-  - tests/test_arch_004c_*.py
-  - tests/test_arch_004e_*.py
-  - tests/test_arch_005*.py
+  - tests/test_arch_004f3_*.py
+  - tests/test_arch_004g3_*.py
+  - tests/test_reader_brief*.py
+  - tests/test_report*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
+  - report-validation
   shared_integration: false
 - module_id: src.ai_trading_system.platform.reporting.owner_daily
   path: src/ai_trading_system/platform/reporting/owner_daily.py
-  sha256: 6b4a64f110ac156f555ef9e2ca6affade0da51b921cf4f3681e2e341b11f6a6f
-  rule_id: platform
-  owner_profile: platform
+  sha256: ed302e3e5c9a0d6efdaea89bf0954514bfc8f5adf0d0987da2d0efc5b7637b67
+  rule_id: platform_reporting
+  owner_profile: reporting
   owners:
-    code_owner: platform_engineering
-    policy_owner: architecture_governance
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
     data_owner: data_governance
-    artifact_owner: platform_io
-    runtime_owner: platform_operations
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
   layer: platform
-  category: platform_services
+  category: reporting_services
   public_contract: true
   deprecation_status: active
   test_globs:
-  - tests/test_arch_004c_*.py
-  - tests/test_arch_004e_*.py
-  - tests/test_arch_005*.py
+  - tests/test_arch_004f3_*.py
+  - tests/test_arch_004g3_*.py
+  - tests/test_reader_brief*.py
+  - tests/test_report*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
+  - report-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.reporting.reader_brief_native
+  path: src/ai_trading_system/platform/reporting/reader_brief_native.py
+  sha256: e2f9a00c5c694a5fc672f46422c695c66cf522e03d18ce587ad79a8dfcb4070c
+  rule_id: platform_reporting
+  owner_profile: reporting
+  owners:
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
+    data_owner: data_governance
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
+  layer: platform
+  category: reporting_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004f3_*.py
+  - tests/test_arch_004g3_*.py
+  - tests/test_reader_brief*.py
+  - tests/test_report*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  - report-validation
   shared_integration: false
 - module_id: src.ai_trading_system.platform.reporting.research_review
   path: src/ai_trading_system/platform/reporting/research_review.py
   sha256: c6391c499fc0a124589f640f378600e6ba63c3b13daecc0cd06f352ff607c8dd
-  rule_id: platform
-  owner_profile: platform
+  rule_id: platform_reporting
+  owner_profile: reporting
   owners:
-    code_owner: platform_engineering
-    policy_owner: architecture_governance
+    code_owner: reporting_platform
+    policy_owner: reporting_governance
     data_owner: data_governance
-    artifact_owner: platform_io
-    runtime_owner: platform_operations
+    artifact_owner: reporting_governance
+    runtime_owner: reporting_operations
   layer: platform
-  category: platform_services
+  category: reporting_services
   public_contract: true
   deprecation_status: active
   test_globs:
-  - tests/test_arch_004c_*.py
-  - tests/test_arch_004e_*.py
-  - tests/test_arch_005*.py
+  - tests/test_arch_004f3_*.py
+  - tests/test_arch_004g3_*.py
+  - tests/test_reader_brief*.py
+  - tests/test_report*.py
   validation_tiers:
   - architecture-fitness
   - contract-validation
+  - report-validation
   shared_integration: false
 - module_id: src.ai_trading_system.platform.validation_trigger_provenance
   path: src/ai_trading_system/platform/validation_trigger_provenance.py
   sha256: 4cd2558ceadd8140a97cd04ab0ca66ab5224866cd2525d7b881b460063be6732
-  rule_id: platform
+  rule_id: platform_root
   owner_profile: platform
   owners:
     code_owner: platform_engineering
@@ -15594,7 +15655,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.reports.reader_brief
   path: src/ai_trading_system/reports/reader_brief.py
-  sha256: c7e984900be4826cf5621b63e26fd7e6c6f31efe633360cf611db1b954e05cdc
+  sha256: b2a089e8b4995f31e982f4a5b0ba9446038e1f617610db8ba04b1b0521b5ba8e
   rule_id: reports
   owner_profile: reporting
   owners:
@@ -18462,7 +18523,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_calendar
   path: src/ai_trading_system/trading_calendar.py
-  sha256: 7fcacf0610aeb4950152ffea078dc396ab0a7a7eeb6a63946c7d1ab6d3a7dccc
+  sha256: c819fd6f99fb3cc324a4ac518b95e13ecc236e3225619b8a013e3d0c5955a7fb
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

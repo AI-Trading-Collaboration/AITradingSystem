@@ -1,18 +1,19 @@
 schema_version: arch_004e_aggregate_shadow_index.v1
 status: SHADOW_COMPATIBILITY_PASS
 policy_id: arch_004e_devex_ownership_policy
-policy_sha256: f2c87368330a636bdc7b9a41d61611c3780bcd076bf1bcc04ae2165e54cc2efe
+policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 15
+fragment_count: 18
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
   current_exists: true
   current_sha256: 0ceffb31e018423b1f018fe94b9be0db1a92f5f3203fe58a86b669f5a8fc4dca
   fragment_root: config/architecture/fragments/reports
-  fragment_count: 4
+  fragment_count: 5
   fragment_paths:
+  - config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/reports/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/reports/owner_daily_brief.yaml
   - config/architecture/fragments/reports/report_audit_index.yaml
@@ -20,10 +21,11 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: 2e71c738ef7feb11f96d8c39726da22c6acb54bac8f5996d55dbd9727ce18311
+  current_sha256: c73b86119bbc410b6e5a915b76596622193c3a8d477198d1ff6be9bd817d3c42
   fragment_root: config/architecture/fragments/artifacts
-  fragment_count: 5
+  fragment_count: 6
   fragment_paths:
+  - config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/artifacts/arch_004g4_periodic_consumers.yaml
   - config/architecture/fragments/artifacts/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/artifacts/owner_daily_brief.yaml
@@ -32,16 +34,24 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: dc5d40445cde8a0365033b52e2b819ecc83cabbcf6fe149e988a0a31fb49378f
+  current_sha256: 974752e849010e995230a97761420e81e97e892076b8c9ab3aa522ce03111e61
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 5
+  fragment_count: 6
   fragment_paths:
+  - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/flows/owner_daily_brief.yaml
   - config/architecture/fragments/flows/report_audit_index.yaml
   - config/architecture/fragments/flows/research_review_pack.yaml
 fragments:
+- fragment_id: artifact.arch_004g3_reader_brief_native
+  fragment_kind: artifact
+  owner: reporting_platform
+  target_id: artifact_catalog
+  path: config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml
+  sha256: c310038c3bf26a237e351c2dd766a827c54fd13e20c112607e79662292735261
+  generated_source_of_truth_active: false
 - fragment_id: artifact.arch_004g4_periodic_consumers
   fragment_kind: artifact
   owner: system_operations
@@ -76,6 +86,13 @@ fragments:
   target_id: artifact_catalog
   path: config/architecture/fragments/artifacts/research_review_pack.yaml
   sha256: c3d13603584bda8c4467ac522b25ac3a9b2ded6ef90a36f201eb94f031187aa8
+  generated_source_of_truth_active: false
+- fragment_id: flow.arch_004g3_reader_brief_native
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
+  sha256: e6028884ab5509fb42a8df3920a824eaa6b40140ed1ff0c62547393a530b2007
   generated_source_of_truth_active: false
 - fragment_id: flow.arch_004g4_periodic_consumers
   fragment_kind: flow
@@ -118,6 +135,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/research_framework.yaml
   sha256: 08d5475487b66a1028b1efc771bb50826b8796ad87a962049f88383573177869
+  generated_source_of_truth_active: false
+- fragment_id: report.arch_004g3_reader_brief_native
+  fragment_kind: report
+  owner: reporting_platform
+  target_id: report_registry
+  path: config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml
+  sha256: 69e999b67c3609fb3340d31d6a9dcfe321ea3bc0ba1e5014efa8b776e593cbf2
   generated_source_of_truth_active: false
 - fragment_id: report.growth_tilt_candidate_family_closure
   fragment_kind: report

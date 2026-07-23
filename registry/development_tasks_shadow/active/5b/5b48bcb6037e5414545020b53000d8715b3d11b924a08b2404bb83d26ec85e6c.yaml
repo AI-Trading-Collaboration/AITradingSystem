@@ -12,7 +12,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: data platform owner；D0B1/S2已完成；等待当前Wave14 S0 PASS后与bounded G3并行推进D0B2
+  next_owner: data platform owner + architecture coordinator；D0B2 domain已完成，正在Wave14
+    S2 shared/formal validation；D0B3未授权
   requirement_refs:
   - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
@@ -21,23 +22,21 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-    与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A immutable
-    publication transaction与D0B1 canonical receipt/verifier、same-byte capture、actual
-    window、profile/as-of pointer、daily typed preflight均正式闭合；D0B2补market-calendar/coverage/gap/finite与download/publish/composite-manifest事务，D0B3才逐consumer授权。当前现场prices/rates/Marketstack
-    SHA已匹配manifest，但该状态不能证明下一次publication原子。
+    与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A/D0B1已闭合；D0B2现提供staged
+    immutable composite publication、完整文件级manifest、exact final-row→immediate-source
+    lineage、calendar/coverage/gap/finite gate与single-observation canonical binding。D0B3才逐consumer授权。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可重算DQ
-      execution receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report
-      bytes与source identity可重放；market-calendar freshness/区间coverage/内部缺口进入gate；system
-      flow/runbook/registry/catalog/tests同步。
+      receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report bytes与source
+      identity可重放；system flow/runbook/registry/catalog/tests同步。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1573
-    row_sha256: b640c04df895a237c04cce1fb8b350757353c0592289de5cb9169eaf9f712947
+    row_sha256: b55121120e162cf418e9675d02c8d8514a11d04dcb48b05e2bccb08e3ac8cce8
     cell_count: 8
     all_cells:
     - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
@@ -45,37 +44,39 @@ task_record:
       lineage
     - P0
     - IN_PROGRESS
-    - data platform owner；D0B1/S2已完成；等待当前Wave14 S0 PASS后与bounded G3并行推进D0B2
+    - data platform owner + architecture coordinator；D0B2 domain已完成，正在Wave14 S2 shared/formal
+      validation；D0B3未授权
     - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-      与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A immutable
-      publication transaction与D0B1 canonical receipt/verifier、same-byte capture、actual
-      window、profile/as-of pointer、daily typed preflight均正式闭合；D0B2补market-calendar/coverage/gap/finite与download/publish/composite-manifest事务，D0B3才逐consumer授权。当前现场prices/rates/Marketstack
-      SHA已匹配manifest，但该状态不能证明下一次publication原子。
+      与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A/D0B1已闭合；D0B2现提供staged
+      immutable composite publication、完整文件级manifest、exact final-row→immediate-source
+      lineage、calendar/coverage/gap/finite gate与single-observation canonical binding。D0B3才逐consumer授权。
     - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可重算DQ
-      execution receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report
-      bytes与source identity可重放；market-calendar freshness/区间coverage/内部缺口进入gate；system
-      flow/runbook/registry/catalog/tests同步。
-    - 2026-07-23：Wave13 closeout已推送，Wave14 S0.1正在建设；D0B2仍未进行manual assignment。Wave12
-      checksum-missing实例保持历史证据，当前SHA已匹配；D0B2仍需关闭非原子publication、composite binding、calendar/coverage/gap/finite缺口。consumer
-      cutover、ACL/crash durability继续false。
+      receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report bytes与source
+      identity可重放；system flow/runbook/registry/catalog/tests同步。
+    - 2026-07-24：phase-exit审计补齐legacy manifest current-generation semantic suffix/transaction唯一性、source
+      request-parameter deep snapshot，以及prices/secondary/manifest root-contained no-follow
+      capture与provider后复核；link、link-swap、manifest tamper和mutable mapping均fail closed且零publication。domain
+      focused/static PASS；当前仍等待Wave14 generated/formal/final Full，consumer cutover、ACL/crash
+      durability、production和broker继续false/none。
     raw_line: '|DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE|Data Foundation /
       immutable snapshots, canonical DQ evidence, lifecycle and lineage|P0|IN_PROGRESS|data
-      platform owner；D0B1/S2已完成；等待当前Wave14 S0 PASS后与bounded G3并行推进D0B2|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-      与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A immutable
-      publication transaction与D0B1 canonical receipt/verifier、same-byte capture、actual
-      window、profile/as-of pointer、daily typed preflight均正式闭合；D0B2补market-calendar/coverage/gap/finite与download/publish/composite-manifest事务，D0B3才逐consumer授权。当前现场prices/rates/Marketstack
-      SHA已匹配manifest，但该状态不能证明下一次publication原子。|canonical数据采用staged immutable snapshot
-      + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可重算DQ
-      execution receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report
-      bytes与source identity可重放；market-calendar freshness/区间coverage/内部缺口进入gate；system
-      flow/runbook/registry/catalog/tests同步。|2026-07-23：Wave13 closeout已推送，Wave14
-      S0.1正在建设；D0B2仍未进行manual assignment。Wave12 checksum-missing实例保持历史证据，当前SHA已匹配；D0B2仍需关闭非原子publication、composite
-      binding、calendar/coverage/gap/finite缺口。consumer cutover、ACL/crash durability继续false。|'
+      platform owner + architecture coordinator；D0B2 domain已完成，正在Wave14 S2 shared/formal
+      validation；D0B3未授权|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
+      与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A/D0B1已闭合；D0B2现提供staged
+      immutable composite publication、完整文件级manifest、exact final-row→immediate-source
+      lineage、calendar/coverage/gap/finite gate与single-observation canonical binding。D0B3才逐consumer授权。|canonical数据采用staged
+      immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可重算DQ
+      receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report bytes与source
+      identity可重放；system flow/runbook/registry/catalog/tests同步。|2026-07-24：phase-exit审计补齐legacy
+      manifest current-generation semantic suffix/transaction唯一性、source request-parameter
+      deep snapshot，以及prices/secondary/manifest root-contained no-follow capture与provider后复核；link、link-swap、manifest
+      tamper和mutable mapping均fail closed且零publication。domain focused/static PASS；当前仍等待Wave14
+      generated/formal/final Full，consumer cutover、ACL/crash durability、production和broker继续false/none。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b640c04df895a237c04cce1f
+  event_id: legacy-import-b55121120e162cf418e9675d
   task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -88,13 +89,16 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: data platform owner；D0B1/S2已完成；等待当前Wave14 S0 PASS后与bounded G3并行推进D0B2
-    notes: 2026-07-23：Wave13 closeout已推送，Wave14 S0.1正在建设；D0B2仍未进行manual assignment。Wave12
-      checksum-missing实例保持历史证据，当前SHA已匹配；D0B2仍需关闭非原子publication、composite binding、calendar/coverage/gap/finite缺口。consumer
-      cutover、ACL/crash durability继续false。
+    next_owner: data platform owner + architecture coordinator；D0B2 domain已完成，正在Wave14
+      S2 shared/formal validation；D0B3未授权
+    notes: 2026-07-24：phase-exit审计补齐legacy manifest current-generation semantic suffix/transaction唯一性、source
+      request-parameter deep snapshot，以及prices/secondary/manifest root-contained no-follow
+      capture与provider后复核；link、link-swap、manifest tamper和mutable mapping均fail closed且零publication。domain
+      focused/static PASS；当前仍等待Wave14 generated/formal/final Full，consumer cutover、ACL/crash
+      durability、production和broker继续false/none。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b640c04df895a237c04cce1fb8b350757353c0592289de5cb9169eaf9f712947
+  - sha256:b55121120e162cf418e9675d02c8d8514a11d04dcb48b05e2bccb08e3ac8cce8
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -102,24 +106,25 @@ projection:
   - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
   - P0
   - IN_PROGRESS
-  - data platform owner；D0B1/S2已完成；等待当前Wave14 S0 PASS后与bounded G3并行推进D0B2
+  - data platform owner + architecture coordinator；D0B2 domain已完成，正在Wave14 S2 shared/formal
+    validation；D0B3未授权
   - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-    与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A immutable
-    publication transaction与D0B1 canonical receipt/verifier、same-byte capture、actual
-    window、profile/as-of pointer、daily typed preflight均正式闭合；D0B2补market-calendar/coverage/gap/finite与download/publish/composite-manifest事务，D0B3才逐consumer授权。当前现场prices/rates/Marketstack
-    SHA已匹配manifest，但该状态不能证明下一次publication原子。
+    与 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。D0A/D0B1已闭合；D0B2现提供staged
+    immutable composite publication、完整文件级manifest、exact final-row→immediate-source
+    lineage、calendar/coverage/gap/finite gate与single-observation canonical binding。D0B3才逐consumer授权。
   - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；所有feature/score/backtest/report统一绑定可重算DQ
-    execution receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report
-    bytes与source identity可重放；market-calendar freshness/区间coverage/内部缺口进入gate；system
-    flow/runbook/registry/catalog/tests同步。
-  - 2026-07-23：Wave13 closeout已推送，Wave14 S0.1正在建设；D0B2仍未进行manual assignment。Wave12
-    checksum-missing实例保持历史证据，当前SHA已匹配；D0B2仍需关闭非原子publication、composite binding、calendar/coverage/gap/finite缺口。consumer
-    cutover、ACL/crash durability继续false。
+    receipt并在FAIL前零下游结果；policy/validator/invocation/input/manifest/report bytes与source
+    identity可重放；system flow/runbook/registry/catalog/tests同步。
+  - 2026-07-24：phase-exit审计补齐legacy manifest current-generation semantic suffix/transaction唯一性、source
+    request-parameter deep snapshot，以及prices/secondary/manifest root-contained no-follow
+    capture与provider后复核；link、link-swap、manifest tamper和mutable mapping均fail closed且零publication。domain
+    focused/static PASS；当前仍等待Wave14 generated/formal/final Full，consumer cutover、ACL/crash
+    durability、production和broker继续false/none。
   docs_links:
   - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   terminal: false
-  raw_row_sha256: b640c04df895a237c04cce1fb8b350757353c0592289de5cb9169eaf9f712947
+  raw_row_sha256: b55121120e162cf418e9675d02c8d8514a11d04dcb48b05e2bccb08e3ac8cce8
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 07345bd56fdc52f513859b29f488df71d1c80a312f77c2640274173157942b97
+fragment_checksum: 52af99695ab36ca242bab6395b3ebf4fb7f63b1432a8cf5d9f61bd1135f2a1fa

@@ -95,14 +95,14 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1613885
-    sha256: 49069dfab695ef37ea537a61ed0117a7c20108b037a3f5a1a905bba87c55821a
-    row_count: 406
+    byte_count: 1614495
+    sha256: e19e36b7a1077f93e546eddd8089cad0bad4e6a2150fb45cf58820315186ae9d
+    row_count: 407
     final_newline: true
-    task_id_order_sha256: b27b6f05d676a8394a4cbeb407ed271c29778fb4875ef52ed6d301739b94f30b
-    row_checksum_order_sha256: 738e33ddc476a574b38388ef9971051edb6879617e01cbcf0f5e179ec4afce03
+    task_id_order_sha256: 14d11c2a899ff3cb3c7b9c8e27f815b2850bd6adb53a847c0baf9ea275d7f251
+    row_checksum_order_sha256: ae63e87b06c0d4f2a48d34a122cbbad806a72f0a9087d7e48bfbe6227d98882f
     task_row_newline_counts:
-      LF: 406
+      LF: 407
   - source: completed
     path: docs/task_register_completed.md
     byte_count: 1076765
@@ -113,10 +113,10 @@ inventory:
     row_checksum_order_sha256: 58e0727debe71377962c43e2b1e39e6cb8fbb1cd98fe66f2a0780f4abbc3d8e5
     task_row_newline_counts:
       LF: 487
-  active_task_count: 406
+  active_task_count: 407
   completed_task_count: 487
-  total_task_count: 893
-  unique_task_count: 893
+  total_task_count: 894
+  unique_task_count: 894
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
@@ -126,14 +126,14 @@ inventory:
     DEFERRED: 1
     DONE: 475
     DROPPED: 12
-    IN_PROGRESS: 5
+    IN_PROGRESS: 6
     PROPOSED: 13
     READY: 1
     VALIDATING: 267
-  task_id_set_sha256: c9ac4d9f9d45e58fae4f41ffaaafcba1c3b68ca41f4aac7c470a8346bc9fe498
+  task_id_set_sha256: e2f1ed0da4c69cd44b1e5c99c475fd2cd18d5f99a6d6e41b2367a4334dd8758a
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: f0adb67c075c8470180ec2ffb7c059110330f0ca3eab578b1f6b6561f7bb9e3a
-  docs_link_set_sha256: 1463e7202bf4db17e38135438b77187e9b4592ed21caf8c097614a1e9d542ca2
+  owner_set_sha256: a36c71625818ec9c45bcdc93fe367f5f255e5c07101cb28d60a08d0f2bb44382
+  docs_link_set_sha256: 5acbebca436c560583fab77f98bb01e3680714dee9afba5ee35d48c3cccc019f
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -761,7 +761,7 @@ inventory:
   - task_id: ARCH-004
     source: active
     line_number: 1569
-    row_sha256: 1227e6a0c89ff47e9015031e89d6a92485980fc73039d445c633aaaa92017a66
+    row_sha256: b2beded1a511171e9f6def1db822ba588f7030c4f67e7142930db43c06e8c0eb
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -775,7 +775,7 @@ inventory:
   - task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
     source: active
     line_number: 1571
-    row_sha256: e559f01b26f34bd58185aa098e56334ef6d0ec62e9b98bc3b62cf235e1e34f02
+    row_sha256: 88e747fc1540c92ef61a622866e490270cbf65b96e601683910b7abd35557681
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -789,7 +789,7 @@ inventory:
   - task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
     source: active
     line_number: 1573
-    row_sha256: b640c04df895a237c04cce1fb8b350757353c0592289de5cb9169eaf9f712947
+    row_sha256: b55121120e162cf418e9675d02c8d8514a11d04dcb48b05e2bccb08e3ac8cce8
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -2931,14 +2931,14 @@ inventory:
   - task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
     source: active
     line_number: 1937
-    row_sha256: dd04fd3108c04bfeaa902f5ebb656c31cb33633803cc1d2566609c893bea621f
+    row_sha256: 26152331a7ac37acdc97f113ba6853a10b2015f52ae93d9c1209c58a252a2daa
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
-  - task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+  - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     source: active
     line_number: 1938
-    row_sha256: 58c2dbd90cd2ac64e970313186a01a1be936627641a191e62261adb3f34c004c
+    row_sha256: 4e0c71aec7b48f09e1b3916d218fb4e5a4c6d7108dc536a481a27f6f65d8c5de
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -2974,6 +2974,13 @@ inventory:
     source: active
     line_number: 1950
     row_sha256: d8294ed8e4ad2aea19418990e24f3ae6befdb32d2f58ee060cc6e567aedd95d8
+    cell_count: 8
+    field_projection: first_eight_cells_legacy_v1
+    history_completeness: LEGACY_HISTORY_PARTIAL
+  - task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+    source: active
+    line_number: 1956
+    row_sha256: 0ad03e55d0197cf07233c6838116f6e3d663cf343aaffd1e827d283297779f52
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -6388,11 +6395,11 @@ inventory:
     history_completeness: LEGACY_HISTORY_PARTIAL
 consumer_characterization:
   status: PASS_CHARACTERIZED
-  consumer_count: 129
+  consumer_count: 130
   runtime_consumer_count: 9
-  test_consumer_count: 118
+  test_consumer_count: 119
   script_consumer_count: 2
-  consumer_set_sha256: 8ffcff8fb61cb7d5ffb91fd2e289c33b4d73a375559719d0dce3def9d37001a2
+  consumer_set_sha256: f90080922697fa57c7e25522e241d6b6f3fd76ddd22d5c8f811c77c39430fdd2
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
     role: runtime
@@ -7108,7 +7115,7 @@ consumer_characterization:
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 6
+    reference_count: 8
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
     role: test
@@ -7116,6 +7123,12 @@ consumer_characterization:
     - docs/task_register.md
     - docs/task_register_completed.md
     reference_count: 2
+    migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+  - path: tests/test_arch_004_wave14_scope_amendment.py
+    role: test
+    targets:
+    - docs/task_register.md
+    reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
   - path: tests/test_arch_005_bootstrap_handoff.py
     role: test
@@ -7225,4 +7238,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 5a40a77863d9aa749fa7b3ec87bc809a45bb44e6efcd9631d67536402b7ec0e7
+baseline_checksum: c1d8415cae27d6caeb8993a569ee1aa0082c329f68aff46e5ebde35c2c76ddbc

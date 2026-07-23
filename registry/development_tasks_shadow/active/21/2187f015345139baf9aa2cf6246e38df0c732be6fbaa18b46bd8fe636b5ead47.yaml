@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  title: null
+  domain: Architecture / shared-checkout writer and operations lease guard
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: architecture control-plane owner + operations automation owner；建议Wave14
+    closeout后、Wave15 assignment前排期
+  requirement_refs:
+  - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
+    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
+    ownership无法约束跨task writer。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 建立workspace identity、exact owned/shared intent、atomic lease/heartbeat/expiry/replay与pre-import/pre-provider
+      gate；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache
+      mutation；互斥domain仍可并行；不读取known-unrelated bytes；focused/architecture/contract/integration/reproducibility/Full
+      PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1938
+    row_sha256: 4e0c71aec7b48f09e1b3916d218fb4e5a4c6d7108dc536a481a27f6f65d8c5de
+    cell_count: 8
+    all_cells:
+    - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+    - Architecture / shared-checkout writer and operations lease guard
+    - P0
+    - PROPOSED
+    - architecture control-plane owner + operations automation owner；建议Wave14 closeout后、Wave15
+      assignment前排期
+    - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
+      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
+      ownership无法约束跨task writer。
+    - 建立workspace identity、exact owned/shared intent、atomic lease/heartbeat/expiry/replay与pre-import/pre-provider
+      gate；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache
+      mutation；互斥domain仍可并行；不读取known-unrelated bytes；focused/architecture/contract/integration/reproducibility/Full
+      PASS。
+    - 2026-07-23：风险登记为P0/PROPOSED；先做S0 policy/characterization和S1 narrow local guard，不与Wave14扩大实现混跑，不授权S5、task
+      source cutover、production或broker。
+    raw_line: '|ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD|Architecture / shared-checkout
+      writer and operations lease guard|P0|PROPOSED|architecture control-plane owner
+      + operations automation owner；建议Wave14 closeout后、Wave15 assignment前排期|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
+      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
+      ownership无法约束跨task writer。|建立workspace identity、exact owned/shared intent、atomic
+      lease/heartbeat/expiry/replay与pre-import/pre-provider gate；重叠writer恰好一个成功，dirty/unattributed或active
+      mutation lease下daily零provider/cache mutation；互斥domain仍可并行；不读取known-unrelated
+      bytes；focused/architecture/contract/integration/reproducibility/Full PASS。|2026-07-23：风险登记为P0/PROPOSED；先做S0
+      policy/characterization和S1 narrow local guard，不与Wave14扩大实现混跑，不授权S5、task source
+      cutover、production或broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4e0c71aec7b48f09e1b3916d
+  task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: architecture control-plane owner + operations automation owner；建议Wave14
+      closeout后、Wave15 assignment前排期
+    notes: 2026-07-23：风险登记为P0/PROPOSED；先做S0 policy/characterization和S1 narrow local
+      guard，不与Wave14扩大实现混跑，不授权S5、task source cutover、production或broker。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4e0c71aec7b48f09e1b3916d218fb4e5a4c6d7108dc536a481a27f6f65d8c5de
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  - Architecture / shared-checkout writer and operations lease guard
+  - P0
+  - PROPOSED
+  - architecture control-plane owner + operations automation owner；建议Wave14 closeout后、Wave15
+    assignment前排期
+  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
+    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
+    ownership无法约束跨task writer。
+  - 建立workspace identity、exact owned/shared intent、atomic lease/heartbeat/expiry/replay与pre-import/pre-provider
+    gate；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache
+    mutation；互斥domain仍可并行；不读取known-unrelated bytes；focused/architecture/contract/integration/reproducibility/Full
+    PASS。
+  - 2026-07-23：风险登记为P0/PROPOSED；先做S0 policy/characterization和S1 narrow local guard，不与Wave14扩大实现混跑，不授权S5、task
+    source cutover、production或broker。
+  docs_links:
+  - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  terminal: false
+  raw_row_sha256: 4e0c71aec7b48f09e1b3916d218fb4e5a4c6d7108dc536a481a27f6f65d8c5de
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 92ffa28979ae1d148e616cae5eb36e7213027f74e975841afa8644b0ce9ed1ea

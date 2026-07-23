@@ -11,9 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture coordinator；Wave13 closeout已推送，正在完成Wave14 S0 reusable infrastructure与exact
-    manifests/ownership/readiness；S0 PASS后才由coordinator manual assignment D0B2+bounded
-    G3
+  next_owner: architecture coordinator；Wave14 D0B2+bounded G3 domain实现已完成，当前由coordinator执行S2
+    shared integration/formal exit
   requirement_refs:
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
@@ -22,61 +21,59 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。G2.4、bootstrap
-    handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；closeout
-    commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`且已普通推送。当前以B/C/D非自引用模型建设Wave14
-    S0；旧G2.5/Wave12 evidence不是本波dispatch authority，D0B2/G3仍未分配，G5继续等待G3共享contract稳定。
+    handoff、ARCH-005 S0～S4B、G2.5、Wave12、Wave13及Wave14 S0均已PASS；D0B2 staged immutable
+    composite publication/exact source allocation与G3首个native reporting slice已完成独立审计。历史S0
+    carrier=`39a3ea730`保持不可变；真实daily发现的`cli_direct` profile丢失以单独coordinator scope
+    amendment治理。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 保持既有控制面、domain迁移与安全边界；依次完成Wave14 S0、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H
-      closeout；每波最多两个互不重叠domain worker、shared-path单写、一次final Full，并通过cadence parity、clean-clone、reproducibility、parallel
-      pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
+    text: 保持既有控制面、domain迁移与安全边界；本波刷新flow/catalog/register/generated manifests/compatibility/deprecation并通过combined
+      focused、architecture、contract、integration/reproducibility和唯一final Full；随后顺序为Wave15
+      D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H。每波最多两个互斥domain worker、shared-path单写；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1569
-    row_sha256: 1227e6a0c89ff47e9015031e89d6a92485980fc73039d445c633aaaa92017a66
+    row_sha256: b2beded1a511171e9f6def1db822ba588f7030c4f67e7142930db43c06e8c0eb
     cell_count: 8
     all_cells:
     - ARCH-004
     - Architecture / post-freeze architecture v2 after TRADING-2438N
     - P0
     - IN_PROGRESS
-    - architecture coordinator；Wave13 closeout已推送，正在完成Wave14 S0 reusable infrastructure与exact
-      manifests/ownership/readiness；S0 PASS后才由coordinator manual assignment D0B2+bounded
-      G3
+    - architecture coordinator；Wave14 D0B2+bounded G3 domain实现已完成，当前由coordinator执行S2
+      shared integration/formal exit
     - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。G2.4、bootstrap
-      handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；closeout
-      commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`且已普通推送。当前以B/C/D非自引用模型建设Wave14
-      S0；旧G2.5/Wave12 evidence不是本波dispatch authority，D0B2/G3仍未分配，G5继续等待G3共享contract稳定。
-    - 保持既有控制面、domain迁移与安全边界；依次完成Wave14 S0、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H
-      closeout；每波最多两个互不重叠domain worker、shared-path单写、一次final Full，并通过cadence parity、clean-clone、reproducibility、parallel
-      pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
-    - 2026-07-23：Wave13 N1 application=`18 DONE / 12 DROPPED`，Wave13 closeout queue=`405
-      active / 487 completed / 892 total`；登记本任务后Wave14 carrier C generated state=`406
-      active / 487 completed / 893 total`。formal gate与closeout push均PASS。current phase=`WAVE14_S0_1_REUSABLE_READINESS_INFRA`，`next_slice_unblocked=false`；长期顺序：Wave14
-      S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C cadence异步积累。Strategy
-      A关闭，B/C和新研究需独立显式授权。
+      handoff、ARCH-005 S0～S4B、G2.5、Wave12、Wave13及Wave14 S0均已PASS；D0B2 staged immutable
+      composite publication/exact source allocation与G3首个native reporting slice已完成独立审计。历史S0
+      carrier=`39a3ea730`保持不可变；真实daily发现的`cli_direct` profile丢失以单独coordinator scope
+      amendment治理。
+    - 保持既有控制面、domain迁移与安全边界；本波刷新flow/catalog/register/generated manifests/compatibility/deprecation并通过combined
+      focused、architecture、contract、integration/reproducibility和唯一final Full；随后顺序为Wave15
+      D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H。每波最多两个互斥domain worker、shared-path单写；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+    - 2026-07-23：D0B2审计后修复secondary retirement、relative output root与canonical INVALID隐式retry，data
+      combined focused=`156 passed`且静态PASS；G3审计无P0/P1，native/generic=`1/9`。current
+      phase=`WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`；generated/formal/final
+      Full尚未完成。Strategy A关闭，B/C和新研究仍需独立显式授权。
     raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|IN_PROGRESS|architecture
-      coordinator；Wave13 closeout已推送，正在完成Wave14 S0 reusable infrastructure与exact manifests/ownership/readiness；S0
-      PASS后才由coordinator manual assignment D0B2+bounded G3|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。G2.4、bootstrap
-      handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；closeout
-      commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`且已普通推送。当前以B/C/D非自引用模型建设Wave14
-      S0；旧G2.5/Wave12 evidence不是本波dispatch authority，D0B2/G3仍未分配，G5继续等待G3共享contract稳定。|保持既有控制面、domain迁移与安全边界；依次完成Wave14
-      S0、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H closeout；每波最多两个互不重叠domain worker、shared-path单写、一次final
-      Full，并通过cadence parity、clean-clone、reproducibility、parallel pytest和architecture
-      fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。|2026-07-23：Wave13
-      N1 application=`18 DONE / 12 DROPPED`，Wave13 closeout queue=`405 active / 487
-      completed / 892 total`；登记本任务后Wave14 carrier C generated state=`406 active /
-      487 completed / 893 total`。formal gate与closeout push均PASS。current phase=`WAVE14_S0_1_REUSABLE_READINESS_INFRA`，`next_slice_unblocked=false`；长期顺序：Wave14
-      S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C cadence异步积累。Strategy
-      A关闭，B/C和新研究需独立显式授权。|'
+      coordinator；Wave14 D0B2+bounded G3 domain实现已完成，当前由coordinator执行S2 shared integration/formal
+      exit|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。G2.4、bootstrap
+      handoff、ARCH-005 S0～S4B、G2.5、Wave12、Wave13及Wave14 S0均已PASS；D0B2 staged immutable
+      composite publication/exact source allocation与G3首个native reporting slice已完成独立审计。历史S0
+      carrier=`39a3ea730`保持不可变；真实daily发现的`cli_direct` profile丢失以单独coordinator scope
+      amendment治理。|保持既有控制面、domain迁移与安全边界；本波刷新flow/catalog/register/generated manifests/compatibility/deprecation并通过combined
+      focused、architecture、contract、integration/reproducibility和唯一final Full；随后顺序为Wave15
+      D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H。每波最多两个互斥domain worker、shared-path单写；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。|2026-07-23：D0B2审计后修复secondary
+      retirement、relative output root与canonical INVALID隐式retry，data combined focused=`156
+      passed`且静态PASS；G3审计无P0/P1，native/generic=`1/9`。current phase=`WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`；generated/formal/final
+      Full尚未完成。Strategy A关闭，B/C和新研究仍需独立显式授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-1227e6a0c89ff47e9015031e
+  event_id: legacy-import-b2beded1a511171e9f6def1d
   task_id: ARCH-004
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -89,18 +86,15 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture coordinator；Wave13 closeout已推送，正在完成Wave14 S0 reusable
-      infrastructure与exact manifests/ownership/readiness；S0 PASS后才由coordinator manual
-      assignment D0B2+bounded G3
-    notes: 2026-07-23：Wave13 N1 application=`18 DONE / 12 DROPPED`，Wave13 closeout
-      queue=`405 active / 487 completed / 892 total`；登记本任务后Wave14 carrier C generated
-      state=`406 active / 487 completed / 893 total`。formal gate与closeout push均PASS。current
-      phase=`WAVE14_S0_1_REUSABLE_READINESS_INFRA`，`next_slice_unblocked=false`；长期顺序：Wave14
-      S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C cadence异步积累。Strategy
-      A关闭，B/C和新研究需独立显式授权。
+    next_owner: architecture coordinator；Wave14 D0B2+bounded G3 domain实现已完成，当前由coordinator执行S2
+      shared integration/formal exit
+    notes: 2026-07-23：D0B2审计后修复secondary retirement、relative output root与canonical
+      INVALID隐式retry，data combined focused=`156 passed`且静态PASS；G3审计无P0/P1，native/generic=`1/9`。current
+      phase=`WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`；generated/formal/final
+      Full尚未完成。Strategy A关闭，B/C和新研究仍需独立显式授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:1227e6a0c89ff47e9015031e89d6a92485980fc73039d445c633aaaa92017a66
+  - sha256:b2beded1a511171e9f6def1db822ba588f7030c4f67e7142930db43c06e8c0eb
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -108,26 +102,24 @@ projection:
   - Architecture / post-freeze architecture v2 after TRADING-2438N
   - P0
   - IN_PROGRESS
-  - architecture coordinator；Wave13 closeout已推送，正在完成Wave14 S0 reusable infrastructure与exact
-    manifests/ownership/readiness；S0 PASS后才由coordinator manual assignment D0B2+bounded
-    G3
+  - architecture coordinator；Wave14 D0B2+bounded G3 domain实现已完成，当前由coordinator执行S2
+    shared integration/formal exit
   - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。G2.4、bootstrap
-    handoff、ARCH-005 S0～S4B、G2.5、Wave12 G4A+D0B1/S2及Wave13 N1 formal gate均已PASS；closeout
-    commit=`e2da21894ea8e8921a86c6c1b48d7b191f0f142c`且已普通推送。当前以B/C/D非自引用模型建设Wave14
-    S0；旧G2.5/Wave12 evidence不是本波dispatch authority，D0B2/G3仍未分配，G5继续等待G3共享contract稳定。
-  - 保持既有控制面、domain迁移与安全边界；依次完成Wave14 S0、D0B2/G3、D0B3/G4B、G5、G6 characterization与G7/H
-    closeout；每波最多两个互不重叠domain worker、shared-path单写、一次final Full，并通过cadence parity、clean-clone、reproducibility、parallel
-    pytest和architecture fitness；全程不得静默改变数据质量、PIT、阈值、回测、权重、promotion、paper-shadow、production或broker。
-  - 2026-07-23：Wave13 N1 application=`18 DONE / 12 DROPPED`，Wave13 closeout queue=`405
-    active / 487 completed / 892 total`；登记本任务后Wave14 carrier C generated state=`406
-    active / 487 completed / 893 total`。formal gate与closeout push均PASS。current phase=`WAVE14_S0_1_REUSABLE_READINESS_INFRA`，`next_slice_unblocked=false`；长期顺序：Wave14
-    S0→D0B2+G3→Wave15 D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H；G4C cadence异步积累。Strategy
-    A关闭，B/C和新研究需独立显式授权。
+    handoff、ARCH-005 S0～S4B、G2.5、Wave12、Wave13及Wave14 S0均已PASS；D0B2 staged immutable
+    composite publication/exact source allocation与G3首个native reporting slice已完成独立审计。历史S0
+    carrier=`39a3ea730`保持不可变；真实daily发现的`cli_direct` profile丢失以单独coordinator scope
+    amendment治理。
+  - 保持既有控制面、domain迁移与安全边界；本波刷新flow/catalog/register/generated manifests/compatibility/deprecation并通过combined
+    focused、architecture、contract、integration/reproducibility和唯一final Full；随后顺序为Wave15
+    D0B3+G4B first consumer/G3 close→G5+D0C/D1→G6→G7/H。每波最多两个互斥domain worker、shared-path单写；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+  - 2026-07-23：D0B2审计后修复secondary retirement、relative output root与canonical INVALID隐式retry，data
+    combined focused=`156 passed`且静态PASS；G3审计无P0/P1，native/generic=`1/9`。current phase=`WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT`；generated/formal/final
+    Full尚未完成。Strategy A关闭，B/C和新研究仍需独立显式授权。
   docs_links:
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 1227e6a0c89ff47e9015031e89d6a92485980fc73039d445c633aaaa92017a66
+  raw_row_sha256: b2beded1a511171e9f6def1db822ba588f7030c4f67e7142930db43c06e8c0eb
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 2f714a0d2ce4c50070bf139e92c46a35298a05f1119ff17b9ec88511e561c389
+fragment_checksum: 046eca98637f26e634f910fabb455ab2d8c6a7b1ff3543c3bdbfd43bae8a3f36
