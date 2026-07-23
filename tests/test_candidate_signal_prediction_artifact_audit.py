@@ -5,7 +5,10 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from ai_trading_system import first_layer_proxy_challenger_experiments
+from ai_trading_system import (
+    candidate_signal_prediction_artifact_audit,
+    first_layer_proxy_challenger_experiments,
+)
 from ai_trading_system.candidate_signal_prediction_artifact_audit import (
     run_candidate_signal_prediction_artifact_audit_pack,
 )
@@ -47,6 +50,25 @@ def strict_data_quality_calls(
     return calls
 
 
+@pytest.fixture(autouse=True)
+def incompatible_baseline_prediction_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> Path:
+    prediction_path = tmp_path / "baseline_source" / "first_layer_composer_v2_predictions.csv"
+    prediction_path.parent.mkdir(parents=True)
+    prediction_path.write_text(
+        "date,prediction\n2026-06-26,0.25\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        candidate_signal_prediction_artifact_audit,
+        "BASELINE_COMPOSER_PREDICTION_PATH",
+        prediction_path,
+    )
+    return prediction_path
+
+
 def test_candidate_artifact_audit_marks_inconclusive_rows_permanent(
     tmp_path: Path,
     strict_data_quality_calls: list[dict[str, object]],
@@ -85,6 +107,7 @@ def test_candidate_artifact_audit_marks_inconclusive_rows_permanent(
 def test_candidate_artifact_audit_baseline_source_is_schema_incompatible(
     tmp_path: Path,
     strict_data_quality_calls: list[dict[str, object]],
+    incompatible_baseline_prediction_path: Path,
 ) -> None:
     payload = run_candidate_signal_prediction_artifact_audit_pack(
         output_root=tmp_path / "outputs",
@@ -98,6 +121,12 @@ def test_candidate_artifact_audit_baseline_source_is_schema_incompatible(
     assert by_type["candidate_signal_spec"]["gap_category"] == "never_generated"
     assert by_type["candidate_signal_series"]["gap_category"] == "schema_incompatible"
     assert by_type["candidate_prediction_artifact"]["gap_category"] == "schema_incompatible"
+    assert by_type["candidate_prediction_artifact"]["evidence_paths"] == [
+        str(incompatible_baseline_prediction_path)
+    ]
+    assert by_type["candidate_prediction_artifact"]["schema_status"] == (
+        "source_model_predictions_exist_but_lack_candidate_id_and_" "candidate_signal_series_schema"
+    )
     assert by_type["registry_reference"]["gap_category"] == "registry_missing_reference"
     assert "first_layer_composer_v2_predictions.csv" in (
         by_type["candidate_prediction_artifact"]["evidence_paths"][0]

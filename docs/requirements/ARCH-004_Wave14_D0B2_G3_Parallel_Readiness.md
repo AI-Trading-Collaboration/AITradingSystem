@@ -343,6 +343,21 @@ Exact superset 由 S0.2 policy 绑定；domain manifest命中任一 coordinator-
 
 ## 进展记录
 
+- 2026-07-24：C5的两项combined focused blocker已在主工作区完成最小修复。Task register恢复并由既有
+  回归锁定scope amendment exact id；candidate audit对全部整文件测试autouse一个tmp
+  schema-incompatible baseline CSV并显式替换读取路径，不再因主工作区是否存在untracked prediction
+  artifact而改变结果。两文件组合=`6 passed`，Ruff/Black/diff-check均PASS；没有修改production
+  runner或放宽schema断言。下一步仍须重新生成task registry、DevEx/deprecation/compatibility fixed
+  point，并在新的clean candidate上从combined focused起重跑全部pre-Full门。
+- 2026-07-24：failure-fix candidate C5
+  `bfe55f44a13c3611108591e983071c794f435cea`、tree
+  `4368b5f8fe98fb786072b4c9c8f863c7a61cf8b7`在sparse formal clone的expanded combined
+  focused真实fail closed为`474 passed / 2 failed / 1 skipped / 119.06s`。第一项是coordinator更新
+  task-register时再次遗漏scope amendment exact id=`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`；现已恢复，
+  后续必须用回归阻止压缩语义时再丢失。第二项说明candidate-audit测试仍隐式依赖主工作区未跟踪的
+  baseline prediction artifact，clean clone中真实状态变成`never_generated`而非预期的
+  `schema_incompatible`；必须补显式deterministic fixture，不能放宽断言。C5将由新的fixed-point
+  candidate取代；全部combined/static/formal tiers重新PASS前仍不得执行replacement Full。
 - 2026-07-24：initial Full 的 clean-clone fixture/root-writer 修复已完成本地交叉验证。Research
   campaign通过可注入prices/rates/DQ report root保留production默认与strict DQ；candidate audit、
   first-layer regenerate/reconciliation、two-layer boundary改用deterministic tmp/upstream fixtures；
