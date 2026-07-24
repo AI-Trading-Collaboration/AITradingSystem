@@ -95,14 +95,14 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1615373
-    sha256: 01eda775477da32e964887090bccab99e82f21c9dedef6a24076422f46f68103
-    row_count: 407
+    byte_count: 1617330
+    sha256: aba8b7e24dec72c3c656dd3ca409aceaafc8472a3385aa997c770722765fe19e
+    row_count: 408
     final_newline: true
-    task_id_order_sha256: 19f98a178ffcf55f89f77905715b9ede77a7a621f019da3c89ad7e6669254c79
-    row_checksum_order_sha256: 722d064250d3ef60e671a7f953e5adc253be2c435d3a4ba2ab5513ed975ec2dc
+    task_id_order_sha256: 86a92c01d17869973944d40772b258f4cc7abb8c4a9c02e27e77028f8b45842b
+    row_checksum_order_sha256: a02c0b24c98c5a1c0bd7abc43311fd0733f7bbf0b3b048d6d9431aefcdb1fa14
     task_row_newline_counts:
-      LF: 407
+      LF: 408
   - source: completed
     path: docs/task_register_completed.md
     byte_count: 1077943
@@ -113,10 +113,10 @@ inventory:
     row_checksum_order_sha256: 47304a12d954293ce583ec0a5a773de8e185fb45b61e67062d9b24f26d5e1471
     task_row_newline_counts:
       LF: 488
-  active_task_count: 407
+  active_task_count: 408
   completed_task_count: 488
-  total_task_count: 895
-  unique_task_count: 895
+  total_task_count: 896
+  unique_task_count: 896
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
@@ -129,11 +129,11 @@ inventory:
     IN_PROGRESS: 6
     PROPOSED: 13
     READY: 1
-    VALIDATING: 267
-  task_id_set_sha256: c1be7ee4153885661ddeb97ffffdb06642cd8796f1f52ce95ce35e329e8c06cc
+    VALIDATING: 268
+  task_id_set_sha256: 8a6a4dedef8df1873f01d9f5203f7a80af9ca70ad688605252254dc8dd29285b
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 537da2edad9f1db8437cfa377efe4385a4f489d5c2400e12d5155f8d91d6cb6a
-  docs_link_set_sha256: 397db1053b298065b48fb0f2b8c8412043dae374cb80b15cf195ba038be319c9
+  owner_set_sha256: 2cf0729b6f8ba5aa5adbcd64c8134847721803e4e404df7464f7bbad89e8a910
+  docs_link_set_sha256: 645488e343cf0cdf767ee95bafea16c9811d69ca73f0a69bc4591aaf5368c515
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -2980,7 +2980,14 @@ inventory:
   - task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
     source: active
     line_number: 1988
-    row_sha256: adc1687edb7794bc3a4552cc5ce089a052fcbfbdb5ef44eedacc5bb5e0a46696
+    row_sha256: a56b309fe755b4e03b75132c94be896cd61d92fa63bcaf2e5d5baf56fbfd9020
+    cell_count: 8
+    field_projection: first_eight_cells_legacy_v1
+    history_completeness: LEGACY_HISTORY_PARTIAL
+  - task_id: ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
+    source: active
+    line_number: 1989
+    row_sha256: cf2546af84213263258c8e9d5ac74682c7f82221540ffe037a79ef2ea099da85
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7245,4 +7252,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 3f74db659530aabe6da80161108e97785ba6b851368d7ba75a215706519499db
+baseline_checksum: a49643e8d818dd3b8229614c590ea65c75f3bbeb3c26afdcfbd1077df07e99f2

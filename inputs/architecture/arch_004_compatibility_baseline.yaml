@@ -19787,6 +19787,24 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
         failure_basis: PYTEST_FAIL
         parent_preflight_status: PASS
         source_artifacts_rewritten: false
+      formal_attempts_append_only:
+      - attempt_id: eng_val_010_architecture_1
+        tier: architecture-fitness
+        status: FAIL
+        passed: 574
+        failed: 2
+        elapsed_seconds: 94.02
+        tested_commit: f0aaa851ce1d4129a57d9c56a32fc2a7830701dd
+        tested_tree: 84ddb7be0114fa27f20f61e387dd1cbb2c09f467
+        artifact:
+          path: outputs/validation_runtime/architecture-fitness_20260724T015144Z/test_runtime_summary.json
+        failure_codes:
+        - S0_DOCUMENT_DRIFT
+        - GIT_BRANCH_UNAVAILABLE
+        direct_fixes:
+        - refresh_arch_005_task_registry_authority
+        - retain_main_branch_in_exact_clone
+        workaround_used: false
   supersession:
     superseded_by_phase: OPS-067
     scope: ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH
@@ -19900,6 +19918,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
   - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
   - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
   - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
   - scripts/build_validation_parent_run_import.py
   - scripts/run_validation_tier.py
   - src/ai_trading_system/cli_commands/reports.py
@@ -20001,7 +20020,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 662c63c365262bf0b3c1f594ab27d5ad08ca6e1a3f94512126748f83b8c2519a
     hash_normalization: git_eol_lf
   - path: docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
-    sha256: eaec44ee08c396ad75558c8ca9dfd435a3d5fca380b9fd5c190d35bec2df755c
+    sha256: 4529d8ea90debe1f4bd29b53d087943af631b4a18fd7bbb1fe2c7b8d834e3751
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
     sha256: ea93132c7aa3238086348162398319c384491233a749ee8f9cf8033bb8fd49e6
@@ -20058,7 +20077,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 4eb0830ba2cd09269ae5c70912e27f1113fc83788b0de2c00320cc325dddcee7
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 104628fadd7d9d1be03ff2908ead95c3149d1f3da369fb9a94407c6d30fd1d02
+    sha256: 1ce1702718ef6aa0481349c19cc91141ce4bb6a777d85f229c0553f119c8bcc6
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -20070,10 +20089,10 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 2613e9220a1142c7f32e726672adc1e6a6c99b34c2a2f29aa280699bc3c62190
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: b58c33e4aa08ac68929a395a284608bf473b78892cc21fb062fb15dacafecc72
+    sha256: 1617921ec86ca5918c09a74c260fd1a3cf6a215fe5cfae03e1079dd4de38f7ac
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 63168a90d03d2df571156170aae7684c32f27ad7fedf4b7beb5b72f202392e64
+    sha256: dfea3a41f63f65952501036b2f18393ab1b83fd12b629397e9bd69440d08c524
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_applied_closeout.json
     sha256: f8ea35968cfc0ad206904009ac0f78cf75b4eadba8acf87d326a4459469be386
@@ -20089,6 +20108,9 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
     sha256: fd812dddb6bd72d3811a5d94ef009d03ee642e72d972d327aaf754bee2a0f9a7
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+    sha256: 628533293e1b2648c9966d2021a4302af84f2af635b787233ab4239d0a96e38a
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
     sha256: 511beddc64a52d304cbe6ad8bfec89f2dddc43db8bde276cf8fd303c18409030
@@ -20112,7 +20134,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: cd61079eb75b92c859403314c12195b7044873d0eee44e49e10bc36253d63779
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
-    sha256: 6863c6a0934245f08640ca08612d73a0a5fb21313be845910e86f7a47ef50348
+    sha256: 49f5af5c551f5bd0a2e1a40c1538fbe32bb822099a54ecbfe090db5a090d52ea
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
     sha256: a23af0687fb17f46543bfabbf2368ad675314a2bec801ec5d93dbd50eb5ab847
@@ -20307,7 +20329,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: bafa4e0f5bf6013626aeb8ff94c7e90da4f0c2319d0583cf3d49c42b91b7e61f
+    sha256: c44c73ae1f95e9f0eb9e38cd223e39250f9c437623a5f75319e42293a0ef68b7
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_wave14_d0b2_g3_readiness.py
     sha256: effe2292ddef5a9d7aae930ad0510948bb0aa645650a4686aed506103deb4efb

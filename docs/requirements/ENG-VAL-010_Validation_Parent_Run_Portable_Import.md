@@ -146,3 +146,11 @@ import validator 在 pytest 启动前：
   `failure_basis=PYTEST_FAIL`、`locator_mode=portable_import_v1`，未读取 source locator
   指向的废弃 clone。状态转 `VALIDATING`，仍须完成 authority refresh、formal gates 与
   OPS-067 Full。
+- 2026-07-24：首个 exact candidate `f0aaa851ce1d4129a57d9c56a32fc2a7830701dd`
+  / tree `84ddb7be0114fa27f20f61e387dd1cbb2c09f467` 的 combined focused
+  `178 passed / 134.45s`，print-only portable parent provenance `PASS`。随后
+  architecture-fitness 为 `574 passed / 2 failed / 94.02s`：一项真实暴露
+  `docs/task_register.md` 新行尚未刷新 ARCH-005 task-registry baseline/shadow，另一项是
+  validation clone 使用 detached HEAD 而无法满足 Wave14 branch evidence。两项均按原设计直接
+  修复：刷新 generated task authority，并让新 exact clone 保持 `main` 分支；不删除失败证据、
+  不放宽 gate、不以重跑覆盖。

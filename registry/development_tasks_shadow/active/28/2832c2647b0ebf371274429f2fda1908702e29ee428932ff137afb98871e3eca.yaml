@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
+  title: null
+  domain: Engineering validation / failed Full parent-run portable import and managed
+    locator portability
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: OPS-067 integration coordinator 刷新 generated authority，完成 formal gates
+    与 parent-bound Full
+  requirement_refs:
+  - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
+    validator、runner/provenance import variant、future repository-relative managed
+    locators与文档已完成；combined focused 148、Ruff/Black/strict mypy PASS。真实 copied parent
+    的原 summary/profile SHA 与 bytes 不变，proof=`c7ad6fdc...0af4`，parent preflight PASS；仍须在最终
+    exact commit/tree 完成 architecture/contract/integration/reproducibility/Full 与
+    post-Full freshness。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 提供 versioned `validation_parent_run_import.v1` builder/strict validator；原
+      summary/profile bytes 与 SHA/size 不变；proof 精确绑定 source locators、run id、source
+      commit、当前 repository-relative fixed siblings 与 production_effect=none；provenance
+      记录 import manifest path/hash；tamper、duplicate/non-finite、wrong run/suffix、traversal、symlink/outside-root、hash/size/commit
+      drift 全部在 pytest 前 fail closed；direct legacy binding保持兼容；新 default managed runtime
+      locators 使用 repository-relative path；focused/static/architecture/contract/integration/reproducibility/Full
+      PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1989
+    row_sha256: cf2546af84213263258c8e9d5ac74682c7f82221540ffe037a79ef2ea099da85
+    cell_count: 8
+    all_cells:
+    - ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
+    - Engineering validation / failed Full parent-run portable import and managed
+      locator portability
+    - P0
+    - VALIDATING
+    - OPS-067 integration coordinator 刷新 generated authority，完成 formal gates 与 parent-bound
+      Full
+    - 详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
+      validator、runner/provenance import variant、future repository-relative managed
+      locators与文档已完成；combined focused 148、Ruff/Black/strict mypy PASS。真实 copied parent
+      的原 summary/profile SHA 与 bytes 不变，proof=`c7ad6fdc...0af4`，parent preflight PASS；仍须在最终
+      exact commit/tree 完成 architecture/contract/integration/reproducibility/Full
+      与 post-Full freshness。
+    - 提供 versioned `validation_parent_run_import.v1` builder/strict validator；原 summary/profile
+      bytes 与 SHA/size 不变；proof 精确绑定 source locators、run id、source commit、当前 repository-relative
+      fixed siblings 与 production_effect=none；provenance 记录 import manifest path/hash；tamper、duplicate/non-finite、wrong
+      run/suffix、traversal、symlink/outside-root、hash/size/commit drift 全部在 pytest
+      前 fail closed；direct legacy binding保持兼容；新 default managed runtime locators 使用
+      repository-relative path；focused/static/architecture/contract/integration/reproducibility/Full
+      PASS。
+    - 2026-07-24：`IN_PROGRESS -> VALIDATING`。真实 summary=`f49fe012...e2e7`/26687、profile=`80ac1117...114b`/13231643、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`并显式`portable_import_v1`。未访问废弃
+      source clone，禁止任何路径 workaround；`production_effect=none`。
+    raw_line: '|ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT|Engineering validation
+      / failed Full parent-run portable import and managed locator portability|P0|VALIDATING|OPS-067
+      integration coordinator 刷新 generated authority，完成 formal gates 与 parent-bound
+      Full|详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
+      validator、runner/provenance import variant、future repository-relative managed
+      locators与文档已完成；combined focused 148、Ruff/Black/strict mypy PASS。真实 copied parent
+      的原 summary/profile SHA 与 bytes 不变，proof=`c7ad6fdc...0af4`，parent preflight PASS；仍须在最终
+      exact commit/tree 完成 architecture/contract/integration/reproducibility/Full
+      与 post-Full freshness。|提供 versioned `validation_parent_run_import.v1` builder/strict
+      validator；原 summary/profile bytes 与 SHA/size 不变；proof 精确绑定 source locators、run
+      id、source commit、当前 repository-relative fixed siblings 与 production_effect=none；provenance
+      记录 import manifest path/hash；tamper、duplicate/non-finite、wrong run/suffix、traversal、symlink/outside-root、hash/size/commit
+      drift 全部在 pytest 前 fail closed；direct legacy binding保持兼容；新 default managed runtime
+      locators 使用 repository-relative path；focused/static/architecture/contract/integration/reproducibility/Full
+      PASS。|2026-07-24：`IN_PROGRESS -> VALIDATING`。真实 summary=`f49fe012...e2e7`/26687、profile=`80ac1117...114b`/13231643、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`并显式`portable_import_v1`。未访问废弃
+      source clone，禁止任何路径 workaround；`production_effect=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cf2546af84213263258c8e9d
+  task_id: ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: OPS-067 integration coordinator 刷新 generated authority，完成 formal gates
+      与 parent-bound Full
+    notes: 2026-07-24：`IN_PROGRESS -> VALIDATING`。真实 summary=`f49fe012...e2e7`/26687、profile=`80ac1117...114b`/13231643、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`并显式`portable_import_v1`。未访问废弃
+      source clone，禁止任何路径 workaround；`production_effect=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cf2546af84213263258c8e9d5ac74682c7f82221540ffe037a79ef2ea099da85
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
+  - Engineering validation / failed Full parent-run portable import and managed locator
+    portability
+  - P0
+  - VALIDATING
+  - OPS-067 integration coordinator 刷新 generated authority，完成 formal gates 与 parent-bound
+    Full
+  - 详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
+    validator、runner/provenance import variant、future repository-relative managed
+    locators与文档已完成；combined focused 148、Ruff/Black/strict mypy PASS。真实 copied parent
+    的原 summary/profile SHA 与 bytes 不变，proof=`c7ad6fdc...0af4`，parent preflight PASS；仍须在最终
+    exact commit/tree 完成 architecture/contract/integration/reproducibility/Full 与
+    post-Full freshness。
+  - 提供 versioned `validation_parent_run_import.v1` builder/strict validator；原 summary/profile
+    bytes 与 SHA/size 不变；proof 精确绑定 source locators、run id、source commit、当前 repository-relative
+    fixed siblings 与 production_effect=none；provenance 记录 import manifest path/hash；tamper、duplicate/non-finite、wrong
+    run/suffix、traversal、symlink/outside-root、hash/size/commit drift 全部在 pytest 前
+    fail closed；direct legacy binding保持兼容；新 default managed runtime locators 使用 repository-relative
+    path；focused/static/architecture/contract/integration/reproducibility/Full PASS。
+  - 2026-07-24：`IN_PROGRESS -> VALIDATING`。真实 summary=`f49fe012...e2e7`/26687、profile=`80ac1117...114b`/13231643、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`并显式`portable_import_v1`。未访问废弃
+    source clone，禁止任何路径 workaround；`production_effect=none`。
+  docs_links:
+  - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
+  terminal: false
+  raw_row_sha256: cf2546af84213263258c8e9d5ac74682c7f82221540ffe037a79ef2ea099da85
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 44bdb00da18294aeb16d6acb67638c5c74b31e412acce336b44ab176d094617e
