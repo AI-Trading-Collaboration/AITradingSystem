@@ -57,10 +57,10 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-OPS_068_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_08025c617e6f6cdac306"
-OPS_068_CURRENT_REPOSITORY_COUNTS = {
-    "python_module_count": 1010,
-    "python_test_file_count": 1176,
+ARCH_005S4D_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_c7fcd16ba4d186a2e149"
+ARCH_005S4D_CURRENT_REPOSITORY_COUNTS = {
+    "python_module_count": 1011,
+    "python_test_file_count": 1177,
     "direct_writer_current_count": 856,
 }
 OPS_068_CURRENT_DOCS_CONFIG_REFERENCE_COUNTS = dict(
@@ -108,9 +108,9 @@ def test_g0_policy_freezes_lifecycle_targets_and_removal_safety() -> None:
 def test_g0_inventory_is_deterministic_and_blocks_every_removal() -> None:
     inventory = scan_deprecation_inventory(load_deprecation_policy())
     surfaces = {item.surface_id: item for item in inventory.surfaces}
-    repository_counts = OPS_068_CURRENT_REPOSITORY_COUNTS
+    repository_counts = ARCH_005S4D_CURRENT_REPOSITORY_COUNTS
 
-    assert inventory.inventory_id == OPS_068_CURRENT_INVENTORY_ID
+    assert inventory.inventory_id == ARCH_005S4D_CURRENT_INVENTORY_ID
     assert inventory.python_module_count == repository_counts["python_module_count"]
     assert inventory.python_test_file_count == repository_counts["python_test_file_count"]
     assert inventory.direct_writer_baseline_count == 894

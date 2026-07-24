@@ -21466,6 +21466,7 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
   - inputs/architecture/arch_004e_architecture_fitness.yaml
   - inputs/architecture/arch_004e_module_manifest.yaml
   - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
   - README.md
@@ -21474,6 +21475,7 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
   - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/platform/architecture/parallel_control_kernel.py
   - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
   - tests/test_ops_daily_finalization.py
   - tests/test_ops_daily.py
   supersession:
@@ -21521,7 +21523,10 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: be4c7b5efa75df9a4df0bb2ce5c8ed0af747fd208ba2e2d9ae6f93c29bb86daf
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: f551879a5b37fba9d4d22bb3ae1e59f8c5054f55b0057a065f1bc3db7927f563
+    sha256: 311d2187a05f44e4072625b8b71eac575264d0f898a9fb85ab137949535fadef
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 8c65c76d68f856fa63c5922c89289712aa8f21182a09159e3f0179bcce482a54
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
     sha256: 0ba06b7525bbc000c8a4cca34fbc68e90820ee069fa8286047bc7acc7397faa0
@@ -21551,7 +21556,10 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: de56e3f6cda233ccdf7f74ef5e837d03e0a2663a31bc8983029db30cd110c880
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: 0dde9dd265aefd742c0e88f20337dec11ecd5e78560cce895347b5e5e062ac37
+    sha256: 582ffda9af37b8c5f219accfcc05e2064cea746590daa1b1c80e55b1ac4a45f6
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 153ac7554cdeb5ac3e139ff21ee49b45b73df894e0913f576fecc0d2a98f2e9a
     hash_normalization: git_eol_lf
   - path: tests/test_arch_005_s4d_checkout_guard.py
     sha256: c8778402b0663ea993772a03d4c98d837cf9ab9ddd21a8f45ff07d2dd10665d1
@@ -21572,6 +21580,11 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
       passed: 576
       failed: 15
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260724T133821Z/test_runtime_summary.json
+    architecture_fitness_inventory_refresh:
+      status: FAIL_REMEDIATING
+      passed: 592
+      failed: 1
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260724T135414Z/test_runtime_summary.json
     architecture_fitness:
       status: PENDING
     contract_validation:

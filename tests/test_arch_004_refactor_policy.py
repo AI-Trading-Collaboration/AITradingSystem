@@ -3884,6 +3884,7 @@ def test_arch_005s4d_is_append_only_current_hash_authority() -> None:
         "inputs/architecture/arch_004e_architecture_fitness.yaml",
         "inputs/architecture/arch_004e_module_manifest.yaml",
         "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
         "inputs/architecture/arch_005_task_registry_baseline.yaml",
         "inputs/architecture/arch_005_task_shadow_index.yaml",
         (
@@ -3894,6 +3895,7 @@ def test_arch_005s4d_is_append_only_current_hash_authority() -> None:
         "src/ai_trading_system/platform/architecture/__init__.py",
         "src/ai_trading_system/platform/architecture/parallel_control_kernel.py",
         "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
         "tests/test_ops_daily.py",
         "tests/test_ops_daily_finalization.py",
     }
