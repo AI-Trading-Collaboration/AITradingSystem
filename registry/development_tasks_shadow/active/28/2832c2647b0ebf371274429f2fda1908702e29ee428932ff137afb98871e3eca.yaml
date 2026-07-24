@@ -12,8 +12,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: OPS-067 integration coordinator：完成 evidence-only post-Full、push；随 parent
-    canonical daily acceptance 一并归档
+  next_owner: OPS-067 integration coordinator：完成最终 evidence exact-tree repeat 与 push；随
+    parent canonical daily acceptance 一并归档
   requirement_refs:
   - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
   module_ids: []
@@ -23,8 +23,8 @@ task_record:
     validator、runner/provenance import variant、future repository-relative managed
     locators与文档已完成；真实 copied parent summary/profile/proof bytes 不变。exact candidate
     `d92eae35` 的 focused/static、architecture/contract/integration/reproducibility
-    与 parent-bound Full 全部 PASS；当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture
-    test。
+    与 parent-bound Full 全部 PASS；commit `633d04a1` 的 evidence-only post-Full gates
+    亦 PASS。当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture test。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 提供 versioned `validation_parent_run_import.v1` builder/strict validator；原
@@ -40,7 +40,7 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1989
-    row_sha256: 4db626360ecfe4694db0a2f7bff7ef61dd407e2cecec8bdea679ddecdb8d806d
+    row_sha256: ac737b4bdfd2ad08e947ab863259a08fa32236b68f83b47b181bb5245f7dcc45
     cell_count: 8
     all_cells:
     - ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
@@ -48,14 +48,14 @@ task_record:
       locator portability
     - P0
     - VALIDATING
-    - OPS-067 integration coordinator：完成 evidence-only post-Full、push；随 parent canonical
-      daily acceptance 一并归档
+    - OPS-067 integration coordinator：完成最终 evidence exact-tree repeat 与 push；随 parent
+      canonical daily acceptance 一并归档
     - 详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
       validator、runner/provenance import variant、future repository-relative managed
       locators与文档已完成；真实 copied parent summary/profile/proof bytes 不变。exact candidate
       `d92eae35` 的 focused/static、architecture/contract/integration/reproducibility
-      与 parent-bound Full 全部 PASS；当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture
-      test。
+      与 parent-bound Full 全部 PASS；commit `633d04a1` 的 evidence-only post-Full gates
+      亦 PASS。当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture test。
     - 提供 versioned `validation_parent_run_import.v1` builder/strict validator；原 summary/profile
       bytes 与 SHA/size 不变；proof 精确绑定 source locators、run id、source commit、当前 repository-relative
       fixed siblings 与 production_effect=none；provenance 记录 import manifest path/hash；tamper、duplicate/non-finite、wrong
@@ -63,29 +63,32 @@ task_record:
       前 fail closed；direct legacy binding保持兼容；新 default managed runtime locators 使用
       repository-relative path；focused/static/architecture/contract/integration/reproducibility/Full
       PASS。
-    - 2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`和`portable_import_v1`。状态保持
-      `VALIDATING` 直到 post-Full/push 与 parent acceptance，未访问废弃 source clone，`production_effect=none`。
+    - 2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；post-Full
+      formal gates PASS。状态保持 `VALIDATING` 直到 final repeat/push 与 parent acceptance，未访问废弃
+      source clone，`production_effect=none`。
     raw_line: '|ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT|Engineering validation
       / failed Full parent-run portable import and managed locator portability|P0|VALIDATING|OPS-067
-      integration coordinator：完成 evidence-only post-Full、push；随 parent canonical daily
-      acceptance 一并归档|详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
+      integration coordinator：完成最终 evidence exact-tree repeat 与 push；随 parent canonical
+      daily acceptance 一并归档|详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
       validator、runner/provenance import variant、future repository-relative managed
       locators与文档已完成；真实 copied parent summary/profile/proof bytes 不变。exact candidate
       `d92eae35` 的 focused/static、architecture/contract/integration/reproducibility
-      与 parent-bound Full 全部 PASS；当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture
-      test。|提供 versioned `validation_parent_run_import.v1` builder/strict validator；原
-      summary/profile bytes 与 SHA/size 不变；proof 精确绑定 source locators、run id、source
-      commit、当前 repository-relative fixed siblings 与 production_effect=none；provenance
-      记录 import manifest path/hash；tamper、duplicate/non-finite、wrong run/suffix、traversal、symlink/outside-root、hash/size/commit
-      drift 全部在 pytest 前 fail closed；direct legacy binding保持兼容；新 default managed runtime
-      locators 使用 repository-relative path；focused/static/architecture/contract/integration/reproducibility/Full
-      PASS。|2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`和`portable_import_v1`。状态保持
-      `VALIDATING` 直到 post-Full/push 与 parent acceptance，未访问废弃 source clone，`production_effect=none`。|'
+      与 parent-bound Full 全部 PASS；commit `633d04a1` 的 evidence-only post-Full gates
+      亦 PASS。当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture test。|提供 versioned
+      `validation_parent_run_import.v1` builder/strict validator；原 summary/profile
+      bytes 与 SHA/size 不变；proof 精确绑定 source locators、run id、source commit、当前 repository-relative
+      fixed siblings 与 production_effect=none；provenance 记录 import manifest path/hash；tamper、duplicate/non-finite、wrong
+      run/suffix、traversal、symlink/outside-root、hash/size/commit drift 全部在 pytest
+      前 fail closed；direct legacy binding保持兼容；新 default managed runtime locators 使用
+      repository-relative path；focused/static/architecture/contract/integration/reproducibility/Full
+      PASS。|2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；post-Full
+      formal gates PASS。状态保持 `VALIDATING` 直到 final repeat/push 与 parent acceptance，未访问废弃
+      source clone，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-4db626360ecfe4694db0a2f7
+  event_id: legacy-import-ac737b4bdfd2ad08e947ab86
   task_id: ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -98,13 +101,14 @@ initial_event:
   to_status: VALIDATING
   payload:
     priority: P0
-    next_owner: OPS-067 integration coordinator：完成 evidence-only post-Full、push；随
-      parent canonical daily acceptance 一并归档
-    notes: 2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`和`portable_import_v1`。状态保持
-      `VALIDATING` 直到 post-Full/push 与 parent acceptance，未访问废弃 source clone，`production_effect=none`。
+    next_owner: OPS-067 integration coordinator：完成最终 evidence exact-tree repeat 与
+      push；随 parent canonical daily acceptance 一并归档
+    notes: 2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；post-Full
+      formal gates PASS。状态保持 `VALIDATING` 直到 final repeat/push 与 parent acceptance，未访问废弃
+      source clone，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:4db626360ecfe4694db0a2f7bff7ef61dd407e2cecec8bdea679ddecdb8d806d
+  - sha256:ac737b4bdfd2ad08e947ab863259a08fa32236b68f83b47b181bb5245f7dcc45
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -113,25 +117,26 @@ projection:
     portability
   - P0
   - VALIDATING
-  - OPS-067 integration coordinator：完成 evidence-only post-Full、push；随 parent canonical
-    daily acceptance 一并归档
+  - OPS-067 integration coordinator：完成最终 evidence exact-tree repeat 与 push；随 parent
+    canonical daily acceptance 一并归档
   - 详见 `docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md`。builder/strict
     validator、runner/provenance import variant、future repository-relative managed
     locators与文档已完成；真实 copied parent summary/profile/proof bytes 不变。exact candidate
     `d92eae35` 的 focused/static、architecture/contract/integration/reproducibility
-    与 parent-bound Full 全部 PASS；当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture
-    test。
+    与 parent-bound Full 全部 PASS；commit `633d04a1` 的 evidence-only post-Full gates
+    亦 PASS。当前不归档，避免移动 active fragment 并改动 Full-sensitive architecture test。
   - 提供 versioned `validation_parent_run_import.v1` builder/strict validator；原 summary/profile
     bytes 与 SHA/size 不变；proof 精确绑定 source locators、run id、source commit、当前 repository-relative
     fixed siblings 与 production_effect=none；provenance 记录 import manifest path/hash；tamper、duplicate/non-finite、wrong
     run/suffix、traversal、symlink/outside-root、hash/size/commit drift 全部在 pytest 前
     fail closed；direct legacy binding保持兼容；新 default managed runtime locators 使用 repository-relative
     path；focused/static/architecture/contract/integration/reproducibility/Full PASS。
-  - 2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；binding保留`PYTEST_FAIL`和`portable_import_v1`。状态保持
-    `VALIDATING` 直到 post-Full/push 与 parent acceptance，未访问废弃 source clone，`production_effect=none`。
+  - 2026-07-24：replacement Full=`7115 passed / 4 skipped / 1176.47s`；summary=`33cb2f5f...4435`/26749、profile=`6e8c076c...5b87`/13345435、proof=`c7ad6fdc...0af4`/1165；post-Full
+    formal gates PASS。状态保持 `VALIDATING` 直到 final repeat/push 与 parent acceptance，未访问废弃
+    source clone，`production_effect=none`。
   docs_links:
   - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
   terminal: false
-  raw_row_sha256: 4db626360ecfe4694db0a2f7bff7ef61dd407e2cecec8bdea679ddecdb8d806d
+  raw_row_sha256: ac737b4bdfd2ad08e947ab863259a08fa32236b68f83b47b181bb5245f7dcc45
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 17b2cf3966a0d184d6a13a4a6910e030ea5d349861b34847e527e26d06df4ace
+fragment_checksum: 0b9bc7134ace8f09d104d04c08aad7d79be4cec8b8dd9cda2a9e1c7421b9f571

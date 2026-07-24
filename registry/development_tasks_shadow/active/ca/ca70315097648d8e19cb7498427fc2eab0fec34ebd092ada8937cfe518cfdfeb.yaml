@@ -11,8 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: operations owner：工程 post-Full gates 与 push 稳定后，只用 `aits ops daily-run`
-    执行 canonical provider-ready 验收
+  next_owner: operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits
+    ops daily-run` 执行 canonical provider-ready 验收
   requirement_refs:
   - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
   module_ids: []
@@ -22,8 +22,9 @@ task_record:
     bounded transient replace retry、strict finalization 与 portable parent import 均已实现；exact
     candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
     passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-    / 1176.47s`。当前只剩 evidence-only post-Full、push、无并发 writer 复核及 canonical daily acceptance；DATA-GOV
-    D0C power-loss durability 独立跟踪。
+    / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
+    freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
+    daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
@@ -38,21 +39,22 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1988
-    row_sha256: a55fc5544087f9527ee1da5d01ce02a91511d57901f1ef0176da6420b2b08fe3
+    row_sha256: 6bb0bd570ac4bed67b1e643df9f0da805179412ee78af0d35f147c8a2ad1d3af
     cell_count: 8
     all_cells:
     - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
     - Operations / canonical Reader Brief and report quality fail-closed finalization
     - P0
     - IN_PROGRESS
-    - operations owner：工程 post-Full gates 与 push 稳定后，只用 `aits ops daily-run` 执行 canonical
-      provider-ready 验收
+    - operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits ops daily-run`
+      执行 canonical provider-ready 验收
     - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
       bounded transient replace retry、strict finalization 与 portable parent import
       均已实现；exact candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
       passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-      / 1176.47s`。当前只剩 evidence-only post-Full、push、无并发 writer 复核及 canonical daily
-      acceptance；DATA-GOV D0C power-loss durability 独立跟踪。
+      / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
+      freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
+      daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。
     - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
       全部 fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次
       finalization quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；canonical
@@ -60,31 +62,34 @@ task_record:
       temp；原失败 Full 由同字节 summary/profile + reviewed import proof 绑定；focused/architecture/contract/integration/reproducibility/Full
       PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。
     - 2026-07-24：首次 Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-      全部 PASS。一次执行通道中断未产出 formal artifact，未计 attempt。任务保持 `IN_PROGRESS`，不写 production/active-shadow
-      weights，不触发 broker/order/trading。
+      全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
+      passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
+      `IN_PROGRESS`，无 weights/broker/trading。
     raw_line: '|OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION|Operations /
       canonical Reader Brief and report quality fail-closed finalization|P0|IN_PROGRESS|operations
-      owner：工程 post-Full gates 与 push 稳定后，只用 `aits ops daily-run` 执行 canonical provider-ready
-      验收|详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
+      owner：最终 engineering evidence commit 复验并 push 后，只用 `aits ops daily-run` 执行 canonical
+      provider-ready 验收|详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
       bounded transient replace retry、strict finalization 与 portable parent import
       均已实现；exact candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
       passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-      / 1176.47s`。当前只剩 evidence-only post-Full、push、无并发 writer 复核及 canonical daily
-      acceptance；DATA-GOV D0C power-loss durability 独立跟踪。|Report quality `FAIL` 与
-      Reader Brief quality `FAILED` CLI/step/finalization 全部 fail closed；`LIMITED_READER_CONTEXT`
+      / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
+      freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
+      daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。|Report quality `FAIL`
+      与 Reader Brief quality `FAILED` CLI/step/finalization 全部 fail closed；`LIMITED_READER_CONTEXT`
       保持可接受但显式披露；最终 Reader Brief bytes 由同次 finalization quality evidence 覆盖；manifest
       经`FINALIZING`两阶段 closure 后才可 PASS；canonical writer 只对 Windows transient replace
       contention bounded retry，非 transient/耗尽仍失败并清 temp；原失败 Full 由同字节 summary/profile
       + reviewed import proof 绑定；focused/architecture/contract/integration/reproducibility/Full
       PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。|2026-07-24：首次
       Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-      全部 PASS。一次执行通道中断未产出 formal artifact，未计 attempt。任务保持 `IN_PROGRESS`，不写 production/active-shadow
-      weights，不触发 broker/order/trading。|'
+      全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
+      passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
+      `IN_PROGRESS`，无 weights/broker/trading。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-a55fc5544087f9527ee1da5d
+  event_id: legacy-import-6bb0bd570ac4bed67b1e643d
   task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -97,14 +102,15 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: operations owner：工程 post-Full gates 与 push 稳定后，只用 `aits ops daily-run`
-      执行 canonical provider-ready 验收
+    next_owner: operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits
+      ops daily-run` 执行 canonical provider-ready 验收
     notes: 2026-07-24：首次 Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-      全部 PASS。一次执行通道中断未产出 formal artifact，未计 attempt。任务保持 `IN_PROGRESS`，不写 production/active-shadow
-      weights，不触发 broker/order/trading。
+      全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
+      passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
+      `IN_PROGRESS`，无 weights/broker/trading。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:a55fc5544087f9527ee1da5d01ce02a91511d57901f1ef0176da6420b2b08fe3
+  - sha256:6bb0bd570ac4bed67b1e643df9f0da805179412ee78af0d35f147c8a2ad1d3af
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -112,14 +118,15 @@ projection:
   - Operations / canonical Reader Brief and report quality fail-closed finalization
   - P0
   - IN_PROGRESS
-  - operations owner：工程 post-Full gates 与 push 稳定后，只用 `aits ops daily-run` 执行 canonical
-    provider-ready 验收
+  - operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits ops daily-run`
+    执行 canonical provider-ready 验收
   - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
     bounded transient replace retry、strict finalization 与 portable parent import 均已实现；exact
     candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
     passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-    / 1176.47s`。当前只剩 evidence-only post-Full、push、无并发 writer 复核及 canonical daily acceptance；DATA-GOV
-    D0C power-loss durability 独立跟踪。
+    / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
+    freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
+    daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。
   - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization 全部
     fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次 finalization
     quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；canonical writer
@@ -127,11 +134,12 @@ projection:
     Full 由同字节 summary/profile + reviewed import proof 绑定；focused/architecture/contract/integration/reproducibility/Full
     PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。
   - 2026-07-24：首次 Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-    全部 PASS。一次执行通道中断未产出 formal artifact，未计 attempt。任务保持 `IN_PROGRESS`，不写 production/active-shadow
-    weights，不触发 broker/order/trading。
+    全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
+    passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
+    `IN_PROGRESS`，无 weights/broker/trading。
   docs_links:
   - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
   terminal: false
-  raw_row_sha256: a55fc5544087f9527ee1da5d01ce02a91511d57901f1ef0176da6420b2b08fe3
+  raw_row_sha256: 6bb0bd570ac4bed67b1e643df9f0da805179412ee78af0d35f147c8a2ad1d3af
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 739446117cb73cd36461ee77a7f1cee1ebdd70d235696a96f134a252bc04e6e2
+fragment_checksum: c53ed0f7df72b73242a0d36163fddd1f6ed2ffe2185c0443e78f16ecc172119c

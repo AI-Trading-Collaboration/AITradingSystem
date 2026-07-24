@@ -19631,7 +19631,7 @@ phase_arch_004_wave14_s2_shared_integration_and_formal_exit:
 
 phase_ops_067_reader_brief_quality_fail_closed_finalization:
   schema_version: ops_067_reader_brief_quality_fail_closed_finalization.v1
-  status: VALIDATING_OPS_067
+  status: ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE
   boundary_id: OPS-067
   task_ids:
   - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
@@ -19877,7 +19877,9 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
         original_parent_bytes_unchanged: true
         protected_research_path_materialized: false
     post_full_closeout:
-      status: PENDING
+      status: PASS
+      tested_commit: 633d04a11896642462cc551fb335137c4db31223
+      tested_tree: 49c856d92840317833fcc18b31c1bf84d9ca7c72
       full_sensitive_sources_unchanged: true
       changed_paths_are_evidence_only: true
       duration_seed_refresh_deferred: true
@@ -19887,6 +19889,58 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
       - static
       - architecture_fitness
       - contract_validation
+      - integration
+      - reproducibility
+      focused:
+        status: PASS
+        passed: 296
+        failed: 0
+        elapsed_seconds: 43.50
+      static:
+        status: PASS
+        devex_validate: PASS
+        task_registry_validate: PASS
+        compatibility_source_hash_mismatch_count: 0
+        module_count: 1009
+        test_file_count: 1175
+        direct_writer_current_count: 856
+        deprecation_inventory_id: arch_004g_deprecation_inventory_bbd4d34695f2235dc20d
+      architecture_fitness:
+        status: PASS
+        passed: 577
+        failed: 0
+        elapsed_seconds: 103.74
+        artifact:
+          path: outputs/validation_runtime/architecture-fitness_20260724T030626Z/test_runtime_summary.json
+          sha256: 4e01cd965ace8212ea1527fe8f8efd6ba21ccc425f9a989fafc42bea45f7ea80
+          size_bytes: 29051
+      contract_validation:
+        status: PASS
+        passed: 274
+        failed: 0
+        elapsed_seconds: 125.89
+        artifact:
+          path: outputs/validation_runtime/contract-validation_20260724T030815Z/test_runtime_summary.json
+          sha256: a5467f23cb84a91c5a1e3fb2078ade245c430c623b7cd916b51010415eb3641b
+          size_bytes: 27557
+      integration:
+        status: PASS
+        passed: 993
+        failed: 0
+        elapsed_seconds: 45.60
+        artifact:
+          path: outputs/validation_runtime/integration_20260724T031025Z/test_runtime_summary.json
+          sha256: 5aeb6c93ec07c51d2511b82adbe262b5ee44b706cc61d9f69d89ad0544ce2d4c
+          size_bytes: 22705
+      reproducibility:
+        status: PASS
+        passed: 23
+        failed: 0
+        elapsed_seconds: 19.57
+        artifact:
+          path: outputs/validation_runtime/reproducibility_20260724T031119Z/test_runtime_summary.json
+          sha256: ca43d97933172316e712638c45679dcf961cc98ac0bf8b49ac871a2aa72937c6
+          size_bytes: 9613
   supersession:
     superseded_by_phase: OPS-067
     scope: ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH
@@ -20106,10 +20160,10 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 662c63c365262bf0b3c1f594ab27d5ad08ca6e1a3f94512126748f83b8c2519a
     hash_normalization: git_eol_lf
   - path: docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
-    sha256: 4771325cf97239148d631f9277ae3a60e7372591921f7725bdcb97b80e5bd65b
+    sha256: 55be8c226f3870e706e43165811f545464fffd410aa80eab91121e7685d85b6c
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
-    sha256: 69b395ef0336653c9bd4d32c80b9c00878831c8a06e854cf3f2e930144710d75
+    sha256: c0e109cf807c8b6af52b0c4311076f4d92b54b447922b5210db6f849bb1dd20d
     hash_normalization: git_eol_lf
   - path: docs/requirements/PLATFORM-UX-001_System_Understanding_Workbench.md
     sha256: af715c13837ee6d22c5ba0ff4987af52eb5fa084bd52436b7e9a0fa5aed08902
@@ -20148,7 +20202,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 336ebabb40aae113dbf6c46765ea663a360829879010e83156021d1579e9eb8e
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 9ce24065bdd9d8a566f122a8474d9bced579379112b4b144de3ea16be849baca
+    sha256: 9627c29306185c8b69177dcef14384a1ce0c8628e6a6e5bd59ac66fc0559b063
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: fade9904deb3a6c7b613e0353b81b0a6b80610ebb73d0adbde07ffef7807262f
@@ -20175,10 +20229,10 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 2613e9220a1142c7f32e726672adc1e6a6c99b34c2a2f29aa280699bc3c62190
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 5bdebd71f15d42002a3843349d44ea020f72e2a8d280095dfdca3f82127267fb
+    sha256: d3c2b32cca3fb2deeb5bf4066d90627def1d07918ba62904a0148666dd57a67b
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: acf61684c9336e981dbab4874371ea8ce69a74af9bdf91fe7e67bc243b2146ed
+    sha256: f577de25f7ead75a3db7aa525f067358237235263b12d9ed4d4205e1f7ef4cf1
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_applied_closeout.json
     sha256: f8ea35968cfc0ad206904009ac0f78cf75b4eadba8acf87d326a4459469be386
@@ -20196,7 +20250,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: fd812dddb6bd72d3811a5d94ef009d03ee642e72d972d327aaf754bee2a0f9a7
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
-    sha256: 079e9e590260b19ca1f76a7b4d81411212ccc68291a969ff0bc2a76a7494a999
+    sha256: f83152672c65cba02c3fed037fe0beb4066844eb37ed021df7ab18a2bdd5e8c1
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
     sha256: 511beddc64a52d304cbe6ad8bfec89f2dddc43db8bde276cf8fd303c18409030
@@ -20220,7 +20274,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: cd61079eb75b92c859403314c12195b7044873d0eee44e49e10bc36253d63779
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
-    sha256: d776bb0f455ae5e9e9b70fd99f76277c8d60920b94d67ec49f6f1f2c1a5c6471
+    sha256: 0dabb2778d736c648f538bb35420ab658ed56797ae23c515a26125c376530a3c
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
     sha256: a23af0687fb17f46543bfabbf2368ad675314a2bec801ec5d93dbd50eb5ab847
@@ -20537,7 +20591,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
   - path: tests/trading_engine/test_price_history_repair.py
     sha256: 659ccb495c8fc57a8be0b6bedc0620ff73d25fd604d36182e06520b74d974c99
     hash_normalization: git_eol_lf
-  source_hash_status: PRE_FORMAL_TRACKED_STATE_FRESH
+  source_hash_status: ENGINEERING_FINAL_TRACKED_STATE_FRESH
   worktree_attribution:
     known_unrelated_worktree_files:
     - docs/research/growth_tilt_owner_diagnosis_pack.md

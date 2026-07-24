@@ -178,3 +178,9 @@ worktree guard 误判为业务或共享路径脏写；其他 untracked/modified 
   applied/no-fallback/order 与 formal selection 全部 PASS。一次执行通道中断未产生新的 formal
   artifact，未计作 Full attempt 或 pytest 结果。当前只剩 evidence-only post-Full gates、提交和
   push；duration seed 保持已验证的 `PARTIAL_SEED v24`，不在 Full 后改动 Full-sensitive 输入。
+- 2026-07-24：Full evidence writeback commit=`633d04a11896642462cc551fb335137c4db31223`
+  / tree=`49c856d92840317833fcc18b31c1bf84d9ca7c72` 的 post-Full focused=`296 passed`，
+  DevEx/task authority/deprecation/source hash freshness PASS；
+  architecture/contract/integration/reproducibility=`577/274/993/23 passed`。工程门禁闭合，
+  仍保持 `VALIDATING`，待最终 evidence commit 的 exact-tree repeat gates、正常 push 和
+  OPS-067 canonical daily acceptance 后统一归档。
