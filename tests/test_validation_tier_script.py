@@ -6,11 +6,16 @@ import subprocess
 import sys
 from collections.abc import Callable
 from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
 import scripts.run_validation_tier as validation_tier
+from ai_trading_system.platform.validation_parent_run_import import (
+    IMPORT_MANIFEST_FILENAME,
+    build_parent_run_import,
+)
 from scripts.pytest_runtime_profile import (
     build_runtime_profile,
     collection_identity,
@@ -76,6 +81,7 @@ def _write_formal_failed_full_parent(
     parent_payload = {
         "schema_version": 1,
         "report_type": "test_runtime_summary",
+        "git_commit": "a" * 40,
         "resolved_tier": "full",
         "status": status or ("PASS" if exit_code == 0 else "FAIL"),
         "exit_code": exit_code,
@@ -84,10 +90,12 @@ def _write_formal_failed_full_parent(
         "production_effect": "none",
         "validation_provenance_status": "PASS",
         "validation_provenance": _full_provenance_payload(),
+        "summary_path": str(parent_path),
         "output_artifacts": [
             {
                 "path": str(profile_path),
                 "exists": True,
+                "artifact_type": "json",
                 "sha256": hashlib.sha256(profile_bytes).hexdigest(),
                 "size_bytes": len(profile_bytes),
             }
@@ -119,6 +127,7 @@ def _write_formal_runtime_profile_failed_parent(parent_path: Path) -> bytes:
     parent_payload = {
         "schema_version": 1,
         "report_type": "test_runtime_summary",
+        "git_commit": "a" * 40,
         "resolved_tier": "full",
         "status": "PASS",
         "exit_code": 0,
@@ -127,10 +136,12 @@ def _write_formal_runtime_profile_failed_parent(parent_path: Path) -> bytes:
         "production_effect": "none",
         "validation_provenance_status": "PASS",
         "validation_provenance": provenance,
+        "summary_path": str(parent_path),
         "output_artifacts": [
             {
                 "path": str(profile_path),
                 "exists": True,
+                "artifact_type": "json",
                 "sha256": hashlib.sha256(profile_bytes).hexdigest(),
                 "size_bytes": len(profile_bytes),
             }
@@ -317,9 +328,7 @@ def test_full_print_only_records_canonical_trigger_provenance(tmp_path: Path) ->
     )
 
     assert completed.returncode == 0
-    summary = json.loads(
-        (artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8")
-    )
+    summary = json.loads((artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8"))
     provenance = summary["validation_provenance"]
     assert provenance == {
         "schema_version": "validation_trigger_provenance.v1",
@@ -339,11 +348,94 @@ def test_full_print_only_records_canonical_trigger_provenance(tmp_path: Path) ->
         "cli_over_environment_precedence": "whole_envelope",
         "validation_errors": [],
     }
-    reader_brief = (artifact_dir / "test_runtime_reader_brief.md").read_text(
-        encoding="utf-8"
-    )
+    reader_brief = (artifact_dir / "test_runtime_reader_brief.md").read_text(encoding="utf-8")
     assert "## Validation Trigger Provenance" in reader_brief
     assert "Trigger reason: `formal_performance_profile`" in reader_brief
+
+
+def test_managed_runtime_artifact_locators_are_repository_relative(
+    tmp_path: Path,
+) -> None:
+    artifact_dir = tmp_path / "outputs" / "validation_runtime" / "fast_relative"
+    started_at = datetime(2026, 7, 24, tzinfo=UTC)
+    provenance = validation_tier._validation_trigger_provenance(
+        validation_tier.parse_args(["fast-unit"]),
+        resolved_tier="fast-unit",
+        repo_root=tmp_path,
+    )
+    payload = validation_tier._runtime_payload(
+        repo_root=tmp_path,
+        requested_tier="fast-unit",
+        resolved_tier="fast-unit",
+        spec=TIER_SPECS["fast-unit"],
+        command=[sys.executable, "-m", "pytest"],
+        workers="16",
+        dist="loadfile",
+        status="PASS",
+        started_at=started_at,
+        ended_at=started_at,
+        result={
+            "exit_code": 0,
+            "pytest_output": "1 passed in 0.01s\n",
+        },
+        artifact_dir=artifact_dir,
+        validation_provenance=provenance,
+    )
+
+    final_payload = validation_tier._write_runtime_artifacts(
+        artifact_dir,
+        payload,
+        repo_root=tmp_path,
+        pytest_output="1 passed in 0.01s\n",
+    )
+
+    assert final_payload["artifact_dir"] == "outputs/validation_runtime/fast_relative"
+    assert final_payload["summary_path"] == (
+        "outputs/validation_runtime/fast_relative/test_runtime_summary.json"
+    )
+    assert final_payload["reader_brief_path"] == (
+        "outputs/validation_runtime/fast_relative/test_runtime_reader_brief.md"
+    )
+    assert final_payload["pytest_output_log_path"] == (
+        "outputs/validation_runtime/fast_relative/pytest_output.log"
+    )
+    assert {str(record["path"]) for record in final_payload["output_artifacts"]} == {
+        "outputs/validation_runtime/fast_relative/test_runtime_summary.json",
+        "outputs/validation_runtime/fast_relative/test_runtime_reader_brief.md",
+        "outputs/validation_runtime/fast_relative/pytest_output.log",
+    }
+    profile_summary = _summarize_runtime_profile(
+        {"profile_status": "PASS"},
+        final_path=(
+            tmp_path
+            / "outputs"
+            / "validation_runtime"
+            / "full_relative"
+            / RUNTIME_PROFILE_OUTPUT_NAME
+        ),
+        repo_root=tmp_path,
+    )
+    assert profile_summary["runtime_profile_path"] == (
+        "outputs/validation_runtime/full_relative/test_runtime_profile.json"
+    )
+
+
+def test_repository_external_relative_artifact_locator_is_absolute(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    monkeypatch.chdir(repo_root)
+    external_path = Path("..") / "external" / "test_runtime_summary.json"
+
+    locator = validation_tier._artifact_locator(
+        external_path,
+        repo_root=repo_root,
+    )
+
+    assert Path(locator).is_absolute()
+    assert Path(locator) == external_path.resolve()
 
 
 def test_failure_fix_rerun_requires_parent_run_before_pytest() -> None:
@@ -367,6 +459,28 @@ def test_failure_fix_rerun_requires_parent_run_before_pytest() -> None:
 
     assert completed.returncode == 2
     assert "failure_fix_rerun requires non-empty parent_run" in completed.stderr
+
+
+def test_parent_run_import_is_rejected_outside_failure_fix_rerun() -> None:
+    args = validation_tier.parse_args(
+        [
+            "full",
+            *FULL_PROVENANCE_ARGS,
+            "--parent-run-import",
+            ("outputs/validation_runtime/full_parent_failure/" "validation_parent_run_import.json"),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=Path.cwd(),
+    )
+
+    assert provenance["status"] == "FAIL"
+    assert (
+        "parent_run_import is only allowed for failure_fix_rerun" in provenance["validation_errors"]
+    )
 
 
 def test_failure_fix_rerun_binds_failed_full_summary_and_sha256(tmp_path: Path) -> None:
@@ -414,6 +528,109 @@ def test_failure_fix_rerun_binds_failed_full_summary_and_sha256(tmp_path: Path) 
         "failure_basis": "PYTEST_FAIL",
         "production_effect": "none",
     }
+
+
+def test_failure_fix_rerun_binds_exact_byte_portable_parent_import(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path / "source"
+    source_parent = (
+        source_root
+        / "outputs"
+        / "validation_runtime"
+        / "full_portable_parent"
+        / "test_runtime_summary.json"
+    )
+    source_summary_bytes = _write_formal_failed_full_parent(source_parent)
+    source_profile_bytes = (source_parent.parent / RUNTIME_PROFILE_OUTPUT_NAME).read_bytes()
+
+    current_root = tmp_path / "current"
+    current_root.mkdir()
+    current_parent = (
+        current_root
+        / "outputs"
+        / "validation_runtime"
+        / "full_portable_parent"
+        / "test_runtime_summary.json"
+    )
+    current_parent.parent.mkdir(parents=True)
+    current_parent.write_bytes(source_summary_bytes)
+    current_profile = current_parent.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    current_profile.write_bytes(source_profile_bytes)
+
+    without_import_args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ENG-VAL-010",
+            "--boundary-id",
+            "portable-parent-import",
+            "--parent-run",
+            current_parent.relative_to(current_root).as_posix(),
+        ]
+    )
+    without_import = validation_tier._validation_trigger_provenance(
+        without_import_args,
+        resolved_tier="full",
+        repo_root=current_root,
+    )
+    assert without_import["status"] == "FAIL"
+    assert "inventory exactly one runtime profile sidecar" in "; ".join(
+        without_import["validation_errors"]
+    )
+
+    import_result = build_parent_run_import(
+        current_parent,
+        repo_root=current_root,
+    )
+    manifest_path = current_parent.parent / IMPORT_MANIFEST_FILENAME
+    args = validation_tier.parse_args(
+        [
+            "full",
+            "--trigger-reason",
+            "failure_fix_rerun",
+            "--task-id",
+            "ENG-VAL-010",
+            "--boundary-id",
+            "portable-parent-import",
+            "--parent-run",
+            current_parent.relative_to(current_root).as_posix(),
+            "--parent-run-import",
+            manifest_path.relative_to(current_root).as_posix(),
+        ]
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        args,
+        resolved_tier="full",
+        repo_root=current_root,
+    )
+
+    assert provenance["status"] == "PASS"
+    parent_binding = provenance["parent_run"]
+    assert parent_binding == {
+        "run_id": "full_portable_parent",
+        "summary_path": (
+            "outputs/validation_runtime/full_portable_parent/" "test_runtime_summary.json"
+        ),
+        "summary_sha256": hashlib.sha256(source_summary_bytes).hexdigest(),
+        "runtime_profile_sha256": hashlib.sha256(source_profile_bytes).hexdigest(),
+        "report_type": "test_runtime_summary",
+        "resolved_tier": "full",
+        "status": "FAIL",
+        "failure_basis": "PYTEST_FAIL",
+        "production_effect": "none",
+        "locator_mode": "portable_import_v1",
+        "import_manifest_path": (
+            "outputs/validation_runtime/full_portable_parent/" "validation_parent_run_import.json"
+        ),
+        "import_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+    }
+    assert import_result["manifest_sha256"] == parent_binding["import_manifest_sha256"]
+    assert current_parent.read_bytes() == source_summary_bytes
+    assert current_profile.read_bytes() == source_profile_bytes
 
 
 def test_failure_fix_rerun_binds_canonical_persisted_runtime_profile_failure(
@@ -511,9 +728,7 @@ def test_failure_fix_rerun_rejects_noncanonical_persisted_failure_shape(
     )
 
     assert provenance["status"] == "FAIL"
-    assert "runtime profile is missing or invalid" in "; ".join(
-        provenance["validation_errors"]
-    )
+    assert "runtime profile is missing or invalid" in "; ".join(provenance["validation_errors"])
 
 
 def test_failure_fix_rerun_validates_the_same_profile_bytes_it_hashes(
@@ -570,9 +785,7 @@ def test_failure_fix_rerun_validates_the_same_profile_bytes_it_hashes(
     )
 
     assert provenance["status"] == "FAIL"
-    assert "runtime profile is missing or invalid" in "; ".join(
-        provenance["validation_errors"]
-    )
+    assert "runtime profile is missing or invalid" in "; ".join(provenance["validation_errors"])
 
 
 def test_failure_fix_rerun_rejects_profile_resolving_outside_parent_run(
@@ -618,9 +831,7 @@ def test_failure_fix_rerun_rejects_profile_resolving_outside_parent_run(
     )
 
     assert provenance["status"] == "FAIL"
-    assert "fixed sibling in its parent run directory" in "; ".join(
-        provenance["validation_errors"]
-    )
+    assert "fixed sibling in its parent run directory" in "; ".join(provenance["validation_errors"])
 
 
 @pytest.mark.parametrize(
@@ -668,11 +879,7 @@ def test_failure_fix_rerun_resolve_loop_is_a_canonical_cli_failure(
             raise RuntimeError("simulated allowed_root symlink loop")
         if resolution_target == "repo_root" and self == tmp_path and not strict:
             raise RuntimeError("simulated repo_root symlink loop")
-        if (
-            resolution_target == "summary_containment"
-            and self == parent_path
-            and not strict
-        ):
+        if resolution_target == "summary_containment" and self == parent_path and not strict:
             raise RuntimeError("simulated summary_containment symlink loop")
         return original_resolve(self, strict=strict)
 
@@ -848,6 +1055,10 @@ def test_trigger_provenance_uses_one_complete_cli_or_environment_envelope(
     assert env_provenance["envelope_source"] == "environment"
     assert env_provenance["task_id"] == "ENV_TASK"
 
+    monkeypatch.setenv(
+        validation_tier.VALIDATION_PARENT_RUN_IMPORT_ENV,
+        "stale-environment-import-must-not-mix-with-cli",
+    )
     cli_args = validation_tier.parse_args(
         [
             "full",
@@ -877,6 +1088,84 @@ def test_trigger_provenance_uses_one_complete_cli_or_environment_envelope(
         "boundary_id": "cli",
         "parent_run": "unset",
     }
+
+
+def test_environment_failure_fix_envelope_binds_portable_parent_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path / "source"
+    source_parent = (
+        source_root
+        / "outputs"
+        / "validation_runtime"
+        / "full_environment_parent"
+        / "test_runtime_summary.json"
+    )
+    source_summary_bytes = _write_formal_failed_full_parent(source_parent)
+    source_profile_bytes = (source_parent.parent / RUNTIME_PROFILE_OUTPUT_NAME).read_bytes()
+
+    current_root = tmp_path / "current"
+    current_root.mkdir()
+    current_parent = (
+        current_root
+        / "outputs"
+        / "validation_runtime"
+        / "full_environment_parent"
+        / "test_runtime_summary.json"
+    )
+    current_parent.parent.mkdir(parents=True)
+    current_parent.write_bytes(source_summary_bytes)
+    current_profile = current_parent.parent / RUNTIME_PROFILE_OUTPUT_NAME
+    current_profile.write_bytes(source_profile_bytes)
+    build_parent_run_import(current_parent, repo_root=current_root)
+    manifest_path = current_parent.parent / IMPORT_MANIFEST_FILENAME
+
+    monkeypatch.setenv(
+        validation_tier.VALIDATION_TRIGGER_REASON_ENV,
+        "failure_fix_rerun",
+    )
+    monkeypatch.setenv(validation_tier.VALIDATION_TASK_ID_ENV, "ENG-VAL-010")
+    monkeypatch.setenv(
+        validation_tier.VALIDATION_BOUNDARY_ID_ENV,
+        "portable-parent-import-environment",
+    )
+    monkeypatch.setenv(
+        validation_tier.VALIDATION_PARENT_RUN_ENV,
+        current_parent.relative_to(current_root).as_posix(),
+    )
+    monkeypatch.setenv(
+        validation_tier.VALIDATION_PARENT_RUN_IMPORT_ENV,
+        manifest_path.relative_to(current_root).as_posix(),
+    )
+
+    provenance = validation_tier._validation_trigger_provenance(
+        validation_tier.parse_args(["full"]),
+        resolved_tier="full",
+        repo_root=current_root,
+    )
+
+    assert provenance["status"] == "PASS"
+    assert provenance["envelope_source"] == "environment"
+    assert provenance["field_sources"] == {
+        "trigger_reason": "environment",
+        "task_id": "environment",
+        "boundary_id": "environment",
+        "parent_run": "environment",
+    }
+    parent_binding = provenance["parent_run"]
+    assert parent_binding["locator_mode"] == "portable_import_v1"
+    assert parent_binding["summary_sha256"] == hashlib.sha256(source_summary_bytes).hexdigest()
+    assert (
+        parent_binding["runtime_profile_sha256"] == hashlib.sha256(source_profile_bytes).hexdigest()
+    )
+    assert parent_binding["import_manifest_path"] == (
+        "outputs/validation_runtime/full_environment_parent/" "validation_parent_run_import.json"
+    )
+    assert (
+        parent_binding["import_manifest_sha256"]
+        == hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    )
 
 
 def test_runtime_profile_summary_does_not_embed_node_rows(tmp_path: Path) -> None:
@@ -1452,9 +1741,7 @@ def _formal_scheduler_profile_payload() -> dict[str, object]:
         file_path: float(len(files) - index) for index, file_path in enumerate(files)
     }
     file_node_counts = {file_path: 1 for file_path in files}
-    file_set_sha256 = hashlib.sha256(
-        "\n".join(sorted(files)).encode("utf-8")
-    ).hexdigest()
+    file_set_sha256 = hashlib.sha256("\n".join(sorted(files)).encode("utf-8")).hexdigest()
     duration_profile = replace(
         load_duration_profile(Path(FULL_DURATION_PROFILE_MANIFEST)),
         manifest_status="COMPLETE",
@@ -1523,10 +1810,13 @@ def test_runtime_profile_rejects_formal_scheduler_semantic_drift(
 ) -> None:
     profile_path = tmp_path / RUNTIME_PROFILE_OUTPUT_NAME
     payload = _formal_scheduler_profile_payload()
-    assert validation_tier._runtime_profile_contract_error(
-        payload,
-        pytest_exitstatus=0,
-    ) is None
+    assert (
+        validation_tier._runtime_profile_contract_error(
+            payload,
+            pytest_exitstatus=0,
+        )
+        is None
+    )
     if field == "policy":
         exact_fallback = _formal_scheduler_profile_payload()
         exact_fallback_scheduler = exact_fallback["scheduler"]  # type: ignore[assignment]
@@ -1539,10 +1829,13 @@ def test_runtime_profile_rejects_formal_scheduler_semantic_drift(
             }
         )
         exact_fallback["performance_evidence_status"] = "FAIL"
-        assert validation_tier._runtime_profile_contract_error(
-            exact_fallback,
-            pytest_exitstatus=0,
-        ) == "runtime complete scheduler fell back despite exact eligibility"
+        assert (
+            validation_tier._runtime_profile_contract_error(
+                exact_fallback,
+                pytest_exitstatus=0,
+            )
+            == "runtime complete scheduler fell back despite exact eligibility"
+        )
 
         ineligible_policy_drift = _formal_scheduler_profile_payload()
         ineligible_scheduler = ineligible_policy_drift["scheduler"]  # type: ignore[assignment]
@@ -1555,10 +1848,7 @@ def test_runtime_profile_rejects_formal_scheduler_semantic_drift(
         assert validation_tier._runtime_profile_contract_error(
             ineligible_policy_drift,
             pytest_exitstatus=0,
-        ) == (
-            "runtime profile applied scheduler does not satisfy the formal scheduler "
-            "contract"
-        )
+        ) == ("runtime profile applied scheduler does not satisfy the formal scheduler " "contract")
     scheduler = payload["scheduler"]  # type: ignore[assignment]
     scheduler[field] = value
     error = validation_tier._runtime_profile_contract_error(
@@ -1568,10 +1858,7 @@ def test_runtime_profile_rejects_formal_scheduler_semantic_drift(
     expected_error = (
         "runtime profile applied scheduler contains fallback evidence"
         if field == "fallback_reason"
-        else (
-            "runtime profile applied scheduler does not satisfy the formal scheduler "
-            "contract"
-        )
+        else ("runtime profile applied scheduler does not satisfy the formal scheduler " "contract")
     )
     assert error == expected_error
     profile_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -2000,13 +2287,9 @@ def test_full_benchmark_print_only_marks_runtime_profile_not_applicable(
     )
 
     assert completed.returncode == 0
-    payload = json.loads(
-        (artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8")
-    )
+    payload = json.loads((artifact_dir / "test_runtime_summary.json").read_text(encoding="utf-8"))
     assert payload["runtime_profile_status"] == "NOT_APPLICABLE"
-    assert payload["runtime_profile_not_applicable_reason"] == (
-        "benchmark_variants_are_non_formal"
-    )
+    assert payload["runtime_profile_not_applicable_reason"] == ("benchmark_variants_are_non_formal")
     assert "test_runtime_profile" not in payload["schema_versions"]
     assert not (artifact_dir / "test_runtime_profile.json").exists()
     assert all(

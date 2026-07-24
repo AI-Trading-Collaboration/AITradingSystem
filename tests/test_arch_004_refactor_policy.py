@@ -3387,7 +3387,10 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     }
     assert ops_067["schema_version"] == "ops_067_reader_brief_quality_fail_closed_finalization.v1"
     assert ops_067["boundary_id"] == "OPS-067"
-    assert ops_067["task_ids"] == ["OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION"]
+    assert ops_067["task_ids"] == [
+        "OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION",
+        "ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT",
+    ]
     assert ops_067["prior_sections_immutability"] == {
         "source_commit": OPS_067_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
@@ -3406,6 +3409,8 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
         "two_phase_manifest_publication": True,
         "whole_run_ledger_outcome": True,
         "closed_market_stale_reader_rejected": True,
+        "portable_failed_full_parent_import": True,
+        "repository_relative_managed_runtime_locators": True,
     }
     assert ops_067["durability_boundary"] == {
         "catchable_exception_compensation": True,
@@ -3414,7 +3419,7 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     }
 
     superseded = set(ops_067["superseded_live_source_paths"])
-    assert len(superseded) == 98
+    assert len(superseded) == 101
     assert superseded == _ops_067_prior_active_source_mismatches()
     assert ops_067["supersession"] == {
         "superseded_by_phase": "OPS-067",
@@ -3426,11 +3431,14 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     assert inherited_removed == {WAVE14_S2_ACTIVE_TASK_SHADOW_PATH}
 
     expected_new_source_paths = {
+        "docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md",
         "docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md",
         (
             "registry/development_tasks_shadow/active/ca/"
             "ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml"
         ),
+        "scripts/build_validation_parent_run_import.py",
+        "scripts/run_validation_tier.py",
         "src/ai_trading_system/cli_commands/reports.py",
         "src/ai_trading_system/contracts/workflow.py",
         "src/ai_trading_system/external_request_cache.py",
@@ -3438,6 +3446,8 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
         "src/ai_trading_system/platform/artifacts/json_contract.py",
         "src/ai_trading_system/platform/artifacts/writer.py",
         "src/ai_trading_system/platform/operations/runtime_control.py",
+        "src/ai_trading_system/platform/validation_parent_run_import.py",
+        "src/ai_trading_system/platform/validation_trigger_provenance.py",
         "src/ai_trading_system/run_artifacts.py",
         "tests/test_arch_004c_artifact_writer.py",
         "tests/test_arch_004c_platform_contracts.py",
@@ -3448,11 +3458,14 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
         "tests/test_report_quality_gate.py",
         "tests/test_run_artifacts.py",
         "tests/test_scheduled_tasks.py",
+        "tests/test_validation_parent_run_import.py",
+        "tests/test_validation_tier_script.py",
+        "tests/test_validation_trigger_provenance.py",
     }
     assert set(ops_067["new_source_paths"]) == expected_new_source_paths
     sources = ops_067["sources"]
     source_paths = [str(source["path"]) for source in sources]
-    assert len(source_paths) == 163
+    assert len(source_paths) == 171
     assert len(source_paths) == len(set(source_paths))
     wave14_source_paths = {str(source["path"]) for source in baseline[WAVE14_S2_SECTION]["sources"]}
     assert set(source_paths) == wave14_source_paths | expected_new_source_paths

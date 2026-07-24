@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1008
+module_count: 1009
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -14719,9 +14719,29 @@ modules:
   - contract-validation
   - report-validation
   shared_integration: false
+- module_id: src.ai_trading_system.platform.validation_parent_run_import
+  path: src/ai_trading_system/platform/validation_parent_run_import.py
+  sha256: 16a09db7e7cb2df3a116b32262c2f029f33f0184ab409d065545e2e8f3a83783
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
 - module_id: src.ai_trading_system.platform.validation_trigger_provenance
   path: src/ai_trading_system/platform/validation_trigger_provenance.py
-  sha256: 4cd2558ceadd8140a97cd04ab0ca66ab5224866cd2525d7b881b460063be6732
+  sha256: 435ec246ceae916cb69864d82a082a336bf17243393d36d52a1290847bb2bafd
   rule_id: platform_root
   owner_profile: platform
   owners:

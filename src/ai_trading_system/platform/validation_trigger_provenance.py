@@ -54,6 +54,11 @@ PARENT_RUN_KEYS = {
     "failure_basis",
     "production_effect",
 }
+PARENT_RUN_IMPORT_KEYS = PARENT_RUN_KEYS | {
+    "locator_mode",
+    "import_manifest_path",
+    "import_manifest_sha256",
+}
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -122,8 +127,7 @@ def validate_full_provenance(payload: object) -> list[str]:
     ):
         errors.append("validation provenance field_sources mix multiple envelopes")
     elif any(
-        field_sources[field_name]
-        != ("unset" if payload.get(field_name) is None else input_source)
+        field_sources[field_name] != ("unset" if payload.get(field_name) is None else input_source)
         for field_name in field_sources
     ):
         errors.append("validation provenance field_sources do not match declared values")
@@ -138,7 +142,9 @@ def validate_full_provenance(payload: object) -> list[str]:
             errors.append("failure_fix_rerun parent_run must be a validated summary binding")
         else:
             parent_keys = set(parent_run)
-            if parent_keys != PARENT_RUN_KEYS:
+            is_direct_binding = parent_keys == PARENT_RUN_KEYS
+            is_portable_import_binding = parent_keys == PARENT_RUN_IMPORT_KEYS
+            if not is_direct_binding and not is_portable_import_binding:
                 errors.append(
                     "parent_run keys mismatch: "
                     f"missing={sorted(PARENT_RUN_KEYS - parent_keys)} "
@@ -195,6 +201,33 @@ def validate_full_provenance(payload: object) -> list[str]:
                 errors.append(f"parent_run {failure_basis} requires status=PASS")
             if parent_run.get("production_effect") != "none":
                 errors.append("parent_run production_effect must be none")
+            if is_portable_import_binding:
+                if parent_run.get("locator_mode") != "portable_import_v1":
+                    errors.append("parent_run locator_mode is invalid")
+                import_manifest_path = parent_run.get("import_manifest_path")
+                run_id = parent_run.get("run_id")
+                expected_import_manifest_path = (
+                    f"outputs/validation_runtime/{run_id}/" "validation_parent_run_import.json"
+                )
+                if (
+                    not isinstance(import_manifest_path, str)
+                    or import_manifest_path != expected_import_manifest_path
+                    or "\\" in import_manifest_path
+                    or PurePosixPath(import_manifest_path).is_absolute()
+                    or PurePosixPath(import_manifest_path).parts
+                    != (
+                        "outputs",
+                        "validation_runtime",
+                        run_id,
+                        "validation_parent_run_import.json",
+                    )
+                ):
+                    errors.append("parent_run import_manifest_path is invalid")
+                if (
+                    not isinstance(parent_run.get("import_manifest_sha256"), str)
+                    or SHA256_RE.fullmatch(str(parent_run.get("import_manifest_sha256"))) is None
+                ):
+                    errors.append("parent_run import_manifest_sha256 is invalid")
     elif parent_run is not None:
         errors.append("parent_run is only allowed for failure_fix_rerun")
     return errors

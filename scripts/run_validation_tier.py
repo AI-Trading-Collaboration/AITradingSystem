@@ -24,6 +24,12 @@ SRC_ROOT_FOR_IMPORTS = REPO_ROOT_FOR_IMPORTS / "src"
 if str(SRC_ROOT_FOR_IMPORTS) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT_FOR_IMPORTS))
 
+from ai_trading_system.platform.validation_parent_run_import import (
+    PARENT_RUN_IMPORT_ENV as VALIDATION_PARENT_RUN_IMPORT_ENV,
+)
+from ai_trading_system.platform.validation_parent_run_import import (
+    validate_parent_run_import,
+)
 from ai_trading_system.platform.validation_trigger_provenance import (  # noqa: E402
     BOUNDARY_ID_ENV as VALIDATION_BOUNDARY_ID_ENV,
 )
@@ -77,6 +83,7 @@ BENCHMARK_REMOVED_VALIDATION_ENV_VARS = (
     VALIDATION_TASK_ID_ENV,
     VALIDATION_BOUNDARY_ID_ENV,
     VALIDATION_PARENT_RUN_ENV,
+    VALIDATION_PARENT_RUN_IMPORT_ENV,
 )
 FULL_RUNTIME_PROFILE_PLUGIN = "scripts.pytest_runtime_profile"
 FULL_DURATION_PROFILE_MANIFEST = "inputs/architecture/arch_004g2_full_duration_profile.yaml"
@@ -472,6 +479,7 @@ def _pytest_output_summary(
     *,
     artifact_dir: Path | None = None,
     log_name: str = PYTEST_OUTPUT_LOG_NAME,
+    repo_root: Path | None = None,
 ) -> dict[str, object]:
     slow_durations = _parse_pytest_slow_durations(pytest_output)
     total_slow_duration = round(
@@ -489,7 +497,10 @@ def _pytest_output_summary(
         summary["pytest_slowest_duration"] = slow_durations[0]
         summary["pytest_slowest_nodeid"] = slow_durations[0]["nodeid"]
     if artifact_dir is not None and pytest_output:
-        summary["pytest_output_log_path"] = str(artifact_dir / log_name)
+        summary["pytest_output_log_path"] = _artifact_locator(
+            artifact_dir / log_name,
+            repo_root=repo_root,
+        )
     return summary
 
 
@@ -585,6 +596,7 @@ def _runtime_run_id(resolved_tier: str, started_at: datetime) -> str:
 def _validated_parent_run_binding(
     raw_parent_run: str,
     *,
+    raw_parent_run_import: str | None = None,
     repo_root: Path,
 ) -> tuple[dict[str, object] | None, list[str]]:
     candidate = Path(raw_parent_run)
@@ -672,11 +684,42 @@ def _validated_parent_run_binding(
                 runtime_profile_sha256 = hashlib.sha256(runtime_profile_bytes).hexdigest()
                 runtime_profile_size = len(runtime_profile_bytes)
 
+    parent_import: dict[str, object] | None = None
+    if raw_parent_run_import is not None:
+        if (
+            resolved_profile_path is None
+            or runtime_profile_bytes is None
+            or runtime_profile_sha256 is None
+            or runtime_profile_size is None
+        ):
+            errors.append(
+                "parent_run_import requires a readable current fixed-sibling runtime profile"
+            )
+        else:
+            import_candidate = Path(raw_parent_run_import)
+            import_path = (
+                import_candidate if import_candidate.is_absolute() else repo_root / import_candidate
+            )
+            parent_import, import_errors = validate_parent_run_import(
+                import_path,
+                parent_summary_path=resolved_path,
+                parent_profile_path=resolved_profile_path,
+                repo_root=repo_root,
+                summary_bytes=raw_bytes,
+                summary=summary,
+                profile_bytes=runtime_profile_bytes,
+            )
+            errors.extend(f"parent_run_import {error}" for error in import_errors)
+
     output_artifacts = summary.get("output_artifacts")
     matching_profile_records: list[Mapping[str, object]] = []
     if isinstance(output_artifacts, list):
         for record in output_artifacts:
             if not isinstance(record, Mapping) or not isinstance(record.get("path"), str):
+                continue
+            if parent_import is not None:
+                if record["path"] == parent_import.get("source_profile_inventory_path"):
+                    matching_profile_records.append(record)
                 continue
             try:
                 record_path = Path(str(record["path"]))
@@ -746,6 +789,11 @@ def _validated_parent_run_binding(
             recorded_profile_path = summary.get("runtime_profile_path")
             if not isinstance(recorded_profile_path, str):
                 errors.append("parent_run runtime_profile_path is missing")
+            elif parent_import is not None:
+                if recorded_profile_path != parent_import.get("source_runtime_profile_path"):
+                    errors.append(
+                        "parent_run runtime_profile_path does not match its imported source locator"
+                    )
             else:
                 try:
                     recorded_candidate = Path(recorded_profile_path)
@@ -794,20 +842,26 @@ def _validated_parent_run_binding(
         relative_path = resolved_path.relative_to(resolved_repo_root).as_posix()
     except (OSError, RuntimeError, ValueError) as exc:
         return None, ["repository root could not be resolved for parent_run summary: " f"{exc}"]
-    return (
-        {
-            "run_id": run_id,
-            "summary_path": relative_path,
-            "summary_sha256": hashlib.sha256(raw_bytes).hexdigest(),
-            "runtime_profile_sha256": str(runtime_profile_sha256),
-            "report_type": "test_runtime_summary",
-            "resolved_tier": "full",
-            "status": parent_status,
-            "failure_basis": str(failure_basis),
-            "production_effect": "none",
-        },
-        [],
-    )
+    binding: dict[str, object] = {
+        "run_id": run_id,
+        "summary_path": relative_path,
+        "summary_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+        "runtime_profile_sha256": str(runtime_profile_sha256),
+        "report_type": "test_runtime_summary",
+        "resolved_tier": "full",
+        "status": parent_status,
+        "failure_basis": str(failure_basis),
+        "production_effect": "none",
+    }
+    if parent_import is not None:
+        binding.update(
+            {
+                "locator_mode": "portable_import_v1",
+                "import_manifest_path": parent_import["manifest_relative_path"],
+                "import_manifest_sha256": parent_import["manifest_sha256"],
+            }
+        )
+    return binding, []
 
 
 def _validation_trigger_provenance(
@@ -830,17 +884,23 @@ def _validation_trigger_provenance(
         "boundary_id": VALIDATION_BOUNDARY_ID_ENV,
         "parent_run": VALIDATION_PARENT_RUN_ENV,
     }
-    if any(value is not None for value in cli_values.values()):
+    cli_parent_run_import = args.parent_run_import
+    if any(value is not None for value in cli_values.values()) or cli_parent_run_import is not None:
         envelope_source = "cli"
         raw_values = cli_values
-    elif any(env_name in os.environ for env_name in env_names.values()):
+        raw_parent_run_import = cli_parent_run_import
+    elif any(env_name in os.environ for env_name in env_names.values()) or (
+        VALIDATION_PARENT_RUN_IMPORT_ENV in os.environ
+    ):
         envelope_source = "environment"
         raw_values = {
             field_name: os.environ.get(env_name) for field_name, env_name in env_names.items()
         }
+        raw_parent_run_import = os.environ.get(VALIDATION_PARENT_RUN_IMPORT_ENV)
     else:
         envelope_source = "unset"
         raw_values = {field_name: None for field_name in env_names}
+        raw_parent_run_import = None
     values: dict[str, object] = {
         field_name: (str(raw_value).strip() or None) if raw_value is not None else None
         for field_name, raw_value in raw_values.items()
@@ -849,6 +909,9 @@ def _validation_trigger_provenance(
         field_name: envelope_source if raw_values[field_name] is not None else "unset"
         for field_name in raw_values
     }
+    parent_run_import = (
+        str(raw_parent_run_import).strip() or None if raw_parent_run_import is not None else None
+    )
 
     required_for_tier = resolved_tier == "full"
     any_declared = envelope_source != "unset"
@@ -873,12 +936,15 @@ def _validation_trigger_provenance(
         else:
             parent_binding, parent_errors = _validated_parent_run_binding(
                 raw_parent_run,
+                raw_parent_run_import=parent_run_import,
                 repo_root=repo_root,
             )
             errors.extend(parent_errors)
             values["parent_run"] = parent_binding
     elif values["parent_run"] is not None:
         errors.append("parent_run is only allowed for failure_fix_rerun")
+    elif parent_run_import is not None:
+        errors.append("parent_run_import is only allowed for failure_fix_rerun")
 
     if required_for_tier:
         if trigger_reason not in FULL_VALIDATION_TRIGGER_REASONS:
@@ -1051,7 +1117,13 @@ def _runtime_payload(
     if result is not None:
         payload.update({key: value for key, value in result.items() if key != "pytest_output"})
     if pytest_output:
-        payload.update(_pytest_output_summary(pytest_output, artifact_dir=artifact_dir))
+        payload.update(
+            _pytest_output_summary(
+                pytest_output,
+                artifact_dir=artifact_dir,
+                repo_root=repo_root,
+            )
+        )
     if validation_provenance.get("status") == "FAIL":
         payload["warnings"].append("validation_trigger_provenance=FAIL")
     runtime_profile_summary = payload.get("runtime_profile_summary")
@@ -1078,9 +1150,15 @@ def _runtime_payload(
             "Only PASS can be used as passing validation evidence for this suite."
         )
     if artifact_dir is not None:
-        payload["artifact_dir"] = str(artifact_dir)
-        payload["summary_path"] = str(artifact_dir / "test_runtime_summary.json")
-        payload["reader_brief_path"] = str(artifact_dir / "test_runtime_reader_brief.md")
+        payload["artifact_dir"] = _artifact_locator(artifact_dir, repo_root=repo_root)
+        payload["summary_path"] = _artifact_locator(
+            artifact_dir / "test_runtime_summary.json",
+            repo_root=repo_root,
+        )
+        payload["reader_brief_path"] = _artifact_locator(
+            artifact_dir / "test_runtime_reader_brief.md",
+            repo_root=repo_root,
+        )
     if requested_tier != resolved_tier:
         payload["legacy_alias_for"] = resolved_tier
     return payload
@@ -1102,27 +1180,48 @@ def _command_input_artifacts(command: Sequence[str], *, repo_root: Path) -> list
 def _runtime_output_artifacts(
     artifact_dir: Path | None,
     *,
+    repo_root: Path | None = None,
     include_runtime_profile: bool,
     include_benchmark_summary: bool = False,
 ) -> list[dict[str, object]]:
     if artifact_dir is None:
         return []
     records = [
-        _runtime_summary_self_record(artifact_dir / "test_runtime_summary.json"),
-        _artifact_record(artifact_dir / "test_runtime_reader_brief.md"),
-        _artifact_record(artifact_dir / PYTEST_OUTPUT_LOG_NAME),
+        _runtime_summary_self_record(
+            artifact_dir / "test_runtime_summary.json",
+            repo_root=repo_root,
+        ),
+        _artifact_record(
+            artifact_dir / "test_runtime_reader_brief.md",
+            repo_root=repo_root,
+        ),
+        _artifact_record(artifact_dir / PYTEST_OUTPUT_LOG_NAME, repo_root=repo_root),
     ]
     if include_runtime_profile:
-        records.append(_artifact_record(artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME))
+        records.append(
+            _artifact_record(
+                artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME,
+                repo_root=repo_root,
+            )
+        )
     if include_benchmark_summary:
-        records.append(_artifact_record(artifact_dir / BENCHMARK_SUMMARY_NAME))
+        records.append(
+            _artifact_record(
+                artifact_dir / BENCHMARK_SUMMARY_NAME,
+                repo_root=repo_root,
+            )
+        )
     return records
 
 
-def _runtime_summary_self_record(path: Path) -> dict[str, object]:
+def _runtime_summary_self_record(
+    path: Path,
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, object]:
     """Describe the final summary without embedding a self-invalidating digest."""
     return {
-        "path": str(path),
+        "path": _artifact_locator(path, repo_root=repo_root),
         "exists": True,
         "artifact_type": "json",
         "sha256": None,
@@ -2236,6 +2335,7 @@ def _summarize_runtime_profile(
     payload: Mapping[str, object],
     *,
     final_path: Path,
+    repo_root: Path | None = None,
 ) -> dict[str, object]:
     collection = payload.get("collection")
     collection_summary = collection if isinstance(collection, dict) else {}
@@ -2244,7 +2344,7 @@ def _summarize_runtime_profile(
     warnings = payload.get("warnings")
     warning_rows = warnings if isinstance(warnings, list) else []
     return {
-        "runtime_profile_path": str(final_path),
+        "runtime_profile_path": _artifact_locator(final_path, repo_root=repo_root),
         "runtime_profile_status": payload.get("profile_status", "FAIL"),
         "formal_full_selection_eligible": scheduler_summary.get(
             "formal_full_selection_eligible",
@@ -2330,12 +2430,30 @@ def _artifact_checksums(records: Sequence[dict[str, object]]) -> dict[str, str]:
     return checksums
 
 
-def _artifact_record(path: Path) -> dict[str, object]:
+def _artifact_locator(path: Path, *, repo_root: Path | None = None) -> str:
+    if repo_root is None:
+        return str(path)
+    try:
+        resolved_root = repo_root.resolve()
+        resolved_path = path.resolve()
+    except (OSError, RuntimeError):
+        return str(path)
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        return str(resolved_path)
+
+
+def _artifact_record(
+    path: Path,
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, object]:
     exists = path.exists()
     is_file = exists and path.is_file()
     is_dir = exists and path.is_dir()
     return {
-        "path": str(path),
+        "path": _artifact_locator(path, repo_root=repo_root),
         "exists": exists,
         "artifact_type": "directory" if is_dir else path.suffix.lower().lstrip(".") or "file",
         "sha256": _sha256_file(path) if is_file else None,
@@ -2533,6 +2651,7 @@ def _write_runtime_artifacts(
     artifact_dir: Path,
     payload: dict[str, object],
     *,
+    repo_root: Path | None = None,
     pytest_output: str = "",
 ) -> dict[str, object]:
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -2549,6 +2668,7 @@ def _write_runtime_artifacts(
     final_payload = dict(payload)
     final_payload["output_artifacts"] = _runtime_output_artifacts(
         artifact_dir,
+        repo_root=repo_root,
         include_runtime_profile=(
             payload.get("resolved_tier") == "full"
             and payload.get("status") != "PRINT_ONLY"
@@ -2633,6 +2753,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             "Path to a prior failed Full test_runtime_summary.json for failure_fix_rerun; "
             "CLI overrides "
             "AITS_VALIDATION_PARENT_RUN."
+        ),
+    )
+    parser.add_argument(
+        "--parent-run-import",
+        help=(
+            "Optional validation_parent_run_import.v1 proof for an exact-byte parent "
+            "copied from another worktree; only valid with failure_fix_rerun and "
+            "--parent-run. CLI overrides AITS_VALIDATION_PARENT_RUN_IMPORT."
         ),
     )
     parser.add_argument(
@@ -2811,7 +2939,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                     ],
                     "benchmark_variant_count": len(benchmark_variants),
                     "benchmark_summary_path": (
-                        str(artifact_dir / BENCHMARK_SUMMARY_NAME)
+                        _artifact_locator(
+                            artifact_dir / BENCHMARK_SUMMARY_NAME,
+                            repo_root=repo_root,
+                        )
                         if artifact_dir is not None
                         else None
                     ),
@@ -2826,7 +2957,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 reason="benchmark_variants_are_non_formal",
             )
         if artifact_dir is not None:
-            payload = _write_runtime_artifacts(artifact_dir, payload)
+            payload = _write_runtime_artifacts(
+                artifact_dir,
+                payload,
+                repo_root=repo_root,
+            )
             print(f"Runtime artifact: {artifact_dir / 'test_runtime_summary.json'}", flush=True)
             print(
                 f"Runtime reader brief: {artifact_dir / 'test_runtime_reader_brief.md'}",
@@ -2865,7 +3000,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "elapsed_seconds": result["elapsed_seconds"],
             }
             run_summary.update(
-                _pytest_output_summary(pytest_output, artifact_dir=artifact_dir, log_name=log_name)
+                _pytest_output_summary(
+                    pytest_output,
+                    artifact_dir=artifact_dir,
+                    log_name=log_name,
+                    repo_root=repo_root,
+                )
             )
             benchmark_runs.append(run_summary)
         overall_exit_code = 0 if all(run["exit_code"] == 0 for run in benchmark_runs) else 1
@@ -2892,7 +3032,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "benchmark_mode": True,
                 "benchmark_runs": benchmark_runs,
                 "benchmark_summary_path": (
-                    str(artifact_dir / BENCHMARK_SUMMARY_NAME) if artifact_dir is not None else None
+                    _artifact_locator(
+                        artifact_dir / BENCHMARK_SUMMARY_NAME,
+                        repo_root=repo_root,
+                    )
+                    if artifact_dir is not None
+                    else None
                 ),
                 "can_support_promotion_evidence": False,
                 "promotion_evidence_limitation": (
@@ -2910,7 +3055,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Status: {status}")
         print(f"Elapsed seconds: {payload['elapsed_seconds']}")
         if artifact_dir is not None:
-            payload = _write_runtime_artifacts(artifact_dir, payload)
+            payload = _write_runtime_artifacts(
+                artifact_dir,
+                payload,
+                repo_root=repo_root,
+            )
             print(f"Runtime artifact: {artifact_dir / 'test_runtime_summary.json'}", flush=True)
             print(
                 f"Benchmark summary: {artifact_dir / BENCHMARK_SUMMARY_NAME}",
@@ -2987,6 +3136,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             _summarize_runtime_profile(
                 runtime_profile_payload,
                 final_path=artifact_dir / RUNTIME_PROFILE_OUTPUT_NAME,
+                repo_root=repo_root,
             )
         )
     status = "PASS" if result["exit_code"] == 0 else "FAIL"
@@ -3013,6 +3163,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         payload = _write_runtime_artifacts(
             artifact_dir,
             payload,
+            repo_root=repo_root,
             pytest_output=str(result.get("pytest_output") or ""),
         )
         print(f"Runtime artifact: {artifact_dir / 'test_runtime_summary.json'}", flush=True)

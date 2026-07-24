@@ -21,7 +21,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: 645e2d0cc181ea61a3687bbbe5a6c2fcca3b9becf4754da9d35389a7954d9f20
+  current_sha256: 8583ef0076e507bcf511f342d36653d382e271a869b1a304549fb83f290c0e99
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 6
   fragment_paths:
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 6e26a6de0676cdc921baf405306f3f651b282dff60fb062c6f40228a4e04f90e
+  current_sha256: 336ebabb40aae113dbf6c46765ea663a360829879010e83156021d1579e9eb8e
   fragment_root: config/architecture/fragments/flows
   fragment_count: 6
   fragment_paths:
