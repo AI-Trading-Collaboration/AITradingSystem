@@ -4873,6 +4873,23 @@ FMP EOD adapter 对 requests `Timeout` / `ConnectionError`（含 `SSLError`）�
 
 2026-07-13/14 缺少 contemporaneous FMP forward PIT、SEC 与 OpenAI prereview hard inputs，因而 canonical daily status 永久保持 `INSUFFICIENT_DATA`，除非未来取得原始 archived inputs。Owner 批准的 `limited_non_pit_reconstruction.v1` 只冻结 cache-only market/macro facts、source SHA、DQ 与 null contract，且位于隔离 replay 目录；它没有 reusable producer/validator、report-registry 或 Reader Brief routing，不生成 score、position、Decision Snapshot，也不进入 weekly/governance/promotion/backtest/production。需要复跑时必须另建受治理链路，不能把 live refetch 解释为历史 PIT。
 
+### 2026-07-21 受治理的 limited non-PIT 证据链（OPS-068）
+
+`aits ops reconstruct-limited-non-pit` 只接受显式的 cache-only inventory bundle、owner decision id、固定 bundle id 和 canonical guard paths。它复制 inventory `replay_run.json`、input freeze manifest 与 market/macro frozen bytes，在隔离目录直接调用 `validate_data_cache`，但不声明 canonical requested-window receipt，也不发布 DQ discovery、daily/latest、report registry 或 Reader Brief pointer。`aits ops validate-limited-non-pit` 从 bundle 真实 bytes 复算 input SHA/size/row count、DQ、market/macro facts、Markdown、source binding、member allowlist、null contract 和 guard before/after identity；schema snapshot 必须与 reviewed `docs/schema/limited_non_pit_reconstruction.v2.schema.json` 一致。
+
+```mermaid
+flowchart LR
+    INV["显式 cache-only inventory<br/>INCOMPLETE_REPLAY"] --> PROD["reconstruct-limited-non-pit<br/>复制 market/macro frozen bytes"]
+    GUARD["明确 canonical cache/state/ledger<br/>before SHA/size"] --> PROD
+    PROD --> DQ["隔离 validate_data_cache<br/>fact validation only"]
+    DQ --> BUNDLE["v2 bundle<br/>market/macro facts + source SHA"]
+    BUNDLE --> VAL["validate-limited-non-pit<br/>content-derived validation"]
+    VAL --> AUDIT["历史缺口审计<br/>canonical=MISSING<br/>conclusion=INSUFFICIENT_DATA"]
+    BUNDLE -. "禁止" .-> DOWN["score / position / Dashboard / Reader Brief<br/>weekly / governance / promotion / backtest / weights"]
+```
+
+该路径不复制 PIT manifest、valuation、risk events、OpenAI queue、historical feature/score seed，也不生成任何结论 artifact。FMP forward PIT、PIT fetch/validation、SEC fundamentals、OpenAI prereview report 和所有 score/position/Decision Snapshot/Dashboard/Reader Brief/weekly/governance/promotion/backtest/weight/production 字段必须为 null。Validator PASS 不能升级 2026-07-21 canonical status；未来找到 exact contemporaneous archives 时仍须另建 strict recovery。
+
 ```mermaid
 flowchart TD
     A["用户执行<br/>aits score-daily --as-of YYYY-MM-DD"] --> B["读取配置<br/>universe / data_quality / features / feature_availability / scoring_rules / portfolio / risk_events / execution_policy"]

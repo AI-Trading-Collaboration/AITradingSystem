@@ -47,6 +47,25 @@ FMP EOD 价格请求对 requests `Timeout` / `ConnectionError`（含 `SSLError`�
 
 OPS-063 的 `limited_non_pit_reconstruction.v1` 仅是 2026-07-13/14 缺 contemporaneous hard inputs 时经 owner 批准的一次性 manual evidence。它不属于 `aits ops daily-run`、periodic-dispatch、Reader Brief 或 governance 下游，canonical daily status 仍为 `INSUFFICIENT_DATA`；operator 不得用 live refetch、7/15 snapshot 或该 bundle 补造 PIT、score、position 或投资结论。未来若需复跑，必须先新建受治理 producer/validator 任务。
 
+OPS-068 已建立受治理的 `limited_non_pit_reconstruction.v2` producer/validator，仅用于 owner 批准后的 2026-07-21 隔离历史事实证据。运行前必须先完成 explicit cache-only inventory，并显式传入 inventory bundle、owner decision id、bundle id 和需要保持 byte-identical 的 canonical cache/state/ledger guard paths：
+
+```text
+aits ops reconstruct-limited-non-pit
+  --inventory-bundle <explicit-inventory-bundle>
+  --owner-decision-id <owner-decision-id>
+  --bundle-id <new-bundle-id>
+  --guard-path data/raw/prices_daily.csv
+  --guard-path data/raw/prices_marketstack_daily.csv
+  --guard-path data/raw/rates_daily.csv
+  --guard-path data/raw/download_manifest.csv
+  --guard-path <explicit-2026-07-22-state>
+  --guard-path <explicit-2026-07-22-ledger>
+  --guard-path <explicit-2026-07-23-state>
+  --guard-path <explicit-2026-07-23-ledger>
+```
+
+Producer 禁止 `latest`/glob 发现、live provider/OpenAI、canonical/latest pointer 或下游结论写入。输出中的 DQ 只验证隔离 market/macro facts，不能解释为 canonical requested-window receipt。生成后必须使用 `aits ops validate-limited-non-pit` 显式绑定同一 as-of、owner decision 和 inventory bundle；validator PASS 仍只表示 frozen bytes、DQ、market/macro facts、null contract 和无下游污染可复核，canonical daily evidence 保持 `MISSING`，结论保持 `INSUFFICIENT_DATA`。
+
 过渡期仍可在 `outputs/reports/` 看到 legacy mirror。投资阅读入口优先级：
 
 1. `evidence_dashboard_YYYY-MM-DD.html`：只读每日决策展示入口，不替代审计源。

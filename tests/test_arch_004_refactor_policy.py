@@ -117,6 +117,25 @@ OPS_067_HISTORICAL_PREFIX_BYTE_COUNT = 1_274_261
 OPS_067_HISTORICAL_PREFIX_SHA256 = (
     "bf683206146c0f0585ce292eafef06c6fe414231630be45c3589d1bb39776df4"
 )
+OPS_068_SECTION = "phase_ops_068_limited_non_pit_reconstruction"
+OPS_068_BASE_COMMIT = "e2b264ba7f3b500c78a796c352327504b9408517"
+OPS_068_BASELINE_GIT_BLOB = "fff2b77d51dd087f1c1e86f598bcc94b6f08a7d8"
+OPS_068_HISTORICAL_PREFIX_BYTE_COUNT = 1_326_278
+OPS_068_HISTORICAL_PREFIX_SHA256 = (
+    "6f993118d3f142f2c14164355d70edb57744249c5c6ef5b5473d0dfe5c7eddbb"
+)
+OPS_068_NEW_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/OPS-068_2026_07_21_Daily_Gap_Recovery.md",
+        "docs/schema/limited_non_pit_reconstruction.v2.schema.json",
+        (
+            "registry/development_tasks_shadow/completed/9d/"
+            "9dd21402a1abc63d94ac7a64ad1fac93c09d13564ab383ee4f9146ce7693fde7.yaml"
+        ),
+        "src/ai_trading_system/limited_non_pit_reconstruction.py",
+        "tests/test_limited_non_pit_reconstruction.py",
+    }
+)
 WAVE14_S2_PRE_FULL_REQUIRED_TIERS = (
     "combined_focused",
     "static",
@@ -288,6 +307,23 @@ def _ops_067_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _ops_068_base_baseline_blob() -> bytes:
+    object_name = f"{OPS_068_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == OPS_068_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -412,6 +448,23 @@ def _assert_ops_067_historical_prefix_immutable(
     assert ops_067_suffix.startswith(
         expected_marker
     ), "OPS-067 must be appended after the exact Wave14 S2 baseline blob"
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_ops_068_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == OPS_068_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == OPS_068_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:OPS_068_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, "OPS-068 historical prefix differs from OPS-067"
+    assert hashlib.sha256(historical_prefix).hexdigest() == OPS_068_HISTORICAL_PREFIX_SHA256
+    ops_068_suffix = current_bytes[OPS_068_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{OPS_068_SECTION}:\n".encode()
+    assert ops_068_suffix.startswith(
+        expected_marker
+    ), "OPS-068 must be appended after the exact OPS-067 baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -669,6 +722,14 @@ def _assert_current_ops_067_historical_prefix_immutable() -> None:
 
 
 @cache
+def _assert_current_ops_068_historical_prefix_immutable() -> None:
+    _assert_ops_068_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_068_base_baseline_blob(),
+    )
+
+
+@cache
 def _compatibility_baseline() -> dict[str, Any]:
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     assert isinstance(baseline, dict)
@@ -741,6 +802,16 @@ def _ops_067_superseded_live_source_paths() -> frozenset[str]:
     baseline = _compatibility_baseline()
     ops_067 = baseline[OPS_067_SECTION]
     paths = ops_067["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _ops_068_superseded_live_source_paths() -> frozenset[str]:
+    _assert_current_ops_068_historical_prefix_immutable()
+    baseline = _compatibility_baseline()
+    ops_068 = baseline[OPS_068_SECTION]
+    paths = ops_068["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -1184,12 +1255,21 @@ def _ops_067_prior_active_source_mismatches() -> frozenset[str]:
     return _prior_active_source_mismatches(OPS_067_SECTION)
 
 
+@cache
+def _ops_068_prior_active_source_mismatches() -> frozenset[str]:
+    return _prior_active_source_mismatches(OPS_068_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if OPS_067_SECTION in baseline:
+    if OPS_068_SECTION in baseline:
+        superseded_paths = _ops_068_superseded_live_source_paths()
+        assert _ops_068_prior_active_source_mismatches() == superseded_paths
+        authority_section = OPS_068_SECTION
+    elif OPS_067_SECTION in baseline:
         superseded_paths = _ops_067_superseded_live_source_paths()
         assert _ops_067_prior_active_source_mismatches() == superseded_paths
         authority_section = OPS_067_SECTION
@@ -2428,7 +2508,7 @@ def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
 def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority() -> None:
     _assert_current_docs_gov_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == OPS_067_SECTION
+    assert next(reversed(baseline)) == OPS_068_SECTION
     docs_gov = baseline[DOCS_GOV_SECTION]
 
     assert docs_gov["schema_version"] == "docs_gov_001_freshness_closeout.v1"
@@ -2493,7 +2573,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
     # section proves that its own supersession set remains covered while the
     # newest section is the exhaustive current-live authority.
     assert _wave12_superseded_live_source_paths() <= docs_gov_live_mismatches
-    assert docs_gov_live_mismatches <= _ops_067_superseded_live_source_paths()
+    assert docs_gov_live_mismatches <= _ops_068_superseded_live_source_paths()
 
     sources = docs_gov["sources"]
     source_paths = [str(source["path"]) for source in sources]
@@ -2527,7 +2607,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
 def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave12_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == OPS_067_SECTION
+    assert next(reversed(baseline)) == OPS_068_SECTION
     wave12 = baseline[WAVE12_SECTION]
 
     assert wave12["schema_version"] == "arch_004_wave12_g4_d0b_s2_closeout.v1"
@@ -2568,7 +2648,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     superseded = set(wave12["superseded_live_source_paths"])
     wave12_live_mismatches = _wave12_prior_active_source_mismatches()
     assert superseded <= wave12_live_mismatches
-    assert wave12_live_mismatches <= _ops_067_superseded_live_source_paths()
+    assert wave12_live_mismatches <= _ops_068_superseded_live_source_paths()
     assert wave12["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE12-S2",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -2611,7 +2691,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
 def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> None:
     _assert_current_wave13_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == OPS_067_SECTION
+    assert next(reversed(baseline)) == OPS_068_SECTION
     wave13 = baseline[WAVE13_SECTION]
 
     assert wave13["schema_version"] == "arch_004_wave13_gov006_n1_closeout.v1"
@@ -2810,7 +2890,7 @@ def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> No
     superseded = set(wave13["superseded_live_source_paths"])
     wave13_live_mismatches = _wave13_prior_active_source_mismatches()
     assert superseded <= wave13_live_mismatches
-    assert wave13_live_mismatches <= _ops_067_superseded_live_source_paths()
+    assert wave13_live_mismatches <= _ops_068_superseded_live_source_paths()
     assert wave13["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE13-GOV006-N1",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -2870,7 +2950,7 @@ def test_arch_004_wave14_s0_1_is_immutable_historical_hash_authority() -> None:
     section_ids = list(baseline)
     assert section_ids.index(WAVE14_S0_1_SECTION) < section_ids.index(WAVE14_S2_SECTION)
     assert section_ids.index(WAVE14_S2_SECTION) < section_ids.index(OPS_067_SECTION)
-    assert next(reversed(baseline)) == OPS_067_SECTION
+    assert next(reversed(baseline)) == OPS_068_SECTION
     wave14 = baseline[WAVE14_S0_1_SECTION]
 
     assert wave14["schema_version"] == ("arch_004_wave14_s0_1_readiness_infrastructure.v1")
@@ -2986,7 +3066,7 @@ def test_arch_004_wave14_s0_1_is_immutable_historical_hash_authority() -> None:
     superseded = set(wave14["superseded_live_source_paths"])
     observed_live_mismatches = _wave14_s0_1_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
-    assert observed_live_mismatches <= _ops_067_superseded_live_source_paths()
+    assert observed_live_mismatches <= _ops_068_superseded_live_source_paths()
     assert len(superseded) == WAVE14_S0_1_EXPECTED_SUPERSEDED_SOURCE_COUNT
     assert wave14["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE14-S0.1",
@@ -3088,7 +3168,7 @@ def test_arch_004_wave14_s0_1_rejects_historical_prefix_tamper() -> None:
 def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave14_s2_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == OPS_067_SECTION
+    assert next(reversed(baseline)) == OPS_068_SECTION
     wave14 = baseline[WAVE14_S2_SECTION]
 
     status = wave14["status"]
@@ -3124,7 +3204,7 @@ def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
     superseded = set(wave14["superseded_live_source_paths"])
     wave14_live_mismatches = _wave14_s2_prior_active_source_mismatches()
     assert superseded <= wave14_live_mismatches
-    assert wave14_live_mismatches <= _ops_067_superseded_live_source_paths()
+    assert wave14_live_mismatches <= _ops_068_superseded_live_source_paths()
     assert wave14["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE14-S2",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -3375,8 +3455,9 @@ def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
 def test_ops_067_is_append_only_current_hash_authority() -> None:
     _assert_current_ops_067_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == OPS_067_SECTION
+    assert next(reversed(baseline)) == OPS_068_SECTION
     assert list(baseline).index(WAVE14_S2_SECTION) < list(baseline).index(OPS_067_SECTION)
+    assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
     ops_067 = baseline[OPS_067_SECTION]
 
     status = ops_067["status"]
@@ -3420,7 +3501,10 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
 
     superseded = set(ops_067["superseded_live_source_paths"])
     assert len(superseded) == 101
-    assert superseded == _ops_067_prior_active_source_mismatches()
+    assert _ops_067_prior_active_source_mismatches() == _ops_068_superseded_live_source_paths()
+    assert _ops_068_superseded_live_source_paths() - superseded == {
+        WAVE14_S2_COMPLETED_TASK_SHADOW_PATH
+    }
     assert ops_067["supersession"] == {
         "superseded_by_phase": "OPS-067",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -3479,8 +3563,9 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     assert inherited_removed.isdisjoint(source_paths)
     assert superseded <= set(source_paths) | inherited_removed
     _assert_wave14_s2_all_sources_tracked(source_paths)
-    for source in sources:
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    historical_baseline = safe_load_yaml_text(_ops_068_base_baseline_blob().decode("utf-8"))
+    assert isinstance(historical_baseline, dict)
+    assert historical_baseline[OPS_067_SECTION] == ops_067
 
     validation = ops_067["validation"]
     required_engineering_gates = (
@@ -3541,6 +3626,125 @@ def test_ops_067_rejects_historical_prefix_tamper() -> None:
     tampered[OPS_067_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_ops_067_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_ops_068_is_append_only_current_hash_authority() -> None:
+    _assert_current_ops_068_historical_prefix_immutable()
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == OPS_068_SECTION
+    assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
+    ops_068 = baseline[OPS_068_SECTION]
+
+    assert ops_068["status"] == "COMPLETE_OPS_068"
+    assert ops_068["schema_version"] == "ops_068_limited_non_pit_reconstruction.v1"
+    assert ops_068["boundary_id"] == "OPS-068"
+    assert ops_068["task_ids"] == ["OPS-068_2026_07_21_DAILY_GAP_RECOVERY"]
+    assert ops_068["prior_sections_immutability"] == {
+        "source_commit": OPS_068_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": OPS_068_BASELINE_GIT_BLOB,
+        "raw_byte_count": OPS_068_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": OPS_068_HISTORICAL_PREFIX_SHA256,
+        "append_offset": OPS_068_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert ops_068["implementation"] == {
+        "explicit_inventory_only": True,
+        "cache_only": True,
+        "content_derived_validation": True,
+        "canonical_guard_before_after": True,
+        "strict_pipeline_output_required_null": True,
+        "investment_conclusion_required_null": True,
+        "latest_or_pointer_publication": False,
+    }
+    assert ops_068["result"] == {
+        "as_of_date": "2026-07-21",
+        "status": "LIMITED_NON_PIT_RECONSTRUCTION",
+        "canonical_daily_evidence": "MISSING",
+        "reconstruction_conclusion": "INSUFFICIENT_DATA",
+        "isolated_data_quality_status": "PASS_WITH_WARNINGS",
+        "error_count": 0,
+        "warning_count": 1,
+        "info_count": 13,
+        "market_fact_count": 26,
+        "macro_fact_count": 3,
+        "strict_pipeline_output": None,
+        "investment_conclusion": None,
+        "production_effect": "none",
+    }
+
+    superseded = set(ops_068["superseded_live_source_paths"])
+    assert len(superseded) == 102
+    assert superseded == _ops_068_prior_active_source_mismatches()
+    assert ops_068["supersession"] == {
+        "superseded_by_phase": "OPS-068",
+        "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
+        "historical_hashes_rewritten": False,
+        "current_hash_authority": f"{OPS_068_SECTION}.sources",
+    }
+    assert ops_068["inherited_removed_live_source_paths"] == [
+        WAVE14_S2_ACTIVE_TASK_SHADOW_PATH
+    ]
+    assert set(ops_068["new_source_paths"]) == OPS_068_NEW_SOURCE_PATHS
+
+    sources = ops_068["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    prior_source_paths = {
+        str(source["path"]) for source in baseline[OPS_067_SECTION]["sources"]
+    }
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == prior_source_paths | OPS_068_NEW_SOURCE_PATHS
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    assert set(ops_068["inherited_removed_live_source_paths"]).isdisjoint(source_paths)
+    assert superseded <= set(source_paths) | set(
+        ops_068["inherited_removed_live_source_paths"]
+    )
+    for source in sources:
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert ops_068["validation"] == {
+        "bundle_validation": {"status": "PASS", "checks": 11, "failed": 0},
+        "focused": {"status": "PASS", "passed": 4, "failed": 0},
+        "fast_unit": {"status": "PASS", "passed": 333, "failed": 0},
+        "architecture_fitness_pre_closeout": {
+            "status": "FAIL_EXPECTED_GOVERNANCE_CLOSEOUT",
+            "passed": 573,
+            "failed": 4,
+        },
+        "post_commit_architecture_fitness_required": True,
+        "contract_validation_required": True,
+    }
+    assert ops_068["worktree_attribution"] == {
+        "known_unrelated_worktree_files": [WAVE14_S2_PROHIBITED_USER_PATH],
+        "active_shared_path_lease_count": 0,
+    }
+    assert ops_068["safety"] == {
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "investment_interpretation_changed": False,
+        "backtest_or_search_executed": False,
+        "data_or_runtime_changed": True,
+        "paper_shadow_or_portfolio_mutated": False,
+        "production_or_active_shadow_weights_written": False,
+        "automatic_command_dispatch_enabled": False,
+        "order_or_broker_action": "none",
+        "production_effect": "none",
+    }
+
+
+def test_ops_068_rejects_historical_prefix_tamper() -> None:
+    base_blob = _ops_068_base_baseline_blob()
+    valid_append = base_blob + f"\n{OPS_068_SECTION}:\n  status: TEST_ONLY\n".encode()
+    _assert_ops_068_historical_prefix_immutable(valid_append, base_blob)
+
+    tampered = bytearray(valid_append)
+    tampered[OPS_068_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_ops_068_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

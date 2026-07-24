@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1175
-test_count: 1116
+test_file_count: 1176
+test_count: 1117
 support_file_count: 59
 orphan_count: 0
 specific_overlap_count: 0
@@ -7439,7 +7439,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: f96d45bd9a0c63937045864aa129ee8884edc2604b902e7903bb82f27d686bf7
+  sha256: 30c5b2ce16c55602aa1e62fc079c9cc3d303fdb52667ada7f96bd97eae1d9cfb
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7799,7 +7799,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 47b0358597da8121e8157f8ca672fcafbbe32676cae75e2fd469c13b0f106a54
+  sha256: 6dd9d121360ca9148224bd50a6fc8731c5a4e4e0b4550c4057050f108af93234
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -11986,6 +11986,22 @@ tests:
 - test_id: tests.test_limited_long_risk
   path: tests/test_limited_long_risk.py
   sha256: 22eca62c277f093b8be6295ab2b10e3153ef0ba01df058ef41efc00263615fec
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_limited_non_pit_reconstruction
+  path: tests/test_limited_non_pit_reconstruction.py
+  sha256: 00ba838dd28560565fda0a57fe0a5199118c7ef4cbb3a1e06bf1462621c9e4ea
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

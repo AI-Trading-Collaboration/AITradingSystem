@@ -65,6 +65,13 @@ from ai_trading_system.historical_replay import (
 from ai_trading_system.legacy.periodic_operations_adapter import (
     build_periodic_operations_plan,
 )
+from ai_trading_system.limited_non_pit_reconstruction import (
+    LimitedNonPitReconstructionError,
+    build_limited_non_pit_reconstruction,
+    default_limited_non_pit_output_root,
+    validate_limited_non_pit_reconstruction,
+    write_limited_non_pit_validation,
+)
 from ai_trading_system.ops_daily import (
     DailyOpsPlan,
     DailyOpsRunReport,
@@ -2381,6 +2388,126 @@ def daily_ops_run_command(
         console.print(f"失败步骤：{failed.step_id}；return_code={failed.return_code}")
     if status not in {"PASS", "PASS_WITH_SKIPS"}:
         raise typer.Exit(code=1)
+
+
+@ops_app.command("reconstruct-limited-non-pit")
+def reconstruct_limited_non_pit_command(
+    inventory_bundle: Annotated[
+        Path,
+        typer.Option(
+            "--inventory-bundle",
+            help="明确的 cache-only inventory bundle；禁止 latest/glob 发现。",
+        ),
+    ],
+    owner_decision_id: Annotated[
+        str,
+        typer.Option(
+            "--owner-decision-id",
+            help="批准受限重建的 owner decision id。",
+        ),
+    ],
+    bundle_id: Annotated[
+        str,
+        typer.Option(
+            "--bundle-id",
+            help="新的隔离 bundle id；已存在目录不会被覆盖。",
+        ),
+    ],
+    guard_path: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "--guard-path",
+            help="生成前后必须 byte-identical 的 canonical 文件；可重复。",
+        ),
+    ] = None,
+    output_root: Annotated[
+        Path | None,
+        typer.Option(
+            "--output-root",
+            help="隔离输出根目录；默认 outputs/replays/limited_non_pit_reconstruction。",
+        ),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录；默认使用当前安装包配置的 PROJECT_ROOT。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """由明确 inventory 生成无 PIT、无结论、无 production effect 的历史事实证据。"""
+
+    try:
+        result = build_limited_non_pit_reconstruction(
+            inventory_bundle=inventory_bundle,
+            owner_decision_id=owner_decision_id,
+            bundle_id=bundle_id,
+            project_root=project_root,
+            output_root=output_root or default_limited_non_pit_output_root(project_root),
+            guard_paths=guard_path or (),
+        )
+    except LimitedNonPitReconstructionError as exc:
+        console.print(f"[red]受限非 PIT 重建失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]受限非 PIT 重建：PASS[/green]")
+    console.print(f"Bundle：{result.bundle_path}")
+    console.print(f"Report：{result.markdown_path}")
+    console.print(f"Validation：{result.validation_path}")
+    console.print("Canonical daily evidence：MISSING")
+    console.print("Reconstruction conclusion：INSUFFICIENT_DATA")
+    console.print("Production effect：none")
+
+
+@ops_app.command("validate-limited-non-pit")
+def validate_limited_non_pit_command(
+    bundle_path: Annotated[
+        Path,
+        typer.Option("--bundle-path", help="待校验的 v2 隔离 bundle。"),
+    ],
+    expected_as_of: Annotated[
+        str,
+        typer.Option("--expected-as-of", help="预期历史交易日，格式 YYYY-MM-DD。"),
+    ],
+    expected_owner_decision_id: Annotated[
+        str,
+        typer.Option(
+            "--expected-owner-decision-id",
+            help="必须与 bundle 完全一致的 owner decision id。",
+        ),
+    ],
+    expected_inventory_bundle: Annotated[
+        Path,
+        typer.Option(
+            "--expected-inventory-bundle",
+            help="必须与 frozen source snapshot 完全一致的原 inventory bundle。",
+        ),
+    ],
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录；默认使用当前安装包配置的 PROJECT_ROOT。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """从 bundle 真实 bytes 复算 DQ、事实、null contract 和成员 allowlist。"""
+
+    validation = validate_limited_non_pit_reconstruction(
+        bundle_path,
+        project_root=project_root,
+        expected_as_of=_parse_date(expected_as_of),
+        expected_owner_decision_id=expected_owner_decision_id,
+        expected_inventory_bundle=expected_inventory_bundle,
+    )
+    style = "green" if validation.passed else "red"
+    console.print(f"[{style}]受限非 PIT bundle 校验：{validation.status}[/{style}]")
+    console.print(f"Checks：{len(validation.checks)}")
+    if validation.errors:
+        for error in validation.errors:
+            console.print(f"Error：{error}")
+        raise typer.Exit(code=1)
+    json_path, markdown_path = write_limited_non_pit_validation(
+        validation,
+        bundle_path,
+    )
+    console.print(f"Validation JSON：{json_path}")
+    console.print(f"Validation report：{markdown_path}")
+    console.print("Production effect：none")
 
 
 @ops_app.command("periodic-dispatch")

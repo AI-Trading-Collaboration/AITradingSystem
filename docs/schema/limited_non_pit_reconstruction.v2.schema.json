@@ -1,0 +1,433 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aitradingsystem.local/schema/limited_non_pit_reconstruction.v2.schema.json",
+  "title": "Limited non-PIT reconstruction evidence",
+  "description": "隔离的 cache-only market/macro 历史事实证据；不构成 canonical daily、PIT、评分、仓位或投资结论。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "task_id",
+    "owner_decision_id",
+    "as_of",
+    "generated_at",
+    "bundle_id",
+    "scope",
+    "canonical_daily_evidence_status",
+    "reconstruction_conclusion_status",
+    "source_inventory",
+    "research_window",
+    "data_quality",
+    "input_summaries",
+    "market_snapshot",
+    "macro_snapshot",
+    "strict_missing_inputs",
+    "conclusion_outputs",
+    "source_artifacts",
+    "canonical_guard_evidence",
+    "exclusions",
+    "safety"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "limited_non_pit_reconstruction.v2"
+    },
+    "status": {
+      "const": "LIMITED_NON_PIT_RECONSTRUCTION"
+    },
+    "task_id": {
+      "const": "OPS-068_2026_07_21_DAILY_GAP_RECOVERY"
+    },
+    "owner_decision_id": {
+      "type": "string",
+      "pattern": "^owner_decision:[A-Za-z0-9._:-]+$"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "bundle_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$"
+    },
+    "scope": {
+      "const": "checksum_backed_market_macro_facts_only"
+    },
+    "canonical_daily_evidence_status": {
+      "const": "MISSING"
+    },
+    "reconstruction_conclusion_status": {
+      "const": "INSUFFICIENT_DATA"
+    },
+    "source_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_bundle_path",
+        "source_run_id",
+        "source_status",
+        "mode",
+        "inventory_only",
+        "visible_at",
+        "cutoff_policy",
+        "replay_run_snapshot",
+        "input_freeze_manifest_snapshot"
+      ],
+      "properties": {
+        "source_bundle_path": {
+          "type": "string"
+        },
+        "source_run_id": {
+          "type": "string"
+        },
+        "source_status": {
+          "const": "INCOMPLETE_REPLAY"
+        },
+        "mode": {
+          "const": "cache-only"
+        },
+        "inventory_only": {
+          "const": true
+        },
+        "visible_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cutoff_policy": {
+          "type": "string"
+        },
+        "replay_run_snapshot": {
+          "$ref": "#/$defs/artifact"
+        },
+        "input_freeze_manifest_snapshot": {
+          "$ref": "#/$defs/artifact"
+        }
+      }
+    },
+    "research_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_default_start",
+        "selected_start",
+        "selected_end",
+        "canonical_requested_window",
+        "evaluated_input_start",
+        "evaluated_input_end",
+        "interpretation"
+      ],
+      "properties": {
+        "project_default_start": {
+          "const": "2021-02-22"
+        },
+        "selected_start": {
+          "const": "2021-02-22"
+        },
+        "selected_end": {
+          "type": "string",
+          "format": "date"
+        },
+        "canonical_requested_window": {
+          "type": "null"
+        },
+        "evaluated_input_start": {
+          "type": "string",
+          "format": "date"
+        },
+        "evaluated_input_end": {
+          "type": "string",
+          "format": "date"
+        },
+        "interpretation": {
+          "const": "isolated_fact_validation_only_no_investment_conclusion"
+        }
+      }
+    },
+    "data_quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "canonical_gate",
+        "status",
+        "passed",
+        "checked_at",
+        "error_count",
+        "warning_count",
+        "info_count",
+        "warning_codes",
+        "report",
+        "marketstack_reconciliation"
+      ],
+      "properties": {
+        "scope": {
+          "const": "isolated_market_macro_fact_validation"
+        },
+        "canonical_gate": {
+          "const": false
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "PASS_WITH_WARNINGS"
+          ]
+        },
+        "passed": {
+          "const": true
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "error_count": {
+          "const": 0
+        },
+        "warning_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "info_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warning_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "report": {
+          "$ref": "#/$defs/artifact"
+        },
+        "marketstack_reconciliation": {
+          "$ref": "#/$defs/artifact"
+        }
+      }
+    },
+    "input_summaries": {
+      "type": "object"
+    },
+    "market_snapshot": {
+      "type": "array"
+    },
+    "macro_snapshot": {
+      "type": "array"
+    },
+    "strict_missing_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fmp_forward_pit_normalized",
+        "pit_validation_report",
+        "fmp_forward_pit_fetch_report",
+        "sec_fundamentals",
+        "openai_prereview_report"
+      ],
+      "properties": {
+        "fmp_forward_pit_normalized": {
+          "type": "null"
+        },
+        "pit_validation_report": {
+          "type": "null"
+        },
+        "fmp_forward_pit_fetch_report": {
+          "type": "null"
+        },
+        "sec_fundamentals": {
+          "type": "null"
+        },
+        "openai_prereview_report": {
+          "type": "null"
+        }
+      }
+    },
+    "conclusion_outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "daily_score",
+        "position",
+        "decision_snapshot",
+        "dashboard",
+        "reader_brief",
+        "weekly",
+        "governance",
+        "promotion",
+        "backtest",
+        "weights",
+        "production"
+      ],
+      "properties": {
+        "daily_score": {
+          "type": "null"
+        },
+        "position": {
+          "type": "null"
+        },
+        "decision_snapshot": {
+          "type": "null"
+        },
+        "dashboard": {
+          "type": "null"
+        },
+        "reader_brief": {
+          "type": "null"
+        },
+        "weekly": {
+          "type": "null"
+        },
+        "governance": {
+          "type": "null"
+        },
+        "promotion": {
+          "type": "null"
+        },
+        "backtest": {
+          "type": "null"
+        },
+        "weights": {
+          "type": "null"
+        },
+        "production": {
+          "type": "null"
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "minItems": 8
+    },
+    "canonical_guard_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unchanged",
+        "before",
+        "after"
+      ],
+      "properties": {
+        "unchanged": {
+          "const": true
+        },
+        "before": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/guard"
+          }
+        },
+        "after": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/guard"
+          }
+        }
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production_effect",
+        "provider_calls",
+        "openai_calls",
+        "canonical_cache_mutation",
+        "canonical_state_mutation",
+        "score_generated",
+        "position_generated",
+        "broker_action_allowed",
+        "trading_action_taken"
+      ],
+      "properties": {
+        "production_effect": {
+          "const": "none"
+        },
+        "provider_calls": {
+          "const": false
+        },
+        "openai_calls": {
+          "const": false
+        },
+        "canonical_cache_mutation": {
+          "const": false
+        },
+        "canonical_state_mutation": {
+          "const": false
+        },
+        "score_generated": {
+          "const": false
+        },
+        "position_generated": {
+          "const": false
+        },
+        "broker_action_allowed": {
+          "const": false
+        },
+        "trading_action_taken": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
