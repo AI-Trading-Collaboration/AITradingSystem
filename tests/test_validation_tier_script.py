@@ -420,6 +420,23 @@ def test_managed_runtime_artifact_locators_are_repository_relative(
     )
 
 
+def test_validation_runtime_root_is_gitignored_for_clean_clone_guards() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    completed = subprocess.run(
+        [
+            "git",
+            "check-ignore",
+            "--no-index",
+            "--quiet",
+            "outputs/validation_runtime/contract-probe.json",
+        ],
+        cwd=project_root,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+
+
 def test_repository_external_relative_artifact_locator_is_absolute(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

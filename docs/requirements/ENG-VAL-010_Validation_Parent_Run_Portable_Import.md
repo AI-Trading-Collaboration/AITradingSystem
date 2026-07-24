@@ -94,6 +94,9 @@ import validator 在 pytest 启动前：
 `--artifact-dir` 时仍可保留绝对 locator，但不得形成可跨仓库误解释的 import proof。
 
 已有绝对路径 artifact 保持 immutable，由 S0/S1 proof 兼容；不批量重写历史证据。
+默认 `outputs/validation_runtime/` 同时是 tracked `.gitignore` 中的 developer-runtime
+边界，使 clean clone 中的 parent、print-only 与 formal gate 产物不会被 architecture
+worktree guard 误判为业务或共享路径脏写；其他 untracked/modified 路径仍由 guard fail closed。
 
 ## 验收标准
 
@@ -106,6 +109,8 @@ import validator 在 pytest 启动前：
 - 未提供 import proof 的 relocated parent 继续失败；同 worktree legacy direct parent继续 PASS；
 - 新 default runtime artifact 的 managed locators 为 repository-relative，旧 consumer 与
   refresh tooling contract测试 PASS；
+- tracked `.gitignore` 只排除 `outputs/validation_runtime/` developer evidence root，
+  Wave14 worktree guard 仍拒绝该 root 外的任何 unexpected dirty path；
 - focused、static、architecture-fitness、contract-validation、integration、reproducibility
   与 OPS-067 formal Full PASS；
 - `strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`，
@@ -154,3 +159,11 @@ import validator 在 pytest 启动前：
   validation clone 使用 detached HEAD 而无法满足 Wave14 branch evidence。两项均按原设计直接
   修复：刷新 generated task authority，并让新 exact clone 保持 `main` 分支；不删除失败证据、
   不放宽 gate、不以重跑覆盖。
+- 2026-07-24：第二个 exact candidate `fcffae49f5496e5dd06919e8cf1e00cf6f2c299c`
+  / tree `c7b40188ea4f6691d6864c2f94caba2bbf77d542` 的 combined focused
+  `185 passed / 134.29s`，task authority 与 branch 问题均已关闭；architecture-fitness
+  进一步得到 `575 passed / 1 failed / 92.90s`，唯一失败为 clean clone 未继承主工作区
+  `.git/info/exclude`，导致合法 `outputs/validation_runtime/` parent/print-only 证据被
+  Wave14 guard 视为 unexpected dirty path。由于 Full 也包含该 guard，不能靠重排命令规避；
+  直接把 developer validation runtime root 固化进 tracked `.gitignore` 并增加 focused
+  contract，其他路径的 guard 语义不变。

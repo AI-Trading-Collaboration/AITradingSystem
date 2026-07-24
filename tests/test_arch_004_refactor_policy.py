@@ -3431,6 +3431,7 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     assert inherited_removed == {WAVE14_S2_ACTIVE_TASK_SHADOW_PATH}
 
     expected_new_source_paths = {
+        ".gitignore",
         "docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md",
         "docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md",
         (
@@ -3469,7 +3470,7 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     assert set(ops_067["new_source_paths"]) == expected_new_source_paths
     sources = ops_067["sources"]
     source_paths = [str(source["path"]) for source in sources]
-    assert len(source_paths) == 172
+    assert len(source_paths) == 173
     assert len(source_paths) == len(set(source_paths))
     wave14_source_paths = {str(source["path"]) for source in baseline[WAVE14_S2_SECTION]["sources"]}
     assert set(source_paths) == wave14_source_paths | expected_new_source_paths

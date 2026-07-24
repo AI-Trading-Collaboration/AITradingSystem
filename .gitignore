@@ -20,6 +20,7 @@ venv/
 config/*.local.yaml
 
 # Local data and generated outputs
+outputs/validation_runtime/
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*

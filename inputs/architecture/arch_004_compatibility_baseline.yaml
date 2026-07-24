@@ -19805,6 +19805,21 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
         - refresh_arch_005_task_registry_authority
         - retain_main_branch_in_exact_clone
         workaround_used: false
+      - attempt_id: eng_val_010_architecture_2
+        tier: architecture-fitness
+        status: FAIL
+        passed: 575
+        failed: 1
+        elapsed_seconds: 92.90
+        tested_commit: fcffae49f5496e5dd06919e8cf1e00cf6f2c299c
+        tested_tree: c7b40188ea4f6691d6864c2f94caba2bbf77d542
+        artifact:
+          path: outputs/validation_runtime/architecture-fitness_20260724T020328Z/test_runtime_summary.json
+        failure_codes:
+        - WORKTREE_UNEXPECTED_PATHS_VALIDATION_RUNTIME
+        direct_fixes:
+        - track_validation_runtime_gitignore_boundary
+        workaround_used: false
   supersession:
     superseded_by_phase: OPS-067
     scope: ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH
@@ -19915,6 +19930,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
   inherited_removed_live_source_paths:
   - registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
   new_source_paths:
+  - .gitignore
   - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
   - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
   - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
@@ -19944,6 +19960,9 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
   - tests/test_validation_tier_script.py
   - tests/test_validation_trigger_provenance.py
   sources:
+  - path: .gitignore
+    sha256: 29b2a6e06b407c61458a0d328cf6a668801839f10796adaacbb182fe525a906e
+    hash_normalization: git_eol_lf
   - path: .github/workflows/ci.yml
     sha256: 2480e557b4e32c86a140441ffdf4dc393042b8b7617234b0b5dd4de24b120636
     hash_normalization: git_eol_lf
@@ -20020,7 +20039,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 662c63c365262bf0b3c1f594ab27d5ad08ca6e1a3f94512126748f83b8c2519a
     hash_normalization: git_eol_lf
   - path: docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
-    sha256: 4529d8ea90debe1f4bd29b53d087943af631b4a18fd7bbb1fe2c7b8d834e3751
+    sha256: 4f2b653b1abe084beeadb6b7c022578c3131eb4591a00d46618fb733464efe18
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
     sha256: ea93132c7aa3238086348162398319c384491233a749ee8f9cf8033bb8fd49e6
@@ -20077,7 +20096,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: 4eb0830ba2cd09269ae5c70912e27f1113fc83788b0de2c00320cc325dddcee7
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 1ce1702718ef6aa0481349c19cc91141ce4bb6a777d85f229c0553f119c8bcc6
+    sha256: feda6fb65698718987d860e895d9a5d4616ebab21b192037a12d5ae6b2047859
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -20329,7 +20348,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: c44c73ae1f95e9f0eb9e38cd223e39250f9c437623a5f75319e42293a0ef68b7
+    sha256: f96d45bd9a0c63937045864aa129ee8884edc2604b902e7903bb82f27d686bf7
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_wave14_d0b2_g3_readiness.py
     sha256: effe2292ddef5a9d7aae930ad0510948bb0aa645650a4686aed506103deb4efb
@@ -20440,7 +20459,7 @@ phase_ops_067_reader_brief_quality_fail_closed_finalization:
     sha256: b1760b9985fcaa7ab9e97afa284395e62c522d7071a78806299a79eeb8606634
     hash_normalization: git_eol_lf
   - path: tests/test_validation_tier_script.py
-    sha256: 15a0abcd8a5f181339141df18b775ab9930cc9ad55a8ba855250cce858ed3e4f
+    sha256: 52d54454375789b0acd4192e440101f99b43763002158b589418fd2dffe9bb02
     hash_normalization: git_eol_lf
   - path: tests/test_validation_trigger_provenance.py
     sha256: dfa13d3e6dd5c5a4e8a68789143684b0f798bef6c687e01c708967efaa6ffc5e
