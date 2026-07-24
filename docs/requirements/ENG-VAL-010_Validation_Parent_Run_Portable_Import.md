@@ -121,10 +121,10 @@ worktree guard 误判为业务或共享路径脏写；其他 untracked/modified 
 1. `COMPLETE`：冻结 manifest schema、task register 与 system-flow 边界。
 2. `COMPLETE`：并行实现 builder/strict validator 与 runner/provenance integration，文件 ownership
    保持分离。
-3. `IN_PROGRESS`：focused/static 已 PASS 并已生成 OPS-067 import proof；
-   architecture/contract/integration/reproducibility 与 generated authority refresh 待完成。
-4. `PENDING`：以 `failure_fix_rerun` + parent summary + import proof 运行第二次 exact-tree Full。
-5. `PENDING`：刷新 manifests、compatibility/deprecation/source hashes，执行 post-Full gates；
+3. `COMPLETE`：focused/static、generated authority 与
+   architecture/contract/integration/reproducibility 已在 exact candidate PASS。
+4. `COMPLETE`：以 `failure_fix_rerun` + parent summary + import proof 完成第二次 exact-tree Full。
+5. `IN_PROGRESS`：刷新并验证 compatibility/deprecation/source hashes，执行 post-Full gates；
    由 OPS-067 coordinator 提交、push 后进入 canonical daily acceptance。
 
 ## 安全边界
@@ -167,3 +167,14 @@ worktree guard 误判为业务或共享路径脏写；其他 untracked/modified 
   Wave14 guard 视为 unexpected dirty path。由于 Full 也包含该 guard，不能靠重排命令规避；
   直接把 developer validation runtime root 固化进 tracked `.gitignore` 并增加 focused
   contract，其他路径的 guard 语义不变。
+- 2026-07-24：最终 Full-tested candidate=`d92eae358cc4b0819d1fa1205e0d3dad8104b57a`
+  / tree=`0e3bca65e5d98d96b4ec892f58936e8680f3a034`。combined focused=`186 passed`；
+  architecture/contract/integration/reproducibility=`577/274/993/23 passed`；parent-bound
+  Full=`7115 passed / 4 skipped / 643 warnings / 1176.47s`。summary
+  SHA-256=`33cb2f5fe64d49be1cb8df7934bbf049185e7a70dcb227a826af07d77d974435`
+  / `26,749` bytes，profile
+  SHA-256=`6e8c076ccaffeca5ce9714ffa80e972b460b39db69c20d5488bd17e64c8c5b87`
+  / `13,345,435` bytes；profile/telemetry/performance/provenance binding、scheduler
+  applied/no-fallback/order 与 formal selection 全部 PASS。一次执行通道中断未产生新的 formal
+  artifact，未计作 Full attempt 或 pytest 结果。当前只剩 evidence-only post-Full gates、提交和
+  push；duration seed 保持已验证的 `PARTIAL_SEED v24`，不在 Full 后改动 Full-sensitive 输入。
