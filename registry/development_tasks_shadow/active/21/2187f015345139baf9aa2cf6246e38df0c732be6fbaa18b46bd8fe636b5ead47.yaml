@@ -11,66 +11,48 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture control-plane owner + operations automation owner；S2 telemetry与Wave15另行等待project
-    owner授权
+  next_owner: architecture control-plane owner；S2 telemetry与S5仍需另行授权
   requirement_refs:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 稳定workspace identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic
-      lease/heartbeat/expiry/replay与pre-body/pre-provider gate已实现；重叠writer恰好一个成功，dirty/unattributed或active
-      mutation lease下daily零provider/cache/report mutation，互斥domain仍可并行，known-unrelated仅按exact
-      path排除且不读取其bytes。验证：focused=`92 passed`；architecture=`593 passed`；contract=`274
-      passed`；integration=`993 passed`；reproducibility=`23 passed`；failure-fix Full=`7136
-      passed / 3 skipped / 643 warnings`。
+    text: 瞬时拒绝恢复，持续拒绝busy fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
+      exclusion继续PASS。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1951
-    row_sha256: b602d10d973232e510b8a7dc5c758a8bbf0364cab107ac646e1ddfb4ffe848a6
+    row_sha256: 5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
     cell_count: 8
     all_cells:
     - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     - Architecture / shared-checkout writer and operations lease guard
     - P0
     - BASELINE_DONE
-    - architecture control-plane owner + operations automation owner；S2 telemetry与Wave15另行等待project
-      owner授权
-    - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。
-    - 稳定workspace identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic
-      lease/heartbeat/expiry/replay与pre-body/pre-provider gate已实现；重叠writer恰好一个成功，dirty/unattributed或active
-      mutation lease下daily零provider/cache/report mutation，互斥domain仍可并行，known-unrelated仅按exact
-      path排除且不读取其bytes。验证：focused=`92 passed`；architecture=`593 passed`；contract=`274
-      passed`；integration=`993 passed`；reproducibility=`23 passed`；failure-fix Full=`7136
-      passed / 3 skipped / 643 warnings`。
-    - 2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required formal tiers与failure-fix
-      Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task source
-      cutover、production和broker继续未授权，`production_effect=none`。
+    - architecture control-plane owner；S2 telemetry与S5仍需另行授权
+    - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。
+    - 瞬时拒绝恢复，持续拒绝busy fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
+      exclusion继续PASS。
+    - 2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180 passed / 3
+      skipped / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task source cutover、production和broker继续未授权。
     raw_line: '|ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD|Architecture / shared-checkout
       writer and operations lease guard|P0|BASELINE_DONE|architecture control-plane
-      owner + operations automation owner；S2 telemetry与Wave15另行等待project owner授权|详见
-      `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。|稳定workspace
-      identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic lease/heartbeat/expiry/replay与pre-body/pre-provider
-      gate已实现；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache/report
-      mutation，互斥domain仍可并行，known-unrelated仅按exact path排除且不读取其bytes。验证：focused=`92
-      passed`；architecture=`593 passed`；contract=`274 passed`；integration=`993 passed`；reproducibility=`23
-      passed`；failure-fix Full=`7136 passed / 3 skipped / 643 warnings`。|2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required
-      formal tiers与failure-fix Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task
-      source cutover、production和broker继续未授权，`production_effect=none`。|'
+      owner；S2 telemetry与S5仍需另行授权|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。|瞬时拒绝恢复，持续拒绝busy
+      fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
+      exclusion继续PASS。|2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180
+      passed / 3 skipped / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task
+      source cutover、production和broker继续未授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b602d10d973232e510b8a7dc
+  event_id: legacy-import-5c0caff59e5e34806a3fcb5b
   task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -83,14 +65,13 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: architecture control-plane owner + operations automation owner；S2
-      telemetry与Wave15另行等待project owner授权
-    notes: 2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required formal tiers与failure-fix
-      Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task source
-      cutover、production和broker继续未授权，`production_effect=none`。
+    next_owner: architecture control-plane owner；S2 telemetry与S5仍需另行授权
+    notes: 2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180 passed
+      / 3 skipped / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task source
+      cutover、production和broker继续未授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b602d10d973232e510b8a7dc5c758a8bbf0364cab107ac646e1ddfb4ffe848a6
+  - sha256:5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -98,22 +79,15 @@ projection:
   - Architecture / shared-checkout writer and operations lease guard
   - P0
   - BASELINE_DONE
-  - architecture control-plane owner + operations automation owner；S2 telemetry与Wave15另行等待project
-    owner授权
-  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。
-  - 稳定workspace identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic
-    lease/heartbeat/expiry/replay与pre-body/pre-provider gate已实现；重叠writer恰好一个成功，dirty/unattributed或active
-    mutation lease下daily零provider/cache/report mutation，互斥domain仍可并行，known-unrelated仅按exact
-    path排除且不读取其bytes。验证：focused=`92 passed`；architecture=`593 passed`；contract=`274
-    passed`；integration=`993 passed`；reproducibility=`23 passed`；failure-fix Full=`7136
-    passed / 3 skipped / 643 warnings`。
-  - 2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required formal tiers与failure-fix
-    Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task source
-    cutover、production和broker继续未授权，`production_effect=none`。
+  - architecture control-plane owner；S2 telemetry与S5仍需另行授权
+  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。
+  - 瞬时拒绝恢复，持续拒绝busy fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
+    exclusion继续PASS。
+  - 2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180 passed / 3 skipped
+    / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task source cutover、production和broker继续未授权。
   docs_links:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   terminal: false
-  raw_row_sha256: b602d10d973232e510b8a7dc5c758a8bbf0364cab107ac646e1ddfb4ffe848a6
+  raw_row_sha256: 5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: fd91ddca2f06c613e7c723a2869be3dd8271c9e77d1e22a5df3fa9c68cfd61d5
+fragment_checksum: 226a5f5cf9ab91c0840bd1d7e79cd60aa0220a61c55ff45ebd3c4717a149c8c8

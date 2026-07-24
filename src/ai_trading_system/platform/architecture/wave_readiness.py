@@ -596,6 +596,29 @@ def validate_wave_readiness_evidence(
         )
 
 
+def validate_committed_wave_readiness_carrier(
+    payload: Mapping[str, Any],
+    *,
+    project_root: Path,
+    policy_path: Path,
+    evidence_path: Path,
+) -> None:
+    """Validate the immutable C/D carrier without replaying post-carrier worktree state."""
+
+    _validate_evidence_structure(payload)
+    root = project_root.resolve()
+    policy_file = policy_path.resolve()
+    evidence_file = evidence_path.resolve()
+    policy = load_wave_readiness_policy(policy_file)
+    _validate_carrier_state(
+        project_root=root,
+        policy=policy,
+        policy_path=policy_file,
+        evidence_path=evidence_file,
+        evidence=payload,
+    )
+
+
 def canonical_evidence_bytes(payload: Mapping[str, Any]) -> bytes:
     _validate_evidence_structure(payload)
     return (
@@ -2556,6 +2579,7 @@ __all__ = [
     "load_strict_yaml_text",
     "load_wave_readiness_evidence",
     "load_wave_readiness_policy",
+    "validate_committed_wave_readiness_carrier",
     "validate_wave_readiness_evidence",
     "validate_wave_readiness_policy",
 ]

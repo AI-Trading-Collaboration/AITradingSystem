@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0B2_FORMAL_COMPLETE_D0B3_FIRST_CONSUMER_AUTHORIZED_AWAITING_WAVE15_CARRIER`
+- current phase：`D0B3_FIRST_CONSUMER_BASELINE_DONE_NEXT_CONSUMER_NOT_AUTHORIZED`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -239,3 +239,13 @@ artifact/source SHA、size、transaction和manifest语义绑定门禁，但在�
   `production_effect=none`。
 - 2026-07-23：owner 授权按双线推进长期任务，DATA-GOV-001 转 `IN_PROGRESS`。首个原子切片冻结为 D0A：复用现有 `ArtifactEnvelope`、atomic writer 与 DQ contract，建立 staged immutable snapshot、validated manifest、atomic current pointer 及 fail-closed validator；不在本切片迁移所有消费者、不选择 Parquet/DuckDB、不改变 score/backtest/report/production。数据 worker 只持有 data-foundation implementation/tests/本需求，`docs/task_register.md`、`docs/system_flow.md`、operations runbook、registry/catalog 与最终验证由 coordinator 集成。
 - 2026-07-12：根据 owner 对当前数据管理、数据与知识系统分离及长期治理的讨论登记为 `PROPOSED`。本次只冻结目标、阶段、边界与冲突处置，不修改 cache、gate、score、backtest、report、scheduler 或 production runtime。
+2026-07-25，D0B3 first-consumer随Wave15完成formal exit：pre-Full门禁全部PASS，
+failure-fix Full=`7180 passed / 3 skipped / 643 warnings`。仅`daily_score_daily@1.0.0`
+具备reviewed consumer authorization；DATA-GOV parent保持`IN_PROGRESS`，ACL/crash durability、
+其他consumer、真实provider/periodic、production与broker仍关闭。
+
+2026-07-25，Wave15 C/D carrier已推送并复验PASS；D0B3 singleton profile、canonical attestation、
+strict verifier与`daily_score_daily`隔离采用已完成domain/shared focused。历史receipt/publication
+`consumer_cutover_allowed=false`保持不变；新授权是可撤销的consumer capability，不是全局flag。
+missing/warning/FAIL/expiry/as-of/profile/publication/receipt/source/tamper均在runner前阻断。当前进入
+formal exit，ACL/crash durability、其他consumer、真实provider/periodic、production与broker仍关闭。

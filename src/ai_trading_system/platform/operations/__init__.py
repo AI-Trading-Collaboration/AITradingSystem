@@ -1,3 +1,9 @@
+from ai_trading_system.platform.operations.periodic_consumer_migration import (
+    NativeConsumerExpectedContext,
+    NativePeriodicConsumerRehearsalResult,
+    build_native_periodic_consumer_parity_plan,
+    dispatch_native_periodic_consumer,
+)
 from ai_trading_system.platform.operations.periodic_control import (
     DEFAULT_PERIODIC_OPERATIONS_CONTROL_POLICY_PATH,
     PeriodicCadenceControl,
@@ -35,9 +41,13 @@ __all__ = [
     "PeriodicDispatchResult",
     "PeriodicOperationsControlError",
     "PeriodicOperationsControlPolicy",
+    "NativeConsumerExpectedContext",
+    "NativePeriodicConsumerRehearsalResult",
+    "build_native_periodic_consumer_parity_plan",
     "build_periodic_due_contexts_from_daily",
     "default_periodic_operations_plan_path",
     "dispatch_periodic_operations_plan",
+    "dispatch_native_periodic_consumer",
     "load_periodic_operations_control_policy",
     "write_periodic_operations_plan",
 ]

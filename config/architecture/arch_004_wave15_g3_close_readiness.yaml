@@ -1,0 +1,83 @@
+schema_version: arch_004_wave15_g3_close_readiness_policy.v1
+policy_id: arch_004_wave15_g3_bounded_close_readiness_v1
+policy_version: 1.0.0
+owner: reporting_governance
+status: REVIEWED
+owner_decision_id: owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1
+bounded_slice:
+  section_id: data_quality_and_pit
+  native_provider: ai_trading_system.platform.reporting.reader_brief_native.provide_data_quality_and_pit_section
+  legacy_projector_name: _data_quality_pit_safety
+  projected_field_count: 19
+  native_provider_count: 1
+  generic_provider_count: 9
+  migration_executed: false
+ratchets:
+  historical_f3_inventory:
+    path: inputs/architecture/arch_004f3_reporting_inventory.yaml
+    inventory_id: reporting_inventory_9f39c169eda16e98097c
+    raw_sha256: 1804dcd6392f692c8e24c592f19888219f30f8b11405ec3eb1f3b05b8d918e06
+  reader_brief_source:
+    path: src/ai_trading_system/reports/reader_brief.py
+    sha256: b2a089e8b4995f31e982f4a5b0ba9446038e1f617610db8ba04b1b0521b5ba8e
+    line_count: 29005
+    top_level_function_count: 366
+  fragments:
+    paths:
+      - config/architecture/fragments/artifacts/arch_004g3_reader_brief_native.yaml
+      - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
+      - config/architecture/fragments/reports/arch_004g3_reader_brief_native.yaml
+    expected_total_report_fragment_count: 5
+    expected_active_source_of_truth_count: 0
+remaining_generic_providers:
+  - section_id: system_status
+    owner: reporting_governance
+    source_keys: [status, status_panel, run_context]
+    prerequisite_contract: typed_system_status_section.v1
+  - section_id: today_decision
+    owner: reporting_governance
+    source_keys: [narrative_executive_summary, executive_decision, action_checklist]
+    prerequisite_contract: typed_today_decision_section.v1
+  - section_id: market_and_score_change
+    owner: reporting_governance
+    source_keys: [market_situation_snapshot, score_change_attribution_summary, score_change_narrative]
+    prerequisite_contract: typed_market_score_change_section.v1
+  - section_id: position_and_binding_gates
+    owner: reporting_governance
+    source_keys: [score_to_position_funnel, component_score_explainability, binding_gate_ladder]
+    prerequisite_contract: typed_position_binding_gate_section.v1
+  - section_id: owner_action_queue
+    owner: reporting_governance
+    source_keys: [manual_review_queue, action_checklist]
+    prerequisite_contract: typed_owner_action_queue_section.v1
+  - section_id: portfolio_and_shadow
+    owner: reporting_governance
+    source_keys: [backtest_shadow_governance, portfolio_control_research, portfolio_control_forward_aging]
+    prerequisite_contract: typed_portfolio_shadow_section.v1
+  - section_id: research_review_due
+    owner: reporting_governance
+    source_keys: [research_governance_summary, research_monthly_review_pack, research_roadmap_dashboard]
+    prerequisite_contract: typed_research_review_due_section.v1
+  - section_id: operations_health
+    owner: reporting_governance
+    source_keys: [daily_task_dashboard, etf_operations_health, report_quality_gate]
+    prerequisite_contract: typed_operations_health_section.v1
+  - section_id: safety_and_navigation
+    owner: reporting_governance
+    source_keys: [production_effect, missing_limited_artifact_impact, report_navigation_groups, appendix_links]
+    prerequisite_contract: typed_safety_navigation_section.v1
+governance:
+  rationale: >
+    Close only the Wave14 data_quality_and_pit bounded slice and freeze an
+    auditable inventory for the nine still-generic providers. This evidence is
+    readiness input for a separately authorized G5 wave, not a migration.
+  review_condition: >
+    Review before changing the bounded section, provider counts, Reader Brief
+    ratchets, remaining-provider inventory, prerequisite contracts, or G5 scope.
+safety:
+  g3_bounded_slice_close_only: true
+  g5_authorized: false
+  reporting_recompute_allowed: false
+  investment_interpretation_change_allowed: false
+  production_effect: none
+  broker_action: none

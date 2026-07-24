@@ -9,6 +9,11 @@ from ai_trading_system.contracts.data_quality import (
     DataQualityEvidence,
     DataQualityEvidenceError,
 )
+from ai_trading_system.contracts.data_quality_consumer_authorization import (
+    DataQualityConsumerAuthorizationAttestation,
+    DataQualityConsumerAuthorizationContractError,
+    VerifiedDataQualityConsumerAuthorization,
+)
 from ai_trading_system.contracts.data_quality_execution import (
     DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
     MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID,
@@ -123,6 +128,8 @@ __all__ = [
     "ContextResolutionStatus",
     "CoverageInterval",
     "DataQualityContractRef",
+    "DataQualityConsumerAuthorizationAttestation",
+    "DataQualityConsumerAuthorizationContractError",
     "DataQualityDateWindow",
     "DataQualityEvidence",
     "DataQualityEvidenceError",
@@ -191,6 +198,7 @@ __all__ = [
     "RemovalGateEvidence",
     "UnknownLegacyStatusError",
     "VerifiedDataQualityPreflight",
+    "VerifiedDataQualityConsumerAuthorization",
     "SurfaceLifecycle",
     "WorkflowCadence",
     "WorkflowContractError",

@@ -31,6 +31,9 @@ from ai_trading_system.core import (
 )
 from ai_trading_system.data.download import default_download_failure_report_path
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.data.quality_consumer_authorization import (
+    DAILY_SCORE_CONSUMER_AUTHORIZATION_TOKEN,
+)
 from ai_trading_system.data.quality_execution_discovery import (
     default_data_quality_execution_discovery_path,
 )
@@ -498,6 +501,8 @@ def build_daily_ops_plan(
         "score-daily",
         "--as-of",
         as_of_text,
+        "--consumer-authorization-profile",
+        DAILY_SCORE_CONSUMER_AUTHORIZATION_TOKEN,
     ]
     score_required_env: tuple[str, ...] = ()
     if skip_risk_event_openai_precheck:

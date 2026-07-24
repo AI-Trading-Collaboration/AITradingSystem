@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -25,12 +27,52 @@ from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
 from ai_trading_system.cli_commands import signals as signals_cli
 from ai_trading_system.cli_commands import valuation as valuation_cli
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.contracts.data_quality_execution import VerifiedDataQualityPreflight
+from ai_trading_system.contracts.status import CanonicalStatus
+from ai_trading_system.data.download_publication import (
+    ValidatedDownloadPublication,
+    resolve_download_publication,
+)
+from ai_trading_system.data.quality_consumer_authorization import (
+    DAILY_SCORE_CONSUMER_AUTHORIZATION_TOKEN,
+    DAILY_SCORE_CONSUMER_ID,
+    DAILY_SCORE_CONSUMER_VERSION,
+    DataQualityConsumerAuthorizationError,
+    build_data_quality_consumer_authorization_attestation,
+    load_reviewed_data_quality_consumer_authorization_policy,
+    verify_data_quality_consumer_authorization,
+    write_data_quality_consumer_authorization_attestation,
+)
+from ai_trading_system.data.quality_execution import (
+    DataQualityExecutionError,
+    verify_data_quality_execution_receipt,
+)
+from ai_trading_system.data.quality_execution_discovery import (
+    DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+    DiscoveredDataQualityExecution,
+    load_default_data_quality_execution_discovery,
+)
 from ai_trading_system.interfaces.cli.etf_portfolio import data_quality as etf_data_quality_cli
 from ai_trading_system.interfaces.cli.etf_portfolio import (
     dynamic_v3_observation_lifecycle as etf_observation_lifecycle_cli,
 )
 from ai_trading_system.interfaces.cli.etf_portfolio import operations as etf_operations_cli
 from ai_trading_system.interfaces.cli.etf_portfolio import reporting as etf_reporting_cli
+from ai_trading_system.platform.operations.periodic_consumer_migration import (
+    NativeConsumerExpectedContext,
+    NativeParityRunnerResult,
+    NativePeriodicConsumerPlanEntry,
+    NativePeriodicConsumerRehearsalResult,
+    PeriodicConsumerMigrationError,
+    build_native_periodic_consumer_parity_plan,
+    dispatch_native_periodic_consumer,
+)
+from ai_trading_system.platform.operations.runtime_control import (
+    OperationsRunControl,
+    load_operations_runtime_control_policy,
+)
+from ai_trading_system.scheduled_tasks import load_scheduled_tasks_config
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -42,7 +84,186 @@ def main(argv: Sequence[str] | None = None) -> int:
     except typer.BadParameter as exc:
         print(str(exc), file=sys.stderr)
         return 1
+    except (
+        DataQualityConsumerAuthorizationError,
+        DataQualityExecutionError,
+        PeriodicConsumerMigrationError,
+    ) as exc:
+        print(f"daily_score_daily 授权阻断：{exc}", file=sys.stderr)
+        return 1
     return 0
+
+
+@dataclass(frozen=True)
+class _DirectDispatchClock:
+    value: datetime
+
+    def now(self) -> datetime:
+        return self.value
+
+
+def _dispatch_daily_score_with_consumer_authorization(
+    *,
+    as_of: date,
+    score_runner: Callable[[], None],
+    run_id: str | None,
+    project_root: Path,
+    now: datetime | None = None,
+    discovery_loader: Callable[..., DiscoveredDataQualityExecution] = (
+        load_default_data_quality_execution_discovery
+    ),
+    receipt_verifier: Callable[..., VerifiedDataQualityPreflight] = (
+        verify_data_quality_execution_receipt
+    ),
+    publication_resolver: Callable[..., ValidatedDownloadPublication] = (
+        resolve_download_publication
+    ),
+    runtime_control: OperationsRunControl | None = None,
+) -> NativePeriodicConsumerRehearsalResult:
+    """Authorize and dispatch the only Wave15 score consumer.
+
+    This is the subprocess boundary reached by ``ops_daily``. It discovers
+    canonical daily-default evidence itself; caller-supplied PASS/status values
+    are never accepted.
+    """
+
+    root = project_root.resolve()
+    timestamp = (now or datetime.now(tz=UTC)).astimezone(UTC)
+    discovered = discovery_loader(as_of, project_root=root)
+    preflight = receipt_verifier(
+        discovered.receipt_path,
+        expected_as_of=as_of,
+        expected_policy_path=root / "config/data_quality.yaml",
+        expected_input_roles=("prices", "rates", "secondary_prices"),
+        project_root=root,
+    ).assert_strict_passed()
+    pointer = discovered.pointer
+    if (
+        pointer.profile_id != DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID
+        or pointer.as_of != as_of
+        or discovered.receipt.as_of != as_of
+        or preflight.as_of != as_of
+    ):
+        raise DataQualityConsumerAuthorizationError(
+            "DQ_AS_OF_MISMATCH",
+            "daily discovery, receipt and preflight must match score as_of",
+        )
+    if (
+        pointer.receipt_id != preflight.receipt_id
+        or pointer.receipt_path != preflight.receipt_path
+        or pointer.receipt_sha256 != preflight.receipt_sha256
+        or pointer.receipt_size_bytes != preflight.receipt_size_bytes
+        or discovered.receipt.receipt_id != preflight.receipt_id
+    ):
+        raise DataQualityConsumerAuthorizationError(
+            "DQ_RECEIPT_ID_MISMATCH",
+            "daily discovery pointer differs from strict preflight",
+        )
+
+    policy = load_reviewed_data_quality_consumer_authorization_policy(project_root=root)
+    publication = publication_resolver(output_dir=root / Path(policy.publication_output_dir))
+    attestation = build_data_quality_consumer_authorization_attestation(
+        policy=policy,
+        preflight=preflight,
+        publication=publication,
+        authorized_at=timestamp,
+        project_root=root,
+    )
+    attestation_path = write_data_quality_consumer_authorization_attestation(
+        attestation,
+        project_root=root,
+    )
+    authorization = verify_data_quality_consumer_authorization(
+        attestation_path,
+        expected_consumer_id=DAILY_SCORE_CONSUMER_ID,
+        expected_consumer_version=DAILY_SCORE_CONSUMER_VERSION,
+        expected_as_of=as_of,
+        expected_data_quality_policy_path=Path("config/data_quality.yaml"),
+        receipt_verifier=receipt_verifier,
+        publication_resolver=publication_resolver,
+        now=timestamp,
+        project_root=root,
+    )
+
+    def fixed_receipt_verifier(
+        receipt_path: Path,
+        *,
+        expected_as_of: date,
+        expected_policy_path: Path,
+        expected_input_roles: tuple[str, ...],
+        project_root: Path = PROJECT_ROOT,
+    ) -> VerifiedDataQualityPreflight:
+        if (
+            receipt_path.resolve() != discovered.receipt_path.resolve()
+            or expected_as_of != as_of
+            or expected_policy_path.resolve() != (root / "config/data_quality.yaml").resolve()
+            or tuple(sorted(expected_input_roles)) != ("prices", "rates", "secondary_prices")
+            or project_root != root
+        ):
+            raise DataQualityConsumerAuthorizationError(
+                "DQ_CONSUMER_AUTHORIZATION_LINEAGE_MISMATCH",
+                "native plan requested a different receipt context",
+            )
+        return preflight
+
+    context = NativeConsumerExpectedContext(
+        as_of=as_of,
+        data_quality_as_of=as_of,
+        expected_policy_path=root / "config/data_quality.yaml",
+        expected_input_roles=("prices", "rates", "secondary_prices"),
+        daily_status=CanonicalStatus.PASS,
+        required_artifacts_ready=True,
+        source_artifact_ids=(attestation.authorization_id,),
+        owner_gate_approved=True,
+        owner_decision_id=policy.owner_decision_id,
+    )
+    clock = _DirectDispatchClock(timestamp)
+    plan = build_native_periodic_consumer_parity_plan(
+        discovered.receipt_path,
+        expected_context=context,
+        scheduled=load_scheduled_tasks_config(),
+        verifier=fixed_receipt_verifier,
+        clock=clock,
+        project_root=root,
+    )
+    control = runtime_control or OperationsRunControl(
+        root=root / "outputs/run_control/periodic/daily_score_consumer",
+        policy=load_operations_runtime_control_policy(),
+    )
+
+    def controlled_runner(
+        entry: NativePeriodicConsumerPlanEntry,
+    ) -> NativeParityRunnerResult:
+        if entry.definition.task_id != DAILY_SCORE_CONSUMER_ID:
+            raise PeriodicConsumerMigrationError(
+                "G4B_CONSUMER_IDENTITY_MISMATCH",
+                entry.definition.task_id,
+            )
+        score_runner()
+        return NativeParityRunnerResult(
+            passed=True,
+            retryable=False,
+            artifact_refs=(
+                f"daily_score:{as_of.isoformat()}",
+                attestation.authorization_id,
+            ),
+        )
+
+    result = dispatch_native_periodic_consumer(
+        plan,
+        task_id=DAILY_SCORE_CONSUMER_ID,
+        authorization=authorization,
+        control=control,
+        runner=controlled_runner,
+        run_id=f"g4b:{run_id or attestation.authorization_id}",
+        clock=clock,
+    )
+    if result.status is not CanonicalStatus.PASS:
+        raise PeriodicConsumerMigrationError(
+            "G4B_DAILY_SCORE_NOT_DISPATCHED",
+            ",".join(result.blocker_codes) or result.status.value,
+        )
+    return result
 
 
 def _dispatch(args: list[str]) -> None:
@@ -208,24 +429,49 @@ def _dispatch(args: list[str]) -> None:
             "daily-run direct dispatcher 不支持 score-daily backfill-baseline；请使用主 CLI。"
         )
     if args[:1] == ["score-daily"]:
+        as_of = _option(args, "--as-of")
         max_candidates = _option(args, "--risk-event-openai-precheck-max-candidates")
-        score_daily_cli.score_daily(
-            as_of=_option(args, "--as-of"),
-            risk_event_openai_precheck_max_candidates=(
-                int(max_candidates) if max_candidates is not None else None
-            ),
-            risk_event_openai_precheck=not _flag(args, "--skip-risk-event-openai-precheck"),
-            llm_request_profile=_option(
-                args,
-                "--llm-request-profile",
-                "risk_event_daily_official_precheck",
+        run_id = _option(args, "--run-id")
+
+        def run_score_daily() -> None:
+            score_daily_cli.score_daily(
+                as_of=as_of,
+                risk_event_openai_precheck_max_candidates=(
+                    int(max_candidates) if max_candidates is not None else None
+                ),
+                risk_event_openai_precheck=not _flag(args, "--skip-risk-event-openai-precheck"),
+                llm_request_profile=_option(
+                    args,
+                    "--llm-request-profile",
+                    "risk_event_daily_official_precheck",
+                )
+                or "risk_event_daily_official_precheck",
+                run_id=run_id,
+                risk_event_openai_precheck_visibility_cutoff=_option(
+                    args,
+                    "--risk-event-openai-precheck-visibility-cutoff",
+                ),
             )
-            or "risk_event_daily_official_precheck",
-            run_id=_option(args, "--run-id"),
-            risk_event_openai_precheck_visibility_cutoff=_option(
-                args,
-                "--risk-event-openai-precheck-visibility-cutoff",
-            ),
+
+        authorization_profile = _option(args, "--consumer-authorization-profile")
+        if authorization_profile is None:
+            run_score_daily()
+            return
+        if authorization_profile != DAILY_SCORE_CONSUMER_AUTHORIZATION_TOKEN:
+            raise typer.BadParameter(
+                "score-daily consumer authorization profile 不受支持：" f"{authorization_profile}"
+            )
+        if as_of is None:
+            raise typer.BadParameter("受控 score-daily dispatch 必须显式提供 --as-of YYYY-MM-DD")
+        try:
+            parsed_as_of = date.fromisoformat(as_of)
+        except ValueError as exc:
+            raise typer.BadParameter("score-daily --as-of 必须是 ISO 日期") from exc
+        _dispatch_daily_score_with_consumer_authorization(
+            as_of=parsed_as_of,
+            score_runner=run_score_daily,
+            run_id=run_id,
+            project_root=Path.cwd(),
         )
         return
     if args[:2] == ["forward-evidence", "capture-dry-run-daily"]:

@@ -589,13 +589,14 @@ WRITE排他；daily operation持WRITE workspace gate并与全部mutation排他�
 
 Owner decision=
 `owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`。
-当前为 `S0_AUTHORIZED_AWAITING_EXACT_CARRIER`：
+当前为 `S3_FORMAL_EXIT_VALIDATING`；C=`3030114b`、D=`7ec6fd71`已推送，domain focused=`73`
+与shared combined focused=`152`均PASS：
 
 |Lane|当前状态|固定范围|停止边界|
 |---|---|---|---|
-|Data + Operations|等待D carrier|只授权`daily_score_daily`，以独立consumer-scoped attestation绑定exact receipt与D0B2 publication companion；strict PASS only|其余consumer、automatic non-daily、真实periodic/provider、production/broker均false|
-|Reporting|等待D carrier|关闭Wave14 `data_quality_and_pit` bounded slice，重验single-owner/parity/ratchet并形成剩余9项inventory/readiness|不迁剩余9项、不启动G5、不改变报告结论|
-|Coordinator|S0-C in progress|先提交/推送task/requirements/双态test/generated facts，再从C HEAD生成只含policy/evidence两文件的D carrier|D PASS/push前不分配domain、不自动dispatch/lease/merge|
+|Data + Operations|实现完成，formal validating|`daily_score_daily@1.0.0`独立attestation绑定exact receipt与D0B2 publication；`ops_daily -> cli_direct -> discovery -> controlled runner`只接受strict PASS verifier capability|其余consumer、automatic non-daily、真实periodic/provider、production/broker均false|
+|Reporting|bounded close evidence完成，formal validating|重验`data_quality_and_pit` single-owner/19-field parity、历史/current ratchet，冻结剩余9项inventory/readiness|`migration_executed=false`，不启动G5、不改变报告结论|
+|Coordinator|S2 complete / S3 validating|shared CLI/exports/runbook/system flow/catalog/register/generated/compatibility集成并执行formal tiers与唯一final Full|不自动扩展consumer、G5/S5、production或broker|
 
 ## 10. 本轮明确不做
 

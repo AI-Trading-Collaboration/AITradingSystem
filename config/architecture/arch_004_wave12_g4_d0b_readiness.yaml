@@ -33,6 +33,7 @@ verified_preflight_capability:
   canonical_receipt_path_template: outputs/data_quality/executions/{receipt_id}/receipt.json
   direct_import_whitelist:
     - src/ai_trading_system/data/quality_execution.py
+    - tests/test_data_quality_consumer_authorization.py
     - tests/test_data_quality_execution_contract.py
   definition_path_exempt_from_import_scan: true
   g4_adapter_path: src/ai_trading_system/platform/operations/periodic_consumer_migration.py

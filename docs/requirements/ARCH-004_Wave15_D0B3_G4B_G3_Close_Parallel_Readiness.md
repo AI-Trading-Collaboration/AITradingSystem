@@ -2,11 +2,11 @@
 
 最后更新：2026-07-25
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 稳定任务 ID：`ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS`
 
-current stage=`S0_AUTHORIZED_AWAITING_EXACT_CARRIER`
+current stage=`S3_FORMAL_EXIT_COMPLETE`
 
 Owner 决策：
 `owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`
@@ -130,6 +130,58 @@ path 排除，guard 不得读取、hash、复制或暂存其 bytes。
 
 ## 进展记录
 
+- 2026-07-25：S3 formal exit完成。最终pre-Full门禁为combined/architecture/contract/integration/
+  report/reproducibility=`233/615/275/993/57/23 passed`；首次Full=`7179 passed / 1 failed /
+  3 skipped`只捕获test-local精确白名单漏项，带父链failure-fix Full=`7180 passed / 3 skipped /
+  643 warnings`。证据收口后的post-Full focused/architecture/contract/integration/
+  reproducibility=`243/615/275/993/23 passed`，runtime behavior source未再改变，无需第二个自然
+  Full。Wave15转`BASELINE_DONE`；其他consumer、真实periodic/provider、G5、S5、production与
+  broker仍未授权，下一波必须由owner另行选择。
+- 2026-07-25：S3首次combined run为`175 passed / 9 failed`；9项均指向尚未刷新
+  compatibility current authority。收口检查同时发现旧deprecation reference scanner会读取已由
+  ARCH-005S4D明确排除的user-owned文档，因此直接修复scanner复用exact exclusion policy并补零读取
+  回归；不以跳过inventory/architecture/Full作为替代。generated/compatibility刷新后必须重跑同一
+  combined与全部formal tiers。
+- 2026-07-25：首次architecture tier为`610 passed / 3 failed`。一项是新consumer contract test
+  合法构造verifier capability但未进入reviewed private-factory test whitelist，已只增加该test path；
+  另两项是Wave14/Wave15已提交C/D carrier test仍尝试用实施后的dirty worktree重放“实施前guard”。
+  新增明确的committed-carrier validator，只验证C/D direct-child、两文件exact Git blob、canonical
+  evidence及dependency binding，不重放post-carrier worktree；live evidence validator仍保持原有
+  fail-closed语义。三项修复后必须以failure-fix reason重跑architecture tier。
+- 2026-07-25：上述三项修复后定向回归`37 passed`；第二次architecture tier为
+  `612 passed / 1 failed`。唯一失败来自ARCH-005S4D Windows仲裁owner的瞬时
+  `PermissionError`误分类，不涉及D0B3/G4B/G3或策略计算。已在ARCH-005S4D同一任务边界登记
+  有界读取稳定化修复；修复后必须继续并行architecture复验，不得以serial PASS替代。
+- 2026-07-25：Windows仲裁修复后architecture=`615 passed`、contract=`275 passed`；
+  integration首次为`992 passed / 1 failed`。唯一失败是scheduled daily链测试仍逐字断言旧
+  `score-daily`命令，遗漏D0B3要求的
+  `--consumer-authorization-profile daily_score_daily@1.0.0`。修复范围仅为把该集成断言升级为精确
+  要求reviewed profile token；runtime命令不回退，缺少/错误token继续在runner前fail closed。
+- 2026-07-25：pre-Full最终门禁为combined/architecture/contract/integration/report/reproducibility
+  `233/615/275/993/57/23 passed`。首次Full=`7179 passed / 1 failed / 3 skipped`，唯一失败为
+  `test_data_quality_execution_contract.py`内另一份机械私有factory扫描白名单未纳入
+  `tests/test_data_quality_consumer_authorization.py`；reviewed runtime policy与Wave12架构白名单均已
+  正确。只把同一精确test path加入该Full-only断言，随后以首个Full artifact为parent执行
+  failure-fix Full；不得放宽src importer或改用通配符。
+
+- 2026-07-25：S0-C/D正式完成。authorization commit
+  `3030114be1c07b71eab5af2d8cbf4f54325cb2ef`与direct-child carrier commit
+  `7ec6fd713b0e676607e38522be36b8e4d6c20d55`均已推送；carrier policy/evidence canonical
+  SHA=`50ba37193bf3aef67439e16a9cf3dd3183bb2e20df84fc63ea075293923a2e51`，direct validate
+  PASS，carrier focused=`40 passed`。
+- 2026-07-25：S1 domain与S2 shared integration实现完成。D0B3新增reviewed singleton policy、
+  canonical content-addressed consumer attestation与verifier-only capability，绑定exact receipt、
+  D0B2 publication、source/window/policy/validator/input/report lineage，24小时reviewed TTL且可撤销；
+  G4B仅为`daily_score_daily`开放controlled native dispatch，其他四身份与automatic non-daily保持
+  false。真实代码路径为`ops_daily -> cli_direct -> daily discovery -> receipt/publication verify ->
+  consumer attestation -> controlled runner`，isolated fixture证明任一missing/warning/FAIL/expiry/
+  identity/profile/source/tamper均`runner_calls=0`、`downstream_artifacts=0`。
+- 2026-07-25：G3 close/readiness evidence重验历史F3 raw SHA、当前Reader Brief
+  SHA=`b2a089e8…`/LOC=`29005`/top-level functions=`366`、legacy builder=`0`、
+  native/generic=`1/9`、19字段与fragment/single-owner边界；剩余9项的source keys、owner与前置
+  typed contract已登记，全部`migration_executed=false`，`g5_authorized=false`。domain focused
+  合计=`73 passed`，shared combined focused=`152 passed`，Ruff/Black/strict scoped mypy PASS；
+  未运行真实daily、provider或cache mutation，现进入S3 formal exit。
 - 2026-07-25：Owner 批准工程线继续推进；coordinator 将其登记为上述窄版 Wave15，开始 S0-C。
   在 D exact carrier PASS 并推送前，不进行 domain assignment；策略线 TRADING-2458 仍保持独立
   ownership，不共享 threshold、candidate、report conclusion 或 prospective 权限。

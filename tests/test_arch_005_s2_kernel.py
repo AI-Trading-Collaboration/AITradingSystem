@@ -347,6 +347,61 @@ def test_arbiter_rejects_unreviewed_actor(tmp_path: Path) -> None:
         )
 
 
+def test_arbiter_retries_transient_windows_owner_read_denial(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    policy = load_parallel_control_policy(POLICY_PATH)
+    store = FileExecutionLeaseStore(tmp_path / "leases", policy=policy)
+    owner_path = store.arbiter_root / "owner.json"
+    original_read_text = Path.read_text
+    owner_read_attempts = 0
+
+    def transient_read_text(path: Path, *args: object, **kwargs: object) -> str:
+        nonlocal owner_read_attempts
+        if path == owner_path:
+            owner_read_attempts += 1
+            if owner_read_attempts == 1:
+                raise PermissionError("simulated Windows atomic replace visibility")
+        return original_read_text(path, *args, **kwargs)
+
+    now = datetime(2026, 7, 20, tzinfo=UTC)
+    with store._arbiter(actor="engineering-agent", now=now):
+        monkeypatch.setattr(Path, "read_text", transient_read_text)
+        with pytest.raises(ParallelControlError, match="LEASE_ARBITER_BUSY"):
+            with store._arbiter(actor="research-agent", now=now):
+                pytest.fail("overlapping arbiter must remain blocked")
+
+    assert owner_read_attempts == 2
+
+
+def test_arbiter_persistent_owner_read_denial_remains_fail_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    policy = load_parallel_control_policy(POLICY_PATH)
+    store = FileExecutionLeaseStore(tmp_path / "leases", policy=policy)
+    owner_path = store.arbiter_root / "owner.json"
+    original_read_text = Path.read_text
+    owner_read_attempts = 0
+
+    def denied_read_text(path: Path, *args: object, **kwargs: object) -> str:
+        nonlocal owner_read_attempts
+        if path == owner_path:
+            owner_read_attempts += 1
+            raise PermissionError("simulated persistent owner denial")
+        return original_read_text(path, *args, **kwargs)
+
+    now = datetime(2026, 7, 20, tzinfo=UTC)
+    with store._arbiter(actor="engineering-agent", now=now):
+        monkeypatch.setattr(Path, "read_text", denied_read_text)
+        with pytest.raises(ParallelControlError, match="LEASE_ARBITER_BUSY"):
+            with store._arbiter(actor="research-agent", now=now):
+                pytest.fail("unreadable arbiter owner must never grant a lease")
+
+    assert owner_read_attempts > 1
+
+
 def test_non_conflicting_lease_requests_can_both_become_active(tmp_path: Path) -> None:
     policy = load_parallel_control_policy(POLICY_PATH)
     tasks = [

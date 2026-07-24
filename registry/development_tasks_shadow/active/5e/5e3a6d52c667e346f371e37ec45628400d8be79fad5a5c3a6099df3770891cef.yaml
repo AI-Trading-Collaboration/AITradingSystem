@@ -11,63 +11,54 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture coordinator；Wave15 S0-C授权基线与exact carrier
+  next_owner: project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
   requirement_refs:
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
-  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
-  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
-    与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G2.4、bootstrap
-    handoff、ARCH-005 S0～S4D、G2.5、Wave12～14均已formal PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded
-    G3 close/readiness。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+    与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+    PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 从授权基线最终HEAD生成两文件exact carrier并PASS后才开始domain实现；每波最多两个互斥domain scope、shared-path单写；D0B3
-      consumer-scoped authorization、G4B fail-closed parity、G3 close/readiness及combined/formal/final
-      Full均通过；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+    text: 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+      readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1581
-    row_sha256: 03a061df45aef8350e1fe7eb3a3cd97f3298632d940f17a7040257c02dba177a
+    row_sha256: 9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
     cell_count: 8
     all_cells:
     - ARCH-004
     - Architecture / post-freeze architecture v2 after TRADING-2438N
     - P0
     - IN_PROGRESS
-    - architecture coordinator；Wave15 S0-C授权基线与exact carrier
-    - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
-      与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G2.4、bootstrap
-      handoff、ARCH-005 S0～S4D、G2.5、Wave12～14均已formal PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded
-      G3 close/readiness。
-    - 从授权基线最终HEAD生成两文件exact carrier并PASS后才开始domain实现；每波最多两个互斥domain scope、shared-path单写；D0B3
-      consumer-scoped authorization、G4B fail-closed parity、G3 close/readiness及combined/formal/final
-      Full均通过；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
-    - 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`、S4D failure-fix
-      Full=`7136 passed / 3 skipped`均已闭合。Owner通过`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`授权窄版Wave15；current
-      phase=`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`，carrier PASS/push前不分配domain，不开放真实periodic/provider、G5、S5、production或broker。
-    raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|IN_PROGRESS|architecture
-      coordinator；Wave15 S0-C授权基线与exact carrier|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
-      与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G2.4、bootstrap
-      handoff、ARCH-005 S0～S4D、G2.5、Wave12～14均已formal PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded
-      G3 close/readiness。|从授权基线最终HEAD生成两文件exact carrier并PASS后才开始domain实现；每波最多两个互斥domain
-      scope、shared-path单写；D0B3 consumer-scoped authorization、G4B fail-closed parity、G3
-      close/readiness及combined/formal/final Full均通过；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。|2026-07-25：Wave14
-      replacement Full=`7007 passed / 4 skipped`、S4D failure-fix Full=`7136 passed
-      / 3 skipped`均已闭合。Owner通过`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`授权窄版Wave15；current
-      phase=`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`，carrier PASS/push前不分配domain，不开放真实periodic/provider、G5、S5、production或broker。|'
+    - project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+    - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+      与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+      PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
+    - 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+      readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+    - 2026-07-25：Wave15 failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current
+      phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004 parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。
+    raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|IN_PROGRESS|project
+      owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+      与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+      PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。|每波exact
+      carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+      readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。|2026-07-25：Wave15
+      failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004
+      parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-03a061df45aef8350e1fe7eb
+  event_id: legacy-import-9c2df21ccb7ae2187e4c1f9c
   task_id: ARCH-004
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -80,13 +71,12 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture coordinator；Wave15 S0-C授权基线与exact carrier
-    notes: 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`、S4D failure-fix
-      Full=`7136 passed / 3 skipped`均已闭合。Owner通过`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`授权窄版Wave15；current
-      phase=`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`，carrier PASS/push前不分配domain，不开放真实periodic/provider、G5、S5、production或broker。
+    next_owner: project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+    notes: 2026-07-25：Wave15 failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current
+      phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004 parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:03a061df45aef8350e1fe7eb3a3cd97f3298632d940f17a7040257c02dba177a
+  - sha256:9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -94,23 +84,18 @@ projection:
   - Architecture / post-freeze architecture v2 after TRADING-2438N
   - P0
   - IN_PROGRESS
-  - architecture coordinator；Wave15 S0-C授权基线与exact carrier
-  - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`、`docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
-    与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G2.4、bootstrap
-    handoff、ARCH-005 S0～S4D、G2.5、Wave12～14均已formal PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded
-    G3 close/readiness。
-  - 从授权基线最终HEAD生成两文件exact carrier并PASS后才开始domain实现；每波最多两个互斥domain scope、shared-path单写；D0B3
-    consumer-scoped authorization、G4B fail-closed parity、G3 close/readiness及combined/formal/final
-    Full均通过；不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
-  - 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`、S4D failure-fix Full=`7136
-    passed / 3 skipped`均已闭合。Owner通过`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`授权窄版Wave15；current
-    phase=`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`，carrier PASS/push前不分配domain，不开放真实periodic/provider、G5、S5、production或broker。
+  - project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+  - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+    与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+    PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
+  - 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+    readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+  - 2026-07-25：Wave15 failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current
+    phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004 parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。
   docs_links:
   - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
   - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
-  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
-  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 03a061df45aef8350e1fe7eb3a3cd97f3298632d940f17a7040257c02dba177a
+  raw_row_sha256: 9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: fe170be2b1366fd36ca7eadae2ff16c9f4d5bb483917dcd73df4d4fc3979823a
+fragment_checksum: 16a156007624b1932f6984494bc4687df5de2642831568d337d8e7fddb65125b

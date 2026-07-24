@@ -5,21 +5,16 @@ from pathlib import Path
 
 from ai_trading_system.platform.architecture.wave_readiness import (
     load_strict_json_text,
-    validate_wave_readiness_evidence,
+    validate_committed_wave_readiness_carrier,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-POLICY_PATH = (
-    PROJECT_ROOT
-    / "config/architecture/arch_004_wave15_d0b3_g4b_g3_close_readiness.yaml"
-)
+POLICY_PATH = PROJECT_ROOT / "config/architecture/arch_004_wave15_d0b3_g4b_g3_close_readiness.yaml"
 EVIDENCE_PATH = (
-    PROJECT_ROOT
-    / "inputs/architecture/arch_004_wave15_d0b3_g4b_g3_close_parallel_readiness.json"
+    PROJECT_ROOT / "inputs/architecture/arch_004_wave15_d0b3_g4b_g3_close_parallel_readiness.json"
 )
 REQUIREMENT_PATH = (
-    PROJECT_ROOT
-    / "docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md"
+    PROJECT_ROOT / "docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md"
 )
 
 
@@ -57,7 +52,7 @@ def test_wave15_exact_policy_and_evidence_are_atomic_across_c_and_d() -> None:
         label=EVIDENCE_PATH.relative_to(PROJECT_ROOT).as_posix(),
     )
     assert isinstance(payload, dict)
-    validate_wave_readiness_evidence(
+    validate_committed_wave_readiness_carrier(
         payload,
         project_root=PROJECT_ROOT,
         policy_path=POLICY_PATH,

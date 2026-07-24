@@ -11,7 +11,7 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: strategy research owner；coordinator负责共享文档与formal integration
+  next_owner: project owner：决定是否批准`RETIRE_CURRENT_FAMILY`；任何后续generator/policy另立任务
   requirement_refs:
   - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
   module_ids: []
@@ -31,36 +31,38 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1580
-    row_sha256: 5a060bc7a7a728d45a62d9938734dbad399f1947f57426918442fc91825e5b03
+    row_sha256: e25e1ff207ac7c77f2fc42b0c387cf5ba12321f0d3608c0f0c9ad399903806a0
     cell_count: 8
     all_cells:
     - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
     - Strategy research / frozen constraint evidence narrow causal diagnostic
     - P0
-    - IN_PROGRESS
-    - strategy research owner；coordinator负责共享文档与formal integration
+    - BASELINE_DONE
+    - project owner：决定是否批准`RETIRE_CURRENT_FAMILY`；任何后续generator/policy另立任务
     - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
       axis和六fold构造exact matched contrast、coverage、effect direction、common-mode与identifiability；原package保持closed。
     - 1,800/1,800 gate facts exact；per-template/fold/axis pair与不可识别原因可重建且double-build
       byte-identical；独立validator拒绝source/pair/aggregate/classification/safety tamper；只输出retire/new-hypothesis/role-correct-policy/insufficient-identifiability
       owner pack；不改threshold/candidate/gate、不重跑package、不访问prospective，formal gates
       PASS。
-    - 2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
-      C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。
+    - 2026-07-25：1,800 evaluations生成7,716个exact matched pairs；7轴均为`COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION`且rate
+      delta=0，建议`RETIRE_CURRENT_FAMILY`。formal与failure-fix Full=`7180 passed / 3 skipped
+      / 643 warnings`完成，任务转`BASELINE_DONE`等待owner决定；结论为观察性matched association，不是投资因果，未自动执行退役或开放新generator/prospective/production。
     raw_line: '|TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC|Strategy research / frozen
-      constraint evidence narrow causal diagnostic|P0|IN_PROGRESS|strategy research
-      owner；coordinator负责共享文档与formal integration|详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
+      constraint evidence narrow causal diagnostic|P0|BASELINE_DONE|project owner：决定是否批准`RETIRE_CURRENT_FAMILY`；任何后续generator/policy另立任务|详见
+      `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
       axis和六fold构造exact matched contrast、coverage、effect direction、common-mode与identifiability；原package保持closed。|1,800/1,800
       gate facts exact；per-template/fold/axis pair与不可识别原因可重建且double-build byte-identical；独立validator拒绝source/pair/aggregate/classification/safety
       tamper；只输出retire/new-hypothesis/role-correct-policy/insufficient-identifiability
       owner pack；不改threshold/candidate/gate、不重跑package、不访问prospective，formal gates
-      PASS。|2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
-      C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。|'
+      PASS。|2026-07-25：1,800 evaluations生成7,716个exact matched pairs；7轴均为`COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION`且rate
+      delta=0，建议`RETIRE_CURRENT_FAMILY`。formal与failure-fix Full=`7180 passed / 3 skipped
+      / 643 warnings`完成，任务转`BASELINE_DONE`等待owner决定；结论为观察性matched association，不是投资因果，未自动执行退役或开放新generator/prospective/production。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-5a060bc7a7a728d45a62d993
+  event_id: legacy-import-e25e1ff207ac7c77f2fc42b0
   task_id: TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -70,33 +72,35 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: strategy research owner；coordinator负责共享文档与formal integration
-    notes: 2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
-      C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。
+    next_owner: project owner：决定是否批准`RETIRE_CURRENT_FAMILY`；任何后续generator/policy另立任务
+    notes: 2026-07-25：1,800 evaluations生成7,716个exact matched pairs；7轴均为`COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION`且rate
+      delta=0，建议`RETIRE_CURRENT_FAMILY`。formal与failure-fix Full=`7180 passed / 3 skipped
+      / 643 warnings`完成，任务转`BASELINE_DONE`等待owner决定；结论为观察性matched association，不是投资因果，未自动执行退役或开放新generator/prospective/production。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:5a060bc7a7a728d45a62d9938734dbad399f1947f57426918442fc91825e5b03
+  - sha256:e25e1ff207ac7c77f2fc42b0c387cf5ba12321f0d3608c0f0c9ad399903806a0
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
   - Strategy research / frozen constraint evidence narrow causal diagnostic
   - P0
-  - IN_PROGRESS
-  - strategy research owner；coordinator负责共享文档与formal integration
+  - BASELINE_DONE
+  - project owner：决定是否批准`RETIRE_CURRENT_FAMILY`；任何后续generator/policy另立任务
   - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
     axis和六fold构造exact matched contrast、coverage、effect direction、common-mode与identifiability；原package保持closed。
   - 1,800/1,800 gate facts exact；per-template/fold/axis pair与不可识别原因可重建且double-build
     byte-identical；独立validator拒绝source/pair/aggregate/classification/safety tamper；只输出retire/new-hypothesis/role-correct-policy/insufficient-identifiability
     owner pack；不改threshold/candidate/gate、不重跑package、不访问prospective，formal gates PASS。
-  - 2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
-    C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。
+  - 2026-07-25：1,800 evaluations生成7,716个exact matched pairs；7轴均为`COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION`且rate
+    delta=0，建议`RETIRE_CURRENT_FAMILY`。formal与failure-fix Full=`7180 passed / 3 skipped
+    / 643 warnings`完成，任务转`BASELINE_DONE`等待owner决定；结论为观察性matched association，不是投资因果，未自动执行退役或开放新generator/prospective/production。
   docs_links:
   - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
   terminal: false
-  raw_row_sha256: 5a060bc7a7a728d45a62d9938734dbad399f1947f57426918442fc91825e5b03
+  raw_row_sha256: e25e1ff207ac7c77f2fc42b0c387cf5ba12321f0d3608c0f0c9ad399903806a0
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: b140c49902b84b2435c8a92128b39bf400846821c366ae1a4b978a0d2523a4d8
+fragment_checksum: a3f129539ec5612419f9d4b6fddb4a4d1cb517e9fdb79d57175bf05cb2472ac2

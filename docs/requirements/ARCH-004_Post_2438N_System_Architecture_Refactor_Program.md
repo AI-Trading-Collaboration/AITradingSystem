@@ -6,14 +6,14 @@
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`IN_PROGRESS`（current phase=`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`）
+- 当前状态：`IN_PROGRESS`（current phase=`WAVE15_S3_FORMAL_EXIT_VALIDATING`）
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
 - 默认 production effect：`none`
 - 正式前序任务：`ARCH-001`、`ARCH-002`、`ARCH-003`、`TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN`
 - 后续执行任务：`ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION`、`ARCH-004G3_REPORTING_NATIVE_MIGRATION`、`ARCH-004G5_RESEARCH_WRAPPER_MIGRATION`、`ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL`
-- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0～S4C已形成validated coordinator closeout baseline；G2.4 handoff、G2.5、Wave12～14均已PASS并推送。Wave14的D0B2与bounded G3按exact ownership完成，C7 replacement Full=`7007 passed / 4 skipped`及post-Full gates闭合；S4D窄版checkout guard也以failure-fix Full=`7136 passed / 3 skipped`正式完成。Owner现已通过`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`批准Wave15窄版，但必须先从授权基线最终HEAD生成exact C/D carrier。Machine dispatch/lease、S5、H、G5、其余consumer、真实periodic/provider、broker与production dispatch仍未开放
+- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0～S4C已形成validated coordinator closeout baseline；G2.4 handoff、G2.5、Wave12～14均已PASS并推送。Wave14的D0B2与bounded G3按exact ownership完成，C7 replacement Full=`7007 passed / 4 skipped`及post-Full gates闭合；S4D窄版checkout guard也以failure-fix Full=`7136 passed / 3 skipped`正式完成。Wave15授权C=`3030114b`与direct-child carrier D=`7ec6fd71`已推送且exact validate PASS；D0B3/G4B first consumer与bounded G3 close/readiness实现及S2 shared integration已完成，当前为S3 formal exit。Machine dispatch/lease、S5、H、G5、其余consumer、真实periodic/provider、broker与production dispatch仍未开放
 
 ## Owner Intent
 

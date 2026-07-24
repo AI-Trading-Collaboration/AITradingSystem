@@ -1,0 +1,60 @@
+schema_version: trading2458_constraint_causal_diagnostic_policy.v1
+policy_id: trading2458_constraint_causal_diagnostic
+version: 1.0.0
+status: REVIEWED_NARROW_DIAGNOSTIC
+owner: strategy_research_owner
+owner_decision: owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1
+rationale: >-
+  对 TRADING-2452/2453 冻结证据做保守的 exact matched contrast，判断现有
+  candidate axes 是否提供可重复辨识度；不把观察性关联写成投资因果，也不改变 gate。
+intended_effect: >-
+  区分 common-mode saturation、可识别关联与不可识别设计，为关闭当前 family、
+  author 新 hypothesis/generator 或另建 role-correct gate policy 提供 owner 复核输入。
+validation_evidence: >-
+  由 content-derived validator 从冻结 1,800 行重建 pair、aggregate、classification、
+  owner pack、hash 与 safety；focused 和 formal tiers 在任务收口时记录。
+review_condition: >-
+  首次正式诊断完成后复核；任何 candidate universe、axis、window role、pair rule 或
+  classification rule 变化都必须新版本和新 owner decision。
+expiry_condition: >-
+  仅适用于已关闭的 TRADING-2452 package 与其 TRADING-2453 diagnosis；
+  不得被未来 package、hard eligibility、promotion 或 production 复用。
+research_window:
+  active_primary_start: '2021-02-22'
+  historical_seen_end: '2025-12-31'
+  prospective_untouched_start: '2026-07-22'
+matched_contrast:
+  unit: SAME_FOLD_SAME_SELECTED_TEMPLATE_ALL_OTHER_AXES_EQUAL
+  target_axes:
+    - constraint_buffer_bps
+    - drawdown_guard
+    - rebalance_cooldown_days
+    - rescue_intensity
+    - risk_off_confirmation_days
+    - smooth_window_days
+    - turnover_penalty
+  required_fold_count: 6
+  minimum_pairs_per_fold: 1
+  minimum_nonzero_pairs_per_fold: 1
+  required_nonzero_direction_consistency: 1.0
+  zero_effect_classification: COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION
+  no_pair_classification: NOT_IDENTIFIABLE_NO_EXACT_MATCHED_PAIRS
+  incomplete_fold_classification: NOT_IDENTIFIABLE_INCOMPLETE_FOLD_COVERAGE
+  mixed_direction_classification: NOT_IDENTIFIABLE_DIRECTION_INCONSISTENT
+  identifiable_classification: IDENTIFIABLE_ASSOCIATION_NOT_PROVEN_CAUSALITY
+interpretation:
+  all_axes_common_mode_recommendation: RETIRE_CURRENT_FAMILY
+  identifiable_axis_recommendation: AUTHOR_NEW_HYPOTHESIS_GENERATOR
+  insufficient_identifiability_recommendation: INSUFFICIENT_IDENTIFIABILITY
+  role_correct_gate_policy_option: AUTHOR_ROLE_CORRECT_GATE_POLICY
+safety:
+  research_only: true
+  manual_review_required: true
+  current_package_reopened: false
+  strategy_gate_changed: false
+  candidate_universe_changed: false
+  candidate_search_executed: false
+  prospective_accessed: false
+  paper_shadow_changed: false
+  production_effect: none
+  broker_action: none

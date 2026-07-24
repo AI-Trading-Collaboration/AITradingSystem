@@ -238,6 +238,7 @@ def test_private_preflight_factory_import_whitelist_is_fail_closed() -> None:
 
     assert whitelist == {
         "src/ai_trading_system/data/quality_execution.py",
+        "tests/test_data_quality_consumer_authorization.py",
         "tests/test_data_quality_execution_contract.py",
     }
     assert capability["canonical_receipt_path_template"] == (

@@ -4,7 +4,7 @@ import ast
 import hashlib
 import json
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,6 +20,9 @@ DEFAULT_DEPRECATION_INVENTORY_PATH = (
 )
 DEFAULT_ARCHITECTURE_FITNESS_PATH = (
     PROJECT_ROOT / "inputs" / "architecture" / "arch_004e_architecture_fitness.yaml"
+)
+DEFAULT_REFERENCE_EXCLUSION_POLICY_PATH = (
+    PROJECT_ROOT / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
 )
 
 
@@ -63,9 +66,7 @@ class DeprecationTargetPolicy:
             if not value.strip():
                 raise DeprecationArchitectureError("DEPRECATION_TARGET_FIELD_REQUIRED", field)
         if self.scan_mode not in {"python_file", "python_glob", "repository_metric"}:
-            raise DeprecationArchitectureError(
-                "DEPRECATION_SCAN_MODE_INVALID", self.scan_mode
-            )
+            raise DeprecationArchitectureError("DEPRECATION_SCAN_MODE_INVALID", self.scan_mode)
 
 
 @dataclass(frozen=True)
@@ -91,13 +92,9 @@ class DeprecationPolicy:
         if not self.required_gate_ids or len(set(self.required_gate_ids)) != len(
             self.required_gate_ids
         ):
-            raise DeprecationArchitectureError(
-                "DEPRECATION_REQUIRED_GATES_INVALID", self.policy_id
-            )
+            raise DeprecationArchitectureError("DEPRECATION_REQUIRED_GATES_INVALID", self.policy_id)
         if self.permanent_dual_track_allowed or self.g0_runtime_removal_allowed:
-            raise DeprecationArchitectureError(
-                "DEPRECATION_G0_SAFETY_INVALID", self.policy_id
-            )
+            raise DeprecationArchitectureError("DEPRECATION_G0_SAFETY_INVALID", self.policy_id)
         if not self.artifact_retention_separate_from_code_removal:
             raise DeprecationArchitectureError(
                 "DEPRECATION_ARTIFACT_RETENTION_REQUIRED", self.policy_id
@@ -112,9 +109,7 @@ class DeprecationPolicy:
             )
         surface_ids = tuple(item.surface_id for item in self.targets)
         if not surface_ids or len(set(surface_ids)) != len(surface_ids):
-            raise DeprecationArchitectureError(
-                "DEPRECATION_TARGETS_INVALID", self.policy_id
-            )
+            raise DeprecationArchitectureError("DEPRECATION_TARGETS_INVALID", self.policy_id)
         if any(item.lifecycle is SurfaceLifecycle.REMOVED for item in self.targets):
             raise DeprecationArchitectureError(
                 "DEPRECATION_G0_REMOVED_TARGET_FORBIDDEN", self.policy_id
@@ -158,9 +153,7 @@ class DeprecationSurfaceInventory:
             "top_level_function_count": self.top_level_function_count,
             "top_level_class_count": self.top_level_class_count,
             "cli_command_decorator_count": self.cli_command_decorator_count,
-            "static_import_reachability_file_count": (
-                self.static_import_reachability_file_count
-            ),
+            "static_import_reachability_file_count": (self.static_import_reachability_file_count),
             "test_reference_file_count": self.test_reference_file_count,
             "docs_config_reference_file_count": self.docs_config_reference_file_count,
             "required_removal_gate_count": self.required_removal_gate_count,
@@ -205,9 +198,7 @@ class DeprecationInventory:
                 "direct_writer_current_count": self.direct_writer_current_count,
                 "direct_writer_violation_count": self.direct_writer_violation_count,
                 "legacy_adapter_file_count": self.legacy_adapter_file_count,
-                "dynamic_strategy_wrapper_file_count": (
-                    self.dynamic_strategy_wrapper_file_count
-                ),
+                "dynamic_strategy_wrapper_file_count": (self.dynamic_strategy_wrapper_file_count),
                 "research_quality_matching_wrapper_count": (
                     self.research_quality_matching_wrapper_count
                 ),
@@ -230,9 +221,7 @@ def load_deprecation_policy(
     lifecycle = _mapping(payload, "lifecycle")
     removal = _mapping(payload, "removal_policy")
     safety = _mapping(payload, "safety_boundary")
-    targets = tuple(
-        _target(_as_mapping(item, "target")) for item in _list(payload, "targets")
-    )
+    targets = tuple(_target(_as_mapping(item, "target")) for item in _list(payload, "targets"))
     policy = DeprecationPolicy(
         policy_id=str(payload.get("policy_id", "")),
         owner=str(payload.get("owner", "")),
@@ -260,6 +249,7 @@ def scan_deprecation_inventory(
     *,
     project_root: Path = PROJECT_ROOT,
     architecture_fitness_path: Path = DEFAULT_ARCHITECTURE_FITNESS_PATH,
+    reference_exclusion_paths: Iterable[str] | None = None,
 ) -> DeprecationInventory:
     resolved = policy or load_deprecation_policy()
     source_root = project_root / "src" / "ai_trading_system"
@@ -268,13 +258,19 @@ def scan_deprecation_inventory(
     test_files = tuple(sorted(test_root.rglob("*.py")))
     source_text = {path: path.read_text(encoding="utf-8") for path in python_files}
     test_text = {path: path.read_text(encoding="utf-8") for path in test_files}
-    reference_files = tuple(
-        sorted((project_root / "docs").rglob("*.md"))
-        + sorted((project_root / "config").rglob("*.yaml"))
+    excluded_references = _reference_exclusion_paths(
+        project_root=project_root,
+        explicit_paths=reference_exclusion_paths,
     )
-    reference_text = {
-        path: path.read_text(encoding="utf-8") for path in reference_files
-    }
+    reference_files = tuple(
+        path
+        for path in (
+            sorted((project_root / "docs").rglob("*.md"))
+            + sorted((project_root / "config").rglob("*.yaml"))
+        )
+        if path.relative_to(project_root).as_posix() not in excluded_references
+    )
+    reference_text = {path: path.read_text(encoding="utf-8") for path in reference_files}
     surfaces = tuple(
         _scan_target(
             target,
@@ -293,32 +289,73 @@ def scan_deprecation_inventory(
         )
     dependency = _mapping(fitness, "dependency_gate")
     root_wrappers = tuple(sorted(source_root.glob("dynamic_strategy_*.py")))
-    quality_names = {
-        path.name
-        for path in (source_root / "research_quality").glob("*.py")
-    }
+    quality_names = {path.name for path in (source_root / "research_quality").glob("*.py")}
     lifecycle_counts = Counter(item.lifecycle.value for item in resolved.targets)
     return DeprecationInventory(
         policy_id=resolved.policy_id,
         python_module_count=_integer(fitness, "module_count"),
         python_test_file_count=_integer(fitness, "test_file_count"),
-        direct_writer_baseline_count=_integer(
-            dependency, "baseline_direct_writer_calls"
-        ),
+        direct_writer_baseline_count=_integer(dependency, "baseline_direct_writer_calls"),
         direct_writer_current_count=_integer(dependency, "current_direct_writer_calls"),
         direct_writer_violation_count=_integer(dependency, "violation_count"),
-        legacy_adapter_file_count=len(
-            tuple((source_root / "legacy").glob("*.py"))
-        ),
+        legacy_adapter_file_count=len(tuple((source_root / "legacy").glob("*.py"))),
         dynamic_strategy_wrapper_file_count=len(root_wrappers),
         research_quality_matching_wrapper_count=sum(
-            path.name.removeprefix("dynamic_strategy_") in quality_names
-            for path in root_wrappers
+            path.name.removeprefix("dynamic_strategy_") in quality_names for path in root_wrappers
         ),
         lifecycle_counts=tuple(sorted(lifecycle_counts.items())),
         removal_ready_count=sum(item.removal_ready for item in surfaces),
         surfaces=surfaces,
     )
+
+
+def _reference_exclusion_paths(
+    *,
+    project_root: Path,
+    explicit_paths: Iterable[str] | None,
+) -> frozenset[str]:
+    if explicit_paths is None:
+        policy_path = project_root / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
+        if not policy_path.is_file():
+            return frozenset()
+        from ai_trading_system.platform.architecture.checkout_guard import (
+            load_checkout_guard_policy,
+        )
+
+        paths = tuple(
+            row.path for row in load_checkout_guard_policy(policy_path).known_unrelated_exclusions
+        )
+    else:
+        paths = tuple(explicit_paths)
+
+    normalized: set[str] = set()
+    normalized_keys: set[str] = set()
+    for raw_path in paths:
+        path = Path(raw_path)
+        if (
+            path.is_absolute()
+            or ".." in path.parts
+            or path.as_posix() != raw_path.replace("\\", "/")
+        ):
+            raise DeprecationArchitectureError(
+                "DEPRECATION_REFERENCE_EXCLUSION_INVALID",
+                str(raw_path),
+            )
+        relative = path.as_posix()
+        if not relative.startswith(("docs/", "config/")):
+            raise DeprecationArchitectureError(
+                "DEPRECATION_REFERENCE_EXCLUSION_OUT_OF_SCOPE",
+                relative,
+            )
+        key = relative.casefold()
+        if key in normalized_keys:
+            raise DeprecationArchitectureError(
+                "DEPRECATION_REFERENCE_EXCLUSION_DUPLICATE",
+                relative,
+            )
+        normalized.add(relative)
+        normalized_keys.add(key)
+    return frozenset(normalized)
 
 
 def assert_frozen_deprecation_inventory(
@@ -373,9 +410,7 @@ def _scan_target(
 ) -> DeprecationSurfaceInventory:
     paths = _target_paths(target, project_root)
     if not paths:
-        raise DeprecationArchitectureError(
-            "DEPRECATION_TARGET_PATH_EMPTY", target.surface_id
-        )
+        raise DeprecationArchitectureError("DEPRECATION_TARGET_PATH_EMPTY", target.surface_id)
     stats = [_python_stats(path) for path in paths]
     modules = tuple(
         _module_name(path, project_root)
@@ -394,9 +429,7 @@ def _scan_target(
         *(path.stem for path in paths),
         *modules,
     }
-    test_references = sum(
-        any(token in text for token in tokens) for text in test_text.values()
-    )
+    test_references = sum(any(token in text for token in tokens) for text in test_text.values())
     docs_references = sum(
         any(token in text for token in tokens) for text in reference_text.values()
     )
@@ -443,9 +476,7 @@ def _python_stats(path: Path) -> tuple[int, int, int, int, int]:
     if path.suffix != ".py":
         return len(text.splitlines()), len(canonical_bytes), 0, 0, 0
     tree = ast.parse(text)
-    functions = sum(
-        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) for node in tree.body
-    )
+    functions = sum(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) for node in tree.body)
     classes = sum(isinstance(node, ast.ClassDef) for node in tree.body)
     command_decorators = sum(
         _is_command_decorator(decorator)

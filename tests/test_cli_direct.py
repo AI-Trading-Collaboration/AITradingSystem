@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shlex
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -85,6 +86,69 @@ def test_cli_direct_score_daily_threads_llm_request_profile(monkeypatch) -> None
 
     assert exit_code == 0
     assert captured["llm_request_profile"] == "risk_event_triaged_official_candidates"
+
+
+def test_cli_direct_routes_daily_score_authorization_profile_before_score(
+    monkeypatch,
+) -> None:
+    captured: dict[str, object] = {}
+    score_calls: list[dict[str, object]] = []
+
+    def fake_score_daily(**kwargs: object) -> None:
+        score_calls.append(kwargs)
+
+    def fake_authorized_dispatch(**kwargs: object) -> None:
+        captured.update(kwargs)
+        kwargs["score_runner"]()
+
+    monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", fake_score_daily)
+    monkeypatch.setattr(
+        cli_direct,
+        "_dispatch_daily_score_with_consumer_authorization",
+        fake_authorized_dispatch,
+    )
+
+    exit_code = cli_direct.main(
+        [
+            "score-daily",
+            "--as-of",
+            "2026-07-23",
+            "--consumer-authorization-profile",
+            "daily_score_daily@1.0.0",
+            "--skip-risk-event-openai-precheck",
+            "--run-id",
+            "daily-wave15",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["as_of"] == date(2026, 7, 23)
+    assert captured["run_id"] == "daily-wave15"
+    assert captured["project_root"] == Path.cwd()
+    assert len(score_calls) == 1
+    assert score_calls[0]["as_of"] == "2026-07-23"
+
+
+def test_cli_direct_rejects_unknown_consumer_profile_before_score(monkeypatch) -> None:
+    score_calls: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        cli_direct.score_daily_cli,
+        "score_daily",
+        lambda **kwargs: score_calls.append(kwargs),
+    )
+
+    exit_code = cli_direct.main(
+        [
+            "score-daily",
+            "--as-of",
+            "2026-07-23",
+            "--consumer-authorization-profile",
+            "weekly_backtest@1.0.0",
+        ]
+    )
+
+    assert exit_code == 1
+    assert score_calls == []
 
 
 def test_cli_direct_dispatches_signal_commands(monkeypatch) -> None:

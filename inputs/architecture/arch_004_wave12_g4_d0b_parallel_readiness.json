@@ -234,9 +234,9 @@
     }
   ],
   "policy_path": "config/architecture/arch_004_wave12_g4_d0b_readiness.yaml",
-  "policy_sha256": "90aeb2457890e9576fa5e5e3ec9b48b4483591a36e873d25fbd2cf560cf2eded",
+  "policy_sha256": "ef55c982e3c3856a78dcc82418080d896797f0dd7ecd6ceb50559b4afb7110c9",
   "production_effect": "none",
-  "readiness_sha256": "e86934e86237ecb66df96ffaf8f3fffe082886e7d658efd78aade0a8282175d3",
+  "readiness_sha256": "059d849c722e3eaec1c244a62997fe6cc466472bb03b44c705c84c7c1d9b962b",
   "safety": {
     "automatic_command_dispatch_enabled": false,
     "automatic_merge_allowed": false,

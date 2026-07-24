@@ -10,6 +10,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
+from time import sleep
 from typing import Any, cast
 
 from ai_trading_system.platform.architecture.parallel_control import (
@@ -30,6 +31,10 @@ LEASE_REPLAY_SCHEMA_VERSION = "execution_lease_replay.v1"
 
 _HARD_DEPENDENCY_TYPES = frozenset({"blocks_start", "blocks_completion"})
 _DEPENDENCY_TYPES = _HARD_DEPENDENCY_TYPES | frozenset({"parent_child", "informational"})
+# Windows can transiently deny readers while the atomic owner file is being
+# replaced. A short bounded stabilization window preserves fail-closed locking.
+_ARBITER_OWNER_READ_ATTEMPTS = 8
+_ARBITER_OWNER_READ_RETRY_SECONDS = 0.01
 _LEASE_TRANSITIONS: dict[str | None, frozenset[str]] = {
     None: frozenset({"REQUESTED"}),
     "REQUESTED": frozenset({"ACTIVE", "BLOCKED"}),
@@ -986,11 +991,7 @@ class FileExecutionLeaseStore:
         acquired = self._publish_prepared_arbiter(owner_payload)
         if not acquired:
             owner_path = self.arbiter_root / "owner.json"
-            try:
-                owner = json.loads(owner_path.read_text(encoding="utf-8"))
-                expires = datetime.fromisoformat(str(owner["expires_at"]))
-            except (OSError, KeyError, ValueError, json.JSONDecodeError) as exc:
-                raise ParallelControlError("LEASE_ARBITER_STATE_INVALID", str(exc)) from exc
+            owner, expires = self._read_arbiter_owner(owner_path)
             owner_state = owner.get("state")
             if owner_state not in {None, "ACTIVE", "RELEASED"}:
                 raise ParallelControlError(
@@ -1042,6 +1043,26 @@ class FileExecutionLeaseStore:
                     pending.rmdir()
                 except FileNotFoundError:
                     pass
+
+    def _read_arbiter_owner(self, owner_path: Path) -> tuple[dict[str, object], datetime]:
+        for attempt in range(_ARBITER_OWNER_READ_ATTEMPTS):
+            try:
+                raw_owner = json.loads(owner_path.read_text(encoding="utf-8"))
+                if not isinstance(raw_owner, dict):
+                    raise TypeError("arbiter owner must be an object")
+                owner = {str(key): value for key, value in raw_owner.items()}
+                expires = datetime.fromisoformat(str(owner["expires_at"]))
+                return owner, expires
+            except PermissionError as exc:
+                if attempt + 1 == _ARBITER_OWNER_READ_ATTEMPTS:
+                    raise ParallelControlError(
+                        "LEASE_ARBITER_BUSY",
+                        "owner state remained temporarily unreadable",
+                    ) from exc
+                sleep(_ARBITER_OWNER_READ_RETRY_SECONDS)
+            except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                raise ParallelControlError("LEASE_ARBITER_STATE_INVALID", str(exc)) from exc
+        raise AssertionError("unreachable arbiter owner read state")
 
 
 def _lease_event(

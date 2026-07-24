@@ -8,8 +8,8 @@
   `DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE`
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`、`DATA-GOV-001`
 - priority：`P0`
-- status：`COMPLETE_WAVE12_S2`（G4 overall=`VALIDATING`；DATA-GOV overall=`IN_PROGRESS`）
-- current roadmap：`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`
+- status：`COMPLETE_WAVE15_FIRST_CONSUMER_BASELINE`（G4 overall=`BASELINE_DONE`；DATA-GOV overall=`IN_PROGRESS`）
+- current roadmap：`WAVE15_S3_FORMAL_EXIT_COMPLETE_OWNER_NEXT_SLICE_REQUIRED`
 - owners：architecture coordinator / operations platform worker / data platform worker
 - source phase：`G2_5_COMPLETE_G4_D0B_NEXT`
 - source base：`12b1fb86369f146c9ef1c7ac54872eb8150ed791`
@@ -260,6 +260,19 @@ domain final integration 混合。
 
 ## 状态记录
 
+- 2026-07-25：Wave15 formal exit完成，final Full链为首次`7179/1/3 skipped`、精确
+  test-local白名单修复后failure-fix `7180 passed / 3 skipped / 643 warnings`。G4 first-consumer
+  baseline转`BASELINE_DONE`；G4C真实cadence、其他四个consumer、真实provider/periodic、
+  production与broker继续关闭，下一consumer不得沿用本次授权。
+- 2026-07-25：Wave15 D0B3/G4B first-consumer domain与shared integration完成。新增reviewed
+  `daily_score_daily@1.0.0` profile、content-addressed authorization attestation及verifier-only
+  capability；attestation机械绑定strict receipt、D0B2 publication、source/window/policy/validator/
+  input/report lineage并以reviewed 24小时TTL失效。`ops_daily`只对daily score命令携带显式profile
+  token，`cli_direct`在score runner之前自行执行daily discovery与双证据重验，再通过F1 runtime
+  semantics dispatch；普通手工score路径未隐式切换。其他四个representative identity、automatic
+  non-daily与generic dispatch保持false；isolated跨层tamper回归为零runner/零downstream。domain
+  focused合计73 PASS、shared combined focused152 PASS，当前等待formal exit；未运行真实daily、
+  provider或cache mutation。
 - 2026-07-24：D0B2随Wave14 S2正式闭合。C7 replacement Full=`7007 passed / 4 skipped /
   643 warnings / 1077.52s`，post-Full focused/architecture/contract/integration/
   reproducibility再次PASS；composite publication、strict calendar/coverage/gap/finite gate、

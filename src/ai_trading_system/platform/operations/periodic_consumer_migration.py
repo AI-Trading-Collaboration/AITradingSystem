@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Protocol
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.contracts.data_quality_consumer_authorization import (
+    VerifiedDataQualityConsumerAuthorization,
+)
 from ai_trading_system.contracts.data_quality_execution import (
     DataQualityExecutionContractError,
     VerifiedDataQualityPreflight,
@@ -627,10 +630,61 @@ def rehearse_native_periodic_consumer(
         raise
 
 
-def dispatch_native_periodic_consumer(*_: object, **__: object) -> None:
-    raise PeriodicConsumerMigrationError(
-        "G4A_EXECUTION_FORBIDDEN",
-        "G4A exposes parity metadata only; command dispatch is not implemented",
+def dispatch_native_periodic_consumer(
+    plan: NativePeriodicConsumerParityPlan,
+    *,
+    task_id: str,
+    authorization: VerifiedDataQualityConsumerAuthorization,
+    control: OperationsRunControl,
+    runner: NativeParityRunner,
+    run_id: str,
+    clock: Clock | None = None,
+) -> NativePeriodicConsumerRehearsalResult:
+    """Dispatch the Wave15 singleton consumer through the existing F1 runtime guard.
+
+    The public callable intentionally accepts only the verifier-sealed
+    consumer-scoped capability. G4A parity metadata remains non-authorizing.
+    """
+
+    if task_id != "daily_score_daily":
+        raise PeriodicConsumerMigrationError(
+            "G4B_CONSUMER_NOT_AUTHORIZED",
+            f"Wave15 only authorizes daily_score_daily, received={task_id}",
+        )
+    if not isinstance(authorization, VerifiedDataQualityConsumerAuthorization):
+        raise PeriodicConsumerMigrationError(
+            "G4B_CONSUMER_AUTHORIZATION_NOT_VERIFIED",
+            "dispatch requires the canonical verifier capability",
+        )
+    if authorization.consumer_id != task_id:
+        raise PeriodicConsumerMigrationError(
+            "G4B_CONSUMER_IDENTITY_MISMATCH",
+            f"authorization={authorization.consumer_id} task={task_id}",
+        )
+    if plan.status is not CanonicalStatus.PASS:
+        raise PeriodicConsumerMigrationError(
+            "G4B_DQ_PREFLIGHT_BLOCKED",
+            ",".join(plan.blocker_codes) or plan.status.value,
+        )
+    if (
+        authorization.as_of != plan.data_quality_as_of
+        or authorization.preflight.receipt_id != plan.receipt_id
+        or authorization.attestation.receipt_path != plan.receipt_path
+    ):
+        raise PeriodicConsumerMigrationError(
+            "G4B_AUTHORIZATION_LINEAGE_MISMATCH",
+            "authorization receipt/date differs from the native parity plan",
+        )
+    entry = plan.entry(task_id)
+    if entry.dispatch_mode is not OperationsDispatchMode.CONTROLLED_AUTOMATIC:
+        raise PeriodicConsumerMigrationError("G4B_DISPATCH_MODE_INVALID", entry.dispatch_mode.value)
+    return rehearse_native_periodic_consumer(
+        plan,
+        task_id=task_id,
+        control=control,
+        runner=runner,
+        run_id=run_id,
+        clock=clock,
     )
 
 

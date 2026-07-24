@@ -2,7 +2,7 @@
 
 最后更新：2026-07-25
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE_OWNER_DECISION_PENDING`
 
 稳定任务 ID：`TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC`
 
@@ -103,6 +103,19 @@ row count、candidate identity、fold 或 TRADING-2453 重算事实漂移，诊�
 
 ## 进展记录
 
+- 2026-07-25：formal exit完成，随Wave15通过combined/architecture/contract/report/reproducibility
+  与failure-fix Full=`7180 passed / 3 skipped / 643 warnings`。诊断结论保持
+  `RETIRE_CURRENT_FAMILY`，但该动作未自动执行；下一责任方为project owner，决定是否批准退役
+  当前family。新generator、role-correct gate policy、prospective、paper-shadow、promotion、
+  production与broker均需独立任务和授权。
+- 2026-07-25：S1～S3实现完成并进入formal integration。reviewed policy固定七个冻结axis、6 folds、
+  same-fold/same-template/other-axis-exact matching 与全fold方向一致规则；实现只重放TRADING-2453
+  已验证事实，没有重跑TRADING-2452或访问prospective。1,800 evaluations共形成7,716个exact
+  matched pairs，七轴的hit-rate/delta/gate变化均为0，分类一致为
+  `COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION`。这说明现有family在观察设计中被共同饱和截断，
+  不能支持继续单轴调参；owner pack建议`RETIRE_CURRENT_FAMILY`，若后续要新generator或role-correct
+  gate必须另立假设与授权。focused=`9 passed`，Ruff/Black/strict mypy与live in-memory double-build
+  PASS；当前等待formal tiers与最终Full。
 - 2026-07-25：Owner 明确“策略线按照 C 继续诊断”。S0 启动；授权仅覆盖冻结证据的窄版
   per-template/per-axis diagnosis，不覆盖 B、新候选生成器、阈值修改、原 package 重跑、
   prospective、paper-shadow、promotion、production 或 broker。

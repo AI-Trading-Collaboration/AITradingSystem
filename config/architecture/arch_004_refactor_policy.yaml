@@ -614,8 +614,8 @@ phase_g_execution:
     G0_inventory_deprecation_policy_and_removal_gate: COMPLETE
     G1_shared_platform_helper_migration: COMPLETE
     G2_interfaces_and_etf_cli_migration: COMPLETE
-    G3_reporting_native_migration: IN_PROGRESS_FIRST_NATIVE_SLICE_COMPLETE
-    G4_operations_consumer_migration: VALIDATING_CADENCE_PENDING
+    G3_reporting_native_migration: BASELINE_DONE_BOUNDED_SLICE_CLOSE_READY
+    G4_operations_consumer_migration: BASELINE_DONE_FIRST_CONSUMER_CADENCE_PENDING
     G5_research_wrapper_migration: NOT_STARTED
     G6_portfolio_decision_sensitive_migration: NOT_STARTED
     G7_closeout_and_h_handoff: NOT_STARTED
@@ -627,11 +627,16 @@ phase_g_execution:
   production_effect: none
   next_phase_unblocked: false
   current_coordination_wave:
-    wave_id: WAVE14_D0B2_BOUNDED_G3
-    current_phase: WAVE14_S2_SHARED_INTEGRATION_AND_FORMAL_EXIT
-    status: S2_COMPLETE_AWAITING_ARCH_005S4D_OWNER_AUTHORIZATION
-    compatibility_status: COMPLETE_WAVE14_S2
-    task_id: ARCH-004W14_D0B2_G3_PARALLEL_READINESS
+    wave_id: WAVE15_D0B3_G4B_G3_CLOSE
+    current_phase: WAVE15_S3_FORMAL_EXIT_COMPLETE
+    status: BASELINE_DONE_OWNER_NEXT_SLICE_REQUIRED
+    compatibility_status: WAVE15_S3_COMPLETE
+    task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+    authorization_commit: 3030114be1c07b71eab5af2d8cbf4f54325cb2ef
+    readiness_carrier_commit: 7ec6fd713b0e676607e38522be36b8e4d6c20d55
+    readiness_carrier_sha256: 50ba37193bf3aef67439e16a9cf3dd3183bb2e20df84fc63ea075293923a2e51
+    domain_focused_passed: 73
+    shared_combined_focused_passed: 152
     source_wave_closeout_commit: e2da21894ea8e8921a86c6c1b48d7b191f0f142c
     source_wave_tree: 73ba7a3830cbc47ccb6dbfb3488eeed5431653c2
     wave14_s0_carrier_commit: 39a3ea7306a3937beda835020df4d8419c1cbbdf
@@ -656,14 +661,17 @@ phase_g_execution:
     task_source_of_truth: LEGACY_MARKDOWN_ONLY
     task_source_of_truth_cutover: false
     next_wave:
-      wave_id: WAVE14_D0B2_BOUNDED_G3
+      wave_id: WAVE15_D0B3_G4B_G3_CLOSE
       dispatch_allowed: false
       prior_g2_5_rehearsal_is_dispatch_authority: false
       final_head_manifest_required: true
       s0_contract_readiness_status: PASS
       next_slice_unblocked: false
-      data_task: DATA-GOV-001_D0B2
+      data_task: DATA-GOV-001_D0B3
       reporting_task: ARCH-004G3_REPORTING_NATIVE_MIGRATION
+      authorized_consumers: [daily_score_daily]
+      other_consumer_authorization_allowed: false
+      g5_unblocked: false
       max_active_domain_workers: 2
       shared_paths_coordinator_only: true
       g4c_cadence_observation_async: true

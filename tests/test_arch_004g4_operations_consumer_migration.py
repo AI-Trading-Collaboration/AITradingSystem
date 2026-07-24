@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, replace
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Self, cast
 
@@ -11,7 +11,13 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.contracts.data_quality import DataQualityEvidence
+from ai_trading_system.contracts.data_quality_consumer_authorization import (
+    DataQualityConsumerAuthorizationAttestation,
+    VerifiedDataQualityConsumerAuthorization,
+    _build_verified_data_quality_consumer_authorization,
+)
 from ai_trading_system.contracts.data_quality_execution import (
+    DataQualityDateWindow,
     DataQualityExecutionContractError,
     VerifiedDataQualityPreflight,
 )
@@ -34,6 +40,7 @@ from ai_trading_system.platform.operations.periodic_consumer_migration import (
     assess_legacy_adapter_direct_callers,
     build_native_periodic_consumer_parity_plan,
     default_native_periodic_consumer_parity_plan_path,
+    dispatch_native_periodic_consumer,
     rehearse_native_periodic_consumer,
     write_native_periodic_consumer_parity_plan,
 )
@@ -213,6 +220,58 @@ def _control(tmp_path: Path, *, max_run_attempts: int = 3) -> OperationsRunContr
     return OperationsRunControl(
         root=tmp_path / "runtime",
         policy=_runtime_policy(max_run_attempts=max_run_attempts),
+    )
+
+
+def _consumer_authorization(
+    *,
+    as_of: date = AS_OF_WEEK_END,
+    receipt_path: str = RECEIPT_PATH,
+) -> VerifiedDataQualityConsumerAuthorization:
+    fake = FakePreflight(as_of=as_of, status="PASS")
+    preflight = cast(VerifiedDataQualityPreflight, fake)
+    start = date(2021, 2, 22)
+    attestation = DataQualityConsumerAuthorizationAttestation(
+        consumer_id="daily_score_daily",
+        consumer_version="1.0.0",
+        policy_id="arch_004_wave15_daily_score_consumer_authorization_v1",
+        policy_version="1.0.0",
+        policy_path=(
+            "config/data_quality/" "arch_004_wave15_daily_score_consumer_authorization.yaml"
+        ),
+        policy_sha256="1" * 64,
+        owner_decision_id=(
+            "owner_decision:ARCH-004-WAVE15:" "2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1"
+        ),
+        authorized_at=NOW,
+        expires_at=NOW + timedelta(hours=24),
+        as_of=as_of,
+        requested_window=DataQualityDateWindow(start, as_of),
+        evaluated_window=DataQualityDateWindow(start, as_of),
+        receipt_id=RECEIPT_ID,
+        receipt_path=receipt_path,
+        receipt_sha256=RECEIPT_SHA,
+        receipt_size_bytes=100,
+        receipt_status="PASS",
+        receipt_lineage_sha256="2" * 64,
+        input_roles=("prices", "rates", "secondary_prices"),
+        publication_transaction_id="download_publication_" + "3" * 64,
+        publication_transaction_path=(
+            "data/raw/.download_publications/generations/test/transaction.json"
+        ),
+        publication_transaction_sha256="4" * 64,
+        publication_discovery_pointer_path=(
+            "data/raw/.download_publications/current/download_composite.json"
+        ),
+        publication_discovery_pointer_sha256="5" * 64,
+        publication_requested_start=start,
+        publication_requested_end=as_of,
+        publication_lineage_sha256="6" * 64,
+    )
+    return _build_verified_data_quality_consumer_authorization(
+        attestation=attestation,
+        preflight=preflight,
+        verified_at=NOW + timedelta(minutes=1),
     )
 
 
@@ -544,6 +603,124 @@ def test_default_public_verifier_missing_receipt_keeps_only_producer_due(
     assert {plan.entry(task_id).due_resolution.status for task_id in G4A_CONSUMER_IDS[1:]} == {
         CanonicalStatus.BLOCKED
     }
+
+
+def test_g4b_controlled_dispatch_executes_only_daily_score_with_verified_capability(
+    tmp_path: Path,
+) -> None:
+    plan = _plan(tmp_path)
+    authorization = _consumer_authorization()
+    control = _control(tmp_path)
+    calls: list[tuple[str, tuple[str, ...]]] = []
+
+    def runner(entry: NativePeriodicConsumerPlanEntry) -> NativeParityRunnerResult:
+        calls.append((entry.definition.task_id, entry.definition.resolved_command))
+        return NativeParityRunnerResult(
+            passed=True,
+            retryable=False,
+            artifact_refs=("artifact:daily_score:isolated",),
+        )
+
+    first = dispatch_native_periodic_consumer(
+        plan,
+        task_id="daily_score_daily",
+        authorization=authorization,
+        control=control,
+        runner=runner,
+        run_id="g4b:first",
+        clock=FakeClock(),
+    )
+    duplicate = dispatch_native_periodic_consumer(
+        plan,
+        task_id="daily_score_daily",
+        authorization=authorization,
+        control=control,
+        runner=runner,
+        run_id="g4b:duplicate",
+        clock=FakeClock(),
+    )
+
+    assert first.status is CanonicalStatus.PASS
+    assert first.runner_called is True
+    assert first.artifact_refs == ("artifact:daily_score:isolated",)
+    assert duplicate.status is CanonicalStatus.PASS
+    assert duplicate.runner_called is False
+    assert duplicate.run_decision is OperationsRunDecision.ALREADY_COMPLETE
+    assert calls == [
+        (
+            "daily_score_daily",
+            plan.entry("daily_score_daily").definition.resolved_command,
+        )
+    ]
+    assert all(item.dispatch_authorized is False for item in plan.entries)
+    assert plan.automatic_dispatch_enabled is False
+
+
+@pytest.mark.parametrize("task_id", G4A_CONSUMER_IDS[0:1] + G4A_CONSUMER_IDS[2:])
+def test_g4b_other_representative_identities_remain_unauthorized_before_runner(
+    tmp_path: Path,
+    task_id: str,
+) -> None:
+    calls: list[str] = []
+
+    with pytest.raises(RuntimeError, match="G4B_CONSUMER_NOT_AUTHORIZED"):
+        dispatch_native_periodic_consumer(
+            _plan(tmp_path),
+            task_id=task_id,
+            authorization=_consumer_authorization(),
+            control=_control(tmp_path),
+            runner=lambda entry: (
+                calls.append(entry.definition.task_id)
+                or NativeParityRunnerResult(passed=True, retryable=False)
+            ),
+            run_id=f"blocked:{task_id}",
+            clock=FakeClock(),
+        )
+
+    assert calls == []
+    assert not (tmp_path / "runtime").exists()
+
+
+def test_g4b_authorization_lineage_and_not_due_fail_before_runner(tmp_path: Path) -> None:
+    calls: list[str] = []
+    plan = _plan(tmp_path)
+
+    with pytest.raises(RuntimeError, match="G4B_AUTHORIZATION_LINEAGE_MISMATCH"):
+        dispatch_native_periodic_consumer(
+            plan,
+            task_id="daily_score_daily",
+            authorization=_consumer_authorization(
+                receipt_path=RECEIPT_PATH.replace("receipt.json", "other.json")
+            ),
+            control=_control(tmp_path / "mismatch"),
+            runner=lambda entry: (
+                calls.append(entry.definition.task_id)
+                or NativeParityRunnerResult(passed=True, retryable=False)
+            ),
+            run_id="g4b:mismatch",
+            clock=FakeClock(),
+        )
+
+    weekend = date(2026, 7, 11)
+    weekend_plan = _plan(tmp_path / "weekend", as_of=weekend)
+    skipped = dispatch_native_periodic_consumer(
+        weekend_plan,
+        task_id="daily_score_daily",
+        authorization=_consumer_authorization(as_of=date(2026, 7, 10)),
+        control=_control(tmp_path / "weekend"),
+        runner=lambda entry: (
+            calls.append(entry.definition.task_id)
+            or NativeParityRunnerResult(passed=True, retryable=False)
+        ),
+        run_id="g4b:not-due",
+        clock=FakeClock(),
+    )
+
+    assert skipped.status is CanonicalStatus.SKIPPED
+    assert skipped.runner_called is False
+    assert calls == []
+    assert not (tmp_path / "mismatch" / "runtime").exists()
+    assert not (tmp_path / "weekend" / "runtime").exists()
 
 
 def test_runtime_rehearsal_pass_duplicate_and_typed_ledger_without_command_execution(

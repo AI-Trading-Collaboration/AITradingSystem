@@ -1,0 +1,46 @@
+schema_version: data_quality_consumer_authorization_policy.v1
+policy_id: arch_004_wave15_daily_score_consumer_authorization_v1
+policy_version: 1.0.0
+owner: data_governance
+status: REVIEWED
+owner_decision_id: owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1
+profile:
+  consumer_id: daily_score_daily
+  consumer_version: 1.0.0
+  execution_profile_id: daily_default.v1
+  publication_output_dir: data/raw
+  authorization_ttl_hours: 24
+  accepted_data_quality_statuses: [PASS]
+  required_input_roles: [prices, rates, secondary_prices]
+  require_download_publication_companion: true
+  require_legacy_projection_verified: true
+  require_exact_as_of: true
+  require_exact_requested_window: true
+  require_exact_evaluated_window: true
+  reversible_authorization: true
+governance:
+  rationale: >
+    Wave15 only authorizes the daily_score_daily consumer after the canonical
+    DQ receipt and D0B2 immutable publication have both been independently
+    revalidated. The authorization is a separate, revocable, consumer-scoped
+    capability; historical receipt and publication safety fields remain false.
+  intended_effect: >
+    Permit one controlled native daily-score dispatch path while preserving
+    fail-closed behavior before runner invocation and downstream artifact
+    publication for every other consumer and every non-PASS condition.
+  validation_evidence: >
+    Typed canonical-attestation round trips, policy/receipt/publication/source
+    tamper tests, expiry/as-of/profile mismatch tests, and isolated G4B runtime
+    parity tests with fake clocks and runners.
+  review_condition: >
+    Review before changing the consumer identity/version, TTL, accepted status,
+    required input roles, window rules, publication binding, or dispatch scope.
+safety:
+  generic_consumer_cutover_allowed: false
+  automatic_command_dispatch: false
+  automatic_non_daily_dispatch: false
+  authorized_consumer_ids: [daily_score_daily]
+  real_periodic_operation_executed: false
+  provider_refresh_executed: false
+  production_effect: none
+  broker_action: none

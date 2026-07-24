@@ -285,6 +285,8 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
             "score-daily",
             "--as-of",
             "2026-05-06",
+            "--consumer-authorization-profile",
+            "daily_score_daily@1.0.0",
             "--skip-risk-event-openai-precheck",
         )
     )

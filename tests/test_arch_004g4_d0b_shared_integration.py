@@ -7,13 +7,30 @@ from pathlib import Path
 from typing import Self, cast
 
 import pytest
+from test_data_quality_consumer_authorization import (
+    AUTHORIZED_AT,
+)
+from test_data_quality_consumer_authorization import (
+    _preflight as _full_preflight,
+)
+from test_data_quality_consumer_authorization import (
+    _project_root as _authorization_project_root,
+)
+from test_data_quality_consumer_authorization import (
+    _publication as _full_publication,
+)
 
 import ai_trading_system.cli_commands.ops as ops_cli
+from ai_trading_system import cli_direct
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.contracts.data_quality import DataQualityEvidence
 from ai_trading_system.contracts.data_quality_execution import (
     DataQualityExecutionReceipt,
     VerifiedDataQualityPreflight,
+)
+from ai_trading_system.contracts.status import CanonicalStatus
+from ai_trading_system.data.quality_consumer_authorization import (
+    DataQualityConsumerAuthorizationError,
 )
 from ai_trading_system.data.quality_execution import DataQualityExecutionError
 from ai_trading_system.data.quality_execution_discovery import (
@@ -25,11 +42,16 @@ from ai_trading_system.data.quality_execution_discovery import (
 from ai_trading_system.ops_daily import (
     DailyOpsRunReport,
     DailyOpsStepResult,
+    _execution_command,
     build_daily_ops_plan,
     resolve_daily_ops_default_as_of,
 )
 from ai_trading_system.platform.operations.periodic_consumer_migration import (
     default_native_periodic_consumer_parity_plan_path,
+)
+from ai_trading_system.platform.operations.runtime_control import (
+    OperationsRunControl,
+    OperationsRuntimeControlPolicy,
 )
 from ai_trading_system.trading_calendar import resolve_default_data_quality_as_of
 
@@ -284,6 +306,162 @@ def test_daily_plan_uses_shared_as_of_policy_and_publishes_discovery_path(
         date(2026, 7, 10),
         project_root=tmp_path,
     )
+
+
+def test_ops_daily_to_cli_direct_discovers_and_dispatches_only_authorized_score(
+    tmp_path: Path,
+) -> None:
+    root = _authorization_project_root(tmp_path)
+    as_of = date(2026, 7, 23)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=root,
+        include_download_data=False,
+        skip_risk_event_openai_precheck=True,
+    )
+    score_step = next(step for step in plan.steps if step.step_id == "score_daily")
+    command = _execution_command(score_step.command, project_root=root)
+    assert command[1:4] == ("-m", "ai_trading_system.cli_direct", "score-daily")
+    assert command[6:8] == (
+        "--consumer-authorization-profile",
+        "daily_score_daily@1.0.0",
+    )
+
+    preflight = _full_preflight()
+    publication = _full_publication(root)
+    pointer = DataQualityExecutionDiscoveryPointer(
+        profile_id=DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+        as_of=as_of,
+        published_at=AUTHORIZED_AT,
+        receipt_id=preflight.receipt_id,
+        receipt_path=preflight.receipt_path,
+        receipt_sha256=preflight.receipt_sha256,
+        receipt_size_bytes=preflight.receipt_size_bytes,
+    )
+    discovered = DiscoveredDataQualityExecution(
+        pointer_path=default_data_quality_execution_discovery_path(
+            as_of,
+            project_root=root,
+        ),
+        pointer=pointer,
+        receipt_path=root / Path(preflight.receipt_path),
+        receipt=preflight.receipt,
+    )
+    discovery_calls: list[tuple[date, Path]] = []
+    receipt_calls: list[Path] = []
+    publication_calls: list[Path] = []
+    score_calls: list[str] = []
+
+    def discovery_loader(
+        value: date,
+        *,
+        project_root: Path,
+    ) -> DiscoveredDataQualityExecution:
+        discovery_calls.append((value, project_root))
+        return discovered
+
+    def receipt_verifier(receipt_path: Path, **kwargs: object) -> VerifiedDataQualityPreflight:
+        receipt_calls.append(receipt_path)
+        return preflight
+
+    def publication_resolver(*, output_dir: Path):
+        publication_calls.append(output_dir)
+        return publication
+
+    runtime_control = OperationsRunControl(
+        root=root / "runtime",
+        policy=OperationsRuntimeControlPolicy(
+            policy_id="wave15_integration_runtime_v1",
+            owner="test",
+            version="1.0.0",
+            lock_ttl_seconds=60,
+            max_run_attempts=3,
+            resume_idempotent_steps=True,
+            legacy_daily_executor_cut_in_enabled=False,
+            non_daily_dispatch_enabled=False,
+        ),
+    )
+    result = cli_direct._dispatch_daily_score_with_consumer_authorization(
+        as_of=as_of,
+        score_runner=lambda: score_calls.append("score"),
+        run_id="wave15-integration",
+        project_root=root,
+        now=AUTHORIZED_AT,
+        discovery_loader=discovery_loader,
+        receipt_verifier=receipt_verifier,
+        publication_resolver=publication_resolver,
+        runtime_control=runtime_control,
+    )
+
+    assert result.status is CanonicalStatus.PASS
+    assert result.runner_called is True
+    assert score_calls == ["score"]
+    assert discovery_calls == [(as_of, root)]
+    assert receipt_calls == [
+        root / Path(preflight.receipt_path),
+        Path(preflight.receipt_path),
+    ]
+    assert publication_calls == [root / "data/raw", root / "data/raw"]
+    assert len(list(root.glob("outputs/data_quality/consumer_authorizations/*/*.json"))) == 1
+
+
+def test_cli_direct_daily_discovery_tamper_blocks_before_score_and_runtime(
+    tmp_path: Path,
+) -> None:
+    root = _authorization_project_root(tmp_path)
+    as_of = date(2026, 7, 23)
+    preflight = _full_preflight()
+    publication = _full_publication(root)
+    discovered = DiscoveredDataQualityExecution(
+        pointer_path=default_data_quality_execution_discovery_path(
+            as_of,
+            project_root=root,
+        ),
+        pointer=DataQualityExecutionDiscoveryPointer(
+            profile_id=DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+            as_of=as_of,
+            published_at=AUTHORIZED_AT,
+            receipt_id=preflight.receipt_id,
+            receipt_path=preflight.receipt_path,
+            receipt_sha256="e" * 64,
+            receipt_size_bytes=preflight.receipt_size_bytes,
+        ),
+        receipt_path=root / Path(preflight.receipt_path),
+        receipt=preflight.receipt,
+    )
+    score_calls: list[str] = []
+    runtime_root = root / "runtime"
+
+    with pytest.raises(
+        DataQualityConsumerAuthorizationError,
+        match="DQ_RECEIPT_ID_MISMATCH",
+    ):
+        cli_direct._dispatch_daily_score_with_consumer_authorization(
+            as_of=as_of,
+            score_runner=lambda: score_calls.append("score"),
+            run_id="wave15-tamper",
+            project_root=root,
+            now=AUTHORIZED_AT,
+            discovery_loader=lambda *args, **kwargs: discovered,
+            receipt_verifier=lambda *args, **kwargs: preflight,
+            publication_resolver=lambda **kwargs: publication,
+            runtime_control=OperationsRunControl(
+                root=runtime_root,
+                policy=OperationsRuntimeControlPolicy(
+                    policy_id="wave15_tamper_runtime_v1",
+                    owner="test",
+                    version="1.0.0",
+                    lock_ttl_seconds=60,
+                    max_run_attempts=3,
+                    resume_idempotent_steps=True,
+                    legacy_daily_executor_cut_in_enabled=False,
+                    non_daily_dispatch_enabled=False,
+                ),
+            ),
+        )
+
+    assert score_calls == []
+    assert not runtime_root.exists()
 
 
 @pytest.mark.parametrize(

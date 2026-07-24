@@ -308,6 +308,32 @@ flowchart LR
     RECEIPT -.-> SAFE2["No consumer cutover / production / broker"]
 ```
 
+Wave15 D0B3/G4B在上述全局false flag之外增加第一个、也是唯一一个consumer-scoped capability，
+不改写历史receipt/publication或把`consumer_cutover_allowed`改成true。统一daily trigger只为
+`daily_score_daily`命令携带reviewed profile token `daily_score_daily@1.0.0`；`cli_direct`随后从
+`daily_default/{data_quality_as_of}` fixed pointer解析候选，重验strict receipt、本次step interval、
+D0B2 canonical publication及role/path/SHA/row/source/window lineage，并写入
+`outputs/data_quality/consumer_authorizations/{authorization_id}/attestation.json`。该attestation是
+canonical JSON、content-addressed、24小时reviewed TTL，只能由verifier返回不可由caller构造的typed
+capability；controlled native runner还要逐项核对consumer/version、plan date、receipt/publication和
+runtime semantics，之后才允许调用score runner。missing、`PASS_WITH_WARNINGS`、`FAIL`、expiry、
+as-of/profile、receipt/publication/source/attestation tamper均零runner、零downstream。普通人工
+`score-daily`未被隐式切换；其余4个representative identity、automatic non-daily、generic dispatch、
+真实provider/periodic、production与broker均保持关闭。
+
+```mermaid
+flowchart LR
+    OPS["Unified daily trigger<br/>daily_score_daily profile token"] --> DISC["Fixed daily_default/as-of discovery"]
+    DISC --> VREC["Strict receipt + step interval verification"]
+    PUB["D0B2 canonical publication"] --> AUTH["Content-addressed consumer attestation<br/>24h reviewed TTL"]
+    VREC --> AUTH
+    AUTH --> CAP["Verifier-only typed capability"]
+    CAP --> CTRL["Controlled native daily_score runner"]
+    VREC -->|"warning / fail / drift"| BLOCK3["Block before score runner"]
+    AUTH -->|"expired / lineage / tamper"| BLOCK3
+    CTRL -.-> SCOPE["Only daily_score_daily<br/>No generic/non-daily/production/broker"]
+```
+
 Wave14 S2 的 clean-clone failure-fix 还把测试期输出边界变为显式依赖：research campaign 的 B2
 compute cache 可注入 prices/rates 与 DQ report root；external-validation 的 data-dependent builder
 链统一传播 `growth_output_root`，相关 CLI 提供保留 canonical default 的
@@ -405,6 +431,27 @@ fold hard eligibility，形成`POLICY_ROLE_MISMATCH_REQUIRES_OWNER_REVIEW`。Own
 必须新policy version+新preregistration/package，
 per-template/per-axis causal replay也需新授权。该链固定prospective/promotion/paper-shadow/production/
 broker关闭，不能把修改gate后的运行称为same-package replay。
+
+TRADING-2458按Owner批准的Strategy C只读重放上述1,800条冻结train evaluation，不重新运行
+evaluator、不访问provider/cache或prospective。reviewed diagnostic policy固定七个candidate axis，
+在同fold、同template且其余六轴exact相等的候选间构造matched contrast；所有source/policy/output
+bytes和inventory都由独立validator重建。正式诊断
+`trading2458-constraint-causal_147cd06da4e0827ede50`形成7,716个exact pairs，但七轴的
+constraint-hit rate、delta与gate reason变化全部为0，分类一致为
+`COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION`。因此当前证据只支持“现有family在观察设计中共同
+饱和、单轴不可辨识”的关联结论，不构成投资因果证明；owner pack建议
+`RETIRE_CURRENT_FAMILY`，任务本身不执行retire、新generator或role-correct gate。若继续研究，必须
+另立可证伪假设、结果不可见预注册与Owner授权；原package仍closed，threshold/candidate universe/
+promotion/paper-shadow/production/broker均不变。
+
+```mermaid
+flowchart LR
+    FROZEN2458["Frozen 1,800 evaluations<br/>TRADING-2452/2453 exact hashes"] --> MATCH2458["Same fold/template<br/>other six axes exact"]
+    MATCH2458 --> PAIRS2458["7,716 matched pairs"]
+    PAIRS2458 --> SAT2458["7 axes: zero outcome delta<br/>common-mode saturation"]
+    SAT2458 --> PACK2458["Owner recommendation<br/>RETIRE_CURRENT_FAMILY"]
+    PACK2458 -.-> STOP2458["No automatic retire / new gate / new run"]
+```
 
 TRADING-2457 在任何未来新策略运行之前增加通用、纯合同的selection admission层，但不替换
 TRADING-2449/2451/2452历史artifact或建立第二套evaluator。输入为reviewed
@@ -840,6 +887,11 @@ Wave14追加`arch_004g3_reader_brief_native_current.v1` current-state ratchet：
 raw SHA保持immutable，当前`reader_brief.py`精确冻结为29,005行/366函数及source SHA，Owner Daily
 精确为1个native+9个generic provider、report fragments为5且active source-of-truth仍为0；任一source、
 结构计数或fragment漂移都必须fail closed，不能再用`<`/`<=`宽松规模目标替代当前证据。
+Wave15 close-readiness继续以content-derived policy/evidence重验历史F3 raw SHA、当前Reader Brief
+source SHA/29,005行/366函数、legacy local builder=0、native import/call=1、19字段parity以及
+1 native/9 generic provider结构；同时把剩余9个generic section逐项冻结owner、source keys与
+prerequisite contract。当前`migration_executed=false`、`G5_unblocked=false`：本节点只证明
+`data_quality_and_pit` bounded slice可以关闭，不迁移剩余9项，也不改变任何报告投资结论。
 
 ```mermaid
 flowchart LR

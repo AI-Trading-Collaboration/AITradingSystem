@@ -264,6 +264,7 @@ def test_verifier_capability_factory_has_a_mechanical_import_whitelist() -> None
     symbol = "_build_verified_data_quality_preflight"
     allowed = {
         "src/ai_trading_system/data/quality_execution.py",
+        "tests/test_data_quality_consumer_authorization.py",
         "tests/test_data_quality_execution_contract.py",
     }
     observed: set[str] = set()

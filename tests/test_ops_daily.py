@@ -166,6 +166,10 @@ def test_daily_ops_plan_threads_llm_request_profile_without_candidate_override()
     score_step = next(step for step in plan.steps if step.step_id == "score_daily")
 
     assert "--llm-request-profile" in score_step.command
+    assert score_step.command[4:6] == (
+        "--consumer-authorization-profile",
+        "daily_score_daily@1.0.0",
+    )
     assert "risk_event_triaged_official_candidates" in score_step.command
     assert "--risk-event-openai-precheck-max-candidates" not in score_step.command
 

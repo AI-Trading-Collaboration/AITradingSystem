@@ -11,62 +11,52 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
-  requirement_refs:
-  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
-  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
+  next_owner: project owner + reporting domain owner；剩余9项仅在独立G5授权后迁移
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
-    与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
+  unstructured_legacy_blocker_or_next_step: 详见 Wave14/Wave15 supporting requirements。Owner
     Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-    DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。
+    DQ/PIT事实，不重算评分、阈值或策略结论。本次close不迁剩余9个generic provider、不启动G5。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: native/generic=`1/9`、legacy `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current
-      SHA exact ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
-      inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
-      final Full PASS。
+    text: native/generic=`1/9`、legacy builder=0、历史/current SHA、single-owner、19字段、bytes/path/schema/status
+      parity与剩余9项readiness inventory持续PASS。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1950
-    row_sha256: db07c4eb05885621140b237ffd0f3b16029c4f809cee8296d4dd1dbc8b19adb1
+    row_sha256: c344a6142ce28387785712adb7a4612bce118b5dba4febddd4ace73b6fab002d
     cell_count: 8
     all_cells:
     - ARCH-004G3_REPORTING_NATIVE_MIGRATION
     - Architecture / Reporting native migration and readable conclusion chain
     - P1
-    - IN_PROGRESS
-    - reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
-    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md` 与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
-      Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-      DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。
-    - native/generic=`1/9`、legacy `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current
-      SHA exact ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
-      inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
-      final Full PASS。
-    - 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
-      bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。
+    - BASELINE_DONE
+    - project owner + reporting domain owner；剩余9项仅在独立G5授权后迁移
+    - 详见 Wave14/Wave15 supporting requirements。Owner Daily `data_quality_and_pit`已迁为native
+      pure projector，Reader Brief删除本地builder；renderer只消费既有canonical DQ/PIT事实，不重算评分、阈值或策略结论。本次close不迁剩余9个generic
+      provider、不启动G5。
+    - native/generic=`1/9`、legacy builder=0、历史/current SHA、single-owner、19字段、bytes/path/schema/status
+      parity与剩余9项readiness inventory持续PASS。
+    - 2026-07-25：content-derived close/readiness与Wave15 failure-fix Full=`7180/0`完成，bounded
+      slice转`BASELINE_DONE`；剩余9项均`migration_executed=false`，G5仍未授权。
     raw_line: '|ARCH-004G3_REPORTING_NATIVE_MIGRATION|Architecture / Reporting native
-      migration and readable conclusion chain|P1|IN_PROGRESS|reporting domain owner；Wave15关闭Wave14
-      bounded slice并形成G5 readiness|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
-      与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
+      migration and readable conclusion chain|P1|BASELINE_DONE|project owner + reporting
+      domain owner；剩余9项仅在独立G5授权后迁移|详见 Wave14/Wave15 supporting requirements。Owner
       Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-      DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。|native/generic=`1/9`、legacy
-      `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current SHA exact
-      ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
-      inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
-      final Full PASS。|2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
-      bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。|'
+      DQ/PIT事实，不重算评分、阈值或策略结论。本次close不迁剩余9个generic provider、不启动G5。|native/generic=`1/9`、legacy
+      builder=0、历史/current SHA、single-owner、19字段、bytes/path/schema/status parity与剩余9项readiness
+      inventory持续PASS。|2026-07-25：content-derived close/readiness与Wave15 failure-fix
+      Full=`7180/0`完成，bounded slice转`BASELINE_DONE`；剩余9项均`migration_executed=false`，G5仍未授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-db07c4eb05885621140b237f
+  event_id: legacy-import-c344a6142ce28387785712ad
   task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -76,36 +66,32 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
-    notes: 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
-      bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。
+    next_owner: project owner + reporting domain owner；剩余9项仅在独立G5授权后迁移
+    notes: 2026-07-25：content-derived close/readiness与Wave15 failure-fix Full=`7180/0`完成，bounded
+      slice转`BASELINE_DONE`；剩余9项均`migration_executed=false`，G5仍未授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:db07c4eb05885621140b237ffd0f3b16029c4f809cee8296d4dd1dbc8b19adb1
+  - sha256:c344a6142ce28387785712adb7a4612bce118b5dba4febddd4ace73b6fab002d
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-004G3_REPORTING_NATIVE_MIGRATION
   - Architecture / Reporting native migration and readable conclusion chain
   - P1
-  - IN_PROGRESS
-  - reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
-  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md` 与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
-    Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-    DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。
-  - native/generic=`1/9`、legacy `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current
-    SHA exact ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
-    inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
-    final Full PASS。
-  - 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
-    bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。
-  docs_links:
-  - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
-  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
+  - BASELINE_DONE
+  - project owner + reporting domain owner；剩余9项仅在独立G5授权后迁移
+  - 详见 Wave14/Wave15 supporting requirements。Owner Daily `data_quality_and_pit`已迁为native
+    pure projector，Reader Brief删除本地builder；renderer只消费既有canonical DQ/PIT事实，不重算评分、阈值或策略结论。本次close不迁剩余9个generic
+    provider、不启动G5。
+  - native/generic=`1/9`、legacy builder=0、历史/current SHA、single-owner、19字段、bytes/path/schema/status
+    parity与剩余9项readiness inventory持续PASS。
+  - 2026-07-25：content-derived close/readiness与Wave15 failure-fix Full=`7180/0`完成，bounded
+    slice转`BASELINE_DONE`；剩余9项均`migration_executed=false`，G5仍未授权。
+  docs_links: []
   terminal: false
-  raw_row_sha256: db07c4eb05885621140b237ffd0f3b16029c4f809cee8296d4dd1dbc8b19adb1
+  raw_row_sha256: c344a6142ce28387785712adb7a4612bce118b5dba4febddd4ace73b6fab002d
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 6bdc3ea26bef012d83ab1779f8a197db668f9e3782fa7a66e64f919bfb1966bf
+fragment_checksum: 49da8b7f5eb6c745706e0031022ef7b7ddedca27de4d161c3f94f94128130b49

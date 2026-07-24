@@ -97,6 +97,19 @@ Known-unrelated exclusion仅由policy登记exact
 
 ## 当前决策
 
+2026-07-25，Wave15 formal integration发现ARCH-004G deprecation inventory的reference扫描仍会
+无差别打开全部`docs/*.md`，与本政策的exact known-unrelated“不读取/hash/复制bytes”约束冲突。
+已将同一reviewed exclusion list接入reference inventory扫描，并增加“被排除路径一旦被打开即失败”
+的回归；不使用临时文件移动、内容复制或跳过formal tier。该修复只改变治理扫描输入边界，不改变
+runtime、策略、数据、报告结论、production或broker。
+
+同日，Wave15第二次architecture-fitness为`612 passed / 1 failed`，唯一失败是Windows并发仲裁
+发布/释放`owner.json`期间的瞬时`PermissionError`被误分类为损坏状态。既有互斥和fail-closed
+语义正确，缺口是文件系统可见性稳定窗口。直接修复范围固定为：仲裁owner读取遇到该瞬时拒绝时
+做有界一致性重试；重试耗尽仍按busy阻断，格式、字段或非瞬时I/O错误继续
+`LEASE_ARBITER_STATE_INVALID`；增加瞬时拒绝恢复和持续拒绝阻断回归。不得把不可读lock当成
+无lock、不得删除有效lock，也不得改用串行pytest掩盖并发失败。
+
 Wave14 S2 formal exit 已完成。2026-07-24，owner 通过
 `owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`
 明确授权窄版 S0/S1。该范围已按“先冻结 S0 policy / characterization，再实现 S1 local guard”
@@ -116,3 +129,8 @@ integration=`993 passed`、reproducibility=`23 passed`，首次Full=`7134 passed
 2 failed / 643 warnings`仅暴露历史兼容性consumer的current-hash authority合同缺口；修复后
 failure-fix Full=`7136 passed / 3 skipped / 643 warnings`。S2 telemetry、Wave15、S5、
 task source cutover、production与broker仍保持未授权。
+
+2026-07-25：Wave15期间发现的known-unrelated扫描越界与Windows仲裁owner瞬时读取竞态均已直接
+修复；并发负例、architecture=`615 passed`及Wave15 failure-fix Full=`7180 passed / 3 skipped /
+643 warnings`通过。任务恢复`BASELINE_DONE_NARROW_S0_S1`；S2 telemetry、S5、task source
+cutover、production与broker仍未授权。

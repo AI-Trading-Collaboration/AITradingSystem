@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1620373
-    sha256: 63e8a2e896f522fac124494e3304b968082ce9d8a536d3c93ce98f3cdf19b097
+    byte_count: 1618598
+    sha256: 45e5cf3f8b90b5a38edc6b88dd1bffec8c3789bf588676ddafa4d1ef43db8974
     row_count: 410
     final_newline: true
     task_id_order_sha256: 34fcc656cf15565ddc4801d53fe5ac3f0d68f736153aa4e43adf970e292101b1
-    row_checksum_order_sha256: a496e6b2cf9273a84334f31bfa103fc0a7933e7b88c1f3fb0b9f64c5a646a982
+    row_checksum_order_sha256: e0545133085ddd7e5f2a199cde77959f9a5c04ab64a9ca94e01315d6b38fe77f
     task_row_newline_counts:
       LF: 410
   - source: completed
@@ -120,19 +120,19 @@ inventory:
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
-    BASELINE_DONE: 101
+    BASELINE_DONE: 105
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
     DONE: 477
     DROPPED: 12
-    IN_PROGRESS: 8
+    IN_PROGRESS: 5
     PROPOSED: 12
     READY: 1
-    VALIDATING: 268
+    VALIDATING: 267
   task_id_set_sha256: 6f1b68c201b7dd4ff625d037784ec75e2a7078abc539c7c741ffd465e9312e39
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 3d71405743d619206f77b2c396c8b769ef11cb26321109f0d05df29e204b1af6
+  owner_set_sha256: 6087285108fd734dcde73b88231111eae7234126ee4e1db337513b14875ae98a
   docs_link_set_sha256: f0c89ae3047814d86c65eba4bffa409984a117272e594ae6daa7856427ca4c54
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -761,14 +761,14 @@ inventory:
   - task_id: TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
     source: active
     line_number: 1580
-    row_sha256: 5a060bc7a7a728d45a62d9938734dbad399f1947f57426918442fc91825e5b03
+    row_sha256: e25e1ff207ac7c77f2fc42b0c387cf5ba12321f0d3608c0f0c9ad399903806a0
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: ARCH-004
     source: active
     line_number: 1581
-    row_sha256: 03a061df45aef8350e1fe7eb3a3cd97f3298632d940f17a7040257c02dba177a
+    row_sha256: 9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -796,7 +796,7 @@ inventory:
   - task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
     source: active
     line_number: 1585
-    row_sha256: 3245324b4086419e7d17709da604b68a8efb0b51b181f96e661c3c9d34279094
+    row_sha256: 578edabe91d6b453468e33f8b7ff9cbab983d3a41039f7c58aea111f6d56ae45
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -2931,28 +2931,28 @@ inventory:
   - task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
     source: active
     line_number: 1948
-    row_sha256: 1c86d95a9d6028e84d3495e1d7a876fd11abeda0c2dd91c91ffed367dcf5d557
+    row_sha256: 503b73a84edc6a36c0d727d2fc8a865879c248ec1fae83ecfce52ddf1ab1acbb
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
     source: active
     line_number: 1949
-    row_sha256: 212555f56941405752d849011039655b7783de7365e60b9e28ef092536efdfcd
+    row_sha256: 064ffce39261fee4c6d7b1f54368b1e654049afd9ba1c6f07a7905c4c9e434d0
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
     source: active
     line_number: 1950
-    row_sha256: db07c4eb05885621140b237ffd0f3b16029c4f809cee8296d4dd1dbc8b19adb1
+    row_sha256: c344a6142ce28387785712adb7a4612bce118b5dba4febddd4ace73b6fab002d
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     source: active
     line_number: 1951
-    row_sha256: b602d10d973232e510b8a7dc5c758a8bbf0364cab107ac646e1ddfb4ffe848a6
+    row_sha256: 5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7273,4 +7273,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: a834f111111974420d2dae56ee66631685392fd87b19d95242a2fee542773703
+baseline_checksum: f40215bf9f276fc610f6fa6a551784151fc1a441b8b93f8188fdab332d483e6c

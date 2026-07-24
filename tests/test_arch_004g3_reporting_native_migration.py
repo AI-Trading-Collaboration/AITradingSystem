@@ -22,6 +22,9 @@ from ai_trading_system.platform.architecture.devex import (
 from ai_trading_system.platform.architecture.wave_readiness import (
     load_strict_yaml_path,
 )
+from ai_trading_system.platform.reporting.g3_close_readiness import (
+    build_g3_close_readiness_evidence,
+)
 from ai_trading_system.platform.reporting.owner_daily import (
     _provide_legacy_payload_section,
 )
@@ -524,6 +527,20 @@ def test_reader_brief_consumer_cut_in_is_single_and_legacy_builder_is_removed() 
     assert "_data_quality_pit_safety" not in local_definitions
     assert len(native_calls) == 1
     assert legacy_calls == []
+
+
+def test_wave15_close_evidence_freezes_wave14_parity_without_running_g5() -> None:
+    evidence = build_g3_close_readiness_evidence()
+
+    assert evidence.status == "PASS"
+    assert evidence.bounded_slice_complete is True
+    assert evidence.projected_field_count == len(PROJECTED_FIELD_ORDER) == 19
+    assert (evidence.native_provider_count, evidence.generic_provider_count) == (1, 9)
+    assert evidence.legacy_projector_definition_count == 0
+    assert evidence.migration_executed is False
+    assert evidence.g5_authorized is False
+    assert evidence.reporting_recompute_allowed is False
+    assert evidence.production_effect == "none"
 
 
 def test_g3_fragments_are_strict_and_aggregate_compatible() -> None:

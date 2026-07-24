@@ -11,62 +11,53 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: operations platform owner；Wave15实现`daily_score_daily`，G4C真实cadence继续异步观察
+  next_owner: operations platform owner + project owner；G4C真实cadence异步观察，下一consumer需独立授权
   requirement_refs:
   - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
-  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-    与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G4A
-    fixed 2/2/1 non-executing parity、producer/consumer边界、operations/DQ双日期、atomic sidecar、CLI/daily
-    typed preflight与same-byte/profile/actual-window/root-bound hardening已正式闭合；G4B只批准`daily_score_daily`。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`。G4A已正式闭合；G4B只批准`daily_score_daily@1.0.0`，reviewed
+    singleton token、verifier-sealed capability与controlled dispatch进入真实`ops_daily ->
+    cli_direct`路径。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 五个代表consumer在fake clock/runner下保持date/condition、lock、duplicate、retry/resume、typed
-      DQ tamper blocker与artifact lineage parity；只有`daily_score_daily`可在reviewed D0B3
-      attestation下受控native dispatch；其余四项与automatic non-daily false；G4C真实ledger不由本波补造。
+    text: 五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3 attestation下受控native
+      dispatch；其余四项与automatic non-daily false；G4C真实ledger不补造。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1949
-    row_sha256: 212555f56941405752d849011039655b7783de7365e60b9e28ef092536efdfcd
+    row_sha256: 064ffce39261fee4c6d7b1f54368b1e654049afd9ba1c6f07a7905c4c9e434d0
     cell_count: 8
     all_cells:
     - ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
     - Architecture / Operations and periodic consumer native migration
     - P0
-    - VALIDATING
-    - operations platform owner；Wave15实现`daily_score_daily`，G4C真实cadence继续异步观察
-    - 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-      与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G4A
-      fixed 2/2/1 non-executing parity、producer/consumer边界、operations/DQ双日期、atomic
-      sidecar、CLI/daily typed preflight与same-byte/profile/actual-window/root-bound
-      hardening已正式闭合；G4B只批准`daily_score_daily`。
-    - 五个代表consumer在fake clock/runner下保持date/condition、lock、duplicate、retry/resume、typed
-      DQ tamper blocker与artifact lineage parity；只有`daily_score_daily`可在reviewed D0B3
-      attestation下受控native dispatch；其余四项与automatic non-daily false；G4C真实ledger不由本波补造。
-    - 2026-07-25：Wave12 formal证据保持；Owner批准Wave15首consumer，但必须先通过C/D carrier。当前未执行真实daily、provider/cache
-      mutation或consumer cutover；production/broker和G5均未开放。
+    - BASELINE_DONE
+    - operations platform owner + project owner；G4C真实cadence异步观察，下一consumer需独立授权
+    - 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`。G4A已正式闭合；G4B只批准`daily_score_daily@1.0.0`，reviewed
+      singleton token、verifier-sealed capability与controlled dispatch进入真实`ops_daily
+      -> cli_direct`路径。
+    - 五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3 attestation下受控native
+      dispatch；其余四项与automatic non-daily false；G4C真实ledger不补造。
+    - 2026-07-25：Wave15 failure-fix Full=`7180/0`，first-consumer baseline转`BASELINE_DONE`。未执行真实daily/provider/cache
+      mutation；production/broker和G5未开放，下一consumer不得复用本次授权。
     raw_line: '|ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION|Architecture / Operations
-      and periodic consumer native migration|P0|VALIDATING|operations platform owner；Wave15实现`daily_score_daily`，G4C真实cadence继续异步观察|详见
-      `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-      与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G4A
-      fixed 2/2/1 non-executing parity、producer/consumer边界、operations/DQ双日期、atomic
-      sidecar、CLI/daily typed preflight与same-byte/profile/actual-window/root-bound
-      hardening已正式闭合；G4B只批准`daily_score_daily`。|五个代表consumer在fake clock/runner下保持date/condition、lock、duplicate、retry/resume、typed
-      DQ tamper blocker与artifact lineage parity；只有`daily_score_daily`可在reviewed D0B3
-      attestation下受控native dispatch；其余四项与automatic non-daily false；G4C真实ledger不由本波补造。|2026-07-25：Wave12
-      formal证据保持；Owner批准Wave15首consumer，但必须先通过C/D carrier。当前未执行真实daily、provider/cache
-      mutation或consumer cutover；production/broker和G5均未开放。|'
+      and periodic consumer native migration|P0|BASELINE_DONE|operations platform
+      owner + project owner；G4C真实cadence异步观察，下一consumer需独立授权|详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`。G4A已正式闭合；G4B只批准`daily_score_daily@1.0.0`，reviewed
+      singleton token、verifier-sealed capability与controlled dispatch进入真实`ops_daily
+      -> cli_direct`路径。|五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3
+      attestation下受控native dispatch；其余四项与automatic non-daily false；G4C真实ledger不补造。|2026-07-25：Wave15
+      failure-fix Full=`7180/0`，first-consumer baseline转`BASELINE_DONE`。未执行真实daily/provider/cache
+      mutation；production/broker和G5未开放，下一consumer不得复用本次授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-212555f56941405752d84901
+  event_id: legacy-import-064ffce39261fee4c6d7b1f5
   task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -76,36 +67,33 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: VALIDATING
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: operations platform owner；Wave15实现`daily_score_daily`，G4C真实cadence继续异步观察
-    notes: 2026-07-25：Wave12 formal证据保持；Owner批准Wave15首consumer，但必须先通过C/D carrier。当前未执行真实daily、provider/cache
-      mutation或consumer cutover；production/broker和G5均未开放。
+    next_owner: operations platform owner + project owner；G4C真实cadence异步观察，下一consumer需独立授权
+    notes: 2026-07-25：Wave15 failure-fix Full=`7180/0`，first-consumer baseline转`BASELINE_DONE`。未执行真实daily/provider/cache
+      mutation；production/broker和G5未开放，下一consumer不得复用本次授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:212555f56941405752d849011039655b7783de7365e60b9e28ef092536efdfcd
+  - sha256:064ffce39261fee4c6d7b1f54368b1e654049afd9ba1c6f07a7905c4c9e434d0
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
   - Architecture / Operations and periodic consumer native migration
   - P0
-  - VALIDATING
-  - operations platform owner；Wave15实现`daily_score_daily`，G4C真实cadence继续异步观察
-  - 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
-    与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。G4A
-    fixed 2/2/1 non-executing parity、producer/consumer边界、operations/DQ双日期、atomic sidecar、CLI/daily
-    typed preflight与same-byte/profile/actual-window/root-bound hardening已正式闭合；G4B只批准`daily_score_daily`。
-  - 五个代表consumer在fake clock/runner下保持date/condition、lock、duplicate、retry/resume、typed
-    DQ tamper blocker与artifact lineage parity；只有`daily_score_daily`可在reviewed D0B3
-    attestation下受控native dispatch；其余四项与automatic non-daily false；G4C真实ledger不由本波补造。
-  - 2026-07-25：Wave12 formal证据保持；Owner批准Wave15首consumer，但必须先通过C/D carrier。当前未执行真实daily、provider/cache
-    mutation或consumer cutover；production/broker和G5均未开放。
+  - BASELINE_DONE
+  - operations platform owner + project owner；G4C真实cadence异步观察，下一consumer需独立授权
+  - 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`。G4A已正式闭合；G4B只批准`daily_score_daily@1.0.0`，reviewed
+    singleton token、verifier-sealed capability与controlled dispatch进入真实`ops_daily ->
+    cli_direct`路径。
+  - 五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3 attestation下受控native
+    dispatch；其余四项与automatic non-daily false；G4C真实ledger不补造。
+  - 2026-07-25：Wave15 failure-fix Full=`7180/0`，first-consumer baseline转`BASELINE_DONE`。未执行真实daily/provider/cache
+    mutation；production/broker和G5未开放，下一consumer不得复用本次授权。
   docs_links:
   - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
-  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 212555f56941405752d849011039655b7783de7365e60b9e28ef092536efdfcd
+  raw_row_sha256: 064ffce39261fee4c6d7b1f54368b1e654049afd9ba1c6f07a7905c4c9e434d0
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 2205385f10856a6aa7bfdfdc5ee294a67d6f312defde1ad46bac8af758a14f25
+fragment_checksum: ff5a8cccd7920c58f5a81ead7ff59da28bf088d8347620483100141f89d2259f

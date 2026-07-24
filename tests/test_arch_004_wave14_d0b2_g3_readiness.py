@@ -6,7 +6,7 @@ from pathlib import Path
 from ai_trading_system.platform.architecture.wave_readiness import (
     load_strict_json_text,
     load_strict_yaml_path,
-    validate_wave_readiness_evidence,
+    validate_committed_wave_readiness_carrier,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -56,7 +56,7 @@ def test_wave14_exact_policy_and_evidence_are_atomic_across_c_and_d() -> None:
         label=EVIDENCE_PATH.relative_to(PROJECT_ROOT).as_posix(),
     )
     assert isinstance(payload, dict)
-    validate_wave_readiness_evidence(
+    validate_committed_wave_readiness_carrier(
         payload,
         project_root=PROJECT_ROOT,
         policy_path=POLICY_PATH,
