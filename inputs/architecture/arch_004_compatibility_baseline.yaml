@@ -21482,7 +21482,7 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     superseded_by_phase: ARCH-005S4D
     scope: EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_DELTA_SOURCES
     historical_hashes_rewritten: false
-    current_hash_authority: phase_arch_005_s4d_shared_checkout_write_lease_guard.sources_then_prior_authority_chain
+    current_hash_authority: phase_arch_005_s4d_shared_checkout_write_lease_guard.sources
   new_source_paths:
   - config/architecture/arch_005_s4d_checkout_guard.yaml
   - scripts/architecture_arch005_checkout_guard.py
@@ -21523,7 +21523,7 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: be4c7b5efa75df9a4df0bb2ce5c8ed0af747fd208ba2e2d9ae6f93c29bb86daf
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 311d2187a05f44e4072625b8b71eac575264d0f898a9fb85ab137949535fadef
+    sha256: 13c803fcfae085630a1285fc4d8e8e79277898d060cda4710869be5015cb2daf
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: 8c65c76d68f856fa63c5922c89289712aa8f21182a09159e3f0179bcce482a54
@@ -21556,7 +21556,7 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: de56e3f6cda233ccdf7f74ef5e837d03e0a2663a31bc8983029db30cd110c880
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: 582ffda9af37b8c5f219accfcc05e2064cea746590daa1b1c80e55b1ac4a45f6
+    sha256: 99e6317e6bea19d0c116e43f68075349acd12fd99c033973dfe7cceb0543ead1
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004g_deprecation.py
     sha256: 153ac7554cdeb5ac3e139ff21ee49b45b73df894e0913f576fecc0d2a98f2e9a
@@ -21594,7 +21594,11 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     reproducibility:
       status: PENDING
     full:
-      status: PENDING
+      status: FAIL_REMEDIATING
+      passed: 7134
+      skipped: 3
+      failed: 2
+      runtime_artifact: outputs/validation_runtime/full_20260724T140613Z/test_runtime_summary.json
   safety:
     s2_telemetry_authorized: false
     wave15_assignment_authorized: false
