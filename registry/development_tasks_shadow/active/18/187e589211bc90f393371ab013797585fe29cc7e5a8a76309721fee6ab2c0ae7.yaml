@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+  title: null
+  domain: Strategy research / frozen constraint evidence narrow causal diagnostic
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy research owner；coordinator负责共享文档与formal integration
+  requirement_refs:
+  - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
+    axis和六fold构造exact matched contrast、coverage、effect direction、common-mode与identifiability；原package保持closed。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 1,800/1,800 gate facts exact；per-template/fold/axis pair与不可识别原因可重建且double-build
+      byte-identical；独立validator拒绝source/pair/aggregate/classification/safety tamper；只输出retire/new-hypothesis/role-correct-policy/insufficient-identifiability
+      owner pack；不改threshold/candidate/gate、不重跑package、不访问prospective，formal gates
+      PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1580
+    row_sha256: 5a060bc7a7a728d45a62d9938734dbad399f1947f57426918442fc91825e5b03
+    cell_count: 8
+    all_cells:
+    - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+    - Strategy research / frozen constraint evidence narrow causal diagnostic
+    - P0
+    - IN_PROGRESS
+    - strategy research owner；coordinator负责共享文档与formal integration
+    - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
+      axis和六fold构造exact matched contrast、coverage、effect direction、common-mode与identifiability；原package保持closed。
+    - 1,800/1,800 gate facts exact；per-template/fold/axis pair与不可识别原因可重建且double-build
+      byte-identical；独立validator拒绝source/pair/aggregate/classification/safety tamper；只输出retire/new-hypothesis/role-correct-policy/insufficient-identifiability
+      owner pack；不改threshold/candidate/gate、不重跑package、不访问prospective，formal gates
+      PASS。
+    - 2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
+      C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。
+    raw_line: '|TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC|Strategy research / frozen
+      constraint evidence narrow causal diagnostic|P0|IN_PROGRESS|strategy research
+      owner；coordinator负责共享文档与formal integration|详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
+      axis和六fold构造exact matched contrast、coverage、effect direction、common-mode与identifiability；原package保持closed。|1,800/1,800
+      gate facts exact；per-template/fold/axis pair与不可识别原因可重建且double-build byte-identical；独立validator拒绝source/pair/aggregate/classification/safety
+      tamper；只输出retire/new-hypothesis/role-correct-policy/insufficient-identifiability
+      owner pack；不改threshold/candidate/gate、不重跑package、不访问prospective，formal gates
+      PASS。|2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
+      C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5a060bc7a7a728d45a62d993
+  task_id: TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: strategy research owner；coordinator负责共享文档与formal integration
+    notes: 2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
+      C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5a060bc7a7a728d45a62d9938734dbad399f1947f57426918442fc91825e5b03
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+  - Strategy research / frozen constraint evidence narrow causal diagnostic
+  - P0
+  - IN_PROGRESS
+  - strategy research owner；coordinator负责共享文档与formal integration
+  - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。只读取TRADING-2452有效run与TRADING-2453诊断的冻结bytes/hash，对四个template、七个candidate
+    axis和六fold构造exact matched contrast、coverage、effect direction、common-mode与identifiability；原package保持closed。
+  - 1,800/1,800 gate facts exact；per-template/fold/axis pair与不可识别原因可重建且double-build
+    byte-identical；独立validator拒绝source/pair/aggregate/classification/safety tamper；只输出retire/new-hypothesis/role-correct-policy/insufficient-identifiability
+    owner pack；不改threshold/candidate/gate、不重跑package、不访问prospective，formal gates PASS。
+  - 2026-07-25：Owner通过`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`批准Strategy
+    C；S0进入`IN_PROGRESS`。B、新candidate generator、prospective、paper-shadow、promotion、production和broker未授权。
+  docs_links:
+  - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+  terminal: false
+  raw_row_sha256: 5a060bc7a7a728d45a62d9938734dbad399f1947f57426918442fc91825e5b03
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: b140c49902b84b2435c8a92128b39bf400846821c366ae1a4b978a0d2523a4d8

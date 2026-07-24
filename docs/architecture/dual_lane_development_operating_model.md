@@ -1,10 +1,19 @@
 # 双线研发 Operating Model 与冲突处理协议
 
-最后更新：2026-07-24
+最后更新：2026-07-25
 
 状态：`ADOPTED_S4C_VALIDATED_MAIN_INTEGRATION`（基于 ARCH-005 S4/S4A；S5 未授权）
 
 ## 1. 决策与适用范围
+
+2026-07-25 当前双线选择：
+
+- `strategy-evidence`：`TRADING-2458` Strategy C，只对冻结 TRADING-2452/2453 evidence 做
+  per-template/per-axis matched contrast 与 identifiability diagnosis；
+- `engineering`：Wave15 窄版 D0B3 + G4B `daily_score_daily` first consumer，并关闭 Wave14
+  bounded G3 slice/形成 G5 readiness；
+- `integration-coordinator`：先完成 C 授权基线与 D exact carrier。D PASS/push 前不分配 domain
+  implementation；两线都不开放 prospective、真实 periodic/provider、G5/S5、production 或 broker。
 
 项目后续研发默认采用以下拓扑：
 
@@ -492,8 +501,9 @@ Smoothed链列为下一工程候选，同时禁止用本次总wall宣称全局�
   path/operation-aware冲突矩阵、原子lease及mutation/daily-run前置门禁现已通过required formal
   tiers与failure-fix Full并转`BASELINE_DONE`；Wave15 exact
   manifests/readiness必须从S4D最终HEAD生成。S4D只解决同一checkout的计划外writer与operations
-  pre-provider安全，不是S5授权；其S2 telemetry与Wave15仍须单独授权，任何仍修改共享执行入口的
-  工作不得与Wave15集成并发。
+  pre-provider安全，不是S5授权；S2 telemetry仍须单独授权。Wave15已由
+  `owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`单独批准，
+  但任何仍修改共享执行入口的工作不得与Wave15集成并发。
 - ARCH-005 S5 source-of-truth cutover 后置，必须单独授权并在真实双线 telemetry 足够后评估；不得与
   另一项中央 shared-architecture 变更并行。
 
@@ -557,16 +567,16 @@ advisory seed为`arch_004g_wave13_full_duration_partial_seed` v24，不声明稳
 验证。N1 formal complete，但closeout提交推送前`Wave14 dispatch=false`、`production_effect=none`；
 推送后仍必须先从最终HEAD通过Wave14 S0。
 
-### Wave 14：D0B2 + bounded G3 -> S2 shared integration
+### Wave 14：D0B2 + bounded G3（formal complete）
 
 S0 exact carrier `39a3ea730`推送后，Data与Reporting按互不重叠路径并行实现，coordinator单写
 exports、Reader Brief/Owner Daily cut-in、CLI、calendar、flow/catalog/register与generated state。
 
 |Lane|当前状态|结果|停止边界|
 |---|---|---|---|
-|Data Foundation|domain complete / S2 validating|staged immutable composite publication、完整文件级manifest、exact final-row→immediate-source allocation、calendar/coverage/internal-gap/finite gate；审计后关闭secondary retirement、relative root和canonical INVALID隐式retry|D0B3 consumer authorization、ACL/crash durability、production/broker仍关闭|
-|Reporting|首个bounded slice complete / S2 validating|`data_quality_and_pit` native pure projector，native/generic=`1/9`，Reader Brief本地builder删除，legacy 19字段与渲染parity保持|G3整体未关闭；G5等待shared report/research contract稳定|
-|Coordinator|S2 in progress|D0B2 combined=`156 passed`且静态PASS，G3独立审计无P0/P1；真实daily的direct profile缺口由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`追加治理|尚待generated manifests、compatibility/deprecation、formal tiers及唯一final Full|
+|Data Foundation|formal complete|staged immutable composite publication、完整文件级manifest、exact final-row→immediate-source allocation、calendar/coverage/internal-gap/finite gate；审计后关闭secondary retirement、relative root和canonical INVALID隐式retry|D0B3只在Wave15按consumer授权；ACL/crash durability、production/broker仍关闭|
+|Reporting|首个bounded slice formal complete|`data_quality_and_pit` native pure projector，native/generic=`1/9`，Reader Brief本地builder删除，legacy 19字段与渲染parity保持|Wave15只做bounded close/readiness；剩余9项与G5需另行授权|
+|Coordinator|`WAVE14_S2_COMPLETE`|C7 replacement Full=`7007 passed / 4 skipped`及post-Full evidence-only gates闭合；真实daily的direct profile缺口由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`追加治理|Wave15必须从2026-07-25授权C HEAD生成D exact carrier|
 
 同一checkout还暴露了计划外automation成为第二writer的缺口。该风险已登记为
 `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`；owner已批准在Wave15 domain assignment前完成
@@ -575,6 +585,18 @@ scope持READ workspace gate并行；shared writer也持READ workspace gate，但
 WRITE排他；daily operation持WRITE workspace gate并与全部mutation排他。它不是ARCH-005 S5，也不把
 互斥domain并行退化为永久全局串行。
 
+### Wave 15：D0B3 + G4B first consumer / bounded G3 close-readiness
+
+Owner decision=
+`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`。
+当前为 `S0_AUTHORIZED_AWAITING_EXACT_CARRIER`：
+
+|Lane|当前状态|固定范围|停止边界|
+|---|---|---|---|
+|Data + Operations|等待D carrier|只授权`daily_score_daily`，以独立consumer-scoped attestation绑定exact receipt与D0B2 publication companion；strict PASS only|其余consumer、automatic non-daily、真实periodic/provider、production/broker均false|
+|Reporting|等待D carrier|关闭Wave14 `data_quality_and_pit` bounded slice，重验single-owner/parity/ratchet并形成剩余9项inventory/readiness|不迁剩余9项、不启动G5、不改变报告结论|
+|Coordinator|S0-C in progress|先提交/推送task/requirements/双态test/generated facts，再从C HEAD生成只含policy/evidence两文件的D carrier|D PASS/push前不分配domain、不自动dispatch/lease/merge|
+
 ## 10. 本轮明确不做
 
 - 不运行真实 periodic operation、策略 backtest、candidate/search 或 provider refresh；weekly 仅执行隔离测试；
@@ -582,6 +604,7 @@ WRITE排他；daily operation持WRITE workspace gate并与全部mutation排他�
   validated-main门禁自动集成；
 - 不因 Wave14 domain/formal exit 完成自动进入G5、ARCH-004H或ARCH-005 S5；Wave15仍只允许
   D0B3+G4B first consumer和G3 close，且必须先通过S4D窄版S0/S1正式门禁并从其最终HEAD重新生成
-  exact readiness；旧G2.5 rehearsal与本次owner decision都不可复用为Wave15 assignment授权；
+  exact readiness；旧G2.5 rehearsal与S4D owner decision不可复用，只有2026-07-25 Wave15独立
+  decision及从其C HEAD生成的D carrier共同满足时才允许assignment；
 - 不运行周期 operations、联网 provider refresh 或 cache 删除；
 - 不改变研究窗口、阈值、策略结论、权重、promotion、paper-shadow、production 或 broker。

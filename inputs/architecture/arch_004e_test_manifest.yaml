@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1177
-test_count: 1118
+test_file_count: 1178
+test_count: 1119
 support_file_count: 59
 orphan_count: 0
 specific_overlap_count: 0
@@ -7494,6 +7494,24 @@ tests:
 - test_id: tests.test_arch_004_wave14_scope_amendment
   path: tests/test_arch_004_wave14_scope_amendment.py
   sha256: 2d1bb5a9f663dfc5202f11538f38a6239880f9af89a8996f772d9599083360cc
+  file_role: test
+  rule_id: architecture_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/contracts/
+  - src/ai_trading_system/platform/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.test_arch_004_wave15_d0b3_g4b_g3_close_readiness
+  path: tests/test_arch_004_wave15_d0b3_g4b_g3_close_readiness.py
+  sha256: 6c8b80c3277241ccbf5bd97750ceb4db49db94050c967a1c0f0562bb1ca8675e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

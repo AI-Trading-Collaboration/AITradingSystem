@@ -21391,10 +21391,18 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
   - inputs/governance/gov_006_wave1_decision_manifest.json
   - README.md
   - registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
   - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
   - registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
   - registry/development_tasks_shadow/active/5e/5e3a6d52c667e346f371e37ec45628400d8be79fad5a5c3a6099df3770891cef.yaml
+  - registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
+  - registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
   - registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
   - registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
   - registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
   - registry/development_tasks_shadow/completed/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
@@ -21493,7 +21501,7 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: f39910a9f0b60549b1389d11aba4059862d3648d824ef6b645e395a89d986fd0
     hash_normalization: git_eol_lf
   - path: docs/architecture/dual_lane_development_operating_model.md
-    sha256: 2307fa680d6783f20b26cc687e53bb4f73fa5a32d96971e1a2536b351f86913e
+    sha256: 2d65283f0a40e753b909dd3e03d0862c36805c2c6812023cb869ffe8a5714687
     hash_normalization: git_eol_lf
   - path: docs/artifact_catalog.md
     sha256: 33b990a8eab591f92c4919b39e4b0a0ccfba7c576439f85afa59fd435f4f44f8
@@ -21502,7 +21510,7 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: aaf48e3ccecf892445ae62b97e819e1aed87c0007f10fc60255779b70aff09ba
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
-    sha256: a23b0ca7b66ebfa30965c52609d61f8eaeb14e112eb7ded2b2e2abcbb7333bb8
+    sha256: dd0d2dd8ad5978fed1bf46a8bc759553065ee107090f6486d8225a08e0f313c4
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
     sha256: aad59c7b933ea80766cd056b432b88b19ac9f50f99256907542732c2be8525cc
@@ -21511,34 +21519,34 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: b40530362e0cb1bcbd7854e1ad6505922215bb9ffb342a5cd86b442f1cf03023
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: ace42f40c6cb2e23eb9d6375e2107f84feda7a8abea2dbb19ab3821634d4997e
+    sha256: 63e8a2e896f522fac124494e3304b968082ce9d8a536d3c93ce98f3cdf19b097
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: ac771021ca36b04f8364b1d33f3156ecb0778312ef47cba15d7ba951511ddfae
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_architecture_fitness.yaml
-    sha256: e3905aefae7c028e553a01edfeda18b2bd39d459732d5a9c7e7c0b0b0dc8f01f
+    sha256: aec187adbdbf7f688ccb83bb046f0892187701b1f6c23c5a3fc78bc634eb1c09
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
     sha256: be4c7b5efa75df9a4df0bb2ce5c8ed0af747fd208ba2e2d9ae6f93c29bb86daf
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 13c803fcfae085630a1285fc4d8e8e79277898d060cda4710869be5015cb2daf
+    sha256: b825457e45053dd5ef73ef18bf504bf7a4b53dd28c69e46bf2cfd8d524efd7c5
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: 8c65c76d68f856fa63c5922c89289712aa8f21182a09159e3f0179bcce482a54
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: b5c49b09c900ecb3a7e72cbefcdff7acc94adbc6ab8675dea6dea21023d1d289
+    sha256: cb0740f590d830665430689c4f2fc9902518ba5b43e239dd2cb671c16b315a92
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 5bfd4f26e4b18e944dd2f4ba7634416e59615948f0a6e13869b37cc593df9e48
+    sha256: 036f7b4ba670c443a73c47023d44877d52c45cf69e6d6125829b711a86d1ef00
     hash_normalization: git_eol_lf
   - path: README.md
     sha256: ebbe600abb5c96bfbc4c63edd26f023f90fa0dd62bd0b6648b5957b0e63dd713
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-    sha256: c8ad17778b7523295b11680601f1f53f1db36f4c7288696897f5a5b488fedac5
+    sha256: e20de2fa3401e766d73c0ec5417500fa04e97a904c4872a727655d5d626dcd33
     hash_normalization: git_eol_lf
   - path: scripts/architecture_arch005_checkout_guard.py
     sha256: 46eef7961392f62fbbefdd669f5db702f30d9c7a10e68a7c48342cc785583625

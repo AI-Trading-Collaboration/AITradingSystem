@@ -1,6 +1,6 @@
 # ARCH-004G4 + DATA-GOV D0B 共享 DQ Preflight 与周期 Consumer 迁移
 
-最后更新：2026-07-24
+最后更新：2026-07-25
 
 ## 任务信息
 
@@ -9,7 +9,7 @@
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`、`DATA-GOV-001`
 - priority：`P0`
 - status：`COMPLETE_WAVE12_S2`（G4 overall=`VALIDATING`；DATA-GOV overall=`IN_PROGRESS`）
-- current roadmap：`WAVE14_S2_COMPLETE_D0B2_FORMAL_PASS_D0B3_NOT_AUTHORIZED`
+- current roadmap：`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`
 - owners：architecture coordinator / operations platform worker / data platform worker
 - source phase：`G2_5_COMPLETE_G4_D0B_NEXT`
 - source base：`12b1fb86369f146c9ef1c7ac54872eb8150ed791`
@@ -17,6 +17,12 @@
 - broker action：`none`
 
 ## 为什么先做这一批
+
+2026-07-25，Owner 已批准窄版 Wave15。新增需求
+`docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`
+是当前执行边界：首个且唯一 consumer 为 `daily_score_daily`；`daily_validate_data` 继续是 producer
+observation，其余 daily/weekly/monthly identity 均未授权。C/D carrier PASS/push 前不进行实现分配，
+本波不运行真实 periodic operation、provider refresh 或外部 scheduler。
 
 G2.5 已证明项目具备双 domain worker 的并行控制能力，但其历史 rehearsal 基于
 `6ee5903a...`，候选批次是 G4 + G3，且 `dispatch_allowed=false`。当前权威路线已经变为 G4 +

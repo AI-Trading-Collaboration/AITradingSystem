@@ -1,21 +1,31 @@
 # ARCH-004：TRADING-2438N 后系统架构重构计划
 
-最后更新：2026-07-23
+最后更新：2026-07-25
 
 ## 任务信息
 
 - 任务 ID：`ARCH-004`
 - 优先级：`P0`
-- 当前状态：`IN_PROGRESS`（current phase=`WAVE14_S2_COMPLETE_AWAITING_ARCH_005S4D_OWNER_AUTHORIZATION`）
+- 当前状态：`IN_PROGRESS`（current phase=`WAVE15_S0_AUTHORIZED_AWAITING_EXACT_CARRIER`）
 - 触发顺序：`TRADING-2438N` 完整收口之后
 - 责任方：系统架构协调者 + 各 bounded context owner + 项目 owner
 - 变更性质：系统级、行为保持优先、渐进迁移
 - 默认 production effect：`none`
 - 正式前序任务：`ARCH-001`、`ARCH-002`、`ARCH-003`、`TRADING-487_to_504_ENGINEERING_CLOSEOUT_AND_WEIGHT_RESEARCH_TURN`
 - 后续执行任务：`ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION`、`ARCH-004G3_REPORTING_NATIVE_MIGRATION`、`ARCH-004G5_RESEARCH_WRAPPER_MIGRATION`、`ARCH-004H_CUTOVER_AND_LEGACY_REMOVAL`
-- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0～S4C已形成validated coordinator closeout baseline；G2.4 handoff、G2.5、Wave12、Wave13与Wave14 S0 carrier均已PASS并推送。Wave14的D0B2与bounded G3已按exact domain ownership完成，C7 replacement Full=`7007 passed / 4 skipped`且post-Full evidence-only gates闭合，当前停在S4D owner authorization gate；真实daily发现的direct CLI profile丢失由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`单独append-only治理，不回写历史S0 evidence。另一个Codex task/daily automation在同checkout成为第二writer的风险已登记`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`，建议Wave14后、Wave15前实施窄版guard。Machine dispatch/lease、S5、H、G5、策略研究、consumer cutover、promotion、broker与production dispatch仍未自动开放
+- 并行研发基础设施：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE` S0～S4C已形成validated coordinator closeout baseline；G2.4 handoff、G2.5、Wave12～14均已PASS并推送。Wave14的D0B2与bounded G3按exact ownership完成，C7 replacement Full=`7007 passed / 4 skipped`及post-Full gates闭合；S4D窄版checkout guard也以failure-fix Full=`7136 passed / 3 skipped`正式完成。Owner现已通过`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`批准Wave15窄版，但必须先从授权基线最终HEAD生成exact C/D carrier。Machine dispatch/lease、S5、H、G5、其余consumer、真实periodic/provider、broker与production dispatch仍未开放
 
 ## Owner Intent
+
+2026-07-25，Owner 同时确认两条独立 lane 继续推进：
+
+- Strategy C 另建 `TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC`，只诊断冻结 evidence，不重开原
+  package、不改 gate/candidate、不访问 prospective；
+- Engineering 进入窄版 Wave15，decision id=
+  `owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`。
+  Scope 仅为 D0B3 + G4B `daily_score_daily` first consumer，以及 Wave14 bounded G3 slice 的
+  close/readiness；exact carrier PASS/push 前不分配实现，G5/S5/真实 periodic/provider/production/
+  broker 继续 false/none。
 
 项目长期持续增加数据、研究、回测、治理、调度、报告和验证模块，但缺少同等强度的整理、抽象、退役和模块边界治理。结果是代码、配置、任务、报告和文档持续膨胀，语义入口分散，并行开发经常争用同一批中央文件。
 

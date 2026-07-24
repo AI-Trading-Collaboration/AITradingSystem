@@ -11,64 +11,62 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: reporting domain worker已完成首个bounded slice；architecture coordinator正在Wave14
-    S2 formal closeout
+  next_owner: reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
   requirement_refs:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Owner
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
+    与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
     Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-    DQ/PIT事实，不重算评分、阈值或策略结论。
+    DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: native core coverage `0→1/10`、generic provider `10→9`、legacy `_data_quality_pit_safety`定义`1→0`、top-level
-      functions `367→366`且LOC `29,053→29,005`；current `reader_brief.py` SHA/LOC/function-count与历史F3
-      inventory raw SHA均exact ratchet；legacy JSON/HTML bytes/path/schema/status parity；focused/report/architecture/contract及Wave
+    text: native/generic=`1/9`、legacy `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current
+      SHA exact ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
+      inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
       final Full PASS。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1937
-    row_sha256: 26152331a7ac37acdc97f113ba6853a10b2015f52ae93d9c1209c58a252a2daa
+    line_number: 1950
+    row_sha256: db07c4eb05885621140b237ffd0f3b16029c4f809cee8296d4dd1dbc8b19adb1
     cell_count: 8
     all_cells:
     - ARCH-004G3_REPORTING_NATIVE_MIGRATION
     - Architecture / Reporting native migration and readable conclusion chain
     - P1
     - IN_PROGRESS
-    - reporting domain worker已完成首个bounded slice；architecture coordinator正在Wave14 S2
-      formal closeout
-    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Owner Daily
-      `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-      DQ/PIT事实，不重算评分、阈值或策略结论。
-    - native core coverage `0→1/10`、generic provider `10→9`、legacy `_data_quality_pit_safety`定义`1→0`、top-level
-      functions `367→366`且LOC `29,053→29,005`；current `reader_brief.py` SHA/LOC/function-count与历史F3
-      inventory raw SHA均exact ratchet；legacy JSON/HTML bytes/path/schema/status parity；focused/report/architecture/contract及Wave
-      final Full PASS。
-    - 2026-07-24：首次domain审计无P0/P1；phase-exit审计发现原宽松规模ratchet不能阻断等规模替换，已补历史F3 raw SHA与当前exact
-      SHA/LOC/function-count，并加入三类单项drift负例。native/generic=`1/9`、5 report fragments、active
-      SOT=0，focused/static PASS；仍等待generated state与Wave14 formal/final Full，`production_effect=none`。
-    raw_line: '|ARCH-004G3_REPORTING_NATIVE_MIGRATION|Architecture / Reporting native
-      migration and readable conclusion chain|P1|IN_PROGRESS|reporting domain worker已完成首个bounded
-      slice；architecture coordinator正在Wave14 S2 formal closeout|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Owner
+    - reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
+    - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md` 与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
       Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-      DQ/PIT事实，不重算评分、阈值或策略结论。|native core coverage `0→1/10`、generic provider `10→9`、legacy
-      `_data_quality_pit_safety`定义`1→0`、top-level functions `367→366`且LOC `29,053→29,005`；current
-      `reader_brief.py` SHA/LOC/function-count与历史F3 inventory raw SHA均exact ratchet；legacy
-      JSON/HTML bytes/path/schema/status parity；focused/report/architecture/contract及Wave
-      final Full PASS。|2026-07-24：首次domain审计无P0/P1；phase-exit审计发现原宽松规模ratchet不能阻断等规模替换，已补历史F3
-      raw SHA与当前exact SHA/LOC/function-count，并加入三类单项drift负例。native/generic=`1/9`、5
-      report fragments、active SOT=0，focused/static PASS；仍等待generated state与Wave14
-      formal/final Full，`production_effect=none`。|'
+      DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。
+    - native/generic=`1/9`、legacy `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current
+      SHA exact ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
+      inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
+      final Full PASS。
+    - 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
+      bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。
+    raw_line: '|ARCH-004G3_REPORTING_NATIVE_MIGRATION|Architecture / Reporting native
+      migration and readable conclusion chain|P1|IN_PROGRESS|reporting domain owner；Wave15关闭Wave14
+      bounded slice并形成G5 readiness|详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`
+      与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
+      Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
+      DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。|native/generic=`1/9`、legacy
+      `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current SHA exact
+      ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
+      inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
+      final Full PASS。|2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
+      bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-26152331a7ac37acdc97f113
+  event_id: legacy-import-db07c4eb05885621140b237f
   task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -81,15 +79,12 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: reporting domain worker已完成首个bounded slice；architecture coordinator正在Wave14
-      S2 formal closeout
-    notes: 2026-07-24：首次domain审计无P0/P1；phase-exit审计发现原宽松规模ratchet不能阻断等规模替换，已补历史F3
-      raw SHA与当前exact SHA/LOC/function-count，并加入三类单项drift负例。native/generic=`1/9`、5
-      report fragments、active SOT=0，focused/static PASS；仍等待generated state与Wave14
-      formal/final Full，`production_effect=none`。
+    next_owner: reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
+    notes: 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
+      bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:26152331a7ac37acdc97f113ba6853a10b2015f52ae93d9c1209c58a252a2daa
+  - sha256:db07c4eb05885621140b237ffd0f3b16029c4f809cee8296d4dd1dbc8b19adb1
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -97,21 +92,20 @@ projection:
   - Architecture / Reporting native migration and readable conclusion chain
   - P1
   - IN_PROGRESS
-  - reporting domain worker已完成首个bounded slice；architecture coordinator正在Wave14 S2
-    formal closeout
-  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md`。Owner Daily
-    `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
-    DQ/PIT事实，不重算评分、阈值或策略结论。
-  - native core coverage `0→1/10`、generic provider `10→9`、legacy `_data_quality_pit_safety`定义`1→0`、top-level
-    functions `367→366`且LOC `29,053→29,005`；current `reader_brief.py` SHA/LOC/function-count与历史F3
-    inventory raw SHA均exact ratchet；legacy JSON/HTML bytes/path/schema/status parity；focused/report/architecture/contract及Wave
+  - reporting domain owner；Wave15关闭Wave14 bounded slice并形成G5 readiness
+  - 详见 `docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md` 与 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner
+    Daily `data_quality_and_pit`已迁为native pure projector，Reader Brief删除本地builder；renderer只消费既有canonical
+    DQ/PIT事实，不重算评分、阈值或策略结论。本次“close”不迁剩余9个generic provider、不启动G5。
+  - native/generic=`1/9`、legacy `_data_quality_pit_safety=0`、top-level functions/LOC与历史F3/current
+    SHA exact ratchet持续PASS；legacy JSON/HTML bytes/path/schema/status parity；新增剩余9个consumer
+    inventory/ownership/dependency/readiness evidence且`migration_executed=false`；focused/report/architecture/contract及Wave
     final Full PASS。
-  - 2026-07-24：首次domain审计无P0/P1；phase-exit审计发现原宽松规模ratchet不能阻断等规模替换，已补历史F3 raw SHA与当前exact
-    SHA/LOC/function-count，并加入三类单项drift负例。native/generic=`1/9`、5 report fragments、active
-    SOT=0，focused/static PASS；仍等待generated state与Wave14 formal/final Full，`production_effect=none`。
+  - 2026-07-25：Wave14 replacement Full=`7007 passed / 4 skipped`已闭合首个slice。Owner授权Wave15
+    bounded close/readiness；当前等待exact carrier，G3整体剩余迁移与G5仍未授权，`production_effect=none`。
   docs_links:
   - docs/requirements/ARCH-004_Wave14_D0B2_G3_Parallel_Readiness.md
+  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
   terminal: false
-  raw_row_sha256: 26152331a7ac37acdc97f113ba6853a10b2015f52ae93d9c1209c58a252a2daa
+  raw_row_sha256: db07c4eb05885621140b237ffd0f3b16029c4f809cee8296d4dd1dbc8b19adb1
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 7028c40c1796417d704de40f936bf1249a387d363df663ee4df7485bc1534b6e
+fragment_checksum: 6bdc3ea26bef012d83ab1779f8a197db668f9e3782fa7a66e64f919bfb1966bf

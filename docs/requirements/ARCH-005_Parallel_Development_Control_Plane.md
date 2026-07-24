@@ -1,6 +1,6 @@
 # ARCH-005 Parallel Development Control Plane
 
-最后更新：2026-07-24
+最后更新：2026-07-25
 
 ## 任务信息
 
@@ -17,9 +17,16 @@
   owner 窄授权并由 Wave 7 首次真实执行 PASS；S5 canonical cutover 尚未授权
 - current safety follow-up：Wave14暴露同一checkout计划外task/automation第二writer风险；
   `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已按owner窄版S0/S1授权转为
-  `P0/BASELINE_DONE`。Wave15 assignment仍须等待从S4D最终HEAD生成的exact readiness与单独授权
+  `P0/BASELINE_DONE`。Wave15现已获单独窄授权，但assignment仍须等待从授权基线最终HEAD生成的
+  exact C/D readiness carrier PASS并推送
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
+
+2026-07-25 current execution note：Owner 已授权 Wave15
+`D0B3 + G4B daily_score_daily first consumer / bounded G3 close-readiness`。该授权不会扩大
+ARCH-005 S5 或 machine dispatch 权限。coordinator 必须先提交/推送 C 授权基线，再从 C HEAD 生成
+只含 reviewed policy/evidence 的 D exact carrier；carrier 只证明可手工分配 scoped implementation，
+不自动发 lease、dispatch、merge、运行 periodic/provider 或改 task source-of-truth。
 
 ### S4A 受监督自动化增量
 
@@ -93,8 +100,9 @@ S4D批准后的顺序固定为：
    全部PASS后转`BASELINE_DONE`；Wave15 exact requirement/readiness仍须从S4D最终HEAD重新生成。
 
 S4D必须path/operation-aware：重叠shared writer恰好一个成功，机械互斥domain仍可并行；不得建立
-第三套lock authority，也不得退化为永久全仓串行锁。S2 telemetry与Wave15仍须另行授权，任何仍改变
-shared execution entry的工作必须先通过适用formal gate。S4D不是S5，不切换task-register
+第三套lock authority，也不得退化为永久全仓串行锁。S2 telemetry仍须另行授权；Wave15已由
+2026-07-25独立owner decision窄授权，但任何仍改变shared execution entry的工作必须先通过适用
+formal gate与C/D carrier。S4D不是S5，不切换task-register
 source-of-truth，不授权production或broker。窄版最终证据为focused=`92 passed`、
 architecture/contract/integration/reproducibility=`593/274/993/23 passed`，failure-fix
 Full=`7136 passed / 3 skipped / 643 warnings`。

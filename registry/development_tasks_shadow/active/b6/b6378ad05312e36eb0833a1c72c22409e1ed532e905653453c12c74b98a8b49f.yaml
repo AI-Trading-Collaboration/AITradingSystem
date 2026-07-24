@@ -1,0 +1,102 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  title: null
+  domain: Architecture / Wave15 D0B3+G4B first consumer and bounded G3 close readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: architecture coordinator；S0-C/D完成后由data/operations与reporting scope推进
+  requirement_refs:
+  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+    consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C登记授权/task/test/generated
+    facts，D只含reviewed policy与exact evidence两文件。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: D从已提交推送的C HEAD deterministic生成，base/tree/source/task/requirement/generated/ownership/safety全量PASS；两domain
+      scope互斥且shared单写；首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final
+      Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1948
+    row_sha256: 1c86d95a9d6028e84d3495e1d7a876fd11abeda0c2dd91c91ffed367dcf5d557
+    cell_count: 8
+    all_cells:
+    - ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+    - Architecture / Wave15 D0B3+G4B first consumer and bounded G3 close readiness
+    - P0
+    - IN_PROGRESS
+    - architecture coordinator；S0-C/D完成后由data/operations与reporting scope推进
+    - 详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+      consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C登记授权/task/test/generated
+      facts，D只含reviewed policy与exact evidence两文件。
+    - D从已提交推送的C HEAD deterministic生成，base/tree/source/task/requirement/generated/ownership/safety全量PASS；两domain
+      scope互斥且shared单写；首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final
+      Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。
+    - 2026-07-25：以`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`进入`S0_AUTHORIZED_AWAITING_EXACT_CARRIER`。D
+      carrier PASS/push前`worker_assignment_allowed=false`、`consumer_cutover_scope=[]`。
+    raw_line: '|ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS|Architecture / Wave15
+      D0B3+G4B first consumer and bounded G3 close readiness|P0|IN_PROGRESS|architecture
+      coordinator；S0-C/D完成后由data/operations与reporting scope推进|详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+      consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C登记授权/task/test/generated
+      facts，D只含reviewed policy与exact evidence两文件。|D从已提交推送的C HEAD deterministic生成，base/tree/source/task/requirement/generated/ownership/safety全量PASS；两domain
+      scope互斥且shared单写；首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final
+      Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。|2026-07-25：以`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`进入`S0_AUTHORIZED_AWAITING_EXACT_CARRIER`。D
+      carrier PASS/push前`worker_assignment_allowed=false`、`consumer_cutover_scope=[]`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-1c86d95a9d6028e84d3495e1
+  task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: architecture coordinator；S0-C/D完成后由data/operations与reporting scope推进
+    notes: 2026-07-25：以`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`进入`S0_AUTHORIZED_AWAITING_EXACT_CARRIER`。D
+      carrier PASS/push前`worker_assignment_allowed=false`、`consumer_cutover_scope=[]`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:1c86d95a9d6028e84d3495e1d7a876fd11abeda0c2dd91c91ffed367dcf5d557
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  - Architecture / Wave15 D0B3+G4B first consumer and bounded G3 close readiness
+  - P0
+  - IN_PROGRESS
+  - architecture coordinator；S0-C/D完成后由data/operations与reporting scope推进
+  - 详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+    consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C登记授权/task/test/generated
+    facts，D只含reviewed policy与exact evidence两文件。
+  - D从已提交推送的C HEAD deterministic生成，base/tree/source/task/requirement/generated/ownership/safety全量PASS；两domain
+    scope互斥且shared单写；首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final
+    Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。
+  - 2026-07-25：以`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`进入`S0_AUTHORIZED_AWAITING_EXACT_CARRIER`。D
+    carrier PASS/push前`worker_assignment_allowed=false`、`consumer_cutover_scope=[]`。
+  docs_links:
+  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
+  terminal: false
+  raw_row_sha256: 1c86d95a9d6028e84d3495e1d7a876fd11abeda0c2dd91c91ffed367dcf5d557
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c1c6328c1216b08b7d25b3beb10f7e0bd38d89f94a172089ecdecb273ad0d5df

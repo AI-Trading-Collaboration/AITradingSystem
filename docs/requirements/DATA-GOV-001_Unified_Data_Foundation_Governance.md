@@ -1,6 +1,6 @@
 # DATA-GOV-001 统一 Data Foundation 治理与长期数据平台加固
 
-最后更新：2026-07-24
+最后更新：2026-07-25
 
 ## 任务信息
 
@@ -8,12 +8,20 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0B2_FORMAL_COMPLETE_D0B3_NOT_AUTHORIZED`
+- current phase：`D0B2_FORMAL_COMPLETE_D0B3_FIRST_CONSUMER_AUTHORIZED_AWAITING_WAVE15_CARRIER`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
 
 ## Owner 决策与目标
+
+2026-07-25，Owner 通过
+`owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`
+批准 D0B3 与 G4B 的首个 consumer。授权对象严格固定为 `daily_score_daily`，并须先通过
+`docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md` 的 C/D exact carrier。
+D0B3 采用独立、consumer-scoped authorization attestation 绑定 D0B2 publication companion 与 exact
+DQ receipt；不改写历史 receipt/publication bytes 或其中的全局 false safety 字段。其余 consumer、
+`PASS_WITH_WARNINGS`、真实 periodic/provider、production 与 broker 继续关闭。
 
 后续将数据能力作为独立的逻辑系统长期治理，但当前不拆 repository、部署单元或服务。Data Foundation 负责生产和证明事实；Knowledge & Insight Core、报告和网页只能消费其机器可读 contract，不能反向覆盖数据、质量状态或 lineage。
 
