@@ -5,9 +5,9 @@
 - task id：`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`
 - parent：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`IN_PROGRESS`
+- status：`BASELINE_DONE_NARROW_S0_S1`
 - owner：architecture control-plane owner / operations automation owner
-- dependency：`SATISFIED_WAVE14_S2_COMPLETE`；建议在 Wave15 domain assignment 前完成窄版 S0/S1
+- dependency：`SATISFIED_WAVE14_S2_COMPLETE`；窄版 S0/S1 已在 Wave15 domain assignment 前完成
 - owner decision：`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`
 - production effect：`none`
 
@@ -99,18 +99,20 @@ Known-unrelated exclusion仅由policy登记exact
 
 Wave14 S2 formal exit 已完成。2026-07-24，owner 通过
 `owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`
-明确授权窄版 S0/S1，从 `PROPOSED` 转为 `IN_PROGRESS`。授权顺序固定为先冻结 S0 policy /
-characterization，再实现 S1 local guard；两者必须在 Wave15 两个 domain worker 启动之前完成并通过
-适用正式门禁。S2 telemetry、Wave15 assignment、ARCH-005 S5、task source cutover、production 与
-broker 仍未授权。
+明确授权窄版 S0/S1。该范围已按“先冻结 S0 policy / characterization，再实现 S1 local guard”
+的顺序完成，并在 Wave15 两个 domain worker 启动前通过适用正式门禁。S2 telemetry、Wave15
+assignment、ARCH-005 S5、task source cutover、production 与 broker 仍未授权。
 
 2026-07-24：dependency evidence 已闭合：Wave14 C7 replacement Full=`7007 passed / 4 skipped`
 且post-Full evidence-only gates PASS。该结果与上述 owner decision 共同解除 S0/S1 implementation
 gate；`next_slice_unblocked=false`仍适用于 Wave15，`production_effect=none`保持不变。
 
-2026-07-24：S0 policy/characterization与S1实现已进入正式验证。当前focused evidence覆盖稳定
-workspace identity/lineage、不相交domain并行、daily全局排他、并发重叠writer恰好一个PASS、重复
-intent replay、casefold/祖先后代冲突、dirty/unattributed零业务输出、known-unrelated exact
-exclusion、heartbeat/stale expiry、symlink/reparse拒绝及真实`aits ops daily-run`在run bundle前
-阻断。只有required formal tiers和Full全部PASS后，task才可转为窄版`BASELINE_DONE`；S2与Wave15
-仍保持未授权。
+2026-07-24：S0 policy/characterization与S1实现完成并转为窄版`BASELINE_DONE`。Focused evidence
+覆盖稳定workspace identity/lineage、不相交domain并行、daily全局排他、并发重叠writer恰好一个
+PASS、重复intent replay、casefold/祖先后代冲突、dirty/unattributed零业务输出、known-unrelated
+exact exclusion、heartbeat/stale expiry、symlink/reparse拒绝及真实`aits ops daily-run`在run
+bundle前阻断，结果为`92 passed`。正式验证闭合为architecture=`593 passed`、contract=`274 passed`、
+integration=`993 passed`、reproducibility=`23 passed`，首次Full=`7134 passed / 3 skipped /
+2 failed / 643 warnings`仅暴露历史兼容性consumer的current-hash authority合同缺口；修复后
+failure-fix Full=`7136 passed / 3 skipped / 643 warnings`。S2 telemetry、Wave15、S5、
+task source cutover、production与broker仍保持未授权。

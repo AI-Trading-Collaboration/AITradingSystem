@@ -21323,7 +21323,7 @@ phase_ops_068_limited_non_pit_reconstruction:
 
 phase_arch_005_s4d_shared_checkout_write_lease_guard:
   schema_version: arch_005_s4d_compatibility_closeout.v1
-  status: VALIDATING_ARCH_005S4D_NARROW_S0_S1
+  status: BASELINE_DONE_ARCH_005S4D_NARROW_S0_S1
   boundary_id: ARCH-005S4D-S0-S1
   task_ids:
   - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
@@ -21493,25 +21493,25 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: f39910a9f0b60549b1389d11aba4059862d3648d824ef6b645e395a89d986fd0
     hash_normalization: git_eol_lf
   - path: docs/architecture/dual_lane_development_operating_model.md
-    sha256: 0df40722461eae96a632759082cdf845074e6307e25ad12be9ca4dfb6ba09415
+    sha256: 2307fa680d6783f20b26cc687e53bb4f73fa5a32d96971e1a2536b351f86913e
     hash_normalization: git_eol_lf
   - path: docs/artifact_catalog.md
     sha256: 33b990a8eab591f92c4919b39e4b0a0ccfba7c576439f85afa59fd435f4f44f8
     hash_normalization: git_eol_lf
   - path: docs/operations/operations_runbook.md
-    sha256: 8cbd185341b6bc3868880812e5617595603874277f889b9cbf2da8890c20689c
+    sha256: aaf48e3ccecf892445ae62b97e819e1aed87c0007f10fc60255779b70aff09ba
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
-    sha256: eed5ac36bfba86e39cdf1491c6b68b2475024924fec78c2f1f2c4e4293052265
+    sha256: a23b0ca7b66ebfa30965c52609d61f8eaeb14e112eb7ded2b2e2abcbb7333bb8
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
-    sha256: 50deecdcb92f3612fd1bdb6df0495e3337487b18089f00c851a121bcdcf00481
+    sha256: aad59c7b933ea80766cd056b432b88b19ac9f50f99256907542732c2be8525cc
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
     sha256: b40530362e0cb1bcbd7854e1ad6505922215bb9ffb342a5cd86b442f1cf03023
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 0760bc3a1b5f888fa833b390b2dc200648eeccd2b85432110a4408072466d41b
+    sha256: ace42f40c6cb2e23eb9d6375e2107f84feda7a8abea2dbb19ab3821634d4997e
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: ac771021ca36b04f8364b1d33f3156ecb0778312ef47cba15d7ba951511ddfae
@@ -21529,16 +21529,16 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
     sha256: 8c65c76d68f856fa63c5922c89289712aa8f21182a09159e3f0179bcce482a54
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 0ba06b7525bbc000c8a4cca34fbc68e90820ee069fa8286047bc7acc7397faa0
+    sha256: b5c49b09c900ecb3a7e72cbefcdff7acc94adbc6ab8675dea6dea21023d1d289
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 10eedca2398b438143410968c3deb57cb12eb50322ee1e3b6e0ae396d20eb5cf
+    sha256: 5bfd4f26e4b18e944dd2f4ba7634416e59615948f0a6e13869b37cc593df9e48
     hash_normalization: git_eol_lf
   - path: README.md
     sha256: ebbe600abb5c96bfbc4c63edd26f023f90fa0dd62bd0b6648b5957b0e63dd713
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-    sha256: 03a311318976f88304dcf75c182caea8be26dcfc6e5318a0e7d46c942b9f9725
+    sha256: c8ad17778b7523295b11680601f1f53f1db36f4c7288696897f5a5b488fedac5
     hash_normalization: git_eol_lf
   - path: scripts/architecture_arch005_checkout_guard.py
     sha256: 46eef7961392f62fbbefdd669f5db702f30d9c7a10e68a7c48342cc785583625
@@ -21586,19 +21586,34 @@ phase_arch_005_s4d_shared_checkout_write_lease_guard:
       failed: 1
       runtime_artifact: outputs/validation_runtime/architecture-fitness_20260724T135414Z/test_runtime_summary.json
     architecture_fitness:
-      status: PENDING
+      status: PASS
+      passed: 593
+      failed: 0
+      runtime_artifact: outputs/validation_runtime/architecture-fitness_20260724T140054Z/test_runtime_summary.json
     contract_validation:
-      status: PENDING
+      status: PASS
+      passed: 274
+      failed: 0
+      runtime_artifact: outputs/validation_runtime/contract-validation_20260724T140241Z/test_runtime_summary.json
     integration:
-      status: PENDING
+      status: PASS
+      passed: 993
+      failed: 0
+      warnings: 642
+      runtime_artifact: outputs/validation_runtime/integration_20260724T140448Z/test_runtime_summary.json
     reproducibility:
-      status: PENDING
+      status: PASS
+      passed: 23
+      failed: 0
+      runtime_artifact: outputs/validation_runtime/reproducibility_20260724T140539Z/test_runtime_summary.json
     full:
-      status: FAIL_REMEDIATING
-      passed: 7134
+      status: PASS_AFTER_FAILURE_FIX
+      passed: 7136
       skipped: 3
-      failed: 2
-      runtime_artifact: outputs/validation_runtime/full_20260724T140613Z/test_runtime_summary.json
+      failed: 0
+      warnings: 643
+      parent_runtime_artifact: outputs/validation_runtime/full_20260724T140613Z/test_runtime_summary.json
+      runtime_artifact: outputs/validation_runtime/full_20260724T143000Z/test_runtime_summary.json
   safety:
     s2_telemetry_authorized: false
     wave15_assignment_authorized: false

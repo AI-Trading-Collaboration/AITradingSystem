@@ -11,62 +11,66 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture control-plane owner + operations automation owner；先完成S0
-    policy/characterization，再实现S1 narrow local guard
+  next_owner: architecture control-plane owner + operations automation owner；S2 telemetry与Wave15另行等待project
+    owner授权
   requirement_refs:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
-    ownership无法约束跨task writer。Owner已通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权窄版S0/S1。
+    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 建立workspace identity、exact owned/shared intent、atomic lease/heartbeat/expiry/replay与pre-import/pre-provider
-      gate；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache
-      mutation；互斥domain仍可并行；不读取known-unrelated bytes；focused、architecture、contract、integration、reproducibility及required
-      Full PASS。
+    text: 稳定workspace identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic
+      lease/heartbeat/expiry/replay与pre-body/pre-provider gate已实现；重叠writer恰好一个成功，dirty/unattributed或active
+      mutation lease下daily零provider/cache/report mutation，互斥domain仍可并行，known-unrelated仅按exact
+      path排除且不读取其bytes。验证：focused=`92 passed`；architecture=`593 passed`；contract=`274
+      passed`；integration=`993 passed`；reproducibility=`23 passed`；failure-fix Full=`7136
+      passed / 3 skipped / 643 warnings`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1938
-    row_sha256: 069699a739432f91ba79d5c7e8827b518175f0d52ab99f55ba6929832304367f
+    row_sha256: b602d10d973232e510b8a7dc5c758a8bbf0364cab107ac646e1ddfb4ffe848a6
     cell_count: 8
     all_cells:
     - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     - Architecture / shared-checkout writer and operations lease guard
     - P0
-    - IN_PROGRESS
-    - architecture control-plane owner + operations automation owner；先完成S0 policy/characterization，再实现S1
-      narrow local guard
+    - BASELINE_DONE
+    - architecture control-plane owner + operations automation owner；S2 telemetry与Wave15另行等待project
+      owner授权
     - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
-      ownership无法约束跨task writer。Owner已通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权窄版S0/S1。
-    - 建立workspace identity、exact owned/shared intent、atomic lease/heartbeat/expiry/replay与pre-import/pre-provider
-      gate；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache
-      mutation；互斥domain仍可并行；不读取known-unrelated bytes；focused、architecture、contract、integration、reproducibility及required
-      Full PASS。
-    - 2026-07-24：从`PROPOSED`转`IN_PROGRESS`；授权只覆盖S0/S1，顺序固定为policy/characterization→local
-      guard→formal validation。Wave15、S2 telemetry、S5、task source cutover、production和broker继续未授权，`production_effect=none`。
+      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。
+    - 稳定workspace identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic
+      lease/heartbeat/expiry/replay与pre-body/pre-provider gate已实现；重叠writer恰好一个成功，dirty/unattributed或active
+      mutation lease下daily零provider/cache/report mutation，互斥domain仍可并行，known-unrelated仅按exact
+      path排除且不读取其bytes。验证：focused=`92 passed`；architecture=`593 passed`；contract=`274
+      passed`；integration=`993 passed`；reproducibility=`23 passed`；failure-fix Full=`7136
+      passed / 3 skipped / 643 warnings`。
+    - 2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required formal tiers与failure-fix
+      Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task source
+      cutover、production和broker继续未授权，`production_effect=none`。
     raw_line: '|ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD|Architecture / shared-checkout
-      writer and operations lease guard|P0|IN_PROGRESS|architecture control-plane
-      owner + operations automation owner；先完成S0 policy/characterization，再实现S1 narrow
-      local guard|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
-      ownership无法约束跨task writer。Owner已通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权窄版S0/S1。|建立workspace
-      identity、exact owned/shared intent、atomic lease/heartbeat/expiry/replay与pre-import/pre-provider
-      gate；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache
-      mutation；互斥domain仍可并行；不读取known-unrelated bytes；focused、architecture、contract、integration、reproducibility及required
-      Full PASS。|2026-07-24：从`PROPOSED`转`IN_PROGRESS`；授权只覆盖S0/S1，顺序固定为policy/characterization→local
-      guard→formal validation。Wave15、S2 telemetry、S5、task source cutover、production和broker继续未授权，`production_effect=none`。|'
+      writer and operations lease guard|P0|BASELINE_DONE|architecture control-plane
+      owner + operations automation owner；S2 telemetry与Wave15另行等待project owner授权|详见
+      `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
+      automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。|稳定workspace
+      identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic lease/heartbeat/expiry/replay与pre-body/pre-provider
+      gate已实现；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache/report
+      mutation，互斥domain仍可并行，known-unrelated仅按exact path排除且不读取其bytes。验证：focused=`92
+      passed`；architecture=`593 passed`；contract=`274 passed`；integration=`993 passed`；reproducibility=`23
+      passed`；failure-fix Full=`7136 passed / 3 skipped / 643 warnings`。|2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required
+      formal tiers与failure-fix Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task
+      source cutover、production和broker继续未授权，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-069699a739432f91ba79d5c7
+  event_id: legacy-import-b602d10d973232e510b8a7dc
   task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -76,37 +80,40 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: architecture control-plane owner + operations automation owner；先完成S0
-      policy/characterization，再实现S1 narrow local guard
-    notes: 2026-07-24：从`PROPOSED`转`IN_PROGRESS`；授权只覆盖S0/S1，顺序固定为policy/characterization→local
-      guard→formal validation。Wave15、S2 telemetry、S5、task source cutover、production和broker继续未授权，`production_effect=none`。
+    next_owner: architecture control-plane owner + operations automation owner；S2
+      telemetry与Wave15另行等待project owner授权
+    notes: 2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required formal tiers与failure-fix
+      Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task source
+      cutover、production和broker继续未授权，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:069699a739432f91ba79d5c7e8827b518175f0d52ab99f55ba6929832304367f
+  - sha256:b602d10d973232e510b8a7dc5c758a8bbf0364cab107ac646e1ddfb4ffe848a6
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   - Architecture / shared-checkout writer and operations lease guard
   - P0
-  - IN_PROGRESS
-  - architecture control-plane owner + operations automation owner；先完成S0 policy/characterization，再实现S1
-    narrow local guard
+  - BASELINE_DONE
+  - architecture control-plane owner + operations automation owner；S2 telemetry与Wave15另行等待project
+    owner授权
   - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。2026-07-23研发与daily
-    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker，但现有lane
-    ownership无法约束跨task writer。Owner已通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权窄版S0/S1。
-  - 建立workspace identity、exact owned/shared intent、atomic lease/heartbeat/expiry/replay与pre-import/pre-provider
-    gate；重叠writer恰好一个成功，dirty/unattributed或active mutation lease下daily零provider/cache
-    mutation；互斥domain仍可并行；不读取known-unrelated bytes；focused、architecture、contract、integration、reproducibility及required
-    Full PASS。
-  - 2026-07-24：从`PROPOSED`转`IN_PROGRESS`；授权只覆盖S0/S1，顺序固定为policy/characterization→local
-    guard→formal validation。Wave15、S2 telemetry、S5、task source cutover、production和broker继续未授权，`production_effect=none`。
+    automation共用checkout，后者在D0B2/G3中间写入状态运行并修改overlap/shared paths，靠人工消息才停止；无未授权commit/push/weights/broker。Owner通过`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`授权的窄版S0/S1现已闭合；S2/Wave15不在本次授权内。
+  - 稳定workspace identity、exact owned/shared intent、path/operation-aware冲突矩阵、atomic
+    lease/heartbeat/expiry/replay与pre-body/pre-provider gate已实现；重叠writer恰好一个成功，dirty/unattributed或active
+    mutation lease下daily零provider/cache/report mutation，互斥domain仍可并行，known-unrelated仅按exact
+    path排除且不读取其bytes。验证：focused=`92 passed`；architecture=`593 passed`；contract=`274
+    passed`；integration=`993 passed`；reproducibility=`23 passed`；failure-fix Full=`7136
+    passed / 3 skipped / 643 warnings`。
+  - 2026-07-24：窄版S0/S1从`IN_PROGRESS`转`BASELINE_DONE`；required formal tiers与failure-fix
+    Full均PASS，兼容性/current-hash authority和生成清单已闭合。S2 telemetry、Wave15、S5、task source
+    cutover、production和broker继续未授权，`production_effect=none`。
   docs_links:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   terminal: false
-  raw_row_sha256: 069699a739432f91ba79d5c7e8827b518175f0d52ab99f55ba6929832304367f
+  raw_row_sha256: b602d10d973232e510b8a7dc5c758a8bbf0364cab107ac646e1ddfb4ffe848a6
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: d4e1fcfbf9c0f6a33571ef045b4b18d756ff14420aebfc8f97012efefea79f1c
+fragment_checksum: bb9400ee7dab1180e7b98cfa509d9ef92aa6d2a33d161840b34df7307133ccb2

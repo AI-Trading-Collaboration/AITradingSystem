@@ -16,8 +16,8 @@
 - integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已获
   owner 窄授权并由 Wave 7 首次真实执行 PASS；S5 canonical cutover 尚未授权
 - current safety follow-up：Wave14暴露同一checkout计划外task/automation第二writer风险；
-  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已获owner窄版S0/S1授权并进入`P0/IN_PROGRESS`。
-  Wave14 S2 formal exit已完成；Wave15 assignment仍须等待S4D最终HEAD与正式门禁闭合
+  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已按owner窄版S0/S1授权转为
+  `P0/BASELINE_DONE`。Wave15 assignment仍须等待从S4D最终HEAD生成的exact readiness与单独授权
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
 
@@ -74,7 +74,7 @@ main 分叉、非 fast-forward、无远端权限或 push rejection 任一出现�
 rebase、建立 merge commit、force-push、删除用户改动或绕过门禁。S4C 不授权 PR 自动创建、S5
 source-of-truth cutover、ARCH-004 G2.5、策略 search/promotion、production 或 broker action。
 
-### S4D Shared Checkout Write Lease Guard（NARROW S0/S1 IN PROGRESS）
+### S4D Shared Checkout Write Lease Guard（NARROW S0/S1 BASELINE DONE）
 
 Wave14真实证明现有“worker owned paths + coordinator单写”只能约束同一计划内的worker，不能阻止
 另一个Codex task或daily automation在同一checkout读取半写状态、发起provider/cache mutation或成为
@@ -89,12 +89,15 @@ S4D批准后的顺序固定为：
 3. S0冻结workspace identity、operation class、owned/shared intent与路径冲突矩阵；
 4. S1复用现有ARCH-005 conflict/lease和operations run-control primitives，实现atomic
    acquire/release、heartbeat/expiry/replay及mutation/daily的pre-import/pre-provider gate；
-5. 从S4D最终HEAD重新生成Wave15 exact requirement/readiness。
+5. 窄版S0/S1在focused、architecture、contract、integration、reproducibility和failure-fix Full
+   全部PASS后转`BASELINE_DONE`；Wave15 exact requirement/readiness仍须从S4D最终HEAD重新生成。
 
 S4D必须path/operation-aware：重叠shared writer恰好一个成功，机械互斥domain仍可并行；不得建立
-第三套lock authority，也不得退化为永久全仓串行锁。S2中纯观测telemetry可以随Wave15异步积累，但
-任何仍改变shared execution entry的工作必须先通过适用formal gate。S4D不是S5，不切换task-register
-source-of-truth，不授权production或broker。
+第三套lock authority，也不得退化为永久全仓串行锁。S2 telemetry与Wave15仍须另行授权，任何仍改变
+shared execution entry的工作必须先通过适用formal gate。S4D不是S5，不切换task-register
+source-of-truth，不授权production或broker。窄版最终证据为focused=`92 passed`、
+architecture/contract/integration/reproducibility=`593/274/993/23 passed`，failure-fix
+Full=`7136 passed / 3 skipped / 643 warnings`。
 
 ## 决策
 
@@ -537,6 +540,11 @@ validated-main integration 授权；任何扩大 lane capacity、切换 source-o
 
 ## 状态记录
 
+- 2026-07-24：S4D窄版S0/S1完成并转`BASELINE_DONE`。Focused=`92 passed`；
+  architecture/contract/integration/reproducibility=`593/274/993/23 passed`；首次Full的2个失败
+  仅定位到历史兼容性consumer的current-hash authority合同，修复后的failure-fix
+  Full=`7136 passed / 3 skipped / 643 warnings`。S2 telemetry、Wave15 assignment、S5、
+  task source cutover、production和broker仍未授权。
 - 2026-07-24：owner已批准S4D窄版S0/S1，decision id=
   `owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`。实现复用
   `execution_lease.v1` / `execution_lease_event.v1`与现有ARCH-005 conflict evaluator，新增稳定

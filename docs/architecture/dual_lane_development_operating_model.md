@@ -488,10 +488,11 @@ Smoothed链列为下一工程候选，同时禁止用本次总wall宣称全局�
   contract稳定。该顺序用短治理批次换取后续dispatch准确性，不把等待时间任务放在开发关键路径上。
 - Wave14 S2 formal exit 已由 C7 replacement Full 与 post-Full evidence-only gates 闭合；owner 已以
   `owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`批准
-  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`窄版S0/S1。当前先完成checkout identity、
-  path/operation-aware冲突矩阵、原子lease及mutation/daily-run前置门禁；Wave15 exact
+  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`窄版S0/S1。checkout identity、
+  path/operation-aware冲突矩阵、原子lease及mutation/daily-run前置门禁现已通过required formal
+  tiers与failure-fix Full并转`BASELINE_DONE`；Wave15 exact
   manifests/readiness必须从S4D最终HEAD生成。S4D只解决同一checkout的计划外writer与operations
-  pre-provider安全，不是S5授权；其只读telemetry可随Wave15异步积累，但任何仍修改共享执行入口的
+  pre-provider安全，不是S5授权；其S2 telemetry与Wave15仍须单独授权，任何仍修改共享执行入口的
   工作不得与Wave15集成并发。
 - ARCH-005 S5 source-of-truth cutover 后置，必须单独授权并在真实双线 telemetry 足够后评估；不得与
   另一项中央 shared-architecture 变更并行。
@@ -569,9 +570,10 @@ exports、Reader Brief/Owner Daily cut-in、CLI、calendar、flow/catalog/regist
 
 同一checkout还暴露了计划外automation成为第二writer的缺口。该风险已登记为
 `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`；owner已批准在Wave15 domain assignment前完成
-窄版checkout lease/pre-provider guard。该门禁允许机械互斥domain scope持READ workspace gate并行；
-shared writer也持READ workspace gate，但其exact shared path保持WRITE排他；daily operation持WRITE
-workspace gate并与全部mutation排他。它不是ARCH-005 S5，也不把互斥domain并行退化为永久全局串行。
+窄版checkout lease/pre-provider guard，当前已完成并转`BASELINE_DONE`。该门禁允许机械互斥domain
+scope持READ workspace gate并行；shared writer也持READ workspace gate，但其exact shared path保持
+WRITE排他；daily operation持WRITE workspace gate并与全部mutation排他。它不是ARCH-005 S5，也不把
+互斥domain并行退化为永久全局串行。
 
 ## 10. 本轮明确不做
 
