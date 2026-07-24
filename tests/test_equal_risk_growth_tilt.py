@@ -4,7 +4,9 @@ import json
 import math
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -170,9 +172,7 @@ def test_equal_risk_growth_tilt_builders_preserve_research_only_boundary(
 
     assert result.exit_code == 0, result.output
     written = json.loads(
-        (growth_root / "equal_risk_cap_floor_tilt_search.json").read_text(
-            encoding="utf-8"
-        )
+        (growth_root / "equal_risk_cap_floor_tilt_search.json").read_text(encoding="utf-8")
     )
     assert written["summary"]["broker_action"] == "none"
     cap_floor = written
@@ -197,9 +197,7 @@ def test_equal_risk_growth_tilt_builders_preserve_research_only_boundary(
         as_of_date=as_of,
     )
     roadmap_ranking = json.loads(
-        (growth_root / "equal_risk_growth_tilt_ranking_tiering.json").read_text(
-            encoding="utf-8"
-        )
+        (growth_root / "equal_risk_growth_tilt_ranking_tiering.json").read_text(encoding="utf-8")
     )
     frontier = run_equal_risk_growth_tilt_tradeoff_frontier(
         **data_kwargs,
@@ -210,42 +208,26 @@ def test_equal_risk_growth_tilt_builders_preserve_research_only_boundary(
         run_growth_research_framing_correction: "growth_research_framing_correction",
         run_equal_risk_cap_floor_tilt_search: "equal_risk_cap_floor_tilt_search",
         run_equal_risk_risk_budget_tilt_search: "equal_risk_risk_budget_tilt_search",
-        run_equal_risk_trend_on_qqq_boost_search: (
-            "equal_risk_trend_on_qqq_boost_search"
-        ),
+        run_equal_risk_trend_on_qqq_boost_search: ("equal_risk_trend_on_qqq_boost_search"),
         run_equal_risk_missed_upside_compensation_search: (
             "equal_risk_missed_upside_compensation_search"
         ),
-        run_equal_risk_small_tqqq_overlay_search: (
-            "equal_risk_small_tqqq_overlay_search"
-        ),
-        run_equal_risk_vol_target_growth_tilt_search: (
-            "equal_risk_vol_target_growth_tilt_search"
-        ),
-        run_equal_risk_growth_tilt_ranking_tiering: (
-            "equal_risk_growth_tilt_ranking_tiering"
-        ),
-        run_growth_tilt_beta_risk_budget_attribution: (
-            "growth_tilt_beta_risk_budget_attribution"
-        ),
+        run_equal_risk_small_tqqq_overlay_search: ("equal_risk_small_tqqq_overlay_search"),
+        run_equal_risk_vol_target_growth_tilt_search: ("equal_risk_vol_target_growth_tilt_search"),
+        run_equal_risk_growth_tilt_ranking_tiering: ("equal_risk_growth_tilt_ranking_tiering"),
+        run_growth_tilt_beta_risk_budget_attribution: ("growth_tilt_beta_risk_budget_attribution"),
         run_growth_tilt_period_drawdown_replay: "growth_tilt_period_drawdown_replay",
-        run_growth_tilt_cost_turnover_sensitivity: (
-            "growth_tilt_cost_turnover_sensitivity"
-        ),
-        run_growth_tilt_definition_lock_versioning: (
-            "growth_tilt_definition_lock_versioning"
-        ),
-        run_growth_tilt_forward_aging_readiness_gate: (
-            "growth_tilt_forward_aging_readiness_gate"
-        ),
+        run_growth_tilt_cost_turnover_sensitivity: ("growth_tilt_cost_turnover_sensitivity"),
+        run_growth_tilt_definition_lock_versioning: ("growth_tilt_definition_lock_versioning"),
+        run_growth_tilt_forward_aging_readiness_gate: ("growth_tilt_forward_aging_readiness_gate"),
         run_growth_tilt_owner_decision_pack: "growth_tilt_owner_decision_pack",
         run_growth_exploration_master_review: "growth_exploration_master_review",
     }
     payloads = [
-        cap_floor
-        if builder is run_equal_risk_cap_floor_tilt_search
-        else json.loads(
-            (growth_root / f"{report_id}.json").read_text(encoding="utf-8")
+        (
+            cap_floor
+            if builder is run_equal_risk_cap_floor_tilt_search
+            else json.loads((growth_root / f"{report_id}.json").read_text(encoding="utf-8"))
         )
         for builder, report_id in generated_report_ids.items()
     ]
@@ -458,6 +440,7 @@ def test_growth_tilt_real_result_convergence_builders_and_cli(
 
 def test_growth_tilt_focused_diagnosis_builders_and_cli(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     prices_path, marketstack_path, rates_path, as_of = _write_growth_caches(tmp_path)
     config_path = _write_small_growth_config(tmp_path)
@@ -465,6 +448,16 @@ def test_growth_tilt_focused_diagnosis_builders_and_cli(
     docs_root = tmp_path / "docs" / "research"
     owner_docs_path = docs_root / "growth_tilt_owner_diagnosis_pack.md"
     master_docs_path = docs_root / "growth_tilt_focused_diagnosis_master_review.md"
+    original_owner_builder = run_growth_tilt_owner_diagnosis_pack
+
+    def redirected_owner_builder(**kwargs: Any) -> dict[str, Any]:
+        kwargs["docs_path"] = owner_docs_path
+        return original_owner_builder(**kwargs)
+
+    monkeypatch.setattr(
+        "ai_trading_system.equal_risk_growth_tilt.run_growth_tilt_owner_diagnosis_pack",
+        redirected_owner_builder,
+    )
     common = {
         "prices_path": prices_path,
         "marketstack_prices_path": marketstack_path,
@@ -500,23 +493,15 @@ def test_growth_tilt_focused_diagnosis_builders_and_cli(
     assert result.exit_code == 0, result.output
     assert (growth_root / "growth_tilt_focused_diagnosis_master_review.json").exists()
     cli_master = json.loads(
-        (
-            growth_root / "growth_tilt_focused_diagnosis_master_review.json"
-        ).read_text(encoding="utf-8")
+        (growth_root / "growth_tilt_focused_diagnosis_master_review.json").read_text(
+            encoding="utf-8"
+        )
     )
     generated_report_ids = {
-        run_best_growth_tilt_candidate_deep_dive: (
-            "best_growth_tilt_candidate_deep_dive"
-        ),
-        run_vol_target_growth_tilt_local_sensitivity: (
-            "vol_target_growth_tilt_local_sensitivity"
-        ),
-        run_beta_adjusted_edge_methodology_audit: (
-            "beta_adjusted_edge_methodology_audit"
-        ),
-        run_growth_tilt_balanced_core_role_review: (
-            "growth_tilt_balanced_core_role_review"
-        ),
+        run_best_growth_tilt_candidate_deep_dive: ("best_growth_tilt_candidate_deep_dive"),
+        run_vol_target_growth_tilt_local_sensitivity: ("vol_target_growth_tilt_local_sensitivity"),
+        run_beta_adjusted_edge_methodology_audit: ("beta_adjusted_edge_methodology_audit"),
+        run_growth_tilt_balanced_core_role_review: ("growth_tilt_balanced_core_role_review"),
         run_growth_tilt_vs_equal_risk_missed_upside_review: (
             "growth_tilt_vs_equal_risk_missed_upside_review"
         ),
@@ -528,9 +513,7 @@ def test_growth_tilt_focused_diagnosis_builders_and_cli(
         ),
     }
     generated_payloads = {
-        builder: json.loads(
-            (growth_root / f"{report_id}.json").read_text(encoding="utf-8")
-        )
+        builder: json.loads((growth_root / f"{report_id}.json").read_text(encoding="utf-8"))
         for builder, report_id in generated_report_ids.items()
     }
     deep = generated_payloads[run_best_growth_tilt_candidate_deep_dive]
@@ -713,12 +696,10 @@ def test_balanced_core_forward_aging_launch_builders_and_cli(
 
     assert result.exit_code == 0, result.output
     assert (growth_root / "balanced_core_maturity_scoreboard_safety_gate.json").exists()
-    maturity_report_id = (
-        run_balanced_core_maturity_scoreboard_safety_gate.__name__.removeprefix("run_")
+    maturity_report_id = run_balanced_core_maturity_scoreboard_safety_gate.__name__.removeprefix(
+        "run_"
     )
-    maturity = json.loads(
-        (growth_root / f"{maturity_report_id}.json").read_text(encoding="utf-8")
-    )
+    maturity = json.loads((growth_root / f"{maturity_report_id}.json").read_text(encoding="utf-8"))
     panel = run_dual_forward_aging_comparator_panel(
         prices_path=prices_path,
         marketstack_prices_path=marketstack_path,

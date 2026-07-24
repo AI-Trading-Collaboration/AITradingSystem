@@ -8199,7 +8199,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.external_request_cache
   path: src/ai_trading_system/external_request_cache.py
-  sha256: 5213e12b117303a3caabddecd6430f995db7d9c50737c8aef07c4b3a1e1200cb
+  sha256: cfee76d7a72c093d98730fc62eda4450c7f6f51185588257bbbae2cb3ccc7098
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -14387,7 +14387,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.writer
   path: src/ai_trading_system/platform/artifacts/writer.py
-  sha256: bebb16cecbd9d9e1059c68b9874b088aecaa2c4e888eb980391445b9f4341e82
+  sha256: d5e5ed523430d427766bb286f901c87b0f07f12afc0885bb4ef70d96dcbae860
   rule_id: platform_artifacts
   owner_profile: platform
   owners:

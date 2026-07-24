@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -29,7 +28,6 @@ from ai_trading_system.external_request_cache_revalidation_coordination import (
     RevalidationProbe,
 )
 from ai_trading_system.platform.artifacts import (
-    ArtifactWriteError,
     ArtifactWriteResult,
     write_bytes_atomic,
     write_json_atomic,
@@ -43,9 +41,6 @@ EXTERNAL_REQUEST_CACHE_NEGATIVE_OBSERVATION_SCHEMA_VERSION = (
 EXTERNAL_REQUEST_CACHE_INVALIDATION_SCHEMA_VERSION = "external_request_cache_invalidation.v1"
 EXTERNAL_REQUEST_CACHE_LIFECYCLE_EVENT_SCHEMA_VERSION = "external_request_cache_lifecycle_event.v1"
 DEFAULT_EXTERNAL_REQUEST_CACHE_DIR = PROJECT_ROOT / "data" / "raw" / "external_request_cache"
-# Windows can briefly deny replace while another writer or reader has the pointer open.
-_ATOMIC_REPLACE_CONTENTION_MAX_ATTEMPTS = 8
-_ATOMIC_REPLACE_CONTENTION_BASE_DELAY_SECONDS = 0.005
 ExternalRequestCacheLookupStatus = Literal[
     "HIT",
     "MISS",
@@ -1354,35 +1349,14 @@ def _required_sha256(value: str, *, field: str) -> str:
 
 
 def _write_cache_bytes_atomically(path: Path, content: bytes) -> ArtifactWriteResult:
-    return _atomic_replace_with_contention_retry(
-        lambda: write_bytes_atomic(path, content),
-    )
+    return write_bytes_atomic(path, content)
 
 
 def _write_cache_json_atomically(
     path: Path,
     payload: Mapping[str, Any],
 ) -> ArtifactWriteResult:
-    return _atomic_replace_with_contention_retry(
-        lambda: write_json_atomic(path, payload),
-    )
-
-
-def _atomic_replace_with_contention_retry(
-    writer: Callable[[], ArtifactWriteResult],
-) -> ArtifactWriteResult:
-    for attempt in range(_ATOMIC_REPLACE_CONTENTION_MAX_ATTEMPTS):
-        try:
-            result = writer()
-        except ArtifactWriteError as exc:
-            if not isinstance(exc.__cause__, PermissionError):
-                raise
-            if attempt + 1 >= _ATOMIC_REPLACE_CONTENTION_MAX_ATTEMPTS:
-                raise
-            time.sleep(_ATOMIC_REPLACE_CONTENTION_BASE_DELAY_SECONDS * (2**attempt))
-        else:
-            return result
-    raise AssertionError("atomic replace retry loop exhausted without returning or raising")
+    return write_json_atomic(path, payload)
 
 
 def _safe_path_token(value: str) -> str:

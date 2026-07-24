@@ -71,8 +71,11 @@ def test_atomic_writer_preserves_existing_target_and_cleans_temp_on_replace_fail
 ) -> None:
     path = tmp_path / "artifact.json"
     path.write_bytes(b"old-content")
+    replace_calls = 0
 
     def fail_replace(source: Path, destination: Path) -> None:
+        nonlocal replace_calls
+        replace_calls += 1
         raise PermissionError(f"cannot replace {source} -> {destination}")
 
     monkeypatch.setattr("ai_trading_system.platform.artifacts.writer.os.replace", fail_replace)
@@ -81,6 +84,78 @@ def test_atomic_writer_preserves_existing_target_and_cleans_temp_on_replace_fail
         write_bytes_atomic(path, b"new-content")
 
     assert path.read_bytes() == b"old-content"
+    assert replace_calls == 1
+    assert list(tmp_path.glob(".artifact.json.*.tmp")) == []
+
+
+def test_atomic_writer_retries_bounded_windows_replace_contention(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "artifact.json"
+    path.write_bytes(b"old-content")
+    real_replace = __import__("os").replace
+    replace_calls = 0
+    delays: list[float] = []
+
+    def transient_then_replace(source: Path, destination: Path) -> None:
+        nonlocal replace_calls
+        replace_calls += 1
+        if replace_calls <= 2:
+            error = PermissionError("destination is temporarily open")
+            error.winerror = 5
+            raise error
+        real_replace(source, destination)
+
+    monkeypatch.setattr(
+        "ai_trading_system.platform.artifacts.writer.os.replace",
+        transient_then_replace,
+    )
+    monkeypatch.setattr(
+        "ai_trading_system.platform.artifacts.writer.time.sleep",
+        delays.append,
+    )
+
+    result = write_bytes_atomic(path, b"new-content")
+
+    assert path.read_bytes() == b"new-content"
+    assert result.sha256 == hashlib.sha256(b"new-content").hexdigest()
+    assert replace_calls == 3
+    assert delays == [0.005, 0.01]
+    assert list(tmp_path.glob(".artifact.json.*.tmp")) == []
+
+
+def test_atomic_writer_fails_closed_after_windows_contention_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "artifact.json"
+    path.write_bytes(b"old-content")
+    replace_calls = 0
+    delays: list[float] = []
+
+    def persistent_contention(_source: Path, _destination: Path) -> None:
+        nonlocal replace_calls
+        replace_calls += 1
+        error = PermissionError("destination remains open")
+        error.winerror = 32
+        raise error
+
+    monkeypatch.setattr(
+        "ai_trading_system.platform.artifacts.writer.os.replace",
+        persistent_contention,
+    )
+    monkeypatch.setattr(
+        "ai_trading_system.platform.artifacts.writer.time.sleep",
+        delays.append,
+    )
+
+    with pytest.raises(ArtifactWriteError, match="ATOMIC_ARTIFACT_WRITE_FAILED"):
+        write_bytes_atomic(path, b"new-content")
+
+    assert path.read_bytes() == b"old-content"
+    assert replace_calls == 8
+    assert delays == [0.005, 0.01, 0.02, 0.04, 0.08, 0.16, 0.32]
     assert list(tmp_path.glob(".artifact.json.*.tmp")) == []
 
 

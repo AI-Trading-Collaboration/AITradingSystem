@@ -5,6 +5,7 @@ import json
 import os
 import platform
 import tempfile
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -16,6 +17,12 @@ import yaml
 from ai_trading_system.contracts.artifact_envelope import ArtifactPointer
 
 DEFAULT_FILE_HASH_CHUNK_SIZE_BYTES = 1024 * 1024
+# Windows may briefly deny an atomic replace while a concurrent reader still
+# holds the destination. Keep the established external-cache budget here at
+# the canonical replace boundary so callers do not stack independent retries.
+_WINDOWS_ATOMIC_REPLACE_MAX_ATTEMPTS = 8
+_WINDOWS_ATOMIC_REPLACE_BASE_DELAY_SECONDS = 0.005
+_WINDOWS_TRANSIENT_REPLACE_WINERRORS = frozenset({5, 32, 33})
 
 
 class ArtifactWriteError(OSError):
@@ -128,7 +135,7 @@ def write_bytes_atomic(path: Path, content: bytes) -> ArtifactWriteResult:
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary_path, path)
+        _replace_with_bounded_windows_contention_retry(temporary_path, path)
     except Exception as exc:
         try:
             temporary_path.unlink(missing_ok=True)
@@ -141,6 +148,25 @@ def write_bytes_atomic(path: Path, content: bytes) -> ArtifactWriteResult:
         sha256=sha256_bytes(content),
         size_bytes=len(content),
     )
+
+
+def _replace_with_bounded_windows_contention_retry(
+    source: Path,
+    destination: Path,
+) -> None:
+    for attempt in range(_WINDOWS_ATOMIC_REPLACE_MAX_ATTEMPTS):
+        try:
+            os.replace(source, destination)
+        except OSError as exc:
+            if (
+                getattr(exc, "winerror", None) not in _WINDOWS_TRANSIENT_REPLACE_WINERRORS
+                or attempt + 1 >= _WINDOWS_ATOMIC_REPLACE_MAX_ATTEMPTS
+            ):
+                raise
+            time.sleep(_WINDOWS_ATOMIC_REPLACE_BASE_DELAY_SECONDS * (2**attempt))
+        else:
+            return
+    raise AssertionError("atomic replace retry loop exhausted without returning or raising")
 
 
 def write_text_atomic(path: Path, content: str) -> ArtifactWriteResult:

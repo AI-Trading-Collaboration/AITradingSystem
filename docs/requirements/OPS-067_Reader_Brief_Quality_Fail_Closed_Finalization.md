@@ -105,6 +105,35 @@
    reproducibility 和任务风险相称的 Full validation。
 4. 正式运营验收只能通过 `aits ops daily-run`；不得用 standalone 命令拼装伪 PASS。
 
+#### S3 Full blocker：Windows atomic replace contention
+
+首次 Full 在 `7053 passed / 1 failed` 后暴露 canonical atomic writer 的真实平台缺口：
+Windows 目标文件被另一个进程短暂以 read handle 打开时，`os.replace` 会以
+`WinError 5` 拒绝替换。external-request singleflight 的 winner 正在发布新 cache
+generation、contender 同时 probe 旧 generation 时可命中该窗口；writer 立即失败，
+随后 coordination 按既有 policy 正确记录 `OWNER_FAILURE_RETRY_DISABLED`。focused
+单跑通过不能证明该并发缺口不存在。
+
+本任务不通过直接重跑 Full 或放宽 singleflight oracle 绕过。durable fix 固定在唯一
+canonical writer：
+
+- 只对 `os.replace` 阶段且只对 Windows transient sharing/access winerror 做短时、
+  固定上限的 retry；写入、flush 与 fsync 不重复；
+- 非 transient 错误立即失败；retry 耗尽仍抛 `ATOMIC_ARTIFACT_WRITE_FAILED`，保留旧
+  target 并清理 unique temp；
+- retry budget 使用具名 platform 常量，目的只是在短暂 reader handle 释放后完成原子
+  replace，不改变 artifact bytes/schema/path 或 fail-closed 语义；
+- external-request cache 现有同预算外层 retry 下沉后删除，避免 platform 与 domain
+  双层退避；coordination lease/fencing 与 owner-failure policy 不变；
+- 增加 transient-then-success、persistent-transient exhaustion 与既有 non-transient
+  cleanup 回归，并重复运行跨进程 same-key fixture；修复后才允许第二次 Full。
+
+同次 Full 还发现测试隔离问题：focused-diagnosis master CLI fixture 只把 master doc
+重定向到 `tmp_path`，其嵌套 owner doc 仍使用项目默认路径，导致 sparse validation
+checkout 在 Full 中重新 materialize owner 明确保护的研究文档。修复只允许在测试中把
+嵌套 builder 的 `docs_path` 显式重定向到同一 `tmp_path`；不得读取、哈希、diff 或更新
+该项目文档，也不得借此改变生产 CLI 默认路径。
+
 ## 验收标准
 
 - CLI 对 Report quality `FAIL`、Reader Brief quality `FAILED` 返回非零，且产物仍可审计。
@@ -146,3 +175,9 @@
   delta focused `36 passed`，DevEx/Ruff/Black 均为 PASS。状态仍为
   `IN_PROGRESS`：还必须在证据写回后的最终候选上通过 Full 与 post-Full gates，
   推送稳定后再只用 canonical `aits ops daily-run` 完成运营验收。
+- 2026-07-24：commit `00b41d5c` / tree `100268ee` 的首次 Full 运行
+  `7053 passed / 1 failed / 4 skipped / 1091.87s`。唯一失败为 Windows
+  `os.replace` 对短暂 reader handle 的 `WinError 5` contention；16 个 xdist worker
+  活性采样约占用 15.5 cores，证明不是挂死。已按 no-silent-workaround 登记 S3
+  blocker；在 canonical writer 完成 bounded transient retry 和定向重复验证前，不把
+  本次结果改写成 PASS，也不直接启动第二次 Full。
