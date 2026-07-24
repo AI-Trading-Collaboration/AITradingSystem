@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+from contextlib import nullcontext
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -815,6 +816,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
         )
 
     monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(ops_cli, "hold_daily_checkout_guard", lambda **_: nullcontext())
     monkeypatch.setattr(ops_cli, "DEFAULT_DECISION_SNAPSHOT_DIR", snapshot_dir)
     monkeypatch.setattr(ops_cli, "run_daily_ops_plan", fake_run_daily_ops_plan)
     original_write_json_atomic = ops_cli.write_json_atomic

@@ -16,8 +16,8 @@
 - integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已获
   owner 窄授权并由 Wave 7 首次真实执行 PASS；S5 canonical cutover 尚未授权
 - current safety follow-up：Wave14暴露同一checkout计划外task/automation第二writer风险；
-  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已登记为`P0/PROPOSED`。Wave14 S2 formal exit
-  已完成，当前停在S4D owner authorization gate；Wave15 assignment前仍须经owner确认推进窄版S0/S1
+  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已获owner窄版S0/S1授权并进入`P0/IN_PROGRESS`。
+  Wave14 S2 formal exit已完成；Wave15 assignment仍须等待S4D最终HEAD与正式门禁闭合
 - downstream consumers：ARCH-004 G3/G4/G5 lanes、`PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH`
 - production effect：`none`
 
@@ -74,17 +74,18 @@ main 分叉、非 fast-forward、无远端权限或 push rejection 任一出现�
 rebase、建立 merge commit、force-push、删除用户改动或绕过门禁。S4C 不授权 PR 自动创建、S5
 source-of-truth cutover、ARCH-004 G2.5、策略 search/promotion、production 或 broker action。
 
-### S4D Shared Checkout Write Lease Guard（PROPOSED）
+### S4D Shared Checkout Write Lease Guard（NARROW S0/S1 IN PROGRESS）
 
 Wave14真实证明现有“worker owned paths + coordinator单写”只能约束同一计划内的worker，不能阻止
 另一个Codex task或daily automation在同一checkout读取半写状态、发起provider/cache mutation或成为
 第二writer。完整需求见
 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。
 
-S4D建议顺序固定为：
+S4D批准后的顺序固定为：
 
 1. Wave14 S2 formal/final Full、归属、commit/push先完整闭合；
-2. owner明确把S4D从`PROPOSED`转为可执行状态；
+2. owner decision `owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`
+   把窄版S0/S1从`PROPOSED`转为可执行状态；
 3. S0冻结workspace identity、operation class、owned/shared intent与路径冲突矩阵；
 4. S1复用现有ARCH-005 conflict/lease和operations run-control primitives，实现atomic
    acquire/release、heartbeat/expiry/replay及mutation/daily的pre-import/pre-provider gate；
@@ -536,10 +537,16 @@ validated-main integration 授权；任何扩大 lane capacity、切换 source-o
 
 ## 状态记录
 
+- 2026-07-24：owner已批准S4D窄版S0/S1，decision id=
+  `owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`。实现复用
+  `execution_lease.v1` / `execution_lease_event.v1`与现有ARCH-005 conflict evaluator，新增稳定
+  checkout identity、path/operation-aware intent、atomic acquire、heartbeat/expiry/replay及
+  `aits ops daily-run`函数体前置门禁；不建立第三套lock authority。S2 telemetry、Wave15
+  assignment、S5、task source cutover、production和broker仍未授权。
 - 2026-07-24：Wave14 S2已以replacement Full=`7007 passed / 4 skipped`及post-Full
-  evidence-only gates完成，S4D dependency转为`satisfied`，但task仍保持`P0/PROPOSED`。
-  `next_slice_unblocked=false`；只有owner明确授权窄版S0/S1后才可实现，且Wave15 exact readiness
-  必须从S4D最终HEAD重建。该状态不授权S5、自动task mutation、production或broker。
+  evidence-only gates完成，S4D dependency转为`satisfied`。该证据解除dependency，不替代本日
+  owner窄授权；Wave15 exact readiness仍必须从S4D最终HEAD重建。该状态不授权S5、自动task
+  mutation、production或broker。
 - 2026-07-24：Wave14集成期间另一个Codex daily automation在同一checkout读取D0B2/G3中间状态并
   修改CLI/DQ/shared文档，主coordinator通过任务消息才停止第二writer。未发生未授权commit/push、
   weights或broker action，但事件证明S4C candidate集成门禁不能替代checkout运行前门禁。新增

@@ -486,12 +486,13 @@ Smoothed链列为下一工程候选，同时禁止用本次总wall宣称全局�
   `DATA-GOV D0B2 + bounded G3`；G4C真实cadence observation异步累积。Wave15只做
   `D0B3 + G4B first consumer`的受控采用，并完成G3 close/readiness；G5须等待G3共享report/research
   contract稳定。该顺序用短治理批次换取后续dispatch准确性，不把等待时间任务放在开发关键路径上。
-- Wave14 S2 formal exit 已由 C7 replacement Full 与 post-Full evidence-only gates 闭合；在本次
-  closeout commit 普通推送并确认 `main=origin/main` 后，先由 owner 把
-  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`从`PROPOSED`转为可执行状态，再完成窄版S0/S1；
-  Wave15 exact manifests/readiness必须从S4D最终HEAD生成。S4D只解决同一checkout的计划外writer与
-  operations pre-provider安全，不是S5授权；其只读telemetry可随Wave15异步积累，但任何仍修改共享执行
-  入口的工作不得与Wave15集成并发。
+- Wave14 S2 formal exit 已由 C7 replacement Full 与 post-Full evidence-only gates 闭合；owner 已以
+  `owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`批准
+  `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`窄版S0/S1。当前先完成checkout identity、
+  path/operation-aware冲突矩阵、原子lease及mutation/daily-run前置门禁；Wave15 exact
+  manifests/readiness必须从S4D最终HEAD生成。S4D只解决同一checkout的计划外writer与operations
+  pre-provider安全，不是S5授权；其只读telemetry可随Wave15异步积累，但任何仍修改共享执行入口的
+  工作不得与Wave15集成并发。
 - ARCH-005 S5 source-of-truth cutover 后置，必须单独授权并在真实双线 telemetry 足够后评估；不得与
   另一项中央 shared-architecture 变更并行。
 
@@ -567,9 +568,10 @@ exports、Reader Brief/Owner Daily cut-in、CLI、calendar、flow/catalog/regist
 |Coordinator|S2 in progress|D0B2 combined=`156 passed`且静态PASS，G3独立审计无P0/P1；真实daily的direct profile缺口由`ARCH-004-WAVE14-A1-DIRECT-DQ-PROFILE`追加治理|尚待generated manifests、compatibility/deprecation、formal tiers及唯一final Full|
 
 同一checkout还暴露了计划外automation成为第二writer的缺口。该风险已登记为
-`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`；建议Wave14 closeout后、Wave15 domain assignment前
-完成窄版checkout lease/pre-provider guard。它不是ARCH-005 S5，也不应把互斥domain并行退化为永久全局
-串行。
+`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`；owner已批准在Wave15 domain assignment前完成
+窄版checkout lease/pre-provider guard。该门禁允许机械互斥domain scope持READ workspace gate并行；
+shared writer也持READ workspace gate，但其exact shared path保持WRITE排他；daily operation持WRITE
+workspace gate并与全部mutation排他。它不是ARCH-005 S5，也不把互斥domain并行退化为永久全局串行。
 
 ## 10. 本轮明确不做
 
@@ -577,7 +579,7 @@ exports、Reader Brief/Owner Daily cut-in、CLI、calendar、flow/catalog/regist
 - 不把“默认双线”解释成 S5、worker自主合并或 autonomous task mutation；coordinator 仅按S4C
   validated-main门禁自动集成；
 - 不因 Wave14 domain/formal exit 完成自动进入G5、ARCH-004H或ARCH-005 S5；Wave15仍只允许
-  D0B3+G4B first consumer和G3 close，且必须先通过S4D owner authorization gate并从其最终HEAD
-  重新生成exact readiness；旧G2.5 rehearsal不可复用为授权；
+  D0B3+G4B first consumer和G3 close，且必须先通过S4D窄版S0/S1正式门禁并从其最终HEAD重新生成
+  exact readiness；旧G2.5 rehearsal与本次owner decision都不可复用为Wave15 assignment授权；
 - 不运行周期 operations、联网 provider refresh 或 cache 删除；
 - 不改变研究窗口、阈值、策略结论、权重、promotion、paper-shadow、production 或 broker。

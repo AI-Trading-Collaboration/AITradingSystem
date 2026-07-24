@@ -6,6 +6,7 @@ import subprocess
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, time
+from functools import wraps
 from pathlib import Path
 from typing import Annotated, Any, Protocol
 
@@ -103,6 +104,10 @@ from ai_trading_system.pipeline_health import (
 from ai_trading_system.pit_snapshots import (
     DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
     default_pit_snapshot_validation_report_path,
+)
+from ai_trading_system.platform.architecture.checkout_guard import (
+    CheckoutGuardError,
+    hold_daily_checkout_guard,
 )
 from ai_trading_system.platform.artifacts import (
     StrictJsonContractError,
@@ -1877,7 +1882,33 @@ def _run_daily_ops_with_completion_callback(
     return report
 
 
+def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..., None]:
+    @wraps(command)
+    def guarded(*args: object, **kwargs: object) -> None:
+        declared_run_id = kwargs.get("run_id")
+        thread_id = (
+            str(declared_run_id)
+            if isinstance(declared_run_id, str) and declared_run_id
+            else "daily-scheduler-entry"
+        )
+        try:
+            with hold_daily_checkout_guard(
+                project_root=PROJECT_ROOT,
+                task_id="OPS-DAILY-UNIFIED-TRIGGER",
+                thread_id=thread_id,
+            ):
+                command(*args, **kwargs)
+        except CheckoutGuardError as exc:
+            console.print(f"[red]Checkout guard：BLOCKED ({exc.code})[/red]")
+            console.print(exc.message)
+            console.print("provider_request=false；cache_mutation=false；report_mutation=false")
+            raise typer.Exit(code=1) from exc
+
+    return guarded
+
+
 @ops_app.command("daily-run")
+@_checkout_guarded_daily_command
 def daily_ops_run_command(
     as_of: Annotated[
         str | None,

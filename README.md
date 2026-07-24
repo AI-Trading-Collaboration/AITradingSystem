@@ -3209,6 +3209,15 @@ aits ops daily-run --as-of 2026-05-02
 
 `daily-run` 会先写出 `outputs/reports/daily_ops_plan_YYYY-MM-DD.md`，再做输入可见性预检查，随后按 `config/scheduled_tasks.yaml` 校验后的顺序调用本地 CLI。`daily-run` 是生产调度入口，不用于历史时点复现；输入可见性预检查对交易日使用最新已完成美股交易日，对显式休市日使用当前 America/New_York 日期，显式未来 `--as-of` 会在任何 download/PIT/SEC/valuation/OpenAI/dashboard 子命令前返回 `BLOCKED_VISIBILITY`，显式历史 `--as-of` 会提示改用 `aits ops replay-day --mode cache-only --as-of YYYY-MM-DD`。交易日 `score-daily` 成功后会先写 forward evidence dry-run archive / append-only ledger，再依次生成 `evidence_dashboard_YYYY-MM-DD.html/json`、SEC PIT shadow observe/monitor、score change attribution、market panel、report index、documentation contract、research governance summary、Reader Brief、report quality gate 和 Reader Brief quality；随后运行 `aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD`，只做 Dynamic v3 rescue weekly due/skip/block 审计、latest pointer validation、stale 检查和可选 observe-only shadow monitor，输出 `reports/etf_portfolio/dynamic_v3_rescue/schedule_observe/dynamic_v3_rescue_schedule_observe_YYYY-MM-DD.json/md`，不自动 `run-profile`、不运行 real sweep、不生成 promotion pack 或 `production_candidate`。这些报告和治理步骤固定 `production_effect=none`，不改变评分、仓位、回测、production weights、active shadow weights 或交易建议。weekly / biweekly / monthly / ad hoc research 任务只在 `config/scheduled_tasks.yaml` 登记，不由 `daily-run` 自动触发。执行器内部优先用项目 `.venv` Python 调用 daily-run direct dispatcher，找不到本地虚拟环境时才回退当前 Python，避免 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`、PATH 上的全局 `aits` 污染每日子命令环境，以及 Typer 对整棵 CLI 做全局解析时触发的 Windows 原生崩溃；子命令环境显式设置 `PYTHONMALLOC=malloc`、`PYTHONFAULTHANDLER=1`、`PYTHONDONTWRITEBYTECODE=1`，为每次 `daily-run` 使用独立 `PYTHONPYCACHEPREFIX=outputs/tmp/pycache/daily_run/run_*`，并在启动子命令前清理 `src/**/__pycache__`，降低 Windows 本机长流程子进程原生崩溃和字节码缓存异常风险。缺少阻断性环境变量时直接返回 `BLOCKED_ENV`，任一执行步骤退出码非 0 或关键 artifact 报告状态非 `PASS*` 时停止，不继续下游步骤；休市日的显式 `SKIPPED` 步骤不视为失败。执行报告写入 `outputs/reports/daily_ops_run_YYYY-MM-DD.md`，只记录步骤状态、退出码、耗时、stdout/stderr 行数和预期 artifact 路径，不保存 stdout/stderr 原文、API key、token 或付费内容原文；同目录会同步写入 `daily_ops_run_metadata_YYYY-MM-DD.json`，记录 run id、git/config/rule hash、命令清单、必需环境变量 presence、输入可见性状态、pre-run input checksum、produced artifact checksum 和 production visibility cutoff，同样不保存 secret 值或命令输出原文。调度器应调用 `daily-run`；`daily-plan` 保留为只读计划和凭据检查。
 
+在上述任何plan、run bundle、provider、cache或report写入前，`daily-run`还会先取得
+ARCH-005S4D checkout WRITE gate。活动研发lease、无归属dirty path、checkout identity/root escape或
+lease conflict会直接返回typed `BLOCKED_CHECKOUT_GUARD`，并声明
+`provider_request_made=false`、`cache_mutation_made=false`、`report_mutation_made=false`、
+`production_effect=none`、`broker_action=none`。开发写入可用
+`python scripts/architecture_arch005_checkout_guard.py acquire|heartbeat|release|replay`
+登记和诊断；互斥domain owned paths可并行，shared writer保持单写。该门禁不替代数据质量门禁，也不授权
+真实daily、Wave15、S5或任何生产/券商动作。
+
 历史交易日分析产出回放使用隔离 replay bundle，默认只读本地归档输入，不调用 live provider 或 OpenAI：
 
 ```powershell

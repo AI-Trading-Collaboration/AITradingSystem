@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import uuid
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
@@ -32,7 +33,7 @@ _DEPENDENCY_TYPES = _HARD_DEPENDENCY_TYPES | frozenset({"parent_child", "informa
 _LEASE_TRANSITIONS: dict[str | None, frozenset[str]] = {
     None: frozenset({"REQUESTED"}),
     "REQUESTED": frozenset({"ACTIVE", "BLOCKED"}),
-    "ACTIVE": frozenset({"RELEASED", "EXPIRED"}),
+    "ACTIVE": frozenset({"ACTIVE", "RELEASED", "EXPIRED"}),
     "EXPIRED": frozenset({"REASSIGNED"}),
     "RELEASED": frozenset(),
     "REASSIGNED": frozenset(),
@@ -558,11 +559,16 @@ def manifest_resource_claims(manifest: ChangeManifest) -> tuple[ResourceClaim, .
 
 
 def leases_conflict(first: ExecutionLease, second: ExecutionLease) -> bool:
-    left = {(claim.kind, claim.resource_id): claim.access for claim in first.resources}
-    right = {(claim.kind, claim.resource_id): claim.access for claim in second.resources}
-    for key in set(left) & set(right):
-        if ResourceAccess.WRITE in {left[key], right[key]}:
-            return True
+    for left in first.resources:
+        for right in second.resources:
+            if left.kind != right.kind:
+                continue
+            if left.kind == "path":
+                same_resource = _repository_paths_overlap(left.resource_id, right.resource_id)
+            else:
+                same_resource = left.resource_id == right.resource_id
+            if same_resource and ResourceAccess.WRITE in {left.access, right.access}:
+                return True
     return False
 
 
@@ -692,6 +698,10 @@ class FileExecutionLeaseStore:
             replay = self.replay()
             if replay.status != "PASS":
                 raise ParallelControlError("LEASE_REPLAY_INVALID", replay.issues[0].code)
+            if self._expire_stale_heads(replay, actor=actor, now=instant):
+                replay = self.replay()
+                if replay.status != "PASS":
+                    raise ParallelControlError("LEASE_REPLAY_INVALID", replay.issues[0].code)
             existing = {lease.lease_id: lease for lease in replay.lease_heads}.get(lease_id)
             head_event_id = dict(replay.head_event_ids).get(lease_id)
             if existing is not None and existing.state == "ACTIVE":
@@ -773,6 +783,44 @@ class FileExecutionLeaseStore:
             )
             return LeaseAcquisition("ACTIVE", active, ("LEASE_ACQUIRED",), False)
 
+    def heartbeat(
+        self,
+        lease_id: str,
+        *,
+        actor: str,
+        now: datetime,
+    ) -> ExecutionLease:
+        instant = _utc(now)
+        with self._arbiter(actor=actor, now=instant):
+            replay = self.replay()
+            if replay.status != "PASS":
+                raise ParallelControlError("LEASE_REPLAY_INVALID", replay.issues[0].code)
+            head = {lease.lease_id: lease for lease in replay.lease_heads}.get(lease_id)
+            previous_event = dict(replay.head_event_ids).get(lease_id)
+            if head is None or head.state != "ACTIVE":
+                raise ParallelControlError("LEASE_ACTIVE_REQUIRED", lease_id)
+            if actor != head.actor:
+                raise ParallelControlError("LEASE_ACTOR_MISMATCH", lease_id)
+            expiry = _lease_expiry(head)
+            if expiry <= instant:
+                raise ParallelControlError("LEASE_HEARTBEAT_EXPIRED", lease_id)
+            refreshed = replace(
+                head,
+                expires_at=(instant + timedelta(seconds=self.policy.lease_ttl_seconds)).isoformat(),
+            )
+            self._append_event(
+                _lease_event(
+                    lease=refreshed,
+                    previous_event_id=previous_event,
+                    from_state="ACTIVE",
+                    to_state="ACTIVE",
+                    occurred_at=instant,
+                    actor=actor,
+                    reason_codes=("LEASE_HEARTBEAT",),
+                )
+            )
+            return refreshed
+
     def release(
         self,
         lease_id: str,
@@ -780,13 +828,14 @@ class FileExecutionLeaseStore:
         actor: str,
         now: datetime,
         evidence_refs: Sequence[str],
+        reason_codes: Sequence[str] = ("EXECUTION_AND_EVIDENCE_PASS",),
     ) -> ExecutionLease:
         return self._terminal_transition(
             lease_id,
             actor=actor,
             now=now,
             to_state="RELEASED",
-            reason_codes=("EXECUTION_AND_EVIDENCE_PASS",),
+            reason_codes=tuple(sorted(reason_codes)),
             evidence_refs=tuple(sorted(evidence_refs)),
         )
 
@@ -887,6 +936,33 @@ class FileExecutionLeaseStore:
             )
             return terminal
 
+    def _expire_stale_heads(
+        self,
+        replay: LeaseReplay,
+        *,
+        actor: str,
+        now: datetime,
+    ) -> bool:
+        expired_any = False
+        head_event_ids = dict(replay.head_event_ids)
+        for head in replay.active_leases:
+            if _lease_expiry(head) > now:
+                continue
+            expired = replace(head, state="EXPIRED")
+            self._append_event(
+                _lease_event(
+                    lease=expired,
+                    previous_event_id=head_event_ids[head.lease_id],
+                    from_state="ACTIVE",
+                    to_state="EXPIRED",
+                    occurred_at=now,
+                    actor=actor,
+                    reason_codes=("STALE_HEARTBEAT_EXPIRED",),
+                )
+            )
+            expired_any = True
+        return expired_any
+
     def _append_event(self, event: LeaseEvent) -> None:
         path = self.events_root / event.lease.lease_id / f"{event.event_id}.json"
         if path.exists():
@@ -899,50 +975,71 @@ class FileExecutionLeaseStore:
     @contextmanager
     def _arbiter(self, *, actor: str, now: datetime) -> Iterator[None]:
         self.root.mkdir(parents=True, exist_ok=True)
-        acquired = False
-        try:
-            self.arbiter_root.mkdir()
-            acquired = True
-        except FileExistsError:
+        owner_payload = {
+            "schema_version": "execution_lease_arbiter.v1",
+            "state": "ACTIVE",
+            "actor": actor,
+            "acquired_at": now.isoformat(),
+            "expires_at": (now + timedelta(seconds=self.policy.arbiter_ttl_seconds)).isoformat(),
+            "production_effect": "none",
+        }
+        acquired = self._publish_prepared_arbiter(owner_payload)
+        if not acquired:
             owner_path = self.arbiter_root / "owner.json"
             try:
                 owner = json.loads(owner_path.read_text(encoding="utf-8"))
                 expires = datetime.fromisoformat(str(owner["expires_at"]))
             except (OSError, KeyError, ValueError, json.JSONDecodeError) as exc:
                 raise ParallelControlError("LEASE_ARBITER_STATE_INVALID", str(exc)) from exc
-            if expires > now:
+            owner_state = owner.get("state")
+            if owner_state not in {None, "ACTIVE", "RELEASED"}:
+                raise ParallelControlError(
+                    "LEASE_ARBITER_STATE_INVALID",
+                    str(owner_state),
+                )
+            if owner_state != "RELEASED" and expires > now:
                 raise ParallelControlError("LEASE_ARBITER_BUSY", str(owner.get("actor"))) from None
-            stale = self.root / f"arbiter.stale.{hashlib.sha256(actor.encode()).hexdigest()[:12]}"
+            stale = self.root / (
+                "arbiter.stale."
+                f"{hashlib.sha256(actor.encode()).hexdigest()[:12]}.{uuid.uuid4().hex}"
+            )
             try:
                 os.replace(self.arbiter_root, stale)
             except OSError as exc:
                 raise ParallelControlError("LEASE_ARBITER_CAS_FAILED", str(exc)) from exc
             (stale / "owner.json").unlink(missing_ok=True)
             stale.rmdir()
-            try:
-                self.arbiter_root.mkdir()
-                acquired = True
-            except FileExistsError as exc:
-                raise ParallelControlError("LEASE_ARBITER_CAS_FAILED", actor) from exc
+            acquired = self._publish_prepared_arbiter(owner_payload)
+            if not acquired:
+                raise ParallelControlError("LEASE_ARBITER_CAS_FAILED", actor)
         try:
-            write_json_atomic(
-                self.arbiter_root / "owner.json",
-                {
-                    "schema_version": "execution_lease_arbiter.v1",
-                    "actor": actor,
-                    "acquired_at": now.isoformat(),
-                    "expires_at": (
-                        now + timedelta(seconds=self.policy.arbiter_ttl_seconds)
-                    ).isoformat(),
-                    "production_effect": "none",
-                },
-            )
             yield
         finally:
             if acquired:
-                (self.arbiter_root / "owner.json").unlink(missing_ok=True)
+                released_payload = {
+                    **owner_payload,
+                    "state": "RELEASED",
+                    "expires_at": now.isoformat(),
+                }
+                write_json_atomic(self.arbiter_root / "owner.json", released_payload)
+
+    def _publish_prepared_arbiter(self, owner_payload: Mapping[str, object]) -> bool:
+        pending = self.root / f"arbiter.pending.{uuid.uuid4().hex}"
+        pending.mkdir()
+        try:
+            write_json_atomic(pending / "owner.json", owner_payload)
+            try:
+                pending.rename(self.arbiter_root)
+            except OSError:
+                if not self.arbiter_root.exists():
+                    raise
+                return False
+            return True
+        finally:
+            if pending.exists():
+                (pending / "owner.json").unlink(missing_ok=True)
                 try:
-                    self.arbiter_root.rmdir()
+                    pending.rmdir()
                 except FileNotFoundError:
                     pass
 
@@ -1057,6 +1154,23 @@ def _canonical_sha256(payload: Mapping[str, object]) -> str:
         payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
     ).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _repository_paths_overlap(first: str, second: str) -> bool:
+    left = tuple(part.casefold() for part in Path(first).parts)
+    right = tuple(part.casefold() for part in Path(second).parts)
+    common = min(len(left), len(right))
+    return left[:common] == right[:common]
+
+
+def _lease_expiry(lease: ExecutionLease) -> datetime:
+    if lease.expires_at is None:
+        raise ParallelControlError("LEASE_EXPIRY_MISSING", lease.lease_id)
+    try:
+        parsed = datetime.fromisoformat(lease.expires_at)
+    except ValueError as exc:
+        raise ParallelControlError("LEASE_EXPIRY_INVALID", lease.lease_id) from exc
+    return _utc(parsed)
 
 
 def _issue(

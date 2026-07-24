@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: c748ae9ffb2e222722ffab9dcfb0abc6a667d29b2724325080038b458e467af1
+baseline_checksum: ddf6b3b540ca82b1b1bdd25921d94d4dd9083eb389523a48d16bc2e9f59a62fd
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 897
 fragment_count: 897
@@ -95,8 +95,8 @@ fragments:
   fragment_checksum: 6396cd2d70e84e9db5d337ebadb2768763d1d066e95d52e4f864903fe2e8afcd
 - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-  file_sha256: fd812dddb6bd72d3811a5d94ef009d03ee642e72d972d327aaf754bee2a0f9a7
-  fragment_checksum: 92ffa28979ae1d148e616cae5eb36e7213027f74e975841afa8644b0ce9ed1ea
+  file_sha256: 03a311318976f88304dcf75c182caea8be26dcfc6e5318a0e7d46c942b9f9725
+  fragment_checksum: d4e1fcfbf9c0f6a33571ef045b4b18d756ff14420aebfc8f97012efefea79f1c
 - task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   path: registry/development_tasks_shadow/active/7f/7fd87f6ffd6be4e77b70a90e91dfd6796a0c09171bb872b4284f2eacecb3b8a6.yaml
   file_sha256: bcbddad3824997541b64ec6a96b6274c133b3b3adaa878c1edf9b59192f04744
@@ -3613,8 +3613,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 9627c29306185c8b69177dcef14384a1ce0c8628e6a6e5bd59ac66fc0559b063
-  rendered_sha256: 9627c29306185c8b69177dcef14384a1ce0c8628e6a6e5bd59ac66fc0559b063
+  source_sha256: 0760bc3a1b5f888fa833b390b2dc200648eeccd2b85432110a4408072466d41b
+  rendered_sha256: 0760bc3a1b5f888fa833b390b2dc200648eeccd2b85432110a4408072466d41b
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3636,4 +3636,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: ad07bf52767fcd3f245ca3b92953a73dc4a16f43615fc88a72288d729ccef603
+index_checksum: 0add321bcf3aed09a527f14115005d211999512fd7a1e939a37d22b606b92972

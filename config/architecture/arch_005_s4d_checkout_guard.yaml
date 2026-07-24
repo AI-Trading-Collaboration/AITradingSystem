@@ -1,0 +1,73 @@
+schema_version: arch_005_s4d_checkout_guard_policy.v1
+policy_id: arch_005_s4d_checkout_guard
+version: 1.0.0
+status: OWNER_APPROVED_S0_S1
+owner: architecture_control_plane_owner
+approved_by: project_owner
+approval_ref: owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1
+rationale: >-
+  Wave14 真实暴露研发任务与 daily automation 在同一 checkout 读取半写状态并成为
+  第二 writer 的风险。聊天约定和计划内 lane ownership 不能替代 checkout-scoped、
+  可重放、fail-closed 的运行前门禁。
+intended_effect: >-
+  在首次 mutation 与 daily provider/cache/report side effect 前建立同一 ARCH-005
+  lease authority；重叠 writer 串行，互不相交 domain writer 保持并行。
+validation_plan:
+  - workspace identity、operation class和冲突矩阵 characterization
+  - overlapping writer exactly-one acquisition
+  - daily active-mutation和unattributed-dirty zero-side-effect tests
+  - heartbeat、expiry、replay、casefold、ancestor和reparse negative tests
+  - focused、architecture、contract、integration、reproducibility和required Full
+review:
+  owner: architecture_control_plane_owner
+  required_before_stage: S2_OR_WAVE15
+  condition: >-
+    S0/S1正式门禁通过后，从最终HEAD重建Wave15 readiness；任何S2 telemetry、
+    S5 task source cutover或扩大operation class均需独立review。
+authority:
+  lease_schema: execution_lease.v1
+  lease_event_schema: execution_lease_event.v1
+  implementation: arch_005_file_execution_lease_store
+  runtime_root: outputs/architecture/arch_005_s4d_checkout_guard
+workspace:
+  identity_method: resolved_checkout_and_git_common_dir_sha256
+  require_exact_head: true
+  require_git_checkout: true
+operation_classes:
+  domain_mutation:
+    workspace_gate_access: READ
+    path_mutation_allowed: true
+  shared_mutation:
+    workspace_gate_access: READ
+    path_mutation_allowed: true
+  daily_operation:
+    workspace_gate_access: WRITE
+    path_mutation_allowed: false
+  read_only_audit:
+    workspace_gate_access: READ
+    path_mutation_allowed: false
+lease:
+  ttl_seconds: 21600
+  heartbeat_interval_seconds: 300
+  max_reassignments: 1
+  arbiter_ttl_seconds: 30
+  max_total_active_leases: 8
+  authority_task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  allowlisted_actors:
+    - architecture-control-plane
+    - operations-automation
+    - integration-coordinator
+known_unrelated_exclusions:
+  - path: docs/research/growth_tilt_owner_diagnosis_pack.md
+    rationale: >-
+      该既有user-owned research文档不参与daily import、provider、cache、DQ、score或report
+      execution；只允许exact pathspec exclusion，guard不得读取、hash或复制其bytes。
+    owner_ref: owner_scope_preservation_2026-07-24
+safety:
+  task_source_cutover: false
+  automatic_task_mutation: false
+  wave15_assignment: false
+  strategy_logic_change: false
+  strategy_threshold_change: false
+  production_effect: none
+  broker_action: none

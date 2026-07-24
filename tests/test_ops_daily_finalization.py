@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import nullcontext
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -548,6 +549,7 @@ def test_closure_failure_and_failed_downgrade_never_leave_pass_manifest(
         return original_write_json_atomic(path, payload, **kwargs)
 
     monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(ops_cli, "hold_daily_checkout_guard", lambda **_: nullcontext())
     monkeypatch.setattr(ops_cli, "run_daily_ops_plan", fake_controlled_runner)
     monkeypatch.setattr(ops_cli, "_finalize_daily_ops_canonical_outputs", fake_finalization)
     monkeypatch.setattr(ops_cli, "_validate_daily_ops_finalization_closure", fail_closure)
