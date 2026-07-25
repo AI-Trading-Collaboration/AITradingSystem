@@ -168,6 +168,9 @@ class DailyOpsStep:
     enabled: bool = True
     skip_reason: str | None = None
     input_visibility: str = "local_or_readonly"
+    dependencies: tuple[str, ...] = ()
+    required_capture_components: tuple[str, ...] = ()
+    always_run: bool = False
 
     def missing_env_vars(self, env: Mapping[str, str]) -> tuple[str, ...]:
         if not self.enabled:
@@ -184,6 +187,13 @@ class DailyOpsPlan:
     steps: tuple[DailyOpsStep, ...]
     market_session: MarketSession
     production_effect: str = ProductionEffect.NONE.value
+
+    @property
+    def dependency_aware(self) -> bool:
+        return any(
+            step.dependencies or step.required_capture_components or step.always_run
+            for step in self.steps
+        )
 
     def missing_env_by_step(
         self,
@@ -204,7 +214,11 @@ class DailyOpsPlan:
 
     def status(self, env: Mapping[str, str] | None = None) -> str:
         if self.missing_env_vars(env):
-            return "BLOCKED_ENV"
+            return (
+                "READY_WITH_BLOCKED_BRANCHES"
+                if self.dependency_aware
+                else "BLOCKED_ENV"
+            )
         if any(not step.enabled for step in self.steps):
             return "READY_WITH_SKIPS"
         return "READY"
@@ -379,6 +393,30 @@ def _enforce_scheduled_daily_plan(plan: DailyOpsPlan) -> None:
         if step_id is None:
             continue
         step = step_by_id[step_id]
+        expected_dependencies = tuple(sorted(
+            dependency
+            for dependency in task.dependencies
+            if dependency in step_by_id
+        ))
+        if step.dependencies != expected_dependencies:
+            raise ValueError(
+                f"daily ops step {step_id} dependency drift: "
+                f"{step.dependencies!r} != {expected_dependencies!r}"
+            )
+        expected_capture_components = (
+            task.required_capture_components
+            if (
+                "capture_daily_inputs" in step_by_id
+                and step_by_id["capture_daily_inputs"].enabled
+            )
+            else ()
+        )
+        if step.required_capture_components != expected_capture_components:
+            raise ValueError(
+                f"daily ops step {step_id} capture component dependency drift"
+            )
+        if step.always_run is not task.always_run:
+            raise ValueError(f"daily ops step {step_id} always_run drift")
         if (
             not plan.market_session.is_trading_day
             and task.closed_market_behavior == "skip_score_artifacts"
@@ -714,8 +752,9 @@ def build_daily_ops_plan(
                 quality_gate=(
                     "内部 umbrella step 逐一尝试市场/宏观、FMP PIT、SEC、valuation 和官方来源；"
                     "市场/宏观保留最多两次受控尝试，并写入同日快照；"
-                    "单源失败后继续保全其他来源，但任一 required component 失败仍整体 "
-                    "fail closed。capture manifest schema="
+                    "单源失败后继续保全其他来源；PARTIAL_CAPTURE 只表示 capture closure "
+                    "完成，不授权缺失 component 的 consumer，overall 仍 fail closed。"
+                    "capture manifest schema="
                     f"{DAILY_INPUT_CAPTURE_SCHEMA_VERSION}，且不替代后续 DQ/PIT/score gates。"
                 ),
                 blocks_downstream=True,
@@ -1670,6 +1709,31 @@ def build_daily_ops_plan(
         }
         steps = [step for step in steps if step.step_id not in superseded_live_fetch_steps]
 
+    scheduled = load_scheduled_tasks_config()
+    scheduled_task_by_step = {
+        task.daily_plan_step_id: task
+        for task in scheduled.daily_tasks()
+        if task.daily_plan_step_id is not None
+    }
+    active_step_ids = {step.step_id for step in steps}
+    steps = [
+        replace(
+            step,
+            dependencies=tuple(sorted(
+                dependency
+                for dependency in scheduled_task_by_step[step.step_id].dependencies
+                if dependency in active_step_ids
+            )),
+            required_capture_components=(
+                scheduled_task_by_step[step.step_id].required_capture_components
+                if capture_active
+                else ()
+            ),
+            always_run=scheduled_task_by_step[step.step_id].always_run,
+        )
+        for step in steps
+    ]
+
     plan = DailyOpsPlan(
         as_of=as_of,
         generated_at=datetime.now(tz=UTC),
@@ -1757,7 +1821,7 @@ def run_daily_ops_plan(
             ),
         )
     missing_env = plan.missing_env_vars(checked_env)
-    if missing_env:
+    if missing_env and not plan.dependency_aware:
         finished_at = datetime.now(tz=UTC)
         status = "BLOCKED_ENV"
         return DailyOpsRunReport(
@@ -1803,6 +1867,42 @@ def run_daily_ops_plan(
             )
             continue
 
+        dependency_blockers = _daily_step_dependency_blockers(
+            step=step,
+            plan=plan,
+            results=tuple(results),
+        )
+        missing_step_env = step.missing_env_vars(checked_env)
+        if dependency_blockers or missing_step_env:
+            blocked_at = datetime.now(tz=UTC)
+            blocker_codes = (
+                *dependency_blockers,
+                *(
+                    f"MISSING_ENV:{env_var}"
+                    for env_var in missing_step_env
+                ),
+            )
+            blocker_summary = ",".join(blocker_codes)
+            if execution_observer is not None:
+                execution_observer.step_skipped(step, at=blocked_at)
+            results.append(
+                DailyOpsStepResult(
+                    step_id=step.step_id,
+                    title=step.title,
+                    command=step.command,
+                    status="BLOCKED",
+                    return_code=None,
+                    started_at=None,
+                    ended_at=blocked_at,
+                    duration_seconds=None,
+                    produced_paths=step.produced_paths,
+                    blocks_downstream=step.blocks_downstream,
+                    skip_reason=blocker_summary,
+                    error=blocker_summary,
+                )
+            )
+            continue
+
         execution_step = replace(
             step,
             command=_daily_ops_step_command_with_visibility_cutoff(
@@ -1830,6 +1930,8 @@ def run_daily_ops_plan(
             stderr_text = completed.stderr or ""
             artifact_error = _post_step_artifact_status_error(step) if return_code == 0 else None
             status = "PASS" if return_code == 0 and artifact_error is None else "FAIL"
+            if status == "PASS" and step.step_id == "capture_daily_inputs":
+                status = _capture_step_closure_status(step)
             diagnostic_path = None
             if status == "FAIL":
                 diagnostic_path = _write_step_failure_diagnostic(
@@ -1892,7 +1994,11 @@ def run_daily_ops_plan(
         results.append(result)
         if execution_observer is not None:
             execution_observer.step_finished(result, at=step_ended)
-        if result.status == "FAIL" and (stop_on_failure or step.blocks_downstream):
+        if (
+            result.status == "FAIL"
+            and not plan.dependency_aware
+            and (stop_on_failure or step.blocks_downstream)
+        ):
             break
 
     finished_at = datetime.now(tz=UTC)
@@ -1924,9 +2030,11 @@ class _DailyOpsLeaseObserver:
         *,
         lease: OperationsRunControlLease,
         resume_completed_step_ids: tuple[str, ...],
+        continue_independent_branches: bool,
     ) -> None:
         self.lease = lease
         self.resume_completed_step_ids = frozenset(resume_completed_step_ids)
+        self.continue_independent_branches = continue_independent_branches
 
     def step_skipped(self, step: DailyOpsStep, *, at: datetime) -> None:
         if step.step_id not in self.resume_completed_step_ids:
@@ -1936,8 +2044,11 @@ class _DailyOpsLeaseObserver:
         self.lease.start_step(step.step_id, at=at)
 
     def step_finished(self, result: DailyOpsStepResult, *, at: datetime) -> None:
-        if result.status == "PASS":
+        if result.status in {"PASS", "LIMITED"}:
             self.lease.pass_step(result.step_id, at=at)
+            return
+        if self.continue_independent_branches:
+            self.lease.continue_after_step_failure(result.step_id, at=at)
             return
         self.lease.fail_step(
             result.step_id,
@@ -1996,6 +2107,7 @@ def run_daily_ops_plan_controlled(
     spec = build_daily_schedule_workflow_spec(
         cadence=scheduled.cadence("daily_trading_day"),
         is_trading_day=plan.market_session.is_trading_day,
+        observed_step_ids=tuple(step.step_id for step in plan.steps),
     )
     control = runtime_control or OperationsRunControl(
         root=(
@@ -2042,6 +2154,7 @@ def run_daily_ops_plan_controlled(
     observer = _DailyOpsLeaseObserver(
         lease=acquisition.lease,
         resume_completed_step_ids=acquisition.resolution.resume_completed_step_ids,
+        continue_independent_branches=controlled_plan.dependency_aware,
     )
     try:
         report = run_daily_ops_plan(
@@ -2075,12 +2188,12 @@ def run_daily_ops_plan_controlled(
             elif report.status.startswith("BLOCKED"):
                 acquisition.lease.finish(
                     CanonicalStatus.BLOCKED,
-                    blocker_codes=(f"DAILY_RUN_{report.status}",),
+                    blocker_codes=_daily_run_blocker_codes(report),
                 )
             else:
                 acquisition.lease.finish(
                     CanonicalStatus.FAILED,
-                    blocker_codes=(f"DAILY_RUN_{report.status}",),
+                    blocker_codes=_daily_run_blocker_codes(report),
                 )
         return report
     except Exception:
@@ -2328,9 +2441,10 @@ def render_daily_ops_plan(
             "",
             "## 步骤",
             "",
-            "| 顺序 | Step | Enabled | Input Visibility | Command | Required Env | Missing Env | "
+            "| 顺序 | Step | Enabled | Dependencies | Capture Components | Always Run | "
+            "Input Visibility | Command | Required Env | Missing Env | "
             "Gate / 边界 | Outputs | Blocks Downstream |",
-            "|---:|---|---|---|---|---|---|---|---|---|",
+            "|---:|---|---|---|---|---|---|---|---|---|---|---|---|",
         ]
     )
     for index, step in enumerate(plan.steps, start=1):
@@ -2343,6 +2457,9 @@ def render_daily_ops_plan(
             f"{index} | "
             f"`{step.step_id}`<br/>{_escape_table(step.title)} | "
             f"{step.enabled} | "
+            f"{', '.join(step.dependencies)} | "
+            f"{', '.join(step.required_capture_components)} | "
+            f"{step.always_run} | "
             f"`{step.input_visibility}` | "
             f"{command} | "
             f"{required_env} | "
@@ -2517,7 +2634,10 @@ def render_daily_ops_run_report(
                 f"{_escape_table(issue.message)}"
             )
         lines.append("")
-    failed = report.failed_step
+    failed = report.failed_step or next(
+        (result for result in report.step_results if result.status == "BLOCKED"),
+        None,
+    )
     if failed is not None:
         failed_command = (
             _escape_table(_join_command(failed.command)) if failed.command else "PRECHECK"
@@ -2553,8 +2673,8 @@ def render_daily_ops_run_report(
         command = (
             f"`{_escape_table(_join_command(result.command))}`" if result.command else "PRECHECK"
         )
-        if result.status == "SKIPPED" and result.skip_reason:
-            command = f"SKIPPED: {_escape_table(result.skip_reason)}"
+        if result.status in {"SKIPPED", "BLOCKED"} and result.skip_reason:
+            command = f"{result.status}: {_escape_table(result.skip_reason)}"
         lines.append(
             "| "
             f"{index} | "
@@ -2572,8 +2692,10 @@ def render_daily_ops_run_report(
             "",
             "## 输出说明",
             "",
-            "- `PASS` 表示命令退出码为 0；`FAIL` 表示命令退出码非 0 或命令无法启动。",
-            "- `SKIPPED` 只会出现在显式传入 `--skip-*` 选项的步骤。",
+            "- `PASS` 表示命令和 artifact status gate 通过；`LIMITED` 表示 capture closure "
+            "完成但至少一个 required component 不可用；`FAIL` 表示命令、artifact 或启动失败。",
+            "- `BLOCKED` 表示 dependency、capture component 或 step-specific env 未满足，"
+            "runner 未调用；`SKIPPED` 表示显式/conditional skip 或 canonical resume。",
             "- 报告中的 `Stdout Lines` / `Stderr Lines` 只记录行数，不在主报告保存原文。",
             "- 失败步骤如生成诊断 artifact，仅保存脱敏 stdout/stderr，"
             "并在阻断步骤和 metadata 中记录路径。",
@@ -2848,9 +2970,93 @@ def _escape_table(value: str) -> str:
 def _daily_run_status(results: list[DailyOpsStepResult]) -> str:
     if any(result.status == "FAIL" for result in results):
         return "FAIL"
+    if any(result.status == "BLOCKED" for result in results):
+        return "BLOCKED_DEPENDENCY"
     if any(result.status == "SKIPPED" for result in results):
         return "PASS_WITH_SKIPS"
+    if any(result.status == "LIMITED" for result in results):
+        return "PASS_WITH_LIMITATIONS"
     return "PASS"
+
+
+def _daily_run_blocker_codes(report: DailyOpsRunReport) -> tuple[str, ...]:
+    blocker_codes: list[str] = []
+    for result in report.step_results:
+        if result.status == "FAIL":
+            blocker_codes.append(f"DAILY_STEP_FAILED:{result.step_id}")
+        elif result.status == "BLOCKED":
+            blocker_codes.append(f"DAILY_STEP_BLOCKED:{result.step_id}")
+    if not blocker_codes:
+        blocker_codes.append(f"DAILY_RUN_{report.status}")
+    return tuple(dict.fromkeys(blocker_codes))
+
+
+def _daily_step_dependency_blockers(
+    *,
+    step: DailyOpsStep,
+    plan: DailyOpsPlan,
+    results: tuple[DailyOpsStepResult, ...],
+) -> tuple[str, ...]:
+    if step.always_run:
+        return ()
+    result_by_id = {result.step_id: result for result in results}
+    blockers: list[str] = []
+    for dependency in step.dependencies:
+        result = result_by_id.get(dependency)
+        if result is None:
+            blockers.append(f"UPSTREAM_NOT_RESOLVED:{dependency}")
+            continue
+        if result.status == "PASS":
+            continue
+        if dependency == "capture_daily_inputs" and result.status == "LIMITED":
+            continue
+        if result.status == "SKIPPED":
+            continue
+        blockers.append(f"UPSTREAM_NOT_PASS:{dependency}:{result.status}")
+
+    if not step.required_capture_components:
+        return tuple(blockers)
+    capture_step = next(
+        (candidate for candidate in plan.steps if candidate.step_id == "capture_daily_inputs"),
+        None,
+    )
+    if capture_step is None:
+        return tuple(blockers)
+    if not capture_step.produced_paths:
+        return (*blockers, "CAPTURE_MANIFEST_PATH_MISSING")
+    manifest_path = capture_step.produced_paths[0]
+    try:
+        manifest = load_strict_json_path(manifest_path)
+    except (OSError, ValueError, StrictJsonContractError) as exc:
+        return (
+            *blockers,
+            f"CAPTURE_MANIFEST_UNREADABLE:{type(exc).__name__}",
+        )
+    component_rows = manifest.get("component_results")
+    if not isinstance(component_rows, list):
+        return (*blockers, "CAPTURE_COMPONENT_RESULTS_INVALID")
+    component_status = {
+        str(row.get("component_id")): str(row.get("status"))
+        for row in component_rows
+        if isinstance(row, Mapping)
+    }
+    for component_id in step.required_capture_components:
+        status = component_status.get(component_id, "MISSING")
+        if status != "PASS":
+            blockers.append(
+                f"CAPTURE_COMPONENT_NOT_PASS:{component_id}:{status}"
+            )
+    return tuple(blockers)
+
+
+def _capture_step_closure_status(step: DailyOpsStep) -> str:
+    if not step.produced_paths:
+        return "FAIL"
+    try:
+        payload = load_strict_json_path(step.produced_paths[0])
+    except (OSError, ValueError, StrictJsonContractError):
+        return "FAIL"
+    return "LIMITED" if payload.get("status") == "PARTIAL_CAPTURE" else "PASS"
 
 
 def _workflow_status(status: str) -> StepStatus:
@@ -2861,7 +3067,7 @@ def _workflow_status(status: str) -> StepStatus:
         return "SKIPPED"
     if normalized == "FAIL":
         return "FAIL"
-    if normalized.startswith("PASS_WITH") or normalized == "WARN":
+    if normalized.startswith("PASS_WITH") or normalized in {"WARN", "LIMITED"}:
         return "WARN"
     if normalized.startswith("BLOCKED"):
         return "BLOCKED"
@@ -3009,6 +3215,9 @@ def _metadata_command_record(step: DailyOpsStep) -> Mapping[str, object]:
         "blocks_downstream": step.blocks_downstream,
         "skip_reason": step.skip_reason,
         "input_visibility": step.input_visibility,
+        "dependencies": list(step.dependencies),
+        "required_capture_components": list(step.required_capture_components),
+        "always_run": step.always_run,
     }
 
 
@@ -3023,6 +3232,7 @@ def _metadata_step_result(result: DailyOpsStepResult) -> Mapping[str, object]:
         "duration_seconds": result.duration_seconds,
         "stdout_line_count": result.stdout_line_count,
         "stderr_line_count": result.stderr_line_count,
+        "skip_reason": result.skip_reason,
         "error": result.error,
         "diagnostic_path": None if result.diagnostic_path is None else str(result.diagnostic_path),
     }

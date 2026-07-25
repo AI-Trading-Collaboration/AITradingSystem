@@ -1,5 +1,5 @@
-schema_version: daily_input_capture_policy.v1
-policy_version: daily_input_capture_v1
+schema_version: daily_input_capture_policy.v2
+policy_version: daily_input_capture_v2
 owner: operations_owner_and_data_platform_owner
 status: REVIEWED
 reviewed_at: 2026-07-25
@@ -17,6 +17,48 @@ paths:
   processed_root: data/processed/daily_input_capture
   external_root: data/external/daily_input_capture
   report_root: outputs/daily_input_capture
+  source_control_root: outputs/daily_input_capture/source_control
+source_control:
+  blocker_taxonomy_version: daily_input_capture_blockers_v1
+  lease_ttl_seconds: 1800
+  component_policies:
+    market_macro:
+      max_attempts: 2
+      retry_delay_seconds: 5
+      retryable_blocker_codes:
+        - PROVIDER_UNAVAILABLE
+        - REQUEST_FAILED
+      recovery_mode: IMMUTABLE_RAW_BACKFILL
+    fmp_forward_pit:
+      max_attempts: 1
+      retry_delay_seconds: 0
+      retryable_blocker_codes: []
+      recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN
+    sec_companyfacts:
+      max_attempts: 1
+      retry_delay_seconds: 0
+      retryable_blocker_codes: []
+      recovery_mode: MANUAL_NON_PIT_RAW_REVIEW
+    fmp_valuation:
+      max_attempts: 1
+      retry_delay_seconds: 0
+      retryable_blocker_codes: []
+      recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN
+    official_policy_sources:
+      max_attempts: 1
+      retry_delay_seconds: 0
+      retryable_blocker_codes: []
+      recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN
+  rationale: >
+    The market/macro command retains the reviewed two-attempt transient-failure
+    budget established by OPS-069. PIT-sensitive and mutable-current endpoints
+    receive one contemporaneous attempt; later recovery must not manufacture
+    historical strict PIT. The 30-minute lease only serializes one
+    source/session capture and stale takeover is audit-recorded.
+  validation_evidence: OPS-070 fault injection and formal validation tiers
+  review_condition: >
+    Review when provider behavior, source eligibility, attempt budget, retry
+    delay, lease TTL, blocker taxonomy, or historical recovery semantics change.
 failure_policy:
   attempt_all_components: true
   required_component_failure_status: PARTIAL_CAPTURE

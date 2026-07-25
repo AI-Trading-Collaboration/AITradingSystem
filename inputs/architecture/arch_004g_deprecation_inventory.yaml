@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_6bcb1252487807eb1a28
+inventory_id: arch_004g_deprecation_inventory_a2d83ec491a3aad5dc33
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 1017
-  python_test_file_count: 1183
+  python_module_count: 1018
+  python_test_file_count: 1184
   direct_writer_baseline_count: 894
   direct_writer_current_count: 856
   direct_writer_violation_count: 0
@@ -115,10 +115,10 @@ surfaces:
   migration_wave: G4
   path: src/ai_trading_system/ops_daily.py
   file_count: 1
-  line_count: 3365
-  byte_count: 132993
-  source_sha256: ecf75087ddf14700951d07d9449ac8e6d93f65baa4aa6f343f40218b52adecf3
-  top_level_function_count: 65
+  line_count: 3575
+  byte_count: 141304
+  source_sha256: 180d067c8624dab5d07fcb881425c3c74cf8030aa7b9d96697abf9b82657f1e9
+  top_level_function_count: 68
   top_level_class_count: 10
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 4
@@ -146,15 +146,15 @@ surfaces:
   migration_wave: G4
   path: src/ai_trading_system/scheduled_tasks.py
   file_count: 1
-  line_count: 320
-  byte_count: 12327
-  source_sha256: 310da4bb5f37c9cb83fe664fe3bfe347700265a1312563b57da89931914762a3
-  top_level_function_count: 9
+  line_count: 393
+  byte_count: 15434
+  source_sha256: 00af1d2f3d47f81a73cdaa8304a03ffb7efcb9d311d5a5462b0837720f7034f5
+  top_level_function_count: 10
   top_level_class_count: 4
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 6
   test_reference_file_count: 11
-  docs_config_reference_file_count: 27
+  docs_config_reference_file_count: 29
   required_removal_gate_count: 12
   removal_ready: false
   open_gate_ids:

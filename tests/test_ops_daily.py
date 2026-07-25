@@ -1272,7 +1272,9 @@ def test_daily_ops_plan_closed_market_downloads_previous_trading_day_when_cache_
     )
 
 
-def test_run_daily_ops_plan_stops_on_first_failed_command(tmp_path: Path) -> None:
+def test_run_daily_ops_plan_continues_independent_branches_after_failure(
+    tmp_path: Path,
+) -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
         project_root=tmp_path,
@@ -1308,24 +1310,70 @@ def test_run_daily_ops_plan_stops_on_first_failed_command(tmp_path: Path) -> Non
     assert report.status == "FAIL"
     assert report.failed_step is not None
     assert report.failed_step.step_id == "sec_metrics"
-    assert [call[3:] for call in calls] == [
-        (
-            "validate-data",
-            "--as-of",
-            "2026-05-06",
-            "--execution-profile",
-            "daily_default.v1",
-        ),
-        ("fundamentals", "download-sec-companyfacts"),
-        (
-            "fundamentals",
-            "extract-sec-metrics",
-            "--as-of",
-            "2026-05-06",
-            "--input-dir",
-            str(tmp_path / "data" / "raw" / "sec_companyfacts"),
-        ),
-    ]
+    command_texts = {" ".join(call) for call in calls}
+    assert any("validate-data" in command for command in command_texts)
+    assert any("data freshness" in command for command in command_texts)
+    assert any("dynamic-v3-rescue schedule observe" in command for command in command_texts)
+    assert any("ops health" in command for command in command_texts)
+    assert not any("score-daily" in command for command in command_texts)
+    assert not any("merge-tsm-ir-sec-metrics" in command for command in command_texts)
+
+
+def test_partial_capture_blocks_only_missing_component_consumers(
+    tmp_path: Path,
+) -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    capture_step = next(
+        step for step in plan.steps if step.step_id == "capture_daily_inputs"
+    )
+    manifest = json.loads(capture_step.produced_paths[0].read_text(encoding="utf-8"))
+    manifest["status"] = "PARTIAL_CAPTURE"
+    next(
+        row
+        for row in manifest["component_results"]
+        if row["component_id"] == "sec_companyfacts"
+    )["status"] = "FAIL"
+    capture_step.produced_paths[0].write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+    calls: list[str] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(" ".join(command))
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={},
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+        visibility_latest_completed_trading_day=date(2026, 5, 6),
+    )
+
+    result_by_id = {result.step_id: result for result in report.step_results}
+    assert report.status == "BLOCKED_DEPENDENCY"
+    assert result_by_id["capture_daily_inputs"].status == "LIMITED"
+    assert result_by_id["validate_data"].status == "PASS"
+    assert result_by_id["pit_snapshots_validate"].status == "PASS"
+    assert result_by_id["sec_metrics"].status == "BLOCKED"
+    assert "CAPTURE_COMPONENT_NOT_PASS:sec_companyfacts:FAIL" in (
+        result_by_id["sec_metrics"].error or ""
+    )
+    assert result_by_id["score_daily"].status == "BLOCKED"
+    assert result_by_id["pipeline_health"].status == "PASS"
+    assert result_by_id["secret_hygiene"].status == "PASS"
+    assert not any("extract-sec-metrics" in command for command in calls)
+    assert any("validate-data" in command for command in calls)
+    assert any("pit-snapshots validate" in command for command in calls)
+    assert any("ops health" in command for command in calls)
+    assert any("security scan-secrets" in command for command in calls)
 
 
 def test_run_daily_ops_plan_writes_redacted_failure_diagnostic(tmp_path: Path) -> None:
@@ -1736,10 +1784,12 @@ def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> 
     assert report.failed_step is not None
     assert report.failed_step.step_id == "pit_snapshots_fetch_fmp_forward"
     assert "artifact_status_failed" in (report.failed_step.error or "")
-    assert [call[3:] for call in calls] == [
-        validate_step.command[1:],
-        pit_step.command[1:],
-    ]
+    command_texts = {" ".join(call) for call in calls}
+    assert any("validate-data" in command for command in command_texts)
+    assert any("fetch-fmp-forward" in command for command in command_texts)
+    assert any("data freshness" in command for command in command_texts)
+    assert any("ops health" in command for command in command_texts)
+    assert not any("score-daily" in command for command in command_texts)
 
 
 def test_daily_ops_report_quality_json_status_gate_accepts_only_canonical_successes(
@@ -2003,6 +2053,62 @@ def _write_daily_quality_artifacts(plan: DailyOpsPlan) -> None:
                 status_field="status",
                 status="OK",
             )
+
+
+def _write_daily_pass_status_artifacts(plan: DailyOpsPlan) -> None:
+    markdown_status_indexes = {
+        "official_policy_sources": (2,),
+        "validate_data": (0,),
+        "pit_snapshots_fetch_fmp_forward": (2,),
+        "pit_snapshots_build_manifest": (1,),
+        "pit_snapshots_validate": (0,),
+        "sec_metrics": (0, 2),
+        "sec_metrics_validation": (0,),
+        "valuation_snapshots": (2, 3),
+        "score_daily": (2, 4),
+        "pipeline_health": (0,),
+        "secret_hygiene": (0,),
+    }
+    for step in plan.steps:
+        if step.step_id == "capture_daily_inputs":
+            step.produced_paths[0].parent.mkdir(parents=True, exist_ok=True)
+            step.produced_paths[0].write_text(
+                json.dumps(
+                    {
+                        "schema_version": "daily_input_capture_manifest.v1",
+                        "as_of": plan.as_of.isoformat(),
+                        "status": "CAPTURED",
+                        "component_results": [
+                            {"component_id": component_id, "status": "PASS"}
+                            for component_id in (
+                                "market_macro",
+                                "fmp_forward_pit",
+                                "sec_companyfacts",
+                                "fmp_valuation",
+                                "official_policy_sources",
+                            )
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            step.produced_paths[2].write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "report_type": "daily_input_capture_validation",
+                        "as_of": plan.as_of.isoformat(),
+                        "production_effect": "none",
+                        "status": "PASS",
+                    }
+                ),
+                encoding="utf-8",
+            )
+        for index in markdown_status_indexes.get(step.step_id, ()):
+            path = step.produced_paths[index]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("- 状态：PASS\n", encoding="utf-8")
+    _write_daily_quality_artifacts(plan)
 
 
 def _write_price_cache(path: Path, latest_date: str) -> None:

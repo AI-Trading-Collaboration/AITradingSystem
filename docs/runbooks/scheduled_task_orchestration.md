@@ -8,46 +8,43 @@
 
 ## Daily Trading-Day Chain
 
-交易日 `aits ops daily-run` 的受控顺序如下：
+交易日 `aits ops daily-run` 仍按配置中的稳定拓扑顺序展示，但执行语义从线性
+fail-fast 改为 `scheduled_tasks_v4` 显式 DAG：
 
-1. `download-data`
-2. `validate-data`
-3. `pit-snapshots fetch-fmp-forward --continue-on-failure`
-4. `pit-snapshots build-manifest`
-5. `pit-snapshots validate`
-6. `fundamentals download-sec-companyfacts`
-7. `fundamentals extract-sec-metrics`
-8. `fundamentals merge-tsm-ir-sec-metrics`
-9. `fundamentals validate-sec-metrics`
-10. `valuation fetch-fmp`
-11. `score-daily`
-12. `forward-evidence capture-dry-run-daily --as-of {as_of}`
-13. `reports dashboard`
-14. `sec-pit shadow-observe --latest`
-15. `sec-pit shadow-monitor --latest`
-16. `reports score-change-attribution --latest`
-17. `reports market-panel --latest`
-18. `data freshness --latest`
-19. `data recover-freshness --latest`
-20. `portfolio track-candidate --latest`
-21. `portfolio review-tracking --latest --show-window-progress`
-22. `reports portfolio-tracking-review --latest`
-23. `etf forward update --latest`
-24. `etf forward dashboard --latest`
-25. `etf forward watchlist --latest`
-26. `reports artifact-lineage --latest`
-27. `reports validate-artifact-lineage --latest`
-28. `reports index --latest`
-29. `docs report-contract --latest`
-30. `reports research-governance-summary --latest`
-31. `reports reader-brief --latest`
-32. `reports quality-gate --latest`
-33. `reports validate-reader-brief --latest`
-34. `etf dynamic-v3-rescue schedule observe --as-of {as_of}`
-35. `ops health`
-36. `security scan-secrets`
+1. capture plane：`ops capture-daily-inputs` 逐源尝试 market/macro、FMP PIT、SEC、
+   valuation 与 official sources；
+2. independent validation branches：
+   `validate-data <- market_macro`、
+   `pit build -> pit validate <- fmp_forward_pit`、
+   `sec metrics -> merge -> validate <- sec_companyfacts`；
+3. score join：`score-daily` 同时依赖 strict DQ/PIT/SEC 和
+   `fmp_valuation + official_policy_sources`；
+4. report branches：forward evidence、dashboard、SEC PIT observe/monitor、score
+   attribution、market panel、freshness/recovery、portfolio tracking、ETF forward、
+   artifact lineage、report index、documentation/governance 与 Reader Brief quality
+   都声明自己的 upstream；
+5. operator closure：`ops health` 与 `security scan-secrets` 为 `always_run`。
 
-`validate-data` 是 cached market / macro data 的必需质量门禁。任何 downstream scoring、technical features、backtest 或 daily report 不得绕过该门禁。`forward-evidence capture-dry-run-daily` 只在 `score-daily` 后写 dry-run archive 和 append-only ledger，固定 `production_effect=none`，不得触发 broker/order、paper-shadow、official weight 或 production mutation。Portfolio tracking review 的 `needs_more_data` 是 VALIDATING 下的正常窗口状态，不得作为 scheduler 失败或 production approval。Dynamic v3 rescue `schedule observe` 只允许检查 weekly due 条件、latest pointer validation、stale 状态和可选 observe-only shadow monitor；不得自动运行 `sweep run-profile`、real sweep、candidate attribution、walk-forward、overfit 或 `promotion pack`。
+一个 branch 的 `FAIL/BLOCKED` 只传播给显式 dependents；无关 sibling 和 always-run
+closure 继续。overall 只要存在 required branch 缺口就必须是
+`BLOCKED_DEPENDENCY/FAIL`，不会进入 Reader Brief finalization 或 terminal PASS。
+`validate-data` 仍是所有 cached market/macro score/report consumer 的必需质量门禁，
+不能因 sibling continuation 被绕过。`forward-evidence capture-dry-run-daily` 只在
+`score-daily` PASS 后写 dry-run archive 和 append-only ledger，固定
+`production_effect=none`，不得触发 broker/order、paper-shadow、official weight 或
+production mutation。Portfolio tracking review 的 `needs_more_data` 是 VALIDATING 下的正常
+窗口状态，不得作为 production approval。Dynamic v3 rescue `schedule observe` 只允许检查
+weekly due、latest pointer、stale 和 optional observe-only shadow monitor；不得自动运行
+parameter sweep、promotion pack 或 broker path。
+
+Capture umbrella 内部仍按稳定顺序展示，但每个 source 有独立
+`source_idempotency_key/lease/attempt_history`。一个 source 的 active lease、quota、credential、
+schema 或 attempt exhaustion 不得扣减其他 source budget。gap ledger 生成
+source/session recovery queue；queue 只登记 manual recovery readiness，不是 scheduler task。
+
+外部 scheduler 仍只能调用 `aits ops daily-run`。当 reviewed external-scheduler marker 存在时，
+该命令先执行 pinned-clean checkout runtime preflight，再进入 checkout WRITE guard。不得为
+preflight、recovery queue 或 non-daily cadence 创建额外 scheduler entry。
 
 ## 验证 Daily Plan
 
@@ -63,11 +60,20 @@ aits ops daily-plan --as-of 2026-05-06
 aits ops daily-run --as-of 2026-05-06
 ```
 
-计划和执行器都应显示同一顺序。若配置与代码步骤不一致，`daily-plan` / `daily-run` 应 fail closed，而不是继续用隐式顺序运行。
+计划和执行器都应显示同一拓扑顺序、dependencies、capture components 与 always-run
+标记。若配置与代码步骤/DAG不一致，`daily-plan` / `daily-run` 应 fail closed，而不是继续用隐式顺序运行。
 
 两者还会在原计划Markdown旁写入 `daily_operations_shadow.v1` JSON sidecar，保存source config hash、market-session activated WorkflowSpec、DUE resolution、non-executing RunLedger和exact parity。该sidecar是additive审计证据，不执行命令、不启用non-daily dispatch、不改变原Markdown bytes/path。
 
-Sidecar同时记录`config/operations/runtime_control.yaml`的path/hash和cut-in flags。F1.4后`legacy_daily_executor_cut_in_enabled=true`：`daily-run`先获取canonical workflow/date lease，再通过兼容façade执行原步骤；每步PASS/SKIPPED/FAILED与terminal状态同时写入`outputs/run_control/daily/states/<idempotency-key>.json`和相邻`*.run_ledger.json`。相同spec/as-of已PASS时不重复运行；active lock、unsafe resume或attempt exhausted在runner前阻断。`validate-data`失败必须在ledger中把该步记为FAILED、下游记为BLOCKED，且不得生成后续score/report。该切换不启用non-daily dispatch。
+Sidecar同时记录`config/operations/runtime_control.yaml`的path/hash和cut-in flags。
+`legacy_daily_executor_cut_in_enabled=true` 时，`daily-run`先获取canonical workflow/date
+lease，再通过兼容façade执行 DAG；每步结果与terminal状态写入
+`outputs/run_control/daily/states/<idempotency-key>.json`和相邻`*.run_ledger.json`。相同
+spec/as-of已PASS时不重复运行；active lock、unsafe resume或attempt exhausted在runner前阻断。
+branch failure 后 lease 保持 active，failed step slot 被释放以运行 independent sibling；未启动的
+dependency-blocked step 在 daily report 为 `BLOCKED`，ledger 为 `SKIPPED`，严格结果必须读取顶层
+`run_status/run_blocker_codes`。`validate-data`失败不得执行score/report consumer，但不再阻止PIT/SEC
+sibling或always-run closure。该切换不启用non-daily dispatch。
 
 F1.5在每次`daily-run`的canonical metadata目录additive写`periodic_operations_plan_YYYY-MM-DD.json`。该文件覆盖14 weekly、6 biweekly、6 monthly和15 ad-hoc任务，每项独立保存one-step WorkflowSpec、typed due resolution、non-executing RunLedger和原command template；缺DQ/artifact/owner evidence的due项BLOCKED，非period-end或event未触发项NOT_DUE。`automatic_command_dispatch_enabled=false`，因此daily trigger不执行这些命令。Operator只有在持有完整evidence/owner decision时才可显式调用`aits ops periodic-dispatch ... --confirm-manual-dispatch`；未解析`{...}`/`<...>`、自然语言manual checkpoint、非allowlist前缀、duplicate/concurrent/attempt exhausted均fail closed。该manual command不是外部scheduler entry。
 

@@ -121,6 +121,28 @@ def _write_daily_pass_status_artifacts(plan) -> None:
     }
     for step in plan.steps:
         if step.step_id == "capture_daily_inputs":
+            manifest_path = step.produced_paths[0]
+            manifest_path.parent.mkdir(parents=True, exist_ok=True)
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "daily_input_capture_manifest.v1",
+                        "as_of": plan.as_of.isoformat(),
+                        "status": "CAPTURED",
+                        "component_results": [
+                            {"component_id": component_id, "status": "PASS"}
+                            for component_id in (
+                                "market_macro",
+                                "fmp_forward_pit",
+                                "sec_companyfacts",
+                                "fmp_valuation",
+                                "official_policy_sources",
+                            )
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
             path = step.produced_paths[2]
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(
@@ -798,7 +820,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
     assert total == 79
 
 
-def test_daily_adapter_preserves_order_and_legacy_commands_without_enabling_runtime() -> None:
+def test_daily_adapter_preserves_order_explicit_dag_and_legacy_commands() -> None:
     cadence = load_scheduled_tasks_config().cadence("daily_trading_day")
     assessment = assess_scheduled_cadence(
         cadence,
@@ -814,7 +836,18 @@ def test_daily_adapter_preserves_order_and_legacy_commands_without_enabling_runt
     steps = assessment.workflow_spec.steps
     assert [step.step_id for step in steps] == [task.daily_plan_step_id for task in cadence.tasks]
     assert steps[0].dependencies == ()
-    assert steps[1].dependencies == (steps[0].step_id,)
+    assert steps[1].dependencies == ()
+    assert next(step for step in steps if step.step_id == "validate_data").dependencies == (
+        "capture_daily_inputs",
+        "download_data",
+    )
+    assert next(step for step in steps if step.step_id == "score_daily").dependencies == (
+        "official_policy_sources",
+        "pit_snapshots_validate",
+        "sec_metrics_validation",
+        "validate_data",
+        "valuation_snapshots",
+    )
     assert " ".join(steps[0].legacy_command) == cadence.tasks[0].command
     assert all(step.entrypoint.callable_name == "dispatch_scheduled_task" for step in steps)
 
@@ -1357,9 +1390,9 @@ def test_controlled_daily_executor_finalization_failure_cannot_write_terminal_pa
     assert report.failed_step.diagnostic_path is not None
     assert report.failed_step.diagnostic_path.exists()
     assert state["status"] == "FAILED"
-    assert state["blocker_codes"] == ["DAILY_RUN_FAIL_FINALIZATION"]
+    assert state["blocker_codes"] == ["DAILY_STEP_FAILED:canonical_finalization"]
     assert ledger.run_status is CanonicalStatus.FAILED
-    assert ledger.run_blocker_codes == ("DAILY_RUN_FAIL_FINALIZATION",)
+    assert ledger.run_blocker_codes == ("DAILY_STEP_FAILED:canonical_finalization",)
     assert all(
         entry.status in {CanonicalStatus.PASS, CanonicalStatus.SKIPPED} for entry in ledger.entries
     )
@@ -1563,7 +1596,13 @@ def test_controlled_daily_executor_blocks_rerun_after_capture_attempt_budget_is_
     )
     assert failed.status == "FAIL"
     assert exhausted.status == "RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED"
-    assert exhausted.failed_step.error == "STEP_ATTEMPT_BUDGET_EXHAUSTED:capture_daily_inputs"
+    assert {
+        item for item in (exhausted.failed_step.error or "").split(",")
+    } == {
+        "STEP_ATTEMPT_BUDGET_EXHAUSTED:capture_daily_inputs",
+        "STEP_ATTEMPT_BUDGET_EXHAUSTED:pipeline_health",
+        "STEP_ATTEMPT_BUDGET_EXHAUSTED:secret_hygiene",
+    }
     state = json.loads(_execution_state_path(tmp_path / "control" / "states").read_text())
     attempts = {row["step_id"]: row["attempts"] for row in state["step_attempts"]}
     assert attempts["capture_daily_inputs"] == 1
@@ -1659,14 +1698,82 @@ def test_controlled_daily_executor_keeps_validate_data_fail_closed_boundary(
     state_path = _execution_state_path(state_root)
     state = json.loads(state_path.read_text(encoding="utf-8"))
     assert state["status"] == "FAILED"
-    assert state["completed_step_ids"] == ["capture_daily_inputs"]
-    assert {row["step_id"]: row["attempts"] for row in state["step_attempts"]} == {
-        "capture_daily_inputs": 1,
-        "validate_data": 1,
-    }
+    assert "capture_daily_inputs" in state["completed_step_ids"]
+    assert "pit_snapshots_validate" in state["completed_step_ids"]
+    assert "sec_metrics_validation" in state["completed_step_ids"]
+    assert "pipeline_health" in state["completed_step_ids"]
+    assert "secret_hygiene" in state["completed_step_ids"]
+    attempts = {row["step_id"]: row["attempts"] for row in state["step_attempts"]}
+    assert attempts["capture_daily_inputs"] == 1
+    assert attempts["validate_data"] == 1
+    assert attempts["pit_snapshots_build_manifest"] == 1
+    assert attempts["sec_metrics"] == 1
     ledger = RunLedger.from_dict(
         json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
     )
     assert ledger.entry("capture_daily_inputs").status is CanonicalStatus.PASS
     assert ledger.entry("validate_data").status is CanonicalStatus.FAILED
-    assert ledger.entry("score_daily").status is CanonicalStatus.BLOCKED
+    assert ledger.entry("score_daily").status is CanonicalStatus.SKIPPED
+
+
+def test_controlled_daily_executor_records_partial_capture_branch_isolation(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    capture_step = next(
+        step for step in plan.steps if step.step_id == "capture_daily_inputs"
+    )
+    manifest = json.loads(capture_step.produced_paths[0].read_text(encoding="utf-8"))
+    manifest["status"] = "PARTIAL_CAPTURE"
+    next(
+        row
+        for row in manifest["component_results"]
+        if row["component_id"] == "fmp_forward_pit"
+    )["status"] = "FAIL"
+    capture_step.produced_paths[0].write_text(json.dumps(manifest), encoding="utf-8")
+    calls: list[str] = []
+
+    def runner(command, **kwargs):
+        calls.append(" ".join(command))
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="partial_capture",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        run_control_root=tmp_path / "control",
+    )
+
+    state_root = tmp_path / "control" / "states"
+    state = json.loads(_execution_state_path(state_root).read_text(encoding="utf-8"))
+    ledger = RunLedger.from_dict(
+        json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
+    )
+    result_by_id = {result.step_id: result for result in report.step_results}
+    assert report.status == "BLOCKED_DEPENDENCY"
+    assert state["status"] == "BLOCKED"
+    assert "capture_daily_inputs" in state["completed_step_ids"]
+    assert "validate_data" in state["completed_step_ids"]
+    assert "sec_metrics_validation" in state["completed_step_ids"]
+    assert "pipeline_health" in state["completed_step_ids"]
+    assert "pit_snapshots_build_manifest" in state["skipped_step_ids"]
+    assert result_by_id["capture_daily_inputs"].status == "LIMITED"
+    assert result_by_id["pit_snapshots_build_manifest"].status == "BLOCKED"
+    assert result_by_id["score_daily"].status == "BLOCKED"
+    assert not any("pit-snapshots build-manifest" in command for command in calls)
+    assert any("validate-data" in command for command in calls)
+    assert any("extract-sec-metrics" in command for command in calls)
+    assert ledger.entry("capture_daily_inputs").status is CanonicalStatus.PASS
+    assert ledger.entry("pit_snapshots_build_manifest").status is CanonicalStatus.SKIPPED
+    assert ledger.entry("score_daily").status is CanonicalStatus.SKIPPED
+    assert ledger.run_status is CanonicalStatus.BLOCKED

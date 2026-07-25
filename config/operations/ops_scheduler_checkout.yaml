@@ -1,0 +1,47 @@
+schema_version: ops_scheduler_checkout_policy.v1
+policy_id: ops_scheduler_checkout_v1
+version: 1.0.0
+status: REVIEWED_ENGINEERING_READY_OWNER_DEPLOYMENT_REQUIRED
+owner: operations_owner_and_project_owner
+reviewed_at: 2026-07-25
+rationale: >
+  Daily provider capture must run from a pinned clean checkout that is isolated
+  from active development changes. The existing checkout lease guard remains
+  the in-checkout writer authority; this policy proves the external scheduler
+  selected the intended checkout and release commit before that guard runs.
+environment:
+  scheduler_marker_name: AITS_EXTERNAL_SCHEDULER
+  scheduler_marker_value: "1"
+  checkout_root_name: AITS_OPS_CHECKOUT_ROOT
+  release_commit_name: AITS_OPS_RELEASE_COMMIT
+  development_checkout_root_name: AITS_DEVELOPMENT_CHECKOUT_ROOT
+repository:
+  expected_remote: git@github.com:AI-Trading-Collaboration/AITradingSystem.git
+  exact_release_commit_required: true
+  clean_checkout_required: true
+  independent_from_development_checkout: true
+  current_process_must_run_from_ops_checkout: true
+trigger:
+  unified_external_trigger:
+    - aits
+    - ops
+    - daily-run
+  separate_periodic_scheduler_entries_allowed: false
+deployment:
+  activation_authorized: false
+  scheduler_installed: false
+  scheduler_enabled: false
+  owner_action_required: >
+    Provision the isolated checkout, pin AITS_OPS_RELEASE_COMMIT, scope
+    credentials, install the one daily-run scheduler entry, and record owner
+    acceptance before changing activation_authorized.
+safety:
+  production_effect: none
+  production_weight_write: false
+  active_shadow_weight_write: false
+  broker_action: false
+  trading_action: false
+review_condition: >
+  Review when the repository remote, environment contract, checkout identity,
+  release pinning, scheduler trigger, deployment state, credential scope, or
+  safety boundary changes.

@@ -340,22 +340,46 @@ FMP forward PIT、SEC companyfacts、FMP valuation/analyst estimates 与 officia
 reviewed policy 和 safety boundary，gap ledger 按同一 XNYS authority 从 tracking start 枚举
 每个 session。
 
-只有 required components 全部通过时 capture step 才返回 0；任何 partial 都在保留成功来源
-之后整体 fail closed。即使 capture 为 `CAPTURED`，其
+OPS-070 S1 将 capture closure 与 consumer authorization 进一步拆开：只要所有 enabled components
+均已尝试，且 manifest、validation 与 gap ledger 可验证，内部 capture command 就完成 closure。
+required component 缺失时 manifest 仍保持 `PARTIAL_CAPTURE`，executor 将该 step 记为 `LIMITED`，
+绝不伪装成 `CAPTURED`。即使 capture 为 `CAPTURED`，其
 `data_quality_status=NOT_EVALUATED`、`consumer_cutover_allowed=false`，后续仍须独立通过
 canonical download publication、`daily_default.v1` strict DQ、PIT/SEC/valuation validation、
 score 与 Reader Brief finalization。PIT build、SEC metrics 与 score valuation input 绑定同日
 capture path；被 umbrella 取代的独立 live fetch steps 不再重复调用。official/OpenAI 的
 score-time formal path仍执行自身权限、cache、visibility 与 formal assessment gates。
 
+`scheduled_tasks_v4` 为 daily steps 冻结显式 DAG 与 capture component matrix：
+`validate_data <- market_macro`、`pit_snapshots_build_manifest <- fmp_forward_pit`、
+`sec_metrics <- sec_companyfacts`，`score_daily` 同时依赖 strict DQ/PIT/SEC steps 与
+`fmp_valuation + official_policy_sources`。某个 source 或 consumer 失败只阻断自己的 descendants；
+无关 sibling 继续，`pipeline_health` 和 `secret_hygiene` 始终执行 operator closure。runtime-control
+保持同一 lease，失败 step 释放 active slot后继续记账，最后以全部 branch 结果统一写
+`BLOCKED/FAILED`。任何 required branch 不完整都不能进入 Reader Brief finalization 或 terminal PASS。
+OPS-070 S2 为每个 `source/session` 建立独立 state、attempt history、idempotency key 和 active
+lease；retry budget、delay、retryable blocker、lease TTL 与 recovery mode 来自
+`daily_input_capture_policy.v2`。活动 lease 和 non-retryable failure 只阻断该 source，stale lease
+在 takeover 前进入 immutable history，已验证 PASS state 可复用而不重复 provider 请求。
+
+S3 由 gap ledger 派生 `daily_input_capture_recovery_queue.v1`：market/macro 可进入人工 immutable
+raw recovery 准备，SEC 需要 non-PIT owner review，PIT-sensitive FMP/official sources 禁止历史
+recapture。queue 不自动执行、不改旧 terminal、不产生 strict PIT 或 consumer authorization。
+
+S4 在现有 checkout WRITE guard 前增加 external scheduler checkout preflight。reviewed env contract
+必须指向与开发工作区不同的 clean checkout、exact release commit 和 reviewed origin；同一进程必须
+确实从该 ops checkout 运行。preflight 只证明 engineering readiness，真实 scheduler/credential
+deployment 仍保持 owner-gated、未安装、未启用。
+
 ```mermaid
 flowchart LR
-    TRIG["Only external trigger<br/>aits ops daily-run"] --> CAPTURE["capture_daily_inputs umbrella"]
-    CAPTURE --> MM["Market + macro canonical download<br/>max 2 attempts + date snapshot"]
-    CAPTURE --> FPIT["FMP forward PIT"]
-    CAPTURE --> SEC["SEC companyfacts"]
-    CAPTURE --> VAL["FMP valuation + analyst estimates"]
-    CAPTURE --> OFF["Official policy sources"]
+    TRIG["Only external trigger<br/>aits ops daily-run"] --> PREFLIGHT["External mode: pinned clean ops checkout preflight"]
+    PREFLIGHT --> CAPTURE["capture_daily_inputs umbrella"]
+    CAPTURE --> MM["Market + macro canonical download<br/>source lease + governed retry"]
+    CAPTURE --> FPIT["FMP forward PIT<br/>source lease"]
+    CAPTURE --> SEC["SEC companyfacts<br/>source lease"]
+    CAPTURE --> VAL["FMP valuation + analyst estimates<br/>source lease"]
+    CAPTURE --> OFF["Official policy sources<br/>source lease"]
     MM --> MAN
     FPIT --> MAN["Date-scoped manifest<br/>path / SHA-256 / size"]
     SEC --> MAN
@@ -363,11 +387,23 @@ flowchart LR
     OFF --> MAN
     MAN --> VCAP["Capture validation"]
     VCAP --> GAP["XNYS session gap ledger"]
-    VCAP -->|"all required PASS"| DQCAP["strict daily_default.v1 DQ"]
-    VCAP -->|"partial / tamper / policy drift"| STOPCAP["Retain successful bytes<br/>block downstream"]
-    DQCAP --> PITCAP["PIT + SEC + valuation consumers<br/>same-date capture paths"]
-    PITCAP --> SCORECAP["score / dashboard / Reader Brief finalization"]
-    GAP -.-> SAFE_CAP["No backfilled strict PIT<br/>no weights / broker / trading"]
+    GAP --> REC["Source/session recovery queue<br/>manual only / no strict PIT"]
+    VCAP --> CDEP["Component dependency matrix"]
+    CDEP -->|"market_macro PASS"| DQCAP["strict daily_default.v1 DQ"]
+    CDEP -->|"fmp_forward_pit PASS"| PITCAP["PIT validation"]
+    CDEP -->|"sec_companyfacts PASS"| SECCAP["SEC validation"]
+    CDEP -->|"component missing"| BRCAP["Block only dependent branch"]
+    DQCAP --> SCORECAP["score gate"]
+    PITCAP --> SCORECAP
+    SECCAP --> SCORECAP
+    CDEP -->|"valuation + official PASS"| SCORECAP
+    SCORECAP --> FINALCAP["dashboard / Reader Brief finalization"]
+    VCAP -->|"tamper / policy drift"| STOPCAP["Fail capture closure"]
+    BRCAP --> CLOSECAP["Always-run health + secret closure"]
+    STOPCAP --> CLOSECAP
+    FINALCAP --> CLOSECAP
+    CLOSECAP --> TERM["Strict terminal PASS / BLOCKED / FAILED"]
+    REC -.-> SAFE_CAP["No automatic recovery<br/>no backfilled strict PIT<br/>no weights / broker / trading"]
 ```
 
 Wave15 D0B3/G4B在上述全局false flag之外增加第一个、也是唯一一个consumer-scoped capability，
@@ -889,11 +925,11 @@ ARCH-004F2 以 `docs/research/current_research_strategy_execution_chain.md` 建�
 
 ARCH-004F2.5 将上述 lifecycle 落为 `contracts.research_lifecycle` pure state machine：`ResearchPreregistration` 强制 hypothesis/baseline/candidate/context、selection-rule SHA-256、metrics、policy refs、validation plan、timezone-aware freeze time、`result_visibility=NONE`、manual review和 no-production；`ResearchLifecycleRecord` 只允许 observation -> evidence -> `KEEP|INVESTIGATE|RETIRE|OPEN_RESEARCH`，OPEN_RESEARCH 后仍须单独 freeze proposal、记录 `PASS|FAILED|BLOCKED` validation，再由人工 owner决定 ADOPT/REJECT/CONTINUE。`apply_periodic_research_review` 只能停在 review outcome，不能创建 preregistration、validation、owner decision或 adoption。既有 `research_campaign.py` 保留为 campaign control plane，`legacy.research_campaign_adapter` 在缺 context/selection checksum/result visibility/policy refs 时显式 BLOCKED，不推断 READY。Generic Experiment runner 通过 optional lifecycle plugin capability写派生 `.lifecycle.json`；未注册 lifecycle plugin 的 spec完全不变。Growth-tilt closure reference 中 terminal negative evidence进入 `RETIRE -> RETIRED`，source-contract blocker进入 `INVESTIGATE -> INVESTIGATING`；旧 primary/section/Markdown/envelope/run-ledger path/schema/status/bytes保持，lifecycle只作 additive sidecar。该 runtime contract不改变研究结论、阈值、权重、DQ/PIT、promotion、paper-shadow、production或broker。
 
-ARCH-004F1 当前建立 operations shadow control path：`config/scheduled_tasks.yaml` 的 37 daily + 41 non-daily tasks 先经 `legacy.scheduled_tasks_adapter` 的显式 owner/timezone/due-policy binding 转为 canonical `WorkflowSpec`；legacy `none/local_cache_write/local_report_write` 通过命名兼容表映射为 no-production boundary，未知 cadence/effect 直接 BLOCKED。Pure `contracts.operations` 用 typed policy/context 解析 daily trigger、period-end、biweekly anchor 和 explicit trigger，并在真正 DUE 后依次检查 completed daily、DQ evidence id、required artifact ids 和 owner decision id，输出 deterministic `DUE|NOT_DUE|BLOCKED` resolution；non-executing `OperationsShadowPlan` 将 resolution 传播到 canonical RunLedger，但 `execution_enabled=false` 且 legacy dispatcher硬阻断。原先只在 `ops_daily.py` 出现的 `official_policy_sources` 已正式登记为 `activation_condition=closed_market_only`，loader、legacy daily validator和shadow WorkflowSpec按同一 market-session activation选择步骤；2个 trading-day和2个 closed-market plan parity均PASS。`aits ops daily-plan`与`daily-run`现在保留旧Markdown bytes/path，同时原子写相邻`*.operations_shadow.json`：sidecar固定`daily_operations_shadow.v1`、source config path/hash、activated WorkflowSpec、DUE resolution、non-executing RunLedger、parity PASS、`commands_executed=false`、`non_daily_dispatch_enabled=false`、`production_effect=none`、`broker_action=none`；parity非PASS则fail closed。F1.2完成，F1.3开始处理lock/retry/idempotency/resume。外部入口仍只有`aits ops daily-run`，non-daily自动dispatch保持disabled。
+ARCH-004F1 当前建立 operations shadow control path：`config/scheduled_tasks.yaml` 的 38 daily + 41 non-daily tasks 先经 `legacy.scheduled_tasks_adapter` 的显式 owner/timezone/due-policy binding 转为 canonical `WorkflowSpec`；legacy `none/local_cache_write/local_report_write` 通过命名兼容表映射为 no-production boundary，未知 cadence/effect 直接 BLOCKED。Pure `contracts.operations` 用 typed policy/context 解析 daily trigger、period-end、biweekly anchor 和 explicit trigger，并在真正 DUE 后依次检查 completed daily、DQ evidence id、required artifact ids 和 owner decision id，输出 deterministic `DUE|NOT_DUE|BLOCKED` resolution；non-executing `OperationsShadowPlan` 将 resolution 传播到 canonical RunLedger，但 `execution_enabled=false` 且 legacy dispatcher硬阻断。原先只在 `ops_daily.py` 出现的 `official_policy_sources` 已正式登记为 `activation_condition=closed_market_only`，loader、legacy daily validator和shadow WorkflowSpec按同一 market-session activation选择步骤；2个 trading-day和2个 closed-market plan parity均PASS。`aits ops daily-plan`与`daily-run`现在保留旧Markdown bytes/path，同时原子写相邻`*.operations_shadow.json`：sidecar固定`daily_operations_shadow.v1`、source config path/hash、activated WorkflowSpec、DUE resolution、non-executing RunLedger、parity PASS、`commands_executed=false`、`non_daily_dispatch_enabled=false`、`production_effect=none`、`broker_action=none`；parity非PASS则fail closed。F1.2完成，F1.3开始处理lock/retry/idempotency/resume。外部入口仍只有`aits ops daily-run`，non-daily自动dispatch保持disabled。
 
 ARCH-004F1.3 新增尚未cut-in legacy daily executor的canonical runtime-control层。`config/operations/runtime_control.yaml`治理6小时lock TTL、2次run attempt上限、idempotent-only resume及daily/non-daily cut-in flags；`OperationsRunControl`以`workflow_id + workflow_spec_id + as_of`生成deterministic idempotency key，以workflow/date原子目录lock阻断并发，只在`expires_at`已过时原子回收stale lock，并通过canonical atomic writer持久化`operations_execution_state.v1`。Run state逐步记录current/completed step和每步attempt；`WorkflowStepSpec.max_attempts`参与真实retry gate，completed/current partial state只有明确`idempotent=true`才可resume；non-idempotent、run/step exhausted、invalid/corrupt state全部fail closed；terminal PASS同key重触发返回`ALREADY_COMPLETE`而不获取lease。Daily shadow sidecar记录runtime policy path/hash及`legacy_daily_executor_cut_in_enabled=false`，因此F1.3只证明runtime capability与边界，真正让`run_daily_ops_plan`消费lease/skip completed steps/写terminal state属于F1.4。Non-daily dispatch仍false，不改变DQ、score、weight、paper-shadow、production或broker。
 
-ARCH-004F1.4 已把上述控制层切入唯一 daily CLI 路径：`aits ops daily-run` 先从market-session activated schedule生成同一`WorkflowSpec`，再按`workflow/spec/as_of`获取lease，最后由受控adapter调用原`run_daily_ops_plan` façade。Observer把legacy step事件映射为canonical start/PASS/SKIPPED/FAILED；resume只跳过此前PASS步骤，重复完成、并发、run/step attempt耗尽在调用runner前返回显式control status。每次`operations_execution_state.v1`原子更新旁都写`*.run_ledger.json`：PASS与SKIPPED都满足后续依赖，实际失败步骤为FAILED，其后未运行步骤为BLOCKED；因此`validate_data`失败会留下`download_data=PASS / validate_data=FAILED / score_daily=BLOCKED`且不执行score。Trading-day、closed-market、resume、duplicate、concurrent与failure fixtures均保留旧DailyOpsStepResult/report contract；CLI对已完成duplicate安全返回，对control blocker fail closed，不生成误导性dashboard/Reader Brief refresh。Runtime policy现为`legacy_daily_executor_cut_in_enabled=true`，但`non_daily_dispatch_enabled=false`，所以F1.5前weekly/biweekly/monthly仍不会自动运行，也不改变DQ、score、weight、paper-shadow、production或broker边界。
+ARCH-004F1.4 已把上述控制层切入唯一 daily CLI 路径：`aits ops daily-run` 先从market-session activated schedule生成同一`WorkflowSpec`，再按`workflow/spec/as_of`获取lease，最后由受控adapter调用原`run_daily_ops_plan` façade。Observer把legacy step事件映射为canonical start/PASS/SKIPPED/FAILED；resume只跳过此前PASS步骤，重复完成、并发、run/step attempt耗尽在调用runner前返回显式control status。F1.4 初始实现采用线性 fail-fast：实际失败步骤为FAILED，其后未运行步骤为BLOCKED。OPS-070 S1 已在不改变同一 runtime-control boundary 的前提下，用 `scheduled_tasks_v4` 的显式 DAG 替换该传播方式：失败 step 释放 active slot，independent sibling 和 always-run closure 继续；依赖不满足的 step 不调用 runner并在 daily report 标记 `BLOCKED`，canonical ledger 对未启动依赖项保留 `SKIPPED`，run 顶层 `run_status/run_blocker_codes` 才是严格终态。`validate_data`失败仍绝不执行score，但PIT/SEC sibling可继续形成证据。Trading-day、closed-market、resume、duplicate、concurrent与failure fixtures覆盖该契约；CLI对已完成duplicate安全返回，对control blocker fail closed，不生成误导性dashboard/Reader Brief refresh。Runtime policy现为`legacy_daily_executor_cut_in_enabled=true`，但automatic non-daily仍关闭，也不改变DQ、score、weight、paper-shadow、production或broker边界。
 
 OPS-067 在这条 controlled path 上增加 canonical finalization hard gate。普通 steps 全部完成后，
 lease 仍保持 active；系统冻结 executor metadata，生成 current-run dashboard、daily decision

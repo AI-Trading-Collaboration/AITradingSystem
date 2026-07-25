@@ -161,6 +161,18 @@ class OperationsRunControlLease:
         self.state = self.state.with_step_passed(step_id=step_id, at=timestamp)
         self._control._write_state(self.state, self.spec)
 
+    def continue_after_step_failure(
+        self,
+        step_id: str,
+        *,
+        at: datetime | None = None,
+    ) -> None:
+        """Release the active slot while preserving the failed attempt for terminal audit."""
+        self._step(step_id)
+        timestamp = at or datetime.now(tz=UTC)
+        self.state = self.state.with_step_retry_ready(step_id=step_id, at=timestamp)
+        self._control._write_state(self.state, self.spec)
+
     def skip_step(self, step_id: str, *, at: datetime | None = None) -> None:
         self._step(step_id)
         timestamp = at or datetime.now(tz=UTC)

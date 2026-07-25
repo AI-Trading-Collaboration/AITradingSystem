@@ -54,11 +54,15 @@ outputs/daily_input_capture/YYYY-MM-DD/
   daily_input_capture_validation_YYYY-MM-DD.json
 outputs/daily_input_capture/
   daily_input_capture_gap_ledger.json
+  daily_input_capture_recovery_queue.json
+  daily_input_capture_recovery_queue_validation.json
+  source_control/YYYY-MM-DD/<component>/state.json
 ```
 
-一个 provider 失败时仍继续尝试其余来源；成功来源的 bytes 和 checksum 会保留，但 umbrella
-最终状态为 `PARTIAL_CAPTURE` 并返回非零，因此下游 strict DQ/PIT/score 不执行。`CAPTURED`
-也不等于数据质量通过：manifest 固定 `data_quality_status=NOT_EVALUATED`、
+一个 provider 失败时仍继续尝试其余来源；成功来源的 bytes 和 checksum 会保留。OPS-070 S1
+起，validated `PARTIAL_CAPTURE` 表示 capture closure 完成，内部 command 返回成功但 executor
+将该 step 记为 `LIMITED`；它不等于 required inputs 完整，也不等于数据质量通过。manifest 固定
+`data_quality_status=NOT_EVALUATED`、
 `consumer_cutover_allowed=false`、`production_effect=none`。人工复核可运行
 `aits ops validate-daily-input-capture --as-of YYYY-MM-DD`；checksum、policy 或 safety drift
 均为 `FAIL`。gap ledger 自 reviewed tracking start 按 XNYS session 显示
@@ -67,6 +71,36 @@ outputs/daily_input_capture/
 保留最多两次受控尝试；成功后将 `prices_daily.csv`、`prices_marketstack_daily.csv`、
 `rates_daily.csv` 和 `download_manifest.csv` 复制到同日 `market_macro/` capture 目录。
 后续 strict DQ 仍读取 canonical cache；同日副本只用于留存与审计，不授权消费。
+
+OPS-070 S2 后，每个 component 使用独立 source/session idempotency key、attempt history 与
+active lease。manifest 的 `blocker_code` 区分 credential、permission、quota、provider
+unavailable、schema、filesystem/integrity、lease conflict、state invalid 和 attempt budget
+exhausted；只有 policy 明确列出的 transient code 才能在该 source 自己的 budget 内重试。
+不要删除 `source_control` state/lock 强行重试；stale lease 会先归档到 `lease_history`。
+
+OPS-070 S3 的 recovery queue 只把 market/macro 标记为可人工准备 immutable raw backfill；
+SEC 需要 owner 复核，FMP PIT/valuation 与 official sources 保持
+`HISTORICAL_RECAPTURE_FORBIDDEN`。queue validator PASS 也不授权自动请求 provider、strict PIT、
+DQ、score 或 consumer cutover。
+
+Daily executor 按 `scheduled_tasks_v4` 的显式 dependency DAG 运行。`market_macro` 只控制
+`validate_data` branch，`fmp_forward_pit` 只控制 PIT branch，`sec_companyfacts` 只控制 SEC branch；
+`score_daily` 必须同时等到 strict DQ/PIT/SEC、`fmp_valuation` 和
+`official_policy_sources`。缺失 component 或 upstream failure 会把相应 consumer 记为
+`BLOCKED`，但无关 sibling 继续形成同日证据。`pipeline_health` 与 `secret_hygiene` 始终执行
+operator closure。任一 required branch 不完整时 overall 仍为 `BLOCKED_DEPENDENCY` 或 `FAIL`，
+不得生成最终 Reader Brief/finalization PASS。
+
+外部 scheduler 部署前先运行：
+
+```powershell
+aits ops scheduler-checkout-preflight
+```
+
+外部 scheduler 必须在同一个 `aits ops daily-run` 入口设置 reviewed env contract，指向与开发
+工作区不同的 clean ops checkout 和 exact release commit。daily-run 会在 provider/cache mutation
+前再次执行 runtime preflight。当前 policy 固定 `activation_authorized=false`，不会安装或启用
+Windows Task Scheduler/cron/GitHub Actions；该部署需要 owner 独立完成。
 
 外部供应商调用前还有一层请求级缓存：`data/raw/external_request_cache/`。FMP、Marketstack、Cboe VIX、FRED、SEC、TSMC IR、官方政策源、EODHD 和 yfinance 路径的相同请求命中 cache 时不得再次请求供应商；只有 MISS 才发送请求。200～399 继续持久复用；4xx/5xx 按 `config/data/external_request_cache_lifecycle_policy.yaml` 的 reviewed pilot TTL 短期复用，到期后下一次业务调用 live revalidate。新记录使用 `metadata.json` atomic current pointer、`bodies/<sha256>.body` 和 `negative_observations/<generation_id>.json`；旧 v1 `response.body` 保持可读，过期、复验或显式失效都不能删除原始失败证据。这个缓存保护供应商额度，不替代业务 raw cache、download manifest、PIT manifest 或数据质量门禁。Cboe VIX 的 `VIX_History.csv` 是固定 URL 的可变静态文件，cache identity 额外包含 ticker/start/end/interval 业务窗口；命中缓存时还会校验 CSV 最大日期覆盖请求 `end`，避免新 as-of 或同窗口旧缓存复用过期 CSV 响应。排查供应商额度或重复请求问题时，先看该目录的 `metadata.json`、`generation_id`、`body_sha256`、`expires_at` 和 negative observation，不要重新跑 live 命令试探。若确需显式失效，必须从当前 pointer 取得 expected generation/body checksum，并用 `aits invalidate-external-request-cache` 提供 actor、reason、reference；CAS 失败时停止，不能手工删文件或覆盖证据。失效本身 `production_effect=none`，但下一次业务调用可能产生外部请求。若 `download-data` 失败，先看 `download_data_diagnostics_YYYY-MM-DD.md`；它记录 provider、失败阶段、cache status、cache key、脱敏请求参数，以及 Marketstack quota preflight 的 budget profile / `violation_reasons`，但不保存 stdout/stderr 原文或供应商响应正文。
 
@@ -108,8 +142,8 @@ Producer 禁止 `latest`/glob 发现、live provider/OpenAI、canonical/latest p
 
 - `aits validate-data` 或 `score-daily` 内部同一路径数据质量门禁失败。
 - SEC metrics、估值快照、风险事件发生记录、execution policy 或 rule card 校验失败。
-- 非 capture 的必需环境变量缺失导致 `daily-plan` 或对应 command fail closed；capture-managed
-  provider key 缺失由 component 记录后形成 `PARTIAL_CAPTURE`，不得在第一步前抹掉其他来源的抓取机会。
+- 非 capture 的必需环境变量缺失只阻断对应 step 和 dependents；capture-managed provider key
+  缺失由 component 记录后形成 `PARTIAL_CAPTURE`，不得在第一步前抹掉其他来源的抓取机会。
 - 显式未来 `as_of` 或历史 `as_of` 被 `daily-run` 输入可见性预检查识别为 `BLOCKED_VISIBILITY`；不得用生产调度入口补跑 strict PIT 复现。
 - `score-daily`、`pipeline health` 或 secret scan 报告状态为 `FAIL`。
 - OpenAI 风险事件预审在启用状态下 fail closed。
@@ -117,8 +151,9 @@ Producer 禁止 `latest`/glob 发现、live provider/OpenAI、canonical/latest p
 可降级但必须披露：
 
 - 显式 `--skip-risk-event-openai-precheck`，日报必须显示未执行自动预审。
-- capture 中某个来源失败但其他来源已保全；整条 daily-run 仍为 FAIL，成功 bytes 仅供审计，
-  不得作为绕过 strict gate 的可消费输入。
+- capture 中某个来源失败但其他来源已保全；缺失来源的 consumer 必须 `BLOCKED`，整条
+  daily-run 仍非 PASS；成功 sibling bytes 只有在自己的 strict gate 通过后才能被对应 consumer
+  使用，不得跨 branch 绕过门禁。
 - 休市日模式跳过 `score-daily`，只保留官方政策/地缘来源抓取和健康检查。
 - 第二数据源覆盖不足，报告必须保留 source limitation，不能写成跨源核验完成。
 
@@ -127,8 +162,9 @@ Producer 禁止 `latest`/glob 发现、live provider/OpenAI、canonical/latest p
 |现象|优先检查|
 |---|---|
 |数据质量失败|`outputs/reports/data_quality_YYYY-MM-DD.md`、download manifest、provider health。|
-|daily input capture 失败|`outputs/daily_input_capture/YYYY-MM-DD/daily_input_capture_manifest_YYYY-MM-DD.json` 与 validation，按 component 查看 return code、missing expected paths 和 retained checksum；不要重跑旧 terminal key。|
-|连续交易日疑似漏跑|`outputs/daily_input_capture/daily_input_capture_gap_ledger.json`；`MISSED/PARTIAL_CAPTURE` 只登记事实，不补造 strict PIT。|
+|daily input capture partial/失败|`outputs/daily_input_capture/YYYY-MM-DD/daily_input_capture_manifest_YYYY-MM-DD.json` 与 validation，按 component 查看 blocker code、attempt history、source lease/idempotency、missing expected paths、retained checksum 和 daily report 的 `CAPTURE_COMPONENT_NOT_PASS`；不要删除旧 terminal key/source state。|
+|连续交易日疑似漏跑|`outputs/daily_input_capture/daily_input_capture_gap_ledger.json`、`daily_input_capture_recovery_queue.json` 及 validation；`MISSED/PARTIAL_CAPTURE` 不补造 strict PIT，queue 不自动执行。|
+|外部 scheduler 被 checkout 阻断|读取 `ops_scheduler_checkout_preflight_*.json/md`，核对 marker、独立绝对路径、exact release commit、origin remote、clean status 和 current-process checkout；不得改用 dirty development checkout。|
 |`download-data` 失败|`outputs/reports/download_data_diagnostics_YYYY-MM-DD.md`，确认 provider、失败阶段、cache status、cache key 和脱敏请求参数。|
 |疑似重复供应商请求|`data/raw/external_request_cache/<provider>/<api_family>/<cache_key>/metadata.json`，确认 cache key、status code 和 body checksum。|
 |PIT checksum mismatch|`pit_snapshots_validation_YYYY-MM-DD.md`、`fmp_forward_pit_fetch_YYYY-MM-DD.md`、raw payload 路径。|

@@ -48,6 +48,7 @@ class LegacyScheduledWorkflowBinding:
     trading_calendar: str | None
     preserve_sequential_order: bool
     is_trading_day: bool | None = None
+    selected_step_ids: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -114,20 +115,38 @@ def assess_scheduled_cadence(
             legacy_production_effects=tuple(effect_rows),
         )
 
-    selected_tasks = tuple(
-        task
-        for task in cadence.tasks
-        if binding.is_trading_day is None
-        or task.active_for_session(is_trading_day=binding.is_trading_day)
-    )
+    if binding.selected_step_ids is not None:
+        selected_id_set = set(binding.selected_step_ids)
+        selected_tasks = tuple(
+            task
+            for task in cadence.tasks
+            if (task.daily_plan_step_id or task.task_id) in selected_id_set
+        )
+    else:
+        selected_tasks = tuple(
+            task
+            for task in cadence.tasks
+            if binding.is_trading_day is None
+            or task.active_for_session(is_trading_day=binding.is_trading_day)
+        )
+    selected_step_ids = {
+        task.daily_plan_step_id or task.task_id for task in selected_tasks
+    }
     steps: list[WorkflowStepSpec] = []
     previous_step_id: str | None = None
     for task in selected_tasks:
-        dependencies = (
-            (previous_step_id,)
-            if binding.preserve_sequential_order and previous_step_id is not None
-            else ()
-        )
+        if cadence.cadence_id == "daily_trading_day":
+            dependencies = tuple(
+                dependency
+                for dependency in task.dependencies
+                if dependency in selected_step_ids
+            )
+        else:
+            dependencies = (
+                (previous_step_id,)
+                if binding.preserve_sequential_order and previous_step_id is not None
+                else ()
+            )
         steps.append(_workflow_step(task, dependencies=dependencies))
         previous_step_id = task.daily_plan_step_id or task.task_id
     workflow = WorkflowSpec(
@@ -223,6 +242,7 @@ def build_daily_schedule_shadow_payload(
     workflow_spec = build_daily_schedule_workflow_spec(
         cadence=cadence,
         is_trading_day=is_trading_day,
+        observed_step_ids=observed_step_ids,
     )
     binding = LegacyScheduledWorkflowBinding(
         owner="system_operations",
@@ -285,7 +305,10 @@ def build_daily_schedule_shadow_payload(
 
 
 def build_daily_schedule_workflow_spec(
-    *, cadence: ScheduledCadence, is_trading_day: bool
+    *,
+    cadence: ScheduledCadence,
+    is_trading_day: bool,
+    observed_step_ids: tuple[str, ...] | None = None,
 ) -> WorkflowSpec:
     assessment = assess_scheduled_cadence(
         cadence,
@@ -296,6 +319,7 @@ def build_daily_schedule_workflow_spec(
             trading_calendar="XNYS",
             preserve_sequential_order=True,
             is_trading_day=is_trading_day,
+            selected_step_ids=observed_step_ids,
         ),
     )
     if assessment.status is not CanonicalStatus.PASS or assessment.workflow_spec is None:

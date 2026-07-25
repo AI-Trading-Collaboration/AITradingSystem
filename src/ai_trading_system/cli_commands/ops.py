@@ -33,6 +33,7 @@ from ai_trading_system.daily_input_capture import (
     daily_input_capture_paths,
     load_daily_input_capture_policy,
     validate_daily_input_capture_manifest,
+    validate_daily_input_capture_recovery_queue,
 )
 from ai_trading_system.daily_task_dashboard import (
     build_daily_task_dashboard_report,
@@ -96,6 +97,12 @@ from ai_trading_system.ops_daily import (
 )
 from ai_trading_system.ops_daily import (
     run_daily_ops_plan_controlled as run_daily_ops_plan,
+)
+from ai_trading_system.ops_scheduler_checkout import (
+    DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
+    inspect_ops_scheduler_checkout,
+    load_ops_scheduler_checkout_policy,
+    write_ops_scheduler_checkout_preflight,
 )
 from ai_trading_system.order_intent_candidates import (
     default_order_intent_candidates_path,
@@ -567,13 +574,14 @@ def capture_daily_inputs_command(
     except (OSError, ValueError) as exc:
         console.print(f"[red]Daily input capture 无法启动：{exc}[/red]")
         raise typer.Exit(code=1) from exc
-    style = "green" if result.passed else "red"
+    style = "green" if result.passed else ("yellow" if result.closure_passed else "red")
     console.print(f"[{style}]Daily input capture：{result.status}[/{style}]")
     console.print(f"Manifest：{result.manifest_path}")
     console.print(f"Validation：{result.validation_path}")
     console.print(f"XNYS session gap ledger：{result.gap_ledger_path}")
+    console.print(f"Source/session recovery queue：{result.recovery_queue_path}")
     console.print("production_effect=none；weights/broker/trading action=false")
-    if not result.passed:
+    if not result.closure_passed:
         raise typer.Exit(code=1)
 
 
@@ -598,6 +606,11 @@ def validate_daily_inputs_command(
             project_root=PROJECT_ROOT,
             policy_path=policy_path,
         )
+        recovery_validation = validate_daily_input_capture_recovery_queue(
+            paths.recovery_queue_json,
+            project_root=PROJECT_ROOT,
+            policy_path=policy_path,
+        )
     except (OSError, ValueError) as exc:
         console.print(f"[red]Daily input capture 校验无法完成：{exc}[/red]")
         raise typer.Exit(code=1) from exc
@@ -605,8 +618,65 @@ def validate_daily_inputs_command(
     console.print(f"[{style}]Daily input capture validation：{validation['status']}[/{style}]")
     console.print(f"Manifest：{paths.manifest_json}")
     console.print(f"Issue count：{validation.get('issue_count', len(validation['issues']))}")
+    queue_style = "green" if recovery_validation["status"] == "PASS" else "red"
+    console.print(
+        f"[{queue_style}]Recovery queue validation："
+        f"{recovery_validation['status']}[/{queue_style}]"
+    )
+    console.print(f"Recovery queue：{paths.recovery_queue_json}")
     console.print("production_effect=none；weights/broker/trading action=false")
-    if validation["status"] != "PASS":
+    if validation["status"] != "PASS" or recovery_validation["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@ops_app.command("scheduler-checkout-preflight")
+def scheduler_checkout_preflight_command(
+    checkout_root: Annotated[
+        Path | None,
+        typer.Option(help="隔离 ops checkout 绝对路径；默认读取 reviewed env contract。"),
+    ] = None,
+    release_commit: Annotated[
+        str | None,
+        typer.Option(help="精确 40-char release commit；默认读取 reviewed env contract。"),
+    ] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed ops scheduler checkout policy。"),
+    ] = DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
+    output_json: Annotated[
+        Path,
+        typer.Option(help="preflight JSON 输出路径。"),
+    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.json",
+    output_markdown: Annotated[
+        Path,
+        typer.Option(help="preflight Markdown 输出路径。"),
+    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.md",
+) -> None:
+    """只读检查 pinned clean ops checkout；不安装或启用 scheduler。"""
+    try:
+        payload = inspect_ops_scheduler_checkout(
+            project_root=PROJECT_ROOT,
+            policy_path=policy_path,
+            env=os.environ,
+            checkout_root=checkout_root,
+            release_commit=release_commit,
+            require_current_process_checkout=False,
+        )
+        write_ops_scheduler_checkout_preflight(
+            payload,
+            json_path=output_json,
+            markdown_path=output_markdown,
+        )
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Ops scheduler checkout preflight 无法完成：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    style = "green" if payload["status"] == "PASS" else "red"
+    console.print(f"[{style}]Ops scheduler checkout preflight：{payload['status']}[/{style}]")
+    console.print(f"JSON：{output_json}")
+    console.print(f"Markdown：{output_markdown}")
+    console.print("activation_authorized=false；scheduler_installed/enabled=false")
+    console.print("production_effect=none；weights/broker/trading action=false")
+    if payload["status"] != "PASS":
         raise typer.Exit(code=1)
 
 
@@ -713,7 +783,13 @@ def daily_ops_plan_command(
     write_daily_ops_shadow_plan(plan, shadow_path)
 
     status = plan.status(os.environ)
-    style = "green" if status == "READY" else "yellow" if status == "READY_WITH_SKIPS" else "red"
+    style = (
+        "green"
+        if status == "READY"
+        else "yellow"
+        if status in {"READY_WITH_SKIPS", "READY_WITH_BLOCKED_BRANCHES"}
+        else "red"
+    )
     missing_env = plan.missing_env_vars(os.environ)
     console.print(f"[{style}]每日运行计划：{status}[/{style}]")
     console.print(f"报告：{report_path}")
@@ -1975,12 +2051,49 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
             else "daily-scheduler-entry"
         )
         try:
+            checkout_policy = load_ops_scheduler_checkout_policy()
+            if checkout_policy.scheduler_marker_name in os.environ:
+                preflight = inspect_ops_scheduler_checkout(
+                    project_root=PROJECT_ROOT,
+                    env=os.environ,
+                    require_current_process_checkout=True,
+                )
+                timestamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
+                write_ops_scheduler_checkout_preflight(
+                    preflight,
+                    json_path=(
+                        PROJECT_ROOT
+                        / "outputs"
+                        / "reports"
+                        / f"ops_scheduler_checkout_preflight_{timestamp}.json"
+                    ),
+                    markdown_path=(
+                        PROJECT_ROOT
+                        / "outputs"
+                        / "reports"
+                        / f"ops_scheduler_checkout_preflight_{timestamp}.md"
+                    ),
+                )
+                if preflight["status"] != "PASS":
+                    console.print(
+                        "[red]Ops scheduler checkout preflight：BLOCKED "
+                        f"({','.join(preflight['blocker_codes'])})[/red]"
+                    )
+                    console.print(
+                        "provider_request=false；cache_mutation=false；"
+                        "production_effect=none"
+                    )
+                    raise typer.Exit(code=1)
             with hold_daily_checkout_guard(
                 project_root=PROJECT_ROOT,
                 task_id="OPS-DAILY-UNIFIED-TRIGGER",
                 thread_id=thread_id,
             ):
                 command(*args, **kwargs)
+        except (OSError, ValueError) as exc:
+            console.print(f"[red]Ops scheduler checkout policy/preflight：BLOCKED ({exc})[/red]")
+            console.print("provider_request=false；cache_mutation=false；production_effect=none")
+            raise typer.Exit(code=1) from exc
         except CheckoutGuardError as exc:
             console.print(f"[red]Checkout guard：BLOCKED ({exc.code})[/red]")
             console.print(exc.message)

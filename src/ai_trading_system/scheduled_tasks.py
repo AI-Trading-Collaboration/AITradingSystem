@@ -41,6 +41,9 @@ class ScheduledTask:
     trading_action: bool = False
     max_attempts: int = 1
     activation_condition: TaskActivationCondition = TaskActivationCondition.ALWAYS
+    dependencies: tuple[str, ...] = ()
+    required_capture_components: tuple[str, ...] = ()
+    always_run: bool = False
 
     def active_for_session(self, *, is_trading_day: bool) -> bool:
         return (
@@ -217,6 +220,20 @@ def _load_task(cadence_id: str, raw: Any) -> ScheduledTask:
     contains = raw.get("command_contains") or ()
     if not isinstance(contains, list | tuple):
         raise ValueError(f"{task_id}: command_contains must be a list")
+    raw_dependencies = raw.get("dependencies")
+    if cadence_id == DAILY_CADENCE_ID and raw_dependencies is None:
+        raise ValueError(f"{task_id}: daily task requires dependencies")
+    dependencies = _task_string_list(
+        raw_dependencies or (),
+        field=f"{task_id}.dependencies",
+    )
+    required_capture_components = _task_string_list(
+        raw.get("required_capture_components") or (),
+        field=f"{task_id}.required_capture_components",
+    )
+    always_run = raw.get("always_run", False)
+    if not isinstance(always_run, bool):
+        raise ValueError(f"{task_id}.always_run must be boolean")
     return ScheduledTask(
         task_id=task_id,
         title=title,
@@ -246,6 +263,9 @@ def _load_task(cadence_id: str, raw: Any) -> ScheduledTask:
         activation_condition=TaskActivationCondition(
             str(raw.get("activation_condition") or TaskActivationCondition.ALWAYS.value)
         ),
+        dependencies=dependencies,
+        required_capture_components=required_capture_components,
+        always_run=always_run,
     )
 
 
@@ -262,6 +282,19 @@ def _positive_task_int(value: Any, *, field: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 1:
         raise ValueError(f"{field} must be a positive integer")
     return value
+
+
+def _task_string_list(value: Any, *, field: str) -> tuple[str, ...]:
+    if not isinstance(value, list | tuple):
+        raise ValueError(f"{field} must be a list")
+    if any(not isinstance(item, str) for item in value):
+        raise ValueError(f"{field} must contain strings")
+    normalized = tuple(item.strip() for item in value)
+    if any(not item for item in normalized):
+        raise ValueError(f"{field} must contain non-empty strings")
+    if len(set(normalized)) != len(normalized):
+        raise ValueError(f"{field} must not contain duplicates")
+    return normalized
 
 
 def _validate_config(config: ScheduledTasksConfig) -> None:
@@ -314,6 +347,46 @@ def _validate_config(config: ScheduledTasksConfig) -> None:
             "scheduled daily_plan_step_id values must be unique: "
             f"{sorted(duplicate_daily_step_ids)}"
         )
+    daily_tasks = config.daily_tasks()
+    daily_step_order = {
+        task.daily_plan_step_id or "": index for index, task in enumerate(daily_tasks)
+    }
+    allowed_capture_components = {
+        "market_macro",
+        "fmp_forward_pit",
+        "sec_companyfacts",
+        "fmp_valuation",
+        "official_policy_sources",
+    }
+    for task in daily_tasks:
+        step_id = task.daily_plan_step_id or ""
+        unknown_dependencies = sorted(set(task.dependencies) - set(daily_step_order))
+        if unknown_dependencies:
+            raise ValueError(
+                f"{task.task_id}: unknown daily dependencies: {unknown_dependencies}"
+            )
+        if step_id in task.dependencies:
+            raise ValueError(f"{task.task_id}: daily task must not depend on itself")
+        late_dependencies = tuple(
+            dependency
+            for dependency in task.dependencies
+            if daily_step_order[dependency] >= daily_step_order[step_id]
+        )
+        if late_dependencies:
+            raise ValueError(
+                f"{task.task_id}: dependencies must precede the task: {late_dependencies}"
+            )
+        unknown_components = sorted(
+            set(task.required_capture_components) - allowed_capture_components
+        )
+        if unknown_components:
+            raise ValueError(
+                f"{task.task_id}: unknown capture components: {unknown_components}"
+            )
+        if task.always_run and (task.dependencies or task.required_capture_components):
+            raise ValueError(
+                f"{task.task_id}: always_run task must not declare dependencies"
+            )
 
     safety_issues = scheduled_safety_issues(config)
     if safety_issues:

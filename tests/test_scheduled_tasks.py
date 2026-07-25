@@ -19,7 +19,7 @@ from ai_trading_system.scheduled_tasks import (
 def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None:
     config = load_scheduled_tasks_config()
 
-    assert config.policy_version == "scheduled_tasks_v3"
+    assert config.policy_version == "scheduled_tasks_v4"
     cadence_ids = {cadence.cadence_id for cadence in config.cadences}
     assert DAILY_CADENCE_ID in cadence_ids
     assert set(NON_DAILY_CADENCE_IDS).issubset(cadence_ids)
@@ -29,6 +29,19 @@ def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None
     assert tasks_by_id["daily_capture_inputs"].production_effect == "local_cache_write"
     assert tasks_by_id["daily_download_data_closed_market"].max_attempts == 2
     assert tasks_by_id["daily_validate_data"].max_attempts == 1
+    assert tasks_by_id["daily_validate_data"].dependencies == (
+        "capture_daily_inputs",
+        "download_data",
+    )
+    assert tasks_by_id["daily_validate_data"].required_capture_components == (
+        "market_macro",
+    )
+    assert tasks_by_id["daily_score_daily"].required_capture_components == (
+        "fmp_valuation",
+        "official_policy_sources",
+    )
+    assert tasks_by_id["daily_ops_health"].always_run is True
+    assert tasks_by_id["daily_secret_scan"].always_run is True
     assert {
         "weekly_backtest",
         "weekly_backtest_robustness",

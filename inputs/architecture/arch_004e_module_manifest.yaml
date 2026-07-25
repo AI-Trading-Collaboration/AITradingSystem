@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1017
+module_count: 1018
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -1139,7 +1139,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.ops
   path: src/ai_trading_system/cli_commands/ops.py
-  sha256: 0c5f518e3bc5b3b2d3573f222b964e220f3fdc4d125d9917da68aaea2c2a2404
+  sha256: bfff5bde96985528021cff736c6d8054eddfa36a9cd328ab433cd17b333335b0
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -2489,7 +2489,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.daily_input_capture
   path: src/ai_trading_system/daily_input_capture.py
-  sha256: 06f248a79c6a7bdef489478b47f4443ef5fbf2828a27a88388ea45c50cd9f3a2
+  sha256: bd22180a2a92ce7f105c3fe33ed342514d21336f712f1b9f8eb2d77cb1d3503c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -13506,7 +13506,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.legacy.scheduled_tasks_adapter
   path: src/ai_trading_system/legacy/scheduled_tasks_adapter.py
-  sha256: f750a3ada43986144255b0a0464a1c8bdf83ee645162f906ca651ee384bd4c90
+  sha256: 3af48eb6915f98e451e7248aa77f6060bb2a97f19f7b809ff3e1d55e8fc5a12f
   rule_id: legacy
   owner_profile: architecture
   owners:
@@ -13788,7 +13788,27 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_daily
   path: src/ai_trading_system/ops_daily.py
-  sha256: 56052f30456ad372c77bda8b86dd02c35bb49cffa44b3b033876056ffb99d6f3
+  sha256: f3a9a512bea88e00e92c240c87d59db81eeaf203d079626ebc4e43897bcd22e4
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.ops_scheduler_checkout
+  path: src/ai_trading_system/ops_scheduler_checkout.py
+  sha256: 8fe971beca6d8a16360252c3ed7379362a6f89cdbbc6775bb3cb17c19b5e73bf
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -14655,7 +14675,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.operations.runtime_control
   path: src/ai_trading_system/platform/operations/runtime_control.py
-  sha256: 7ab062df232147bf5473cd6b05b43021fb8dffbfebd8a77a0f1fa8fc6f6b3703
+  sha256: f8d12256a15d7da5b89cae92c4f1c517ce126f7b7579ddf2e0915afeff665dd7
   rule_id: platform_operations
   owner_profile: platform
   owners:
@@ -18162,7 +18182,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.scheduled_tasks
   path: src/ai_trading_system/scheduled_tasks.py
-  sha256: 3e24bbef02739e237142277d46f8504a51d4240c0cdd734248c01f50e039a83d
+  sha256: 47cd97bada7045bbf34e09b6bc602eb0ee11d33a1ac3a25487e6ae4bb9444f14
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

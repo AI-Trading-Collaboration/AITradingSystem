@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: scheduled_tasks_v3
+policy_version: scheduled_tasks_v4
 policy_metadata:
   owner: system
   status: active_baseline
@@ -12,15 +12,19 @@ policy_metadata:
     correction. OPS-069 adds a capture-first umbrella step that attempts
     market/macro and every other independent daily source before strict consumer
     gates. The umbrella preserves the reviewed two-attempt market/macro budget;
-    all other steps retain their existing attempt budgets.
+    all other steps retain their existing attempt budgets. OPS-070 adds an
+    explicit daily step/component dependency DAG and always-run operator closure
+    so a branch failure cannot suppress independent validation evidence.
   intended_effect: >
     Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
-    daily trading-day chain while registering non-daily governance chains for
+    dependency-aware daily trading-day chain while registering non-daily governance chains for
     manual or future scheduler review. Preserve date-scoped market/macro, FMP
     PIT, SEC, valuation, and official-source inputs plus a continuous XNYS gap ledger
     before strict downstream consumption. Permit one bounded rerun of the
     idempotent download-data step without deleting prior state or ledger;
-    a second failure under the same workflow spec remains terminal.
+    a second failure under the same workflow spec remains terminal. A missing
+    dependency blocks only its consumers while the overall run remains
+    non-PASS and always-run health/security closure still executes.
   validation_evidence: >
     OPS-059 tests cover daily command order, closed-market skips, non-daily task
     registration, and no-production safety invariants for reader/governance/
@@ -28,6 +32,8 @@ policy_metadata:
     propagation and hard stop after the bounded second download attempt.
     OPS-069 tests cover attempt-all capture, partial retention, checksum tamper,
     XNYS gap visibility, consumer path binding, and no-production boundaries.
+    OPS-070 fault-injection tests cover sibling continuation, dependency blocking,
+    strict terminal status, runtime-control accounting, and always-run closure.
   review_condition: >
     Review whenever a daily report, governance report, shadow monitor, backtest,
     parameter, documentation, report registry, scheduler command, capture
@@ -54,6 +60,7 @@ cadences:
     tasks:
       - task_id: daily_capture_inputs
         daily_plan_step_id: capture_daily_inputs
+        dependencies: []
         title: Capture independently available daily inputs before strict gates
         command: aits ops capture-daily-inputs --as-of {as_of}
         command_contains:
@@ -71,6 +78,7 @@ cadences:
         trading_action: false
       - task_id: daily_download_data_closed_market
         daily_plan_step_id: download_data
+        dependencies: []
         title: Conditionally refresh market and macro data on closed-market runs
         max_attempts: 2
         command: aits download-data --start {download_start} --end {download_end}
@@ -82,6 +90,11 @@ cadences:
         production_effect: local_cache_write
       - task_id: daily_validate_data
         daily_plan_step_id: validate_data
+        dependencies:
+          - capture_daily_inputs
+          - download_data
+        required_capture_components:
+          - market_macro
         title: Validate cached market and macro data
         command: aits validate-data --as-of {download_end} --execution-profile daily_default.v1
         command_contains:
@@ -91,6 +104,7 @@ cadences:
         production_effect: none
       - task_id: daily_official_policy_sources
         daily_plan_step_id: official_policy_sources
+        dependencies: []
         title: Fetch official policy and geopolitical sources on closed-market days
         command: aits risk-events fetch-official-sources --as-of {as_of}
         command_contains:
@@ -102,6 +116,7 @@ cadences:
         production_effect: local_cache_write
       - task_id: daily_pit_fetch_fmp_forward_closed_market
         daily_plan_step_id: pit_snapshots_fetch_fmp_forward
+        dependencies: []
         title: Fetch FMP forward PIT snapshots on closed-market runs
         command: aits pit-snapshots fetch-fmp-forward --as-of {as_of} --continue-on-failure
         command_contains:
@@ -113,6 +128,11 @@ cadences:
         production_effect: local_cache_write
       - task_id: daily_pit_build_manifest
         daily_plan_step_id: pit_snapshots_build_manifest
+        dependencies:
+          - capture_daily_inputs
+          - pit_snapshots_fetch_fmp_forward
+        required_capture_components:
+          - fmp_forward_pit
         title: Build PIT snapshot manifest
         command: aits pit-snapshots build-manifest --as-of {as_of}
         command_contains:
@@ -122,6 +142,8 @@ cadences:
         production_effect: none
       - task_id: daily_pit_validate
         daily_plan_step_id: pit_snapshots_validate
+        dependencies:
+          - pit_snapshots_build_manifest
         title: Validate PIT snapshot manifest
         command: aits pit-snapshots validate --as-of {as_of}
         command_contains:
@@ -131,6 +153,7 @@ cadences:
         production_effect: none
       - task_id: daily_sec_companyfacts_closed_market
         daily_plan_step_id: sec_companyfacts
+        dependencies: []
         title: Download SEC companyfacts on closed-market runs
         command: aits fundamentals download-sec-companyfacts
         command_contains:
@@ -141,6 +164,11 @@ cadences:
         production_effect: local_cache_write
       - task_id: daily_sec_extract_metrics
         daily_plan_step_id: sec_metrics
+        dependencies:
+          - capture_daily_inputs
+          - sec_companyfacts
+        required_capture_components:
+          - sec_companyfacts
         title: Extract SEC metrics
         command: aits fundamentals extract-sec-metrics --as-of {as_of}
         command_contains:
@@ -150,6 +178,8 @@ cadences:
         production_effect: none
       - task_id: daily_tsm_ir_sec_merge
         daily_plan_step_id: tsm_ir_sec_metrics_merge
+        dependencies:
+          - sec_metrics
         title: Merge TSM IR and SEC metrics
         command: aits fundamentals merge-tsm-ir-sec-metrics --as-of {as_of}
         command_contains:
@@ -159,6 +189,8 @@ cadences:
         production_effect: none
       - task_id: daily_sec_validate_metrics
         daily_plan_step_id: sec_metrics_validation
+        dependencies:
+          - tsm_ir_sec_metrics_merge
         title: Validate SEC metrics
         command: aits fundamentals validate-sec-metrics --as-of {as_of}
         command_contains:
@@ -168,6 +200,7 @@ cadences:
         production_effect: none
       - task_id: daily_valuation_fetch_fmp_closed_market
         daily_plan_step_id: valuation_snapshots
+        dependencies: []
         title: Fetch FMP valuation snapshots on closed-market runs
         command: aits valuation fetch-fmp --as-of {as_of}
         command_contains:
@@ -178,6 +211,15 @@ cadences:
         production_effect: local_cache_write
       - task_id: daily_score_daily
         daily_plan_step_id: score_daily
+        dependencies:
+          - validate_data
+          - pit_snapshots_validate
+          - sec_metrics_validation
+          - valuation_snapshots
+          - official_policy_sources
+        required_capture_components:
+          - fmp_valuation
+          - official_policy_sources
         title: Build daily score and decision artifacts
         command: aits score-daily --as-of {as_of}
         command_contains:
@@ -187,6 +229,8 @@ cadences:
         production_effect: local_report_write
       - task_id: daily_forward_evidence_dry_run
         daily_plan_step_id: forward_evidence_dry_run_daily
+        dependencies:
+          - score_daily
         title: Capture forward evidence daily dry-run archive
         command: aits forward-evidence capture-dry-run-daily --as-of {as_of}
         command_contains:
@@ -201,6 +245,8 @@ cadences:
         broker_action: false
       - task_id: daily_evidence_dashboard
         daily_plan_step_id: reports_dashboard
+        dependencies:
+          - score_daily
         title: Build evidence dashboard
         command: aits reports dashboard --as-of {as_of}
         command_contains:
@@ -213,6 +259,8 @@ cadences:
         broker_action: false
       - task_id: daily_sec_pit_shadow_observe
         daily_plan_step_id: sec_pit_shadow_observe
+        dependencies:
+          - sec_metrics_validation
         title: Refresh SEC PIT observe-only shadow lane
         command: aits sec-pit shadow-observe --latest --end {as_of}
         command_contains:
@@ -227,6 +275,8 @@ cadences:
         broker_action: false
       - task_id: daily_sec_pit_shadow_monitor
         daily_plan_step_id: sec_pit_shadow_monitor
+        dependencies:
+          - sec_pit_shadow_observe
         title: Refresh SEC PIT shadow monitor
         command: aits sec-pit shadow-monitor --latest --as-of {as_of}
         command_contains:
@@ -241,6 +291,8 @@ cadences:
         broker_action: false
       - task_id: daily_score_change_attribution
         daily_plan_step_id: score_change_attribution
+        dependencies:
+          - score_daily
         title: Build score change attribution
         command: aits reports score-change-attribution --latest
         command_contains:
@@ -254,6 +306,8 @@ cadences:
         broker_action: false
       - task_id: daily_market_panel
         daily_plan_step_id: market_panel
+        dependencies:
+          - score_daily
         title: Build market panel
         command: aits reports market-panel --latest
         command_contains:
@@ -267,6 +321,8 @@ cadences:
         broker_action: false
       - task_id: daily_market_data_freshness
         daily_plan_step_id: market_data_freshness
+        dependencies:
+          - validate_data
         title: Build market data freshness tracking readiness
         command: aits data freshness --latest
         command_contains:
@@ -280,6 +336,8 @@ cadences:
         broker_action: false
       - task_id: daily_market_data_recover_freshness
         daily_plan_step_id: market_data_recover_freshness
+        dependencies:
+          - market_data_freshness
         title: Recover market data freshness if needed
         command: aits data recover-freshness --latest
         command_contains:
@@ -293,6 +351,8 @@ cadences:
         broker_action: false
       - task_id: daily_portfolio_candidate_tracking
         daily_plan_step_id: portfolio_candidate_tracking
+        dependencies:
+          - score_daily
         title: Track active portfolio candidate
         command: aits portfolio track-candidate --latest
         command_contains:
@@ -306,6 +366,8 @@ cadences:
         broker_action: false
       - task_id: daily_portfolio_tracking_review
         daily_plan_step_id: portfolio_tracking_review
+        dependencies:
+          - portfolio_candidate_tracking
         title: Review portfolio tracking window progress
         command: aits portfolio review-tracking --latest --show-window-progress
         command_contains:
@@ -320,6 +382,8 @@ cadences:
         broker_action: false
       - task_id: daily_portfolio_tracking_review_report
         daily_plan_step_id: portfolio_tracking_review_report
+        dependencies:
+          - portfolio_tracking_review
         title: Build portfolio tracking review report alias
         command: aits reports portfolio-tracking-review --latest
         command_contains:
@@ -333,6 +397,8 @@ cadences:
         broker_action: false
       - task_id: daily_etf_forward_update
         daily_plan_step_id: etf_forward_update
+        dependencies:
+          - score_daily
         title: Update ETF forward shadow simulation
         command: aits etf forward update --latest
         command_contains:
@@ -347,6 +413,8 @@ cadences:
         broker_action: false
       - task_id: daily_etf_forward_dashboard
         daily_plan_step_id: etf_forward_dashboard
+        dependencies:
+          - etf_forward_update
         title: Build ETF forward simulation dashboard
         command: aits etf forward dashboard --latest
         command_contains:
@@ -361,6 +429,8 @@ cadences:
         broker_action: false
       - task_id: daily_etf_forward_watchlist
         daily_plan_step_id: etf_forward_watchlist
+        dependencies:
+          - etf_forward_dashboard
         title: Build ETF forward simulation watchlist
         command: aits etf forward watchlist --latest
         command_contains:
@@ -375,6 +445,14 @@ cadences:
         broker_action: false
       - task_id: daily_artifact_lineage
         daily_plan_step_id: artifact_lineage
+        dependencies:
+          - reports_dashboard
+          - sec_pit_shadow_monitor
+          - score_change_attribution
+          - market_panel
+          - market_data_recover_freshness
+          - portfolio_tracking_review_report
+          - etf_forward_watchlist
         title: Build artifact lineage graph
         command: aits reports artifact-lineage --latest
         command_contains:
@@ -388,6 +466,8 @@ cadences:
         broker_action: false
       - task_id: daily_validate_artifact_lineage
         daily_plan_step_id: validate_artifact_lineage
+        dependencies:
+          - artifact_lineage
         title: Validate artifact lineage graph
         command: aits reports validate-artifact-lineage --latest
         command_contains:
@@ -401,6 +481,8 @@ cadences:
         broker_action: false
       - task_id: daily_report_index
         daily_plan_step_id: report_index
+        dependencies:
+          - validate_artifact_lineage
         title: Build report index
         command: aits reports index --latest
         command_contains:
@@ -414,6 +496,8 @@ cadences:
         broker_action: false
       - task_id: daily_documentation_contract
         daily_plan_step_id: documentation_contract
+        dependencies:
+          - report_index
         title: Build documentation contract
         command: aits docs report-contract --latest
         command_contains:
@@ -427,6 +511,8 @@ cadences:
         broker_action: false
       - task_id: daily_research_governance_summary
         daily_plan_step_id: research_governance_summary
+        dependencies:
+          - documentation_contract
         title: Build research governance summary
         command: aits reports research-governance-summary --latest
         command_contains:
@@ -440,6 +526,15 @@ cadences:
         broker_action: false
       - task_id: daily_reader_brief
         daily_plan_step_id: reader_brief
+        dependencies:
+          - reports_dashboard
+          - sec_pit_shadow_monitor
+          - score_change_attribution
+          - market_panel
+          - market_data_recover_freshness
+          - portfolio_tracking_review_report
+          - etf_forward_watchlist
+          - research_governance_summary
         title: Build Reader Brief
         command: aits reports reader-brief --latest
         command_contains:
@@ -453,6 +548,8 @@ cadences:
         broker_action: false
       - task_id: daily_report_quality_gate
         daily_plan_step_id: report_quality_gate
+        dependencies:
+          - reader_brief
         title: Build report quality gate
         command: aits reports quality-gate --latest
         command_contains:
@@ -466,6 +563,8 @@ cadences:
         broker_action: false
       - task_id: daily_validate_reader_brief
         daily_plan_step_id: validate_reader_brief
+        dependencies:
+          - report_quality_gate
         title: Validate Reader Brief
         command: aits reports validate-reader-brief --latest
         command_contains:
@@ -479,6 +578,8 @@ cadences:
         broker_action: false
       - task_id: daily_dynamic_v3_rescue_schedule_observe
         daily_plan_step_id: dynamic_v3_rescue_schedule_observe
+        dependencies:
+          - validate_data
         title: Dynamic v3 rescue scheduled observation gate
         command: aits etf dynamic-v3-rescue schedule observe --as-of {as_of}
         command_contains:
@@ -497,6 +598,8 @@ cadences:
         broker_action: false
       - task_id: daily_ops_health
         daily_plan_step_id: pipeline_health
+        dependencies: []
+        always_run: true
         title: Run ops health
         command: aits ops health --as-of {as_of}
         command_contains:
@@ -506,6 +609,8 @@ cadences:
         production_effect: none
       - task_id: daily_secret_scan
         daily_plan_step_id: secret_hygiene
+        dependencies: []
+        always_run: true
         title: Scan secrets
         command: aits security scan-secrets --as-of {as_of}
         command_contains:
