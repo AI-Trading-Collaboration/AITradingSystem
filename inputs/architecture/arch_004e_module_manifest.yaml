@@ -2323,7 +2323,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.workflow
   path: src/ai_trading_system/contracts/workflow.py
-  sha256: f660407fc02d97b7265b168bd9e551de322f2e8d5966282d7ae9d3cc29281881
+  sha256: 4c43aa2d1821691a1f2840eb80bd2f80c50669b20f17be7d517c99c8d2044003
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -13506,7 +13506,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.legacy.scheduled_tasks_adapter
   path: src/ai_trading_system/legacy/scheduled_tasks_adapter.py
-  sha256: 3af48eb6915f98e451e7248aa77f6060bb2a97f19f7b809ff3e1d55e8fc5a12f
+  sha256: 069905cbdf11163cb89f8f99235235d71bdd71ca11bf099e65ed9696fced884f
   rule_id: legacy
   owner_profile: architecture
   owners:
@@ -13788,7 +13788,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_daily
   path: src/ai_trading_system/ops_daily.py
-  sha256: f3a9a512bea88e00e92c240c87d59db81eeaf203d079626ebc4e43897bcd22e4
+  sha256: 4c7156826d4894256935b0bc85a2c8b4cc086defb8e51ef5d610c02620327c4c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

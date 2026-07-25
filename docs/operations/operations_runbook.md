@@ -228,6 +228,14 @@ aits ops daily-run --as-of YYYY-MM-DD
 
 ARCH-004F1 runtime-control policy位于`config/operations/runtime_control.yaml`。当前 `legacy_daily_executor_cut_in_enabled=true`，生产 `daily-run` 已由 canonical lock/idempotency state、run/step attempt budget 和 safe-resume policy 控制；plan sidecar 仍只用于披露 policy path/hash 与 legacy parity，不代表任何 step 已执行或 PASS。自动/人工重触发都只能按当前 workflow spec 的 reviewed attempt budget 恢复，operator 不得手工改 flag、删除 state/lock 或伪造新 key 绕过控制。
 
+OPS-070 起，daily canonical `WorkflowSpec.semantic_revision` 必须同时绑定
+`config/scheduled_tasks.yaml` 与 `config/operations/daily_input_capture.yaml` 的 reviewed
+`policy_version`。会改变 XNYS capture 资格、source attempt/lease/recovery 或 consumer DAG
+语义的配置修订必须先更新对应 reviewed policy version；daily plan shadow 与真实
+`daily-run` 必须显示相同 revision。合法 policy 修订会生成新 spec/key，但旧 FAILED
+state/ledger 必须保留；相同 revision 的 retry exhaustion 仍不得通过删除 state、提高旧
+budget 或任意改 version 绕过。
+
 ## Daily Tasks
 
 交易日 daily chain 至少覆盖以下必需任务；完整顺序以 `config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准。

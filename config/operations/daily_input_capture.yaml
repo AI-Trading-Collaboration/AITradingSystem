@@ -1,5 +1,5 @@
 schema_version: daily_input_capture_policy.v2
-policy_version: daily_input_capture_v2
+policy_version: daily_input_capture_v3
 owner: operations_owner_and_data_platform_owner
 status: REVIEWED
 reviewed_at: 2026-07-25

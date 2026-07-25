@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -1057,6 +1058,10 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["parity"]["status"] == "PASS"
     assert payload["shadow_plan"]["execution_enabled"] is False
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
+    assert payload["workflow_spec"]["semantic_revision"] == (
+        "scheduled=scheduled_tasks_v4;capture=daily_input_capture_v3"
+    )
+    assert plan.workflow_semantic_revision == payload["workflow_spec"]["semantic_revision"]
     assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"
     assert payload["runtime_control_policy"]["legacy_daily_executor_cut_in_enabled"] is True
     assert payload["runtime_control_policy"]["non_daily_dispatch_enabled"] is True
@@ -1178,6 +1183,42 @@ def test_runtime_control_blocks_after_attempt_budget_is_exhausted(tmp_path: Path
 
     assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_RETRY_EXHAUSTED
     assert blocked.resolution.blocker_codes == ("RUN_ATTEMPT_BUDGET_EXHAUSTED",)
+
+
+def test_runtime_control_policy_revision_creates_new_key_without_mutating_exhausted_state(
+    tmp_path: Path,
+) -> None:
+    control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
+    as_of = date(2026, 7, 24)
+    now = datetime(2026, 7, 25, tzinfo=UTC)
+    old_spec = replace(
+        _runtime_spec(second_max_attempts=1),
+        semantic_revision="scheduled=scheduled_tasks_v4;capture=daily_input_capture_v2",
+    )
+    old = control.acquire(spec=old_spec, as_of=as_of, run_id="old", now=now)
+    assert old.lease is not None
+    old.lease.start_step("first", at=now)
+    old.lease.pass_step("first", at=now)
+    old.lease.start_step("second", at=now)
+    old.lease.release()
+
+    exhausted = control.acquire(spec=old_spec, as_of=as_of, run_id="old_retry", now=now)
+    assert exhausted.resolution.decision is OperationsRunDecision.BLOCKED_RETRY_EXHAUSTED
+    old_state_path = tmp_path / "states" / f"{old.resolution.idempotency_key}.json"
+    old_state_bytes = old_state_path.read_bytes()
+
+    new_spec = replace(
+        old_spec,
+        semantic_revision="scheduled=scheduled_tasks_v4;capture=daily_input_capture_v3",
+    )
+    fresh = control.acquire(spec=new_spec, as_of=as_of, run_id="new", now=now)
+
+    assert fresh.resolution.decision is OperationsRunDecision.START_NEW
+    assert fresh.lease is not None
+    assert fresh.resolution.idempotency_key != old.resolution.idempotency_key
+    assert old_state_path.read_bytes() == old_state_bytes
+    assert (tmp_path / "states" / f"{fresh.resolution.idempotency_key}.json").exists()
+    fresh.lease.release()
 
 
 def test_runtime_control_consumes_step_retry_budget_from_workflow_spec(tmp_path: Path) -> None:
@@ -1475,7 +1516,11 @@ def test_controlled_daily_executor_resumes_without_repeating_completed_step(
         policy=_runtime_policy(daily_cut_in=True),
     )
     cadence = load_scheduled_tasks_config().cadence("daily_trading_day")
-    spec = build_daily_schedule_workflow_spec(cadence=cadence, is_trading_day=True)
+    spec = build_daily_schedule_workflow_spec(
+        cadence=cadence,
+        is_trading_day=True,
+        semantic_revision=plan.workflow_semantic_revision,
+    )
     prior = control.acquire(spec=spec, as_of=as_of, run_id="prior")
     assert prior.lease is not None
     prior.lease.start_step("capture_daily_inputs")
@@ -1532,6 +1577,7 @@ def test_controlled_daily_executor_blocks_concurrent_trigger_before_runner(
     spec = build_daily_schedule_workflow_spec(
         cadence=load_scheduled_tasks_config().cadence("daily_trading_day"),
         is_trading_day=True,
+        semantic_revision=plan.workflow_semantic_revision,
     )
     active = control.acquire(spec=spec, as_of=as_of, run_id="active")
     assert active.lease is not None

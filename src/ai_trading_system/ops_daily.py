@@ -187,6 +187,7 @@ class DailyOpsPlan:
     steps: tuple[DailyOpsStep, ...]
     market_session: MarketSession
     production_effect: str = ProductionEffect.NONE.value
+    workflow_semantic_revision: str | None = None
 
     @property
     def dependency_aware(self) -> bool:
@@ -1739,6 +1740,9 @@ def build_daily_ops_plan(
         generated_at=datetime.now(tz=UTC),
         steps=tuple(steps),
         market_session=market_session,
+        workflow_semantic_revision=(
+            f"scheduled={scheduled.policy_version};capture={capture_policy.policy_version}"
+        ),
     )
     _enforce_scheduled_daily_plan(plan)
     return plan
@@ -2108,6 +2112,7 @@ def run_daily_ops_plan_controlled(
         cadence=scheduled.cadence("daily_trading_day"),
         is_trading_day=plan.market_session.is_trading_day,
         observed_step_ids=tuple(step.step_id for step in plan.steps),
+        semantic_revision=plan.workflow_semantic_revision,
     )
     control = runtime_control or OperationsRunControl(
         root=(
@@ -2522,6 +2527,7 @@ def write_daily_ops_shadow_plan(
         observed_enabled=tuple(step.enabled for step in plan.steps),
         source_config_path=scheduled.path,
         source_config_sha256=hashlib.sha256(scheduled.path.read_bytes()).hexdigest(),
+        semantic_revision=plan.workflow_semantic_revision,
     )
     runtime_policy = load_operations_runtime_control_policy(runtime_control_policy_path)
     payload["runtime_control_policy"] = {

@@ -230,14 +230,26 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   provider/DQ/PIT blocker；reviewed forward tracking 起点改为首个实际可验收 latest
   decision session `2026-07-24`。旧 FAILED state/ledger 保留，新 policy/spec 必须生成
   新 idempotency key 后从唯一 daily trigger 重跑。
+- 2026-07-25：`tracking_start` 修复发布为 `8f88156f9c4f65dd921848ce86b0e1e4d523b09c`
+  后，scheduler checkout preflight 与 33-step daily plan 均 PASS/READY，但唯一入口在
+  provider 调用前返回 `RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED`。根因是 canonical
+  `WorkflowSpec.spec_id` 只绑定 scheduled step topology/commands，没有绑定会改变 capture
+  资格与 source-control 行为的 `daily_input_capture` reviewed policy revision；因此
+  tracking policy 修正仍错误复用了旧 FAILED key。最佳修复不是删除旧 state、提高旧
+  attempt budget 或伪造新 key，而是把 scheduled policy version 与 capture policy version
+  作为显式 runtime semantic revision 纳入 `WorkflowSpec` 哈希；reviewed capture policy
+  同步升级版本。验收须证明旧 state/ledger 保留、新 spec/key 可追踪、未变 policy 的
+  重触发仍受原 budget 约束，并再次只从 `aits ops daily-run` 执行真实 provider-ready
+  session。
 
 ## 临时 live-fix worktree 生命周期
 
 - owning task：`OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG`
 - absolute path：`D:\Work\AITradingSystem_ops070_livefix_20260725`
-- purpose：仅修正真实验收暴露的 `tracking_start` 非客观全局阻断，更新对应测试、任务
-  状态、requirement、compatibility authority 与确定性生成清单；不得混入主工作区
-  DEVX/owner 变更。
+- purpose：修正真实验收暴露的 `tracking_start` 非客观全局阻断，并让 canonical
+  workflow spec 显式绑定 scheduled/capture reviewed policy revisions；更新对应测试、
+  任务状态、requirement、system flow、compatibility authority 与确定性生成清单；不得
+  混入主工作区 DEVX/owner 变更。
 - exit condition：focused/architecture/required validation PASS、commit/push 完成、独立
   ops checkout pin 到新 exact release commit 且真实 daily-run 取得可审计终态后，确认
   无唯一未提交证据或活动进程，再用 `git worktree remove` 清理并 prune。若验证或运营

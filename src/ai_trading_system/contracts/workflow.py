@@ -216,6 +216,7 @@ class WorkflowSpec:
     steps: tuple[WorkflowStepSpec, ...]
     due_policy_id: str
     trading_calendar: str | None = None
+    semantic_revision: str | None = None
 
     def __post_init__(self) -> None:
         for value, field in (
@@ -225,6 +226,8 @@ class WorkflowSpec:
             (self.due_policy_id, "due_policy_id"),
         ):
             _require_text(value, field)
+        if self.semantic_revision is not None:
+            _require_text(self.semantic_revision, "semantic_revision")
         if not self.steps:
             raise WorkflowContractError("WORKFLOW_STEPS_EMPTY", self.workflow_id)
         step_ids = [step.step_id for step in self.steps]
@@ -256,7 +259,7 @@ class WorkflowSpec:
         return f"workflow_spec_{hashlib.sha256(material).hexdigest()[:20]}"
 
     def _semantic_payload(self) -> dict[str, object]:
-        return {
+        payload: dict[str, object] = {
             "schema_version": self.schema_version,
             "workflow_id": self.workflow_id,
             "owner": self.owner,
@@ -266,6 +269,9 @@ class WorkflowSpec:
             "trading_calendar": self.trading_calendar,
             "steps": [step.to_dict() for step in self.steps],
         }
+        if self.semantic_revision is not None:
+            payload["semantic_revision"] = self.semantic_revision
+        return payload
 
     def to_dict(self) -> dict[str, object]:
         return {"spec_id": self.spec_id, **self._semantic_payload()}
@@ -282,6 +288,11 @@ class WorkflowSpec:
                 None
                 if payload.get("trading_calendar") is None
                 else str(payload.get("trading_calendar"))
+            ),
+            semantic_revision=(
+                None
+                if payload.get("semantic_revision") is None
+                else str(payload.get("semantic_revision"))
             ),
             steps=tuple(
                 WorkflowStepSpec.from_dict(_mapping(item, "step"))

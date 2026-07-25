@@ -11,8 +11,9 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits
-    ops daily-run`重跑首个合法provider-ready XNYS session
+  next_owner: Codex：将scheduled/capture reviewed policy revision纳入canonical workflow
+    spec并发布新release；operations owner：从唯一`aits ops daily-run`重跑首个合法provider-ready XNYS
+    session
   requirement_refs:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   module_ids: []
@@ -24,48 +25,50 @@ task_record:
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-      attempt/lease/recovery均可审计；独立ops checkout exact commit/origin/clean/current-process
-      preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
+      attempt/lease/recovery均可审计；reviewed capture policy修正产生可追踪新spec/key且旧state/ledger不可改写；未变policy仍受原attempt
+      budget约束；独立ops checkout exact commit/origin/clean/current-process preflight
+      fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1588
-    row_sha256: 0f8f41ebe5a63737bb7219b5f3683dcfab9f584ad23f82a301c2fee6cf9953cb
+    row_sha256: 323920e4296ed2eae8def80f18df8b2f17a3c5c12901beb072e2a23c555e24ab
     cell_count: 8
     all_cells:
     - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
     - Operations / objective blocker taxonomy and consumer dependency DAG
     - P0
     - VALIDATING
-    - Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits ops
-      daily-run`重跑首个合法provider-ready XNYS session
+    - Codex：将scheduled/capture reviewed policy revision纳入canonical workflow spec并发布新release；operations
+      owner：从唯一`aits ops daily-run`重跑首个合法provider-ready XNYS session
     - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
       closure与consumer authorization分离；S2已加入逐源lease/idempotency、稳定blocker taxonomy与reviewed
       retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight。
     - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-      attempt/lease/recovery均可审计；独立ops checkout exact commit/origin/clean/current-process
-      preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
-    - 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
-      DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
-      `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
-      `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。
+      attempt/lease/recovery均可审计；reviewed capture policy修正产生可追踪新spec/key且旧state/ledger不可改写；未变policy仍受原attempt
+      budget约束；独立ops checkout exact commit/origin/clean/current-process preflight
+      fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
+    - 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run暴露`tracking_start=2026-07-27`非客观阻断，修正到`2026-07-24`后preflight/plan通过，但canonical
+      run仍因spec未绑定capture policy而复用旧FAILED key并返回`RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED`，provider
+      request仍为0。现实施runtime semantic revision绑定，不删除旧state、不放宽旧budget；`production_effect=none`，无weights/broker/trading。
     raw_line: '|OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG|Operations /
-      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations
-      owner：从唯一`aits ops daily-run`重跑首个合法provider-ready XNYS session|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
+      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：将scheduled/capture
+      reviewed policy revision纳入canonical workflow spec并发布新release；operations owner：从唯一`aits
+      ops daily-run`重跑首个合法provider-ready XNYS session|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
       closure与consumer authorization分离；S2已加入逐源lease/idempotency、稳定blocker taxonomy与reviewed
       retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight。|单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-      attempt/lease/recovery均可审计；独立ops checkout exact commit/origin/clean/current-process
-      preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。|2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
-      DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
-      `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
-      `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。|'
+      attempt/lease/recovery均可审计；reviewed capture policy修正产生可追踪新spec/key且旧state/ledger不可改写；未变policy仍受原attempt
+      budget约束；独立ops checkout exact commit/origin/clean/current-process preflight
+      fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。|2026-07-25：S1-S4工程与正式validation已PASS。首次真实run暴露`tracking_start=2026-07-27`非客观阻断，修正到`2026-07-24`后preflight/plan通过，但canonical
+      run仍因spec未绑定capture policy而复用旧FAILED key并返回`RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED`，provider
+      request仍为0。现实施runtime semantic revision绑定，不删除旧state、不放宽旧budget；`production_effect=none`，无weights/broker/trading。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-0f8f41ebe5a63737bb7219b5
+  event_id: legacy-import-323920e4296ed2eae8def80f
   task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -78,15 +81,15 @@ initial_event:
   to_status: VALIDATING
   payload:
     priority: P0
-    next_owner: Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits
-      ops daily-run`重跑首个合法provider-ready XNYS session
-    notes: 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
-      DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
-      `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
-      `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。
+    next_owner: Codex：将scheduled/capture reviewed policy revision纳入canonical workflow
+      spec并发布新release；operations owner：从唯一`aits ops daily-run`重跑首个合法provider-ready
+      XNYS session
+    notes: 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run暴露`tracking_start=2026-07-27`非客观阻断，修正到`2026-07-24`后preflight/plan通过，但canonical
+      run仍因spec未绑定capture policy而复用旧FAILED key并返回`RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED`，provider
+      request仍为0。现实施runtime semantic revision绑定，不删除旧state、不放宽旧budget；`production_effect=none`，无weights/broker/trading。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:0f8f41ebe5a63737bb7219b5f3683dcfab9f584ad23f82a301c2fee6cf9953cb
+  - sha256:323920e4296ed2eae8def80f18df8b2f17a3c5c12901beb072e2a23c555e24ab
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -94,21 +97,21 @@ projection:
   - Operations / objective blocker taxonomy and consumer dependency DAG
   - P0
   - VALIDATING
-  - Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits ops daily-run`重跑首个合法provider-ready
-    XNYS session
+  - Codex：将scheduled/capture reviewed policy revision纳入canonical workflow spec并发布新release；operations
+    owner：从唯一`aits ops daily-run`重跑首个合法provider-ready XNYS session
   - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
     closure与consumer authorization分离；S2已加入逐源lease/idempotency、稳定blocker taxonomy与reviewed
     retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight。
   - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-    attempt/lease/recovery均可审计；独立ops checkout exact commit/origin/clean/current-process
-    preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
-  - 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
-    DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
-    `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
-    `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。
+    attempt/lease/recovery均可审计；reviewed capture policy修正产生可追踪新spec/key且旧state/ledger不可改写；未变policy仍受原attempt
+    budget约束；独立ops checkout exact commit/origin/clean/current-process preflight fail
+    closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
+  - 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run暴露`tracking_start=2026-07-27`非客观阻断，修正到`2026-07-24`后preflight/plan通过，但canonical
+    run仍因spec未绑定capture policy而复用旧FAILED key并返回`RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED`，provider
+    request仍为0。现实施runtime semantic revision绑定，不删除旧state、不放宽旧budget；`production_effect=none`，无weights/broker/trading。
   docs_links:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   terminal: false
-  raw_row_sha256: 0f8f41ebe5a63737bb7219b5f3683dcfab9f584ad23f82a301c2fee6cf9953cb
+  raw_row_sha256: 323920e4296ed2eae8def80f18df8b2f17a3c5c12901beb072e2a23c555e24ab
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 62d9c178b6bd2f33ba7ddaf3cb2f0d29c1c2c516d64420307f835a395c7efa36
+fragment_checksum: 2f4c46f7a63f3e411b9c2081fce0fac2acf7711dc27adace4f8f1f1becf27283

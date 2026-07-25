@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 
 import pytest
@@ -159,6 +160,15 @@ def test_workflow_spec_rejects_cycles_and_non_idempotent_retries() -> None:
             due_policy_id="daily.v1",
             steps=(step_a, step_b),
         )
+
+
+def test_workflow_spec_semantic_revision_changes_identity_and_round_trips() -> None:
+    base = _workflow_spec()
+    revised = replace(base, semantic_revision="capture=daily_input_capture_v3")
+
+    assert revised.spec_id != base.spec_id
+    assert WorkflowSpec.from_dict(revised.to_dict()) == revised
+    assert "semantic_revision" not in base.to_dict()
 
 
 def test_run_ledger_enforces_dependencies_quality_and_round_trip() -> None:

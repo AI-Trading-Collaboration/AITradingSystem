@@ -133,7 +133,7 @@ def _runner_for_components(
 def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
     policy = load_daily_input_capture_policy()
 
-    assert policy.policy_version == "daily_input_capture_v2"
+    assert policy.policy_version == "daily_input_capture_v3"
     assert policy.tracking_start == date(2026, 7, 24)
     assert policy.blocker_taxonomy_version == "daily_input_capture_blockers_v1"
     assert policy.lease_ttl_seconds == 1800
@@ -657,6 +657,4 @@ def test_recovery_queue_for_missed_sessions_never_authorizes_historical_pit(
         policy_path=policy_path,
     )
     assert tampered["status"] == "FAIL"
-    assert "QUEUE_SAFETY_BOUNDARY_MISMATCH" in {
-        issue["code"] for issue in tampered["issues"]
-    }
+    assert "QUEUE_SAFETY_BOUNDARY_MISMATCH" in {issue["code"] for issue in tampered["issues"]}

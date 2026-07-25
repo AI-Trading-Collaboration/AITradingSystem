@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 
@@ -238,11 +238,13 @@ def build_daily_schedule_shadow_payload(
     observed_enabled: tuple[bool, ...],
     source_config_path: Path,
     source_config_sha256: str,
+    semantic_revision: str | None = None,
 ) -> dict[str, object]:
     workflow_spec = build_daily_schedule_workflow_spec(
         cadence=cadence,
         is_trading_day=is_trading_day,
         observed_step_ids=observed_step_ids,
+        semantic_revision=semantic_revision,
     )
     binding = LegacyScheduledWorkflowBinding(
         owner="system_operations",
@@ -309,6 +311,7 @@ def build_daily_schedule_workflow_spec(
     cadence: ScheduledCadence,
     is_trading_day: bool,
     observed_step_ids: tuple[str, ...] | None = None,
+    semantic_revision: str | None = None,
 ) -> WorkflowSpec:
     assessment = assess_scheduled_cadence(
         cadence,
@@ -326,7 +329,9 @@ def build_daily_schedule_workflow_spec(
         raise LegacyScheduledTaskDispatchBlocked(
             "daily schedule compatibility assessment did not produce a canonical workflow"
         )
-    return assessment.workflow_spec
+    if semantic_revision is None:
+        return assessment.workflow_spec
+    return replace(assessment.workflow_spec, semantic_revision=semantic_revision)
 
 
 def _workflow_step(task: ScheduledTask, *, dependencies: tuple[str, ...]) -> WorkflowStepSpec:
