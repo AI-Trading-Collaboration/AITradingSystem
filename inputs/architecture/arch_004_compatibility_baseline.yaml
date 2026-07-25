@@ -24184,7 +24184,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
     hash_normalization: git_eol_lf
   - path: config/operations/daily_input_capture.yaml
-    sha256: 801bc3e04d7181c32311754b12f7f75fc1def673ef016c22c5aeb78318154a25
+    sha256: 76722a4addac61ead2d51e156decd684e46344fb33b7fe2cfc19e2b55769d7cb
     hash_normalization: git_eol_lf
   - path: config/operations/ops_scheduler_checkout.yaml
     sha256: 577e822f287902c0f41628355bfaeb2b262ac959359e030c96f8958a8926379e
@@ -24238,7 +24238,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: 662c63c365262bf0b3c1f594ab27d5ad08ca6e1a3f94512126748f83b8c2519a
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
-    sha256: e061049195e97e033c0eed53a1a7620bd2ec4b6b9db1d7921f054c5cf54dc0ed
+    sha256: e80a73356d069c9e3e5037717f6280181f1596fc2cf2e2afb206062b2e8351f7
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
     sha256: 7e85bde4eaeb7558083e2b6b4bd7f32e09cac051028a9fbe775ac9ea1d73c6a2
@@ -24274,7 +24274,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: f167a37319b409800e499da47f9d7cc6cef64c50dfaa3f7cb5de77f1099c6a4d
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: d1debd60f5767fd9490bef0639238e4ddb51207806c2f597bad5722a9639df30
+    sha256: 5b58d17afdb7b4a19327b03580098985d696c5dccbaa2d445b605af68fe34b1d
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: d824f19f1b469a99c0612cb7cf5ba083f5f245d05735a63aeac2688ae0c549a2
@@ -24292,7 +24292,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: 5a5f7c9e784f2220338917f2f61d25cc49a5b419e3d2501fd6e31a0978fbbe8c
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: fde75b357b5215b707a624ac4aad910957732f417ae49e5b1ef79033f7b8835f
+    sha256: d40a9bd169a8e3b59e2f2a6de996305f897406ca8ca9be6821d97790d78dcb77
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -24304,10 +24304,10 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: 6e058212b131b7e4fc01705ce41be1e37b5c7af6a65cc9cb6c6c14024a926072
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: f48538be16e8c9e4a6a2f09d57424a09eb03fd859a581d3f878daad5d64e38c7
+    sha256: 7887940f6a139a0261cf9f9a9fa451104471933d0e12471bcf9a08201c9827a1
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 13ed964ccb02157f2cb3f6e4651f56db23aad6aa139218cc297f5abb1006c412
+    sha256: ce4416e26cf29672ed58dbc2c6b87d13f3f243256287f14e6901d9f157b73f8b
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_decision_manifest.json
     sha256: 9269df2bfa35ca8e88f7b44d80a0cbb9abb64fc9f79119b3a17e8b0bfdd6cc7d
@@ -24334,7 +24334,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: 03323888a1b24f4c775436bd78accbb40d6e93c4b8652565c21b127dbc3b394f
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
-    sha256: 287beed4a5490bbcfee2d374e2abf5f4d3246985ffa25dd63df4b18b26f0d38b
+    sha256: 5cf470a3140d236c2bf58f6421751d3a06696aaf35c9c92b5053091a74235961
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
     sha256: e70eec0f967cf2c6fa19a11a757f4c5c617a803f40ab3e554fd5040bfaca18ed
@@ -24532,7 +24532,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: 6e8c7361aef148ec24c1903e36395c9d4cf0722fd2284b56df6d1e6d37201cfb
     hash_normalization: git_eol_lf
   - path: tests/test_daily_input_capture.py
-    sha256: 394defe9ae6436df1431104c956ef26dd9191160246a993e4afa7694689dede2
+    sha256: 02080333590b04bb9345dc0da1b782cd4c829ee3e766d3416742694473c2f03c
     hash_normalization: git_eol_lf
   - path: tests/test_data_download.py
     sha256: d47360af0f26b9619a0f611d745a812bc020f5d76eb22857775bb4f7e40b2950

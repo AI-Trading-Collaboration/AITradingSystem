@@ -9039,7 +9039,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_daily_input_capture
   path: tests/test_daily_input_capture.py
-  sha256: 394defe9ae6436df1431104c956ef26dd9191160246a993e4afa7694689dede2
+  sha256: 02080333590b04bb9345dc0da1b782cd4c829ee3e766d3416742694473c2f03c
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

@@ -220,3 +220,25 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   642 warnings / 1,173.83s`。S1～S4 engineering closeout 完成；任务保持
   `VALIDATING`，仅等待 owner 部署独立 ops checkout / scoped credentials / 唯一
   scheduler trigger，以及首个合法 provider-ready XNYS session 运营验收。
+- 2026-07-25：真实部署验收首先证明两层 checkout guard 生效：共享
+  `data/outputs` junction 的尝试被 `CHECKOUT_RUNTIME_ROOT_OUTSIDE` 在 provider request、
+  cache/report mutation 前阻断；将完整 canonical runtime state 复制到独立 checkout 后，
+  scheduler preflight PASS 且 release checkout 保持 clean。随后唯一外部入口
+  `aits ops daily-run` 自动选择合法最新 XNYS session `2026-07-24`，但 capture 在任何
+  source attempt 前被 `tracking_start=2026-07-27` 全局拒绝，33 个 DAG step 均取得终态，
+  `secret_hygiene` 仍 PASS，provider request 为零。该日期门禁是非客观全局阻断，不是
+  provider/DQ/PIT blocker；reviewed forward tracking 起点改为首个实际可验收 latest
+  decision session `2026-07-24`。旧 FAILED state/ledger 保留，新 policy/spec 必须生成
+  新 idempotency key 后从唯一 daily trigger 重跑。
+
+## 临时 live-fix worktree 生命周期
+
+- owning task：`OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG`
+- absolute path：`D:\Work\AITradingSystem_ops070_livefix_20260725`
+- purpose：仅修正真实验收暴露的 `tracking_start` 非客观全局阻断，更新对应测试、任务
+  状态、requirement、compatibility authority 与确定性生成清单；不得混入主工作区
+  DEVX/owner 变更。
+- exit condition：focused/architecture/required validation PASS、commit/push 完成、独立
+  ops checkout pin 到新 exact release commit 且真实 daily-run 取得可审计终态后，确认
+  无唯一未提交证据或活动进程，再用 `git worktree remove` 清理并 prune。若验证或运营
+  验收失败，保留 blocker evidence，并在本节追加风险、owner 与下一退出条件。

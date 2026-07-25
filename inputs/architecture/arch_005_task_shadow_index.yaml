@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: e33942b1f927d56de9d0a92dda6a6600e1f57ccb044829ee3ae93ea8461b390c
+baseline_checksum: 36c48a819d06e81581483cfa058486ec34c8cf218526071b3a52ffa50845cd93
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 902
 fragment_count: 902
@@ -587,8 +587,8 @@ fragments:
   fragment_checksum: 907ab4a2f2f6470d7f706f0ae8aad13a16074d76c679cfb093f81bf52a4ea7b2
 - task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
-  file_sha256: 287beed4a5490bbcfee2d374e2abf5f4d3246985ffa25dd63df4b18b26f0d38b
-  fragment_checksum: 0c767aad9d36c60e071a9bf1cb12a36d883b74a884123cad7d0ea34f48037eff
+  file_sha256: 5cf470a3140d236c2bf58f6421751d3a06696aaf35c9c92b5053091a74235961
+  fragment_checksum: 62d9c178b6bd2f33ba7ddaf3cb2f0d29c1c2c516d64420307f835a395c7efa36
 - task_id: PIT-001
   path: registry/development_tasks_shadow/active/6b/6bcf100bd2ed48230eec76b5a35417a9a97dd5c4abb4de3c8f63dd936d77d1c5.yaml
   file_sha256: a911424e3b6369882090891306131075be4dd8048f6cc701a9d15aa7a1ba73f3
@@ -3633,8 +3633,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: d1debd60f5767fd9490bef0639238e4ddb51207806c2f597bad5722a9639df30
-  rendered_sha256: d1debd60f5767fd9490bef0639238e4ddb51207806c2f597bad5722a9639df30
+  source_sha256: 5b58d17afdb7b4a19327b03580098985d696c5dccbaa2d445b605af68fe34b1d
+  rendered_sha256: 5b58d17afdb7b4a19327b03580098985d696c5dccbaa2d445b605af68fe34b1d
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3656,4 +3656,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 5f96cfd56a2851d52fdf28a9e8ed0b00b086cf1f905e4168b5da7ad6ea5ac6eb
+index_checksum: d89a6e7041d21357b85c0b7defaf201ed67cc24b9ac7d402cad94493f611b0c7

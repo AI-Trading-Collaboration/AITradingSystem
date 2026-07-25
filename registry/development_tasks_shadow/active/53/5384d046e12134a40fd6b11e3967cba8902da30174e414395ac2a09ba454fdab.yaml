@@ -11,8 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner：部署独立pinned ops checkout、scoped credentials与唯一`aits ops
-    daily-run` scheduler trigger；operations owner：在首个合法provider-ready XNYS session完成真实运营验收
+  next_owner: Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits
+    ops daily-run`重跑首个合法provider-ready XNYS session
   requirement_refs:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   module_ids: []
@@ -20,7 +20,7 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
     closure与consumer authorization分离；S2已加入逐源lease/idempotency、稳定blocker taxonomy与reviewed
-    retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight，但部署激活保持owner-gated。
+    retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
@@ -32,41 +32,40 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1588
-    row_sha256: 4337a10e5257e9bd3a1b39e2ce8be11def26b69297e7767fb6a8325a4f0c12a6
+    row_sha256: 0f8f41ebe5a63737bb7219b5f3683dcfab9f584ad23f82a301c2fee6cf9953cb
     cell_count: 8
     all_cells:
     - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
     - Operations / objective blocker taxonomy and consumer dependency DAG
     - P0
     - VALIDATING
-    - project owner：部署独立pinned ops checkout、scoped credentials与唯一`aits ops daily-run`
-      scheduler trigger；operations owner：在首个合法provider-ready XNYS session完成真实运营验收
+    - Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits ops
+      daily-run`重跑首个合法provider-ready XNYS session
     - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
       closure与consumer authorization分离；S2已加入逐源lease/idempotency、稳定blocker taxonomy与reviewed
-      retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight，但部署激活保持owner-gated。
+      retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight。
     - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
       attempt/lease/recovery均可审计；独立ops checkout exact commit/origin/clean/current-process
       preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
-    - 2026-07-25：S1-S4工程、fault-injection与隔离closeout完成；23个归属文件与主工作区SHA-256一致，纯OPS-070
-      append-only authority保留`fc6313416`的1,521,808-byte prefix且排除DEVX/owner文件。focused=133、architecture=622、contract=275、integration=994、reproducibility=23、Full=`7,233
-      passed / 4 skipped / 642 warnings`均PASS；Ruff与diff check PASS。工程侧剩余项为owner-gated外部部署与首个合法provider-ready
-      XNYS session验收；`production_effect=none`，无weights/broker/trading。
+    - 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
+      DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
+      `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
+      `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。
     raw_line: '|OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG|Operations /
-      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|project
-      owner：部署独立pinned ops checkout、scoped credentials与唯一`aits ops daily-run` scheduler
-      trigger；operations owner：在首个合法provider-ready XNYS session完成真实运营验收|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
+      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations
+      owner：从唯一`aits ops daily-run`重跑首个合法provider-ready XNYS session|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
       closure与consumer authorization分离；S2已加入逐源lease/idempotency、稳定blocker taxonomy与reviewed
-      retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight，但部署激活保持owner-gated。|单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
+      retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight。|单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
       attempt/lease/recovery均可审计；独立ops checkout exact commit/origin/clean/current-process
-      preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。|2026-07-25：S1-S4工程、fault-injection与隔离closeout完成；23个归属文件与主工作区SHA-256一致，纯OPS-070
-      append-only authority保留`fc6313416`的1,521,808-byte prefix且排除DEVX/owner文件。focused=133、architecture=622、contract=275、integration=994、reproducibility=23、Full=`7,233
-      passed / 4 skipped / 642 warnings`均PASS；Ruff与diff check PASS。工程侧剩余项为owner-gated外部部署与首个合法provider-ready
-      XNYS session验收；`production_effect=none`，无weights/broker/trading。|'
+      preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。|2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
+      DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
+      `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
+      `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-4337a10e5257e9bd3a1b39e2
+  event_id: legacy-import-0f8f41ebe5a63737bb7219b5
   task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -79,15 +78,15 @@ initial_event:
   to_status: VALIDATING
   payload:
     priority: P0
-    next_owner: project owner：部署独立pinned ops checkout、scoped credentials与唯一`aits ops
-      daily-run` scheduler trigger；operations owner：在首个合法provider-ready XNYS session完成真实运营验收
-    notes: 2026-07-25：S1-S4工程、fault-injection与隔离closeout完成；23个归属文件与主工作区SHA-256一致，纯OPS-070
-      append-only authority保留`fc6313416`的1,521,808-byte prefix且排除DEVX/owner文件。focused=133、architecture=622、contract=275、integration=994、reproducibility=23、Full=`7,233
-      passed / 4 skipped / 642 warnings`均PASS；Ruff与diff check PASS。工程侧剩余项为owner-gated外部部署与首个合法provider-ready
-      XNYS session验收；`production_effect=none`，无weights/broker/trading。
+    next_owner: Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits
+      ops daily-run`重跑首个合法provider-ready XNYS session
+    notes: 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
+      DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
+      `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
+      `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:4337a10e5257e9bd3a1b39e2ce8be11def26b69297e7767fb6a8325a4f0c12a6
+  - sha256:0f8f41ebe5a63737bb7219b5f3683dcfab9f584ad23f82a301c2fee6cf9953cb
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -95,21 +94,21 @@ projection:
   - Operations / objective blocker taxonomy and consumer dependency DAG
   - P0
   - VALIDATING
-  - project owner：部署独立pinned ops checkout、scoped credentials与唯一`aits ops daily-run`
-    scheduler trigger；operations owner：在首个合法provider-ready XNYS session完成真实运营验收
+  - Codex：修正真实验收暴露的`tracking_start`全局阻断并发布新release；operations owner：从唯一`aits ops daily-run`重跑首个合法provider-ready
+    XNYS session
   - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1已将capture
     closure与consumer authorization分离；S2已加入逐源lease/idempotency、稳定blocker taxonomy与reviewed
-    retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight，但部署激活保持owner-gated。
+    retry；S3已加入严格PIT边界内的恢复队列；S4已加入pinned clean独立checkout policy/preflight。
   - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
     attempt/lease/recovery均可审计；独立ops checkout exact commit/origin/clean/current-process
     preflight fail closed；正式validation与真实provider-ready session验收PASS；无weights/broker/trading。
-  - 2026-07-25：S1-S4工程、fault-injection与隔离closeout完成；23个归属文件与主工作区SHA-256一致，纯OPS-070
-    append-only authority保留`fc6313416`的1,521,808-byte prefix且排除DEVX/owner文件。focused=133、architecture=622、contract=275、integration=994、reproducibility=23、Full=`7,233
-    passed / 4 skipped / 642 warnings`均PASS；Ruff与diff check PASS。工程侧剩余项为owner-gated外部部署与首个合法provider-ready
-    XNYS session验收；`production_effect=none`，无weights/broker/trading。
+  - 2026-07-25：S1-S4工程与正式validation已PASS。首次真实run证明checkout/runtime-root门禁与33-step
+    DAG终态/always-run closure生效，但合法latest session `2026-07-24`在source attempt前被reviewed
+    `tracking_start=2026-07-27`非客观阻断；provider request=0。现将forward tracking起点校准为首个实际可验收session
+    `2026-07-24`，保留旧FAILED state/ledger并以新policy/spec key重跑；`production_effect=none`，无weights/broker/trading。
   docs_links:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   terminal: false
-  raw_row_sha256: 4337a10e5257e9bd3a1b39e2ce8be11def26b69297e7767fb6a8325a4f0c12a6
+  raw_row_sha256: 0f8f41ebe5a63737bb7219b5f3683dcfab9f584ad23f82a301c2fee6cf9953cb
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 0c767aad9d36c60e071a9bf1cb12a36d883b74a884123cad7d0ea34f48037eff
+fragment_checksum: 62d9c178b6bd2f33ba7ddaf3cb2f0d29c1c2c516d64420307f835a395c7efa36

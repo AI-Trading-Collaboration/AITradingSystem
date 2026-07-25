@@ -134,6 +134,7 @@ def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
     policy = load_daily_input_capture_policy()
 
     assert policy.policy_version == "daily_input_capture_v2"
+    assert policy.tracking_start == date(2026, 7, 24)
     assert policy.blocker_taxonomy_version == "daily_input_capture_blockers_v1"
     assert policy.lease_ttl_seconds == 1800
     assert policy.component_policies["market_macro"].max_attempts == 2

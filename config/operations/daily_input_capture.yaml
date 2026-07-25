@@ -5,7 +5,7 @@ status: REVIEWED
 reviewed_at: 2026-07-25
 calendar_authority: XNYS
 decision_session_policy: XNYS_DECISION_SESSION_ALIGNED
-tracking_start: 2026-07-27
+tracking_start: 2026-07-24
 required_components:
   - market_macro
   - fmp_forward_pit
