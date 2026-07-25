@@ -25626,13 +25626,13 @@ phase_arch_005_s4d_s2_read_only_telemetry:
     sha256: 119d98c9a81653ad019167bf391ade72cff46e81be91e5f30003b6712d9cfd8c
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
-    sha256: 4306835fa7c0d73ee00584d4ddbb162e84a9adea6b20e050b4078d7d95a0757f
+    sha256: 495b916b8548ab36c2d4c67a0a971bee47c8872d88af3f4bbcb379727a6db753
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
     sha256: 754048ec22b60f0539e9aef1de6079549912bc80a5dbdf137064714b45f9d9bc
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 3b41a98ae1086e33266159d5c8a8090f7a1091f733a12ad89110723bc2926bfa
+    sha256: 6e84a92142b5680b2fde6ef68c1141bcb45708ad7e7bdf637d895ed3425b5050
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: 9d730e9994324b9897467cd2c89bfd0363d3d4df85ef8408dab4ab8f69623d8c
@@ -25650,13 +25650,13 @@ phase_arch_005_s4d_s2_read_only_telemetry:
     sha256: 87274b828b56cee1a52ea865ece8a296bdd9e97d341a4add6cd199091100b478
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 81a3a12976acf9ad82d76bd0fb5169b3e9ca679f04a8ab62234856e00bd3f2b6
+    sha256: d0732dd28eb5044d3946cf137343023e5b096cff03f6597b40cc93eb95a70917
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 1fbda7fd7ab31fbd759132a6536df6a76ff97b0f0bba89d7b8a1a85cadfd15a5
+    sha256: ac8a9de53db3de5eb34e39429d0d8e0ebb8919dda88f42d9db3f6d5751a4b5c5
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-    sha256: a56e01e844c4032b6c3daf3dfdecae9933630702f63c3ebaa9b8f5216d14ce13
+    sha256: 393ec26eb7279560871b39f59715eda84f10d59b4ce861c33723390b269650d1
     hash_normalization: git_eol_lf
   - path: scripts/architecture_arch005_checkout_guard.py
     sha256: 941259518d28026d5f3f849ed9eb49842acaa3f94fba756bb99cf105cd90e183

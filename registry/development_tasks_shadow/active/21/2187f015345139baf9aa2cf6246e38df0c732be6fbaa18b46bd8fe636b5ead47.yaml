@@ -30,7 +30,7 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1955
-    row_sha256: fbbc03725be7e3ac4457eecec37058358e4d6af09b120597b7444463ed07a1db
+    row_sha256: f664a9f94af8a509e0b467bcdd929cf558e290495c63c0fa6e3e1e889ba05a9c
     cell_count: 8
     all_cells:
     - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
@@ -47,7 +47,8 @@ task_record:
       intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0
       unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
       evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
-      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
+      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。候选`b8d774828`已fast-forward并推送main；148个canonical
+      evidence文件逐SHA复核，临时worktree清理释放253,037,884 bytes。状态转`BASELINE_DONE`；S5、task
       source cutover、production和broker继续未授权。
     raw_line: '|ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD|Architecture / shared-checkout
       writer and operations lease guard|P0|BASELINE_DONE|project owner：独立评审两批rollup并决定是否另行提出S5；architecture
@@ -59,13 +60,14 @@ task_record:
       intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0
       unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
       evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
-      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
+      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。候选`b8d774828`已fast-forward并推送main；148个canonical
+      evidence文件逐SHA复核，临时worktree清理释放253,037,884 bytes。状态转`BASELINE_DONE`；S5、task
       source cutover、production和broker继续未授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-fbbc03725be7e3ac4457eece
+  event_id: legacy-import-f664a9f94af8a509e0b467bc
   task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -83,11 +85,12 @@ initial_event:
       intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0
       unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
       evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
-      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
+      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。候选`b8d774828`已fast-forward并推送main；148个canonical
+      evidence文件逐SHA复核，临时worktree清理释放253,037,884 bytes。状态转`BASELINE_DONE`；S5、task
       source cutover、production和broker继续未授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:fbbc03725be7e3ac4457eecec37058358e4d6af09b120597b7444463ed07a1db
+  - sha256:f664a9f94af8a509e0b467bcdd929cf558e290495c63c0fa6e3e1e889ba05a9c
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -104,11 +107,12 @@ projection:
   - 2026-07-26：owner授权窄版S2只读telemetry；实现中直接修复release-time scope drift。两批snapshot=`checkout-telemetry-18eee4c13adf0b0490dd`/`checkout-telemetry-1dcb86b0e292efb62eb3`，合计23
     intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0 unreviewed
     block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5 evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
-    passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
-    source cutover、production和broker继续未授权。
+    passed`，Full=`7265 passed / 4 skipped / 643 warnings`。候选`b8d774828`已fast-forward并推送main；148个canonical
+    evidence文件逐SHA复核，临时worktree清理释放253,037,884 bytes。状态转`BASELINE_DONE`；S5、task source
+    cutover、production和broker继续未授权。
   docs_links:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   terminal: false
-  raw_row_sha256: fbbc03725be7e3ac4457eecec37058358e4d6af09b120597b7444463ed07a1db
+  raw_row_sha256: f664a9f94af8a509e0b467bcdd929cf558e290495c63c0fa6e3e1e889ba05a9c
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 25d474eb096cd1c20c70fdc509b6c1d1a75d7ce3d61e9575e1311103dc40f917
+fragment_checksum: 862afe262ecaec156b2776629673486db4a824a01ba2761ff99db89cd3ec5b96

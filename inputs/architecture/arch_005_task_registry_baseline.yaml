@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1626708
-    sha256: 3b41a98ae1086e33266159d5c8a8090f7a1091f733a12ad89110723bc2926bfa
+    byte_count: 1626847
+    sha256: 6e84a92142b5680b2fde6ef68c1141bcb45708ad7e7bdf637d895ed3425b5050
     row_count: 415
     final_newline: true
     task_id_order_sha256: 4ada8d16bff6479bc13dc24a32508ca68d09b24f9a6475f710ef4af58c441bbe
-    row_checksum_order_sha256: 7617a1741b336274e5d55539d76d0d0e44c33e83573bc082fd621cccfd6b18da
+    row_checksum_order_sha256: 05bbf349c875d1e493e594da71ae4975c34772fb5207d7f61a445aa771ac96f7
     task_row_newline_counts:
       LF: 415
   - source: completed
@@ -2980,7 +2980,7 @@ inventory:
   - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     source: active
     line_number: 1955
-    row_sha256: fbbc03725be7e3ac4457eecec37058358e4d6af09b120597b7444463ed07a1db
+    row_sha256: f664a9f94af8a509e0b467bcdd929cf558e290495c63c0fa6e3e1e889ba05a9c
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7308,4 +7308,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 0cb70e89d9d50139de3fef15faaf170c384a47fa63dc85f980b7311b59c5ad54
+baseline_checksum: 58b63af6a98461641b9bd65d382e2352b7a0f9a4e1d26ca24c3d1a16c971abac

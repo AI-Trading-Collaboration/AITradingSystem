@@ -212,3 +212,13 @@ phase-exit Full=`7265 passed / 4 skipped / 643 warnings`。首次Full调用因�
 trigger provenance在pytest启动前按合同拒绝，补齐
 `phase_exit_or_handoff / ARCH-005S4D-S2`后才执行上述唯一实际Full。S2证据已满足“可提交S5评估”
 的工程前置条件，但没有形成S5授权；下一步由project owner独立评审rollup后决定是否提出S5。
+
+S4C收口后，候选`b8d77482883bd0e04e7c9a1d41e7a3329ea6e370`已fast-forward进入并推送
+`main`；工作区中的两批telemetry、人工review、rollup、lease/intents及正式验证runtime artifacts
+按12个显式allowlisted root迁移至main canonical outputs，共新增142个文件、14,633,862 bytes，
+随后对包含既有bootstrap evidence在内的148个文件、17,442,676 bytes逐文件SHA-256复核一致。
+临时worktree在tracked/untracked=0、active lease=0、无依赖进程且非证据内容仅为可再生pytest/
+mypy/ruff/pyc与测试cache后，以exact path
+`D:\Work\AITradingSystem_arch005s4d_s2_telemetry_20260726`删除并prune，释放253,037,884 bytes。
+实现可由main commit与远端分支恢复，运行证据保留在main canonical outputs；已知用户研究文档全程
+只用exact exclude pathspec排除，未读取、hash、复制或修改。
