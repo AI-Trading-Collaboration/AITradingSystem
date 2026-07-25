@@ -36,7 +36,7 @@ from ai_trading_system.ops_daily import (
 from ai_trading_system.trading_calendar import us_equity_market_session
 
 
-def test_daily_ops_plan_reports_missing_required_env() -> None:
+def test_daily_ops_plan_defers_provider_env_failures_until_capture() -> None:
     plan = build_daily_ops_plan(as_of=date(2026, 5, 6))
     missing = plan.missing_env_vars(
         {
@@ -46,30 +46,27 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
         }
     )
 
-    assert plan.status({"FMP_API_KEY": "", "MARKETSTACK_API_KEY": ""}) == "BLOCKED_ENV"
-    assert missing == (
-        "FMP_API_KEY",
-        "MARKETSTACK_API_KEY",
-        "OPENAI_API_KEY",
-        "SEC_USER_AGENT",
-    )
+    assert plan.status({"FMP_API_KEY": "", "MARKETSTACK_API_KEY": ""}) == "READY"
+    assert missing == ()
     markdown = render_daily_ops_plan(plan, env={})
-    pit_command = "`aits pit-snapshots fetch-fmp-forward --as-of 2026-05-06 --continue-on-failure`"
-    assert "状态：BLOCKED_ENV" in markdown
-    assert "`aits download-data --start 2018-01-01 --end 2026-05-06`" in markdown
-    assert "download_data_diagnostics_2026-05-06.md" in markdown
-    assert "失败时写入脱敏 download_data_diagnostics 报告" in markdown
+    assert "状态：READY" in markdown
+    assert (
+        "`aits ops capture-daily-inputs --as-of 2026-05-06 "
+        "--download-start 2018-01-01`" in markdown
+    )
+    assert "`aits download-data --start 2018-01-01 --end 2026-05-06`" not in markdown
+    assert "市场/宏观保留最多两次受控尝试" in markdown
     assert (
         "`aits validate-data --as-of 2026-05-06 --execution-profile daily_default.v1`" in markdown
     )
-    assert pit_command in markdown
-    assert "`aits pit-snapshots build-manifest --as-of 2026-05-06`" in markdown
-    assert "`aits pit-snapshots validate --as-of 2026-05-06`" in markdown
-    assert "`aits fundamentals download-sec-companyfacts`" in markdown
-    assert "`aits fundamentals extract-sec-metrics --as-of 2026-05-06`" in markdown
+    assert "`aits pit-snapshots build-manifest --as-of 2026-05-06 " in markdown
+    assert "--fmp-forward-pit-dir" in markdown
+    assert "`aits pit-snapshots validate --as-of 2026-05-06 " in markdown
+    assert "--input-path" in markdown
+    assert "`aits fundamentals extract-sec-metrics --as-of 2026-05-06 " in markdown
+    assert "--input-dir" in markdown
     assert "`aits fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06`" in markdown
     assert "`aits fundamentals validate-sec-metrics --as-of 2026-05-06`" in markdown
-    assert "`aits valuation fetch-fmp --as-of 2026-05-06`" in markdown
     assert "`aits score-daily --as-of 2026-05-06" in markdown
     assert "--llm-request-profile risk_event_daily_official_precheck" in markdown
     assert "`aits reports dashboard --as-of 2026-05-06`" in markdown
@@ -142,7 +139,7 @@ def test_execution_command_prefers_project_venv_python(tmp_path: Path) -> None:
 
 def test_daily_ops_plan_allows_explicit_openai_skip() -> None:
     plan = build_daily_ops_plan(
-        as_of=date(2026, 5, 6),
+        as_of=date(2026, 7, 27),
         skip_risk_event_openai_precheck=True,
     )
     env = {
@@ -585,14 +582,11 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     markdown = output_path.read_text(encoding="utf-8")
     assert "# 每日运行计划" in markdown
     assert "validate-data --as-of 2026-05-06" in markdown
-    assert "pit-snapshots fetch-fmp-forward" in markdown
-    assert "--continue-on-failure" in markdown
+    assert "ops capture-daily-inputs --as-of 2026-05-06" in markdown
     assert "pit-snapshots build-manifest --as-of 2026-05-06" in markdown
     assert "pit-snapshots validate --as-of 2026-05-06" in markdown
-    assert "fundamentals download-sec-companyfacts" in markdown
     assert "fundamentals extract-sec-metrics --as-of 2026-05-06" in markdown
     assert "fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06" in markdown
-    assert "valuation fetch-fmp --as-of 2026-05-06" in markdown
     assert "reports dashboard --as-of 2026-05-06" in markdown
     assert "sec-pit shadow-observe --latest --end 2026-05-06" in markdown
     assert "sec-pit shadow-monitor --latest --as-of 2026-05-06" in markdown
@@ -1015,7 +1009,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
         assert manifest_record["size_bytes"] == len(legacy_bytes)
 
 
-def test_daily_ops_plan_cli_can_fail_on_missing_env(tmp_path: Path) -> None:
+def test_daily_ops_plan_cli_does_not_preempt_capture_on_missing_env(tmp_path: Path) -> None:
     output_path = tmp_path / "daily_ops_plan.md"
 
     result = CliRunner().invoke(
@@ -1037,8 +1031,9 @@ def test_daily_ops_plan_cli_can_fail_on_missing_env(tmp_path: Path) -> None:
         },
     )
 
-    assert result.exit_code == 1
-    assert "每日运行计划：BLOCKED_ENV" in result.output
+    assert result.exit_code == 0
+    assert "每日运行计划：READY" in result.output
+    assert "capture-daily-inputs" in output_path.read_text(encoding="utf-8")
     assert output_path.exists()
 
 
@@ -1112,15 +1107,12 @@ def test_periodic_dispatch_cli_fails_without_manual_confirmation() -> None:
     assert "confirm-manual-dispatch" in result.output
 
 
-def test_daily_ops_plan_pit_failure_is_not_a_downstream_blocker() -> None:
+def test_daily_ops_plan_capture_failure_is_a_downstream_blocker() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
-        include_download_data=False,
         skip_risk_event_openai_precheck=True,
     )
-    pit_step = next(
-        step for step in plan.steps if step.step_id == "pit_snapshots_fetch_fmp_forward"
-    )
+    capture_step = next(step for step in plan.steps if step.step_id == "capture_daily_inputs")
     pit_manifest_step = next(
         step for step in plan.steps if step.step_id == "pit_snapshots_build_manifest"
     )
@@ -1128,11 +1120,11 @@ def test_daily_ops_plan_pit_failure_is_not_a_downstream_blocker() -> None:
         step for step in plan.steps if step.step_id == "pit_snapshots_validate"
     )
 
-    assert pit_step.required_env_vars == ()
-    assert pit_step.blocks_downstream is False
+    assert capture_step.required_env_vars == ()
+    assert capture_step.blocks_downstream is True
     assert pit_manifest_step.blocks_downstream is True
     assert pit_validate_step.blocks_downstream is True
-    assert "--continue-on-failure" in pit_step.command
+    assert "pit_snapshots_fetch_fmp_forward" not in {step.step_id for step in plan.steps}
     assert (
         plan.status(
             {
@@ -1140,40 +1132,39 @@ def test_daily_ops_plan_pit_failure_is_not_a_downstream_blocker() -> None:
                 "SEC_USER_AGENT": "AITradingSystem test@example.com",
             }
         )
-        == "READY_WITH_SKIPS"
+        == "READY"
     )
 
 
-def test_daily_ops_plan_sec_and_valuation_steps_block_score_daily() -> None:
+def test_daily_ops_plan_capture_replaces_sec_and_valuation_fetch_before_score() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
         skip_risk_event_openai_precheck=True,
     )
     step_ids = [step.step_id for step in plan.steps]
 
-    assert step_ids.index("sec_companyfacts") < step_ids.index("score_daily")
+    assert step_ids.index("capture_daily_inputs") < step_ids.index("score_daily")
     assert step_ids.index("sec_metrics") < step_ids.index("score_daily")
     assert step_ids.index("tsm_ir_sec_metrics_merge") < step_ids.index("score_daily")
     assert step_ids.index("sec_metrics_validation") < step_ids.index("score_daily")
     assert step_ids.index("sec_metrics") < step_ids.index("tsm_ir_sec_metrics_merge")
     assert step_ids.index("tsm_ir_sec_metrics_merge") < step_ids.index("sec_metrics_validation")
-    assert step_ids.index("valuation_snapshots") < step_ids.index("score_daily")
+    assert "sec_companyfacts" not in step_ids
+    assert "valuation_snapshots" not in step_ids
 
-    sec_companyfacts = next(step for step in plan.steps if step.step_id == "sec_companyfacts")
+    capture_step = next(step for step in plan.steps if step.step_id == "capture_daily_inputs")
     sec_metrics = next(step for step in plan.steps if step.step_id == "sec_metrics")
     tsm_merge = next(step for step in plan.steps if step.step_id == "tsm_ir_sec_metrics_merge")
-    valuation = next(step for step in plan.steps if step.step_id == "valuation_snapshots")
+    score = next(step for step in plan.steps if step.step_id == "score_daily")
 
-    assert sec_companyfacts.required_env_vars == ("SEC_USER_AGENT",)
-    assert sec_companyfacts.blocks_downstream is True
-    assert "download-sec-companyfacts" in sec_companyfacts.command
+    assert capture_step.required_env_vars == ()
+    assert capture_step.blocks_downstream is True
     assert sec_metrics.blocks_downstream is True
     assert "extract-sec-metrics" in sec_metrics.command
     assert tsm_merge.blocks_downstream is True
     assert "merge-tsm-ir-sec-metrics" in tsm_merge.command
-    assert valuation.required_env_vars == ("FMP_API_KEY",)
-    assert valuation.blocks_downstream is True
-    assert "fetch-fmp" in valuation.command
+    assert "--valuation-path" in score.command
+    assert "daily_input_capture" in " ".join(score.command)
 
 
 def test_daily_ops_plan_closed_market_skips_score_and_current_download(
@@ -1326,7 +1317,14 @@ def test_run_daily_ops_plan_stops_on_first_failed_command(tmp_path: Path) -> Non
             "daily_default.v1",
         ),
         ("fundamentals", "download-sec-companyfacts"),
-        ("fundamentals", "extract-sec-metrics", "--as-of", "2026-05-06"),
+        (
+            "fundamentals",
+            "extract-sec-metrics",
+            "--as-of",
+            "2026-05-06",
+            "--input-dir",
+            str(tmp_path / "data" / "raw" / "sec_companyfacts"),
+        ),
     ]
 
 

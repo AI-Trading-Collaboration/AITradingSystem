@@ -88,6 +88,267 @@ def test_cli_direct_score_daily_threads_llm_request_profile(monkeypatch) -> None
     assert captured["llm_request_profile"] == "risk_event_triaged_official_candidates"
 
 
+def test_cli_direct_score_daily_threads_date_scoped_valuation_path(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+    valuation_path = tmp_path / "valuation"
+
+    def fake_score_daily(**kwargs: object) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", fake_score_daily)
+
+    exit_code = cli_direct.main(
+        [
+            "score-daily",
+            "--as-of",
+            "2026-07-27",
+            "--valuation-path",
+            str(valuation_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["valuation_path"] == valuation_path
+
+
+def test_cli_direct_dispatches_capture_and_date_scoped_source_paths(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    calls: dict[str, dict[str, object]] = {}
+
+    def recorder(name: str):
+        def _fake(**kwargs: object) -> None:
+            calls[name] = kwargs
+
+        return _fake
+
+    monkeypatch.setattr(
+        cli_direct.ops_cli,
+        "capture_daily_inputs_command",
+        recorder("capture"),
+    )
+    monkeypatch.setattr(
+        cli_direct.pit_snapshots_cli,
+        "fetch_fmp_forward_pit_command",
+        recorder("pit_fetch"),
+    )
+    monkeypatch.setattr(
+        cli_direct.pit_snapshots_cli,
+        "build_pit_snapshot_manifest_command",
+        recorder("pit_build"),
+    )
+    monkeypatch.setattr(
+        cli_direct.pit_snapshots_cli,
+        "validate_pit_snapshots_command",
+        recorder("pit_validate"),
+    )
+    monkeypatch.setattr(
+        cli_direct.fundamentals_cli,
+        "download_sec_companyfacts_command",
+        recorder("sec_download"),
+    )
+    monkeypatch.setattr(
+        cli_direct.fundamentals_cli,
+        "extract_sec_metrics_command",
+        recorder("sec_extract"),
+    )
+    monkeypatch.setattr(
+        cli_direct.valuation_cli,
+        "fetch_fmp_valuations",
+        recorder("valuation"),
+    )
+    monkeypatch.setattr(
+        cli_direct.risk_events_cli,
+        "fetch_official_policy_sources_command",
+        recorder("official"),
+    )
+
+    policy_path = tmp_path / "capture.yaml"
+    pit_raw = tmp_path / "raw" / "pit"
+    pit_normalized = tmp_path / "processed" / "pit.csv"
+    pit_manifest = tmp_path / "raw" / "pit_manifest.csv"
+    pit_fetch_report = tmp_path / "reports" / "pit_fetch.md"
+    pit_validation_report = tmp_path / "reports" / "pit_validation.md"
+    sec_raw = tmp_path / "raw" / "sec"
+    valuation_dir = tmp_path / "external" / "valuation"
+    analyst_dir = tmp_path / "raw" / "analyst"
+    valuation_fetch_report = tmp_path / "reports" / "valuation_fetch.md"
+    valuation_validation_report = tmp_path / "reports" / "valuation_validation.md"
+    official_raw = tmp_path / "raw" / "official"
+    official_processed = tmp_path / "processed" / "official"
+    official_manifest = tmp_path / "raw" / "official_manifest.csv"
+    official_report = tmp_path / "reports" / "official.md"
+
+    assert (
+        cli_direct.main(
+            [
+                "ops",
+                "capture-daily-inputs",
+                "--as-of",
+                "2026-07-27",
+                "--policy-path",
+                str(policy_path),
+                "--download-start",
+                "2021-02-22",
+                "--full-universe",
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli_direct.main(
+            [
+                "pit-snapshots",
+                "fetch-fmp-forward",
+                "--as-of",
+                "2026-07-27",
+                "--raw-output-dir",
+                str(pit_raw),
+                "--normalized-output-path",
+                str(pit_normalized),
+                "--manifest-path",
+                str(pit_manifest),
+                "--output-path",
+                str(pit_fetch_report),
+                "--pit-validation-report-path",
+                str(pit_validation_report),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli_direct.main(
+            [
+                "pit-snapshots",
+                "build-manifest",
+                "--as-of",
+                "2026-07-27",
+                "--output-path",
+                str(pit_manifest),
+                "--fmp-analyst-history-dir",
+                str(analyst_dir),
+                "--fmp-forward-pit-dir",
+                str(pit_raw),
+                "--validation-report-path",
+                str(pit_validation_report),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli_direct.main(
+            [
+                "pit-snapshots",
+                "validate",
+                "--as-of",
+                "2026-07-27",
+                "--input-path",
+                str(pit_manifest),
+                "--output-path",
+                str(pit_validation_report),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli_direct.main(
+            [
+                "fundamentals",
+                "download-sec-companyfacts",
+                "--output-dir",
+                str(sec_raw),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli_direct.main(
+            [
+                "fundamentals",
+                "extract-sec-metrics",
+                "--as-of",
+                "2026-07-27",
+                "--input-dir",
+                str(sec_raw),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli_direct.main(
+            [
+                "valuation",
+                "fetch-fmp",
+                "--as-of",
+                "2026-07-27",
+                "--output-dir",
+                str(valuation_dir),
+                "--analyst-history-dir",
+                str(analyst_dir),
+                "--pit-normalized-path",
+                str(pit_normalized),
+                "--output-path",
+                str(valuation_fetch_report),
+                "--validation-report-path",
+                str(valuation_validation_report),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli_direct.main(
+            [
+                "risk-events",
+                "fetch-official-sources",
+                "--as-of",
+                "2026-07-27",
+                "--raw-dir",
+                str(official_raw),
+                "--processed-dir",
+                str(official_processed),
+                "--download-manifest-path",
+                str(official_manifest),
+                "--output-path",
+                str(official_report),
+            ]
+        )
+        == 0
+    )
+
+    assert calls["capture"] == {
+        "as_of": "2026-07-27",
+        "policy_path": policy_path,
+        "download_start": "2021-02-22",
+        "full_universe": True,
+    }
+    assert calls["pit_fetch"]["raw_output_dir"] == pit_raw
+    assert calls["pit_fetch"]["normalized_output_path"] == pit_normalized
+    assert calls["pit_fetch"]["manifest_path"] == pit_manifest
+    assert calls["pit_fetch"]["output_path"] == pit_fetch_report
+    assert calls["pit_fetch"]["pit_validation_report_path"] == pit_validation_report
+    assert calls["pit_build"]["output_path"] == pit_manifest
+    assert calls["pit_build"]["fmp_analyst_history_dir"] == analyst_dir
+    assert calls["pit_build"]["fmp_forward_pit_dir"] == pit_raw
+    assert calls["pit_build"]["validation_report_path"] == pit_validation_report
+    assert calls["pit_validate"]["input_path"] == pit_manifest
+    assert calls["pit_validate"]["output_path"] == pit_validation_report
+    assert calls["sec_download"]["output_dir"] == sec_raw
+    assert calls["sec_extract"]["input_dir"] == sec_raw
+    assert calls["valuation"]["output_dir"] == valuation_dir
+    assert calls["valuation"]["analyst_history_dir"] == analyst_dir
+    assert calls["valuation"]["pit_normalized_path"] == pit_normalized
+    assert calls["valuation"]["output_path"] == valuation_fetch_report
+    assert calls["valuation"]["validation_report_path"] == valuation_validation_report
+    assert calls["official"]["raw_dir"] == official_raw
+    assert calls["official"]["processed_dir"] == official_processed
+    assert calls["official"]["download_manifest_path"] == official_manifest
+    assert calls["official"]["output_path"] == official_report
+
+
 def test_cli_direct_routes_daily_score_authorization_profile_before_score(
     monkeypatch,
 ) -> None:
@@ -702,8 +963,28 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch, tmp_path: Pa
                 "full_universe": False,
             },
         ),
-        ("build_manifest", {"as_of": "2026-05-13"}),
-        ("validate_pit", {"as_of": "2026-05-13"}),
+        (
+            "build_manifest",
+            {
+                "as_of": "2026-05-13",
+                "output_path": cli_direct.pit_snapshots_cli.DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+                "fmp_analyst_history_dir": (
+                    cli_direct.pit_snapshots_cli.DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR
+                ),
+                "fmp_forward_pit_dir": (
+                    cli_direct.pit_snapshots_cli.DEFAULT_FMP_FORWARD_PIT_RAW_DIR
+                ),
+                "validation_report_path": None,
+            },
+        ),
+        (
+            "validate_pit",
+            {
+                "as_of": "2026-05-13",
+                "input_path": cli_direct.pit_snapshots_cli.DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+                "output_path": None,
+            },
+        ),
         ("docs_contract", {"as_of": None, "latest": True}),
         (
             "heuristic_audit",
@@ -1153,6 +1434,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         cli_direct.etf_observation_lifecycle_cli,
         "dynamic_v3_schedule_observe_command",
         recorder("dynamic_v3_rescue_schedule_observe"),
+    )
+    monkeypatch.setattr(
+        cli_direct.ops_cli,
+        "capture_daily_inputs_command",
+        recorder("capture_daily_inputs"),
     )
     monkeypatch.setattr(
         cli_direct.ops_cli,

@@ -1,6 +1,6 @@
 # Daily Ops Runbook
 
-最后更新：2026-06-05
+最后更新：2026-07-25
 
 本文是 `aits ops daily-run` 的人工可交接运行手册。它不替代数据质量门禁、日报、pipeline health、secret hygiene 或 evidence bundle；它只规定什么时候跑、失败时看什么、哪些输出是正式结论、哪些只是审计附录。
 
@@ -8,8 +8,8 @@
 
 |频率|命令|目的|
 |---|---|---|
-|交易日前/盘前|`aits ops daily-plan --as-of YYYY-MM-DD --fail-on-missing-env`|确认环境变量、缓存路径、预期 artifact 和当日是否交易日。未传 `--as-of` 时默认使用最新已完成美股交易日。|
-|交易日盘后|`aits ops daily-run` 或 `aits ops daily-run --as-of YYYY-MM-DD`|执行下载、PIT、SEC、估值、日报、只读 dashboard、pipeline health 和 secret scan。未传 `--as-of` 时默认使用最新已完成美股交易日。|
+|交易日前/盘前|`aits ops daily-plan --as-of YYYY-MM-DD --fail-on-missing-env`|确认计划级环境、缓存路径、预期 artifact 和当日是否交易日。FMP/SEC/OpenAI 等逐 provider 缺失不会在 capture 前全局阻断；真实缺失由 capture/score component 脱敏记录并 fail closed。未传 `--as-of` 时默认使用最新已完成美股交易日。|
+|交易日盘后|`aits ops daily-run` 或 `aits ops daily-run --as-of YYYY-MM-DD`|先逐源保全市场/宏观、FMP PIT、SEC、估值和官方来源，再执行 strict DQ、PIT/SEC/score、只读 dashboard、Reader Brief、pipeline health 和 secret scan。未传 `--as-of` 时默认使用最新已完成美股交易日。|
 |历史时点复现|`aits ops replay-day --as-of YYYY-MM-DD --mode cache-only --openai-replay-policy cache-only`|只读归档输入，生成隔离 replay bundle；不调用 live provider 或 OpenAI。|
 |每周|`aits reports investment-review --period weekly --as-of YYYY-MM-DD`、`aits feedback loop-review --as-of YYYY-MM-DD`、`aits feedback optimize-market-feedback --as-of YYYY-MM-DD`|复核结论变化、outcome、learning queue、shadow maturity、blocked tasks，并判断市场反馈优化 readiness。|
 |每月|`aits backtest --robustness-report --to YYYY-MM-DD`、`aits feedback build-parameter-replay --as-of YYYY-MM-DD`、`aits feedback build-parameter-candidates --as-of YYYY-MM-DD`、`aits reports investment-review --period monthly --as-of YYYY-MM-DD`、`aits feedback optimize-market-feedback --as-of YYYY-MM-DD --replay-start 2022-12-01 --replay-end YYYY-MM-DD`、必要时运行覆盖诊断|复核规则、数据源、gate 松紧、样本成熟度、参数复测收益变化、参数候选台账、as-if 回放窗口和 owner action。|
@@ -40,6 +40,33 @@ outputs/runs/daily/<executed_at_utc>/
 `<executed_at_utc>` 使用 `YYYYMMDDTHHMMSSZ`，表示本轮实际执行时间；`as_of_<YYYY-MM-DD>` 表示市场评估日期。目录名使用 filesystem-safe run id；原始 run id、执行时间戳、评估日期和 run root 会写入 `manifest.json` 和 daily ops metadata。
 
 `data/raw/` 与 `data/processed/` 是可校验状态缓存和输入引用来源，不是每次运行的完整归档副本。正式 run bundle 归档本轮报告、trace、metadata、manifest 和 checksum 引用；需要严格历史复现时使用 `outputs/replays/` 下的隔离 replay bundle。
+
+OPS-069 起，交易日 `daily-run` 的第一项业务步骤是内部
+`aits ops capture-daily-inputs --as-of YYYY-MM-DD`。它不是第二个 scheduler entry，而是由统一
+trigger 调用的 umbrella step。输出包括：
+
+```text
+data/raw/daily_input_capture/YYYY-MM-DD/
+data/processed/daily_input_capture/YYYY-MM-DD/
+data/external/daily_input_capture/YYYY-MM-DD/
+outputs/daily_input_capture/YYYY-MM-DD/
+  daily_input_capture_manifest_YYYY-MM-DD.json
+  daily_input_capture_validation_YYYY-MM-DD.json
+outputs/daily_input_capture/
+  daily_input_capture_gap_ledger.json
+```
+
+一个 provider 失败时仍继续尝试其余来源；成功来源的 bytes 和 checksum 会保留，但 umbrella
+最终状态为 `PARTIAL_CAPTURE` 并返回非零，因此下游 strict DQ/PIT/score 不执行。`CAPTURED`
+也不等于数据质量通过：manifest 固定 `data_quality_status=NOT_EVALUATED`、
+`consumer_cutover_allowed=false`、`production_effect=none`。人工复核可运行
+`aits ops validate-daily-input-capture --as-of YYYY-MM-DD`；checksum、policy 或 safety drift
+均为 `FAIL`。gap ledger 自 reviewed tracking start 按 XNYS session 显示
+`CAPTURED/PARTIAL_CAPTURE/MISSED/INSUFFICIENT_DATA`，不得为修饰连续性而补抓历史 strict PIT。
+交易日的 canonical market/macro `download-data` 已是 umbrella 的第一个 required component，
+保留最多两次受控尝试；成功后将 `prices_daily.csv`、`prices_marketstack_daily.csv`、
+`rates_daily.csv` 和 `download_manifest.csv` 复制到同日 `market_macro/` capture 目录。
+后续 strict DQ 仍读取 canonical cache；同日副本只用于留存与审计，不授权消费。
 
 外部供应商调用前还有一层请求级缓存：`data/raw/external_request_cache/`。FMP、Marketstack、Cboe VIX、FRED、SEC、TSMC IR、官方政策源、EODHD 和 yfinance 路径的相同请求命中 cache 时不得再次请求供应商；只有 MISS 才发送请求。200～399 继续持久复用；4xx/5xx 按 `config/data/external_request_cache_lifecycle_policy.yaml` 的 reviewed pilot TTL 短期复用，到期后下一次业务调用 live revalidate。新记录使用 `metadata.json` atomic current pointer、`bodies/<sha256>.body` 和 `negative_observations/<generation_id>.json`；旧 v1 `response.body` 保持可读，过期、复验或显式失效都不能删除原始失败证据。这个缓存保护供应商额度，不替代业务 raw cache、download manifest、PIT manifest 或数据质量门禁。Cboe VIX 的 `VIX_History.csv` 是固定 URL 的可变静态文件，cache identity 额外包含 ticker/start/end/interval 业务窗口；命中缓存时还会校验 CSV 最大日期覆盖请求 `end`，避免新 as-of 或同窗口旧缓存复用过期 CSV 响应。排查供应商额度或重复请求问题时，先看该目录的 `metadata.json`、`generation_id`、`body_sha256`、`expires_at` 和 negative observation，不要重新跑 live 命令试探。若确需显式失效，必须从当前 pointer 取得 expected generation/body checksum，并用 `aits invalidate-external-request-cache` 提供 actor、reason、reference；CAS 失败时停止，不能手工删文件或覆盖证据。失效本身 `production_effect=none`，但下一次业务调用可能产生外部请求。若 `download-data` 失败，先看 `download_data_diagnostics_YYYY-MM-DD.md`；它记录 provider、失败阶段、cache status、cache key、脱敏请求参数，以及 Marketstack quota preflight 的 budget profile / `violation_reasons`，但不保存 stdout/stderr 原文或供应商响应正文。
 
@@ -81,7 +108,8 @@ Producer 禁止 `latest`/glob 发现、live provider/OpenAI、canonical/latest p
 
 - `aits validate-data` 或 `score-daily` 内部同一路径数据质量门禁失败。
 - SEC metrics、估值快照、风险事件发生记录、execution policy 或 rule card 校验失败。
-- 必需环境变量缺失导致 `daily-plan` 或 `daily-run` 为 `BLOCKED_ENV`。
+- 非 capture 的必需环境变量缺失导致 `daily-plan` 或对应 command fail closed；capture-managed
+  provider key 缺失由 component 记录后形成 `PARTIAL_CAPTURE`，不得在第一步前抹掉其他来源的抓取机会。
 - 显式未来 `as_of` 或历史 `as_of` 被 `daily-run` 输入可见性预检查识别为 `BLOCKED_VISIBILITY`；不得用生产调度入口补跑 strict PIT 复现。
 - `score-daily`、`pipeline health` 或 secret scan 报告状态为 `FAIL`。
 - OpenAI 风险事件预审在启用状态下 fail closed。
@@ -89,7 +117,8 @@ Producer 禁止 `latest`/glob 发现、live provider/OpenAI、canonical/latest p
 可降级但必须披露：
 
 - 显式 `--skip-risk-event-openai-precheck`，日报必须显示未执行自动预审。
-- PIT 抓取入口层失败但已用 `--continue-on-failure` 写出失败报告；失败快照不得作为可用 PIT 输入。
+- capture 中某个来源失败但其他来源已保全；整条 daily-run 仍为 FAIL，成功 bytes 仅供审计，
+  不得作为绕过 strict gate 的可消费输入。
 - 休市日模式跳过 `score-daily`，只保留官方政策/地缘来源抓取和健康检查。
 - 第二数据源覆盖不足，报告必须保留 source limitation，不能写成跨源核验完成。
 
@@ -98,6 +127,8 @@ Producer 禁止 `latest`/glob 发现、live provider/OpenAI、canonical/latest p
 |现象|优先检查|
 |---|---|
 |数据质量失败|`outputs/reports/data_quality_YYYY-MM-DD.md`、download manifest、provider health。|
+|daily input capture 失败|`outputs/daily_input_capture/YYYY-MM-DD/daily_input_capture_manifest_YYYY-MM-DD.json` 与 validation，按 component 查看 return code、missing expected paths 和 retained checksum；不要重跑旧 terminal key。|
+|连续交易日疑似漏跑|`outputs/daily_input_capture/daily_input_capture_gap_ledger.json`；`MISSED/PARTIAL_CAPTURE` 只登记事实，不补造 strict PIT。|
 |`download-data` 失败|`outputs/reports/download_data_diagnostics_YYYY-MM-DD.md`，确认 provider、失败阶段、cache status、cache key 和脱敏请求参数。|
 |疑似重复供应商请求|`data/raw/external_request_cache/<provider>/<api_family>/<cache_key>/metadata.json`，确认 cache key、status code 和 body checksum。|
 |PIT checksum mismatch|`pit_snapshots_validation_YYYY-MM-DD.md`、`fmp_forward_pit_fetch_YYYY-MM-DD.md`、raw payload 路径。|

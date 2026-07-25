@@ -19,6 +19,16 @@ def _sha256_path(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 
 
+def _source_sha256_path(path: Path, source: dict[str, Any]) -> str:
+    payload = path.read_bytes()
+    normalization = source.get("hash_normalization")
+    if normalization == "git_eol_lf":
+        payload = payload.replace(b"\r\n", b"\n")
+    elif normalization is not None:
+        raise AssertionError(f"unsupported hash normalization: {normalization}")
+    return sha256(payload).hexdigest()
+
+
 def _assert_historical_source_is_current_or_superseded(
     baseline: dict[str, Any],
     source: dict[str, str],
@@ -29,7 +39,7 @@ def _assert_historical_source_is_current_or_superseded(
     live_path = repository_root / source_path
     assert live_path.is_file(), live_path
 
-    live_hash = _sha256_path(live_path)
+    live_hash = _source_sha256_path(live_path, source)
     if source["sha256"] == live_hash:
         return
 
@@ -65,8 +75,9 @@ def _assert_historical_source_is_current_or_superseded(
     assert (
         supersession["current_hash_authority"] == expected_authority
     ), f"{section_key} current hash authority must be {expected_authority}"
+    current_live_hash = _source_sha256_path(live_path, current_source)
     assert (
-        current_source.get("sha256") == live_hash
+        current_source.get("sha256") == current_live_hash
     ), f"{source_path}: latest authority hash does not match live bytes"
 
 

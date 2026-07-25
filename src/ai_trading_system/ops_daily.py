@@ -29,6 +29,11 @@ from ai_trading_system.core import (
     WorkflowStep,
     WorkflowStepResult,
 )
+from ai_trading_system.daily_input_capture import (
+    DAILY_INPUT_CAPTURE_SCHEMA_VERSION,
+    daily_input_capture_paths,
+    load_daily_input_capture_policy,
+)
 from ai_trading_system.data.download import default_download_failure_report_path
 from ai_trading_system.data.quality import default_quality_report_path
 from ai_trading_system.data.quality_consumer_authorization import (
@@ -452,9 +457,24 @@ def build_daily_ops_plan(
     if full_universe:
         download_command.append("--full-universe")
 
-    pit_raw_dir = raw_dir / "fmp_forward_pit"
-    pit_manifest = raw_dir / "pit_snapshots" / "manifest.csv"
-    pit_normalized_dir = processed_dir / "pit_snapshots"
+    capture_policy = load_daily_input_capture_policy(project_root=project_root)
+    capture_paths = daily_input_capture_paths(as_of, policy=capture_policy)
+    capture_active = (
+        market_session.is_trading_day
+        and include_download_data
+        and include_pit_snapshots
+        and include_sec_fundamentals
+        and include_valuation_snapshots
+    )
+    pit_raw_dir = capture_paths.pit_raw_dir if capture_active else raw_dir / "fmp_forward_pit"
+    pit_manifest = (
+        capture_paths.pit_manifest_path
+        if capture_active
+        else raw_dir / "pit_snapshots" / "manifest.csv"
+    )
+    pit_normalized_dir = (
+        capture_paths.processed_root if capture_active else processed_dir / "pit_snapshots"
+    )
     pit_fetch_report = default_fmp_forward_pit_fetch_report_path(reports_dir, as_of)
     pit_normalized = default_fmp_forward_pit_normalized_path(
         pit_normalized_dir,
@@ -464,7 +484,9 @@ def build_daily_ops_plan(
         reports_dir,
         as_of,
     )
-    sec_companyfacts_dir = raw_dir / "sec_companyfacts"
+    sec_companyfacts_dir = (
+        capture_paths.sec_companyfacts_dir if capture_active else raw_dir / "sec_companyfacts"
+    )
     sec_companyfacts_validation_report = default_sec_companyfacts_validation_report_path(
         reports_dir,
         as_of,
@@ -479,8 +501,16 @@ def build_daily_ops_plan(
         reports_dir,
         as_of,
     )
-    valuation_snapshots_dir = project_root / "data" / "external" / "valuation_snapshots"
-    fmp_analyst_history_dir = default_fmp_analyst_estimate_history_dir(raw_dir)
+    valuation_snapshots_dir = (
+        capture_paths.valuation_dir
+        if capture_active
+        else project_root / "data" / "external" / "valuation_snapshots"
+    )
+    fmp_analyst_history_dir = (
+        capture_paths.analyst_history_dir
+        if capture_active
+        else default_fmp_analyst_estimate_history_dir(raw_dir)
+    )
     fmp_valuation_fetch_report = default_fmp_valuation_fetch_report_path(
         reports_dir,
         as_of,
@@ -518,6 +548,12 @@ def build_daily_ops_plan(
             )
     if not skip_risk_event_openai_precheck:
         score_required_env = ("OPENAI_API_KEY",)
+    if capture_active:
+        # The umbrella capture records provider/env failures after attempting every
+        # independent source. Keep the legacy plan-wide env preflight from erasing
+        # those capture opportunities; score-daily still fails closed on its own env.
+        score_required_env = ()
+        score_command.extend(["--valuation-path", str(valuation_snapshots_dir)])
     if run_id:
         score_command.extend(["--run-id", run_id])
     score_enabled = market_session.is_trading_day
@@ -641,30 +677,91 @@ def build_daily_ops_plan(
         dynamic_v3_schedule_observe_root / f"dynamic_v3_rescue_schedule_observe_{as_of_text}.md"
     )
 
-    steps = [
-        DailyOpsStep(
-            step_id="download_data",
-            title="更新市场和宏观缓存",
-            command=tuple(download_command) if download_enabled else (),
-            required_env_vars=(("FMP_API_KEY", "MARKETSTACK_API_KEY") if download_enabled else ()),
-            produced_paths=(
-                raw_dir / "prices_daily.csv",
-                raw_dir / "prices_marketstack_daily.csv",
-                raw_dir / "rates_daily.csv",
-                raw_dir / "download_manifest.csv",
-            ),
-            failure_diagnostic_paths=(
-                default_download_failure_report_path(reports_dir, download_end),
-            ),
-            quality_gate=(
-                "下载审计 manifest 记录 provider、endpoint、请求参数、row count 和 checksum；"
-                "失败时写入脱敏 download_data_diagnostics 报告并停止下游。"
-            ),
-            blocks_downstream=True,
-            enabled=download_enabled,
-            skip_reason=download_skip_reason,
-            input_visibility="live_provider",
-        ),
+    steps: list[DailyOpsStep] = []
+    if market_session.is_trading_day:
+        steps.append(
+            DailyOpsStep(
+                step_id="capture_daily_inputs",
+                title="逐源保全当日输入并刷新 XNYS session 缺口台账",
+                command=(
+                    tuple(
+                        [
+                            "aits",
+                            "ops",
+                            "capture-daily-inputs",
+                            "--as-of",
+                            as_of_text,
+                            "--download-start",
+                            download_start.isoformat(),
+                        ]
+                        + (["--full-universe"] if full_universe else [])
+                    )
+                    if capture_active
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    capture_paths.manifest_json,
+                    capture_paths.manifest_markdown,
+                    capture_paths.validation_json,
+                    capture_paths.validation_markdown,
+                    capture_paths.gap_ledger_json,
+                    capture_paths.gap_ledger_markdown,
+                    capture_paths.raw_root,
+                    capture_paths.processed_root,
+                    capture_paths.external_root,
+                ),
+                quality_gate=(
+                    "内部 umbrella step 逐一尝试市场/宏观、FMP PIT、SEC、valuation 和官方来源；"
+                    "市场/宏观保留最多两次受控尝试，并写入同日快照；"
+                    "单源失败后继续保全其他来源，但任一 required component 失败仍整体 "
+                    "fail closed。capture manifest schema="
+                    f"{DAILY_INPUT_CAPTURE_SCHEMA_VERSION}，且不替代后续 DQ/PIT/score gates。"
+                ),
+                blocks_downstream=True,
+                enabled=capture_active,
+                skip_reason=(
+                    None
+                    if capture_active
+                    else (
+                        "本次显式关闭了 download/PIT/SEC/valuation 中至少一项；"
+                        "保持 legacy provider steps。"
+                    )
+                ),
+                input_visibility="live_provider",
+            )
+        )
+    if not capture_active:
+        steps.append(
+            DailyOpsStep(
+                step_id="download_data",
+                title="更新市场和宏观缓存",
+                command=tuple(download_command) if download_enabled else (),
+                required_env_vars=(
+                    ("FMP_API_KEY", "MARKETSTACK_API_KEY")
+                    if download_enabled and not capture_active
+                    else ()
+                ),
+                produced_paths=(
+                    raw_dir / "prices_daily.csv",
+                    raw_dir / "prices_marketstack_daily.csv",
+                    raw_dir / "rates_daily.csv",
+                    raw_dir / "download_manifest.csv",
+                ),
+                failure_diagnostic_paths=(
+                    default_download_failure_report_path(reports_dir, download_end),
+                ),
+                quality_gate=(
+                    "下载审计 manifest 记录 provider、endpoint、请求参数、row count 和 checksum；"
+                    "失败时写入脱敏 download_data_diagnostics 报告并停止下游。"
+                ),
+                blocks_downstream=True,
+                enabled=download_enabled,
+                skip_reason=download_skip_reason,
+                input_visibility="live_provider",
+            )
+        )
+    steps.append(
         DailyOpsStep(
             step_id="validate_data",
             title="校验市场和宏观缓存",
@@ -684,8 +781,8 @@ def build_daily_ops_plan(
             ),
             blocks_downstream=True,
             input_visibility="derived_local",
-        ),
-    ]
+        )
+    )
     if not market_session.is_trading_day:
         steps.append(
             DailyOpsStep(
@@ -732,7 +829,7 @@ def build_daily_ops_plan(
                         as_of_text,
                         "--continue-on-failure",
                     )
-                    if include_pit_snapshots
+                    if include_pit_snapshots and not capture_active
                     else ()
                 ),
                 required_env_vars=(),
@@ -747,11 +844,15 @@ def build_daily_ops_plan(
                     "和 validate 步骤仍会显式披露 PIT 可用性。"
                 ),
                 blocks_downstream=False,
-                enabled=include_pit_snapshots,
+                enabled=include_pit_snapshots and not capture_active,
                 skip_reason=(
-                    None
-                    if include_pit_snapshots
-                    else "显式跳过 PIT 抓取；缺跑日期不能事后补成 strict PIT。"
+                    (
+                        None
+                        if include_pit_snapshots
+                        else "显式跳过 PIT 抓取；缺跑日期不能事后补成 strict PIT。"
+                    )
+                    if not capture_active
+                    else "FMP forward PIT 已由 capture_daily_inputs 同日保全，禁止重复抓取。"
                 ),
                 input_visibility="live_provider",
             ),
@@ -759,7 +860,21 @@ def build_daily_ops_plan(
                 step_id="pit_snapshots_build_manifest",
                 title="重建 PIT 快照 manifest",
                 command=(
-                    ("aits", "pit-snapshots", "build-manifest", "--as-of", as_of_text)
+                    (
+                        "aits",
+                        "pit-snapshots",
+                        "build-manifest",
+                        "--as-of",
+                        as_of_text,
+                        "--output-path",
+                        str(pit_manifest),
+                        "--fmp-forward-pit-dir",
+                        str(pit_raw_dir),
+                        "--fmp-analyst-history-dir",
+                        str(fmp_analyst_history_dir),
+                        "--validation-report-path",
+                        str(pit_validation_report),
+                    )
                     if include_pit_snapshots
                     else ()
                 ),
@@ -782,7 +897,17 @@ def build_daily_ops_plan(
                 step_id="pit_snapshots_validate",
                 title="校验 PIT 快照 manifest",
                 command=(
-                    ("aits", "pit-snapshots", "validate", "--as-of", as_of_text)
+                    (
+                        "aits",
+                        "pit-snapshots",
+                        "validate",
+                        "--as-of",
+                        as_of_text,
+                        "--input-path",
+                        str(pit_manifest),
+                        "--output-path",
+                        str(pit_validation_report),
+                    )
                     if include_pit_snapshots
                     else ()
                 ),
@@ -810,10 +935,12 @@ def build_daily_ops_plan(
                         "fundamentals",
                         "download-sec-companyfacts",
                     )
-                    if include_sec_fundamentals
+                    if include_sec_fundamentals and not capture_active
                     else ()
                 ),
-                required_env_vars=("SEC_USER_AGENT",) if include_sec_fundamentals else (),
+                required_env_vars=(
+                    ("SEC_USER_AGENT",) if include_sec_fundamentals and not capture_active else ()
+                ),
                 produced_paths=(
                     sec_companyfacts_dir,
                     sec_companyfacts_dir / "sec_companyfacts_manifest.csv",
@@ -823,11 +950,15 @@ def build_daily_ops_plan(
                     "endpoint、请求参数、row count 和 checksum manifest；失败时停止日报前置链路。"
                 ),
                 blocks_downstream=True,
-                enabled=include_sec_fundamentals,
+                enabled=include_sec_fundamentals and not capture_active,
                 skip_reason=(
-                    None
-                    if include_sec_fundamentals
-                    else "显式跳过 SEC companyfacts 刷新，只复用已有 SEC 原始缓存。"
+                    (
+                        None
+                        if include_sec_fundamentals
+                        else "显式跳过 SEC companyfacts 刷新，只复用已有 SEC 原始缓存。"
+                    )
+                    if not capture_active
+                    else "SEC companyfacts 已由 capture_daily_inputs 写入同日不可变目录。"
                 ),
                 input_visibility="live_provider",
             ),
@@ -841,6 +972,8 @@ def build_daily_ops_plan(
                         "extract-sec-metrics",
                         "--as-of",
                         as_of_text,
+                        "--input-dir",
+                        str(sec_companyfacts_dir),
                     )
                     if include_sec_fundamentals
                     else ()
@@ -937,10 +1070,12 @@ def build_daily_ops_plan(
                         "--as-of",
                         as_of_text,
                     )
-                    if include_valuation_snapshots
+                    if include_valuation_snapshots and not capture_active
                     else ()
                 ),
-                required_env_vars=("FMP_API_KEY",) if include_valuation_snapshots else (),
+                required_env_vars=(
+                    ("FMP_API_KEY",) if include_valuation_snapshots and not capture_active else ()
+                ),
                 produced_paths=(
                     valuation_snapshots_dir,
                     fmp_analyst_history_dir,
@@ -952,11 +1087,15 @@ def build_daily_ops_plan(
                     "失败时停止，避免日报读取过期估值输入。"
                 ),
                 blocks_downstream=True,
-                enabled=include_valuation_snapshots,
+                enabled=include_valuation_snapshots and not capture_active,
                 skip_reason=(
-                    None
-                    if include_valuation_snapshots
-                    else "显式跳过估值快照刷新，只复用已有 valuation_snapshots。"
+                    (
+                        None
+                        if include_valuation_snapshots
+                        else "显式跳过估值快照刷新，只复用已有 valuation_snapshots。"
+                    )
+                    if not capture_active
+                    else "FMP valuation 已由 capture_daily_inputs 写入同日不可变目录。"
                 ),
                 input_visibility="live_provider",
             ),
@@ -1523,6 +1662,14 @@ def build_daily_ops_plan(
             ),
         ]
     )
+    if capture_active:
+        superseded_live_fetch_steps = {
+            "pit_snapshots_fetch_fmp_forward",
+            "sec_companyfacts",
+            "valuation_snapshots",
+        }
+        steps = [step for step in steps if step.step_id not in superseded_live_fetch_steps]
+
     plan = DailyOpsPlan(
         as_of=as_of,
         generated_at=datetime.now(tz=UTC),
@@ -3077,6 +3224,12 @@ def _text_sha256(value: str) -> str:
 
 def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
     json_status_contract = {
+        "capture_daily_inputs": (
+            2,
+            "daily_input_capture_validation",
+            "status",
+            frozenset({"PASS"}),
+        ),
         "report_quality_gate": (
             0,
             "report_quality_gate",

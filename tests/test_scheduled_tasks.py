@@ -19,13 +19,15 @@ from ai_trading_system.scheduled_tasks import (
 def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None:
     config = load_scheduled_tasks_config()
 
-    assert config.policy_version == "scheduled_tasks_v2"
+    assert config.policy_version == "scheduled_tasks_v3"
     cadence_ids = {cadence.cadence_id for cadence in config.cadences}
     assert DAILY_CADENCE_ID in cadence_ids
     assert set(NON_DAILY_CADENCE_IDS).issubset(cadence_ids)
     assert scheduled_safety_issues(config) == ()
     tasks_by_id = config.tasks_by_id()
-    assert tasks_by_id["daily_download_data"].max_attempts == 2
+    assert tasks_by_id["daily_capture_inputs"].max_attempts == 1
+    assert tasks_by_id["daily_capture_inputs"].production_effect == "local_cache_write"
+    assert tasks_by_id["daily_download_data_closed_market"].max_attempts == 2
     assert tasks_by_id["daily_validate_data"].max_attempts == 1
     assert {
         "weekly_backtest",
@@ -74,7 +76,7 @@ def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None
 def test_daily_plan_matches_required_scheduled_order() -> None:
     config = load_scheduled_tasks_config()
     plan = build_daily_ops_plan(
-        as_of=date(2026, 5, 6),
+        as_of=date(2026, 7, 27),
         skip_risk_event_openai_precheck=True,
     )
 
@@ -83,16 +85,14 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
     )
     command_text = "\n".join(" ".join(step.command) for step in plan.steps if step.command)
     for expected in (
-        "download-data",
+        "ops capture-daily-inputs --as-of 2026-07-27",
+        "--download-start 2018-01-01",
         "validate-data",
-        "pit-snapshots fetch-fmp-forward",
         "pit-snapshots build-manifest",
         "pit-snapshots validate",
-        "fundamentals download-sec-companyfacts",
         "fundamentals extract-sec-metrics",
         "fundamentals merge-tsm-ir-sec-metrics",
         "fundamentals validate-sec-metrics",
-        "valuation fetch-fmp",
         "score-daily",
         "reports dashboard",
         "sec-pit shadow-observe --latest",

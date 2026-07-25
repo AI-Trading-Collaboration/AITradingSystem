@@ -27,6 +27,13 @@ from ai_trading_system.contracts.data_quality_execution import (
     VerifiedDataQualityPreflight,
 )
 from ai_trading_system.contracts.status import CanonicalStatus
+from ai_trading_system.daily_input_capture import (
+    DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+    capture_daily_inputs,
+    daily_input_capture_paths,
+    load_daily_input_capture_policy,
+    validate_daily_input_capture_manifest,
+)
 from ai_trading_system.daily_task_dashboard import (
     build_daily_task_dashboard_report,
     default_daily_decision_summary_path,
@@ -525,6 +532,82 @@ def _build_daily_ops_plan_from_cli_options(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     return plan_date, plan
+
+
+@ops_app.command("capture-daily-inputs", hidden=True)
+def capture_daily_inputs_command(
+    as_of: Annotated[
+        str,
+        typer.Option(help="必须是 XNYS trading session，格式 YYYY-MM-DD。"),
+    ],
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed daily input capture policy 路径。"),
+    ] = DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+    download_start: Annotated[
+        str,
+        typer.Option(help="市场/宏观累计缓存下载起始日，格式 YYYY-MM-DD。"),
+    ] = "2018-01-01",
+    full_universe: Annotated[
+        bool,
+        typer.Option("--full-universe", help="市场/宏观下载包含完整 AI 产业链标的。"),
+    ] = False,
+) -> None:
+    """内部步骤：逐源保全当日输入；不得作为独立外部 scheduler trigger。"""
+    capture_date = _parse_date(as_of)
+    market_download_start = _parse_date(download_start)
+    try:
+        result = capture_daily_inputs(
+            as_of=capture_date,
+            project_root=PROJECT_ROOT,
+            policy_path=policy_path,
+            download_start=market_download_start,
+            full_universe=full_universe,
+        )
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Daily input capture 无法启动：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    style = "green" if result.passed else "red"
+    console.print(f"[{style}]Daily input capture：{result.status}[/{style}]")
+    console.print(f"Manifest：{result.manifest_path}")
+    console.print(f"Validation：{result.validation_path}")
+    console.print(f"XNYS session gap ledger：{result.gap_ledger_path}")
+    console.print("production_effect=none；weights/broker/trading action=false")
+    if not result.passed:
+        raise typer.Exit(code=1)
+
+
+@ops_app.command("validate-daily-input-capture")
+def validate_daily_inputs_command(
+    as_of: Annotated[
+        str,
+        typer.Option(help="校验日期，格式 YYYY-MM-DD。"),
+    ],
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed daily input capture policy 路径。"),
+    ] = DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+) -> None:
+    """校验 daily input capture manifest、artifact checksum 与 safety boundary。"""
+    validation_date = _parse_date(as_of)
+    try:
+        policy = load_daily_input_capture_policy(policy_path, project_root=PROJECT_ROOT)
+        paths = daily_input_capture_paths(validation_date, policy=policy)
+        validation = validate_daily_input_capture_manifest(
+            paths.manifest_json,
+            project_root=PROJECT_ROOT,
+            policy_path=policy_path,
+        )
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Daily input capture 校验无法完成：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    style = "green" if validation["status"] == "PASS" else "red"
+    console.print(f"[{style}]Daily input capture validation：{validation['status']}[/{style}]")
+    console.print(f"Manifest：{paths.manifest_json}")
+    console.print(f"Issue count：{validation.get('issue_count', len(validation['issues']))}")
+    console.print("production_effect=none；weights/broker/trading action=false")
+    if validation["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 @ops_app.command("daily-plan")

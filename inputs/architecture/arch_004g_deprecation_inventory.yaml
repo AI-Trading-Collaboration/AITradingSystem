@@ -1,9 +1,9 @@
-inventory_id: arch_004g_deprecation_inventory_849a5a0e402629cc3dee
+inventory_id: arch_004g_deprecation_inventory_6bcb1252487807eb1a28
 schema_version: arch_004g_deprecation_inventory.v1
 policy_id: arch_004g_deprecation_policy_v1
 repository:
-  python_module_count: 1016
-  python_test_file_count: 1182
+  python_module_count: 1017
+  python_test_file_count: 1183
   direct_writer_baseline_count: 894
   direct_writer_current_count: 856
   direct_writer_violation_count: 0
@@ -115,14 +115,14 @@ surfaces:
   migration_wave: G4
   path: src/ai_trading_system/ops_daily.py
   file_count: 1
-  line_count: 3212
-  byte_count: 126730
-  source_sha256: ca2d23dff85f234788e2303ee8645f8fe83803d2d01ccffb18ea4db70ae816a4
+  line_count: 3365
+  byte_count: 132993
+  source_sha256: ecf75087ddf14700951d07d9449ac8e6d93f65baa4aa6f343f40218b52adecf3
   top_level_function_count: 65
   top_level_class_count: 10
   cli_command_decorator_count: 0
   static_import_reachability_file_count: 4
-  test_reference_file_count: 9
+  test_reference_file_count: 10
   docs_config_reference_file_count: 33
   required_removal_gate_count: 12
   removal_ready: false

@@ -120,6 +120,21 @@ def _write_daily_pass_status_artifacts(plan) -> None:
         "secret_hygiene": (0,),
     }
     for step in plan.steps:
+        if step.step_id == "capture_daily_inputs":
+            path = step.produced_paths[2]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "report_type": "daily_input_capture_validation",
+                        "as_of": plan.as_of.isoformat(),
+                        "production_effect": "none",
+                        "status": "PASS",
+                    }
+                ),
+                encoding="utf-8",
+            )
         for index in indexes.get(step.step_id, ()):
             path = step.produced_paths[index]
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -780,7 +795,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
         )
         total += len(assessment.workflow_spec.steps)
 
-    assert total == 78
+    assert total == 79
 
 
 def test_daily_adapter_preserves_order_and_legacy_commands_without_enabling_runtime() -> None:
@@ -1430,8 +1445,8 @@ def test_controlled_daily_executor_resumes_without_repeating_completed_step(
     spec = build_daily_schedule_workflow_spec(cadence=cadence, is_trading_day=True)
     prior = control.acquire(spec=spec, as_of=as_of, run_id="prior")
     assert prior.lease is not None
-    prior.lease.start_step("download_data")
-    prior.lease.pass_step("download_data")
+    prior.lease.start_step("capture_daily_inputs")
+    prior.lease.pass_step("capture_daily_inputs")
     prior.lease.release()
     calls: list[tuple[str, ...]] = []
 
@@ -1450,17 +1465,19 @@ def test_controlled_daily_executor_resumes_without_repeating_completed_step(
         runtime_control=control,
     )
 
-    first = next(result for result in report.step_results if result.step_id == "download_data")
+    first = next(
+        result for result in report.step_results if result.step_id == "capture_daily_inputs"
+    )
     assert first.status == "SKIPPED"
     assert "Canonical resume" in str(first.skip_reason)
-    assert not any("download-data" in " ".join(command) for command in calls)
+    assert not any("capture-daily-inputs" in " ".join(command) for command in calls)
     state_root = tmp_path / "control" / "states"
     state_path = _execution_state_path(state_root)
     assert json.loads(state_path.read_text(encoding="utf-8"))["status"] == "PASS"
     ledger = RunLedger.from_dict(
         json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
     )
-    assert ledger.entry("download_data").status is CanonicalStatus.PASS
+    assert ledger.entry("capture_daily_inputs").status is CanonicalStatus.PASS
     assert all(
         entry.status in {CanonicalStatus.PASS, CanonicalStatus.SKIPPED} for entry in ledger.entries
     )
@@ -1507,7 +1524,7 @@ def test_controlled_daily_executor_blocks_concurrent_trigger_before_runner(
     active.lease.release()
 
 
-def test_controlled_daily_executor_allows_one_configured_download_retry_then_blocks(
+def test_controlled_daily_executor_blocks_rerun_after_capture_attempt_budget_is_exhausted(
     tmp_path: Path,
 ) -> None:
     as_of = date(2026, 5, 6)
@@ -1534,7 +1551,7 @@ def test_controlled_daily_executor_allows_one_configured_download_retry_then_blo
         visibility_latest_completed_trading_day=as_of,
         runtime_control=control,
     )
-    retry = run_daily_ops_plan_controlled(
+    exhausted = run_daily_ops_plan_controlled(
         plan,
         project_root=tmp_path,
         env=_daily_env(),
@@ -1544,24 +1561,12 @@ def test_controlled_daily_executor_allows_one_configured_download_retry_then_blo
         visibility_latest_completed_trading_day=as_of,
         runtime_control=control,
     )
-    exhausted = run_daily_ops_plan_controlled(
-        plan,
-        project_root=tmp_path,
-        env=_daily_env(),
-        runner=failing_runner,
-        run_id="exhausted",
-        visibility_check_date=as_of,
-        visibility_latest_completed_trading_day=as_of,
-        runtime_control=control,
-    )
-
     assert failed.status == "FAIL"
-    assert retry.status == "FAIL"
     assert exhausted.status == "RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED"
-    assert exhausted.failed_step.error == "RUN_ATTEMPT_BUDGET_EXHAUSTED"
+    assert exhausted.failed_step.error == "STEP_ATTEMPT_BUDGET_EXHAUSTED:capture_daily_inputs"
     state = json.loads(_execution_state_path(tmp_path / "control" / "states").read_text())
     attempts = {row["step_id"]: row["attempts"] for row in state["step_attempts"]}
-    assert attempts["download_data"] == 2
+    assert attempts["capture_daily_inputs"] == 1
 
 
 @pytest.mark.parametrize("as_of", [date(2026, 5, 6), date(2026, 5, 10)])
@@ -1622,6 +1627,7 @@ def test_controlled_daily_executor_keeps_validate_data_fail_closed_boundary(
         project_root=tmp_path,
         skip_risk_event_openai_precheck=True,
     )
+    _write_daily_pass_status_artifacts(plan)
     calls: list[str] = []
 
     def runner(command, **kwargs):
@@ -1653,14 +1659,14 @@ def test_controlled_daily_executor_keeps_validate_data_fail_closed_boundary(
     state_path = _execution_state_path(state_root)
     state = json.loads(state_path.read_text(encoding="utf-8"))
     assert state["status"] == "FAILED"
-    assert state["completed_step_ids"] == ["download_data"]
+    assert state["completed_step_ids"] == ["capture_daily_inputs"]
     assert {row["step_id"]: row["attempts"] for row in state["step_attempts"]} == {
-        "download_data": 1,
+        "capture_daily_inputs": 1,
         "validate_data": 1,
     }
     ledger = RunLedger.from_dict(
         json.loads(_execution_ledger_path(state_root).read_text(encoding="utf-8"))
     )
-    assert ledger.entry("download_data").status is CanonicalStatus.PASS
+    assert ledger.entry("capture_daily_inputs").status is CanonicalStatus.PASS
     assert ledger.entry("validate_data").status is CanonicalStatus.FAILED
     assert ledger.entry("score_daily").status is CanonicalStatus.BLOCKED

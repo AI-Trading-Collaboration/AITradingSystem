@@ -1,0 +1,38 @@
+schema_version: daily_input_capture_policy.v1
+policy_version: daily_input_capture_v1
+owner: operations_owner_and_data_platform_owner
+status: REVIEWED
+reviewed_at: 2026-07-25
+calendar_authority: XNYS
+decision_session_policy: XNYS_DECISION_SESSION_ALIGNED
+tracking_start: 2026-07-27
+required_components:
+  - market_macro
+  - fmp_forward_pit
+  - sec_companyfacts
+  - fmp_valuation
+  - official_policy_sources
+paths:
+  raw_root: data/raw/daily_input_capture
+  processed_root: data/processed/daily_input_capture
+  external_root: data/external/daily_input_capture
+  report_root: outputs/daily_input_capture
+failure_policy:
+  attempt_all_components: true
+  required_component_failure_status: PARTIAL_CAPTURE
+  required_component_failure_exit_code: 1
+  downstream_consumption_allowed_statuses:
+    - CAPTURED
+safety:
+  production_effect: none
+  production_weight_write: false
+  active_shadow_weight_write: false
+  broker_action: false
+  trading_action: false
+review_condition: >
+  Review when a required source, capture path, XNYS calendar authority, retention
+  rule, downstream consumer binding, or safety boundary changes.
+rationale: >
+  Preserve every independently available daily source before strict downstream
+  gates. A partial capture remains non-consumable but prevents one provider or
+  data-quality failure from erasing evidence from all other providers.

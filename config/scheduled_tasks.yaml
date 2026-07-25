@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: scheduled_tasks_v2
+policy_version: scheduled_tasks_v3
 policy_metadata:
   owner: system
   status: active_baseline
@@ -9,11 +9,16 @@ policy_metadata:
     SEC PIT shadow monitoring, research governance, backtest, parameter, weight,
     documentation, or report registry tasks. TRADING-2443 makes the idempotent
     download-data step attempt budget explicit after a reviewed provider-policy
-    correction, while all other steps retain the one-attempt default.
+    correction. OPS-069 adds a capture-first umbrella step that attempts
+    market/macro and every other independent daily source before strict consumer
+    gates. The umbrella preserves the reviewed two-attempt market/macro budget;
+    all other steps retain their existing attempt budgets.
   intended_effect: >
     Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
     daily trading-day chain while registering non-daily governance chains for
-    manual or future scheduler review. Permit one bounded rerun of the
+    manual or future scheduler review. Preserve date-scoped market/macro, FMP
+    PIT, SEC, valuation, and official-source inputs plus a continuous XNYS gap ledger
+    before strict downstream consumption. Permit one bounded rerun of the
     idempotent download-data step without deleting prior state or ledger;
     a second failure under the same workflow spec remains terminal.
   validation_evidence: >
@@ -21,10 +26,12 @@ policy_metadata:
     registration, and no-production safety invariants for reader/governance/
     shadow monitor tasks. TRADING-2443 tests cover configured step-attempt
     propagation and hard stop after the bounded second download attempt.
+    OPS-069 tests cover attempt-all capture, partial retention, checksum tamper,
+    XNYS gap visibility, consumer path binding, and no-production boundaries.
   review_condition: >
     Review whenever a daily report, governance report, shadow monitor, backtest,
-    parameter, documentation, report registry, scheduler command, or per-step
-    attempt budget is added or changed.
+    parameter, documentation, report registry, scheduler command, capture
+    component/path, or per-step attempt budget is added or changed.
 market_regime:
   default_regime_id: unified_primary_2021
   anchor_event: ChatGPT public launch
@@ -45,14 +52,32 @@ cadences:
       - aits ops daily-plan
       - aits ops daily-run
     tasks:
-      - task_id: daily_download_data
+      - task_id: daily_capture_inputs
+        daily_plan_step_id: capture_daily_inputs
+        title: Capture independently available daily inputs before strict gates
+        command: aits ops capture-daily-inputs --as-of {as_of}
+        command_contains:
+          - aits
+          - ops
+          - capture-daily-inputs
+          - --as-of
+        activation_condition: trading_day_only
+        closed_market_behavior: skip
+        data_quality_gate: "Capture status never authorizes consumption; market/macro download runs inside the umbrella, and any required component failure blocks DQ/PIT/score while successful components remain retained."
+        production_effect: local_cache_write
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+        trading_action: false
+      - task_id: daily_download_data_closed_market
         daily_plan_step_id: download_data
-        title: Download market and macro data
+        title: Conditionally refresh market and macro data on closed-market runs
         max_attempts: 2
         command: aits download-data --start {download_start} --end {download_end}
         command_contains:
           - aits
           - download-data
+        activation_condition: closed_market_only
         closed_market_behavior: conditional_previous_trading_day_cache
         production_effect: local_cache_write
       - task_id: daily_validate_data
@@ -75,14 +100,15 @@ cadences:
         activation_condition: closed_market_only
         closed_market_behavior: run
         production_effect: local_cache_write
-      - task_id: daily_pit_fetch_fmp_forward
+      - task_id: daily_pit_fetch_fmp_forward_closed_market
         daily_plan_step_id: pit_snapshots_fetch_fmp_forward
-        title: Fetch FMP forward PIT snapshots
+        title: Fetch FMP forward PIT snapshots on closed-market runs
         command: aits pit-snapshots fetch-fmp-forward --as-of {as_of} --continue-on-failure
         command_contains:
           - pit-snapshots
           - fetch-fmp-forward
           - --continue-on-failure
+        activation_condition: closed_market_only
         closed_market_behavior: run
         production_effect: local_cache_write
       - task_id: daily_pit_build_manifest
@@ -103,13 +129,14 @@ cadences:
           - validate
         closed_market_behavior: run
         production_effect: none
-      - task_id: daily_sec_companyfacts
+      - task_id: daily_sec_companyfacts_closed_market
         daily_plan_step_id: sec_companyfacts
-        title: Download SEC companyfacts
+        title: Download SEC companyfacts on closed-market runs
         command: aits fundamentals download-sec-companyfacts
         command_contains:
           - fundamentals
           - download-sec-companyfacts
+        activation_condition: closed_market_only
         closed_market_behavior: run
         production_effect: local_cache_write
       - task_id: daily_sec_extract_metrics
@@ -139,13 +166,14 @@ cadences:
           - validate-sec-metrics
         closed_market_behavior: run
         production_effect: none
-      - task_id: daily_valuation_fetch_fmp
+      - task_id: daily_valuation_fetch_fmp_closed_market
         daily_plan_step_id: valuation_snapshots
-        title: Fetch FMP valuation snapshots
+        title: Fetch FMP valuation snapshots on closed-market runs
         command: aits valuation fetch-fmp --as-of {as_of}
         command_contains:
           - valuation
           - fetch-fmp
+        activation_condition: closed_market_only
         closed_market_behavior: run
         production_effect: local_cache_write
       - task_id: daily_score_daily

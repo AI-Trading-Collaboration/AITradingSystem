@@ -330,6 +330,46 @@ flowchart LR
     RECEIPT -.-> SAFE2["No consumer cutover / production / broker"]
 ```
 
+OPS-069 将“尽量保全当日输入”与“允许下游消费”拆开。统一外部 trigger 仍只有
+`aits ops daily-run`；交易日 plan 的第一个业务步骤调用内部
+`aits ops capture-daily-inputs`。umbrella runner 对 market/macro canonical download、
+FMP forward PIT、SEC companyfacts、FMP valuation/analyst estimates 与 official policy sources
+逐项执行，即使一个 component
+失败也继续其他来源。每个成功文件写入 date-scoped path，并在
+`daily_input_capture_manifest.v1` 中绑定 path/SHA-256/size；随后 validation 重验 live bytes、
+reviewed policy 和 safety boundary，gap ledger 按同一 XNYS authority 从 tracking start 枚举
+每个 session。
+
+只有 required components 全部通过时 capture step 才返回 0；任何 partial 都在保留成功来源
+之后整体 fail closed。即使 capture 为 `CAPTURED`，其
+`data_quality_status=NOT_EVALUATED`、`consumer_cutover_allowed=false`，后续仍须独立通过
+canonical download publication、`daily_default.v1` strict DQ、PIT/SEC/valuation validation、
+score 与 Reader Brief finalization。PIT build、SEC metrics 与 score valuation input 绑定同日
+capture path；被 umbrella 取代的独立 live fetch steps 不再重复调用。official/OpenAI 的
+score-time formal path仍执行自身权限、cache、visibility 与 formal assessment gates。
+
+```mermaid
+flowchart LR
+    TRIG["Only external trigger<br/>aits ops daily-run"] --> CAPTURE["capture_daily_inputs umbrella"]
+    CAPTURE --> MM["Market + macro canonical download<br/>max 2 attempts + date snapshot"]
+    CAPTURE --> FPIT["FMP forward PIT"]
+    CAPTURE --> SEC["SEC companyfacts"]
+    CAPTURE --> VAL["FMP valuation + analyst estimates"]
+    CAPTURE --> OFF["Official policy sources"]
+    MM --> MAN
+    FPIT --> MAN["Date-scoped manifest<br/>path / SHA-256 / size"]
+    SEC --> MAN
+    VAL --> MAN
+    OFF --> MAN
+    MAN --> VCAP["Capture validation"]
+    VCAP --> GAP["XNYS session gap ledger"]
+    VCAP -->|"all required PASS"| DQCAP["strict daily_default.v1 DQ"]
+    VCAP -->|"partial / tamper / policy drift"| STOPCAP["Retain successful bytes<br/>block downstream"]
+    DQCAP --> PITCAP["PIT + SEC + valuation consumers<br/>same-date capture paths"]
+    PITCAP --> SCORECAP["score / dashboard / Reader Brief finalization"]
+    GAP -.-> SAFE_CAP["No backfilled strict PIT<br/>no weights / broker / trading"]
+```
+
 Wave15 D0B3/G4B在上述全局false flag之外增加第一个、也是唯一一个consumer-scoped capability，
 不改写历史receipt/publication或把`consumer_cutover_allowed`改成true。统一daily trigger只为
 `daily_score_daily`命令携带reviewed profile token `daily_score_daily@1.0.0`；`cli_direct`随后从
@@ -5421,7 +5461,7 @@ flowchart TD
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出 Decision Card v2，固定呈现状态标签、市场吸引力、判断置信度、`Data Gate`、`Run ID / Trace`、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制、下一步触发条件、`Main Invalidator` 和 `Next Checks`；随后输出 `Data Lineage Card`，列出生成命令、market regime、关键输入、关键输出、trace 和 `production_effect`；`Base Signal / Risk Caps` 内含 `Score-to-Position Funnel` 和 `Binding Gate Ladder`，按 component score、effective weights、overall score、score band、confidence、macro risk budget、position gates 和 final position 解释分数到仓位路径，并标明 binding gate；正文继续输出复核五问、结论使用等级、适用范围、变化原因树、什么情况会改变判断、关注股票趋势分析、产业链节点热度与健康度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、置信度调整后模型仓位、限制说明、人工复核摘要和可追溯引用章节；关注股票趋势分析按 `core_watchlist` 显示逐 ticker 1/5/20 日收益、20/50/100/200 日均线位置、相对均线偏离和数据覆盖；当前项目范围为趋势判断/投研辅助，不触发交易；执行建议、关注股票趋势、节点热度/健康度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `trend_only`、`actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示“趋势判断，不触发交易”，不能自动升级为仓位复核或交易执行；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
 |统一计划任务配置|`config/scheduled_tasks.yaml`|OPS-059 统一登记 `daily_trading_day`、`weekly`、`biweekly`、`monthly` 和 `ad_hoc_research` 链路；daily 链路由 `daily_plan_step_id` 绑定 `aits ops daily-plan/daily-run`，非 daily 链路只登记 cadence、命令和安全边界，不进入每日执行；TRADING-099 只允许 `dynamic-v3-rescue schedule observe` 作为 daily lightweight gate，所有 `run-profile`、candidate attribution、walk-forward、overfit 和 promotion pack 仍在 weekly/manual/ad hoc cadence 登记并要求 `date_gate`、`trigger_condition`、`data_quality_gate`、`manual_review_required`；Reader Brief、governance、shadow monitor、documentation/report registry 任务固定 `production_effect=none`、不写 production weights、不写 active shadow weights、不触发 broker/trading；默认 primary research window 为 `unified_primary_2021`，默认回测起点记录为 `2021-02-22`，`ai_after_chatgpt` 只能作为显式历史/regime角色|OPS-059；TRADING-099|
-|每日运行计划|`aits ops daily-plan` / `src/ai_trading_system/cli_commands/ops.py`|生成本地或云 VM 可用的每日运行计划，并校验默认交易日步骤顺序必须匹配 `config/scheduled_tasks.yaml` 的 `daily_trading_day`；`ops` Typer 命令组已迁入低耦合命令模块，主入口仍保持命令名、参数、退出码和报告语义兼容；未显式传入 `--as-of` 时按 `America/New_York` 的 U.S. equity market 日历和 daily ops provider-ready buffer 选择最新已完成且供应商日终数据应可用的交易日；交易日列出 `download-data`、`validate-data`、`pit-snapshots fetch-fmp-forward --continue-on-failure`、`pit-snapshots build-manifest`、`pit-snapshots validate`、SEC companyfacts、SEC metrics extract/merge/validate、FMP valuation、`score-daily`、`reports dashboard`、SEC PIT shadow observe/monitor、score change attribution、market panel、market data freshness、freshness recovery、portfolio candidate tracking、portfolio tracking review window progress、portfolio tracking review report alias、report index、documentation contract、research governance summary、Reader Brief、Reader Brief quality、Dynamic v3 rescue schedule observe gate、`ops health` 和 secret scan 的顺序、环境变量、输出、质量门禁和阻断关系；休市日若上一交易日价格缓存已覆盖则跳过 `download-data`，仍运行 `validate-data`（以上一交易日为 as-of）、官方政策来源、PIT、SEC、valuation、Dynamic v3 rescue schedule observe gate、`ops health --non-trading-day` 和 secret scan，并跳过 `score-daily` 与 Reader Brief scoring artifacts|OPS-059；TRADING-058A 增加 daily tracking window review；TRADING-099；TRADING-1087 provider-ready as-of buffer|
+|每日运行计划|`aits ops daily-plan` / `src/ai_trading_system/cli_commands/ops.py`|生成本地或云 VM 可用的每日运行计划，并校验默认交易日步骤顺序必须匹配 `config/scheduled_tasks.yaml` 的 `daily_trading_day`；`ops` Typer 命令组已迁入低耦合命令模块，主入口仍保持命令名、参数、退出码和报告语义兼容；未显式传入 `--as-of` 时按 `America/New_York` 的 U.S. equity market 日历和 daily ops provider-ready buffer 选择最新已完成且供应商日终数据应可用的交易日；交易日先列出内部 `capture-daily-inputs`（内含 market/macro `download-data` 两次受控尝试、同日快照、FMP PIT、SEC companyfacts、FMP valuation 与官方来源），再列出 `validate-data`、`pit-snapshots build-manifest`、`pit-snapshots validate`、SEC metrics extract/merge/validate、`score-daily`、`reports dashboard`、SEC PIT shadow observe/monitor、score change attribution、market panel、market data freshness、freshness recovery、portfolio candidate tracking、portfolio tracking review window progress、portfolio tracking review report alias、report index、documentation contract、research governance summary、Reader Brief、Reader Brief quality、Dynamic v3 rescue schedule observe gate、`ops health` 和 secret scan 的顺序、环境变量、输出、质量门禁和阻断关系；休市日若上一交易日价格缓存已覆盖则跳过 `download-data`，仍运行 `validate-data`（以上一交易日为 as-of）、官方政策来源、PIT、SEC、valuation、Dynamic v3 rescue schedule observe gate、`ops health --non-trading-day` 和 secret scan，并跳过 `score-daily` 与 Reader Brief scoring artifacts|OPS-059；TRADING-058A 增加 daily tracking window review；TRADING-099；TRADING-1087 provider-ready as-of buffer；OPS-069 capture-first|
 |每日运行执行器|`aits ops daily-run` / `src/ai_trading_system/cli_commands/ops.py`|进入函数体和任何run bundle/provider/cache/report写入前，先按ARCH-005S4D取得checkout WRITE gate；活动研发lease、无归属dirty path、identity/root escape或lease conflict时typed BLOCKED并声明零业务副作用。通过后复用 `daily-plan` 的受控步骤顺序真实调用本地 CLI；交易日执行完整 daily chain，`score-daily` 后依次生成 dashboard、SEC PIT shadow observe、SEC PIT shadow monitor、score change attribution、market panel、market data freshness、freshness recovery、portfolio candidate tracking、portfolio tracking review window progress、portfolio tracking review report alias、report index、documentation contract、research governance summary、Reader Brief、Reader Brief quality 和 `aits etf dynamic-v3-rescue schedule observe --as-of YYYY-MM-DD`，再运行 health 与 secret scan；schedule observe 只写 `reports/etf_portfolio/dynamic_v3_rescue/schedule_observe/dynamic_v3_rescue_schedule_observe_YYYY-MM-DD.json/md`，记录 weekly due/skip/block、latest pointer validation、stale 检查和可选 observe-only shadow monitor，不运行 real sweep、不生成 promotion pack 或 `production_candidate`；weekly/biweekly/monthly/ad hoc research tasks 只由 `scheduled_tasks.yaml` 登记，不在 daily-run 自动执行；`daily-run` 仍是生产调度入口，不用于历史时点复现，显式未来或历史 `as_of` 在输入可见性预检查处 fail closed；默认写入 canonical run bundle，并生成 daily task dashboard、daily decision summary 和 blocked-only order intent candidates；direct dispatcher 支持 daily 子命令（`download-data`、`validate-data`、PIT fetch/build/validate、valuation fetch、SEC PIT shadow observe/monitor、report index `--latest`、docs report-contract `--latest`、Reader Brief 链、Dynamic v3 rescue schedule observe gate），其中模块化迁移后的根级数据缓存命令调用 `src/ai_trading_system/cli_commands/data_cache.py`，PIT 命令调用 `src/ai_trading_system/cli_commands/pit_snapshots.py`，估值抓取调用 `src/ai_trading_system/cli_commands/valuation.py`，portfolio tracking / review 调用 `src/ai_trading_system/cli_commands/portfolio.py`，ops health 调用 `src/ai_trading_system/cli_commands/ops.py`；缺少阻断性 env、子命令退出非 0 或关键 artifact 状态非 `PASS*` 时停止；`needs_more_data` 是 tracking review 的正常 VALIDATING 结果，不允许被解释为失败或 production approval；只读报告、governance、shadow monitor、schedule observe 和 Reader Brief 链失败不允许被解释为生产权重、active shadow 权重或交易动作|OPS-059；TRADING-058A 增加 daily tracking window review；TRADING-099；ARCH-001 direct dispatcher 模块化兼容；ARCH-005S4D checkout preflight|
 |本地 Python 运行环境|`.python-version` / `.venv` / `pyproject.toml` optional dependencies|项目主线开发和本地运行标准化为 Python 3.11，与 GitHub Actions、Ruff/Black/Mypy target version 对齐；README 使用 `py -3.11 -m venv .venv` 和 `.[dev,data,dashboard,brokers]` 安装路径；`dev` extra 包含 `pyarrow` 以便 CI 覆盖 SEC PIT Arrow string dtype 稳健性测试；`brokers` optional dependency group 提供 IBKR Paper read-only snapshot 所需的 `ib-insync`；裸 `python` 可保留其他版本，但 daily-run、pytest、ruff、black 和 IBKR snapshot 应优先用 `.venv` Python 3.11 执行|已实现基础版|
 |Reports CLI 命令边界|`aits reports ...` / `src/ai_trading_system/cli_commands/reports.py` / `engineering_reports.py` / `report_index_commands.py` / `src/ai_trading_system/cli_direct.py` report aliases|以 `reports.py` 作为主注册入口，集中承载 investment review、evidence dashboard、daily task dashboard、Reader Brief / quality、calculation explainers、score-change attribution、market panel、research governance summary、shadow/parameter/signal/portfolio/weight/data report aliases；engineering closeout / latest 查询和 report index / waiver inventory 已拆到专用 adapter，但外部仍保持 `aits reports ...` 命令名；direct dispatcher 的报告路径统一调用 `reports_cli`，避免报告命令继续散落在主 `cli.py`；所有命令保持只读或既有 fail-closed 语义，不新增数据流、不绕过 `aits validate-data` 要求、不改变 report registry 或下游投资解释|ARCH-001 第二十一批完成；TRADING-487_to_504 Stage B boundary baseline|

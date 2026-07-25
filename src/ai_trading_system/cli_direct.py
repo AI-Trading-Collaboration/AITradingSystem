@@ -22,6 +22,7 @@ from ai_trading_system.cli_commands import parameters as parameters_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import portfolio as portfolio_cli
 from ai_trading_system.cli_commands import reports as reports_cli
+from ai_trading_system.cli_commands import risk_events as risk_events_cli
 from ai_trading_system.cli_commands import score_daily as score_daily_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
@@ -267,6 +268,21 @@ def _dispatch_daily_score_with_consumer_authorization(
 
 
 def _dispatch(args: list[str]) -> None:
+    if args[:2] == ["ops", "capture-daily-inputs"]:
+        as_of = _option(args, "--as-of")
+        if as_of is None:
+            raise typer.BadParameter("capture-daily-inputs 必须显式提供 --as-of")
+        ops_cli.capture_daily_inputs_command(
+            as_of=as_of,
+            policy_path=_path_option_with_default(
+                args,
+                "--policy-path",
+                ops_cli.DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+            ),
+            download_start=_option(args, "--download-start", "2018-01-01"),
+            full_universe=_flag(args, "--full-universe"),
+        )
+        return
     if args[:1] == ["download-data"]:
         data_cache_cli.download_data(
             start=_option(args, "--start", "2018-01-01"),
@@ -398,22 +414,79 @@ def _dispatch(args: list[str]) -> None:
     if args[:2] == ["pit-snapshots", "fetch-fmp-forward"]:
         pit_snapshots_cli.fetch_fmp_forward_pit_command(
             as_of=_option(args, "--as-of"),
+            raw_output_dir=_path_option_with_default(
+                args,
+                "--raw-output-dir",
+                pit_snapshots_cli.DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
+            ),
+            normalized_output_path=_optional_path(args, "--normalized-output-path"),
+            manifest_path=_path_option_with_default(
+                args,
+                "--manifest-path",
+                pit_snapshots_cli.DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+            ),
+            output_path=_optional_path(args, "--output-path"),
+            pit_validation_report_path=_optional_path(
+                args,
+                "--pit-validation-report-path",
+            ),
             continue_on_failure=_flag(args, "--continue-on-failure"),
         )
         return
     if args[:2] == ["pit-snapshots", "build-manifest"]:
-        pit_snapshots_cli.build_pit_snapshot_manifest_command(as_of=_option(args, "--as-of"))
+        pit_snapshots_cli.build_pit_snapshot_manifest_command(
+            as_of=_option(args, "--as-of"),
+            output_path=_path_option_with_default(
+                args,
+                "--output-path",
+                pit_snapshots_cli.DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+            ),
+            fmp_analyst_history_dir=_path_option_with_default(
+                args,
+                "--fmp-analyst-history-dir",
+                pit_snapshots_cli.DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+            ),
+            fmp_forward_pit_dir=_path_option_with_default(
+                args,
+                "--fmp-forward-pit-dir",
+                pit_snapshots_cli.DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
+            ),
+            validation_report_path=_optional_path(
+                args,
+                "--validation-report-path",
+            ),
+        )
         return
     if args[:2] == ["pit-snapshots", "validate"]:
-        pit_snapshots_cli.validate_pit_snapshots_command(as_of=_option(args, "--as-of"))
+        pit_snapshots_cli.validate_pit_snapshots_command(
+            as_of=_option(args, "--as-of"),
+            input_path=_path_option_with_default(
+                args,
+                "--input-path",
+                pit_snapshots_cli.DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+            ),
+            output_path=_optional_path(args, "--output-path"),
+        )
         return
     if args[:2] == ["fundamentals", "download-sec-companyfacts"]:
         fundamentals_cli.download_sec_companyfacts_command(
-            user_agent=_option(args, "--user-agent") or os.getenv("SEC_USER_AGENT")
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                fundamentals_cli.PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+            ),
+            user_agent=_option(args, "--user-agent") or os.getenv("SEC_USER_AGENT"),
         )
         return
     if args[:2] == ["fundamentals", "extract-sec-metrics"]:
-        fundamentals_cli.extract_sec_metrics_command(as_of=_option(args, "--as-of"))
+        fundamentals_cli.extract_sec_metrics_command(
+            as_of=_option(args, "--as-of"),
+            input_dir=_path_option_with_default(
+                args,
+                "--input-dir",
+                fundamentals_cli.PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+            ),
+        )
         return
     if args[:2] == ["fundamentals", "merge-tsm-ir-sec-metrics"]:
         fundamentals_cli.merge_tsm_ir_sec_metrics(as_of=_option(args, "--as-of"))
@@ -422,7 +495,49 @@ def _dispatch(args: list[str]) -> None:
         fundamentals_cli.validate_sec_metrics_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["valuation", "fetch-fmp"]:
-        valuation_cli.fetch_fmp_valuations(as_of=_option(args, "--as-of"))
+        valuation_cli.fetch_fmp_valuations(
+            as_of=_option(args, "--as-of"),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                valuation_cli.PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+            ),
+            analyst_history_dir=_path_option_with_default(
+                args,
+                "--analyst-history-dir",
+                valuation_cli.DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+            ),
+            pit_normalized_path=(
+                _optional_path(args, "--pit-normalized-path")
+                or valuation_cli.DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR
+            ),
+            output_path=_optional_path(args, "--output-path"),
+            validation_report_path=_optional_path(
+                args,
+                "--validation-report-path",
+            ),
+        )
+        return
+    if args[:2] == ["risk-events", "fetch-official-sources"]:
+        risk_events_cli.fetch_official_policy_sources_command(
+            as_of=_option(args, "--as-of"),
+            raw_dir=_path_option_with_default(
+                args,
+                "--raw-dir",
+                risk_events_cli.DEFAULT_OFFICIAL_POLICY_RAW_DIR,
+            ),
+            processed_dir=_path_option_with_default(
+                args,
+                "--processed-dir",
+                risk_events_cli.DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+            ),
+            download_manifest_path=_path_option_with_default(
+                args,
+                "--download-manifest-path",
+                risk_events_cli.PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+            ),
+            output_path=_optional_path(args, "--output-path"),
+        )
         return
     if args[:2] == ["score-daily", "backfill-baseline"]:
         raise typer.BadParameter(
@@ -450,6 +565,10 @@ def _dispatch(args: list[str]) -> None:
                 risk_event_openai_precheck_visibility_cutoff=_option(
                     args,
                     "--risk-event-openai-precheck-visibility-cutoff",
+                ),
+                valuation_path=(
+                    _optional_path(args, "--valuation-path")
+                    or score_daily_cli.PROJECT_ROOT / "data" / "external" / "valuation_snapshots"
                 ),
             )
 
