@@ -149,8 +149,7 @@ def _write_daily_pass_status_artifacts(plan) -> None:
             path.write_text(
                 json.dumps(
                     {
-                        "schema_version": 1,
-                        "report_type": "daily_input_capture_validation",
+                        "schema_version": "daily_input_capture_validation.v1",
                         "as_of": plan.as_of.isoformat(),
                         "production_effect": "none",
                         "status": "PASS",
@@ -1059,7 +1058,7 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["shadow_plan"]["execution_enabled"] is False
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
     assert payload["workflow_spec"]["semantic_revision"] == (
-        "scheduled=scheduled_tasks_v4;capture=daily_input_capture_v3"
+        "scheduled=scheduled_tasks_v5;capture=daily_input_capture_v3"
     )
     assert plan.workflow_semantic_revision == payload["workflow_spec"]["semantic_revision"]
     assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"

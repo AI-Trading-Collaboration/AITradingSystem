@@ -13788,7 +13788,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_daily
   path: src/ai_trading_system/ops_daily.py
-  sha256: 4c7156826d4894256935b0bc85a2c8b4cc086defb8e51ef5d610c02620327c4c
+  sha256: b7070905c1d27218073db11caeb2bd21c9e533c84d7eac9b977ad33084c95f11
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

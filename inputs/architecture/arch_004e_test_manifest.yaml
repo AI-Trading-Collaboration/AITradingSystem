@@ -7439,7 +7439,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: affd94c21cf41d4ed663c7fcf69f14c5d99a5c7a6b507d7f5c9330495a150789
+  sha256: e7d5abe8b1eb29889050d4247875c4549bb160edd5b504ac7ecd0b8c4fb1d50f
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7601,7 +7601,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004c_platform_adapters
   path: tests/test_arch_004c_platform_adapters.py
-  sha256: 9b6fcdcc3de03cf59e152db77a7832db769ba451335d50f2a933897a061ed046
+  sha256: d530ef55a0a20c11bf5daad254fbd428df7c3b78526e991ec1fec15bcf7fe393
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7673,7 +7673,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004f1_operations_control_plane
   path: tests/test_arch_004f1_operations_control_plane.py
-  sha256: 3f0b87c2da1433c1c886ba96d286704c0820722280726255f674864e37e82762
+  sha256: d7f8967c1ee4c827a4bc28b844bb7d5ac792dbf3688f692b9bef1b06874b8ed2
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7835,7 +7835,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: f36ced320d6179a310a9decbb366ebee13188b92e2992f67817ab09a47728873
+  sha256: b35d9bf09ba7cb5799d346f7b2db5ac7956f383952e6507b6675cb122c5b9a6c
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -12645,7 +12645,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_ops_daily
   path: tests/test_ops_daily.py
-  sha256: 4093f13eaefcb7e7298c718d2ccf2f91f552d6da2c6019d73bfab8ee1233df81
+  sha256: 1db94fa7d8dcbff63fd70b3e080d0afa271ee8e8fafd6cf95d7fef5c089379a9
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14613,7 +14613,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_scheduled_tasks
   path: tests/test_scheduled_tasks.py
-  sha256: f57b3d5ff593ed2095b6db37e67f2ccb2c6ecc851723d4db7cf79f9796573d1a
+  sha256: abe493ee50f68594dee220d23ebaf85e38efbc91d8d095ea3f154e8751d6ceee
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

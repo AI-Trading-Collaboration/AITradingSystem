@@ -241,6 +241,33 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   同步升级版本。验收须证明旧 state/ledger 保留、新 spec/key 可追踪、未变 policy 的
   重触发仍受原 budget 约束，并再次只从 `aits ops daily-run` 执行真实 provider-ready
   session。
+- 2026-07-25：semantic revision 修复发布为
+  `e60ee55ee6fef18284294a2887e4e9ecbf7b7fba` 后，唯一入口取得新
+  `workflow_spec_640b3af307093293ee1d` / run-control key，并完成 33 个 step 的真实
+  终态记录。capture 对五个 component 均发起真实请求：
+  `fmp_forward_pit`、`sec_companyfacts`、`fmp_valuation` 与
+  `official_policy_sources` PASS，合计保留 86 个 component artifact refs；
+  `market_macro` 在两个 reviewed attempts 后因
+  `DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH` 保持 FAIL。manifest 为
+  `PARTIAL_CAPTURE`，validation artifact 使用真实 contract
+  `schema_version=daily_input_capture_validation.v1` 且自身状态 PASS，
+  `consumer_cutover_allowed=false`。
+- 2026-07-25：上述真实 run 同时暴露第三个非客观全局阻断：
+  `_post_step_artifact_status_error` 把 capture validation 错误套用
+  `schema_version=integer:1` 和 `report_type` 的 report artifact contract，因而把本应
+  `LIMITED` 的 validated partial capture 误记为 FAIL，继续阻断了已经具备 PASS
+  component 的 PIT/SEC consumer。最佳修复是让 JSON artifact gate 显式声明各 artifact
+  自身的 schema version 与可选 report type，保持 as-of、status、
+  `production_effect=none` 和 strict JSON 校验不变；同步升级 scheduled reviewed policy
+  revision 以生成可审计的新 workflow spec/key。重跑必须复用四个 PASS source state，
+  不重复 provider 请求；market/macro 的 exhausted integrity blocker 保留，DQ/score/
+  Reader Brief 继续 fail closed，而 PIT/SEC sibling 必须实际执行并留下验证证据。
+- 2026-07-25：capture validation contract 对齐与 `scheduled_tasks_v5` 工程验证 PASS：
+  focused=`117 passed`、fast-unit=`340 passed`、architecture-fitness=`624 passed`、
+  contract-validation=`275 passed`；严格 schema/as-of/status/production-effect 负向断言、
+  partial-capture branch isolation、runtime-control 与 compatibility authority 均通过。
+  下一步只通过唯一 `aits ops daily-run` 对同一 provider-ready session 取得新 spec/key，
+  验证四个 PASS source state 幂等复用且 PIT/SEC branch 实际继续。
 
 ## 临时 live-fix worktree 生命周期
 

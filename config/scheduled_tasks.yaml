@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: scheduled_tasks_v4
+policy_version: scheduled_tasks_v5
 policy_metadata:
   owner: system
   status: active_baseline
@@ -15,6 +15,8 @@ policy_metadata:
     all other steps retain their existing attempt budgets. OPS-070 adds an
     explicit daily step/component dependency DAG and always-run operator closure
     so a branch failure cannot suppress independent validation evidence.
+    Version 5 binds the capture validation artifact to its native versioned
+    schema instead of applying the generic report-artifact schema contract.
   intended_effect: >
     Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
     dependency-aware daily trading-day chain while registering non-daily governance chains for
@@ -24,7 +26,9 @@ policy_metadata:
     idempotent download-data step without deleting prior state or ledger;
     a second failure under the same workflow spec remains terminal. A missing
     dependency blocks only its consumers while the overall run remains
-    non-PASS and always-run health/security closure still executes.
+    non-PASS and always-run health/security closure still executes. A validated
+    partial capture is recorded as LIMITED so consumers backed by PASS source
+    components may proceed, while missing-component consumers remain blocked.
   validation_evidence: >
     OPS-059 tests cover daily command order, closed-market skips, non-daily task
     registration, and no-production safety invariants for reader/governance/
@@ -33,7 +37,8 @@ policy_metadata:
     OPS-069 tests cover attempt-all capture, partial retention, checksum tamper,
     XNYS gap visibility, consumer path binding, and no-production boundaries.
     OPS-070 fault-injection tests cover sibling continuation, dependency blocking,
-    strict terminal status, runtime-control accounting, and always-run closure.
+    strict terminal status, runtime-control accounting, always-run closure, and
+    the native daily_input_capture_validation.v1 artifact contract.
   review_condition: >
     Review whenever a daily report, governance report, shadow monitor, backtest,
     parameter, documentation, report registry, scheduler command, capture

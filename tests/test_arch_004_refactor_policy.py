@@ -176,6 +176,7 @@ OPS_070_NEW_SOURCE_PATHS = frozenset(
             "5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml"
         ),
         "src/ai_trading_system/ops_scheduler_checkout.py",
+        "tests/test_arch_004c_platform_adapters.py",
         "tests/test_ops_scheduler_checkout.py",
     }
 )

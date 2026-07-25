@@ -3443,11 +3443,15 @@ def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
         "capture_daily_inputs": (
             2,
             "daily_input_capture_validation",
+            "daily_input_capture_validation.v1",
+            None,
             "status",
             frozenset({"PASS"}),
         ),
         "report_quality_gate": (
             0,
+            "report_quality_gate",
+            1,
             "report_quality_gate",
             "report_quality_status",
             frozenset({"PASS", "PASS_WITH_WARNINGS"}),
@@ -3455,18 +3459,29 @@ def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
         "validate_reader_brief": (
             0,
             "reader_brief_quality",
+            1,
+            "reader_brief_quality",
             "status",
             frozenset({"OK", "PASS_WITH_WARNINGS", "LIMITED_READER_CONTEXT"}),
         ),
     }.get(step.step_id)
     if json_status_contract is not None:
-        index, artifact_name, status_field, allowed_statuses = json_status_contract
+        (
+            index,
+            artifact_name,
+            expected_schema_version,
+            expected_report_type,
+            status_field,
+            allowed_statuses,
+        ) = json_status_contract
         if index >= len(step.produced_paths):
             return f"artifact_status_path_missing: {step.step_id}[{index}]"
         return _json_status_artifact_error(
             step_id=step.step_id,
             path=step.produced_paths[index],
             artifact_name=artifact_name,
+            expected_schema_version=expected_schema_version,
+            expected_report_type=expected_report_type,
             status_field=status_field,
             allowed_statuses=allowed_statuses,
         )
@@ -3501,6 +3516,8 @@ def _json_status_artifact_error(
     step_id: str,
     path: Path,
     artifact_name: str,
+    expected_schema_version: int | str,
+    expected_report_type: str | None,
     status_field: str,
     allowed_statuses: frozenset[str],
 ) -> str | None:
@@ -3516,15 +3533,23 @@ def _json_status_artifact_error(
     if not isinstance(payload, Mapping):
         return f"artifact_status_invalid_json: {path} root_type={type(payload).__name__}"
     schema_version = payload.get("schema_version")
-    if type(schema_version) is not int or schema_version != 1:
+    if (
+        type(schema_version) is not type(expected_schema_version)
+        or schema_version != expected_schema_version
+    ):
+        expected_type = type(expected_schema_version).__name__
         return (
             f"artifact_status_schema_invalid: {path} "
-            f"expected=integer:1 actual={schema_version!r}"
+            f"expected={expected_type}:{expected_schema_version!r} "
+            f"actual={schema_version!r}"
         )
-    if payload.get("report_type") != artifact_name:
+    if (
+        expected_report_type is not None
+        and payload.get("report_type") != expected_report_type
+    ):
         return (
             f"artifact_status_report_type_invalid: {path} "
-            f"expected={artifact_name!r} actual={payload.get('report_type')!r}"
+            f"expected={expected_report_type!r} actual={payload.get('report_type')!r}"
         )
 
     artifact_as_of = payload.get("as_of")

@@ -1842,6 +1842,47 @@ def test_daily_ops_reader_brief_quality_json_gate_allows_limited_context(
         assert _post_step_artifact_status_error(step) is not None
 
 
+def test_daily_ops_capture_validation_gate_uses_native_versioned_schema(
+    tmp_path: Path,
+) -> None:
+    validation_path = (
+        tmp_path / "daily_input_capture_validation_2026-05-06.json"
+    )
+    step = DailyOpsStep(
+        step_id="capture_daily_inputs",
+        title="capture",
+        command=("aits", "ops", "capture-daily-inputs"),
+        required_env_vars=(),
+        produced_paths=(
+            tmp_path / "daily_input_capture_manifest_2026-05-06.json",
+            tmp_path / "daily_input_capture_gap_ledger_2026-05-06.json",
+            validation_path,
+        ),
+        quality_gate="test",
+        blocks_downstream=True,
+    )
+    validation_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "daily_input_capture_validation.v1",
+                "as_of": "2026-05-06",
+                "production_effect": "none",
+                "status": "PASS",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert _post_step_artifact_status_error(step) is None
+
+    payload = json.loads(validation_path.read_text(encoding="utf-8"))
+    payload["schema_version"] = 1
+    validation_path.write_text(json.dumps(payload), encoding="utf-8")
+    assert "artifact_status_schema_invalid" in (
+        _post_step_artifact_status_error(step) or ""
+    )
+
+
 @pytest.mark.parametrize("schema_version", [True, 1.0, "1"])
 @pytest.mark.parametrize(
     ("step_id", "artifact_name", "status_field", "status"),
@@ -2095,8 +2136,7 @@ def _write_daily_pass_status_artifacts(plan: DailyOpsPlan) -> None:
             step.produced_paths[2].write_text(
                 json.dumps(
                     {
-                        "schema_version": 1,
-                        "report_type": "daily_input_capture_validation",
+                        "schema_version": "daily_input_capture_validation.v1",
                         "as_of": plan.as_of.isoformat(),
                         "production_effect": "none",
                         "status": "PASS",

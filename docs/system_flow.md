@@ -350,13 +350,18 @@ score 与 Reader Brief finalization。PIT build、SEC metrics 与 score valuatio
 capture path；被 umbrella 取代的独立 live fetch steps 不再重复调用。official/OpenAI 的
 score-time formal path仍执行自身权限、cache、visibility 与 formal assessment gates。
 
-`scheduled_tasks_v4` 为 daily steps 冻结显式 DAG 与 capture component matrix：
+`scheduled_tasks_v5` 为 daily steps 冻结显式 DAG、capture component matrix 与
+artifact-contract-aware closure gate：
 `validate_data <- market_macro`、`pit_snapshots_build_manifest <- fmp_forward_pit`、
 `sec_metrics <- sec_companyfacts`，`score_daily` 同时依赖 strict DQ/PIT/SEC steps 与
 `fmp_valuation + official_policy_sources`。某个 source 或 consumer 失败只阻断自己的 descendants；
 无关 sibling 继续，`pipeline_health` 和 `secret_hygiene` 始终执行 operator closure。runtime-control
 保持同一 lease，失败 step 释放 active slot后继续记账，最后以全部 branch 结果统一写
 `BLOCKED/FAILED`。任何 required branch 不完整都不能进入 Reader Brief finalization 或 terminal PASS。
+capture validation 使用 native `daily_input_capture_validation.v1` schema，不要求 report-only
+`report_type`；report quality 与 Reader Brief quality 仍使用 exact integer schema/report type。
+所有 JSON gate 均保持 strict parse、exact as-of、canonical success status 和
+`production_effect=none`，因此 contract 对齐只消除误阻断，不提升缺失 component 的消费权限。
 OPS-070 S2 为每个 `source/session` 建立独立 state、attempt history、idempotency key 和 active
 lease；retry budget、delay、retryable blocker、lease TTL 与 recovery mode 来自
 `daily_input_capture_policy.v2`。活动 lease 和 non-retryable failure 只阻断该 source，stale lease
@@ -929,7 +934,7 @@ ARCH-004F1 当前建立 operations shadow control path：`config/scheduled_tasks
 
 ARCH-004F1.3 新增尚未cut-in legacy daily executor的canonical runtime-control层。`config/operations/runtime_control.yaml`治理6小时lock TTL、2次run attempt上限、idempotent-only resume及daily/non-daily cut-in flags；`OperationsRunControl`以`workflow_id + workflow_spec_id + as_of`生成deterministic idempotency key，以workflow/date原子目录lock阻断并发，只在`expires_at`已过时原子回收stale lock，并通过canonical atomic writer持久化`operations_execution_state.v1`。Run state逐步记录current/completed step和每步attempt；`WorkflowStepSpec.max_attempts`参与真实retry gate，completed/current partial state只有明确`idempotent=true`才可resume；non-idempotent、run/step exhausted、invalid/corrupt state全部fail closed；terminal PASS同key重触发返回`ALREADY_COMPLETE`而不获取lease。Daily shadow sidecar记录runtime policy path/hash及`legacy_daily_executor_cut_in_enabled=false`，因此F1.3只证明runtime capability与边界，真正让`run_daily_ops_plan`消费lease/skip completed steps/写terminal state属于F1.4。Non-daily dispatch仍false，不改变DQ、score、weight、paper-shadow、production或broker。
 
-ARCH-004F1.4 已把上述控制层切入唯一 daily CLI 路径：`aits ops daily-run` 先从market-session activated schedule生成同一`WorkflowSpec`，再按`workflow/spec/as_of`获取lease，最后由受控adapter调用原`run_daily_ops_plan` façade。Observer把legacy step事件映射为canonical start/PASS/SKIPPED/FAILED；resume只跳过此前PASS步骤，重复完成、并发、run/step attempt耗尽在调用runner前返回显式control status。F1.4 初始实现采用线性 fail-fast：实际失败步骤为FAILED，其后未运行步骤为BLOCKED。OPS-070 S1 已在不改变同一 runtime-control boundary 的前提下，用 `scheduled_tasks_v4` 的显式 DAG 替换该传播方式：失败 step 释放 active slot，independent sibling 和 always-run closure 继续；依赖不满足的 step 不调用 runner并在 daily report 标记 `BLOCKED`，canonical ledger 对未启动依赖项保留 `SKIPPED`，run 顶层 `run_status/run_blocker_codes` 才是严格终态。`validate_data`失败仍绝不执行score，但PIT/SEC sibling可继续形成证据。Trading-day、closed-market、resume、duplicate、concurrent与failure fixtures覆盖该契约；CLI对已完成duplicate安全返回，对control blocker fail closed，不生成误导性dashboard/Reader Brief refresh。Runtime policy现为`legacy_daily_executor_cut_in_enabled=true`，但automatic non-daily仍关闭，也不改变DQ、score、weight、paper-shadow、production或broker边界。
+ARCH-004F1.4 已把上述控制层切入唯一 daily CLI 路径：`aits ops daily-run` 先从market-session activated schedule生成同一`WorkflowSpec`，再按`workflow/spec/as_of`获取lease，最后由受控adapter调用原`run_daily_ops_plan` façade。Observer把legacy step事件映射为canonical start/PASS/SKIPPED/FAILED；resume只跳过此前PASS步骤，重复完成、并发、run/step attempt耗尽在调用runner前返回显式control status。F1.4 初始实现采用线性 fail-fast：实际失败步骤为FAILED，其后未运行步骤为BLOCKED。OPS-070 S1 已在不改变同一 runtime-control boundary 的前提下，用 `scheduled_tasks_v5` 的显式 DAG 替换该传播方式：失败 step 释放 active slot，independent sibling 和 always-run closure 继续；依赖不满足的 step 不调用 runner并在 daily report 标记 `BLOCKED`，canonical ledger 对未启动依赖项保留 `SKIPPED`，run 顶层 `run_status/run_blocker_codes` 才是严格终态。`validate_data`失败仍绝不执行score，但PIT/SEC sibling可继续形成证据。Trading-day、closed-market、resume、duplicate、concurrent与failure fixtures覆盖该契约；CLI对已完成duplicate安全返回，对control blocker fail closed，不生成误导性dashboard/Reader Brief refresh。Runtime policy现为`legacy_daily_executor_cut_in_enabled=true`，但automatic non-daily仍关闭，也不改变DQ、score、weight、paper-shadow、production或broker边界。
 
 OPS-070 真实 provider-ready 验收进一步修正 canonical key 的 policy binding：`DailyOpsPlan.workflow_semantic_revision` 显式组合 `config/scheduled_tasks.yaml` 的 reviewed `policy_version` 与 `config/operations/daily_input_capture.yaml` 的 reviewed `policy_version`，并写入 `WorkflowSpec.semantic_revision` 后参与 `spec_id` 与 `operations_idempotency_key` 哈希。这样，改变 XNYS capture 资格、source attempt、lease 或 recovery 语义的 reviewed capture policy 修订会生成新 spec/key，而相同 policy revision 的重复触发仍复用原 key 并受原 run/step attempt budget 限制。旧 FAILED state/ledger 不删除、不改写，也不得通过改 flag、提高旧 budget 或伪造 key 恢复；daily plan shadow 与真实 controlled runner 必须携带同一 semantic revision。该绑定只控制可审计执行身份，不放宽 DQ/PIT/score 门禁，不修改 production/active shadow weights，也不触发 broker/trading。
 
