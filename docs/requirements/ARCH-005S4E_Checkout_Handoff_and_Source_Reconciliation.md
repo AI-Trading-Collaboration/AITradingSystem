@@ -191,6 +191,15 @@ OPS-070 与本任务 required validation 绑定最终 tree。任何自动清理�
   候选触达；随后仅以`git merge --ff-only`集成并普通push，最终
   `main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。该集成不授权
   automatic cleanup、S5、task source cutover、production或broker。
+- 2026-07-25：临时worktree closeout审计确认tracked/untracked归属变更均为0，ignored共
+  4536个文件/177,566,723 bytes。删除allowlist严格限定为
+  `D:\Work\AITradingSystem_ops070_livefix_20260725`，不得扩展到父目录或其他worktree。已将
+  `outputs/architecture/arch_005_s4e/`及全部2026-07-25 validation runtime evidence复制到
+  `D:\Work\AITradingSystem`同名canonical路径，共103个文件/43,872,331 bytes，并逐文件
+  SHA-256复核一致。其余4433个文件/133,694,392 bytes仅含Python/pytest/Ruff cache、
+  test-generated diagnostics/weight-calibration cache及deterministic shadow view；不含unique
+  implementation或未保全证据，随`git worktree remove`删除且不承诺恢复。tracked history和
+  retained evidence分别由已推送Git commits与canonical outputs恢复。
 - 2026-07-25：owner 同意先修复 dirty-main/迁移后残留问题。审计确认 351 个状态项中，
   319 个为 task registry 生成物、5 个为 architecture 生成物、23 个为 OPS-070 源文件、
   2 个为 DEVX-001 unique 文件、1 个为 mixed task register、1 个为 CRLF stat-only。

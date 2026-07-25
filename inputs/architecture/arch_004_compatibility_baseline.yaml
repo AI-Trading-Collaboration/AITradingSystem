@@ -25093,7 +25093,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 65c9af85439d01980b030ecdb263265277207565301e34bca456a5e281d63280
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
-    sha256: 7f1653bd9d1df26198f24ee8ba05adb4836d86aec4c9afc9a24ae094eb6a0b32
+    sha256: cee857bfdbcd8245db00657e5074a5e622faf56e43cee98c8505fad503465268
     hash_normalization: git_eol_lf
   - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
     sha256: 64c46e23efa45f5049d9084a28b4513a1b054525d5e443e9696e2c81ae50b555
