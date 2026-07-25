@@ -25562,6 +25562,7 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   known_unrelated_exclusions:
   - docs/research/growth_tilt_owner_diagnosis_pack.md
   superseded_live_source_paths:
+  - AGENTS.md
   - config/architecture/arch_005_s4d_checkout_guard.yaml
   - config/architecture/arch_005_s4e_checkout_reconciliation.yaml
   - docs/artifact_catalog.md
@@ -25583,6 +25584,7 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_005_s4d_checkout_guard.py
+  - tests/test_legacy_research_artifact_portable_lineage.py
   supersession:
     superseded_by_phase: ARCH-005S4D-S2
     scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
@@ -25591,6 +25593,7 @@ phase_arch_005_s4d_s2_read_only_telemetry:
     current_hash_authority: phase_arch_005_s4d_s2_read_only_telemetry.sources
   removed_live_source_paths: []
   source_delta_paths:
+  - AGENTS.md
   - config/architecture/arch_005_s4d_checkout_guard.yaml
   - config/architecture/arch_005_s4e_checkout_reconciliation.yaml
   - docs/artifact_catalog.md
@@ -25612,10 +25615,14 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_arch_005_s4d_checkout_guard.py
+  - tests/test_legacy_research_artifact_portable_lineage.py
   new_source_paths:
   - src/ai_trading_system/platform/architecture/checkout_telemetry.py
   - tests/test_arch_005_s4d_checkout_telemetry.py
   sources:
+  - path: AGENTS.md
+    sha256: 9ca16736cd615a1903284b180a03f07cac6f4a668657f861402860f6ec348bbe
+    hash_normalization: git_eol_lf
   - path: config/architecture/arch_005_s4d_checkout_guard.yaml
     sha256: 5a399ceceaa613e6651f81a5aa377c93d240326964d947dd658088f198a3aec3
     hash_normalization: git_eol_lf
@@ -25626,46 +25633,46 @@ phase_arch_005_s4d_s2_read_only_telemetry:
     sha256: 119d98c9a81653ad019167bf391ade72cff46e81be91e5f30003b6712d9cfd8c
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
-    sha256: 495b916b8548ab36c2d4c67a0a971bee47c8872d88af3f4bbcb379727a6db753
+    sha256: 3f95fe6d33c99d60e0269f8304104e652d8afb8fc04ab1915c10d9b175d132e1
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
-    sha256: 754048ec22b60f0539e9aef1de6079549912bc80a5dbdf137064714b45f9d9bc
+    sha256: 0deb726f97ea9ea575e778e2062990e74ba8aa7565c0d1749793274b36611d41
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 6e84a92142b5680b2fde6ef68c1141bcb45708ad7e7bdf637d895ed3425b5050
+    sha256: a6d01d976b02c1d03a41b49c3ede7e7c25acbc6c3c469aba62c68a1ebb0fb03b
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-    sha256: 9d730e9994324b9897467cd2c89bfd0363d3d4df85ef8408dab4ab8f69623d8c
+    sha256: a36fa7ec9edb0ea3ca57bf3484b320687997a64317fd91783545ffd65ef74a4f
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_architecture_fitness.yaml
     sha256: 362792bd701a007e09083a90360a961542e46ee007cf7b64270ad81eeab975ff
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
-    sha256: d0991e5606fc2cac262de7772ed3835cadcbb623b3f6be3da7c5360952ff50d0
+    sha256: 50af4f7657dd36da8288d1bd7cb9fa118fec1a7a4654a20d80983bf3c6a0706a
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 158c952c4a08a24c34c458c5e394d3f44b72bb9d2fd6f31e8e2c8699a6c9dd88
+    sha256: 665471699b2acec3893b9e50aadb96b0127aea91b497b6a60aa6ada3e446e7f5
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: 87274b828b56cee1a52ea865ece8a296bdd9e97d341a4add6cd199091100b478
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: d0732dd28eb5044d3946cf137343023e5b096cff03f6597b40cc93eb95a70917
+    sha256: 95960cdd720366ee245b8bc1e1036b3abe6d4b5a5350350b87dd4c78c5f92f5c
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: ac8a9de53db3de5eb34e39429d0d8e0ebb8919dda88f42d9db3f6d5751a4b5c5
+    sha256: 4c57d36015b6ae3c935991b18f5ff6a71c5c7c8b24e9d5454a8d053892168811
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-    sha256: 393ec26eb7279560871b39f59715eda84f10d59b4ce861c33723390b269650d1
+    sha256: 7a07c3d2adba85194a73a55485bb6f85bdf75ce71dfdca7b1bf5efcf42e597bd
     hash_normalization: git_eol_lf
   - path: scripts/architecture_arch005_checkout_guard.py
-    sha256: 941259518d28026d5f3f849ed9eb49842acaa3f94fba756bb99cf105cd90e183
+    sha256: 1cc72b0e8ab0dc708e727cdc8e346adc3978a36ad0ee8e265f840b35e84b645e
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/architecture/__init__.py
-    sha256: f401db3b0e06b4ebf742a824956f9b2fdd7802e236edfc40ad531b54e9314f1c
+    sha256: 9a78e4c33d3697e9a6f32cd39df77be788b9b2cf133e2b3ba30e8f95d684cbec
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/architecture/checkout_guard.py
-    sha256: 2cce795e4d1684b82404ac5b1e039df073d3d04c61bc3923e5e32642a865d198
+    sha256: 211ac4a3739d9a0f0003cf5c7d77e7db6f6bf64a30be83dd776a7cafad845532
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/architecture/checkout_telemetry.py
     sha256: a2572166c1e3721484a51f9dec27b36a21da3b3f0b4ec604370fe9608298bb06
@@ -25674,28 +25681,40 @@ phase_arch_005_s4d_s2_read_only_telemetry:
     sha256: 06794e8ab3ea093e0edcff71c608de11b6926dfbc63442d03812e9a808872dd7
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: c2ab530b547a1e0c3b5c63fb48cedd451d62c75a4f61611aec9905db260d3935
+    sha256: 355f514b231ba96c1ecac17e6887801cceee2f1fd90d6dc36612f1f23d4ea6a7
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004g_deprecation.py
     sha256: 9fa81a9185fc6db8790dfa88e6db5773a606c4a162ed6447eb405a692d8ee983
     hash_normalization: git_eol_lf
   - path: tests/test_arch_005_s4d_checkout_guard.py
-    sha256: a7a253f47454f342e4d3f76c49e1b1bfcfc54a031f644c26e056d0324b5322de
+    sha256: 4b4541be36b26f596873d56260e6342c406e25b745a3c19538a005d29deba304
     hash_normalization: git_eol_lf
   - path: tests/test_arch_005_s4d_checkout_telemetry.py
     sha256: 6c99733a1ad6d6f4038992457187883b71cd8c0e308eaf0a2f6600cd426d1535
+    hash_normalization: git_eol_lf
+  - path: tests/test_legacy_research_artifact_portable_lineage.py
+    sha256: 4df7060a36f97f0d85fca025be47362a41d27946c56371d0a60758f14209bf98
     hash_normalization: git_eol_lf
   validation:
     engineering_status: FORMAL_VALIDATION_PASS
     focused: PASS_75
     release_hardening_focused: PASS_21
     compatibility_deprecation_combined: PASS_68
-    architecture_fitness: PASS_644
+    safe_audit_focused: PASS_16
+    safe_audit_combined: PASS_70
+    portable_lineage_focused: PASS_24
+    post_fix_combined: PASS_94
+    architecture_fitness: PASS_646
     contract_validation: PASS_275
     integration: PASS_995
     reproducibility: PASS_23
-    full: PASS_7265_SKIPPED_4_WARNINGS_643
-    full_runtime_summary: outputs/validation_runtime/full_20260725T154816Z/test_runtime_summary.json
+    initial_hardening_full: FAIL_1_PASS_7267_SKIPPED_3_WARNINGS_643
+    initial_hardening_full_runtime_summary: outputs/validation_runtime/full_20260725T163954Z/test_runtime_summary.json
+    full: PASS_AFTER_FAILURE_FIX_7268_SKIPPED_3_WARNINGS_643
+    full_runtime_summary: outputs/validation_runtime/full_20260725T170729Z/test_runtime_summary.json
+    post_full_architecture_runtime_summary: outputs/validation_runtime/architecture-fitness_20260725T172804Z/test_runtime_summary.json
+    post_full_contract_runtime_summary: outputs/validation_runtime/contract-validation_20260725T173037Z/test_runtime_summary.json
+    safe_worktree_audit: PASS
   safety:
     task_governance_status_mutated: false
     automatic_task_mutation: false

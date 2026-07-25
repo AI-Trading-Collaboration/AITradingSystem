@@ -422,6 +422,22 @@ def test_recovered_r0_r1_r2_bundle_fails_closed_after_reviewed_source_drift(
     frozen = _read_json(DEFAULT_TRADING2449_SIDECAR_PATH)
     assert frozen["sidecar_id"] == "portable-lineage_dfa5dfc7208e5913fc75"
     assert frozen != built
+    drift_binding_id = "source_100e2a05abff91305c13"
+    drift_binding = next(
+        source for source in frozen["sources"] if source["binding_id"] == drift_binding_id
+    )
+    portable_source = PROJECT_ROOT / drift_binding["locator"]["path"]
+    portable_source_sha = _sha256(portable_source)
+    assert portable_source_sha != drift_binding["sha256"]
+    historical_source = Path(drift_binding["legacy_path"])
+    historical_portable_conflict = (
+        historical_source.is_file() and _sha256(historical_source) != portable_source_sha
+    )
+    expected_unarchived_reason = (
+        "HISTORICAL_PORTABLE_CONFLICT"
+        if historical_portable_conflict
+        else "PORTABLE_SOURCE_TAMPERED"
+    )
     kwargs = {
         "portable_lineage_sidecar_path": DEFAULT_TRADING2449_SIDECAR_PATH,
         "portable_project_root": PROJECT_ROOT,
@@ -452,7 +468,8 @@ def test_recovered_r0_r1_r2_bundle_fails_closed_after_reviewed_source_drift(
     ):
         assert validation["status"] == "FAIL"
         resolution = validation["portable_lineage_resolution"]
-        assert resolution["reason_code"] == "HISTORICAL_PORTABLE_CONFLICT"
+        assert resolution["reason_code"] == expected_unarchived_reason
+        assert drift_binding_id in resolution["detail"]
         assert resolution["production_effect"] == "none"
     assert {path: (path.stat().st_size, _sha256(path)) for path in artifacts} == before
 

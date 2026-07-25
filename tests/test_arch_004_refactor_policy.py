@@ -3190,7 +3190,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
     # section proves that its own supersession set remains covered while the
     # newest section is the exhaustive current-live authority.
     assert _wave12_superseded_live_source_paths() <= docs_gov_live_mismatches
-    assert docs_gov_live_mismatches <= _arch_005s4e_superseded_live_source_paths()
+    assert docs_gov_live_mismatches <= _arch_005s4d_s2_all_superseded_live_source_paths()
 
     sources = docs_gov["sources"]
     source_paths = [str(source["path"]) for source in sources]
@@ -3265,7 +3265,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     superseded = set(wave12["superseded_live_source_paths"])
     wave12_live_mismatches = _wave12_prior_active_source_mismatches()
     assert superseded <= wave12_live_mismatches
-    assert wave12_live_mismatches <= _arch_005s4e_superseded_live_source_paths()
+    assert wave12_live_mismatches <= _arch_005s4d_s2_all_superseded_live_source_paths()
     assert wave12["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE12-S2",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -3507,7 +3507,7 @@ def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> No
     superseded = set(wave13["superseded_live_source_paths"])
     wave13_live_mismatches = _wave13_prior_active_source_mismatches()
     assert superseded <= wave13_live_mismatches
-    assert wave13_live_mismatches <= _arch_005s4e_superseded_live_source_paths()
+    assert wave13_live_mismatches <= _arch_005s4d_s2_all_superseded_live_source_paths()
     assert wave13["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE13-GOV006-N1",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -3823,7 +3823,7 @@ def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
     superseded = set(wave14["superseded_live_source_paths"])
     wave14_live_mismatches = _wave14_s2_prior_active_source_mismatches()
     assert superseded <= wave14_live_mismatches
-    assert wave14_live_mismatches <= _arch_005s4e_superseded_live_source_paths()
+    assert wave14_live_mismatches <= _arch_005s4d_s2_all_superseded_live_source_paths()
     assert wave14["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE14-S2",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",
@@ -4122,7 +4122,7 @@ def test_ops_067_is_append_only_current_hash_authority() -> None:
     assert len(superseded) == 101
     ops_067_live_mismatches = _ops_067_prior_active_source_mismatches()
     assert _ops_068_superseded_live_source_paths() <= ops_067_live_mismatches
-    assert ops_067_live_mismatches <= _arch_005s4e_superseded_live_source_paths()
+    assert ops_067_live_mismatches <= _arch_005s4d_s2_all_superseded_live_source_paths()
     assert _ops_068_superseded_live_source_paths() - superseded == {
         WAVE14_S2_COMPLETED_TASK_SHADOW_PATH
     }
@@ -4301,7 +4301,7 @@ def test_ops_068_is_append_only_current_hash_authority() -> None:
     assert len(superseded) == 102
     ops_068_live_mismatches = _ops_068_prior_active_source_mismatches()
     assert superseded <= ops_068_live_mismatches
-    assert ops_068_live_mismatches <= _arch_005s4e_superseded_live_source_paths()
+    assert ops_068_live_mismatches <= _arch_005s4d_s2_all_superseded_live_source_paths()
     assert ops_068["supersession"] == {
         "superseded_by_phase": "OPS-068",
         "scope": "ALL_PRIOR_NON_HISTORICAL_SOURCE_RECORDS_FOR_EACH_LISTED_PATH",

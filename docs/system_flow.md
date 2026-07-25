@@ -944,6 +944,11 @@ ARCH-005S4D 在同一checkout的开发写入与operations入口之前增加path/
 Lease release还会重扫当前dirty paths；acquire后新增的未声明path会写入typed
 `CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED` causal event、先释放lease再令调用失败，防止scope drift被成功
 closeout掩盖或因失败留下stale active lease。
+收口审计统一调用
+`architecture_arch005_checkout_guard.py worktree-audit`；它对porcelain dirty inventory、
+unstaged `diff --check`与staged `diff --cached --check`三条Git调用集中注入policy登记的全部
+`:(exclude,literal)<exact-path>`，避免人工repository-wide Git命令漏排known-unrelated bytes。
+普通路径的whitespace错误仍typed BLOCKED；该入口只读且不写task、report、cache、production或broker。
 
 ARCH-005S4D S2在同一门禁上增加只读telemetry projection。`telemetry-build`发现checkout-scoped
 immutable intent与causal lease event，并可显式绑定supervised run、S4C handoff/reconciliation和人工

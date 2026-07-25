@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1626847
-    sha256: 6e84a92142b5680b2fde6ef68c1141bcb45708ad7e7bdf637d895ed3425b5050
+    byte_count: 1627125
+    sha256: a6d01d976b02c1d03a41b49c3ede7e7c25acbc6c3c469aba62c68a1ebb0fb03b
     row_count: 415
     final_newline: true
     task_id_order_sha256: 4ada8d16bff6479bc13dc24a32508ca68d09b24f9a6475f710ef4af58c441bbe
-    row_checksum_order_sha256: 05bbf349c875d1e493e594da71ae4975c34772fb5207d7f61a445aa771ac96f7
+    row_checksum_order_sha256: b549258628a48ff9db46e0953d12bc0a9ea8df22257f448a771c6f6831163c5b
     task_row_newline_counts:
       LF: 415
   - source: completed
@@ -132,7 +132,7 @@ inventory:
     VALIDATING: 268
   task_id_set_sha256: 3fb0120d2dbe0697dc36a479d7bf128065258d1cf099138b9c114e8518118465
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 7938718f858c87ddf9acc87b76a192eef719787e35e5656f37562b133ea7f965
+  owner_set_sha256: 387992d4bd9411dddc3aa62d8e316bb84b146beb04932d64e070a779eec242e3
   docs_link_set_sha256: e2590c880ebf92e52f2ca35082b57560854cd67420de9f9c3e5ec63744a87218
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -2980,7 +2980,7 @@ inventory:
   - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     source: active
     line_number: 1955
-    row_sha256: f664a9f94af8a509e0b467bcdd929cf558e290495c63c0fa6e3e1e889ba05a9c
+    row_sha256: 89eb58a98cb0c0674ab81108d4a8da48e15ab827b7b6d8f04a6f0962785fb3fe
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7308,4 +7308,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 58b63af6a98461641b9bd65d382e2352b7a0f9a4e1d26ca24c3d1a16c971abac
+baseline_checksum: 3ffa4109647685af6c11e4e3521413794c345e1edeabbe0aa1f1fc1ef6c47a04

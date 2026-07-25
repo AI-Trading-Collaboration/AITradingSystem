@@ -38,6 +38,7 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 CHECKOUT_GUARD_POLICY_SCHEMA_VERSION = "arch_005_s4d_checkout_guard_policy.v2"
 CHECKOUT_INTENT_SCHEMA_VERSION = "checkout_operation_intent.v1"
 CHECKOUT_DECISION_SCHEMA_VERSION = "checkout_guard_decision.v1"
+CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION = "checkout_worktree_audit.v1"
 DEFAULT_CHECKOUT_GUARD_POLICY_PATH = (
     PROJECT_ROOT / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
 )
@@ -197,6 +198,25 @@ class CheckoutGuardDecision:
         }
 
 
+@dataclass(frozen=True)
+class CheckoutWorktreeAudit:
+    dirty_paths: tuple[str, ...]
+    known_unrelated_exclusions: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION,
+            "status": "PASS",
+            "dirty_paths": list(self.dirty_paths),
+            "known_unrelated_exclusions": list(self.known_unrelated_exclusions),
+            "unstaged_diff_check": "PASS",
+            "staged_diff_check": "PASS",
+            "task_governance_status_mutated": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        }
+
+
 class CheckoutLeaseHandle:
     def __init__(
         self,
@@ -278,6 +298,29 @@ class CheckoutLeaseGuard:
 
     def replay(self) -> LeaseReplay:
         return self.store.replay()
+
+    def audit_worktree(self) -> CheckoutWorktreeAudit:
+        exclusions = tuple(
+            row.path for row in self.policy.known_unrelated_exclusions
+        )
+        dirty_paths = collect_checkout_dirty_paths(
+            self.project_root,
+            exclusions=exclusions,
+        )
+        _run_git_diff_check(
+            self.project_root,
+            exclusions=exclusions,
+            cached=False,
+        )
+        _run_git_diff_check(
+            self.project_root,
+            exclusions=exclusions,
+            cached=True,
+        )
+        return CheckoutWorktreeAudit(
+            dirty_paths=dirty_paths,
+            known_unrelated_exclusions=exclusions,
+        )
 
     def release(
         self,
@@ -907,6 +950,42 @@ def collect_checkout_dirty_paths(
             )
             index += 1
     return tuple(sorted(set(paths), key=lambda value: value.casefold()))
+
+
+def _run_git_diff_check(
+    project_root: Path,
+    *,
+    exclusions: Sequence[str],
+    cached: bool,
+) -> None:
+    root = project_root.resolve()
+    args = ["diff"]
+    if cached:
+        args.append("--cached")
+    args.extend(("--check", "--", "."))
+    args.extend(f":(exclude,literal){path}" for path in exclusions)
+    try:
+        result = subprocess.run(
+            ["git", "-c", "core.quotepath=false", *args],
+            cwd=root,
+            check=False,
+            capture_output=True,
+        )
+    except OSError as exc:
+        raise CheckoutGuardError(
+            "CHECKOUT_GIT_DIFF_CHECK_EXECUTION",
+            str(exc),
+        ) from exc
+    if result.returncode != 0:
+        output = (result.stdout + result.stderr).decode(
+            "utf-8",
+            errors="replace",
+        ).strip()
+        scope = "staged" if cached else "unstaged"
+        raise CheckoutGuardError(
+            "CHECKOUT_GIT_DIFF_CHECK_FAILED",
+            f"{scope}:{output}",
+        )
 
 
 def _checkout_lease_policy(

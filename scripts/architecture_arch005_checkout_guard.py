@@ -101,9 +101,15 @@ def main() -> int:
     rollup_validate.add_argument("--project-root", type=Path, default=PROJECT_ROOT)
     rollup_validate.add_argument("--artifact", type=Path, required=True)
 
+    worktree_audit = subparsers.add_parser("worktree-audit")
+    worktree_audit.add_argument("--project-root", type=Path, default=PROJECT_ROOT)
+
     args = parser.parse_args()
     try:
-        if args.command == "telemetry-build":
+        if args.command == "worktree-audit":
+            audit_guard = CheckoutLeaseGuard(project_root=args.project_root)
+            payload = audit_guard.audit_worktree().to_dict()
+        elif args.command == "telemetry-build":
             payload = build_checkout_telemetry_snapshot(
                 project_root=args.project_root,
                 runtime_root=args.runtime_root,

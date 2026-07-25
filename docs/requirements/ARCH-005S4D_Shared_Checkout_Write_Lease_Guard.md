@@ -220,5 +220,70 @@ S4C收口后，候选`b8d77482883bd0e04e7c9a1d41e7a3329ea6e370`已fast-forward�
 临时worktree在tracked/untracked=0、active lease=0、无依赖进程且非证据内容仅为可再生pytest/
 mypy/ruff/pyc与测试cache后，以exact path
 `D:\Work\AITradingSystem_arch005s4d_s2_telemetry_20260726`删除并prune，释放253,037,884 bytes。
-实现可由main commit与远端分支恢复，运行证据保留在main canonical outputs；已知用户研究文档全程
-只用exact exclude pathspec排除，未读取、hash、复制或修改。
+实现可由main commit与远端分支恢复，运行证据保留在main canonical outputs。
+
+### S2 post-close safe worktree audit hardening
+
+上述清理记录写回前的人工收口检查暴露了一个新的命令边界缺口：一次直接
+`git diff --check`漏带policy登记的exact exclude pathspec，Git因此检查了已知无关研究文档并只输出
+line-ending warning；没有输出正文、计算内容hash、复制、暂存或修改该文件，但“Git未打开其bytes”
+这一严格合同已被破坏，不能继续记为全程zero-read。
+
+直接修复范围如下：
+
+1. 在既有checkout guard增加`checkout_worktree_audit.v1`只读API/CLI，同时执行porcelain dirty
+   inventory、unstaged diff check与staged diff check；
+2. 三个Git调用必须统一追加每个policy exclusion的
+   `:(exclude,literal)<exact-path>`，不得依赖调用者手工拼pathspec；
+3. 项目工程规则要求存在known-unrelated exclusion时，收口审计必须使用该入口，禁止直接运行未带
+   exact exclusion的repository-wide `git status` / `git diff` / `git diff --check`；
+4. regression必须证明excluded dirty trailing-whitespace文件不会进入dirty inventory或diff check，
+   而普通路径的whitespace错误仍typed BLOCKED；命令参数测试必须验证每次Git调用都携带exact
+   literal exclusion；
+5. 本硬化不读取market cache、不改变task source、调度、策略、报告结论、production或broker。
+
+该补强是对手工Git旁路的直接治理，不声称可以拦截所有任意外部进程；其可验证边界是：项目规定的
+收口入口集中生成安全pathspec，Codex/工程流程不再自行拼接仓库级审计命令。
+
+硬化实现已完成：`CheckoutLeaseGuard.audit_worktree()`与CLI `worktree-audit`固定输出
+`checkout_worktree_audit.v1`，先收集exact-excluded dirty inventory，再分别执行unstaged与staged
+whitespace check；任一普通路径错误均以`CHECKOUT_GIT_DIFF_CHECK_FAILED`阻断。集成测试使用一份
+dirty且含trailing whitespace的known-unrelated文件证明三条Git命令均排除它，同时证明普通路径在
+unstaged和staged两种状态都会失败；参数级回归验证三次调用均携带完整
+`:(exclude,literal)`。focused guard=`16 passed`，compatibility/deprecation/guard/telemetry
+combined=`70 passed`，safe `worktree-audit`对当前12个归属dirty path返回PASS。事故事实保留，
+不回写为“从未读取”；本轮没有再次直接执行裸repository-wide Git audit。
+
+### Post-close Full 的 portable-lineage 环境合同修复
+
+safe audit硬化后的首轮正式Full在
+`outputs/validation_runtime/full_20260725T163954Z/test_runtime_summary.json`保留为
+`1 failed / 7267 passed / 3 skipped / 643 warnings`。唯一失败为
+`test_recovered_r0_r1_r2_bundle_fails_closed_after_reviewed_source_drift`：测试固定要求
+`HISTORICAL_PORTABLE_CONFLICT`，但冻结sidecar指向的历史临时目录
+`D:\Work\AITradingSystem-eb0-candidate`已按临时工作区生命周期被移除，因此resolver在同一份
+reviewed source drift上正确返回`PORTABLE_SOURCE_TAMPERED`。单节点并行复验得到同一结果，确认
+这是测试的外部目录存在性假设，而不是并发flaky或lineage放行。
+
+直接修复只调整该回归的oracle：先从冻结sidecar读取首个适用source binding，再按历史路径是否
+仍存在精确断言首个fail-closed原因。若历史bytes存在且与portable bytes冲突，必须得到
+`HISTORICAL_PORTABLE_CONFLICT`；若历史路径已完成治理性清理，必须得到
+`PORTABLE_SOURCE_TAMPERED`并绑定同一个source id。两种环境都必须保持四个consumer为`FAIL`、
+`production_effect=none`，且immutable artifacts byte-identical。修复不得恢复或伪造临时目录，
+不得放宽为任意错误码，也不得改变production resolver语义。验收要求focused测试、失败父运行绑定的
+`failure_fix_rerun` Full、post-Full architecture/contract及安全worktree audit全部PASS。
+
+父失败证据绑定的`failure_fix_rerun` Full已完成：
+`outputs/validation_runtime/full_20260725T170729Z/test_runtime_summary.json`记录
+`7268 passed / 3 skipped / 643 warnings / 1123.35s`与`status=PASS`，父运行精确绑定
+`full_20260725T163954Z`。测试修复没有改变resolver或任何生产模块；最终状态仍需以更新后的
+task registry、DevEx manifests、compatibility source hashes及post-Full architecture/contract
+重新验证后关闭。
+
+post-Full formal收口已完成：architecture-fitness=`646 passed`，artifact=
+`outputs/validation_runtime/architecture-fitness_20260725T172804Z/test_runtime_summary.json`；
+contract-validation=`275 passed`，artifact=
+`outputs/validation_runtime/contract-validation_20260725T173037Z/test_runtime_summary.json`。
+safe `worktree-audit`对17个归属dirty paths返回PASS，并继续以exact literal pathspec排除已知无关
+研究文档。任务恢复`BASELINE_DONE`；这只完成S4D S2与post-close hardening，不构成S5、task source
+cutover、production或broker授权。

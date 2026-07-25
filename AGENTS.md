@@ -212,6 +212,25 @@ Whenever a task moves forward, becomes blocked, is superseded, or is completed,
 update the register in the same change as the code or documentation change that
 caused the status transition.
 
+## Known-Unrelated Worktree Audit Discipline
+
+When `config/architecture/arch_005_s4d_checkout_guard.yaml` registers one or
+more `known_unrelated_exclusions`, repository-wide closeout inspection must use:
+
+`python scripts/architecture_arch005_checkout_guard.py worktree-audit`
+
+Do not run a bare repository-wide `git status`, `git diff`, or
+`git diff --check` in that checkout. The governed audit command applies every
+registered exclusion as an exact literal pathspec to dirty inventory, unstaged
+diff checking, and staged diff checking. It must not open, hash, copy, stage, or
+modify excluded file contents.
+
+Direct Git inspection is allowed only when every invocation includes the same
+complete exact exclusion set, or when it targets an explicit allowlist of
+task-owned paths that cannot include an excluded path. If an exclusion is
+accidentally omitted, record the inspection as an audit incident even when no
+file content was printed and no modification occurred.
+
 ## Temporary Workspace Lifecycle Discipline
 
 Temporary Git worktrees, local clones, validation snapshots, external cache

@@ -11,8 +11,10 @@ import pytest
 from typer.testing import CliRunner
 
 import ai_trading_system.cli_commands.ops as ops_cli
+import ai_trading_system.platform.architecture.checkout_guard as checkout_guard_module
 from ai_trading_system.cli import app
 from ai_trading_system.platform.architecture.checkout_guard import (
+    CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION,
     DEFAULT_CHECKOUT_GUARD_POLICY_PATH,
     CheckoutGuardError,
     CheckoutLeaseGuard,
@@ -308,6 +310,77 @@ def test_declared_dirty_mutation_is_attributed_and_unrelated_exact_path_is_exclu
     assert set(exclusion) == {"path", "rationale", "owner_ref"}
     assert "sha256" not in exclusion
     handle.release(outcome="completed", at=NOW + timedelta(seconds=1))
+
+
+def test_worktree_audit_excludes_known_unrelated_from_all_git_checks(
+    git_checkout: Path,
+) -> None:
+    unrelated = git_checkout / "docs/research/growth_tilt_owner_diagnosis_pack.md"
+    unrelated.write_text("owner bytes with trailing whitespace   \n", encoding="utf-8")
+    guard = _guard(git_checkout)
+
+    audit = guard.audit_worktree().to_dict()
+
+    assert audit == {
+        "schema_version": CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION,
+        "status": "PASS",
+        "dirty_paths": [],
+        "known_unrelated_exclusions": [
+            "docs/research/growth_tilt_owner_diagnosis_pack.md",
+        ],
+        "unstaged_diff_check": "PASS",
+        "staged_diff_check": "PASS",
+        "task_governance_status_mutated": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    (git_checkout / "src/a.py").write_text("A = 2   \n", encoding="utf-8")
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_GIT_DIFF_CHECK_FAILED.*unstaged.*trailing whitespace",
+    ):
+        guard.audit_worktree()
+
+    (git_checkout / "src/a.py").write_text("A = 3   \n", encoding="utf-8")
+    _git(git_checkout, "add", "src/a.py")
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_GIT_DIFF_CHECK_FAILED.*staged.*trailing whitespace",
+    ):
+        guard.audit_worktree()
+
+
+def test_worktree_audit_injects_exact_literal_exclusion_into_every_git_call(
+    git_checkout: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    guard = _guard(git_checkout)
+    calls: list[list[str]] = []
+
+    def fake_run(args: list[str], **_: object) -> subprocess.CompletedProcess[bytes]:
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(checkout_guard_module.subprocess, "run", fake_run)
+
+    guard.audit_worktree()
+
+    exclusion = (
+        ":(exclude,literal)"
+        "docs/research/growth_tilt_owner_diagnosis_pack.md"
+    )
+    assert len(calls) == 3
+    assert all(call[-1] == exclusion for call in calls)
+    assert calls[0][3:8] == [
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+        "--ignore-submodules=none",
+    ]
+    assert calls[1][3:6] == ["diff", "--check", "--"]
+    assert calls[2][3:7] == ["diff", "--cached", "--check", "--"]
 
 
 def test_release_scope_drift_fails_after_safely_releasing_lease(

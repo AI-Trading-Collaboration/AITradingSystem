@@ -7439,7 +7439,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: c2ab530b547a1e0c3b5c63fb48cedd451d62c75a4f61611aec9905db260d3935
+  sha256: 355f514b231ba96c1ecac17e6887801cceee2f1fd90d6dc36612f1f23d4ea6a7
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7967,7 +7967,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s4d_checkout_guard
   path: tests/test_arch_005_s4d_checkout_guard.py
-  sha256: a7a253f47454f342e4d3f76c49e1b1bfcfc54a031f644c26e056d0324b5322de
+  sha256: 4b4541be36b26f596873d56260e6342c406e25b745a3c19538a005d29deba304
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -12053,7 +12053,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_legacy_research_artifact_portable_lineage
   path: tests/test_legacy_research_artifact_portable_lineage.py
-  sha256: 82df7752291ad17b20cdd7e87e44e81c6c8f772a30f0d0980b6700abed5208b1
+  sha256: 4df7060a36f97f0d85fca025be47362a41d27946c56371d0a60758f14209bf98
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
