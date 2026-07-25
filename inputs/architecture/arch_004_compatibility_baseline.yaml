@@ -24696,6 +24696,17 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     tracked_paths_restored: 343
     untracked_paths_removed: 7
     automatic_cleanup_allowed: false
+  main_integration:
+    mode: FAST_FORWARD_ONLY
+    candidate_commit: a318b9e1120215ce400870aa3dfab5d36e47a2a3
+    main_commit: a318b9e1120215ce400870aa3dfab5d36e47a2a3
+    origin_main_commit: a318b9e1120215ce400870aa3dfab5d36e47a2a3
+    candidate_behind_count: 0
+    candidate_ahead_count: 12
+    active_lease_count: 0
+    known_unrelated_path_untouched: true
+    push_status: PASS
+    s5_cutover_authorized: false
   generated_state:
     active_task_count: 415
     completed_task_count: 489
@@ -25043,7 +25054,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: fb511020adb9941422508913fea598181c7179007a09ac79873c2a4b805e887a
     hash_normalization: git_eol_lf
   - path: docs/architecture/dual_lane_development_operating_model.md
-    sha256: 523bab9a38a8176c731fdd2cdb5cf2dc3948e4e19fd31a33e1ce99a5622ef463
+    sha256: c4c862376fd79f312a66564450205d3eb8d70d51095975f18b003e17538dd7ef
     hash_normalization: git_eol_lf
   - path: docs/artifact_catalog.md
     sha256: 8dfd1cb3b4375dbc34f07594cf339f13c786ec811cd92cab98a01398b3667573
@@ -25076,13 +25087,13 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 68a6615d6dc23ce7d34dd2667fa9a4fe2f1e53849369f0db57318e090cb14ae5
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
-    sha256: 3e3a4fb8d1c32cbb453ed4d0808224710cbd5843b243f724e789c2b51c69f38c
+    sha256: aa00a0fa899a4af6a8a80af02dad2eed17a36df1a4775a04e0f7bbac24c70ec4
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
-    sha256: 65aa8fa098e07cfd5b25d42916b0da61c6c6c03008ec9dbe7af5b789609acd20
+    sha256: 65c9af85439d01980b030ecdb263265277207565301e34bca456a5e281d63280
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
-    sha256: 717bebdaba352e31740c1dd9fa513bfddeffa7191dbed09efe8fe8a743a77236
+    sha256: 7f1653bd9d1df26198f24ee8ba05adb4836d86aec4c9afc9a24ae094eb6a0b32
     hash_normalization: git_eol_lf
   - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
     sha256: 64c46e23efa45f5049d9084a28b4513a1b054525d5e443e9696e2c81ae50b555
@@ -25127,7 +25138,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: f9cf8b638cecf0769353fa249d2bb45a660bbf567afd812eada9d1d2dba0c805
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 109deccb35d0116e7e3e2c2c5cc5d47c0acea626236eac160b4bb588c185e0e0
+    sha256: dd9a597d7fd3835aedf35b25ef801c808ba619f9bc4bc9d89cffa6d416e22c91
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: d824f19f1b469a99c0612cb7cf5ba083f5f245d05735a63aeac2688ae0c549a2
@@ -25157,10 +25168,10 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 4533b737b25f89a76a742432318e2ece9c1726cb50de471965677c7dd93ea02e
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: b0c8f87d051c486d83ba515a66c36782e27f2dd188924a584c4e2f8188d988e5
+    sha256: 21863b3839aa13bc9e5a0a6b90ec37d8b5f3b49c060742309408e1ccf4266e3b
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 131fdc5e79758fb38fba73d0f9104887b29088b118eb6f7947d821b596f1564c
+    sha256: a652fac316b3821b7574c31150caec059763bb8f309ddb396c9ebfd0efc4e91a
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_decision_manifest.json
     sha256: 9269df2bfa35ca8e88f7b44d80a0cbb9abb64fc9f79119b3a17e8b0bfdd6cc7d
@@ -25175,7 +25186,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 39cbfba6e2c62db55487c051067e14cc17d003c3a39887743bdd17ee910a9f15
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-    sha256: 17228a73ff8aec8add8cc953420daa39a6145ea208231f9b04b52a4a9d2aa34b
+    sha256: e276936f1b206b3c3af3e0846e6ef63ef20c4289503e066d17a9b6cae4126f34
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
     sha256: 01169c8e8ae314e0e7fb6be81deb53e41e20a01638bdbaceb2d5fd2fb16870af
@@ -25193,7 +25204,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 5120f405e010e62ba086febf0a235f32c91c23866d99be42276259c47b6ca83f
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
-    sha256: 47a27d6550b1e7bcb804db4e82ce686e040d42bc2e48514f74592ecd0296b310
+    sha256: 454306412c74798fd934c48f83b0a503f7ff48d39a428888dbdfd77394299111
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
     sha256: fef48d9e6b017751b4c4962c179873335cf7342195266a3eec9b654b05edb407
@@ -25466,6 +25477,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     engineering_status: FORMAL_VALIDATION_PASS
     focused: PASS_20
     focused_combined: PASS_86_SKIPPED_1
+    focused_s4c_final: PASS_56
     architecture_fitness: PASS_634
     contract_validation: PASS_275
     integration: PASS_995
@@ -25474,6 +25486,8 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     full: PASS_7255_SKIPPED_4
     full_failure_fix_rerun_parent: outputs/validation_runtime/full_20260725T131315Z/test_runtime_summary.json
     full_runtime_summary: outputs/validation_runtime/full_20260725T133339Z/test_runtime_summary.json
+    full_s4c_natural_integration_boundary: PASS_7255_SKIPPED_4_WARNINGS_642
+    full_s4c_runtime_summary: outputs/validation_runtime/full_20260725T142638Z/test_runtime_summary.json
   safety:
     automatic_cleanup_allowed: false
     automatic_restore_allowed: false

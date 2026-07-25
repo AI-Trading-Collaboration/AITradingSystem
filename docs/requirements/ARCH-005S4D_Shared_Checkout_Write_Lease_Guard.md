@@ -92,6 +92,18 @@ Known-unrelated exclusion仅由policy登记exact
 - 输出等待时间、冲突原因、lease持有时间、误阻断与无归属写入 telemetry；
 - 只有证据显示 task-register source-of-truth成为主要瓶颈时，才另行评估ARCH-005 S5。
 
+2026-07-25受控准备范围已冻结，但尚未获得实现授权：
+
+- 只允许从既有guard、lease event、handoff与reconciliation事实做read-only projection，不新增
+  writer、lock authority或自动状态迁移；
+- schema至少记录workspace/task/operation identity、wait duration、typed conflict reason、
+  lease held duration、expiry/replay结果、unattributed count，以及经人工判定的false-block标记；
+- 原始事件必须保持immutable并可按checksum重放；汇总不得回写task register或改变调度优先级；
+- 先观察至少两个真实、独立的受控集成批次，再判断瓶颈是否来自task source、checkout lease、
+  validation runtime或外部依赖；
+- 在上述证据和独立owner decision形成前，`task_source_cutover=false`、S5未授权，
+  production/broker边界不变。
+
 ## 验收条件
 
 - 两个 writer 请求重叠shared path时恰好一个成功，另一个在写入前typed BLOCKED。
@@ -139,5 +151,6 @@ task source cutover、production与broker仍保持未授权。
 
 2026-07-25：Wave15期间发现的known-unrelated扫描越界与Windows仲裁owner瞬时读取竞态均已直接
 修复；并发负例、architecture=`615 passed`及Wave15 failure-fix Full=`7180 passed / 3 skipped /
-643 warnings`通过。任务恢复`BASELINE_DONE_NARROW_S0_S1`；S2 telemetry、S5、task source
+643 warnings`通过。任务恢复`BASELINE_DONE_NARROW_S0_S1`。同日S4E已完成S4C main集成，
+S2 telemetry的只读合同准备范围如上冻结，但实现仍需独立owner decision；S5、task source
 cutover、production与broker仍未授权。

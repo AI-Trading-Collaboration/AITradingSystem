@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: fd7f295766b8531c731684a78caa5cc2ebf50c2c1caee46c699006ac3a40b4b3
+baseline_checksum: 8d69f2eb34ada7c75ec2fc89626b2b44419fd7662a68e8345f3310f3028b0400
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 904
 fragment_count: 904
@@ -99,12 +99,12 @@ fragments:
   fragment_checksum: 5d6f63775eb30e44c283f9066c15d941e99e6734f699092ec5eb2453c71c121c
 - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-  file_sha256: 17228a73ff8aec8add8cc953420daa39a6145ea208231f9b04b52a4a9d2aa34b
-  fragment_checksum: 2e450bd490e6cb39c54c4be07a9b281b510d5349ecf2aa8d3edb0396c6cc7375
+  file_sha256: e276936f1b206b3c3af3e0846e6ef63ef20c4289503e066d17a9b6cae4126f34
+  fragment_checksum: ce59f9f53aa57c5cb676766396cb16078bc3a22754975c62c34545357a8ef544
 - task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
   path: registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
-  file_sha256: 47a27d6550b1e7bcb804db4e82ce686e040d42bc2e48514f74592ecd0296b310
-  fragment_checksum: 080c786f60e28211899c38a21593df320263368b6479717da218f614d3a492df
+  file_sha256: 454306412c74798fd934c48f83b0a503f7ff48d39a428888dbdfd77394299111
+  fragment_checksum: 1cd04339b02d4b64e1c1d0993dc191e6c0361e1856d7dd7e145f7b6b7bf12c21
 - task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   path: registry/development_tasks_shadow/active/7f/7fd87f6ffd6be4e77b70a90e91dfd6796a0c09171bb872b4284f2eacecb3b8a6.yaml
   file_sha256: 2f1349c1cddfbb1a9c648a3c141c928d275531538ef218b274840ad1d34428c9
@@ -3641,8 +3641,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 109deccb35d0116e7e3e2c2c5cc5d47c0acea626236eac160b4bb588c185e0e0
-  rendered_sha256: 109deccb35d0116e7e3e2c2c5cc5d47c0acea626236eac160b4bb588c185e0e0
+  source_sha256: dd9a597d7fd3835aedf35b25ef801c808ba619f9bc4bc9d89cffa6d416e22c91
+  rendered_sha256: dd9a597d7fd3835aedf35b25ef801c808ba619f9bc4bc9d89cffa6d416e22c91
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3664,4 +3664,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 7016f30f6f2b112f471d1369c579b9e74c9c5f9126a0410866752ae6fdc0625c
+index_checksum: af4a58a33a457f7b55bbc098b21d29132cc5137194bc9cc0b2007a1b988887d9

@@ -5,7 +5,7 @@
 - task id：`ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION`
 - parent：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`IN_PROGRESS`
+- status：`BASELINE_DONE`
 - owner：architecture control-plane owner / integration coordinator
 - owner decision：
   `owner_decision:ARCH-005S4E:2026-07-25:approve_checkout_handoff_reconciliation_v1`
@@ -128,7 +128,8 @@ OPS-070 与本任务 required validation 绑定最终 tree。任何自动清理�
 
 - owning task：`ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION`
 - absolute path：`D:\Work\AITradingSystem_ops070_livefix_20260725`
-- branch：`codex/arch-005-s4e-checkout-reconciliation`
+- final branch：`codex/arch-005-s4e-current-main-reconciliation`
+- implementation branch：`codex/arch-005-s4e-checkout-reconciliation`
 - base：`ops070-closeout@925315059b88ee781e9dae7960d232714a610566`
 - purpose：在已推送的 OPS-070 clean baseline 上实现 S4E，不继续写 dirty main。
 - exit condition：required validation PASS、归属文件提交并普通 push；确认运行证据已进入 canonical
@@ -182,6 +183,14 @@ OPS-070 与本任务 required validation 绑定最终 tree。任何自动清理�
   `outputs/validation_runtime/full_20260725T133339Z/test_runtime_summary.json`；首次失败摘要：
   `outputs/validation_runtime/full_20260725T131315Z/test_runtime_summary.json`。S0/S1 required
   validation全部通过，进入S2 current-main recovery audit；该状态不授权自动restore/delete。
+- 2026-07-25：S4C在最终候选`a318b9e1120215ce400870aa3dfab5d36e47a2a3`
+  上完成focused/architecture/contract/integration/reproducibility=`56/634/275/995/23 passed`，
+  natural integration boundary Full=`7255 passed / 4 skipped / 642 warnings`，运行摘要为
+  `outputs/validation_runtime/full_20260725T142638Z/test_runtime_summary.json`。预检确认
+  active lease=0、候选相对旧`origin/main`为behind=0/ahead=12、known-unrelated exact path未被
+  候选触达；随后仅以`git merge --ff-only`集成并普通push，最终
+  `main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。该集成不授权
+  automatic cleanup、S5、task source cutover、production或broker。
 - 2026-07-25：owner 同意先修复 dirty-main/迁移后残留问题。审计确认 351 个状态项中，
   319 个为 task registry 生成物、5 个为 architecture 生成物、23 个为 OPS-070 源文件、
   2 个为 DEVX-001 unique 文件、1 个为 mixed task register、1 个为 CRLF stat-only。

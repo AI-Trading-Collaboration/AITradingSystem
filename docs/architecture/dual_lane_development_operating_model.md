@@ -512,7 +512,10 @@ Smoothed链列为下一工程候选，同时禁止用本次总wall宣称全局�
   `checkout_reconciliation_report.v1`；只有exact target/history-proven residue可进入
   coordinator cleanup allowlist。`main`受保护为coordinator-only shared mutation，domain writer
   不得直接写入；unique/mixed/unattributed保留并阻断，generated views只在最终canonical source
-  上重建。该机制不自动restore/delete/commit/merge/push，也不是S5授权。
+  上重建。该机制不自动restore/delete/commit/merge/push，也不是S5授权。S4E当前已通过S4C
+  fast-forward进入`main@a318b9e1120215ce400870aa3dfab5d36e47a2a3`，`origin/main`与候选
+  完全一致；最终natural integration boundary Full=`7255 passed / 4 skipped / 642 warnings`。
+  后续只允许先形成S4D S2只读telemetry证据，再决定是否提出S5授权。
 
 ### Wave 11：G2.5 readiness + Data Foundation D0A + GOV-006 N0（formal PASS）
 

@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1626060
-    sha256: 109deccb35d0116e7e3e2c2c5cc5d47c0acea626236eac160b4bb588c185e0e0
+    byte_count: 1626132
+    sha256: dd9a597d7fd3835aedf35b25ef801c808ba619f9bc4bc9d89cffa6d416e22c91
     row_count: 415
     final_newline: true
     task_id_order_sha256: 4ada8d16bff6479bc13dc24a32508ca68d09b24f9a6475f710ef4af58c441bbe
-    row_checksum_order_sha256: 8a5583efdef37cbc3d834375e2234fc2f298df2764210377d90603528e83c331
+    row_checksum_order_sha256: cb5b23ba979954d734c2a346d6bac6168ed51b9ede803f53a4cba71d58e0890e
     task_row_newline_counts:
       LF: 415
   - source: completed
@@ -132,7 +132,7 @@ inventory:
     VALIDATING: 268
   task_id_set_sha256: 3fb0120d2dbe0697dc36a479d7bf128065258d1cf099138b9c114e8518118465
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 3e37f00c8589b60e5e61cf113a1486d02a4fd1e5d4e3aa76bf88061bd616a000
+  owner_set_sha256: 567282e3e74ff6143a06a86e9b383bcf7b3a26ab89676f8d442697b7070fd540
   docs_link_set_sha256: e2590c880ebf92e52f2ca35082b57560854cd67420de9f9c3e5ec63744a87218
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -2980,14 +2980,14 @@ inventory:
   - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     source: active
     line_number: 1955
-    row_sha256: 5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
+    row_sha256: b308462e2304c2c6e1f8ae06367e000b59462afe800821100a62391136523801
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
     source: active
     line_number: 1956
-    row_sha256: c977cfd65da1bb25d1ab961cd64fa81ffc1768b845bf56331de05c633a78ec1f
+    row_sha256: de4e58388a3b863e46827d35cf970e537ac91ed52e2f95c1724f09c628b72085
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7308,4 +7308,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: fd7f295766b8531c731684a78caa5cc2ebf50c2c1caee46c699006ac3a40b4b3
+baseline_checksum: 8d69f2eb34ada7c75ec2fc89626b2b44419fd7662a68e8345f3310f3028b0400

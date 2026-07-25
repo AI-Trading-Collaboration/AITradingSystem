@@ -11,15 +11,15 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
+  next_owner: architecture control-plane owner：观察后续S4D S2 telemetry；known-unrelated研究文档继续由其owner处理
   requirement_refs:
   - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
-    formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
-    protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0-S2、DEVX
+    unique迁移、迁移前exact blob preservation、current-main受控收口及S4C fast-forward integration均已完成；S4D
+    protected-main guard和handoff/reconciliation退出事务已进入main。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
@@ -32,43 +32,40 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1956
-    row_sha256: c977cfd65da1bb25d1ab961cd64fa81ffc1768b845bf56331de05c633a78ec1f
+    row_sha256: de4e58388a3b863e46827d35cf970e537ac91ed52e2f95c1724f09c628b72085
     cell_count: 8
     all_cells:
     - ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
     - Architecture / checkout handoff and source reconciliation
     - P0
     - BASELINE_DONE
-    - project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
-    - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
-      formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
-      protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。
+    - architecture control-plane owner：观察后续S4D S2 telemetry；known-unrelated研究文档继续由其owner处理
+    - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0-S2、DEVX
+      unique迁移、迁移前exact blob preservation、current-main受控收口及S4C fast-forward integration均已完成；S4D
+      protected-main guard和handoff/reconciliation退出事务已进入main。
     - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
       PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated
       rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。
-    - 2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
-      checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
-      known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
-      exact path，不再有本任务归属 residue。
+    - 2026-07-25：S4C候选`a318b9e11`通过focused/architecture/contract/integration/reproducibility=`56/634/275/995/23
+      passed`及natural-boundary Full=`7255 passed / 4 skipped / 642 warnings`；`main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。known-unrelated
+      exact path全程未读未改；S5未授权。
     raw_line: '|ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION|Architecture
-      / checkout handoff and source reconciliation|P0|BASELINE_DONE|project owner
-      + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理|详见
-      `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
-      formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
-      protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。|protected-main
-      mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
+      / checkout handoff and source reconciliation|P0|BASELINE_DONE|architecture control-plane
+      owner：观察后续S4D S2 telemetry；known-unrelated研究文档继续由其owner处理|详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0-S2、DEVX
+      unique迁移、迁移前exact blob preservation、current-main受控收口及S4C fast-forward integration均已完成；S4D
+      protected-main guard和handoff/reconciliation退出事务已进入main。|protected-main mutation
+      guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
       PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated
-      rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。|2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
-      checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
-      known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
-      exact path，不再有本任务归属 residue。|'
+      rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。|2026-07-25：S4C候选`a318b9e11`通过focused/architecture/contract/integration/reproducibility=`56/634/275/995/23
+      passed`及natural-boundary Full=`7255 passed / 4 skipped / 642 warnings`；`main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。known-unrelated
+      exact path全程未读未改；S5未授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-c977cfd65da1bb25d1ab961c
+  event_id: legacy-import-de4e58388a3b863e46827d35
   task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -81,14 +78,13 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
-    notes: 2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
-      checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
-      known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
-      exact path，不再有本任务归属 residue。
+    next_owner: architecture control-plane owner：观察后续S4D S2 telemetry；known-unrelated研究文档继续由其owner处理
+    notes: 2026-07-25：S4C候选`a318b9e11`通过focused/architecture/contract/integration/reproducibility=`56/634/275/995/23
+      passed`及natural-boundary Full=`7255 passed / 4 skipped / 642 warnings`；`main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。known-unrelated
+      exact path全程未读未改；S5未授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:c977cfd65da1bb25d1ab961cd64fa81ffc1768b845bf56331de05c633a78ec1f
+  - sha256:de4e58388a3b863e46827d35cf970e537ac91ed52e2f95c1724f09c628b72085
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -96,21 +92,20 @@ projection:
   - Architecture / checkout handoff and source reconciliation
   - P0
   - BASELINE_DONE
-  - project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
-  - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
-    formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
-    protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。
+  - architecture control-plane owner：观察后续S4D S2 telemetry；known-unrelated研究文档继续由其owner处理
+  - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0-S2、DEVX
+    unique迁移、迁移前exact blob preservation、current-main受控收口及S4C fast-forward integration均已完成；S4D
+    protected-main guard和handoff/reconciliation退出事务已进入main。
   - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
     zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
     PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated
     rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。
-  - 2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
-    checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
-    known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
-    exact path，不再有本任务归属 residue。
+  - 2026-07-25：S4C候选`a318b9e11`通过focused/architecture/contract/integration/reproducibility=`56/634/275/995/23
+    passed`及natural-boundary Full=`7255 passed / 4 skipped / 642 warnings`；`main=origin/main=candidate=a318b9e1120215ce400870aa3dfab5d36e47a2a3`。known-unrelated
+    exact path全程未读未改；S5未授权。
   docs_links:
   - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
   terminal: false
-  raw_row_sha256: c977cfd65da1bb25d1ab961cd64fa81ffc1768b845bf56331de05c633a78ec1f
+  raw_row_sha256: de4e58388a3b863e46827d35cf970e537ac91ed52e2f95c1724f09c628b72085
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 080c786f60e28211899c38a21593df320263368b6479717da218f614d3a492df
+fragment_checksum: 1cd04339b02d4b64e1c1d0993dc191e6c0361e1856d7dd7e145f7b6b7bf12c21

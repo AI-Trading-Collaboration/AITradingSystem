@@ -11,48 +11,50 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture control-plane owner；S2 telemetry与S5仍需另行授权
+  next_owner: architecture control-plane owner：S2只读telemetry等待独立owner decision；project
+    owner仅在真实证据后评估S5
   requirement_refs:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
+    authority或task状态回写。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 瞬时拒绝恢复，持续拒绝busy fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
-      exclusion继续PASS。
+    text: telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
+      decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1955
-    row_sha256: 5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
+    row_sha256: b308462e2304c2c6e1f8ae06367e000b59462afe800821100a62391136523801
     cell_count: 8
     all_cells:
     - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     - Architecture / shared-checkout writer and operations lease guard
     - P0
     - BASELINE_DONE
-    - architecture control-plane owner；S2 telemetry与S5仍需另行授权
-    - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。
-    - 瞬时拒绝恢复，持续拒绝busy fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
-      exclusion继续PASS。
-    - 2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180 passed / 3
-      skipped / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task source cutover、production和broker继续未授权。
+    - architecture control-plane owner：S2只读telemetry等待独立owner decision；project owner仅在真实证据后评估S5
+    - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
+      authority或task状态回写。
+    - telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
+      decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。
+    - 2026-07-25：窄版formal evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task
+      source cutover、production和broker继续未授权。
     raw_line: '|ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD|Architecture / shared-checkout
       writer and operations lease guard|P0|BASELINE_DONE|architecture control-plane
-      owner；S2 telemetry与S5仍需另行授权|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。|瞬时拒绝恢复，持续拒绝busy
-      fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
-      exclusion继续PASS。|2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180
-      passed / 3 skipped / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task
-      source cutover、production和broker继续未授权。|'
+      owner：S2只读telemetry等待独立owner decision；project owner仅在真实证据后评估S5|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
+      authority或task状态回写。|telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
+      decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。|2026-07-25：窄版formal
+      evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task source cutover、production和broker继续未授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-5c0caff59e5e34806a3fcb5b
+  event_id: legacy-import-b308462e2304c2c6e1f8ae06
   task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -65,13 +67,13 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: architecture control-plane owner；S2 telemetry与S5仍需另行授权
-    notes: 2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180 passed
-      / 3 skipped / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task source
-      cutover、production和broker继续未授权。
+    next_owner: architecture control-plane owner：S2只读telemetry等待独立owner decision；project
+      owner仅在真实证据后评估S5
+    notes: 2026-07-25：窄版formal evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task
+      source cutover、production和broker继续未授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
+  - sha256:b308462e2304c2c6e1f8ae06367e000b59462afe800821100a62391136523801
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -79,15 +81,16 @@ projection:
   - Architecture / shared-checkout writer and operations lease guard
   - P0
   - BASELINE_DONE
-  - architecture control-plane owner；S2 telemetry与S5仍需另行授权
-  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。Owner授权窄版S0/S1；Wave15补齐known-unrelated零读取与Windows仲裁owner有界一致性读取。
-  - 瞬时拒绝恢复，持续拒绝busy fail-closed，格式/字段/非瞬时I/O仍invalid；重叠writer、dirty/unattributed、daily零副作用与exact
-    exclusion继续PASS。
-  - 2026-07-25：并发负例、architecture=`615 passed`、failure-fix Full=`7180 passed / 3 skipped
-    / 643 warnings`通过，任务恢复`BASELINE_DONE`；S2 telemetry、S5、task source cutover、production和broker继续未授权。
+  - architecture control-plane owner：S2只读telemetry等待独立owner decision；project owner仅在真实证据后评估S5
+  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
+    authority或task状态回写。
+  - telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
+    decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。
+  - 2026-07-25：窄版formal evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task
+    source cutover、production和broker继续未授权。
   docs_links:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   terminal: false
-  raw_row_sha256: 5c0caff59e5e34806a3fcb5b6a3f545ea61f8db74841943cc54c1ce033793b66
+  raw_row_sha256: b308462e2304c2c6e1f8ae06367e000b59462afe800821100a62391136523801
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 2e450bd490e6cb39c54c4be07a9b281b510d5349ecf2aa8d3edb0396c6cc7375
+fragment_checksum: ce59f9f53aa57c5cb676766396cb16078bc3a22754975c62c34545357a8ef544

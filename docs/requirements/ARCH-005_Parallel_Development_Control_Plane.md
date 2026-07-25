@@ -107,7 +107,7 @@ source-of-truth，不授权production或broker。窄版最终证据为focused=`9
 architecture/contract/integration/reproducibility=`593/274/993/23 passed`，failure-fix
 Full=`7136 passed / 3 skipped / 643 warnings`。
 
-### S4E Checkout Handoff 与 Source Reconciliation（IN PROGRESS）
+### S4E Checkout Handoff 与 Source Reconciliation（S4C MAIN INTEGRATED）
 
 OPS-070从共享`main`复制到isolated worktree后，目标分支已提交但source checkout未被强制
 reconcile；DEVX-001又刷新task shadow与architecture manifests，最终形成351个dirty状态项。
@@ -120,6 +120,14 @@ protected-main mutation、immutable `checkout_handoff.v1`、first-parent
 只有`EXACT_TARGET`和`SUPERSEDED_IN_TARGET_HISTORY`可进入人工coordinator allowlist；
 unique/mixed/lineage missing/unattributed必须保留并fail closed。S4E不自动restore/delete/commit/
 merge/push，不授权S5、task source cutover、production或broker。
+
+2026-07-25，S4E S0-S2与S4C closeout已在候选
+`a318b9e1120215ce400870aa3dfab5d36e47a2a3`闭合：第二份reconciliation report为
+9 exact、17 first-parent history、324 generated、1 known-unrelated zero-read，且
+blocking/unattributed/retained=0；最终focused/architecture/contract/integration/
+reproducibility=`56/634/275/995 passed`，natural integration boundary Full=
+`7255 passed / 4 skipped / 642 warnings`。`main`与`origin/main`均已fast-forward到同一提交。
+下一步仅准备S4D S2只读telemetry合同；S5仍须基于真实批次证据另行授权。
 
 ## 决策
 
