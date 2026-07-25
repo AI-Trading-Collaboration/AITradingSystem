@@ -240,6 +240,7 @@ class CaptureComponent:
     retryable_blocker_codes: tuple[str, ...] = ()
     recovery_mode: str = "HISTORICAL_RECAPTURE_FORBIDDEN"
     snapshot_sources: tuple[Path, ...] = ()
+    source_owned_paths: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -477,6 +478,16 @@ def build_daily_input_capture_components(
                 paths.pit_raw_dir,
                 paths.pit_normalized_path,
                 paths.pit_manifest_path,
+                paths.pit_fetch_report_path,
+                paths.pit_validation_report_path,
+            ),
+            # The PIT manifest is a consumer-owned cross-kind aggregate. Older
+            # daily plans rebuilt it in place after capture, so it cannot be a
+            # source/session idempotency commitment. Raw payloads, normalized
+            # bytes, and component reports remain exact reuse authority.
+            source_owned_paths=(
+                paths.pit_raw_dir,
+                paths.pit_normalized_path,
                 paths.pit_fetch_report_path,
                 paths.pit_validation_report_path,
             ),
@@ -784,12 +795,18 @@ def _capture_component_with_source_control(
     prior_attempts = list(state.get("attempts", [])) if state else []
     if state and state.get("status") == "PASS":
         prior_result = state.get("component_result")
-        if isinstance(prior_result, Mapping) and _component_result_artifacts_current(
-            prior_result,
-            project_root=project_root,
-        ):
+        reusable_result = (
+            _reusable_pass_component_result(
+                prior_result,
+                component=component,
+                project_root=project_root,
+            )
+            if isinstance(prior_result, Mapping)
+            else None
+        )
+        if reusable_result is not None:
             return {
-                **dict(prior_result),
+                **reusable_result,
                 "source_lease_status": "REUSED_PASS",
                 "idempotency_reused": True,
                 "source_revision": component.source_revision,
@@ -1112,30 +1129,57 @@ def _load_source_state(
     return payload, None, None
 
 
-def _component_result_artifacts_current(
+def _reusable_pass_component_result(
     result: Mapping[str, object],
     *,
+    component: CaptureComponent,
     project_root: Path,
-) -> bool:
+) -> dict[str, object] | None:
     artifacts = result.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
-        return False
+        return None
+    recorded_by_path: dict[str, Mapping[str, object]] = {}
     for artifact in artifacts:
         if not isinstance(artifact, Mapping):
-            return False
+            return None
         path_value = artifact.get("path")
-        if not isinstance(path_value, str) or not path_value:
-            return False
-        path = Path(path_value)
-        if not path.is_absolute():
-            path = project_root / path
         if (
-            not path.is_file()
-            or artifact.get("size_bytes") != path.stat().st_size
-            or artifact.get("sha256") != sha256_path(path)
+            not isinstance(path_value, str)
+            or not path_value
+            or path_value in recorded_by_path
         ):
-            return False
-    return True
+            return None
+        recorded_by_path[path_value] = artifact
+
+    authority_paths = component.source_owned_paths or component.expected_paths
+    current_records = _artifact_records(authority_paths, project_root)
+    current_by_path = {str(item["path"]): item for item in current_records}
+    allowed_excluded_paths = {
+        _relative_path(path, project_root)
+        for path in component.expected_paths
+        if path not in authority_paths and path.is_file()
+    }
+    recorded_paths = set(recorded_by_path)
+    current_paths = set(current_by_path)
+    excluded_paths = recorded_paths - current_paths
+    if (
+        current_paths - recorded_paths
+        or excluded_paths - allowed_excluded_paths
+        or any(
+            recorded_by_path[path].get("size_bytes")
+            != current_by_path[path]["size_bytes"]
+            or recorded_by_path[path].get("sha256") != current_by_path[path]["sha256"]
+            for path in current_paths
+        )
+    ):
+        return None
+
+    reusable = dict(result)
+    reusable["artifacts"] = current_records
+    if excluded_paths:
+        reusable["artifact_reuse_scope"] = "SOURCE_OWNED_ONLY"
+        reusable["excluded_non_authoritative_artifacts"] = sorted(excluded_paths)
+    return reusable
 
 
 def _source_idempotency_key(

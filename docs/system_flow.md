@@ -365,7 +365,7 @@ capture validation 使用 native `daily_input_capture_validation.v1` schema，�
 `production_effect=none`，因此 contract 对齐只消除误阻断，不提升缺失 component 的消费权限。
 OPS-070 S2 为每个 `source/session` 建立独立 state、attempt history、idempotency key 和 active
 lease；retry budget、delay、retryable blocker、lease TTL、recovery mode 与
-component-scoped `source_revision` 来自 `daily_input_capture_policy.v4`。活动 lease 和
+component-scoped `source_revision` 来自 `daily_input_capture_policy.v5`。活动 lease 和
 non-retryable failure 只阻断该 source，stale lease 在 takeover 前进入 immutable history。
 未变 PASS revision 继续复用原 state/key；显式 superseding revision 只重开目标 component，
 并将新 state 隔离到 revision path，旧 terminal bytes 不改写。
@@ -374,7 +374,10 @@ non-retryable failure 只阻断该 source，stale lease 在 takeover 前进入 i
 `pit_snapshots_project_fmp_forward` 只读取同批 retained raw payload，重算 normalized bytes，
 与 capture normalized CSV exact 比对后原子写入 canonical processed/report 路径，全程
 `provider_request_performed=false`。PIT manifest/validation 与 pipeline health 都显式要求
-`fmp_forward_pit` snapshot kind 非空；analyst/history snapshot 即使共享 source id 也不能替代。
+PASS reuse 只以 component-owned raw/normalized/report artifacts 的 exact path/SHA/size
+集合为 authority；会由下游扩展的 cross-kind PIT aggregate manifest 属于 consumer，
+排除时必须披露，且不能掩盖任何 source-owned drift。`fmp_forward_pit` snapshot kind
+必须非空；analyst/history snapshot 即使共享 source id 也不能替代。
 Immutable download publication resolver 对 transaction-bound legacy manifest 只允许绝对
 checkout 前缀迁移且 artifact filename 必须 exact；新 generation pre-commit 仍校验当前 root
 exact path，其他 manifest/source/window/checksum 字段保持 fail closed。

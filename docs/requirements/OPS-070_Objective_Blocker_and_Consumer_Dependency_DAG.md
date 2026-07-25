@@ -345,3 +345,38 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   architecture-fitness=`624 passed`，contract-validation=`275 passed`。未用串行 pytest
   覆盖失败。当前仍不宣称运营 PASS；下一步发布 exact commit、pin 独立 runtime checkout，
   然后只调用一次唯一 `aits ops daily-run` 取得真实 DQ/PIT/score/Reader Brief 终态。
+- 2026-07-25：release `23d4da3aaa547b9a07e920f01ebcf56f8ccbc910` 已推送并 pin
+  到独立 clean runtime checkout；scheduler preflight PASS。唯一一次真实
+  `aits ops daily-run --as-of 2026-07-24` 取得
+  `workflow_spec_f9765ef710d1373267c5` /
+  `operations_run_330847ca56adc301c4ee1d6d`，34/34 steps terminal，overall `FAILED`。
+  `market_macro` 新 revision 真实 PASS，capture/strict DQ、SEC、freshness、schedule observe
+  与 secret hygiene 均 PASS，证明 publication relocation 修复有效。没有 production/active
+  shadow weight 或 broker/trading action。
+- 同一 run 暴露新的 source-artifact ownership blocker：旧
+  `fmp_forward_pit` terminal PASS state 的 21 个 artifacts 中，20 个 source-owned
+  raw/normalized/report bytes 仍 exact，只有
+  `data/raw/daily_input_capture/2026-07-24/pit_snapshot_manifest.csv` 从原 SHA
+  `30abc0ad...` 变为 `3ea94279...`。该文件曾被旧 PIT consumer 扩展为跨-kind aggregate，
+  不是 provider/raw drift；因此 component 被 `SOURCE_STATE_INVALID` 阻断，projection/PIT/
+  score/report 未运行，pipeline health 诚实 FAIL。最佳修复是把 idempotent PASS reuse
+  绑定到 component-owned artifacts，明确把会由 consumer 重建的 aggregate manifest 排除
+  在 source-state reuse authority 之外；仍须要求 raw directory 的完整 path/SHA/size 集、
+  normalized CSV 和 component reports exact，并在复用结果中披露 excluded aggregate。
+  旧 state/manifest/run ledger 均不改写，不重抓 FMP，不重跑本次 daily key；修复后只做
+  retained-state fault-injection 与正式工程验证，运营复验留给下一合法 scheduler run。
+- 2026-07-25：artifact ownership 修复已落地到
+  `daily_input_capture_policy.v5`。真实 retained-state 只读复验对
+  `2026-07-24/fmp_forward_pit/state.json` 的 20 个 source-owned artifacts 全部 exact
+  PASS，`artifact_reuse_scope=SOURCE_OWNED_ONLY`，唯一
+  `excluded_non_authoritative_artifacts` 为 cross-kind
+  `pit_snapshot_manifest.csv`；state SHA-256
+  `ca76ee9172fe2ae154dae442d388846946bb6fec93b108e8dfd72b231107117e`
+  前后不变，`provider_request_performed=false`。两条 fault-injection 同时证明 aggregate
+  consumer mutation 可复用、normalized source tamper 仍 `SOURCE_STATE_INVALID`。
+  正式验证为 focused=`114 + 68 passed`、fast-unit=`340 passed`、
+  architecture-fitness 首轮 stale authority=`623 passed / 1 failed`，刷新 OPS-070
+  current hash 后正式=`624 passed`、contract-validation=`275 passed`、Ruff PASS。
+  当前工程 blocker 已关闭，但不宣称 2026-07-24 旧 run 转为 PASS，也不再调用
+  `daily-run`；下一合法 XNYS scheduler run 必须真实通过 projection、PIT、score、
+  dashboard、Reader Brief 与 finalization 后，OPS-070 才能完成运营验收。

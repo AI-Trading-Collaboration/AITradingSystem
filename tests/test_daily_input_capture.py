@@ -143,7 +143,7 @@ def _runner_for_components(
 def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
     policy = load_daily_input_capture_policy()
 
-    assert policy.policy_version == "daily_input_capture_v4"
+    assert policy.policy_version == "daily_input_capture_v5"
     assert policy.tracking_start == date(2026, 7, 24)
     assert policy.blocker_taxonomy_version == "daily_input_capture_blockers_v1"
     assert policy.lease_ttl_seconds == 1800
@@ -462,6 +462,106 @@ def test_source_scoped_state_reuses_pass_without_repeating_provider_requests(
         str(item["source_idempotency_key"]).startswith("daily-input-source-")
         for item in second.component_results
     )
+
+
+def test_fmp_pass_reuse_excludes_legacy_consumer_mutated_aggregate_manifest(
+    tmp_path: Path,
+) -> None:
+    policy_path = tmp_path / "capture_policy.yaml"
+    _write_policy(policy_path, tmp_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    as_of = date(2026, 7, 27)
+    paths = daily_input_capture_paths(as_of, policy=policy)
+    components = build_daily_input_capture_components(
+        as_of=as_of,
+        paths=paths,
+        policy=policy,
+        project_root=tmp_path,
+    )
+    first = capture_daily_inputs(
+        as_of=as_of,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=_runner_for_components(components, calls=[]),
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
+    )
+    assert first.status == "CAPTURED"
+    source_state_path = (
+        policy.source_control_root / as_of.isoformat() / "fmp_forward_pit" / "state.json"
+    )
+    source_state_bytes = source_state_path.read_bytes()
+    paths.pit_manifest_path.write_text("consumer-expanded-aggregate\n", encoding="utf-8")
+
+    second = capture_daily_inputs(
+        as_of=as_of,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("provider request repeated")
+        ),
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 35, tzinfo=UTC),
+    )
+
+    fmp = next(
+        item for item in second.component_results if item["component_id"] == "fmp_forward_pit"
+    )
+    assert second.status == "CAPTURED"
+    assert fmp["idempotency_reused"] is True
+    assert fmp["artifact_reuse_scope"] == "SOURCE_OWNED_ONLY"
+    assert fmp["excluded_non_authoritative_artifacts"] == [
+        "data/raw/daily_input_capture/2026-07-27/pit_snapshot_manifest.csv"
+    ]
+    assert all(
+        item["path"]
+        != "data/raw/daily_input_capture/2026-07-27/pit_snapshot_manifest.csv"
+        for item in fmp["artifacts"]
+    )
+    assert source_state_path.read_bytes() == source_state_bytes
+
+
+def test_fmp_pass_reuse_still_rejects_source_owned_artifact_drift(
+    tmp_path: Path,
+) -> None:
+    policy_path = tmp_path / "capture_policy.yaml"
+    _write_policy(policy_path, tmp_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    as_of = date(2026, 7, 27)
+    paths = daily_input_capture_paths(as_of, policy=policy)
+    components = build_daily_input_capture_components(
+        as_of=as_of,
+        paths=paths,
+        policy=policy,
+        project_root=tmp_path,
+    )
+    capture_daily_inputs(
+        as_of=as_of,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=_runner_for_components(components, calls=[]),
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
+    )
+    paths.pit_normalized_path.write_text("tampered\n", encoding="utf-8")
+
+    second = capture_daily_inputs(
+        as_of=as_of,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("provider request repeated")
+        ),
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 35, tzinfo=UTC),
+    )
+
+    fmp = next(
+        item for item in second.component_results if item["component_id"] == "fmp_forward_pit"
+    )
+    assert second.status == "PARTIAL_CAPTURE"
+    assert fmp["blocker_code"] == "SOURCE_STATE_INVALID"
+    assert fmp["error_summary"] == "terminal PASS source state artifact drift"
 
 
 def test_component_revision_reopens_only_superseded_failed_source(

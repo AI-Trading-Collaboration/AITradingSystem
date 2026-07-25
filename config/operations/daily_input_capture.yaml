@@ -1,5 +1,5 @@
 schema_version: daily_input_capture_policy.v2
-policy_version: daily_input_capture_v4
+policy_version: daily_input_capture_v5
 owner: operations_owner_and_data_platform_owner
 status: REVIEWED
 reviewed_at: 2026-07-25
@@ -70,12 +70,16 @@ source_control:
     PIT-sensitive and mutable-current endpoints
     receive one contemporaneous attempt; later recovery must not manufacture
     historical strict PIT. The 30-minute lease only serializes one
-    source/session capture and stale takeover is audit-recorded.
+    source/session capture and stale takeover is audit-recorded. PASS reuse binds
+    only component-owned raw/normalized/report artifacts. Consumer-owned aggregate
+    manifests may be rebuilt downstream and are excluded with an explicit reuse
+    disclosure; they cannot weaken exact source artifact verification.
   validation_evidence: OPS-070 fault injection and formal validation tiers
   review_condition: >
     Review and bump the affected component source_revision when provider behavior,
     source eligibility, command, attempt budget, retry delay, recovery semantics,
-    or supersession lineage changes. Also review lease TTL or blocker taxonomy changes.
+    supersession lineage, or source/consumer artifact ownership changes. Also
+    review lease TTL or blocker taxonomy changes.
 failure_policy:
   attempt_all_components: true
   required_component_failure_status: PARTIAL_CAPTURE
