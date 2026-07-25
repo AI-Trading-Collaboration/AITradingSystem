@@ -1,0 +1,255 @@
+schema_version: strategy_style_discovery_universe_policy.v1
+policy_id: strategy_style_discovery_spy_qld_universe_v1
+version: 1.1.0
+status: OWNER_APPROVED_ROLE_LIMITED_2X_IMPLEMENTATION_INSTRUMENT
+owner: project_owner_and_research_governance
+owner_decision: owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument
+owner_decision_history:
+  - owner_decision:TRADING-2459:2026-07-25:spy_reference_now_qld_research_before_action_universe
+  - owner_decision:TRADING-2459:2026-07-25:approve_scoped_five_asset_dq_to_avoid_qld_block
+  - owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument
+scoped_data_quality_exception:
+  approval_id: owner_decision:TRADING-2459:2026-07-25:approve_scoped_five_asset_dq_to_avoid_qld_block
+  approved_at: '2026-07-25'
+  approved_by: project_owner
+  reason: >-
+    canonical full-cache DQ当前仅因31条^VIX non-XNYS-session行失败；该ticker不属于
+    QLD instrument evaluation的输入，Owner明确要求该无关全局blocker不得阻塞QLD评估。
+  behavioral_impact: >-
+    评估只消费并校验SPY/QQQ/SGOV/TQQQ/QLD及同期rates的隔离snapshot；结果不得标记为
+    canonical full-cache PASS，不得被其他consumer、promotion、paper-shadow或production复用。
+  risk: >-
+    scoped PASS不能证明全局cache或^VIX质量；若实际五资产panel遗漏了canonical full-universe
+    才能发现的cross-source问题，结论可信度低于完整canonical strict PASS。
+  validation_coverage: >-
+    同一validate_data_cache实现对隔离五资产panel执行schema、coverage、freshness、duplicate、
+    session、OHLC、finite/positive、return和rates检查；panel/source/report均绑定SHA-256，
+    content-derived validator从source重建指标并执行tamper tests。
+  exit_condition: >-
+    DATA-GOV-001_D0B2B取得下一合法provider-ready canonical strict PASS后，以同一冻结政策
+    重跑QLD评估；新结果验证通过后替代本scoped artifact，或证实结论不变后关闭例外。
+  canonical_cache_mutation_allowed: false
+  global_canonical_dq_status: FAIL
+  global_blocker_code: prices_non_market_session_date
+  global_blocker_ticker: ^VIX
+scoped_warning_resolution:
+  warning_code: prices_adjustment_ratio_jump
+  status: OWNER_REVIEWED_KNOWN_CORPORATE_ACTIONS
+  interpretation: >-
+    scoped DQ的唯一warning对应QLD两次官方2:1 forward split；adjusted-close在split日
+    分别为+0.2556%与-4.7097%，没有把约-50%的raw split price change写入收益路径。
+  global_data_quality_policy_changed: false
+  events:
+    - ticker: QLD
+      effective_date: '2021-05-25'
+      ratio: 2
+      source_name: ProShares May 2021 ETF Share Splits
+      source_url: https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-51121
+    - ticker: QLD
+      effective_date: '2025-11-20'
+      ratio: 2
+      source_name: ProShares November 2025 ETF Share Splits
+      source_url: https://www.proshares.com/press-releases/proshares-announces-etf-share-splits5
+rationale: >-
+  将SPY作为广义市场benchmark和regime control；在固定2x QQQ-equivalent exposure评估
+  证明QLD具有增量实现价值后，Owner只批准其作为角色受限的执行实现工具，避免把工具选择
+  自由度误写成Alpha或趋势判断。
+intended_effect: >-
+  区分reference universe、current primary action assets、role-limited implementation
+  instrument与signal/candidate universe；独立趋势和风险决策先确定目标暴露，执行层仅在
+  目标QQQ-equivalent exposure接近2x时考虑QLD。
+review_condition: >-
+  D0B2B canonical strict PASS后按冻结政策重跑；自动执行前必须另行治理“可信上升趋势”、
+  “接近2x”、风险门、instrument selector、forward shadow与退出规则。任何资产角色、实现
+  权重、cadence、窗口、成本、指标或decision mapping变化都必须新版本。
+research_context:
+  market_regime_id: unified_primary_2021
+  research_window_id: exact_three_asset_validated
+  requested_start: '2021-02-22'
+  historical_seen_end: '2026-07-21'
+  prospective_untouched_start: '2026-07-22'
+  legacy_ai_cycle_comparison_start: '2022-12-01'
+  prospective_access_allowed_for_calculation: false
+  prospective_source_rows_observed_during_audit: true
+  prospective_observation_note: >-
+    2026-07-25审计共享prices_daily.csv文件尾部时，终端输出包含2026-07-22至
+    2026-07-24行。本评估必须在加载后立即截断至2026-07-21，且不得将后续值用于
+    指标、判断或参数变化；但不能再声称这些日期对本任务保持untouched。
+universes:
+  reference_and_regime_control:
+    - SPY
+    - QQQ
+  current_primary_action_comparator:
+    - SGOV
+    - QQQ
+    - TQQQ
+  role_limited_2x_implementation_instrument:
+    - QLD
+  signal_input_instruments:
+    - SPY
+    - QQQ
+  qld_signal_input_allowed: false
+  qld_independent_style_allowed: false
+  qld_free_candidate_dimension_allowed: false
+  role_limited_implementation_universe_change_approved: true
+  official_primary_action_universe_change_allowed: false
+  official_action_universe_change_allowed: false
+role_limited_2x_implementation_policy:
+  approval_id: owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument
+  status: OWNER_APPROVED_ROLE_LIMITED_MANUAL_CONSIDERATION
+  instrument: QLD
+  instrument_role: execution_implementation_only
+  independent_trend_model_required: true
+  trusted_nasdaq_uptrend_required: true
+  portfolio_target_qqq_equivalent_exposure_near_2x_required: true
+  risk_gate_pass_required: true
+  upstream_target_exposure_must_preexist_instrument_selection: true
+  allowed_comparison_dimensions:
+    - turnover
+    - transaction_cost
+    - tracking_error
+    - volatility
+    - drawdown
+    - worst_window_loss
+  historical_return_ranking_switch_allowed: false
+  qld_as_trend_signal_allowed: false
+  qld_as_independent_strategy_style_allowed: false
+  qld_as_free_candidate_dimension_allowed: false
+  automatic_exposure_increase_allowed: false
+  automatic_instrument_selection_allowed: false
+  official_target_weight_mutation_allowed: false
+  paper_shadow_change_allowed: false
+  production_use_allowed: false
+  broker_action_allowed: false
+  numeric_near_2x_tolerance_defined: false
+  executable_selector_policy_defined: false
+  forward_shadow_required_before_automated_use: true
+  unresolved_policy_dependencies:
+    - trusted_uptrend_definition
+    - near_2x_numeric_tolerance
+    - risk_gate_binding
+    - implementation_selector
+    - forward_shadow_acceptance
+    - deleveraging_and_exit_rules
+instrument_exposure_multipliers:
+  SPY: 1.0
+  QQQ: 1.0
+  SGOV: 0.0
+  QLD: 2.0
+  TQQQ: 3.0
+source_commitments:
+  existing_prices_path: data/raw/prices_daily.csv
+  existing_rates_path: data/raw/rates_daily.csv
+  qld_provider: Financial Modeling Prep
+  qld_provider_id: fmp_eod_daily_prices
+  qld_raw_endpoint: https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted
+  qld_adjusted_endpoint: https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted
+  qld_request_symbol: QLD
+  isolated_source_required: true
+  canonical_cache_mutation_allowed: false
+  required_expected_tickers:
+    - SPY
+    - QQQ
+    - SGOV
+    - QLD
+    - TQQQ
+fixed_implementations:
+  - implementation_id: qld_100
+    weights:
+      QLD: 1.0
+    target_qqq_equivalent_exposure: 2.0
+  - implementation_id: qqq_50_tqqq_50
+    weights:
+      QQQ: 0.5
+      TQQQ: 0.5
+    target_qqq_equivalent_exposure: 2.0
+  - implementation_id: sgov_33_tqqq_67
+    weights:
+      SGOV: 0.3333333333333333
+      TQQQ: 0.6666666666666666
+    target_qqq_equivalent_exposure: 2.0
+rebalance_cadences:
+  - buy_and_hold
+  - weekly
+  - monthly
+  - daily
+turnover_and_cost_mechanics:
+  initial_establishment_cost_included: true
+  initial_one_way_traded_notional: 1.0
+  rebalance_one_way_traded_notional_formula: 0.5 * sum(abs(target_weight - drifted_weight))
+  cost_application: >-
+    每个交易日收益实现后按cadence在收盘执行target-weight rebalance；成本等于
+    one-way traded notional乘transaction-cost policy的总bps，并从当日组合NAV扣除。
+  buy_and_hold_rebalance_turnover_after_initial: 0.0
+transaction_cost_policy_path: config/research/transaction_cost_model.yaml
+required_metrics:
+  - total_return
+  - cagr
+  - annualized_volatility
+  - max_drawdown
+  - sharpe
+  - calmar
+  - worst_1d_loss
+  - worst_5d_loss
+  - worst_20d_loss
+  - external_turnover
+  - cost_drag
+metric_conventions:
+  annualization_sessions: 252
+  sharpe_risk_free_rate: 0.0
+  sharpe_label: annualized_non_excess_return_sharpe
+  slice_reinitialization: >-
+    每个预注册切片独立从NAV=1和目标权重开始，并计入统一初始建仓成本；切片指标不是
+    full-primary NAV路径的简单截取。
+tracking_diagnostics:
+  - residual_bias
+  - residual_mae
+  - residual_rmse
+  - correlation
+  - realized_beta
+required_slices:
+  - full_primary
+  - pre_ai_cycle_comparison
+  - ai_cycle_comparison
+  - calendar_year
+decision_mapping:
+  pareto_objectives:
+    maximize:
+      - terminal_value_net
+      - cagr
+      - max_drawdown
+      - worst_5d_loss
+      - worst_20d_loss
+    minimize:
+      - annualized_volatility
+      - external_turnover
+      - cost_drag
+  floating_point_epsilon: 1.0e-12
+  eligible_strict_advantage_rule: >-
+    同一cadence下QLD必须处于三种实现的Pareto non-dominated frontier，且在至少一个
+    预注册Pareto objective上严格优于两种current-universe comparator。
+  no_value_rule: >-
+    QLD在四个cadence上均被至少一种current-universe comparator Pareto dominated。
+  mixed_rule: 所有不满足eligible或no_value且数据质量通过的结果。
+  eligible_status: QLD_ELIGIBLE_FOR_OWNER_ACTION_UNIVERSE_REVIEW
+  no_value_status: QLD_NO_INCREMENTAL_IMPLEMENTATION_VALUE
+  mixed_status: QLD_MIXED_EVIDENCE_KEEP_RESEARCH_ONLY
+  blocked_status: BLOCKED_DATA_QUALITY_OR_COVERAGE
+safety:
+  research_only: true
+  historical_seen_only: true
+  prospective_source_rows_observed: true
+  prospective_values_used_in_evaluation: false
+  candidate_search_executed: false
+  strategy_logic_changed: false
+  official_action_universe_changed: false
+  official_primary_action_universe_changed: false
+  role_limited_implementation_universe_changed: true
+  qld_role_limited_manual_consideration_approved: true
+  qld_automatic_execution_allowed: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none
+  scoped_data_quality_exception_active: true
+  canonical_full_cache_pass_claimed: false

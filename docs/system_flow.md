@@ -938,6 +938,73 @@ TRADING-2438N1 新增 `aits research strategies growth-tilt-candidate-family-clo
 
 ARCH-004D 将上述 N1 closed/read-only/no-effect path 迁为首个 reference vertical slice：`config/research/experiments/growth_tilt_candidate_family_closure.yaml` 经 typed resolver 生成 deterministic `ExperimentSpec + ConfigRef`，generic `research_framework.runner` 统一读取 structured/text inputs并记录 path/hash/size，calculator plugin 复用原 `research_quality` pure builder，report plugin只生成原 negative-ledger section和 Markdown。旧 `growth-tilt-candidate-family-close` CLI/options/exit 继续由 time-bounded façade转入 generic runner，primary/section/Markdown 的 path/schema/status/bytes不变；额外写出 `artifact_envelope.v1` 与 one-step `run_ledger.v1` sidecars，explicit status map只允许 terminal closure -> PASS、source-contract blocked -> BLOCKED。该 governance-only slice不读取 fresh cached market/macro data，故 `data_quality_required=false` 且不伪造 DQ PASS；sidecar PASS只证明旧 closure复现成功，不改变 N1结论，也不表示 candidate/replay/promotion/paper-shadow/production/broker ready。
 
+TRADING-2459 在 generic experiment path 上新增首个真实 DQ-bound instrument evaluation：SPY 立即进入
+reference / benchmark / regime-control role，但不进入 action weight；QLD 先作为 research-only extended
+instrument完成冻结评估，Owner读取结果后只批准其进入role-limited 2x execution / implementation
+universe。输入先把 canonical SPY/QQQ/SGOV/TQQQ/rates 截断至历史可见终点 `2026-07-21`，再与隔离
+FMP QLD raw/adjusted source合并为五资产 package，QLD 抓取不得写 canonical price cache。canonical
+`aits validate-data --as-of 2026-07-24` 因本实验不消费的 31 条 `^VIX` non-session rows 继续真实
+`FAIL`；Owner 明确批准 scoped research-only 例外后，实际五资产 panel 仍调用同一
+`validate_data_cache`：source package 构建时执行一次，每次 experiment 重建时再直接执行一次，
+并得到 `PASS_WITH_WARNINGS`。唯一 adjustment-ratio warning由两次 ProShares
+官方 QLD 2:1 split解释，不修改全局 DQ policy，且该 scoped evidence不能供其他 consumer复用。
+`leveraged_exposure_instrument_evaluation` ExperimentSpec 固定三种 2x QQQ-equivalent implementation、
+buy-and-hold/weekly/monthly/daily cadence、transaction-cost policy、指标、切片与 Pareto mapping；
+calculator/report plugin从冻结 source package重建全部结果，generic runner把真实
+`DataQualityEvidence`、input/config/code hashes和Owner role disposition写入
+primary/summary/Markdown、artifact envelope与run ledger。机械结果保留
+`QLD_ELIGIBLE_FOR_OWNER_ACTION_UNIVERSE_REVIEW`，Owner disposition另行说明角色批准。执行层只有在
+独立趋势模型先确认可信Nasdaq-100上升趋势、组合层先形成接近2x的QQQ-equivalent target且风险门通过
+后才可考虑QLD；QLD不进入signal、独立style或自由candidate space。near-2x容差、selector、
+forward-shadow与退出政策完成前，automatic selection、official weights、paper-shadow、production和
+broker均不变；D0B2B canonical strict PASS后必须按同一冻结政策重跑。
+
+```mermaid
+flowchart LR
+    C["Canonical SPY / QQQ / SGOV / TQQQ / rates<br/>cutoff 2026-07-21"] --> P["Isolated five-asset source package"]
+    Q["FMP QLD raw + adjusted<br/>no canonical-cache mutation"] --> P
+    G["Canonical full-cache DQ = FAIL<br/>unrelated ^VIX blocker"] --> X["Owner-approved scoped research exception"]
+    X --> D["Same validate_data_cache<br/>five assets = PASS_WITH_WARNINGS"]
+    P --> D
+    D --> E["Typed ExperimentSpec + fixed 2x implementations"]
+    E --> V["Content-derived metrics / slices / Pareto validator"]
+    V --> A["Primary + summary + Chinese report<br/>envelope + run ledger"]
+    A --> M["Mechanical result<br/>eligible for Owner review"]
+    M --> O["Owner-approved role-limited<br/>2x implementation instrument"]
+    T["Independent trusted uptrend decision"] --> U["Conditional execution-layer consideration"]
+    E2["Portfolio target near 2x<br/>QQQ-equivalent exposure"] --> U
+    R["Risk gate PASS"] --> U
+    O --> U
+    U -.-> N["No QLD signal / style / free candidate<br/>no automatic weights / paper-shadow / production / broker"]
+```
+
+TRADING-2460 启动 Strategy Style Discovery 的 Decision Target Capability Audit 第一批，但只建立
+label foundation，不训练模型或选择策略风格。Canonical `prices_daily.csv` / `rates_daily.csv` 必须
+先对完整预期 universe 调用 `validate_data_cache`；只有 strict PASS 后，才允许物化
+QQQ/SPY/SGOV adjusted-close 隔离 panel 并再次调用同一 validator。TRADING-2459 的 QLD scoped
+exception 明确不可复用，所以当前 31 条 `^VIX` non-session blocker 会让正式 run 输出
+`BLOCKED_DATA_QUALITY_OR_SOURCE`，不会先过滤 VIX 再声称 canonical PASS。通过 DQ 后，calculator
+按 1/5/10/20 个未来共同交易 session 生成 primary `QQQ_MINUS_SGOV` 与 diagnostics
+`SPY_MINUS_SGOV`、`QQQ_MINUS_SPY`，同时记录 label start/end/available-on-session 和三资产未来
+max drawdown / worst-1d。Content-derived validator 从 source package 重建全部 rows、summary、
+commitment 与中文 Markdown；label interval 和 maturity gate 给后续 purged walk-forward 使用，
+数值 embargo 留待下一批 reviewed policy。本批不执行 feature selection、model training、
+candidate search、strategy backtest 或权重生成，paper-shadow/production/broker 均不改变。
+
+```mermaid
+flowchart LR
+    C1["Canonical full cache<br/>QQQ / SPY / SGOV + rates"] --> G1["validate_data_cache<br/>strict full-universe gate"]
+    G1 -->|FAIL| B1["BLOCKED_DATA_QUALITY_OR_SOURCE<br/>no real labels"]
+    G1 -->|PASS| P1["Content-addressed three-asset panel<br/>same validator rerun"]
+    P1 --> L1["1 / 5 / 10 / 20-session labels<br/>decision + interval + availability"]
+    L1 --> X1["QQQ-SGOV primary<br/>SPY-SGOV + QQQ-SPY diagnostics"]
+    L1 --> R1["Future max drawdown<br/>future worst 1d"]
+    X1 --> V1["Content-derived rebuild<br/>identity + source + tamper validation"]
+    R1 --> V1
+    V1 --> A1["Primary + summary + Chinese report<br/>envelope + run ledger"]
+    A1 -.-> N1["No model / search / backtest / weights<br/>no paper-shadow / production / broker"]
+```
+
 ARCH-004E 新增持续 DevEx/ownership 控制链：`config/architecture/devex_ownership_policy.yaml` 以互斥 specific rule + fail-closed fallback 为全部 source/test/support Python 文件生成 deterministic module/test manifests，并将 code、policy、data、artifact、runtime 五类 owner 分开记录；changed-file impact selector 只提供 focused feedback，shared aggregate 或 unknown path 会升级到 architecture coordinator/full gate，绝不替代 phase full validation。ARCH-004C dependency/direct-writer ratchet、manifest freshness、ownership coverage 与 aggregate reproducibility 被汇总为单一 architecture fitness；`scripts/run_validation_tier.py architecture-fitness` 从 generated test manifest 解析测试集合，不维护第二份手写路径。module/experiment/report scaffold 只创建 skeleton/spec/fragment，并在目标存在时 fail closed；4 个 fragment 只生成覆盖 report registry、artifact catalog、system flow 三个 target 的 shadow index，现有 aggregate 仍是 source-of-truth 且由 coordinator 独占。engineering surface inventory 只链接上述 control artifacts，不改变既有 report schema 的核心解释。该链路只改研发治理，不改变 scheduler cadence、研究结果、报告结论、DQ/PIT、阈值、权重、promotion、paper-shadow、production 或 broker。
 
 ARCH-005S4D 在同一checkout的开发写入与operations入口之前增加path/operation-aware门禁：`config/architecture/arch_005_s4d_checkout_guard.yaml`冻结workspace identity、operation class、known-unrelated exact exclusion和TTL/heartbeat policy；`checkout_guard.py`从resolved checkout、Git common dir、HEAD/upstream与exact intent生成可重放decision，并复用现有`FileExecutionLeaseStore`的`execution_lease.v1` / `execution_lease_event.v1`执行atomic acquire、heartbeat、expiry、release和replay。机械互斥domain writer与shared writer均持READ workspace gate以保留不相交domain并行，owned/shared exact path自身按WRITE资源执行祖先/后代及casefold冲突；`aits ops daily-run`持WRITE workspace gate并与全部mutation排他。dirty/unattributed、active conflict、symlink/junction/reparse、root escape或lineage异常均在业务命令、provider、cache、run bundle和report写入前typed BLOCKED。known-unrelated exclusion只比较exact path，不读取、hash或复制文件内容。该窄版S0/S1不运行数据质量、provider或策略流程，不改变scheduler cadence、task source、研究结论、阈值、权重、promotion、paper-shadow、production或broker。

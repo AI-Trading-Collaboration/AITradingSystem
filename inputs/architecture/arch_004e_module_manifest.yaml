@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1020
+module_count: 1022
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -16416,6 +16416,28 @@ modules:
   - architecture-fitness
   - contract-validation
   shared_integration: false
+- module_id: src.ai_trading_system.research_framework.plugins.decision_target_capability_audit_label_foundation
+  path: src/ai_trading_system/research_framework/plugins/decision_target_capability_audit_label_foundation.py
+  sha256: 0cd260b56e7659ccc7da0d56adf6a8437744475d5b378d52d638a22422fe17bd
+  rule_id: research_framework
+  owner_profile: research
+  owners:
+    code_owner: research_platform
+    policy_owner: research_governance
+    data_owner: research_data_governance
+    artifact_owner: research_governance
+    runtime_owner: research_operations
+  layer: application
+  category: research_experiment_platform
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004d_*.py
+  - tests/test_arch_004e_*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
 - module_id: src.ai_trading_system.research_framework.plugins.growth_tilt_candidate_family_closure
   path: src/ai_trading_system/research_framework/plugins/growth_tilt_candidate_family_closure.py
   sha256: 7f6ddb5a4eee2d442e325c840d57444b5f44c392b6e0a53e40bf662d978f10f8
@@ -16438,9 +16460,31 @@ modules:
   - architecture-fitness
   - contract-validation
   shared_integration: false
+- module_id: src.ai_trading_system.research_framework.plugins.leveraged_exposure_instrument_evaluation
+  path: src/ai_trading_system/research_framework/plugins/leveraged_exposure_instrument_evaluation.py
+  sha256: e9deb098e65225e032932e65642fea7319ed2559b314ccacaaeca92da7f0e888
+  rule_id: research_framework
+  owner_profile: research
+  owners:
+    code_owner: research_platform
+    policy_owner: research_governance
+    data_owner: research_data_governance
+    artifact_owner: research_governance
+    runtime_owner: research_operations
+  layer: application
+  category: research_experiment_platform
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004d_*.py
+  - tests/test_arch_004e_*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
 - module_id: src.ai_trading_system.research_framework.runner
   path: src/ai_trading_system/research_framework/runner.py
-  sha256: 32e828b8f47fbd00b3e1e067fac9460717785f6e35b3ab2106763e96d6d8d8b6
+  sha256: 0960fe7ffc843b84e273f68a8994458f6003aea94ce0ce32ed4bd494e9b77e77
   rule_id: research_framework
   owner_profile: research
   owners:

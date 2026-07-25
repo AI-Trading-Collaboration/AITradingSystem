@@ -107,6 +107,55 @@ feature_freeze:
       validation_coverage: versioned glossary, migration guard, focused and full validation
       exit_condition: TRADING-2452 package and shared contract closeout PASS
       production_effect: none
+    - task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+      owner: project_owner
+      approved_at: 2026-07-25
+      reason: >-
+        formalize SPY as a reference/regime-control asset and evaluate QLD instrument
+        implementation value before any action-universe decision
+      behavioral_impact: >-
+        adds one research-framework experiment/plugin and isolated historical-seen
+        evidence; after evidence review, QLD enters only a role-limited 2x
+        implementation universe while signals, free candidates, primary action assets
+        and official weights do not change
+      risk: >-
+        additional instrument choice could be mistaken for alpha; prospective rows were
+        observed during source audit but are excluded from evaluation; scoped DQ does not
+        prove canonical full-cache PASS
+      validation_coverage: >-
+        preregistered fixed implementations/cadences, owner-approved scoped five-asset
+        data-quality path, official QLD split review, content-derived validator, tamper
+        tests, architecture/contract/reproducibility/full
+      exit_condition: >-
+        SPY reference role, QLD owner decision pack and the separate Owner approval for
+        role-limited 2x implementation are validated; automatic selector/weights remain
+        unauthorized; rerun the frozen study after DATA-GOV-001_D0B2B obtains canonical
+        strict PASS
+      production_effect: none
+    - task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+      owner: project_owner
+      approved_at: 2026-07-25
+      reason: >-
+        establish the first Strategy Style Discovery decision-target label
+        foundation before choosing models, features or a preferred strategy style
+      behavioral_impact: >-
+        adds one research-framework experiment/plugin and governed label package
+        for QQQ-minus-SGOV, SPY-minus-SGOV and QQQ-minus-SPY over fixed
+        1/5/10/20-session horizons; no strategy, model, weights or action universe
+        changes
+      risk: >-
+        future returns could leak across folds or a scoped DQ exception could be
+        mistaken for canonical readiness; explicit label intervals, maturity dates,
+        strict canonical DQ and fail-closed source commitments contain those risks
+      validation_coverage: >-
+        clean fixture, canonical-DQ blocker, prospective-row guard, excess-return
+        identity, content-derived rebuild, tamper tests, generic runner sidecars,
+        report/architecture contracts and reproducibility validation
+      exit_condition: >-
+        batch-one policy, source package, label rows, summary, Chinese report and
+        content-derived validator are complete; real data remains BLOCKED until
+        DATA-GOV-001_D0B2B supplies canonical strict PASS
+      production_effect: none
 
 predecessor_disposition_vocabulary:
   - REUSE

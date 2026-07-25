@@ -27,6 +27,26 @@ benchmark_requirements:
   - buy_and_hold
   - static_allocation
   - simple_trend_following
+  - SPY_broad_market_beta_reference
+universe_roles:
+  reference_and_regime_control:
+    - SPY
+    - QQQ
+  current_primary_action_comparator:
+    - SGOV
+    - QQQ
+    - TQQQ
+  role_limited_implementation_instruments:
+    - QLD
+  qld_role_decision_id: owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument
+  qld_direct_action_candidate_eligible: false
+  qld_conditional_execution_implementation_eligible: true
+  qld_signal_input_eligible: false
+  qld_required_upstream_conditions:
+    - independent_trend_model_marks_trusted_nasdaq_uptrend
+    - portfolio_target_qqq_equivalent_exposure_is_near_2x
+    - risk_gate_passes
+  qld_automatic_instrument_selection_allowed: false
 control_requirements:
   - asset_shuffled_indicator
   - random_signal
@@ -48,3 +68,9 @@ safety_boundary:
   paper_shadow_change_allowed: false
   official_target_weights_allowed: false
   broker_action_allowed: false
+  spy_reference_role_changes_action_space: false
+  qld_action_universe_change_allowed: false
+  qld_primary_action_universe_change_allowed: false
+  qld_role_limited_2x_implementation_consideration_allowed: true
+  qld_signal_use_allowed: false
+  qld_automatic_exposure_increase_allowed: false

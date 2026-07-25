@@ -1,0 +1,126 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  title: null
+  domain: Strategy Style Discovery / decision-target capability audit batch-1 label
+    foundation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: DATA-GOV-001_D0B2B：修复canonical VIX session数据并取得strict PASS；随后strategy
+    research owner按冻结v1政策重建真实labels并复核coverage；development coordinator完成clean-main
+    commit/main集成与旧worktree清理
+  requirement_refs:
+  - docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。第一批policy/source-package/label
+    builder/content-derived validator/中文报告与治理集成已完成；真实`2021-02-22..2026-07-24`运行因`prices_non_market_session_date`
+    fail closed，`panel_materialized=false`。QLD scoped exception不得复用；不训练模型、不做feature/candidate/parameter
+    search、策略回测或权重生成。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 政策manifest治理owner/version/rationale/data roles/窗口/return basis/horizon/purge/embargo/safety；clean
+      fixture逐decision date输出三类gross excess return、各资产forward total return、future
+      max drawdown/worst-1d、label interval/available-at和source/DQ commitment；validator重建rows/summary/Markdown并拒绝source/date/return/label/hash/safety
+      tamper；正式BLOCKED产物双构建byte-identical且validator 0 errors；focused/report/reproducibility/contract/architecture
+      PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2012
+    row_sha256: 34e3020323b4100d94b7d4d55d2fdd466a0afa43f88db753a46d0621433f42ac
+    cell_count: 8
+    all_cells:
+    - TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+    - Strategy Style Discovery / decision-target capability audit batch-1 label foundation
+    - P0
+    - BASELINE_DONE
+    - DATA-GOV-001_D0B2B：修复canonical VIX session数据并取得strict PASS；随后strategy research
+      owner按冻结v1政策重建真实labels并复核coverage；development coordinator完成clean-main commit/main集成与旧worktree清理
+    - 详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。第一批policy/source-package/label
+      builder/content-derived validator/中文报告与治理集成已完成；真实`2021-02-22..2026-07-24`运行因`prices_non_market_session_date`
+      fail closed，`panel_materialized=false`。QLD scoped exception不得复用；不训练模型、不做feature/candidate/parameter
+      search、策略回测或权重生成。
+    - 政策manifest治理owner/version/rationale/data roles/窗口/return basis/horizon/purge/embargo/safety；clean
+      fixture逐decision date输出三类gross excess return、各资产forward total return、future
+      max drawdown/worst-1d、label interval/available-at和source/DQ commitment；validator重建rows/summary/Markdown并拒绝source/date/return/label/hash/safety
+      tamper；正式BLOCKED产物双构建byte-identical且validator 0 errors；focused/report/reproducibility/contract/architecture
+      PASS；`production_effect=none`、`broker_action=none`。
+    - 2026-07-26：clean-main集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+      passed / 4 skipped / 643 warnings`；只待commit进入main及旧worktree清理。真实labels继续受canonical
+      DQ阻断，fixture PASS不表示真实数据READY。
+    raw_line: '|TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION|Strategy
+      Style Discovery / decision-target capability audit batch-1 label foundation|P0|BASELINE_DONE|DATA-GOV-001_D0B2B：修复canonical
+      VIX session数据并取得strict PASS；随后strategy research owner按冻结v1政策重建真实labels并复核coverage；development
+      coordinator完成clean-main commit/main集成与旧worktree清理|详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。第一批policy/source-package/label
+      builder/content-derived validator/中文报告与治理集成已完成；真实`2021-02-22..2026-07-24`运行因`prices_non_market_session_date`
+      fail closed，`panel_materialized=false`。QLD scoped exception不得复用；不训练模型、不做feature/candidate/parameter
+      search、策略回测或权重生成。|政策manifest治理owner/version/rationale/data roles/窗口/return basis/horizon/purge/embargo/safety；clean
+      fixture逐decision date输出三类gross excess return、各资产forward total return、future
+      max drawdown/worst-1d、label interval/available-at和source/DQ commitment；validator重建rows/summary/Markdown并拒绝source/date/return/label/hash/safety
+      tamper；正式BLOCKED产物双构建byte-identical且validator 0 errors；focused/report/reproducibility/contract/architecture
+      PASS；`production_effect=none`、`broker_action=none`。|2026-07-26：clean-main集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+      passed / 4 skipped / 643 warnings`；只待commit进入main及旧worktree清理。真实labels继续受canonical
+      DQ阻断，fixture PASS不表示真实数据READY。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-34e3020323b4100d94b7d4d5
+  task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: DATA-GOV-001_D0B2B：修复canonical VIX session数据并取得strict PASS；随后strategy
+      research owner按冻结v1政策重建真实labels并复核coverage；development coordinator完成clean-main
+      commit/main集成与旧worktree清理
+    notes: 2026-07-26：clean-main集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+      passed / 4 skipped / 643 warnings`；只待commit进入main及旧worktree清理。真实labels继续受canonical
+      DQ阻断，fixture PASS不表示真实数据READY。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:34e3020323b4100d94b7d4d55d2fdd466a0afa43f88db753a46d0621433f42ac
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  - Strategy Style Discovery / decision-target capability audit batch-1 label foundation
+  - P0
+  - BASELINE_DONE
+  - DATA-GOV-001_D0B2B：修复canonical VIX session数据并取得strict PASS；随后strategy research
+    owner按冻结v1政策重建真实labels并复核coverage；development coordinator完成clean-main commit/main集成与旧worktree清理
+  - 详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。第一批policy/source-package/label
+    builder/content-derived validator/中文报告与治理集成已完成；真实`2021-02-22..2026-07-24`运行因`prices_non_market_session_date`
+    fail closed，`panel_materialized=false`。QLD scoped exception不得复用；不训练模型、不做feature/candidate/parameter
+    search、策略回测或权重生成。
+  - 政策manifest治理owner/version/rationale/data roles/窗口/return basis/horizon/purge/embargo/safety；clean
+    fixture逐decision date输出三类gross excess return、各资产forward total return、future max
+    drawdown/worst-1d、label interval/available-at和source/DQ commitment；validator重建rows/summary/Markdown并拒绝source/date/return/label/hash/safety
+    tamper；正式BLOCKED产物双构建byte-identical且validator 0 errors；focused/report/reproducibility/contract/architecture
+    PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-07-26：clean-main集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+    passed / 4 skipped / 643 warnings`；只待commit进入main及旧worktree清理。真实labels继续受canonical
+    DQ阻断，fixture PASS不表示真实数据READY。
+  docs_links:
+  - docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+  terminal: false
+  raw_row_sha256: 34e3020323b4100d94b7d4d55d2fdd466a0afa43f88db753a46d0621433f42ac
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6fbfefbb4eaf889a8d6395e8126bd3bd266317afb58adba05e396e46aee059d8

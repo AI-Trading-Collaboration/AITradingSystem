@@ -247,3 +247,22 @@ TRADING-2460及共享architecture/task/report权威文件，不能直接删除�
 `outputs/research_strategies/`根。旧worktree中的contract、architecture和首次失败Full
 runtime artifact也在主工作区存在同路径、同规模副本；删除前仍需逐文件SHA-256复核，
 不能仅以路径或文件数判定等价。
+
+复核结果：旧worktree中的
+`contract-validation_20260725T101417Z`（3 files / 36,373 bytes）、
+`architecture-fitness_20260725T102719Z`（3 files / 40,214 bytes）和
+`full_20260725T103158Z`（4 files / 13,602,396 bytes）已与主工作区同相对路径副本逐文件
+比对SHA-256，三组均byte-identical。旧worktree两个任务专属
+`outputs/research_strategies/`根为空；主工作区对应QLD与label-foundation canonical根分别
+保留12和7个文件。因此旧worktree不再是这些运行证据的唯一副本，但仍须等待代码集成进入
+reviewed main、formal validation通过且无活动进程后才能删除。
+
+clean-main集成formal验证已通过：focused=`100 passed`、Ruff/Black/strict mypy PASS、
+report-validation=`57 passed`、reproducibility=`23 passed`、
+contract-validation=`275 passed`、architecture-fitness=`648 passed`、
+integration=`995 passed`、required Full=`7281 passed / 4 skipped / 643 warnings`，
+Full runtime artifact=
+`outputs/validation_runtime/full_20260725T185736Z/test_runtime_summary.json`。下一步只剩集成
+commit/push进入reviewed main、验证commit ancestry与canonical evidence，然后检查活动进程并
+按exact allowlist移除旧TRADING与临时集成worktree；DEVX-001仍保持`IN_PROGRESS`直到
+OPS-070 runtime满足其独立退出条件。

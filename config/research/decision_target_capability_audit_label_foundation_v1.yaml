@@ -1,0 +1,100 @@
+schema_version: decision_target_capability_audit_policy.v1
+policy_id: decision_target_capability_audit_label_foundation_v1
+version: 1.0.0
+status: OWNER_APPROVED_BATCH1_LABEL_FOUNDATION
+owner: project_owner_and_research_governance
+owner_decision: owner_decision:TRADING-2460:2026-07-25:approve_decision_target_capability_audit_batch1_label_foundation
+rationale: >-
+  在不知道当前输入与分析方式擅长何种策略风格时，先审计系统对不同决策目标的可学习性；
+  第一批只固化无模型、无搜索的未来收益与左尾诊断标签，避免预先把“好策略”定义成系统
+  未必擅长的单一风格。
+intended_effect: >-
+  为后续 Strategy Style Discovery 提供时间可审计、可 purge、可防篡改的 label foundation；
+  本政策不决定特征、模型、策略阈值、仓位或候选家族。
+validation_evidence: >-
+  由 clean fixture、标签恒等式、时间区间、DQ fail-closed、双构建与 tamper tests 覆盖；
+  真实数据只有 canonical strict DQ PASS 后才可产生 READY 结论。
+review_condition: >-
+  第二批开始前复核 target usefulness、label coverage 与 split semantics；任何 target、
+  horizon、return convention、数据质量范围或时间边界变化都必须发布新政策版本。
+research_context:
+  market_regime_id: unified_primary_2021
+  research_window_id: exact_qqq_sgov_tqqq_validated_window
+  requested_start: '2021-02-22'
+  as_of_semantics: runtime_argument
+  historical_seen_only: true
+  prospective_values_allowed: false
+decision_targets:
+  primary:
+    target_id: QQQ_MINUS_SGOV
+    asset: QQQ
+    benchmark: SGOV
+    role: primary_deployment_opportunity_target
+  diagnostics:
+    - target_id: SPY_MINUS_SGOV
+      asset: SPY
+      benchmark: SGOV
+      role: broad_market_risk_premium_control
+    - target_id: QQQ_MINUS_SPY
+      asset: QQQ
+      benchmark: SPY
+      role: nasdaq_relative_selection_control
+  accounting_identity:
+    expression: QQQ_MINUS_SGOV = SPY_MINUS_SGOV + QQQ_MINUS_SPY
+    validation_required: true
+horizons:
+  - horizon_id: 1d
+    sessions: 1
+  - horizon_id: 5d
+    sessions: 5
+  - horizon_id: 10d
+    sessions: 10
+  - horizon_id: 20d
+    sessions: 20
+return_convention:
+  price_field: adj_close
+  return_type: total_return
+  interval: decision_close_to_hth_future_common_session_close
+  label_start: first_future_common_session
+  label_end: hth_future_common_session
+  label_available_on_session: label_end
+risk_diagnostics:
+  per_asset:
+    - future_max_drawdown
+    - future_worst_1d_return
+  assets:
+    - QQQ
+    - SPY
+    - SGOV
+data_quality:
+  policy_id: DATA_QUALITY_CACHE_GATE
+  policy_version: data_quality_cache_gate.v2
+  canonical_full_cache_pass_required: true
+  same_validation_code_path_required: validate_data_cache
+  scoped_exception_allowed: false
+  panel_revalidation_required: true
+  required_tickers:
+    - QQQ
+    - SPY
+    - SGOV
+split_readiness:
+  label_interval_emitted: true
+  label_maturity_gate: label_available_on_session <= training_as_of
+  purge_rule: purge_training_rows_whose_label_interval_overlaps_validation_or_test
+  embargo_policy_status: DEFERRED_TO_NEXT_BATCH
+  embargo_sessions: null
+  ungoverned_numeric_embargo_allowed: false
+safety:
+  research_only: true
+  historical_seen_only: true
+  prospective_values_used: false
+  feature_selection_executed: false
+  model_training_executed: false
+  candidate_search_executed: false
+  strategy_logic_changed: false
+  target_weights_changed: false
+  official_action_universe_changed: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none

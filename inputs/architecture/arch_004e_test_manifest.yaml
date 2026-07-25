@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1186
-test_count: 1127
+test_file_count: 1188
+test_count: 1129
 support_file_count: 59
 orphan_count: 0
 specific_overlap_count: 0
@@ -425,6 +425,23 @@ tests:
   suite: contract-validation
   covered_module_prefixes:
   - src/ai_trading_system/research_quality/
+- test_id: tests.research_strategies.test_decision_target_capability_audit_label_foundation
+  path: tests/research_strategies/test_decision_target_capability_audit_label_foundation.py
+  sha256: a291cf1a31a527edfac7b4c766de3099d8f656e6e11e522056e3eec63c46fbfc
+  file_role: test
+  rule_id: research_strategy_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: research_strategy
+  suite: slow-research-regression
+  covered_module_prefixes:
+  - src/ai_trading_system/research_quality/
+  - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_dynamic_strategy_blocking_gap_remediation_implementation_plan
   path: tests/research_strategies/test_dynamic_strategy_blocking_gap_remediation_implementation_plan.py
   sha256: 48e487d22ebde272ee5b235363b273c56f311e5d77d4417146480e7ade97549b
@@ -2077,6 +2094,23 @@ tests:
 - test_id: tests.research_strategies.test_growth_tilt_valid_until_outcome_hit_rate_study
   path: tests/research_strategies/test_growth_tilt_valid_until_outcome_hit_rate_study.py
   sha256: b7712c84d8d5388e24c2b123002ef1414d88b04f737ce9abc0f3af8f476f8265
+  file_role: test
+  rule_id: research_strategy_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: research_strategy
+  suite: slow-research-regression
+  covered_module_prefixes:
+  - src/ai_trading_system/research_quality/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.research_strategies.test_leveraged_exposure_instrument_evaluation
+  path: tests/research_strategies/test_leveraged_exposure_instrument_evaluation.py
+  sha256: d0fe27e416e445c089bb798cfc5542cecdcd2807eaa5dc7eb809b25b426f54af
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7439,7 +7473,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 355f514b231ba96c1ecac17e6887801cceee2f1fd90d6dc36612f1f23d4ea6a7
+  sha256: e5364be88ccde5a9cd60b8a42f3d80abd4a7e2c0014d9ff4862b0178f5b70c76
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7727,7 +7761,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004f3_reporting_architecture
   path: tests/test_arch_004f3_reporting_architecture.py
-  sha256: 7990a7d8c40ce22df7874b3f640ed50467c81daf91cec2165ef1bb709c93ba27
+  sha256: 0fed00850084b6aec5a3e0b80fe354b3120d77b91007321973d2b8daebffc9b1
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7835,7 +7869,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 9fa81a9185fc6db8790dfa88e6db5773a606c4a162ed6447eb405a692d8ee983
+  sha256: 58772667832bad99c4fbf8ab660aef8901f7f8e699b344f0dbeeb434ef7e154f
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

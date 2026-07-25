@@ -20,6 +20,35 @@ investable_universe:
     - multi_asset_long_only
     - ETF portfolio universe
     - AI satellite universe
+universe_roles:
+  reference_and_regime_control:
+    tickers:
+      - SPY
+      - QQQ
+    action_weight_eligible: false
+    rationale: >-
+      SPY提供broad-market beta与risk-appetite control，QQQ提供Nasdaq growth beta；
+      reference角色不得被解释为可执行权重。
+  current_primary_action_comparator:
+    tickers:
+      - SGOV
+      - QQQ
+      - TQQQ
+    action_weight_eligible: true
+  role_limited_implementation_instruments:
+    tickers:
+      - QLD
+    direct_action_candidate_eligible: false
+    conditional_execution_implementation_eligible: true
+    signal_input_eligible: false
+    independent_strategy_style_eligible: false
+    owner_decision_id: owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument
+    required_upstream_conditions:
+      - independent_trend_model_marks_trusted_nasdaq_uptrend
+      - portfolio_target_qqq_equivalent_exposure_is_near_2x
+      - risk_gate_passes
+    automatic_instrument_selection_allowed: false
+    selector_policy_required_before_automated_use: true
 current_portfolio:
   required_fields:
     - asset
@@ -85,3 +114,10 @@ safety_boundary:
   paper_shadow_change_allowed: false
   broker_action_allowed: false
   order_action_allowed: false
+  spy_reference_role_changes_action_space: false
+  qld_action_universe_change_allowed: false
+  qld_primary_action_universe_change_allowed: false
+  qld_role_limited_2x_implementation_consideration_allowed: true
+  qld_signal_use_allowed: false
+  qld_automatic_exposure_increase_allowed: false
+  qld_automatic_instrument_selection_allowed: false

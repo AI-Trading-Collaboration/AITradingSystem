@@ -177,14 +177,8 @@ ARCH_005S4E_HISTORICAL_PREFIX_SHA256 = (
 ARCH_005S4E_NEW_SOURCE_PATHS = frozenset(
     {
         "config/architecture/arch_005_s4e_checkout_reconciliation.yaml",
-        (
-            "docs/requirements/"
-            "ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md"
-        ),
-        (
-            "docs/requirements/"
-            "DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md"
-        ),
+        ("docs/requirements/" "ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md"),
+        ("docs/requirements/" "DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md"),
         (
             "registry/development_tasks_shadow/active/5f/"
             "5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml"
@@ -194,10 +188,7 @@ ARCH_005S4E_NEW_SOURCE_PATHS = frozenset(
             "ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml"
         ),
         "scripts/architecture_arch005_checkout_reconciliation.py",
-        (
-            "src/ai_trading_system/platform/architecture/"
-            "checkout_reconciliation.py"
-        ),
+        ("src/ai_trading_system/platform/architecture/" "checkout_reconciliation.py"),
         "tests/test_arch_005_s4e_checkout_reconciliation.py",
     }
 )
@@ -210,11 +201,84 @@ ARCH_005S4D_S2_HISTORICAL_PREFIX_SHA256 = (
 )
 ARCH_005S4D_S2_NEW_SOURCE_PATHS = frozenset(
     {
-        (
-            "src/ai_trading_system/platform/architecture/"
-            "checkout_telemetry.py"
-        ),
+        ("src/ai_trading_system/platform/architecture/" "checkout_telemetry.py"),
         "tests/test_arch_005_s4d_checkout_telemetry.py",
+    }
+)
+TRADING_2458_2460_INTEGRATION_SECTION = "phase_trading_2458_2460_clean_main_integration"
+TRADING_2458_2460_INTEGRATION_BASE_COMMIT = "3e58b2c6d74d38e14fe8e8c25e31ada8950eeb0e"
+TRADING_2458_2460_INTEGRATION_BASELINE_GIT_BLOB = "8ca811637e56ad8793250d8bbcb38cfd679cac4d"
+TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT = 1_623_138
+TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_SHA256 = (
+    "41d3dea5743c4f114f525917fa362730195b4cf981a26ec54acaf8021af25a66"
+)
+TRADING_2458_2460_INTEGRATION_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/arch_004_refactor_policy.yaml",
+        "config/report_registry.yaml",
+        "config/research/decision_target_capability_audit_label_foundation_v1.yaml",
+        ("config/research/experiments/" "decision_target_capability_audit_label_foundation.yaml"),
+        ("config/research/experiments/" "leveraged_exposure_instrument_evaluation.yaml"),
+        "config/research/portfolio_decision_problem.yaml",
+        "config/research/protocols/portfolio_decision_problem_v1.yaml",
+        "config/research/strategy_style_discovery_universe_v1.yaml",
+        "docs/artifact_catalog.md",
+        ("docs/requirements/" "DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md"),
+        "docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md",
+        (
+            "docs/requirements/"
+            "TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md"
+        ),
+        ("docs/requirements/" "TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md"),
+        "docs/research/decision_target_capability_audit_label_foundation.md",
+        "docs/research/leveraged_exposure_instrument_evaluation.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        (
+            "registry/development_tasks_shadow/active/18/"
+            "187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/28/"
+            "2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/6d/"
+            "6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/ca/"
+            "ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/fa/"
+            "fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/ec/"
+            "ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml"
+        ),
+        (
+            "src/ai_trading_system/research_framework/plugins/"
+            "decision_target_capability_audit_label_foundation.py"
+        ),
+        (
+            "src/ai_trading_system/research_framework/plugins/"
+            "leveraged_exposure_instrument_evaluation.py"
+        ),
+        "src/ai_trading_system/research_framework/runner.py",
+        ("tests/research_strategies/" "test_decision_target_capability_audit_label_foundation.py"),
+        ("tests/research_strategies/" "test_leveraged_exposure_instrument_evaluation.py"),
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004f3_reporting_architecture.py",
+        "tests/test_arch_004g_deprecation.py",
     }
 )
 OPS_070_NEW_SOURCE_PATHS = frozenset(
@@ -570,9 +634,7 @@ def _arch_005s4e_base_baseline_blob() -> bytes:
 
 @cache
 def _arch_005s4d_s2_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{ARCH_005S4D_S2_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{ARCH_005S4D_S2_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -580,6 +642,25 @@ def _arch_005s4d_s2_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == ARCH_005S4D_S2_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2458_2460_integration_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2458_2460_INTEGRATION_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2458_2460_INTEGRATION_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -824,9 +905,7 @@ def _assert_arch_005s4e_historical_prefix_immutable(
     assert hashlib.sha256(base_blob).hexdigest() == ARCH_005S4E_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:ARCH_005S4E_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, "ARCH-005S4E historical prefix differs from OPS-070"
-    assert hashlib.sha256(historical_prefix).hexdigest() == (
-        ARCH_005S4E_HISTORICAL_PREFIX_SHA256
-    )
+    assert hashlib.sha256(historical_prefix).hexdigest() == (ARCH_005S4E_HISTORICAL_PREFIX_SHA256)
     suffix = current_bytes[ARCH_005S4E_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005S4E_SECTION}:\n".encode()
     assert suffix.startswith(
@@ -840,22 +919,42 @@ def _assert_arch_005s4d_s2_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == ARCH_005S4D_S2_HISTORICAL_PREFIX_BYTE_COUNT
-    assert hashlib.sha256(base_blob).hexdigest() == (
-        ARCH_005S4D_S2_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :ARCH_005S4D_S2_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
-    assert historical_prefix == base_blob, (
-        "ARCH-005S4D S2 historical prefix differs from ARCH-005S4E"
-    )
+    assert hashlib.sha256(base_blob).hexdigest() == (ARCH_005S4D_S2_HISTORICAL_PREFIX_SHA256)
+    historical_prefix = current_bytes[:ARCH_005S4D_S2_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-005S4D S2 historical prefix differs from ARCH-005S4E"
     assert hashlib.sha256(historical_prefix).hexdigest() == (
         ARCH_005S4D_S2_HISTORICAL_PREFIX_SHA256
     )
     suffix = current_bytes[ARCH_005S4D_S2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005S4D_S2_SECTION}:\n".encode()
+    assert suffix.startswith(
+        expected_marker
+    ), "ARCH-005S4D S2 must be appended after the exact ARCH-005S4E baseline blob"
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2458_2460_integration_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, (
+        "TRADING clean-main integration historical prefix differs from " "ARCH-005S4D S2"
+    )
+    assert hashlib.sha256(historical_prefix).hexdigest() == (
+        TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_SHA256
+    )
+    suffix = current_bytes[TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{TRADING_2458_2460_INTEGRATION_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker), (
-        "ARCH-005S4D S2 must be appended after the exact ARCH-005S4E baseline blob"
+        "TRADING clean-main integration must be appended after the exact "
+        "ARCH-005S4D S2 baseline blob"
     )
     assert current_bytes.count(expected_marker) == 1
 
@@ -1315,11 +1414,36 @@ def _arch_005s4d_s2_superseded_live_source_paths() -> frozenset[str]:
 
 
 @cache
-def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
-    return (
-        _arch_005s4e_superseded_live_source_paths()
-        | _arch_005s4d_s2_superseded_live_source_paths()
+def _trading_2458_2460_integration_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2458_2460_integration_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2458_2460_integration_base_baseline_blob(),
     )
+    baseline = _compatibility_baseline()
+    phase = baseline[TRADING_2458_2460_INTEGRATION_SECTION]
+    paths = phase["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2458_2460_integration_source_paths() -> frozenset[str]:
+    baseline = _compatibility_baseline()
+    phase = baseline[TRADING_2458_2460_INTEGRATION_SECTION]
+    sources = phase["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
+    paths = (
+        _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
+    )
+    baseline = _compatibility_baseline()
+    if TRADING_2458_2460_INTEGRATION_SECTION in baseline:
+        paths |= _trading_2458_2460_integration_source_paths()
+    return paths
 
 
 def _raw_source_sha256(source: dict[str, object]) -> str:
@@ -1837,18 +1961,26 @@ def _arch_005s4d_s2_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(ARCH_005S4D_S2_SECTION)
 
 
+@cache
+def _trading_2458_2460_integration_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2458_2460_INTEGRATION_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if ARCH_005S4D_S2_SECTION in baseline:
-        current_superseded_paths = (
-            _arch_005s4d_s2_superseded_live_source_paths()
-        )
-        assert _arch_005s4d_s2_prior_active_source_mismatches() == (
+    if TRADING_2458_2460_INTEGRATION_SECTION in baseline:
+        current_superseded_paths = _trading_2458_2460_integration_superseded_live_source_paths()
+        assert _trading_2458_2460_integration_prior_active_source_mismatches() == (
             current_superseded_paths
         )
+        superseded_paths = _arch_005s4d_s2_all_superseded_live_source_paths()
+        authority_section = TRADING_2458_2460_INTEGRATION_SECTION
+    elif ARCH_005S4D_S2_SECTION in baseline:
+        current_superseded_paths = _arch_005s4d_s2_superseded_live_source_paths()
+        assert _arch_005s4d_s2_prior_active_source_mismatches() == (current_superseded_paths)
         superseded_paths = _arch_005s4d_s2_all_superseded_live_source_paths()
         authority_section = ARCH_005S4D_S2_SECTION
     elif ARCH_005S4E_SECTION in baseline:
@@ -3125,7 +3257,7 @@ def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
 def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority() -> None:
     _assert_current_docs_gov_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     docs_gov = baseline[DOCS_GOV_SECTION]
 
     assert docs_gov["schema_version"] == "docs_gov_001_freshness_closeout.v1"
@@ -3224,7 +3356,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
 def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave12_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     wave12 = baseline[WAVE12_SECTION]
 
     assert wave12["schema_version"] == "arch_004_wave12_g4_d0b_s2_closeout.v1"
@@ -3308,7 +3440,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
 def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> None:
     _assert_current_wave13_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     wave13 = baseline[WAVE13_SECTION]
 
     assert wave13["schema_version"] == "arch_004_wave13_gov006_n1_closeout.v1"
@@ -3567,7 +3699,7 @@ def test_arch_004_wave14_s0_1_is_immutable_historical_hash_authority() -> None:
     section_ids = list(baseline)
     assert section_ids.index(WAVE14_S0_1_SECTION) < section_ids.index(WAVE14_S2_SECTION)
     assert section_ids.index(WAVE14_S2_SECTION) < section_ids.index(OPS_067_SECTION)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     wave14 = baseline[WAVE14_S0_1_SECTION]
 
     assert wave14["schema_version"] == ("arch_004_wave14_s0_1_readiness_infrastructure.v1")
@@ -3683,9 +3815,7 @@ def test_arch_004_wave14_s0_1_is_immutable_historical_hash_authority() -> None:
     superseded = set(wave14["superseded_live_source_paths"])
     observed_live_mismatches = _wave14_s0_1_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
-    assert observed_live_mismatches <= (
-        _arch_005s4d_s2_all_superseded_live_source_paths()
-    )
+    assert observed_live_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert len(superseded) == WAVE14_S0_1_EXPECTED_SUPERSEDED_SOURCE_COUNT
     assert wave14["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE14-S0.1",
@@ -3787,7 +3917,7 @@ def test_arch_004_wave14_s0_1_rejects_historical_prefix_tamper() -> None:
 def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave14_s2_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     wave14 = baseline[WAVE14_S2_SECTION]
 
     status = wave14["status"]
@@ -4074,7 +4204,7 @@ def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
 def test_ops_067_is_append_only_current_hash_authority() -> None:
     _assert_current_ops_067_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     assert list(baseline).index(WAVE14_S2_SECTION) < list(baseline).index(OPS_067_SECTION)
     assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
     ops_067 = baseline[OPS_067_SECTION]
@@ -4255,7 +4385,7 @@ def test_ops_067_rejects_historical_prefix_tamper() -> None:
 def test_ops_068_is_append_only_current_hash_authority() -> None:
     _assert_current_ops_068_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
     ops_068 = baseline[OPS_068_SECTION]
 
@@ -4372,7 +4502,7 @@ def test_ops_068_rejects_historical_prefix_tamper() -> None:
 def test_arch_005s4d_is_append_only_current_hash_authority() -> None:
     _assert_current_arch_005s4d_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     assert list(baseline).index(OPS_068_SECTION) < list(baseline).index(ARCH_005S4D_SECTION)
     phase = baseline[ARCH_005S4D_SECTION]
 
@@ -4410,9 +4540,7 @@ def test_arch_005s4d_is_append_only_current_hash_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     observed_live_mismatches = _arch_005s4d_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
-    assert observed_live_mismatches <= (
-        _arch_005s4d_s2_all_superseded_live_source_paths()
-    )
+    assert observed_live_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "ARCH-005S4D",
         "scope": "EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_DELTA_SOURCES",
@@ -4520,7 +4648,7 @@ def test_arch_005s4d_rejects_historical_prefix_tamper() -> None:
 def test_arch_004_wave15_is_append_only_current_hash_authority() -> None:
     _assert_current_wave15_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     assert list(baseline).index(ARCH_005S4D_SECTION) < list(baseline).index(WAVE15_SECTION)
     phase = baseline[WAVE15_SECTION]
 
@@ -4571,9 +4699,7 @@ def test_arch_004_wave15_is_append_only_current_hash_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     observed_wave15_mismatches = _wave15_prior_active_source_mismatches()
     assert superseded <= observed_wave15_mismatches
-    assert observed_wave15_mismatches <= (
-        _arch_005s4d_s2_all_superseded_live_source_paths()
-    )
+    assert observed_wave15_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "ARCH-004-WAVE15-S3",
         "scope": "EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_DELTA_SOURCES",
@@ -4639,7 +4765,7 @@ def test_arch_004_wave15_is_append_only_current_hash_authority() -> None:
 def test_data_gov_001_d0b2b_is_append_only_current_hash_authority() -> None:
     _assert_current_d0b2b_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     assert list(baseline).index(WAVE15_SECTION) < list(baseline).index(D0B2B_SECTION)
     phase = baseline[D0B2B_SECTION]
 
@@ -4696,9 +4822,7 @@ def test_data_gov_001_d0b2b_is_append_only_current_hash_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     observed_live_mismatches = _d0b2b_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
-    assert observed_live_mismatches <= (
-        _arch_005s4d_s2_all_superseded_live_source_paths()
-    )
+    assert observed_live_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "DATA-GOV-001-D0B2B",
         "scope": "EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_DELTA_SOURCES",
@@ -4783,7 +4907,7 @@ def test_ops_069_is_append_only_current_hash_authority() -> None:
         _ops_069_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     assert list(baseline).index(D0B2B_SECTION) < list(baseline).index(OPS_069_SECTION)
     phase = baseline[OPS_069_SECTION]
 
@@ -4807,9 +4931,7 @@ def test_ops_069_is_append_only_current_hash_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     observed_live_mismatches = _ops_069_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
-    assert observed_live_mismatches <= (
-        _arch_005s4d_s2_all_superseded_live_source_paths()
-    )
+    assert observed_live_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "OPS-069",
         "scope": "EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -4855,7 +4977,7 @@ def test_ops_070_is_append_only_current_hash_authority() -> None:
         _ops_070_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
     assert list(baseline).index(OPS_069_SECTION) < list(baseline).index(OPS_070_SECTION)
     phase = baseline[OPS_070_SECTION]
 
@@ -4879,9 +5001,7 @@ def test_ops_070_is_append_only_current_hash_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     observed_live_mismatches = _ops_070_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
-    assert observed_live_mismatches <= (
-        _arch_005s4d_s2_all_superseded_live_source_paths()
-    )
+    assert observed_live_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "OPS-070",
         "scope": "EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -4899,9 +5019,7 @@ def test_ops_070_is_append_only_current_hash_authority() -> None:
     source_paths = [str(source["path"]) for source in sources]
     assert len(source_paths) == len(set(source_paths))
     assert source_paths == sorted(source_paths, key=str.casefold)
-    assert set(source_paths) == (
-        superseded - removed_live_paths
-    ) | OPS_070_NEW_SOURCE_PATHS
+    assert set(source_paths) == (superseded - removed_live_paths) | OPS_070_NEW_SOURCE_PATHS
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
@@ -4936,10 +5054,8 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         _arch_005s4e_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
-    assert list(baseline).index(OPS_070_SECTION) < list(baseline).index(
-        ARCH_005S4E_SECTION
-    )
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert list(baseline).index(OPS_070_SECTION) < list(baseline).index(ARCH_005S4E_SECTION)
     phase = baseline[ARCH_005S4E_SECTION]
 
     assert phase["schema_version"] == "arch_005_s4e_compatibility_closeout.v1"
@@ -4953,8 +5069,7 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         "ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION",
     ]
     assert phase["owner_decision"] == (
-        "owner_decision:ARCH-005S4E:2026-07-25:"
-        "approve_checkout_handoff_reconciliation_v1"
+        "owner_decision:ARCH-005S4E:2026-07-25:" "approve_checkout_handoff_reconciliation_v1"
     )
     assert phase["prior_sections_immutability"] == {
         "source_commit": ARCH_005S4E_BASE_COMMIT,
@@ -4973,21 +5088,15 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         "target_lineage": "FIRST_PARENT_ONLY",
         "automatic_cleanup_allowed": False,
         "generated_rebuild_owner": "integration-coordinator",
-        "s2_current_main_reconciliation": (
-            "PASS_RECONCILED_MAIN_KNOWN_UNRELATED_EXCLUDED"
-        ),
+        "s2_current_main_reconciliation": ("PASS_RECONCILED_MAIN_KNOWN_UNRELATED_EXCLUDED"),
     }
     assert phase["recovery_audit"] == {
         "source_commit": "fc6313416d78f56a29519f41ca564eaa1f90e8ce",
         "target_commit": "913232c7519ca96a0041ae525b53e9b8e43dc331",
         "preservation_commit": "e45d77158",
         "canonical_restore_commit": "913232c75",
-        "handoff_checksum": (
-            "c14067df6affa0d5cb973435c743aaf300e54ad3d6040c56dec5b744513ee349"
-        ),
-        "report_checksum": (
-            "57ad581a0cc070dfe19908c54289414eef7fc34c362766f95d3dfb6483d18439"
-        ),
+        "handoff_checksum": ("c14067df6affa0d5cb973435c743aaf300e54ad3d6040c56dec5b744513ee349"),
+        "report_checksum": ("57ad581a0cc070dfe19908c54289414eef7fc34c362766f95d3dfb6483d18439"),
         "decision": "READY_FOR_COORDINATOR_RECONCILIATION",
         "exact_target_count": 9,
         "target_history_count": 17,
@@ -5000,16 +5109,12 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         "untracked_paths_removed": 7,
         "automatic_cleanup_allowed": False,
     }
-    assert phase["known_unrelated_exclusions"] == [
-        WAVE14_S2_PROHIBITED_USER_PATH
-    ]
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
 
     superseded = set(phase["superseded_live_source_paths"])
     observed_live_mismatches = _arch_005s4e_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
-    assert observed_live_mismatches <= (
-        _arch_005s4d_s2_all_superseded_live_source_paths()
-    )
+    assert observed_live_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "ARCH-005S4E",
         "scope": "EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -5027,9 +5132,7 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
     source_paths = [str(source["path"]) for source in sources]
     assert len(source_paths) == len(set(source_paths))
     assert source_paths == sorted(source_paths, key=str.casefold)
-    assert set(source_paths) == (
-        superseded - removed_live_paths
-    ) | ARCH_005S4E_NEW_SOURCE_PATHS
+    assert set(source_paths) == (superseded - removed_live_paths) | ARCH_005S4E_NEW_SOURCE_PATHS
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
@@ -5047,12 +5150,8 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         "integration",
         "reproducibility",
     ):
-        assert validation[tier] == "PENDING" or str(validation[tier]).startswith(
-            "PASS_"
-        )
-    assert validation["full"] == "PENDING" or str(validation["full"]).startswith(
-        "PASS_"
-    )
+        assert validation[tier] == "PENDING" or str(validation[tier]).startswith("PASS_")
+    assert validation["full"] == "PENDING" or str(validation["full"]).startswith("PASS_")
     assert phase["safety"] == {
         "automatic_cleanup_allowed": False,
         "automatic_restore_allowed": False,
@@ -5075,9 +5174,10 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
         _arch_005s4d_s2_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005S4D_S2_SECTION
-    assert list(baseline).index(ARCH_005S4E_SECTION) < list(baseline).index(
-        ARCH_005S4D_S2_SECTION
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert list(baseline).index(ARCH_005S4E_SECTION) < list(baseline).index(ARCH_005S4D_S2_SECTION)
+    assert list(baseline).index(ARCH_005S4D_S2_SECTION) < list(baseline).index(
+        TRADING_2458_2460_INTEGRATION_SECTION
     )
     phase = baseline[ARCH_005S4D_S2_SECTION]
 
@@ -5091,8 +5191,7 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
         "ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD",
     ]
     assert phase["owner_decision"] == (
-        "owner_decision:ARCH-005S4D-S2:2026-07-26:"
-        "approve_read_only_telemetry_v1"
+        "owner_decision:ARCH-005S4D-S2:2026-07-26:" "approve_read_only_telemetry_v1"
     )
     assert phase["prior_sections_immutability"] == {
         "source_commit": ARCH_005S4D_S2_BASE_COMMIT,
@@ -5118,9 +5217,7 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
     }
     evidence = phase["telemetry_evidence"]
     assert evidence["observed_batch_count"] in {1, 2}
-    assert evidence["s4c_main_snapshot_id"] == (
-        "checkout-telemetry-18eee4c13adf0b0490dd"
-    )
+    assert evidence["s4c_main_snapshot_id"] == ("checkout-telemetry-18eee4c13adf0b0490dd")
     assert evidence["s4c_main_expected_block_count"] == 7
     assert evidence["s4c_main_confirmed_false_block_count"] == 0
     assert evidence["s4c_main_unreviewed_block_count"] == 0
@@ -5131,7 +5228,9 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
     ]
 
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _arch_005s4d_s2_prior_active_source_mismatches()
+    observed_live_mismatches = _arch_005s4d_s2_prior_active_source_mismatches()
+    assert superseded <= observed_live_mismatches
+    assert observed_live_mismatches <= (_arch_005s4d_s2_all_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "ARCH-005S4D-S2",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -5153,7 +5252,7 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     validation = phase["validation"]
     assert validation["engineering_status"] in {
@@ -5168,9 +5267,7 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
         "reproducibility",
         "full",
     ):
-        assert validation[tier] == "PENDING" or str(validation[tier]).startswith(
-            "PASS_"
-        )
+        assert validation[tier] == "PENDING" or str(validation[tier]).startswith("PASS_")
     assert phase["safety"] == {
         "task_governance_status_mutated": False,
         "automatic_task_mutation": False,
@@ -5188,11 +5285,122 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
     }
 
 
+def test_trading_2458_2460_integration_is_append_only_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    _assert_trading_2458_2460_integration_historical_prefix_immutable(
+        current_bytes,
+        _trading_2458_2460_integration_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    phase = baseline[TRADING_2458_2460_INTEGRATION_SECTION]
+
+    assert phase["schema_version"] == ("trading_2458_2460_clean_main_integration_compatibility.v1")
+    assert phase["status"] in {
+        "VALIDATING_TRADING_2458_2460_CLEAN_MAIN_INTEGRATION",
+        "COMPLETE_TRADING_2458_2460_CLEAN_MAIN_INTEGRATION",
+    }
+    assert phase["boundary_id"] == "TRADING-2458-2460-CLEAN-MAIN-INTEGRATION"
+    assert phase["task_ids"] == [
+        "TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC",
+        "TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE",
+        "TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION",
+        "DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP",
+    ]
+    assert phase["owner_authorization"] == (
+        "owner_authorization:DEVX-001:2026-07-26:"
+        "process_three_existing_worktrees_in_recommended_order"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2458_2460_INTEGRATION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2458_2460_INTEGRATION_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["implementation"] == {
+        "source_checkpoint_commit": "95a26bcac",
+        "source_worktree": ("D:\\Work\\AITradingSystem-TRADING-2459-style-discovery"),
+        "integration_worktree": ("D:\\Work\\AITradingSystem_trading2459_integration_20260726"),
+        "integration_branch": "codex/trading-2458-2460-integration",
+        "clean_main_replay": True,
+        "generated_authority_rebuilt": True,
+        "runtime_evidence_sha256_verified": True,
+        "old_runtime_artifact_group_count": 3,
+        "old_runtime_artifact_byte_identical": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [
+        WAVE14_S2_PROHIBITED_USER_PATH,
+    ]
+
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == (_trading_2458_2460_integration_prior_active_source_mismatches())
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2458-2460-CLEAN-MAIN-INTEGRATION",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": ARCH_005S4D_S2_SECTION,
+        "current_hash_authority": (f"{TRADING_2458_2460_INTEGRATION_SECTION}.sources"),
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["source_delta_paths"]) == superseded
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2458_2460_INTEGRATION_SOURCE_PATHS - superseded
+    )
+
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == TRADING_2458_2460_INTEGRATION_SOURCE_PATHS
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    validation = phase["validation"]
+    assert validation["engineering_status"] in {
+        "PENDING_FORMAL_CLOSEOUT",
+        "FORMAL_VALIDATION_PASS",
+    }
+    for tier in (
+        "focused",
+        "architecture_fitness",
+        "contract_validation",
+        "report_validation",
+        "reproducibility",
+        "full",
+    ):
+        assert validation[tier] == "PENDING" or str(validation[tier]).startswith("PASS_")
+    assert phase["safety"] == {
+        "research_only": True,
+        "historical_seen_only": True,
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "official_target_weights_changed": False,
+        "automatic_execution_allowed": False,
+        "paper_shadow_changed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2458_2460_integration_rejects_historical_prefix_tamper() -> None:
+    base_blob = _trading_2458_2460_integration_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError):
+        _assert_trading_2458_2460_integration_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
 def test_arch_005s4d_s2_rejects_historical_prefix_tamper() -> None:
     base_blob = _arch_005s4d_s2_base_baseline_blob()
-    valid_append = (
-        base_blob + f"\n{ARCH_005S4D_S2_SECTION}:\n  status: TEST_ONLY\n".encode()
-    )
+    valid_append = base_blob + f"\n{ARCH_005S4D_S2_SECTION}:\n  status: TEST_ONLY\n".encode()
     _assert_arch_005s4d_s2_historical_prefix_immutable(valid_append, base_blob)
 
     tampered = bytearray(valid_append)
@@ -5206,9 +5414,7 @@ def test_arch_005s4d_s2_rejects_historical_prefix_tamper() -> None:
 
 def test_arch_005s4e_rejects_historical_prefix_tamper() -> None:
     base_blob = _arch_005s4e_base_baseline_blob()
-    valid_append = (
-        base_blob + f"\n{ARCH_005S4E_SECTION}:\n  status: TEST_ONLY\n".encode()
-    )
+    valid_append = base_blob + f"\n{ARCH_005S4E_SECTION}:\n  status: TEST_ONLY\n".encode()
     _assert_arch_005s4e_historical_prefix_immutable(valid_append, base_blob)
 
     tampered = bytearray(valid_append)

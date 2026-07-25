@@ -1,0 +1,97 @@
+schema_version: experiment_spec.v1
+experiment_id: leveraged_exposure_instrument_evaluation
+spec_version: leveraged_exposure_instrument_evaluation.experiment.v2
+status: owner_approved_role_limited_2x_implementation
+owner: research_governance
+task_register_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+calculator_plugin:
+  plugin_id: leveraged_exposure_instrument_calculator
+  version: v2
+report_plugin:
+  plugin_id: leveraged_exposure_instrument_report
+  version: v2
+inputs:
+  - input_id: universe_policy
+    document_kind: structured
+    role: preregistered_universe_and_decision_policy
+    required: true
+    default_path: config/research/strategy_style_discovery_universe_v1.yaml
+  - input_id: instrument_panel_package
+    document_kind: structured
+    role: isolated_content_addressed_price_panel_and_data_quality_evidence
+    required: true
+    default_path: outputs/research_strategies/leveraged_exposure_instrument_evaluation/source/instrument_panel_package.json
+  - input_id: transaction_cost_policy
+    document_kind: structured
+    role: governed_transaction_cost_model
+    required: true
+    default_path: config/research/transaction_cost_model.yaml
+  - input_id: data_quality_policy
+    document_kind: structured
+    role: governed_data_quality_validation_policy
+    required: true
+    default_path: config/data_quality.yaml
+  - input_id: requirement_text
+    document_kind: text
+    role: owner_decision_and_interpretation_boundary
+    required: true
+    default_path: docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+outputs:
+  - output_id: primary
+    artifact_kind: primary_json
+    root: output
+    filename: leveraged_exposure_instrument_evaluation.json
+    artifact_path_key: json_path
+  - output_id: instrument_evaluation_summary
+    artifact_kind: section_json
+    root: output
+    filename: leveraged_exposure_instrument_evaluation_summary.json
+    artifact_path_key: summary_path
+    payload_key: instrument_evaluation_summary
+    section_report_type: leveraged_exposure_instrument_evaluation_summary
+  - output_id: reader_markdown
+    artifact_kind: markdown
+    root: docs
+    filename: leveraged_exposure_instrument_evaluation.md
+    artifact_path_key: markdown_path
+  - output_id: envelope
+    artifact_kind: envelope_json
+    root: output
+    filename: leveraged_exposure_instrument_evaluation.envelope.json
+  - output_id: run_ledger
+    artifact_kind: run_ledger_json
+    root: output
+    filename: leveraged_exposure_instrument_evaluation.run_ledger.json
+legacy_status_mappings:
+  - legacy_status: QLD_ELIGIBLE_FOR_OWNER_ACTION_UNIVERSE_REVIEW
+    canonical_status: PASS
+  - legacy_status: QLD_NO_INCREMENTAL_IMPLEMENTATION_VALUE
+    canonical_status: PASS
+  - legacy_status: QLD_MIXED_EVIDENCE_KEEP_RESEARCH_ONLY
+    canonical_status: PASS
+  - legacy_status: BLOCKED_DATA_QUALITY_OR_COVERAGE
+    canonical_status: BLOCKED
+report:
+  report_id: leveraged_exposure_instrument_evaluation
+  title: Leveraged Exposure Instrument Evaluation
+  audience: researcher
+  reader_tier: research_review_pack
+  cadence: manual
+  canonical_source: ai_trading_system.research_framework.plugins.leveraged_exposure_instrument_evaluation:build_evaluation_payload
+  section_provider: ai_trading_system.research_framework.plugins.leveraged_exposure_instrument_evaluation:instrument_evaluation_summary
+  view_model: ai_trading_system.research_framework.plugins.leveraged_exposure_instrument_evaluation:leveraged_exposure_instrument_view_model
+  renderer: ai_trading_system.research_framework.plugins.leveraged_exposure_instrument_evaluation:render_evaluation_markdown
+  artifact_globs:
+    - outputs/research_strategies/leveraged_exposure_instrument_evaluation/leveraged_exposure_instrument_evaluation.json
+    - outputs/research_strategies/leveraged_exposure_instrument_evaluation/leveraged_exposure_instrument_evaluation_summary.json
+    - docs/research/leveraged_exposure_instrument_evaluation.md
+  freshness_sla_days: 0
+  owner_action: govern_forward_shadow_and_non_automatic_implementation_selector
+  actionable: false
+  lifecycle: CURRENT
+strict_default: true
+data_quality_required: true
+investment_facing_envelope: false
+manual_review_required: true
+production_effect: none
+broker_action: none

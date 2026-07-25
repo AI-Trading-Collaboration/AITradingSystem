@@ -20889,6 +20889,80 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: leveraged_exposure_instrument_evaluation
+    title: QLD Incremental Instrument Value Evaluation and Role Disposition
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: research_framework.run_experiment
+    artifact_globs:
+      - config/research/strategy_style_discovery_universe_v1.yaml
+      - config/research/experiments/leveraged_exposure_instrument_evaluation.yaml
+      - docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+      - outputs/research_strategies/leveraged_exposure_instrument_evaluation/source/instrument_panel_package.json
+      - outputs/research_strategies/leveraged_exposure_instrument_evaluation/leveraged_exposure_instrument_evaluation.json
+      - outputs/research_strategies/leveraged_exposure_instrument_evaluation/leveraged_exposure_instrument_evaluation_summary.json
+      - outputs/research_strategies/leveraged_exposure_instrument_evaluation/leveraged_exposure_instrument_evaluation.envelope.json
+      - outputs/research_strategies/leveraged_exposure_instrument_evaluation/leveraged_exposure_instrument_evaluation.run_ledger.json
+      - docs/research/leveraged_exposure_instrument_evaluation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 0
+    freshness_rationale: >-
+      TRADING-2459 freezes the 2021-02-22..2026-07-21 historical-seen window,
+      three fixed 2x implementations, four cadences, transaction-cost policy and
+      exact Pareto mapping. The owner-approved scoped five-asset DQ exception
+      excludes the unrelated canonical ^VIX blocker but remains explicit:
+      scoped status is PASS_WITH_WARNINGS while canonical full-cache status is
+      FAIL. ProShares official notices explain the two QLD split warnings.
+      The mechanical artifact remains historical-seen rather than unbiased OOS.
+      Owner subsequently approved QLD only as a role-limited 2x implementation
+      instrument after independent trend, target-exposure and risk decisions;
+      primary action assets, signals, weights and automatic execution do not change.
+    owner_action: >-
+      govern forward shadow, near-2x tolerance, risk binding, implementation selector
+      and exit rules before any automatic or production use
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
+  - report_id: decision_target_capability_audit_label_foundation
+    title: Decision Target Capability Audit Batch 1 Label Foundation
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: research_framework.run_experiment
+    artifact_globs:
+      - config/research/decision_target_capability_audit_label_foundation_v1.yaml
+      - config/research/experiments/decision_target_capability_audit_label_foundation.yaml
+      - docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/source/market_panel_package.json
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation.json
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation_summary.json
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation.envelope.json
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation.run_ledger.json
+      - docs/research/decision_target_capability_audit_label_foundation.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 0
+    freshness_rationale: >-
+      TRADING-2460 Batch 1 freezes QQQ-minus-SGOV as the primary target,
+      SPY-minus-SGOV and QQQ-minus-SPY as diagnostic decomposition controls,
+      and 1/5/10/20 common-session horizons. Rows expose decision, label-start,
+      label-end and availability dates plus adjusted-close total return and
+      future-path left-tail diagnostics. Canonical full-cache strict DQ is
+      mandatory; the QLD scoped exception is not reusable. Until canonical DQ
+      passes, the real run remains BLOCKED while clean fixtures validate label
+      semantics and content-derived tamper detection. No model, feature
+      selection, strategy search, backtest, target weight or action-universe
+      mutation occurs.
+    owner_action: resolve_canonical_data_quality_then_review_label_coverage
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_baseline_capability_graph
     title: Growth Tilt Baseline Capability Graph
     group: research

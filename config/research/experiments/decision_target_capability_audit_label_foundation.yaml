@@ -1,0 +1,88 @@
+schema_version: experiment_spec.v1
+experiment_id: decision_target_capability_audit_label_foundation
+spec_version: decision_target_capability_audit_label_foundation.experiment.v1
+status: owner_approved_batch1_label_foundation
+owner: research_governance
+task_register_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+calculator_plugin:
+  plugin_id: decision_target_label_foundation_calculator
+  version: v1
+report_plugin:
+  plugin_id: decision_target_label_foundation_report
+  version: v1
+inputs:
+  - input_id: label_policy
+    document_kind: structured
+    role: preregistered_decision_target_and_label_policy
+    required: true
+    default_path: config/research/decision_target_capability_audit_label_foundation_v1.yaml
+  - input_id: market_panel_package
+    document_kind: structured
+    role: canonical_dq_gated_content_addressed_market_panel
+    required: true
+    default_path: outputs/research_strategies/decision_target_capability_audit_label_foundation/source/market_panel_package.json
+  - input_id: data_quality_policy
+    document_kind: structured
+    role: governed_data_quality_validation_policy
+    required: true
+    default_path: config/data_quality.yaml
+  - input_id: requirement_text
+    document_kind: text
+    role: owner_decision_and_interpretation_boundary
+    required: true
+    default_path: docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+outputs:
+  - output_id: primary
+    artifact_kind: primary_json
+    root: output
+    filename: decision_target_capability_audit_label_foundation.json
+    artifact_path_key: json_path
+  - output_id: label_foundation_summary
+    artifact_kind: section_json
+    root: output
+    filename: decision_target_capability_audit_label_foundation_summary.json
+    artifact_path_key: summary_path
+    payload_key: label_foundation_summary
+    section_report_type: decision_target_capability_audit_label_foundation_summary
+  - output_id: reader_markdown
+    artifact_kind: markdown
+    root: docs
+    filename: decision_target_capability_audit_label_foundation.md
+    artifact_path_key: markdown_path
+  - output_id: envelope
+    artifact_kind: envelope_json
+    root: output
+    filename: decision_target_capability_audit_label_foundation.envelope.json
+  - output_id: run_ledger
+    artifact_kind: run_ledger_json
+    root: output
+    filename: decision_target_capability_audit_label_foundation.run_ledger.json
+legacy_status_mappings:
+  - legacy_status: LABEL_FOUNDATION_READY
+    canonical_status: PASS
+  - legacy_status: BLOCKED_DATA_QUALITY_OR_SOURCE
+    canonical_status: BLOCKED
+report:
+  report_id: decision_target_capability_audit_label_foundation
+  title: Decision Target Capability Audit Label Foundation
+  audience: researcher
+  reader_tier: research_review_pack
+  cadence: manual
+  canonical_source: ai_trading_system.research_framework.plugins.decision_target_capability_audit_label_foundation:build_label_payload
+  section_provider: ai_trading_system.research_framework.plugins.decision_target_capability_audit_label_foundation:label_foundation_summary
+  view_model: ai_trading_system.research_framework.plugins.decision_target_capability_audit_label_foundation:decision_target_label_view_model
+  renderer: ai_trading_system.research_framework.plugins.decision_target_capability_audit_label_foundation:render_label_markdown
+  artifact_globs:
+    - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation.json
+    - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation_summary.json
+    - docs/research/decision_target_capability_audit_label_foundation.md
+  freshness_sla_days: 0
+  owner_action: resolve_canonical_data_quality_then_review_label_foundation
+  actionable: false
+  lifecycle: CURRENT
+strict_default: true
+data_quality_required: true
+investment_facing_envelope: false
+manual_review_required: true
+production_effect: none
+broker_action: none

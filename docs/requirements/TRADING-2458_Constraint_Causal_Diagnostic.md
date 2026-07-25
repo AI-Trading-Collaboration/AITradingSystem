@@ -2,12 +2,33 @@
 
 最后更新：2026-07-25
 
-状态：`BASELINE_DONE_OWNER_DECISION_PENDING`
+状态：`IN_PROGRESS_OWNER_APPROVED_FAMILY_RETIREMENT`
 
 稳定任务 ID：`TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC`
 
 Owner 决策：
-`owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`
+
+- `owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`
+- `owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family`
+
+## Owner 正式退役决定
+
+Owner 已批准正式退役 TRADING-2452 冻结的当前 candidate family：四个既有 template、
+七个 candidate axis 和由其生成的 300-candidate universe 不再允许继续单轴调参、候选扩张、
+selection、watchlist、promotion 或 production 复用。
+
+该决定：
+
+- 保留 TRADING-2452 package、TRADING-2453 diagnosis 与本任务全部 artifact 作为 immutable
+  historical evidence，不改写原 bytes、hash 或机械结论；
+- 不退役通用 research framework、`equal_risk_qqq_sgov` forward-aging 或 QLD 的
+  role-limited implementation 角色；
+- 不批准新 hypothesis/generator，不批准修改现有 constraint gate，也不访问 prospective；
+- 任何后续 family 必须使用新 family/package id、独立预注册、无污染 selection protocol 和新的
+  Owner 决策，不能继承本 family 的 active/selectable 身份。
+
+退役治理状态、consumer fail-closed 边界与验证将在同一任务后续变更中收口；在此之前，原
+package 已保持 closed，不能因状态落实尚未完成而恢复研究或执行资格。
 
 ## 背景与授权上下文
 
@@ -103,6 +124,17 @@ row count、candidate identity、fold 或 TRADING-2453 重算事实漂移，诊�
 
 ## 进展记录
 
+- 2026-07-26：clean-main集成formal closeout通过：focused=`100 passed`、
+  report-validation=`57 passed`、reproducibility=`23 passed`、
+  contract-validation=`275 passed`、architecture-fitness=`648 passed`、
+  integration=`995 passed`、Full=`7281 passed / 4 skipped / 643 warnings`；
+  Full artifact=`outputs/validation_runtime/full_20260725T185736Z/test_runtime_summary.json`。
+  该工程交付不改变本任务`IN_PROGRESS`的退役治理责任，也不授权新family或生产行为。
+- 2026-07-26：旧TRADING worktree的37项在途内容已形成仅本地取证快照
+  `95a26bcac`，并从reviewed main=`3e58b2c6d`重放到
+  `codex/trading-2458-2460-integration`。本步骤只完成证据与治理内容的clean-main集成，
+  不把Owner批准的family退役自动扩张为新generator、gate、prospective、paper-shadow、
+  production或broker授权；当前等待重新生成共享authority及required Full。
 - 2026-07-25：formal exit完成，随Wave15通过combined/architecture/contract/report/reproducibility
   与failure-fix Full=`7180 passed / 3 skipped / 643 warnings`。诊断结论保持
   `RETIRE_CURRENT_FAMILY`，但该动作未自动执行；下一责任方为project owner，决定是否批准退役

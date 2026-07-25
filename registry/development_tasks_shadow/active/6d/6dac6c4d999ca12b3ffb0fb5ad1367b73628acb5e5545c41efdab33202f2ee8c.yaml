@@ -1,0 +1,128 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  title: null
+  domain: Strategy research / SPY reference adoption and QLD incremental action-universe
+    evaluation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy research owner：治理可信趋势、near-2x数值容差、risk-gate binding、非自动implementation
+    selector、forward-shadow验收及去杠杆/退出规则；D0B2B strict PASS后按同政策重跑；development coordinator完成clean-main
+    commit/main集成与旧worktree清理
+  requirement_refs:
+  - docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地：独立趋势模型与风险门先决定目标QQQ-equivalent
+    exposure；只有目标接近2x时执行层才可考虑QLD。QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由；本决定不直接生成weights、paper-shadow、production或broker
+    action。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 政策manifest和portfolio decision contract已区分primary action assets、role-limited
+      implementation instruments与signal inputs；QLD只在independent trend/risk/exposure
+      decision之后参与执行实现比较；不得按本次历史收益切换；scoped DQ/lineage、v2双构建、tamper和角色边界focused验证PASS；official
+      target weights、paper-shadow、production和broker保持不变。剩余治理完成且forward shadow通过后，仍须额外Owner决定才能开放自动或生产使用。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2006
+    row_sha256: d95241145d439319a22b4628af656ef2d6c6eae321ddad31be9dd2020342d693
+    cell_count: 8
+    all_cells:
+    - TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+    - Strategy research / SPY reference adoption and QLD incremental action-universe
+      evaluation
+    - P0
+    - BASELINE_DONE
+    - strategy research owner：治理可信趋势、near-2x数值容差、risk-gate binding、非自动implementation
+      selector、forward-shadow验收及去杠杆/退出规则；D0B2B strict PASS后按同政策重跑；development coordinator完成clean-main
+      commit/main集成与旧worktree清理
+    - 详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地：独立趋势模型与风险门先决定目标QQQ-equivalent
+      exposure；只有目标接近2x时执行层才可考虑QLD。QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由；本决定不直接生成weights、paper-shadow、production或broker
+      action。
+    - 政策manifest和portfolio decision contract已区分primary action assets、role-limited
+      implementation instruments与signal inputs；QLD只在independent trend/risk/exposure
+      decision之后参与执行实现比较；不得按本次历史收益切换；scoped DQ/lineage、v2双构建、tamper和角色边界focused验证PASS；official
+      target weights、paper-shadow、production和broker保持不变。剩余治理完成且forward shadow通过后，仍须额外Owner决定才能开放自动或生产使用。
+    - 2026-07-26：37项在途内容已从reviewed main重放并以append-only compatibility authority收口；focused=`100`、Ruff/Black/strict
+      mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及required
+      Full=`7281 passed / 4 skipped / 643 warnings`全部PASS。canonical full-cache仍因31条`^VIX`
+      non-session行FAIL；例外不供其他consumer复用，D0B2B strict PASS后必须重跑。当前只待commit进入main及旧worktree清理。
+    raw_line: '|TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE|Strategy research
+      / SPY reference adoption and QLD incremental action-universe evaluation|P0|BASELINE_DONE|strategy
+      research owner：治理可信趋势、near-2x数值容差、risk-gate binding、非自动implementation selector、forward-shadow验收及去杠杆/退出规则；D0B2B
+      strict PASS后按同政策重跑；development coordinator完成clean-main commit/main集成与旧worktree清理|详见
+      `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地：独立趋势模型与风险门先决定目标QQQ-equivalent
+      exposure；只有目标接近2x时执行层才可考虑QLD。QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由；本决定不直接生成weights、paper-shadow、production或broker
+      action。|政策manifest和portfolio decision contract已区分primary action assets、role-limited
+      implementation instruments与signal inputs；QLD只在independent trend/risk/exposure
+      decision之后参与执行实现比较；不得按本次历史收益切换；scoped DQ/lineage、v2双构建、tamper和角色边界focused验证PASS；official
+      target weights、paper-shadow、production和broker保持不变。剩余治理完成且forward shadow通过后，仍须额外Owner决定才能开放自动或生产使用。|2026-07-26：37项在途内容已从reviewed
+      main重放并以append-only compatibility authority收口；focused=`100`、Ruff/Black/strict
+      mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及required
+      Full=`7281 passed / 4 skipped / 643 warnings`全部PASS。canonical full-cache仍因31条`^VIX`
+      non-session行FAIL；例外不供其他consumer复用，D0B2B strict PASS后必须重跑。当前只待commit进入main及旧worktree清理。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d95241145d439319a22b4628
+  task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: strategy research owner：治理可信趋势、near-2x数值容差、risk-gate binding、非自动implementation
+      selector、forward-shadow验收及去杠杆/退出规则；D0B2B strict PASS后按同政策重跑；development coordinator完成clean-main
+      commit/main集成与旧worktree清理
+    notes: 2026-07-26：37项在途内容已从reviewed main重放并以append-only compatibility authority收口；focused=`100`、Ruff/Black/strict
+      mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及required
+      Full=`7281 passed / 4 skipped / 643 warnings`全部PASS。canonical full-cache仍因31条`^VIX`
+      non-session行FAIL；例外不供其他consumer复用，D0B2B strict PASS后必须重跑。当前只待commit进入main及旧worktree清理。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:d95241145d439319a22b4628af656ef2d6c6eae321ddad31be9dd2020342d693
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  - Strategy research / SPY reference adoption and QLD incremental action-universe
+    evaluation
+  - P0
+  - BASELINE_DONE
+  - strategy research owner：治理可信趋势、near-2x数值容差、risk-gate binding、非自动implementation
+    selector、forward-shadow验收及去杠杆/退出规则；D0B2B strict PASS后按同政策重跑；development coordinator完成clean-main
+    commit/main集成与旧worktree清理
+  - 详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地：独立趋势模型与风险门先决定目标QQQ-equivalent
+    exposure；只有目标接近2x时执行层才可考虑QLD。QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由；本决定不直接生成weights、paper-shadow、production或broker
+    action。
+  - 政策manifest和portfolio decision contract已区分primary action assets、role-limited implementation
+    instruments与signal inputs；QLD只在independent trend/risk/exposure decision之后参与执行实现比较；不得按本次历史收益切换；scoped
+    DQ/lineage、v2双构建、tamper和角色边界focused验证PASS；official target weights、paper-shadow、production和broker保持不变。剩余治理完成且forward
+    shadow通过后，仍须额外Owner决定才能开放自动或生产使用。
+  - 2026-07-26：37项在途内容已从reviewed main重放并以append-only compatibility authority收口；focused=`100`、Ruff/Black/strict
+    mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及required
+    Full=`7281 passed / 4 skipped / 643 warnings`全部PASS。canonical full-cache仍因31条`^VIX`
+    non-session行FAIL；例外不供其他consumer复用，D0B2B strict PASS后必须重跑。当前只待commit进入main及旧worktree清理。
+  docs_links:
+  - docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+  terminal: false
+  raw_row_sha256: d95241145d439319a22b4628af656ef2d6c6eae321ddad31be9dd2020342d693
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e94a1c75f1f44eda6a5e8930cb8e5d2b1b44ca7cbf8c8b3c24b8669b00b455d5

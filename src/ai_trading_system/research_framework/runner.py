@@ -14,6 +14,7 @@ from ai_trading_system.contracts import (
     ArtifactPointer,
     ArtifactVisibility,
     CanonicalStatus,
+    DataQualityEvidence,
     EntrypointRef,
     PolicyRef,
     PolicyRole,
@@ -116,6 +117,10 @@ def run_experiment(
     )
 
     canonical_status = spec.canonical_status(str(payload.get("status") or ""))
+    data_quality = _data_quality_evidence(
+        payload,
+        required=spec.data_quality_required,
+    )
     envelope = _build_envelope(
         spec=spec,
         resolved_spec=resolved_spec,
@@ -125,6 +130,7 @@ def run_experiment(
         generated_at=generated_at,
         as_of=request.as_of,
         canonical_status=canonical_status,
+        data_quality=data_quality,
     )
     envelope_output = spec.output(OutputArtifactKind.ENVELOPE_JSON)
     write_json_atomic(output_paths[envelope_output.output_id], envelope.to_dict())
@@ -135,6 +141,7 @@ def run_experiment(
         generated_at=generated_at,
         as_of=request.as_of,
         canonical_status=canonical_status,
+        data_quality=data_quality,
     )
     ledger_output = spec.output(OutputArtifactKind.RUN_LEDGER_JSON)
     write_json_atomic(output_paths[ledger_output.output_id], ledger.to_dict())
@@ -262,6 +269,7 @@ def _build_envelope(
     generated_at: datetime,
     as_of: date,
     canonical_status: CanonicalStatus,
+    data_quality: DataQualityEvidence | None,
 ) -> ArtifactEnvelope:
     policy = resolved_spec.reference
     return ArtifactEnvelope(
@@ -278,6 +286,7 @@ def _build_envelope(
         visibility=ArtifactVisibility.RESEARCH,
         investment_facing=spec.investment_facing_envelope,
         data_quality_required=spec.data_quality_required,
+        data_quality=data_quality,
         input_artifacts=tuple(_source_pointer(item) for item in source_artifacts),
         policy_refs=(
             PolicyRef(
@@ -289,7 +298,11 @@ def _build_envelope(
                 sha256=policy.sha256,
             ),
         ),
-        limitations=("data_quality_not_applicable_governance_artifact_closure_only",),
+        limitations=(
+            ()
+            if data_quality is not None
+            else ("data_quality_not_applicable_governance_artifact_closure_only",)
+        ),
         next_actions=(str(payload.get("next_route") or "manual_review"),),
     )
 
@@ -302,6 +315,7 @@ def _build_ledger(
     generated_at: datetime,
     as_of: date,
     canonical_status: CanonicalStatus,
+    data_quality: DataQualityEvidence | None,
 ) -> RunLedger:
     step = WorkflowStepSpec(
         step_id="evaluate_and_render",
@@ -347,10 +361,26 @@ def _build_ledger(
             CanonicalStatus.PASS,
             at=generated_at,
             artifacts=(pointer,),
+            data_quality=data_quality,
         )
     else:
         raise ValueError(f"unsupported reference experiment terminal status: {canonical_status}")
     return ledger.with_entry(workflow, entry)
+
+
+def _data_quality_evidence(
+    payload: Mapping[str, Any],
+    *,
+    required: bool,
+) -> DataQualityEvidence | None:
+    raw = payload.get("data_quality_evidence")
+    if raw is None:
+        if required:
+            raise ValueError("data_quality_evidence is required by experiment spec")
+        return None
+    if not isinstance(raw, Mapping):
+        raise ValueError("data_quality_evidence must be a mapping")
+    return DataQualityEvidence.from_dict(raw)
 
 
 def _source_artifact_record(path: Path) -> dict[str, object]:

@@ -25739,3 +25739,243 @@ phase_arch_005_s4d_s2_read_only_telemetry:
     strategy_threshold_changed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2458_2460_clean_main_integration:
+  schema_version: trading_2458_2460_clean_main_integration_compatibility.v1
+  status: COMPLETE_TRADING_2458_2460_CLEAN_MAIN_INTEGRATION
+  boundary_id: TRADING-2458-2460-CLEAN-MAIN-INTEGRATION
+  task_ids:
+  - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+  - TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  - TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  owner_authorization: owner_authorization:DEVX-001:2026-07-26:process_three_existing_worktrees_in_recommended_order
+  prior_sections_immutability:
+    source_commit: 3e58b2c6d74d38e14fe8e8c25e31ada8950eeb0e
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 8ca811637e56ad8793250d8bbcb38cfd679cac4d
+    raw_byte_count: 1623138
+    raw_sha256: 41d3dea5743c4f114f525917fa362730195b4cf981a26ec54acaf8021af25a66
+    append_offset: 1623138
+    current_section_must_be_eof: true
+  implementation:
+    source_checkpoint_commit: 95a26bcac
+    source_worktree: D:\Work\AITradingSystem-TRADING-2459-style-discovery
+    integration_worktree: D:\Work\AITradingSystem_trading2459_integration_20260726
+    integration_branch: codex/trading-2458-2460-integration
+    clean_main_replay: true
+    generated_authority_rebuilt: true
+    runtime_evidence_sha256_verified: true
+    old_runtime_artifact_group_count: 3
+    old_runtime_artifact_byte_identical: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/architecture/arch_004_refactor_policy.yaml
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - src/ai_trading_system/research_framework/runner.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2458-2460-CLEAN-MAIN-INTEGRATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_005_s4d_s2_read_only_telemetry
+    current_hash_authority: phase_trading_2458_2460_clean_main_integration.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - config/architecture/arch_004_refactor_policy.yaml
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - src/ai_trading_system/research_framework/runner.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  new_source_paths:
+  - config/research/decision_target_capability_audit_label_foundation_v1.yaml
+  - config/research/experiments/decision_target_capability_audit_label_foundation.yaml
+  - config/research/experiments/leveraged_exposure_instrument_evaluation.yaml
+  - config/research/portfolio_decision_problem.yaml
+  - config/research/protocols/portfolio_decision_problem_v1.yaml
+  - config/research/strategy_style_discovery_universe_v1.yaml
+  - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+  - docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+  - docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+  - docs/research/decision_target_capability_audit_label_foundation.md
+  - docs/research/leveraged_exposure_instrument_evaluation.md
+  - registry/development_tasks_shadow/active/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - src/ai_trading_system/research_framework/plugins/decision_target_capability_audit_label_foundation.py
+  - src/ai_trading_system/research_framework/plugins/leveraged_exposure_instrument_evaluation.py
+  - tests/research_strategies/test_decision_target_capability_audit_label_foundation.py
+  - tests/research_strategies/test_leveraged_exposure_instrument_evaluation.py
+  sources:
+  - path: config/architecture/arch_004_refactor_policy.yaml
+    sha256: cb0b47bc3019783498ee34c70cf2c0d40b7c5ef99ca27139eac5b20a66d791ae
+    hash_normalization: git_eol_lf
+  - path: config/report_registry.yaml
+    sha256: 9168ac779536b9bf0721b974b3ac8330174b44d1458fb71c02ec8ab95f52371b
+    hash_normalization: git_eol_lf
+  - path: config/research/decision_target_capability_audit_label_foundation_v1.yaml
+    sha256: 85d79e308900b9ee43ffd15d6eb5968acad412875ccbaa9561f39cc59699c836
+    hash_normalization: git_eol_lf
+  - path: config/research/experiments/decision_target_capability_audit_label_foundation.yaml
+    sha256: 98c9fb30cb53710a811c5084b5ff1838f1fcf6e47b033dc81759422427fb7028
+    hash_normalization: git_eol_lf
+  - path: config/research/experiments/leveraged_exposure_instrument_evaluation.yaml
+    sha256: e9c9b7023423e9fe80ed78a8546ed8a339040a8864c1365b64fe479a70e161ad
+    hash_normalization: git_eol_lf
+  - path: config/research/portfolio_decision_problem.yaml
+    sha256: 913e6f59e58dbf04b3d24d8caaab96b1aabe24ceb87c6f4ec9323b7b663920ca
+    hash_normalization: git_eol_lf
+  - path: config/research/protocols/portfolio_decision_problem_v1.yaml
+    sha256: c0e2cc5c1b487bc5d3a78a7aca5c6107b938016939c3bff430dd40195683fa1e
+    hash_normalization: git_eol_lf
+  - path: config/research/strategy_style_discovery_universe_v1.yaml
+    sha256: b1a237a30c17f4f5f6adf0cc97058e5e66c4d337ea4c4fed8da449fb993e8bd6
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: 8e378716a34eb0eb5f85f8b0db35dc86d2e07aa3f83a4410872b648c9f65f0b9
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+    sha256: 4acf4caefd354c7b3714737966e9093ae5cef1c725f394a592ad8c4508f54e7e
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+    sha256: 02e49cb1d1e468a280aebbc845f20f47d264ede2d3a0646d6c3a3057fc2d7004
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+    sha256: 50f28ea0d6e6847d219532a321b1813c78c0d5369b2a9eff0907bca5e3d1063a
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+    sha256: 2e0bc8281e51144e712e17f8420fcad659cb60480e663e558fef0d307765277d
+    hash_normalization: git_eol_lf
+  - path: docs/research/decision_target_capability_audit_label_foundation.md
+    sha256: c2acefefe091ba604cc0a3f02993b5c485ecde93780fcb196cc304de03fd0ff5
+    hash_normalization: git_eol_lf
+  - path: docs/research/leveraged_exposure_instrument_evaluation.md
+    sha256: 4951a75b53d302e20072b7d7e2d01b52bccf32fb466b8ab1029b36d7d0e2020c
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: cd25a0407eb0fde81710c6f22f46c320e0ed4924cc4a4b3e16f8c87f8b9923f0
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: b30b65962c0c3de2fbd7462f503e99bd190c5c97a381b25ef9c8d62d429be25d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: cd11752a3dc908531408dde6d2467a9936d1d41a89fb8733ca877c575309d0d3
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 9956dc7727ada51b2d94477ccee8a0adc69837162f1ba2c1df23c3c3ed4a8a2d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 48903587705bfdca4e181a6a8bd5bdd767a322d149cc668e2e82bbe723ee8a8c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 5ec3705bda0d6c98a16877d4eee2375563dda4d9b34dbae091d2e82461533eca
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: c4d912f2c8af211ccf3598890fcfbdc2a7a6add0878e7a4f2637df579a0fbcfd
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 8782a6f56cda8d3044b6784c5f8ce69aeb3ebedd45ddb4464e09b433d8551933
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 0f027c2bba2157c8e14b2191c1db20025b785dce376e1376b7fba372ddeeec3d
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+    sha256: a225d65f2ea75568c7e80ce7abbc26438e1e7884eea0208d4a998b486245cc3d
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+    sha256: 444b78ea6f691fce2e8f03f446d52b32412e5db55f968d663146c23b0b66d791
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+    sha256: 904ae48ec0f468ebca2bbec4858e1255a6bb8a3909304e6e2c7c6639af2cefdc
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+    sha256: 4e5c26ebf89fad072f1fcb443be7a330fc8488b274bc296d528f4c595a3b56ed
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+    sha256: d6bc7b9036dbb8b31fd030f7a6b337c18667afe6bdee124517ff1e6074b12f58
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+    sha256: db1c1e0dc9c3f024f7cf1fe001f97aea3b99565535fdca6159b08f06ef7515f9
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/research_framework/plugins/decision_target_capability_audit_label_foundation.py
+    sha256: 0cd260b56e7659ccc7da0d56adf6a8437744475d5b378d52d638a22422fe17bd
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/research_framework/plugins/leveraged_exposure_instrument_evaluation.py
+    sha256: e9deb098e65225e032932e65642fea7319ed2559b314ccacaaeca92da7f0e888
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/research_framework/runner.py
+    sha256: 0960fe7ffc843b84e273f68a8994458f6003aea94ce0ce32ed4bd494e9b77e77
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_decision_target_capability_audit_label_foundation.py
+    sha256: a291cf1a31a527edfac7b4c766de3099d8f656e6e11e522056e3eec63c46fbfc
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_leveraged_exposure_instrument_evaluation.py
+    sha256: d0fe27e416e445c089bb798cfc5542cecdcd2807eaa5dc7eb809b25b426f54af
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: e5364be88ccde5a9cd60b8a42f3d80abd4a7e2c0014d9ff4862b0178f5b70c76
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004f3_reporting_architecture.py
+    sha256: 0fed00850084b6aec5a3e0b80fe354b3120d77b91007321973d2b8daebffc9b1
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 58772667832bad99c4fbf8ab660aef8901f7f8e699b344f0dbeeb434ef7e154f
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: FORMAL_VALIDATION_PASS
+    focused: PASS_100
+    static: PASS_RUFF_BLACK_STRICT_MYPY
+    report_validation: PASS_57
+    reproducibility: PASS_23
+    contract_validation: PASS_275
+    architecture_fitness: PASS_648
+    integration: PASS_995
+    full: PASS_7281_SKIPPED_4_WARNINGS_643
+    report_runtime_summary: outputs/validation_runtime/report-validation_20260725T185210Z/test_runtime_summary.json
+    reproducibility_runtime_summary: outputs/validation_runtime/reproducibility_20260725T185245Z/test_runtime_summary.json
+    contract_runtime_summary: outputs/validation_runtime/contract-validation_20260725T192121Z/test_runtime_summary.json
+    architecture_runtime_summary: outputs/validation_runtime/architecture-fitness_20260725T192337Z/test_runtime_summary.json
+    integration_runtime_summary: outputs/validation_runtime/integration_20260725T185648Z/test_runtime_summary.json
+    full_runtime_summary: outputs/validation_runtime/full_20260725T185736Z/test_runtime_summary.json
+  safety:
+    research_only: true
+    historical_seen_only: true
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    official_target_weights_changed: false
+    automatic_execution_allowed: false
+    paper_shadow_changed: false
+    production_effect: none
+    broker_action: none

@@ -11,8 +11,8 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: development coordinator：在`D:\Work\AITradingSystem_trading2459_integration_20260726`推进TRADING-2458/2459/2460
-    clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime worktree
+  next_owner: development coordinator：提交并并入TRADING-2458/2459/2460 clean-main集成后清理旧TRADING与临时集成worktree；OPS-070
+    owner在下一合法scheduler验收与证据迁移后清理runtime worktree
   requirement_refs:
   - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   module_ids: []
@@ -23,8 +23,8 @@ task_record:
     blob已在main历史中。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree remove/prune已完成；TRADING三任务必须从当前main重放37项在途权威内容、重新生成共享authority并通过required
-      Full；ignored证据逐文件hash复核后才能清理旧worktree；OPS-070 runtime必须等待下一合法scheduler验收及canonical
+    text: scanner已清理；TRADING 37项在途权威内容已从clean main重放、runtime证据逐文件SHA-256验证且formal/required
+      Full PASS，commit进入main后检查进程并按exact allowlist清理两个TRADING worktree；OPS-070 runtime必须等待下一合法scheduler验收及canonical
       evidence迁移。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
@@ -32,37 +32,40 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1949
-    row_sha256: 95f070311ebd33d648decb44886937ce4e72050a883af84b8929bcec07218334
+    row_sha256: 3d358c77353ab2b3cb4fc742068f0f30a5902a59345a9a7e99bfa4645537abe3
     cell_count: 8
     all_cells:
     - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
     - Developer experience / temporary clone, worktree and cache lifecycle
     - P1
     - IN_PROGRESS
-    - development coordinator：在`D:\Work\AITradingSystem_trading2459_integration_20260726`推进TRADING-2458/2459/2460
-      clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime worktree
+    - development coordinator：提交并并入TRADING-2458/2459/2460 clean-main集成后清理旧TRADING与临时集成worktree；OPS-070
+      owner在下一合法scheduler验收与证据迁移后清理runtime worktree
     - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
       clone/cache；2026-07-26 scanner复核确认原index与companion目录已不存在，alternate-index将5,959-path表象收敛为1个真实差异，且该exact
       blob已在main历史中。
-    - scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree remove/prune已完成；TRADING三任务必须从当前main重放37项在途权威内容、重新生成共享authority并通过required
-      Full；ignored证据逐文件hash复核后才能清理旧worktree；OPS-070 runtime必须等待下一合法scheduler验收及canonical
+    - scanner已清理；TRADING 37项在途权威内容已从clean main重放、runtime证据逐文件SHA-256验证且formal/required
+      Full PASS，commit进入main后检查进程并按exact allowlist清理两个TRADING worktree；OPS-070 runtime必须等待下一合法scheduler验收及canonical
       evidence迁移。
-    - 2026-07-26：scanner已完成清理并释放6,000 files/99,417,684 bytes；现登记隔离集成worktree=`D:\Work\AITradingSystem_trading2459_integration_20260726`、branch=`codex/trading-2458-2460-integration`，用于保留main后续修复并重放TRADING-2458/2459/2460内容。旧worktree两个任务专属ignored输出根为空，对应canonical输出已在主工作区；runtime
-      artifact删除前仍须逐文件SHA-256确认。任务保持`IN_PROGRESS`，无production或broker effect。
+    - 2026-07-26：TRADING clean-main集成已通过focused=`100`、Ruff/Black/strict mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+      passed / 4 skipped / 643 warnings`。旧worktree三个既有runtime artifact组已与主工作区逐文件SHA-256一致，任务专属ignored输出根为空；当前进入commit/main集成与exact
+      cleanup。DEVX保持`IN_PROGRESS`，无production或broker effect。
     raw_line: '|DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP|Developer experience
-      / temporary clone, worktree and cache lifecycle|P1|IN_PROGRESS|development coordinator：在`D:\Work\AITradingSystem_trading2459_integration_20260726`推进TRADING-2458/2459/2460
-      clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime worktree|详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
+      / temporary clone, worktree and cache lifecycle|P1|IN_PROGRESS|development coordinator：提交并并入TRADING-2458/2459/2460
+      clean-main集成后清理旧TRADING与临时集成worktree；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime
+      worktree|详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
       clone/cache；2026-07-26 scanner复核确认原index与companion目录已不存在，alternate-index将5,959-path表象收敛为1个真实差异，且该exact
-      blob已在main历史中。|scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree
-      remove/prune已完成；TRADING三任务必须从当前main重放37项在途权威内容、重新生成共享authority并通过required Full；ignored证据逐文件hash复核后才能清理旧worktree；OPS-070
-      runtime必须等待下一合法scheduler验收及canonical evidence迁移。|2026-07-26：scanner已完成清理并释放6,000
-      files/99,417,684 bytes；现登记隔离集成worktree=`D:\Work\AITradingSystem_trading2459_integration_20260726`、branch=`codex/trading-2458-2460-integration`，用于保留main后续修复并重放TRADING-2458/2459/2460内容。旧worktree两个任务专属ignored输出根为空，对应canonical输出已在主工作区；runtime
-      artifact删除前仍须逐文件SHA-256确认。任务保持`IN_PROGRESS`，无production或broker effect。|'
+      blob已在main历史中。|scanner已清理；TRADING 37项在途权威内容已从clean main重放、runtime证据逐文件SHA-256验证且formal/required
+      Full PASS，commit进入main后检查进程并按exact allowlist清理两个TRADING worktree；OPS-070 runtime必须等待下一合法scheduler验收及canonical
+      evidence迁移。|2026-07-26：TRADING clean-main集成已通过focused=`100`、Ruff/Black/strict
+      mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+      passed / 4 skipped / 643 warnings`。旧worktree三个既有runtime artifact组已与主工作区逐文件SHA-256一致，任务专属ignored输出根为空；当前进入commit/main集成与exact
+      cleanup。DEVX保持`IN_PROGRESS`，无production或broker effect。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-95f070311ebd33d648decb44
+  event_id: legacy-import-3d358c77353ab2b3cb4fc742
   task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -75,13 +78,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: development coordinator：在`D:\Work\AITradingSystem_trading2459_integration_20260726`推进TRADING-2458/2459/2460
-      clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime worktree
-    notes: 2026-07-26：scanner已完成清理并释放6,000 files/99,417,684 bytes；现登记隔离集成worktree=`D:\Work\AITradingSystem_trading2459_integration_20260726`、branch=`codex/trading-2458-2460-integration`，用于保留main后续修复并重放TRADING-2458/2459/2460内容。旧worktree两个任务专属ignored输出根为空，对应canonical输出已在主工作区；runtime
-      artifact删除前仍须逐文件SHA-256确认。任务保持`IN_PROGRESS`，无production或broker effect。
+    next_owner: development coordinator：提交并并入TRADING-2458/2459/2460 clean-main集成后清理旧TRADING与临时集成worktree；OPS-070
+      owner在下一合法scheduler验收与证据迁移后清理runtime worktree
+    notes: 2026-07-26：TRADING clean-main集成已通过focused=`100`、Ruff/Black/strict mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+      passed / 4 skipped / 643 warnings`。旧worktree三个既有runtime artifact组已与主工作区逐文件SHA-256一致，任务专属ignored输出根为空；当前进入commit/main集成与exact
+      cleanup。DEVX保持`IN_PROGRESS`，无production或broker effect。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:95f070311ebd33d648decb44886937ce4e72050a883af84b8929bcec07218334
+  - sha256:3d358c77353ab2b3cb4fc742068f0f30a5902a59345a9a7e99bfa4645537abe3
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -89,19 +93,20 @@ projection:
   - Developer experience / temporary clone, worktree and cache lifecycle
   - P1
   - IN_PROGRESS
-  - development coordinator：在`D:\Work\AITradingSystem_trading2459_integration_20260726`推进TRADING-2458/2459/2460
-    clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime worktree
+  - development coordinator：提交并并入TRADING-2458/2459/2460 clean-main集成后清理旧TRADING与临时集成worktree；OPS-070
+    owner在下一合法scheduler验收与证据迁移后清理runtime worktree
   - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
     clone/cache；2026-07-26 scanner复核确认原index与companion目录已不存在，alternate-index将5,959-path表象收敛为1个真实差异，且该exact
     blob已在main历史中。
-  - scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree remove/prune已完成；TRADING三任务必须从当前main重放37项在途权威内容、重新生成共享authority并通过required
-    Full；ignored证据逐文件hash复核后才能清理旧worktree；OPS-070 runtime必须等待下一合法scheduler验收及canonical
+  - scanner已清理；TRADING 37项在途权威内容已从clean main重放、runtime证据逐文件SHA-256验证且formal/required
+    Full PASS，commit进入main后检查进程并按exact allowlist清理两个TRADING worktree；OPS-070 runtime必须等待下一合法scheduler验收及canonical
     evidence迁移。
-  - 2026-07-26：scanner已完成清理并释放6,000 files/99,417,684 bytes；现登记隔离集成worktree=`D:\Work\AITradingSystem_trading2459_integration_20260726`、branch=`codex/trading-2458-2460-integration`，用于保留main后续修复并重放TRADING-2458/2459/2460内容。旧worktree两个任务专属ignored输出根为空，对应canonical输出已在主工作区；runtime
-    artifact删除前仍须逐文件SHA-256确认。任务保持`IN_PROGRESS`，无production或broker effect。
+  - 2026-07-26：TRADING clean-main集成已通过focused=`100`、Ruff/Black/strict mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
+    passed / 4 skipped / 643 warnings`。旧worktree三个既有runtime artifact组已与主工作区逐文件SHA-256一致，任务专属ignored输出根为空；当前进入commit/main集成与exact
+    cleanup。DEVX保持`IN_PROGRESS`，无production或broker effect。
   docs_links:
   - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   terminal: false
-  raw_row_sha256: 95f070311ebd33d648decb44886937ce4e72050a883af84b8929bcec07218334
+  raw_row_sha256: 3d358c77353ab2b3cb4fc742068f0f30a5902a59345a9a7e99bfa4645537abe3
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 233df73de6badce17504a34651e3eeae322b2c00fa40e309cd5fb188b52fdb6f
+fragment_checksum: d5b6d0734be36976ce3853430c44547b163cadc34d997127ead13c5c34b61a57
