@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 70ba2f582a1e63f0a805784149b3a3ffe584eb04eae66bf7089657e300d8d510
+baseline_checksum: 6cdc2d7dccaf189b51859001b0095322341cddb53e4dc46c5730f87b83b38fdb
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 902
 fragment_count: 902
@@ -587,8 +587,8 @@ fragments:
   fragment_checksum: 907ab4a2f2f6470d7f706f0ae8aad13a16074d76c679cfb093f81bf52a4ea7b2
 - task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
-  file_sha256: e4eed20183af16d813900b929b24107cd57665e62a102539a6cbabcc231c98f3
-  fragment_checksum: b6badbd05e4736ff216de55361be73d30f950c39a7cfbae5e02f81461dad92a3
+  file_sha256: 2cbfceaa1b388a48fde7248d7f406e11768aab044286c73311d0c124e0359343
+  fragment_checksum: c6d40420eb3529c8288fbe8e9f44a77d21225c3bf12facc7fd8106d60c967b41
 - task_id: PIT-001
   path: registry/development_tasks_shadow/active/6b/6bcf100bd2ed48230eec76b5a35417a9a97dd5c4abb4de3c8f63dd936d77d1c5.yaml
   file_sha256: a911424e3b6369882090891306131075be4dd8048f6cc701a9d15aa7a1ba73f3
@@ -3633,8 +3633,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 77c308f99514abedda0b6c119d7ce2d04f82c4bc42ac888ceb14ea18ba2e623e
-  rendered_sha256: 77c308f99514abedda0b6c119d7ce2d04f82c4bc42ac888ceb14ea18ba2e623e
+  source_sha256: cebe248fdec17820decff9f0d3ecbb2a2ea2f9fb764c446b1939aa37a429d1fc
+  rendered_sha256: cebe248fdec17820decff9f0d3ecbb2a2ea2f9fb764c446b1939aa37a429d1fc
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3656,4 +3656,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 4f1ffab0c6a8bfcdd7e4faa60a4fae278caaa1340d28d01a13ae3595e9c1aa91
+index_checksum: a553272b3c460ff832e82cc460a056aa03dbcad9bb3e0e6edca692a34ab882fc

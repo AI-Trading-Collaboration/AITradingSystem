@@ -268,6 +268,31 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   partial-capture branch isolation、runtime-control 与 compatibility authority 均通过。
   下一步只通过唯一 `aits ops daily-run` 对同一 provider-ready session 取得新 spec/key，
   验证四个 PASS source state 幂等复用且 PIT/SEC branch 实际继续。
+- 2026-07-25：release `c51804917d3a7dad2ba80ce65ecf56f0550100fa` 在独立 clean
+  ops checkout 通过 preflight，并从唯一 `aits ops daily-run` 完成真实验收 run
+  `daily_ops_run:2026-07-24:20260725T100612Z`。新
+  `workflow_spec_5bbc63024052102cdef3` / `operations_run_d0cb72506a653878a6ee81b9`
+  与旧 key 隔离，33/33 steps 取得 terminal 记录。capture 被正确登记为 `LIMITED`；
+  五个 source state 均 `idempotency_reused=true`，没有重复 provider 请求；四个 PASS
+  components 继续保留原 86 个 artifacts。
+- 2026-07-25：真实 branch isolation 达到 S1 验收目标：
+  `pit_snapshots_build_manifest`、`pit_snapshots_validate`、`sec_metrics`、
+  `tsm_ir_sec_metrics_merge`、`sec_metrics_validation`、SEC PIT observe/monitor 均实际
+  PASS；PIT validation 为 40 snapshots / 13,052 raw rows / 0 errors / 0 warnings，
+  SEC companyfacts 为 17/17 companies / 0 errors / 0 warnings，最终 SEC metrics 覆盖
+  196/198，只有 AMZN R&D annual/quarterly 两项 warning。`validate_data` 仅因
+  `market_macro=FAIL` 被 component gate BLOCKED，`score_daily`、dashboard、Reader Brief
+  与 finalization 继续 fail closed。`secret_hygiene` 扫描 30,543 files 并 PASS。
+- 2026-07-25：任务保持 `VALIDATING`，不宣称 full operational PASS。剩余 blocker：
+  market/macro 的
+  `DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH (NOT_COMMITTED)` 需要 data platform
+  owner 修复 canonical publication transaction binding；此外 `pipeline_health` 仍要求旧
+  canonical `fmp_forward_pit_<as_of>.csv` / fetch report 路径，虽然同日 capture raw 与
+  processed bytes 已保留，但当前 PIT manifest PASS 只覆盖
+  `fmp_valuation_expectations` 40 snapshots，尚未证明 forward PIT component 被该 consumer
+  contract 纳入。下一阶段必须对齐 capture-to-canonical PIT projection 与 health contract，
+  并要求 source-specific coverage fail closed；不得把当前 PASS 扩大解释为 forward PIT
+  consumer acceptance。
 
 ## 临时 live-fix worktree 生命周期
 

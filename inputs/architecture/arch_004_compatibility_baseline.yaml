@@ -24241,7 +24241,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: 662c63c365262bf0b3c1f594ab27d5ad08ca6e1a3f94512126748f83b8c2519a
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
-    sha256: 9feffbae1f825ad0e176b0096483d8e56cfe63fc8d9c27c4c835255630e4816d
+    sha256: 77f531fd36a00d6a546e71af4b3b4964303c9fc290ba3ebe5f93585ef1746033
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-102_to_110_Stable_Real_Parameter_Iteration_Backtest_Loop.md
     sha256: 7e85bde4eaeb7558083e2b6b4bd7f32e09cac051028a9fbe775ac9ea1d73c6a2
@@ -24277,7 +24277,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: f2cd606fae276779c3a32989d2a9b05b767a20ec3cb52ae5ecfaad7089b6c1f0
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 77c308f99514abedda0b6c119d7ce2d04f82c4bc42ac888ceb14ea18ba2e623e
+    sha256: cebe248fdec17820decff9f0d3ecbb2a2ea2f9fb764c446b1939aa37a429d1fc
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: d824f19f1b469a99c0612cb7cf5ba083f5f245d05735a63aeac2688ae0c549a2
@@ -24307,10 +24307,10 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: d914ab64f0bbbc9fa97043e7607009c1240e1862b923b8444780fc4fcb0bafc7
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 3be05d36de914902bb2927f09f68d1030cb6ce2cad403850831d97c61f76ab4d
+    sha256: 34904d4b5a2046675b471e1f043702823b697052fe3fdb3f214ca12e51f9c8cc
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 75e19579ba7303c47e78489e9b620c64354cc6048624818222530d4ff099c225
+    sha256: a494e8e37560eec45a4cbdf6524be6c754fc8acfae84eef8d8a448513529e9a3
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_decision_manifest.json
     sha256: 9269df2bfa35ca8e88f7b44d80a0cbb9abb64fc9f79119b3a17e8b0bfdd6cc7d
@@ -24337,7 +24337,7 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
     sha256: 03323888a1b24f4c775436bd78accbb40d6e93c4b8652565c21b127dbc3b394f
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
-    sha256: e4eed20183af16d813900b929b24107cd57665e62a102539a6cbabcc231c98f3
+    sha256: 2cbfceaa1b388a48fde7248d7f406e11768aab044286c73311d0c124e0359343
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
     sha256: e70eec0f967cf2c6fa19a11a757f4c5c617a803f40ab3e554fd5040bfaca18ed
