@@ -12,28 +12,31 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: data platform owner + project owner；推进ACL/crash durability或逐consumer独立授权
+  next_owner: data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
+    durability或逐consumer独立授权
   requirement_refs:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`
-    与 G4/D0B supporting requirement。D0A/D0B1/D0B2已formal闭合；D0B3只为`daily_score_daily@1.0.0`建立独立consumer-scoped
-    authorization attestation，不改历史receipt/publication bytes或全局false flag。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
+    supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
+    formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
+    semantic缺口，当前无可消费strict PASS receipt。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首个consumer
-      profile绑定exact receipt、publication companion、source/window/policy/validator/input/report
-      bytes；strict PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其余consumer与automatic
-      non-daily仍false。
+    text: canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
+      receipt/publication/source/window/policy/validator/input/report/calendar authority；strict
+      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
+      run PASS前G4C、其余consumer与automatic non-daily均false。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1585
-    row_sha256: 578edabe91d6b453468e33f8b7ff9cbab983d3a41039f7c58aea111f6d56ae45
+    row_sha256: 49f3336cb63bc0ee5599f76c655f64f4eca707f71d6e8602ffa0f378ffc19cbd
     cell_count: 8
     all_cells:
     - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
@@ -41,31 +44,36 @@ task_record:
       lineage
     - P0
     - IN_PROGRESS
-    - data platform owner + project owner；推进ACL/crash durability或逐consumer独立授权
-    - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md` 与
-      G4/D0B supporting requirement。D0A/D0B1/D0B2已formal闭合；D0B3只为`daily_score_daily@1.0.0`建立独立consumer-scoped
-      authorization attestation，不改历史receipt/publication bytes或全局false flag。
-    - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首个consumer
-      profile绑定exact receipt、publication companion、source/window/policy/validator/input/report
-      bytes；strict PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其余consumer与automatic
-      non-daily仍false。
-    - 2026-07-25：D0B3 first-consumer随Wave15 formal与failure-fix Full=`7180/0`完成。DATA-GOV
-      parent仍`IN_PROGRESS`；ACL/crash durability、其余consumer、真实periodic/provider、production和broker继续关闭，下一consumer不得复用本次授权。
+    - data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
+      durability或逐consumer独立授权
+    - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
+      supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
+      formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
+      semantic缺口，当前无可消费strict PASS receipt。
+    - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
+      receipt/publication/source/window/policy/validator/input/report/calendar authority；strict
+      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
+      run PASS前G4C、其余consumer与automatic non-daily均false。
+    - 2026-07-25：Wave15 failure-fix Full=`7180/0`保留；`as_of=2026-07-24`真实run为3 errors+1
+      warning并在DQ fail closed。DATA-GOV parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash
+      durability、production和broker继续关闭。
     raw_line: '|DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE|Data Foundation /
       immutable snapshots, canonical DQ evidence, lifecycle and lineage|P0|IN_PROGRESS|data
-      platform owner + project owner；推进ACL/crash durability或逐consumer独立授权|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`
-      与 G4/D0B supporting requirement。D0A/D0B1/D0B2已formal闭合；D0B3只为`daily_score_daily@1.0.0`建立独立consumer-scoped
-      authorization attestation，不改历史receipt/publication bytes或全局false flag。|canonical数据采用staged
-      immutable snapshot + validated manifest + atomic pointer；首个consumer profile绑定exact
-      receipt、publication companion、source/window/policy/validator/input/report bytes；strict
-      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其余consumer与automatic
-      non-daily仍false。|2026-07-25：D0B3 first-consumer随Wave15 formal与failure-fix Full=`7180/0`完成。DATA-GOV
-      parent仍`IN_PROGRESS`；ACL/crash durability、其余consumer、真实periodic/provider、production和broker继续关闭，下一consumer不得复用本次授权。|'
+      platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
+      durability或逐consumer独立授权|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
+      supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
+      formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
+      semantic缺口，当前无可消费strict PASS receipt。|canonical数据采用staged immutable snapshot
+      + validated manifest + atomic pointer；首consumer绑定exact receipt/publication/source/window/policy/validator/input/report/calendar
+      authority；strict PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
+      run PASS前G4C、其余consumer与automatic non-daily均false。|2026-07-25：Wave15 failure-fix
+      Full=`7180/0`保留；`as_of=2026-07-24`真实run为3 errors+1 warning并在DQ fail closed。DATA-GOV
+      parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash durability、production和broker继续关闭。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-578edabe91d6b453468e33f8
+  event_id: legacy-import-49f3336cb63bc0ee5599f76c
   task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -78,12 +86,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: data platform owner + project owner；推进ACL/crash durability或逐consumer独立授权
-    notes: 2026-07-25：D0B3 first-consumer随Wave15 formal与failure-fix Full=`7180/0`完成。DATA-GOV
-      parent仍`IN_PROGRESS`；ACL/crash durability、其余consumer、真实periodic/provider、production和broker继续关闭，下一consumer不得复用本次授权。
+    next_owner: data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
+      durability或逐consumer独立授权
+    notes: 2026-07-25：Wave15 failure-fix Full=`7180/0`保留；`as_of=2026-07-24`真实run为3
+      errors+1 warning并在DQ fail closed。DATA-GOV parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash
+      durability、production和broker继续关闭。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:578edabe91d6b453468e33f8b7ff9cbab983d3a41039f7c58aea111f6d56ae45
+  - sha256:49f3336cb63bc0ee5599f76c655f64f4eca707f71d6e8602ffa0f378ffc19cbd
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -91,19 +101,23 @@ projection:
   - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
   - P0
   - IN_PROGRESS
-  - data platform owner + project owner；推进ACL/crash durability或逐consumer独立授权
-  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md` 与 G4/D0B
-    supporting requirement。D0A/D0B1/D0B2已formal闭合；D0B3只为`daily_score_daily@1.0.0`建立独立consumer-scoped
-    authorization attestation，不改历史receipt/publication bytes或全局false flag。
-  - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首个consumer
-    profile绑定exact receipt、publication companion、source/window/policy/validator/input/report
-    bytes；strict PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其余consumer与automatic
-    non-daily仍false。
-  - 2026-07-25：D0B3 first-consumer随Wave15 formal与failure-fix Full=`7180/0`完成。DATA-GOV
-    parent仍`IN_PROGRESS`；ACL/crash durability、其余consumer、真实periodic/provider、production和broker继续关闭，下一consumer不得复用本次授权。
+  - data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
+    durability或逐consumer独立授权
+  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
+    supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
+    formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
+    semantic缺口，当前无可消费strict PASS receipt。
+  - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
+    receipt/publication/source/window/policy/validator/input/report/calendar authority；strict
+    PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
+    run PASS前G4C、其余consumer与automatic non-daily均false。
+  - 2026-07-25：Wave15 failure-fix Full=`7180/0`保留；`as_of=2026-07-24`真实run为3 errors+1
+    warning并在DQ fail closed。DATA-GOV parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash
+    durability、production和broker继续关闭。
   docs_links:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   terminal: false
-  raw_row_sha256: 578edabe91d6b453468e33f8b7ff9cbab983d3a41039f7c58aea111f6d56ae45
+  raw_row_sha256: 49f3336cb63bc0ee5599f76c655f64f4eca707f71d6e8602ffa0f378ffc19cbd
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: b0992b1cfbf72ebc15852215cc943fc41fd40ff6351dbf6dedf203c747bd7e28
+fragment_checksum: aceb6d70c2db312a3a85bae738eea332ba9cc32da0ef7b7937c3ebb87b64046a

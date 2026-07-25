@@ -27,6 +27,14 @@ write/operations lease guard，failure-fix Full=`7136 passed / 3 skipped`。
 本授权不是 S5、全量 consumer cutover、外部 scheduler、真实 periodic execution、provider refresh、
 G5、production 或 broker 授权。
 
+2026-07-25 随后的首个真实 canonical daily acceptance 没有推翻本任务的工程
+`BASELINE_DONE`：publication complete-file binding、profile propagation 和 strict consumer
+blocker 均按设计生效。但 upstream DQ 因 window/calendar/adjustment policy 缺口未产生 strict
+PASS receipt，`daily_score_daily@1.0.0` 因而没有获得本次可执行 capability，runner 与下游
+artifact 均保持零。operational remediation 由
+`docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`
+独立跟踪；在其通过前不得把 Wave15 baseline 解释为真实 daily PASS、G4C 或下一 consumer 授权。
+
 ## C / D 精确载体序列
 
 为避免 readiness evidence 自引用或绑定未提交工作树，Wave15 采用两提交载体：

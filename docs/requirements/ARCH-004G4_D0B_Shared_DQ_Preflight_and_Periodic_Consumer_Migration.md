@@ -8,8 +8,10 @@
   `DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE`
 - parent：`ARCH-004G_DOMAIN_MIGRATION_AND_SUBTRACTION`、`DATA-GOV-001`
 - priority：`P0`
-- status：`COMPLETE_WAVE15_FIRST_CONSUMER_BASELINE`（G4 overall=`BASELINE_DONE`；DATA-GOV overall=`IN_PROGRESS`）
-- current roadmap：`WAVE15_S3_FORMAL_EXIT_COMPLETE_OWNER_NEXT_SLICE_REQUIRED`
+- status：`COMPLETE_WAVE15_FIRST_CONSUMER_BASELINE_WITH_D0B2B_OPERATIONAL_BLOCKER`
+  （G4 overall=`BASELINE_DONE`；DATA-GOV overall=`IN_PROGRESS`）
+- current roadmap：
+  `D0B2B_OWNER_POLICY_REQUIRED_G4C_AND_NEXT_CONSUMER_NOT_AUTHORIZED`
 - owners：architecture coordinator / operations platform worker / data platform worker
 - source phase：`G2_5_COMPLETE_G4_D0B_NEXT`
 - source base：`12b1fb86369f146c9ef1c7ac54872eb8150ed791`
@@ -260,6 +262,17 @@ domain final integration 混合。
 
 ## 状态记录
 
+- 2026-07-25：首个真实 post-Wave15 canonical run
+  `daily_ops_run:2026-07-24:20260725T003257Z` 已验证 D0B2 complete-file publication、
+  `daily_default.v1` propagation 和 D0B3 strict blocker 生效，但未取得可消费的 PASS receipt。
+  DQ 因 publication window 超集被错误按不等处理、`^VIX` source-specific session、
+  `2025-01-09` special closure 未编码而产生 3 errors；另有 5 个 adjustment rows 使
+  结果即使消除 errors 也会保持 `PASS_WITH_WARNINGS`，而首 consumer 只接受 strict PASS。
+  新增 P0 `DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION`
+  （详见
+  `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`）。
+  历史 formal baseline 不重写；D0B2 operational semantic acceptance、G4C、下一 consumer
+  与 automatic non-daily 均保持阻断。
 - 2026-07-25：Wave15 formal exit完成，final Full链为首次`7179/1/3 skipped`、精确
   test-local白名单修复后failure-fix `7180 passed / 3 skipped / 643 warnings`。G4 first-consumer
   baseline转`BASELINE_DONE`；G4C真实cadence、其他四个consumer、真实provider/periodic、

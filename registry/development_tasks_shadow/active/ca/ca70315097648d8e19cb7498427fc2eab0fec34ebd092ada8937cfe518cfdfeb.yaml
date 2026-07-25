@@ -11,85 +11,65 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits
-    ops daily-run` 执行 canonical provider-ready 验收
+  next_owner: operations owner：等待D0B2B reviewed修复后，在新合法provider-ready date只用`aits
+    ops daily-run`完成finalization验收
   requirement_refs:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
-    bounded transient replace retry、strict finalization 与 portable parent import 均已实现；exact
-    candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
-    passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-    / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
-    freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
-    daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`
+    与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Windows
+    bounded transient replace retry、strict finalization、portable parent import及formal/Full均已完成；`as_of=2026-07-24`真实run在Reader
+    Brief前被upstream DQ阻断，不是OPS-067回归，同key不得重试。DATA-GOV D0C power-loss durability独立跟踪。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
-      全部 fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次
-      finalization quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；canonical
-      writer 只对 Windows transient replace contention bounded retry，非 transient/耗尽仍失败并清
-      temp；原失败 Full 由同字节 summary/profile + reviewed import proof 绑定；focused/architecture/contract/integration/reproducibility/Full
-      PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。
+      全部 fail closed；`LIMITED_READER_CONTEXT`显式披露；最终 Reader Brief bytes由同次finalization
+      evidence覆盖；manifest经`FINALIZING` closure后才可PASS；新合法canonical run必须实际到达并通过finalization；旧FAILED
+      state/ledger byte-identical；`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 2001
-    row_sha256: 6bb0bd570ac4bed67b1e643df9f0da805179412ee78af0d35f147c8a2ad1d3af
+    line_number: 2002
+    row_sha256: ca0089d3c790ba53568829d15c139c5d845c03b1eec0c22ed7a882d4b8f678f0
     cell_count: 8
     all_cells:
     - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
     - Operations / canonical Reader Brief and report quality fail-closed finalization
     - P0
     - IN_PROGRESS
-    - operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits ops daily-run`
-      执行 canonical provider-ready 验收
-    - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
-      bounded transient replace retry、strict finalization 与 portable parent import
-      均已实现；exact candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
-      passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-      / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
-      freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
-      daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。
+    - operations owner：等待D0B2B reviewed修复后，在新合法provider-ready date只用`aits ops daily-run`完成finalization验收
+    - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`
+      与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Windows
+      bounded transient replace retry、strict finalization、portable parent import及formal/Full均已完成；`as_of=2026-07-24`真实run在Reader
+      Brief前被upstream DQ阻断，不是OPS-067回归，同key不得重试。DATA-GOV D0C power-loss durability独立跟踪。
     - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
-      全部 fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次
-      finalization quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；canonical
-      writer 只对 Windows transient replace contention bounded retry，非 transient/耗尽仍失败并清
-      temp；原失败 Full 由同字节 summary/profile + reviewed import proof 绑定；focused/architecture/contract/integration/reproducibility/Full
-      PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。
-    - 2026-07-24：首次 Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-      全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
-      passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
-      `IN_PROGRESS`，无 weights/broker/trading。
+      全部 fail closed；`LIMITED_READER_CONTEXT`显式披露；最终 Reader Brief bytes由同次finalization
+      evidence覆盖；manifest经`FINALIZING` closure后才可PASS；新合法canonical run必须实际到达并通过finalization；旧FAILED
+      state/ledger byte-identical；`production_effect=none`。
+    - 2026-07-25：engineering evidence已稳定；首个新合法run为`download_data=PASS`、`validate_data=FAIL`、34
+      BLOCKED，无final Reader Brief/quality artifact可验收。任务保持`IN_PROGRESS`并被D0B2B上游阻断；无weights/broker/trading。
     raw_line: '|OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION|Operations /
       canonical Reader Brief and report quality fail-closed finalization|P0|IN_PROGRESS|operations
-      owner：最终 engineering evidence commit 复验并 push 后，只用 `aits ops daily-run` 执行 canonical
-      provider-ready 验收|详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
-      bounded transient replace retry、strict finalization 与 portable parent import
-      均已实现；exact candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
-      passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-      / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
-      freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
-      daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。|Report quality `FAIL`
-      与 Reader Brief quality `FAILED` CLI/step/finalization 全部 fail closed；`LIMITED_READER_CONTEXT`
-      保持可接受但显式披露；最终 Reader Brief bytes 由同次 finalization quality evidence 覆盖；manifest
-      经`FINALIZING`两阶段 closure 后才可 PASS；canonical writer 只对 Windows transient replace
-      contention bounded retry，非 transient/耗尽仍失败并清 temp；原失败 Full 由同字节 summary/profile
-      + reviewed import proof 绑定；focused/architecture/contract/integration/reproducibility/Full
-      PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。|2026-07-24：首次
-      Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-      全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
-      passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
-      `IN_PROGRESS`，无 weights/broker/trading。|'
+      owner：等待D0B2B reviewed修复后，在新合法provider-ready date只用`aits ops daily-run`完成finalization验收|详见
+      `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`
+      与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Windows
+      bounded transient replace retry、strict finalization、portable parent import及formal/Full均已完成；`as_of=2026-07-24`真实run在Reader
+      Brief前被upstream DQ阻断，不是OPS-067回归，同key不得重试。DATA-GOV D0C power-loss durability独立跟踪。|Report
+      quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization 全部 fail
+      closed；`LIMITED_READER_CONTEXT`显式披露；最终 Reader Brief bytes由同次finalization evidence覆盖；manifest经`FINALIZING`
+      closure后才可PASS；新合法canonical run必须实际到达并通过finalization；旧FAILED state/ledger byte-identical；`production_effect=none`。|2026-07-25：engineering
+      evidence已稳定；首个新合法run为`download_data=PASS`、`validate_data=FAIL`、34 BLOCKED，无final
+      Reader Brief/quality artifact可验收。任务保持`IN_PROGRESS`并被D0B2B上游阻断；无weights/broker/trading。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-6bb0bd570ac4bed67b1e643d
+  event_id: legacy-import-ca0089d3c790ba53568829d1
   task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -102,15 +82,13 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits
-      ops daily-run` 执行 canonical provider-ready 验收
-    notes: 2026-07-24：首次 Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-      全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
-      passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
-      `IN_PROGRESS`，无 weights/broker/trading。
+    next_owner: operations owner：等待D0B2B reviewed修复后，在新合法provider-ready date只用`aits
+      ops daily-run`完成finalization验收
+    notes: 2026-07-25：engineering evidence已稳定；首个新合法run为`download_data=PASS`、`validate_data=FAIL`、34
+      BLOCKED，无final Reader Brief/quality artifact可验收。任务保持`IN_PROGRESS`并被D0B2B上游阻断；无weights/broker/trading。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:6bb0bd570ac4bed67b1e643df9f0da805179412ee78af0d35f147c8a2ad1d3af
+  - sha256:ca0089d3c790ba53568829d15c139c5d845c03b1eec0c22ed7a882d4b8f678f0
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -118,28 +96,21 @@ projection:
   - Operations / canonical Reader Brief and report quality fail-closed finalization
   - P0
   - IN_PROGRESS
-  - operations owner：最终 engineering evidence commit 复验并 push 后，只用 `aits ops daily-run`
-    执行 canonical provider-ready 验收
-  - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
-    bounded transient replace retry、strict finalization 与 portable parent import 均已实现；exact
-    candidate `d92eae35` 的 focused/architecture/contract/integration/reproducibility=`186/577/274/993/23
-    passed`，parent-bound replacement Full=`7115 passed / 4 skipped / 643 warnings
-    / 1176.47s`。commit `633d04a1` 的 post-Full focused=`296 passed`，DevEx/task authority/source
-    freshness及formal tiers全部PASS；当前只剩最终 exact-tree repeat、push、无并发 writer 复核及 canonical
-    daily acceptance。DATA-GOV D0C power-loss durability独立跟踪。
+  - operations owner：等待D0B2B reviewed修复后，在新合法provider-ready date只用`aits ops daily-run`完成finalization验收
+  - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`
+    与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Windows
+    bounded transient replace retry、strict finalization、portable parent import及formal/Full均已完成；`as_of=2026-07-24`真实run在Reader
+    Brief前被upstream DQ阻断，不是OPS-067回归，同key不得重试。DATA-GOV D0C power-loss durability独立跟踪。
   - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization 全部
-    fail closed；`LIMITED_READER_CONTEXT` 保持可接受但显式披露；最终 Reader Brief bytes 由同次 finalization
-    quality evidence 覆盖；manifest 经`FINALIZING`两阶段 closure 后才可 PASS；canonical writer
-    只对 Windows transient replace contention bounded retry，非 transient/耗尽仍失败并清 temp；原失败
-    Full 由同字节 summary/profile + reviewed import proof 绑定；focused/architecture/contract/integration/reproducibility/Full
-    PASS；旧 2026-07-22 state/ledger byte-identical；`production_effect=none`。
-  - 2026-07-24：首次 Full FAIL 原样保留；replacement Full summary/profile SHA-256=`33cb2f5f...4435`/`6e8c076c...5b87`，profile/telemetry/performance/provenance/scheduler
-    全部 PASS。post-Full architecture/contract/integration/reproducibility=`577/274/993/23
-    passed`。工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；任务保持
-    `IN_PROGRESS`，无 weights/broker/trading。
+    fail closed；`LIMITED_READER_CONTEXT`显式披露；最终 Reader Brief bytes由同次finalization
+    evidence覆盖；manifest经`FINALIZING` closure后才可PASS；新合法canonical run必须实际到达并通过finalization；旧FAILED
+    state/ledger byte-identical；`production_effect=none`。
+  - 2026-07-25：engineering evidence已稳定；首个新合法run为`download_data=PASS`、`validate_data=FAIL`、34
+    BLOCKED，无final Reader Brief/quality artifact可验收。任务保持`IN_PROGRESS`并被D0B2B上游阻断；无weights/broker/trading。
   docs_links:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
   terminal: false
-  raw_row_sha256: 6bb0bd570ac4bed67b1e643df9f0da805179412ee78af0d35f147c8a2ad1d3af
+  raw_row_sha256: ca0089d3c790ba53568829d15c139c5d845c03b1eec0c22ed7a882d4b8f678f0
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 6caf86338f0aec681af3d5c7a7f6ab0bbe7429a7a771e09559c27b5129e3f8f6
+fragment_checksum: 277e8f3eb31810de7ef22b43eb863a739a48d987f1c29ba8600a48a1eda6f7ff
