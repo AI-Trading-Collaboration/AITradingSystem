@@ -4803,8 +4803,9 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
     assert phase["status"] in {
         "VALIDATING_ARCH_005S4E_S0_S1",
         "BASELINE_DONE_ARCH_005S4E_S0_S1_S2_PENDING",
+        "BASELINE_DONE_ARCH_005S4E_S0_S2",
     }
-    assert phase["boundary_id"] == "ARCH-005S4E-S0-S1"
+    assert phase["boundary_id"] in {"ARCH-005S4E-S0-S1", "ARCH-005S4E-S0-S2"}
     assert phase["task_ids"] == [
         "ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION",
     ]
@@ -4829,7 +4830,32 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         "target_lineage": "FIRST_PARENT_ONLY",
         "automatic_cleanup_allowed": False,
         "generated_rebuild_owner": "integration-coordinator",
-        "s2_current_main_reconciliation": "BLOCKED_EXACT_LINEAGE_PRESERVATION",
+        "s2_current_main_reconciliation": (
+            "PASS_RECONCILED_MAIN_KNOWN_UNRELATED_EXCLUDED"
+        ),
+    }
+    assert phase["recovery_audit"] == {
+        "source_commit": "fc6313416d78f56a29519f41ca564eaa1f90e8ce",
+        "target_commit": "913232c7519ca96a0041ae525b53e9b8e43dc331",
+        "preservation_commit": "e45d77158",
+        "canonical_restore_commit": "913232c75",
+        "handoff_checksum": (
+            "c14067df6affa0d5cb973435c743aaf300e54ad3d6040c56dec5b744513ee349"
+        ),
+        "report_checksum": (
+            "57ad581a0cc070dfe19908c54289414eef7fc34c362766f95d3dfb6483d18439"
+        ),
+        "decision": "READY_FOR_COORDINATOR_RECONCILIATION",
+        "exact_target_count": 9,
+        "target_history_count": 17,
+        "generated_rebuild_count": 324,
+        "known_unrelated_not_read_count": 1,
+        "blocking_count": 0,
+        "unattributed_count": 0,
+        "retained_count": 0,
+        "tracked_paths_restored": 343,
+        "untracked_paths_removed": 7,
+        "automatic_cleanup_allowed": False,
     }
     assert phase["known_unrelated_exclusions"] == [
         WAVE14_S2_PROHIBITED_USER_PATH

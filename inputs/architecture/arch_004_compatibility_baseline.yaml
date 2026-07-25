@@ -24656,8 +24656,8 @@ phase_ops_070_objective_blocker_and_consumer_dependency_dag:
 
 phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
   schema_version: arch_005_s4e_compatibility_closeout.v1
-  status: BASELINE_DONE_ARCH_005S4E_S0_S1_S2_PENDING
-  boundary_id: ARCH-005S4E-S0-S1
+  status: BASELINE_DONE_ARCH_005S4E_S0_S2
+  boundary_id: ARCH-005S4E-S0-S2
   task_ids:
   - ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
   owner_decision: owner_decision:ARCH-005S4E:2026-07-25:approve_checkout_handoff_reconciliation_v1
@@ -24677,7 +24677,25 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     target_lineage: FIRST_PARENT_ONLY
     automatic_cleanup_allowed: false
     generated_rebuild_owner: integration-coordinator
-    s2_current_main_reconciliation: BLOCKED_EXACT_LINEAGE_PRESERVATION
+    s2_current_main_reconciliation: PASS_RECONCILED_MAIN_KNOWN_UNRELATED_EXCLUDED
+  recovery_audit:
+    source_commit: fc6313416d78f56a29519f41ca564eaa1f90e8ce
+    target_commit: 913232c7519ca96a0041ae525b53e9b8e43dc331
+    preservation_commit: e45d77158
+    canonical_restore_commit: 913232c75
+    handoff_checksum: c14067df6affa0d5cb973435c743aaf300e54ad3d6040c56dec5b744513ee349
+    report_checksum: 57ad581a0cc070dfe19908c54289414eef7fc34c362766f95d3dfb6483d18439
+    decision: READY_FOR_COORDINATOR_RECONCILIATION
+    exact_target_count: 9
+    target_history_count: 17
+    generated_rebuild_count: 324
+    known_unrelated_not_read_count: 1
+    blocking_count: 0
+    unattributed_count: 0
+    retained_count: 0
+    tracked_paths_restored: 343
+    untracked_paths_removed: 7
+    automatic_cleanup_allowed: false
   generated_state:
     active_task_count: 415
     completed_task_count: 489
@@ -25064,7 +25082,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 65aa8fa098e07cfd5b25d42916b0da61c6c6c03008ec9dbe7af5b789609acd20
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
-    sha256: ba52cb8482654aa1c41b41619b14e4b45854fb8b907be8eaadc7fe9ae22c30b8
+    sha256: 717bebdaba352e31740c1dd9fa513bfddeffa7191dbed09efe8fe8a743a77236
     hash_normalization: git_eol_lf
   - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
     sha256: 64c46e23efa45f5049d9084a28b4513a1b054525d5e443e9696e2c81ae50b555
@@ -25109,7 +25127,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: f9cf8b638cecf0769353fa249d2bb45a660bbf567afd812eada9d1d2dba0c805
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: db149f4553d26834335de75c33b597520a5446c242064b6c75a8d4504964c1e7
+    sha256: 109deccb35d0116e7e3e2c2c5cc5d47c0acea626236eac160b4bb588c185e0e0
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: d824f19f1b469a99c0612cb7cf5ba083f5f245d05735a63aeac2688ae0c549a2
@@ -25127,7 +25145,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 5e892ed8b40eb10b3258ffd01089ac7f2633396a02d8f3f4692eac64936dc9a7
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 69cdaae8fdcba3bc21802ab9f3f1379cfcca384e0d2e24c5588ed5fa295bfcaf
+    sha256: b5965d110b71451b81cb6d58d3a3466dd3e34d3219e8462e4f5b940db2c8694b
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -25139,10 +25157,10 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 4533b737b25f89a76a742432318e2ece9c1726cb50de471965677c7dd93ea02e
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 32f5717a8cf47b7b780bec81bebd6c82b27881ae74107c953801a9eae3de8943
+    sha256: b0c8f87d051c486d83ba515a66c36782e27f2dd188924a584c4e2f8188d988e5
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 6995f1f88792ffff1f7d3465e0ae6ad5d68c58481c5b34e5ac208a1a42cb9bdd
+    sha256: 131fdc5e79758fb38fba73d0f9104887b29088b118eb6f7947d821b596f1564c
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_decision_manifest.json
     sha256: 9269df2bfa35ca8e88f7b44d80a0cbb9abb64fc9f79119b3a17e8b0bfdd6cc7d
@@ -25175,7 +25193,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 5120f405e010e62ba086febf0a235f32c91c23866d99be42276259c47b6ca83f
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
-    sha256: 3ba522255b8e480041a2b4cf7b5e897c29ca6dbe981758f2a570da384732cc9e
+    sha256: 47a27d6550b1e7bcb804db4e82ce686e040d42bc2e48514f74592ecd0296b310
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
     sha256: fef48d9e6b017751b4c4962c179873335cf7342195266a3eec9b654b05edb407
@@ -25337,7 +25355,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: de6f22f0ac341f8d4202da58162e0aea0ad55a4ddd546b0867ad825d02817c03
+    sha256: 0d04072d4cbae5fe1571e31469c2da255864af3fd4cb39220d6e25d3db1bf8e3
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
     sha256: e39468ce2bfaa3785127062e1399ef795a8b709ccc6f6acfabdecba0d0ef6734

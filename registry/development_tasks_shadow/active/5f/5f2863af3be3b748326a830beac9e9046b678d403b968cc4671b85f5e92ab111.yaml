@@ -11,66 +11,64 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed
-    lineage并重跑recovery audit；仅在report无blocker后收口dirty main
+  next_owner: project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
   requirement_refs:
   - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
-    validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
-    rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
+    formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
+    protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-      PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
-      cleanup/task mutation/production/broker保持false/none。
+      PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated
+      rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1956
-    row_sha256: b523a8c1cb5b9ad9007d847fd319a456e714b5f27eb40a035aa4c7ec1d222f48
+    row_sha256: c977cfd65da1bb25d1ab961cd64fa81ffc1768b845bf56331de05c633a78ec1f
     cell_count: 8
     all_cells:
     - ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
     - Architecture / checkout handoff and source reconciliation
     - P0
-    - IN_PROGRESS
-    - integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed lineage并重跑recovery
-      audit；仅在report无blocker后收口dirty main
-    - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
-      validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
-      rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。
+    - BASELINE_DONE
+    - project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
+    - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
+      formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
+      protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。
     - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-      PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
-      cleanup/task mutation/production/broker保持false/none。
-    - 2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7
-      exact、15 history、324 generated、3 retained、1 known-unrelated、1 lineage-missing、0
-      unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS requirement迁移前snapshot的exact
-      preservation lineage。
+      PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated
+      rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。
+    - 2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
+      checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
+      known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
+      exact path，不再有本任务归属 residue。
     raw_line: '|ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION|Architecture
-      / checkout handoff and source reconciliation|P0|IN_PROGRESS|integration coordinator：保留OPS
-      requirement迁移前exact snapshot的reviewed lineage并重跑recovery audit；仅在report无blocker后收口dirty
-      main|详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
-      validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
-      rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。|protected-main
+      / checkout handoff and source reconciliation|P0|BASELINE_DONE|project owner
+      + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理|详见
+      `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
+      formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
+      protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。|protected-main
       mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-      PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
-      cleanup/task mutation/production/broker保持false/none。|2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report
-      checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7 exact、15 history、324 generated、3
-      retained、1 known-unrelated、1 lineage-missing、0 unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS
-      requirement迁移前snapshot的exact preservation lineage。|'
+      PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated
+      rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。|2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
+      checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
+      known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
+      exact path，不再有本任务归属 residue。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b523a8c1cb5b9ad9007d847f
+  event_id: legacy-import-c977cfd65da1bb25d1ab961c
   task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -80,41 +78,39 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed
-      lineage并重跑recovery audit；仅在report无blocker后收口dirty main
-    notes: 2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7
-      exact、15 history、324 generated、3 retained、1 known-unrelated、1 lineage-missing、0
-      unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS requirement迁移前snapshot的exact
-      preservation lineage。
+    next_owner: project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
+    notes: 2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
+      checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
+      known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
+      exact path，不再有本任务归属 residue。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b523a8c1cb5b9ad9007d847fd319a456e714b5f27eb40a035aa4c7ec1d222f48
+  - sha256:c977cfd65da1bb25d1ab961cd64fa81ffc1768b845bf56331de05c633a78ec1f
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
   - Architecture / checkout handoff and source reconciliation
   - P0
-  - IN_PROGRESS
-  - integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed lineage并重跑recovery
-    audit；仅在report无blocker后收口dirty main
-  - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
-    validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
-    rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。
+  - BASELINE_DONE
+  - project owner + integration coordinator：review并集成`codex/arch-005-s4e-current-main-reconciliation`；known-unrelated研究文档继续由其owner处理
+  - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1
+    formal validation、DEVX unique迁移、迁移前exact blob preservation与S2 current-main受控收口均完成；S4D
+    protected-main guard和handoff/reconciliation退出事务已形成reviewed branch。
   - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
     zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-    PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
-    cleanup/task mutation/production/broker保持false/none。
-  - 2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7
-    exact、15 history、324 generated、3 retained、1 known-unrelated、1 lineage-missing、0
-    unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS requirement迁移前snapshot的exact
-    preservation lineage。
+    PASS；第二份report blocking/unattributed/retained=0，26项exact/history allowlist与324项generated
+    rebuild完成人工收口；automatic cleanup/task mutation/production/broker保持false/none。
+  - 2026-07-25：S0/S1提交`6757f83c2`并推送；迁移/保存提交=`38bcd95f8/e45d77158/913232c75`。第二份handoff/report
+    checksums=`c14067df...e349`/`57ad581a...8439`，结果9 exact、17 history、324 generated、1
+    known-unrelated、0 blocker/unattributed/retained。按报告恢复343 tracked并删除7 untracked；当前main只剩未读取的known-unrelated
+    exact path，不再有本任务归属 residue。
   docs_links:
   - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
   terminal: false
-  raw_row_sha256: b523a8c1cb5b9ad9007d847fd319a456e714b5f27eb40a035aa4c7ec1d222f48
+  raw_row_sha256: c977cfd65da1bb25d1ab961cd64fa81ffc1768b845bf56331de05c633a78ec1f
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: db254a6f3e674907b4fdc2c74e9b8f2c3645754b8f8637895c67bd4dfac5147f
+fragment_checksum: 080c786f60e28211899c38a21593df320263368b6479717da218f614d3a492df

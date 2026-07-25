@@ -152,8 +152,23 @@ OPS-070 与本任务 required validation 绑定最终 tree。任何自动清理�
 - 2026-07-25：DEVX-001独有`AGENTS.md`规则、supporting requirement与task-register事实已
   迁入独立reconciliation branch的reviewed change；OPS-070 task row继续采用目标分支更晚的
   canonical状态，没有用旧main行回退。首次handoff/report保存在
-  `outputs/architecture/arch_005_s4e/`。在OPS requirement旧快照取得可审计preservation
-  lineage且第二份report无blocker前，当前dirty main保持只读，不执行restore/delete。
+  `outputs/architecture/arch_005_s4e/`。
+- 2026-07-25：commit `e45d77158`用Git index exact blob方式保存迁移前OPS requirement
+  `e571ea3b...`与mixed task register `0cb3e25b...`，commit `913232c75`立即恢复目标
+  canonical版本；最终tree未回退，但first-parent历史保留了source exact bytes。第二份
+  handoff/report checksums=`c14067df6affa0d5cb973435c743aaf300e54ad3d6040c56dec5b744513ee349`/
+  `57ad581a0cc070dfe19908c54289414eef7fc34c362766f95d3dfb6483d18439`，
+  target=`913232c7519ca96a0041ae525b53e9b8e43dc331`，结果9项`EXACT_TARGET`、
+  17项`SUPERSEDED_IN_TARGET_HISTORY`、324项`GENERATED_INVALIDATED`、1项
+  `KNOWN_UNRELATED_NOT_READ`，blocking/unattributed/retained均为0，decision=
+  `READY_FOR_COORDINATOR_RECONCILIATION`。
+- 2026-07-25：按第二份报告的完整allowlist人工恢复343个tracked路径，并删除7个untracked
+  residue；删除目标均已存在于远端
+  `codex/arch-005-s4e-current-main-reconciliation`的reviewed history，可从Git恢复。
+  当前`main`只剩policy精确声明的
+  `docs/research/growth_tilt_owner_diagnosis_pack.md`，本任务未读取、hash、复制或修改该文件；
+  对S4D guard而言不再有unattributed/shared residue。automatic cleanup仍为false，本次是
+  integration coordinator在PASS report后执行的显式人工收口，不自动merge/cutover。
 - 2026-07-25：首次正式Full=`7254 passed / 4 skipped / 1 failed / 643 warnings`；
   唯一失败为既有`test_reverse_concurrency_keeps_latest_candidate_current`在Full CPU竞争下用
   `sleep(20ms)`假设newest worker必先取得锁，真实结果为older先发布、newest随后合法覆盖，最终
