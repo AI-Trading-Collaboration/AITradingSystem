@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 3ffa4109647685af6c11e4e3521413794c345e1edeabbe0aa1f1fc1ef6c47a04
+baseline_checksum: 9a19152fdd801d9df251eab9c172a91d7576a2cd8e8c0f2896f50b317bc59481
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 904
 fragment_count: 904
@@ -335,8 +335,8 @@ fragments:
   fragment_checksum: 8232a58f1c9305f32b885c1aaa50f9fc576070c16f69f725706a9aad3db299b8
 - task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
   path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
-  file_sha256: 6256fb973a6bdf38a8a91ec02a1244555092fb12933609edd3bc79c02149ef11
-  fragment_checksum: 6a1fbe63a2ab883818516720e17a6246ca72f4bbab2b679e9f912cb53e0e4901
+  file_sha256: 8cb1e03b86a7ffd4cb97f8395d1af20205cb94c9893db36cb441c500597579ac
+  fragment_checksum: 3882972fe678b34f7950c1fa0c0fe61a03d5a76aaa5a9b6ec39c2a2306114fb2
 - task_id: DOC-001
   path: registry/development_tasks_shadow/active/35/354f45b40d45c4c35dfda2ceb87a3bf1ce503c82794b875661a811af7398de19.yaml
   file_sha256: 3d8d624d4f9aefb349bb8369dd63bda0b3b3354fc129af81c087d1c0b1bd44af
@@ -3641,8 +3641,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: a6d01d976b02c1d03a41b49c3ede7e7c25acbc6c3c469aba62c68a1ebb0fb03b
-  rendered_sha256: a6d01d976b02c1d03a41b49c3ede7e7c25acbc6c3c469aba62c68a1ebb0fb03b
+  source_sha256: 2e6d397e73f6da04c21d789ba60a8a7c8fdcd8344cc921315ca5c88921bad6f5
+  rendered_sha256: 2e6d397e73f6da04c21d789ba60a8a7c8fdcd8344cc921315ca5c88921bad6f5
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3664,4 +3664,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: c58a796d94f78998c6acaf43b4141dd8928726b2854ae9646a62e148932ff0de
+index_checksum: 34dba5435065960611016bf86b8ded00ce4aa142816a4fb3c643b22858368bb2

@@ -25567,6 +25567,7 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   - config/architecture/arch_005_s4e_checkout_reconciliation.yaml
   - docs/artifact_catalog.md
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   - docs/system_flow.md
   - docs/task_register.md
   - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
@@ -25577,6 +25578,7 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
   - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
   - scripts/architecture_arch005_checkout_guard.py
   - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/platform/architecture/checkout_guard.py
@@ -25598,6 +25600,7 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   - config/architecture/arch_005_s4e_checkout_reconciliation.yaml
   - docs/artifact_catalog.md
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   - docs/system_flow.md
   - docs/task_register.md
   - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
@@ -25608,6 +25611,7 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
   - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
   - scripts/architecture_arch005_checkout_guard.py
   - src/ai_trading_system/platform/architecture/__init__.py
   - src/ai_trading_system/platform/architecture/checkout_guard.py
@@ -25635,11 +25639,14 @@ phase_arch_005_s4d_s2_read_only_telemetry:
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
     sha256: 3f95fe6d33c99d60e0269f8304104e652d8afb8fc04ab1915c10d9b175d132e1
     hash_normalization: git_eol_lf
+  - path: docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+    sha256: 0b318b2dc736fabb99d08d3f617714a1aab17c81dcf7fa3176ea7ec815e20c5b
+    hash_normalization: git_eol_lf
   - path: docs/system_flow.md
     sha256: 0deb726f97ea9ea575e778e2062990e74ba8aa7565c0d1749793274b36611d41
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: a6d01d976b02c1d03a41b49c3ede7e7c25acbc6c3c469aba62c68a1ebb0fb03b
+    sha256: 2e6d397e73f6da04c21d789ba60a8a7c8fdcd8344cc921315ca5c88921bad6f5
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: a36fa7ec9edb0ea3ca57bf3484b320687997a64317fd91783545ffd65ef74a4f
@@ -25657,13 +25664,16 @@ phase_arch_005_s4d_s2_read_only_telemetry:
     sha256: 87274b828b56cee1a52ea865ece8a296bdd9e97d341a4add6cd199091100b478
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 95960cdd720366ee245b8bc1e1036b3abe6d4b5a5350350b87dd4c78c5f92f5c
+    sha256: d210fecf8dbc7a28650714b52ed4c6b5c43045cb95cf3995c742be9ec9177be2
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 4c57d36015b6ae3c935991b18f5ff6a71c5c7c8b24e9d5454a8d053892168811
+    sha256: c5ebc50ab46871a43041b1b90b0074fc55d186e09e2ab1c7e5963e4eddac01c1
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
     sha256: 7a07c3d2adba85194a73a55485bb6f85bdf75ce71dfdca7b1bf5efcf42e597bd
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+    sha256: 8cb1e03b86a7ffd4cb97f8395d1af20205cb94c9893db36cb441c500597579ac
     hash_normalization: git_eol_lf
   - path: scripts/architecture_arch005_checkout_guard.py
     sha256: 1cc72b0e8ab0dc708e727cdc8e346adc3978a36ad0ee8e265f840b35e84b645e

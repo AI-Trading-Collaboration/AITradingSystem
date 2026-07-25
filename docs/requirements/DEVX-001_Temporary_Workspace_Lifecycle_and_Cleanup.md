@@ -177,3 +177,38 @@ closeout 时清理，造成空间占用、状态误读和未审计修改被误�
   Git 历史恢复，可重建 cache 可重新生成；只存在于已删除目录的 ignored cache/旧 validation
   output 不保证恢复。删除前已依据 Wave14 COMPLETE、S4A BASELINE_DONE、clean Git 状态和
   commit ancestry 确认这些目录不再是当前 canonical evidence source。
+
+## 7. 2026-07-26 scanner forensic reconciliation
+
+project owner授权按风险顺序处理三个既存worktree，首先处理
+`D:\w14c_scanner_20260723_185121`。删除前只读复核得到：
+
+- scanner HEAD=`242aac767d9b4d694e2b91b22853a7875e583815`，其父提交
+  `e2da21894ea8e8921a86c6c1b48d7b191f0f142c`已在main历史中；snapshot commit本身不是
+  main祖先，但Wave14 readiness实现已由后续reviewed main提交持续演进并通过当前formal Full；
+- worktree Git metadata中的index文件已不存在，先前记录的
+  `D:\w14c_commit_index_20260723_194551` companion目录也已不存在。使用系统临时目录中的
+  alternate index执行`read-tree HEAD`与exact-excluded refresh后，5,959-path表象收敛为
+  1个真实tracked差异、0个untracked差异；原worktree和Git metadata均未修改；
+- 唯一真实差异为
+  `inputs/architecture/arch_004g_deprecation_inventory.yaml`，raw SHA-256=
+  `482dfaef9eb3709587c9419e2eea123e069099e311cfcdb62b3e5fae4f7546cc`，
+  normalized Git blob=`7a5be6e699dd115c74715d76035ea486731ed38c`。该exact blob已存在于main祖先
+  `6a498f60993569e48afc4fd6597fdb6b515e17b8`与
+  `cb29989229035d6d790cca4f2594755c69a8f45e`，因此不是唯一未迁移证据；
+- alternate-index审计只发现40个ignored `src` cache文件、954,591 bytes，没有
+  `outputs/`、`reports/`、`data/`或`artifacts/` evidence；没有活动进程引用该路径；
+- 删除allowlist仅包含上述scanner绝对路径。删除前规模为6,000 files /
+  99,417,684 logical bytes。执行`git worktree remove --force`与`git worktree prune`后，
+  必须确认目录、registration与stale metadata均消失，再把本节和task register更新为完成。
+
+恢复边界：snapshot commit及唯一dirty blob均可从Git历史恢复；ignored cache可重建且不保证
+恢复；已消失的旧companion index不再被宣称保留。known-unrelated research文档继续通过exact
+pathspec排除，未读取、hash或复制其bytes。
+
+执行结果：`git worktree remove --force`只作用于上述exact allowlist，随后
+`git worktree prune`完成。目标目录与worktree registration均已不存在，释放6,000 files /
+99,417,684 logical bytes。scanner forensic与清理阶段完成；DEVX-001继续保持
+`IN_PROGRESS`以推进TRADING-2459迁移及OPS-070 runtime的独立退出条件。收口验证为
+focused=`64 passed`、architecture-fitness=`646 passed`，runtime artifact=
+`outputs/validation_runtime/architecture-fitness_20260725T181946Z/test_runtime_summary.json`。

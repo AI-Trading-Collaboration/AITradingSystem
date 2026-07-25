@@ -11,61 +11,61 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459
-    owner在各自合入、证据迁移和退出条件满足后清理活动worktree
+  next_owner: development coordinator：推进TRADING-2459 clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime
+    worktree
   requirement_refs:
   - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
-    clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
-    workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
-    candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。
+    clone/cache；2026-07-26 scanner复核确认原index与companion目录已不存在，alternate-index将5,959-path表象收敛为1个真实差异，且该exact
+    blob已在main历史中。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 首轮29个直接目标及3个空container清理完成，释放约3.22 GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456
-      GiB；Git worktree无stale registration。dirty scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。
+    text: scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree remove/prune已完成；TRADING-2459必须先迁移37项在途权威内容并通过required
+      Full；OPS-070 runtime必须等待下一合法scheduler验收及canonical evidence迁移。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1949
-    row_sha256: e7ecfe2707904c676a42bf8e94406f247f620b14e117b69bdcc519a6021a1ed4
+    row_sha256: f06d8d5140db688a87c25b7f4d5d90a2441ab1c4defa96b7a243f1bc0c9695aa
     cell_count: 8
     all_cells:
     - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
     - Developer experience / temporary clone, worktree and cache lifecycle
     - P1
-    - BASELINE_DONE
-    - development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459 owner在各自合入、证据迁移和退出条件满足后清理活动worktree
+    - IN_PROGRESS
+    - development coordinator：推进TRADING-2459 clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime
+      worktree
     - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
-      clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
-      workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
-      candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。
-    - 首轮29个直接目标及3个空container清理完成，释放约3.22 GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456
-      GiB；Git worktree无stale registration。dirty scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。
-    - 2026-07-25：保持`BASELINE_DONE`。累计删除15 worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
-      document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+      clone/cache；2026-07-26 scanner复核确认原index与companion目录已不存在，alternate-index将5,959-path表象收敛为1个真实差异，且该exact
+      blob已在main历史中。
+    - scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree remove/prune已完成；TRADING-2459必须先迁移37项在途权威内容并通过required
+      Full；OPS-070 runtime必须等待下一合法scheduler验收及canonical evidence迁移。
+    - 2026-07-26：scanner HEAD不是main祖先但其Wave14实现已被后续reviewed main演进取代；唯一真实dirty deprecation
+      inventory blob命中两个main祖先提交，0 untracked evidence，40个ignored src cache、0活动进程。已按exact
+      allowlist删除并prune scanner，目录与registration均消失，释放6,000 files/99,417,684 bytes；snapshot与dirty
+      blob可由Git历史恢复；focused/architecture=`64/646 passed`。任务继续`IN_PROGRESS`进入TRADING-2459收口，无production或broker
       effect。
     raw_line: '|DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP|Developer experience
-      / temporary clone, worktree and cache lifecycle|P1|BASELINE_DONE|development
-      coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459 owner在各自合入、证据迁移和退出条件满足后清理活动worktree|详见
-      `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
-      clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
-      workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
-      candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。|首轮29个直接目标及3个空container清理完成，释放约3.22
-      GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456 GiB；Git worktree无stale registration。dirty
-      scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。|2026-07-25：保持`BASELINE_DONE`。累计删除15
-      worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
-      document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+      / temporary clone, worktree and cache lifecycle|P1|IN_PROGRESS|development coordinator：推进TRADING-2459
+      clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime worktree|详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
+      clone/cache；2026-07-26 scanner复核确认原index与companion目录已不存在，alternate-index将5,959-path表象收敛为1个真实差异，且该exact
+      blob已在main历史中。|scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree
+      remove/prune已完成；TRADING-2459必须先迁移37项在途权威内容并通过required Full；OPS-070 runtime必须等待下一合法scheduler验收及canonical
+      evidence迁移。|2026-07-26：scanner HEAD不是main祖先但其Wave14实现已被后续reviewed main演进取代；唯一真实dirty
+      deprecation inventory blob命中两个main祖先提交，0 untracked evidence，40个ignored src cache、0活动进程。已按exact
+      allowlist删除并prune scanner，目录与registration均消失，释放6,000 files/99,417,684 bytes；snapshot与dirty
+      blob可由Git历史恢复；focused/architecture=`64/646 passed`。任务继续`IN_PROGRESS`进入TRADING-2459收口，无production或broker
       effect。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-e7ecfe2707904c676a42bf8e
+  event_id: legacy-import-f06d8d5140db688a87c25b7f
   task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -75,37 +75,41 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: BASELINE_DONE
+  to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459
-      owner在各自合入、证据迁移和退出条件满足后清理活动worktree
-    notes: 2026-07-25：保持`BASELINE_DONE`。累计删除15 worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
-      document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+    next_owner: development coordinator：推进TRADING-2459 clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime
+      worktree
+    notes: 2026-07-26：scanner HEAD不是main祖先但其Wave14实现已被后续reviewed main演进取代；唯一真实dirty
+      deprecation inventory blob命中两个main祖先提交，0 untracked evidence，40个ignored src cache、0活动进程。已按exact
+      allowlist删除并prune scanner，目录与registration均消失，释放6,000 files/99,417,684 bytes；snapshot与dirty
+      blob可由Git历史恢复；focused/architecture=`64/646 passed`。任务继续`IN_PROGRESS`进入TRADING-2459收口，无production或broker
       effect。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:e7ecfe2707904c676a42bf8e94406f247f620b14e117b69bdcc519a6021a1ed4
+  - sha256:f06d8d5140db688a87c25b7f4d5d90a2441ab1c4defa96b7a243f1bc0c9695aa
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
   - Developer experience / temporary clone, worktree and cache lifecycle
   - P1
-  - BASELINE_DONE
-  - development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459 owner在各自合入、证据迁移和退出条件满足后清理活动worktree
+  - IN_PROGRESS
+  - development coordinator：推进TRADING-2459 clean-main集成；OPS-070 owner在下一合法scheduler验收与证据迁移后清理runtime
+    worktree
   - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
-    clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
-    workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
-    candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。
-  - 首轮29个直接目标及3个空container清理完成，释放约3.22 GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456
-    GiB；Git worktree无stale registration。dirty scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。
-  - 2026-07-25：保持`BASELINE_DONE`。累计删除15 worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
-    document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+    clone/cache；2026-07-26 scanner复核确认原index与companion目录已不存在，alternate-index将5,959-path表象收敛为1个真实差异，且该exact
+    blob已在main历史中。
+  - scanner唯一blob已进入main历史、ignored仅为可重建cache、无活动进程，exact worktree remove/prune已完成；TRADING-2459必须先迁移37项在途权威内容并通过required
+    Full；OPS-070 runtime必须等待下一合法scheduler验收及canonical evidence迁移。
+  - 2026-07-26：scanner HEAD不是main祖先但其Wave14实现已被后续reviewed main演进取代；唯一真实dirty deprecation
+    inventory blob命中两个main祖先提交，0 untracked evidence，40个ignored src cache、0活动进程。已按exact
+    allowlist删除并prune scanner，目录与registration均消失，释放6,000 files/99,417,684 bytes；snapshot与dirty
+    blob可由Git历史恢复；focused/architecture=`64/646 passed`。任务继续`IN_PROGRESS`进入TRADING-2459收口，无production或broker
     effect。
   docs_links:
   - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   terminal: false
-  raw_row_sha256: e7ecfe2707904c676a42bf8e94406f247f620b14e117b69bdcc519a6021a1ed4
+  raw_row_sha256: f06d8d5140db688a87c25b7f4d5d90a2441ab1c4defa96b7a243f1bc0c9695aa
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 6a1fbe63a2ab883818516720e17a6246ca72f4bbab2b679e9f912cb53e0e4901
+fragment_checksum: 3882972fe678b34f7950c1fa0c0fe61a03d5a76aaa5a9b6ec39c2a2306114fb2
