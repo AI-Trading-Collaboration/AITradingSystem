@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1185
-test_count: 1126
+test_file_count: 1186
+test_count: 1127
 support_file_count: 59
 orphan_count: 0
 specific_overlap_count: 0
@@ -7439,7 +7439,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 0d04072d4cbae5fe1571e31469c2da255864af3fd4cb39220d6e25d3db1bf8e3
+  sha256: c2ab530b547a1e0c3b5c63fb48cedd451d62c75a4f61611aec9905db260d3935
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7835,7 +7835,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 302a6e02c2dd34d00623eba77e741eccd729e688cec8547ed45037f30ec650a9
+  sha256: 9fa81a9185fc6db8790dfa88e6db5773a606c4a162ed6447eb405a692d8ee983
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7967,7 +7967,23 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s4d_checkout_guard
   path: tests/test_arch_005_s4d_checkout_guard.py
-  sha256: cc1b23f016ab5028088912f2240caf12a62c9f2f86c9ac2e4fea3cfd92e21d4d
+  sha256: a7a253f47454f342e4d3f76c49e1b1bfcfc54a031f644c26e056d0324b5322de
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005_s4d_checkout_telemetry
+  path: tests/test_arch_005_s4d_checkout_telemetry.py
+  sha256: 6c99733a1ad6d6f4038992457187883b71cd8c0e308eaf0a2f6600cd426d1535
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
@@ -40,10 +41,10 @@ def git_checkout(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def test_policy_freezes_owner_approved_s0_s1_matrix_and_safety() -> None:
+def test_policy_freezes_owner_approved_s0_s1_s2_matrix_and_safety() -> None:
     policy = load_checkout_guard_policy(DEFAULT_CHECKOUT_GUARD_POLICY_PATH)
 
-    assert policy.status == "OWNER_APPROVED_S0_S1"
+    assert policy.status == "OWNER_APPROVED_S0_S1_S2_READ_ONLY"
     assert policy.approval_ref == "owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1"
     assert dict(policy.operation_gate_access) == {
         CheckoutOperationClass.DOMAIN_MUTATION: "READ",
@@ -307,6 +308,48 @@ def test_declared_dirty_mutation_is_attributed_and_unrelated_exact_path_is_exclu
     assert set(exclusion) == {"path", "rationale", "owner_ref"}
     assert "sha256" not in exclusion
     handle.release(outcome="completed", at=NOW + timedelta(seconds=1))
+
+
+def test_release_scope_drift_fails_after_safely_releasing_lease(
+    git_checkout: Path,
+) -> None:
+    guard = _guard(git_checkout)
+    decision, handle = _acquire_mutation(
+        guard,
+        intent_id="release-scope-drift",
+        task_id="TASK-A",
+        owned_paths=("src/a.py",),
+    )
+    assert decision.status == "PASS"
+    assert handle is not None
+    (git_checkout / "src/late.py").write_text("LATE = 1\n", encoding="utf-8")
+
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED.*src/late.py",
+    ):
+        handle.release(outcome="completed", at=NOW + timedelta(seconds=1))
+
+    assert handle.released is True
+    replay = guard.replay()
+    assert replay.active_leases == ()
+    head = next(
+        lease for lease in replay.lease_heads if lease.lease_id == decision.lease_id
+    )
+    assert head.state == "RELEASED"
+    event_path = next(
+        (guard.store.events_root / head.lease_id).glob("*.json")
+    )
+    events = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in (guard.store.events_root / head.lease_id).glob("*.json")
+    ]
+    assert event_path.is_file()
+    assert any(
+        "CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED:src/late.py"
+        in event["reason_codes"]
+        for event in events
+    )
 
 
 def test_heartbeat_extends_lease_and_stale_owner_is_expired_before_daily(

@@ -11,50 +11,61 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture control-plane owner：S2只读telemetry等待独立owner decision；project
-    owner仅在真实证据后评估S5
+  next_owner: project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护S2只读遥测合同
   requirement_refs:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
-    authority或task状态回写。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1与S2只读遥测均已闭合；S2只投影既有guard/lease/handoff/reconciliation事件，不新增writer、lock
+    authority、自动调度或task状态回写。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
-      decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。
+    text: telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；acquire后新增未声明dirty
+      path在release时typed fail、安全释放并进入telemetry；两个独立真实批次与rollup均PASS，confirmed false
+      block/unreviewed block均为0；S5必须有独立owner decision，task source、production与broker不得随证据就绪自动切换。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1955
-    row_sha256: b308462e2304c2c6e1f8ae06367e000b59462afe800821100a62391136523801
+    row_sha256: fbbc03725be7e3ac4457eecec37058358e4d6af09b120597b7444463ed07a1db
     cell_count: 8
     all_cells:
     - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
     - Architecture / shared-checkout writer and operations lease guard
     - P0
     - BASELINE_DONE
-    - architecture control-plane owner：S2只读telemetry等待独立owner decision；project owner仅在真实证据后评估S5
-    - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
-      authority或task状态回写。
-    - telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
-      decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。
-    - 2026-07-25：窄版formal evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task
+    - project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护S2只读遥测合同
+    - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1与S2只读遥测均已闭合；S2只投影既有guard/lease/handoff/reconciliation事件，不新增writer、lock
+      authority、自动调度或task状态回写。
+    - telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；acquire后新增未声明dirty
+      path在release时typed fail、安全释放并进入telemetry；两个独立真实批次与rollup均PASS，confirmed false
+      block/unreviewed block均为0；S5必须有独立owner decision，task source、production与broker不得随证据就绪自动切换。
+    - 2026-07-26：owner授权窄版S2只读telemetry；实现中直接修复release-time scope drift。两批snapshot=`checkout-telemetry-18eee4c13adf0b0490dd`/`checkout-telemetry-1dcb86b0e292efb62eb3`，合计23
+      intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0
+      unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
+      evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
+      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
       source cutover、production和broker继续未授权。
     raw_line: '|ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD|Architecture / shared-checkout
-      writer and operations lease guard|P0|BASELINE_DONE|architecture control-plane
-      owner：S2只读telemetry等待独立owner decision；project owner仅在真实证据后评估S5|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
-      authority或task状态回写。|telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
-      decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。|2026-07-25：窄版formal
-      evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task source cutover、production和broker继续未授权。|'
+      writer and operations lease guard|P0|BASELINE_DONE|project owner：独立评审两批rollup并决定是否另行提出S5；architecture
+      control-plane owner维护S2只读遥测合同|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1与S2只读遥测均已闭合；S2只投影既有guard/lease/handoff/reconciliation事件，不新增writer、lock
+      authority、自动调度或task状态回写。|telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；acquire后新增未声明dirty
+      path在release时typed fail、安全释放并进入telemetry；两个独立真实批次与rollup均PASS，confirmed false
+      block/unreviewed block均为0；S5必须有独立owner decision，task source、production与broker不得随证据就绪自动切换。|2026-07-26：owner授权窄版S2只读telemetry；实现中直接修复release-time
+      scope drift。两批snapshot=`checkout-telemetry-18eee4c13adf0b0490dd`/`checkout-telemetry-1dcb86b0e292efb62eb3`，合计23
+      intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0
+      unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
+      evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
+      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
+      source cutover、production和broker继续未授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b308462e2304c2c6e1f8ae06
+  event_id: legacy-import-fbbc03725be7e3ac4457eece
   task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -67,13 +78,16 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: architecture control-plane owner：S2只读telemetry等待独立owner decision；project
-      owner仅在真实证据后评估S5
-    notes: 2026-07-25：窄版formal evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task
+    next_owner: project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护S2只读遥测合同
+    notes: 2026-07-26：owner授权窄版S2只读telemetry；实现中直接修复release-time scope drift。两批snapshot=`checkout-telemetry-18eee4c13adf0b0490dd`/`checkout-telemetry-1dcb86b0e292efb62eb3`，合计23
+      intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0
+      unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
+      evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
+      passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
       source cutover、production和broker继续未授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b308462e2304c2c6e1f8ae06367e000b59462afe800821100a62391136523801
+  - sha256:fbbc03725be7e3ac4457eecec37058358e4d6af09b120597b7444463ed07a1db
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -81,16 +95,20 @@ projection:
   - Architecture / shared-checkout writer and operations lease guard
   - P0
   - BASELINE_DONE
-  - architecture control-plane owner：S2只读telemetry等待独立owner decision；project owner仅在真实证据后评估S5
-  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1已闭合；S2准备范围冻结为对既有guard/lease/handoff/reconciliation事件的只读投影，不新增writer、lock
-    authority或task状态回写。
-  - telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；至少观察两个独立真实集成批次后才允许提出S5
-    decision；瞬时拒绝、重叠writer、dirty/unattributed、daily零副作用与exact exclusion持续PASS。
-  - 2026-07-25：窄版formal evidence保持PASS；S4E完成S4C main集成后补齐S2受控准备边界，但实现仍未授权。S5、task
+  - project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护S2只读遥测合同
+  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1与S2只读遥测均已闭合；S2只投影既有guard/lease/handoff/reconciliation事件，不新增writer、lock
+    authority、自动调度或task状态回写。
+  - telemetry schema覆盖wait/conflict/held/expiry/replay/unattributed/人工false-block；原始事件immutable/checksum可重放；acquire后新增未声明dirty
+    path在release时typed fail、安全释放并进入telemetry；两个独立真实批次与rollup均PASS，confirmed false
+    block/unreviewed block均为0；S5必须有独立owner decision，task source、production与broker不得随证据就绪自动切换。
+  - 2026-07-26：owner授权窄版S2只读telemetry；实现中直接修复release-time scope drift。两批snapshot=`checkout-telemetry-18eee4c13adf0b0490dd`/`checkout-telemetry-1dcb86b0e292efb62eb3`，合计23
+    intents、22 leases、79 events、9个经人工确认的EXPECTED_BLOCK、0 confirmed false block、0 unreviewed
+    block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5 evidence ready。正式验证architecture/contract/integration/reproducibility=`644/275/995/23
+    passed`，Full=`7265 passed / 4 skipped / 643 warnings`。状态转`BASELINE_DONE`；S5、task
     source cutover、production和broker继续未授权。
   docs_links:
   - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
   terminal: false
-  raw_row_sha256: b308462e2304c2c6e1f8ae06367e000b59462afe800821100a62391136523801
+  raw_row_sha256: fbbc03725be7e3ac4457eecec37058358e4d6af09b120597b7444463ed07a1db
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: ce59f9f53aa57c5cb676766396cb16078bc3a22754975c62c34545357a8ef544
+fragment_checksum: 25d474eb096cd1c20c70fdc509b6c1d1a75d7ce3d61e9575e1311103dc40f917

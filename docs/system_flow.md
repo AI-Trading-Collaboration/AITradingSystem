@@ -941,6 +941,33 @@ ARCH-004D 将上述 N1 closed/read-only/no-effect path 迁为首个 reference ve
 ARCH-004E 新增持续 DevEx/ownership 控制链：`config/architecture/devex_ownership_policy.yaml` 以互斥 specific rule + fail-closed fallback 为全部 source/test/support Python 文件生成 deterministic module/test manifests，并将 code、policy、data、artifact、runtime 五类 owner 分开记录；changed-file impact selector 只提供 focused feedback，shared aggregate 或 unknown path 会升级到 architecture coordinator/full gate，绝不替代 phase full validation。ARCH-004C dependency/direct-writer ratchet、manifest freshness、ownership coverage 与 aggregate reproducibility 被汇总为单一 architecture fitness；`scripts/run_validation_tier.py architecture-fitness` 从 generated test manifest 解析测试集合，不维护第二份手写路径。module/experiment/report scaffold 只创建 skeleton/spec/fragment，并在目标存在时 fail closed；4 个 fragment 只生成覆盖 report registry、artifact catalog、system flow 三个 target 的 shadow index，现有 aggregate 仍是 source-of-truth 且由 coordinator 独占。engineering surface inventory 只链接上述 control artifacts，不改变既有 report schema 的核心解释。该链路只改研发治理，不改变 scheduler cadence、研究结果、报告结论、DQ/PIT、阈值、权重、promotion、paper-shadow、production 或 broker。
 
 ARCH-005S4D 在同一checkout的开发写入与operations入口之前增加path/operation-aware门禁：`config/architecture/arch_005_s4d_checkout_guard.yaml`冻结workspace identity、operation class、known-unrelated exact exclusion和TTL/heartbeat policy；`checkout_guard.py`从resolved checkout、Git common dir、HEAD/upstream与exact intent生成可重放decision，并复用现有`FileExecutionLeaseStore`的`execution_lease.v1` / `execution_lease_event.v1`执行atomic acquire、heartbeat、expiry、release和replay。机械互斥domain writer与shared writer均持READ workspace gate以保留不相交domain并行，owned/shared exact path自身按WRITE资源执行祖先/后代及casefold冲突；`aits ops daily-run`持WRITE workspace gate并与全部mutation排他。dirty/unattributed、active conflict、symlink/junction/reparse、root escape或lineage异常均在业务命令、provider、cache、run bundle和report写入前typed BLOCKED。known-unrelated exclusion只比较exact path，不读取、hash或复制文件内容。该窄版S0/S1不运行数据质量、provider或策略流程，不改变scheduler cadence、task source、研究结论、阈值、权重、promotion、paper-shadow、production或broker。
+Lease release还会重扫当前dirty paths；acquire后新增的未声明path会写入typed
+`CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED` causal event、先释放lease再令调用失败，防止scope drift被成功
+closeout掩盖或因失败留下stale active lease。
+
+ARCH-005S4D S2在同一门禁上增加只读telemetry projection。`telemetry-build`发现checkout-scoped
+immutable intent与causal lease event，并可显式绑定supervised run、S4C handoff/reconciliation和人工
+false-block review；每个输入保存relative path、schema/source id和raw SHA-256，validator重读原始bytes、
+重放lease causal chain并重新计算wait/conflict/held/heartbeat/expiry/reassignment/unattributed指标。
+Snapshot和rollup只能写入
+`outputs/architecture/arch_005_s4d_checkout_guard/telemetry/`，existing different bytes、source
+tamper、root/reparse escape、unknown review observation或policy drift均fail closed。两份unique batch
+snapshot才把rollup标为`S5 evaluation evidence ready`，但`S5 owner decision required=true`、
+`s5_cutover_authorized=false`、`task_source_cutover=false`始终保持；projection不回写task facts、不改变
+scheduler priority，也不运行DQ、provider、策略、production或broker路径。
+
+```mermaid
+flowchart LR
+    I["Immutable checkout intents"] --> P["Read-only telemetry projection"]
+    E["Causal lease events"] --> P
+    A["Explicit supervised / handoff / reconciliation evidence"] --> P
+    R["Manual false-block review"] --> P
+    P --> S["Immutable per-batch snapshot"]
+    S --> V["Raw SHA + source identity + causal replay validation"]
+    V --> U["Unique-batch rollup"]
+    U --> G["S5 evaluation evidence ready"]
+    G -.-> N["Owner decision still required; no cutover / production / broker"]
+```
 
 ARCH-005S4E 补齐isolated worktree迁移后的退出事务：S4D v1.1在受保护`main`上拒绝domain mutation，shared mutation仅允许`integration-coordinator`；`architecture_arch005_checkout_reconciliation.py prepare|prepare-recovery`读取source/target checkout identity、Git common dir、base/head/ref、explicit owned/generated/retained roles及exact status/raw SHA-256/normalized blob，生成带canonical checksum的`checkout_handoff.v1`。目标形成reviewed commits后，`audit`只沿target first-parent历史验证source residue，输出`checkout_reconciliation_report.v1`，把路径分为exact target、target历史已取代、source clean/stat-only、generated需重建、retained unique、known-unrelated zero-read、mixed、lineage missing或unattributed。只有exact/history-proven path进入coordinator cleanup allowlist；报告固定`automatic_cleanup_allowed=false`，不会restore、delete、commit、merge、push或切换task source。generated views只能在最终canonical source上由coordinator重建，unique/mixed/unattributed一律保留并fail closed。该治理链不读取市场数据、不运行DQ/provider/策略/运营流程，不改变scheduler cadence、研究结论、阈值、权重、promotion、paper-shadow、production或broker。
 

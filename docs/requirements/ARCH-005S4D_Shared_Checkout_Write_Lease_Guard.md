@@ -5,7 +5,7 @@
 - task id：`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`
 - parent：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`IN_PROGRESS_S2_READ_ONLY_TELEMETRY`
+- status：`BASELINE_DONE_S2_READ_ONLY_TELEMETRY`
 - owner：architecture control-plane owner / operations automation owner
 - dependency：`SATISFIED_WAVE14_S2_COMPLETE`；窄版 S0/S1 已在 Wave15 domain assignment 前完成
 - owner decision：`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`
@@ -50,7 +50,7 @@ task 或 scheduler automation 在同一 checkout 读取半写状态或成为第�
 - 记录本次 incident 与禁止的半写读取、双写和隐式接管路径。
 
 Owner-reviewed S0 matrix由
-`config/architecture/arch_005_s4d_checkout_guard.yaml@1.1.0`冻结：
+`config/architecture/arch_005_s4d_checkout_guard.yaml@1.2.0`冻结：
 
 |Operation class|Workspace gate|Path claim|与daily关系|允许的并行|
 |---|---|---|---|---|
@@ -88,6 +88,13 @@ Known-unrelated exclusion仅由policy登记exact
 `docs/research/growth_tilt_owner_diagnosis_pack.md` path；guard只把该literal pathspec传给Git status，
 不得打开、读取、hash或复制该文件的bytes。
 
+S2 formal首轮刷新deprecation inventory时进一步暴露lease scope drift：acquire后的新增dirty path若未在
+原intent声明，旧release路径不会再次归属校验。直接修复要求release前重扫Git dirty paths；发现
+unattributed path时，先以`CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED:<path>`写入同一causal release event并
+安全释放lease，再让调用命令typed fail。这样既不留下stale active lease，也不能用“成功release”掩盖
+租约内越界；telemetry必须把该terminal event投影为unattributed observation。Known-unrelated和runtime
+root继续exact exclusion，原始文件bytes仍不得被读取。
+
 ### S2 Integration and telemetry
 
 - 接入 supervised automation/S4C closeout与 Codex task handoff metadata；
@@ -108,12 +115,24 @@ Known-unrelated exclusion仅由policy登记exact
 - 在至少两个真实批次证据和独立S5 owner decision形成前，`task_source_cutover=false`、
   S5未授权，production/broker边界不变。
 
+S2实现由`checkout_telemetry.py`和
+`architecture_arch005_checkout_guard.py telemetry-build|telemetry-validate|telemetry-rollup|
+telemetry-rollup-validate`提供。Snapshot从checkout-scoped immutable intent、causal lease event及
+显式传入的supervised run、handoff、reconciliation、人工false-block review构建；每个source绑定
+project-relative path、schema/source id、raw SHA-256，重放时重新读取并校验。Snapshot固定输出
+workspace/task/thread/actor/operation identity、wait/held duration、typed conflict、heartbeat/expiry/
+reassignment/replay、unattributed dirty path及人工复核分类，且所有自动mutation/cutover/production/
+broker字段为false/none。Rollup只接受已重新验证的unique batch snapshot；达到两批仅设置
+`s5_evaluation_evidence_ready=true`，同时继续固定`S5 owner decision required=true`和
+`s5_cutover_authorized=false`。输出只允许写入policy治理的telemetry root，existing不同bytes、
+root escape、reparse、source tamper、unknown review observation或policy drift均fail closed。
+
 ## S2 临时工作区生命周期
 
 - owning task：`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`
 - absolute path：`D:\Work\AITradingSystem_arch005s4d_s2_telemetry_20260726`
 - branch：`codex/arch-005-s4d-s2-telemetry`
-- base：`main@a9fbe22ea060701cd658650cf8777d0d125ebf6a`
+- base：`main@77bc0742736d657e7294842bfba3bba5143b3b6b`
 - purpose：在不继续写dirty shared main的前提下实现只读telemetry schema、投影器、CLI与测试。
 - exit condition：focused与适用formal tiers PASS，generated views/source hashes fresh，归属文件
   commit并普通push；S4C fast-forward main后审计tracked/untracked/ignored内容，保全唯一运行证据，
@@ -127,6 +146,8 @@ Known-unrelated exclusion仅由policy登记exact
 - Daily operation在活动研发lease或未归属dirty state下零provider request、零cache/report mutation。
 - 两个机械互斥domain scope仍可并行，shared coordinator保持单写。
 - Crash、stale heartbeat、重复触发、PID复用、路径大小写/祖先后代冲突和symlink/junction均有负例。
+- acquire后新增未声明dirty path在release时typed fail、lease仍安全释放，并进入telemetry
+  unattributed observation。
 - Lease replay、worktree attribution、base/head/remote lineage和known-unrelated exclusion可独立验证。
 - focused、architecture、contract、integration、reproducibility及required Full PASS。
 - `task_source_cutover=false`、`production_effect=none`、`broker_action=none`。
@@ -171,3 +192,23 @@ task source cutover、production与broker仍保持未授权。
 643 warnings`通过。任务恢复`BASELINE_DONE_NARROW_S0_S1`。同日S4E已完成S4C main集成，
 S2 telemetry的只读合同准备范围如上冻结。2026-07-26 owner已授权该窄版S2并转
 `IN_PROGRESS_S2_READ_ONLY_TELEMETRY`；S5、task source cutover、production与broker仍未授权。
+
+2026-07-26：S2只读遥测已完成两个独立真实批次并转
+`BASELINE_DONE_S2_READ_ONLY_TELEMETRY`。第一批
+`checkout-telemetry-18eee4c13adf0b0490dd`覆盖S4C main至S2授权期间的20个intent、19个lease、
+67个event、7个unattributed path；第二批
+`checkout-telemetry-1dcb86b0e292efb62eb3`覆盖S2隔离实现与收口的3个intent、3个lease、
+12个event、2个release-time unattributed path。9个block observation均由
+`architecture_control_plane_owner`复核为`EXPECTED_BLOCK`，confirmed false block与unreviewed
+block均为0，两个批次replay均`PASS`且active lease为0。两批rollup
+`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅将
+`s5_evaluation_evidence_ready`置为true，同时保持`s5_owner_decision_required=true`、
+`s5_cutover_authorized=false`、`task_source_cutover=false`。
+
+正式验证闭合为focused combined=`75 passed`、release hardening focused=`21 passed`、
+compatibility/deprecation combined=`68 passed`、architecture=`644 passed`、
+contract=`275 passed`、integration=`995 passed`、reproducibility=`23 passed`，natural
+phase-exit Full=`7265 passed / 4 skipped / 643 warnings`。首次Full调用因缺少
+trigger provenance在pytest启动前按合同拒绝，补齐
+`phase_exit_or_handoff / ARCH-005S4D-S2`后才执行上述唯一实际Full。S2证据已满足“可提交S5评估”
+的工程前置条件，但没有形成S5授权；下一步由project owner独立评审rollup后决定是否提出S5。

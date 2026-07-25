@@ -24,6 +24,7 @@ from ai_trading_system.platform.architecture.parallel_control import (
     ParallelControlError,
 )
 from ai_trading_system.platform.architecture.parallel_control_kernel import (
+    ExecutionLease,
     FileExecutionLeaseStore,
     LeaseReplay,
     ParallelControlPolicy,
@@ -34,7 +35,7 @@ from ai_trading_system.platform.architecture.parallel_control_kernel import (
 from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-CHECKOUT_GUARD_POLICY_SCHEMA_VERSION = "arch_005_s4d_checkout_guard_policy.v1"
+CHECKOUT_GUARD_POLICY_SCHEMA_VERSION = "arch_005_s4d_checkout_guard_policy.v2"
 CHECKOUT_INTENT_SCHEMA_VERSION = "checkout_operation_intent.v1"
 CHECKOUT_DECISION_SCHEMA_VERSION = "checkout_guard_decision.v1"
 DEFAULT_CHECKOUT_GUARD_POLICY_PATH = (
@@ -234,14 +235,20 @@ class CheckoutLeaseHandle:
         if self._released:
             return
         reason = _identifier(outcome, "outcome").upper()
-        self.guard.store.release(
-            self.lease_id,
-            actor=self.actor,
-            now=at or datetime.now(tz=UTC),
-            evidence_refs=(self.decision.intent_path.as_posix(), *evidence_refs),
-            reason_codes=(f"CHECKOUT_OPERATION_{reason}",),
-        )
-        self._released = True
+        try:
+            self.guard.release(
+                self.lease_id,
+                actor=self.actor,
+                outcome=reason,
+                evidence_refs=evidence_refs,
+                now=at,
+            )
+        except CheckoutGuardError as exc:
+            if exc.code == "CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED":
+                self._released = True
+            raise
+        else:
+            self._released = True
 
 
 class CheckoutLeaseGuard:
@@ -271,6 +278,66 @@ class CheckoutLeaseGuard:
 
     def replay(self) -> LeaseReplay:
         return self.store.replay()
+
+    def release(
+        self,
+        lease_id: str,
+        *,
+        actor: str,
+        outcome: str,
+        evidence_refs: Sequence[str] = (),
+        now: datetime | None = None,
+    ) -> ExecutionLease:
+        instant = _aware_utc(now or datetime.now(tz=UTC))
+        replay = self.store.replay()
+        head = {lease.lease_id: lease for lease in replay.lease_heads}.get(lease_id)
+        if head is None:
+            raise CheckoutGuardError("CHECKOUT_LEASE_UNKNOWN", lease_id)
+        intent_id = head.change_id.removeprefix("checkout:")
+        if f"checkout:{intent_id}" != head.change_id:
+            raise CheckoutGuardError(
+                "CHECKOUT_RELEASE_CHANGE_ID",
+                head.change_id,
+            )
+        intent_path = self.runtime_root / "intents" / f"{intent_id}.json"
+        declared_paths, operation_class = _load_release_scope(
+            intent_path,
+            expected_intent_id=intent_id,
+        )
+        status_exclusions = (
+            *(row.path for row in self.policy.known_unrelated_exclusions),
+            self.runtime_root.relative_to(self.project_root).as_posix(),
+        )
+        dirty_paths = collect_checkout_dirty_paths(
+            self.project_root,
+            exclusions=status_exclusions,
+        )
+        unattributed = _unattributed_dirty_paths(
+            dirty_paths,
+            operation_class=operation_class,
+            declared_paths=declared_paths,
+        )
+        reason = _identifier(outcome, "outcome").upper()
+        reason_codes = (
+            f"CHECKOUT_OPERATION_{reason}",
+            *(
+                f"CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED:{path}"
+                for path in unattributed
+            ),
+        )
+        released = self.store.release(
+            lease_id,
+            actor=actor,
+            now=instant,
+            evidence_refs=(intent_path.as_posix(), *evidence_refs),
+            reason_codes=reason_codes,
+        )
+        if unattributed:
+            raise CheckoutGuardError(
+                "CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED",
+                ",".join(unattributed),
+            )
+        return released
 
     def acquire(
         self,
@@ -575,7 +642,7 @@ def load_checkout_guard_policy(path: Path) -> CheckoutGuardPolicy:
             "CHECKOUT_POLICY_SCHEMA",
             str(payload.get("schema_version")),
         )
-    if payload.get("status") != "OWNER_APPROVED_S0_S1":
+    if payload.get("status") != "OWNER_APPROVED_S0_S1_S2_READ_ONLY":
         raise CheckoutGuardError("CHECKOUT_POLICY_STATUS", str(payload.get("status")))
     authority = _mapping(payload.get("authority"), "authority")
     workspace = _mapping(payload.get("workspace"), "workspace")
@@ -625,6 +692,7 @@ def load_checkout_guard_policy(path: Path) -> CheckoutGuardPolicy:
             "wave15_assignment",
             "strategy_logic_change",
             "strategy_threshold_change",
+            "s5_cutover_authorized",
         )
     ):
         raise CheckoutGuardError(
@@ -735,6 +803,8 @@ def load_checkout_guard_policy(path: Path) -> CheckoutGuardPolicy:
 def resolve_checkout_identity(project_root: Path) -> CheckoutIdentity:
     root = project_root.resolve()
     checkout_text = _git_output(root, ("rev-parse", "--show-toplevel"), required=True)
+    if checkout_text is None:
+        raise CheckoutGuardError("CHECKOUT_GIT_EMPTY", "--show-toplevel")
     checkout_root = Path(checkout_text).resolve()
     if checkout_root != root:
         raise CheckoutGuardError(
@@ -746,8 +816,12 @@ def resolve_checkout_identity(project_root: Path) -> CheckoutIdentity:
         ("rev-parse", "--path-format=absolute", "--git-common-dir"),
         required=True,
     )
+    if common_text is None:
+        raise CheckoutGuardError("CHECKOUT_GIT_EMPTY", "--git-common-dir")
     common_dir = Path(common_text).resolve()
     head = _git_output(root, ("rev-parse", "--verify", "HEAD"), required=True)
+    if head is None:
+        raise CheckoutGuardError("CHECKOUT_GIT_EMPTY", "HEAD")
     branch_name = _git_output(
         root,
         ("symbolic-ref", "--quiet", "--short", "HEAD"),
@@ -946,6 +1020,36 @@ def _persist_or_replay_intent(
         return replace(intent, created_at=created_at)
     write_json_atomic(path, payload)
     return intent
+
+
+def _load_release_scope(
+    path: Path,
+    *,
+    expected_intent_id: str,
+) -> tuple[tuple[str, ...], CheckoutOperationClass]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path)) from exc
+    if not isinstance(payload, Mapping):
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path))
+    if payload.get("schema_version") != CHECKOUT_INTENT_SCHEMA_VERSION:
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path))
+    if payload.get("intent_id") != expected_intent_id:
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path))
+    try:
+        operation_class = CheckoutOperationClass(str(payload.get("operation_class")))
+    except ValueError as exc:
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", str(path)) from exc
+    owned_paths = _release_paths(payload.get("owned_paths"), "owned_paths")
+    shared_paths = _release_paths(payload.get("shared_paths"), "shared_paths")
+    return (*owned_paths, *shared_paths), operation_class
+
+
+def _release_paths(value: object, field: str) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        raise CheckoutGuardError("CHECKOUT_INTENT_INVALID", field)
+    return tuple(_portable_path(item, field) for item in value)
 
 
 def _git_output(

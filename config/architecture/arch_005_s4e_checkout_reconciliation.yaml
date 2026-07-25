@@ -15,7 +15,7 @@ intended_effect: >-
 checkout_guard_policy:
   path: config/architecture/arch_005_s4d_checkout_guard.yaml
   policy_id: arch_005_s4d_checkout_guard
-  version: 1.1.0
+  version: 1.2.0
 path_roles:
   - owned
   - generated

@@ -25500,3 +25500,213 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     strategy_threshold_changed: false
     production_effect: none
     broker_action: none
+
+phase_arch_005_s4d_s2_read_only_telemetry:
+  schema_version: arch_005_s4d_s2_compatibility_closeout.v1
+  status: BASELINE_DONE_ARCH_005S4D_S2_READ_ONLY_TELEMETRY
+  boundary_id: ARCH-005S4D-S2
+  task_ids:
+  - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  owner_decision: owner_decision:ARCH-005S4D-S2:2026-07-26:approve_read_only_telemetry_v1
+  prior_sections_immutability:
+    source_commit: 77bc0742736d657e7294842bfba3bba5143b3b6b
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: df2da7b70613145319f0f372c3275f287ce3acec
+    raw_byte_count: 1610891
+    raw_sha256: 418d8eb33bc1db2a429dc33fdbb42e38ca24a1a4bf22e6e807ae1e2e7dbfe3f0
+    append_offset: 1610891
+    current_section_must_be_eof: true
+  implementation:
+    policy_version: arch_005_s4d_checkout_guard@1.2.0
+    snapshot_schema: checkout_guard_telemetry_snapshot.v1
+    rollup_schema: checkout_guard_telemetry_rollup.v1
+    false_block_review_schema: checkout_guard_false_block_review.v1
+    minimum_observation_batches: 2
+    raw_source_sha256_binding: true
+    causal_lease_replay: true
+    governed_immutable_output: true
+    task_governance_status_mutation: false
+    automatic_task_mutation: false
+    s5_cutover_authorized: false
+  telemetry_evidence:
+    observed_batch_count: 2
+    s4c_main_snapshot_id: checkout-telemetry-18eee4c13adf0b0490dd
+    s4c_main_intent_count: 20
+    s4c_main_lease_count: 19
+    s4c_main_lease_event_count: 67
+    s4c_main_conflict_count: 0
+    s4c_main_unattributed_path_count: 7
+    s4c_main_expected_block_count: 7
+    s4c_main_confirmed_false_block_count: 0
+    s4c_main_unreviewed_block_count: 0
+    s4c_main_active_lease_count: 0
+    worktree_snapshot_id: checkout-telemetry-1dcb86b0e292efb62eb3
+    worktree_intent_count: 3
+    worktree_lease_count: 3
+    worktree_lease_event_count: 12
+    worktree_conflict_count: 0
+    worktree_unattributed_path_count: 2
+    worktree_expected_block_count: 2
+    worktree_confirmed_false_block_count: 0
+    worktree_unreviewed_block_count: 0
+    worktree_active_lease_count: 0
+    rollup_id: checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41
+    total_intent_count: 23
+    total_lease_count: 22
+    total_lease_event_count: 79
+    total_unattributed_path_count: 9
+    total_confirmed_false_block_count: 0
+    total_unreviewed_block_count: 0
+    s5_evaluation_evidence_ready: true
+    s5_owner_decision_required: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/architecture/arch_005_s4d_checkout_guard.yaml
+  - config/architecture/arch_005_s4e_checkout_reconciliation.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - scripts/architecture_arch005_checkout_guard.py
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/checkout_guard.py
+  - src/ai_trading_system/platform/architecture/parallel_control_kernel.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_arch_005_s4d_checkout_guard.py
+  supersession:
+    superseded_by_phase: ARCH-005S4D-S2
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_005_s4e_checkout_handoff_and_source_reconciliation
+    current_hash_authority: phase_arch_005_s4d_s2_read_only_telemetry.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - config/architecture/arch_005_s4d_checkout_guard.yaml
+  - config/architecture/arch_005_s4e_checkout_reconciliation.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - scripts/architecture_arch005_checkout_guard.py
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/checkout_guard.py
+  - src/ai_trading_system/platform/architecture/parallel_control_kernel.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_arch_005_s4d_checkout_guard.py
+  new_source_paths:
+  - src/ai_trading_system/platform/architecture/checkout_telemetry.py
+  - tests/test_arch_005_s4d_checkout_telemetry.py
+  sources:
+  - path: config/architecture/arch_005_s4d_checkout_guard.yaml
+    sha256: 5a399ceceaa613e6651f81a5aa377c93d240326964d947dd658088f198a3aec3
+    hash_normalization: git_eol_lf
+  - path: config/architecture/arch_005_s4e_checkout_reconciliation.yaml
+    sha256: 74b402c3d84d4042c9aa5f207c50ccb2d00ebdd99c59901eeaee0cedeced7c32
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: 119d98c9a81653ad019167bf391ade72cff46e81be91e5f30003b6712d9cfd8c
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+    sha256: 4306835fa7c0d73ee00584d4ddbb162e84a9adea6b20e050b4078d7d95a0757f
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 754048ec22b60f0539e9aef1de6079549912bc80a5dbdf137064714b45f9d9bc
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 3b41a98ae1086e33266159d5c8a8090f7a1091f733a12ad89110723bc2926bfa
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 9d730e9994324b9897467cd2c89bfd0363d3d4df85ef8408dab4ab8f69623d8c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 362792bd701a007e09083a90360a961542e46ee007cf7b64270ad81eeab975ff
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: d0991e5606fc2cac262de7772ed3835cadcbb623b3f6be3da7c5360952ff50d0
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 158c952c4a08a24c34c458c5e394d3f44b72bb9d2fd6f31e8e2c8699a6c9dd88
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 87274b828b56cee1a52ea865ece8a296bdd9e97d341a4add6cd199091100b478
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 81a3a12976acf9ad82d76bd0fb5169b3e9ca679f04a8ab62234856e00bd3f2b6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 1fbda7fd7ab31fbd759132a6536df6a76ff97b0f0bba89d7b8a1a85cadfd15a5
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+    sha256: a56e01e844c4032b6c3daf3dfdecae9933630702f63c3ebaa9b8f5216d14ce13
+    hash_normalization: git_eol_lf
+  - path: scripts/architecture_arch005_checkout_guard.py
+    sha256: 941259518d28026d5f3f849ed9eb49842acaa3f94fba756bb99cf105cd90e183
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/architecture/__init__.py
+    sha256: f401db3b0e06b4ebf742a824956f9b2fdd7802e236edfc40ad531b54e9314f1c
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/architecture/checkout_guard.py
+    sha256: 2cce795e4d1684b82404ac5b1e039df073d3d04c61bc3923e5e32642a865d198
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/architecture/checkout_telemetry.py
+    sha256: a2572166c1e3721484a51f9dec27b36a21da3b3f0b4ec604370fe9608298bb06
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py
+    sha256: 06794e8ab3ea093e0edcff71c608de11b6926dfbc63442d03812e9a808872dd7
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: c2ab530b547a1e0c3b5c63fb48cedd451d62c75a4f61611aec9905db260d3935
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 9fa81a9185fc6db8790dfa88e6db5773a606c4a162ed6447eb405a692d8ee983
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_005_s4d_checkout_guard.py
+    sha256: a7a253f47454f342e4d3f76c49e1b1bfcfc54a031f644c26e056d0324b5322de
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_005_s4d_checkout_telemetry.py
+    sha256: 6c99733a1ad6d6f4038992457187883b71cd8c0e308eaf0a2f6600cd426d1535
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: FORMAL_VALIDATION_PASS
+    focused: PASS_75
+    release_hardening_focused: PASS_21
+    compatibility_deprecation_combined: PASS_68
+    architecture_fitness: PASS_644
+    contract_validation: PASS_275
+    integration: PASS_995
+    reproducibility: PASS_23
+    full: PASS_7265_SKIPPED_4_WARNINGS_643
+    full_runtime_summary: outputs/validation_runtime/full_20260725T154816Z/test_runtime_summary.json
+  safety:
+    task_governance_status_mutated: false
+    automatic_task_mutation: false
+    automatic_scheduler_priority_change: false
+    automatic_cleanup_allowed: false
+    automatic_commit_allowed: false
+    automatic_merge_allowed: false
+    automatic_push_allowed: false
+    task_source_cutover: false
+    s5_cutover_authorized: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    production_effect: none
+    broker_action: none

@@ -1,7 +1,7 @@
-schema_version: arch_005_s4d_checkout_guard_policy.v1
+schema_version: arch_005_s4d_checkout_guard_policy.v2
 policy_id: arch_005_s4d_checkout_guard
-version: 1.1.0
-status: OWNER_APPROVED_S0_S1
+version: 1.2.0
+status: OWNER_APPROVED_S0_S1_S2_READ_ONLY
 owner: architecture_control_plane_owner
 approved_by: project_owner
 approval_ref: owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1
@@ -20,10 +20,10 @@ validation_plan:
   - focused、architecture、contract、integration、reproducibility和required Full
 review:
   owner: architecture_control_plane_owner
-  required_before_stage: S2_OR_WAVE15
+  required_before_stage: S5
   condition: >-
-    S0/S1正式门禁通过后，从最终HEAD重建Wave15 readiness；任何S2 telemetry、
-    S5 task source cutover或扩大operation class均需独立review。
+    S2只读telemetry完成并观察至少两个独立真实集成批次后，仍须project owner
+    单独review才允许评估S5；不得从telemetry PASS自动推导cutover。
 authority:
   lease_schema: execution_lease.v1
   lease_event_schema: execution_lease_event.v1
@@ -64,6 +64,37 @@ lease:
     - architecture-control-plane
     - operations-automation
     - integration-coordinator
+telemetry:
+  status: OWNER_APPROVED_READ_ONLY
+  owner: architecture_control_plane_owner
+  approved_by: project_owner
+  approval_ref: owner_decision:ARCH-005S4D-S2:2026-07-26:approve_read_only_telemetry_v1
+  snapshot_schema: checkout_guard_telemetry_snapshot.v1
+  rollup_schema: checkout_guard_telemetry_rollup.v1
+  false_block_review_schema: checkout_guard_false_block_review.v1
+  output_root: outputs/architecture/arch_005_s4d_checkout_guard/telemetry
+  minimum_observation_batches: 2
+  accepted_batch_kinds:
+    - supervised_automation
+    - s4c_integration
+    - manual_control_plane
+  rationale: >-
+    两个独立真实批次是区分偶发checkout等待与持续控制面瓶颈的最小pilot观察窗；
+    该阈值只允许形成S5评估输入，不授权source cutover。
+  intended_effect: >-
+    从既有immutable intent、lease event、supervised automation和S4C reconciliation
+    事实生成可重放的等待、冲突、持有、expiry、unattributed与人工false-block统计。
+  validation_plan:
+    - raw source checksum与lease causal replay
+    - wait/conflict/held/expiry/unattributed deterministic projection
+    - false-block review exact observation binding
+    - two-batch rollup不自动授权S5
+    - focused、architecture、contract、integration、reproducibility与required Full
+  review:
+    owner: project_owner
+    condition: >-
+      至少两个unique batch_id的真实snapshot均PASS，且瓶颈归因、false-block人工复核和
+      validation evidence完整后，才可另行提出S5 owner decision。
 known_unrelated_exclusions:
   - path: docs/research/growth_tilt_owner_diagnosis_pack.md
     rationale: >-
@@ -76,5 +107,6 @@ safety:
   wave15_assignment: false
   strategy_logic_change: false
   strategy_threshold_change: false
+  s5_cutover_authorized: false
   production_effect: none
   broker_action: none

@@ -577,6 +577,100 @@ def leases_conflict(first: ExecutionLease, second: ExecutionLease) -> bool:
     return False
 
 
+def replay_lease_events(
+    events: Sequence[LeaseEvent],
+    *,
+    initial_issues: Sequence[ControlIssue] = (),
+) -> LeaseReplay:
+    issues = set(initial_issues)
+    by_lease: dict[str, list[LeaseEvent]] = {}
+    for event in events:
+        by_lease.setdefault(event.lease.lease_id, []).append(event)
+    heads: list[ExecutionLease] = []
+    head_ids: list[tuple[str, str]] = []
+    for lease_id, records in sorted(by_lease.items()):
+        event_by_id = {record.event_id: record for record in records}
+        if len(event_by_id) != len(records):
+            issues.add(_issue("LEASE_EVENT_ID_DUPLICATE", (), lease_id, "duplicate event id"))
+            continue
+        children = {record.previous_event_id for record in records if record.previous_event_id}
+        candidates = sorted(set(event_by_id) - children)
+        if len(candidates) != 1:
+            issues.add(_issue("LEASE_CAUSAL_HEAD_COUNT", (), lease_id, str(len(candidates))))
+            continue
+        head = event_by_id[candidates[0]]
+        chain: list[LeaseEvent] = []
+        seen: set[str] = set()
+        current: LeaseEvent | None = head
+        while current is not None:
+            if current.event_id in seen:
+                issues.add(_issue("LEASE_CAUSAL_CYCLE", (), lease_id, current.event_id))
+                break
+            seen.add(current.event_id)
+            chain.append(current)
+            current = (
+                event_by_id.get(current.previous_event_id)
+                if current.previous_event_id is not None
+                else None
+            )
+        if len(seen) != len(records):
+            issues.add(
+                _issue("LEASE_CAUSAL_DISCONNECTED", (), lease_id, "event chain incomplete")
+            )
+            continue
+        prior_state: str | None = None
+        valid = True
+        for record in reversed(chain):
+            if (
+                record.from_state != prior_state
+                or record.to_state not in _LEASE_TRANSITIONS[prior_state]
+            ):
+                issues.add(
+                    _issue(
+                        "LEASE_TRANSITION_INVALID",
+                        (record.lease.task_id,),
+                        lease_id,
+                        f"{record.from_state}->{record.to_state}",
+                    )
+                )
+                valid = False
+                break
+            if record.lease.state != record.to_state:
+                issues.add(
+                    _issue("LEASE_EVENT_STATE_MISMATCH", (), lease_id, record.event_id)
+                )
+                valid = False
+                break
+            prior_state = record.to_state
+        if valid:
+            heads.append(head.lease)
+            head_ids.append((lease_id, head.event_id))
+    active = sorted(
+        (lease for lease in heads if lease.state == "ACTIVE"),
+        key=lambda item: item.lease_id,
+    )
+    for index, first in enumerate(active):
+        for second in active[index + 1 :]:
+            if leases_conflict(first, second):
+                issues.add(
+                    _issue(
+                        "ACTIVE_LEASE_RESOURCE_CONFLICT",
+                        (first.task_id, second.task_id),
+                        f"{first.lease_id},{second.lease_id}",
+                        "active leases overlap",
+                    )
+                )
+    ordered_issues = tuple(sorted(issues))
+    return LeaseReplay(
+        status="PASS" if not ordered_issues else "FAIL",
+        lease_heads=tuple(sorted(heads, key=lambda item: item.lease_id)),
+        active_leases=tuple(active),
+        head_event_ids=tuple(sorted(head_ids)),
+        event_count=len(events),
+        issues=ordered_issues,
+    )
+
+
 class FileExecutionLeaseStore:
     def __init__(self, root: Path, *, policy: ParallelControlPolicy) -> None:
         self.root = root.resolve()
@@ -590,92 +684,10 @@ class FileExecutionLeaseStore:
         if self.events_root.exists():
             for path in sorted(self.events_root.glob("*/*.json")):
                 try:
-                    events.append(_parse_lease_event(json.loads(path.read_text(encoding="utf-8"))))
+                    events.append(parse_lease_event(json.loads(path.read_text(encoding="utf-8"))))
                 except (OSError, json.JSONDecodeError, ParallelControlError) as exc:
                     issues.add(_issue("LEASE_EVENT_INVALID", (), path.as_posix(), str(exc)))
-        by_lease: dict[str, list[LeaseEvent]] = {}
-        for event in events:
-            by_lease.setdefault(event.lease.lease_id, []).append(event)
-        heads: list[ExecutionLease] = []
-        head_ids: list[tuple[str, str]] = []
-        for lease_id, records in sorted(by_lease.items()):
-            event_by_id = {record.event_id: record for record in records}
-            if len(event_by_id) != len(records):
-                issues.add(_issue("LEASE_EVENT_ID_DUPLICATE", (), lease_id, "duplicate event id"))
-                continue
-            children = {record.previous_event_id for record in records if record.previous_event_id}
-            candidates = sorted(set(event_by_id) - children)
-            if len(candidates) != 1:
-                issues.add(_issue("LEASE_CAUSAL_HEAD_COUNT", (), lease_id, str(len(candidates))))
-                continue
-            head = event_by_id[candidates[0]]
-            chain: list[LeaseEvent] = []
-            seen: set[str] = set()
-            current: LeaseEvent | None = head
-            while current is not None:
-                if current.event_id in seen:
-                    issues.add(_issue("LEASE_CAUSAL_CYCLE", (), lease_id, current.event_id))
-                    break
-                seen.add(current.event_id)
-                chain.append(current)
-                current = (
-                    event_by_id.get(current.previous_event_id)
-                    if current.previous_event_id is not None
-                    else None
-                )
-            if len(seen) != len(records):
-                issues.add(
-                    _issue("LEASE_CAUSAL_DISCONNECTED", (), lease_id, "event chain incomplete")
-                )
-                continue
-            prior_state: str | None = None
-            valid = True
-            for record in reversed(chain):
-                if (
-                    record.from_state != prior_state
-                    or record.to_state not in _LEASE_TRANSITIONS[prior_state]
-                ):
-                    issues.add(
-                        _issue(
-                            "LEASE_TRANSITION_INVALID",
-                            (record.lease.task_id,),
-                            lease_id,
-                            f"{record.from_state}->{record.to_state}",
-                        )
-                    )
-                    valid = False
-                    break
-                if record.lease.state != record.to_state:
-                    issues.add(_issue("LEASE_EVENT_STATE_MISMATCH", (), lease_id, record.event_id))
-                    valid = False
-                    break
-                prior_state = record.to_state
-            if valid:
-                heads.append(head.lease)
-                head_ids.append((lease_id, head.event_id))
-        active = sorted(
-            (lease for lease in heads if lease.state == "ACTIVE"), key=lambda x: x.lease_id
-        )
-        for index, first in enumerate(active):
-            for second in active[index + 1 :]:
-                if leases_conflict(first, second):
-                    issues.add(
-                        _issue(
-                            "ACTIVE_LEASE_RESOURCE_CONFLICT",
-                            (first.task_id, second.task_id),
-                            f"{first.lease_id},{second.lease_id}",
-                            "active leases overlap",
-                        )
-                    )
-        ordered_issues = tuple(sorted(issues))
-        return LeaseReplay(
-            status="PASS" if not ordered_issues else "FAIL",
-            lease_heads=tuple(sorted(heads, key=lambda item: item.lease_id)),
-            active_leases=tuple(active),
-            head_event_ids=tuple(sorted(head_ids)),
-            event_count=len(events),
-            issues=ordered_issues,
-        )
+        return replay_lease_events(events, initial_issues=tuple(issues))
 
     def acquire(
         self,
@@ -1088,7 +1100,7 @@ def _lease_event(
     return replace(prototype, event_id=f"lease-event-{_canonical_sha256(prototype._body())[:20]}")
 
 
-def _parse_lease_event(payload: Mapping[str, Any]) -> LeaseEvent:
+def parse_lease_event(payload: Mapping[str, Any]) -> LeaseEvent:
     event_id = _text(payload.get("event_id"), "event_id")
     lease_payload = _mapping(payload.get("lease"), "lease")
     resource_payloads = lease_payload.get("resources")

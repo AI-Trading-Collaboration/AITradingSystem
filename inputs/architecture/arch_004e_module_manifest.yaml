@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1019
+module_count: 1020
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -14031,7 +14031,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
-  sha256: 9ed9d087dc2ca52da37f91215267eafde44fe5a42da0307d499925b9ef23cde0
+  sha256: f401db3b0e06b4ebf742a824956f9b2fdd7802e236edfc40ad531b54e9314f1c
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -14123,7 +14123,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.checkout_guard
   path: src/ai_trading_system/platform/architecture/checkout_guard.py
-  sha256: 17ad535c89e811507f4fa7bd0bb3e203d1963de083b3db2b216727d528db70c8
+  sha256: 2cce795e4d1684b82404ac5b1e039df073d3d04c61bc3923e5e32642a865d198
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -14147,6 +14147,29 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.checkout_reconciliation
   path: src/ai_trading_system/platform/architecture/checkout_reconciliation.py
   sha256: f75612bdff8812d0c33b9d2bd4d009fee557452d93248d81385a7e9582ab9626
+  rule_id: platform_architecture
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: architecture_platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.checkout_telemetry
+  path: src/ai_trading_system/platform/architecture/checkout_telemetry.py
+  sha256: a2572166c1e3721484a51f9dec27b36a21da3b3f0b4ec604370fe9608298bb06
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -14307,7 +14330,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_control_kernel
   path: src/ai_trading_system/platform/architecture/parallel_control_kernel.py
-  sha256: dd8e14445e74f5e81d1b7c36dee71baa35690cfa1b3ab4ccd92137c4c64624f6
+  sha256: 06794e8ab3ea093e0edcff71c608de11b6926dfbc63442d03812e9a808872dd7
   rule_id: platform_architecture
   owner_profile: platform
   owners:
