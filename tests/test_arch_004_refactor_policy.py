@@ -175,9 +175,16 @@ OPS_070_NEW_SOURCE_PATHS = frozenset(
             "registry/development_tasks_shadow/active/53/"
             "5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml"
         ),
+        "src/ai_trading_system/cli_commands/pit_snapshots.py",
+        "src/ai_trading_system/fmp_forward_pit.py",
         "src/ai_trading_system/ops_scheduler_checkout.py",
+        "src/ai_trading_system/pipeline_health.py",
+        "src/ai_trading_system/pit_snapshots.py",
         "tests/test_arch_004c_platform_adapters.py",
+        "tests/test_fmp_forward_pit.py",
         "tests/test_ops_scheduler_checkout.py",
+        "tests/test_pipeline_health.py",
+        "tests/test_pit_snapshots.py",
     }
 )
 D0B2B_NEW_SOURCE_PATHS = frozenset(

@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+import pytest
 from typer.testing import CliRunner
 
 import ai_trading_system.cli_commands.pit_snapshots as pit_snapshots_cli
@@ -16,9 +17,11 @@ from ai_trading_system.fmp_forward_pit import (
     attach_fmp_forward_pit_raw_paths,
     fetch_fmp_forward_pit_snapshots,
     normalize_fmp_forward_pit_payloads,
+    project_fmp_forward_pit_capture,
     render_fmp_forward_pit_fetch_report,
     retarget_fmp_forward_pit_normalized_rows,
     write_fmp_forward_pit_normalized_csv,
+    write_fmp_forward_pit_normalized_csv_from_payloads,
     write_fmp_forward_pit_raw_payloads,
 )
 from ai_trading_system.pit_snapshots import (
@@ -97,6 +100,86 @@ def test_fetch_fmp_forward_pit_writes_raw_normalized_and_manifest(
     assert normalized_csv[0]["raw_payload_sha256"] == manifest_records[0].raw_payload_sha256
     assert pit_report.status == "PASS"
     assert "available_time <= decision_time" in render_fmp_forward_pit_fetch_report(report)
+
+
+def test_project_retained_capture_replays_exact_normalized_bytes_without_provider(
+    tmp_path: Path,
+) -> None:
+    report = fetch_fmp_forward_pit_snapshots(
+        ["NVDA", "MSFT"],
+        api_key="test-key",
+        as_of=date(2026, 5, 4),
+        provider=_FakeFmpForwardPitProvider(),
+        downloaded_at=datetime(2026, 5, 5, 1, 2, 3, tzinfo=UTC),
+        analyst_estimate_limit=2,
+    )
+    raw_dir = tmp_path / "data" / "raw" / "capture" / "fmp_forward_pit"
+    raw_paths = write_fmp_forward_pit_raw_payloads(report.raw_payloads, raw_dir)
+    attached = attach_fmp_forward_pit_raw_paths(
+        report.raw_payloads,
+        raw_paths,
+        project_root=tmp_path,
+    )
+    capture_normalized = tmp_path / "capture" / "fmp_forward_pit_2026-05-04.csv"
+    write_fmp_forward_pit_normalized_csv_from_payloads(attached, capture_normalized)
+    canonical_normalized = (
+        tmp_path / "data" / "processed" / "pit_snapshots" / "fmp_forward_pit_2026-05-04.csv"
+    )
+    canonical_report = tmp_path / "outputs" / "reports" / "fmp_forward_pit_fetch_2026-05-04.md"
+
+    projection = project_fmp_forward_pit_capture(
+        raw_input_dir=raw_dir,
+        capture_normalized_input_path=capture_normalized,
+        as_of=date(2026, 5, 4),
+        normalized_output_path=canonical_normalized,
+        report_output_path=canonical_report,
+        project_root=tmp_path,
+    )
+
+    assert projection.raw_payload_count == 2
+    assert projection.normalized_row_count == report.normalized_row_count
+    assert projection.provider_request_performed is False
+    assert canonical_normalized.read_bytes() == capture_normalized.read_bytes()
+    report_text = canonical_report.read_text(encoding="utf-8")
+    assert "- 状态：PASS" in report_text
+    assert "projection_mode: `RETAINED_CAPTURE_REPLAY`" in report_text
+    assert "provider_request_performed: `false`" in report_text
+
+
+def test_project_retained_capture_rejects_normalized_drift(tmp_path: Path) -> None:
+    report = fetch_fmp_forward_pit_snapshots(
+        ["NVDA"],
+        api_key="test-key",
+        as_of=date(2026, 5, 4),
+        provider=_FakeFmpForwardPitProvider(),
+        downloaded_at=datetime(2026, 5, 5, 1, 2, 3, tzinfo=UTC),
+        analyst_estimate_limit=2,
+    )
+    raw_dir = tmp_path / "data" / "raw" / "capture" / "fmp_forward_pit"
+    raw_paths = write_fmp_forward_pit_raw_payloads(report.raw_payloads, raw_dir)
+    attached = attach_fmp_forward_pit_raw_paths(
+        report.raw_payloads,
+        raw_paths,
+        project_root=tmp_path,
+    )
+    capture_normalized = tmp_path / "capture" / "fmp_forward_pit_2026-05-04.csv"
+    write_fmp_forward_pit_normalized_csv_from_payloads(attached, capture_normalized)
+    capture_normalized.write_bytes(
+        capture_normalized.read_bytes().replace(b"medium", b"low", 1)
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="capture normalized bytes differ",
+    ):
+        project_fmp_forward_pit_capture(
+            raw_input_dir=raw_dir,
+            capture_normalized_input_path=capture_normalized,
+            as_of=date(2026, 5, 4),
+            normalized_output_path=tmp_path / "canonical.csv",
+            report_output_path=tmp_path / "canonical.md",
+            project_root=tmp_path,
+        )
 
 
 def test_normalized_id_handles_non_ascii_long_record_keys() -> None:

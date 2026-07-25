@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -66,6 +67,8 @@ _SUPPORTED_RECOVERY_MODES = frozenset(
 
 @dataclass(frozen=True)
 class CaptureComponentPolicy:
+    source_revision: str
+    supersedes_source_revisions: tuple[str, ...]
     max_attempts: int
     retry_delay_seconds: int
     retryable_blocker_codes: tuple[str, ...]
@@ -230,6 +233,8 @@ class CaptureComponent:
     command: tuple[str, ...]
     expected_paths: tuple[Path, ...]
     required: bool
+    source_revision: str = ""
+    supersedes_source_revisions: tuple[str, ...] = ()
     max_attempts: int = 1
     retry_delay_seconds: int = 0
     retryable_blocker_codes: tuple[str, ...] = ()
@@ -305,6 +310,19 @@ def load_daily_input_capture_policy(
         component_raw = component_policy_payload.get(component_id)
         if not isinstance(component_raw, Mapping):
             raise ValueError(f"component policy must be a mapping: {component_id}")
+        source_revision = _required_text(component_raw, "source_revision")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", source_revision):
+            raise ValueError(f"invalid source_revision: {component_id}")
+        supersedes_raw = component_raw.get("supersedes_source_revisions")
+        if not isinstance(supersedes_raw, list) or not all(
+            isinstance(item, str) and item for item in supersedes_raw
+        ):
+            raise ValueError(f"invalid supersedes_source_revisions: {component_id}")
+        if (
+            len(set(supersedes_raw)) != len(supersedes_raw)
+            or source_revision in supersedes_raw
+        ):
+            raise ValueError(f"invalid source revision lineage: {component_id}")
         max_attempts = _positive_int(component_raw.get("max_attempts"), "max_attempts")
         retry_delay_seconds = _non_negative_int(
             component_raw.get("retry_delay_seconds"),
@@ -321,6 +339,8 @@ def load_daily_input_capture_policy(
         if recovery_mode not in _SUPPORTED_RECOVERY_MODES:
             raise ValueError(f"unsupported recovery_mode: {component_id}:{recovery_mode}")
         component_policies[component_id] = CaptureComponentPolicy(
+            source_revision=source_revision,
+            supersedes_source_revisions=tuple(supersedes_raw),
             max_attempts=max_attempts,
             retry_delay_seconds=retry_delay_seconds,
             retryable_blocker_codes=tuple(retryable_raw),
@@ -417,6 +437,10 @@ def build_daily_input_capture_components(
                 paths.market_download_manifest_path,
             ),
             required="market_macro" in required,
+            source_revision=component_policy["market_macro"].source_revision,
+            supersedes_source_revisions=component_policy[
+                "market_macro"
+            ].supersedes_source_revisions,
             max_attempts=component_policy["market_macro"].max_attempts,
             retry_delay_seconds=component_policy["market_macro"].retry_delay_seconds,
             retryable_blocker_codes=component_policy[
@@ -457,6 +481,10 @@ def build_daily_input_capture_components(
                 paths.pit_validation_report_path,
             ),
             required="fmp_forward_pit" in required,
+            source_revision=component_policy["fmp_forward_pit"].source_revision,
+            supersedes_source_revisions=component_policy[
+                "fmp_forward_pit"
+            ].supersedes_source_revisions,
             max_attempts=component_policy["fmp_forward_pit"].max_attempts,
             retry_delay_seconds=component_policy["fmp_forward_pit"].retry_delay_seconds,
             retryable_blocker_codes=component_policy[
@@ -478,6 +506,10 @@ def build_daily_input_capture_components(
                 paths.sec_companyfacts_dir / "sec_companyfacts_manifest.csv",
             ),
             required="sec_companyfacts" in required,
+            source_revision=component_policy["sec_companyfacts"].source_revision,
+            supersedes_source_revisions=component_policy[
+                "sec_companyfacts"
+            ].supersedes_source_revisions,
             max_attempts=component_policy["sec_companyfacts"].max_attempts,
             retry_delay_seconds=component_policy["sec_companyfacts"].retry_delay_seconds,
             retryable_blocker_codes=component_policy[
@@ -511,6 +543,10 @@ def build_daily_input_capture_components(
                 paths.valuation_validation_report_path,
             ),
             required="fmp_valuation" in required,
+            source_revision=component_policy["fmp_valuation"].source_revision,
+            supersedes_source_revisions=component_policy[
+                "fmp_valuation"
+            ].supersedes_source_revisions,
             max_attempts=component_policy["fmp_valuation"].max_attempts,
             retry_delay_seconds=component_policy["fmp_valuation"].retry_delay_seconds,
             retryable_blocker_codes=component_policy[
@@ -542,6 +578,10 @@ def build_daily_input_capture_components(
                 paths.official_fetch_report_path,
             ),
             required="official_policy_sources" in required,
+            source_revision=component_policy["official_policy_sources"].source_revision,
+            supersedes_source_revisions=component_policy[
+                "official_policy_sources"
+            ].supersedes_source_revisions,
             max_attempts=component_policy["official_policy_sources"].max_attempts,
             retry_delay_seconds=component_policy[
                 "official_policy_sources"
@@ -706,17 +746,29 @@ def _capture_component_with_source_control(
     idempotency_key = _source_idempotency_key(
         component=component,
         as_of=as_of,
-        policy=policy,
     )
     policy_sha256 = sha256_path(policy_path)
     started_at = _aware_now(clock)
-    state, state_issue = _load_source_state(
+    state, state_issue, superseded_revision = _load_source_state(
         state_path,
         component=component,
         as_of=as_of,
         idempotency_key=idempotency_key,
-        policy_sha256=policy_sha256,
     )
+    superseded_state_path: Path | None = None
+    if superseded_revision is not None:
+        superseded_state_path = state_path
+        revision_root = source_root / "revisions" / component.source_revision
+        state_path = revision_root / "state.json"
+        lock_path = revision_root / "active.lock"
+        state, state_issue, nested_superseded_revision = _load_source_state(
+            state_path,
+            component=component,
+            as_of=as_of,
+            idempotency_key=idempotency_key,
+        )
+        if nested_superseded_revision is not None:
+            state_issue = "revision-scoped source state cannot itself be superseded"
     if state_issue is not None:
         return _source_blocked_result(
             component=component,
@@ -740,6 +792,8 @@ def _capture_component_with_source_control(
                 **dict(prior_result),
                 "source_lease_status": "REUSED_PASS",
                 "idempotency_reused": True,
+                "source_revision": component.source_revision,
+                "source_state_path": _relative_path(state_path, project_root),
             }
         return _source_blocked_result(
             component=component,
@@ -759,6 +813,8 @@ def _capture_component_with_source_control(
                 **dict(prior_result),
                 "source_lease_status": "REUSED_TERMINAL",
                 "idempotency_reused": True,
+                "source_revision": component.source_revision,
+                "source_state_path": _relative_path(state_path, project_root),
             }
     if len(prior_attempts) >= component.max_attempts:
         return _source_blocked_result(
@@ -895,6 +951,13 @@ def _capture_component_with_source_control(
                 "retry_after_seconds": retry_after_seconds,
                 "attempt_history": list(prior_attempts),
                 "source_idempotency_key": idempotency_key,
+                "source_revision": component.source_revision,
+                "source_state_path": _relative_path(state_path, project_root),
+                "superseded_state_path": (
+                    _relative_path(superseded_state_path, project_root)
+                    if superseded_state_path is not None
+                    else None
+                ),
                 "source_lease_id": lease["lease_id"],
                 "source_lease_status": lease_status,
                 "idempotency_reused": False,
@@ -904,6 +967,15 @@ def _capture_component_with_source_control(
                 "schema_version": "daily_input_capture_source_state.v1",
                 "policy_version": policy.policy_version,
                 "policy_sha256": policy_sha256,
+                "source_revision": component.source_revision,
+                "supersedes_source_revisions": list(
+                    component.supersedes_source_revisions
+                ),
+                "superseded_state_path": (
+                    _relative_path(superseded_state_path, project_root)
+                    if superseded_state_path is not None
+                    else None
+                ),
                 "as_of": as_of.isoformat(),
                 "component_id": component.component_id,
                 "source_idempotency_key": idempotency_key,
@@ -987,6 +1059,7 @@ def _source_blocked_result(
         "retry_after_seconds": None,
         "attempt_history": list(attempt_history),
         "source_idempotency_key": idempotency_key,
+        "source_revision": component.source_revision,
         "source_lease_id": lease_id,
         "source_lease_status": lease_status,
         "idempotency_reused": lease_status.startswith("REUSED"),
@@ -1000,31 +1073,43 @@ def _load_source_state(
     component: CaptureComponent,
     as_of: date,
     idempotency_key: str,
-    policy_sha256: str,
-) -> tuple[Mapping[str, object] | None, str | None]:
+) -> tuple[Mapping[str, object] | None, str | None, str | None]:
     if not path.exists():
-        return None, None
+        return None, None, None
     try:
         payload = load_strict_json_path(path)
     except (OSError, ValueError) as exc:
-        return None, f"source state unreadable: {exc}"
+        return None, f"source state unreadable: {exc}", None
     if not isinstance(payload, Mapping):
-        return None, "source state must be an object"
+        return None, "source state must be an object", None
     expected = {
         "schema_version": "daily_input_capture_source_state.v1",
-        "policy_sha256": policy_sha256,
         "as_of": as_of.isoformat(),
         "component_id": component.component_id,
-        "source_idempotency_key": idempotency_key,
         "production_effect": "none",
     }
     mismatches = [key for key, value in expected.items() if payload.get(key) != value]
     if mismatches:
-        return None, "source state identity mismatch: " + ", ".join(mismatches)
+        return None, "source state identity mismatch: " + ", ".join(mismatches), None
+    observed_revision = payload.get("source_revision") or payload.get("policy_version")
+    if payload.get("source_idempotency_key") != idempotency_key:
+        if observed_revision in component.supersedes_source_revisions:
+            return None, None, str(observed_revision)
+        return None, "source state identity mismatch: source_idempotency_key", None
+    if observed_revision != component.source_revision:
+        return None, "source state identity mismatch: source_revision", None
     attempts = payload.get("attempts")
     if not isinstance(attempts, list):
-        return None, "source state attempts must be a list"
-    return payload, None
+        return None, "source state attempts must be a list", None
+    result = payload.get("component_result")
+    if isinstance(result, Mapping):
+        if (
+            result.get("command") != list(component.command)
+            or result.get("max_attempts") != component.max_attempts
+            or result.get("recovery_mode") != component.recovery_mode
+        ):
+            return None, "source state component contract mismatch", None
+    return payload, None, None
 
 
 def _component_result_artifacts_current(
@@ -1057,13 +1142,12 @@ def _source_idempotency_key(
     *,
     component: CaptureComponent,
     as_of: date,
-    policy: DailyInputCapturePolicy,
 ) -> str:
     payload = {
         "as_of": as_of.isoformat(),
         "command": list(component.command),
         "component_id": component.component_id,
-        "policy_version": policy.policy_version,
+        "policy_version": component.source_revision,
     }
     digest = hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")

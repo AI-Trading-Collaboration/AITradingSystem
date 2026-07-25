@@ -506,14 +506,8 @@ def build_daily_ops_plan(
         and include_valuation_snapshots
     )
     pit_raw_dir = capture_paths.pit_raw_dir if capture_active else raw_dir / "fmp_forward_pit"
-    pit_manifest = (
-        capture_paths.pit_manifest_path
-        if capture_active
-        else raw_dir / "pit_snapshots" / "manifest.csv"
-    )
-    pit_normalized_dir = (
-        capture_paths.processed_root if capture_active else processed_dir / "pit_snapshots"
-    )
+    pit_manifest = raw_dir / "pit_snapshots" / "manifest.csv"
+    pit_normalized_dir = processed_dir / "pit_snapshots"
     pit_fetch_report = default_fmp_forward_pit_fetch_report_path(reports_dir, as_of)
     pit_normalized = default_fmp_forward_pit_normalized_path(
         pit_normalized_dir,
@@ -896,6 +890,53 @@ def build_daily_ops_plan(
                 ),
                 input_visibility="live_provider",
             ),
+            *(
+                [
+                    DailyOpsStep(
+                        step_id="pit_snapshots_project_fmp_forward",
+                        title="校验 retained capture 并投影 canonical FMP forward PIT",
+                        command=(
+                            (
+                                "aits",
+                                "pit-snapshots",
+                                "project-fmp-forward-capture",
+                                "--as-of",
+                                as_of_text,
+                                "--raw-input-dir",
+                                str(capture_paths.pit_raw_dir),
+                                "--capture-normalized-input-path",
+                                str(capture_paths.pit_normalized_path),
+                                "--normalized-output-path",
+                                str(pit_normalized),
+                                "--output-path",
+                                str(pit_fetch_report),
+                            )
+                            if capture_active
+                            else ()
+                        ),
+                        required_env_vars=(),
+                        produced_paths=(pit_normalized, pit_fetch_report),
+                        quality_gate=(
+                            "只读取 PASS capture component 的 retained raw bytes，重算 normalized "
+                            "rows 并与 capture normalized exact bytes 对比后原子写 canonical "
+                            "projection；不请求 provider，失败时停止 PIT consumer。"
+                        ),
+                        blocks_downstream=True,
+                        enabled=capture_active,
+                        skip_reason=(
+                            None
+                            if capture_active
+                            else (
+                                "未激活统一 daily input capture；"
+                                "不存在可投影的同批 retained bytes。"
+                            )
+                        ),
+                        input_visibility="derived_local",
+                    )
+                ]
+                if market_session.is_trading_day
+                else []
+            ),
             DailyOpsStep(
                 step_id="pit_snapshots_build_manifest",
                 title="重建 PIT 快照 manifest",
@@ -914,6 +955,8 @@ def build_daily_ops_plan(
                         str(fmp_analyst_history_dir),
                         "--validation-report-path",
                         str(pit_validation_report),
+                        "--required-snapshot-kinds",
+                        "fmp_forward_pit",
                     )
                     if include_pit_snapshots
                     else ()
@@ -947,6 +990,8 @@ def build_daily_ops_plan(
                         str(pit_manifest),
                         "--output-path",
                         str(pit_validation_report),
+                        "--required-snapshot-kinds",
+                        "fmp_forward_pit",
                     )
                     if include_pit_snapshots
                     else ()

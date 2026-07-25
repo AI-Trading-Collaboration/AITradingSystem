@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import re
 from collections.abc import Mapping
@@ -13,6 +14,11 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.platform.artifacts import (
+    load_strict_json_path,
+    write_bytes_atomic,
+    write_text_atomic,
+)
 from ai_trading_system.valuation_sources import (
     FMP_ANALYST_ESTIMATE_PAGE,
     FMP_ANALYST_ESTIMATE_PERIOD,
@@ -175,6 +181,22 @@ class FmpForwardPitFetchReport:
         if self.warning_count:
             return "PASS_WITH_WARNINGS"
         return "PASS"
+
+
+@dataclass(frozen=True)
+class FmpForwardPitProjectionResult:
+    as_of: date
+    raw_payload_count: int
+    normalized_row_count: int
+    raw_input_dir: Path
+    capture_normalized_input_path: Path
+    capture_normalized_sha256: str
+    normalized_output_path: Path
+    normalized_output_sha256: str
+    report_output_path: Path
+    report_output_sha256: str
+    provider_request_performed: bool = False
+    production_effect: str = "none"
 
 
 class FmpForwardPitProvider(Protocol):
@@ -430,10 +452,264 @@ def write_fmp_forward_pit_normalized_csv_from_payloads(
     return output_path
 
 
+def load_fmp_forward_pit_raw_payloads(
+    raw_input_dir: Path,
+    *,
+    expected_as_of: date,
+    project_root: Path = PROJECT_ROOT,
+) -> tuple[FmpForwardPitRawPayload, ...]:
+    paths = tuple(sorted(raw_input_dir.rglob("*.json"))) if raw_input_dir.is_dir() else ()
+    if not paths:
+        raise ValueError(f"FMP forward PIT raw capture is empty: {raw_input_dir}")
+    payloads: list[FmpForwardPitRawPayload] = []
+    seen_tickers: set[str] = set()
+    for path in paths:
+        raw = load_strict_json_path(path)
+        if not isinstance(raw, Mapping):
+            raise ValueError(f"FMP forward PIT raw payload must be an object: {path}")
+        required_fields = {
+            "provider",
+            "source_type",
+            "ticker",
+            "provider_symbol",
+            "as_of",
+            "captured_at",
+            "downloaded_at",
+            "endpoints",
+            "request_parameters_by_endpoint",
+            "row_count",
+            "checksum_sha256",
+            "records_by_endpoint",
+        }
+        if set(raw) != required_fields:
+            raise ValueError(f"FMP forward PIT raw payload fields mismatch: {path}")
+        ticker = str(raw["ticker"]).strip().upper()
+        provider_symbol = str(raw["provider_symbol"]).strip().upper()
+        if (
+            not ticker
+            or ticker in seen_tickers
+            or path.parent.name.upper() != ticker
+            or raw["provider"] != FMP_SOURCE_NAME
+            or raw["source_type"] != "paid_vendor"
+        ):
+            raise ValueError(f"FMP forward PIT raw source identity mismatch: {path}")
+        seen_tickers.add(ticker)
+        try:
+            payload_as_of = date.fromisoformat(str(raw["as_of"]))
+            captured_at = date.fromisoformat(str(raw["captured_at"]))
+            downloaded_at = datetime.fromisoformat(str(raw["downloaded_at"]))
+        except ValueError as exc:
+            raise ValueError(f"FMP forward PIT raw timestamp invalid: {path}") from exc
+        if payload_as_of != expected_as_of:
+            raise ValueError(f"FMP forward PIT raw as_of mismatch: {path}")
+        if downloaded_at.tzinfo is None or downloaded_at.utcoffset() is None:
+            raise ValueError(f"FMP forward PIT downloaded_at must be timezone-aware: {path}")
+        expected_endpoints = [
+            f"{FMP_BASE_URL}/{endpoint}" for endpoint in FMP_FORWARD_PIT_ENDPOINTS
+        ]
+        if raw["endpoints"] != expected_endpoints:
+            raise ValueError(f"FMP forward PIT endpoint coverage mismatch: {path}")
+        request_parameters = raw["request_parameters_by_endpoint"]
+        records_by_endpoint = raw["records_by_endpoint"]
+        if (
+            not isinstance(request_parameters, Mapping)
+            or set(request_parameters) != set(FMP_FORWARD_PIT_ENDPOINTS)
+            or not isinstance(records_by_endpoint, Mapping)
+            or set(records_by_endpoint) != set(FMP_FORWARD_PIT_ENDPOINTS)
+        ):
+            raise ValueError(f"FMP forward PIT endpoint payload mismatch: {path}")
+        endpoint_records: dict[str, tuple[dict[str, Any], ...]] = {}
+        normalized_parameters: dict[str, dict[str, object]] = {}
+        for endpoint in FMP_FORWARD_PIT_ENDPOINTS:
+            records = records_by_endpoint[endpoint]
+            parameters = request_parameters[endpoint]
+            if (
+                not isinstance(records, list)
+                or any(not isinstance(record, dict) for record in records)
+                or not isinstance(parameters, Mapping)
+            ):
+                raise ValueError(f"FMP forward PIT endpoint schema mismatch: {path}:{endpoint}")
+            endpoint_records[endpoint] = tuple(dict(record) for record in records)
+            normalized_parameters[endpoint] = dict(parameters)
+        row_count = sum(len(records) for records in endpoint_records.values())
+        if type(raw["row_count"]) is not int or raw["row_count"] != row_count:
+            raise ValueError(f"FMP forward PIT row_count mismatch: {path}")
+        if raw["checksum_sha256"] != _json_checksum(endpoint_records):
+            raise ValueError(f"FMP forward PIT logical checksum mismatch: {path}")
+        payloads.append(
+            FmpForwardPitRawPayload(
+                ticker=ticker,
+                as_of=payload_as_of,
+                captured_at=captured_at,
+                downloaded_at=downloaded_at,
+                provider_symbol=provider_symbol,
+                endpoint_records=endpoint_records,
+                request_parameters_by_endpoint=normalized_parameters,
+                checksum_sha256=sha256(path.read_bytes()).hexdigest(),
+                source_path=_display_path(path, project_root),
+            )
+        )
+    return tuple(payloads)
+
+
+def project_fmp_forward_pit_capture(
+    *,
+    raw_input_dir: Path,
+    capture_normalized_input_path: Path,
+    as_of: date,
+    normalized_output_path: Path,
+    report_output_path: Path,
+    project_root: Path = PROJECT_ROOT,
+) -> FmpForwardPitProjectionResult:
+    payloads = load_fmp_forward_pit_raw_payloads(
+        raw_input_dir,
+        expected_as_of=as_of,
+        project_root=project_root,
+    )
+    capture_raw = capture_normalized_input_path.read_bytes()
+    ticker_order = _normalized_capture_ticker_order(capture_raw)
+    payload_by_ticker = {payload.ticker: payload for payload in payloads}
+    if set(ticker_order) != set(payload_by_ticker):
+        raise ValueError("FMP forward PIT capture normalized ticker coverage mismatch")
+    ordered_payloads = tuple(payload_by_ticker[ticker] for ticker in ticker_order)
+    normalized_raw = _fmp_forward_pit_normalized_csv_bytes(ordered_payloads)
+    if normalized_raw != capture_raw:
+        raise ValueError("FMP forward PIT capture normalized bytes differ from retained raw replay")
+    normalized_rows = normalize_fmp_forward_pit_payloads(ordered_payloads)
+    report = _fmp_forward_pit_report_from_retained_payloads(
+        ordered_payloads,
+        normalized_rows=normalized_rows,
+    )
+    capture_sha256 = sha256(capture_raw).hexdigest()
+    normalized_sha256 = sha256(normalized_raw).hexdigest()
+    report_text = (
+        render_fmp_forward_pit_fetch_report(report)
+        + "\n## Canonical projection\n\n"
+        + "- projection_mode: `RETAINED_CAPTURE_REPLAY`\n"
+        + f"- raw_input_dir: `{_display_path(raw_input_dir, project_root).as_posix()}`\n"
+        + "- provider_request_performed: `false`\n"
+        + f"- capture_normalized_sha256: `{capture_sha256}`\n"
+        + f"- canonical_normalized_sha256: `{normalized_sha256}`\n"
+        + "- production_effect: `none`\n"
+    )
+    write_bytes_atomic(normalized_output_path, normalized_raw)
+    write_text_atomic(report_output_path, report_text)
+    if normalized_output_path.read_bytes() != normalized_raw:
+        raise ValueError("FMP forward PIT canonical normalized projection verification failed")
+    report_raw = report_output_path.read_bytes()
+    return FmpForwardPitProjectionResult(
+        as_of=as_of,
+        raw_payload_count=len(ordered_payloads),
+        normalized_row_count=len(normalized_rows),
+        raw_input_dir=raw_input_dir,
+        capture_normalized_input_path=capture_normalized_input_path,
+        capture_normalized_sha256=capture_sha256,
+        normalized_output_path=normalized_output_path,
+        normalized_output_sha256=normalized_sha256,
+        report_output_path=report_output_path,
+        report_output_sha256=sha256(report_raw).hexdigest(),
+    )
+
+
 def normalize_fmp_forward_pit_payloads(
     payloads: tuple[FmpForwardPitRawPayload, ...] | list[FmpForwardPitRawPayload],
 ) -> tuple[FmpForwardPitNormalizedRow, ...]:
     return tuple(_normalize_fmp_forward_pit_payloads(payloads))
+
+
+def _fmp_forward_pit_normalized_csv_bytes(
+    payloads: tuple[FmpForwardPitRawPayload, ...],
+) -> bytes:
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=list(FMP_FORWARD_PIT_NORMALIZED_COLUMNS))
+    writer.writeheader()
+    for payload in payloads:
+        for record in _normalized_csv_records_for_payload(payload):
+            writer.writerow(record)
+    return output.getvalue().encode("utf-8")
+
+
+def _normalized_capture_ticker_order(raw: bytes) -> tuple[str, ...]:
+    try:
+        reader = csv.DictReader(io.StringIO(raw.decode("utf-8"), newline=""))
+        if tuple(reader.fieldnames or ()) != FMP_FORWARD_PIT_NORMALIZED_COLUMNS:
+            raise ValueError("normalized columns mismatch")
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for row in reader:
+            ticker = str(row.get("canonical_ticker", "")).strip().upper()
+            if not ticker:
+                raise ValueError("normalized ticker is blank")
+            if ticker not in seen:
+                seen.add(ticker)
+                ordered.append(ticker)
+    except (UnicodeError, csv.Error) as exc:
+        raise ValueError("FMP forward PIT capture normalized CSV is invalid") from exc
+    if not ordered:
+        raise ValueError("FMP forward PIT capture normalized CSV is empty")
+    return tuple(ordered)
+
+
+def _fmp_forward_pit_report_from_retained_payloads(
+    payloads: tuple[FmpForwardPitRawPayload, ...],
+    *,
+    normalized_rows: tuple[FmpForwardPitNormalizedRow, ...],
+) -> FmpForwardPitFetchReport:
+    if not payloads:
+        raise ValueError("FMP forward PIT retained payloads are empty")
+    downloaded_at_values = {payload.downloaded_at for payload in payloads}
+    captured_at_values = {payload.captured_at for payload in payloads}
+    as_of_values = {payload.as_of for payload in payloads}
+    analyst_limits = {
+        payload.request_parameters_by_endpoint["analyst-estimates"].get("limit")
+        for payload in payloads
+    }
+    calendar_from_values = {
+        payload.request_parameters_by_endpoint["earnings-calendar"].get("from")
+        for payload in payloads
+    }
+    calendar_to_values = {
+        payload.request_parameters_by_endpoint["earnings-calendar"].get("to")
+        for payload in payloads
+    }
+    if (
+        len(downloaded_at_values) != 1
+        or len(captured_at_values) != 1
+        or len(as_of_values) != 1
+        or len(analyst_limits) != 1
+        or len(calendar_from_values) != 1
+        or len(calendar_to_values) != 1
+    ):
+        raise ValueError("FMP forward PIT retained payload batch metadata mismatch")
+    analyst_limit = next(iter(analyst_limits))
+    if type(analyst_limit) is not int:
+        raise ValueError("FMP forward PIT analyst estimate limit is invalid")
+    try:
+        calendar_from = date.fromisoformat(str(next(iter(calendar_from_values))))
+        calendar_to = date.fromisoformat(str(next(iter(calendar_to_values))))
+    except ValueError as exc:
+        raise ValueError("FMP forward PIT earnings calendar window is invalid") from exc
+    checksum_payload = {
+        payload.ticker: {
+            endpoint: list(payload.endpoint_records[endpoint])
+            for endpoint in FMP_FORWARD_PIT_ENDPOINTS
+        }
+        for payload in payloads
+    }
+    return FmpForwardPitFetchReport(
+        as_of=next(iter(as_of_values)),
+        captured_at=next(iter(captured_at_values)),
+        downloaded_at=next(iter(downloaded_at_values)),
+        requested_tickers=tuple(payload.ticker for payload in payloads),
+        provider_symbols=tuple(payload.provider_symbol for payload in payloads),
+        analyst_estimate_limit=analyst_limit,
+        earnings_calendar_from=calendar_from,
+        earnings_calendar_to=calendar_to,
+        raw_payloads=payloads,
+        normalized_rows=normalized_rows,
+        row_count=sum(payload.row_count for payload in payloads),
+        checksum_sha256=_json_checksum(checksum_payload),
+    )
 
 
 def retarget_fmp_forward_pit_normalized_rows(

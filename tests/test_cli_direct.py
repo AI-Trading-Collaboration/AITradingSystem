@@ -975,6 +975,7 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch, tmp_path: Pa
                     cli_direct.pit_snapshots_cli.DEFAULT_FMP_FORWARD_PIT_RAW_DIR
                 ),
                 "validation_report_path": None,
+                "required_snapshot_kinds": None,
             },
         ),
         (
@@ -983,6 +984,7 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch, tmp_path: Pa
                 "as_of": "2026-05-13",
                 "input_path": cli_direct.pit_snapshots_cli.DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
                 "output_path": None,
+                "required_snapshot_kinds": None,
             },
         ),
         ("docs_contract", {"as_of": None, "latest": True}),
@@ -1295,6 +1297,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         cli_direct.pit_snapshots_cli,
         "fetch_fmp_forward_pit_command",
         recorder("pit_snapshots_fetch_fmp_forward"),
+    )
+    monkeypatch.setattr(
+        cli_direct.pit_snapshots_cli,
+        "project_fmp_forward_pit_capture_command",
+        recorder("pit_snapshots_project_fmp_forward"),
     )
     monkeypatch.setattr(
         cli_direct.pit_snapshots_cli,

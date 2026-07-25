@@ -1,5 +1,5 @@
 schema_version: daily_input_capture_policy.v2
-policy_version: daily_input_capture_v3
+policy_version: daily_input_capture_v4
 owner: operations_owner_and_data_platform_owner
 status: REVIEWED
 reviewed_at: 2026-07-25
@@ -23,6 +23,9 @@ source_control:
   lease_ttl_seconds: 1800
   component_policies:
     market_macro:
+      source_revision: market_macro_v4_relocation_recovery
+      supersedes_source_revisions:
+        - daily_input_capture_v3
       max_attempts: 2
       retry_delay_seconds: 5
       retryable_blocker_codes:
@@ -30,35 +33,49 @@ source_control:
         - REQUEST_FAILED
       recovery_mode: IMMUTABLE_RAW_BACKFILL
     fmp_forward_pit:
+      source_revision: daily_input_capture_v3
+      supersedes_source_revisions: []
       max_attempts: 1
       retry_delay_seconds: 0
       retryable_blocker_codes: []
       recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN
     sec_companyfacts:
+      source_revision: daily_input_capture_v3
+      supersedes_source_revisions: []
       max_attempts: 1
       retry_delay_seconds: 0
       retryable_blocker_codes: []
       recovery_mode: MANUAL_NON_PIT_RAW_REVIEW
     fmp_valuation:
+      source_revision: daily_input_capture_v3
+      supersedes_source_revisions: []
       max_attempts: 1
       retry_delay_seconds: 0
       retryable_blocker_codes: []
       recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN
     official_policy_sources:
+      source_revision: daily_input_capture_v3
+      supersedes_source_revisions: []
       max_attempts: 1
       retry_delay_seconds: 0
       retryable_blocker_codes: []
       recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN
   rationale: >
-    The market/macro command retains the reviewed two-attempt transient-failure
-    budget established by OPS-069. PIT-sensitive and mutable-current endpoints
+    Component-scoped source_revision keeps unchanged PASS source/session states
+    reusable across aggregate policy updates. market_macro_v4_relocation_recovery
+    explicitly supersedes only the exhausted daily_input_capture_v3 market/macro
+    state after the checkout-relocation publication defect was fixed; the old
+    state remains immutable at its original path. The market/macro command retains
+    the reviewed two-attempt transient-failure budget established by OPS-069.
+    PIT-sensitive and mutable-current endpoints
     receive one contemporaneous attempt; later recovery must not manufacture
     historical strict PIT. The 30-minute lease only serializes one
     source/session capture and stale takeover is audit-recorded.
   validation_evidence: OPS-070 fault injection and formal validation tiers
   review_condition: >
-    Review when provider behavior, source eligibility, attempt budget, retry
-    delay, lease TTL, blocker taxonomy, or historical recovery semantics change.
+    Review and bump the affected component source_revision when provider behavior,
+    source eligibility, command, attempt budget, retry delay, recovery semantics,
+    or supersession lineage changes. Also review lease TTL or blocker taxonomy changes.
 failure_policy:
   attempt_all_components: true
   required_component_failure_status: PARTIAL_CAPTURE

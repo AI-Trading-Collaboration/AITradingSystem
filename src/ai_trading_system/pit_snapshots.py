@@ -115,6 +115,12 @@ DEFAULT_PIT_SNAPSHOT_DIR = PROJECT_ROOT / "data" / "raw" / "pit_snapshots"
 DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH = DEFAULT_PIT_SNAPSHOT_DIR / "manifest.csv"
 PIT_SNAPSHOT_SCHEMA_VERSION = "1"
 PIT_SNAPSHOT_PARSER_VERSION = "pit_snapshot_manifest_v1"
+PIT_SNAPSHOT_KINDS = (
+    "fmp_analyst_estimates",
+    "fmp_historical_valuation",
+    "fmp_forward_pit",
+    "eodhd_earnings_trends",
+)
 
 
 class PitSnapshotIssueSeverity(StrEnum):
@@ -177,6 +183,7 @@ class PitSnapshotValidationReport:
     generated_at: datetime
     records: tuple[PitSnapshotManifestRecord, ...]
     issues: tuple[PitSnapshotValidationIssue, ...] = field(default_factory=tuple)
+    required_snapshot_kinds: tuple[str, ...] = ()
     production_effect: str = "none"
 
     @property
@@ -186,6 +193,13 @@ class PitSnapshotValidationReport:
     @property
     def source_count(self) -> int:
         return len({record.source_id for record in self.records})
+
+    def snapshot_kind_count(self, snapshot_kind: str) -> int:
+        return sum(
+            1
+            for record in self.records
+            if _snapshot_kind_from_snapshot_id(record.snapshot_id) == snapshot_kind
+        )
 
     @property
     def row_count(self) -> int:
@@ -218,7 +232,9 @@ def validate_pit_snapshot_manifest(
     as_of: date,
     data_sources: DataSourcesConfig | None = None,
     project_root: Path = PROJECT_ROOT,
+    required_snapshot_kinds: tuple[str, ...] = (),
 ) -> PitSnapshotValidationReport:
+    normalized_required_kinds = _normalized_required_snapshot_kinds(required_snapshot_kinds)
     issues: list[PitSnapshotValidationIssue] = []
     records: list[PitSnapshotManifestRecord] = []
     if not input_path.exists():
@@ -236,6 +252,7 @@ def validate_pit_snapshot_manifest(
             generated_at=datetime.now(tz=UTC),
             records=tuple(),
             issues=tuple(issues),
+            required_snapshot_kinds=normalized_required_kinds,
         )
     try:
         with input_path.open(encoding="utf-8", newline="") as file:
@@ -257,6 +274,7 @@ def validate_pit_snapshot_manifest(
             generated_at=datetime.now(tz=UTC),
             records=tuple(),
             issues=tuple(issues),
+            required_snapshot_kinds=normalized_required_kinds,
         )
 
     missing_columns = [
@@ -277,6 +295,7 @@ def validate_pit_snapshot_manifest(
             generated_at=datetime.now(tz=UTC),
             records=tuple(),
             issues=tuple(issues),
+            required_snapshot_kinds=normalized_required_kinds,
         )
 
     source_catalog = (
@@ -308,12 +327,26 @@ def validate_pit_snapshot_manifest(
         _validate_payload(record, input_path=input_path, project_root=project_root, issues=issues)
         _validate_source_catalog(record, source_catalog, issues, row_number)
 
+    for snapshot_kind in normalized_required_kinds:
+        if not any(
+            _snapshot_kind_from_snapshot_id(record.snapshot_id) == snapshot_kind
+            for record in records
+        ):
+            issues.append(
+                PitSnapshotValidationIssue(
+                    severity=PitSnapshotIssueSeverity.ERROR,
+                    code="pit_snapshot_required_kind_missing",
+                    message=f"required snapshot kind 缺失：{snapshot_kind}",
+                    path=input_path,
+                )
+            )
     return PitSnapshotValidationReport(
         as_of=as_of,
         input_path=input_path,
         generated_at=datetime.now(tz=UTC),
         records=tuple(records),
         issues=tuple(issues),
+        required_snapshot_kinds=normalized_required_kinds,
     )
 
 
@@ -425,6 +458,10 @@ def render_pit_snapshot_validation_report(report: PitSnapshotValidationReport) -
         f"- Manifest：`{report.input_path}`",
         f"- 快照数量：{report.snapshot_count}",
         f"- 来源数量：{report.source_count}",
+        (
+            "- 必需 snapshot kinds："
+            f"{', '.join(report.required_snapshot_kinds) or 'none'}"
+        ),
         f"- 原始记录数：{report.row_count}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
@@ -437,11 +474,37 @@ def render_pit_snapshot_validation_report(report: PitSnapshotValidationReport) -
         "`available_time <= decision_time` 查询。",
         "- 缺跑的历史日期不能事后补写为 strict PIT，只能作为缺口或降级项记录。",
         "",
+        "## Snapshot kind 覆盖",
+        "",
+        "| Snapshot kind | Required | 快照数 |",
+        "|---|---|---:|",
+    ]
+    observed_snapshot_kinds = {
+        _snapshot_kind_from_snapshot_id(record.snapshot_id) for record in report.records
+    }
+    for snapshot_kind in PIT_SNAPSHOT_KINDS:
+        count = report.snapshot_kind_count(snapshot_kind)
+        if count or snapshot_kind in report.required_snapshot_kinds:
+            lines.append(
+                f"| {snapshot_kind} | "
+                f"{snapshot_kind in report.required_snapshot_kinds} | {count} |"
+            )
+    unknown_count = sum(
+        1
+        for snapshot_kind in observed_snapshot_kinds
+        if snapshot_kind not in PIT_SNAPSHOT_KINDS
+    )
+    if unknown_count:
+        lines.append(f"| unknown | False | {unknown_count} |")
+    lines.extend(
+        [
+        "",
         "## 来源摘要",
         "",
         "| Source | 类型 | 快照数 | Row count | PIT class | Backtest use |",
         "|---|---|---:|---:|---|---|",
-    ]
+        ]
+    )
     for source_id in sorted({record.source_id for record in report.records}):
         records = [record for record in report.records if record.source_id == source_id]
         source_type = records[0].source_type if records else ""
@@ -634,6 +697,23 @@ def _record_from_manifest_row(row: Mapping[str, Any]) -> PitSnapshotManifestReco
         validation_status=_cell(row, "validation_status"),
         validation_report_path=_cell(row, "validation_report_path"),
     )
+
+
+def _normalized_required_snapshot_kinds(value: tuple[str, ...]) -> tuple[str, ...]:
+    if not isinstance(value, tuple):
+        raise TypeError("required_snapshot_kinds must be a tuple")
+    normalized = tuple(dict.fromkeys(item.strip() for item in value if item.strip()))
+    unsupported = tuple(item for item in normalized if item not in PIT_SNAPSHOT_KINDS)
+    if unsupported:
+        raise ValueError(f"unsupported required snapshot kinds: {', '.join(unsupported)}")
+    return normalized
+
+
+def _snapshot_kind_from_snapshot_id(snapshot_id: str) -> str:
+    for snapshot_kind in PIT_SNAPSHOT_KINDS:
+        if snapshot_id.startswith(f"{snapshot_kind}_"):
+            return snapshot_kind
+    return "unknown"
 
 
 def _validate_required_values(

@@ -11,23 +11,22 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Data platform owner：修复`DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH`
-    publication binding；Codex：对齐capture forward PIT到canonical projection、source-specific
-    PIT coverage与pipeline health contract；operations owner：在新reviewed spec后只从唯一daily
-    trigger复验
+  next_owner: Codex：完成 release 与一次唯一 daily trigger 真实复验；operations owner：复核最终 DQ/score/Reader
+    Brief 终态与人工事项
   requirement_refs:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4与capture
-    validation contract已实现；真实run已证明PASS source幂等复用、PIT/SEC sibling继续和strict downstream阻断。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
+    publication resolver、retained FMP forward PIT canonical projection、required-kind
+    coverage与component-scoped source revision已实现并通过 formal validation。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
       attempt/lease/recovery均可审计；validated `PARTIAL_CAPTURE`按真实schema登记为`LIMITED`；PASS
-      source不得重复请求且可授权其独立consumer；market/macro integrity blocker继续阻断DQ/score/Reader
-      Brief；forward PIT consumer必须验证自己的source coverage而非由valuation snapshots替代；旧state/ledger不可改写；正式validation与真实provider-ready
+      source不得重复请求且可授权其独立consumer；publication relocation只豁免transaction-bound绝对root且filename
+      exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与一次真实provider-ready
       session验收PASS；无weights/broker/trading。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
@@ -35,49 +34,49 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1588
-    row_sha256: b1b741e1e6459941557fea6be8c929b94b0eb966423b67e55d179f1a4b11fd23
+    row_sha256: 70b94efa640d7651882cd16163862e74840d0cea7126276bcaa1b98f5afb0162
     cell_count: 8
     all_cells:
     - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
     - Operations / objective blocker taxonomy and consumer dependency DAG
     - P0
     - VALIDATING
-    - Data platform owner：修复`DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH` publication
-      binding；Codex：对齐capture forward PIT到canonical projection、source-specific PIT
-      coverage与pipeline health contract；operations owner：在新reviewed spec后只从唯一daily
-      trigger复验
-    - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4与capture
-      validation contract已实现；真实run已证明PASS source幂等复用、PIT/SEC sibling继续和strict downstream阻断。
+    - Codex：完成 release 与一次唯一 daily trigger 真实复验；operations owner：复核最终 DQ/score/Reader
+      Brief 终态与人工事项
+    - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
+      publication resolver、retained FMP forward PIT canonical projection、required-kind
+      coverage与component-scoped source revision已实现并通过 formal validation。
     - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
       attempt/lease/recovery均可审计；validated `PARTIAL_CAPTURE`按真实schema登记为`LIMITED`；PASS
-      source不得重复请求且可授权其独立consumer；market/macro integrity blocker继续阻断DQ/score/Reader
-      Brief；forward PIT consumer必须验证自己的source coverage而非由valuation snapshots替代；旧state/ledger不可改写；正式validation与真实provider-ready
+      source不得重复请求且可授权其独立consumer；publication relocation只豁免transaction-bound绝对root且filename
+      exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与一次真实provider-ready
       session验收PASS；无weights/broker/trading。
-    - 2026-07-25：release `c51804917` 真实run取得新spec/key和33/33 terminal records；capture正确为`LIMITED`，5个source均idempotency
-      reuse，四个PASS source的86个artifacts未重复请求。PIT/SEC/SEC shadow branches实际PASS，market/macro仅阻断DQ及score/report
-      descendants，secret scan PASS。overall仍FAIL：market publication transaction mismatch未修；pipeline
-      health发现旧FMP normalized/fetch路径缺失，当前PIT PASS仅含40个valuation snapshots，forward
-      PIT source-specific consumer coverage尚未闭环。`production_effect=none`，无weights/broker/trading。
+    - 2026-07-25：旧真实run证明branch isolation但暴露publication绝对checkout路径误绑定与forward PIT
+      canonical缺口。本批保持pre-commit exact校验并让resolver仅接受filename-scoped relocation；从17个retained
+      raw payload重放12,822 rows，与capture CSV SHA-256 exact一致且provider request为零；PIT
+      build/validate/health要求`fmp_forward_pit` kind，只有market revision重开、四个PASS source沿用原revision/key。聚焦回归=`174
+      + 119 passed`，fast-unit=`340 passed`，architecture-fitness 首轮仅因生成清单时序`623/1`后重建并正式`624
+      passed`，contract-validation=`275 passed`；等待release及唯一`aits ops daily-run`真实终态。`production_effect=none`，无weights/broker/trading。
     raw_line: '|OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG|Operations /
-      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Data platform
-      owner：修复`DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH` publication binding；Codex：对齐capture
-      forward PIT到canonical projection、source-specific PIT coverage与pipeline health
-      contract；operations owner：在新reviewed spec后只从唯一daily trigger复验|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4与capture
-      validation contract已实现；真实run已证明PASS source幂等复用、PIT/SEC sibling继续和strict downstream阻断。|单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
+      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：完成
+      release 与一次唯一 daily trigger 真实复验；operations owner：复核最终 DQ/score/Reader Brief
+      终态与人工事项|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
+      publication resolver、retained FMP forward PIT canonical projection、required-kind
+      coverage与component-scoped source revision已实现并通过 formal validation。|单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
       attempt/lease/recovery均可审计；validated `PARTIAL_CAPTURE`按真实schema登记为`LIMITED`；PASS
-      source不得重复请求且可授权其独立consumer；market/macro integrity blocker继续阻断DQ/score/Reader
-      Brief；forward PIT consumer必须验证自己的source coverage而非由valuation snapshots替代；旧state/ledger不可改写；正式validation与真实provider-ready
-      session验收PASS；无weights/broker/trading。|2026-07-25：release `c51804917` 真实run取得新spec/key和33/33
-      terminal records；capture正确为`LIMITED`，5个source均idempotency reuse，四个PASS source的86个artifacts未重复请求。PIT/SEC/SEC
-      shadow branches实际PASS，market/macro仅阻断DQ及score/report descendants，secret scan
-      PASS。overall仍FAIL：market publication transaction mismatch未修；pipeline health发现旧FMP
-      normalized/fetch路径缺失，当前PIT PASS仅含40个valuation snapshots，forward PIT source-specific
-      consumer coverage尚未闭环。`production_effect=none`，无weights/broker/trading。|'
+      source不得重复请求且可授权其独立consumer；publication relocation只豁免transaction-bound绝对root且filename
+      exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与一次真实provider-ready
+      session验收PASS；无weights/broker/trading。|2026-07-25：旧真实run证明branch isolation但暴露publication绝对checkout路径误绑定与forward
+      PIT canonical缺口。本批保持pre-commit exact校验并让resolver仅接受filename-scoped relocation；从17个retained
+      raw payload重放12,822 rows，与capture CSV SHA-256 exact一致且provider request为零；PIT
+      build/validate/health要求`fmp_forward_pit` kind，只有market revision重开、四个PASS source沿用原revision/key。聚焦回归=`174
+      + 119 passed`，fast-unit=`340 passed`，architecture-fitness 首轮仅因生成清单时序`623/1`后重建并正式`624
+      passed`，contract-validation=`275 passed`；等待release及唯一`aits ops daily-run`真实终态。`production_effect=none`，无weights/broker/trading。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b1b741e1e6459941557fea6b
+  event_id: legacy-import-70b94efa640d7651882cd161
   task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -90,18 +89,17 @@ initial_event:
   to_status: VALIDATING
   payload:
     priority: P0
-    next_owner: Data platform owner：修复`DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH`
-      publication binding；Codex：对齐capture forward PIT到canonical projection、source-specific
-      PIT coverage与pipeline health contract；operations owner：在新reviewed spec后只从唯一daily
-      trigger复验
-    notes: 2026-07-25：release `c51804917` 真实run取得新spec/key和33/33 terminal records；capture正确为`LIMITED`，5个source均idempotency
-      reuse，四个PASS source的86个artifacts未重复请求。PIT/SEC/SEC shadow branches实际PASS，market/macro仅阻断DQ及score/report
-      descendants，secret scan PASS。overall仍FAIL：market publication transaction mismatch未修；pipeline
-      health发现旧FMP normalized/fetch路径缺失，当前PIT PASS仅含40个valuation snapshots，forward
-      PIT source-specific consumer coverage尚未闭环。`production_effect=none`，无weights/broker/trading。
+    next_owner: Codex：完成 release 与一次唯一 daily trigger 真实复验；operations owner：复核最终 DQ/score/Reader
+      Brief 终态与人工事项
+    notes: 2026-07-25：旧真实run证明branch isolation但暴露publication绝对checkout路径误绑定与forward
+      PIT canonical缺口。本批保持pre-commit exact校验并让resolver仅接受filename-scoped relocation；从17个retained
+      raw payload重放12,822 rows，与capture CSV SHA-256 exact一致且provider request为零；PIT
+      build/validate/health要求`fmp_forward_pit` kind，只有market revision重开、四个PASS source沿用原revision/key。聚焦回归=`174
+      + 119 passed`，fast-unit=`340 passed`，architecture-fitness 首轮仅因生成清单时序`623/1`后重建并正式`624
+      passed`，contract-validation=`275 passed`；等待release及唯一`aits ops daily-run`真实终态。`production_effect=none`，无weights/broker/trading。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b1b741e1e6459941557fea6be8c929b94b0eb966423b67e55d179f1a4b11fd23
+  - sha256:70b94efa640d7651882cd16163862e74840d0cea7126276bcaa1b98f5afb0162
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -109,24 +107,25 @@ projection:
   - Operations / objective blocker taxonomy and consumer dependency DAG
   - P0
   - VALIDATING
-  - Data platform owner：修复`DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH` publication
-    binding；Codex：对齐capture forward PIT到canonical projection、source-specific PIT coverage与pipeline
-    health contract；operations owner：在新reviewed spec后只从唯一daily trigger复验
-  - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4与capture
-    validation contract已实现；真实run已证明PASS source幂等复用、PIT/SEC sibling继续和strict downstream阻断。
+  - Codex：完成 release 与一次唯一 daily trigger 真实复验；operations owner：复核最终 DQ/score/Reader
+    Brief 终态与人工事项
+  - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
+    publication resolver、retained FMP forward PIT canonical projection、required-kind
+    coverage与component-scoped source revision已实现并通过 formal validation。
   - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
     attempt/lease/recovery均可审计；validated `PARTIAL_CAPTURE`按真实schema登记为`LIMITED`；PASS
-    source不得重复请求且可授权其独立consumer；market/macro integrity blocker继续阻断DQ/score/Reader
-    Brief；forward PIT consumer必须验证自己的source coverage而非由valuation snapshots替代；旧state/ledger不可改写；正式validation与真实provider-ready
+    source不得重复请求且可授权其独立consumer；publication relocation只豁免transaction-bound绝对root且filename
+    exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与一次真实provider-ready
     session验收PASS；无weights/broker/trading。
-  - 2026-07-25：release `c51804917` 真实run取得新spec/key和33/33 terminal records；capture正确为`LIMITED`，5个source均idempotency
-    reuse，四个PASS source的86个artifacts未重复请求。PIT/SEC/SEC shadow branches实际PASS，market/macro仅阻断DQ及score/report
-    descendants，secret scan PASS。overall仍FAIL：market publication transaction mismatch未修；pipeline
-    health发现旧FMP normalized/fetch路径缺失，当前PIT PASS仅含40个valuation snapshots，forward PIT
-    source-specific consumer coverage尚未闭环。`production_effect=none`，无weights/broker/trading。
+  - 2026-07-25：旧真实run证明branch isolation但暴露publication绝对checkout路径误绑定与forward PIT canonical缺口。本批保持pre-commit
+    exact校验并让resolver仅接受filename-scoped relocation；从17个retained raw payload重放12,822
+    rows，与capture CSV SHA-256 exact一致且provider request为零；PIT build/validate/health要求`fmp_forward_pit`
+    kind，只有market revision重开、四个PASS source沿用原revision/key。聚焦回归=`174 + 119 passed`，fast-unit=`340
+    passed`，architecture-fitness 首轮仅因生成清单时序`623/1`后重建并正式`624 passed`，contract-validation=`275
+    passed`；等待release及唯一`aits ops daily-run`真实终态。`production_effect=none`，无weights/broker/trading。
   docs_links:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   terminal: false
-  raw_row_sha256: b1b741e1e6459941557fea6be8c929b94b0eb966423b67e55d179f1a4b11fd23
+  raw_row_sha256: 70b94efa640d7651882cd16163862e74840d0cea7126276bcaa1b98f5afb0162
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: c6d40420eb3529c8288fbe8e9f44a77d21225c3bf12facc7fd8106d60c967b41
+fragment_checksum: 58d19440ebc75c82c5fbaa5510e8e03f83d10b71f4c5d32fd762b553930afe55

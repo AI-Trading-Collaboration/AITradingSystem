@@ -293,6 +293,33 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   contract 纳入。下一阶段必须对齐 capture-to-canonical PIT projection 与 health contract，
   并要求 source-specific coverage fail closed；不得把当前 PASS 扩大解释为 forward PIT
   consumer acceptance。
+- 2026-07-25：剩余两项进入实现，根因和阶段验收冻结如下。
+  1. publication blocker 不是 provider 数据冲突，而是 immutable
+     `download_manifest.csv.output_path` 保存了发布 checkout 的绝对路径；canonical
+     publication 被复制到隔离 runtime checkout 后，resolver 用当前 root 重算该字段，
+     因而把同一 transaction 的合法 relocation 误判为 current-generation mismatch。
+     修复必须保持 checksum、row count、source events、transaction id 和 artifact filename
+     exact，只允许 resolver 对已由 transaction SHA 绑定的历史绝对 `output_path` 做
+     filename-scoped relocation 校验；pre-commit 新 generation 仍要求当前 root 的 exact
+     path，tamper 仍 fail closed。
+  2. trading-day capture 已保留 17 个 FMP forward raw payload、日期隔离 normalized CSV
+     与 fetch report；下游缺口是没有从 retained raw bytes 到 canonical
+     `data/processed/pit_snapshots/`、`outputs/reports/` 和 canonical PIT manifest 的
+     derived projection。新增步骤只能读取 PASS capture component 的已留存 bytes，
+     重算 normalized rows、核对 capture normalized exact bytes、写 canonical projection，
+     `provider_request_performed=false`；不得重复请求 FMP。
+  3. PIT build/validate 与 pipeline-health 必须显式要求 `fmp_forward_pit` snapshot kind
+     非空，不能再由同属 `fmp_valuation_expectations` source_id 的 analyst/history rows
+     代替。缺该 kind 时 build/validate/health 均 fail closed。
+  4. 为真实复验只重开已耗尽的 `market_macro` source/session attempt，capture policy
+     使用 component-scoped reviewed source revision：四个未变 PASS component 延续原 revision
+     并复用原 state；market/macro 以显式 superseding revision 归档旧 terminal state 后取得
+     新 idempotency key。旧 state/ledger 不删除、不改写，PIT-sensitive source 不重抓。
+  5. 完成 focused、fast-unit、architecture-fitness、contract-validation 后发布新
+     scheduled/capture reviewed revisions；只从唯一 `aits ops daily-run` 触发一次真实复验。
+     验收要求 canonical publication 可在 runtime checkout resolve、market/macro capture
+     PASS、forward projection/required-kind/PIT validation PASS、pipeline-health 不再报告旧
+     PIT 路径缺失；DQ/score/Reader Brief 仍按自身真实门禁决定，绝不补造结论。
 
 ## 临时 live-fix worktree 生命周期
 
@@ -306,3 +333,15 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   ops checkout pin 到新 exact release commit 且真实 daily-run 取得可审计终态后，确认
   无唯一未提交证据或活动进程，再用 `git worktree remove` 清理并 prune。若验证或运营
   验收失败，保留 blocker evidence，并在本节追加风险、owner 与下一退出条件。
+
+- 2026-07-25：两项 live-fix engineering 与 formal validation 完成。Publication resolver
+  在 retained runtime publication 上成功解析原 transaction，仍拒绝 filename tamper；FMP
+  forward retained replay 验证 17 个 raw payload、12,822 normalized rows，capture 与
+  canonical bytes SHA-256 均为
+  `771dde3a3856347574693fb71afb60358cd6ec8f85896c36e02ce9dd4e591fd4`，
+  `provider_request_performed=false`。聚焦回归=`174 + 119 passed`，Ruff/diff-check PASS，
+  fast-unit=`340 passed`，architecture-fitness 首轮仅因 generator 后测试 inventory id
+  更新造成 stale manifest（`623 passed / 1 failed`），重建确定性清单后正式
+  architecture-fitness=`624 passed`，contract-validation=`275 passed`。未用串行 pytest
+  覆盖失败。当前仍不宣称运营 PASS；下一步发布 exact commit、pin 独立 runtime checkout，
+  然后只调用一次唯一 `aits ops daily-run` 取得真实 DQ/PIT/score/Reader Brief 终态。

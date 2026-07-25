@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import shutil
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -229,6 +230,72 @@ def test_member_tamper_invalidates_canonical_resolver(tmp_path: Path) -> None:
     with pytest.raises(
         DownloadPublicationIntegrityError,
         match="DOWNLOAD_ARTIFACT_BINDING_MISMATCH",
+    ):
+        resolve_download_publication(output_dir=tmp_path)
+
+
+def test_resolver_accepts_transaction_bound_manifest_after_checkout_relocation(
+    tmp_path: Path,
+) -> None:
+    published_root = tmp_path / "published_checkout" / "data" / "raw"
+    relocated_root = tmp_path / "runtime_checkout" / "data" / "raw"
+    result = _publish(published_root)
+    shutil.copytree(published_root, relocated_root)
+
+    relocated = resolve_download_publication(output_dir=relocated_root)
+
+    assert relocated.transaction_id == result.transaction_id
+    assert relocated.prices_path.is_relative_to(relocated_root)
+    assert relocated.rates_path.is_relative_to(relocated_root)
+    assert relocated.legacy_projection_verified is True
+
+
+def test_relocated_manifest_output_filename_tamper_still_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    result = _publish(tmp_path)
+    tampered_raw = _rewrite_manifest_row(
+        result.manifest_path.read_bytes(),
+        row_index=-2,
+        field="output_path",
+        value=str(tmp_path / "wrong.csv"),
+    )
+    tampered_digest = publication_module._sha256(tampered_raw)
+    tampered_relative = f".download_publications/members/{tampered_digest}/download_manifest.csv"
+    original_parse = publication_module._strict_canonical_json
+    original_read = publication_module._read_required
+
+    def transaction_with_matching_manifest_ref(
+        raw: bytes,
+        *,
+        schema: str,
+        code: str,
+    ) -> dict[str, object]:
+        payload = original_parse(raw, schema=schema, code=code)
+        if schema == publication_module.DOWNLOAD_PUBLICATION_SCHEMA_VERSION:
+            manifest = payload["download_manifest"]
+            assert isinstance(manifest, dict)
+            manifest["path"] = tampered_relative
+            manifest["sha256"] = tampered_digest
+            manifest["size_bytes"] = len(tampered_raw)
+        return payload
+
+    def read_tampered_manifest(root: Path, relative_path: str, code: str) -> bytes:
+        if relative_path == tampered_relative:
+            return tampered_raw
+        return original_read(root, relative_path, code)
+
+    monkeypatch.setattr(
+        publication_module,
+        "_strict_canonical_json",
+        transaction_with_matching_manifest_ref,
+    )
+    monkeypatch.setattr(publication_module, "_read_required", read_tampered_manifest)
+
+    with pytest.raises(
+        DownloadPublicationIntegrityError,
+        match="DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH",
     ):
         resolve_download_publication(output_dir=tmp_path)
 

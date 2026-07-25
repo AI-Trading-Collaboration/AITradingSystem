@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: scheduled_tasks_v5
+policy_version: scheduled_tasks_v6
 policy_metadata:
   owner: system
   status: active_baseline
@@ -17,6 +17,8 @@ policy_metadata:
     so a branch failure cannot suppress independent validation evidence.
     Version 5 binds the capture validation artifact to its native versioned
     schema instead of applying the generic report-artifact schema contract.
+    Version 6 adds the retained-capture-to-canonical FMP forward PIT projection
+    and makes forward snapshot-kind coverage an explicit consumer gate.
   intended_effect: >
     Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
     dependency-aware daily trading-day chain while registering non-daily governance chains for
@@ -38,7 +40,9 @@ policy_metadata:
     XNYS gap visibility, consumer path binding, and no-production boundaries.
     OPS-070 fault-injection tests cover sibling continuation, dependency blocking,
     strict terminal status, runtime-control accounting, always-run closure, and
-    the native daily_input_capture_validation.v1 artifact contract.
+    the native daily_input_capture_validation.v1 artifact contract. Version 6
+    additionally requires exact normalized replay, zero provider requests during
+    projection, and fail-closed fmp_forward_pit kind coverage in PIT and health.
   review_condition: >
     Review whenever a daily report, governance report, shadow monitor, backtest,
     parameter, documentation, report registry, scheduler command, capture
@@ -131,11 +135,38 @@ cadences:
         activation_condition: closed_market_only
         closed_market_behavior: run
         production_effect: local_cache_write
+      - task_id: daily_pit_project_fmp_forward_capture
+        daily_plan_step_id: pit_snapshots_project_fmp_forward
+        dependencies:
+          - capture_daily_inputs
+        required_capture_components:
+          - fmp_forward_pit
+        title: Project retained FMP forward PIT capture into canonical consumer paths
+        command: >-
+          aits pit-snapshots project-fmp-forward-capture
+          --as-of {as_of}
+          --raw-input-dir data/raw/daily_input_capture/{as_of}/fmp_forward_pit
+          --capture-normalized-input-path data/processed/daily_input_capture/{as_of}/fmp_forward_pit_{as_of}.csv
+          --normalized-output-path data/processed/pit_snapshots/fmp_forward_pit_{as_of}.csv
+          --output-path outputs/reports/fmp_forward_pit_fetch_{as_of}.md
+        command_contains:
+          - pit-snapshots
+          - project-fmp-forward-capture
+          - --capture-normalized-input-path
+        activation_condition: trading_day_only
+        closed_market_behavior: skip
+        data_quality_gate: "Recompute normalized rows from retained raw capture, require exact capture-normalized bytes, and perform no provider request."
+        production_effect: local_cache_write
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+        trading_action: false
       - task_id: daily_pit_build_manifest
         daily_plan_step_id: pit_snapshots_build_manifest
         dependencies:
           - capture_daily_inputs
           - pit_snapshots_fetch_fmp_forward
+          - pit_snapshots_project_fmp_forward
         required_capture_components:
           - fmp_forward_pit
         title: Build PIT snapshot manifest

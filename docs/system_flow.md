@@ -350,9 +350,10 @@ score 与 Reader Brief finalization。PIT build、SEC metrics 与 score valuatio
 capture path；被 umbrella 取代的独立 live fetch steps 不再重复调用。official/OpenAI 的
 score-time formal path仍执行自身权限、cache、visibility 与 formal assessment gates。
 
-`scheduled_tasks_v5` 为 daily steps 冻结显式 DAG、capture component matrix 与
+`scheduled_tasks_v6` 为 daily steps 冻结显式 DAG、capture component matrix 与
 artifact-contract-aware closure gate：
-`validate_data <- market_macro`、`pit_snapshots_build_manifest <- fmp_forward_pit`、
+`validate_data <- market_macro`、`pit_snapshots_project_fmp_forward <- fmp_forward_pit`、
+`pit_snapshots_build_manifest <- projection/live fetch`、
 `sec_metrics <- sec_companyfacts`，`score_daily` 同时依赖 strict DQ/PIT/SEC steps 与
 `fmp_valuation + official_policy_sources`。某个 source 或 consumer 失败只阻断自己的 descendants；
 无关 sibling 继续，`pipeline_health` 和 `secret_hygiene` 始终执行 operator closure。runtime-control
@@ -363,9 +364,20 @@ capture validation 使用 native `daily_input_capture_validation.v1` schema，�
 所有 JSON gate 均保持 strict parse、exact as-of、canonical success status 和
 `production_effect=none`，因此 contract 对齐只消除误阻断，不提升缺失 component 的消费权限。
 OPS-070 S2 为每个 `source/session` 建立独立 state、attempt history、idempotency key 和 active
-lease；retry budget、delay、retryable blocker、lease TTL 与 recovery mode 来自
-`daily_input_capture_policy.v2`。活动 lease 和 non-retryable failure 只阻断该 source，stale lease
-在 takeover 前进入 immutable history，已验证 PASS state 可复用而不重复 provider 请求。
+lease；retry budget、delay、retryable blocker、lease TTL、recovery mode 与
+component-scoped `source_revision` 来自 `daily_input_capture_policy.v4`。活动 lease 和
+non-retryable failure 只阻断该 source，stale lease 在 takeover 前进入 immutable history。
+未变 PASS revision 继续复用原 state/key；显式 superseding revision 只重开目标 component，
+并将新 state 隔离到 revision path，旧 terminal bytes 不改写。
+
+交易日 FMP forward PIT 不再从 capture 路径直接冒充 canonical consumer artifact。
+`pit_snapshots_project_fmp_forward` 只读取同批 retained raw payload，重算 normalized bytes，
+与 capture normalized CSV exact 比对后原子写入 canonical processed/report 路径，全程
+`provider_request_performed=false`。PIT manifest/validation 与 pipeline health 都显式要求
+`fmp_forward_pit` snapshot kind 非空；analyst/history snapshot 即使共享 source id 也不能替代。
+Immutable download publication resolver 对 transaction-bound legacy manifest 只允许绝对
+checkout 前缀迁移且 artifact filename 必须 exact；新 generation pre-commit 仍校验当前 root
+exact path，其他 manifest/source/window/checksum 字段保持 fail closed。
 
 S3 由 gap ledger 派生 `daily_input_capture_recovery_queue.v1`：market/macro 可进入人工 immutable
 raw recovery 准备，SEC 需要 non-PIT owner review，PIT-sensitive FMP/official sources 禁止历史
@@ -395,7 +407,8 @@ flowchart LR
     GAP --> REC["Source/session recovery queue<br/>manual only / no strict PIT"]
     VCAP --> CDEP["Component dependency matrix"]
     CDEP -->|"market_macro PASS"| DQCAP["strict daily_default.v1 DQ"]
-    CDEP -->|"fmp_forward_pit PASS"| PITCAP["PIT validation"]
+    CDEP -->|"fmp_forward_pit PASS"| PITPROJ["Retained raw replay<br/>exact normalized bytes<br/>no provider request"]
+    PITPROJ --> PITCAP["Canonical manifest + PIT validation<br/>required kind = fmp_forward_pit"]
     CDEP -->|"sec_companyfacts PASS"| SECCAP["SEC validation"]
     CDEP -->|"component missing"| BRCAP["Block only dependent branch"]
     DQCAP --> SCORECAP["score gate"]
@@ -3132,8 +3145,9 @@ flowchart TD
         FMPFPR["outputs/reports/fmp_forward_pit_fetch_YYYY-MM-DD.md<br/>FMP PIT 抓取报告"]
         EODHDTR["data/raw/eodhd_earnings_trends/*.json<br/>EODHD Earnings Trends 原始响应"]
         PITF["aits pit-snapshots fetch-fmp-forward<br/>抓取 FMP estimates / price target / ratings / earnings calendar"]
-        PITB["aits pit-snapshots build-manifest<br/>从现有 FMP/EODHD raw cache 建立通用 PIT manifest"]
-        PITV["aits pit-snapshots validate<br/>校验 PIT manifest / payload checksum / available_time"]
+        PITP["aits pit-snapshots project-fmp-forward-capture<br/>retained raw exact replay 到 canonical normalized/report<br/>不请求 provider"]
+        PITB["aits pit-snapshots build-manifest<br/>从现有 FMP/EODHD raw cache 建立通用 PIT manifest<br/>daily 要求 fmp_forward_pit kind 非空"]
+        PITV["aits pit-snapshots validate<br/>校验 PIT manifest / payload checksum / available_time / required kind"]
         PITR["outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md<br/>PIT 快照归档质量报告"]
         OPRAW["data/raw/official_policy_sources/YYYY-MM-DD/*<br/>官方来源 raw payload、row count 和 sha256"]
         OPCAND["data/processed/official_policy_source_candidates_YYYY-MM-DD.csv<br/>pending_review 人工复核候选；production_effect=none"]
@@ -3478,9 +3492,10 @@ flowchart TD
         DSHR["outputs/reports/data_sources_health_YYYY-MM-DD.md<br/>manifest/cache/checksum/freshness/coverage"]
         DSPIT["aits data-sources pit-manifest report/validate<br/>TRADING-355 source-level PIT source manifest<br/>STRONG_PIT / APPROX_PIT / NON_PIT / UNKNOWN"]
         DSPITR["reports/data_governance/pit_source_manifest/<manifest_id>/<br/>pit_source_manifest.json/md + validation + reader_brief_section<br/>retrieval_time / effective_date / revision_risk / cache checksum / refresh policy / validation policy"]
-        PSMF["aits pit-snapshots fetch-fmp-forward<br/>阶段 2：FMP forward-only PIT 抓取<br/>--continue-on-failure 可用于日常调度非阻断失败报告"]
-        PSMB["aits pit-snapshots build-manifest<br/>现有 raw cache 归档"]
-        PSV["aits pit-snapshots validate<br/>PIT raw snapshot 质量门禁"]
+        PSMF["aits pit-snapshots fetch-fmp-forward<br/>阶段 2：FMP forward-only PIT 抓取<br/>--continue-on-failure 可用于休市日 live fetch 失败报告"]
+        PSMP["aits pit-snapshots project-fmp-forward-capture<br/>交易日从 retained capture exact replay；不重复请求 provider"]
+        PSMB["aits pit-snapshots build-manifest<br/>现有 raw cache 归档；required kind fail closed"]
+        PSV["aits pit-snapshots validate<br/>PIT raw snapshot 与 required kind 质量门禁"]
         PSR["outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md<br/>缺跑不能事后补 strict PIT"]
         EVI["aits evidence import-csv"]
         EV["aits evidence validate"]

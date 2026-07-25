@@ -92,6 +92,7 @@ def build_pit_snapshot_health_checks(
     min_normalized_rows: int = 1,
     max_snapshot_age_days: int = 3,
     visibility_cutoff: datetime | None = None,
+    required_snapshot_kinds: tuple[str, ...] = (),
 ) -> tuple[PipelineArtifactCheck, ...]:
     if min_manifest_records < 0:
         raise ValueError("min_manifest_records must be non-negative")
@@ -99,6 +100,8 @@ def build_pit_snapshot_health_checks(
         raise ValueError("min_normalized_rows must be non-negative")
     if max_snapshot_age_days < 0:
         raise ValueError("max_snapshot_age_days must be non-negative")
+    if any(not item or item != item.strip() for item in required_snapshot_kinds):
+        raise ValueError("required_snapshot_kinds must contain non-empty normalized values")
 
     checks = [
         _check_artifact(
@@ -192,6 +195,14 @@ def build_pit_snapshot_health_checks(
                 project_root=project_root,
             ),
         ]
+    )
+    checks.extend(
+        _pit_snapshot_kind_coverage_check(
+            manifest_path=manifest_path,
+            rows=manifest_rows,
+            snapshot_kind=snapshot_kind,
+        )
+        for snapshot_kind in required_snapshot_kinds
     )
     return tuple(checks)
 
@@ -461,6 +472,40 @@ def _fmp_forward_pit_fetch_report_status_check(
         modified_at=_modified_at(fetch_report_path),
         severity=severity,
         message=message,
+    )
+
+
+def _pit_snapshot_kind_coverage_check(
+    *,
+    manifest_path: Path,
+    rows: tuple[dict[str, str], ...],
+    snapshot_kind: str,
+) -> PipelineArtifactCheck:
+    count = sum(
+        1
+        for row in rows
+        if str(row.get("snapshot_id", "")).startswith(f"{snapshot_kind}_")
+    )
+    spec = PipelineArtifactSpec(
+        artifact_id=f"pit_snapshot_kind_{snapshot_kind}",
+        label=f"PIT snapshot kind {snapshot_kind}",
+        path=manifest_path,
+        required=True,
+        investigation_hint=(
+            f"确认 PIT manifest 的 {snapshot_kind} raw capture 已被发现并通过 checksum 校验。"
+        ),
+    )
+    return PipelineArtifactCheck(
+        spec=spec,
+        exists=manifest_path.exists(),
+        size_bytes=_path_size(manifest_path),
+        modified_at=_modified_at(manifest_path),
+        severity=None if count else PipelineHealthSeverity.ERROR,
+        message=(
+            f"snapshot kind {snapshot_kind} 覆盖 {count} 条。"
+            if count
+            else f"required snapshot kind {snapshot_kind} 缺失。"
+        ),
     )
 
 

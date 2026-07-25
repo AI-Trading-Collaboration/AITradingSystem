@@ -48,6 +48,8 @@ def _write_policy(path: Path, project_root: Path) -> None:
                 "  lease_ttl_seconds: 1800",
                 "  component_policies:",
                 "    market_macro:",
+                "      source_revision: daily_input_capture_test_v2",
+                "      supersedes_source_revisions: []",
                 "      max_attempts: 2",
                 "      retry_delay_seconds: 0",
                 "      retryable_blocker_codes:",
@@ -55,21 +57,29 @@ def _write_policy(path: Path, project_root: Path) -> None:
                 "        - REQUEST_FAILED",
                 "      recovery_mode: IMMUTABLE_RAW_BACKFILL",
                 "    fmp_forward_pit:",
+                "      source_revision: daily_input_capture_test_v2",
+                "      supersedes_source_revisions: []",
                 "      max_attempts: 1",
                 "      retry_delay_seconds: 0",
                 "      retryable_blocker_codes: []",
                 "      recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN",
                 "    sec_companyfacts:",
+                "      source_revision: daily_input_capture_test_v2",
+                "      supersedes_source_revisions: []",
                 "      max_attempts: 1",
                 "      retry_delay_seconds: 0",
                 "      retryable_blocker_codes: []",
                 "      recovery_mode: MANUAL_NON_PIT_RAW_REVIEW",
                 "    fmp_valuation:",
+                "      source_revision: daily_input_capture_test_v2",
+                "      supersedes_source_revisions: []",
                 "      max_attempts: 1",
                 "      retry_delay_seconds: 0",
                 "      retryable_blocker_codes: []",
                 "      recovery_mode: HISTORICAL_RECAPTURE_FORBIDDEN",
                 "    official_policy_sources:",
+                "      source_revision: daily_input_capture_test_v2",
+                "      supersedes_source_revisions: []",
                 "      max_attempts: 1",
                 "      retry_delay_seconds: 0",
                 "      retryable_blocker_codes: []",
@@ -133,11 +143,17 @@ def _runner_for_components(
 def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
     policy = load_daily_input_capture_policy()
 
-    assert policy.policy_version == "daily_input_capture_v3"
+    assert policy.policy_version == "daily_input_capture_v4"
     assert policy.tracking_start == date(2026, 7, 24)
     assert policy.blocker_taxonomy_version == "daily_input_capture_blockers_v1"
     assert policy.lease_ttl_seconds == 1800
     assert policy.component_policies["market_macro"].max_attempts == 2
+    assert policy.component_policies["market_macro"].source_revision == (
+        "market_macro_v4_relocation_recovery"
+    )
+    assert policy.component_policies["market_macro"].supersedes_source_revisions == (
+        "daily_input_capture_v3",
+    )
     assert policy.component_policies["market_macro"].retry_delay_seconds == 5
     assert policy.component_policies["market_macro"].retryable_blocker_codes == (
         "PROVIDER_UNAVAILABLE",
@@ -379,9 +395,10 @@ def test_daily_plan_binds_capture_before_strict_consumers() -> None:
     )
     step_ids = [step.step_id for step in plan.steps]
 
-    assert step_ids[:3] == [
+    assert step_ids[:4] == [
         "capture_daily_inputs",
         "validate_data",
+        "pit_snapshots_project_fmp_forward",
         "pit_snapshots_build_manifest",
     ]
     assert "download_data" not in step_ids
@@ -445,6 +462,97 @@ def test_source_scoped_state_reuses_pass_without_repeating_provider_requests(
         str(item["source_idempotency_key"]).startswith("daily-input-source-")
         for item in second.component_results
     )
+
+
+def test_component_revision_reopens_only_superseded_failed_source(
+    tmp_path: Path,
+) -> None:
+    policy_path = tmp_path / "capture_policy.yaml"
+    _write_policy(policy_path, tmp_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    paths = daily_input_capture_paths(date(2026, 7, 27), policy=policy)
+    components = build_daily_input_capture_components(
+        as_of=date(2026, 7, 27),
+        paths=paths,
+        policy=policy,
+        project_root=tmp_path,
+    )
+    first_calls: list[str] = []
+    first = capture_daily_inputs(
+        as_of=date(2026, 7, 27),
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=_runner_for_components(
+            components,
+            failing_component="market_macro",
+            calls=first_calls,
+        ),
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
+    )
+    assert first.status == "PARTIAL_CAPTURE"
+    legacy_market_state = (
+        policy.source_control_root / "2026-07-27" / "market_macro" / "state.json"
+    )
+    legacy_market_state_raw = legacy_market_state.read_bytes()
+
+    revised = policy_path.read_text(encoding="utf-8").replace(
+        "policy_version: daily_input_capture_test_v2",
+        "policy_version: daily_input_capture_test_v3",
+    )
+    revised = revised.replace(
+        (
+            "    market_macro:\n"
+            "      source_revision: daily_input_capture_test_v2\n"
+            "      supersedes_source_revisions: []"
+        ),
+        (
+            "    market_macro:\n"
+            "      source_revision: market_macro_test_v3\n"
+            "      supersedes_source_revisions:\n"
+            "        - daily_input_capture_test_v2"
+        ),
+        1,
+    )
+    policy_path.write_text(revised, encoding="utf-8")
+    revised_policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    revised_paths = daily_input_capture_paths(date(2026, 7, 27), policy=revised_policy)
+    revised_components = build_daily_input_capture_components(
+        as_of=date(2026, 7, 27),
+        paths=revised_paths,
+        policy=revised_policy,
+        project_root=tmp_path,
+    )
+    second_calls: list[str] = []
+    second = capture_daily_inputs(
+        as_of=date(2026, 7, 27),
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=_runner_for_components(revised_components, calls=second_calls),
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 35, tzinfo=UTC),
+    )
+
+    assert second.status == "CAPTURED"
+    assert second_calls == ["market_macro"]
+    market = second.component_results[0]
+    assert market["source_revision"] == "market_macro_test_v3"
+    assert market["idempotency_reused"] is False
+    assert market["superseded_state_path"] == (
+        "outputs/source_control/2026-07-27/market_macro/state.json"
+    )
+    assert all(
+        item["idempotency_reused"] is True for item in second.component_results[1:]
+    )
+    assert legacy_market_state.read_bytes() == legacy_market_state_raw
+    assert (
+        policy.source_control_root
+        / "2026-07-27"
+        / "market_macro"
+        / "revisions"
+        / "market_macro_test_v3"
+        / "state.json"
+    ).is_file()
 
 
 def test_non_retryable_quota_blocker_does_not_consume_other_source_budgets(

@@ -27,6 +27,7 @@ from ai_trading_system.fmp_forward_pit import (
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
     fetch_fmp_forward_pit_snapshots,
+    project_fmp_forward_pit_capture,
     sanitize_fmp_forward_pit_error_message,
     write_fmp_forward_pit_fetch_report,
     write_fmp_forward_pit_normalized_csv_from_payloads,
@@ -91,6 +92,10 @@ def validate_pit_snapshots_command(
         Path | None,
         typer.Option(help="Markdown PIT 快照质量报告输出路径。"),
     ] = None,
+    required_snapshot_kinds: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔的必需 snapshot kind；任一缺失即 fail closed。"),
+    ] = None,
 ) -> None:
     """校验 forward-only PIT raw snapshot manifest。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
@@ -102,6 +107,7 @@ def validate_pit_snapshots_command(
         input_path=input_path,
         as_of=validation_date,
         data_sources=load_data_sources(data_sources_path),
+        required_snapshot_kinds=tuple(_parse_csv_items(required_snapshot_kinds)),
     )
     write_pit_snapshot_validation_report(report, report_path)
 
@@ -113,6 +119,50 @@ def validate_pit_snapshots_command(
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@pit_snapshots_app.command("project-fmp-forward-capture")
+def project_fmp_forward_pit_capture_command(
+    raw_input_dir: Annotated[
+        Path,
+        typer.Option(help="已通过 daily capture 保留的 FMP forward PIT raw 目录。"),
+    ],
+    capture_normalized_input_path: Annotated[
+        Path,
+        typer.Option(help="daily capture 同批 normalized CSV，用于 exact replay 校验。"),
+    ],
+    normalized_output_path: Annotated[
+        Path,
+        typer.Option(help="canonical FMP forward PIT normalized CSV 输出路径。"),
+    ],
+    output_path: Annotated[
+        Path,
+        typer.Option(help="canonical FMP forward PIT fetch/projection 报告路径。"),
+    ],
+    as_of: Annotated[
+        str,
+        typer.Option(help="投影日期，格式为 YYYY-MM-DD。"),
+    ],
+) -> None:
+    """从同日 retained capture bytes 投影 canonical FMP forward PIT，不请求 provider。"""
+    projection_date = _parse_date(as_of)
+    try:
+        result = project_fmp_forward_pit_capture(
+            raw_input_dir=raw_input_dir,
+            capture_normalized_input_path=capture_normalized_input_path,
+            as_of=projection_date,
+            normalized_output_path=normalized_output_path,
+            report_output_path=output_path,
+        )
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]FMP forward PIT canonical projection 失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    console.print("[green]FMP forward PIT canonical projection：PASS[/green]")
+    console.print(f"Raw payload：{result.raw_payload_count}")
+    console.print(f"Normalized rows：{result.normalized_row_count}")
+    console.print(f"Normalized：{result.normalized_output_path}")
+    console.print(f"Report：{result.report_output_path}")
+    console.print("provider_request_performed=false；production_effect=none")
 
 
 @pit_snapshots_app.command("build-manifest")
@@ -149,6 +199,10 @@ def build_pit_snapshot_manifest_command(
         Path | None,
         typer.Option(help="Markdown PIT 快照质量报告输出路径。"),
     ] = None,
+    required_snapshot_kinds: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔的必需 snapshot kind；任一缺失即 fail closed。"),
+    ] = None,
 ) -> None:
     """从现有 FMP/EODHD raw cache 生成通用 PIT raw snapshot manifest。"""
     manifest_date = _parse_date(as_of) if as_of else date.today()
@@ -169,6 +223,7 @@ def build_pit_snapshot_manifest_command(
         input_path=manifest_path,
         as_of=manifest_date,
         data_sources=data_sources,
+        required_snapshot_kinds=tuple(_parse_csv_items(required_snapshot_kinds)),
     )
     write_pit_snapshot_validation_report(report, report_path)
 

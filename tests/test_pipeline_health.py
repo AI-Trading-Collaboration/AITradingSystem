@@ -130,6 +130,37 @@ def test_pit_snapshot_health_checks_flag_failed_fetch_report(
     assert "FMP PIT 抓取报告状态为 FAIL" in messages_by_id["fmp_forward_pit_fetch_status"]
 
 
+def test_pit_snapshot_health_requires_forward_snapshot_kind(tmp_path: Path) -> None:
+    pit_paths = _write_pit_health_inputs(tmp_path, date(2026, 5, 4))
+    manifest_text = pit_paths["manifest"].read_text(encoding="utf-8").replace(
+        "fmp_forward_pit_nvda_2026_05_04_deadbeef",
+        "fmp_analyst_estimates_nvda_2026_05_04_deadbeef",
+    )
+    pit_paths["manifest"].write_text(manifest_text, encoding="utf-8")
+
+    report = build_pipeline_health_report(
+        as_of=date(2026, 5, 4),
+        artifacts=(),
+        extra_checks=build_pit_snapshot_health_checks(
+            as_of=date(2026, 5, 4),
+            manifest_path=pit_paths["manifest"],
+            normalized_path=pit_paths["normalized"],
+            validation_report_path=pit_paths["validation_report"],
+            fetch_report_path=pit_paths["fetch_report"],
+            project_root=tmp_path,
+            required_snapshot_kinds=("fmp_forward_pit",),
+        ),
+    )
+
+    assert report.status == "FAIL"
+    check = next(
+        item
+        for item in report.checks
+        if item.spec.artifact_id == "pit_snapshot_kind_fmp_forward_pit"
+    )
+    assert "required snapshot kind fmp_forward_pit 缺失" in check.message
+
+
 def test_pit_snapshot_health_checks_allow_production_visibility_cutoff(
     tmp_path: Path,
 ) -> None:
@@ -313,7 +344,10 @@ def _write_pit_health_inputs(
         "\n".join(
             [
                 "snapshot_id,raw_payload_path,raw_payload_sha256,available_time",
-                f"snapshot-1,{payload_path},{checksum},{resolved_available_time}",
+                (
+                    "fmp_forward_pit_nvda_2026_05_04_deadbeef,"
+                    f"{payload_path},{checksum},{resolved_available_time}"
+                ),
             ]
         )
         + "\n",

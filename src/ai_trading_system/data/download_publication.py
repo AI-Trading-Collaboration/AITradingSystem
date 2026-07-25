@@ -10,7 +10,7 @@ import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import NoReturn
 
 from ai_trading_system.contracts import ArtifactPointer, DataQualityEvidence
@@ -1900,6 +1900,7 @@ def _validate_current_legacy_manifest_semantics(
     published_at: datetime,
     artifacts: Sequence[Mapping[str, object]],
     source_payloads: Sequence[Mapping[str, object]],
+    allow_relocated_output_paths: bool = False,
 ) -> None:
     expected = _legacy_manifest_records_from_payloads(
         root=root,
@@ -1920,15 +1921,28 @@ def _validate_current_legacy_manifest_semantics(
     suffix = rows[len(rows) - len(expected) :]
     extra_columns = tuple(field for field in header if field not in _MANIFEST_COLUMNS)
     observed_roles: list[str] = []
-    for index, (observed, expected_record) in enumerate(zip(suffix, expected, strict=True)):
+    for index, (observed, expected_record, artifact) in enumerate(
+        zip(suffix, expected, artifacts, strict=True)
+    ):
         expected_row = {
             field: "" if expected_record.get(field) is None else str(expected_record.get(field, ""))
             for field in _MANIFEST_COLUMNS
         }
-        if any(observed.get(field) != value for field, value in expected_row.items()):
+        compared_fields = (
+            tuple(field for field in _MANIFEST_COLUMNS if field != "output_path")
+            if allow_relocated_output_paths
+            else _MANIFEST_COLUMNS
+        )
+        if any(observed.get(field) != expected_row[field] for field in compared_fields):
             _fail(
                 "DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH",
                 f"current suffix row {index} differs from canonical transaction bindings",
+            )
+        if allow_relocated_output_paths:
+            _validate_relocated_legacy_output_path(
+                observed.get("output_path", ""),
+                expected_filename=_text(artifact.get("filename"), "artifact.filename"),
+                row_index=index,
             )
         if any(observed.get(field) for field in extra_columns):
             _fail(
@@ -1969,6 +1983,28 @@ def _validate_current_legacy_manifest_semantics(
                 "DOWNLOAD_MANIFEST_CURRENT_TRANSACTION_DUPLICATE",
                 transaction_id,
             )
+
+
+def _validate_relocated_legacy_output_path(
+    value: str,
+    *,
+    expected_filename: str,
+    row_index: int,
+) -> None:
+    if (
+        not value
+        or value != value.strip()
+        or not (
+            PureWindowsPath(value).is_absolute()
+            or PurePosixPath(value).is_absolute()
+        )
+        or PureWindowsPath(value).name != expected_filename
+        or PurePosixPath(value.replace("\\", "/")).name != expected_filename
+    ):
+        _fail(
+            "DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH",
+            f"current suffix row {row_index} has an invalid relocated output path",
+        )
 
 
 def _legacy_manifest_rows(
@@ -2284,6 +2320,7 @@ def _validate_transaction(
         published_at=published_at,
         artifacts=artifact_payloads,
         source_payloads=source_payloads,
+        allow_relocated_output_paths=True,
     )
     identity = {
         "base_pointer_sha256": base_pointer_sha256,

@@ -417,6 +417,7 @@ def pipeline_health_command(
         min_normalized_rows=min_pit_normalized_rows,
         max_snapshot_age_days=max_pit_snapshot_age_days,
         visibility_cutoff=production_health_cutoff,
+        required_snapshot_kinds=("fmp_forward_pit",),
     )
     core_artifacts = [
         PipelineArtifactSpec(

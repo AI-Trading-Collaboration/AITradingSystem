@@ -433,6 +433,18 @@ def _dispatch(args: list[str]) -> None:
             continue_on_failure=_flag(args, "--continue-on-failure"),
         )
         return
+    if args[:2] == ["pit-snapshots", "project-fmp-forward-capture"]:
+        pit_snapshots_cli.project_fmp_forward_pit_capture_command(
+            as_of=_option(args, "--as-of") or "",
+            raw_input_dir=_path_option(args, "--raw-input-dir"),
+            capture_normalized_input_path=_path_option(
+                args,
+                "--capture-normalized-input-path",
+            ),
+            normalized_output_path=_path_option(args, "--normalized-output-path"),
+            output_path=_path_option(args, "--output-path"),
+        )
+        return
     if args[:2] == ["pit-snapshots", "build-manifest"]:
         pit_snapshots_cli.build_pit_snapshot_manifest_command(
             as_of=_option(args, "--as-of"),
@@ -455,6 +467,7 @@ def _dispatch(args: list[str]) -> None:
                 args,
                 "--validation-report-path",
             ),
+            required_snapshot_kinds=_option(args, "--required-snapshot-kinds"),
         )
         return
     if args[:2] == ["pit-snapshots", "validate"]:
@@ -466,6 +479,7 @@ def _dispatch(args: list[str]) -> None:
                 pit_snapshots_cli.DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
             ),
             output_path=_optional_path(args, "--output-path"),
+            required_snapshot_kinds=_option(args, "--required-snapshot-kinds"),
         )
         return
     if args[:2] == ["fundamentals", "download-sec-companyfacts"]:

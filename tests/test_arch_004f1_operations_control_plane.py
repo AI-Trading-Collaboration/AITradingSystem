@@ -817,7 +817,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
         )
         total += len(assessment.workflow_spec.steps)
 
-    assert total == 79
+    assert total == 80
 
 
 def test_daily_adapter_preserves_order_explicit_dag_and_legacy_commands() -> None:
@@ -1058,7 +1058,7 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["shadow_plan"]["execution_enabled"] is False
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
     assert payload["workflow_spec"]["semantic_revision"] == (
-        "scheduled=scheduled_tasks_v5;capture=daily_input_capture_v3"
+        "scheduled=scheduled_tasks_v6;capture=daily_input_capture_v4"
     )
     assert plan.workflow_semantic_revision == payload["workflow_spec"]["semantic_revision"]
     assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"

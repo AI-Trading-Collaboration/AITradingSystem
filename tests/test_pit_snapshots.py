@@ -42,6 +42,47 @@ def test_validate_pit_snapshot_manifest_passes_valid_manifest(tmp_path: Path) ->
     assert "available_time <= decision_time" in markdown
 
 
+def test_validate_pit_snapshot_manifest_requires_forward_snapshot_kind(
+    tmp_path: Path,
+) -> None:
+    payload_path = _write_raw_payload(tmp_path / "raw" / "nvda.json")
+    analyst_record = replace(
+        _record(payload_path, tmp_path),
+        snapshot_id="fmp_analyst_estimates_nvda_2026_05_02_deadbeef",
+    )
+    manifest_path = _write_manifest(tmp_path / "manifest.csv", analyst_record)
+
+    missing = validate_pit_snapshot_manifest(
+        input_path=manifest_path,
+        as_of=date(2026, 5, 2),
+        data_sources=_data_sources(),
+        project_root=tmp_path,
+        required_snapshot_kinds=("fmp_forward_pit",),
+    )
+    forward_record = replace(
+        analyst_record,
+        snapshot_id="fmp_forward_pit_nvda_2026_05_02_deadbeef",
+    )
+    write_pit_snapshot_manifest([forward_record], manifest_path)
+    covered = validate_pit_snapshot_manifest(
+        input_path=manifest_path,
+        as_of=date(2026, 5, 2),
+        data_sources=_data_sources(),
+        project_root=tmp_path,
+        required_snapshot_kinds=("fmp_forward_pit",),
+    )
+
+    assert missing.status == "FAIL"
+    assert "pit_snapshot_required_kind_missing" in {
+        issue.code for issue in missing.issues
+    }
+    assert covered.status == "PASS"
+    assert covered.snapshot_kind_count("fmp_forward_pit") == 1
+    assert "| fmp_forward_pit | True | 1 |" in render_pit_snapshot_validation_report(
+        covered
+    )
+
+
 def test_validate_pit_snapshot_manifest_rejects_checksum_mismatch(
     tmp_path: Path,
 ) -> None:
