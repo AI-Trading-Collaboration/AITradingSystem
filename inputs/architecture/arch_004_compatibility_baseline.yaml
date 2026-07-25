@@ -25090,7 +25090,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: aa00a0fa899a4af6a8a80af02dad2eed17a36df1a4775a04e0f7bbac24c70ec4
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
-    sha256: 65c9af85439d01980b030ecdb263265277207565301e34bca456a5e281d63280
+    sha256: 1f0dd00452bd06a26be1cb23040112a288d72b857e9bc01ed9fa77ecf0a05837
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
     sha256: cee857bfdbcd8245db00657e5074a5e622faf56e43cee98c8505fad503465268

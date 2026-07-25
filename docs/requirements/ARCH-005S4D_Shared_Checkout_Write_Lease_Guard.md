@@ -5,10 +5,12 @@
 - task id：`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`
 - parent：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`BASELINE_DONE_NARROW_S0_S1`
+- status：`IN_PROGRESS_S2_READ_ONLY_TELEMETRY`
 - owner：architecture control-plane owner / operations automation owner
 - dependency：`SATISFIED_WAVE14_S2_COMPLETE`；窄版 S0/S1 已在 Wave15 domain assignment 前完成
 - owner decision：`owner_decision:ARCH-005S4D:2026-07-24:approve_narrow_s0_s1_v1`
+- S2 owner decision：
+  `owner_decision:ARCH-005S4D-S2:2026-07-26:approve_read_only_telemetry_v1`
 - production effect：`none`
 
 ## 问题与风险
@@ -92,7 +94,9 @@ Known-unrelated exclusion仅由policy登记exact
 - 输出等待时间、冲突原因、lease持有时间、误阻断与无归属写入 telemetry；
 - 只有证据显示 task-register source-of-truth成为主要瓶颈时，才另行评估ARCH-005 S5。
 
-2026-07-25受控准备范围已冻结，但尚未获得实现授权：
+2026-07-25受控准备范围已冻结。2026-07-26，project owner明确授权按
+`owner_decision:ARCH-005S4D-S2:2026-07-26:approve_read_only_telemetry_v1`
+进入S2实现；授权不扩展下列边界：
 
 - 只允许从既有guard、lease event、handoff与reconciliation事实做read-only projection，不新增
   writer、lock authority或自动状态迁移；
@@ -101,8 +105,21 @@ Known-unrelated exclusion仅由policy登记exact
 - 原始事件必须保持immutable并可按checksum重放；汇总不得回写task register或改变调度优先级；
 - 先观察至少两个真实、独立的受控集成批次，再判断瓶颈是否来自task source、checkout lease、
   validation runtime或外部依赖；
-- 在上述证据和独立owner decision形成前，`task_source_cutover=false`、S5未授权，
-  production/broker边界不变。
+- 在至少两个真实批次证据和独立S5 owner decision形成前，`task_source_cutover=false`、
+  S5未授权，production/broker边界不变。
+
+## S2 临时工作区生命周期
+
+- owning task：`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`
+- absolute path：`D:\Work\AITradingSystem_arch005s4d_s2_telemetry_20260726`
+- branch：`codex/arch-005-s4d-s2-telemetry`
+- base：`main@a9fbe22ea060701cd658650cf8777d0d125ebf6a`
+- purpose：在不继续写dirty shared main的前提下实现只读telemetry schema、投影器、CLI与测试。
+- exit condition：focused与适用formal tiers PASS，generated views/source hashes fresh，归属文件
+  commit并普通push；S4C fast-forward main后审计tracked/untracked/ignored内容，保全唯一运行证据，
+  确认无活动进程再按上述exact absolute path执行`git worktree remove`与`git worktree prune`。
+- cleanup safety：删除allowlist只包含上述worktree exact path；不得删除其他worktree、runtime
+  checkout、用户研究文档或canonical outputs。
 
 ## 验收条件
 
@@ -152,5 +169,5 @@ task source cutover、production与broker仍保持未授权。
 2026-07-25：Wave15期间发现的known-unrelated扫描越界与Windows仲裁owner瞬时读取竞态均已直接
 修复；并发负例、architecture=`615 passed`及Wave15 failure-fix Full=`7180 passed / 3 skipped /
 643 warnings`通过。任务恢复`BASELINE_DONE_NARROW_S0_S1`。同日S4E已完成S4C main集成，
-S2 telemetry的只读合同准备范围如上冻结，但实现仍需独立owner decision；S5、task source
-cutover、production与broker仍未授权。
+S2 telemetry的只读合同准备范围如上冻结。2026-07-26 owner已授权该窄版S2并转
+`IN_PROGRESS_S2_READ_ONLY_TELEMETRY`；S5、task source cutover、production与broker仍未授权。
