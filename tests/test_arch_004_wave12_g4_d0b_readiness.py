@@ -185,7 +185,7 @@ def test_shared_contract_and_reviewed_data_quality_policy_hashes_are_bound() -> 
     assert contract["sha256"] == _sha256(contract["path"])
     assert data_policy == {
         "policy_id": "DATA_QUALITY_CACHE_GATE",
-        "policy_version": "data_quality_cache_gate.v1",
+            "policy_version": "data_quality_cache_gate.v2",
         "status": "REVIEWED",
         "path": "config/data_quality.yaml",
         "sha256": _sha256("config/data_quality.yaml"),

@@ -66,7 +66,24 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert config.prices.consistency_start_date is not None
     assert config.prices.consistency_start_date.isoformat() == "2021-02-22"
     assert config.prices.volume_optional_tickers == ["^VIX"]
-    assert config.prices.known_split_events["NVDA"][0].ratio == 10
+    assert [event.ratio for event in config.prices.known_split_events["NVDA"]] == [4, 10]
+    assert config.prices.known_split_events["AMZN"][0].ratio == 20
+    assert config.prices.known_split_events["GOOG"][0].effective_date.isoformat() == "2022-07-18"
+    tqqq_effective_dates = [
+        event.effective_date.isoformat()
+        for event in config.prices.known_split_events["TQQQ"]
+    ]
+    assert tqqq_effective_dates == [
+        "2022-01-13",
+        "2025-11-20",
+    ]
+    assert all(
+        event.status == "REVIEWED"
+        and event.owner == "data_platform_owner"
+        and event.review_condition
+        for events in config.prices.known_split_events.values()
+        for event in events
+    )
     assert config.prices.secondary_source_self_check_fail_closed is False
     assert config.prices.ticker_return_threshold_overrides["^VIX"].extreme_daily_return_abs == 2.00
     assert config.rates.min_plausible_value == -1.0

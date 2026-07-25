@@ -145,6 +145,8 @@ D0B2B_HISTORICAL_PREFIX_SHA256 = (
 )
 D0B2B_NEW_SOURCE_PATHS = frozenset(
     {
+        "config/data/canonical_price_session_policy.yaml",
+        "config/data/us_equity_special_closure_registry.yaml",
         (
             "docs/requirements/"
             "DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md"
@@ -153,6 +155,10 @@ D0B2B_NEW_SOURCE_PATHS = frozenset(
             "registry/development_tasks_shadow/active/bc/"
             "bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml"
         ),
+        "src/ai_trading_system/data/market_data.py",
+        "src/ai_trading_system/us_equity_special_closure_policy.py",
+        "tests/test_market_data.py",
+        "tests/test_us_equity_special_closure_policy.py",
     }
 )
 WAVE15_NEW_SOURCE_PATHS = frozenset(

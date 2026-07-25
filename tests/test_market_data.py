@@ -1,15 +1,21 @@
 from __future__ import annotations
 
+import json
 from datetime import date
+from hashlib import sha256
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from ai_trading_system.data.market_data import (
+    CBOE_RAW_SOURCE_COMMITMENT_ATTR,
     CboeVixPriceProvider,
     CsvDataCache,
     FmpPriceProvider,
     PriceRequest,
+    align_canonical_prices_to_decision_sessions,
+    load_canonical_price_session_policy,
     normalize_cboe_vix_prices,
     normalize_fmp_prices,
     normalize_fred_rates,
@@ -170,6 +176,62 @@ def test_normalize_cboe_vix_prices_filters_range_and_sets_internal_ticker() -> N
     assert pd.isna(prices.loc[0, "volume"])
 
 
+def test_canonical_vix_alignment_excludes_non_xnys_session_and_audits_source() -> None:
+    prices = pd.DataFrame(
+        [
+            {
+                "date": "2026-05-01",
+                "ticker": "^VIX",
+                "close": 18.2,
+                "__source": "prices:vix",
+            },
+            {
+                "date": "2026-05-02",
+                "ticker": "^VIX",
+                "close": 18.4,
+                "__source": "prices:vix",
+            },
+            {
+                "date": "2026-05-02",
+                "ticker": "QQQ",
+                "close": 500.0,
+                "__source": "prices:primary",
+            },
+        ]
+    )
+
+    result = align_canonical_prices_to_decision_sessions(
+        prices,
+        provenance_column="__source",
+    )
+
+    assert result.prices[["ticker", "date"]].to_records(index=False).tolist() == [
+        ("QQQ", "2026-05-02"),
+        ("^VIX", "2026-05-01"),
+    ]
+    assert len(result.event_audits) == 1
+    audit = result.event_audits[0]
+    assert audit.source_event_id == "prices:vix"
+    assert audit.input_row_count == 2
+    assert audit.output_row_count == 1
+    assert audit.excluded_dates == ("2026-05-02",)
+    assert result.policy.decision_calendar == "XNYS"
+    assert len(result.policy.sha256) == 64
+
+
+def test_canonical_price_session_policy_rejects_unsupported_action(tmp_path: Path) -> None:
+    policy_path = tmp_path / "policy.yaml"
+    governed = load_canonical_price_session_policy()
+    raw = governed.path.read_text(encoding="utf-8").replace(
+        "EXCLUDE_NON_DECISION_SESSIONS",
+        "KEEP_SOURCE_SESSION",
+    )
+    policy_path.write_text(raw, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unsupported action"):
+        load_canonical_price_session_policy(policy_path)
+
+
 def test_fmp_price_provider_skips_unsupported_vix_and_uses_price_symbol() -> None:
     fake_requests = _FakeRequests(
         [
@@ -216,6 +278,37 @@ def test_cboe_vix_price_provider_reads_official_csv() -> None:
     assert prices["ticker"].tolist() == ["^VIX"]
     assert prices.loc[0, "close"] == 18.2
     assert fake_requests.calls == [provider.base_url]
+    commitment = prices.attrs[CBOE_RAW_SOURCE_COMMITMENT_ATTR]
+    expected_raw = fake_requests.text.encode("utf-8")
+    assert commitment["raw_response_sha256"] == sha256(expected_raw).hexdigest()
+    assert commitment["raw_response_size_bytes"] == len(expected_raw)
+    assert commitment["storage_mode"] == "EPHEMERAL_INJECTED_TRANSPORT"
+
+
+def test_cboe_vix_commitment_binds_persisted_raw_provider_bytes(tmp_path: Path) -> None:
+    fake_requests = _FakeTextRequests(
+        "DATE,OPEN,HIGH,LOW,CLOSE\n"
+        "05/01/2026,18.0,19.0,17.5,18.2\n"
+    )
+    provider = CboeVixPriceProvider(
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+    )
+
+    prices = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 1))
+    )
+
+    commitment = prices.attrs[CBOE_RAW_SOURCE_COMMITMENT_ATTR]
+    metadata_path = Path(str(commitment["cache_metadata_path"]))
+    metadata_raw = metadata_path.read_bytes()
+    metadata = json.loads(metadata_raw)
+    body_path = metadata_path.parent / str(metadata["body_path"])
+    expected_raw = fake_requests.text.encode("utf-8")
+    assert commitment["storage_mode"] == "EXTERNAL_REQUEST_CACHE_IMMUTABLE_BODY"
+    assert commitment["cache_metadata_sha256"] == sha256(metadata_raw).hexdigest()
+    assert commitment["raw_response_sha256"] == sha256(expected_raw).hexdigest()
+    assert body_path.read_bytes() == expected_raw
 
 
 def test_cboe_vix_price_provider_cache_identity_includes_requested_window(tmp_path: Path) -> None:

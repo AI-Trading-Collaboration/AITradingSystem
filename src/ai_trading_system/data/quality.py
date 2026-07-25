@@ -324,14 +324,18 @@ def validate_data_cache(
     if (
         explicit_requested_window is not None
         and manifest_requested_window is not None
-        and explicit_requested_window != manifest_requested_window
+        and (
+            manifest_requested_window[0] > explicit_requested_window[0]
+            or manifest_requested_window[1] != explicit_requested_window[1]
+        )
     ):
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
                 "download_manifest_requested_window_mismatch",
                 (
-                    "显式 requested_window 与当前 artifact 的 manifest window 不一致："
+                    "当前 artifact 的 manifest window 未完整覆盖显式 requested_window，"
+                    "或末端日期不一致："
                     f"explicit={_window_text(explicit_requested_window)}；"
                     f"manifest={_window_text(manifest_requested_window)}"
                 ),

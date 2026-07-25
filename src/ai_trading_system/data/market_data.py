@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from hashlib import sha256
@@ -13,6 +14,8 @@ from typing import Any, Protocol, cast
 import pandas as pd
 
 from ai_trading_system.external_request_cache import (
+    EXTERNAL_REQUEST_CACHE_SCHEMA_VERSION,
+    LEGACY_EXTERNAL_REQUEST_CACHE_SCHEMA_VERSION,
     CachedHttpResponse,
     cached_requests_get,
     default_external_request_cache_dir,
@@ -21,6 +24,8 @@ from ai_trading_system.external_request_cache import (
     sanitize_diagnostic_text,
     write_external_request_cache_response,
 )
+from ai_trading_system.trading_calendar import is_us_equity_trading_day
+from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 MARKETSTACK_EOD_URL = "https://api.marketstack.com/v2/eod"
 MARKETSTACK_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
@@ -46,6 +51,15 @@ CBOE_VIX_DAILY_PRICES_URL = (
 CBOE_VIX_TICKER = "^VIX"
 FRED_PROVIDER_NAME = "Federal Reserve Economic Data"
 FRED_API_FAMILY = "fredgraph_csv"
+CANONICAL_PRICE_SESSION_POLICY_SCHEMA_VERSION = "canonical_price_session_policy.v1"
+CANONICAL_PRICE_SESSION_AUDIT_SCHEMA_VERSION = (
+    "canonical_price_session_normalization_audit.v1"
+)
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_CANONICAL_PRICE_SESSION_POLICY_PATH = (
+    _PROJECT_ROOT / "config" / "data" / "canonical_price_session_policy.yaml"
+)
+CBOE_RAW_SOURCE_COMMITMENT_ATTR = "cboe_raw_source_commitment"
 
 
 @dataclass(frozen=True)
@@ -61,6 +75,45 @@ class RateRequest:
     series_ids: list[str]
     start: date
     end: date
+
+
+@dataclass(frozen=True)
+class CanonicalPriceSessionRule:
+    ticker: str
+    source_session: str
+    action: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class CanonicalPriceSessionPolicy:
+    policy_id: str
+    policy_version: str
+    canonical_dataset: str
+    decision_calendar: str
+    session_resolver: str
+    rules: tuple[CanonicalPriceSessionRule, ...]
+    path: Path
+    sha256: str
+
+
+@dataclass(frozen=True)
+class CanonicalPriceSessionEventAudit:
+    source_event_id: str
+    ticker: str
+    source_session: str
+    action: str
+    reason: str
+    input_row_count: int
+    output_row_count: int
+    excluded_dates: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CanonicalPriceSessionAlignment:
+    prices: pd.DataFrame
+    policy: CanonicalPriceSessionPolicy
+    event_audits: tuple[CanonicalPriceSessionEventAudit, ...]
 
 
 class PriceDataProvider(Protocol):
@@ -572,12 +625,19 @@ class CboeVixPriceProvider:
             raise ValueError("Cboe VIX request failed: " f"http_status={response.status_code}")
 
         raw = pd.read_csv(StringIO(str(response.text)))
-        return normalize_cboe_vix_prices(
+        normalized = normalize_cboe_vix_prices(
             raw,
             ticker=self.ticker,
             start=request.start,
             end=request.end,
         )
+        normalized.attrs[CBOE_RAW_SOURCE_COMMITMENT_ATTR] = (
+            _cboe_raw_source_commitment(
+                response,
+                cache_persistence_enabled=request_cache_dir is not None,
+            )
+        )
+        return normalized
 
 
 @dataclass(frozen=True)
@@ -1022,6 +1082,187 @@ def normalize_cboe_vix_prices(
     return frame[columns].sort_values(["ticker", "date"]).reset_index(drop=True)
 
 
+def align_canonical_prices_to_decision_sessions(
+    prices: pd.DataFrame,
+    *,
+    provenance_column: str,
+    policy_path: Path = DEFAULT_CANONICAL_PRICE_SESSION_POLICY_PATH,
+) -> CanonicalPriceSessionAlignment:
+    """Align governed source series to the canonical XNYS decision-session index."""
+
+    policy = load_canonical_price_session_policy(policy_path)
+    if prices.empty:
+        return CanonicalPriceSessionAlignment(
+            prices=prices.copy(),
+            policy=policy,
+            event_audits=(),
+        )
+    required = {"date", "ticker", provenance_column}
+    missing = sorted(required - set(prices.columns))
+    if missing:
+        raise ValueError(
+            "Canonical price session alignment missing columns: " + ", ".join(missing)
+        )
+
+    aligned = prices.copy()
+    parsed_dates = pd.to_datetime(aligned["date"], errors="coerce")
+    if bool(parsed_dates.isna().any()):
+        raise ValueError("Canonical price session alignment received invalid dates")
+    aligned["date"] = parsed_dates.dt.strftime("%Y-%m-%d")
+    event_audits: list[CanonicalPriceSessionEventAudit] = []
+    excluded_indices: set[object] = set()
+    for rule in policy.rules:
+        ticker_mask = aligned["ticker"].astype(str).eq(rule.ticker)
+        governed = aligned.loc[ticker_mask, ["date", provenance_column]].copy()
+        if governed.empty:
+            continue
+        if bool(governed[provenance_column].isna().any()):
+            raise ValueError(
+                f"Canonical price session alignment found null provenance for {rule.ticker}"
+            )
+        governed["_is_decision_session"] = governed["date"].map(
+            lambda value: is_us_equity_trading_day(date.fromisoformat(str(value)))
+        )
+        for source_event_id, source_rows in governed.groupby(
+            provenance_column,
+            sort=True,
+            dropna=False,
+        ):
+            excluded = source_rows.loc[~source_rows["_is_decision_session"]]
+            retained = source_rows.loc[source_rows["_is_decision_session"]]
+            excluded_dates = tuple(sorted(excluded["date"].astype(str).tolist()))
+            if len(excluded_dates) != len(set(excluded_dates)):
+                raise ValueError(
+                    "Canonical price session alignment found duplicate excluded row keys"
+                )
+            event_audits.append(
+                CanonicalPriceSessionEventAudit(
+                    source_event_id=str(source_event_id),
+                    ticker=rule.ticker,
+                    source_session=rule.source_session,
+                    action=rule.action,
+                    reason=rule.reason,
+                    input_row_count=len(source_rows),
+                    output_row_count=len(retained),
+                    excluded_dates=excluded_dates,
+                )
+            )
+            excluded_indices.update(excluded.index.tolist())
+
+    if excluded_indices:
+        aligned = aligned.drop(index=list(excluded_indices))
+    aligned = aligned.sort_values(["ticker", "date"]).reset_index(drop=True)
+    return CanonicalPriceSessionAlignment(
+        prices=aligned,
+        policy=policy,
+        event_audits=tuple(
+            sorted(
+                event_audits,
+                key=lambda item: (item.source_event_id, item.ticker),
+            )
+        ),
+    )
+
+
+def load_canonical_price_session_policy(
+    path: Path = DEFAULT_CANONICAL_PRICE_SESSION_POLICY_PATH,
+) -> CanonicalPriceSessionPolicy:
+    resolved = path.resolve(strict=True)
+    raw = resolved.read_bytes()
+    try:
+        payload = safe_load_yaml_text(raw.decode("utf-8"))
+    except (UnicodeError, ValueError) as exc:
+        raise ValueError(f"Canonical price session policy is unreadable: {resolved}") from exc
+    if not isinstance(payload, Mapping):
+        raise ValueError("Canonical price session policy must be a mapping")
+    required = {
+        "schema_version",
+        "policy_id",
+        "policy_version",
+        "status",
+        "owner",
+        "canonical_dataset",
+        "decision_calendar",
+        "session_resolver",
+        "rationale",
+        "intended_effect",
+        "validation_evidence",
+        "review_condition",
+        "rules",
+    }
+    if set(payload) != required:
+        raise ValueError("Canonical price session policy fields do not match the governed schema")
+    expected_values = {
+        "schema_version": CANONICAL_PRICE_SESSION_POLICY_SCHEMA_VERSION,
+        "status": "owner_approved",
+        "canonical_dataset": "prices_daily.csv",
+        "decision_calendar": "XNYS",
+        "session_resolver": (
+            "ai_trading_system.trading_calendar.is_us_equity_trading_day"
+        ),
+    }
+    for field_name, expected in expected_values.items():
+        if payload.get(field_name) != expected:
+            raise ValueError(
+                f"Canonical price session policy has invalid {field_name}: "
+                f"{payload.get(field_name)!r}"
+            )
+    for field_name in (
+        "policy_id",
+        "policy_version",
+        "owner",
+        "rationale",
+        "intended_effect",
+        "validation_evidence",
+        "review_condition",
+    ):
+        if not isinstance(payload.get(field_name), str) or not str(payload[field_name]).strip():
+            raise ValueError(f"Canonical price session policy requires {field_name}")
+    raw_rules = payload.get("rules")
+    if not isinstance(raw_rules, list) or not raw_rules:
+        raise ValueError("Canonical price session policy rules must be a non-empty list")
+    rules: list[CanonicalPriceSessionRule] = []
+    observed_tickers: set[str] = set()
+    for raw_rule in raw_rules:
+        if not isinstance(raw_rule, Mapping) or set(raw_rule) != {
+            "ticker",
+            "source_session",
+            "action",
+            "reason",
+        }:
+            raise ValueError("Canonical price session policy rule fields are invalid")
+        values = {
+            field_name: raw_rule.get(field_name)
+            for field_name in ("ticker", "source_session", "action", "reason")
+        }
+        if any(not isinstance(value, str) or not value.strip() for value in values.values()):
+            raise ValueError("Canonical price session policy rule values must be non-empty strings")
+        ticker = str(values["ticker"])
+        if ticker in observed_tickers:
+            raise ValueError(f"Canonical price session policy duplicates ticker: {ticker}")
+        if values["action"] != "EXCLUDE_NON_DECISION_SESSIONS":
+            raise ValueError("Canonical price session policy contains unsupported action")
+        observed_tickers.add(ticker)
+        rules.append(
+            CanonicalPriceSessionRule(
+                ticker=ticker,
+                source_session=str(values["source_session"]),
+                action=str(values["action"]),
+                reason=str(values["reason"]),
+            )
+        )
+    return CanonicalPriceSessionPolicy(
+        policy_id=str(payload["policy_id"]),
+        policy_version=str(payload["policy_version"]),
+        canonical_dataset=str(payload["canonical_dataset"]),
+        decision_calendar=str(payload["decision_calendar"]),
+        session_resolver=str(payload["session_resolver"]),
+        rules=tuple(rules),
+        path=resolved,
+        sha256=sha256(raw).hexdigest(),
+    )
+
+
 def normalize_fred_rates(raw: pd.DataFrame) -> pd.DataFrame:
     if raw.empty:
         raise ValueError("rate data is empty")
@@ -1085,6 +1326,60 @@ def _http_response_content(response: Any) -> bytes:
     if hasattr(response, "json"):
         return json.dumps(response.json(), ensure_ascii=False).encode("utf-8")
     return b""
+
+
+def _cboe_raw_source_commitment(
+    response: CachedHttpResponse,
+    *,
+    cache_persistence_enabled: bool,
+) -> dict[str, object]:
+    content = bytes(response.content)
+    metadata_path = response.cache_metadata_path
+    metadata_sha256: str | None = None
+    generation_id: str | None = None
+    storage_mode = "EPHEMERAL_INJECTED_TRANSPORT"
+    normalized_metadata_path: str | None = None
+    if cache_persistence_enabled and metadata_path.is_file():
+        metadata_raw = metadata_path.read_bytes()
+        metadata_sha256 = sha256(metadata_raw).hexdigest()
+        normalized_metadata_path = metadata_path.resolve(strict=True).as_posix()
+        storage_mode = "EXTERNAL_REQUEST_CACHE_IMMUTABLE_BODY"
+        try:
+            metadata = json.loads(metadata_raw)
+        except (UnicodeError, json.JSONDecodeError) as exc:
+            raise ValueError("Cboe cache metadata is unreadable") from exc
+        observed_body_sha256 = metadata.get("body_sha256")
+        observed_cache_key = metadata.get("cache_key")
+        if (
+            observed_body_sha256 != sha256(content).hexdigest()
+            or observed_cache_key != response.cache_key
+        ):
+            raise ValueError("Cboe cache metadata does not bind the provider response")
+        schema_version = metadata.get("schema_version")
+        raw_generation_id = metadata.get("generation_id")
+        if schema_version == LEGACY_EXTERNAL_REQUEST_CACHE_SCHEMA_VERSION:
+            storage_mode = "EXTERNAL_REQUEST_CACHE_LEGACY_BODY"
+        elif (
+            schema_version == EXTERNAL_REQUEST_CACHE_SCHEMA_VERSION
+            and isinstance(raw_generation_id, str)
+            and raw_generation_id
+        ):
+            generation_id = raw_generation_id
+        else:
+            raise ValueError("Cboe cache metadata is missing generation_id")
+    return {
+        "schema_version": "cboe_raw_source_commitment.v1",
+        "provider": "Cboe Global Markets",
+        "api_family": "vix_daily_prices",
+        "endpoint": response.url,
+        "cache_key": response.cache_key,
+        "cache_generation_id": generation_id,
+        "cache_metadata_path": normalized_metadata_path,
+        "cache_metadata_sha256": metadata_sha256,
+        "raw_response_sha256": sha256(content).hexdigest(),
+        "raw_response_size_bytes": len(content),
+        "storage_mode": storage_mode,
+    }
 
 
 def _cboe_vix_response_covers_end(response: CachedHttpResponse, end: date) -> bool:

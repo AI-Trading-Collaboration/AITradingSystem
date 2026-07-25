@@ -7,7 +7,7 @@ import math
 import os
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -36,7 +36,10 @@ from ai_trading_system.data.immutable_publish import (
     read_contained_artifact_bytes,
 )
 from ai_trading_system.data.market_data import (
+    CANONICAL_PRICE_SESSION_AUDIT_SCHEMA_VERSION,
+    CBOE_RAW_SOURCE_COMMITMENT_ATTR,
     CBOE_VIX_TICKER,
+    CanonicalPriceSessionAlignment,
     CboeVixPriceProvider,
     FmpPriceProvider,
     FredRateProvider,
@@ -48,6 +51,7 @@ from ai_trading_system.data.market_data import (
     RateDataProvider,
     RateRequest,
     YFinancePriceProvider,
+    align_canonical_prices_to_decision_sessions,
 )
 from ai_trading_system.external_request_cache import (
     ExternalRequestCacheEvent,
@@ -84,6 +88,7 @@ class DataDownloadSummary:
     publication_atomicity_scope: str | None = None
     legacy_projection_atomicity: str | None = None
     consumer_cutover_allowed: bool = False
+    price_session_normalization_audits: tuple[dict[str, object], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -111,6 +116,7 @@ class IncrementalPriceDownload:
     fetched_row_count: int
     output_row_count: int
     request_budget_status: dict[str, object] | None = None
+    raw_source_commitments: tuple[Mapping[str, object], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -410,6 +416,11 @@ def download_daily_data(
             start=start,
             end=end,
         )
+        price_session_alignment = align_canonical_prices_to_decision_sessions(
+            prices,
+            provenance_column=_PROVENANCE_EVENT_COLUMN,
+        )
+        prices = price_session_alignment.prices
         rates = _tag_rate_frame(
             rate_provider.download_rates(rate_request),
             source_event_id=rate_event_id,
@@ -467,22 +478,35 @@ def download_daily_data(
     )
     price_event_definitions: list[_SourceEventDefinition] = []
     if primary_existing_event is not None:
-        price_event_definitions.append(primary_existing_event)
+        price_event_definitions.append(
+            _with_price_session_normalization_audit(
+                primary_existing_event,
+                alignment=price_session_alignment,
+                requested_start=start,
+                requested_end=end,
+            )
+        )
     if primary_download.fetch_windows or primary_existing_event is None:
         price_event_definitions.append(
-            _SourceEventDefinition(
-                source_event_id=primary_live_event_id,
-                artifact_role="prices",
-                source_kind=_LIVE_PROVIDER,
-                source_id=price_source_id,
-                provider=price_provider_name,
-                endpoint=price_endpoint,
-                request_parameters=_price_request_parameters(
-                    price_provider,
-                    price_request,
-                    incremental_download=primary_download,
-                    request_cache_summaries=request_cache_summaries,
+            _with_price_session_normalization_audit(
+                _SourceEventDefinition(
+                    source_event_id=primary_live_event_id,
+                    artifact_role="prices",
+                    source_kind=_LIVE_PROVIDER,
+                    source_id=price_source_id,
+                    provider=price_provider_name,
+                    endpoint=price_endpoint,
+                    request_parameters=_price_request_parameters(
+                        price_provider,
+                        price_request,
+                        incremental_download=primary_download,
+                        request_cache_summaries=request_cache_summaries,
+                    ),
                 ),
+                alignment=price_session_alignment,
+                requested_start=start,
+                requested_end=end,
+                raw_source_commitments=primary_download.raw_source_commitments,
             )
         )
     if (
@@ -496,19 +520,25 @@ def download_daily_data(
             vix_price_provider
         )
         price_event_definitions.append(
-            _SourceEventDefinition(
-                source_event_id=vix_live_event_id,
-                artifact_role="prices",
-                source_kind=_LIVE_PROVIDER,
-                source_id=vix_source_id,
-                provider=vix_provider_name,
-                endpoint=vix_endpoint,
-                request_parameters=_price_request_parameters(
-                    vix_price_provider,
-                    vix_request,
-                    incremental_download=vix_download,
-                    request_cache_summaries=request_cache_summaries,
+            _with_price_session_normalization_audit(
+                _SourceEventDefinition(
+                    source_event_id=vix_live_event_id,
+                    artifact_role="prices",
+                    source_kind=_LIVE_PROVIDER,
+                    source_id=vix_source_id,
+                    provider=vix_provider_name,
+                    endpoint=vix_endpoint,
+                    request_parameters=_price_request_parameters(
+                        vix_price_provider,
+                        vix_request,
+                        incremental_download=vix_download,
+                        request_cache_summaries=request_cache_summaries,
+                    ),
                 ),
+                alignment=price_session_alignment,
+                requested_start=start,
+                requested_end=end,
+                raw_source_commitments=vix_download.raw_source_commitments,
             )
         )
     price_sources = _source_bindings_for_frame(
@@ -628,6 +658,14 @@ def download_daily_data(
         publication_atomicity_scope=publication.atomicity_scope,
         legacy_projection_atomicity=publication.legacy_projection_atomicity,
         consumer_cutover_allowed=publication.consumer_cutover_allowed,
+        price_session_normalization_audits=tuple(
+            dict(audit)
+            for event in price_event_definitions
+            for audit in (
+                event.request_parameters.get("canonical_session_normalization"),
+            )
+            if isinstance(audit, Mapping)
+        ),
     )
 
 
@@ -666,6 +704,7 @@ def _download_incremental_prices(
     )
 
     fetched_frames: list[pd.DataFrame] = []
+    raw_source_commitments: list[Mapping[str, object]] = []
     for window in fetch_windows:
         fetched = provider.download_prices(
             PriceRequest(
@@ -675,6 +714,11 @@ def _download_incremental_prices(
                 interval=request.interval,
             )
         )
+        raw_source_commitment = fetched.attrs.get(CBOE_RAW_SOURCE_COMMITMENT_ATTR)
+        if raw_source_commitment is not None:
+            if not isinstance(raw_source_commitment, Mapping):
+                raise ValueError("Provider raw source commitment must be a mapping")
+            raw_source_commitments.append(dict(raw_source_commitment))
         fetched = fetched.copy()
         fetched[_PROVENANCE_EVENT_COLUMN] = live_source_event_id
         fetched_frames.append(fetched)
@@ -704,6 +748,7 @@ def _download_incremental_prices(
         fetched_row_count=sum(len(frame) for frame in fetched_frames),
         output_row_count=len(prices),
         request_budget_status=request_budget_status,
+        raw_source_commitments=_unique_raw_source_commitments(raw_source_commitments),
     )
 
 
@@ -1082,6 +1127,93 @@ def _unique_source_event_definitions(
             raise ValueError(f"Conflicting source event definition: {event.source_event_id}")
         by_id[event.source_event_id] = event
     return tuple(by_id[event_id] for event_id in sorted(by_id))
+
+
+def _with_price_session_normalization_audit(
+    event: _SourceEventDefinition,
+    *,
+    alignment: CanonicalPriceSessionAlignment,
+    requested_start: date,
+    requested_end: date,
+    raw_source_commitments: tuple[Mapping[str, object], ...] = (),
+) -> _SourceEventDefinition:
+    records = tuple(
+        audit
+        for audit in alignment.event_audits
+        if audit.source_event_id == event.source_event_id
+    )
+    if not records:
+        return event
+    if event.source_id == "cboe_vix_daily_prices" and not raw_source_commitments:
+        raise ValueError("Cboe VIX normalization audit requires a raw provider response commitment")
+    try:
+        policy_path = alignment.policy.path.relative_to(Path(__file__).resolve().parents[3])
+    except ValueError:
+        policy_path = alignment.policy.path
+    request_parameters = dict(event.request_parameters)
+    request_parameters["canonical_session_normalization"] = {
+        "schema_version": CANONICAL_PRICE_SESSION_AUDIT_SCHEMA_VERSION,
+        "policy_id": alignment.policy.policy_id,
+        "policy_version": alignment.policy.policy_version,
+        "policy_path": policy_path.as_posix(),
+        "policy_sha256": alignment.policy.sha256,
+        "canonical_dataset": alignment.policy.canonical_dataset,
+        "decision_calendar": alignment.policy.decision_calendar,
+        "session_resolver": alignment.policy.session_resolver,
+        "evaluation_window": {
+            "start": requested_start.isoformat(),
+            "end": requested_end.isoformat(),
+        },
+        "source_event_id": event.source_event_id,
+        "source_commitment": {
+            "source_kind": event.source_kind,
+            "source_id": event.source_id,
+            "provider": event.provider,
+            "endpoint": event.endpoint,
+            "raw_provider_responses": [
+                dict(commitment) for commitment in raw_source_commitments
+            ],
+            "predecessor_artifact_sha256": event.request_parameters.get(
+                "predecessor_artifact_sha256"
+            ),
+            "legacy_cache_sha256": event.request_parameters.get("cache_sha256"),
+        },
+        "records": [
+            {
+                "ticker": record.ticker,
+                "source_session": record.source_session,
+                "action": record.action,
+                "reason": record.reason,
+                "input_row_count": record.input_row_count,
+                "output_row_count": record.output_row_count,
+                "excluded_row_count": len(record.excluded_dates),
+                "excluded_dates": list(record.excluded_dates),
+            }
+            for record in records
+        ],
+        "no_look_ahead": True,
+    }
+    return replace(event, request_parameters=request_parameters)
+
+
+def _unique_raw_source_commitments(
+    commitments: list[Mapping[str, object]],
+) -> tuple[Mapping[str, object], ...]:
+    by_identity: dict[str, dict[str, object]] = {}
+    for commitment in commitments:
+        normalized = dict(commitment)
+        try:
+            identity = json.dumps(
+                normalized,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Provider raw source commitment must be canonical JSON") from exc
+        by_identity[identity] = normalized
+    return tuple(by_identity[identity] for identity in sorted(by_identity))
 
 
 def _tag_rate_frame(

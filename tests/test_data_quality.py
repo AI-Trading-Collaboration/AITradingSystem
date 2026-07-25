@@ -126,6 +126,70 @@ def test_validate_data_cache_flags_suspicious_price_move(tmp_path: Path) -> None
     )
 
 
+def test_validate_data_cache_classifies_reviewed_split_ratio_jumps(tmp_path: Path) -> None:
+    prices_path = tmp_path / "prices_daily.csv"
+    rates_path = tmp_path / "rates_daily.csv"
+
+    def split_basis_row(
+        value_date: str,
+        ticker: str,
+        adjustment_ratio: float,
+    ) -> dict[str, object]:
+        close = 100.0 / adjustment_ratio
+        return _price_row(
+            value_date,
+            ticker,
+            close,
+            close + 1.0,
+            close - 1.0,
+            close,
+            100.0,
+            1000,
+        )
+
+    rows = [
+        split_basis_row("2021-07-19", "NVDA", 1.0 / 4.0),
+        split_basis_row("2021-07-20", "NVDA", 1.0),
+        split_basis_row("2025-11-21", "NVDA", 1.0),
+        split_basis_row("2022-06-03", "AMZN", 1.0 / 20.0),
+        split_basis_row("2022-06-06", "AMZN", 1.0),
+        split_basis_row("2025-11-21", "AMZN", 1.0),
+        split_basis_row("2022-07-15", "GOOG", 1.0 / 20.0),
+        split_basis_row("2022-07-18", "GOOG", 1.0),
+        split_basis_row("2025-11-21", "GOOG", 1.0),
+        split_basis_row("2022-01-12", "TQQQ", 1.0 / 4.0),
+        split_basis_row("2022-01-13", "TQQQ", 1.0 / 2.0),
+        split_basis_row("2025-11-19", "TQQQ", 1.0 / 2.0),
+        split_basis_row("2025-11-20", "TQQQ", 1.0),
+        split_basis_row("2025-11-21", "TQQQ", 1.0),
+        split_basis_row("2025-11-19", "MSFT", 1.0 / 2.0),
+        split_basis_row("2025-11-20", "MSFT", 1.0),
+        split_basis_row("2025-11-21", "MSFT", 1.0),
+    ]
+    pd.DataFrame(rows).to_csv(prices_path, index=False)
+    pd.DataFrame(
+        [{"date": "2025-11-21", "series": "DGS2", "value": 3.6}]
+    ).to_csv(rates_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["AMZN", "GOOG", "MSFT", "NVDA", "TQQQ"],
+        expected_rate_series=["DGS2"],
+        quality_config=load_data_quality(),
+        as_of=date(2025, 11, 22),
+    )
+    known_issue = _issue_by_code(report, "prices_known_split_adjustment_ratio_jump")
+    unresolved_issue = _issue_by_code(report, "prices_adjustment_ratio_jump")
+
+    assert known_issue.severity is Severity.INFO
+    assert known_issue.rows == 5
+    assert "MSFT" not in (known_issue.sample or "")
+    assert unresolved_issue.severity is Severity.WARNING
+    assert unresolved_issue.rows == 1
+    assert "MSFT" in (unresolved_issue.sample or "")
+
+
 def test_validate_data_cache_fails_extreme_stock_price_move(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(tmp_path)
     prices = pd.read_csv(prices_path)
@@ -407,6 +471,83 @@ def test_explicit_window_uses_canonical_publication_binding(tmp_path: Path) -> N
     assert "市场日历口径" in markdown
 
 
+def test_explicit_window_accepts_full_history_canonical_publication(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_start=date(2021, 2, 22),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert report.status == "PASS"
+    assert "download_manifest_requested_window_mismatch" not in _issue_codes(report)
+    assert report.requested_window_start == date(2026, 4, 29)
+    assert report.requested_window_end == date(2026, 4, 30)
+
+
+def test_explicit_window_rejects_canonical_publication_with_insufficient_start_coverage(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_start=date(2026, 4, 30),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert report.status == "FAIL"
+    assert "download_manifest_requested_window_mismatch" in _issue_codes(report)
+
+
+def test_explicit_window_rejects_canonical_publication_end_drift(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    publication = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        requested_end=date(2026, 5, 1),
+        published_at=datetime(2026, 5, 2, tzinfo=UTC),
+    )
+
+    report = validate_data_cache(
+        prices_path=publication.legacy_prices_path,
+        rates_path=publication.legacy_rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=publication.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert report.status == "FAIL"
+    assert "download_manifest_requested_window_mismatch" in _issue_codes(report)
+
+
 def test_explicit_window_rejects_legacy_manifest_without_canonical_pointer(
     tmp_path: Path,
 ) -> None:
@@ -671,6 +812,38 @@ def test_explicit_window_uses_current_generation_with_duplicate_history(
     assert current.transaction_id != first.transaction_id
     assert current.manifest_row_count == 4
     assert report.status == "PASS"
+
+
+def test_explicit_window_rejects_predecessor_generation_inputs(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    predecessor = _publish_quality_cache(
+        tmp_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    current = _publish_quality_cache(
+        tmp_path,
+        prices_path=predecessor.legacy_prices_path,
+        rates_path=predecessor.legacy_rates_path,
+        published_at=datetime(2026, 5, 1, 0, 1, tzinfo=UTC),
+    )
+
+    report = validate_data_cache(
+        prices_path=predecessor.prices_path,
+        rates_path=predecessor.rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 4, 30),
+        manifest_path=current.legacy_manifest_path,
+        requested_window=(date(2026, 4, 29), date(2026, 4, 30)),
+    )
+
+    assert report.status == "FAIL"
+    assert {
+        "prices_download_publication_binding_mismatch",
+        "rates_download_publication_binding_mismatch",
+    }.issubset(_issue_codes(report))
 
 
 def test_explicit_window_rejects_path_sha_and_row_binding_mismatch(
@@ -1526,7 +1699,16 @@ def _prepare_canonical_cli_project(
     (root / "config/universe.yaml").write_bytes(
         (REAL_PROJECT_ROOT / "config/universe.yaml").read_bytes()
     )
+    special_closure_policy_path = root / "config/data/us_equity_special_closure_registry.yaml"
+    special_closure_policy_path.parent.mkdir(parents=True, exist_ok=True)
+    special_closure_policy_path.write_bytes(
+        (
+            REAL_PROJECT_ROOT / "config/data/us_equity_special_closure_registry.yaml"
+        ).read_bytes()
+    )
     for relative in (
+        Path("src/ai_trading_system/trading_calendar.py"),
+        Path("src/ai_trading_system/us_equity_special_closure_policy.py"),
         Path("src/ai_trading_system/data/immutable_publish.py"),
         Path("src/ai_trading_system/data/quality_execution.py"),
         Path("src/ai_trading_system/data/quality.py"),

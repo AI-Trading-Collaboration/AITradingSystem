@@ -1,10 +1,10 @@
 governance:
   policy_id: DATA_QUALITY_CACHE_GATE
-  policy_version: data_quality_cache_gate.v1
+  policy_version: data_quality_cache_gate.v2
   status: REVIEWED
   owner: data_platform_owner
   role: data_quality
-  reviewed_at: 2026-07-23
+  reviewed_at: 2026-07-25
   rationale: >-
     统一约束 aits validate-data 的价格、利率、下载清单和第二来源验证；整个原始文件的
     SHA-256 是 D0B execution receipt 的 reviewed policy commitment。
@@ -31,40 +31,112 @@ prices:
   known_split_ratio_tolerance_abs: 0.08
   known_split_events:
     NVDA:
+      - effective_date: 2021-07-20
+        ratio: 4
+        source_name: NVIDIA 2021 Stock Split FAQ
+        source_url: https://investor.nvidia.com/files/doc_downloads/doc_faq/06/21/NVIDIA-2021-Stock-Split-FAQ.pdf
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-25
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
+        note: "NVIDIA common stock began trading on a four-for-one split-adjusted basis on 2021-07-20."
       - effective_date: 2024-06-10
         ratio: 10
         source_name: NVIDIA 2024 Stock Split FAQ
         source_url: https://investor.nvidia.com/files/doc_downloads/2024/06/nvidia-2024-stock-split_faq_investors.pdf
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-23
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "NVIDIA common stock began trading split-adjusted at market open."
+    AMZN:
+      - effective_date: 2022-06-06
+        ratio: 20
+        source_name: Amazon Investor Relations stock split FAQ
+        source_url: https://ir.aboutamazon.com/faqs/default.aspx/1000/
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-25
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
+        note: "The split was effective after the 2022-06-03 close and AMZN began split-adjusted trading on 2022-06-06."
+    GOOG:
+      - effective_date: 2022-07-18
+        ratio: 20
+        source_name: Alphabet Q2 2022 earnings release
+        source_url: https://abc.xyz/assets/investor/static/pdf/2022Q2_alphabet_earnings_release.pdf
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-25
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
+        note: "Alphabet executed the split after the 2022-07-15 close and GOOG began split-adjusted trading on 2022-07-18."
+    TQQQ:
+      - effective_date: 2022-01-13
+        ratio: 2
+        source_name: ProShares December 2021 ETF share split filing
+        source_url: https://www.proshares.com/globalassets/proshares/documents/8k/pstii_8k_12222021.pdf
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-25
+        review_condition: "Sponsor correction, provider adjustment-policy change, or observed ratio/date drift."
+        note: "TQQQ began trading at its two-for-one post-split price before market open on 2022-01-13."
+      - effective_date: 2025-11-20
+        ratio: 2
+        source_name: ProShares November 2025 ETF share split announcement
+        source_url: https://www.proshares.com/press-releases/proshares-announces-etf-share-splits5
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-25
+        review_condition: "Sponsor correction, provider adjustment-policy change, or observed ratio/date drift."
+        note: "TQQQ began trading at its two-for-one post-split price before market open on 2025-11-20."
     AVGO:
       - effective_date: 2024-07-15
         ratio: 10
         source_name: Broadcom fiscal 2024 second quarter results press release
         source_url: https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announces-second-quarter-fiscal-year-2024-financial
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-23
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "Broadcom common stock began trading on a split-adjusted basis at market open."
     LRCX:
       - effective_date: 2024-10-03
         ratio: 10
         source_name: Lam Research stock split press release
         source_url: https://newsroom.lamresearch.com/2024-05-21-Lam-Research-Corporation-Announces-10-Billion-Share-Repurchase-Authorization-and-a-10-for-1-Stock-Split
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-23
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "Lam Research common stock began trading on a post-split basis at market open."
     NOW:
       - effective_date: 2025-12-18
         ratio: 5
         source_name: ServiceNow 5-for-1 stock split press release
         source_url: https://investor.servicenow.com/news/news-details/2025/ServiceNow-Shareholders-Approve-5-for-1-Stock-Split/default.aspx
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-23
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "ServiceNow common stock was expected to begin trading on a split-adjusted basis."
     SMH:
       - effective_date: 2023-05-05
         ratio: 2
         source_name: VanEck Semiconductor ETF share split press release
         source_url: https://www.vaneck.com/us/en/press-releases/smh-vaneck-semiconductor-etf-share-split-press-release.pdf
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-23
+        review_condition: "Sponsor correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "VanEck Semiconductor ETF split-adjusted trading date."
     SOXX:
       - effective_date: 2024-03-07
         ratio: 3
         source_name: OCC information memo 53942 for SOXX split
         source_url: https://www.miaxglobal.com/sites/default/files/alert-files/SOXX_Split_53942.pdf
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-07-23
+        review_condition: "Sponsor/exchange correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "iShares Semiconductor ETF split effective date."
   # 第二来源核验使用同一组阈值：raw close 超阈值会阻塞；
   # adjusted close 若仅因分红复权口径不同而 raw close 对齐，则输出警告。

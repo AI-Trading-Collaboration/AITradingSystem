@@ -1157,6 +1157,92 @@ def test_resolver_rejects_tampered_canonical_predecessor_metadata(
         resolve_download_publication(output_dir=tmp_path)
 
 
+def test_normalization_audit_policy_commitment_is_publication_bound(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = _prices_source()
+    parameters = dict(source.request_parameters)
+    parameters["canonical_session_normalization"] = {
+        "schema_version": "canonical_price_session_normalization_audit.v1",
+        "policy_id": "canonical_prices_xnys_decision_sessions",
+        "policy_version": "canonical_prices_xnys_decision_sessions.v1",
+        "policy_path": "config/data/canonical_price_session_policy.yaml",
+        "policy_sha256": "1" * 64,
+        "canonical_dataset": "prices_daily.csv",
+        "decision_calendar": "XNYS",
+        "session_resolver": (
+            "ai_trading_system.trading_calendar.is_us_equity_trading_day"
+        ),
+        "evaluation_window": {
+            "start": START.isoformat(),
+            "end": END.isoformat(),
+        },
+        "source_event_id": source.source_event_id,
+        "source_commitment": {
+            "source_kind": source.source_kind,
+            "source_id": source.source_id,
+            "provider": source.provider,
+            "endpoint": source.endpoint,
+            "raw_provider_responses": [],
+            "predecessor_artifact_sha256": None,
+            "legacy_cache_sha256": None,
+        },
+        "records": [
+            {
+                "ticker": "^VIX",
+                "source_session": "CBOE_VIX_INDEX",
+                "action": "EXCLUDE_NON_DECISION_SESSIONS",
+                "reason": "source_session_not_xnys_decision_session",
+                "input_row_count": 0,
+                "output_row_count": 0,
+                "excluded_row_count": 0,
+                "excluded_dates": [],
+            }
+        ],
+        "no_look_ahead": True,
+    }
+    source = replace(source, request_parameters=parameters)
+    result = publish_download_transaction(
+        output_dir=tmp_path,
+        requested_start=START,
+        requested_end=END,
+        published_at=PUBLISHED_AT,
+        artifacts=(_prices_artifact(), _rates_artifact()),
+        source_bindings=(source, _rates_source()),
+    )
+    original_parse = publication_module._strict_canonical_json
+
+    def tampered_transaction(
+        raw: bytes,
+        *,
+        schema: str,
+        code: str,
+    ) -> dict[str, object]:
+        payload = original_parse(raw, schema=schema, code=code)
+        if schema == publication_module.DOWNLOAD_PUBLICATION_SCHEMA_VERSION:
+            persisted = _transaction_source(payload, source.source_event_id)
+            request_parameters = persisted["request_parameters"]
+            assert isinstance(request_parameters, dict)
+            audit = request_parameters["canonical_session_normalization"]
+            assert isinstance(audit, dict)
+            audit["policy_sha256"] = "2" * 64
+            persisted["request_parameters_sha256"] = publication_module._canonical_sha256(
+                request_parameters
+            )
+        return payload
+
+    monkeypatch.setattr(publication_module, "_strict_canonical_json", tampered_transaction)
+
+    with pytest.raises(
+        DownloadPublicationIntegrityError,
+        match="DOWNLOAD_MANIFEST_CURRENT_GENERATION_MISMATCH",
+    ):
+        resolve_download_publication(output_dir=tmp_path)
+
+    assert result.transaction_manifest_path.is_file()
+
+
 @pytest.mark.parametrize(
     "case",
     ["artifact_event_id", "binding_event_id", "binding_source_id"],

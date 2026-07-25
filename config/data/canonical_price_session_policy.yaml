@@ -1,0 +1,24 @@
+schema_version: canonical_price_session_policy.v1
+policy_id: canonical_prices_xnys_decision_sessions
+policy_version: canonical_prices_xnys_decision_sessions.v1
+status: owner_approved
+owner: project_owner
+canonical_dataset: prices_daily.csv
+decision_calendar: XNYS
+session_resolver: ai_trading_system.trading_calendar.is_us_equity_trading_day
+rationale: >-
+  Canonical daily prices are decision inputs for a U.S. equity strategy and
+  therefore share one XNYS decision-session index even when a provider series
+  publishes observations on a broader source calendar.
+intended_effect: >-
+  Exclude source-calendar observations that are not XNYS decision sessions
+  without changing or deleting retained provider response bytes.
+validation_evidence: DATA-GOV-001_D0B2B focused normalization and publication tests
+review_condition: >-
+  Review before adding a non-XNYS decision calendar, changing the canonical
+  dataset session semantics, or replacing the governed session resolver.
+rules:
+  - ticker: ^VIX
+    source_session: CBOE_VIX_INDEX
+    action: EXCLUDE_NON_DECISION_SESSIONS
+    reason: source_session_not_xnys_decision_session

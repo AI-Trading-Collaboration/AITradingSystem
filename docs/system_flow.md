@@ -286,23 +286,45 @@ callback异常必须在pointer前fail closed，不能用旧source binding提交�
 
 带显式requested window的canonical DQ会在captured input bytes之前锁定已验证publication，再以同一组
 captured bytes执行唯一一次validator并核对role/path/SHA/full row count、canonical manifest与publication
-window。主/第二价格源按NYSE regular sessions检查requested-window coverage与per-ticker internal gap，
-prices/rates同时拒绝NaN/Inf；canonical pointer、immutable member、source allocation、manifest、
-legacy projection或window任一不一致均在receipt/downstream前fail closed。`cli_direct`必须保留scheduler
-显式传入的`--execution-profile daily_default.v1`，不能把daily receipt降为`manual.v1`。该阶段仍固定
-`consumer_cutover_allowed=false`、`production_effect=none`，不授权production/active-shadow weights或
-broker/trading action。
+window。D0B2B把window关系明确为publication必须包含DQ起点且末端必须精确相等：
+`publication_start <= dq_start && publication_end == dq_end`；覆盖不足、末端漂移或前代generation都继续
+fail closed，不再把合法的full-history publication误判为requested-window mismatch。
+
+方案A `XNYS decision-session aligned`由reviewed
+`config/data/canonical_price_session_policy.yaml`治理。下载合并后、immutable composite publication前，
+`^VIX`非XNYS decision-session rows被确定性排除；Cboe原始response bytes仍由external-request cache保留，
+source event的`canonical_price_session_normalization_audit.v1`冻结policy path/SHA、evaluation window、
+逐source-event输入/输出/排除日期和raw response commitment。canonical rows没有免检名单，仍与股票/ETF
+共同按XNYS decision sessions执行coverage与per-ticker internal-gap gate。
+
+`config/data/us_equity_special_closure_registry.yaml`是versioned XNYS特殊全日休市权威，首条reviewed记录为
+`2025-01-09`；session resolver、DQ expected sessions、previous/latest trading day和partial-day判定共用
+同一loader。canonical DQ validator v2把registry的policy/schema/version/calendar/path/SHA写入exact
+invocation，并把calendar实现与policy loader加入implementation-source binding；runner执行中policy漂移、
+verifier重验时policy或实现漂移均fail closed。`config/data_quality.yaml` v2另把AMZN/GOOG/NVDA/TQQQ五条
+权威复核split事件从未知adjustment warning转为reviewed INFO，未登记跳变仍为WARNING。
+
+prices/rates继续拒绝NaN/Inf；canonical pointer、immutable member、source allocation、manifest、
+legacy projection、session policy、calendar authority或window任一不一致均在receipt/downstream前
+fail closed。`cli_direct`必须保留scheduler显式传入的`--execution-profile daily_default.v1`，不能把daily
+receipt降为`manual.v1`。该修复不重试已终态的`as_of=2026-07-24` key；只允许后续新合法provider-ready
+trading date通过统一`aits ops daily-run`形成operational acceptance。全链仍固定
+`production_effect=none`，不写production/active-shadow weights，不授权broker/trading action。
 
 ```mermaid
 flowchart LR
     SRC["Provider responses + existing canonical generation"] --> MERGE["In-memory merge + winning-row source bindings"]
-    MERGE --> MEMBERS["Immutable prices / rates / secondary members"]
+    CAL["Reviewed XNYS calendar<br/>regular rules + special closures"] --> ALIGN
+    SESS["Owner-approved price-session policy"] --> ALIGN["XNYS decision-session alignment<br/>raw Cboe commitment retained"]
+    MERGE --> ALIGN
+    ALIGN --> MEMBERS["Immutable prices / rates / secondary members"]
     MEMBERS --> TXN["Composite transaction + full-file manifest"]
     TXN --> PTR2["Atomic current/download_composite.json"]
     PTR2 --> PROJ["Compatibility fixed-path projection"]
     PTR2 --> CAP["Resolve canonical publication, then capture input bytes"]
-    CAP --> GATE["Calendar / coverage / gap / finite + exact SHA/row/source/window gate"]
-    GATE --> RECEIPT["Canonical DQ receipt + daily_default discovery"]
+    CAP --> GATE["Containment window / calendar / coverage / gap / finite<br/>+ exact SHA/row/source gate"]
+    CAL --> GATE
+    GATE --> RECEIPT["Canonical DQ receipt<br/>calendar policy + implementation binding"]
     PROJ -->|"drift"| STOP2["Fail closed"]
     GATE -->|"mismatch"| STOP2
     RECEIPT -.-> SAFE2["No consumer cutover / production / broker"]

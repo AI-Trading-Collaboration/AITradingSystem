@@ -20,10 +20,10 @@ source_bindings:
     sha256: 91a72f561ecaddbb93eceba797bc0260c663dd2a02c964a82f9c55b49c677a37
   data_quality_policy:
     policy_id: DATA_QUALITY_CACHE_GATE
-    policy_version: data_quality_cache_gate.v1
+    policy_version: data_quality_cache_gate.v2
     status: REVIEWED
     path: config/data_quality.yaml
-    sha256: c6a6b48cc8c9e715f2428f0062fe658297f388d7fec14624ebb32f7a78d7e948
+    sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
 
 verified_preflight_capability:
   defining_path: src/ai_trading_system/contracts/data_quality_execution.py

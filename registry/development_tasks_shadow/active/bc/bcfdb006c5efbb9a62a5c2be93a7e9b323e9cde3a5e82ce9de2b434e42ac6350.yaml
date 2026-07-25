@@ -12,16 +12,18 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner + data platform owner：选择`^VIX` XNYS decision-session aligned（推荐）或per-asset
-    calendar，并批准reviewed policy carrier
+  next_owner: operations owner：等待新合法provider-ready trading date，仅经`aits ops daily-run`完成canonical
+    acceptance
   requirement_refs:
   - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。需修复publication覆盖窗口误判、versioned
-    special-closure registry、`^VIX` session contract、calendar authority receipt binding，并以权威来源治理5个adjustment
-    events；旧2026-07-22/23/24 FAILED state/ledger不得改，同key不得重试。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Owner
+    decision `owner_decision:DATA-GOV-001-D0B2B:2026-07-25:approve_vix_xnys_aligned_v1`选择`^VIX`
+    XNYS decision-session aligned；需修复publication覆盖窗口误判、versioned special-closure registry、受治理`^VIX`
+    normalization、calendar authority receipt binding，并以权威来源治理5个adjustment events；旧2026-07-22/23/24
+    FAILED state/ledger不得改，同key不得重试。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: focused/architecture/contract/integration/reproducibility/required Full
@@ -33,39 +35,44 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1586
-    row_sha256: 32007d8e38a69474dd9cacd000b5ff048c8f7f4c3ea5bf7300931eff135b2715
+    row_sha256: ec53867fd5e9a18644ed7e16a92a176d7583653ae084d19dfe0cb6d106904742
     cell_count: 8
     all_cells:
     - DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
     - Data Foundation / canonical daily window, source-calendar and adjustment semantics
     - P0
-    - BLOCKED_OWNER_INPUT
-    - project owner + data platform owner：选择`^VIX` XNYS decision-session aligned（推荐）或per-asset
-      calendar，并批准reviewed policy carrier
-    - 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。需修复publication覆盖窗口误判、versioned
-      special-closure registry、`^VIX` session contract、calendar authority receipt
-      binding，并以权威来源治理5个adjustment events；旧2026-07-22/23/24 FAILED state/ledger不得改，同key不得重试。
+    - IN_PROGRESS
+    - operations owner：等待新合法provider-ready trading date，仅经`aits ops daily-run`完成canonical
+      acceptance
+    - 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Owner
+      decision `owner_decision:DATA-GOV-001-D0B2B:2026-07-25:approve_vix_xnys_aligned_v1`选择`^VIX`
+      XNYS decision-session aligned；需修复publication覆盖窗口误判、versioned special-closure
+      registry、受治理`^VIX` normalization、calendar authority receipt binding，并以权威来源治理5个adjustment
+      events；旧2026-07-22/23/24 FAILED state/ledger不得改，同key不得重试。
     - focused/architecture/contract/integration/reproducibility/required Full PASS；reviewed
       `daily_default.v1` strict DQ为0 error/0 unresolved warning；新合法唯一`aits ops daily-run`完整通过PIT/score/dashboard/Reader
       Brief/finalization；raw/provenance保留、无look-ahead；`production_effect=none`。
-    - 2026-07-25：首个post-Wave15 canonical run证明publication/profile/fail-closed已生效，但因3
-      errors+1 warning阻断34个下游steps。任务登记为P0并停在owner semantic gate，不删行、不改manifest、不放宽strict
-      profile。
+    - 2026-07-25：方案A工程修复及正式工程验证完成，combined parallel regression=`331 passed`，architecture/contract/integration/reproducibility=`617/275/993/23
+      passed`，自然Full=`7,210 passed / 3 skipped / 643 warnings / 1,163.57s`；状态保持`IN_PROGRESS`，因为新合法canonical
+      run尚未形成strict DQ/PIT/score/Reader Brief operational evidence。旧FAILED key保持不可重试。
     raw_line: '|DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION|Data Foundation
-      / canonical daily window, source-calendar and adjustment semantics|P0|BLOCKED_OWNER_INPUT|project
-      owner + data platform owner：选择`^VIX` XNYS decision-session aligned（推荐）或per-asset
-      calendar，并批准reviewed policy carrier|详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。需修复publication覆盖窗口误判、versioned
-      special-closure registry、`^VIX` session contract、calendar authority receipt
-      binding，并以权威来源治理5个adjustment events；旧2026-07-22/23/24 FAILED state/ledger不得改，同key不得重试。|focused/architecture/contract/integration/reproducibility/required
+      / canonical daily window, source-calendar and adjustment semantics|P0|IN_PROGRESS|operations
+      owner：等待新合法provider-ready trading date，仅经`aits ops daily-run`完成canonical acceptance|详见
+      `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Owner
+      decision `owner_decision:DATA-GOV-001-D0B2B:2026-07-25:approve_vix_xnys_aligned_v1`选择`^VIX`
+      XNYS decision-session aligned；需修复publication覆盖窗口误判、versioned special-closure
+      registry、受治理`^VIX` normalization、calendar authority receipt binding，并以权威来源治理5个adjustment
+      events；旧2026-07-22/23/24 FAILED state/ledger不得改，同key不得重试。|focused/architecture/contract/integration/reproducibility/required
       Full PASS；reviewed `daily_default.v1` strict DQ为0 error/0 unresolved warning；新合法唯一`aits
-      ops daily-run`完整通过PIT/score/dashboard/Reader Brief/finalization；raw/provenance保留、无look-ahead；`production_effect=none`。|2026-07-25：首个post-Wave15
-      canonical run证明publication/profile/fail-closed已生效，但因3 errors+1 warning阻断34个下游steps。任务登记为P0并停在owner
-      semantic gate，不删行、不改manifest、不放宽strict profile。|'
+      ops daily-run`完整通过PIT/score/dashboard/Reader Brief/finalization；raw/provenance保留、无look-ahead；`production_effect=none`。|2026-07-25：方案A工程修复及正式工程验证完成，combined
+      parallel regression=`331 passed`，architecture/contract/integration/reproducibility=`617/275/993/23
+      passed`，自然Full=`7,210 passed / 3 skipped / 643 warnings / 1,163.57s`；状态保持`IN_PROGRESS`，因为新合法canonical
+      run尚未形成strict DQ/PIT/score/Reader Brief operational evidence。旧FAILED key保持不可重试。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-32007d8e38a69474dd9cacd0
+  event_id: legacy-import-ec53867fd5e9a18644ed7e16
   task_id: DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -75,38 +82,40 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: BLOCKED_OWNER_INPUT
+  to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: project owner + data platform owner：选择`^VIX` XNYS decision-session
-      aligned（推荐）或per-asset calendar，并批准reviewed policy carrier
-    notes: 2026-07-25：首个post-Wave15 canonical run证明publication/profile/fail-closed已生效，但因3
-      errors+1 warning阻断34个下游steps。任务登记为P0并停在owner semantic gate，不删行、不改manifest、不放宽strict
-      profile。
+    next_owner: operations owner：等待新合法provider-ready trading date，仅经`aits ops daily-run`完成canonical
+      acceptance
+    notes: 2026-07-25：方案A工程修复及正式工程验证完成，combined parallel regression=`331 passed`，architecture/contract/integration/reproducibility=`617/275/993/23
+      passed`，自然Full=`7,210 passed / 3 skipped / 643 warnings / 1,163.57s`；状态保持`IN_PROGRESS`，因为新合法canonical
+      run尚未形成strict DQ/PIT/score/Reader Brief operational evidence。旧FAILED key保持不可重试。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:32007d8e38a69474dd9cacd000b5ff048c8f7f4c3ea5bf7300931eff135b2715
+  - sha256:ec53867fd5e9a18644ed7e16a92a176d7583653ae084d19dfe0cb6d106904742
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
   - Data Foundation / canonical daily window, source-calendar and adjustment semantics
   - P0
-  - BLOCKED_OWNER_INPUT
-  - project owner + data platform owner：选择`^VIX` XNYS decision-session aligned（推荐）或per-asset
-    calendar，并批准reviewed policy carrier
-  - 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。需修复publication覆盖窗口误判、versioned
-    special-closure registry、`^VIX` session contract、calendar authority receipt binding，并以权威来源治理5个adjustment
-    events；旧2026-07-22/23/24 FAILED state/ledger不得改，同key不得重试。
+  - IN_PROGRESS
+  - operations owner：等待新合法provider-ready trading date，仅经`aits ops daily-run`完成canonical
+    acceptance
+  - 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。Owner
+    decision `owner_decision:DATA-GOV-001-D0B2B:2026-07-25:approve_vix_xnys_aligned_v1`选择`^VIX`
+    XNYS decision-session aligned；需修复publication覆盖窗口误判、versioned special-closure registry、受治理`^VIX`
+    normalization、calendar authority receipt binding，并以权威来源治理5个adjustment events；旧2026-07-22/23/24
+    FAILED state/ledger不得改，同key不得重试。
   - focused/architecture/contract/integration/reproducibility/required Full PASS；reviewed
     `daily_default.v1` strict DQ为0 error/0 unresolved warning；新合法唯一`aits ops daily-run`完整通过PIT/score/dashboard/Reader
     Brief/finalization；raw/provenance保留、无look-ahead；`production_effect=none`。
-  - 2026-07-25：首个post-Wave15 canonical run证明publication/profile/fail-closed已生效，但因3
-    errors+1 warning阻断34个下游steps。任务登记为P0并停在owner semantic gate，不删行、不改manifest、不放宽strict
-    profile。
+  - 2026-07-25：方案A工程修复及正式工程验证完成，combined parallel regression=`331 passed`，architecture/contract/integration/reproducibility=`617/275/993/23
+    passed`，自然Full=`7,210 passed / 3 skipped / 643 warnings / 1,163.57s`；状态保持`IN_PROGRESS`，因为新合法canonical
+    run尚未形成strict DQ/PIT/score/Reader Brief operational evidence。旧FAILED key保持不可重试。
   docs_links:
   - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   terminal: false
-  raw_row_sha256: 32007d8e38a69474dd9cacd000b5ff048c8f7f4c3ea5bf7300931eff135b2715
+  raw_row_sha256: ec53867fd5e9a18644ed7e16a92a176d7583653ae084d19dfe0cb6d106904742
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 85798a11195b249c6190c63a6c7110ad95c0db0c23595026a5be73e9f2b69236
+fragment_checksum: 31d844ba5e2ed78f6f13af2da5c5c338504a4cbf9a795e01bde0e3b410b9deb1

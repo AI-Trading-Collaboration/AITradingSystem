@@ -11,6 +11,7 @@ from ai_trading_system.trading_calendar import (
     latest_completed_us_equity_trading_day,
     previous_us_equity_trading_day,
     resolve_default_data_quality_as_of,
+    us_equity_calendar_source,
     us_equity_full_day_holidays,
     us_equity_market_session,
     us_equity_partial_trading_days,
@@ -50,6 +51,38 @@ def test_primary_research_window_start_is_a_regular_trading_day() -> None:
 
     assert session.session_status == "TRADING_DAY"
     assert session.is_trading_day is True
+
+
+def test_special_full_day_closure_uses_reviewed_xnys_authority() -> None:
+    closure_date = date(2025, 1, 9)
+    session = us_equity_market_session(closure_date)
+
+    assert us_equity_full_day_holidays(2025)[closure_date] == (
+        "President Jimmy Carter National Day of Mourning"
+    )
+    assert not is_us_equity_trading_day(closure_date)
+    assert session.session_status == "CLOSED_MARKET"
+    assert session.session_kind == "SPECIAL_FULL_DAY_CLOSURE"
+    assert session.reason == "President Jimmy Carter National Day of Mourning"
+    assert session.previous_trading_day == date(2025, 1, 8)
+    assert "us_equity_special_closure_registry@1.0.0" in session.calendar_source
+    assert "sha256=" in session.calendar_source
+    assert session.calendar_source == us_equity_calendar_source()
+
+
+def test_special_closure_preserves_surrounding_xnys_sessions() -> None:
+    assert is_us_equity_trading_day(date(2025, 1, 8))
+    assert not is_us_equity_trading_day(date(2025, 1, 9))
+    assert is_us_equity_trading_day(date(2025, 1, 10))
+    assert previous_us_equity_trading_day(date(2025, 1, 10)) == date(2025, 1, 8)
+
+
+def test_latest_completed_trading_day_skips_special_full_day_closure() -> None:
+    new_york = ZoneInfo("America/New_York")
+
+    assert latest_completed_us_equity_trading_day(
+        datetime(2025, 1, 9, 20, 0, tzinfo=new_york)
+    ) == date(2025, 1, 8)
 
 
 def test_previous_trading_day_skips_holiday_weekend() -> None:

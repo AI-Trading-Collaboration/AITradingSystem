@@ -628,10 +628,16 @@ class PriceReturnThresholdOverrideConfig(BaseModel):
 
 
 class KnownSplitEventConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     effective_date: date
     ratio: float = Field(gt=1)
     source_name: str
     source_url: str
+    status: Literal["REVIEWED"]
+    owner: str = Field(min_length=1)
+    reviewed_at: date
+    review_condition: str = Field(min_length=1)
     note: str = ""
 
 

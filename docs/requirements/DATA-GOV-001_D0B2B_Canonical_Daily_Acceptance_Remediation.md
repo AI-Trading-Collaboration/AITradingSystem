@@ -2,7 +2,7 @@
 
 最后更新：2026-07-25
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`IN_PROGRESS`
 
 稳定任务 ID：
 `DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION`
@@ -19,6 +19,21 @@
 owner：project owner / data platform owner / architecture coordinator
 
 production effect：`none`
+
+Owner decision：
+
+- decision id：
+  `owner_decision:DATA-GOV-001-D0B2B:2026-07-25:approve_vix_xnys_aligned_v1`；
+- decided at：`2026-07-25`；
+- decision：采用方案 A — `XNYS decision-session aligned`；
+- rationale：保持 canonical daily score、跨 ticker feature 和研究窗口使用单一 XNYS
+  decision calendar，同时完整保留 Cboe raw/immutable bytes、source provenance 和受治理
+  normalization audit；不在本阶段引入 per-asset calendar 的 feature/backtest/report
+  全链迁移风险；
+- intended effect：canonical `prices_daily.csv` 只发布 XNYS decision-session rows，
+  `^VIX` 非 XNYS session rows 仅在 reviewed normalization 中排除并记录，不删除原始证据；
+- review condition：若未来策略确需利用 Cboe-specific extra sessions，必须另行登记
+  per-asset calendar migration，并证明跨 calendar alignment 与 no-look-ahead。
 
 ## 触发事件
 
@@ -111,14 +126,14 @@ origin provenance；但 Cboe 官方 VIX history 页面和本项目使用的官�
 
 不能把统一 XNYS calendar 强加给所有 asset，也不能简单把 `^VIX` 加入免检名单。
 
-owner 必须在实现前选择并审核以下语义：
+Owner 已审核以下语义，并于 2026-07-25 选择方案 A：
 
 1. **A — XNYS decision-session aligned（推荐窄版）**  
    canonical `prices_daily.csv` 只保留 XNYS decision sessions；Cboe raw/GTH bytes 和
    source provenance 保留在 raw/immutable publication，normalization 显式、可审计地排除
    非 XNYS session 的 `^VIX` 行。这样 daily score、研究窗口与跨 ticker 对齐仍使用同一
    decision calendar。
-2. **B — per-asset calendar**  
+2. **B — per-asset calendar（本轮未选择）**
    为每个 asset/source 引入 `calendar_id`，允许 `^VIX` 使用 Cboe-specific sessions；
    所有 feature、alignment、coverage、backtest 与 report consumer 必须明确证明跨 calendar
    对齐和 no-look-ahead。该方案长期更一般，但范围、迁移与验证成本更高。
@@ -216,8 +231,32 @@ invocation、publisher/verifier 与 D0B3 authorization 必须能检测 calendar 
 9. periodic due/not-due/blocked 只由同次 canonical evidence 决定，不单独拼装。
 10. `production_effect=none`；无 production/active-shadow weight、broker/order/trading。
 
-## 当前停止条件
+## 当前实施状态
 
-本任务保持 `BLOCKED_OWNER_INPUT`，等待 owner 对 B3 选择 A 或 B，并确认 S0 policy
-carrier 可开始。该 blocker 已满足 no-silent-workaround 的记录要求；不自动安排同 key 重试，
-也不因 Wave15 工程 baseline 已完成而把 strict canonical receipt 写成可用。
+Owner 已通过
+`owner_decision:DATA-GOV-001-D0B2B:2026-07-25:approve_vix_xnys_aligned_v1`
+选择方案 A，任务保持 `IN_PROGRESS`，实施阶段为
+`ENGINEERING_VALIDATION_PASS_CANONICAL_ACCEPTANCE_PENDING`：
+
+- S0 PASS：owner decision、两个reviewed policy carrier和五条权威复核split事件已冻结；
+- S1 PASS：publication containment为起点覆盖、末端exact，覆盖不足/末端漂移/前代
+  generation继续阻断；
+- S2 PASS：reviewed XNYS special-closure registry覆盖`2025-01-09`，所有session resolver共用
+  该权威；canonical DQ validator v2把calendar policy commitments与实现源码加入receipt binding；
+- S3 PASS：`^VIX`在canonical publication前按XNYS decision sessions对齐；Cboe raw bytes、
+  cache provenance、policy SHA及逐event排除日期/数量/原因进入受transaction绑定的audit；
+- S4 PASS：AMZN、GOOG、NVDA和TQQQ五条事件以发行人/基金sponsor官方资料治理；
+  未登记ratio jump仍为WARNING；
+- S5 engineering PASS：focused slice分别`49`、`32`、`103`、receipt `38`项通过，
+  combined parallel regression `331 passed`，Ruff PASS；
+- S5 formal engineering PASS：architecture-fitness=`617 passed`、
+  contract-validation=`275 passed`、integration=`993 passed`、
+  reproducibility=`23 passed`，自然Full=`7,210 passed / 3 skipped / 643 warnings`
+  （`1,163.57s`）；对应runtime artifacts分别为
+  `architecture-fitness_20260725T033436Z`、`contract-validation_20260725T033617Z`、
+  `integration_20260725T033839Z`、`reproducibility_20260725T033936Z`和
+  `full_20260725T034024Z`。
+
+剩余唯一业务验收是退出标准第1和第7项：在新合法provider-ready trading date通过唯一入口
+`aits ops daily-run`形成新的strict canonical evidence。不得自动安排`2026-07-24`同key重试，
+不得直接运行PIT/score等子命令，也不因工程验证通过而把旧strict canonical receipt写成可用。

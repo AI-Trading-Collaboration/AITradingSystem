@@ -22620,6 +22620,11 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
   - tests/test_two_layer_boundary_contract.py
   - tests/test_validation_runtime_profile.py
   - tests/test_validation_tier_script.py
+  - config/data_quality.yaml
+  - src/ai_trading_system/data/download_publication.py
+  - tests/test_config.py
+  - tests/test_data_download_publication.py
+  - tests/test_data_quality_execution_discovery.py
   supersession:
     superseded_by_phase: DATA-GOV-001-D0B2B
     scope: EXHAUSTIVE_CURRENT_LIVE_MISMATCH_SET_WITH_DELTA_SOURCES
@@ -22630,6 +22635,7 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
   - config/architecture/arch_004_refactor_policy.yaml
   - config/architecture/arch_004_wave12_g4_d0b_readiness.yaml
   - config/architecture/devex_ownership_policy.yaml
+  - config/data_quality.yaml
   - config/scheduled_tasks.yaml
   - docs/architecture/dual_lane_development_operating_model.md
   - docs/artifact_catalog.md
@@ -22697,6 +22703,7 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
   - src/ai_trading_system/contracts/workflow.py
   - src/ai_trading_system/data/__init__.py
   - src/ai_trading_system/data/download.py
+  - src/ai_trading_system/data/download_publication.py
   - src/ai_trading_system/data/immutable_publish.py
   - src/ai_trading_system/data/quality.py
   - src/ai_trading_system/data/quality_execution.py
@@ -22736,10 +22743,13 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
   - tests/test_arch_005_s2_kernel.py
   - tests/test_architecture_wave_readiness.py
   - tests/test_cli_direct.py
+  - tests/test_config.py
   - tests/test_data_download.py
+  - tests/test_data_download_publication.py
   - tests/test_data_quality.py
   - tests/test_data_quality_execution.py
   - tests/test_data_quality_execution_contract.py
+  - tests/test_data_quality_execution_discovery.py
   - tests/test_dynamic_v3_clean_selection_trading2452.py
   - tests/test_equal_risk_growth_tilt.py
   - tests/test_gov_006_task_portfolio_normalization.py
@@ -22754,8 +22764,14 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
   - tests/test_validation_runtime_profile.py
   - tests/test_validation_tier_script.py
   new_source_paths:
+  - config/data/canonical_price_session_policy.yaml
+  - config/data/us_equity_special_closure_registry.yaml
   - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   - registry/development_tasks_shadow/active/bc/bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml
+  - src/ai_trading_system/data/market_data.py
+  - src/ai_trading_system/us_equity_special_closure_policy.py
+  - tests/test_market_data.py
+  - tests/test_us_equity_special_closure_policy.py
   removed_live_source_paths:
   - registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
   sources:
@@ -22766,10 +22782,19 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: c74ec44b9b3250dae40fd0d60b775ef1dd66ef6248a4ae898ea493db45d44ab0
     hash_normalization: git_eol_lf
   - path: config/architecture/arch_004_wave12_g4_d0b_readiness.yaml
-    sha256: ef55c982e3c3856a78dcc82418080d896797f0dd7ecd6ceb50559b4afb7110c9
+    sha256: 362af12a6a8203e3e5a6c5ae2d5a12992bfeafedf15a4d5d0e2c563de55bee13
     hash_normalization: git_eol_lf
   - path: config/architecture/devex_ownership_policy.yaml
     sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
+    hash_normalization: git_eol_lf
+  - path: config/data/canonical_price_session_policy.yaml
+    sha256: a1353613d8b4e6e961c365c6214aa399798383372c3f375a104f43c0fbebc9ce
+    hash_normalization: git_eol_lf
+  - path: config/data/us_equity_special_closure_registry.yaml
+    sha256: c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4
+    hash_normalization: git_eol_lf
+  - path: config/data_quality.yaml
+    sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
     hash_normalization: git_eol_lf
   - path: config/scheduled_tasks.yaml
     sha256: 0df8da799b2903a79ebd0824e8368e01f0402c204db04b52835602f8f87cacf0
@@ -22778,10 +22803,10 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: cd3140e39621d9c42b84b0e5f0d2dd9ef8bf02e6f167df95dd652e6630dc7b01
     hash_normalization: git_eol_lf
   - path: docs/artifact_catalog.md
-    sha256: f0779acf703c9444724be047d3a40bafa831859fe50dcced707a00614cc56f15
+    sha256: 0d0f764ec9bea77c62f6ec70f2b8483340060ea1fae88441fbc0ac32843fc12f
     hash_normalization: git_eol_lf
   - path: docs/operations/operations_runbook.md
-    sha256: 11365548f78b853bb3125a7dbf68a02e519dd13162260a4643d0dd1b5f566d8b
+    sha256: 52928247f880dc11dfd9177a91b2fbfbdcc5663270ea4d2a7874d005ca6d4138
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
     sha256: 4d6bc954c21e7a4d9909444ddbcd1a243841a44206ec8612400f1a6c32caa27a
@@ -22814,7 +22839,7 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: 38420ad66ae56e9e95ae9d88bdb902edc67dcce2dcc0b4b4ba3a4907836a3d75
     hash_normalization: git_eol_lf
   - path: docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
-    sha256: f28ad836dcd6fbbec2a48d1857a42692257dd07fb92b0dc7e7c67173669d6e61
+    sha256: 13b66beab1628828e706aa0e4ab6cb645cc9282f9cab9f40210fe43b644a619f
     hash_normalization: git_eol_lf
   - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
     sha256: 64c46e23efa45f5049d9084a28b4513a1b054525d5e443e9696e2c81ae50b555
@@ -22853,28 +22878,28 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: 2d704b55e48ba594ae10bac4fe31720de383deebc848777d312c488fa89b3103
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
-    sha256: 4e670d3682fa54ddc83952f582f8b165f6167b85ceae7591d626c7f6636e33db
+    sha256: 2262e6cd0f9895493c4980d3b5fcb09ff43149bb8bf60cd0e5f6e0224fc68e2a
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: f223648e099e73a1c65009b2f7113185a4e61c29edb6471b9a81e07d71e4cfc9
+    sha256: b95939a5da4737e7970279b47e531309c6ea09b8db7fe6c7e618fc8b5301f016
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: d824f19f1b469a99c0612cb7cf5ba083f5f245d05735a63aeac2688ae0c549a2
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004_wave12_g4_d0b_parallel_readiness.json
-    sha256: 09fef02104a7442675a8ef81a4f660bb3c6c403d9fdad5300428dd2393b9b618
+    sha256: c1e872a928ee2b707af2ac2e1bb9bc48738797d43ba5cd845851b63735315be6
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-    sha256: 937be5ca9a8798b8c11a479a981b3edf0b3c132ebe7f2b7e0cde25eb5e4b69d9
+    sha256: 011907e0ed6f06604ee712781a32ea1818558f7c7aede8699b7f87a38c048215
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_architecture_fitness.yaml
-    sha256: 25b4ed9a5b8dd9662edbefe12762f3ddfe109cf68728625c97c35e93230b358c
+    sha256: a9e048f6e5fa70260034489e857b186275f35de0d50ae5e98350c9f0898b3357
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
-    sha256: fd13d9c86e1e287a5fbb26325255326b3404eb1e8df1cbf5de2d706c9595e255
+    sha256: b4c5797d414b2ae215752f0faffea78063430dae602acb8524f70f7f023f09c1
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 4e6c1c9e62b96774f3cfcdde1a0d1f5da4bcfa54fd8942507cbe5f57a7437613
+    sha256: 72898e76209b889688e07eec9e83c1b40210bf1186a43cbfc6cff431e5ca9664
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -22883,13 +22908,13 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: df1d10aeedcf8d572fa568e45a100d097aed2685a115c9ec8e1f7251517e2cfd
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
-    sha256: 3aad566862f543cd9840e515bd18f65199f21836a779693c7bea2ef5e4b9a957
+    sha256: 401eddc4f784047bdb4cf76fd7e6923a537fad16224ca31a96ea2e3c33ad0f62
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 3c767277fcdfaf315603c791ddea5447d290532418ad58661282cc6fee4a8594
+    sha256: 303bdcd591e56e0c27bdaed2bf3b47dffa29780022fe4160194fff05e6216811
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 2747324aa6507f17255a27d7dfe5aa7c9de160c8172e2b864ada422f5a33c8fc
+    sha256: 735c252c1fdf46d8abef172f2ee822737832cf85255570ecf009f8b9c996508e
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_decision_manifest.json
     sha256: 9269df2bfa35ca8e88f7b44d80a0cbb9abb64fc9f79119b3a17e8b0bfdd6cc7d
@@ -22931,7 +22956,7 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: 70b370bbab36d0405a6853424848bc9c59dc0998940e113a140f681326f30d07
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/bc/bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml
-    sha256: 97013935651805bdaf9553b6bf77a318c3e55eb7efd59a9e9e2b2363175c8b60
+    sha256: 31c4c97d16941b64872a6f0a871fc02a1d67b3dab8425b4cebb1d3181071d780
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
     sha256: 5e90e51c60434032175f5375200014c220c7698def0b7984853cfef7880580d3
@@ -22964,7 +22989,7 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: e3678456f0630bf59eb0c899fffbf26a9de95a8553d8f8436cfe17e77c9a147b
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/config.py
-    sha256: 8d5a9c1045eadf4ee683eda43de431353fad15732395c0cda936f51b9cf606af
+    sha256: e9db552573b3f0a028b753f1bf5b65921d5f2c202603691630a1110faef074a9
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/contracts/__init__.py
     sha256: f45d6ea445bd95850f57bfa5add95b23562e78e2cba14348a1247a085daea65f
@@ -22976,16 +23001,22 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: cf2dc8efaff3997c312029827d7e62d74f00cf9859acdb576a99ee8155553727
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/data/download.py
-    sha256: 3e1b4f819605c66009eb17afdb9a11f6c28635bc3f30ace354ba119f381eecd4
+    sha256: 5fd85cb693d0b616906cd0ac3f975398ee9b27e04b9e03d9096a9c0b71db95df
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/download_publication.py
+    sha256: 18944ebc520e6966d21c271c038acd3cc97aa656abdf0ed0d8f9e7d9c3ad5a72
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/data/immutable_publish.py
     sha256: 6fd4f239874f53bdd5121b492106820810923fd4dbf8276bae02176dce6224fc
     hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/market_data.py
+    sha256: c185e9e38bf2943167204154863f6fbf1af64bae0911fd5a61d396ecc9e91e13
+    hash_normalization: git_eol_lf
   - path: src/ai_trading_system/data/quality.py
-    sha256: 5ad84b9eb236eaf0d2a52651638661d1edd92d8276767b9391cce7de85eb3403
+    sha256: 2112af2373a9e8c8aceffc4a5de47dc2ed4f0deafd47fb1b547a711b07567213
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/data/quality_execution.py
-    sha256: b8c9fbf18c09aea5010d16c912b173fbb20ae062435bf1241b5adb64829f94b0
+    sha256: d25039fb456048eb02df3de0ebd1d5248115a998c7cc3598a3c1c14c3475537d
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/data_refresh_audit.py
     sha256: 58c8d5fddbdaa4abd9eac0d8cf8628768af9e4b2641c99fa0c2fb88d73e3daca
@@ -23054,16 +23085,19 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: 93c4afb165f40dad8bd5cb07f3b5e7dcb87dd7ccf7a07947022ba540cf4a7c72
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/trading_calendar.py
-    sha256: c819fd6f99fb3cc324a4ac518b95e13ecc236e3225619b8a013e3d0c5955a7fb
+    sha256: ec34df0b571b9250579499d4227f08c809cb79ec6f648c37445488a2c82de8d7
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/us_equity_special_closure_policy.py
+    sha256: 7a50326b594cdf3e0c730db9e3ac7590c970ccf6d1d442e828963944111bdcd8
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_g2_5_readiness.py
     sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: ec1e3c053f7a17515bdce0943cd3c31bcb00230fb22f52612450897d89058a56
+    sha256: 32c086e731bcf19dacb10ec90f71d76a3b434c63550637bedb2e73400c621ac3
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
-    sha256: 637bb1900fd6accba8e602df1d0df2da8cf2902c5a555e395ec286df1e2f874f
+    sha256: e39468ce2bfaa3785127062e1399ef795a8b709ccc6f6acfabdecba0d0ef6734
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_wave14_d0b2_g3_readiness.py
     sha256: a46643513e50a34fab8bfe81d97d7ec3c66f8ef6a5f37c1d16fd23122f9854d1
@@ -23081,7 +23115,7 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: 11b66463603e859630ac1a1bb456436060a4eb88f87613e5cf907e6307f34964
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004g_deprecation.py
-    sha256: 6451a34692fe24633b0cfabe379031496118a1de06bc06e52edfe55a309bd912
+    sha256: b4a57b73396510002e5667027cac0f0eb3b6ce2f10877f0cc4f70565351f7397
     hash_normalization: git_eol_lf
   - path: tests/test_arch_005_bootstrap_handoff.py
     sha256: 3c047c554716d22f5b2e5cc85932f4f87305d86dec71b71a2aaedd1f9cd0d776
@@ -23095,17 +23129,26 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
   - path: tests/test_cli_direct.py
     sha256: 30444a4ff0f59f9135af52aee01f4a0e84cf6ca5bc399380a90970b09f7196cc
     hash_normalization: git_eol_lf
+  - path: tests/test_config.py
+    sha256: 6e8c7361aef148ec24c1903e36395c9d4cf0722fd2284b56df6d1e6d37201cfb
+    hash_normalization: git_eol_lf
   - path: tests/test_data_download.py
-    sha256: dfe928d9837294f2e5ddb472cdba93ce498bbb052563e2f5d2ea081997799f1f
+    sha256: d47360af0f26b9619a0f611d745a812bc020f5d76eb22857775bb4f7e40b2950
+    hash_normalization: git_eol_lf
+  - path: tests/test_data_download_publication.py
+    sha256: 302b67c18ba3c658cefb474afd7e1ffa89c5e3918a72d4bcc83330d285e27deb
     hash_normalization: git_eol_lf
   - path: tests/test_data_quality.py
-    sha256: e49650a8e2dd8fbac3263e60b1a89a0bd8c39cab44a9609c67ff9f1702b935c2
+    sha256: 7cdce655dafd3685d87f77b4928abd87d5801b3174109fe7bbb4074d53c03cac
     hash_normalization: git_eol_lf
   - path: tests/test_data_quality_execution.py
-    sha256: f31d1e05c6860e22e9c2f7167703109e6c4f07646626097ec355838594f593d5
+    sha256: 23256c246e0459cf6c31b725ad754e4bfdb0a799382366d9a129539d0bf6d301
     hash_normalization: git_eol_lf
   - path: tests/test_data_quality_execution_contract.py
-    sha256: f8cd43a1dcce36f7f9632076beb1c6ffbc90ab9791ab3b72a055a5faa6a191c2
+    sha256: 047fbeed9a99037dc8f2377ddcaf5417e2680da7860be251c30887d7c4935703
+    hash_normalization: git_eol_lf
+  - path: tests/test_data_quality_execution_discovery.py
+    sha256: 74c8c772cbdf193ee2948f0b093a1e6b15afd83ba4ab7006d78b6b5ee44d0e97
     hash_normalization: git_eol_lf
   - path: tests/test_dynamic_v3_clean_selection_trading2452.py
     sha256: 8957c24518dcfda558fddfd2857d2854046f834d3ae821cba707489a1a112a62
@@ -23118,6 +23161,9 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     hash_normalization: git_eol_lf
   - path: tests/test_immutable_data_publish.py
     sha256: 400b195a1fb714f1e14fd589e62520411f7413c0d8d9cb02b3cd29f55f4fd543
+    hash_normalization: git_eol_lf
+  - path: tests/test_market_data.py
+    sha256: 827ab6f850469e64603123794a46af80b88732ff7305bd131552b7427fbed3af
     hash_normalization: git_eol_lf
   - path: tests/test_ops_daily.py
     sha256: 545dc66c607e391d71a489dc3ed54ca249f1e31e6699f88453f0018fbd85452d
@@ -23135,10 +23181,13 @@ phase_data_gov_001_d0b2b_operational_acceptance_registration:
     sha256: 4e07fc1ea026ddfb202c37d24a2da86a939294a7c3c18468fff02f64d694c05a
     hash_normalization: git_eol_lf
   - path: tests/test_trading_calendar.py
-    sha256: 1323b2b27ca62eccba0d634789e70d8232f93a4f8bcf7c4cef5c3f855f78ad03
+    sha256: 5d5882ebbb5d3e74d19c4c897a5d62e40c5e0d1d834189344f1f6917140f500b
     hash_normalization: git_eol_lf
   - path: tests/test_two_layer_boundary_contract.py
     sha256: 0104f2a5e8a19513ef8bb655f431d27b2678822fe598b8495bb34907e94b1a62
+    hash_normalization: git_eol_lf
+  - path: tests/test_us_equity_special_closure_policy.py
+    sha256: afa1732d479336dea73df7a95dfe17d0bf9c30490526437af5c13fb3c4a3b6f5
     hash_normalization: git_eol_lf
   - path: tests/test_validation_runtime_profile.py
     sha256: dfabd48cc790ba7a428d5633c6cb9c261b6c32936b81d148146674d410250433

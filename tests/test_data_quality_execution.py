@@ -131,6 +131,12 @@ def test_runner_calls_canonical_validator_once_and_verifies_strict_pass(
     assert result.receipt.evaluated_window == DataQualityDateWindow(AS_OF, AS_OF)
     invocation = {item.name: item.value_json for item in result.receipt.invocation}
     assert invocation["execution_profile_id"] == (f'"{MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID}"')
+    assert invocation["calendar_id"] == '"XNYS"'
+    assert invocation["calendar_policy_id"] == '"us_equity_special_closure_registry"'
+    assert (
+        invocation["calendar_policy_path"]
+        == '"config/data/us_equity_special_closure_registry.yaml"'
+    )
     assert len(result.report_path.read_bytes()) == result.receipt.report.size_bytes
     assert result.receipt_path.read_bytes() == result.receipt.canonical_bytes
     assert result.receipt_path.relative_to(execution_fixture.root).as_posix() == (
@@ -139,6 +145,30 @@ def test_runner_calls_canonical_validator_once_and_verifies_strict_pass(
     assert not list(execution_fixture.root.rglob("latest"))
     assert preflight.receipt_id == result.receipt.receipt_id
     assert preflight.status == "PASS"
+
+
+def test_verifier_rejects_calendar_policy_drift(
+    execution_fixture: ExecutionFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _install_report_spy(monkeypatch, status="PASS")
+    result = run_canonical_data_quality_execution(
+        execution_fixture.request,
+        project_root=execution_fixture.root,
+    )
+    calendar_policy_path = (
+        execution_fixture.root / "config/data/us_equity_special_closure_registry.yaml"
+    )
+    calendar_policy_path.write_bytes(calendar_policy_path.read_bytes() + b"\n")
+
+    with pytest.raises(DataQualityExecutionError, match="DQ_CALENDAR_POLICY_SHA_MISMATCH"):
+        verify_data_quality_execution_receipt(
+            result.receipt_path,
+            expected_as_of=AS_OF,
+            expected_policy_path=execution_fixture.policy_path,
+            expected_input_roles={"prices", "rates"},
+            project_root=execution_fixture.root,
+        )
 
 
 @pytest.mark.parametrize("escaped_parent", ["reports", "executions"])
@@ -1054,6 +1084,9 @@ def _copy_validator_sources(root: Path) -> None:
         Path("src/ai_trading_system/data/immutable_publish.py"),
         Path("src/ai_trading_system/data/quality_execution.py"),
         Path("src/ai_trading_system/data/quality.py"),
+        Path("src/ai_trading_system/trading_calendar.py"),
+        Path("src/ai_trading_system/us_equity_special_closure_policy.py"),
+        Path("config/data/us_equity_special_closure_registry.yaml"),
     ):
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)

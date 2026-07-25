@@ -234,9 +234,9 @@
     }
   ],
   "policy_path": "config/architecture/arch_004_wave12_g4_d0b_readiness.yaml",
-  "policy_sha256": "ef55c982e3c3856a78dcc82418080d896797f0dd7ecd6ceb50559b4afb7110c9",
+  "policy_sha256": "362af12a6a8203e3e5a6c5ae2d5a12992bfeafedf15a4d5d0e2c563de55bee13",
   "production_effect": "none",
-  "readiness_sha256": "059d849c722e3eaec1c244a62997fe6cc466472bb03b44c705c84c7c1d9b962b",
+  "readiness_sha256": "580e6ab05369848801f7a8b7dd0083092257fe9ec043c8201f28e8f2765de1af",
   "safety": {
     "automatic_command_dispatch_enabled": false,
     "automatic_merge_allowed": false,
@@ -257,8 +257,8 @@
     "data_quality_policy": {
       "path": "config/data_quality.yaml",
       "policy_id": "DATA_QUALITY_CACHE_GATE",
-      "policy_version": "data_quality_cache_gate.v1",
-      "sha256": "c6a6b48cc8c9e715f2428f0062fe658297f388d7fec14624ebb32f7a78d7e948",
+      "policy_version": "data_quality_cache_gate.v2",
+      "sha256": "e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82",
       "status": "REVIEWED"
     },
     "shared_contract": {

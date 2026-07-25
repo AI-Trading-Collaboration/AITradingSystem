@@ -1,0 +1,35 @@
+schema_version: us_equity_special_closure_registry.v1
+policy_id: us_equity_special_closure_registry
+policy_version: 1.0.0
+status: reviewed_active
+calendar_id: XNYS
+owner: data_platform_owner + project_owner
+reviewed_at: "2026-07-25"
+rationale: >-
+  XNYS decision-session consumers must distinguish authoritative unscheduled
+  full-day exchange closures from missing market data. Regular holiday
+  calculations remain code-governed and this registry carries only reviewed
+  exceptional closures.
+intended_effect: >-
+  Daily PIT, scoring, data-quality coverage, previous-session resolution, and
+  partial-session classification use one XNYS decision-session authority.
+review_condition:
+  - NYSE announces or revises an unscheduled full-day market closure
+  - calendar implementation or regular holiday rules change
+  - a consumer proposes a non-XNYS or per-asset decision calendar
+source_requirements:
+  accepted_source_classes:
+    - official_exchange_notice
+  accepted_https_hosts:
+    - www.nyse.com
+closures:
+  - date: "2025-01-09"
+    calendar_id: XNYS
+    closure_type: FULL_DAY
+    reason: President Jimmy Carter National Day of Mourning
+    source:
+      source_class: official_exchange_notice
+      publisher: New York Stock Exchange
+      document_title: National Day of Mourning - Thursday, January 9, 2025
+      url: https://www.nyse.com/publicdocs/nyse/markets/american-options/rule-interpretations/2025/National_Day_of_Mourning_20250102.pdf
+      published_on: "2025-01-02"

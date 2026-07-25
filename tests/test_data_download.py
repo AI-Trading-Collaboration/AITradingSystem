@@ -1557,6 +1557,100 @@ def test_download_daily_data_adds_cboe_vix_when_primary_skips_it(tmp_path: Path)
     assert vix_event["request_parameters"]["tickers"] == ["^VIX"]
 
 
+def test_download_daily_data_publishes_xnys_aligned_vix_exclusion_audit(
+    tmp_path: Path,
+) -> None:
+    raw_response = (
+        "DATE,OPEN,HIGH,LOW,CLOSE\n"
+        "04/30/2026,16.5,17.2,15.9,16.8\n"
+        "05/01/2026,18.0,19.0,17.5,18.2\n"
+        "05/02/2026,18.1,19.1,17.6,18.3\n"
+    )
+    summary = download_daily_data(
+        load_universe(),
+        start=date(2026, 4, 30),
+        end=date(2026, 5, 2),
+        output_dir=tmp_path,
+        price_provider=FakeNoVixPriceProvider(),
+        vix_price_provider=CboeVixPriceProvider(
+            requests_module=_FakeCboeRequests(text=raw_response)
+        ),
+        rate_provider=FakeRateProvider(),
+    )
+
+    prices = pd.read_csv(summary.prices_path)
+    vix_dates = prices.loc[prices["ticker"] == "^VIX", "date"].astype(str).tolist()
+    assert vix_dates == ["2026-04-30", "2026-05-01"]
+    assert "2026-05-02" not in vix_dates
+    assert len(summary.price_session_normalization_audits) == 1
+
+    assert summary.publication_manifest_path is not None
+    transaction = json.loads(summary.publication_manifest_path.read_text(encoding="utf-8"))
+    event = next(
+        item
+        for item in transaction["source_event_records"]
+        if item["source_id"] == "cboe_vix_daily_prices"
+    )
+    audit = event["request_parameters"]["canonical_session_normalization"]
+    assert audit["decision_calendar"] == "XNYS"
+    assert audit["policy_path"] == "config/data/canonical_price_session_policy.yaml"
+    assert len(audit["policy_sha256"]) == 64
+    assert audit["records"] == [
+        {
+            "action": "EXCLUDE_NON_DECISION_SESSIONS",
+            "excluded_dates": ["2026-05-02"],
+            "excluded_row_count": 1,
+            "input_row_count": 3,
+            "output_row_count": 2,
+            "reason": "source_session_not_xnys_decision_session",
+            "source_session": "CBOE_VIX_INDEX",
+            "ticker": "^VIX",
+        }
+    ]
+    raw_commitments = audit["source_commitment"]["raw_provider_responses"]
+    assert len(raw_commitments) == 1
+    assert raw_commitments[0]["raw_response_sha256"] == sha256_bytes(
+        raw_response.encode("utf-8")
+    )
+    assert raw_commitments[0]["storage_mode"] == "EPHEMERAL_INJECTED_TRANSPORT"
+    assert event["winning_row_count"] == 2
+
+
+def test_download_daily_data_fails_closed_when_cboe_commitment_is_missing(
+    tmp_path: Path,
+) -> None:
+    class UncommittedCboeProvider(CboeVixPriceProvider):
+        def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+            return pd.DataFrame(
+                [
+                    {
+                        "date": request.start.isoformat(),
+                        "ticker": "^VIX",
+                        "open": 1.0,
+                        "high": 1.0,
+                        "low": 1.0,
+                        "close": 1.0,
+                        "adj_close": 1.0,
+                        "volume": pd.NA,
+                    }
+                ]
+            )
+
+    with pytest.raises(ValueError, match="raw provider response commitment"):
+        download_daily_data(
+            load_universe(),
+            start=date(2026, 5, 2),
+            end=date(2026, 5, 2),
+            output_dir=tmp_path,
+            price_provider=FakeNoVixPriceProvider(),
+            vix_price_provider=UncommittedCboeProvider(),
+            rate_provider=FakeRateProvider(),
+        )
+
+    assert not (tmp_path / ".download_publications/current/download_composite.json").exists()
+    assert not (tmp_path / "prices_daily.csv").exists()
+
+
 def test_download_daily_data_records_fmp_primary_source_without_key(tmp_path: Path) -> None:
     summary = download_daily_data(
         load_universe(),
@@ -1778,6 +1872,9 @@ class _FakeCboeResponse:
 
 
 class _FakeCboeRequests:
+    def __init__(self, text: str | None = None) -> None:
+        self.text = text
+
     def get(
         self,
         _url: str,
@@ -1785,7 +1882,11 @@ class _FakeCboeRequests:
         timeout: int,
     ) -> _FakeCboeResponse:
         assert timeout == 30
-        return _FakeCboeResponse()
+        if self.text is None:
+            return _FakeCboeResponse()
+        response = _FakeCboeResponse()
+        response.text = self.text
+        return response
 
 
 class _NeverRequests:

@@ -270,9 +270,16 @@ def _execution_result(
     universe_path.parent.mkdir(parents=True, exist_ok=True)
     universe_bytes = (REAL_PROJECT_ROOT / "config/universe.yaml").read_bytes()
     universe_path.write_bytes(universe_bytes)
+    calendar_policy_path = root / "config/data/us_equity_special_closure_registry.yaml"
+    calendar_policy_path.parent.mkdir(parents=True, exist_ok=True)
+    calendar_policy_bytes = (
+        REAL_PROJECT_ROOT / "config/data/us_equity_special_closure_registry.yaml"
+    ).read_bytes()
+    calendar_policy_path.write_bytes(calendar_policy_bytes)
     receipt = _receipt(
         profile_id=profile_id,
         universe_sha256=hashlib.sha256(universe_bytes).hexdigest(),
+        calendar_policy_sha256=hashlib.sha256(calendar_policy_bytes).hexdigest(),
     )
     receipt_path = root / f"outputs/data_quality/executions/{receipt.receipt_id}/receipt.json"
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
@@ -299,10 +306,11 @@ def _receipt(
     *,
     profile_id: str = DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
     universe_sha256: str = SHA_D,
+    calendar_policy_sha256: str = SHA_C,
 ) -> DataQualityExecutionReceipt:
     policy = DataQualityPolicyBinding(
         policy_id="DATA_QUALITY_CACHE_GATE",
-        policy_version="data_quality_cache_gate.v1",
+        policy_version="data_quality_cache_gate.v2",
         status="REVIEWED",
         owner="data_platform_owner",
         role=PolicyRole.DATA_QUALITY,
@@ -342,7 +350,7 @@ def _receipt(
         policy=policy,
         validator=DataQualityValidatorBinding(
             validator_id="aits.validate-data",
-            validator_version="quality_execution.run_canonical_data_quality_execution.v1",
+            validator_version="quality_execution.run_canonical_data_quality_execution.v2",
             entrypoint=(
                 "ai_trading_system.data.quality_execution:" "run_canonical_data_quality_execution"
             ),
@@ -360,6 +368,16 @@ def _receipt(
             for name, value in {
                 "as_of": AS_OF.isoformat(),
                 "backtest_manifest_path": None,
+                "calendar_id": "XNYS",
+                "calendar_policy_id": "us_equity_special_closure_registry",
+                "calendar_policy_path": (
+                    "config/data/us_equity_special_closure_registry.yaml"
+                ),
+                "calendar_policy_schema_version": (
+                    "us_equity_special_closure_registry.v1"
+                ),
+                "calendar_policy_sha256": calendar_policy_sha256,
+                "calendar_policy_version": "1.0.0",
                 "evaluated_window": DataQualityDateWindow(date(2021, 2, 22), AS_OF).to_dict(),
                 "execution_profile_id": profile_id,
                 "execution_profile_config_path": (

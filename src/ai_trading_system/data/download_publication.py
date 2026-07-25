@@ -28,6 +28,7 @@ from ai_trading_system.data.immutable_publish import (
     write_contained_artifact_bytes,
 )
 from ai_trading_system.platform.artifacts import canonical_json_bytes, sha256_bytes
+from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 DOWNLOAD_PUBLICATION_SCHEMA_VERSION = "download_publication_transaction.v1"
 DOWNLOAD_DISCOVERY_SCHEMA_VERSION = "data_current_pointer.v1"
@@ -129,6 +130,9 @@ _ATOMICITY_SCOPE = "IMMUTABLE_GENERATION_DISCOVERY_POINTER_ONLY"
 _LEGACY_PROJECTION_ROLE = "COMPATIBILITY_ONLY"
 _LEGACY_PROJECTION_ATOMICITY = "NOT_GUARANTEED"
 _VALIDATION_SCOPE = "STRUCTURAL_PUBLICATION_ONLY"
+_CANONICAL_SESSION_AUDIT_SCHEMA_VERSION = (
+    "canonical_price_session_normalization_audit.v1"
+)
 
 
 class DownloadPublicationError(RuntimeError):
@@ -1100,6 +1104,9 @@ def _validated_source_bindings(
         _validated_source_kind_parameters(
             source_kind=item.source_kind,
             artifact_role=item.artifact_role,
+            source_id=item.source_id,
+            provider=item.provider,
+            endpoint=item.endpoint,
             request_parameters=request_parameters,
             replay_inputs=replay_inputs,
             source_event_id=item.source_event_id,
@@ -1271,6 +1278,9 @@ def _validated_source_kind_parameters(
     *,
     source_kind: str,
     artifact_role: str,
+    source_id: str,
+    provider: str,
+    endpoint: str,
     request_parameters: Mapping[str, object],
     replay_inputs: tuple[DownloadReplayInputCandidate, ...],
     source_event_id: str,
@@ -1278,6 +1288,9 @@ def _validated_source_kind_parameters(
     _validated_source_kind_payload(
         source_kind=source_kind,
         artifact_role=artifact_role,
+        source_id=source_id,
+        provider=provider,
+        endpoint=endpoint,
         request_parameters=request_parameters,
         replay_inputs=[_replay_input_payload(item) for item in replay_inputs],
         source_event_id=source_event_id,
@@ -1288,10 +1301,22 @@ def _validated_source_kind_payload(
     *,
     source_kind: str,
     artifact_role: str,
+    source_id: str,
+    provider: str,
+    endpoint: str,
     request_parameters: Mapping[str, object],
     replay_inputs: Sequence[Mapping[str, object]],
     source_event_id: str,
 ) -> None:
+    _validated_canonical_session_normalization_audit(
+        request_parameters.get("canonical_session_normalization"),
+        source_kind=source_kind,
+        artifact_role=artifact_role,
+        source_id=source_id,
+        provider=provider,
+        endpoint=endpoint,
+        source_event_id=source_event_id,
+    )
     if source_kind == _LIVE_PROVIDER:
         if replay_inputs:
             _fail("DOWNLOAD_REPLAY_INPUT_BINDING_MISMATCH", source_event_id)
@@ -1418,6 +1443,233 @@ def _validated_source_kind_payload(
         or request_parameters.get("data_quality_provenance") is not False
     ):
         _fail("DOWNLOAD_LEGACY_IMPORT_BINDING_MISMATCH", source_event_id)
+
+
+def _validated_canonical_session_normalization_audit(
+    value: object,
+    *,
+    source_kind: str,
+    artifact_role: str,
+    source_id: str,
+    provider: str,
+    endpoint: str,
+    source_event_id: str,
+) -> None:
+    if value is None:
+        return
+    if artifact_role != "prices":
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    audit = _mapping(value, "canonical_session_normalization")
+    _exact_fields(
+        audit,
+        {
+            "schema_version",
+            "policy_id",
+            "policy_version",
+            "policy_path",
+            "policy_sha256",
+            "canonical_dataset",
+            "decision_calendar",
+            "session_resolver",
+            "evaluation_window",
+            "source_event_id",
+            "source_commitment",
+            "records",
+            "no_look_ahead",
+        },
+        "DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID",
+    )
+    if (
+        audit.get("schema_version") != _CANONICAL_SESSION_AUDIT_SCHEMA_VERSION
+        or audit.get("canonical_dataset") != "prices_daily.csv"
+        or audit.get("decision_calendar") != "XNYS"
+        or audit.get("session_resolver")
+        != "ai_trading_system.trading_calendar.is_us_equity_trading_day"
+        or audit.get("source_event_id") != source_event_id
+        or audit.get("no_look_ahead") is not True
+    ):
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    _text(audit.get("policy_id"), "normalization.policy_id")
+    _text(audit.get("policy_version"), "normalization.policy_version")
+    policy_path = _portable_relative(audit.get("policy_path"), "normalization.policy_path")
+    if not policy_path.startswith("config/data/"):
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    _digest(audit.get("policy_sha256"), "normalization.policy_sha256")
+
+    window = _mapping(audit.get("evaluation_window"), "normalization.evaluation_window")
+    _exact_fields(
+        window,
+        {"start", "end"},
+        "DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID",
+    )
+    window_start = _date_value(window.get("start"), "normalization.evaluation_window.start")
+    window_end = _date_value(window.get("end"), "normalization.evaluation_window.end")
+    if window_start > window_end:
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+
+    commitment = _mapping(
+        audit.get("source_commitment"),
+        "normalization.source_commitment",
+    )
+    _exact_fields(
+        commitment,
+        {
+            "source_kind",
+            "source_id",
+            "provider",
+            "endpoint",
+            "raw_provider_responses",
+            "predecessor_artifact_sha256",
+            "legacy_cache_sha256",
+        },
+        "DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID",
+    )
+    if (
+        commitment.get("source_kind") != source_kind
+        or commitment.get("source_id") != source_id
+        or commitment.get("provider") != provider
+        or commitment.get("endpoint") != endpoint
+    ):
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    predecessor_digest = commitment.get("predecessor_artifact_sha256")
+    legacy_digest = commitment.get("legacy_cache_sha256")
+    if source_kind == _CANONICAL_PREDECESSOR_REUSE:
+        _digest(predecessor_digest, "normalization.predecessor_artifact_sha256")
+        if legacy_digest is not None:
+            _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    elif source_kind == _LEGACY_LOCAL_CACHE_IMPORT:
+        _digest(legacy_digest, "normalization.legacy_cache_sha256")
+        if predecessor_digest is not None:
+            _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    elif predecessor_digest is not None or legacy_digest is not None:
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+
+    raw_responses = _mapping_list(
+        commitment.get("raw_provider_responses"),
+        "normalization.raw_provider_responses",
+    )
+    if source_id == "cboe_vix_daily_prices" and not raw_responses:
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    for raw_response in raw_responses:
+        _validated_cboe_raw_source_commitment(raw_response, source_event_id=source_event_id)
+
+    records = _mapping_list(audit.get("records"), "normalization.records")
+    if not records:
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    observed_tickers: set[str] = set()
+    for record in records:
+        _exact_fields(
+            record,
+            {
+                "ticker",
+                "source_session",
+                "action",
+                "reason",
+                "input_row_count",
+                "output_row_count",
+                "excluded_row_count",
+                "excluded_dates",
+            },
+            "DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID",
+        )
+        ticker = _text(record.get("ticker"), "normalization.record.ticker")
+        if ticker in observed_tickers:
+            _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+        observed_tickers.add(ticker)
+        _text(record.get("source_session"), "normalization.record.source_session")
+        if (
+            record.get("action") != "EXCLUDE_NON_DECISION_SESSIONS"
+            or record.get("reason") != "source_session_not_xnys_decision_session"
+        ):
+            _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+        input_rows = _integer(
+            record.get("input_row_count"),
+            "normalization.record.input_row_count",
+        )
+        output_rows = _integer(
+            record.get("output_row_count"),
+            "normalization.record.output_row_count",
+        )
+        excluded_rows = _integer(
+            record.get("excluded_row_count"),
+            "normalization.record.excluded_row_count",
+        )
+        excluded_dates = _ordered_string_list(
+            record.get("excluded_dates"),
+            "normalization.record.excluded_dates",
+        )
+        if (
+            excluded_dates != tuple(sorted(set(excluded_dates)))
+            or excluded_rows != len(excluded_dates)
+            or input_rows != output_rows + excluded_rows
+        ):
+            _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+        for raw_date in excluded_dates:
+            excluded_date = _date_value(
+                raw_date,
+                "normalization.record.excluded_dates[]",
+            )
+            if (
+                excluded_date < window_start
+                or excluded_date > window_end
+                or is_us_equity_trading_day(excluded_date)
+            ):
+                _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+
+
+def _validated_cboe_raw_source_commitment(
+    commitment: Mapping[str, object],
+    *,
+    source_event_id: str,
+) -> None:
+    _exact_fields(
+        commitment,
+        {
+            "schema_version",
+            "provider",
+            "api_family",
+            "endpoint",
+            "cache_key",
+            "cache_generation_id",
+            "cache_metadata_path",
+            "cache_metadata_sha256",
+            "raw_response_sha256",
+            "raw_response_size_bytes",
+            "storage_mode",
+        },
+        "DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID",
+    )
+    if (
+        commitment.get("schema_version") != "cboe_raw_source_commitment.v1"
+        or commitment.get("provider") != "Cboe Global Markets"
+        or commitment.get("api_family") != "vix_daily_prices"
+    ):
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    _text(commitment.get("endpoint"), "normalization.raw.endpoint")
+    _text(commitment.get("cache_key"), "normalization.raw.cache_key")
+    _digest(commitment.get("raw_response_sha256"), "normalization.raw.raw_response_sha256")
+    _integer(
+        commitment.get("raw_response_size_bytes"),
+        "normalization.raw.raw_response_size_bytes",
+    )
+    storage_mode = commitment.get("storage_mode")
+    metadata_path = commitment.get("cache_metadata_path")
+    metadata_digest = commitment.get("cache_metadata_sha256")
+    generation_id = commitment.get("cache_generation_id")
+    if storage_mode == "EXTERNAL_REQUEST_CACHE_IMMUTABLE_BODY":
+        _text(metadata_path, "normalization.raw.cache_metadata_path")
+        _digest(metadata_digest, "normalization.raw.cache_metadata_sha256")
+        _text(generation_id, "normalization.raw.cache_generation_id")
+    elif storage_mode == "EXTERNAL_REQUEST_CACHE_LEGACY_BODY":
+        _text(metadata_path, "normalization.raw.cache_metadata_path")
+        _digest(metadata_digest, "normalization.raw.cache_metadata_sha256")
+        if generation_id is not None:
+            _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    elif storage_mode == "EPHEMERAL_INJECTED_TRANSPORT":
+        if metadata_path is not None or metadata_digest is not None or generation_id is not None:
+            _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
+    else:
+        _fail("DOWNLOAD_SESSION_NORMALIZATION_AUDIT_INVALID", source_event_id)
 
 
 def _replay_input_payload(item: DownloadReplayInputCandidate) -> dict[str, object]:
@@ -2175,6 +2427,9 @@ def _validated_transaction_sources(
         _validated_source_kind_payload(
             source_kind=source_kind,
             artifact_role=role,
+            source_id=source_id,
+            provider=provider,
+            endpoint=endpoint,
             request_parameters=request_parameters,
             replay_inputs=replay_inputs,
             source_event_id=source_event_id,

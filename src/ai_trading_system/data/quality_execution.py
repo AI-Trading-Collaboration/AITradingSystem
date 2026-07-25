@@ -54,10 +54,15 @@ from ai_trading_system.data.quality import (
     resolve_download_publication_observation,
     validate_data_cache,
 )
+from ai_trading_system.us_equity_special_closure_policy import (
+    US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
+    UsEquitySpecialClosurePolicy,
+    load_us_equity_special_closure_policy,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 VALIDATOR_ID: Final = "aits.validate-data"
-VALIDATOR_VERSION: Final = "quality_execution.run_canonical_data_quality_execution.v1"
+VALIDATOR_VERSION: Final = "quality_execution.run_canonical_data_quality_execution.v2"
 VALIDATOR_ENTRYPOINT: Final = (
     "ai_trading_system.data.quality_execution:run_canonical_data_quality_execution"
 )
@@ -66,6 +71,17 @@ DEFAULT_POLICY_PATH: Final = Path("config/data_quality.yaml")
 _EXECUTION_SOURCE_PATH: Final = Path("src/ai_trading_system/data/quality_execution.py")
 _QUALITY_SOURCE_PATH: Final = Path("src/ai_trading_system/data/quality.py")
 _IMMUTABLE_PUBLISH_SOURCE_PATH: Final = Path("src/ai_trading_system/data/immutable_publish.py")
+_TRADING_CALENDAR_SOURCE_PATH: Final = Path("src/ai_trading_system/trading_calendar.py")
+_SPECIAL_CLOSURE_POLICY_SOURCE_PATH: Final = Path(
+    "src/ai_trading_system/us_equity_special_closure_policy.py"
+)
+_VALIDATOR_SOURCE_PATHS: Final = (
+    _EXECUTION_SOURCE_PATH,
+    _QUALITY_SOURCE_PATH,
+    _IMMUTABLE_PUBLISH_SOURCE_PATH,
+    _TRADING_CALENDAR_SOURCE_PATH,
+    _SPECIAL_CLOSURE_POLICY_SOURCE_PATH,
+)
 _DAILY_DEFAULT_UNIVERSE_PATH: Final = Path("config/universe.yaml")
 _DAILY_DEFAULT_PRICES_PATH: Final = "data/raw/prices_daily.csv"
 _DAILY_DEFAULT_RATES_PATH: Final = "data/raw/rates_daily.csv"
@@ -84,6 +100,12 @@ _CANONICAL_INVOCATION_NAMES: Final = frozenset(
     {
         "as_of",
         "backtest_manifest_path",
+        "calendar_id",
+        "calendar_policy_id",
+        "calendar_policy_path",
+        "calendar_policy_schema_version",
+        "calendar_policy_sha256",
+        "calendar_policy_version",
         "evaluated_window",
         "execution_profile_id",
         "execution_profile_config_path",
@@ -270,6 +292,17 @@ def load_reviewed_data_quality_policy(
     return ReviewedDataQualityPolicy(config=config, binding=binding)
 
 
+def _load_reviewed_calendar_policy(root: Path) -> UsEquitySpecialClosurePolicy:
+    relative = US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()
+    try:
+        return load_us_equity_special_closure_policy(root / Path(relative))
+    except ValueError as exc:
+        raise DataQualityExecutionError(
+            "DQ_CALENDAR_POLICY_INVALID",
+            f"cannot load reviewed calendar policy {relative}: {exc}",
+        ) from exc
+
+
 def run_canonical_data_quality_execution(
     request: CanonicalDataQualityExecutionRequest,
     *,
@@ -283,6 +316,7 @@ def run_canonical_data_quality_execution(
         )
     root = project_root.resolve()
     policy = load_reviewed_data_quality_policy(request.policy_path, project_root=root)
+    calendar_policy = _load_reviewed_calendar_policy(root)
     request_paths = _resolve_request_paths(request, root)
     execution_profile = _build_execution_profile_binding(request, request_paths, root)
     download_publication_resolution: DownloadPublicationResolution = (
@@ -419,6 +453,12 @@ def run_canonical_data_quality_execution(
         expected_sha256=policy.binding.sha256,
         mismatch_code="DQ_POLICY_SHA_MISMATCH",
     )
+    _assert_file_unchanged(
+        US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix(),
+        calendar_policy.path,
+        expected_sha256=calendar_policy.sha256,
+        mismatch_code="DQ_CALENDAR_POLICY_SHA_MISMATCH",
+    )
     _assert_validator_sources_unchanged(validator_sources)
     _assert_execution_profile_config_unchanged(execution_profile, root)
     receipt = DataQualityExecutionReceipt(
@@ -438,6 +478,7 @@ def run_canonical_data_quality_execution(
             policy.binding.path,
             evaluated_window=evaluated_window,
             execution_profile=execution_profile,
+            calendar_policy=calendar_policy,
         ),
         inputs=inputs,
         report=report_binding,
@@ -743,11 +784,7 @@ def _utc_now() -> datetime:
 def _capture_validator_sources(root: Path) -> dict[str, DataFileSnapshot]:
     paths = {
         source_path.as_posix(): root / source_path
-        for source_path in (
-            _EXECUTION_SOURCE_PATH,
-            _QUALITY_SOURCE_PATH,
-            _IMMUTABLE_PUBLISH_SOURCE_PATH,
-        )
+        for source_path in _VALIDATOR_SOURCE_PATHS
     }
     snapshots = capture_data_file_snapshots(paths)
     for source_path, snapshot in snapshots.items():
@@ -763,11 +800,7 @@ def _validator_binding(
     snapshots: Mapping[str, DataFileSnapshot],
 ) -> DataQualityValidatorBinding:
     sources: list[DataQualityImplementationSourceBinding] = []
-    for source_path in (
-        _EXECUTION_SOURCE_PATH,
-        _QUALITY_SOURCE_PATH,
-        _IMMUTABLE_PUBLISH_SOURCE_PATH,
-    ):
+    for source_path in _VALIDATOR_SOURCE_PATHS:
         relative = source_path.as_posix()
         snapshot = snapshots.get(relative)
         if snapshot is None or not snapshot.exists or snapshot.sha256 is None:
@@ -1138,12 +1171,19 @@ def _invocation_bindings(
     *,
     evaluated_window: DataQualityDateWindow,
     execution_profile: _ExecutionProfileBinding,
+    calendar_policy: UsEquitySpecialClosurePolicy,
 ) -> tuple[DataQualityInvocationParameter, ...]:
     values: dict[str, object] = {
         "as_of": request.as_of.isoformat(),
         "backtest_manifest_path": (
             request_paths["backtest_manifest"][0] if "backtest_manifest" in request_paths else None
         ),
+        "calendar_id": calendar_policy.calendar_id,
+        "calendar_policy_id": calendar_policy.policy_id,
+        "calendar_policy_path": US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix(),
+        "calendar_policy_schema_version": calendar_policy.schema_version,
+        "calendar_policy_sha256": calendar_policy.sha256,
+        "calendar_policy_version": calendar_policy.policy_version,
         "evaluated_window": evaluated_window.to_dict(),
         "execution_profile_id": request.execution_profile_id,
         "execution_profile_config_path": execution_profile.config_path,
@@ -1236,11 +1276,7 @@ def _verify_validator_binding(claimed: DataQualityValidatorBinding, root: Path) 
         )
     if claimed.entrypoint != VALIDATOR_ENTRYPOINT:
         raise DataQualityExecutionError("DQ_VALIDATOR_ENTRYPOINT_MISMATCH", claimed.entrypoint)
-    expected_paths = {
-        _EXECUTION_SOURCE_PATH.as_posix(),
-        _QUALITY_SOURCE_PATH.as_posix(),
-        _IMMUTABLE_PUBLISH_SOURCE_PATH.as_posix(),
-    }
+    expected_paths = {source_path.as_posix() for source_path in _VALIDATOR_SOURCE_PATHS}
     claimed_paths = {item.path for item in claimed.implementation_sources}
     if claimed_paths != expected_paths:
         raise DataQualityExecutionError(
@@ -1382,6 +1418,7 @@ def verify_daily_default_execution_profile_receipt(
         raise DataQualityExecutionError(
             "DQ_RECEIPT_FIELDS_INVALID", "receipt is not daily_default.v1"
         )
+    _verify_calendar_policy_invocation(invocation, project_root.resolve())
     _verify_execution_profile_invocation(
         invocation,
         observed_input_paths={item.role: item.path for item in receipt.inputs},
@@ -1399,6 +1436,7 @@ def _verify_invocation(
         raise DataQualityExecutionError(
             "DQ_RECEIPT_FIELDS_INVALID", "canonical invocation parameter set mismatch"
         )
+    _verify_calendar_policy_invocation(invocation, project_root)
     expected_values: dict[str, object] = {
         "as_of": receipt.as_of.isoformat(),
         "backtest_manifest_path": (
@@ -1458,6 +1496,36 @@ def _verify_invocation(
             raise DataQualityExecutionError(
                 "DQ_RECEIPT_FIELDS_INVALID", f"invalid invocation {name}"
             )
+
+
+def _verify_calendar_policy_invocation(
+    invocation: Mapping[str, object],
+    project_root: Path,
+) -> None:
+    expected_path = US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()
+    if invocation.get("calendar_policy_path") != expected_path:
+        raise DataQualityExecutionError(
+            "DQ_CALENDAR_POLICY_PATH_MISMATCH",
+            f"expected={expected_path} actual={invocation.get('calendar_policy_path')}",
+        )
+    observed = _load_reviewed_calendar_policy(project_root)
+    expected_values = {
+        "calendar_id": observed.calendar_id,
+        "calendar_policy_id": observed.policy_id,
+        "calendar_policy_schema_version": observed.schema_version,
+        "calendar_policy_version": observed.policy_version,
+    }
+    for name, expected in expected_values.items():
+        if invocation.get(name) != expected:
+            raise DataQualityExecutionError(
+                "DQ_CALENDAR_POLICY_ID_MISMATCH",
+                f"invocation {name} mismatch",
+            )
+    if invocation.get("calendar_policy_sha256") != observed.sha256:
+        raise DataQualityExecutionError(
+            "DQ_CALENDAR_POLICY_SHA_MISMATCH",
+            expected_path,
+        )
 
 
 def _verify_execution_profile_invocation(

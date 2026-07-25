@@ -4,12 +4,19 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from ai_trading_system.us_equity_special_closure_policy import (
+    US_EQUITY_DECISION_CALENDAR_ID,
+    US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
+    UsEquitySpecialClosure,
+    default_us_equity_special_closure_policy,
+)
+
 NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE = (
     "NYSE regular full-day holiday rules: weekends, New Year's Day, "
     "Martin Luther King Jr. Day, Washington's Birthday, Good Friday, "
     "Memorial Day, Juneteenth (2022 onward), Independence Day, Labor Day, "
-    "Thanksgiving Day, "
-    "and Christmas Day. Does not include unscheduled special closures."
+    "Thanksgiving Day, and Christmas Day; combined with the reviewed "
+    f"{US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()} registry."
 )
 NYSE_PARTIAL_TRADING_DAY_CALENDAR_SOURCE = (
     "NYSE scheduled partial trading day baseline: Independence Day Eve when it "
@@ -40,8 +47,14 @@ class MarketSession:
 
 
 def us_equity_market_session(as_of: date) -> MarketSession:
-    holiday_name = us_equity_full_day_holidays(as_of.year).get(as_of)
+    regular_holiday_name = _regular_full_day_holidays(as_of.year).get(as_of)
+    special_closure = us_equity_special_full_day_closures(as_of.year).get(as_of)
+    if regular_holiday_name is not None and special_closure is not None:
+        raise ValueError(
+            f"special-closure policy duplicates a regular full-day holiday: {as_of.isoformat()}"
+        )
     partial_name = us_equity_partial_trading_days(as_of.year).get(as_of)
+    calendar_source = us_equity_calendar_source()
     if as_of.weekday() >= 5:
         return MarketSession(
             as_of=as_of,
@@ -50,17 +63,30 @@ def us_equity_market_session(as_of: date) -> MarketSession:
             is_trading_day=False,
             reason="weekend",
             previous_trading_day=previous_us_equity_trading_day(as_of),
+            calendar_source=calendar_source,
             session_kind="WEEKEND",
         )
-    if holiday_name is not None:
+    if regular_holiday_name is not None:
         return MarketSession(
             as_of=as_of,
             market="US_EQUITY",
             session_status="CLOSED_MARKET",
             is_trading_day=False,
-            reason=holiday_name,
+            reason=regular_holiday_name,
             previous_trading_day=previous_us_equity_trading_day(as_of),
+            calendar_source=calendar_source,
             session_kind="US_MARKET_HOLIDAY",
+        )
+    if special_closure is not None:
+        return MarketSession(
+            as_of=as_of,
+            market="US_EQUITY",
+            session_status="CLOSED_MARKET",
+            is_trading_day=False,
+            reason=special_closure.reason,
+            previous_trading_day=previous_us_equity_trading_day(as_of),
+            calendar_source=calendar_source,
+            session_kind="SPECIAL_FULL_DAY_CLOSURE",
         )
     if partial_name is not None:
         return MarketSession(
@@ -70,10 +96,7 @@ def us_equity_market_session(as_of: date) -> MarketSession:
             is_trading_day=True,
             reason=partial_name,
             previous_trading_day=previous_us_equity_trading_day(as_of),
-            calendar_source=(
-                f"{NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE} "
-                f"{NYSE_PARTIAL_TRADING_DAY_CALENDAR_SOURCE}"
-            ),
+            calendar_source=f"{calendar_source} {NYSE_PARTIAL_TRADING_DAY_CALENDAR_SOURCE}",
             session_kind="PARTIAL_TRADING_DAY",
             close_time=US_EQUITY_PARTIAL_CLOSE_TIME,
         )
@@ -84,6 +107,7 @@ def us_equity_market_session(as_of: date) -> MarketSession:
         is_trading_day=True,
         reason="regular_trading_day",
         previous_trading_day=previous_us_equity_trading_day(as_of),
+        calendar_source=calendar_source,
         session_kind="NORMAL_TRADING_DAY",
         close_time=US_EQUITY_REGULAR_CLOSE_TIME,
     )
@@ -147,6 +171,35 @@ def previous_us_equity_trading_day(value: date) -> date:
 
 
 def us_equity_full_day_holidays(year: int) -> dict[date, str]:
+    holidays = _regular_full_day_holidays(year)
+    for closure_date, closure in us_equity_special_full_day_closures(year).items():
+        if closure_date in holidays:
+            raise ValueError(
+                "special-closure policy duplicates a regular full-day holiday: "
+                f"{closure_date.isoformat()}"
+            )
+        holidays[closure_date] = closure.reason
+    return holidays
+
+
+def us_equity_special_full_day_closures(
+    year: int,
+) -> dict[date, UsEquitySpecialClosure]:
+    policy = default_us_equity_special_closure_policy()
+    if policy.calendar_id != US_EQUITY_DECISION_CALENDAR_ID:
+        raise ValueError("US equity special-closure policy calendar authority mismatch")
+    return {closure.closure_date: closure for closure in policy.closures_for_year(year)}
+
+
+def us_equity_calendar_source() -> str:
+    policy = default_us_equity_special_closure_policy()
+    return (
+        f"{NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE} Special-closure authority "
+        f"{policy.policy_identity}; sha256={policy.sha256}."
+    )
+
+
+def _regular_full_day_holidays(year: int) -> dict[date, str]:
     holidays: dict[date, str] = {}
     for actual_year in (year - 1, year, year + 1):
         for holiday_date, holiday_name in _regular_holiday_dates(actual_year):

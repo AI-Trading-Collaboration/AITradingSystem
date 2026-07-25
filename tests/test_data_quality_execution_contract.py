@@ -315,7 +315,7 @@ def test_primary_data_quality_config_exposes_reviewed_governance_metadata() -> N
 
     assert config.governance is not None
     assert config.governance.policy_id == "DATA_QUALITY_CACHE_GATE"
-    assert config.governance.policy_version == "data_quality_cache_gate.v1"
+    assert config.governance.policy_version == "data_quality_cache_gate.v2"
     assert config.governance.status == "REVIEWED"
     assert config.governance.role == "data_quality"
 

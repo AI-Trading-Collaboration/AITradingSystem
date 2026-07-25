@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1015
+module_count: 1016
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -1995,7 +1995,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.config
   path: src/ai_trading_system/config.py
-  sha256: 8d5a9c1045eadf4ee683eda43de431353fad15732395c0cda936f51b9cf606af
+  sha256: e9db552573b3f0a028b753f1bf5b65921d5f2c202603691630a1110faef074a9
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2531,7 +2531,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.download
   path: src/ai_trading_system/data/download.py
-  sha256: 3e1b4f819605c66009eb17afdb9a11f6c28635bc3f30ace354ba119f381eecd4
+  sha256: 5fd85cb693d0b616906cd0ac3f975398ee9b27e04b9e03d9096a9c0b71db95df
   rule_id: data
   owner_profile: data
   owners:
@@ -2553,7 +2553,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.download_publication
   path: src/ai_trading_system/data/download_publication.py
-  sha256: 3952e8d2201b7bf7d7f4f8b0173c03c1a68c04d3f091096b2290e4de05da56d4
+  sha256: 18944ebc520e6966d21c271c038acd3cc97aa656abdf0ed0d8f9e7d9c3ad5a72
   rule_id: data
   owner_profile: data
   owners:
@@ -2597,7 +2597,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.market_data
   path: src/ai_trading_system/data/market_data.py
-  sha256: 55fd1586a9ef31818babf71da7b3d5c397fa8684d50a95bc77c4f9dfffddb527
+  sha256: c185e9e38bf2943167204154863f6fbf1af64bae0911fd5a61d396ecc9e91e13
   rule_id: data
   owner_profile: data
   owners:
@@ -2619,7 +2619,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.quality
   path: src/ai_trading_system/data/quality.py
-  sha256: 5ad84b9eb236eaf0d2a52651638661d1edd92d8276767b9391cce7de85eb3403
+  sha256: 2112af2373a9e8c8aceffc4a5de47dc2ed4f0deafd47fb1b547a711b07567213
   rule_id: data
   owner_profile: data
   owners:
@@ -2663,7 +2663,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.quality_execution
   path: src/ai_trading_system/data/quality_execution.py
-  sha256: b8c9fbf18c09aea5010d16c912b173fbb20ae062435bf1241b5adb64829f94b0
+  sha256: d25039fb456048eb02df3de0ebd1d5248115a998c7cc3598a3c1c14c3475537d
   rule_id: data
   owner_profile: data
   owners:
@@ -18698,7 +18698,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.trading_calendar
   path: src/ai_trading_system/trading_calendar.py
-  sha256: c819fd6f99fb3cc324a4ac518b95e13ecc236e3225619b8a013e3d0c5955a7fb
+  sha256: ec34df0b571b9250579499d4227f08c809cb79ec6f648c37445488a2c82de8d7
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -21027,6 +21027,26 @@ modules:
 - module_id: src.ai_trading_system.upper_state_label_feature_reset
   path: src/ai_trading_system/upper_state_label_feature_reset.py
   sha256: 264717c5554bfa2eef37bb9cd178be79e2c3801561879882a01a003f512fc4ef
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.us_equity_special_closure_policy
+  path: src/ai_trading_system/us_equity_special_closure_policy.py
+  sha256: 7a50326b594cdf3e0c730db9e3ac7590c970ccf6d1d442e828963944111bdcd8
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
