@@ -24677,11 +24677,11 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     target_lineage: FIRST_PARENT_ONLY
     automatic_cleanup_allowed: false
     generated_rebuild_owner: integration-coordinator
-    s2_current_main_reconciliation: PENDING_S0_S1_FORMAL_PASS
+    s2_current_main_reconciliation: BLOCKED_EXACT_LINEAGE_PRESERVATION
   generated_state:
-    active_task_count: 414
+    active_task_count: 415
     completed_task_count: 489
-    total_task_count: 903
+    total_task_count: 904
     task_registry_shadow_byte_identical: true
     module_count: 1019
     test_file_count: 1185
@@ -24691,6 +24691,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
   - docs/research/growth_tilt_owner_diagnosis_pack.md
   superseded_live_source_paths:
   - .github/workflows/ci.yml
+  - AGENTS.md
   - config/architecture/arch_004_refactor_policy.yaml
   - config/architecture/arch_004_wave12_g4_d0b_readiness.yaml
   - config/architecture/arch_005_s4d_checkout_guard.yaml
@@ -24841,6 +24842,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
   - registry/development_tasks_shadow/active/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
   source_delta_paths:
   - .github/workflows/ci.yml
+  - AGENTS.md
   - config/architecture/arch_004_refactor_policy.yaml
   - config/architecture/arch_004_wave12_g4_d0b_readiness.yaml
   - config/architecture/arch_005_s4d_checkout_guard.yaml
@@ -24985,13 +24987,18 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
   new_source_paths:
   - config/architecture/arch_005_s4e_checkout_reconciliation.yaml
   - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   - registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
   - scripts/architecture_arch005_checkout_reconciliation.py
   - src/ai_trading_system/platform/architecture/checkout_reconciliation.py
   - tests/test_arch_005_s4e_checkout_reconciliation.py
   sources:
   - path: .github/workflows/ci.yml
     sha256: 2480e557b4e32c86a140441ffdf4dc393042b8b7617234b0b5dd4de24b120636
+    hash_normalization: git_eol_lf
+  - path: AGENTS.md
+    sha256: 0a14aba471a71d1c58464b20b0a32b98a6dd084ef716e89e632c906a236171ab
     hash_normalization: git_eol_lf
   - path: config/architecture/arch_004_refactor_policy.yaml
     sha256: c74ec44b9b3250dae40fd0d60b775ef1dd66ef6248a4ae898ea493db45d44ab0
@@ -25057,10 +25064,13 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 65aa8fa098e07cfd5b25d42916b0da61c6c6c03008ec9dbe7af5b789609acd20
     hash_normalization: git_eol_lf
   - path: docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
-    sha256: cfc692231cff2c455cda8f6af7b57dfb29925d262bc8c2bdd93f6cf94663ed4c
+    sha256: ba52cb8482654aa1c41b41619b14e4b45854fb8b907be8eaadc7fe9ae22c30b8
     hash_normalization: git_eol_lf
   - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
     sha256: 64c46e23efa45f5049d9084a28b4513a1b054525d5e443e9696e2c81ae50b555
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+    sha256: cf55b70c15ce8fdfc5b2c01d4d4e4e38dd68797156594b4ed4fc57b3638ea5cf
     hash_normalization: git_eol_lf
   - path: docs/requirements/GOV-006_Active_Task_Portfolio_Normalization.md
     sha256: 662c63c365262bf0b3c1f594ab27d5ad08ca6e1a3f94512126748f83b8c2519a
@@ -25099,7 +25109,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: f9cf8b638cecf0769353fa249d2bb45a660bbf567afd812eada9d1d2dba0c805
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: f7b41143def5d9ef692cbe04df95329c7d822a28b8dbd0aaaadcf1cef8ffd87d
+    sha256: db149f4553d26834335de75c33b597520a5446c242064b6c75a8d4504964c1e7
     hash_normalization: git_eol_lf
   - path: docs/task_register_completed.md
     sha256: d824f19f1b469a99c0612cb7cf5ba083f5f245d05735a63aeac2688ae0c549a2
@@ -25117,7 +25127,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 5e892ed8b40eb10b3258ffd01089ac7f2633396a02d8f3f4692eac64936dc9a7
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 1cce9094399e310b3d8236af0bac8db819d2bb50950473423829686e8fd27d99
+    sha256: 69cdaae8fdcba3bc21802ab9f3f1379cfcca384e0d2e24c5588ed5fa295bfcaf
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g2_5_parallel_readiness.json
     sha256: c2339f81a152ecc13b16a565baaa094cfb54bd45a34e418da9894823a0f86381
@@ -25129,10 +25139,10 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 4533b737b25f89a76a742432318e2ece9c1726cb50de471965677c7dd93ea02e
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 6c3ca8bfad277cc9cba84e7552793931440f7961234437e4d4d7c6e8035d6cf6
+    sha256: 32f5717a8cf47b7b780bec81bebd6c82b27881ae74107c953801a9eae3de8943
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 9de1cd30a34169d31ecafb4f91e8e9c0ac9828278f1a0e0c0619274190d43bb2
+    sha256: 6995f1f88792ffff1f7d3465e0ae6ad5d68c58481c5b34e5ac208a1a42cb9bdd
     hash_normalization: git_eol_lf
   - path: inputs/governance/gov_006_wave1_decision_manifest.json
     sha256: 9269df2bfa35ca8e88f7b44d80a0cbb9abb64fc9f79119b3a17e8b0bfdd6cc7d
@@ -25144,19 +25154,19 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 492d961315604eb2f358344eeaf5ea4dbe27b157949b4dd2d4877ac9cefe621b
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
-    sha256: da60140053effa7d09d909195ee6ad8728cdfa5e469eec410373572791d95a2d
+    sha256: 39cbfba6e2c62db55487c051067e14cc17d003c3a39887743bdd17ee910a9f15
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
-    sha256: 2423e6ed32917b2cd7bc3e7e5fd4046cebca238281895b0f1adf38119171782f
+    sha256: 17228a73ff8aec8add8cc953420daa39a6145ea208231f9b04b52a4a9d2aa34b
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
-    sha256: dc9c0de57876774e2c9d892623a5a8daf4050a68097313687e80fd7992be927d
+    sha256: 01169c8e8ae314e0e7fb6be81deb53e41e20a01638bdbaceb2d5fd2fb16870af
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
-    sha256: 0c50d7110c08c8d40e461a694bff6b8473fe4de9351a63ed114e494e367627f9
+    sha256: c3fbd55be4694e21619fb7236813339a69ccf7d8f87a7491654f5e62950c8b9a
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
-    sha256: 03323888a1b24f4c775436bd78accbb40d6e93c4b8652565c21b127dbc3b394f
+    sha256: 0968ffdac7f6d33555efcb0b9ca7acb168a637f919149f92ae17340bdc6d4ec0
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
     sha256: e70eec0f967cf2c6fa19a11a757f4c5c617a803f40ab3e554fd5040bfaca18ed
@@ -25165,25 +25175,28 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: 5120f405e010e62ba086febf0a235f32c91c23866d99be42276259c47b6ca83f
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
-    sha256: 6c5f984d6605c1a64bceac3bb08caabd893683027b70c81851afae052993eb6e
+    sha256: 3ba522255b8e480041a2b4cf7b5e897c29ca6dbe981758f2a570da384732cc9e
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
-    sha256: 8a8b3a407a69addcda174babeeef4ad6946d439770f062cdef0d3294593c3da0
+    sha256: fef48d9e6b017751b4c4962c179873335cf7342195266a3eec9b654b05edb407
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
-    sha256: 7a5920f78aee60ae7b4a8f493551c9b48e7e5e25e30d293fe727ddd599ecb57d
+    sha256: 5f79f743cb018a7cfb369d4bef2064e52cc72326cd6535096d49705cf57769ea
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
-    sha256: b3f1d8fdac4359ab7bc7d1c58584d7c9e60a8b2528aa0a4875255ae94c44c31a
+    sha256: f3c94a4d2156211a910febe1397f8639cab593e5107d915905eede51f520ceb6
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
-    sha256: e9b8a7fc87914b96fc89905a6c98c184572ddb45e8a8a845d4f3f6dd4d657188
+    sha256: e28f04da85d00dafc7f1183fab1ee6d9804be3130afe8d5f35abf38edb347d2e
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
-    sha256: 3152a6059f1e1d55689685ae5396d0246a3997bb126fa056b577d4d12327a401
+    sha256: 013a750ce005f96042b1ca6ccbb92578c4540bf9288aca95cc6ce2cfab5944ba
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
-    sha256: 140bcd2b4c031ffbb4ae47f0156a758110206b5967eac551fd05c756c7cf6023
+    sha256: 8826613e101143aa462deae3a0bab355dc37119837ba291363504d07081fc110
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+    sha256: 6256fb973a6bdf38a8a91ec02a1244555092fb12933609edd3bc79c02149ef11
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/completed/d4/d4fc4bd29b4d23452253c0bc5a7889e5dbd8195817ffd56ac7561a9897c1d9bf.yaml
     sha256: 6051ee16e9c1ea8934b840d032fa5e2c32178c0fe4ed9f76cda3156f37419cd6
@@ -25324,7 +25337,7 @@ phase_arch_005_s4e_checkout_handoff_and_source_reconciliation:
     sha256: ccd62bb88aec86238234487b59e01449cb5e280cec583eed4b35f491da866b1f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: 063d3f804ac022949a3dea7263aa78ddaa2268ccfd96bf8de25d890939e162d4
+    sha256: de6f22f0ac341f8d4202da58162e0aea0ad55a4ddd546b0867ad825d02817c03
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
     sha256: e39468ce2bfaa3785127062e1399ef795a8b709ccc6f6acfabdecba0d0ef6734

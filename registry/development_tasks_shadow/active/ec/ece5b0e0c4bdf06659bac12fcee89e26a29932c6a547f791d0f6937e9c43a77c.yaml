@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  title: null
+  domain: Developer experience / temporary clone, worktree and cache lifecycle
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459
+    owner在各自合入、证据迁移和退出条件满足后清理活动worktree
+  requirement_refs:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
+    clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
+    workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
+    candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 首轮29个直接目标及3个空container清理完成，释放约3.22 GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456
+      GiB；Git worktree无stale registration。dirty scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1949
+    row_sha256: e7ecfe2707904c676a42bf8e94406f247f620b14e117b69bdcc519a6021a1ed4
+    cell_count: 8
+    all_cells:
+    - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+    - Developer experience / temporary clone, worktree and cache lifecycle
+    - P1
+    - BASELINE_DONE
+    - development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459 owner在各自合入、证据迁移和退出条件满足后清理活动worktree
+    - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
+      clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
+      workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
+      candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。
+    - 首轮29个直接目标及3个空container清理完成，释放约3.22 GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456
+      GiB；Git worktree无stale registration。dirty scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。
+    - 2026-07-25：保持`BASELINE_DONE`。累计删除15 worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
+      document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+      effect。
+    raw_line: '|DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP|Developer experience
+      / temporary clone, worktree and cache lifecycle|P1|BASELINE_DONE|development
+      coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459 owner在各自合入、证据迁移和退出条件满足后清理活动worktree|详见
+      `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
+      clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
+      workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
+      candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。|首轮29个直接目标及3个空container清理完成，释放约3.22
+      GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456 GiB；Git worktree无stale registration。dirty
+      scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。|2026-07-25：保持`BASELINE_DONE`。累计删除15
+      worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
+      document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+      effect。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e7ecfe2707904c676a42bf8e
+  task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459
+      owner在各自合入、证据迁移和退出条件满足后清理活动worktree
+    notes: 2026-07-25：保持`BASELINE_DONE`。累计删除15 worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
+      document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+      effect。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e7ecfe2707904c676a42bf8e94406f247f620b14e117b69bdcc519a6021a1ed4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  - Developer experience / temporary clone, worktree and cache lifecycle
+  - P1
+  - BASELINE_DONE
+  - development coordinator：审计dirty scanner与关联index；OPS-070/TRADING-2459 owner在各自合入、证据迁移和退出条件满足后清理活动worktree
+  - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。已按显式allowlist删除完成任务的worktree/local
+    clone/cache；OPS-067的11个历史clone在HEAD ancestry、canonical Full evidence同字节迁移和进程占用复核后全部删除；dirty、未合入或active
+    workspace继续保留。`AGENTS.md`已固化统一依据：合入是必要非充分条件；合入/等价、canonical evidence hash、tracked/untracked/ignored归属和运行依赖全部闭合后，dirty但被后续reviewed
+    candidate取代的中间clone应分类为`REMOVE_SUPERSEDED`并及时清理。
+  - 首轮29个直接目标及3个空container清理完成，释放约3.22 GiB；后续删除11个OPS-067 clone、73,575文件并额外释放1.456
+    GiB；Git worktree无stale registration。dirty scanner须先判定唯一内容；OPS-070/TRADING-2459必须等待合入与证据迁移，不得因空间压力提前删除。
+  - 2026-07-25：保持`BASELINE_DONE`。累计删除15 worktree、13 clone、12 mypy cache及3个空container；OPS-067无残留clone。统一删除依据已进入工程规则与supporting
+    document；当前保留scanner、TRADING-2459与两个OPS-070 worktree，均有明确非删除原因；无数据流、投资逻辑或production
+    effect。
+  docs_links:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  terminal: false
+  raw_row_sha256: e7ecfe2707904c676a42bf8e94406f247f620b14e117b69bdcc519a6021a1ed4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 6a1fbe63a2ab883818516720e17a6246ca72f4bbab2b679e9f912cb53e0e4901

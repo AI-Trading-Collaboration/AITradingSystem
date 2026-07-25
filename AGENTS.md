@@ -212,6 +212,60 @@ Whenever a task moves forward, becomes blocked, is superseded, or is completed,
 update the register in the same change as the code or documentation change that
 caused the status transition.
 
+## Temporary Workspace Lifecycle Discipline
+
+Temporary Git worktrees, local clones, validation snapshots, external cache
+directories, and supervised-run workspaces must have an explicit lifecycle.
+
+Before creating one:
+
+- record the owning task, purpose, absolute path, and exit condition in the
+  supporting requirement or task progress notes when it may survive the current
+  command or Codex turn;
+- use a task-identifiable name and the narrowest safe parent directory;
+- do not create another candidate directory when an existing audited workspace
+  can satisfy the same isolation and reproducibility requirement.
+
+Before task closeout, after a successful commit/push, or after abandoning a
+development attempt:
+
+1. inspect tracked, untracked, and ignored content and confirm whether any
+   evidence or implementation remains unique;
+2. move required evidence to its canonical governed location and verify the
+   destination before cleanup;
+3. confirm no active process or current validation depends on the path;
+4. remove clean Git worktrees with `git worktree remove`, remove disposable
+   clones/caches with an explicit absolute-path allowlist, and run
+   `git worktree prune` when applicable;
+5. report what was removed, what was retained, and whether recovery is possible.
+
+Merge status is necessary but not sufficient for cleanup. A temporary workspace
+whose HEAD or patch has entered the reviewed mainline should be removed when all
+of the following are true:
+
+- the merge is confirmed by commit ancestry or reviewed patch/PR equivalence;
+- every required artifact or validation result exists in its canonical governed
+  location and immutable files match the recorded hashes;
+- tracked, untracked, and ignored content has been audited and contains no
+  unique unsuperseded implementation or evidence;
+- no active process, scheduler entry, current validation, or operational
+  acceptance still depends on the path;
+- the exact deletion allowlist, released size, retained evidence, and
+  recoverability boundary will be recorded in the owning task documentation.
+
+A dirty intermediate clone is not retained merely because its bytes differ from
+the latest mainline. If later reviewed commits or candidates supersede those
+bytes and canonical evidence has been preserved, classify the clone as
+superseded and clean it. Conversely, branch merge alone never authorizes
+deleting unaudited dirty or ignored content.
+
+Abandoning an attempt does not authorize discarding unreviewed changes. Dirty or
+uncertain directories must be preserved until audited. If a temporary directory
+cannot be removed at closeout, record its path, reason, behavioral or evidence
+risk, next owner, and concrete exit condition in `docs/task_register.md` or the
+linked supporting requirement. Leaving temporary directories behind without
+that record is not an acceptable closeout state.
+
 ## Local Commit Discipline
 
 When completing work that was explicitly selected from `docs/task_register.md`

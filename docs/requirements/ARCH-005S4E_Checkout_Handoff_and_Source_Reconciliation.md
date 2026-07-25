@@ -137,6 +137,23 @@ OPS-070 与本任务 required validation 绑定最终 tree。任何自动清理�
 
 ## 状态记录
 
+- 2026-07-25：对当前 `main@fc6313416` 生成首次真实
+  `RECOVERY_AUDIT` handoff（checksum
+  `f90d1e194805225eb4252c26548efce427c25af8a38ae3c9a94c9ef35859c06f`），351项全部
+  归属完成：23 owned、324 generated、3 retained、1 known-unrelated，unattributed=0。
+  首份report（checksum
+  `0d08c7fccaa2021327f5a672c24463d01412c14d46570de5c0bb7ab336bc7394`）
+  严格输出`BLOCKED`：7项`EXACT_TARGET`、15项
+  `SUPERSEDED_IN_TARGET_HISTORY`、324项`GENERATED_INVALIDATED`、3项
+  `RETAIN_UNIQUE`、1项`KNOWN_UNRELATED_NOT_READ`；唯一
+  `TARGET_LINEAGE_MISSING`为OPS-070 requirement迁移前快照。该快照是目标当前
+  requirement的严格前缀，但从未作为exact blob进入target first-parent历史，因此不把
+  “文本已包含”降格为cleanup证明。22项allowlist和324项generated均暂不清理。
+- 2026-07-25：DEVX-001独有`AGENTS.md`规则、supporting requirement与task-register事实已
+  迁入独立reconciliation branch的reviewed change；OPS-070 task row继续采用目标分支更晚的
+  canonical状态，没有用旧main行回退。首次handoff/report保存在
+  `outputs/architecture/arch_005_s4e/`。在OPS requirement旧快照取得可审计preservation
+  lineage且第二份report无blocker前，当前dirty main保持只读，不执行restore/delete。
 - 2026-07-25：首次正式Full=`7254 passed / 4 skipped / 1 failed / 643 warnings`；
   唯一失败为既有`test_reverse_concurrency_keeps_latest_candidate_current`在Full CPU竞争下用
   `sleep(20ms)`假设newest worker必先取得锁，真实结果为older先发布、newest随后合法覆盖，最终

@@ -11,59 +11,66 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: architecture control-plane owner + integration coordinator：实现S0/S1并完成formal
-    validation；S2仅在审计报告PASS后受控收口当前dirty main
+  next_owner: integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed
+    lineage并重跑recovery audit；仅在report无blocker后收口dirty main
   requirement_refs:
   - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
-    worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
+    validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
+    rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-      PASS；automatic cleanup/task mutation/production/broker保持false/none。
+      PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
+      cleanup/task mutation/production/broker保持false/none。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
-    line_number: 1955
-    row_sha256: f0ca653b3a35438f1d93be33fe746ebb481f5b78eb46b6603c8a5e33c0b612ad
+    line_number: 1956
+    row_sha256: b523a8c1cb5b9ad9007d847fd319a456e714b5f27eb40a035aa4c7ec1d222f48
     cell_count: 8
     all_cells:
     - ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
     - Architecture / checkout handoff and source reconciliation
     - P0
     - IN_PROGRESS
-    - architecture control-plane owner + integration coordinator：实现S0/S1并完成formal
-      validation；S2仅在审计报告PASS后受控收口当前dirty main
-    - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
-      worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。
+    - integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed lineage并重跑recovery
+      audit；仅在report无blocker后收口dirty main
+    - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
+      validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
+      rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。
     - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-      PASS；automatic cleanup/task mutation/production/broker保持false/none。
-    - 2026-07-25：owner同意优先修复；只读审计确认351项由319 task-registry generated、5 architecture
-      generated、23 OPS源文件、2 DEVX unique、1 mixed register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
-      worktree实现，不自动修改dirty main。
+      PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
+      cleanup/task mutation/production/broker保持false/none。
+    - 2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7
+      exact、15 history、324 generated、3 retained、1 known-unrelated、1 lineage-missing、0
+      unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS requirement迁移前snapshot的exact
+      preservation lineage。
     raw_line: '|ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION|Architecture
-      / checkout handoff and source reconciliation|P0|IN_PROGRESS|architecture control-plane
-      owner + integration coordinator：实现S0/S1并完成formal validation；S2仅在审计报告PASS后受控收口当前dirty
-      main|详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
-      worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。|protected-main
+      / checkout handoff and source reconciliation|P0|IN_PROGRESS|integration coordinator：保留OPS
+      requirement迁移前exact snapshot的reviewed lineage并重跑recovery audit；仅在report无blocker后收口dirty
+      main|详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
+      validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
+      rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。|protected-main
       mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
       zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-      PASS；automatic cleanup/task mutation/production/broker保持false/none。|2026-07-25：owner同意优先修复；只读审计确认351项由319
-      task-registry generated、5 architecture generated、23 OPS源文件、2 DEVX unique、1 mixed
-      register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
-      worktree实现，不自动修改dirty main。|'
+      PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
+      cleanup/task mutation/production/broker保持false/none。|2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report
+      checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7 exact、15 history、324 generated、3
+      retained、1 known-unrelated、1 lineage-missing、0 unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS
+      requirement迁移前snapshot的exact preservation lineage。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-f0ca653b3a35438f1d93be33
+  event_id: legacy-import-b523a8c1cb5b9ad9007d847f
   task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -76,14 +83,15 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: architecture control-plane owner + integration coordinator：实现S0/S1并完成formal
-      validation；S2仅在审计报告PASS后受控收口当前dirty main
-    notes: 2026-07-25：owner同意优先修复；只读审计确认351项由319 task-registry generated、5 architecture
-      generated、23 OPS源文件、2 DEVX unique、1 mixed register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
-      worktree实现，不自动修改dirty main。
+    next_owner: integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed
+      lineage并重跑recovery audit；仅在report无blocker后收口dirty main
+    notes: 2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7
+      exact、15 history、324 generated、3 retained、1 known-unrelated、1 lineage-missing、0
+      unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS requirement迁移前snapshot的exact
+      preservation lineage。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:f0ca653b3a35438f1d93be33fe746ebb481f5b78eb46b6603c8a5e33c0b612ad
+  - sha256:b523a8c1cb5b9ad9007d847fd319a456e714b5f27eb40a035aa4c7ec1d222f48
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -91,19 +99,22 @@ projection:
   - Architecture / checkout handoff and source reconciliation
   - P0
   - IN_PROGRESS
-  - architecture control-plane owner + integration coordinator：实现S0/S1并完成formal validation；S2仅在审计报告PASS后受控收口当前dirty
-    main
-  - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
-    worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。
+  - integration coordinator：保留OPS requirement迁移前exact snapshot的reviewed lineage并重跑recovery
+    audit；仅在report无blocker后收口dirty main
+  - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。S0/S1与formal
+    validation已完成；首次真实recovery audit对351项零遗漏归属，22项OPS residue已有exact/history证明，324项为generated
+    rebuild，DEVX unique已迁入独立reviewed change，但OPS requirement旧快照从未以exact blob进入target历史。
   - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
     zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
-    PASS；automatic cleanup/task mutation/production/broker保持false/none。
-  - 2026-07-25：owner同意优先修复；只读审计确认351项由319 task-registry generated、5 architecture generated、23
-    OPS源文件、2 DEVX unique、1 mixed register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
-    worktree实现，不自动修改dirty main。
+    PASS；S2第二份report须无blocking/unattributed，unique evidence进入reviewed lineage后才能人工cleanup；automatic
+    cleanup/task mutation/production/broker保持false/none。
+  - 2026-07-25：S0/S1提交`6757f83c2`并推送；首次handoff/report checksums=`f90d1e19...c06f`/`0d08c7fc...394`，结果7
+    exact、15 history、324 generated、3 retained、1 known-unrelated、1 lineage-missing、0
+    unattributed。DEVX规则/requirement/task事实已保留；当前main未执行restore/delete，等待OPS requirement迁移前snapshot的exact
+    preservation lineage。
   docs_links:
   - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
   terminal: false
-  raw_row_sha256: f0ca653b3a35438f1d93be33fe746ebb481f5b78eb46b6603c8a5e33c0b612ad
+  raw_row_sha256: b523a8c1cb5b9ad9007d847fd319a456e714b5f27eb40a035aa4c7ec1d222f48
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 4c94b1e992dc96128604727217b037d6e7527e96778244bd53fc5ce7b3db7fac
+fragment_checksum: db254a6f3e674907b4fdc2c74e9b8f2c3645754b8f8637895c67bd4dfac5147f
