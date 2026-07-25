@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 9a19152fdd801d9df251eab9c172a91d7576a2cd8e8c0f2896f50b317bc59481
+baseline_checksum: 6d24269fd0c867c071b247b2235bcbf75edd4fed3d4c4c8b3f0d288a6920c8c0
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 904
 fragment_count: 904
@@ -335,8 +335,8 @@ fragments:
   fragment_checksum: 8232a58f1c9305f32b885c1aaa50f9fc576070c16f69f725706a9aad3db299b8
 - task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
   path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
-  file_sha256: 8cb1e03b86a7ffd4cb97f8395d1af20205cb94c9893db36cb441c500597579ac
-  fragment_checksum: 3882972fe678b34f7950c1fa0c0fe61a03d5a76aaa5a9b6ec39c2a2306114fb2
+  file_sha256: f48c95bfe72f84c171d10050e160d51a1e0aff7e92694eda0d451f2b7c3d6a08
+  fragment_checksum: 233df73de6badce17504a34651e3eeae322b2c00fa40e309cd5fb188b52fdb6f
 - task_id: DOC-001
   path: registry/development_tasks_shadow/active/35/354f45b40d45c4c35dfda2ceb87a3bf1ce503c82794b875661a811af7398de19.yaml
   file_sha256: 3d8d624d4f9aefb349bb8369dd63bda0b3b3354fc129af81c087d1c0b1bd44af
@@ -3641,8 +3641,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 2e6d397e73f6da04c21d789ba60a8a7c8fdcd8344cc921315ca5c88921bad6f5
-  rendered_sha256: 2e6d397e73f6da04c21d789ba60a8a7c8fdcd8344cc921315ca5c88921bad6f5
+  source_sha256: 7ad8dfac13556131e71075521d68ff637787b0ca9481534f1f80347083f5a847
+  rendered_sha256: 7ad8dfac13556131e71075521d68ff637787b0ca9481534f1f80347083f5a847
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3664,4 +3664,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 34dba5435065960611016bf86b8ded00ce4aa142816a4fb3c643b22858368bb2
+index_checksum: 48f158c12c31a515e39a440597a4058b06c2d34404e932e4598bdf8976ab1e6c

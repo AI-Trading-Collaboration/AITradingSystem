@@ -212,3 +212,38 @@ pathspec排除，未读取、hash或复制其bytes。
 `IN_PROGRESS`以推进TRADING-2459迁移及OPS-070 runtime的独立退出条件。收口验证为
 focused=`64 passed`、architecture-fitness=`646 passed`，runtime artifact=
 `outputs/validation_runtime/architecture-fitness_20260725T181946Z/test_runtime_summary.json`。
+
+## 8. 2026-07-26 TRADING-2458/2459/2460 clean-main integration
+
+scanner清理后，下一风险项为
+`D:\Work\AITradingSystem-TRADING-2459-style-discovery`中的37项在途权威内容。旧worktree
+HEAD=`fc6313416d78f56a29519f41ca564eaa1f90e8ce`已是main祖先，但23个tracked修改与14个
+untracked文件尚未形成可审阅提交；其中同时包含TRADING-2458、TRADING-2459、
+TRADING-2460及共享architecture/task/report权威文件，不能直接删除或将整棵旧worktree
+覆盖到当前main。
+
+本轮先建立隔离集成worktree：
+
+- owning tasks：`TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC`、
+  `TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE`、
+  `TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION`和
+  `DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP`；
+- path：`D:\Work\AITradingSystem_trading2459_integration_20260726`；
+- branch：`codex/trading-2458-2460-integration`；
+- purpose：从当前reviewed main重放37项任务内容，保留main上的后续修复，重新生成共享
+  manifests、task shadow、deprecation inventory和compatibility authority，并执行formal
+  validation；
+- evidence boundary：旧worktree中的任务专属tracked/untracked文档与实现必须先进入Git；
+  ignored运行证据只有在canonical main副本存在且hash一致，或已迁移到受治理位置后才能分类为
+  superseded/rebuildable；
+- exit condition：集成变更通过focused、architecture、contract、report、reproducibility及
+  required Full，commit/push并进入reviewed main；随后复核旧worktree和集成worktree的
+  tracked/untracked/ignored内容、活动进程、canonical evidence与恢复边界，按exact allowlist
+  执行`git worktree remove`和`git worktree prune`。
+
+创建新worktree前已确认旧目录中的两个任务专属ignored输出根为空；对应
+`leveraged_exposure_instrument_evaluation`与
+`decision_target_capability_audit_label_foundation`运行证据已位于主工作区canonical
+`outputs/research_strategies/`根。旧worktree中的contract、architecture和首次失败Full
+runtime artifact也在主工作区存在同路径、同规模副本；删除前仍需逐文件SHA-256复核，
+不能仅以路径或文件数判定等价。
