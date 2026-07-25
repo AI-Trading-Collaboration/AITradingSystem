@@ -266,3 +266,30 @@ Full runtime artifact=
 commit/push进入reviewed main、验证commit ancestry与canonical evidence，然后检查活动进程并
 按exact allowlist移除旧TRADING与临时集成worktree；DEVX-001仍保持`IN_PROGRESS`直到
 OPS-070 runtime满足其独立退出条件。
+
+执行结果：旧worktree的37项内容先以checkpoint commit=`95a26bcac`完整保留，再从
+reviewed main=`3e58b2c6d`重放并修复生成权威冲突；最终集成commit=
+`0f585879650f3433008bbbfbbaf52f47dba1ae15`已纯快进进入`main`并推送到
+`origin/main`。删除前把8组正式验证目录、25个文件、13,924,990 bytes复制到主工作区
+同相对路径，并逐文件复核SHA-256；两个任务专属ignored输出根仍为0 files / 0 bytes，
+没有活动进程引用目标目录。
+
+本轮删除allowlist严格限定为：
+
+- `D:\Work\AITradingSystem-TRADING-2459-style-discovery`
+- `D:\Work\AITradingSystem_trading2459_integration_20260726`
+
+两个worktree均为0项tracked/untracked差异；旧worktree含4,775个ignored文件 /
+200,003,010 bytes，集成worktree含4,399个ignored文件 / 171,083,471 bytes，均由已迁移
+validation evidence之外的可重建cache、编译产物和被正式验证取代的运行中间物组成。执行
+`git worktree remove --force`与`git worktree prune`后，目录和registration均不存在，
+共释放21,289 files / 573,489,392 logical bytes（约546.92 MiB）。
+
+恢复边界：集成实现可从`main`、`origin/main`及
+`origin/codex/trading-2458-2460-integration`恢复；旧在途字节仍可从本地
+`codex/trading-2459-style-discovery`的checkpoint commit恢复；canonical研究输出和正式
+validation evidence保留在主工作区。已删除的ignored cache与非canonical中间物未进入回收站，
+不保证逐字节恢复但可重建。known-unrelated research文档继续按exact pathspec排除，未读取、
+hash、复制或纳入提交。TRADING工作区退出条件已全部满足；DEVX-001继续保持
+`IN_PROGRESS`，仅剩`D:\Work\AITradingSystem_ops_runtime_20260725`的独立合法scheduler验收
+与证据迁移/清理。

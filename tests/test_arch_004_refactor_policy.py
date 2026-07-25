@@ -281,6 +281,27 @@ TRADING_2458_2460_INTEGRATION_SOURCE_PATHS = frozenset(
         "tests/test_arch_004g_deprecation.py",
     }
 )
+DEVX_TRADING_CLEANUP_SECTION = "phase_devx_001_trading_workspace_cleanup"
+DEVX_TRADING_CLEANUP_BASE_COMMIT = "0f585879650f3433008bbbfbbaf52f47dba1ae15"
+DEVX_TRADING_CLEANUP_BASELINE_GIT_BLOB = "7ec44196f606d9f7a6c496f3e69b99cbe4a6e4b1"
+DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT = 1_637_593
+DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_SHA256 = (
+    "ae4ea07b89499ea40fbaa22e0a228d2566f2b07079d5d7c70acb6eb7c85ecda1"
+)
+DEVX_TRADING_CLEANUP_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        (
+            "registry/development_tasks_shadow/active/ec/"
+            "ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml"
+        ),
+        "tests/test_arch_004_refactor_policy.py",
+    }
+)
 OPS_070_NEW_SOURCE_PATHS = frozenset(
     {
         "config/operations/ops_scheduler_checkout.yaml",
@@ -668,6 +689,25 @@ def _trading_2458_2460_integration_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _devx_trading_cleanup_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{DEVX_TRADING_CLEANUP_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == DEVX_TRADING_CLEANUP_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -956,6 +996,27 @@ def _assert_trading_2458_2460_integration_historical_prefix_immutable(
         "TRADING clean-main integration must be appended after the exact "
         "ARCH-005S4D S2 baseline blob"
     )
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_devx_trading_cleanup_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX TRADING cleanup historical prefix differs from the immutable integration blob"
+    assert hashlib.sha256(historical_prefix).hexdigest() == (
+        DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_SHA256
+    )
+    suffix = current_bytes[DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{DEVX_TRADING_CLEANUP_SECTION}:\n".encode()
+    assert suffix.startswith(
+        expected_marker
+    ), "DEVX TRADING cleanup must be appended after the exact integration blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -1430,6 +1491,28 @@ def _trading_2458_2460_integration_superseded_live_source_paths() -> frozenset[s
 def _trading_2458_2460_integration_source_paths() -> frozenset[str]:
     baseline = _compatibility_baseline()
     phase = baseline[TRADING_2458_2460_INTEGRATION_SECTION]
+    sources = phase["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _devx_trading_cleanup_superseded_live_source_paths() -> frozenset[str]:
+    _assert_devx_trading_cleanup_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _devx_trading_cleanup_base_baseline_blob(),
+    )
+    baseline = _compatibility_baseline()
+    phase = baseline[DEVX_TRADING_CLEANUP_SECTION]
+    paths = phase["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _devx_trading_cleanup_source_paths() -> frozenset[str]:
+    baseline = _compatibility_baseline()
+    phase = baseline[DEVX_TRADING_CLEANUP_SECTION]
     sources = phase["sources"]
     assert isinstance(sources, list)
     return frozenset(str(source["path"]) for source in sources)
@@ -1966,12 +2049,27 @@ def _trading_2458_2460_integration_prior_active_source_mismatches() -> frozenset
     return _latest_active_source_mismatches(TRADING_2458_2460_INTEGRATION_SECTION)
 
 
+@cache
+def _devx_trading_cleanup_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(DEVX_TRADING_CLEANUP_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2458_2460_INTEGRATION_SECTION in baseline:
+    if DEVX_TRADING_CLEANUP_SECTION in baseline:
+        current_superseded_paths = _devx_trading_cleanup_superseded_live_source_paths()
+        assert _devx_trading_cleanup_prior_active_source_mismatches() == (
+            current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+        )
+        authority_section = DEVX_TRADING_CLEANUP_SECTION
+    elif TRADING_2458_2460_INTEGRATION_SECTION in baseline:
         current_superseded_paths = _trading_2458_2460_integration_superseded_live_source_paths()
         assert _trading_2458_2460_integration_prior_active_source_mismatches() == (
             current_superseded_paths
@@ -3257,7 +3355,7 @@ def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
 def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority() -> None:
     _assert_current_docs_gov_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     docs_gov = baseline[DOCS_GOV_SECTION]
 
     assert docs_gov["schema_version"] == "docs_gov_001_freshness_closeout.v1"
@@ -3356,7 +3454,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
 def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave12_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     wave12 = baseline[WAVE12_SECTION]
 
     assert wave12["schema_version"] == "arch_004_wave12_g4_d0b_s2_closeout.v1"
@@ -3440,7 +3538,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
 def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> None:
     _assert_current_wave13_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     wave13 = baseline[WAVE13_SECTION]
 
     assert wave13["schema_version"] == "arch_004_wave13_gov006_n1_closeout.v1"
@@ -3699,7 +3797,7 @@ def test_arch_004_wave14_s0_1_is_immutable_historical_hash_authority() -> None:
     section_ids = list(baseline)
     assert section_ids.index(WAVE14_S0_1_SECTION) < section_ids.index(WAVE14_S2_SECTION)
     assert section_ids.index(WAVE14_S2_SECTION) < section_ids.index(OPS_067_SECTION)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     wave14 = baseline[WAVE14_S0_1_SECTION]
 
     assert wave14["schema_version"] == ("arch_004_wave14_s0_1_readiness_infrastructure.v1")
@@ -3917,7 +4015,7 @@ def test_arch_004_wave14_s0_1_rejects_historical_prefix_tamper() -> None:
 def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave14_s2_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     wave14 = baseline[WAVE14_S2_SECTION]
 
     status = wave14["status"]
@@ -4204,7 +4302,7 @@ def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
 def test_ops_067_is_append_only_current_hash_authority() -> None:
     _assert_current_ops_067_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(WAVE14_S2_SECTION) < list(baseline).index(OPS_067_SECTION)
     assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
     ops_067 = baseline[OPS_067_SECTION]
@@ -4385,7 +4483,7 @@ def test_ops_067_rejects_historical_prefix_tamper() -> None:
 def test_ops_068_is_append_only_current_hash_authority() -> None:
     _assert_current_ops_068_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
     ops_068 = baseline[OPS_068_SECTION]
 
@@ -4502,7 +4600,7 @@ def test_ops_068_rejects_historical_prefix_tamper() -> None:
 def test_arch_005s4d_is_append_only_current_hash_authority() -> None:
     _assert_current_arch_005s4d_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(OPS_068_SECTION) < list(baseline).index(ARCH_005S4D_SECTION)
     phase = baseline[ARCH_005S4D_SECTION]
 
@@ -4648,7 +4746,7 @@ def test_arch_005s4d_rejects_historical_prefix_tamper() -> None:
 def test_arch_004_wave15_is_append_only_current_hash_authority() -> None:
     _assert_current_wave15_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(ARCH_005S4D_SECTION) < list(baseline).index(WAVE15_SECTION)
     phase = baseline[WAVE15_SECTION]
 
@@ -4765,7 +4863,7 @@ def test_arch_004_wave15_is_append_only_current_hash_authority() -> None:
 def test_data_gov_001_d0b2b_is_append_only_current_hash_authority() -> None:
     _assert_current_d0b2b_historical_prefix_immutable()
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(WAVE15_SECTION) < list(baseline).index(D0B2B_SECTION)
     phase = baseline[D0B2B_SECTION]
 
@@ -4907,7 +5005,7 @@ def test_ops_069_is_append_only_current_hash_authority() -> None:
         _ops_069_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(D0B2B_SECTION) < list(baseline).index(OPS_069_SECTION)
     phase = baseline[OPS_069_SECTION]
 
@@ -4977,7 +5075,7 @@ def test_ops_070_is_append_only_current_hash_authority() -> None:
         _ops_070_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(OPS_069_SECTION) < list(baseline).index(OPS_070_SECTION)
     phase = baseline[OPS_070_SECTION]
 
@@ -5054,7 +5152,7 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         _arch_005s4e_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(OPS_070_SECTION) < list(baseline).index(ARCH_005S4E_SECTION)
     phase = baseline[ARCH_005S4E_SECTION]
 
@@ -5174,7 +5272,7 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
         _arch_005s4d_s2_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     assert list(baseline).index(ARCH_005S4E_SECTION) < list(baseline).index(ARCH_005S4D_S2_SECTION)
     assert list(baseline).index(ARCH_005S4D_S2_SECTION) < list(baseline).index(
         TRADING_2458_2460_INTEGRATION_SECTION
@@ -5292,7 +5390,7 @@ def test_trading_2458_2460_integration_is_append_only_current_hash_authority() -
         _trading_2458_2460_integration_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_2460_INTEGRATION_SECTION
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
     phase = baseline[TRADING_2458_2460_INTEGRATION_SECTION]
 
     assert phase["schema_version"] == ("trading_2458_2460_clean_main_integration_compatibility.v1")
@@ -5358,7 +5456,7 @@ def test_trading_2458_2460_integration_is_append_only_current_hash_authority() -
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     validation = phase["validation"]
     assert validation["engineering_status"] in {
@@ -5385,6 +5483,105 @@ def test_trading_2458_2460_integration_is_append_only_current_hash_authority() -
         "production_effect": "none",
         "broker_action": "none",
     }
+
+
+def test_devx_trading_cleanup_is_append_only_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    _assert_devx_trading_cleanup_historical_prefix_immutable(
+        current_bytes,
+        _devx_trading_cleanup_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == DEVX_TRADING_CLEANUP_SECTION
+    phase = baseline[DEVX_TRADING_CLEANUP_SECTION]
+
+    assert phase["schema_version"] == "devx_001_trading_workspace_cleanup_compatibility.v1"
+    assert phase["status"] == "COMPLETE_TRADING_WORKSPACE_CLEANUP"
+    assert phase["boundary_id"] == "DEVX-001-TRADING-WORKSPACE-CLEANUP"
+    assert phase["task_ids"] == [
+        "DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP",
+        "TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC",
+        "TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE",
+        "TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION",
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": DEVX_TRADING_CLEANUP_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": DEVX_TRADING_CLEANUP_BASELINE_GIT_BLOB,
+        "raw_byte_count": DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_SHA256,
+        "append_offset": DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["cleanup"] == {
+        "integration_commit": "0f585879650f3433008bbbfbbaf52f47dba1ae15",
+        "source_checkpoint_commit": "95a26bcac11db460840736724226e6a37ff1e07d",
+        "removed_worktrees": [
+            "D:\\Work\\AITradingSystem-TRADING-2459-style-discovery",
+            "D:\\Work\\AITradingSystem_trading2459_integration_20260726",
+        ],
+        "removed_file_count": 21_289,
+        "removed_logical_bytes": 573_489_392,
+        "canonical_validation_group_count": 8,
+        "canonical_validation_file_count": 25,
+        "canonical_validation_bytes": 13_924_990,
+        "canonical_validation_sha256_verified": True,
+        "active_process_reference_count": 0,
+        "worktree_registration_removed": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [
+        WAVE14_S2_PROHIBITED_USER_PATH,
+    ]
+
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _devx_trading_cleanup_prior_active_source_mismatches()
+    assert superseded == DEVX_TRADING_CLEANUP_SOURCE_PATHS
+    assert phase["supersession"] == {
+        "superseded_by_phase": "DEVX-001-TRADING-WORKSPACE-CLEANUP",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2458_2460_INTEGRATION_SECTION,
+        "current_hash_authority": f"{DEVX_TRADING_CLEANUP_SECTION}.sources",
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["source_delta_paths"]) == superseded
+    assert phase["new_source_paths"] == []
+
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == DEVX_TRADING_CLEANUP_SOURCE_PATHS
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["validation"] == {
+        "engineering_status": "FORMAL_VALIDATION_PASS",
+        "focused": "PASS_64",
+        "task_registry": "PASS_BYTE_IDENTICAL",
+        "architecture_devex": "PASS",
+        "worktree_cleanup_audit": "PASS",
+    }
+    assert phase["safety"] == {
+        "task_status_remains_in_progress_for_ops_runtime": True,
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_devx_trading_cleanup_rejects_historical_prefix_tamper() -> None:
+    base_blob = _devx_trading_cleanup_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_devx_trading_cleanup_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
 
 
 def test_trading_2458_2460_integration_rejects_historical_prefix_tamper() -> None:

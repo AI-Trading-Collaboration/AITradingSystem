@@ -25979,3 +25979,96 @@ phase_trading_2458_2460_clean_main_integration:
     paper_shadow_changed: false
     production_effect: none
     broker_action: none
+
+phase_devx_001_trading_workspace_cleanup:
+  schema_version: devx_001_trading_workspace_cleanup_compatibility.v1
+  status: COMPLETE_TRADING_WORKSPACE_CLEANUP
+  boundary_id: DEVX-001-TRADING-WORKSPACE-CLEANUP
+  task_ids:
+  - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+  - TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  - TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  owner_authorization: owner_authorization:DEVX-001:2026-07-26:process_three_existing_worktrees_in_recommended_order
+  prior_sections_immutability:
+    source_commit: 0f585879650f3433008bbbfbbaf52f47dba1ae15
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 7ec44196f606d9f7a6c496f3e69b99cbe4a6e4b1
+    raw_byte_count: 1637593
+    raw_sha256: ae4ea07b89499ea40fbaa22e0a228d2566f2b07079d5d7c70acb6eb7c85ecda1
+    append_offset: 1637593
+    current_section_must_be_eof: true
+  cleanup:
+    integration_commit: 0f585879650f3433008bbbfbbaf52f47dba1ae15
+    source_checkpoint_commit: 95a26bcac11db460840736724226e6a37ff1e07d
+    removed_worktrees:
+    - D:\Work\AITradingSystem-TRADING-2459-style-discovery
+    - D:\Work\AITradingSystem_trading2459_integration_20260726
+    removed_file_count: 21289
+    removed_logical_bytes: 573489392
+    canonical_validation_group_count: 8
+    canonical_validation_file_count: 25
+    canonical_validation_bytes: 13924990
+    canonical_validation_sha256_verified: true
+    active_process_reference_count: 0
+    worktree_registration_removed: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: DEVX-001-TRADING-WORKSPACE-CLEANUP
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2458_2460_clean_main_integration
+    current_hash_authority: phase_devx_001_trading_workspace_cleanup.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - tests/test_arch_004_refactor_policy.py
+  new_source_paths: []
+  sources:
+  - path: docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+    sha256: b5a389ec534262ad6f9e3291c01df08cae97d040727f00dc3bc1304a621db6c5
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: cd5ccd7f0e599b8441ba3b67f2355b6921ffcf1cc6a530392b0475eb27877158
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 4adb0c656ba7ab4f7e90cd4d078b80e02c573a8a0a079735d5696ba8805ef69a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 4a61ed1c1e8e472ebcaf98c2a83e20d46c0fb12d381243be1b2241ad731c60bb
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: d11d9b31819a1492ccf00929617cc0c412f2be6d5c531aaed0768a888d87dda4
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+    sha256: 818bd1656c99417c6016cb7e9d5303f9ed9a056bec683f91a0ba80b45c28e29c
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 1e838beb6267fa9a681a05f6546aef57792a9d5790ac1c578232213ac1d32011
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: FORMAL_VALIDATION_PASS
+    focused: PASS_64
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    worktree_cleanup_audit: PASS
+  safety:
+    task_status_remains_in_progress_for_ops_runtime: true
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    production_effect: none
+    broker_action: none
