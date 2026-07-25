@@ -1,0 +1,109 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
+  title: null
+  domain: Architecture / checkout handoff and source reconciliation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: architecture control-plane owner + integration coordinator：实现S0/S1并完成formal
+    validation；S2仅在审计报告PASS后受控收口当前dirty main
+  requirement_refs:
+  - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
+    worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
+      zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
+      PASS；automatic cleanup/task mutation/production/broker保持false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1955
+    row_sha256: f0ca653b3a35438f1d93be33fe746ebb481f5b78eb46b6603c8a5e33c0b612ad
+    cell_count: 8
+    all_cells:
+    - ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
+    - Architecture / checkout handoff and source reconciliation
+    - P0
+    - IN_PROGRESS
+    - architecture control-plane owner + integration coordinator：实现S0/S1并完成formal
+      validation；S2仅在审计报告PASS后受控收口当前dirty main
+    - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
+      worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。
+    - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
+      zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
+      PASS；automatic cleanup/task mutation/production/broker保持false/none。
+    - 2026-07-25：owner同意优先修复；只读审计确认351项由319 task-registry generated、5 architecture
+      generated、23 OPS源文件、2 DEVX unique、1 mixed register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
+      worktree实现，不自动修改dirty main。
+    raw_line: '|ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION|Architecture
+      / checkout handoff and source reconciliation|P0|IN_PROGRESS|architecture control-plane
+      owner + integration coordinator：实现S0/S1并完成formal validation；S2仅在审计报告PASS后受控收口当前dirty
+      main|详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
+      worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。|protected-main
+      mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
+      zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
+      PASS；automatic cleanup/task mutation/production/broker保持false/none。|2026-07-25：owner同意优先修复；只读审计确认351项由319
+      task-registry generated、5 architecture generated、23 OPS源文件、2 DEVX unique、1 mixed
+      register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
+      worktree实现，不自动修改dirty main。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f0ca653b3a35438f1d93be33
+  task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: architecture control-plane owner + integration coordinator：实现S0/S1并完成formal
+      validation；S2仅在审计报告PASS后受控收口当前dirty main
+    notes: 2026-07-25：owner同意优先修复；只读审计确认351项由319 task-registry generated、5 architecture
+      generated、23 OPS源文件、2 DEVX unique、1 mixed register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
+      worktree实现，不自动修改dirty main。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:f0ca653b3a35438f1d93be33fe746ebb481f5b78eb46b6603c8a5e33c0b612ad
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
+  - Architecture / checkout handoff and source reconciliation
+  - P0
+  - IN_PROGRESS
+  - architecture control-plane owner + integration coordinator：实现S0/S1并完成formal validation；S2仅在审计报告PASS后受控收口当前dirty
+    main
+  - 详见 `docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。OPS-070从共享main迁入clean
+    worktree后，目标分支已继续提交但原checkout残留多版本拼合、DEVX unique bytes及大批generated fanout；S4D只阻断副作用，尚无迁移退出事务。
+  - protected-main mutation guard、immutable `checkout_handoff.v1`、`checkout_reconciliation_report.v1`、exact/history/unique/mixed/generated/stat-only分类、known-unrelated
+    zero-read、tamper/base/lineage fail-close及focused/architecture/contract/integration/reproducibility/Full
+    PASS；automatic cleanup/task mutation/production/broker保持false/none。
+  - 2026-07-25：owner同意优先修复；只读审计确认351项由319 task-registry generated、5 architecture generated、23
+    OPS源文件、2 DEVX unique、1 mixed register与1 CRLF stat-only组成。任务进入`IN_PROGRESS`，从`ops070-closeout@925315059`的clean
+    worktree实现，不自动修改dirty main。
+  docs_links:
+  - docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md
+  terminal: false
+  raw_row_sha256: f0ca653b3a35438f1d93be33fe746ebb481f5b78eb46b6603c8a5e33c0b612ad
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 4c94b1e992dc96128604727217b037d6e7527e96778244bd53fc5ce7b3db7fac

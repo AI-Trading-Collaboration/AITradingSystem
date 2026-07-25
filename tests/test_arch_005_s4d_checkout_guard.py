@@ -32,7 +32,7 @@ def git_checkout(tmp_path: Path) -> Path:
     unrelated = tmp_path / "docs/research/growth_tilt_owner_diagnosis_pack.md"
     unrelated.parent.mkdir(parents=True)
     unrelated.write_text("owner bytes v1\n", encoding="utf-8")
-    _git(tmp_path, "init")
+    _git(tmp_path, "init", "-b", "fixture")
     _git(tmp_path, "config", "user.email", "checkout-guard@example.com")
     _git(tmp_path, "config", "user.name", "Checkout Guard Test")
     _git(tmp_path, "add", ".")
@@ -65,8 +65,54 @@ def test_workspace_identity_is_checkout_scoped_and_records_lineage(
     assert identity.workspace_id.startswith("checkout-")
     assert Path(identity.checkout_root) == git_checkout.resolve()
     assert len(identity.head_commit) == 40
+    assert identity.branch_name == "fixture"
     assert identity.upstream_ref is None
     assert identity.upstream_commit is None
+
+
+def test_main_branch_requires_integration_coordinator_for_mutation(
+    git_checkout: Path,
+) -> None:
+    _git(git_checkout, "branch", "-m", "main")
+    guard = _guard(git_checkout)
+
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_PROTECTED_BRANCH_DOMAIN_MUTATION",
+    ):
+        _acquire_mutation(
+            guard,
+            intent_id="main-domain",
+            task_id="TASK-A",
+            owned_paths=("src/a.py",),
+        )
+
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_PROTECTED_BRANCH_COORDINATOR_REQUIRED",
+    ):
+        guard.acquire(
+            intent_id="main-shared-wrong-actor",
+            task_id="TASK-A",
+            thread_id="thread-task-a",
+            actor="architecture-control-plane",
+            operation_class=CheckoutOperationClass.SHARED_MUTATION,
+            shared_paths=("src/a.py",),
+            now=NOW,
+        )
+
+    decision, handle = guard.acquire(
+        intent_id="main-shared-coordinator",
+        task_id="TASK-A",
+        thread_id="thread-task-a",
+        actor="integration-coordinator",
+        operation_class=CheckoutOperationClass.SHARED_MUTATION,
+        shared_paths=("src/a.py",),
+        now=NOW,
+    )
+    assert decision.status == "PASS"
+    assert handle is not None
+    handle.release(outcome="completed", at=NOW + timedelta(seconds=1))
 
 
 def test_disjoint_domain_mutations_remain_parallel_but_daily_is_exclusive(

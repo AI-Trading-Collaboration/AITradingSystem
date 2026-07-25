@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import time
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path, PurePosixPath
+from threading import Event
 from typing import Any
 
 import pytest
@@ -616,6 +616,7 @@ def test_monotonic_gate_rejects_stale_as_of_and_generated_at(
 
 def test_reverse_concurrency_keeps_latest_candidate_current(tmp_path: Path) -> None:
     store = tmp_path / "store"
+    newest_published = Event()
     cases = {
         index: _case(
             tmp_path,
@@ -627,9 +628,12 @@ def test_reverse_concurrency_keeps_latest_candidate_current(tmp_path: Path) -> N
     }
 
     def publish(index: int) -> str:
-        # Submit newest first and delay progressively older candidates. The lock
-        # must serialize them, while the monotonic gate rejects stale followers.
-        time.sleep((4 - index) * 0.02)
+        # A sleep-based ordering assertion becomes nondeterministic when the Full
+        # suite heavily contends for CPU. Keep all four workers concurrent, but
+        # release the three stale contenders only after the newest publication
+        # commits; they still race for the same lock and must all fail monotonicity.
+        if index != 4:
+            assert newest_published.wait(timeout=10)
         try:
             publish_immutable_snapshot(
                 store_root=store,
@@ -639,6 +643,9 @@ def test_reverse_concurrency_keeps_latest_candidate_current(tmp_path: Path) -> N
             )
         except DataPublicationConflictError:
             return "CONFLICT"
+        finally:
+            if index == 4:
+                newest_published.set()
         return "PUBLISHED"
 
     with ThreadPoolExecutor(max_workers=4) as pool:

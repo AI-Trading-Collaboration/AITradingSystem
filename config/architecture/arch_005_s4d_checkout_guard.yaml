@@ -1,6 +1,6 @@
 schema_version: arch_005_s4d_checkout_guard_policy.v1
 policy_id: arch_005_s4d_checkout_guard
-version: 1.0.0
+version: 1.1.0
 status: OWNER_APPROVED_S0_S1
 owner: architecture_control_plane_owner
 approved_by: project_owner
@@ -33,6 +33,13 @@ workspace:
   identity_method: resolved_checkout_and_git_common_dir_sha256
   require_exact_head: true
   require_git_checkout: true
+protected_branch_mutation:
+  approval_ref: owner_decision:ARCH-005S4E:2026-07-25:approve_checkout_handoff_reconciliation_v1
+  branches:
+    - main
+  domain_mutation_allowed: false
+  shared_mutation_actors:
+    - integration-coordinator
 operation_classes:
   domain_mutation:
     workspace_gate_access: READ

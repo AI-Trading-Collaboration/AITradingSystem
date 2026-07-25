@@ -506,6 +506,13 @@ Smoothed链列为下一工程候选，同时禁止用本次总wall宣称全局�
   但任何仍修改共享执行入口的工作不得与Wave15集成并发。
 - ARCH-005 S5 source-of-truth cutover 后置，必须单独授权并在真实双线 telemetry 足够后评估；不得与
   另一项中央 shared-architecture 变更并行。
+- OPS-070真实迁移暴露source checkout closeout缺口后，owner于2026-07-25批准
+  `ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION`。后续从共享checkout迁往isolated
+  worktree必须在复制时冻结`checkout_handoff.v1`，在目标reviewed first-parent历史形成后生成
+  `checkout_reconciliation_report.v1`；只有exact target/history-proven residue可进入
+  coordinator cleanup allowlist。`main`受保护为coordinator-only shared mutation，domain writer
+  不得直接写入；unique/mixed/unattributed保留并阻断，generated views只在最终canonical source
+  上重建。该机制不自动restore/delete/commit/merge/push，也不是S5授权。
 
 ### Wave 11：G2.5 readiness + Data Foundation D0A + GOV-006 N0（formal PASS）
 

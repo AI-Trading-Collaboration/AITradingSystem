@@ -1,0 +1,49 @@
+schema_version: arch_005_s4e_checkout_reconciliation_policy.v1
+policy_id: arch_005_s4e_checkout_reconciliation
+version: 1.0.0
+status: OWNER_APPROVED_S0_S1
+owner: architecture_control_plane_owner
+approved_by: project_owner
+approval_ref: owner_decision:ARCH-005S4E:2026-07-25:approve_checkout_handoff_reconciliation_v1
+rationale: >-
+  S4D能够阻断dirty/unattributed checkout的运行副作用，但OPS-070真实迁移证明，
+  source checkout在isolated target提交后仍可能保留多版本拼合、unique bytes与generated
+  fanout。迁移必须成为可重放、可验证、fail-closed的退出事务。
+intended_effect: >-
+  保护main为coordinator-only mutation checkout，并通过immutable handoff和reconciliation
+  report证明哪些source residue已被目标历史取代、哪些必须保留或人工拆分。
+checkout_guard_policy:
+  path: config/architecture/arch_005_s4d_checkout_guard.yaml
+  policy_id: arch_005_s4d_checkout_guard
+  version: 1.1.0
+path_roles:
+  - owned
+  - generated
+  - retained
+  - known_unrelated
+cleanup_eligible_classifications:
+  - EXACT_TARGET
+  - SUPERSEDED_IN_TARGET_HISTORY
+blocking_classifications:
+  - MIXED_SPLIT_REQUIRED
+  - TARGET_LINEAGE_MISSING
+  - UNATTRIBUTED_DIRTY
+known_unrelated_exclusions:
+  - path: docs/research/growth_tilt_owner_diagnosis_pack.md
+    rationale: >-
+      既有user-owned research文档不属于ARCH-005S4E迁移；仅允许exact pathspec
+      exclusion，不读取、hash或复制其bytes。
+    owner_ref: owner_scope_preservation_2026-07-24
+safety:
+  automatic_cleanup_allowed: false
+  automatic_restore_allowed: false
+  automatic_delete_allowed: false
+  automatic_commit_allowed: false
+  automatic_merge_allowed: false
+  automatic_push_allowed: false
+  automatic_task_mutation: false
+  task_source_cutover: false
+  strategy_logic_change: false
+  strategy_threshold_change: false
+  production_effect: none
+  broker_action: none

@@ -48,7 +48,7 @@ task 或 scheduler automation 在同一 checkout 读取半写状态或成为第�
 - 记录本次 incident 与禁止的半写读取、双写和隐式接管路径。
 
 Owner-reviewed S0 matrix由
-`config/architecture/arch_005_s4d_checkout_guard.yaml@1.0.0`冻结：
+`config/architecture/arch_005_s4d_checkout_guard.yaml@1.1.0`冻结：
 
 |Operation class|Workspace gate|Path claim|与daily关系|允许的并行|
 |---|---|---|---|---|
@@ -60,6 +60,13 @@ Owner-reviewed S0 matrix由
 路径冲突按casefold后的ancestor/descendant关系判断。workspace identity由resolved checkout与Git common
 dir生成稳定SHA identity，并记录exact HEAD/upstream；lease authority继续使用
 `execution_lease.v1` / `execution_lease_event.v1`，不新增第三套锁。
+
+2026-07-25 的 v1.1 additive policy由
+`owner_decision:ARCH-005S4E:2026-07-25:approve_checkout_handoff_reconciliation_v1`
+批准：受保护`main`拒绝`domain_mutation`，`shared_mutation`只允许
+`integration-coordinator`。它复用同一guard authority，具体handoff/reconciliation退出事务由
+`ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION`负责；不扩大daily operation、
+自动集成、task source、production或broker权限。
 
 ### S1 Narrow local guard
 

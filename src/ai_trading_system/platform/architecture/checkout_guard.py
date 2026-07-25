@@ -84,6 +84,9 @@ class CheckoutGuardPolicy:
     identity_method: str
     require_exact_head: bool
     require_git_checkout: bool
+    protected_branches: tuple[str, ...]
+    protected_branch_domain_mutation_allowed: bool
+    protected_branch_shared_mutation_actors: tuple[str, ...]
     operation_gate_access: tuple[tuple[CheckoutOperationClass, ContractAccess], ...]
     lease_ttl_seconds: int
     heartbeat_interval_seconds: int
@@ -108,6 +111,7 @@ class CheckoutIdentity:
     checkout_root: str
     git_common_dir: str
     head_commit: str
+    branch_name: str | None
     upstream_ref: str | None
     upstream_commit: str | None
 
@@ -117,6 +121,7 @@ class CheckoutIdentity:
             "checkout_root": self.checkout_root,
             "git_common_dir": self.git_common_dir,
             "head_commit": self.head_commit,
+            "branch_name": self.branch_name,
             "upstream_ref": self.upstream_ref,
             "upstream_commit": self.upstream_commit,
         }
@@ -284,6 +289,23 @@ class CheckoutLeaseGuard:
         if actor not in self.policy.allowlisted_actors:
             raise CheckoutGuardError("CHECKOUT_ACTOR_NOT_ALLOWLISTED", actor)
         identity = resolve_checkout_identity(self.project_root)
+        if identity.branch_name in self.policy.protected_branches:
+            if (
+                operation_class is CheckoutOperationClass.DOMAIN_MUTATION
+                and not self.policy.protected_branch_domain_mutation_allowed
+            ):
+                raise CheckoutGuardError(
+                    "CHECKOUT_PROTECTED_BRANCH_DOMAIN_MUTATION",
+                    identity.branch_name,
+                )
+            if (
+                operation_class is CheckoutOperationClass.SHARED_MUTATION
+                and actor not in self.policy.protected_branch_shared_mutation_actors
+            ):
+                raise CheckoutGuardError(
+                    "CHECKOUT_PROTECTED_BRANCH_COORDINATOR_REQUIRED",
+                    f"{identity.branch_name}:{actor}",
+                )
         checked_base = base_commit or identity.head_commit
         if self.policy.require_exact_head and checked_base != identity.head_commit:
             raise CheckoutGuardError(
@@ -557,6 +579,10 @@ def load_checkout_guard_policy(path: Path) -> CheckoutGuardPolicy:
         raise CheckoutGuardError("CHECKOUT_POLICY_STATUS", str(payload.get("status")))
     authority = _mapping(payload.get("authority"), "authority")
     workspace = _mapping(payload.get("workspace"), "workspace")
+    protected = _mapping(
+        payload.get("protected_branch_mutation"),
+        "protected_branch_mutation",
+    )
     operations = _mapping(payload.get("operation_classes"), "operation_classes")
     lease = _mapping(payload.get("lease"), "lease")
     safety = _mapping(payload.get("safety"), "safety")
@@ -645,6 +671,18 @@ def load_checkout_guard_policy(path: Path) -> CheckoutGuardPolicy:
             workspace.get("require_git_checkout"),
             "require_git_checkout",
         ),
+        protected_branches=_strings(
+            protected.get("branches"),
+            "protected_branches",
+        ),
+        protected_branch_domain_mutation_allowed=_boolean(
+            protected.get("domain_mutation_allowed"),
+            "domain_mutation_allowed",
+        ),
+        protected_branch_shared_mutation_actors=_strings(
+            protected.get("shared_mutation_actors"),
+            "shared_mutation_actors",
+        ),
         operation_gate_access=tuple(operation_gate_access),
         lease_ttl_seconds=_positive_int(lease.get("ttl_seconds"), "ttl_seconds"),
         heartbeat_interval_seconds=_positive_int(
@@ -678,6 +716,19 @@ def load_checkout_guard_policy(path: Path) -> CheckoutGuardPolicy:
             "CHECKOUT_POLICY_HEARTBEAT_INTERVAL",
             "heartbeat interval must be shorter than lease TTL",
         )
+    if policy.protected_branch_domain_mutation_allowed:
+        raise CheckoutGuardError(
+            "CHECKOUT_POLICY_PROTECTED_BRANCH_DOMAIN_MUTATION",
+            "protected branch domain mutation must remain false",
+        )
+    if any(
+        actor not in policy.allowlisted_actors
+        for actor in policy.protected_branch_shared_mutation_actors
+    ):
+        raise CheckoutGuardError(
+            "CHECKOUT_POLICY_PROTECTED_BRANCH_ACTOR",
+            "shared mutation actor must be allowlisted",
+        )
     return policy
 
 
@@ -697,6 +748,11 @@ def resolve_checkout_identity(project_root: Path) -> CheckoutIdentity:
     )
     common_dir = Path(common_text).resolve()
     head = _git_output(root, ("rev-parse", "--verify", "HEAD"), required=True)
+    branch_name = _git_output(
+        root,
+        ("symbolic-ref", "--quiet", "--short", "HEAD"),
+        required=False,
+    )
     upstream_ref = _git_output(
         root,
         ("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"),
@@ -719,6 +775,7 @@ def resolve_checkout_identity(project_root: Path) -> CheckoutIdentity:
         checkout_root=str(checkout_root),
         git_common_dir=str(common_dir),
         head_commit=head,
+        branch_name=branch_name,
         upstream_ref=upstream_ref,
         upstream_commit=upstream_commit,
     )

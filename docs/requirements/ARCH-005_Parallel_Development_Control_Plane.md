@@ -107,6 +107,20 @@ source-of-truth，不授权production或broker。窄版最终证据为focused=`9
 architecture/contract/integration/reproducibility=`593/274/993/23 passed`，failure-fix
 Full=`7136 passed / 3 skipped / 643 warnings`。
 
+### S4E Checkout Handoff 与 Source Reconciliation（IN PROGRESS）
+
+OPS-070从共享`main`复制到isolated worktree后，目标分支已提交但source checkout未被强制
+reconcile；DEVX-001又刷新task shadow与architecture manifests，最终形成351个dirty状态项。
+S4D能阻断半写状态进入业务运行，却不能证明source residue已被target history取代。S4E因此把
+protected-main mutation、immutable `checkout_handoff.v1`、first-parent
+`checkout_reconciliation_report.v1`与generated-view coordinator rebuild组成退出事务。
+
+完整边界、分类与验收见
+`docs/requirements/ARCH-005S4E_Checkout_Handoff_and_Source_Reconciliation.md`。
+只有`EXACT_TARGET`和`SUPERSEDED_IN_TARGET_HISTORY`可进入人工coordinator allowlist；
+unique/mixed/lineage missing/unattributed必须保留并fail closed。S4E不自动restore/delete/commit/
+merge/push，不授权S5、task source cutover、production或broker。
+
 ## 决策
 
 后续并行研发不能继续依赖一份由所有 worker 共同编辑的 Markdown 任务表。系统需要一个 Git-native、可审计、可重放、fail-closed 的并行研发控制平面，负责从需求、依赖和资源边界推导可运行任务，分配 execution lane，收集验证证据，并把状态、原因、结果和后续动作投影为人类可读视图。
@@ -548,6 +562,11 @@ validated-main integration 授权；任何扩大 lane capacity、切换 source-o
 
 ## 状态记录
 
+- 2026-07-25：owner批准先修复isolated迁移后dirty-main残留。新增
+  `ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION`，S0/S1实现protected-main
+  coordinator-only mutation、immutable handoff、first-parent source/target reconciliation和
+  fail-closed classification；当前main的351项只读审计与DEVX unique迁移属于S2，S1正式验证
+  PASS前不得清理。自动restore/delete/commit/merge/push与task source cutover保持false。
 - 2026-07-24：S4D窄版S0/S1完成并转`BASELINE_DONE`。Focused=`92 passed`；
   architecture/contract/integration/reproducibility=`593/274/993/23 passed`；首次Full的2个失败
   仅定位到历史兼容性consumer的current-hash authority合同，修复后的failure-fix
