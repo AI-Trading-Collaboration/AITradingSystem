@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER
+  title: null
+  domain: Operations / capture-first daily inputs and XNYS session gap ledger
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: OPS-070 operations owner：继续下一合法 scheduler run 的 PIT/score/Reader Brief
+    branch-isolation 验收
+  requirement_refs:
+  - docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md`。OPS-069
+    逐源保全与连续 XNYS gap ledger 已闭合；更后层的 source/consumer dependency、PIT projection 与 artifact
+    ownership 已由 OPS-070 承接，不再作为本任务 blocker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: S1～S4 capture-first、date-scoped artifacts、manifest/validation、gap ledger、recovery
+      queue、consumer safety 与正式门禁完成；独立 runtime checkout 的真实 `2026-07-24` manifest
+      为 validated `PARTIAL_CAPTURE`，一个 component 失败时另外四个继续保全；ledger 从 reviewed tracking
+      start 连续覆盖该 session；无 strict PIT backfill、weights、broker 或 trading action。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 508
+    row_sha256: b86489635455adb65f461fd310e9637b259bfcf12eb17a0b638065687c990dd1
+    cell_count: 8
+    all_cells:
+    - OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER
+    - Operations / capture-first daily inputs and XNYS session gap ledger
+    - P0
+    - DONE
+    - OPS-070 operations owner：继续下一合法 scheduler run 的 PIT/score/Reader Brief branch-isolation
+      验收
+    - 详见 `docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md`。OPS-069
+      逐源保全与连续 XNYS gap ledger 已闭合；更后层的 source/consumer dependency、PIT projection 与
+      artifact ownership 已由 OPS-070 承接，不再作为本任务 blocker。
+    - S1～S4 capture-first、date-scoped artifacts、manifest/validation、gap ledger、recovery
+      queue、consumer safety 与正式门禁完成；独立 runtime checkout 的真实 `2026-07-24` manifest
+      为 validated `PARTIAL_CAPTURE`，一个 component 失败时另外四个继续保全；ledger 从 reviewed tracking
+      start 连续覆盖该 session；无 strict PIT backfill、weights、broker 或 trading action。
+    - 2026-07-27：当前 focused 复验 `67 passed`；真实 validation/recovery queue 均 `PASS /
+      issue_count=0`、`consumer_cutover_allowed=false`。任务从 `IN_PROGRESS` 纠正为 `DONE`；OPS-070
+      保持 `VALIDATING`，等待其独立运营退出条件。
+    raw_line: '|OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER|Operations / capture-first
+      daily inputs and XNYS session gap ledger|P0|DONE|OPS-070 operations owner：继续下一合法
+      scheduler run 的 PIT/score/Reader Brief branch-isolation 验收|详见 `docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md`。OPS-069
+      逐源保全与连续 XNYS gap ledger 已闭合；更后层的 source/consumer dependency、PIT projection 与
+      artifact ownership 已由 OPS-070 承接，不再作为本任务 blocker。|S1～S4 capture-first、date-scoped
+      artifacts、manifest/validation、gap ledger、recovery queue、consumer safety 与正式门禁完成；独立
+      runtime checkout 的真实 `2026-07-24` manifest 为 validated `PARTIAL_CAPTURE`，一个
+      component 失败时另外四个继续保全；ledger 从 reviewed tracking start 连续覆盖该 session；无 strict
+      PIT backfill、weights、broker 或 trading action。|2026-07-27：当前 focused 复验 `67 passed`；真实
+      validation/recovery queue 均 `PASS / issue_count=0`、`consumer_cutover_allowed=false`。任务从
+      `IN_PROGRESS` 纠正为 `DONE`；OPS-070 保持 `VALIDATING`，等待其独立运营退出条件。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b86489635455adb65f461fd3
+  task_id: OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: OPS-070 operations owner：继续下一合法 scheduler run 的 PIT/score/Reader Brief
+      branch-isolation 验收
+    notes: 2026-07-27：当前 focused 复验 `67 passed`；真实 validation/recovery queue 均 `PASS
+      / issue_count=0`、`consumer_cutover_allowed=false`。任务从 `IN_PROGRESS` 纠正为 `DONE`；OPS-070
+      保持 `VALIDATING`，等待其独立运营退出条件。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b86489635455adb65f461fd310e9637b259bfcf12eb17a0b638065687c990dd1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER
+  - Operations / capture-first daily inputs and XNYS session gap ledger
+  - P0
+  - DONE
+  - OPS-070 operations owner：继续下一合法 scheduler run 的 PIT/score/Reader Brief branch-isolation
+    验收
+  - 详见 `docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md`。OPS-069
+    逐源保全与连续 XNYS gap ledger 已闭合；更后层的 source/consumer dependency、PIT projection 与 artifact
+    ownership 已由 OPS-070 承接，不再作为本任务 blocker。
+  - S1～S4 capture-first、date-scoped artifacts、manifest/validation、gap ledger、recovery
+    queue、consumer safety 与正式门禁完成；独立 runtime checkout 的真实 `2026-07-24` manifest 为
+    validated `PARTIAL_CAPTURE`，一个 component 失败时另外四个继续保全；ledger 从 reviewed tracking
+    start 连续覆盖该 session；无 strict PIT backfill、weights、broker 或 trading action。
+  - 2026-07-27：当前 focused 复验 `67 passed`；真实 validation/recovery queue 均 `PASS / issue_count=0`、`consumer_cutover_allowed=false`。任务从
+    `IN_PROGRESS` 纠正为 `DONE`；OPS-070 保持 `VALIDATING`，等待其独立运营退出条件。
+  docs_links:
+  - docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md
+  terminal: true
+  raw_row_sha256: b86489635455adb65f461fd310e9637b259bfcf12eb17a0b638065687c990dd1
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 48e2d57d5475382ca8a0ea651f3a51d2bcd10f6f01aba820a009b63db76cb648

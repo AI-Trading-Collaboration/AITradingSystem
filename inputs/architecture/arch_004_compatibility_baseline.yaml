@@ -28351,3 +28351,95 @@ phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate:
     cached_data_mutated: false
     production_effect: none
     broker_action: none
+
+phase_ops_069_daily_input_capture_terminal_archive:
+  schema_version: ops_069_daily_input_capture_terminal_archive_compatibility.v1
+  status: COMPLETE
+  boundary_id: OPS-069-TERMINAL-ARCHIVE
+  task_ids:
+  - OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER
+  owner_authorization: task_register_completed:OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER:DONE
+  prior_sections_immutability:
+    source_commit: 0e4d5a862855b88dacb48a539985b77b41757479
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 92aca5c09f20d41b587a786ebe371c57928320d5
+    raw_byte_count: 1771189
+    raw_sha256: 0b41765c7bb8d49a12416d4b1dfaa88a8912578b423cd80e54a65ca3a7291ea4
+    append_offset: 1771189
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/e2/e243dd6b7a896e38db785f5f6f8a288efeecaada3c5bc24278ab62fe476b0ba9.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: OPS-069-TERMINAL-ARCHIVE
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_ARCHIVE_MOVE
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate
+    current_hash_authority: phase_ops_069_daily_input_capture_terminal_archive.sources
+  removed_live_source_paths:
+  - registry/development_tasks_shadow/active/e2/e243dd6b7a896e38db785f5f6f8a288efeecaada3c5bc24278ab62fe476b0ba9.yaml
+  new_source_paths:
+  - registry/development_tasks_shadow/completed/e2/e243dd6b7a896e38db785f5f6f8a288efeecaada3c5bc24278ab62fe476b0ba9.yaml
+  source_delta_paths:
+  - docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/completed/e2/e243dd6b7a896e38db785f5f6f8a288efeecaada3c5bc24278ab62fe476b0ba9.yaml
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: docs/requirements/OPS-069_Daily_Input_Capture_and_Session_Gap_Ledger.md
+    sha256: 36976eb7393fdb6b1e2ffe5d0b0df6b74bc822c53f1bf1711b6a71a9d12cf72d
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 83ac109a677ad6f7c0330d421f1eb44fbae80958d2346e628e8b4609eaa60a29
+    hash_normalization: git_eol_lf
+  - path: docs/task_register_completed.md
+    sha256: 7b667e6d23c0d8b059b935b386d0d86b3b47f02ec429668cfe3a7c8c8b4da9f8
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: be22c22b94603096607791a582ca03c580b1ad4ead6667fcb071cb5af1cc9daf
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 6e787e38fc43ff39b5a1cbaa0a4b0f9e33c5e8f4b73fb1d8e2400d94ff35b896
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 4237d9bf43585847e0153aa9478498a673258839067cdc56c331a6d2b4f9ef9d
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/e2/e243dd6b7a896e38db785f5f6f8a288efeecaada3c5bc24278ab62fe476b0ba9.yaml
+    sha256: 5ef3d8e1d6c03c5684074d151a47e50930c9487743c9c179cba47244e2ef7934
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: a11410c4105fdef13cf16d3a76ffdd886108377da818c52b86a711dabb36de76
+    hash_normalization: git_eol_lf
+  validation:
+    focused_ops: PASS_67
+    runtime_capture_validation: PASS_ISSUE_COUNT_0
+    runtime_recovery_queue_validation: PASS_ISSUE_COUNT_0
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture_initial_attempt: FAIL_678_PASS_4_FAIL_HISTORICAL_SUPERSESSION_BOUND
+    architecture: PASS_682
+    contract: PASS_275
+  safety:
+    governance_status_correction_only: true
+    runtime_behavior_changed: false
+    data_flow_changed: false
+    runtime_artifacts_read: true
+    cached_data_read: false
+    cached_data_mutated: false
+    strict_pit_backfill_executed: false
+    consumer_cutover_allowed: false
+    weights_changed: false
+    production_effect: none
+    broker_action: none

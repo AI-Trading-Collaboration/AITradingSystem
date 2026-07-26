@@ -512,6 +512,34 @@ ARCH_004G2_PAPER_WEEKLY_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
+OPS_069_TERMINAL_ARCHIVE_SECTION = (
+    "phase_ops_069_daily_input_capture_terminal_archive"
+)
+OPS_069_TERMINAL_ARCHIVE_BASE_COMMIT = (
+    "0e4d5a862855b88dacb48a539985b77b41757479"
+)
+OPS_069_TERMINAL_ARCHIVE_BASELINE_GIT_BLOB = (
+    "92aca5c09f20d41b587a786ebe371c57928320d5"
+)
+OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT = 1_771_189
+OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_SHA256 = (
+    "0b41765c7bb8d49a12416d4b1dfaa88a8912578b423cd80e54a65ca3a7291ea4"
+)
+LATEST_COMPATIBILITY_SECTION = OPS_069_TERMINAL_ARCHIVE_SECTION
+OPS_069_ACTIVE_TASK_SHADOW_PATH = (
+    "registry/development_tasks_shadow/active/e2/"
+    "e243dd6b7a896e38db785f5f6f8a288efeecaada3c5bc24278ab62fe476b0ba9.yaml"
+)
+OPS_069_COMPLETED_TASK_SHADOW_PATH = (
+    "registry/development_tasks_shadow/completed/e2/"
+    "e243dd6b7a896e38db785f5f6f8a288efeecaada3c5bc24278ab62fe476b0ba9.yaml"
+)
+OPS_069_TERMINAL_ARCHIVE_NEW_SOURCE_PATHS = frozenset(
+    {OPS_069_COMPLETED_TASK_SHADOW_PATH}
+)
+OPS_069_TERMINAL_ARCHIVE_REMOVED_SOURCE_PATHS = frozenset(
+    {OPS_069_ACTIVE_TASK_SHADOW_PATH}
+)
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -1234,6 +1262,26 @@ def _arch_004g2_paper_weekly_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _ops_069_terminal_archive_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{OPS_069_TERMINAL_ARCHIVE_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == OPS_069_TERMINAL_ARCHIVE_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -1881,6 +1929,37 @@ def _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
     expected_marker = f"\n{ARCH_004G2_PAPER_WEEKLY_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker), (
         "paper-weekly authority must be appended after the exact TRADING-2461 blob"
+    )
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_ops_069_terminal_archive_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[
+        :OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT
+    ]
+    assert historical_prefix == base_blob, (
+        "OPS-069 terminal-archive historical prefix differs from the immutable "
+        "paper-weekly blob"
+    )
+    assert (
+        hashlib.sha256(historical_prefix).hexdigest()
+        == OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_SHA256
+    )
+    suffix = current_bytes[
+        OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT:
+    ]
+    expected_marker = f"\n{OPS_069_TERMINAL_ARCHIVE_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker), (
+        "OPS-069 terminal-archive authority must be appended after the exact "
+        "paper-weekly blob"
     )
     assert current_bytes.count(expected_marker) == 1
 
@@ -2714,6 +2793,28 @@ def _arch_004g2_paper_weekly_source_paths() -> frozenset[str]:
 
 
 @cache
+def _ops_069_terminal_archive_superseded_live_source_paths() -> frozenset[str]:
+    _assert_ops_069_terminal_archive_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_069_terminal_archive_base_baseline_blob(),
+    )
+    baseline = _compatibility_baseline()
+    phase = baseline[OPS_069_TERMINAL_ARCHIVE_SECTION]
+    paths = phase["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _ops_069_terminal_archive_source_paths() -> frozenset[str]:
+    baseline = _compatibility_baseline()
+    phase = baseline[OPS_069_TERMINAL_ARCHIVE_SECTION]
+    sources = phase["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -2749,6 +2850,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _trading_2461_source_paths()
     if ARCH_004G2_PAPER_WEEKLY_SECTION in baseline:
         paths |= _arch_004g2_paper_weekly_source_paths()
+    if OPS_069_TERMINAL_ARCHIVE_SECTION in baseline:
+        paths |= _ops_069_terminal_archive_source_paths()
     return paths
 
 
@@ -3352,12 +3455,47 @@ def _arch_004g2_paper_weekly_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(ARCH_004G2_PAPER_WEEKLY_SECTION)
 
 
+@cache
+def _ops_069_terminal_archive_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(OPS_069_TERMINAL_ARCHIVE_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if ARCH_004G2_PAPER_WEEKLY_SECTION in baseline:
+    if OPS_069_TERMINAL_ARCHIVE_SECTION in baseline:
+        current_superseded_paths = (
+            _ops_069_terminal_archive_superseded_live_source_paths()
+        )
+        assert (
+            _ops_069_terminal_archive_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+            | _trading_2459_doc_closeout_source_paths()
+            | _data_gov_002_source_paths()
+            | _devx_002_source_paths()
+            | _devx_002_push_v2_source_paths()
+            | _arch_004g2_observability_source_paths()
+            | _arch_004g2_closure_threshold_source_paths()
+            | _data_gov_002_phase_b1_source_paths()
+            | _trading_2458_retirement_source_paths()
+            | _trading_2458_closeout_source_paths()
+            | _data_gov_002_phase_b2_source_paths()
+            | _devx_003_source_paths()
+            | _data_gov_002c1_source_paths()
+            | _data_gov_002c2_source_paths()
+            | _trading_2461_source_paths()
+            | _arch_004g2_paper_weekly_source_paths()
+            | _ops_069_terminal_archive_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = OPS_069_TERMINAL_ARCHIVE_SECTION
+    elif ARCH_004G2_PAPER_WEEKLY_SECTION in baseline:
         current_superseded_paths = (
             _arch_004g2_paper_weekly_superseded_live_source_paths()
         )
@@ -8051,6 +8189,7 @@ def test_devx_003_is_preserved_historical_authority() -> None:
             | _data_gov_002c2_superseded_live_source_paths()
             | _trading_2461_superseded_live_source_paths()
             | _arch_004g2_paper_weekly_superseded_live_source_paths()
+            | _ops_069_terminal_archive_superseded_live_source_paths()
         )
     assert phase["supersession"] == {
         "superseded_by_phase": "DEVX-003-GOVERNED-CLOSEOUT-REMOTE-PREFLIGHT",
@@ -8151,6 +8290,7 @@ def test_data_gov_002c1_is_preserved_historical_authority() -> None:
         | _data_gov_002c2_superseded_live_source_paths()
         | _trading_2461_superseded_live_source_paths()
         | _arch_004g2_paper_weekly_superseded_live_source_paths()
+        | _ops_069_terminal_archive_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C1-DQ-ISSUE-ATTRIBUTION-READINESS-INVENTORY"),
@@ -8258,6 +8398,7 @@ def test_data_gov_002c2_is_preserved_historical_authority() -> None:
         superseded
         | _trading_2461_superseded_live_source_paths()
         | _arch_004g2_paper_weekly_superseded_live_source_paths()
+        | _ops_069_terminal_archive_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK"),
@@ -8368,7 +8509,9 @@ def test_trading_2461_model_ladder_is_preserved_historical_authority() -> None:
     observed_live_mismatches = _trading_2461_prior_active_source_mismatches()
     assert superseded <= observed_live_mismatches
     assert observed_live_mismatches <= (
-        superseded | _arch_004g2_paper_weekly_superseded_live_source_paths()
+        superseded
+        | _arch_004g2_paper_weekly_superseded_live_source_paths()
+        | _ops_069_terminal_archive_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2461-DECISION-TARGET-CAPABILITY-AUDIT-BATCH2",
@@ -8433,14 +8576,20 @@ def test_trading_2461_model_ladder_is_preserved_historical_authority() -> None:
     }
 
 
-def test_arch_004g2_paper_weekly_is_current_hash_authority() -> None:
+def test_arch_004g2_paper_weekly_is_preserved_historical_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
         current_bytes,
         _arch_004g2_paper_weekly_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_004G2_PAPER_WEEKLY_SECTION
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    assert list(baseline).index(TRADING_2461_SECTION) < list(baseline).index(
+        ARCH_004G2_PAPER_WEEKLY_SECTION
+    )
+    assert list(baseline).index(ARCH_004G2_PAPER_WEEKLY_SECTION) < list(
+        baseline
+    ).index(OPS_069_TERMINAL_ARCHIVE_SECTION)
     phase = baseline[ARCH_004G2_PAPER_WEEKLY_SECTION]
 
     assert phase["schema_version"] == (
@@ -8469,7 +8618,13 @@ def test_arch_004g2_paper_weekly_is_current_hash_authority() -> None:
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
 
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _arch_004g2_paper_weekly_prior_active_source_mismatches()
+    observed_live_mismatches = (
+        _arch_004g2_paper_weekly_prior_active_source_mismatches()
+    )
+    assert superseded <= observed_live_mismatches
+    assert observed_live_mismatches <= (
+        superseded | _ops_069_terminal_archive_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": (
             "ARCH-004G2-PAPER-SHADOW-WEEKLY-VALIDATION-AUTHORITY-CANDIDATE"
@@ -8496,7 +8651,7 @@ def test_arch_004g2_paper_weekly_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     validation = phase["validation"]
     assert validation["baseline"] == "PASS_5_299_34_SECONDS"
@@ -8529,6 +8684,102 @@ def test_arch_004g2_paper_weekly_is_current_hash_authority() -> None:
     assert safety["cached_data_mutated"] is False
     assert safety["production_effect"] == "none"
     assert safety["broker_action"] == "none"
+
+
+def test_ops_069_terminal_archive_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    _assert_ops_069_terminal_archive_historical_prefix_immutable(
+        current_bytes,
+        _ops_069_terminal_archive_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == OPS_069_TERMINAL_ARCHIVE_SECTION
+    phase = baseline[OPS_069_TERMINAL_ARCHIVE_SECTION]
+
+    assert phase["schema_version"] == (
+        "ops_069_daily_input_capture_terminal_archive_compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING", "COMPLETE"}
+    assert phase["boundary_id"] == "OPS-069-TERMINAL-ARCHIVE"
+    assert phase["task_ids"] == [
+        "OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER"
+    ]
+    assert phase["owner_authorization"] == (
+        "task_register_completed:"
+        "OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER:DONE"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": OPS_069_TERMINAL_ARCHIVE_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": OPS_069_TERMINAL_ARCHIVE_BASELINE_GIT_BLOB,
+        "raw_byte_count": OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_SHA256,
+        "append_offset": OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _ops_069_terminal_archive_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": "OPS-069-TERMINAL-ARCHIVE",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_ARCHIVE_MOVE",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": ARCH_004G2_PAPER_WEEKLY_SECTION,
+        "current_hash_authority": (
+            f"{OPS_069_TERMINAL_ARCHIVE_SECTION}.sources"
+        ),
+    }
+    assert set(phase["removed_live_source_paths"]) == (
+        OPS_069_TERMINAL_ARCHIVE_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        OPS_069_TERMINAL_ARCHIVE_NEW_SOURCE_PATHS
+    )
+    expected_source_delta = (
+        superseded - OPS_069_TERMINAL_ARCHIVE_REMOVED_SOURCE_PATHS
+    ) | OPS_069_TERMINAL_ARCHIVE_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected_source_delta
+
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected_source_delta
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    validation = phase["validation"]
+    assert validation["focused_ops"] == "PASS_67"
+    assert validation["runtime_capture_validation"] == "PASS_ISSUE_COUNT_0"
+    assert validation["runtime_recovery_queue_validation"] == (
+        "PASS_ISSUE_COUNT_0"
+    )
+    assert validation["task_registry"] == "PASS_BYTE_IDENTICAL"
+    assert validation["architecture_devex"] == "PASS"
+    if phase["status"] == "COMPLETE":
+        assert str(validation["architecture"]).startswith("PASS_")
+        assert str(validation["contract"]).startswith("PASS_")
+    else:
+        assert validation["architecture"] == "PENDING"
+        assert validation["contract"] == "PENDING"
+
+    assert phase["safety"] == {
+        "governance_status_correction_only": True,
+        "runtime_behavior_changed": False,
+        "data_flow_changed": False,
+        "runtime_artifacts_read": True,
+        "cached_data_read": False,
+        "cached_data_mutated": False,
+        "strict_pit_backfill_executed": False,
+        "consumer_cutover_allowed": False,
+        "weights_changed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
 
 
 def test_trading_2458_retirement_rejects_historical_prefix_tamper() -> None:
@@ -8614,6 +8865,17 @@ def test_arch_004g2_paper_weekly_rejects_historical_prefix_tamper() -> None:
     tampered[ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_ops_069_terminal_archive_rejects_historical_prefix_tamper() -> None:
+    base_blob = _ops_069_terminal_archive_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_ops_069_terminal_archive_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

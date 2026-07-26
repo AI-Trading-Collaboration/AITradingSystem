@@ -4,9 +4,9 @@
 
 - task id：`OPS-069_DAILY_INPUT_CAPTURE_AND_SESSION_GAP_LEDGER`
 - priority：P0
-- status：`IN_PROGRESS`
-- owner：operations owner + data platform owner
-- last updated：2026-07-25
+- status：`DONE`
+- owner：后续 daily branch isolation / PIT / score / Reader Brief 运营验收由 `OPS-070` 承接
+- last updated：2026-07-27
 
 ## 问题与根因
 
@@ -116,6 +116,20 @@ ledger 必须能够在“最新日期运行成功但中间日期漏跑”的情�
 
 ## Blocker 与退出条件
 
-当前 blocker 是尚无新合法 provider-ready trading date 的真实运行证据。工程验证完成后，
-任务保持 `IN_PROGRESS`，直到真实 run 证明“部分来源故障不再造成其他来源零捕获”，且
-gap ledger 能连续覆盖自 tracking start 起的每个 XNYS session。
+OPS-069 的工程与运营退出条件已闭合：
+
+- S1～S4 已由 `fc6313416`～`925315059` 提交链实现，后续 `OPS-070` 正式门禁覆盖
+  focused、architecture、contract、integration、reproducibility 与 Full；
+- 独立 runtime checkout 的真实 `2026-07-24` manifest 为 validated
+  `PARTIAL_CAPTURE`：`fmp_forward_pit=FAIL` 时，`market_macro`、
+  `sec_companyfacts`、`fmp_valuation` 与 `official_policy_sources` 仍完成捕获；
+- validation artifact 为 `PASS / issue_count=0`，capture 仍保持
+  `consumer_cutover_allowed=false`；
+- reviewed `tracking_start=2026-07-24`，gap ledger 连续覆盖该起始 session 并保留
+  `PARTIAL_CAPTURE`，recovery queue validation 为 `PASS / issue_count=0`；
+- 未补造 historical strict PIT，未写 production/active-shadow weights，未触发
+  broker/trading action。
+
+因此本任务于 2026-07-27 转 `DONE`。OPS-070 对同一真实运行暴露并修复了更后层的
+source/consumer dependency、PIT projection 与 artifact ownership 问题；其下一合法
+scheduler run 验收是 OPS-070 的独立退出条件，不再作为 OPS-069 blocker。
