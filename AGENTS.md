@@ -212,6 +212,42 @@ Whenever a task moves forward, becomes blocked, is superseded, or is completed,
 update the register in the same change as the code or documentation change that
 caused the status transition.
 
+## Governed Development Workflow Skill Discipline
+
+Before the first implementation write for any non-trivial tracked repository
+mutation, Codex must use the `run-governed-development` skill or execute its
+documented equivalent preflight. This applies to implementation, bug fixes,
+refactors, data pipelines, scoring, backtests, report behavior, architecture,
+governance, and developer-workflow changes.
+
+The only mutation allowed before a missing task passes preflight is the
+coordinator-owned creation or update of the task-register row and its supporting
+requirement. Rerun preflight after that record exists and before implementation.
+
+Choose exactly one governed mode:
+
+- `READ_ONLY`: explanation, review, status, and diagnosis that do not modify
+  tracked content. Do not create a branch, worktree, or write lease merely to
+  answer a read-only request.
+- `SINGLE_LANE`: one task-owned implementation scope. Start from the exact local
+  `main` commit, use a task branch, run lane-focused validation, and close through
+  the local-main integration rules below.
+- `DUAL_LANE`: independent engineering and strategy-evidence scopes. Freeze one
+  exact local-main base, use isolated branches/worktrees, declare disjoint path,
+  module, contract, resource, and evidence-lineage claims, and integrate through
+  one coordinator candidate.
+
+If shared schema, public contract, global policy, DQ/PIT semantics, cache
+identity, or another consumer-visible boundary must change, complete the smallest
+reviewed serial contract wave first. Recompute both lanes from its new exact base;
+do not let a consumer continue from a stale contract merely because its files do
+not overlap.
+
+If the skill is unavailable or damaged, follow the equivalent rules in this file
+and the ARCH-005 operating model manually, report the skill issue, and remain
+fail closed. Skill availability never weakens task registration, checkout audit,
+lease, validation, integration, or cleanup requirements.
+
 ## Known-Unrelated Worktree Audit Discipline
 
 When `config/architecture/arch_005_s4d_checkout_guard.yaml` registers one or
@@ -285,34 +321,47 @@ risk, next owner, and concrete exit condition in `docs/task_register.md` or the
 linked supporting requirement. Leaving temporary directories behind without
 that record is not an acceptable closeout state.
 
-## Local Commit Discipline
+## Local Branch, Commit, and Main Integration Discipline
 
 When completing work that was explicitly selected from `docs/task_register.md`
 or another project TODO list, the finished change may be committed directly to
-the current local branch after the relevant validation has passed. The commit
+the current task branch after the relevant validation has passed. The commit
 must include the task-register/status update, supporting documentation updates,
 and the implementation or test changes that caused the task to move forward.
 
-After the local commit succeeds and the relevant validation has passed, push the
-current branch by default. Do not push if the user explicitly asks not to push,
-if the commit includes unrelated user changes, if the branch has no configured
-remote/upstream, or if the push would require rewriting history or force-push.
-Opening or updating a pull request, rewriting history, force-pushing, or
-including unrelated user changes still requires an explicit project-owner
-request.
+The default closeout boundary is local `main`. Remote push, pull request, or
+other publication is a separate action and requires an explicit project-owner
+request or a reviewed task-specific authorization that explicitly supersedes
+this default. Historical ARCH-005 evidence that included ordinary push proves a
+capability; it is not standing authorization for new tasks.
 
-This is the standard closeout workflow and does not require an extra reminder
-from the project owner. At the end of a qualifying task, Codex must:
+For `SINGLE_LANE`, require local `main` to be an ancestor of the validated task
+commit and use `git merge --ff-only <task-branch>`. Do not create an empty or
+redundant post-merge commit.
+
+For `DUAL_LANE`, do not fast-forward sibling branches into `main` one after the
+other: after the first fast-forward the second sibling necessarily diverges.
+Create one coordinator integration branch from the frozen base, absorb validated
+lane changes in the fixed reviewed order, refresh shared/generated state, and
+validate the combined final tree. Fast-forward local `main` exactly once to that
+integration candidate. Do not automatically rebase, create merge commits,
+force-push, or delete user changes to make the topology fit.
+
+At the end of a qualifying task, Codex must:
 
 1. confirm the worktree only contains changes attributable to the completed
    task;
 2. run and record the relevant validation;
 3. stage only the attributable files;
 4. create a local commit on the current branch after validation passes;
-5. push the current branch when a normal upstream push is available and none of
-   the no-push conditions above apply;
-6. report the commit SHA, push result, validation summary, and any reason a
-   commit or push was intentionally skipped.
+5. build and validate the coordinator integration candidate when multiple lanes
+   are involved;
+6. fast-forward local `main` only after ancestry, final-tree, attribution,
+   generated-freshness, and active-lease checks pass;
+7. perform remote publication only when separately authorized;
+8. audit and clean merged branches/worktrees under the temporary workspace
+   lifecycle rules, then report the task commit, local-main SHA, validation,
+   cleanup, and remote-action result.
 
 ## Parallel Development Discipline
 
@@ -334,6 +383,13 @@ Parallel work must remain reviewable:
 - do not duplicate logic across parallel branches just to move faster; extract
   shared helpers during integration when the duplication affects correctness or
   auditability.
+
+All parallel workers must start from the same exact local-main commit. The
+integration coordinator owns task-register updates, root/shared wiring,
+catalogs/registries, generated manifests/views, formal validation, the final
+candidate commit, and the single local-main fast-forward. Lane workers run
+focused/impact validation; heavyweight Full validation runs at the natural
+integration boundary and must not compete with another Full run.
 
 ## Output Language
 

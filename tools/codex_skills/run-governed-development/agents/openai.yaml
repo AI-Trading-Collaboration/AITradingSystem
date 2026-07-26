@@ -1,0 +1,4 @@
+interface:
+  display_name: "Governed Development"
+  short_description: "Run audited project development workflows"
+  default_prompt: "Use $run-governed-development to preflight and execute this repository task safely."

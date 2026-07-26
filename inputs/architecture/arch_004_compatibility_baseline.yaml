@@ -26432,3 +26432,216 @@ phase_data_gov_002_capability_receipt_phase_a:
     daily_operation_authorized: false
     production_effect: none
     broker_action: none
+
+phase_devx_002_governed_development_workflow_skill:
+  schema_version: devx_002_governed_development_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: DEVX-002
+  task_ids:
+  - DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  owner_authorization: owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1
+  prior_sections_immutability:
+    source_commit: 6935cdd622dcf7dad55a48685a79cc1856f39ee4
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 62fe82a041dbd77aef9276a2b871e97f52af2426
+    raw_byte_count: 1665104
+    raw_sha256: 2913ffe1fce6d541b6fcd0276f26205fea7fb5039e911a8b1856ec5b2e169a5a
+    append_offset: 1665104
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - AGENTS.md
+  - docs/architecture/dual_lane_development_operating_model.md
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
+  - registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
+  - registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+  - registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: DEVX-002
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_002_capability_receipt_phase_a
+    current_hash_authority: phase_devx_002_governed_development_workflow_skill.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - AGENTS.md
+  - docs/architecture/dual_lane_development_operating_model.md
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+  - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
+  - registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
+  - registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+  - registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_governed_development_skill.py
+  - tools/codex_skills/run-governed-development/agents/openai.yaml
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/scripts/preflight.py
+  - tools/codex_skills/run-governed-development/scripts/verify_bundle_parity.py
+  - tools/codex_skills/run-governed-development/SKILL.md
+  new_source_paths:
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+  - tests/test_governed_development_skill.py
+  - tools/codex_skills/run-governed-development/agents/openai.yaml
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/scripts/preflight.py
+  - tools/codex_skills/run-governed-development/scripts/verify_bundle_parity.py
+  - tools/codex_skills/run-governed-development/SKILL.md
+  sources:
+  - path: AGENTS.md
+    sha256: 0a7129a2c3d7604f627445c0eb96b215e970123b5e54aeca8e7cdec84b467b08
+    hash_normalization: git_eol_lf
+  - path: docs/architecture/dual_lane_development_operating_model.md
+    sha256: 1e52385a317956c4753c5dee32cb3a0a4d11980b431cf82b1939e76b7de0e861
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+    sha256: 547cf3e547a6bc76afcdf7406e333b9029b74c40a83bed989915ffb179db97b5
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+    sha256: c6e9a95829c3ea55161bda989dcd45a95ea236d18acc995d1121a9c172b0ed89
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: fc9055c5835e772863dfd515e5f62e00a82a32ea4ddbef30cf0afeb430a942f8
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 2a1bcb33a0aa30264f1433680f8912beca7c467ab6f408888761030cdca3bd75
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 572b32ba1475426d402c6f802f2951a48cc5af6cea1ba94780be81e30924f3d1
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 62b4a3a9a96a4a62e45c824099681a3fe9e1e0f18b8a0043b1d35592805bfe34
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 9b76d6fcc0b003936b170af24d9efe6811848237ec993d0877e42d2c663fc12b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 70bb2babce0e854840f94f97103915aa6b5ef2962f03be26a24311f169183f20
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+    sha256: 6c5648fe1fbb0d5ed7534727e7180949bcff1776cfc3f64b1b024830533bd940
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+    sha256: c31510aa939826946bdf72eba8a2fbc00a009cdd15e222f524c077f42aac5f03
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+    sha256: 97d2fb740afa0eae562de22a281999205e998d18737246fe157ef4e3acce81e9
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+    sha256: 64d5c3c62f03fdd98c723240ca98980c048aeae05661ab99aa144d73b98ed9f3
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+    sha256: 15a32ebb592813e65c70a4c20af7ef6ca7533f779f46c5ba2e5b15618e7af94e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
+    sha256: f4f410ddc2c07cc4bc8f6cb01f7880914dd1833c03e40b8cc71061a7366c43c0
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
+    sha256: d53b7a10d522c45fa72314696d21101277e6205c39b22f20e103c107520f49b2
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+    sha256: 65a5653745d93456f936515ab4ee10d8379af6bb33b264eb3a95d2aab0227da0
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
+    sha256: cab0659da603ae4bfae62dca81c19984456ec08344312f829efd3e1af5985189
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+    sha256: 6867047bc043c0da4acb22a721f533e70f58521dbd6c5c03588f79f81c5a5062
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
+    sha256: 283e02423ca1e4e0234ef751a027bf59331b1863c8e2c81f647a238e66aa298e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+    sha256: edbfff5a92d2b5642586c2f43ecef9eba4fa77c4be22f1bfda8cbdd8db3703df
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+    sha256: 5cefbf27ca28db5126e7ea5794a37ed8edb3dc0add41612ee7613f9d69a41501
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
+    sha256: 40b87f64194a8c6feca1146460967acd23d4ae1235efe954026feac5cd3a93a8
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+    sha256: 31020b0e4d08ed7ecb07efdfe81d977366efa6572cb67581276f271cfd623915
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 7e6f505ef8d69c9857abacea5f65734e0928e7d17ad74afa77c20607b9cc6994
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 5b55fc481e1851616e5182812858296de845b3bec68b3bf7b90c8d87a74e244d
+    hash_normalization: git_eol_lf
+  - path: tests/test_governed_development_skill.py
+    sha256: 5105da47ccc9c23f058b16d5c2ec3e11c8f3a21de9f01fe03574bc037773d357
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/agents/openai.yaml
+    sha256: cc2e9c83ad3fd7c0b2ff3b07cc2811e0e31191112081d089584765c34ef84faa
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/references/workflow-modes.md
+    sha256: cf49554068665ecd8f09d7b756b12463e1f364d2dffb27d101f7a9562b7f726a
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/scripts/preflight.py
+    sha256: 5c07a39dd792dafd629cb4ad8d5bf8cf42869e2d97d6110e7d84e477ce74829a
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/scripts/verify_bundle_parity.py
+    sha256: efe60bbe67669540b108b191f4bb6b25a5c24f1b5a9b904df02a2415573de352
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/SKILL.md
+    sha256: f594eb721ce89e78f89c92f766e9782c0812a83ee656c3fd3d8e3775a9f1c54a
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: PRE_CLOSEOUT_VALIDATION
+    skill_quick_validate: PASS_CANONICAL_AND_INSTALLED
+    bundle_parity: PASS_5_FILES
+    skill_focused: PASS_11
+    combined_focused: PASS_52
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture_initial: FAIL_14_AUTHORITY_DRIFT
+    architecture_parent_rerun: UNSUPPORTED_NON_FULL_LINKED_EVIDENCE
+    initial_runtime_summary: outputs/validation_runtime/architecture-fitness_20260726T032309Z/test_runtime_summary.json
+    architecture_rerun: REQUIRED_WITH_TASK_BOUNDARY
+  safety:
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: false
+    production_effect: none
+    broker_action: none
+    remote_action: separate_authorization

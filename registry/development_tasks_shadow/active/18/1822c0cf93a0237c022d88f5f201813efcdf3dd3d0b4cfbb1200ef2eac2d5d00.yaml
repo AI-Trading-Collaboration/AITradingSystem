@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  title: null
+  domain: Developer experience / governed preflight, branch topology and Codex skill
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 后续研发任务owner：在首个真实任务继续观察触发、lane ownership与local-main closeout；发现缺口另建follow-up
+  requirement_refs:
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner
+    decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`；任何非平凡tracked
+    mutation须使用`run-governed-development`或等价preflight。默认收口改为本地main，remote push/PR单独授权；parallel
+    sibling branches必须经coordinator integration branch。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: AGENTS、ARCH-005和operating model一致；skill由标准init生成且canonical/installed byte
+      parity通过；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；task absence、active lease、base/path/coordinator冲突fail
+      closed；适用项目验证、safe audit、branch commit和local-main ff通过；无production/broker effect。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1951
+    row_sha256: eb90bbbce550c2244f72df5703288a8e2e980b59e6617bd0f333b3d58031aede
+    cell_count: 8
+    all_cells:
+    - DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+    - Developer experience / governed preflight, branch topology and Codex skill
+    - P0
+    - BASELINE_DONE
+    - 后续研发任务owner：在首个真实任务继续观察触发、lane ownership与local-main closeout；发现缺口另建follow-up
+    - 详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner
+      decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`；任何非平凡tracked
+      mutation须使用`run-governed-development`或等价preflight。默认收口改为本地main，remote push/PR单独授权；parallel
+      sibling branches必须经coordinator integration branch。
+    - AGENTS、ARCH-005和operating model一致；skill由标准init生成且canonical/installed byte parity通过；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；task
+      absence、active lease、base/path/coordinator冲突fail closed；适用项目验证、safe audit、branch
+      commit和local-main ff通过；无production/broker effect。
+    - 2026-07-26：规则、skill与场景基线完成，状态转`BASELINE_DONE`；第一轮architecture-fitness的14项失败已定位为append-only
+      authority未刷新。Runner的`--parent-run`只接受failed Full，故保留首轮失败artifact为直接证据，architecture修复重跑使用task/boundary
+      provenance；后续真实任务观察不阻塞启用。
+    raw_line: '|DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL|Developer experience
+      / governed preflight, branch topology and Codex skill|P0|BASELINE_DONE|后续研发任务owner：在首个真实任务继续观察触发、lane
+      ownership与local-main closeout；发现缺口另建follow-up|详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner
+      decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`；任何非平凡tracked
+      mutation须使用`run-governed-development`或等价preflight。默认收口改为本地main，remote push/PR单独授权；parallel
+      sibling branches必须经coordinator integration branch。|AGENTS、ARCH-005和operating
+      model一致；skill由标准init生成且canonical/installed byte parity通过；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；task
+      absence、active lease、base/path/coordinator冲突fail closed；适用项目验证、safe audit、branch
+      commit和local-main ff通过；无production/broker effect。|2026-07-26：规则、skill与场景基线完成，状态转`BASELINE_DONE`；第一轮architecture-fitness的14项失败已定位为append-only
+      authority未刷新。Runner的`--parent-run`只接受failed Full，故保留首轮失败artifact为直接证据，architecture修复重跑使用task/boundary
+      provenance；后续真实任务观察不阻塞启用。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-eb90bbbce550c2244f72df57
+  task_id: DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 后续研发任务owner：在首个真实任务继续观察触发、lane ownership与local-main closeout；发现缺口另建follow-up
+    notes: 2026-07-26：规则、skill与场景基线完成，状态转`BASELINE_DONE`；第一轮architecture-fitness的14项失败已定位为append-only
+      authority未刷新。Runner的`--parent-run`只接受failed Full，故保留首轮失败artifact为直接证据，architecture修复重跑使用task/boundary
+      provenance；后续真实任务观察不阻塞启用。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:eb90bbbce550c2244f72df5703288a8e2e980b59e6617bd0f333b3d58031aede
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  - Developer experience / governed preflight, branch topology and Codex skill
+  - P0
+  - BASELINE_DONE
+  - 后续研发任务owner：在首个真实任务继续观察触发、lane ownership与local-main closeout；发现缺口另建follow-up
+  - 详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`；任何非平凡tracked
+    mutation须使用`run-governed-development`或等价preflight。默认收口改为本地main，remote push/PR单独授权；parallel
+    sibling branches必须经coordinator integration branch。
+  - AGENTS、ARCH-005和operating model一致；skill由标准init生成且canonical/installed byte parity通过；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；task
+    absence、active lease、base/path/coordinator冲突fail closed；适用项目验证、safe audit、branch
+    commit和local-main ff通过；无production/broker effect。
+  - 2026-07-26：规则、skill与场景基线完成，状态转`BASELINE_DONE`；第一轮architecture-fitness的14项失败已定位为append-only
+    authority未刷新。Runner的`--parent-run`只接受failed Full，故保留首轮失败artifact为直接证据，architecture修复重跑使用task/boundary
+    provenance；后续真实任务观察不阻塞启用。
+  docs_links:
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  terminal: false
+  raw_row_sha256: eb90bbbce550c2244f72df5703288a8e2e980b59e6617bd0f333b3d58031aede
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 143355a1a6f94a574c4ea1e4f36207f44c3f1a07554ed7f7f1015de87a1cc6bf

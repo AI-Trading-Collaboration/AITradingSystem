@@ -11,8 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: integration coordinator：按S4C门禁自动集成后续已验证双线批次；project owner决定S5；S4D checkout
-    guard另行登记
+  next_owner: integration coordinator：按S4C门禁收口后续已验证双线批次到local main；remote action单独授权；project
+    owner决定S5
   requirement_refs:
   - docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md
   - docs/architecture/dual_lane_development_operating_model.md
@@ -22,52 +22,60 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4B已完成；S4C首个真实批次已证明候选在归属、freshness、required
-    focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，可由coordinator自动commit、fast-forward
-    main并普通push；任一检查失败仍停止。
+    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4E已完成；S4C首个真实批次已证明候选在归属、freshness、required
+    focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后可安全进入main。2026-07-26
+    DEVX-002决定把默认边界收窄为local main；双线sibling branches先形成单一coordinator integration candidate。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: S4C只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
-      status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，`origin/main`必须是候选祖先，push后复核SHA一致。
+    text: S4C只开放validated coordinator local closeout，不开放worker自动合并、PR、rebase、merge
+      commit、force-push、task status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，local
+      main必须是candidate祖先。Remote push仅在另行授权时要求`origin/main`祖先关系和SHA复核。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1583
-    row_sha256: 88e747fc1540c92ef61a622866e490270cbf65b96e601683910b7abd35557681
+    row_sha256: eae49ba7047269c9bcfd941598ce1cbe9a64cb728585218cdaeca4a1f9062120
     cell_count: 8
     all_cells:
     - ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
     - Architecture / auditable parallel development scheduling foundation
     - P0
     - BASELINE_DONE
-    - integration coordinator：按S4C门禁自动集成后续已验证双线批次；project owner决定S5；S4D checkout guard另行登记
+    - integration coordinator：按S4C门禁收口后续已验证双线批次到local main；remote action单独授权；project
+      owner决定S5
     - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4B已完成；S4C首个真实批次已证明候选在归属、freshness、required
-      focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，可由coordinator自动commit、fast-forward
-      main并普通push；任一检查失败仍停止。
-    - S4C只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
-      status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，`origin/main`必须是候选祖先，push后复核SHA一致。
+      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4E已完成；S4C首个真实批次已证明候选在归属、freshness、required
+      focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后可安全进入main。2026-07-26
+      DEVX-002决定把默认边界收窄为local main；双线sibling branches先形成单一coordinator integration
+      candidate。
+    - S4C只开放validated coordinator local closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
+      status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，local main必须是candidate祖先。Remote
+      push仅在另行授权时要求`origin/main`祖先关系和SHA复核。
     - 2026-07-22：首批候选`codex/dual-lane-wave7-window-migration@80ffc28c`相对`origin/main@0fc316e5`为`0
       behind/6 ahead`；focused/architecture/contract=`22/446/265 passed`，代码最终Full=`6553
-      passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。2026-07-23：Wave14又暴露另一个Codex
-      task/daily automation可在同一checkout读取半写状态并成为第二writer；已登记`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`，建议Wave14后、Wave15前实施窄版S0/S1。该缺口不否定S4C证据，也不自动授权S5。
+      passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。该ordinary-push结果保留为历史能力证据。2026-07-26：Owner
+      decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`，后续remote
+      action不再自动继承；S5仍未授权。
     raw_line: '|ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE|Architecture / auditable
-      parallel development scheduling foundation|P0|BASELINE_DONE|integration coordinator：按S4C门禁自动集成后续已验证双线批次；project
-      owner决定S5；S4D checkout guard另行登记|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4B已完成；S4C首个真实批次已证明候选在归属、freshness、required
-      focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，可由coordinator自动commit、fast-forward
-      main并普通push；任一检查失败仍停止。|S4C只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge
-      commit、force-push、task status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，`origin/main`必须是候选祖先，push后复核SHA一致。|2026-07-22：首批候选`codex/dual-lane-wave7-window-migration@80ffc28c`相对`origin/main@0fc316e5`为`0
+      parallel development scheduling foundation|P0|BASELINE_DONE|integration coordinator：按S4C门禁收口后续已验证双线批次到local
+      main；remote action单独授权；project owner决定S5|详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
+      和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4E已完成；S4C首个真实批次已证明候选在归属、freshness、required
+      focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后可安全进入main。2026-07-26
+      DEVX-002决定把默认边界收窄为local main；双线sibling branches先形成单一coordinator integration
+      candidate。|S4C只开放validated coordinator local closeout，不开放worker自动合并、PR、rebase、merge
+      commit、force-push、task status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，local
+      main必须是candidate祖先。Remote push仅在另行授权时要求`origin/main`祖先关系和SHA复核。|2026-07-22：首批候选`codex/dual-lane-wave7-window-migration@80ffc28c`相对`origin/main@0fc316e5`为`0
       behind/6 ahead`；focused/architecture/contract=`22/446/265 passed`，代码最终Full=`6553
-      passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。2026-07-23：Wave14又暴露另一个Codex
-      task/daily automation可在同一checkout读取半写状态并成为第二writer；已登记`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`，建议Wave14后、Wave15前实施窄版S0/S1。该缺口不否定S4C证据，也不自动授权S5。|'
+      passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。该ordinary-push结果保留为历史能力证据。2026-07-26：Owner
+      decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`，后续remote
+      action不再自动继承；S5仍未授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-88e747fc1540c92ef61a6228
+  event_id: legacy-import-eae49ba7047269c9bcfd9415
   task_id: ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -80,15 +88,16 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: integration coordinator：按S4C门禁自动集成后续已验证双线批次；project owner决定S5；S4D
-      checkout guard另行登记
+    next_owner: integration coordinator：按S4C门禁收口后续已验证双线批次到local main；remote action单独授权；project
+      owner决定S5
     notes: 2026-07-22：首批候选`codex/dual-lane-wave7-window-migration@80ffc28c`相对`origin/main@0fc316e5`为`0
       behind/6 ahead`；focused/architecture/contract=`22/446/265 passed`，代码最终Full=`6553
-      passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。2026-07-23：Wave14又暴露另一个Codex
-      task/daily automation可在同一checkout读取半写状态并成为第二writer；已登记`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`，建议Wave14后、Wave15前实施窄版S0/S1。该缺口不否定S4C证据，也不自动授权S5。
+      passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。该ordinary-push结果保留为历史能力证据。2026-07-26：Owner
+      decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`，后续remote
+      action不再自动继承；S5仍未授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:88e747fc1540c92ef61a622866e490270cbf65b96e601683910b7abd35557681
+  - sha256:eae49ba7047269c9bcfd941598ce1cbe9a64cb728585218cdaeca4a1f9062120
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -96,23 +105,26 @@ projection:
   - Architecture / auditable parallel development scheduling foundation
   - P0
   - BASELINE_DONE
-  - integration coordinator：按S4C门禁自动集成后续已验证双线批次；project owner决定S5；S4D checkout guard另行登记
+  - integration coordinator：按S4C门禁收口后续已验证双线批次到local main；remote action单独授权；project
+    owner决定S5
   - 详见 `docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md`、`docs/requirements/ARCH-005_S4A_Supervised_Automation.md`、`docs/architecture/dual_lane_development_operating_model.md`
-    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4B已完成；S4C首个真实批次已证明候选在归属、freshness、required
-    focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后，可由coordinator自动commit、fast-forward
-    main并普通push；任一检查失败仍停止。
-  - S4C只开放validated coordinator closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
-    status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，`origin/main`必须是候选祖先，push后复核SHA一致。
+    和 `docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md`。S0～S4E已完成；S4C首个真实批次已证明候选在归属、freshness、required
+    focused/architecture/contract/full、generated hashes、active lease与fast-forward检查全部PASS后可安全进入main。2026-07-26
+    DEVX-002决定把默认边界收窄为local main；双线sibling branches先形成单一coordinator integration candidate。
+  - S4C只开放validated coordinator local closeout，不开放worker自动合并、PR、rebase、merge commit、force-push、task
+    status mutation、S5 cutover、ARCH-004 G2.5或策略/生产副作用；每批验证绑定最终tree，local main必须是candidate祖先。Remote
+    push仅在另行授权时要求`origin/main`祖先关系和SHA复核。
   - 2026-07-22：首批候选`codex/dual-lane-wave7-window-migration@80ffc28c`相对`origin/main@0fc316e5`为`0
     behind/6 ahead`；focused/architecture/contract=`22/446/265 passed`，代码最终Full=`6553
-    passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。2026-07-23：Wave14又暴露另一个Codex
-    task/daily automation可在同一checkout读取半写状态并成为第二writer；已登记`ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`，建议Wave14后、Wave15前实施窄版S0/S1。该缺口不否定S4C证据，也不自动授权S5。
+    passed/2 skipped/1089.21s`，generated hashes/lease/fast-forward均PASS并普通推送。该ordinary-push结果保留为历史能力证据。2026-07-26：Owner
+    decision=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`，后续remote
+    action不再自动继承；S5仍未授权。
   docs_links:
   - docs/architecture/arch_005_s2_s4_closeout_2026-07-20.md
   - docs/architecture/dual_lane_development_operating_model.md
   - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
   - docs/requirements/ARCH-005_S4A_Supervised_Automation.md
   terminal: false
-  raw_row_sha256: 88e747fc1540c92ef61a622866e490270cbf65b96e601683910b7abd35557681
+  raw_row_sha256: eae49ba7047269c9bcfd941598ce1cbe9a64cb728585218cdaeca4a1f9062120
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: db2ca652b991acd2ed7146f4e0db487e2804f4e25f7af3c5f6727e5dcd21fda6
+fragment_checksum: 32b6a6baa9075a37be448e6047a607a9fd61a6d5df15d76925220ef94a736e28

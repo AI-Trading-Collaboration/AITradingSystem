@@ -1,12 +1,22 @@
 # 双线研发 Operating Model 与冲突处理协议
 
-最后更新：2026-07-25
+最后更新：2026-07-26
 
-状态：`ADOPTED_S4C_VALIDATED_MAIN_INTEGRATION`（基于 ARCH-005 S4/S4A；S5 未授权）
+状态：`ADOPTED_LOCAL_MAIN_COORDINATED_INTEGRATION`（基于 ARCH-005 S4/S4A/S4C；
+S5 未授权）
 
 ## 1. 决策与适用范围
 
-2026-07-25 当前双线选择：
+2026-07-26 当前流程决定：
+
+- 所有非平凡 tracked mutation 使用 `run-governed-development` 或等价 preflight；
+- 单线任务验证后 fast-forward local `main`；
+- 双线 sibling branches 从同一 local-main exact base 启动，但只能通过一个 coordinator
+  integration candidate 一次性 fast-forward local `main`；
+- remote push、PR 或其他发布作为单独 owner 指令或独立 reviewed authorization处理；
+- 历史 S4C ordinary-push批次继续作为能力证据，不构成新任务的 standing authorization。
+
+2026-07-25 双线任务选择：
 
 - `strategy-evidence`：`TRADING-2458` Strategy C，只对冻结 TRADING-2452/2453 evidence 做
   per-template/per-axis matched contrast 与 identifiability diagnosis；
@@ -55,7 +65,7 @@ root CLI、report registry、system flow、架构清单和全量验证上重新�
 |---|---|---|---|
 |`engineering`|task/requirement、exact base、owned paths、module/contract/resource claims、focused tests、safety boundary|独占工程模块、lane-local policy/contract、focused tests、lane evidence|直接编辑 coordinator-only 文件；借工程优化改变 DQ、PIT 或投资语义|
 |`strategy-evidence`|预注册或明确的 legacy-diagnostic contract、source commitments、research window、DQ/PIT/cost/holdout、owned paths、focused tests|独占研究模块、证据 validator、lane-local artifacts/tests、诚实的 BLOCKED/INCOMPLETE 结论|事后选择候选、补造证据、复用污染 holdout、无授权运行 clean search/promotion|
-|`integration-coordinator`|两条 lane 的 manifest、diff、validation evidence、base freshness 与 unresolved conflicts|共享接线、任务登记、system flow、catalog/registry、generated manifests/views、formal validation、validated commit、fast-forward main与普通push|替 worker 改写业务结论；把集成 PASS 推断为策略 PASS；rebase/merge commit/force-push|
+|`integration-coordinator`|两条 lane 的 manifest、diff、validation evidence、base freshness 与 unresolved conflicts|共享接线、任务登记、system flow、catalog/registry、generated manifests/views、formal validation、validated integration candidate、一次性fast-forward local main；remote action另行授权|替 worker 改写业务结论；把集成 PASS 推断为策略 PASS；逐sibling推进main；自动rebase/merge commit/force-push|
 
 每条 worker manifest 至少声明：
 
@@ -151,22 +161,27 @@ coordinator wait 和 full validation 资源均可控，才讨论增加第三条 
 - full 只在 formal trigger/natural integration boundary 运行一次，失败修复重跑必须遵守 provenance policy；
 - 新增测试进入 slowest tail、wall/P95/P99、scheduler fallback、tail idle 或峰值内存异常时，暂停下一批扩容并登记性能任务。
 
-### S4C 验证通过后的 main 自动集成门禁
+### S4C 验证通过后的 local main 集成门禁
 
-Owner 已授权 coordinator 在每个 integration batch 的适用门禁全部 PASS 后自动收口到 main。顺序固定：
+Owner 已授权 coordinator 在每个 integration batch 的适用门禁全部 PASS 后收口到 local main。
+2026-07-26 起remote action单独授权。顺序固定：
 
 1. 冻结候选最终 tree，确认工作区归属清楚、无越界写、active shared-path lease=0；
 2. 确认 lane focused、required architecture/contract/full、generated manifests/views、compatibility/
    deprecation/source hashes 对该 tree 新鲜；仅文档/generated closeout可复用最近代码 Full，且不得改变
    runtime/data/strategy/report语义；
-3. fetch `origin/main`，要求它是候选祖先；否则停止并重新做 base/conflict/readiness，不自动 rebase；
-4. coordinator commit后确认 tree bytes未变，切换main并执行`git merge --ff-only <candidate>`；
-5. 普通push `origin main`，再确认`main`、`origin/main`、candidate SHA完全相同；
-6. 以新main作为下一双线batch的exact base。
+3. 确认 local `main` 是candidate祖先；否则停止并重新做base/conflict/readiness，不自动rebase；
+4. 双线批次确认两条 sibling lane 已按固定顺序进入同一coordinator integration candidate；
+5. coordinator commit后确认tree bytes未变，切换local main并执行
+   `git merge --ff-only <candidate>`；
+6. 确认`local main=candidate`，并以该提交作为下一batch的exact base；
+7. 只有另行授权remote action时才fetch `origin/main`、验证其祖先关系、ordinary push并复核
+   `local main=origin/main=candidate`。
 
-任何 dirty/unattributed worktree、stale validation/hash/base、活动lease、分叉、非fast-forward或push
-rejection均停止自动集成并报告。禁止用merge commit、rebase、force-push、删除用户改动或降级验证继续。
-该自动集成权限本身不延伸到worker、PR、task status自动变更、S5、G2.5、策略promotion或
+任何 dirty/unattributed worktree、stale validation/hash/base、活动lease、分叉或非fast-forward均停止
+本地集成并报告；remote push rejection只在单独授权的发布动作中处理。禁止用merge commit、rebase、
+force-push、删除用户改动或降级验证继续。该集成权限本身不延伸到worker、PR、task status自动变更、
+S5、G2.5、策略promotion或
 production/broker行为；后续任务即使由独立 owner 指令解锁，也仍须先满足本节 final-tree 门禁，不能把
 “任务已授权”解释为“允许绕过验证自动合入”。
 
@@ -599,20 +614,21 @@ WRITE排他；daily operation持WRITE workspace gate并与全部mutation排他�
 
 Owner decision=
 `owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1`。
-当前为 `S3_FORMAL_EXIT_VALIDATING`；C=`3030114b`、D=`7ec6fd71`已推送，domain focused=`73`
-与shared combined focused=`152`均PASS：
+最终状态为 `WAVE15_S3_FORMAL_EXIT_COMPLETE`；C=`3030114b`、D=`7ec6fd71`已推送，
+domain focused=`73`与shared combined focused=`152`均PASS，failure-fix Full=`7180 passed /
+3 skipped / 643 warnings`：
 
 |Lane|当前状态|固定范围|停止边界|
 |---|---|---|---|
-|Data + Operations|实现完成，formal validating|`daily_score_daily@1.0.0`独立attestation绑定exact receipt与D0B2 publication；`ops_daily -> cli_direct -> discovery -> controlled runner`只接受strict PASS verifier capability|其余consumer、automatic non-daily、真实periodic/provider、production/broker均false|
-|Reporting|bounded close evidence完成，formal validating|重验`data_quality_and_pit` single-owner/19-field parity、历史/current ratchet，冻结剩余9项inventory/readiness|`migration_executed=false`，不启动G5、不改变报告结论|
-|Coordinator|S2 complete / S3 validating|shared CLI/exports/runbook/system flow/catalog/register/generated/compatibility集成并执行formal tiers与唯一final Full|不自动扩展consumer、G5/S5、production或broker|
+|Data + Operations|实现与formal exit完成|`daily_score_daily@1.0.0`独立attestation绑定exact receipt与D0B2 publication；`ops_daily -> cli_direct -> discovery -> controlled runner`只接受strict PASS verifier capability|其余consumer、automatic non-daily、真实periodic/provider、production/broker均false|
+|Reporting|bounded close evidence与formal exit完成|重验`data_quality_and_pit` single-owner/19-field parity、历史/current ratchet，冻结剩余9项inventory/readiness|`migration_executed=false`，不启动G5、不改变报告结论|
+|Coordinator|S3 formal exit complete|shared CLI/exports/runbook/system flow/catalog/register/generated/compatibility集成并执行formal tiers与final Full|不自动扩展consumer、G5/S5、production或broker|
 
 ## 10. 本轮明确不做
 
 - 不运行真实 periodic operation、策略 backtest、candidate/search 或 provider refresh；weekly 仅执行隔离测试；
 - 不把“默认双线”解释成 S5、worker自主合并或 autonomous task mutation；coordinator 仅按S4C
-  validated-main门禁自动集成；
+  final-tree门禁合入local main，remote action单独授权；
 - 不因 Wave14 domain/formal exit 完成自动进入G5、ARCH-004H或ARCH-005 S5；Wave15仍只允许
   D0B3+G4B first consumer和G3 close，且必须先通过S4D窄版S0/S1正式门禁并从其最终HEAD重新生成
   exact readiness；旧G2.5 rehearsal与S4D owner decision不可复用，只有2026-07-25 Wave15独立
