@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import math
@@ -11,8 +12,6 @@ from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from typing import Any
-
-import yaml
 
 from ai_trading_system.platform.architecture.devex import (
     build_aggregate_shadow_index,
@@ -38,6 +37,13 @@ from ai_trading_system.platform.architecture.task_registry_shadow import (
     validate_s0_baseline,
     validate_shadow_fragment,
     validate_shadow_index,
+)
+from ai_trading_system.yaml_loader import (
+    StrictYamlError,
+    StrictYamlOptions,
+)
+from ai_trading_system.yaml_loader import (
+    load_strict_yaml_text as load_canonical_strict_yaml_text,
 )
 
 POLICY_SCHEMA_VERSION = "architecture_wave_readiness_policy.v1"
@@ -201,41 +207,40 @@ class WaveReadinessError(ValueError):
         super().__init__(f"{code}: {message}")
 
 
-class _UniqueKeySafeLoader(yaml.SafeLoader):
-    pass
-
-
-def _construct_unique_mapping(
-    loader: Any,
-    node: yaml.nodes.MappingNode,
-    deep: bool = False,
-) -> dict[str, object]:
-    result: dict[str, object] = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if not isinstance(key, str):
-            raise WaveReadinessError("YAML_NON_STRING_KEY", f"line={key_node.start_mark.line + 1}")
-        if key in result:
-            raise WaveReadinessError("YAML_DUPLICATE_KEY", key)
-        result[key] = loader.construct_object(value_node, deep=deep)
-    return result
-
-
-_UniqueKeySafeLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_unique_mapping,
+_STRICT_YAML_OPTIONS = StrictYamlOptions(
+    key_policy="STRING",
+    flatten_mapping=False,
+    reject_non_finite=False,
 )
+
+
+def _strict_duplicate_key(detail: str) -> str:
+    key_repr, separator, line = detail.removeprefix("key=").rpartition(" line=")
+    if not separator or not line.isdigit():
+        return detail
+    try:
+        key = ast.literal_eval(key_repr)
+    except (SyntaxError, ValueError):
+        return detail
+    return key if isinstance(key, str) else detail
 
 
 def load_strict_yaml_text(text: str, *, label: str = "yaml") -> object:
     try:
-        value = yaml.load(text, Loader=_UniqueKeySafeLoader)
-    except WaveReadinessError:
-        raise
-    except RecursionError as exc:
-        raise WaveReadinessError("YAML_CYCLIC_ALIAS", label) from exc
-    except yaml.YAMLError as exc:
-        if "recursive" in str(exc).lower():
+        value = load_canonical_strict_yaml_text(
+            text,
+            options=_STRICT_YAML_OPTIONS,
+            label=label,
+        )
+    except StrictYamlError as exc:
+        if exc.code == "DUPLICATE_KEY":
+            raise WaveReadinessError(
+                "YAML_DUPLICATE_KEY",
+                _strict_duplicate_key(exc.detail),
+            ) from exc
+        if exc.code == "NON_STRING_KEY":
+            raise WaveReadinessError("YAML_NON_STRING_KEY", exc.detail) from exc
+        if exc.code == "CYCLIC_ALIAS":
             raise WaveReadinessError("YAML_CYCLIC_ALIAS", label) from exc
         raise WaveReadinessError("YAML_INVALID", label) from exc
     _reject_non_finite(value, label)

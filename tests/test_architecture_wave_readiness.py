@@ -30,6 +30,7 @@ from ai_trading_system.platform.architecture.wave_readiness import (
     git_is_ancestor,
     git_resolve_ref,
     load_strict_json_text,
+    load_strict_yaml_path,
     load_strict_yaml_text,
     validate_wave_readiness_policy,
 )
@@ -459,22 +460,61 @@ def test_policy_fails_closed_for_unknown_authority_and_conflict(mutator: Any, co
 
 
 @pytest.mark.parametrize(
-    "text",
+    ("text", "code", "message"),
     [
-        "root:\n  value: 1\n  value: 2\n",
-        "value: .nan\n",
-        "value: 1e999\n",
+        ("root:\n  value: 1\n  value: 2\n", "YAML_DUPLICATE_KEY", "value"),
+        ("1: value\n", "YAML_NON_STRING_KEY", "line=1"),
+        (
+            "base: &base\n  a: 1\nmerged:\n  <<: *base\n",
+            "YAML_INVALID",
+            "yaml",
+        ),
+        ("value: [1\n", "YAML_INVALID", "yaml"),
+        (
+            'value: !!python/object/apply:os.system ["echo hi"]\n',
+            "YAML_INVALID",
+            "yaml",
+        ),
+        ("value: .nan\n", "NON_FINITE_NUMBER", "yaml.value"),
+        ("value: 1e999\n", "NON_FINITE_NUMBER", "yaml.value"),
+        ("root:\n  value: .inf\n", "NON_FINITE_NUMBER", "yaml.root.value"),
+        ("root:\n  - 1e999\n", "NON_FINITE_NUMBER", "yaml.root[0]"),
+        (
+            "root: &root\n  self: *root\n",
+            "YAML_CYCLIC_ALIAS",
+            "yaml",
+        ),
+        (
+            "root: &root\n  - *root\n",
+            "YAML_CYCLIC_ALIAS",
+            "yaml.root[0]",
+        ),
     ],
 )
-def test_strict_yaml_rejects_duplicate_and_non_finite(text: str) -> None:
-    with pytest.raises(WaveReadinessError):
-        load_strict_yaml_text(text)
-
-
-def test_strict_yaml_rejects_cyclic_alias_as_typed_error() -> None:
+def test_strict_yaml_preserves_typed_failure_contract(
+    text: str,
+    code: str,
+    message: str,
+) -> None:
     with pytest.raises(WaveReadinessError) as caught:
-        load_strict_yaml_text("root: &root\n  self: *root\n")
-    assert caught.value.code == "YAML_CYCLIC_ALIAS"
+        load_strict_yaml_text(text)
+    assert caught.value.code == code
+    assert caught.value.message == message
+
+
+def test_strict_yaml_path_preserves_read_failure_contract(tmp_path: Path) -> None:
+    missing = tmp_path / "missing.yaml"
+    with pytest.raises(WaveReadinessError) as caught:
+        load_strict_yaml_path(missing)
+    assert caught.value.code == "YAML_READ"
+    assert caught.value.message == str(missing)
+
+    invalid_utf8 = tmp_path / "invalid.yaml"
+    invalid_utf8.write_bytes(b"\xff")
+    with pytest.raises(WaveReadinessError) as caught:
+        load_strict_yaml_path(invalid_utf8)
+    assert caught.value.code == "YAML_READ"
+    assert caught.value.message == str(invalid_utf8)
 
 
 @pytest.mark.parametrize(

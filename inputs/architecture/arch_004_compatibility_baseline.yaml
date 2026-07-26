@@ -29434,3 +29434,92 @@ phase_arch_005m1_batch2_integration_revalidation_loader:
     strategy_conclusion_changed: false
     production_effect: none
     broker_action: none
+
+phase_arch_005m1_batch3_wave_readiness_loader:
+  schema_version: arch_005m1_batch3_wave_readiness_loader_compatibility.v1
+  status: BASELINE_DONE_BATCH_3
+  boundary_id: ARCH-005M1-BATCH3-WAVE-READINESS-LOADER
+  task_ids:
+  - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+  owner_authorization: owner_continuation:ARCH-005M1:2026-07-27:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: edb356bf9c038d7d2d1ba6056ac3783a763bbbab
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 802eaf47794a94d6481f987717821ee283adf5bf
+    raw_byte_count: 1841511
+    raw_sha256: a293bc06efb0c7e9176e2aed5174da12449110889830f98de176b633caf129ef
+    append_offset: 1841511
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - src/ai_trading_system/platform/architecture/wave_readiness.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_architecture_wave_readiness.py
+  supersession:
+    superseded_by_phase: ARCH-005M1-BATCH3-WAVE-READINESS-LOADER
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_005m1_batch2_integration_revalidation_loader
+    current_hash_authority: phase_arch_005m1_batch3_wave_readiness_loader.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - src/ai_trading_system/platform/architecture/wave_readiness.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_architecture_wave_readiness.py
+  sources:
+  - {path: docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md, sha256: 16a7b9bf159a582a86a5b9da5fc77e6c5e5f74c7dbe1092e909fad392018497e, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: 938c5d3a4698a221cb549ff960ec0131cbf723e58db729b2783633ff25c397dd, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 40ccefaad727e7a36c57282d3ce7c1b4e5a368a6ef66581fa0c689034aafc787, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: f3e4e9b3441a4a581469cf1f3faa3115e4766155d911d5fad6a4d1b1e7bccdc0, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 9b21ee46e2c369e41b640ff8d0b2ba2130e456df9945ee93a8efc6fa83545f82, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 48d71e2c4f926dd9ef63c180f4ab4416651b0cc85603494f1fcecfeff9b7ce9a, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 77ace1da7b185782100739799dd91e9a8031d19677eb51890e1464fa2acb6583, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 220d1e2a62b272418cd0ba55712f8bf435fe29547dc68ac1db2b57a1bcda5ce0, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml, sha256: 4f3cf3e0826fa0a6deed5fe49ad9fdf0f116d5cfe946a02b373b8b620d164c8a, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/wave_readiness.py, sha256: 739b27308bb89a807ab88e52a239625cf451cac9ab86cf15a9cbbbb54bd6f2b0, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: e838f815aaf1a1f4f2b32283420c71bfba7fe3d9cc03eae3e11de3f523cf4d68, hash_normalization: git_eol_lf}
+  - {path: tests/test_architecture_wave_readiness.py, sha256: 24130efac42e55f91ee63d39d07d1aaa1e5c8b779c4bb4670070e8a7624975fb, hash_normalization: git_eol_lf}
+  implementation:
+    canonical_strict_yaml_primitive_reused: true
+    local_unique_loader_removed: true
+    key_policy: STRING
+    flatten_mapping: false
+    canonical_reject_non_finite: false
+    existing_recursive_value_validator_preserved: true
+    public_error_contract_preserved: true
+    readiness_decision_semantics_changed: false
+    remaining_loader_count: 1
+  validation:
+    focused: PASS_148
+    strict_mypy: PASS
+    ruff: PASS
+    architecture: PASS_737
+    contract: PASS_275
+    full: PASS_7514_WITH_3_SKIPPED
+    post_full_architecture: PASS_737
+    post_full_contract: PASS_275
+  safety:
+    data_quality_contract_changed: false
+    strategy_conclusion_changed: false
+    production_effect: none
+    broker_action: none

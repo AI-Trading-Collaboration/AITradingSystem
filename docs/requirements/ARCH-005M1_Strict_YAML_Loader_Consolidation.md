@@ -7,7 +7,7 @@
 Owner continuation：
 `owner_continuation:ARCH-005M1:2026-07-27:continue_long_term_engineering_goal`
 
-状态：`BASELINE_DONE_BATCH_2`
+状态：`BASELINE_DONE_BATCH_3`
 
 ## 1. 问题与目标
 
@@ -193,3 +193,68 @@ candidate creation或validation tier语义。
   `7504 passed / 3 skipped / 643 warnings`。Batch 2验收满足，状态转
   `BASELINE_DONE_BATCH_2`；最终元数据树执行post-Full Architecture/Contract。Wave readiness
   与US special closure仍须后续独立批次，ARCH-005M1未归档。
+
+## 9. Batch 3：Wave Readiness Loader
+
+### 9.1 合同与范围
+
+Batch 3只迁移`platform/architecture/wave_readiness.py`公开的
+`load_strict_yaml_text/path` wrapper，复用canonical primitive并保持：
+
+- string-only key、no YAML merge flatten；
+- duplicate=`YAML_DUPLICATE_KEY`且message只含key；
+- non-string=`YAML_NON_STRING_KEY`和1-based line；
+- cyclic alias=`YAML_CYCLIC_ALIAS`，malformed/unsafe tag=`YAML_INVALID`；
+- non-finite number/text/exponent=`NON_FINITE_NUMBER`及原field detail；
+- read/UTF-8=`YAML_READ`和原path；
+- 公开function name/signature、policy/evidence schema、readiness计算、Git/worktree/lease/
+  archive行为全部不变。
+
+Batch 3不得迁移US special closure，不得修改canonical primitive或测试内只读fixture loader。
+
+### 9.2 步骤与验收
+
+1. 扩充wrapper characterization，精确断言duplicate/non-string/merge/cycle/non-finite/
+   malformed/unsafe/read/UTF-8 code与message；
+2. 用`StrictYamlOptions(STRING, flatten_mapping=false, reject_non_finite=false)`接入语法
+   解析，并继续由现有`_reject_non_finite`完成值安全检查，以保持mapping key/list index的
+   原field detail；
+3. 删除production module内本地loader class/constructor，保留JSON和通用递归validator；
+4. 更新system flow、generated views与append-only compatibility authority；
+5. 运行focused、strict mypy、Ruff、Architecture、Contract和唯一required Full。
+
+frozen base=`edb356bf9c038d7d2d1ba6056ac3783a763bbbab`，branch=
+`codex/arch-005m1-strict-yaml-batch3-wave-readiness`。不创建额外workspace，不触碰operations
+worktree或known-unrelated文档；无DQ/PIT/strategy/backtest/report conclusion/production/broker
+变化。Batch 3完成后仍保留US special closure一个loader，任务继续`BASELINE_DONE`而非归档。
+
+### 9.3 Batch 3进度
+
+- 2026-07-27：Batch 2已在`edb356bf9`推送并clean closeout；READ_ONLY与SINGLE_LANE START
+  preflight在`main=origin/main=edb356bf9`、active lease=0下PASS。Batch 3冻结Wave readiness
+  production wrapper和对应characterization test为唯一实现范围，状态进入
+  `IN_PROGRESS_BATCH_3`。
+- 2026-07-27：baseline Wave Readiness focused=`39 passed`；wrapper已接入canonical syntax
+  primitive，本地loader class/constructor删除。canonical non-finite检查在本wrapper关闭，
+  继续复用既有递归validator，避免把`yaml.root.value`退化为位置索引；新增精确
+  characterization覆盖duplicate、non-string、no-merge、malformed、unsafe tag、
+  non-finite field、recursive mapping/sequence、missing file和invalid UTF-8。
+- 2026-07-27：canonical primitive与Wave Readiness focused=`56 passed`，strict mypy和
+  Ruff PASS；system flow已反映Batch 3边界。状态进入`VALIDATING_BATCH_3`，下一步刷新
+  generated views和append-only compatibility authority后运行formal gates。
+- 2026-07-27：append-only compatibility authority绑定`edb356bf9`历史prefix exact Git
+  blob，兼容性回归=`92 passed`，累计focused evidence=`148 passed`；只允许Wave
+  Readiness production module和对应测试/治理/generated state发生变化，其余readiness
+  config、CLI、canonical loader、Integration Revalidation和US special closure保持frozen。
+- 2026-07-27：Architecture首轮在`736 passed / 1 failed`发现compatibility测试扩展后
+  test manifest未重新生成；直接刷新canonical manifest后复跑=`737 passed`。Contract=
+  `275 passed`。该失败属于generated authority stale并已直接修复，未使用workaround。
+  下一步执行唯一required Full。
+- 2026-07-27：唯一required Full以`natural_integration_boundary` provenance通过：
+  `7514 passed / 3 skipped / 643 warnings`。Batch 3验收满足，状态转
+  `BASELINE_DONE_BATCH_3`；ARCH-005M1保持active，下一独立批次仅剩US special closure。
+  最终治理元数据刷新后执行post-Full Architecture/Contract。
+- 2026-07-27：post-Full Contract=`275 passed`。首次post Architecture在状态先切为
+  `BASELINE_DONE_BATCH_3`但post字段仍为`PENDING`时由compatibility lifecycle断言按设计
+  fail closed（`736 passed / 1 failed`）；恢复`VALIDATING_BATCH_3`、写入已确认Contract
+  证据后复跑Architecture=`737 passed`，再原子完成状态与post字段，未使用workaround。
