@@ -7,22 +7,30 @@
 Owner 决定：
 `owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`
 
+后续 Owner 决定：
+`owner_decision:DEVX-002:2026-07-26:default_ordinary_push_after_local_main_v2`
+
 状态：`BASELINE_DONE`
 
 ## 1. 问题与目标
 
 项目已经分别建立 task-register、known-unrelated worktree audit、temporary workspace
 lifecycle、ARCH-005 dual-lane control plane、S4D checkout lease guard 和 formal validation
-纪律，但执行入口分散。最近的 owner 决定又把默认收口边界从历史 S4C 的自动 ordinary push
-收窄为：
+纪律，但执行入口分散。v1 owner决定曾把默认收口边界从历史 S4C 的自动 ordinary push
+收窄到local `main`。v2 owner决定在验证这条本地集成链后恢复默认ordinary push，因此当前流程为：
 
 1. 从本地 `main` 的 exact HEAD 创建任务分支；
 2. 先完成任务登记、归属、实现和验证；
 3. 单线任务把已验证分支 fast-forward 到本地 `main`；
 4. 双线任务不得逐分支直接 fast-forward `main`，必须先进入 coordinator integration
    branch，按固定顺序形成单一候选 tree，再一次性 fast-forward 本地 `main`；
-5. remote push、PR 或其他外部发布作为单独动作处理；
+5. local-main fast-forward后fetch remote main，只有远端仍是candidate祖先时执行普通
+   non-force push并复核双SHA；
 6. 已合并分支和临时工作区只在完成内容、证据、进程和可恢复性审计后清理。
+
+PR、force-push、history rewrite、自动merge/rebase、remote divergence修复或发布含无关改动的
+candidate不在默认授权内。Owner显式要求no-push、无remote/upstream或上述门禁失败时跳过push并
+报告，不能把默认push解释为修复远端历史的授权。
 
 本任务把上述流程固化为项目规则和可复用 Codex skill，降低工作区污染、base drift、第二
 并行分支无法 fast-forward、shared writer 冲突、重复 Full、临时工作区遗留和远端误发布风险。
@@ -64,7 +72,9 @@ lifecycle、ARCH-005 dual-lane control plane、S4D checkout lease guard 和 form
 - lane-local focused validation 通过后提交任务分支；
 - final tree 完成 required validation、generated freshness 与 audit 后，使用 `--ff-only`
   合入本地 `main`；
-- 不自动 push；远端动作需单独 owner 指令或独立 reviewed authorization。
+- local-main fast-forward后默认fetch并普通push remote main，push前后都做ancestor/SHA复核；
+- owner no-push、无upstream、无关改动、divergence、non-fast-forward或需要history rewrite时
+  fail closed并报告，不自动pull/rebase/merge/force-push。
 
 ### 3.3 `DUAL_LANE`
 
@@ -81,6 +91,7 @@ lifecycle、ARCH-005 dual-lane control plane、S4D checkout lease guard 和 form
   顺序吸收两条 lane；
 - 只对 integration candidate 运行 combined/formal gates；PASS 后一次性 fast-forward 本地
   `main`；
+- local-main集成后由coordinator执行同一套默认remote-main ordinary-push门禁；
 - 不允许两个 sibling lane 依次直接 fast-forward `main`，也不自动 rebase、merge commit、
   force-push 或删除用户改动。
 
@@ -89,7 +100,7 @@ lifecycle、ARCH-005 dual-lane control plane、S4D checkout lease guard 和 form
 ### S0：规则冻结与任务登记
 
 - 更新 `AGENTS.md` 的 skill trigger、local-main closeout、dual-lane integration branch 和
-  remote-action boundary；
+  default ordinary-push boundary；
 - 更新 ARCH-005 requirement 与 dual-lane operating model，保留历史 S4C push 证据但明确
   新默认；
 - 修正 Wave15 已完成但 operating model 仍写 `VALIDATING` 的状态滞后。
@@ -135,7 +146,7 @@ Preflight 至少输出：
 - AGENTS/docs/task consistency、architecture/contract 等适用项目验证 PASS；
 - governed worktree audit PASS；
 - task branch提交后 fast-forward 本地 `main`；
-- 删除已合并任务分支；不自动 push。
+- 删除已合并任务分支；默认ordinary push完成并复核remote SHA，或记录合法skip/block原因。
 
 ## 5. 验收标准
 
@@ -145,7 +156,8 @@ Preflight 至少输出：
 - known-unrelated exclusions只经 governed audit处理；
 - active lease、base drift、task absence、path conflict和coordinator-only violation fail closed；
 - Full只在自然 integration boundary运行，失败修复保持 parent provenance；
-- historical S4C ordinary-push证据保留，但当前默认 remote action为separate authorization；
+- historical S4C ordinary-push证据保留；v2恢复validated local-main后的default ordinary push，
+  但PR、force-push与remote divergence修复仍需单独授权；
 - skill canonical/installed bundles可验证一致；
 - 无策略、DQ/PIT、报告结论、production或broker行为变化。
 
@@ -164,7 +176,7 @@ Preflight 至少输出：
 - 2026-07-26：Owner确认项目内研发流程、local-main边界、parallel integration topology、
   workspace cleanup与skill强制入口均需明确推进；任务建立并进入`IN_PROGRESS`。
 - 2026-07-26：`AGENTS.md`、ARCH-005 requirement和dual-lane operating model已统一到
-  local-main默认边界；remote push/PR保留为独立授权动作。
+  v1 local-main默认边界；该历史状态由v2后续owner决定显式取代。
 - 2026-07-26：canonical与installed skill已按`skill-creator`标准初始化并实现；
   `quick_validate`、byte parity、ruff、strict mypy、py_compile与11项focused tests通过。
 - 2026-07-26：已实际运行`READ_ONLY`、`SINGLE_LANE`和`DUAL_LANE`正例，以及task缺失、
@@ -179,3 +191,11 @@ Preflight 至少输出：
 - 2026-07-26：任务进入`BASELINE_DONE`；剩余长期观察项是在后续首个真实非平凡研发任务
   中复核触发命中、lane ownership和local-main closeout体验，如暴露新边界再登记后续任务，
   不阻塞当前skill启用。
+- 2026-07-26：Owner明确要求立即推送当前local `main`，并把后续默认改为：final-tree
+  validation与local-main fast-forward通过后，自动执行普通`origin/main` push。DEVX-002以
+  `default_ordinary_push_after_local_main_v2`重新进入`IN_PROGRESS`；PR、force-push、
+  history rewrite、remote divergence修复和混入无关提交仍不自动授权。
+- 2026-07-26：v2规则已同步到AGENTS、ARCH-005、dual-lane operating model与canonical skill；
+  增加default-push一致性回归测试，并将任务转回`BASELINE_DONE`。本轮必须完成focused/formal
+  validation、canonical/installed parity、local-main fast-forward、默认ordinary push与remote
+  SHA复核后才能提交收口报告。

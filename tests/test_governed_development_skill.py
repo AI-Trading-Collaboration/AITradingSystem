@@ -11,6 +11,15 @@ ROOT = Path(__file__).resolve().parents[1]
 PREFLIGHT_PATH = (
     ROOT / "tools" / "codex_skills" / "run-governed-development" / "scripts" / "preflight.py"
 )
+SKILL_PATH = ROOT / "tools" / "codex_skills" / "run-governed-development" / "SKILL.md"
+WORKFLOW_REFERENCE_PATH = (
+    ROOT
+    / "tools"
+    / "codex_skills"
+    / "run-governed-development"
+    / "references"
+    / "workflow-modes.md"
+)
 
 
 def _load_preflight() -> ModuleType:
@@ -130,3 +139,21 @@ def test_lane_cannot_claim_coordinator_only_path() -> None:
 def test_unsafe_repository_paths_are_rejected(path: str) -> None:
     with pytest.raises(ValueError):
         PREFLIGHT.normalize_repo_path(path)
+
+
+def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
+    agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    skill = SKILL_PATH.read_text(encoding="utf-8")
+    workflow = WORKFLOW_REFERENCE_PATH.read_text(encoding="utf-8")
+    normalized_workflow = " ".join(workflow.split())
+
+    assert "default closeout boundary includes local `main` and a normal push" in agents
+    assert "ordinary non-force push" in agents
+    assert "remote has diverged" in agents
+    assert "run the closeout preflight with\n  `--remote-action`" in skill
+    assert "force-push" in skill
+    assert (
+        "repository default is an ordinary push after local-main integration"
+        in normalized_workflow.lower()
+    )
+    assert "missing remote/upstream, remote divergence, or non-fast-forward push" in workflow

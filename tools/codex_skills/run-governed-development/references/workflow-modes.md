@@ -10,8 +10,10 @@ Use these sources in descending execution authority:
 4. executable checkout/lease/validation guards;
 5. this skill.
 
-The skill never authorizes strategy, production, broker, remote publication, or
-task-source cutover.
+The skill never independently authorizes strategy, production, broker, PR,
+force-push, history rewrite, remote-divergence repair, or task-source cutover.
+Apply the repository's default ordinary-push rule only after its final-tree,
+ancestry, attribution, and remote-main gates pass.
 
 ## Preflight Commands
 
@@ -47,6 +49,10 @@ Add `--contract-change` when a global policy, shared schema, public API,
 DQ/PIT/cache identity, research window, threshold, or consumer-visible contract
 changes. Expect `SERIAL_CONTRACT_WAVE_REQUIRED`.
 
+Add `--remote-action` to the coordinator closeout preflight. The repository
+default is an ordinary push after local-main integration; this flag validates
+that a remote exists and makes the intended publication visible in the output.
+
 ## Mode Protocols
 
 ### READ_ONLY
@@ -66,7 +72,9 @@ changes. Expect `SERIAL_CONTRACT_WAVE_REQUIRED`.
 7. Update task status and generated governance state.
 8. Commit the validated final tree.
 9. Verify local `main` is its ancestor and fast-forward local `main`.
-10. Audit, then delete the merged task branch when recovery is available.
+10. Run closeout preflight with `--remote-action`, fetch remote main, require it
+    to be the candidate's ancestor, ordinary-push, and verify both SHAs.
+11. Audit, then delete the merged task branch when recovery is available.
 
 ### DUAL_LANE
 
@@ -85,7 +93,9 @@ changes. Expect `SERIAL_CONTRACT_WAVE_REQUIRED`.
    required integration/Full tiers on the final candidate.
 10. Fast-forward local `main` once. Never fast-forward sibling lanes directly in
     sequence.
-11. Audit and clean each lane independently.
+11. Run the coordinator remote gate, ordinary-push local main, and verify
+    `local main = remote main = candidate`.
+12. Audit and clean each lane independently.
 
 ## Coordinator-Only Defaults
 
@@ -118,4 +128,6 @@ Stop and report on:
 - concurrent heavyweight Full runs;
 - unattributed or unique worktree residue;
 - non-fast-forward local-main integration;
-- remote action without explicit authorization.
+- missing remote/upstream, remote divergence, or non-fast-forward push;
+- candidate history containing unrelated user changes or commits;
+- any push that would require merge, rebase, history rewrite, or force-push.

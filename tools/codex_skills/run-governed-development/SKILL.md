@@ -56,7 +56,13 @@ ownership rules, integration topology, validation, and cleanup.
 - For `DUAL_LANE`, form one coordinator integration candidate from the common
   base, absorb lanes in the reviewed order, refresh shared/generated state,
   validate the combined tree, and fast-forward local `main` once.
-- Treat remote push or PR as a separate action requiring explicit authorization.
+- After local-main integration, run the closeout preflight with
+  `--remote-action`, fetch remote main, require it to be an ancestor of the
+  candidate, perform the repository-default ordinary non-force push, and verify
+  both SHAs. Skip only for an explicit no-push request or a governed no-push
+  condition.
+- Treat PR, force-push, history rewrite, and remote-divergence repair as separate
+  actions requiring explicit authorization.
 - Use the governed worktree audit at closeout.
 - Clean branches/worktrees only after ancestry, unique-content, canonical
   evidence, process dependency, and recoverability checks pass.

@@ -26645,3 +26645,118 @@ phase_devx_002_governed_development_workflow_skill:
     production_effect: none
     broker_action: none
     remote_action: separate_authorization
+
+phase_devx_002_default_ordinary_push_v2:
+  schema_version: devx_002_default_ordinary_push_compatibility.v2
+  status: BASELINE_DONE
+  boundary_id: DEVX-002-PUSH-V2
+  task_ids:
+  - DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  owner_authorization: owner_decision:DEVX-002:2026-07-26:default_ordinary_push_after_local_main_v2
+  prior_sections_immutability:
+    source_commit: 211c934b6b4a33170b8b79b279aff267b57f6911
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 8c1f7462c27964ce4050727107de018d5dd7fb1e
+    raw_byte_count: 1679340
+    raw_sha256: 6f9e336cddaa26edd0f723d432a46993bb5e56c48bab9145fe262482bd7d85e4
+    append_offset: 1679340
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - AGENTS.md
+  - docs/architecture/dual_lane_development_operating_model.md
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_governed_development_skill.py
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/SKILL.md
+  supersession:
+    superseded_by_phase: DEVX-002-PUSH-V2
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_devx_002_governed_development_workflow_skill
+    current_hash_authority: phase_devx_002_default_ordinary_push_v2.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - AGENTS.md
+  - docs/architecture/dual_lane_development_operating_model.md
+  - docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_governed_development_skill.py
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/SKILL.md
+  new_source_paths: []
+  sources:
+  - path: AGENTS.md
+    sha256: 50eec60d696edc8964c68ecadb20ed87ce4866c09b7f15d17a17d3f6654412fd
+    hash_normalization: git_eol_lf
+  - path: docs/architecture/dual_lane_development_operating_model.md
+    sha256: 67de763083e980c541d319dae6e584c6e06c12b862f1bf47b758b9d580e8dcd0
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md
+    sha256: b17e2e0a2489435ce1abdf18a5bec8fee4016a0c8ab4185c42640ed62a5742d6
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+    sha256: e4576d45535f9a66ab2a0118fdbd6e0802c6f32076c6dab9690a8a2afbafe414
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 6580f3bd10c1c94a1bc0a6ff82a8aa641a8c975e05d6c4d7da2f10d35989b796
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 88eaea056ab34edcdf3b6e81ed68664af38d02723e2164929c601d34e1094cf6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: eeb8bf2c3f244d09a4e02907cbc0954b99ecbb71ac61e7dddd753a9b9a38ff9b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 3fa715d0075f4914433ea7cc26e7f713f9887fb4942214f099c77d2a7589117e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+    sha256: 330735de7f23cfb26e839ae9580c4d24918346f2107bba4d122136b9f959f0c2
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: d288ae66369b1215fe95b076f88d805e96f10c63f5341ef334309d6f42b525c8
+    hash_normalization: git_eol_lf
+  - path: tests/test_governed_development_skill.py
+    sha256: 8b284b4709489c9ca9ac88709dd0a44a13d50916c20bf8f048a5c73f8b25e191
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/references/workflow-modes.md
+    sha256: c0e4d78a99cf28826b6c5d16c5cdae3a9433af361836c62ace170dd766dc87d4
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/SKILL.md
+    sha256: dfaec11c7013199dad3d76a54a6f65e341d6b038e0b6a9cb430010e20ea2fd7f
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: PRE_CLOSEOUT_VALIDATION
+    initial_main_push: PASS_3_COMMITS
+    initial_pushed_commit: 211c934b6b4a33170b8b79b279aff267b57f6911
+    skill_quick_validate: REQUIRED
+    bundle_parity: REQUIRED
+    focused: REQUIRED
+    architecture: REQUIRED
+    contract: REQUIRED
+    full: REQUIRED
+  safety:
+    default_remote_publication: ORDINARY_NON_FORCE_PUSH_AFTER_LOCAL_MAIN
+    pull_request_authorized: false
+    force_push_authorized: false
+    history_rewrite_authorized: false
+    remote_divergence_auto_repair: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: false
+    production_effect: none
+    broker_action: none

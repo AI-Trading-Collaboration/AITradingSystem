@@ -329,11 +329,19 @@ the current task branch after the relevant validation has passed. The commit
 must include the task-register/status update, supporting documentation updates,
 and the implementation or test changes that caused the task to move forward.
 
-The default closeout boundary is local `main`. Remote push, pull request, or
-other publication is a separate action and requires an explicit project-owner
-request or a reviewed task-specific authorization that explicitly supersedes
-this default. Historical ARCH-005 evidence that included ordinary push proves a
-capability; it is not standing authorization for new tasks.
+The default closeout boundary includes local `main` and a normal push of that
+validated local-main commit to its configured remote main branch. After the
+local fast-forward, fetch the remote main ref, require it to be an ancestor of
+the validated candidate, perform an ordinary non-force push, and verify the
+local-main and remote-main SHAs are identical.
+
+Do not push when the user explicitly asks not to push, the candidate contains
+unrelated user changes or commits, no configured remote/upstream is available,
+the remote has diverged, the update is non-fast-forward, or publication would
+require a merge, rebase, history rewrite, force-push, PR, or broader external
+action. Stop and report those conditions rather than repairing remote history
+automatically. Pull requests and force-pushes always require separate explicit
+authorization.
 
 For `SINGLE_LANE`, require local `main` to be an ancestor of the validated task
 commit and use `git merge --ff-only <task-branch>`. Do not create an empty or
@@ -358,10 +366,11 @@ At the end of a qualifying task, Codex must:
    are involved;
 6. fast-forward local `main` only after ancestry, final-tree, attribution,
    generated-freshness, and active-lease checks pass;
-7. perform remote publication only when separately authorized;
+7. fetch the remote main ref, perform the default ordinary push when its safety
+   conditions hold, and verify `local main = remote main = candidate`;
 8. audit and clean merged branches/worktrees under the temporary workspace
    lifecycle rules, then report the task commit, local-main SHA, validation,
-   cleanup, and remote-action result.
+   push/remote SHA, cleanup, and any reason the default push was skipped.
 
 ## Parallel Development Discipline
 

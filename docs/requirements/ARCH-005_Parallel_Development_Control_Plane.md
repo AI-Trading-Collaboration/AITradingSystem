@@ -1,12 +1,12 @@
 # ARCH-005 Parallel Development Control Plane
 
-最后更新：2026-07-25
+最后更新：2026-07-26
 
 ## 任务信息
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`BASELINE_DONE_S4C_VALIDATED_LOCAL_MAIN_DEFAULT_S5_PENDING`
+- status：`BASELINE_DONE_S4C_VALIDATED_DEFAULT_PUSH_S5_PENDING`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
@@ -14,8 +14,9 @@
 - approved pre-bootstrap boundary：ARCH-004G2.4-EB2 integration gate 已 PASS，owner 批准的下一实现范围为最终可复用、非 cutover 的 manifest/conflict/lane-plan/evidence primitives；它不是 S0，不得迁移 task registry、切换事实源、生成替代 task views、派发任务或获取真实 lease
 - pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
 - integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已由
-  Wave 7 首次真实执行 PASS；2026-07-26 后默认收口边界改为 local main，remote action 单独授权；
-  S5 canonical cutover 尚未授权
+  Wave 7 首次真实执行 PASS；2026-07-26 DEVX-002 v2恢复validated local-main后的默认ordinary
+  push，并保留remote divergence/history rewrite/force-push fail-closed边界；S5 canonical cutover
+  尚未授权
 - current safety follow-up：Wave14暴露同一checkout计划外task/automation第二writer风险；
   `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已按owner窄版S0/S1授权转为
   `P0/BASELINE_DONE`。Wave15现已获单独窄授权，但assignment仍须等待从授权基线最终HEAD生成的
@@ -36,6 +37,13 @@ ARCH-005 S5 或 machine dispatch 权限。coordinator 必须先提交/推送 C �
 fast-forward `main`；coordinator 必须先从共同 exact base 形成单一 integration candidate，完成
 shared/generated refresh 与 formal validation 后只 fast-forward local `main` 一次。历史 S4C ordinary
 push 结果继续作为能力证据保留，但不构成后续任务 standing authorization。
+
+2026-07-26 workflow v2 note：Owner随后通过
+`owner_decision:DEVX-002:2026-07-26:default_ordinary_push_after_local_main_v2`
+恢复默认ordinary push：final-tree门禁PASS且candidate已fast-forward到local `main`后，coordinator
+fetch remote main、要求remote main为candidate祖先、执行普通non-force push并复核
+`local main=remote main=candidate`。该默认不授权PR、force-push、history rewrite、自动merge/rebase、
+remote divergence修复或发布无关改动；owner no-push、无upstream或任一门禁失败时停止并报告。
 
 ### S4A 受监督自动化增量
 
@@ -73,8 +81,8 @@ helper、降低门禁或用 stale artifact 提升表面吞吐。
 
 2026-07-22 的历史 owner 授权允许 integration coordinator 在候选批次完成全部适用验证后执行
 `commit -> fast-forward main -> ordinary push`。该路径已用真实批次证明可行。2026-07-26 的
-DEVX-002 owner decision 收窄后，默认路径只到 local `main`；ordinary push 不再自动继承，必须单独
-授权。两版都不让 worker 自行合并，也不把 integration PASS 解释为策略 PASS。
+DEVX-002 v1曾把默认路径收窄到local `main`；同日v2在保留更严格远端门禁的前提下恢复默认
+ordinary push。各版本都不让worker自行合并，也不把integration PASS解释为策略PASS。
 
 自动集成前必须同时满足：
 
@@ -82,19 +90,20 @@ DEVX-002 owner decision 收窄后，默认路径只到 local `main`；ordinary p
 2. lane focused 与本批 required architecture/contract/full 均 PASS；失败修复 Full 必须绑定原失败
    provenance，文档/generated-only closeout只能在最后代码 Full 之后且不得改变运行语义；
 3. module/test manifests、task shadows、compatibility/deprecation/source hashes 对候选最终 tree 新鲜；
-4. local `main` 是候选提交祖先，可使用 `--ff-only`；`origin/main` divergence 必须披露，但在没有
-   remote action 时不构成本地收口 blocker；
+4. local `main` 是候选提交祖先，可使用 `--ff-only`；fetch后的`origin/main`必须是candidate祖先，
+   divergence、non-fast-forward或无upstream使默认push fail closed，但不回滚已验证的local-main
+   fast-forward；
 5. commit 后 tree bytes 与验证时冻结 tree 相同，本地收口后必须验证
    `local main=candidate`；
-6. 只有另行授权 remote action 时，才 fetch `origin/main`、要求远端是候选祖先、执行 ordinary
-   push 并复核 `local main=origin/main=candidate`。
+6. 默认fetch `origin/main`、要求远端是候选祖先、执行ordinary non-force push并复核
+   `local main=origin/main=candidate`；owner no-push或合法skip条件必须显式记录。
 
 默认动作固定为候选归属/验证复核、coordinator commit、切换 local main、
-`git merge --ff-only` 和本地 SHA 复核。双线批次先把两条 sibling lane 吸收到单一 coordinator
+`git merge --ff-only`、本地SHA复核、remote fetch、ordinary push与双SHA复核。双线批次先把两条 sibling lane 吸收到单一 coordinator
 integration candidate，不能逐 lane 直接推进 main。脏工作区、validation/base/hash stale、活动共享
 lease、local main 分叉或非 fast-forward任一出现都 fail closed 并报告；不得自动 rebase、建立 merge
-commit、force-push、删除用户改动或绕过门禁。远端权限、push rejection 与远端 SHA 只在单独授权的
-remote action 中判断。S4C 不授权 PR 自动创建、S5 source-of-truth cutover、ARCH-004 G2.5、策略
+commit、force-push、删除用户改动或绕过门禁。远端divergence、push rejection、无upstream或
+候选含无关提交时默认push停止并报告，不自动修复。S4C 不授权 PR 自动创建、S5 source-of-truth cutover、ARCH-004 G2.5、策略
 search/promotion、production 或 broker action。
 
 ### S4D Shared Checkout Write Lease Guard（NARROW S0/S1 BASELINE DONE）
