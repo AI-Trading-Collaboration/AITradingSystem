@@ -2,7 +2,7 @@
 
 最后更新：2026-07-26
 
-状态：`IN_PROGRESS_RETIREMENT_GUARD_VALIDATED_PENDING_ARCHIVE`
+状态：`COMPLETE`
 
 稳定任务 ID：`TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC`
 
@@ -222,6 +222,17 @@ row count、candidate identity、fold 或 TRADING-2453 重算事实漂移，诊�
   重新通过required Full并进入local/remote main；旧v1/v2/v3与v4临时worktree在唯一证据、
   tracked/untracked/ignored内容和活动进程审计后统一清理。最终main提交可恢复实现，
   临时runtime可重建且不承诺恢复。
+- 2026-07-26：任务已从active register迁移至completed archive；归档只改变本requirement、
+  active/completed task registers、task registry baseline/index、该任务shadow与append-only
+  closeout authority，不改变retirement implementation、policy或投资解释边界。v4最终树仍须
+  通过required validation并安全进入local/remote main后才构成发布完成。
+- 2026-07-26：v4最终组合树formal validation通过：focused=`73 passed`、
+  architecture=`668 passed`、contract=`275 passed`、Full=`7345 passed / 4 skipped /
+  642 warnings / 1312.58s pytest`，post-Full architecture=`668 passed`。Full runtime
+  artifact位于
+  `outputs/validation_runtime/trading2458_retirement_rebase3_20260726/closeout_full/`。
+  最终evidence-only回填后仅剩architecture/contract复验、worktree audit及ff-only
+  local-main/ordinary-push门禁；退役范围和禁止项不变。
 - 2026-07-26：clean-main集成formal closeout通过：focused=`100 passed`、
   report-validation=`57 passed`、reproducibility=`23 passed`、
   contract-validation=`275 passed`、architecture-fitness=`648 passed`、

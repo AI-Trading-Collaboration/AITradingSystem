@@ -27277,3 +27277,93 @@ phase_trading_2458_candidate_family_retirement_v1:
     paper_shadow_changed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2458_candidate_family_retirement_closeout:
+  schema_version: trading_2458_candidate_family_retirement_closeout_compatibility.v1
+  status: COMPLETE
+  boundary_id: TRADING-2458-CANDIDATE-FAMILY-RETIREMENT-V4-CLOSEOUT
+  task_ids:
+  - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+  owner_authorization: owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family
+  prior_sections_immutability:
+    source_commit: 42deab316de4eec678574647a27cd94ad43d7697
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 3b1974b825aceaf862d93f9169386987169998d9
+    raw_byte_count: 1711875
+    raw_sha256: 6fed5c1364303061c92e9493a226464b4c2bfef6c8820a683d42ffba34dd241e
+    append_offset: 1711875
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: TRADING-2458-CANDIDATE-FAMILY-RETIREMENT-V4-CLOSEOUT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_ARCHIVE_MOVE
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2458_candidate_family_retirement_v1
+    current_hash_authority: phase_trading_2458_candidate_family_retirement_closeout.sources
+  removed_live_source_paths:
+  - registry/development_tasks_shadow/active/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+  new_source_paths:
+  - registry/development_tasks_shadow/completed/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+  source_delta_paths:
+  - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/completed/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+    sha256: 7c5e50089ab89e4ca1115e7b5b2ee5a634c971ba58ffbd97df5860747044feba
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 22ed5f28b16569e2fb740cdea2bf1b302dff0237fce4faa7cf0b72c76baa4c63
+    hash_normalization: git_eol_lf
+  - path: docs/task_register_completed.md
+    sha256: 2c3eaa30afabdc910b0aef54a2150e9c38b4a631b2402b6d6ffe81cbe35a23d3
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 4eeb60ae5df327b57925054ebbd1964dabdceea8a372c148f2f0ab8ea45cb872
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 16d9875e36c1f391e23c301f61bb98392bb4878b39fe74262958696ed7046707
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: cf7d2e086a3ae8ff533d2c4761c841290246ae486b1e4bf93baab39f67976163
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+    sha256: c620555d88feaa7b9639fa5e43b5b972f82e70603e032de347456d8df6e5ca01
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: fc2b33c0739543a3d4779bef5b044cd82fb38314925b27ce1155cd8878fa148b
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: V4_FORMAL_CLOSEOUT_PASS
+    v3_closeout_full: PASS_7338_SKIPPED_4_WARNINGS_642
+    v3_carrier_drift: FAIL_MAIN_ADVANCED_TO_B8463FAAC
+    v4_exact_base: b8463faac3579f9b3084458f62a27d2a4f21b2b1
+    v4_focused: PASS_73
+    v4_architecture: PASS_668
+    v4_contract: PASS_275
+    v4_full: PASS_7345_SKIPPED_4_WARNINGS_642
+    post_full_evidence_gate: PASS_668
+  safety:
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    historical_artifact_bytes_changed: false
+    candidate_family_reopened: false
+    prospective_accessed: false
+    paper_shadow_changed: false
+    production_effect: none
+    broker_action: none

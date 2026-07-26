@@ -379,13 +379,36 @@ TRADING_2458_RETIREMENT_HISTORICAL_PREFIX_BYTE_COUNT = 1_703_744
 TRADING_2458_RETIREMENT_HISTORICAL_PREFIX_SHA256 = (
     "475e75e34c2b38ed086dc3795aa7d03090e2834a248dbdc34a2d71de28c5b8db"
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2458_RETIREMENT_SECTION
+TRADING_2458_CLOSEOUT_SECTION = "phase_trading_2458_candidate_family_retirement_closeout"
+TRADING_2458_CLOSEOUT_BASE_COMMIT = "42deab316de4eec678574647a27cd94ad43d7697"
+TRADING_2458_CLOSEOUT_BASELINE_GIT_BLOB = "3b1974b825aceaf862d93f9169386987169998d9"
+TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT = 1_711_875
+TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_SHA256 = (
+    "6fed5c1364303061c92e9493a226464b4c2bfef6c8820a683d42ffba34dd241e"
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2458_CLOSEOUT_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
         "docs/research/trading2458_candidate_family_retirement.md",
         "src/ai_trading_system/trading2458_candidate_family_retirement.py",
         "tests/test_trading2458_candidate_family_retirement.py",
+    }
+)
+TRADING_2458_CLOSEOUT_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "registry/development_tasks_shadow/completed/18/"
+            "187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml"
+        ),
+    }
+)
+TRADING_2458_CLOSEOUT_REMOVED_SOURCE_PATHS = frozenset(
+    {
+        (
+            "registry/development_tasks_shadow/active/18/"
+            "187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml"
+        ),
     }
 )
 ARCH_004G2_OBSERVABILITY_NEW_SOURCE_PATHS = frozenset(
@@ -963,6 +986,23 @@ def _trading_2458_retirement_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2458_closeout_base_baseline_blob() -> bytes:
+    object_name = f"{TRADING_2458_CLOSEOUT_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2458_CLOSEOUT_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -1459,6 +1499,29 @@ def _assert_trading_2458_retirement_historical_prefix_immutable(
     expected_marker = f"\n{TRADING_2458_RETIREMENT_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker), (
         "TRADING-2458 retirement must be appended after the exact DATA-GOV-002 Phase B1 blob"
+    )
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2458_closeout_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, (
+        "TRADING-2458 closeout historical prefix differs from the immutable "
+        "candidate-family retirement blob"
+    )
+    assert (
+        hashlib.sha256(historical_prefix).hexdigest()
+        == TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_SHA256
+    )
+    suffix = current_bytes[TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{TRADING_2458_CLOSEOUT_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker), (
+        "TRADING-2458 closeout must be appended after the exact retirement blob"
     )
     assert current_bytes.count(expected_marker) == 1
 
@@ -2138,6 +2201,28 @@ def _trading_2458_retirement_source_paths() -> frozenset[str]:
 
 
 @cache
+def _trading_2458_closeout_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2458_closeout_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2458_closeout_base_baseline_blob(),
+    )
+    baseline = _compatibility_baseline()
+    phase = baseline[TRADING_2458_CLOSEOUT_SECTION]
+    paths = phase["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2458_closeout_source_paths() -> frozenset[str]:
+    baseline = _compatibility_baseline()
+    phase = baseline[TRADING_2458_CLOSEOUT_SECTION]
+    sources = phase["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -2159,6 +2244,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _arch_004g2_observability_source_paths()
     if TRADING_2458_RETIREMENT_SECTION in baseline:
         paths |= _trading_2458_retirement_source_paths()
+    if TRADING_2458_CLOSEOUT_SECTION in baseline:
+        paths |= _trading_2458_closeout_source_paths()
     return paths
 
 
@@ -2728,12 +2815,37 @@ def _trading_2458_retirement_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(TRADING_2458_RETIREMENT_SECTION)
 
 
+@cache
+def _trading_2458_closeout_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2458_CLOSEOUT_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2458_RETIREMENT_SECTION in baseline:
+    if TRADING_2458_CLOSEOUT_SECTION in baseline:
+        current_superseded_paths = _trading_2458_closeout_superseded_live_source_paths()
+        assert _trading_2458_closeout_prior_active_source_mismatches() == (
+            current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+            | _trading_2459_doc_closeout_source_paths()
+            | _data_gov_002_source_paths()
+            | _devx_002_source_paths()
+            | _devx_002_push_v2_source_paths()
+            | _arch_004g2_observability_source_paths()
+            | _arch_004g2_closure_threshold_source_paths()
+            | _data_gov_002_phase_b1_source_paths()
+            | _trading_2458_retirement_source_paths()
+            | _trading_2458_closeout_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2458_CLOSEOUT_SECTION
+    elif TRADING_2458_RETIREMENT_SECTION in baseline:
         current_superseded_paths = _trading_2458_retirement_superseded_live_source_paths()
         assert _trading_2458_retirement_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
@@ -6964,14 +7076,16 @@ def test_data_gov_002_phase_b1_is_preserved_historical_authority() -> None:
     }
 
 
-def test_trading_2458_candidate_family_retirement_is_current_hash_authority() -> None:
+def test_trading_2458_candidate_family_retirement_is_preserved_historical_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     _assert_trading_2458_retirement_historical_prefix_immutable(
         current_bytes,
         _trading_2458_retirement_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2458_RETIREMENT_SECTION
+    assert list(baseline).index(TRADING_2458_RETIREMENT_SECTION) < list(baseline).index(
+        TRADING_2458_CLOSEOUT_SECTION
+    )
     assert list(baseline).index(DATA_GOV_002_PHASE_B1_SECTION) < list(baseline).index(
         TRADING_2458_RETIREMENT_SECTION
     )
@@ -6996,7 +7110,6 @@ def test_trading_2458_candidate_family_retirement_is_current_hash_authority() ->
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
 
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _trading_2458_retirement_prior_active_source_mismatches()
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2458-CANDIDATE-FAMILY-RETIREMENT-V4",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -7019,7 +7132,7 @@ def test_trading_2458_candidate_family_retirement_is_current_hash_authority() ->
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["validation"] == {
         "engineering_status": "PRIOR_CARRIER_VALIDATED_V4_RECOMPUTE_PENDING",
@@ -7043,12 +7156,109 @@ def test_trading_2458_candidate_family_retirement_is_current_hash_authority() ->
     }
 
 
+def test_trading_2458_candidate_family_retirement_closeout_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    _assert_trading_2458_closeout_historical_prefix_immutable(
+        current_bytes,
+        _trading_2458_closeout_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2458_CLOSEOUT_SECTION
+    phase = baseline[TRADING_2458_CLOSEOUT_SECTION]
+
+    assert phase["schema_version"] == (
+        "trading_2458_candidate_family_retirement_closeout_compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING_FINAL_TREE", "COMPLETE"}
+    assert phase["boundary_id"] == "TRADING-2458-CANDIDATE-FAMILY-RETIREMENT-V4-CLOSEOUT"
+    assert phase["task_ids"] == ["TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC"]
+    assert phase["owner_authorization"] == (
+        "owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2458_CLOSEOUT_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2458_CLOSEOUT_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _trading_2458_closeout_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2458-CANDIDATE-FAMILY-RETIREMENT-V4-CLOSEOUT",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_ARCHIVE_MOVE",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2458_RETIREMENT_SECTION,
+        "current_hash_authority": f"{TRADING_2458_CLOSEOUT_SECTION}.sources",
+    }
+    removed = set(phase["removed_live_source_paths"])
+    assert removed == TRADING_2458_CLOSEOUT_REMOVED_SOURCE_PATHS
+    assert removed <= superseded
+    assert set(phase["new_source_paths"]) == TRADING_2458_CLOSEOUT_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == (
+        (superseded - removed) | TRADING_2458_CLOSEOUT_NEW_SOURCE_PATHS
+    )
+
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == set(phase["source_delta_paths"])
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    validation = phase["validation"]
+    assert validation["v3_closeout_full"] == "PASS_7338_SKIPPED_4_WARNINGS_642"
+    assert validation["v3_carrier_drift"] == "FAIL_MAIN_ADVANCED_TO_B8463FAAC"
+    assert validation["v4_exact_base"] == TRADING_2458_RETIREMENT_BASE_COMMIT
+    if phase["status"] == "COMPLETE":
+        assert validation["v4_focused"].startswith("PASS_")
+        assert validation["v4_architecture"].startswith("PASS_")
+        assert validation["v4_contract"].startswith("PASS_")
+        assert validation["v4_full"].startswith("PASS_")
+        assert validation["post_full_evidence_gate"].startswith("PASS_")
+    else:
+        assert validation["v4_focused"] == "PENDING"
+        assert validation["v4_architecture"] == "PENDING"
+        assert validation["v4_contract"] == "PENDING"
+        assert validation["v4_full"] == "PENDING"
+        assert validation["post_full_evidence_gate"] == "PENDING"
+    assert phase["safety"] == {
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "historical_artifact_bytes_changed": False,
+        "candidate_family_reopened": False,
+        "prospective_accessed": False,
+        "paper_shadow_changed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
 def test_trading_2458_retirement_rejects_historical_prefix_tamper() -> None:
     base_blob = _trading_2458_retirement_base_baseline_blob()
     tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
     tampered[TRADING_2458_RETIREMENT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2458_retirement_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2458_closeout_rejects_historical_prefix_tamper() -> None:
+    base_blob = _trading_2458_closeout_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2458_closeout_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )
