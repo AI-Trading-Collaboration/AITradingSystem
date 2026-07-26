@@ -8047,10 +8047,11 @@ def test_devx_003_is_preserved_historical_authority() -> None:
     assert superseded <= observed_live_mismatches
     assert observed_live_mismatches <= (
         superseded
-        | _data_gov_002c1_superseded_live_source_paths()
-        | _data_gov_002c2_superseded_live_source_paths()
-        | _trading_2461_superseded_live_source_paths()
-    )
+            | _data_gov_002c1_superseded_live_source_paths()
+            | _data_gov_002c2_superseded_live_source_paths()
+            | _trading_2461_superseded_live_source_paths()
+            | _arch_004g2_paper_weekly_superseded_live_source_paths()
+        )
     assert phase["supersession"] == {
         "superseded_by_phase": "DEVX-003-GOVERNED-CLOSEOUT-REMOTE-PREFLIGHT",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",

@@ -28263,7 +28263,7 @@ phase_trading_2461_decision_target_capability_audit_model_ladder:
 
 phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate:
   schema_version: arch_004g2_paper_shadow_weekly_validation_authority_candidate_compatibility.v1
-  status: VALIDATING_REJECTED_THRESHOLD_MISS
+  status: BASELINE_DONE_REJECTED_THRESHOLD_MISS
   boundary_id: ARCH-004G2-PAPER-SHADOW-WEEKLY-VALIDATION-AUTHORITY-CANDIDATE
   task_ids:
   - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
@@ -28315,7 +28315,7 @@ phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate:
     sha256: 49bdf5f88709ff34d0ea96f90dbcf86dc3f95fdc67ca2c25084ce70fbe167b4e
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 6111134283028a71c9d1aa58e7f00bc1cf7a2582c067716e586df000ed7b6e1f
+    sha256: af85f3047eda0f0f354be0348e178a03bd15213d85ba830656626aa28f677b2e
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
     sha256: f686d3d12df9a33e55acc57414f035126a74b98b526785968aee786a370f3e09
@@ -28327,7 +28327,7 @@ phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate:
     sha256: 8ccf1cff0b90a344f1532a4b7815a9ee64f98b2a26c087b616a55775ea438762
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: ff1d94d95ab5161c802ada0052997642667c8586bcff3547af07544455ec6857
+    sha256: ec9185cc0fde1e35876888c281ee1d879878347e49463fc74782f5aec6ccf166
     hash_normalization: git_eol_lf
   validation:
     baseline: PASS_5_299_34_SECONDS
@@ -28337,8 +28337,8 @@ phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate:
     implementation_restored: PASS_BLOB_6092152071797758d7413cc3d19bd5ebeac4126b
     task_registry: PASS_BYTE_IDENTICAL
     architecture_devex: PASS
-    architecture: PENDING
-    contract: PENDING
+    architecture: PASS_680
+    contract: PASS_275
     full: NOT_RUN_IMPLEMENTATION_REJECTED
   safety:
     candidate_result: REJECTED_THRESHOLD_MISS
