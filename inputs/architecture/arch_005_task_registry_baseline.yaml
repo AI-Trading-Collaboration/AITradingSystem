@@ -95,26 +95,26 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1637766
-    sha256: 2a897fa40933f0a53fc803bec4f6a9ed33359f0122e9e75b136d966c70af59e6
-    row_count: 421
+    byte_count: 1636897
+    sha256: 0800bb4593fb8281cfc1372b7baa30aa250af51b7a6501c3c4c4a8810fe1bb38
+    row_count: 420
     final_newline: true
-    task_id_order_sha256: 78d1e940423e1bd4371011f0d64cdfcff12d7313f37039b3ecdbc1f6a85b66e7
-    row_checksum_order_sha256: d21b1fbe2500743d942e4e4ed5576b7d5c04481b435b059f7b90ccea6cc8aa89
+    task_id_order_sha256: d8c8a8d1bf8751c67d2b0ea62cdaa0561b6ecf25792b2db8947a60547a9ca1ae
+    row_checksum_order_sha256: 7e05dc97b7c548dc1c5749695640f754a00271347044b053a0fa099b7c2e6c19
     task_row_newline_counts:
-      LF: 421
+      LF: 420
   - source: completed
     path: docs/task_register_completed.md
-    byte_count: 1087047
-    sha256: 0514ede66fb0b983f791982d1bbfdd3b759815939ae1c32b6c201f64796d9fd6
-    row_count: 495
+    byte_count: 1088274
+    sha256: 61d51e8db2bb3b0ad28bce4fe9b77fa995ee24980345ee9c1e4c3df9cbe98a79
+    row_count: 496
     final_newline: true
-    task_id_order_sha256: 2d25ae60d7f406b118de43807fdacc45dc965b1215b145b0cc79db44daf3c106
-    row_checksum_order_sha256: 0cbd3c2f8d03c341a4eb9c429d8d9eb1fac3765a16fdab73e43dd257a628b486
+    task_id_order_sha256: 0fbb92c91cf85eff061399fd32de7bfcbd2f0a4838319f9c4f6987eecfa1df05
+    row_checksum_order_sha256: 29fb8858839f6a6b99b440881e28a616245995697d1034ee4b090f8ecd39d030
     task_row_newline_counts:
-      LF: 495
-  active_task_count: 421
-  completed_task_count: 495
+      LF: 496
+  active_task_count: 420
+  completed_task_count: 496
   total_task_count: 916
   unique_task_count: 916
   task_id_overlap_count: 0
@@ -124,16 +124,16 @@ inventory:
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
-    DONE: 483
+    DONE: 484
     DROPPED: 12
     IN_PROGRESS: 8
-    PROPOSED: 10
+    PROPOSED: 9
     READY: 1
     VALIDATING: 267
   task_id_set_sha256: 9cc042626a6d9634f959a3b9947753563a63588791256714c2a1fe2387e90199
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 9dc604485463cfe21b09f2fc1f66375e480d7cb7f547d82adf7e3d959c3701c3
-  docs_link_set_sha256: 97ed5101061f48111e5bc0e2357b06200aac9d0fe80d049f301278a2c2f09d43
+  owner_set_sha256: c1d5cb29cfddf629f22bd4213e845e894c276bfd9bd5c089a196298a7b115041
+  docs_link_set_sha256: 6f3d791a7270170cc8dc5fe930862f1468f5249929519fb0a02325db0173d6c6
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -3012,72 +3012,65 @@ inventory:
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
-  - task_id: ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
-    source: active
-    line_number: 1962
-    row_sha256: 02f0c151eadcb923ceade777d3053c150c0aa3e19f9cd4a87545e85ff040c104
-    cell_count: 8
-    field_projection: first_eight_cells_legacy_v1
-    history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: PROD-003
     source: active
-    line_number: 1970
+    line_number: 1969
     row_sha256: d8294ed8e4ad2aea19418990e24f3ae6befdb32d2f58ee060cc6e567aedd95d8
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
     source: active
-    line_number: 2008
+    line_number: 2007
     row_sha256: c0c06691eb8c62bbed23af452067c2fb7b13ece02b74799ae53b1742417938e6
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
     source: active
-    line_number: 2014
+    line_number: 2013
     row_sha256: 8592db2da2f52b8b65a23e75740021b56166ab3d9950fb8cf04044088c3c045a
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
     source: active
-    line_number: 2020
+    line_number: 2019
     row_sha256: ca0089d3c790ba53568829d15c139c5d845c03b1eec0c22ed7a882d4b8f678f0
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
     source: active
-    line_number: 2021
+    line_number: 2020
     row_sha256: ac737b4bdfd2ad08e947ab863259a08fa32236b68f83b47b181bb5245f7dcc45
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
     source: active
-    line_number: 2027
+    line_number: 2026
     row_sha256: 00c78d701acb49a84fc05e7feb7f982e633659e6773283b6c36bf37408fa416c
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
     source: active
-    line_number: 2028
+    line_number: 2027
     row_sha256: 3f88e9358009b435f625557a7d6eab4e6689a2bf879309eb226febbb9757d29b
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
     source: active
-    line_number: 2029
+    line_number: 2028
     row_sha256: 5b74b38e0167d8d6be300289d55eb3c0ff3822125a4d8314c5ef6bacfe9502cf
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
     source: active
-    line_number: 2030
+    line_number: 2029
     row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
@@ -6547,13 +6540,20 @@ inventory:
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
+  - task_id: ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+    source: completed
+    line_number: 512
+    row_sha256: 04c1349eb0d6a20e193b8e9c33959424a6ec1905b72ba8d672bdf08128cf85d4
+    cell_count: 8
+    field_projection: first_eight_cells_legacy_v1
+    history_completeness: LEGACY_HISTORY_PARTIAL
 consumer_characterization:
   status: PASS_CHARACTERIZED
   consumer_count: 131
   runtime_consumer_count: 9
   test_consumer_count: 120
   script_consumer_count: 2
-  consumer_set_sha256: ddaa8a47e2760813bd8d60c44f7c77951df84a24e23f4aa60881fa6b418b3984
+  consumer_set_sha256: eb156b3c35cac2affb47494a7d923185bd5f21032d06bd8d22aa5a6fb67d1bbf
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
     role: runtime
@@ -7269,7 +7269,7 @@ consumer_characterization:
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 12
+    reference_count: 13
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
     role: test
@@ -7398,4 +7398,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 1a2be1b74d96a192aed8d12096efd3c85ffa85237243fb341fbbec21bd678841
+baseline_checksum: fe089ebf0865c6b208c8ea47cca2aec75bce6b2436824512a4a6be6844b85388

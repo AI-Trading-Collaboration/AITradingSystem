@@ -29231,3 +29231,120 @@ phase_arch_005m2_portable_bootstrap_bundle_adoption:
     data_quality_contract_changed: false
     production_effect: none
     broker_action: none
+
+phase_arch_005m3_external_request_cache_multiprocess_harness_hardening:
+  schema_version: arch_005m3_external_request_cache_multiprocess_harness_hardening_compatibility.v1
+  status: COMPLETE
+  boundary_id: ARCH-005M3-EXTERNAL-REQUEST-CACHE-MULTIPROCESS-HARNESS
+  task_ids:
+  - ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+  owner_authorization: owner_continuation:ARCH-005M3:2026-07-27:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: 970d5189f707a3e7b1fd62a7d96c24cbbda79d4b
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 4c3a959b584b322afc250396fe35d7d11a78a317
+    raw_byte_count: 1826176
+    raw_sha256: 7c543793ffd697d70d08366ad46fb1e8a88ffb026b37cd8a14d0f3b0a41128db
+    append_offset: 1826176
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_external_request_cache_revalidation_coordination.py
+  supersession:
+    superseded_by_phase: ARCH-005M3-EXTERNAL-REQUEST-CACHE-MULTIPROCESS-HARNESS
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_005m2_portable_bootstrap_bundle_adoption
+    current_hash_authority: phase_arch_005m3_external_request_cache_multiprocess_harness_hardening.sources
+  removed_live_source_paths:
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  new_source_paths:
+  - docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md
+  - docs/task_register_completed.md
+  - registry/development_tasks_shadow/completed/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  source_delta_paths:
+  - docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - registry/development_tasks_shadow/completed/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_external_request_cache_revalidation_coordination.py
+  sources:
+  - {path: docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md, sha256: b58902cc8481f3ead89722f259940b5964beada53b06f2371b2a7810252d8500, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 0800bb4593fb8281cfc1372b7baa30aa250af51b7a6501c3c4c4a8810fe1bb38, hash_normalization: git_eol_lf}
+  - {path: docs/task_register_completed.md, sha256: 61d51e8db2bb3b0ad28bce4fe9b77fa995ee24980345ee9c1e4c3df9cbe98a79, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: b338d6f55d588d4e7986eebb342ff0fc1e6fe3c08413d6ddbd9ba5c6732ee676, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 664a20e4780ded5f5dd6d6032040a6a8b7164757186b634a39f23f3c0308b068, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: fd03847e5ed38db0ff6ad3ac3ee8982b189b08e3f85b9181999706249c4bbb3c, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml, sha256: dc9c9252caf63130091df558ac606788336ada03e92d5f643a7ce207e98e929b, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml, sha256: 84a057b31cc5421b691af885e1f4a4c72c6230bb9153af5c90c24f9f6ceed40f, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml, sha256: e384152f38a9b2af9e56ee9a8cbb379e2450eb8582512e79c607d2feed47e777, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml, sha256: fbe5258be4f6f371bb3769af117ef3c252a3d9149b7d03bace74e1b1dbf9da29, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml, sha256: 6aa8dcb1bc4399ef8146084bf2f3683ab291e40e72bba3cdb32babc69bef25fc, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml, sha256: 2ffc79c875ca16bf3a264af82c51683894a0bdb997ad922f0d05d6ddb94d9614, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml, sha256: 4ee32b3de890f3c3f31aa14cdf5d1a30f0f57f4cbeae91c6f6b5b26058ed191d, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml, sha256: 28ce45c7e0bc0909a2dd1eb688ee5c125bd499eaddcf74430a709290485296e7, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml, sha256: fbefe89dd6daa4dfa035e46a36bb947841126a195994729cce0bb2508a4ad1a2, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/completed/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml, sha256: 9eaafa5cc96bac8d74262726a2489351c226c00af58ebc74b0f5cca4b8dd96be, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: c03f95a78fd9dd6ee04fed1e2643f058d86c58e6c983aaa1469330e2e9bcfeb7, hash_normalization: git_eol_lf}
+  - {path: tests/test_external_request_cache_revalidation_coordination.py, sha256: 3ec9d909f1bd5ba7b34e637a3fe820c6d18493e5b1d21e34b9c9e480f040fd15, hash_normalization: git_eol_lf}
+  implementation:
+    structured_probe_and_result_pid_binding: true
+    single_monotonic_orchestration_deadline: true
+    first_probe_early_exit_detection: true
+    terminal_result_early_exit_detection: true
+    terminate_join_kill_cleanup: true
+    queue_close_and_join_thread_cleanup: true
+    same_key_repeat_count: 20
+    production_module_or_policy_changed: false
+  evidence:
+    frozen_base: 970d5189f707a3e7b1fd62a7d96c24cbbda79d4b
+    complete_coordination_file: PASS_39
+    coordination_and_cache_regression: PASS_65
+    production_module_and_policy_exact_bytes_unchanged: true
+    post_full_architecture_attempt_1: FAIL_722_PASSED_3_FAILED
+    post_full_architecture_failure_scope: HISTORICAL_COMPATIBILITY_ASSERTIONS_ONLY
+  validation:
+    focused: PASS_153
+    architecture: PASS_725
+    contract: PASS_275
+    full: PASS_7494_WITH_3_SKIPPED
+    post_full_architecture: PASS_725
+    post_full_contract: PASS_275
+  safety:
+    real_provider_request: false
+    cached_market_data_mutated: false
+    data_quality_contract_changed: false
+    strategy_conclusion_changed: false
+    production_effect: none
+    broker_action: none

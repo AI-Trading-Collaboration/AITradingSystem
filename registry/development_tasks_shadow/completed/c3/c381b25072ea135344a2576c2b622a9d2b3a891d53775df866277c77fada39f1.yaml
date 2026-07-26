@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+  title: null
+  domain: Test infrastructure / external request cache multiprocess harness hardening
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: data-platform test maintainer：后续新增multiprocess consumer时复用该harness contract；如需production
+    coordination语义变更须另立任务
+  requirement_refs:
+  - docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md`。只加固测试harness；production
+    coordination module/policy、lease/heartbeat/takeover/unlock、provider、cache、DQ/PIT或策略语义均未修改。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: structured probe/result绑定exact PID；child early exit快速typed诊断；barrier/result/join共享deadline；finally
+      terminate/join/kill并close/join queues；同key exactly one live request与唯一winner，loser只允许waiter或double-check
+      reuse且generation精确；20次重复、完整文件与formal gates PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 512
+    row_sha256: 04c1349eb0d6a20e193b8e9c33959424a6ec1905b72ba8d672bdf08128cf85d4
+    cell_count: 8
+    all_cells:
+    - ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+    - Test infrastructure / external request cache multiprocess harness hardening
+    - P2
+    - DONE
+    - data-platform test maintainer：后续新增multiprocess consumer时复用该harness contract；如需production
+      coordination语义变更须另立任务
+    - 详见 `docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md`。只加固测试harness；production
+      coordination module/policy、lease/heartbeat/takeover/unlock、provider、cache、DQ/PIT或策略语义均未修改。
+    - structured probe/result绑定exact PID；child early exit快速typed诊断；barrier/result/join共享deadline；finally
+      terminate/join/kill并close/join queues；同key exactly one live request与唯一winner，loser只允许waiter或double-check
+      reuse且generation精确；20次重复、完整文件与formal gates PASS。
+    - 2026-07-27：Ruff PASS；focused/Architecture/Contract=`153/725/275 passed`，唯一required
+      Full=`7494 passed / 3 skipped / 643 warnings`；zero/nonzero/terminal-result early
+      exit与stall cleanup负例通过，production module/policy相对frozen base exact bytes不变；compatibility
+      authority历史prefix byte-identical，任务归档DONE。
+    raw_line: '|ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING|Test
+      infrastructure / external request cache multiprocess harness hardening|P2|DONE|data-platform
+      test maintainer：后续新增multiprocess consumer时复用该harness contract；如需production coordination语义变更须另立任务|详见
+      `docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md`。只加固测试harness；production
+      coordination module/policy、lease/heartbeat/takeover/unlock、provider、cache、DQ/PIT或策略语义均未修改。|structured
+      probe/result绑定exact PID；child early exit快速typed诊断；barrier/result/join共享deadline；finally
+      terminate/join/kill并close/join queues；同key exactly one live request与唯一winner，loser只允许waiter或double-check
+      reuse且generation精确；20次重复、完整文件与formal gates PASS。|2026-07-27：Ruff PASS；focused/Architecture/Contract=`153/725/275
+      passed`，唯一required Full=`7494 passed / 3 skipped / 643 warnings`；zero/nonzero/terminal-result
+      early exit与stall cleanup负例通过，production module/policy相对frozen base exact bytes不变；compatibility
+      authority历史prefix byte-identical，任务归档DONE。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-04c1349eb0d6a20e193b8e9c
+  task_id: ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: data-platform test maintainer：后续新增multiprocess consumer时复用该harness
+      contract；如需production coordination语义变更须另立任务
+    notes: 2026-07-27：Ruff PASS；focused/Architecture/Contract=`153/725/275 passed`，唯一required
+      Full=`7494 passed / 3 skipped / 643 warnings`；zero/nonzero/terminal-result early
+      exit与stall cleanup负例通过，production module/policy相对frozen base exact bytes不变；compatibility
+      authority历史prefix byte-identical，任务归档DONE。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:04c1349eb0d6a20e193b8e9c33959424a6ec1905b72ba8d672bdf08128cf85d4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005M3_EXTERNAL_REQUEST_CACHE_MULTIPROCESS_HARNESS_HARDENING
+  - Test infrastructure / external request cache multiprocess harness hardening
+  - P2
+  - DONE
+  - data-platform test maintainer：后续新增multiprocess consumer时复用该harness contract；如需production
+    coordination语义变更须另立任务
+  - 详见 `docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md`。只加固测试harness；production
+    coordination module/policy、lease/heartbeat/takeover/unlock、provider、cache、DQ/PIT或策略语义均未修改。
+  - structured probe/result绑定exact PID；child early exit快速typed诊断；barrier/result/join共享deadline；finally
+    terminate/join/kill并close/join queues；同key exactly one live request与唯一winner，loser只允许waiter或double-check
+    reuse且generation精确；20次重复、完整文件与formal gates PASS。
+  - 2026-07-27：Ruff PASS；focused/Architecture/Contract=`153/725/275 passed`，唯一required
+    Full=`7494 passed / 3 skipped / 643 warnings`；zero/nonzero/terminal-result early
+    exit与stall cleanup负例通过，production module/policy相对frozen base exact bytes不变；compatibility
+    authority历史prefix byte-identical，任务归档DONE。
+  docs_links:
+  - docs/requirements/ARCH-005M3_External_Request_Cache_Multiprocess_Harness_Hardening.md
+  terminal: true
+  raw_row_sha256: 04c1349eb0d6a20e193b8e9c33959424a6ec1905b72ba8d672bdf08128cf85d4
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: e0be590653caed7b6463b46d6283e0f1e9c336cf292cff1a9ebb4c8501bb6b01
