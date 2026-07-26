@@ -1,0 +1,20 @@
+{
+  "broker_action": "none",
+  "checks": {
+    "all_source_owner_decisions_pending": true,
+    "c1_inventory_current_and_exact_sites": true,
+    "content_derived_rebuild": true,
+    "no_new_runtime_or_isolation_authority": true,
+    "safety_boundary": true,
+    "single_row_and_row_pair_taxonomy": true,
+    "source_and_policy_bindings": true
+  },
+  "error_count": 0,
+  "errors": [],
+  "expected_review_pack_id": "dq_rate_issue_attribution_review_0957cfde306cb37b760f1005",
+  "production_effect": "none",
+  "review_pack_id": "dq_rate_issue_attribution_review_0957cfde306cb37b760f1005",
+  "schema_version": "data_quality_rate_issue_attribution_review_validation.v1",
+  "status": "PASS",
+  "task_id": "DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK"
+}

@@ -1,0 +1,464 @@
+{
+  "authority": {
+    "capability_policy_change_authorized": false,
+    "consumer_migration_authorized": false,
+    "message_or_sample_scope_inference_allowed": false,
+    "new_issue_isolation_authorized": false,
+    "review_pack_is_authorization": false,
+    "runtime_contract_change_authorized": false,
+    "source_owner_decision_recorded": false
+  },
+  "c1_inventory_id": "dq_issue_attribution_inventory_03821e2e3dc483446249d52c",
+  "candidates": [
+    {
+      "affected_price_tickers": [],
+      "affected_rate_series_rule": "DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS",
+      "affected_rows_rule": "TRIGGER_AND_PREVIOUS_VALID_SAME_SERIES_ROW_WITH_DIGESTS",
+      "affected_source_roles": [
+        "primary_macro_rates"
+      ],
+      "affected_window_rule": "PREVIOUS_TO_TRIGGER_DATE_INCLUSIVE",
+      "attribution_completeness_requirements": [
+        "EXACT_CANONICAL_SOURCE_ROLE",
+        "NON_EMPTY_NORMALIZED_RATE_SERIES",
+        "PARSEABLE_TRIGGER_AND_PREVIOUS_DATES",
+        "TRIGGER_AND_PREVIOUS_ROW_IDENTITIES"
+      ],
+      "c1_owner_review_status": "OWNER_REVIEW_REQUIRED",
+      "c1_phase_c_migration_eligible": false,
+      "c1_scope_status": "GLOBAL_OR_UNKNOWN_SCOPE",
+      "defect_fields": [
+        "value"
+      ],
+      "derived_fields": [
+        "_change"
+      ],
+      "emitter_function": "_check_rate_moves",
+      "emitter_function_ast_sha256": "1b1416dc9517de6621951fcdbee75a38fd518336e5e0f4eab8cda3fa9da9cef0",
+      "identity_fields": [
+        "date",
+        "series"
+      ],
+      "incomplete_when": [
+        "RATE_SERIES_MISSING_OR_BLANK",
+        "PREVIOUS_VALID_OBSERVATION_UNAVAILABLE",
+        "TRIGGER_OR_PREVIOUS_ROW_IDENTITY_UNAVAILABLE"
+      ],
+      "issue_code": "rates_extreme_daily_change",
+      "message_or_sample_scope_inference_allowed": false,
+      "new_issue_isolation_authorized": false,
+      "policy_dependencies": [
+        "rates.consistency_start_date",
+        "rates.extreme_daily_change_abs",
+        "rates.series_overrides"
+      ],
+      "predicate_id": "ABSOLUTE_CHANGE_EXCEEDS_EXTREME_POLICY_THRESHOLD",
+      "proposed_contract_wave_disposition": "CONTRACT_WAVE_CANDIDATE",
+      "row_dependencies": [
+        "PREVIOUS_VALID_SAME_SERIES_ROW",
+        "TRIGGER_ROW"
+      ],
+      "runtime_attribution_implemented": false,
+      "scope_taxonomy": "CURRENT_AND_PREVIOUS_VALID_OBSERVATION",
+      "severity": "ERROR",
+      "site_id": "dq_issue_site_85549de0f1e9ab739a74",
+      "source_line": 2544,
+      "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
+      "source_owner_questions": [
+        "是否确认 move issue 的完整 row scope 必须同时包含当前行和前一有效观测？",
+        "是否要求 C3 保存命中的 series-specific threshold 与 predecessor identity？"
+      ],
+      "source_path": "src/ai_trading_system/data/quality.py"
+    },
+    {
+      "affected_price_tickers": [],
+      "affected_rate_series_rule": "DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS",
+      "affected_rows_rule": "SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST",
+      "affected_source_roles": [
+        "primary_macro_rates"
+      ],
+      "affected_window_rule": "UNAVAILABLE_FOR_INVALID_DATE",
+      "attribution_completeness_requirements": [
+        "EXACT_CANONICAL_SOURCE_ROLE",
+        "NON_EMPTY_NORMALIZED_RATE_SERIES",
+        "SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST"
+      ],
+      "c1_owner_review_status": "OWNER_REVIEW_REQUIRED",
+      "c1_phase_c_migration_eligible": false,
+      "c1_scope_status": "GLOBAL_OR_UNKNOWN_SCOPE",
+      "defect_fields": [
+        "date"
+      ],
+      "derived_fields": [],
+      "emitter_function": "_validate_rates",
+      "emitter_function_ast_sha256": "4fabc20a083e9f212f45dddaec4c141e9eeea4154dcfd23244020fe889a4bfa1",
+      "identity_fields": [
+        "series"
+      ],
+      "incomplete_when": [
+        "RATE_SERIES_MISSING_OR_BLANK",
+        "SOURCE_ROW_IDENTITY_UNAVAILABLE"
+      ],
+      "issue_code": "rates_invalid_date",
+      "message_or_sample_scope_inference_allowed": false,
+      "new_issue_isolation_authorized": false,
+      "policy_dependencies": [],
+      "predicate_id": "PARSED_DATE_IS_MISSING",
+      "proposed_contract_wave_disposition": "CONTRACT_WAVE_CANDIDATE",
+      "row_dependencies": [
+        "TRIGGER_ROW"
+      ],
+      "runtime_attribution_implemented": false,
+      "scope_taxonomy": "SINGLE_SOURCE_ROW",
+      "severity": "ERROR",
+      "site_id": "dq_issue_site_0e7f3d74bfa489801c83",
+      "source_line": 1243,
+      "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
+      "source_owner_questions": [
+        "是否确认 invalid date 不阻止按 non-empty series 做保守 series-level attribution？",
+        "是否接受该类 issue 永不参与 window-level isolation？"
+      ],
+      "source_path": "src/ai_trading_system/data/quality.py"
+    },
+    {
+      "affected_price_tickers": [],
+      "affected_rate_series_rule": "DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS",
+      "affected_rows_rule": "SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST",
+      "affected_source_roles": [
+        "primary_macro_rates"
+      ],
+      "affected_window_rule": "EXACT_TRIGGER_DATE_WHEN_PARSEABLE",
+      "attribution_completeness_requirements": [
+        "EXACT_CANONICAL_SOURCE_ROLE",
+        "NON_EMPTY_NORMALIZED_RATE_SERIES",
+        "SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST"
+      ],
+      "c1_owner_review_status": "OWNER_REVIEW_REQUIRED",
+      "c1_phase_c_migration_eligible": false,
+      "c1_scope_status": "GLOBAL_OR_UNKNOWN_SCOPE",
+      "defect_fields": [
+        "value"
+      ],
+      "derived_fields": [],
+      "emitter_function": "_validate_rates",
+      "emitter_function_ast_sha256": "4fabc20a083e9f212f45dddaec4c141e9eeea4154dcfd23244020fe889a4bfa1",
+      "identity_fields": [
+        "date",
+        "series"
+      ],
+      "incomplete_when": [
+        "RATE_SERIES_MISSING_OR_BLANK",
+        "SOURCE_ROW_IDENTITY_UNAVAILABLE"
+      ],
+      "issue_code": "rates_invalid_value",
+      "message_or_sample_scope_inference_allowed": false,
+      "new_issue_isolation_authorized": false,
+      "policy_dependencies": [],
+      "predicate_id": "NUMERIC_VALUE_IS_MISSING",
+      "proposed_contract_wave_disposition": "CONTRACT_WAVE_CANDIDATE",
+      "row_dependencies": [
+        "TRIGGER_ROW"
+      ],
+      "runtime_attribution_implemented": false,
+      "scope_taxonomy": "SINGLE_SOURCE_ROW",
+      "severity": "ERROR",
+      "site_id": "dq_issue_site_f337897b3d0d0b8e2842",
+      "source_line": 1256,
+      "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
+      "source_owner_questions": [
+        "是否确认 value 缺失或非数值只影响触发行及其 series？",
+        "date 无法解析时是否固定降级为 series-level attribution？"
+      ],
+      "source_path": "src/ai_trading_system/data/quality.py"
+    },
+    {
+      "affected_price_tickers": [],
+      "affected_rate_series_rule": "DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS",
+      "affected_rows_rule": "SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST",
+      "affected_source_roles": [
+        "primary_macro_rates"
+      ],
+      "affected_window_rule": "EXACT_TRIGGER_DATE_WHEN_PARSEABLE",
+      "attribution_completeness_requirements": [
+        "EXACT_CANONICAL_SOURCE_ROLE",
+        "NON_EMPTY_NORMALIZED_RATE_SERIES",
+        "SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST"
+      ],
+      "c1_owner_review_status": "OWNER_REVIEW_REQUIRED",
+      "c1_phase_c_migration_eligible": false,
+      "c1_scope_status": "GLOBAL_OR_UNKNOWN_SCOPE",
+      "defect_fields": [
+        "value"
+      ],
+      "derived_fields": [],
+      "emitter_function": "_validate_rates",
+      "emitter_function_ast_sha256": "4fabc20a083e9f212f45dddaec4c141e9eeea4154dcfd23244020fe889a4bfa1",
+      "identity_fields": [
+        "date",
+        "series"
+      ],
+      "incomplete_when": [
+        "RATE_SERIES_MISSING_OR_BLANK",
+        "SOURCE_ROW_IDENTITY_UNAVAILABLE"
+      ],
+      "issue_code": "rates_non_finite_value",
+      "message_or_sample_scope_inference_allowed": false,
+      "new_issue_isolation_authorized": false,
+      "policy_dependencies": [],
+      "predicate_id": "NUMERIC_VALUE_IS_NON_FINITE",
+      "proposed_contract_wave_disposition": "CONTRACT_WAVE_CANDIDATE",
+      "row_dependencies": [
+        "TRIGGER_ROW"
+      ],
+      "runtime_attribution_implemented": false,
+      "scope_taxonomy": "SINGLE_SOURCE_ROW",
+      "severity": "ERROR",
+      "site_id": "dq_issue_site_dcc6dcab7a17c225b404",
+      "source_line": 1269,
+      "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
+      "source_owner_questions": [
+        "是否确认 Infinity/non-finite 只影响触发行及其 series？",
+        "date 无法解析时是否固定降级为 series-level attribution？"
+      ],
+      "source_path": "src/ai_trading_system/data/quality.py"
+    },
+    {
+      "affected_price_tickers": [],
+      "affected_rate_series_rule": "DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS",
+      "affected_rows_rule": "SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST",
+      "affected_source_roles": [
+        "primary_macro_rates"
+      ],
+      "affected_window_rule": "EXACT_TRIGGER_DATE_WHEN_PARSEABLE",
+      "attribution_completeness_requirements": [
+        "EXACT_CANONICAL_SOURCE_ROLE",
+        "NON_EMPTY_NORMALIZED_RATE_SERIES",
+        "SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST"
+      ],
+      "c1_owner_review_status": "OWNER_REVIEW_REQUIRED",
+      "c1_phase_c_migration_eligible": false,
+      "c1_scope_status": "GLOBAL_OR_UNKNOWN_SCOPE",
+      "defect_fields": [
+        "value"
+      ],
+      "derived_fields": [],
+      "emitter_function": "_check_rate_ranges",
+      "emitter_function_ast_sha256": "037500e0ee0b2217805acf958fa4d136a3a596791a6e5c3c04666e866a238e16",
+      "identity_fields": [
+        "date",
+        "series"
+      ],
+      "incomplete_when": [
+        "RATE_SERIES_MISSING_OR_BLANK",
+        "SOURCE_ROW_IDENTITY_UNAVAILABLE"
+      ],
+      "issue_code": "rates_out_of_range",
+      "message_or_sample_scope_inference_allowed": false,
+      "new_issue_isolation_authorized": false,
+      "policy_dependencies": [
+        "rates.min_plausible_value",
+        "rates.max_plausible_value",
+        "rates.series_overrides"
+      ],
+      "predicate_id": "VALUE_OUTSIDE_SERIES_POLICY_RANGE",
+      "proposed_contract_wave_disposition": "CONTRACT_WAVE_CANDIDATE",
+      "row_dependencies": [
+        "TRIGGER_ROW"
+      ],
+      "runtime_attribution_implemented": false,
+      "scope_taxonomy": "SINGLE_SOURCE_ROW",
+      "severity": "ERROR",
+      "site_id": "dq_issue_site_6421117ee905a6da1438",
+      "source_line": 2467,
+      "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
+      "source_owner_questions": [
+        "是否确认 configured plausible range 的越界只影响触发行及其 series？",
+        "是否要求 C3 把实际命中的 series-specific threshold 一并写入 evidence？"
+      ],
+      "source_path": "src/ai_trading_system/data/quality.py"
+    },
+    {
+      "affected_price_tickers": [],
+      "affected_rate_series_rule": "DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS",
+      "affected_rows_rule": "TRIGGER_AND_PREVIOUS_VALID_SAME_SERIES_ROW_WITH_DIGESTS",
+      "affected_source_roles": [
+        "primary_macro_rates"
+      ],
+      "affected_window_rule": "PREVIOUS_TO_TRIGGER_DATE_INCLUSIVE",
+      "attribution_completeness_requirements": [
+        "EXACT_CANONICAL_SOURCE_ROLE",
+        "NON_EMPTY_NORMALIZED_RATE_SERIES",
+        "PARSEABLE_TRIGGER_AND_PREVIOUS_DATES",
+        "TRIGGER_AND_PREVIOUS_ROW_IDENTITIES"
+      ],
+      "c1_owner_review_status": "OWNER_REVIEW_REQUIRED",
+      "c1_phase_c_migration_eligible": false,
+      "c1_scope_status": "GLOBAL_OR_UNKNOWN_SCOPE",
+      "defect_fields": [
+        "value"
+      ],
+      "derived_fields": [
+        "_change"
+      ],
+      "emitter_function": "_check_rate_moves",
+      "emitter_function_ast_sha256": "1b1416dc9517de6621951fcdbee75a38fd518336e5e0f4eab8cda3fa9da9cef0",
+      "identity_fields": [
+        "date",
+        "series"
+      ],
+      "incomplete_when": [
+        "RATE_SERIES_MISSING_OR_BLANK",
+        "PREVIOUS_VALID_OBSERVATION_UNAVAILABLE",
+        "TRIGGER_OR_PREVIOUS_ROW_IDENTITY_UNAVAILABLE"
+      ],
+      "issue_code": "rates_suspicious_daily_change",
+      "message_or_sample_scope_inference_allowed": false,
+      "new_issue_isolation_authorized": false,
+      "policy_dependencies": [
+        "rates.consistency_start_date",
+        "rates.suspicious_daily_change_abs",
+        "rates.extreme_daily_change_abs",
+        "rates.series_overrides"
+      ],
+      "predicate_id": "ABSOLUTE_CHANGE_EXCEEDS_SUSPICIOUS_BUT_NOT_EXTREME_THRESHOLD",
+      "proposed_contract_wave_disposition": "CONTRACT_WAVE_CANDIDATE",
+      "row_dependencies": [
+        "PREVIOUS_VALID_SAME_SERIES_ROW",
+        "TRIGGER_ROW"
+      ],
+      "runtime_attribution_implemented": false,
+      "scope_taxonomy": "CURRENT_AND_PREVIOUS_VALID_OBSERVATION",
+      "severity": "WARNING",
+      "site_id": "dq_issue_site_df1c184d09e3c55d3e71",
+      "source_line": 2555,
+      "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
+      "source_owner_questions": [
+        "是否确认 warning 也使用与 extreme move 相同的完整 row-pair attribution？",
+        "是否确认 C3 不因 severity=WARNING 自动扩大任何 isolation 权威？"
+      ],
+      "source_path": "src/ai_trading_system/data/quality.py"
+    }
+  ],
+  "contract_wave_recommendation": {
+    "candidate_issue_codes": [
+      "rates_extreme_daily_change",
+      "rates_invalid_date",
+      "rates_invalid_value",
+      "rates_non_finite_value",
+      "rates_out_of_range",
+      "rates_suspicious_daily_change"
+    ],
+    "capability_classifier_change_required": true,
+    "consumer_migration_authorized": false,
+    "contract_wave_started": false,
+    "recommended_initial_isolation_rule": "ALL_AFFECTED_RATE_SERIES_OUTSIDE_REQUIRED_SCOPE",
+    "runtime_schema_change_required": true,
+    "serial_contract_wave_required_after_approval": true,
+    "series_attribution_must_be_complete_and_non_empty": true,
+    "source_owner_decision_required": true,
+    "status": "READY_FOR_SOURCE_OWNER_DECISION",
+    "unknown_or_incomplete_attribution_remains_global": true,
+    "window_or_row_level_isolation_authorized": false
+  },
+  "dq_policy_governance": {
+    "owner": "data_platform_owner",
+    "policy_id": "DATA_QUALITY_CACHE_GATE",
+    "policy_version": "data_quality_cache_gate.v2",
+    "review_condition": "阈值、研究窗口、输入角色、freshness/coverage 语义或 canonical validator 发生变化时必须重新评审并提升版本。",
+    "reviewed_at": "2026-07-25",
+    "role": "data_quality",
+    "status": "REVIEWED"
+  },
+  "input_bindings": [
+    {
+      "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
+      "role": "c1_readiness_inventory",
+      "sha256": "b7762a834f3d3f2c6c9d7e740b92fd7825bce5f819e52abb164482622440a80c",
+      "size_bytes": 85428
+    },
+    {
+      "path": "config/data_quality/rate_row_issue_attribution_review_v1.yaml",
+      "role": "source_owner_review_proposal",
+      "sha256": "9a511dd38ae4d8fd64fd15c843ee292cd81879a16c6ebb62e255341ab52cb25e",
+      "size_bytes": 9480
+    },
+    {
+      "path": "src/ai_trading_system/data/quality.py",
+      "role": "canonical_dq_source",
+      "sha256": "003573c01e0a879a8585a77076f4c32a366c016fb40596c3d721e942b4ddb64b",
+      "size_bytes": 101983
+    },
+    {
+      "path": "config/data_quality.yaml",
+      "role": "reviewed_dq_policy",
+      "sha256": "e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82",
+      "size_bytes": 9002
+    }
+  ],
+  "parent_owner_decision_id": "owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1",
+  "proposal": {
+    "broker_action": "none",
+    "candidate_source_domain": "rates",
+    "canonical_source_role": "primary_macro_rates",
+    "consumer_migration_authorized": false,
+    "new_issue_isolation_authorized": false,
+    "parent_owner_decision_id": "owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1",
+    "production_effect": "none",
+    "proposal_id": "rate_row_issue_attribution_review_v1",
+    "proposal_owner": "data_platform_engineering",
+    "proposal_version": "1.0.0",
+    "recommended_initial_isolation_rule": "ALL_AFFECTED_RATE_SERIES_OUTSIDE_REQUIRED_SCOPE",
+    "required_source_owner": "data_platform_rate_quality_owner",
+    "review_condition": "Rate source owner must decide every exact site as APPROVE_FOR_CONTRACT_WAVE, REVISE, or REJECT. A later C3 task must bind the recorded decisions, extend the typed runtime contract, and prove false-isolation behavior before any capability policy may use a rate issue code.",
+    "runtime_contract_change_authorized": false,
+    "schema_version": "data_quality_rate_row_issue_attribution_review_proposal.v1",
+    "status": "PROPOSED_FOR_SOURCE_OWNER_REVIEW",
+    "task_id": "DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK",
+    "window_or_row_level_isolation_authorized": false
+  },
+  "rate_policy_snapshot": {
+    "consistency_start_date": "2021-02-22",
+    "extreme_daily_change_abs": 2.0,
+    "max_plausible_value": 25.0,
+    "max_stale_calendar_days": 7,
+    "min_plausible_value": -1.0,
+    "series_overrides": {
+      "DTWEXBGS": {
+        "extreme_daily_change_abs": 5.0,
+        "max_plausible_value": 250.0,
+        "max_stale_calendar_days": 14,
+        "min_plausible_value": 0.0,
+        "suspicious_daily_change_abs": 2.0
+      }
+    },
+    "suspicious_daily_change_abs": 0.75
+  },
+  "review_pack_id": "dq_rate_issue_attribution_review_0957cfde306cb37b760f1005",
+  "safety": {
+    "broker_action": "none",
+    "cached_data_mutated": false,
+    "cached_data_read": false,
+    "capability_policy_or_classifier_changed": false,
+    "consumer_migration_executed": false,
+    "data_quality_behavior_changed": false,
+    "data_quality_issue_schema_changed": false,
+    "data_quality_policy_changed": false,
+    "new_issue_isolation_authorized": false,
+    "production_effect": "none",
+    "strategy_logic_changed": false
+  },
+  "schema_version": "data_quality_rate_issue_attribution_review_pack.v1",
+  "status": "SOURCE_OWNER_DECISION_PENDING",
+  "summary": {
+    "candidate_site_count": 6,
+    "contract_wave_candidate_count": 6,
+    "current_and_previous_observation_site_count": 2,
+    "error_site_count": 5,
+    "new_issue_isolation_authorized_site_count": 0,
+    "pending_source_owner_decision_count": 6,
+    "runtime_attribution_implemented_site_count": 0,
+    "single_source_row_site_count": 4,
+    "warning_site_count": 1
+  },
+  "task_id": "DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK"
+}

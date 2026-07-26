@@ -1,10 +1,10 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 049eb1739653f45367492de781bbb4316e4c39dde9bd327efb3c993bb5889369
+baseline_checksum: b9e3f0467d44bd96f33770b4093d13fb93f5bcf59202afcc879a17369cc57ce5
 source_of_truth: LEGACY_MARKDOWN_ONLY
-task_count: 910
-fragment_count: 910
+task_count: 911
+fragment_count: 911
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -333,6 +333,10 @@ fragments:
   path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
   file_sha256: 1c4ec8e8423c32639c4cada640b3fc3b6c5bbed14f0c585fdd60f5b436ceb01c
   fragment_checksum: b1b4e0a2392a485adc17eaf9548e583f583c7f6d2bdd01a0947b3850a71a6677
+- task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  file_sha256: cfe87fb730c93c6bc25deee8da89bdc3a449231370c4197f5da25e8f31f81139
+  fragment_checksum: 6890e2d97995e45912d6c0e11160d414244908a80d00fbcd7447c100ce3b134b
 - task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
   path: registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
   file_sha256: d3743c4a96ad9f6d4a4ab2837ed6268769fc26cf0a11e7e69dae571821342396
@@ -3665,8 +3669,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: dc89a768d3916e40070e92d4d59818700a845800871759219021ab4de61897d5
-  rendered_sha256: dc89a768d3916e40070e92d4d59818700a845800871759219021ab4de61897d5
+  source_sha256: a3e5fdbe83c1354ee357b9dde500af70472ee5dcc74e98fea75707bc80ef7141
+  rendered_sha256: a3e5fdbe83c1354ee357b9dde500af70472ee5dcc74e98fea75707bc80ef7141
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3688,4 +3692,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: cd372616dfa294e931572e36244fd82c378afa83e4716f2fac0ddf387b0dfc40
+index_checksum: 5f7b08b14174051b8d3355fddb0d3f8f9cfb41862c5120f7d10639c897757c8e

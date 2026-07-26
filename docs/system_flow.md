@@ -1047,6 +1047,19 @@ Inventory 不解析message/sample推断scope，不增加allowed code，不修改
 cache、daily/periodic、production或broker行为；它只为后续逐site source-owner review和独立
 typed-attribution contract wave提供事实输入。
 
+DATA-GOV-002 Phase C2 在 C1 inventory 之后增加非授权性的 rate source-owner review pack。
+`python scripts/rate_issue_attribution_review_pack.py --repo-root .` 固定 C1 建议的 6 个
+static rate sites，绑定 C1 inventory、canonical `quality.py`、reviewed
+`config/data_quality.yaml` 和 proposal manifest 的 SHA-256。Builder 区分
+`SINGLE_SOURCE_ROW`（4项）与 `CURRENT_AND_PREVIOUS_VALID_OBSERVATION`（2项）：
+move issue 的完整 row/window evidence 必须同时包含 trigger row 和同 series 前一有效观测，
+不得把 sample 中的当前行冒充完整影响范围。Validator 从全部绑定 bytes 重建 JSON、validation
+和中文 Markdown，并拒绝 candidate、taxonomy、source、DQ policy、proposal 或输出漂移。
+所有 6 项 decision 均保持 `PENDING_SOURCE_OWNER_DECISION`；pack 只建议后续 C3 首先评审
+`ALL_AFFECTED_RATE_SERIES_OUTSIDE_REQUIRED_SCOPE`，且要求 series attribution 完整、非空。
+Window/row-level isolation、typed runtime schema、capability classifier、consumer migration、
+daily/periodic、production 和 broker 均未授权。
+
 ```mermaid
 flowchart LR
     C1["Immutable canonical source bytes<br/>full expected universe"] --> G1["validate_data_cache<br/>full canonical report"]
@@ -1075,8 +1088,11 @@ flowchart LR
     VP -.-> N1
     ES["C1 canonical emitter sources<br/>+ reviewed capability policies"] --> INV["AST readiness inventory<br/>69 stable emission sites"]
     INV --> IQ["1 reviewed site<br/>68 owner-review-required sites"]
-    IQ --> CW["Future typed-attribution contract wave<br/>separate reviewed task"]
+    IQ --> RP["C2 exact six-site rate review pack<br/>4 single-row + 2 row-pair"]
+    RP --> SO["Six pending source-owner decisions<br/>APPROVE / REVISE / REJECT"]
+    SO --> CW["Future C3 typed-attribution contract wave<br/>separate reviewed task"]
     INV -.-> NA["No new isolation authority<br/>no DQ / consumer behavior change"]
+    RP -.-> NA
 ```
 
 ARCH-004E 新增持续 DevEx/ownership 控制链：`config/architecture/devex_ownership_policy.yaml` 以互斥 specific rule + fail-closed fallback 为全部 source/test/support Python 文件生成 deterministic module/test manifests，并将 code、policy、data、artifact、runtime 五类 owner 分开记录；changed-file impact selector 只提供 focused feedback，shared aggregate 或 unknown path 会升级到 architecture coordinator/full gate，绝不替代 phase full validation。ARCH-004C dependency/direct-writer ratchet、manifest freshness、ownership coverage 与 aggregate reproducibility 被汇总为单一 architecture fitness；`scripts/run_validation_tier.py architecture-fitness` 从 generated test manifest 解析测试集合，不维护第二份手写路径。module/experiment/report scaffold 只创建 skeleton/spec/fragment，并在目标存在时 fail closed；4 个 fragment 只生成覆盖 report registry、artifact catalog、system flow 三个 target 的 shadow index，现有 aggregate 仍是 source-of-truth 且由 coordinator 独占。engineering surface inventory 只链接上述 control artifacts，不改变既有 report schema 的核心解释。该链路只改研发治理，不改变 scheduler cadence、研究结果、报告结论、DQ/PIT、阈值、权重、promotion、paper-shadow、production 或 broker。

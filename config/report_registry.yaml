@@ -20953,6 +20953,32 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: rate_issue_attribution_source_owner_review_pack
+    title: Rate Issue Attribution Source-Owner Review Pack
+    group: governance
+    cadence: ad_hoc
+    audience: project_owner
+    owner: data_platform
+    command: python scripts/rate_issue_attribution_review_pack.py --repo-root .
+    artifact_globs:
+      - config/data_quality/rate_row_issue_attribution_review_v1.yaml
+      - inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+      - inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
+      - docs/data_quality/rate_issue_attribution_review_pack_v1.md
+      - docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 0
+    freshness_rationale: >-
+      DATA-GOV-002C2 binds the exact six-site C1 hand-off, canonical DQ source,
+      reviewed DQ policy and non-authoritative proposal bytes. Any input change
+      requires an immediate rebuild before the rate source owner records a
+      decision. The pack keeps all decisions pending and grants no isolation.
+    owner_action: decide_each_rate_issue_before_c3_contract_wave
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: decision_target_capability_audit_label_foundation
     title: Decision Target Capability Audit Batch 1 Label Foundation
     group: research

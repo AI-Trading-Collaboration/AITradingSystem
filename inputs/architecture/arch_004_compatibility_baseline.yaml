@@ -27917,3 +27917,191 @@ phase_data_gov_002c1_dq_issue_attribution_readiness_inventory:
     cached_data_mutated: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack:
+  schema_version: data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK
+  task_ids:
+  - DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  owner_authorization: owner_continuation:DATA-GOV-002C2:2026-07-26:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: fb18463e599fe404a60e99f0da718c454a03a829
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: de7b3e78afde8fcd106a38c3cf272f04ff9f4bbf
+    raw_byte_count: 1748058
+    raw_sha256: 1c7ae69b0d15bd74cb29b93b51f601eca115895d5591fc689b6c3785b9fcb2bc
+    append_offset: 1748058
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_002c1_dq_issue_attribution_readiness_inventory
+    current_hash_authority: phase_data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/data_quality/rate_row_issue_attribution_review_v1.yaml
+  - docs/data_quality/rate_issue_attribution_review_pack_v1.md
+  - docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - scripts/rate_issue_attribution_review_pack.py
+  - src/ai_trading_system/data/rate_issue_attribution_review_pack.py
+  - tests/test_rate_issue_attribution_review_pack.py
+  source_delta_paths:
+  - config/data_quality/rate_row_issue_attribution_review_v1.yaml
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/data_quality/rate_issue_attribution_review_pack_v1.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - scripts/rate_issue_attribution_review_pack.py
+  - src/ai_trading_system/data/rate_issue_attribution_review_pack.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_rate_issue_attribution_review_pack.py
+  sources:
+  - path: config/data_quality/rate_row_issue_attribution_review_v1.yaml
+    sha256: 9a511dd38ae4d8fd64fd15c843ee292cd81879a16c6ebb62e255341ab52cb25e
+    hash_normalization: git_eol_lf
+  - path: config/report_registry.yaml
+    sha256: 60924fd8c09d0c8e4e0ac0d48f7631e2b8239683057e76912ae6d71db79c38ec
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: d1586fc0630ce1b45433a91bc83bdd29549af18579e81bb221342bbcae597106
+    hash_normalization: git_eol_lf
+  - path: docs/data_quality/rate_issue_attribution_review_pack_v1.md
+    sha256: 51375823e522e573e876c240704c25d293f1498fdc920eed5ac9a2601e3c0b87
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+    sha256: 1f460f1c315e8729fc0f9ea9402e163a7306a56d3a0bcfc432e6dd60fcfe92b4
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
+    sha256: 2a4d8d119b60e0b26137376053358852cd53164f12334cbd70507525e6b10b21
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: d6335ca8fcede846626b2a790cdf7392fa3c9d2f3ade8dacff63777fd33337a7
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: a3e5fdbe83c1354ee357b9dde500af70472ee5dcc74e98fea75707bc80ef7141
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 7c0f1b4e896f5402fdf9b95342c44cc0e4f17a278e318a07f23b5c038a3b9d36
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: e384ad8cc2f03620bccbc888d32252d5f7ac505d7fca2bafe7cd089cba7ec23d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: ce8ebc79db6a7ef4ef7d1170ea6fcba0c731b4414a23e6d2859c4dde0bbeb890
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 9032d9b87f911b80e5d84be26085bdb8e230337754980d4ada3c5407832aed21
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: eb3c16a4c781c5be9d57a4652d0ab964a095aa9dec4f0bfd57fe387dd6440dd9
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: b81c0cc2b5504befbbe7c3f77a40be616fa25017be0ad3d11014753baa5d6ef8
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 0fbbb151b3cd2e4bcbb1a4581a419edec5d5582a2fb62f377a394fa6210958f8
+    hash_normalization: git_eol_lf
+  - path: inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+    sha256: 63e63ed10390e2f99eb5803fad003182981b8c4bac2aebd8351edadda238d8a1
+    hash_normalization: git_eol_lf
+  - path: inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
+    sha256: 8edf48521cd3887c96eeef30720fedc6a9e22d1f0687622ba3726f0cce854637
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+    sha256: cfe87fb730c93c6bc25deee8da89bdc3a449231370c4197f5da25e8f31f81139
+    hash_normalization: git_eol_lf
+  - path: scripts/rate_issue_attribution_review_pack.py
+    sha256: abd79409eed5eb554efff6cfa0475f465c34221f3f92772a22d23bb6e94da28c
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/rate_issue_attribution_review_pack.py
+    sha256: 14874fcbaecf29fcf32e80f07e08c5805225564bff85f82147c46800e27407b6
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 0657145891847f52fc17958cb349ebda44dbe9a2e1c3acaaae74fd0c2be92132
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004f3_reporting_architecture.py
+    sha256: f3687c345ad19e6979b339660ad6124bc7d0b0ff769e5d7cbdffcdfa391b80a3
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 53d931038ddaaee3c259e22409aee202a75da31579274ea7be57c9a3d1def0db
+    hash_normalization: git_eol_lf
+  - path: tests/test_rate_issue_attribution_review_pack.py
+    sha256: b6270dab6c45ba427e992df5ca6c4fd7ca86a20cb613395e1dcf4ad10a0d0402
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: BASELINE_DONE_SOURCE_OWNER_DECISION_PENDING
+    review_pack_build: PASS_6_SITES
+    review_pack_check: PASS_0_ERRORS
+    focused: PASS_166
+    focused_c2_contract: PASS_11
+    black: PASS
+    ruff: PASS
+    strict_mypy: PASS
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture_initial: FAIL_1_C1_AUTHORITY_DRIFT_673_PASS
+    architecture: PASS_676
+    contract: PASS_275
+    report: PASS_57_WITH_62_WARNINGS
+    reproducibility: PASS_23
+    integration: PASS_995_WITH_642_WARNINGS
+    full: PASS_7389_SKIPPED_3_WARNINGS_643
+  safety:
+    candidate_site_count: 6
+    single_source_row_site_count: 4
+    current_and_previous_observation_site_count: 2
+    pending_source_owner_decision_count: 6
+    proposal_is_authorization: false
+    recommended_initial_isolation_rule: ALL_AFFECTED_RATE_SERIES_OUTSIDE_REQUIRED_SCOPE
+    window_or_row_level_isolation_authorized: false
+    runtime_attribution_implemented: false
+    new_issue_isolation_authorized: false
+    message_or_sample_scope_parsing_used: false
+    data_quality_behavior_changed: false
+    capability_behavior_changed: false
+    consumer_migration_executed: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: true
+    cached_data_read: false
+    cached_data_mutated: false
+    production_effect: none
+    broker_action: none

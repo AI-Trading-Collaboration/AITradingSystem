@@ -7,7 +7,7 @@
 Owner 决定：
 `owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
 
-状态：`BASELINE_DONE_PHASE_C1_READINESS_INVENTORY_OWNER_REVIEW_PENDING`
+状态：`BASELINE_DONE_PHASE_C2_REVIEW_PACK_SOURCE_OWNER_DECISION_PENDING`
 
 ## 1. 问题与目标
 
@@ -325,3 +325,18 @@ B2 交付：
   `outputs/validation_runtime/full_20260726T130144Z/test_runtime_summary.json`。Phase C整体仍未
   完成；下一步是独立C2 source-owner review，不得把C1 inventory解释为typed attribution或
   新隔离授权。
+- 2026-07-26：Phase C2 已建立 exact six-site rate source-owner review pack。C2 绑定 C1
+  inventory、canonical `quality.py`、reviewed DQ policy 和 proposal bytes，区分4个
+  single-row与2个current-plus-previous-observation move sites；所有decision仍为
+  `PENDING_SOURCE_OWNER_DECISION`。本阶段不修改`DataQualityIssue`、capability
+  policy/classifier或full/scoped DQ。只有逐site决定完成后才可另建C3 serial contract wave；
+  window/row-level isolation、consumer migration、daily/periodic、production和broker仍未授权。
+- 2026-07-26：Phase C2 工程基线正式闭合。Pack ID=
+  `dq_rate_issue_attribution_review_0957cfde306cb37b760f1005`；focused DQ/current C2=
+  `166/11 passed`，architecture/contract/report/reproducibility/integration=
+  `676/275/57/23/995 passed`，唯一 natural-boundary Full=
+  `7389 passed / 3 skipped / 643 warnings`，artifact=
+  `outputs/validation_runtime/full_20260726T142413Z/test_runtime_summary.json`。Parent 转
+  `BASELINE_DONE_PHASE_C2_REVIEW_PACK_SOURCE_OWNER_DECISION_PENDING`；下一责任人是 rate
+  source owner，对 6 个 site 逐项 `APPROVE_FOR_CONTRACT_WAVE`、`REVISE` 或 `REJECT`。
+  在决定齐备前不得建立 C3 runtime contract wave，也不得把工程建议解释为现行隔离权威。

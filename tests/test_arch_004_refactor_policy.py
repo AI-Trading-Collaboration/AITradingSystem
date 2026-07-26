@@ -446,6 +446,33 @@ DATA_GOV_002C1_NEW_SOURCE_PATHS = frozenset(
         "tests/test_data_quality_issue_attribution_inventory.py",
     }
 )
+DATA_GOV_002C2_SECTION = "phase_data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack"
+DATA_GOV_002C2_BASE_COMMIT = "fb18463e599fe404a60e99f0da718c454a03a829"
+DATA_GOV_002C2_BASELINE_GIT_BLOB = "de7b3e78afde8fcd106a38c3cf272f04ff9f4bbf"
+DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT = 1_748_058
+DATA_GOV_002C2_HISTORICAL_PREFIX_SHA256 = (
+    "1c7ae69b0d15bd74cb29b93b51f601eca115895d5591fc689b6c3785b9fcb2bc"
+)
+LATEST_COMPATIBILITY_SECTION = DATA_GOV_002C2_SECTION
+DATA_GOV_002C2_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/data_quality/rate_row_issue_attribution_review_v1.yaml",
+        "docs/data_quality/rate_issue_attribution_review_pack_v1.md",
+        (
+            "docs/requirements/"
+            "DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md"
+        ),
+        "inputs/data_quality/rate_issue_attribution_review_pack_v1.json",
+        "inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json",
+        (
+            "registry/development_tasks_shadow/active/d8/"
+            "d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml"
+        ),
+        "scripts/rate_issue_attribution_review_pack.py",
+        "src/ai_trading_system/data/rate_issue_attribution_review_pack.py",
+        "tests/test_rate_issue_attribution_review_pack.py",
+    }
+)
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -1107,6 +1134,23 @@ def _data_gov_002c1_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _data_gov_002c2_base_baseline_blob() -> bytes:
+    object_name = f"{DATA_GOV_002C2_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == DATA_GOV_002C2_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -1685,6 +1729,25 @@ def _assert_data_gov_002c1_historical_prefix_immutable(
     assert suffix.startswith(
         expected_marker
     ), "DATA-GOV-002C1 authority must be appended after the exact DEVX-003 blob"
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_data_gov_002c2_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_002C2_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert (
+        historical_prefix == base_blob
+    ), "DATA-GOV-002C2 historical prefix differs from the immutable C1 blob"
+    assert hashlib.sha256(historical_prefix).hexdigest() == DATA_GOV_002C2_HISTORICAL_PREFIX_SHA256
+    suffix = current_bytes[DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{DATA_GOV_002C2_SECTION}:\n".encode()
+    assert suffix.startswith(
+        expected_marker
+    ), "DATA-GOV-002C2 authority must be appended after the exact C1 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2451,6 +2514,28 @@ def _data_gov_002c1_source_paths() -> frozenset[str]:
 
 
 @cache
+def _data_gov_002c2_superseded_live_source_paths() -> frozenset[str]:
+    _assert_data_gov_002c2_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _data_gov_002c2_base_baseline_blob(),
+    )
+    baseline = _compatibility_baseline()
+    phase = baseline[DATA_GOV_002C2_SECTION]
+    paths = phase["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _data_gov_002c2_source_paths() -> frozenset[str]:
+    baseline = _compatibility_baseline()
+    phase = baseline[DATA_GOV_002C2_SECTION]
+    sources = phase["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -2480,6 +2565,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _devx_003_source_paths()
     if DATA_GOV_002C1_SECTION in baseline:
         paths |= _data_gov_002c1_source_paths()
+    if DATA_GOV_002C2_SECTION in baseline:
+        paths |= _data_gov_002c2_source_paths()
     return paths
 
 
@@ -3068,12 +3155,39 @@ def _data_gov_002c1_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(DATA_GOV_002C1_SECTION)
 
 
+@cache
+def _data_gov_002c2_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(DATA_GOV_002C2_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DATA_GOV_002C1_SECTION in baseline:
+    if DATA_GOV_002C2_SECTION in baseline:
+        current_superseded_paths = _data_gov_002c2_superseded_live_source_paths()
+        assert _data_gov_002c2_prior_active_source_mismatches() == current_superseded_paths
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+            | _trading_2459_doc_closeout_source_paths()
+            | _data_gov_002_source_paths()
+            | _devx_002_source_paths()
+            | _devx_002_push_v2_source_paths()
+            | _arch_004g2_observability_source_paths()
+            | _arch_004g2_closure_threshold_source_paths()
+            | _data_gov_002_phase_b1_source_paths()
+            | _trading_2458_retirement_source_paths()
+            | _trading_2458_closeout_source_paths()
+            | _data_gov_002_phase_b2_source_paths()
+            | _devx_003_source_paths()
+            | _data_gov_002c1_source_paths()
+            | _data_gov_002c2_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = DATA_GOV_002C2_SECTION
+    elif DATA_GOV_002C1_SECTION in baseline:
         current_superseded_paths = _data_gov_002c1_superseded_live_source_paths()
         assert _data_gov_002c1_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
@@ -7762,8 +7876,11 @@ def test_data_gov_002c1_is_current_hash_authority() -> None:
         _data_gov_002c1_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == DATA_GOV_002C1_SECTION
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_003_SECTION) < list(baseline).index(DATA_GOV_002C1_SECTION)
+    assert list(baseline).index(DATA_GOV_002C1_SECTION) < list(baseline).index(
+        DATA_GOV_002C2_SECTION
+    )
     phase = baseline[DATA_GOV_002C1_SECTION]
 
     assert phase["schema_version"] == (
@@ -7808,7 +7925,10 @@ def test_data_gov_002c1_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        if source["path"] in _data_gov_002c2_superseded_live_source_paths():
+            assert re.fullmatch(r"[0-9a-f]{64}", str(source["sha256"]))
+        else:
+            assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     validation = phase["validation"]
     for field in (
@@ -7843,6 +7963,115 @@ def test_data_gov_002c1_is_current_hash_authority() -> None:
         "strategy_logic_changed": False,
         "strategy_threshold_changed": False,
         "data_flow_changed": True,
+        "cached_data_mutated": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_data_gov_002c2_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    _assert_data_gov_002c2_historical_prefix_immutable(
+        current_bytes,
+        _data_gov_002c2_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == DATA_GOV_002C2_SECTION
+    assert list(baseline).index(DATA_GOV_002C1_SECTION) < list(baseline).index(
+        DATA_GOV_002C2_SECTION
+    )
+    phase = baseline[DATA_GOV_002C2_SECTION]
+
+    assert phase["schema_version"] == (
+        "data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack_" "compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING", "BASELINE_DONE"}
+    assert phase["boundary_id"] == (
+        "DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK"
+    )
+    assert phase["task_ids"] == [
+        "DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK"
+    ]
+    assert phase["owner_authorization"] == (
+        "owner_continuation:DATA-GOV-002C2:2026-07-26:" "continue_long_term_engineering_goal"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": DATA_GOV_002C2_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": DATA_GOV_002C2_BASELINE_GIT_BLOB,
+        "raw_byte_count": DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": DATA_GOV_002C2_HISTORICAL_PREFIX_SHA256,
+        "append_offset": DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _data_gov_002c2_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": ("DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK"),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DATA_GOV_002C1_SECTION,
+        "current_hash_authority": f"{DATA_GOV_002C2_SECTION}.sources",
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["new_source_paths"]) == DATA_GOV_002C2_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == (superseded | DATA_GOV_002C2_NEW_SOURCE_PATHS)
+
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == set(phase["source_delta_paths"])
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    validation = phase["validation"]
+    assert validation["review_pack_build"] == "PASS_6_SITES"
+    assert validation["review_pack_check"] == "PASS_0_ERRORS"
+    assert validation["focused"] == "PASS_166"
+    assert validation["black"] == "PASS"
+    assert validation["ruff"] == "PASS"
+    assert validation["strict_mypy"] == "PASS"
+    assert validation["task_registry"] == "PASS_BYTE_IDENTICAL"
+    assert validation["architecture_devex"] == "PASS"
+    assert validation["architecture_initial"] == "FAIL_1_C1_AUTHORITY_DRIFT_673_PASS"
+    formal_fields = (
+        "architecture",
+        "contract",
+        "report",
+        "reproducibility",
+        "integration",
+        "full",
+    )
+    if phase["status"] == "BASELINE_DONE":
+        for field in formal_fields:
+            assert str(validation[field]).startswith("PASS_")
+    else:
+        for field in formal_fields:
+            assert validation[field] == "PENDING"
+    assert phase["safety"] == {
+        "candidate_site_count": 6,
+        "single_source_row_site_count": 4,
+        "current_and_previous_observation_site_count": 2,
+        "pending_source_owner_decision_count": 6,
+        "proposal_is_authorization": False,
+        "recommended_initial_isolation_rule": ("ALL_AFFECTED_RATE_SERIES_OUTSIDE_REQUIRED_SCOPE"),
+        "window_or_row_level_isolation_authorized": False,
+        "runtime_attribution_implemented": False,
+        "new_issue_isolation_authorized": False,
+        "message_or_sample_scope_parsing_used": False,
+        "data_quality_behavior_changed": False,
+        "capability_behavior_changed": False,
+        "consumer_migration_executed": False,
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "data_flow_changed": True,
+        "cached_data_read": False,
         "cached_data_mutated": False,
         "production_effect": "none",
         "broker_action": "none",
@@ -7899,6 +8128,17 @@ def test_data_gov_002c1_rejects_historical_prefix_tamper() -> None:
     tampered[DATA_GOV_002C1_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_data_gov_002c1_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_data_gov_002c2_rejects_historical_prefix_tamper() -> None:
+    base_blob = _data_gov_002c2_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_data_gov_002c2_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

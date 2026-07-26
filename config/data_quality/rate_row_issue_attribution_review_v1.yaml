@@ -1,0 +1,205 @@
+schema_version: data_quality_rate_row_issue_attribution_review_proposal.v1
+proposal_id: rate_row_issue_attribution_review_v1
+proposal_version: 1.0.0
+status: PROPOSED_FOR_SOURCE_OWNER_REVIEW
+task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+parent_owner_decision_id: owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1
+proposal_owner: data_platform_engineering
+required_source_owner: data_platform_rate_quality_owner
+canonical_source_role: primary_macro_rates
+candidate_source_domain: rates
+recommended_initial_isolation_rule: ALL_AFFECTED_RATE_SERIES_OUTSIDE_REQUIRED_SCOPE
+window_or_row_level_isolation_authorized: false
+new_issue_isolation_authorized: false
+runtime_contract_change_authorized: false
+consumer_migration_authorized: false
+review_condition: >-
+  Rate source owner must decide every exact site as APPROVE_FOR_CONTRACT_WAVE,
+  REVISE, or REJECT. A later C3 task must bind the recorded decisions, extend
+  the typed runtime contract, and prove false-isolation behavior before any
+  capability policy may use a rate issue code.
+candidates:
+  - site_id: dq_issue_site_0e7f3d74bfa489801c83
+    issue_code: rates_invalid_date
+    emitter_function: _validate_rates
+    severity: ERROR
+    scope_taxonomy: SINGLE_SOURCE_ROW
+    predicate_id: PARSED_DATE_IS_MISSING
+    defect_fields: [date]
+    identity_fields: [series]
+    derived_fields: []
+    row_dependencies: [TRIGGER_ROW]
+    affected_price_tickers: []
+    affected_rate_series_rule: DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS
+    affected_source_roles: [primary_macro_rates]
+    affected_window_rule: UNAVAILABLE_FOR_INVALID_DATE
+    affected_rows_rule: SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST
+    attribution_completeness_requirements:
+      - EXACT_CANONICAL_SOURCE_ROLE
+      - NON_EMPTY_NORMALIZED_RATE_SERIES
+      - SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST
+    incomplete_when:
+      - RATE_SERIES_MISSING_OR_BLANK
+      - SOURCE_ROW_IDENTITY_UNAVAILABLE
+    policy_dependencies: []
+    proposed_contract_wave_disposition: CONTRACT_WAVE_CANDIDATE
+    source_owner_decision: PENDING_SOURCE_OWNER_DECISION
+    source_owner_questions:
+      - 是否确认 invalid date 不阻止按 non-empty series 做保守 series-level attribution？
+      - 是否接受该类 issue 永不参与 window-level isolation？
+  - site_id: dq_issue_site_f337897b3d0d0b8e2842
+    issue_code: rates_invalid_value
+    emitter_function: _validate_rates
+    severity: ERROR
+    scope_taxonomy: SINGLE_SOURCE_ROW
+    predicate_id: NUMERIC_VALUE_IS_MISSING
+    defect_fields: [value]
+    identity_fields: [date, series]
+    derived_fields: []
+    row_dependencies: [TRIGGER_ROW]
+    affected_price_tickers: []
+    affected_rate_series_rule: DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS
+    affected_source_roles: [primary_macro_rates]
+    affected_window_rule: EXACT_TRIGGER_DATE_WHEN_PARSEABLE
+    affected_rows_rule: SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST
+    attribution_completeness_requirements:
+      - EXACT_CANONICAL_SOURCE_ROLE
+      - NON_EMPTY_NORMALIZED_RATE_SERIES
+      - SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST
+    incomplete_when:
+      - RATE_SERIES_MISSING_OR_BLANK
+      - SOURCE_ROW_IDENTITY_UNAVAILABLE
+    policy_dependencies: []
+    proposed_contract_wave_disposition: CONTRACT_WAVE_CANDIDATE
+    source_owner_decision: PENDING_SOURCE_OWNER_DECISION
+    source_owner_questions:
+      - 是否确认 value 缺失或非数值只影响触发行及其 series？
+      - date 无法解析时是否固定降级为 series-level attribution？
+  - site_id: dq_issue_site_dcc6dcab7a17c225b404
+    issue_code: rates_non_finite_value
+    emitter_function: _validate_rates
+    severity: ERROR
+    scope_taxonomy: SINGLE_SOURCE_ROW
+    predicate_id: NUMERIC_VALUE_IS_NON_FINITE
+    defect_fields: [value]
+    identity_fields: [date, series]
+    derived_fields: []
+    row_dependencies: [TRIGGER_ROW]
+    affected_price_tickers: []
+    affected_rate_series_rule: DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS
+    affected_source_roles: [primary_macro_rates]
+    affected_window_rule: EXACT_TRIGGER_DATE_WHEN_PARSEABLE
+    affected_rows_rule: SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST
+    attribution_completeness_requirements:
+      - EXACT_CANONICAL_SOURCE_ROLE
+      - NON_EMPTY_NORMALIZED_RATE_SERIES
+      - SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST
+    incomplete_when:
+      - RATE_SERIES_MISSING_OR_BLANK
+      - SOURCE_ROW_IDENTITY_UNAVAILABLE
+    policy_dependencies: []
+    proposed_contract_wave_disposition: CONTRACT_WAVE_CANDIDATE
+    source_owner_decision: PENDING_SOURCE_OWNER_DECISION
+    source_owner_questions:
+      - 是否确认 Infinity/non-finite 只影响触发行及其 series？
+      - date 无法解析时是否固定降级为 series-level attribution？
+  - site_id: dq_issue_site_6421117ee905a6da1438
+    issue_code: rates_out_of_range
+    emitter_function: _check_rate_ranges
+    severity: ERROR
+    scope_taxonomy: SINGLE_SOURCE_ROW
+    predicate_id: VALUE_OUTSIDE_SERIES_POLICY_RANGE
+    defect_fields: [value]
+    identity_fields: [date, series]
+    derived_fields: []
+    row_dependencies: [TRIGGER_ROW]
+    affected_price_tickers: []
+    affected_rate_series_rule: DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS
+    affected_source_roles: [primary_macro_rates]
+    affected_window_rule: EXACT_TRIGGER_DATE_WHEN_PARSEABLE
+    affected_rows_rule: SOURCE_ROW_ORDINAL_PLUS_CANONICAL_ROW_DIGEST
+    attribution_completeness_requirements:
+      - EXACT_CANONICAL_SOURCE_ROLE
+      - NON_EMPTY_NORMALIZED_RATE_SERIES
+      - SOURCE_ROW_ORDINAL_AND_CONTENT_DIGEST
+    incomplete_when:
+      - RATE_SERIES_MISSING_OR_BLANK
+      - SOURCE_ROW_IDENTITY_UNAVAILABLE
+    policy_dependencies:
+      - rates.min_plausible_value
+      - rates.max_plausible_value
+      - rates.series_overrides
+    proposed_contract_wave_disposition: CONTRACT_WAVE_CANDIDATE
+    source_owner_decision: PENDING_SOURCE_OWNER_DECISION
+    source_owner_questions:
+      - 是否确认 configured plausible range 的越界只影响触发行及其 series？
+      - 是否要求 C3 把实际命中的 series-specific threshold 一并写入 evidence？
+  - site_id: dq_issue_site_85549de0f1e9ab739a74
+    issue_code: rates_extreme_daily_change
+    emitter_function: _check_rate_moves
+    severity: ERROR
+    scope_taxonomy: CURRENT_AND_PREVIOUS_VALID_OBSERVATION
+    predicate_id: ABSOLUTE_CHANGE_EXCEEDS_EXTREME_POLICY_THRESHOLD
+    defect_fields: [value]
+    identity_fields: [date, series]
+    derived_fields: [_change]
+    row_dependencies: [PREVIOUS_VALID_SAME_SERIES_ROW, TRIGGER_ROW]
+    affected_price_tickers: []
+    affected_rate_series_rule: DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS
+    affected_source_roles: [primary_macro_rates]
+    affected_window_rule: PREVIOUS_TO_TRIGGER_DATE_INCLUSIVE
+    affected_rows_rule: TRIGGER_AND_PREVIOUS_VALID_SAME_SERIES_ROW_WITH_DIGESTS
+    attribution_completeness_requirements:
+      - EXACT_CANONICAL_SOURCE_ROLE
+      - NON_EMPTY_NORMALIZED_RATE_SERIES
+      - PARSEABLE_TRIGGER_AND_PREVIOUS_DATES
+      - TRIGGER_AND_PREVIOUS_ROW_IDENTITIES
+    incomplete_when:
+      - RATE_SERIES_MISSING_OR_BLANK
+      - PREVIOUS_VALID_OBSERVATION_UNAVAILABLE
+      - TRIGGER_OR_PREVIOUS_ROW_IDENTITY_UNAVAILABLE
+    policy_dependencies:
+      - rates.consistency_start_date
+      - rates.extreme_daily_change_abs
+      - rates.series_overrides
+    proposed_contract_wave_disposition: CONTRACT_WAVE_CANDIDATE
+    source_owner_decision: PENDING_SOURCE_OWNER_DECISION
+    source_owner_questions:
+      - 是否确认 move issue 的完整 row scope 必须同时包含当前行和前一有效观测？
+      - 是否要求 C3 保存命中的 series-specific threshold 与 predecessor identity？
+  - site_id: dq_issue_site_df1c184d09e3c55d3e71
+    issue_code: rates_suspicious_daily_change
+    emitter_function: _check_rate_moves
+    severity: WARNING
+    scope_taxonomy: CURRENT_AND_PREVIOUS_VALID_OBSERVATION
+    predicate_id: ABSOLUTE_CHANGE_EXCEEDS_SUSPICIOUS_BUT_NOT_EXTREME_THRESHOLD
+    defect_fields: [value]
+    identity_fields: [date, series]
+    derived_fields: [_change]
+    row_dependencies: [PREVIOUS_VALID_SAME_SERIES_ROW, TRIGGER_ROW]
+    affected_price_tickers: []
+    affected_rate_series_rule: DISTINCT_NORMALIZED_NON_EMPTY_SERIES_FROM_TRIGGER_ROWS
+    affected_source_roles: [primary_macro_rates]
+    affected_window_rule: PREVIOUS_TO_TRIGGER_DATE_INCLUSIVE
+    affected_rows_rule: TRIGGER_AND_PREVIOUS_VALID_SAME_SERIES_ROW_WITH_DIGESTS
+    attribution_completeness_requirements:
+      - EXACT_CANONICAL_SOURCE_ROLE
+      - NON_EMPTY_NORMALIZED_RATE_SERIES
+      - PARSEABLE_TRIGGER_AND_PREVIOUS_DATES
+      - TRIGGER_AND_PREVIOUS_ROW_IDENTITIES
+    incomplete_when:
+      - RATE_SERIES_MISSING_OR_BLANK
+      - PREVIOUS_VALID_OBSERVATION_UNAVAILABLE
+      - TRIGGER_OR_PREVIOUS_ROW_IDENTITY_UNAVAILABLE
+    policy_dependencies:
+      - rates.consistency_start_date
+      - rates.suspicious_daily_change_abs
+      - rates.extreme_daily_change_abs
+      - rates.series_overrides
+    proposed_contract_wave_disposition: CONTRACT_WAVE_CANDIDATE
+    source_owner_decision: PENDING_SOURCE_OWNER_DECISION
+    source_owner_questions:
+      - 是否确认 warning 也使用与 extreme move 相同的完整 row-pair attribution？
+      - 是否确认 C3 不因 severity=WARNING 自动扩大任何 isolation 权威？
+production_effect: none
+broker_action: none
