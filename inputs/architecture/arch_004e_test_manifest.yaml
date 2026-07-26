@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1195
-test_count: 1135
+test_file_count: 1196
+test_count: 1136
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -461,6 +461,23 @@ tests:
 - test_id: tests.research_strategies.test_decision_target_capability_audit_model_ladder
   path: tests/research_strategies/test_decision_target_capability_audit_model_ladder.py
   sha256: b1b00f71ee7e07927c74d968d580320adf95d95baf7ee97330098f62ddf308bd
+  file_role: test
+  rule_id: research_strategy_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: research_strategy
+  suite: slow-research-regression
+  covered_module_prefixes:
+  - src/ai_trading_system/research_quality/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.research_strategies.test_decision_target_tail_risk_robustness_audit
+  path: tests/research_strategies/test_decision_target_tail_risk_robustness_audit.py
+  sha256: 941f65b75e325ed83b4d3d37238520b17e34872d5a9a2970cda5786059c17dba
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7506,7 +7523,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 0a085e407de36fa7fe89fc456c529fdaf1d9e936509006158727ec83fccc924c
+  sha256: 584806261b360cc6a1f7d209e0262996f89b2c14e0a213206190bf12f372b78b
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7794,7 +7811,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004f3_reporting_architecture
   path: tests/test_arch_004f3_reporting_architecture.py
-  sha256: 238c1dd98f52a6754440521676e346400d96d30da5fbed05a08a2e1955aaf558
+  sha256: 67a1ef6659aa06f0eb302685a27d6a6ac19d7e577bcc1c4269b8d39990bef561
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7902,7 +7919,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: e6dcb0151431b5cf07a324540808108d7ecfa566670f89e74b705071e96affb6
+  sha256: ec00f3e26a471d86f8e8e4bbbad536282264dbdf158b1c09d8ffecdeefbde903
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

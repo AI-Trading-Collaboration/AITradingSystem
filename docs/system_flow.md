@@ -1021,6 +1021,18 @@ family 或 horizon。真实 `2021-02-22..2026-07-24` source 的实际 feature/la
 robustness任务；不创建candidate、不跑策略回测、不生成权重，QLD不进入signal/style，
 paper-shadow/promotion/production/broker不改变。
 
+TRADING-2462 在读取Batch 2 detailed rows前冻结tail-risk robustness / falsification policy，
+随后exact重建TRADING-2461并运行lag-1、embargo-40、SPY/SGOV source ablation、三类family-only
+diagnostics、全fold jackknife、train-only regime/event calibration和199次20-session block
+permutation placebo。真实结果中exact reconstruction、fold influence和1d/5d/10d placebo均通过；
+5个mandatory variants有4个保留target support，但`DROP_SPY_DERIVED`只剩5d。更关键的是，
+drawdown LOW与volatility HIGH共6个pooled strata只有63～69 rows，低于预注册80-row floor；
+event calibration各horizon/quantile只有1或2个eligible folds，低于6-fold floor。因此机械结论为
+`INSUFFICIENT_ROBUSTNESS_EVIDENCE`，不能把placebo通过或4/5 mandatory通过解释为整体稳健，
+也不能事后降低样本门槛。当前route关闭tail-risk路径或重新设计decision target；不批准Decision
+Value Audit、risk overlay、candidate、backtest、weights或QLD signal，所有production/broker边界
+保持`none`。
+
 DATA-GOV-002 Phase B1 在上述 receipt 之上增加 generic consumer adapter 的合同层。
 `data_quality_consumer_dependency.v1` 把 exact
 consumer/version、capability/version、capability policy 与 DQ policy 的 repo-relative
@@ -1101,8 +1113,13 @@ flowchart LR
     S2 --> M2["M0 mean / M1 ridge / M2 interaction<br/>fixed feature prefixes"]
     M2 --> C3["M1/full-prefix capability gates<br/>7 folds / 118,300 predictions"]
     C3 --> T2["TAIL_RISK_ONLY_SKILL<br/>return targets unsupported"]
+    T2 --> A2["TRADING-2462 frozen falsification audit<br/>lag / embargo / ablation / jackknife"]
+    A2 --> P2["Train-only regime + event calibration<br/>20-session block placebo"]
+    P2 --> I2["INSUFFICIENT_ROBUSTNESS_EVIDENCE<br/>sample floors not fully evaluable"]
+    I2 --> X2["Close tail-risk path<br/>or redesign decision target"]
     O1 -.-> N1["No global PASS overclaim / reuse / daily authorization<br/>no model / weights / production / broker"]
     T2 -.-> N1
+    I2 -.-> N1
     PO -.-> N1
     VP -.-> N1
     ES["C1 canonical emitter sources<br/>+ reviewed capability policies"] --> INV["AST readiness inventory<br/>69 stable emission sites"]

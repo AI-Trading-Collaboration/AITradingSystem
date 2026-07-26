@@ -1,0 +1,284 @@
+schema_version: decision_target_tail_risk_robustness_audit_policy.v1
+policy_id: decision_target_tail_risk_robustness_audit_v1
+version: 1.0.0
+status: OWNER_APPROVED_HISTORICAL_SEEN_FALSIFICATION_BASELINE
+owner: project_owner_and_research_governance
+owner_decision: owner_decision:TRADING-2462:2026-07-27:approve_tail_risk_capability_robustness_falsification_audit_v1
+protocol_frozen_before_detailed_result_rows: true
+rationale: >-
+  TRADING-2461只证明QQQ future worst-1d target在historical-seen purged walk-forward中达到pilot
+  capability gate。本政策在读取其detailed prediction/metric rows前冻结timing、embargo、
+  feature/source ablation、fold influence、train-only regime/event calibration与block-placebo
+  证伪轴；任一mandatory axis失败都不得把能力升级为risk overlay。
+intended_effect: >-
+  区分可跨扰动复现的tail-risk ranking skill、依赖特定输入或样本切片的fragile skill，以及
+  无法拒绝placebo或无法重建的falsified/insufficient evidence。
+validation_evidence: >-
+  exact Batch 2 content reconstruction、variant rebuild、fold-local train threshold、deterministic
+  block permutation、double-build byte identity、content-derived validator与tamper tests。
+review_condition: >-
+  本任务只决定是否允许另立Decision Value Audit。任何threshold、variant、horizon、event
+  quantile、regime definition、placebo seed/block/replicate或aggregate mapping变化必须发布新
+  policy version并获得Owner review；不得按v1结果修改。
+
+research_context:
+  research_window_id: exact_qqq_sgov_tqqq_validated_window
+  requested_start: '2021-02-22'
+  selected_range:
+    start: '2021-02-22'
+    end: '2026-07-24'
+  expected_evaluated_range:
+    start: '2021-08-11'
+    end: '2026-06-25'
+  historical_seen_only: true
+  prospective_values_allowed: false
+
+input_authority:
+  source_task_id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  source_schema_version: decision_target_capability_audit_model_ladder.v1
+  source_status: CAPABILITY_AUDIT_READY
+  source_style_status: TAIL_RISK_ONLY_SKILL
+  evaluation_commitment_sha256: 9c538f23d3e6d463feb5faab484132ca4635c043c09cafee960d1aac9095dc02
+  expected_fold_count: 7
+  expected_prediction_row_count: 118300
+  primary_model_id: M1_RIDGE_LINEAR
+  primary_feature_prefix: CROSS_ASSET_STATE
+  primary_target_id: QQQ_FUTURE_WORST_1D_RETURN
+  primary_horizons:
+    - 1d
+    - 5d
+    - 10d
+  diagnostic_horizons:
+    - 20d
+  full_canonical_status: FAIL
+  scoped_status: PASS
+  global_cache_pass_claimed: false
+  required_price_tickers:
+    - QQQ
+    - SPY
+    - SGOV
+  expected_files:
+    result:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.json
+      size_bytes: 39043580
+      sha256: 2fe2f6b8853cf0bb2ea541543c013e27bbe6d2ae5ed5793ee7edc0152c58dc27
+    summary:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder_summary.json
+      size_bytes: 1040
+      sha256: b6d352f8b58be0f49dffb3796e7a776da1ddb9e8dfcf00a7fafc812102a92569
+    envelope:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.envelope.json
+      size_bytes: 3584
+      sha256: cdb95cc7640e76a2c55c77aa630941ed4480d73b35272cb38bdca5b2bf66397b
+    run_ledger:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.run_ledger.json
+      size_bytes: 1953
+      sha256: 0a5412e9ff9b679f571fc030f2927d835d710b9063fcd64b17cc296e1802ed80
+    input_snapshot:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/source/input_snapshot.json
+      size_bytes: 2476
+      sha256: 3d9b9f60b0bd5fabdf225980405d17034655c2fdfdad8071432075b58176ec05
+    label_payload:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_label_payload.json
+      size_bytes: 9560259
+      sha256: 3b41ca325d7f1110173593b25d35e1fab7e9409e3ace61d9e959f117b7553b80
+    source_package:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_source_package.json
+      size_bytes: 17945
+      sha256: eb86292a470a1ab13c54a52b3b9c21ee98eeb9c547460057903d6d18e53d554e
+    market_panel:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_market_panel.csv
+      size_bytes: 306380
+      sha256: 155093a99e0c258e89268745a4579c6a0e8838fa7aa363466044a5a722137150
+    capability_receipt:
+      path: outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_capability_receipt.json
+      size_bytes: 13315
+      sha256: 624623557c2552b9090469f070cb177cadf6bc8b71940f97772a13c629d85afa
+    source_policy:
+      path: config/research/decision_target_capability_audit_model_ladder_v1.yaml
+      size_bytes: 10197
+      sha256: 9b84ac832cced4823367c75e2670e22652c7dbeba8dd0aa5bbc30942287b9b19
+    source_requirement:
+      path: docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+      size_bytes: 20350
+      sha256: 9eb5d45cbd8cbe249423a4d15c90e84b0aa0d65cd6570a5c78b212433c06b293
+    source_implementation:
+      path: src/ai_trading_system/research_framework/plugins/decision_target_capability_audit_model_ladder.py
+      size_bytes: 66952
+      sha256: 89a3822d419a7c49cf2a74fa46de16153a2e8605f56d6546804f86cf23b7bfc9
+
+variant_policy:
+  target_id: QQQ_FUTURE_WORST_1D_RETURN
+  all_horizons:
+    - 1d
+    - 5d
+    - 10d
+    - 20d
+  variants:
+    - variant_id: EXACT_PRIMARY
+      mandatory: true
+      feature_selector: ALL
+      feature_lag_sessions: 0
+      embargo_sessions: 20
+      rationale: exact Batch 2 primary model reconstruction
+    - variant_id: FEATURE_LAG_1
+      mandatory: true
+      feature_selector: ALL
+      feature_lag_sessions: 1
+      embargo_sessions: 20
+      rationale: reject dependence on same-session feature timing
+    - variant_id: EMBARGO_40
+      mandatory: true
+      feature_selector: ALL
+      feature_lag_sessions: 0
+      embargo_sessions: 40
+      rationale: double maximum label horizon and original embargo
+    - variant_id: DROP_SPY_DERIVED
+      mandatory: true
+      feature_selector: EXCLUDE_SOURCE_ROLE
+      excluded_source_role: SPY
+      feature_lag_sessions: 0
+      embargo_sessions: 20
+      rationale: reject single dependence on SPY reference features
+    - variant_id: DROP_SGOV_DERIVED
+      mandatory: true
+      feature_selector: EXCLUDE_SOURCE_ROLE
+      excluded_source_role: SGOV
+      feature_lag_sessions: 0
+      embargo_sessions: 20
+      rationale: reject single dependence on SGOV defensive reference features
+    - variant_id: PRICE_TREND_ONLY
+      mandatory: false
+      feature_selector: FAMILY_ONLY
+      included_family: PRICE_TREND
+      feature_lag_sessions: 0
+      embargo_sessions: 20
+      rationale: diagnostic family concentration
+    - variant_id: VOLATILITY_DRAWDOWN_ONLY
+      mandatory: false
+      feature_selector: FAMILY_ONLY
+      included_family: VOLATILITY_DRAWDOWN
+      feature_lag_sessions: 0
+      embargo_sessions: 20
+      rationale: diagnostic family concentration
+    - variant_id: CROSS_ASSET_STATE_ONLY
+      mandatory: false
+      feature_selector: FAMILY_ONLY
+      included_family: CROSS_ASSET_STATE
+      feature_lag_sessions: 0
+      embargo_sessions: 20
+      rationale: diagnostic family concentration
+
+capability_gate:
+  status: TEMPORARY_PILOT_FALSIFICATION_BASELINE
+  owner: project_owner_and_research_governance
+  rationale: >-
+    保持TRADING-2461的fold/rank/RMSE/quintile门槛，避免在robustness audit中为当前结果重定义
+    capability；10d是原通过集合中的最长horizon，mandatory variant必须保留。
+  review_condition: >-
+    V1完成后不得校准本门槛；只可在新的independent evidence与Owner review下发布v2。
+  minimum_valid_folds: 6
+  minimum_positive_spearman_folds: 5
+  minimum_median_spearman: 0.03
+  minimum_pooled_spearman: 0.05
+  minimum_median_rmse_improvement_vs_m0_exclusive: 0.0
+  minimum_median_quintile_spread_exclusive: 0.0
+  minimum_supported_primary_horizons: 2
+  required_primary_horizon: 10d
+  all_mandatory_variants_must_support_target: true
+
+fold_influence_gate:
+  status: TEMPORARY_PILOT_FALSIFICATION_BASELINE
+  minimum_leave_one_fold_out_spearman: 0.03
+  required_leave_one_fold_out_passes: 7
+  minimum_test_rows_per_fold: 20
+  required_horizon: 10d
+  minimum_passing_primary_horizons: 2
+
+regime_gate:
+  status: TEMPORARY_PILOT_FALSIFICATION_BASELINE
+  threshold_fit_scope: fold_train_only
+  quantiles:
+    - 0.3333333333333333
+    - 0.6666666666666666
+  dimensions:
+    - regime_id: TREND
+      feature_id: qqq_return_60
+    - regime_id: VOLATILITY
+      feature_id: qqq_volatility_60
+    - regime_id: DRAWDOWN
+      feature_id: qqq_drawdown_120
+  minimum_rows_per_pooled_stratum: 80
+  minimum_positive_strata_per_dimension: 2
+  minimum_eligible_strata_per_dimension: 3
+  minimum_allowed_stratum_spearman: -0.05
+  required_horizon: 10d
+  minimum_passing_primary_horizons: 2
+
+event_calibration_gate:
+  status: TEMPORARY_PILOT_FALSIFICATION_BASELINE
+  event_threshold_fit_scope: fold_train_only
+  risk_flag_threshold_fit_scope: fold_train_only
+  tail_event_quantiles:
+    - 0.10
+    - 0.20
+  predicted_risk_quantile: 0.20
+  minimum_test_events_per_fold: 3
+  minimum_flagged_rows_per_fold: 5
+  minimum_fold_lift_exclusive: 1.0
+  minimum_fold_top_bottom_separation_exclusive: 0.0
+  minimum_passing_folds: 5
+  minimum_pooled_lift: 1.20
+  required_horizon: 10d
+  minimum_passing_primary_horizons: 2
+
+placebo_gate:
+  status: TEMPORARY_PILOT_FALSIFICATION_BASELINE
+  kind: WITHIN_FOLD_BLOCK_PERMUTATION
+  block_sessions: 20
+  replicate_count: 199
+  random_seed: 2462
+  alternative: GREATER_ACTUAL_SPEARMAN
+  maximum_empirical_p_value: 0.05
+  null_percentile: 0.95
+  required_horizon: 10d
+  minimum_passing_primary_horizons: 2
+
+decision_policy:
+  allowed_statuses:
+    - TAIL_RISK_CAPABILITY_ROBUST
+    - TAIL_RISK_CAPABILITY_FRAGILE
+    - TAIL_RISK_CAPABILITY_FALSIFIED
+    - INSUFFICIENT_ROBUSTNESS_EVIDENCE
+  robust_requires:
+    - EXACT_RECONSTRUCTION_PASS
+    - ALL_MANDATORY_VARIANTS_PASS
+    - FOLD_INFLUENCE_PASS
+    - REGIME_CONCENTRATION_PASS
+    - EVENT_CALIBRATION_PASS
+    - PLACEBO_REJECTION_PASS
+  falsified_if_any:
+    - EXACT_RECONSTRUCTION_FAIL
+    - REQUIRED_10D_PLACEBO_NOT_REJECTED
+    - NO_PRIMARY_HORIZON_SURVIVES_BOTH_TIMING_AND_EMBARGO_STRESS
+  insufficient_if_any:
+    - INPUT_OR_SCHEMA_MISMATCH
+    - FOLD_OR_ROW_IDENTITY_MISMATCH
+    - MANDATORY_AXIS_NOT_EVALUABLE
+  next_route_on_robust: OWNER_MAY_AUTHORIZE_SEPARATE_DECISION_VALUE_AUDIT
+  next_route_on_non_robust: CLOSE_TAIL_RISK_PATH_OR_REDESIGN_DECISION_TARGET
+
+safety:
+  research_only: true
+  historical_seen_only: true
+  prospective_accessed: false
+  candidate_family_created: false
+  risk_overlay_created: false
+  strategy_backtest_executed: false
+  transaction_cost_model_applied: false
+  target_weights_generated: false
+  qld_used_as_signal: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none

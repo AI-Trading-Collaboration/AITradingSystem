@@ -21066,6 +21066,41 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: decision_target_tail_risk_robustness_audit
+    title: Decision Target Tail-Risk Robustness / Falsification Audit
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: research_framework.run_experiment
+    artifact_globs:
+      - config/research/decision_target_tail_risk_robustness_audit_v1.yaml
+      - config/research/experiments/decision_target_tail_risk_robustness_audit.yaml
+      - docs/requirements/TRADING-2462_Tail_Risk_Capability_Robustness_Falsification_Audit.md
+      - outputs/research_strategies/decision_target_tail_risk_robustness_audit/decision_target_tail_risk_robustness_audit.json
+      - outputs/research_strategies/decision_target_tail_risk_robustness_audit/decision_target_tail_risk_robustness_audit_summary.json
+      - outputs/research_strategies/decision_target_tail_risk_robustness_audit/decision_target_tail_risk_robustness_audit.envelope.json
+      - outputs/research_strategies/decision_target_tail_risk_robustness_audit/decision_target_tail_risk_robustness_audit.run_ledger.json
+      - docs/research/decision_target_tail_risk_robustness_audit.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 0
+    freshness_rationale: >-
+      TRADING-2462 exact-binds and reconstructs the TRADING-2461 historical-seen
+      Batch 2 package, then applies the preregistered one-session feature lag,
+      40-session embargo, SPY/SGOV ablations, family diagnostics, all-fold
+      jackknife, train-only regime/event calibration and 199-replicate
+      20-session block-permutation placebo. Exact reconstruction, fold influence
+      and placebo pass; DROP_SPY_DERIVED loses target support, while regime and
+      event-calibration sample floors are not fully evaluable. The mechanical
+      result is INSUFFICIENT_ROBUSTNESS_EVIDENCE, so the audit closes rather
+      than authorizes Decision Value Audit, risk overlay, candidate, weights,
+      QLD signal, paper-shadow, promotion, production or broker action.
+    owner_action: close_tail_risk_path_or_redesign_decision_target
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_baseline_capability_graph
     title: Growth Tilt Baseline Capability Graph
     group: research

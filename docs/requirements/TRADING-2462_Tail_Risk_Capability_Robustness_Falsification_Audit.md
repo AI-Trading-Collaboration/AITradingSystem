@@ -2,7 +2,7 @@
 
 最后更新：2026-07-27
 
-状态：`EVIDENCE_COMPLETE_FORMAL_VALIDATION_PENDING`
+状态：`COMPLETE`
 
 稳定任务 ID：`TRADING-2462_TAIL_RISK_CAPABILITY_ROBUSTNESS_FALSIFICATION_AUDIT`
 
@@ -174,3 +174,14 @@ evidence与 review condition。结果只允许：
   manifests与共享测试，属于消费者可见串行合同波。因此v4不运行Full，转为只读迁移源；v5从
   新exact main重放本任务变更并完成formal/Full/归档。v1-v4只在v5证明无unique
   content/evidence/process dependency后清理。
+- 2026-07-27：v5在`bc8496b11039f3d6a8d2bc837e821c298e04c9cf` exact main完成最终
+  重建。13个迁移输入/证据逐SHA256一致；canonical runner与独立content-derived rebuild
+  对10个核心字段零差异，evaluation commitment均为
+  `8f9f3cf0cc904d3269b5476bb5e1b3f0ddfd109df70966d5ea8061df754c7a4e`。
+  Focused=`113`、Architecture=`694`、Contract=`275`、Report=`57`、
+  Reproducibility=`23`、Integration=`995`、Full=`7420 passed / 4 skipped`全部PASS。
+  Architecture首次尝试仅因外层120秒命令时限终止，未形成正式runtime artifact；正式重跑
+  保持16 workers并通过。目标模块Ruff、compile与
+  `mypy --strict --follow-imports=skip`通过；直接追踪全import graph仍显示基线既有215项
+  跨模块类型债务，未把它改写为本任务PASS或在本任务内修复。最终机械结论、route及所有
+  no-overlay/no-candidate/no-weights/no-QLD-signal/no-production边界不变。

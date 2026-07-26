@@ -1,0 +1,113 @@
+schema_version: experiment_spec.v1
+experiment_id: decision_target_tail_risk_robustness_audit
+spec_version: decision_target_tail_risk_robustness_audit.experiment.v1
+status: owner_approved_historical_seen_falsification_audit
+owner: research_governance
+task_register_id: TRADING-2462_TAIL_RISK_CAPABILITY_ROBUSTNESS_FALSIFICATION_AUDIT
+calculator_plugin:
+  plugin_id: decision_target_tail_risk_robustness_audit_calculator
+  version: v1
+report_plugin:
+  plugin_id: decision_target_tail_risk_robustness_audit_report
+  version: v1
+inputs:
+  - input_id: audit_policy
+    document_kind: structured
+    role: preregistered_tail_risk_robustness_and_falsification_policy
+    required: true
+    default_path: config/research/decision_target_tail_risk_robustness_audit_v1.yaml
+  - input_id: source_policy
+    document_kind: structured
+    role: exact_trading_2461_model_ladder_policy
+    required: true
+    default_path: config/research/decision_target_capability_audit_model_ladder_v1.yaml
+  - input_id: source_result
+    document_kind: structured
+    role: exact_trading_2461_capability_result
+    required: true
+    default_path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.json
+  - input_id: source_summary
+    document_kind: structured
+    role: exact_trading_2461_capability_summary
+    required: true
+    default_path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder_summary.json
+  - input_id: source_envelope
+    document_kind: structured
+    role: exact_trading_2461_artifact_envelope
+    required: true
+    default_path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.envelope.json
+  - input_id: source_run_ledger
+    document_kind: structured
+    role: exact_trading_2461_run_ledger
+    required: true
+    default_path: outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.run_ledger.json
+  - input_id: input_snapshot
+    document_kind: structured
+    role: exact_trading_2461_input_snapshot
+    required: true
+    default_path: outputs/research_strategies/decision_target_capability_audit_model_ladder/source/input_snapshot.json
+  - input_id: source_requirement_text
+    document_kind: text
+    role: trading_2461_owner_decision_and_safety_boundary
+    required: true
+    default_path: docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+  - input_id: requirement_text
+    document_kind: text
+    role: trading_2462_owner_decision_and_falsification_boundary
+    required: true
+    default_path: docs/requirements/TRADING-2462_Tail_Risk_Capability_Robustness_Falsification_Audit.md
+outputs:
+  - output_id: primary
+    artifact_kind: primary_json
+    root: output
+    filename: decision_target_tail_risk_robustness_audit.json
+    artifact_path_key: json_path
+  - output_id: audit_summary
+    artifact_kind: section_json
+    root: output
+    filename: decision_target_tail_risk_robustness_audit_summary.json
+    artifact_path_key: summary_path
+    payload_key: audit_summary
+    section_report_type: decision_target_tail_risk_robustness_audit_summary
+  - output_id: reader_markdown
+    artifact_kind: markdown
+    root: docs
+    filename: decision_target_tail_risk_robustness_audit.md
+    artifact_path_key: markdown_path
+  - output_id: envelope
+    artifact_kind: envelope_json
+    root: output
+    filename: decision_target_tail_risk_robustness_audit.envelope.json
+  - output_id: run_ledger
+    artifact_kind: run_ledger_json
+    root: output
+    filename: decision_target_tail_risk_robustness_audit.run_ledger.json
+legacy_status_mappings:
+  - legacy_status: TAIL_RISK_ROBUSTNESS_AUDIT_READY
+    canonical_status: PASS
+  - legacy_status: BLOCKED_INPUT_OR_PROTOCOL
+    canonical_status: BLOCKED
+report:
+  report_id: decision_target_tail_risk_robustness_audit
+  title: Decision Target Tail-Risk Robustness / Falsification Audit
+  audience: researcher
+  reader_tier: research_review_pack
+  cadence: manual
+  canonical_source: ai_trading_system.research_framework.plugins.decision_target_tail_risk_robustness_audit:build_tail_risk_robustness_payload
+  section_provider: ai_trading_system.research_framework.plugins.decision_target_tail_risk_robustness_audit:tail_risk_robustness_summary
+  view_model: ai_trading_system.research_framework.plugins.decision_target_tail_risk_robustness_audit:tail_risk_robustness_view_model
+  renderer: ai_trading_system.research_framework.plugins.decision_target_tail_risk_robustness_audit:render_tail_risk_robustness_markdown
+  artifact_globs:
+    - outputs/research_strategies/decision_target_tail_risk_robustness_audit/decision_target_tail_risk_robustness_audit.json
+    - outputs/research_strategies/decision_target_tail_risk_robustness_audit/decision_target_tail_risk_robustness_audit_summary.json
+    - docs/research/decision_target_tail_risk_robustness_audit.md
+  freshness_sla_days: 0
+  owner_action: review_falsification_result_before_authorizing_any_decision_value_audit
+  actionable: false
+  lifecycle: CURRENT
+strict_default: true
+data_quality_required: true
+investment_facing_envelope: false
+manual_review_required: true
+production_effect: none
+broker_action: none

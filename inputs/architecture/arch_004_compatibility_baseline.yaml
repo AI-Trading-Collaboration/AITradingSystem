@@ -28767,3 +28767,162 @@ phase_devx_005_target_bound_worktree_audit:
     known_unrelated_opened: false
     production_effect: none
     broker_action: none
+
+phase_trading_2462_tail_risk_robustness_falsification_audit:
+  schema_version: trading_2462_tail_risk_robustness_falsification_audit_compatibility.v1
+  status: COMPLETE
+  boundary_id: TRADING-2462-TAIL-RISK-ROBUSTNESS-FALSIFICATION-AUDIT
+  task_ids:
+  - TRADING-2462_TAIL_RISK_CAPABILITY_ROBUSTNESS_FALSIFICATION_AUDIT
+  owner_authorization: owner_decision:TRADING-2462:2026-07-27:approve_tail_risk_capability_robustness_falsification_audit_v1
+  prior_sections_immutability:
+    source_commit: bc8496b11039f3d6a8d2bc837e821c298e04c9cf
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 074ca94a5ebec39e7007ba70fedcd802731dabc1
+    raw_byte_count: 1792642
+    raw_sha256: 776bd60ed7edd2eb9fffc5d87f7134983e1bacbd38a5360c1b041b284281b2ef
+    append_offset: 1792642
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/system_flow.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2462-TAIL-RISK-ROBUSTNESS-FALSIFICATION-AUDIT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_devx_005_target_bound_worktree_audit
+    current_hash_authority: phase_trading_2462_tail_risk_robustness_falsification_audit.sources
+  removed_live_source_paths:
+  - registry/development_tasks_shadow/active/8a/8a124c3f1fb3cd10eddf178834b6a0d62026760cc274f49707e423203f45fa9d.yaml
+  new_source_paths:
+  - config/research/decision_target_tail_risk_robustness_audit_v1.yaml
+  - config/research/experiments/decision_target_tail_risk_robustness_audit.yaml
+  - docs/requirements/TRADING-2462_Tail_Risk_Capability_Robustness_Falsification_Audit.md
+  - docs/research/decision_target_tail_risk_robustness_audit.md
+  - registry/development_tasks_shadow/completed/8a/8a124c3f1fb3cd10eddf178834b6a0d62026760cc274f49707e423203f45fa9d.yaml
+  - src/ai_trading_system/research_framework/plugins/decision_target_tail_risk_robustness_audit.py
+  - tests/research_strategies/test_decision_target_tail_risk_robustness_audit.py
+  source_delta_paths:
+  - config/report_registry.yaml
+  - config/research/decision_target_tail_risk_robustness_audit_v1.yaml
+  - config/research/experiments/decision_target_tail_risk_robustness_audit.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2462_Tail_Risk_Capability_Robustness_Falsification_Audit.md
+  - docs/research/decision_target_tail_risk_robustness_audit.md
+  - docs/system_flow.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/completed/8a/8a124c3f1fb3cd10eddf178834b6a0d62026760cc274f49707e423203f45fa9d.yaml
+  - src/ai_trading_system/research_framework/plugins/decision_target_tail_risk_robustness_audit.py
+  - tests/research_strategies/test_decision_target_tail_risk_robustness_audit.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  sources:
+  - path: config/report_registry.yaml
+    sha256: 64429070f5bef1fab05c0b0653a40bf34f862ab5648e1308cff5eb87c0d5dfcb
+    hash_normalization: git_eol_lf
+  - path: config/research/decision_target_tail_risk_robustness_audit_v1.yaml
+    sha256: 7878dd1a790a1070e9f6dc5f589d671f9d9450aad5ed97159d5570f4d0a9a768
+    hash_normalization: git_eol_lf
+  - path: config/research/experiments/decision_target_tail_risk_robustness_audit.yaml
+    sha256: 12a557dffdb75620322442dbe90a98b25aee96e7c7994f5f6f8885c15cbef933
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: c5f5cc3b896cb77c202c8b4ee53bb38c0464a18593b6e98c2f0d101e37dd4bec
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2462_Tail_Risk_Capability_Robustness_Falsification_Audit.md
+    sha256: f746f1e7d33397d76c8294f35fc51c0a6c4bf068284cbdcd8b383dbb29c7dd2b
+    hash_normalization: git_eol_lf
+  - path: docs/research/decision_target_tail_risk_robustness_audit.md
+    sha256: a3e6af5e8f0c6eb44102360e6421b21d308136fecc94b321714870ec2431267f
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 9e06d48f61514ac705002e68ff3a2cc39f889561cc22716d1ed5ca922e1dfa9a
+    hash_normalization: git_eol_lf
+  - path: docs/task_register_completed.md
+    sha256: 7aa78bcd75f006079501e644c207f4035ee9938c8d3ebda23e01560e37664315
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 6cee3f8c9f0fae808a665c9adcfb55492ffc1993c0589bb5c79b0a48cd9d5613
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: aec11a8e4cc83fd41b30c13fcd925dfbe293c6b000b462ecd70071a474155dee
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 9b2c19276ba9ad1c12b815add8807469489ab2f293d6f1638f5eed5e7577987a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 72ada10386889f7267bf7eadbae38189772caf5cf94f207a84185746491fe727
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 6a112d0c81584734c9ca825b93c39a68c12d25694f90b0a4d821f75a4f0dcd3f
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: c48e16322af94ff9a564299a4bf363342303ba5246d19650d57f9ac4d45b207a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: ea4fdfe1e5249710e5dc201ab6b02ffc38e6a184d735687c62d0446842427351
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/8a/8a124c3f1fb3cd10eddf178834b6a0d62026760cc274f49707e423203f45fa9d.yaml
+    sha256: 605393a3de57675cae4f8bd0d38109932148bc8dd6095072c89df99ae3b22cfb
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/research_framework/plugins/decision_target_tail_risk_robustness_audit.py
+    sha256: c1e42107edbb3fd8affddb16d0ce9430c9936ed14641b22852939c83bdb67276
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_decision_target_tail_risk_robustness_audit.py
+    sha256: 941f65b75e325ed83b4d3d37238520b17e34872d5a9a2970cda5786059c17dba
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 584806261b360cc6a1f7d209e0262996f89b2c14e0a213206190bf12f372b78b
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004f3_reporting_architecture.py
+    sha256: 67a1ef6659aa06f0eb302685a27d6a6ac19d7e577bcc1c4269b8d39990bef561
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: ec00f3e26a471d86f8e8e4bbbad536282264dbdf158b1c09d8ffecdeefbde903
+    hash_normalization: git_eol_lf
+  validation:
+    focused_and_authority: PASS_113
+    reporting_architecture: PASS_INCLUDED_IN_FOCUSED_113
+    deprecation: PASS_INCLUDED_IN_FOCUSED_113
+    architecture: PASS_694
+    contract: PASS_275
+    report: PASS_57
+    reproducibility: PASS_23
+    full: PASS_7420_WITH_4_SKIPPED
+    post_full_architecture: PASS_694
+    post_full_contract: PASS_275
+  safety:
+    historical_seen_only: true
+    result: INSUFFICIENT_ROBUSTNESS_EVIDENCE
+    decision_value_audit_authorized: false
+    promotion_authorized: false
+    strategy_family_created: false
+    risk_overlay_authorized: false
+    target_weights_generated: false
+    qld_signal_role_changed: false
+    prospective_accessed: false
+    paper_shadow_changed: false
+    production_effect: none
+    broker_action: none
