@@ -27559,7 +27559,7 @@ phase_data_gov_002_capability_receipt_phase_b2:
 
 phase_devx_003_governed_closeout_remote_preflight:
   schema_version: devx_003_governed_closeout_remote_preflight_compatibility.v1
-  status: VALIDATING
+  status: BASELINE_DONE
   boundary_id: DEVX-003-GOVERNED-CLOSEOUT-REMOTE-PREFLIGHT
   task_ids:
   - DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
@@ -27636,19 +27636,19 @@ phase_devx_003_governed_closeout_remote_preflight:
   - tools/codex_skills/run-governed-development/SKILL.md
   sources:
   - path: docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md
-    sha256: a2c72324ab43893973b85783535a39fe7d4cc2323296e58f82faf68f7b4cc10f
+    sha256: 421e60d72e3c8095992481fe770593632076d2e53fad8b802152cb72efe35006
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 725db539509317db5a70b9aa4be7c3561b83ea97a99051fefcf2e91ed435009e
+    sha256: 96c4e210b5f55588676e26be7323578192f36e1cc2eb587a43834047df9da5cf
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
     sha256: 07a9cfc25a0b623db88fa019186952e98438ae9fd1dd9d0b5e610dc48202970f
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 36c9087383c67dab05980389322d780eff98d2f7ed600324987e981147711cd7
+    sha256: ec4c5d9f9327689698d47e8b6bb86cde350ce3a83f1e4aee890dd5a25b6e8003
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 06708ae6039e1f587546290a0bfce73ffb80cb8f5d9593600dd77d18aa761c5f
+    sha256: e9569846b4cbac6390d70e2c19adcaffff3fe9750479a4422ef4b99c47ad6d62
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
     sha256: 30f5e4289a33ea9f1128425e6566ebc402bb3f27876756cfc655170d6529e035
@@ -27678,7 +27678,7 @@ phase_devx_003_governed_closeout_remote_preflight:
     sha256: 8380ad0c7364b8bb871d2b58419a6184f43403edb7bbcdfc65b238f2e54e5b90
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/7b/7b04799972c59b71610e961e1ef5b68bb12230cdbf7f125bd217d27f2a281504.yaml
-    sha256: 716ee0f416922ae42574ca2323e7e53f915b5befb93608fff0c5e3b839649cf7
+    sha256: 70cba39951f831ffbc94e304a8692e896680a139ff03e4837f65ffc162d8ec7c
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
     sha256: 3b19267910314eb39c82d39f6e092b37a0db07833a6fc89d6c6f75a5129cf934
@@ -27711,7 +27711,7 @@ phase_devx_003_governed_closeout_remote_preflight:
     sha256: 1e6fb410d691240a3d0264eed6e4cdf33c229b45cd6f5514281ba59de310ae92
     hash_normalization: git_eol_lf
   validation:
-    engineering_status: VALIDATING
+    engineering_status: BASELINE_DONE
     focused: PASS_25
     black: PASS
     ruff: PASS
@@ -27720,7 +27720,7 @@ phase_devx_003_governed_closeout_remote_preflight:
     installed_quick_validate: PASS
     bundle_parity: PASS_5_FILES
     branch_negative_forward_test: PASS_NON_MAIN_DIRTY_BLOCKED
-    main_closeout_forward_test: PENDING_AFTER_LOCAL_MAIN_FF
+    main_closeout_forward_test: PASS_CLEAN_MAIN_ORIGIN_ANCESTOR
     task_registry: PASS_BYTE_IDENTICAL
     architecture_devex: PASS
     architecture: PASS_672

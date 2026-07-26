@@ -7,7 +7,7 @@
 Owner continuation：
 `owner_continuation:DEVX-003:2026-07-26:continue_long_term_engineering_goal`
 
-状态：`VALIDATING_LOCAL_MAIN_CLOSEOUT`
+状态：`BASELINE_DONE`
 
 ## 1. 问题
 
@@ -137,3 +137,10 @@ rebase 或修复 divergence。
   状态转 `VALIDATING_LOCAL_MAIN_CLOSEOUT`，下一步仅剩 candidate commit、
   local-main fast-forward、真实 `CLOSEOUT --remote-action` 和 ordinary push
   双 SHA 复核。
+- 2026-07-26：validated candidate `69ef2555c04c99d7acb3b53d72640727f6e3546f`
+  已 fast-forward 到 clean local `main`。刷新 remote 后，installed preflight 以
+  `SINGLE_LANE / coordinator / CLOSEOUT / --remote-action` 和原 scope claims
+  返回 `PASS`：`local_only=1`、`origin_only=0`、无 blocker、无 warning、
+  worktree audit PASS、active lease 为空。状态转 `BASELINE_DONE`；该结果证明
+  `origin/main` 为 candidate 祖先时正式入口可用，最终 evidence commit 后执行
+  ordinary push 与双 SHA 复核。
