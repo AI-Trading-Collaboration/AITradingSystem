@@ -28540,3 +28540,99 @@ phase_devx_004_completed_task_closeout_registration:
     earlier_stages_fail_closed: true
     production_effect: none
     broker_action: none
+
+phase_devx_001_research_worktree_lifecycle_reconciliation:
+  schema_version: devx_001_research_worktree_lifecycle_reconciliation_compatibility.v1
+  status: BASELINE_DONE_AUDIT_INCIDENT
+  boundary_id: DEVX-001-RESEARCH-WORKTREE-RECONCILIATION
+  task_ids:
+  - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  - DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
+  owner_authorization: task_register:DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP:IN_PROGRESS
+  prior_sections_immutability:
+    source_commit: f8b32b24b1983afc39a4a1cfdfb4d31d584d82fb
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: cd0034202297b0a4199f12641b14e42f521f503d
+    raw_byte_count: 1780838
+    raw_sha256: 8f8f46dc9807dbce44a606d726847babb82dd6a726ec547d428c4bb07f273cc4
+    append_offset: 1780838
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: DEVX-001-RESEARCH-WORKTREE-RECONCILIATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_devx_004_completed_task_closeout_registration
+    current_hash_authority: phase_devx_001_research_worktree_lifecycle_reconciliation.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  source_delta_paths:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+    sha256: 3ba8bf4da17360e7fef42161778934fa3b7b97b9fb3470fda645a4273cb8faab
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+    sha256: e62265a0ccdf1c010a4f64f5fbc0fce15691fea80a31454212137d1ec53e3a61
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 88e01d2f7ced2691c216ff4eed7f85e6c53ffdab86f6c8105167047a51baefb8
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: af31c97c6dff27519d3e417a845bbfcc8169681eb45fe86c88ef63568499c6a6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: bac8c4082dbe32b470260a3dfb1315c7771cda0d4715001395ea82f0f0c60221
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 8555d0282e473843b12560069f0e835dce54a3e34c83b4d8f75d263888298215
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+    sha256: c2f2b862f26424983084ff57c0dabd17785652c03f378700dc447f764dc04fbd
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+    sha256: 5da08338b0ed8ff1e92200cd12e59ced58e37b7ff22ab2a949688cc0646010f5
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: fa00a0da5d59342eeaf71b251f08218e26f876ac9afeabaa11cc6b2df70d50fd
+    hash_normalization: git_eol_lf
+  evidence:
+    removed_worktree_count: 8
+    removed_file_count: 78356
+    released_logical_bytes: 2277275474
+    migrated_file_count: 19
+    migrated_bytes: 14017755
+    migrated_bundle_sha256: 0bfe5f2929ccfbd7404e6c15a509acf3a751db916acdbdffca373eb8a13cdc21
+    retained_worktree_count: 3
+  validation:
+    evidence_hash: PASS
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture: PASS_686
+    contract: PASS_275
+  safety:
+    target_tracked_diff_audit_proven: false
+    audit_incident_recorded: true
+    further_worktree_deletion_allowed: false
+    known_unrelated_opened: false
+    production_effect: none
+    broker_action: none

@@ -293,3 +293,103 @@ validation evidence保留在主工作区。已删除的ignored cache与非canoni
 hash、复制或纳入提交。TRADING工作区退出条件已全部满足；DEVX-001继续保持
 `IN_PROGRESS`，仅剩`D:\Work\AITradingSystem_ops_runtime_20260725`的独立合法scheduler验收
 与证据迁移/清理。
+
+## 9. 2026-07-27 research worktree lifecycle reconciliation
+
+DEVX-004 收口后的只读 preflight 发现 Git 仍登记 10 个未写入本任务保留清单的
+TRADING-2458/2461/2462 worktree。本轮按 2.1 的统一删除依据逐目录复核，而不是把
+`checkout_worktree_audit=PASS` 或 clean tracked state 单独当作删除授权。
+
+### 9.1 删除候选与 exact allowlist
+
+以下 8 个目录属于已完成任务的历史 carrier，目标实现已由后续 reviewed main 候选取代；
+其中 4 个 HEAD 是当前 main 祖先，另外 4 个 non-ancestor branch 的 commit/patch 已由任务
+requirement 明确记录为 base-drift 后废弃或重建的中间版本：
+
+- `D:\Work\AITradingSystem_t2461_7b88`：10,456 files / 320,620,735 bytes；
+- `D:\Work\AITradingSystem_t2461_8a31`：10,242 files / 317,855,952 bytes；
+- `D:\Work\AITradingSystem_t2461_a309`：9,056 files / 285,564,707 bytes；
+- `D:\Work\AITradingSystem_t2461_fb18`：10,633 files / 326,009,624 bytes；
+- `D:\Work\AITradingSystem_trading2458_retirement_20260726`：
+  7,716 files / 201,837,924 bytes；
+- `D:\Work\AITradingSystem_trading2458_retirement_rebase_20260726`：
+  10,340 files / 272,670,538 bytes；
+- `D:\Work\AITradingSystem_trading2458_retirement_rebase2_20260726`：
+  10,337 files / 265,455,757 bytes；
+- `D:\Work\AITradingSystem_trading2458_retirement_rebase3_20260726`：
+  9,576 files / 287,260,237 bytes。
+
+TRADING-2461 最终 7b88 的 43 个 required output files 已在主工作区同相对路径逐文件
+SHA-256 相等；旧 a309/8a31/fb18 validation outputs 是被后续 exact-base Full 取代的
+中间证据。untracked task-owned code/config/research files除历史 requirement 与 task shadow
+状态外均与当前 main 相同；差异项由后续 reviewed completed archive 明确取代。
+
+TRADING-2458 v4 的最终验证证据仍仅位于 rebase3 worktree。删除前必须把以下 6 组
+19 files / 14,017,755 bytes 迁移至主工作区相同的 canonical
+`outputs/validation_runtime/trading2458_retirement_rebase3_20260726/` 路径，并复核
+bundle SHA-256=`0bfe5f2929ccfbd7404e6c15a509acf3a751db916acdbdffca373eb8a13cdc21`：
+`closeout_architecture`、`closeout_contract`、`closeout_full`、
+`final_evidence_architecture`、`final_evidence_contract` 与
+`post_full_architecture`。
+
+8 个删除候选均没有活动进程或 Windows Scheduled Task 引用。删除只允许使用上述 exact
+绝对路径，先逐个执行 `git worktree remove --force`，再执行 `git worktree prune`。
+已提交实现可由 Git main/历史分支恢复；迁移后的 final evidence 由主工作区恢复；被后续
+候选取代的 ignored cache、旧 validation outputs、lease/intents 与 mutable shadow views
+不保证恢复。
+
+### 9.2 强制保留
+
+- `D:\Work\AITradingSystem_t2462_tailrisk` 与
+  `D:\Work\AITradingSystem_t2462_tailrisk_v2` 含尚未进入 main 的 TRADING-2462
+  tail-risk robustness implementation/requirement。审计期间 v2 的 PID `45804` 执行
+  `validate_content_rebuild.py`，随后正常结束并把 branch 从 `573a8c27b`推进到
+  checkpoint `c1ce71825`，进一步证明该路径仍是活动研究来源。分类为 `KEEP_ACTIVE`，
+  next owner 为 strategy research owner；退出条件是任务授权/归档结论、独有代码与证据
+  迁移、进程结束和重新审计。
+- `D:\Work\AITradingSystem_ops_runtime_20260725` 继续分类为 `KEEP_ACTIVE`，仍由
+  OPS-070 下一合法 scheduler run、canonical evidence 迁移与 operational acceptance
+  退出条件控制，本轮不得修改或删除。
+
+known-unrelated
+`docs/research/growth_tilt_owner_diagnosis_pack.md` 在所有 Git inspection 中使用 exact
+literal exclusion，未读取、hash、复制、暂存或修改。
+
+### 9.3 执行结果与 worktree-audit 事故
+
+TRADING-2458 v4 的 19 files / 14,017,755 bytes 已迁移至主工作区；源与目标逐文件
+size/SHA-256相等，目标 bundle SHA-256=
+`0bfe5f2929ccfbd7404e6c15a509acf3a751db916acdbdffca373eb8a13cdc21`。
+首次 PowerShell copy 尝试因 `Copy-Item -LiteralPath` 不展开 `*`，只创建6个空目录，
+未复制、覆盖或删除文件；随后改为逐文件 exact `-LiteralPath` 复制并通过完整哈希复核。
+
+上述8个exact worktree已执行`git worktree remove --force`与`git worktree prune`，目录和
+registration均消失，共删除78,356 files / 2,277,275,474 logical bytes。清理后只剩主
+checkout、OPS-070 runtime与两个TRADING-2462 worktree。8条本地branch ref暂时保留，作为
+旧carrier commit的直接恢复入口；是否删除branch须另行做branch-retirement审计。
+
+删除完成后复核发现，本轮“逐worktree checkout audit PASS”证据无效：命令虽然在目标目录
+执行，但调用的是主工作区
+`D:\Work\AITradingSystem\scripts\architecture_arch005_checkout_guard.py`；该脚本的
+`PROJECT_ROOT`固定取脚本所在仓库，因此实际重复审计了主checkout。删除前确实完成并保留了
+每个目标的branch/HEAD/main ancestry、exact-excluded untracked清单、ignored清单、任务文件
+与main hash对照、output逐文件hash对照、进程和Scheduled Task检查；但没有正确执行目标
+worktree的tracked unstaged/staged diff audit。
+
+由于目录已直接删除且未进入回收站，无法事后证明不存在unique uncommitted tracked bytes，
+也不保证恢复这类潜在字节。风险缓解证据包括：任务最终实现已进入reviewed main；任务
+requirements明确记录多轮base-drift supersession；任务专属untracked实现已与main对照；
+TRADING-2461 final与迁移后的TRADING-2458 final evidence已逐hash保全；旧branch refs仍在。
+这些证据支持实现与required evidence可恢复，但不把缺失的tracked-diff检查改写为PASS。
+
+在新增target-bound worktree audit入口并验证其确实绑定被审计repository之前，不得继续删除
+OPS-070或TRADING-2462 worktree。该工具缺口必须作为独立P0 developer-workflow follow-up
+登记和修复。
+
+本轮收口验证通过：architecture-fitness=`686 passed`，runtime artifact=
+`outputs/validation_runtime/architecture-fitness_20260726T170436Z/test_runtime_summary.json`；
+contract-validation=`275 passed`，runtime artifact=
+`outputs/validation_runtime/contract-validation_20260726T170655Z/test_runtime_summary.json`。
+这些PASS证明当前治理记录、兼容性基线和contract在主checkout中一致，不补足删除前缺失的
+target tracked-diff审计，也不解除后续worktree删除禁令。DEVX-001继续保持`IN_PROGRESS`，
+等待DEVX-005修复以及OPS-070/TRADING-2462各自满足独立退出条件。

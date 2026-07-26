@@ -557,6 +557,29 @@ DEVX_004_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
+DEVX_001_RECONCILIATION_SECTION = (
+    "phase_devx_001_research_worktree_lifecycle_reconciliation"
+)
+DEVX_001_RECONCILIATION_BASE_COMMIT = (
+    "f8b32b24b1983afc39a4a1cfdfb4d31d584d82fb"
+)
+DEVX_001_RECONCILIATION_BASELINE_GIT_BLOB = (
+    "cd0034202297b0a4199f12641b14e42f521f503d"
+)
+DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT = 1_780_838
+DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_SHA256 = (
+    "8f8f46dc9807dbce44a606d726847babb82dd6a726ec547d428c4bb07f273cc4"
+)
+LATEST_COMPATIBILITY_SECTION = DEVX_001_RECONCILIATION_SECTION
+DEVX_001_RECONCILIATION_NEW_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md",
+        (
+            "registry/development_tasks_shadow/active/e6/"
+            "e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml"
+        ),
+    }
+)
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -1316,6 +1339,26 @@ def _devx_004_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _devx_001_reconciliation_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{DEVX_001_RECONCILIATION_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == DEVX_001_RECONCILIATION_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -2011,6 +2054,29 @@ def _assert_devx_004_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == DEVX_004_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[DEVX_004_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_004_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_devx_001_reconciliation_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[
+        :DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT
+    ]
+    assert historical_prefix == base_blob, (
+        "DEVX-001 reconciliation historical prefix differs from immutable DEVX-004 blob"
+    )
+    suffix = current_bytes[
+        DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT:
+    ]
+    expected_marker = f"\n{DEVX_001_RECONCILIATION_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -2884,6 +2950,26 @@ def _devx_004_source_paths() -> frozenset[str]:
 
 
 @cache
+def _devx_001_reconciliation_superseded_live_source_paths() -> frozenset[str]:
+    _assert_devx_001_reconciliation_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _devx_001_reconciliation_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[DEVX_001_RECONCILIATION_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _devx_001_reconciliation_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[DEVX_001_RECONCILIATION_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -2923,6 +3009,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _ops_069_terminal_archive_source_paths()
     if DEVX_004_SECTION in baseline:
         paths |= _devx_004_source_paths()
+    if DEVX_001_RECONCILIATION_SECTION in baseline:
+        paths |= _devx_001_reconciliation_source_paths()
     return paths
 
 
@@ -3536,12 +3624,49 @@ def _devx_004_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(DEVX_004_SECTION)
 
 
+@cache
+def _devx_001_reconciliation_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(DEVX_001_RECONCILIATION_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DEVX_004_SECTION in baseline:
+    if DEVX_001_RECONCILIATION_SECTION in baseline:
+        current_superseded_paths = (
+            _devx_001_reconciliation_superseded_live_source_paths()
+        )
+        assert (
+            _devx_001_reconciliation_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+            | _trading_2459_doc_closeout_source_paths()
+            | _data_gov_002_source_paths()
+            | _devx_002_source_paths()
+            | _devx_002_push_v2_source_paths()
+            | _arch_004g2_observability_source_paths()
+            | _arch_004g2_closure_threshold_source_paths()
+            | _data_gov_002_phase_b1_source_paths()
+            | _trading_2458_retirement_source_paths()
+            | _trading_2458_closeout_source_paths()
+            | _data_gov_002_phase_b2_source_paths()
+            | _devx_003_source_paths()
+            | _data_gov_002c1_source_paths()
+            | _data_gov_002c2_source_paths()
+            | _trading_2461_source_paths()
+            | _arch_004g2_paper_weekly_source_paths()
+            | _ops_069_terminal_archive_source_paths()
+            | _devx_004_source_paths()
+            | _devx_001_reconciliation_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = DEVX_001_RECONCILIATION_SECTION
+    elif DEVX_004_SECTION in baseline:
         current_superseded_paths = _devx_004_superseded_live_source_paths()
         assert _devx_004_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
@@ -8293,6 +8418,7 @@ def test_devx_003_is_preserved_historical_authority() -> None:
             | _arch_004g2_paper_weekly_superseded_live_source_paths()
             | _ops_069_terminal_archive_superseded_live_source_paths()
             | _devx_004_superseded_live_source_paths()
+            | _devx_001_reconciliation_superseded_live_source_paths()
         )
     assert phase["supersession"] == {
         "superseded_by_phase": "DEVX-003-GOVERNED-CLOSEOUT-REMOTE-PREFLIGHT",
@@ -8395,6 +8521,7 @@ def test_data_gov_002c1_is_preserved_historical_authority() -> None:
         | _arch_004g2_paper_weekly_superseded_live_source_paths()
         | _ops_069_terminal_archive_superseded_live_source_paths()
         | _devx_004_superseded_live_source_paths()
+        | _devx_001_reconciliation_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C1-DQ-ISSUE-ATTRIBUTION-READINESS-INVENTORY"),
@@ -8504,6 +8631,7 @@ def test_data_gov_002c2_is_preserved_historical_authority() -> None:
         | _arch_004g2_paper_weekly_superseded_live_source_paths()
         | _ops_069_terminal_archive_superseded_live_source_paths()
         | _devx_004_superseded_live_source_paths()
+        | _devx_001_reconciliation_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK"),
@@ -8618,6 +8746,7 @@ def test_trading_2461_model_ladder_is_preserved_historical_authority() -> None:
         | _arch_004g2_paper_weekly_superseded_live_source_paths()
         | _ops_069_terminal_archive_superseded_live_source_paths()
         | _devx_004_superseded_live_source_paths()
+        | _devx_001_reconciliation_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2461-DECISION-TARGET-CAPABILITY-AUDIT-BATCH2",
@@ -8732,6 +8861,7 @@ def test_arch_004g2_paper_weekly_is_preserved_historical_authority() -> None:
         superseded
         | _ops_069_terminal_archive_superseded_live_source_paths()
         | _devx_004_superseded_live_source_paths()
+        | _devx_001_reconciliation_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": (
@@ -8836,7 +8966,9 @@ def test_ops_069_terminal_archive_is_preserved_historical_authority() -> None:
     )
     assert superseded <= observed_live_mismatches
     assert observed_live_mismatches <= (
-        superseded | _devx_004_superseded_live_source_paths()
+        superseded
+        | _devx_004_superseded_live_source_paths()
+        | _devx_001_reconciliation_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": "OPS-069-TERMINAL-ARCHIVE",
@@ -8899,13 +9031,16 @@ def test_ops_069_terminal_archive_is_preserved_historical_authority() -> None:
     }
 
 
-def test_devx_004_is_current_hash_authority() -> None:
+def test_devx_004_is_preserved_historical_authority() -> None:
     _assert_devx_004_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_004_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == DEVX_004_SECTION
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    assert list(baseline).index(DEVX_004_SECTION) < list(baseline).index(
+        DEVX_001_RECONCILIATION_SECTION
+    )
     phase = baseline[DEVX_004_SECTION]
     assert phase["schema_version"] == (
         "devx_004_completed_task_closeout_registration_compatibility.v1"
@@ -8923,7 +9058,11 @@ def test_devx_004_is_current_hash_authority() -> None:
         "current_section_must_be_eof": True,
     }
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _devx_004_prior_active_source_mismatches()
+    observed = _devx_004_prior_active_source_mismatches()
+    assert superseded <= observed
+    assert observed <= (
+        superseded | _devx_001_reconciliation_superseded_live_source_paths()
+    )
     assert phase["removed_live_source_paths"] == []
     assert set(phase["new_source_paths"]) == DEVX_004_NEW_SOURCE_PATHS
     expected = superseded | DEVX_004_NEW_SOURCE_PATHS
@@ -8934,7 +9073,7 @@ def test_devx_004_is_current_hash_authority() -> None:
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["validation"]["focused_skill"] == "PASS_30"
     assert phase["validation"]["bundle_parity"] == "PASS_5_FILES"
     if phase["status"] == "BASELINE_DONE":
@@ -8943,6 +9082,72 @@ def test_devx_004_is_current_hash_authority() -> None:
     assert phase["safety"] == {
         "completed_registration_closeout_only": True,
         "earlier_stages_fail_closed": True,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_devx_001_reconciliation_is_current_hash_authority() -> None:
+    _assert_devx_001_reconciliation_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _devx_001_reconciliation_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == DEVX_001_RECONCILIATION_SECTION
+    phase = baseline[DEVX_001_RECONCILIATION_SECTION]
+    assert phase["schema_version"] == (
+        "devx_001_research_worktree_lifecycle_reconciliation_compatibility.v1"
+    )
+    assert phase["status"] in {
+        "VALIDATING_AUDIT_INCIDENT",
+        "BASELINE_DONE_AUDIT_INCIDENT",
+    }
+    assert phase["boundary_id"] == "DEVX-001-RESEARCH-WORKTREE-RECONCILIATION"
+    assert phase["task_ids"] == [
+        "DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP",
+        "DEVX-005_TARGET_BOUND_WORKTREE_AUDIT",
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": DEVX_001_RECONCILIATION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": DEVX_001_RECONCILIATION_BASELINE_GIT_BLOB,
+        "raw_byte_count": DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_SHA256,
+        "append_offset": DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _devx_001_reconciliation_prior_active_source_mismatches()
+    expected = superseded | DEVX_001_RECONCILIATION_NEW_SOURCE_PATHS
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["new_source_paths"]) == DEVX_001_RECONCILIATION_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    assert [str(row["path"]) for row in sources] == sorted(
+        expected, key=str.casefold
+    )
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["evidence"] == {
+        "removed_worktree_count": 8,
+        "removed_file_count": 78356,
+        "released_logical_bytes": 2277275474,
+        "migrated_file_count": 19,
+        "migrated_bytes": 14017755,
+        "migrated_bundle_sha256": (
+            "0bfe5f2929ccfbd7404e6c15a509acf3a751db916acdbdffca373eb8a13cdc21"
+        ),
+        "retained_worktree_count": 3,
+    }
+    if phase["status"] == "BASELINE_DONE_AUDIT_INCIDENT":
+        assert str(phase["validation"]["architecture"]).startswith("PASS_")
+        assert str(phase["validation"]["contract"]).startswith("PASS_")
+    assert phase["safety"] == {
+        "target_tracked_diff_audit_proven": False,
+        "audit_incident_recorded": True,
+        "further_worktree_deletion_allowed": False,
+        "known_unrelated_opened": False,
         "production_effect": "none",
         "broker_action": "none",
     }
@@ -9054,6 +9259,16 @@ def test_devx_004_rejects_historical_prefix_tamper() -> None:
         _assert_devx_004_historical_prefix_immutable(
             bytes(tampered),
             _devx_004_base_baseline_blob(),
+        )
+
+
+def test_devx_001_reconciliation_rejects_historical_prefix_tamper() -> None:
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_devx_001_reconciliation_historical_prefix_immutable(
+            bytes(tampered),
+            _devx_001_reconciliation_base_baseline_blob(),
         )
 
 
