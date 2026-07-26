@@ -11,8 +11,8 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；DEVX
-    follow-up先修复target-bound worktree audit
+  next_owner: OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+    target-bound audit重新评估
   requirement_refs:
   - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   module_ids: []
@@ -23,8 +23,8 @@ task_record:
     main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；在target-bound
-      audit修复前不得继续删除OPS-070/TRADING-2462；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
+    text: TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed
+      main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
       evidence与恢复边界。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
@@ -32,41 +32,38 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1950
-    row_sha256: 2dda9bc519f6f21fa4ed34439e4de1164c0f5157fc282e8a3cdc63e3a1e2f7d0
+    row_sha256: f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
     cell_count: 8
     all_cells:
     - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
     - Developer experience / temporary clone, worktree and cache lifecycle
     - P1
     - IN_PROGRESS
-    - OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；DEVX follow-up先修复target-bound
-      worktree audit
+    - OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+      target-bound audit重新评估
     - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
       v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute
       main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。
-    - TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；在target-bound
-      audit修复前不得继续删除OPS-070/TRADING-2462；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
+    - TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed
+      main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
       evidence与恢复边界。
-    - 2026-07-27：删除78,356 files / 2,277,275,474 bytes，目标目录与registration均消失；迁移bundle
-      SHA-256=`0bfe5f29...cdc21`。目标untracked/ignored/ancestry/process已审计，但tracked
-      diff因脚本root绑定错误无法事后证明；旧branch refs保留缓解恢复风险；architecture-fitness=`686 passed`、contract-validation=`275
-      passed`，但PASS不解除删除禁令。DEVX保持`IN_PROGRESS`，无production或broker effect。
+    - 2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462 v3 target上PASS，formal
+      Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
+      effect。
     raw_line: '|DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP|Developer experience
       / temporary clone, worktree and cache lifecycle|P1|IN_PROGRESS|OPS-070 owner负责runtime退出；strategy
-      research owner负责TRADING-2462；DEVX follow-up先修复target-bound worktree audit|详见
-      `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
+      research owner负责TRADING-2462；后续每个删除候选必须使用v2 target-bound audit重新评估|详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
       v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute
       main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。|TRADING-2458
-      v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；在target-bound audit修复前不得继续删除OPS-070/TRADING-2462；后续清理必须同时证明target
-      tracked/unstaged/staged、untracked、ignored、进程、canonical evidence与恢复边界。|2026-07-27：删除78,356
-      files / 2,277,275,474 bytes，目标目录与registration均消失；迁移bundle SHA-256=`0bfe5f29...cdc21`。目标untracked/ignored/ancestry/process已审计，但tracked
-      diff因脚本root绑定错误无法事后证明；旧branch refs保留缓解恢复风险；architecture-fitness=`686 passed`、contract-validation=`275
-      passed`，但PASS不解除删除禁令。DEVX保持`IN_PROGRESS`，无production或broker effect。|'
+      v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target
+      tracked/unstaged/staged、untracked、ignored、进程、canonical evidence与恢复边界。|2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462
+      v3 target上PASS，formal Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
+      effect。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-2dda9bc519f6f21fa4ed3443
+  event_id: legacy-import-f979f29da38a5b5348e8680b
   task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -79,15 +76,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；DEVX
-      follow-up先修复target-bound worktree audit
-    notes: 2026-07-27：删除78,356 files / 2,277,275,474 bytes，目标目录与registration均消失；迁移bundle
-      SHA-256=`0bfe5f29...cdc21`。目标untracked/ignored/ancestry/process已审计，但tracked
-      diff因脚本root绑定错误无法事后证明；旧branch refs保留缓解恢复风险；architecture-fitness=`686 passed`、contract-validation=`275
-      passed`，但PASS不解除删除禁令。DEVX保持`IN_PROGRESS`，无production或broker effect。
+    next_owner: OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+      target-bound audit重新评估
+    notes: 2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462 v3 target上PASS，formal
+      Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
+      effect。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:2dda9bc519f6f21fa4ed34439e4de1164c0f5157fc282e8a3cdc63e3a1e2f7d0
+  - sha256:f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -95,21 +91,20 @@ projection:
   - Developer experience / temporary clone, worktree and cache lifecycle
   - P1
   - IN_PROGRESS
-  - OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；DEVX follow-up先修复target-bound
-    worktree audit
+  - OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+    target-bound audit重新评估
   - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
     v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute
     main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。
-  - TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；在target-bound
-    audit修复前不得继续删除OPS-070/TRADING-2462；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
+  - TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed
+    main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
     evidence与恢复边界。
-  - 2026-07-27：删除78,356 files / 2,277,275,474 bytes，目标目录与registration均消失；迁移bundle
-    SHA-256=`0bfe5f29...cdc21`。目标untracked/ignored/ancestry/process已审计，但tracked diff因脚本root绑定错误无法事后证明；旧branch
-    refs保留缓解恢复风险；architecture-fitness=`686 passed`、contract-validation=`275 passed`，但PASS不解除删除禁令。DEVX保持`IN_PROGRESS`，无production或broker
+  - 2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462 v3 target上PASS，formal
+    Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
     effect。
   docs_links:
   - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
   terminal: false
-  raw_row_sha256: 2dda9bc519f6f21fa4ed34439e4de1164c0f5157fc282e8a3cdc63e3a1e2f7d0
+  raw_row_sha256: f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 7c1caae62c78b8c3e8b19ed70c79addfa0718c542df0aa254d11f94e19dd8306
+fragment_checksum: 8a0830e551b3e9f4d9e8223072198019f50f6eae49249086022917f2b721730a

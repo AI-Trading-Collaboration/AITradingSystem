@@ -11,7 +11,7 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: developer workflow / checkout guard owner：先实现并验证target identity，再允许DEVX-001继续任何worktree删除
+  next_owner: developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
   requirement_refs:
   - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
   module_ids: []
@@ -30,33 +30,37 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2031
-    row_sha256: 729a11fc7a267f50b65d6f6bacfe592e1da95bb7f16c5b0c8da46d61598ae7db
+    row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
     cell_count: 8
     all_cells:
     - DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
     - Developer experience / target-bound governed worktree audit
     - P0
-    - PROPOSED
-    - developer workflow / checkout guard owner：先实现并验证target identity，再允许DEVX-001继续任何worktree删除
+    - BASELINE_DONE
+    - developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
     - 详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout guard以脚本位置固定`PROJECT_ROOT`，从目标worktree调用main脚本仍审计main，导致DEVX-001清理事故。
     - '`worktree-audit`显式绑定registered target worktree；输出policy/target/toplevel/common-dir
       identity；dirty/unstaged/staged三路使用同target与完整exact exclusions；wrong/independent/unregistered
       target fail closed；focused/Architecture/Contract PASS。'
-    - 2026-07-27：由DEVX-001事故登记为P0 PROPOSED；在修复进入reviewed main前禁止继续删除OPS-070或TRADING-2462
-      worktree；无production或broker effect。
+    - 2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity drift
+      gate完成；focused=`29 passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462
+      v3 target审计PASS。首轮Architecture 8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker
+      effect。
     raw_line: '|DEVX-005_TARGET_BOUND_WORKTREE_AUDIT|Developer experience / target-bound
-      governed worktree audit|P0|PROPOSED|developer workflow / checkout guard owner：先实现并验证target
-      identity，再允许DEVX-001继续任何worktree删除|详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout
+      governed worktree audit|P0|BASELINE_DONE|developer workflow / checkout guard
+      owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除|详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout
       guard以脚本位置固定`PROJECT_ROOT`，从目标worktree调用main脚本仍审计main，导致DEVX-001清理事故。|`worktree-audit`显式绑定registered
       target worktree；输出policy/target/toplevel/common-dir identity；dirty/unstaged/staged三路使用同target与完整exact
       exclusions；wrong/independent/unregistered target fail closed；focused/Architecture/Contract
-      PASS。|2026-07-27：由DEVX-001事故登记为P0 PROPOSED；在修复进入reviewed main前禁止继续删除OPS-070或TRADING-2462
-      worktree；无production或broker effect。|'
+      PASS。|2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity
+      drift gate完成；focused=`29 passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462
+      v3 target审计PASS。首轮Architecture 8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker
+      effect。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-729a11fc7a267f50b65d6f6b
+  event_id: legacy-import-ec5ab181fa54fabc76acdb2c
   task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -66,32 +70,35 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: developer workflow / checkout guard owner：先实现并验证target identity，再允许DEVX-001继续任何worktree删除
-    notes: 2026-07-27：由DEVX-001事故登记为P0 PROPOSED；在修复进入reviewed main前禁止继续删除OPS-070或TRADING-2462
-      worktree；无production或broker effect。
+    next_owner: developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
+    notes: 2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity
+      drift gate完成；focused=`29 passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462
+      v3 target审计PASS。首轮Architecture 8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker
+      effect。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:729a11fc7a267f50b65d6f6bacfe592e1da95bb7f16c5b0c8da46d61598ae7db
+  - sha256:ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
   - Developer experience / target-bound governed worktree audit
   - P0
-  - PROPOSED
-  - developer workflow / checkout guard owner：先实现并验证target identity，再允许DEVX-001继续任何worktree删除
+  - BASELINE_DONE
+  - developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
   - 详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout guard以脚本位置固定`PROJECT_ROOT`，从目标worktree调用main脚本仍审计main，导致DEVX-001清理事故。
   - '`worktree-audit`显式绑定registered target worktree；输出policy/target/toplevel/common-dir
     identity；dirty/unstaged/staged三路使用同target与完整exact exclusions；wrong/independent/unregistered
     target fail closed；focused/Architecture/Contract PASS。'
-  - 2026-07-27：由DEVX-001事故登记为P0 PROPOSED；在修复进入reviewed main前禁止继续删除OPS-070或TRADING-2462
-    worktree；无production或broker effect。
+  - 2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity drift gate完成；focused=`29
+    passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462 v3 target审计PASS。首轮Architecture
+    8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker effect。
   docs_links:
   - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
   terminal: false
-  raw_row_sha256: 729a11fc7a267f50b65d6f6bacfe592e1da95bb7f16c5b0c8da46d61598ae7db
+  raw_row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: c8ed4bfb18db00980102685e4e83bf4b991e502e36f758dfba779d4476c9be22
+fragment_checksum: d9db9c9b21157397359c4afa73b1b0dad715cd71c51f941c0c37adb4d6704a98

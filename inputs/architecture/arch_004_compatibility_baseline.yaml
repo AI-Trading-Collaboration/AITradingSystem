@@ -28636,3 +28636,134 @@ phase_devx_001_research_worktree_lifecycle_reconciliation:
     known_unrelated_opened: false
     production_effect: none
     broker_action: none
+
+phase_devx_005_target_bound_worktree_audit:
+  schema_version: devx_005_target_bound_worktree_audit_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: DEVX-005-TARGET-BOUND-WORKTREE-AUDIT
+  task_ids:
+  - DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
+  owner_authorization: task_register:DEVX-005_TARGET_BOUND_WORKTREE_AUDIT:BASELINE_DONE
+  prior_sections_immutability:
+    source_commit: 0cb8bf9be3e1f91044e6cb950f6b401b5e230fb3
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 28f5172f095bc8b7cc8626752729594f49e6adee
+    raw_byte_count: 1785830
+    raw_sha256: cdc4be90c932312bef7cae4cb0b58c1a0733947c639ff9fc63da27206a73a4c0
+    append_offset: 1785830
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - scripts/architecture_arch005_checkout_guard.py
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/checkout_guard.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_005_s4d_checkout_guard.py
+  supersession:
+    superseded_by_phase: DEVX-005-TARGET-BOUND-WORKTREE-AUDIT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_devx_001_research_worktree_lifecycle_reconciliation
+    current_hash_authority: phase_devx_005_target_bound_worktree_audit.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - scripts/architecture_arch005_checkout_guard.py
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/checkout_guard.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_005_s4d_checkout_guard.py
+  sources:
+  - path: docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+    sha256: fe4df72834f99e58a08eceb9beba7ba255a2fa3e0820bc1321e2a5174806e317
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+    sha256: d47fbac8a3ab52f3806644f94c7ca5197604c79e7a788defe86d7cddabec2111
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 09fde408e4d228452990d7b1a6f21857002e93c8e11b1fc71c8e3be7143a64b7
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 647860338bc54861c5276e9a16f90cbc27163e82b3cddb1dc4e890270ec3a388
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: f580b8267203520e94628fde2b22f19b31cd719b11d687722211b3c56245a0c0
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 49b78cf31d8a36dceb5a784ebc1688146f5e51f6cd7548065a07145abf857a2c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 9b66fe3a677390ae4ac92de1094fcc7ee07b2f277297f6fc4f8354cad9bb36ee
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: e26fc561e6e21f8313efb31b29f3bf7da95263f502deade29ad6069043110868
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 312b6148837205acb36f920baf69e11aafc2e9db51dab1ca6886d7ac18b3711f
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+    sha256: 0c72a39392f9df2c932209d6c725f5dc529c8e82e1b52c93192a53b074d1c56d
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+    sha256: b88cfef81855f77838cb9ead3f553b4292ba2ab8cc5a076cba13e44443eb2032
+    hash_normalization: git_eol_lf
+  - path: scripts/architecture_arch005_checkout_guard.py
+    sha256: 5320fc418e1deae510053485ebddeaaa98bd6809cc4426f57e8a73a297a27234
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/architecture/__init__.py
+    sha256: cd6bcaf5b6eea6de05aca2aa2da0e6b6278b9e54f7119fe563fa9f1029c32c83
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/architecture/checkout_guard.py
+    sha256: fc121dfc2a85b84b350e942ef8b4ae47d74a3f0d156e972c3b424f49e4e2561e
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 0a085e407de36fa7fe89fc456c529fdaf1d9e936509006158727ec83fccc924c
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_005_s4d_checkout_guard.py
+    sha256: 5c563c9f242bcfd5ae19ae958c058b5b5d3bd02bda34e60d2daecafd70f4544c
+    hash_normalization: git_eol_lf
+  evidence:
+    audit_schema_version: checkout_worktree_audit.v2
+    focused_guard_tests: PASS_20
+    real_registered_target_audit: PASS
+    policy_and_target_toplevel_disclosed: true
+    registration_identity_disclosed: true
+    same_git_common_dir_proven: true
+  validation:
+    focused_guard: PASS_20
+    focused_guard_and_documentation: PASS_29
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture: PASS_692
+    contract: PASS_275
+  safety:
+    target_binding_proven: true
+    identity_drift_fails_closed: true
+    independent_clone_fails_closed: true
+    worktree_deletion_authorized: false
+    known_unrelated_opened: false
+    production_effect: none
+    broker_action: none

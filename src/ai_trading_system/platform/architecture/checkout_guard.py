@@ -38,7 +38,7 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 CHECKOUT_GUARD_POLICY_SCHEMA_VERSION = "arch_005_s4d_checkout_guard_policy.v2"
 CHECKOUT_INTENT_SCHEMA_VERSION = "checkout_operation_intent.v1"
 CHECKOUT_DECISION_SCHEMA_VERSION = "checkout_guard_decision.v1"
-CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION = "checkout_worktree_audit.v1"
+CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION = "checkout_worktree_audit.v2"
 DEFAULT_CHECKOUT_GUARD_POLICY_PATH = (
     PROJECT_ROOT / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
 )
@@ -130,6 +130,33 @@ class CheckoutIdentity:
 
 
 @dataclass(frozen=True)
+class RegisteredWorktree:
+    toplevel: str
+    head_commit: str
+    branch_ref: str | None
+    detached: bool
+    locked_reason: str | None
+    prunable_reason: str | None
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "toplevel": self.toplevel,
+            "head_commit": self.head_commit,
+            "branch_ref": self.branch_ref,
+            "detached": self.detached,
+            "locked_reason": self.locked_reason,
+            "prunable_reason": self.prunable_reason,
+        }
+
+
+@dataclass(frozen=True)
+class WorktreeAuditBinding:
+    policy_identity: CheckoutIdentity
+    audited_identity: CheckoutIdentity
+    registration: RegisteredWorktree
+
+
+@dataclass(frozen=True)
 class CheckoutOperationIntent:
     intent_id: str
     task_id: str
@@ -200,6 +227,9 @@ class CheckoutGuardDecision:
 
 @dataclass(frozen=True)
 class CheckoutWorktreeAudit:
+    policy_identity: CheckoutIdentity
+    audited_identity: CheckoutIdentity
+    registration: RegisteredWorktree
     dirty_paths: tuple[str, ...]
     known_unrelated_exclusions: tuple[str, ...]
 
@@ -207,6 +237,22 @@ class CheckoutWorktreeAudit:
         return {
             "schema_version": CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION,
             "status": "PASS",
+            "policy_repository": {
+                "toplevel": self.policy_identity.checkout_root,
+                "git_common_dir": self.policy_identity.git_common_dir,
+                "workspace_id": self.policy_identity.workspace_id,
+                "head_commit": self.policy_identity.head_commit,
+                "branch_name": self.policy_identity.branch_name,
+            },
+            "audited_repository": {
+                "toplevel": self.audited_identity.checkout_root,
+                "git_common_dir": self.audited_identity.git_common_dir,
+                "workspace_id": self.audited_identity.workspace_id,
+                "head_commit": self.audited_identity.head_commit,
+                "branch_name": self.audited_identity.branch_name,
+            },
+            "worktree_registration": self.registration.to_dict(),
+            "same_git_common_dir": True,
             "dirty_paths": list(self.dirty_paths),
             "known_unrelated_exclusions": list(self.known_unrelated_exclusions),
             "unstaged_diff_check": "PASS",
@@ -299,10 +345,19 @@ class CheckoutLeaseGuard:
     def replay(self) -> LeaseReplay:
         return self.store.replay()
 
-    def audit_worktree(self) -> CheckoutWorktreeAudit:
-        exclusions = tuple(
-            row.path for row in self.policy.known_unrelated_exclusions
+    def audit_worktree(
+        self,
+        *,
+        policy_project_root: Path | None = None,
+    ) -> CheckoutWorktreeAudit:
+        policy_root = (
+            self.project_root if policy_project_root is None else policy_project_root.resolve()
         )
+        binding = resolve_worktree_audit_binding(
+            policy_project_root=policy_root,
+            audited_project_root=self.project_root,
+        )
+        exclusions = tuple(row.path for row in self.policy.known_unrelated_exclusions)
         dirty_paths = collect_checkout_dirty_paths(
             self.project_root,
             exclusions=exclusions,
@@ -317,7 +372,22 @@ class CheckoutLeaseGuard:
             exclusions=exclusions,
             cached=True,
         )
+        verified_binding = resolve_worktree_audit_binding(
+            policy_project_root=policy_root,
+            audited_project_root=self.project_root,
+        )
+        if verified_binding != binding:
+            raise CheckoutGuardError(
+                "CHECKOUT_AUDIT_IDENTITY_DRIFT",
+                (
+                    f"before={_worktree_binding_summary(binding)};"
+                    f"after={_worktree_binding_summary(verified_binding)}"
+                ),
+            )
         return CheckoutWorktreeAudit(
+            policy_identity=binding.policy_identity,
+            audited_identity=binding.audited_identity,
+            registration=binding.registration,
             dirty_paths=dirty_paths,
             known_unrelated_exclusions=exclusions,
         )
@@ -363,10 +433,7 @@ class CheckoutLeaseGuard:
         reason = _identifier(outcome, "outcome").upper()
         reason_codes = (
             f"CHECKOUT_OPERATION_{reason}",
-            *(
-                f"CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED:{path}"
-                for path in unattributed
-            ),
+            *(f"CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED:{path}" for path in unattributed),
         )
         released = self.store.release(
             lease_id,
@@ -898,6 +965,233 @@ def resolve_checkout_identity(project_root: Path) -> CheckoutIdentity:
     )
 
 
+def resolve_worktree_audit_binding(
+    *,
+    policy_project_root: Path,
+    audited_project_root: Path,
+) -> WorktreeAuditBinding:
+    policy_root = _checked_audit_root(policy_project_root, role="POLICY")
+    audited_root = _checked_audit_root(audited_project_root, role="TARGET")
+    try:
+        policy_identity = resolve_checkout_identity(policy_root)
+    except CheckoutGuardError as exc:
+        raise CheckoutGuardError(
+            f"CHECKOUT_AUDIT_POLICY_{exc.code.removeprefix('CHECKOUT_')}",
+            exc.message,
+        ) from exc
+    try:
+        audited_identity = resolve_checkout_identity(audited_root)
+    except CheckoutGuardError as exc:
+        raise CheckoutGuardError(
+            f"CHECKOUT_AUDIT_TARGET_{exc.code.removeprefix('CHECKOUT_')}",
+            exc.message,
+        ) from exc
+    if _path_identity_key(Path(policy_identity.git_common_dir)) != _path_identity_key(
+        Path(audited_identity.git_common_dir)
+    ):
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_GIT_COMMON_DIR_MISMATCH",
+            (
+                f"policy={policy_identity.git_common_dir};"
+                f"target={audited_identity.git_common_dir}"
+            ),
+        )
+    registrations = _registered_worktrees(policy_root)
+    if (
+        _matching_worktree_registration(
+            registrations,
+            Path(policy_identity.checkout_root),
+        )
+        is None
+    ):
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_POLICY_UNREGISTERED",
+            policy_identity.checkout_root,
+        )
+    registration = _matching_worktree_registration(
+        registrations,
+        Path(audited_identity.checkout_root),
+    )
+    if registration is None:
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_TARGET_UNREGISTERED",
+            audited_identity.checkout_root,
+        )
+    _assert_registration_matches_identity(registration, audited_identity)
+    return WorktreeAuditBinding(
+        policy_identity=policy_identity,
+        audited_identity=audited_identity,
+        registration=registration,
+    )
+
+
+def _checked_audit_root(path: Path, *, role: str) -> Path:
+    candidate = path.expanduser()
+    try:
+        resolved = candidate.resolve(strict=True)
+    except FileNotFoundError as exc:
+        raise CheckoutGuardError(
+            f"CHECKOUT_AUDIT_{role}_NOT_FOUND",
+            str(candidate),
+        ) from exc
+    except OSError as exc:
+        raise CheckoutGuardError(
+            f"CHECKOUT_AUDIT_{role}_RESOLUTION_FAILED",
+            str(exc),
+        ) from exc
+    if not resolved.is_dir():
+        raise CheckoutGuardError(
+            f"CHECKOUT_AUDIT_{role}_NOT_DIRECTORY",
+            str(resolved),
+        )
+    return resolved
+
+
+def _registered_worktrees(policy_root: Path) -> tuple[RegisteredWorktree, ...]:
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-c",
+                "core.quotepath=false",
+                "worktree",
+                "list",
+                "--porcelain",
+                "-z",
+            ],
+            cwd=policy_root,
+            check=False,
+            capture_output=True,
+        )
+    except OSError as exc:
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_WORKTREE_LIST_EXECUTION",
+            str(exc),
+        ) from exc
+    if result.returncode != 0:
+        message = result.stderr.decode("utf-8", errors="replace").strip()
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_WORKTREE_LIST_FAILED",
+            message,
+        )
+    records: list[RegisteredWorktree] = []
+    fields: dict[str, str] = {}
+    flags: set[str] = set()
+    for raw_token in (*result.stdout.split(b"\0"), b""):
+        if not raw_token:
+            if fields or flags:
+                records.append(_registered_worktree_from_fields(fields, flags))
+                fields = {}
+                flags = set()
+            continue
+        try:
+            token = raw_token.decode("utf-8", errors="strict")
+        except UnicodeDecodeError as exc:
+            raise CheckoutGuardError(
+                "CHECKOUT_AUDIT_WORKTREE_LIST_ENCODING",
+                str(exc),
+            ) from exc
+        key, separator, value = token.partition(" ")
+        if separator:
+            if key in fields:
+                raise CheckoutGuardError(
+                    "CHECKOUT_AUDIT_WORKTREE_LIST_DUPLICATE_FIELD",
+                    key,
+                )
+            fields[key] = value
+        else:
+            flags.add(key)
+    if not records:
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_WORKTREE_LIST_EMPTY",
+            str(policy_root),
+        )
+    return tuple(records)
+
+
+def _registered_worktree_from_fields(
+    fields: Mapping[str, str],
+    flags: set[str],
+) -> RegisteredWorktree:
+    toplevel = fields.get("worktree")
+    head = fields.get("HEAD")
+    if not toplevel or not head:
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_WORKTREE_LIST_INVALID",
+            json.dumps(dict(fields), ensure_ascii=False, sort_keys=True),
+        )
+    if "branch" in fields and "detached" in flags:
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_WORKTREE_LIST_INVALID",
+            f"branch_and_detached:{toplevel}",
+        )
+    return RegisteredWorktree(
+        toplevel=str(Path(toplevel).resolve(strict=False)),
+        head_commit=head,
+        branch_ref=fields.get("branch"),
+        detached="detached" in flags,
+        locked_reason=(
+            fields.get("locked") if "locked" in fields else ("" if "locked" in flags else None)
+        ),
+        prunable_reason=(
+            fields.get("prunable")
+            if "prunable" in fields
+            else ("" if "prunable" in flags else None)
+        ),
+    )
+
+
+def _matching_worktree_registration(
+    registrations: Sequence[RegisteredWorktree],
+    target: Path,
+) -> RegisteredWorktree | None:
+    target_key = _path_identity_key(target)
+    matches = [row for row in registrations if _path_identity_key(Path(row.toplevel)) == target_key]
+    if len(matches) > 1:
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_WORKTREE_REGISTRATION_DUPLICATE",
+            str(target),
+        )
+    return matches[0] if matches else None
+
+
+def _assert_registration_matches_identity(
+    registration: RegisteredWorktree,
+    identity: CheckoutIdentity,
+) -> None:
+    expected_branch_ref = (
+        None if identity.branch_name is None else f"refs/heads/{identity.branch_name}"
+    )
+    if (
+        registration.head_commit != identity.head_commit
+        or registration.branch_ref != expected_branch_ref
+        or registration.detached != (identity.branch_name is None)
+    ):
+        raise CheckoutGuardError(
+            "CHECKOUT_AUDIT_REGISTRATION_IDENTITY_MISMATCH",
+            (
+                f"registration={json.dumps(registration.to_dict(), sort_keys=True)};"
+                f"identity={json.dumps(identity.to_dict(), sort_keys=True)}"
+            ),
+        )
+
+
+def _path_identity_key(path: Path) -> str:
+    return os.path.normcase(str(path.resolve(strict=False)))
+
+
+def _worktree_binding_summary(binding: WorktreeAuditBinding) -> str:
+    return json.dumps(
+        {
+            "policy": binding.policy_identity.to_dict(),
+            "audited": binding.audited_identity.to_dict(),
+            "registration": binding.registration.to_dict(),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def collect_checkout_dirty_paths(
     project_root: Path,
     *,
@@ -977,10 +1271,14 @@ def _run_git_diff_check(
             str(exc),
         ) from exc
     if result.returncode != 0:
-        output = (result.stdout + result.stderr).decode(
-            "utf-8",
-            errors="replace",
-        ).strip()
+        output = (
+            (result.stdout + result.stderr)
+            .decode(
+                "utf-8",
+                errors="replace",
+            )
+            .strip()
+        )
         scope = "staged" if cached else "unstaged"
         raise CheckoutGuardError(
             "CHECKOUT_GIT_DIFF_CHECK_FAILED",

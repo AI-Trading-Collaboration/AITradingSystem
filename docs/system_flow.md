@@ -1125,6 +1125,13 @@ closeout掩盖或因失败留下stale active lease。
 unstaged `diff --check`与staged `diff --cached --check`三条Git调用集中注入policy登记的全部
 `:(exclude,literal)<exact-path>`，避免人工repository-wide Git命令漏排known-unrelated bytes。
 普通路径的whitespace错误仍typed BLOCKED；该入口只读且不写task、report、cache、production或broker。
+DEVX-005把该入口升级为`checkout_worktree_audit.v2`：默认仍审计policy checkout；跨worktree时必须
+显式传入`--target-repository <registered-worktree>`。guard分别解析policy与target的toplevel、
+Git common dir、HEAD/branch/workspace identity，并用policy repository的
+`git worktree list --porcelain -z`确认target registration；独立clone、非toplevel、未登记路径或
+审计前后identity drift均typed fail closed。dirty、unstaged与staged三条检查只在同一target cwd
+执行，输出同时披露policy repository、audited repository及registration，防止把主checkout PASS
+误读成目标worktree PASS。
 
 ARCH-005S4D S2在同一门禁上增加只读telemetry projection。`telemetry-build`发现checkout-scoped
 immutable intent与causal lease event，并可显式绑定supervised run、S4C handoff/reconciliation和人工

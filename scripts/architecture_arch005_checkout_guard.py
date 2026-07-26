@@ -102,13 +102,22 @@ def main() -> int:
     rollup_validate.add_argument("--artifact", type=Path, required=True)
 
     worktree_audit = subparsers.add_parser("worktree-audit")
-    worktree_audit.add_argument("--project-root", type=Path, default=PROJECT_ROOT)
+    worktree_audit.add_argument(
+        "--target-repository",
+        "--project-root",
+        dest="target_repository",
+        type=Path,
+        default=PROJECT_ROOT,
+        help=("Registered worktree to audit; --project-root remains a compatibility alias"),
+    )
 
     args = parser.parse_args()
     try:
         if args.command == "worktree-audit":
-            audit_guard = CheckoutLeaseGuard(project_root=args.project_root)
-            payload = audit_guard.audit_worktree().to_dict()
+            audit_guard = CheckoutLeaseGuard(project_root=args.target_repository)
+            payload = audit_guard.audit_worktree(
+                policy_project_root=PROJECT_ROOT,
+            ).to_dict()
         elif args.command == "telemetry-build":
             payload = build_checkout_telemetry_snapshot(
                 project_root=args.project_root,

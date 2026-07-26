@@ -393,3 +393,11 @@ contract-validation=`275 passed`，runtime artifact=
 这些PASS证明当前治理记录、兼容性基线和contract在主checkout中一致，不补足删除前缺失的
 target tracked-diff审计，也不解除后续worktree删除禁令。DEVX-001继续保持`IN_PROGRESS`，
 等待DEVX-005修复以及OPS-070/TRADING-2462各自满足独立退出条件。
+
+2026-07-27后续修复：DEVX-005已实现并验证`checkout_worktree_audit.v2`，要求跨worktree审计
+显式传入`--target-repository`，输出policy/target/registration双身份并在审计前后检查漂移。
+真实TRADING-2462 v3 target只读审计PASS，focused=`29 passed`、Architecture=`692 passed`、
+Contract=`275 passed`。因此“缺少target-bound工具”的前置阻塞在该修复进入reviewed main后
+解除；但本任务不会据此自动删除OPS-070或任何TRADING-2462 worktree。每个候选仍必须重新执行
+target-bound audit、unique evidence/active process/scheduler/recoverability检查并取得其独立退出
+条件；本轮没有执行新的worktree删除。

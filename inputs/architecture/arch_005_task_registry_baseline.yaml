@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1637802
-    sha256: 88e01d2f7ced2691c216ff4eed7f85e6c53ffdab86f6c8105167047a51baefb8
+    byte_count: 1637860
+    sha256: 647860338bc54861c5276e9a16f90cbc27163e82b3cddb1dc4e890270ec3a388
     row_count: 422
     final_newline: true
     task_id_order_sha256: fa85c8aa01791db1a6147012dfea4328be5fc269ba1dd4bbb06c5436375704ae
-    row_checksum_order_sha256: 94bd236803264607a13b4bc394bfa8a15e1f9ff5ea4daf63161cde1504100761
+    row_checksum_order_sha256: ccd451e8f65b47a443115ba6af5d8fd80c11958f6f2b099203f0217cba1fdd81
     task_row_newline_counts:
       LF: 422
   - source: completed
@@ -120,19 +120,19 @@ inventory:
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
-    BASELINE_DONE: 113
+    BASELINE_DONE: 114
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
     DONE: 480
     DROPPED: 12
     IN_PROGRESS: 8
-    PROPOSED: 13
+    PROPOSED: 12
     READY: 1
     VALIDATING: 267
   task_id_set_sha256: 55da7558830f1a066670ecdd9e7d4af7093e73929a41f8a293b1c92ac48640e2
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 0e2e6a169560e8be31a1b8376dcc9351008dcf1ac51fffc7a77cc79cad465db5
+  owner_set_sha256: 9088e083b8674b50c6e5f45755efc559d4cdc9c466823031f650aa00945cab99
   docs_link_set_sha256: 89c63149e5bc835d28542afe15d465819fa6ce8433df83050432df563cd5cf4d
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -2931,7 +2931,7 @@ inventory:
   - task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
     source: active
     line_number: 1950
-    row_sha256: 2dda9bc519f6f21fa4ed34439e4de1164c0f5157fc282e8a3cdc63e3a1e2f7d0
+    row_sha256: f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -3085,7 +3085,7 @@ inventory:
   - task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
     source: active
     line_number: 2031
-    row_sha256: 729a11fc7a267f50b65d6f6bacfe592e1da95bb7f16c5b0c8da46d61598ae7db
+    row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7384,4 +7384,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: e620d03bf9f039b7a9783f0222538335420c2572daf69d1c13c8ae23ec0acbab
+baseline_checksum: 4c80df53770a05f183fe8b904a789c7e24adcad86f579e08fbcd3176c7530a89

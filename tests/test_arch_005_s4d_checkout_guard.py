@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from threading import Barrier
@@ -12,6 +14,7 @@ from typer.testing import CliRunner
 
 import ai_trading_system.cli_commands.ops as ops_cli
 import ai_trading_system.platform.architecture.checkout_guard as checkout_guard_module
+import scripts.architecture_arch005_checkout_guard as checkout_guard_cli
 from ai_trading_system.cli import app
 from ai_trading_system.platform.architecture.checkout_guard import (
     CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION,
@@ -320,10 +323,34 @@ def test_worktree_audit_excludes_known_unrelated_from_all_git_checks(
     guard = _guard(git_checkout)
 
     audit = guard.audit_worktree().to_dict()
+    identity = resolve_checkout_identity(git_checkout)
 
     assert audit == {
         "schema_version": CHECKOUT_WORKTREE_AUDIT_SCHEMA_VERSION,
         "status": "PASS",
+        "policy_repository": {
+            "toplevel": identity.checkout_root,
+            "git_common_dir": identity.git_common_dir,
+            "workspace_id": identity.workspace_id,
+            "head_commit": identity.head_commit,
+            "branch_name": identity.branch_name,
+        },
+        "audited_repository": {
+            "toplevel": identity.checkout_root,
+            "git_common_dir": identity.git_common_dir,
+            "workspace_id": identity.workspace_id,
+            "head_commit": identity.head_commit,
+            "branch_name": identity.branch_name,
+        },
+        "worktree_registration": {
+            "toplevel": identity.checkout_root,
+            "head_commit": identity.head_commit,
+            "branch_ref": "refs/heads/fixture",
+            "detached": False,
+            "locked_reason": None,
+            "prunable_reason": None,
+        },
+        "same_git_common_dir": True,
         "dirty_paths": [],
         "known_unrelated_exclusions": [
             "docs/research/growth_tilt_owner_diagnosis_pack.md",
@@ -357,19 +384,19 @@ def test_worktree_audit_injects_exact_literal_exclusion_into_every_git_call(
 ) -> None:
     guard = _guard(git_checkout)
     calls: list[list[str]] = []
+    real_run = subprocess.run
 
     def fake_run(args: list[str], **_: object) -> subprocess.CompletedProcess[bytes]:
-        calls.append(args)
-        return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
+        if "status" in args or "diff" in args:
+            calls.append(args)
+            return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
+        return real_run(args, **_)
 
     monkeypatch.setattr(checkout_guard_module.subprocess, "run", fake_run)
 
     guard.audit_worktree()
 
-    exclusion = (
-        ":(exclude,literal)"
-        "docs/research/growth_tilt_owner_diagnosis_pack.md"
-    )
+    exclusion = ":(exclude,literal)" "docs/research/growth_tilt_owner_diagnosis_pack.md"
     assert len(calls) == 3
     assert all(call[-1] == exclusion for call in calls)
     assert calls[0][3:8] == [
@@ -381,6 +408,142 @@ def test_worktree_audit_injects_exact_literal_exclusion_into_every_git_call(
     ]
     assert calls[1][3:6] == ["diff", "--check", "--"]
     assert calls[2][3:7] == ["diff", "--cached", "--check", "--"]
+
+
+def test_target_bound_worktree_audit_isolates_target_state(
+    git_checkout: Path,
+) -> None:
+    target = git_checkout.with_name(f"{git_checkout.name}-target")
+    _git(git_checkout, "worktree", "add", "-b", "target-audit", str(target))
+    (target / "src/a.py").write_text("A = 2\n", encoding="utf-8")
+    (target / "src/b.py").write_text("B = 2\n", encoding="utf-8")
+    _git(target, "add", "src/b.py")
+    (target / "src/new.py").write_text("NEW = 1\n", encoding="utf-8")
+    unrelated = target / "docs/research/growth_tilt_owner_diagnosis_pack.md"
+    unrelated.write_text("target owner bytes   \n", encoding="utf-8")
+
+    policy_audit = _guard(git_checkout).audit_worktree().to_dict()
+    target_audit = (
+        _guard(target)
+        .audit_worktree(
+            policy_project_root=git_checkout,
+        )
+        .to_dict()
+    )
+
+    assert policy_audit["dirty_paths"] == []
+    assert target_audit["dirty_paths"] == [
+        "src/a.py",
+        "src/b.py",
+        "src/new.py",
+    ]
+    assert target_audit["policy_repository"]["toplevel"] == str(git_checkout.resolve())
+    assert target_audit["audited_repository"]["toplevel"] == str(target.resolve())
+    assert target_audit["worktree_registration"]["branch_ref"] == ("refs/heads/target-audit")
+    assert target_audit["same_git_common_dir"] is True
+
+
+def test_target_bound_worktree_audit_cli_uses_explicit_target_repository(
+    git_checkout: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    target = git_checkout.with_name(f"{git_checkout.name}-cli-target")
+    _git(git_checkout, "worktree", "add", "-b", "cli-target-audit", str(target))
+    (target / "src/new.py").write_text("NEW = 1\n", encoding="utf-8")
+    monkeypatch.setattr(checkout_guard_cli, "PROJECT_ROOT", git_checkout)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "architecture_arch005_checkout_guard.py",
+            "worktree-audit",
+            "--target-repository",
+            str(target),
+        ],
+    )
+
+    assert checkout_guard_cli.main() == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["audited_repository"]["toplevel"] == str(target.resolve())
+    assert payload["dirty_paths"] == ["src/new.py"]
+
+
+def test_target_bound_worktree_audit_rejects_invalid_targets(
+    git_checkout: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(CheckoutGuardError, match="CHECKOUT_AUDIT_TARGET_NOT_FOUND"):
+        checkout_guard_module.resolve_worktree_audit_binding(
+            policy_project_root=git_checkout,
+            audited_project_root=git_checkout / "missing",
+        )
+
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_AUDIT_TARGET_ROOT_MISMATCH",
+    ):
+        _guard(git_checkout / "src").audit_worktree(
+            policy_project_root=git_checkout,
+        )
+
+    independent = git_checkout.with_name(f"{git_checkout.name}-independent")
+    _git(tmp_path, "clone", str(git_checkout), str(independent))
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_AUDIT_GIT_COMMON_DIR_MISMATCH",
+    ):
+        _guard(independent).audit_worktree(
+            policy_project_root=git_checkout,
+        )
+
+    target = git_checkout.with_name(f"{git_checkout.name}-unregistered-target")
+    _git(git_checkout, "worktree", "add", "-b", "unregistered-target", str(target))
+    registrations = checkout_guard_module._registered_worktrees(git_checkout)
+    monkeypatch.setattr(
+        checkout_guard_module,
+        "_registered_worktrees",
+        lambda _: tuple(row for row in registrations if Path(row.toplevel) != target.resolve()),
+    )
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_AUDIT_TARGET_UNREGISTERED",
+    ):
+        _guard(target).audit_worktree(
+            policy_project_root=git_checkout,
+        )
+
+
+def test_target_bound_worktree_audit_fails_on_identity_drift(
+    git_checkout: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = checkout_guard_module.resolve_worktree_audit_binding(
+        policy_project_root=git_checkout,
+        audited_project_root=git_checkout,
+    )
+    drifted = replace(
+        binding,
+        audited_identity=replace(
+            binding.audited_identity,
+            head_commit="0" * 40,
+        ),
+    )
+    bindings = iter((binding, drifted))
+    monkeypatch.setattr(
+        checkout_guard_module,
+        "resolve_worktree_audit_binding",
+        lambda **_: next(bindings),
+    )
+
+    with pytest.raises(
+        CheckoutGuardError,
+        match="CHECKOUT_AUDIT_IDENTITY_DRIFT",
+    ):
+        _guard(git_checkout).audit_worktree(
+            policy_project_root=git_checkout,
+        )
 
 
 def test_release_scope_drift_fails_after_safely_releasing_lease(
@@ -406,21 +569,16 @@ def test_release_scope_drift_fails_after_safely_releasing_lease(
     assert handle.released is True
     replay = guard.replay()
     assert replay.active_leases == ()
-    head = next(
-        lease for lease in replay.lease_heads if lease.lease_id == decision.lease_id
-    )
+    head = next(lease for lease in replay.lease_heads if lease.lease_id == decision.lease_id)
     assert head.state == "RELEASED"
-    event_path = next(
-        (guard.store.events_root / head.lease_id).glob("*.json")
-    )
+    event_path = next((guard.store.events_root / head.lease_id).glob("*.json"))
     events = [
         json.loads(path.read_text(encoding="utf-8"))
         for path in (guard.store.events_root / head.lease_id).glob("*.json")
     ]
     assert event_path.is_file()
     assert any(
-        "CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED:src/late.py"
-        in event["reason_codes"]
+        "CHECKOUT_RELEASE_DIRTY_UNATTRIBUTED:src/late.py" in event["reason_codes"]
         for event in events
     )
 
