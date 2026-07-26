@@ -1,0 +1,16 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.data_quality_capability
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: immutable_canonical_source_bytes
+stages:
+  - full_canonical_validate_data_cache
+  - structured_global_issue_attribution
+  - reviewed_frozen_scope_projection
+  - content_bound_requested_window_authority
+  - scoped_validate_data_cache
+  - content_derived_capability_receipt
+  - exact_consumer_verification
+compatibility_flow_entry_required: true
+generated_source_of_truth_active: false

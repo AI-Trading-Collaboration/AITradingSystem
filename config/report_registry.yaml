@@ -20936,9 +20936,16 @@ reports:
     command: research_framework.run_experiment
     artifact_globs:
       - config/research/decision_target_capability_audit_label_foundation_v1.yaml
+      - config/research/decision_target_capability_audit_label_foundation_v2.yaml
+      - config/data_quality/decision_target_label_core_capability_v1.yaml
       - config/research/experiments/decision_target_capability_audit_label_foundation.yaml
       - docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+      - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
       - outputs/research_strategies/decision_target_capability_audit_label_foundation/source/market_panel_package.json
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/source/capability/capability_receipts/*.json
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/source/capability/*data_quality_report.md
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/source/capability/capability_market_panel.csv
+      - outputs/research_strategies/decision_target_capability_audit_label_foundation/source/capability/capability_rates_snapshot.csv
       - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation.json
       - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation_summary.json
       - outputs/research_strategies/decision_target_capability_audit_label_foundation/decision_target_capability_audit_label_foundation.envelope.json
@@ -20951,13 +20958,15 @@ reports:
       SPY-minus-SGOV and QQQ-minus-SPY as diagnostic decomposition controls,
       and 1/5/10/20 common-session horizons. Rows expose decision, label-start,
       label-end and availability dates plus adjusted-close total return and
-      future-path left-tail diagnostics. Canonical full-cache strict DQ is
-      mandatory; the QLD scoped exception is not reusable. Until canonical DQ
-      passes, the real run remains BLOCKED while clean fixtures validate label
-      semantics and content-derived tamper detection. No model, feature
-      selection, strategy search, backtest, target weight or action-universe
-      mutation occurs.
-    owner_action: resolve_canonical_data_quality_then_review_label_coverage
+      future-path left-tail diagnostics. V2 always runs and discloses full
+      canonical DQ, then permits one reviewed label-core capability only when
+      every global ERROR is structurally attributed outside the frozen
+      QQQ/SPY/SGOV scope and the exact projection passes the same validator
+      with status PASS. The receipt cannot claim global PASS, authorize daily
+      operation or be reused by another consumer. The QLD exception remains
+      non-reusable. No model, feature selection, strategy search, backtest,
+      target weight or action-universe mutation occurs.
+    owner_action: verify_capability_receipt_then_review_label_coverage
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

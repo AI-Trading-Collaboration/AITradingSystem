@@ -1,6 +1,6 @@
 schema_version: experiment_spec.v1
 experiment_id: decision_target_capability_audit_label_foundation
-spec_version: decision_target_capability_audit_label_foundation.experiment.v1
+spec_version: decision_target_capability_audit_label_foundation.experiment.v2
 status: owner_approved_batch1_label_foundation
 owner: research_governance
 task_register_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
@@ -15,7 +15,7 @@ inputs:
     document_kind: structured
     role: preregistered_decision_target_and_label_policy
     required: true
-    default_path: config/research/decision_target_capability_audit_label_foundation_v1.yaml
+    default_path: config/research/decision_target_capability_audit_label_foundation_v2.yaml
   - input_id: market_panel_package
     document_kind: structured
     role: canonical_dq_gated_content_addressed_market_panel

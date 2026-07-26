@@ -32,9 +32,12 @@ SPEC_PATH = (
     / "config/research/experiments/decision_target_capability_audit_label_foundation.yaml"
 )
 POLICY_PATH = (
-    PROJECT_ROOT / "config/research/decision_target_capability_audit_label_foundation_v1.yaml"
+    PROJECT_ROOT / "config/research/decision_target_capability_audit_label_foundation_v2.yaml"
 )
 DATA_QUALITY_POLICY_PATH = PROJECT_ROOT / "config/data_quality.yaml"
+CAPABILITY_POLICY_PATH = (
+    PROJECT_ROOT / "config/data_quality/decision_target_label_core_capability_v1.yaml"
+)
 AS_OF = date(2021, 5, 28)
 GENERATED_AT = datetime(2026, 7, 25, 12, 0, tzinfo=UTC)
 
@@ -104,6 +107,8 @@ def test_canonical_data_quality_failure_blocks_before_panel_materialization(
         expected_price_tickers=["QQQ", "SPY", "SGOV"],
         expected_rate_series=["DGS3MO"],
         captured_at=GENERATED_AT,
+        capability_policy_path=CAPABILITY_POLICY_PATH,
+        data_quality_policy_path=DATA_QUALITY_POLICY_PATH,
     )
     sources = {
         "label_policy": policy,
@@ -143,7 +148,7 @@ def test_prospective_source_value_fails_closed_even_with_updated_file_commitment
     payload = build_label_payload(sources, as_of=AS_OF)
 
     assert payload["status"] == BLOCKED_STATUS
-    assert payload["strict_validation_errors"] == ["PROSPECTIVE_VALUE_ENTERED_SOURCE_PANEL"]
+    assert payload["strict_validation_errors"] == ["CAPABILITY_RECEIPT_VERIFICATION_FAILED"]
 
 
 def test_scoped_dq_exception_and_numeric_embargo_fail_closed(tmp_path: Path) -> None:
@@ -220,6 +225,8 @@ def _sources(tmp_path: Path) -> tuple[dict[str, object], dict[str, Path]]:
         expected_price_tickers=["QQQ", "SPY", "SGOV"],
         expected_rate_series=["DGS3MO"],
         captured_at=GENERATED_AT,
+        capability_policy_path=CAPABILITY_POLICY_PATH,
+        data_quality_policy_path=DATA_QUALITY_POLICY_PATH,
     )
     package_path = source_root / "market_panel_package.json"
     stored_package = json.loads(package_path.read_text(encoding="utf-8"))

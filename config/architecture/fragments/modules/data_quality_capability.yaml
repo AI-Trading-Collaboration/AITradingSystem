@@ -1,0 +1,12 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.data_quality_capability
+fragment_kind: module
+owner: data_platform
+module_prefix: src/ai_trading_system/data/quality_capability.py
+public_contracts:
+  - ConsumerDataCapabilityPolicy
+  - ConsumerDataCapabilityReceipt
+  - build_consumer_data_capability
+  - verify_consumer_data_capability_receipt
+compatibility_facades: []
+deprecation_status: active_reference_architecture

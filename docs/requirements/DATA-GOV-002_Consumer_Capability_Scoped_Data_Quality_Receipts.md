@@ -1,0 +1,220 @@
+# DATA-GOV-002：Consumer Capability-Scoped Data Quality Receipts
+
+最后更新：2026-07-26
+
+稳定任务 ID：`DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS`
+
+Owner 决定：
+`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
+
+状态：`BASELINE_DONE_PHASE_A_CONTRACT_AND_TRADING_2460_PILOT`
+
+## 1. 问题与目标
+
+当前 canonical `daily_default.v1` DQ profile 以整份 market/macro cache 为验证与消费边界。
+这对 daily operation 是正确边界，但会把只消费少量、预先冻结输入的 research consumer 与无关
+instrument 的数据问题绑定。例如 TRADING-2460 Label Foundation 只消费 QQQ、SPY、SGOV
+价格，却会被 `^VIX` 的 `prices_non_market_session_date` 阻断。首个真实 pilot 进一步确认：
+该标签消费者不读取任何 rates series，因此 policy 的 exact rate scope 必须为空，不能为了贴合
+全局 DQ profile 而虚构 DGS3MO 依赖。
+
+本任务建立长期的 consumer capability receipt 层，目标是：
+
+1. 保留 `aits validate-data` / `validate_data_cache` 的 canonical 全局运行与问题披露；
+2. 允许预先冻结且经过 Owner review 的 consumer 只对自己的 transitive input closure 取得
+   strict `PASS` capability receipt；
+3. 把“该 capability 可消费”与“全局 cache PASS”“daily operation 可运行”“其他 consumer
+   可复用”严格分离；
+4. 让策略研究只依赖 immutable、content-addressed、可重放的输入 capability，而不依赖 daily
+   orchestration 内部状态；
+5. 逐步把 instrument-scoped DQ issue 从非结构化文字升级为可机器判定的 affected-instrument
+   事实，任何无法证明 scope 的错误继续全局阻断。
+
+这不是 DQ exception、silent filtering 或 D0B2B 替代方案。D0B2B 仍负责完整 daily profile 的
+operational acceptance；本任务不改变 daily score、periodic operation、production 或 broker 门禁。
+
+## 2. 长期目标架构
+
+```text
+immutable canonical snapshot/publication
+                 |
+                 +--> full canonical DQ report/receipt
+                 |         |
+                 |         +--> daily_default consumer（仍要求完整 strict PASS）
+                 |
+                 +--> reviewed capability policy
+                           |
+                           +--> exact source-byte capture
+                           +--> predeclared row/column/window projection
+                           +--> same-code-path scoped DQ
+                           +--> content-derived capability receipt
+                                      |
+                                      +--> one exact authorized consumer
+```
+
+每份 capability receipt 必须绑定：
+
+- `capability_id`、version、consumer id/version、Owner decision；
+- policy path、policy SHA-256、数据质量 policy path/SHA-256；
+- requested/evaluated window 和 `as_of`；
+- canonical source role/path/SHA-256/size/row count；
+- exact required price tickers、rate series、字段和 calendar semantics；
+- full canonical DQ status、report path/hash、全部 blocker code；
+- scoped strict DQ status、report path/hash、全部 blocker code；
+- materialized panel/rates path/hash/size/row count；
+- structured global-error isolation result；
+- `global_cache_pass_claimed=false`（当 full status 非 `PASS`）；
+- `cross_consumer_reuse_allowed=false`、`daily_operation_authorized=false`、
+  `production_effect=none`、`broker_action=none`。
+
+## 3. Fail-closed 判定规则
+
+### 3.1 Scope freeze
+
+Capability policy 必须在读取运行结果之前固定：
+
+- consumer identity/version；
+- required instruments/series/fields；
+- research window 与 calendar；
+- accepted scoped status，首版只允许 exact `PASS`；
+- 可隔离的 global issue code；
+- 每个可隔离 issue 所需的结构化 attribution 类型；
+- review/expiry condition。
+
+运行时参数只能等于 policy，不能扩大或缩小 scope。不得在发现错误后临时删除 ticker、series、
+日期、字段或 source role。
+
+### 3.2 Full report 仍必须运行
+
+每次 materialization 先从一次 immutable byte capture 运行 full canonical DQ，并保存报告。
+Full report 的 provenance、manifest、publication、schema、parse 或无结构化 attribution 的 ERROR
+一律阻断 capability。只有 policy 明确允许、且 issue 自带 non-empty structured
+`affected_instruments`、并与 frozen required instruments 完全不相交时，才可进入 scoped
+validation。
+
+首个 pilot 只允许隔离：
+
+- `prices_non_market_session_date`；
+- attribution rule=`ALL_AFFECTED_INSTRUMENTS_OUTSIDE_REQUIRED_SCOPE`。
+
+不得按 message/sample 文本猜测 affected ticker。
+
+### 3.3 Scoped strict validation
+
+Scoped panel 必须由同一批 canonical source bytes 机械投影，并再次调用
+`validate_data_cache`。以下任一情况均不得发布 PASS receipt：
+
+- status 不是 exact `PASS`；
+- required ticker/series 缺失或出现额外 ticker/series；
+- source bytes、policy bytes、DQ policy bytes或 materialized bytes漂移；
+- panel 不是 canonical source 的 exact frozen-scope projection；
+- global blocker 未被 policy + structured attribution 完整解释；
+- report、receipt id、checksum、row count、window、`as_of` 或安全字段不一致。
+
+## 4. 分阶段实现
+
+### Phase A：typed contract 与 TRADING-2460 pilot
+
+依赖：Owner 当前决定；不依赖 D0B2B operational acceptance。
+
+交付：
+
+1. `data_quality_consumer_capability_policy.v1` reviewed policy；
+2. `data_quality_consumer_capability_receipt.v1` typed/content-derived contract；
+3. immutable source capture、scoped materializer 与 verifier；
+4. `DataQualityIssue.affected_instruments` 的向后兼容扩展，并先覆盖
+   `prices_non_market_session_date`；
+5. TRADING-2460 v2 label policy 与 source package binding；
+6. clean、required-instrument failure、out-of-scope VIX failure、unstructured error、
+   scope drift、policy/source/report/panel/receipt tamper tests；
+7. system flow、artifact/report registry 和任务状态同步。
+
+Phase A 退出：
+
+- global exact `PASS` 时 capability strict PASS；
+- global 因仅 `^VIX` non-session ERROR 失败、scoped QQQ/SPY/SGOV strict PASS 时，receipt
+  可以是 PASS，但所有 artifacts 明确 full DQ FAIL、global PASS claim=false；
+-同一 error 触及 QQQ/SPY/SGOV、缺少 structured attribution、出现 manifest/publication/schema
+  blocker或 scoped warning/error 时 fail closed；
+- TRADING-2460 只能消费 exact capability id/version/consumer binding；
+- required focused、architecture、contract、integration、reproducibility 与 natural-boundary
+  Full 按项目规则通过；
+- `production_effect=none`、`broker_action=none`。
+
+### Phase B：generic consumer adapter
+
+依赖：Phase A 至少一个真实 canonical run 和 tamper evidence PASS，且复核没有误隔离。
+
+交付：
+
+- framework-level verifier/preflight；
+- consumer dependency declaration；
+- capability discovery pointer 和 immutable receipt retention；
+- research runner 在 evaluator 前统一 fail closed；
+- 第二个性质不同的 read-only consumer pilot。
+
+不得自动迁移 daily/periodic consumer。
+
+### Phase C：DQ issue attribution 扩展
+
+依赖：逐 issue code 的 source owner review。
+
+交付：
+
+- price ticker、rate series、source role、window/field 等 typed attribution；
+- source-wide 与 row-scoped issue taxonomy；
+- 不再依赖 message/sample parsing；
+- attribution completeness/tamper tests。
+
+未迁移 issue 默认 `GLOBAL_OR_UNKNOWN_SCOPE` 并阻断。
+
+### Phase D：consumer migration 与治理收敛
+
+依赖：至少两个真实 consumer、多个真实批次、false-isolation review 和 Owner 独立授权。
+
+交付：
+
+- 逐 consumer migration matrix；
+- capability inventory/expiry/revocation；
+- duplicate scoped materialization/cache reuse 的 content-addressed 优化；
+- global/consumer status dashboard。
+
+不删除 full canonical receipt，不把局部 PASS 聚合为全局 PASS。
+
+## 5. 安全和投资边界
+
+- 本任务只改变数据消费授权粒度，不改变任何 strategy target、feature、threshold、模型、权重或
+  action universe。
+- Capability PASS 不是策略有效、模型可学、promotion、paper-shadow 或生产就绪结论。
+- TRADING-2460 pilot 仍为 historical-seen label foundation，不训练模型、不搜索 candidate、不运行
+  strategy backtest。
+- QLD scoped evidence/exception不得复用。
+- daily operation、D0B2B、G4C、其他 consumer、production 与 broker 保持原门禁。
+- 任何临时 workaround 必须另行 Owner 讨论并记录；本任务不允许 fallback 到 silent filter。
+
+## 6. 进度记录
+
+- 2026-07-26：Owner 要求工程线针对研究/工程互相阻塞问题制定长期方案并推进实现；建立
+  DATA-GOV-002，批准先实施 typed capability receipt 与 TRADING-2460 pilot。
+- 2026-07-26：Phase A 已实现 reviewed policy、typed/content-derived receipt、immutable source
+  capture、full/scoped same-code-path DQ、structured affected-instrument attribution、exact
+  materializer/verifier、TRADING-2460 v2 binding 与 tamper tests。真实 pilot 初次把 DGS3MO
+  错列为 required input 时 scoped DQ 以 `rates_empty` 正确 fail closed；复核 label 数据依赖后，
+  policy 修正为 price-only QQQ/SPY/SGOV，required rate scope 为空。
+- 2026-07-26：真实 `2021-02-22..2026-07-24` 重建得到 receipt
+  `dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`。
+  Full canonical DQ 保持 `FAIL`，唯一 ERROR 为
+  `prices_non_market_session_date`、affected instrument=`^VIX`；scoped DQ=`PASS`，
+  `global_cache_pass_claimed=false`，禁止跨 consumer 复用及 daily/production/broker 授权。
+  TRADING-2460 label status=`LABEL_FOUNDATION_READY`，common sessions=`1362`、
+  rows=`5412`，content-derived validation 0 errors。
+- 2026-07-26：Phase A 正式验证完成。Focused DQ/consumer regression=`118 passed`；
+  architecture-fitness=`654 passed`，report-validation=`57 passed / 62 warnings`，
+  reproducibility=`23 passed`，contract-validation=`275 passed`，
+  integration=`995 passed / 642 warnings`。首次 natural-boundary Full 发现 7 个旧 consumer
+  future-as-of fixture 回归；根因是 deterministic `checked_at` 约束误作用于未显式传参的调用。
+  修正为只校验调用方显式 `checked_at` 后，目标回归=`70 passed`，带 parent-run 证明的 Full
+  修复重跑=`7292 passed / 3 skipped / 643 warnings`，runtime artifact=
+  `outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。
+  Phase A 转 `BASELINE_DONE`；Phase B 需另行选择第二个性质不同的 read-only consumer，
+  不由本次验收自动启动。

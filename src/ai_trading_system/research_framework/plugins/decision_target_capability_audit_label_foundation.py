@@ -10,8 +10,17 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import DataQualityConfig, load_data_quality
-from ai_trading_system.contracts import DataQualityEvidence
+from ai_trading_system.contracts import (
+    CapabilityQualityBinding,
+    ConsumerDataCapabilityReceipt,
+    DataQualityEvidence,
+)
 from ai_trading_system.data.quality import validate_data_cache, write_data_quality_report
+from ai_trading_system.data.quality_capability import (
+    build_consumer_data_capability,
+    load_reviewed_consumer_data_capability_policy,
+    verify_consumer_data_capability_receipt,
+)
 from ai_trading_system.platform.artifacts import (
     canonical_json_bytes,
     sha256_path,
@@ -50,8 +59,31 @@ def build_decision_target_source_package(
     require_secondary_prices: bool = False,
     quality_config: DataQualityConfig | None = None,
     captured_at: datetime | None = None,
+    capability_policy_path: Path | None = None,
+    data_quality_policy_path: Path | None = None,
 ) -> dict[str, Any]:
     """Run canonical DQ first and only materialize a research panel after PASS."""
+
+    if policy.get("schema_version") == "decision_target_capability_audit_policy.v2":
+        if capability_policy_path is None or data_quality_policy_path is None:
+            raise ValueError("v2 source package requires capability and data-quality policy paths")
+        return _build_capability_decision_target_source_package(
+            policy=policy,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            output_root=output_root,
+            as_of=as_of,
+            expected_price_tickers=expected_price_tickers,
+            expected_rate_series=expected_rate_series,
+            manifest_path=manifest_path,
+            backtest_manifest_path=backtest_manifest_path,
+            secondary_prices_path=secondary_prices_path,
+            require_secondary_prices=require_secondary_prices,
+            quality_config=quality_config,
+            captured_at=captured_at,
+            capability_policy_path=capability_policy_path,
+            data_quality_policy_path=data_quality_policy_path,
+        )
 
     config = quality_config or load_data_quality()
     start = date.fromisoformat(str(_mapping(policy.get("research_context")).get("requested_start")))
@@ -203,6 +235,171 @@ def build_decision_target_source_package(
     return {**package, "package": _file_record(package_path)}
 
 
+def _build_capability_decision_target_source_package(
+    *,
+    policy: Mapping[str, Any],
+    prices_path: Path,
+    rates_path: Path,
+    output_root: Path,
+    as_of: date,
+    expected_price_tickers: Sequence[str],
+    expected_rate_series: Sequence[str],
+    manifest_path: Path | None,
+    backtest_manifest_path: Path | None,
+    secondary_prices_path: Path | None,
+    require_secondary_prices: bool,
+    quality_config: DataQualityConfig | None,
+    captured_at: datetime | None,
+    capability_policy_path: Path,
+    data_quality_policy_path: Path,
+) -> dict[str, Any]:
+    capability_policy = load_reviewed_consumer_data_capability_policy(capability_policy_path)
+    policy_dq = _mapping(policy.get("data_quality"))
+    expected_binding = (
+        capability_policy.capability_id == policy_dq.get("capability_id")
+        and capability_policy.capability_version == policy_dq.get("capability_version")
+        and capability_policy.consumer_id == policy_dq.get("capability_consumer_id")
+        and capability_policy.consumer_version == policy_dq.get("capability_consumer_version")
+        and capability_policy.required_price_tickers
+        == tuple(sorted(str(item) for item in policy_dq.get("required_tickers", ())))
+        and capability_policy.required_rate_series
+        == tuple(sorted(str(item) for item in policy_dq.get("required_rate_series", ())))
+    )
+    if not expected_binding:
+        raise ValueError("label policy and capability policy binding mismatch")
+    result = build_consumer_data_capability(
+        capability_policy=capability_policy,
+        capability_policy_path=capability_policy_path,
+        data_quality_policy_path=data_quality_policy_path,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_root=output_root / "capability",
+        as_of=as_of,
+        full_expected_price_tickers=expected_price_tickers,
+        full_expected_rate_series=expected_rate_series,
+        manifest_path=manifest_path,
+        backtest_manifest_path=backtest_manifest_path,
+        secondary_prices_path=secondary_prices_path,
+        require_secondary_prices=require_secondary_prices,
+        quality_config=quality_config,
+        generated_at=_aware_utc(captured_at or datetime.now(UTC)),
+    )
+    receipt = result.receipt
+    scoped_evidence = _receipt_quality_evidence(
+        receipt,
+        receipt.scoped_quality,
+        contract_id="decision_target_label_core_capability",
+    )
+    full_evidence = _receipt_quality_evidence(
+        receipt,
+        receipt.full_quality,
+        contract_id="canonical_decision_target_source_validation",
+    )
+    start = date.fromisoformat(str(_mapping(policy.get("research_context")).get("requested_start")))
+    observed_at = _aware_utc(captured_at or receipt.generated_at)
+    provider_records = _canonical_provider_records(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        secondary_prices_path=secondary_prices_path,
+        manifest_path=manifest_path,
+        start=start,
+        as_of=as_of,
+        captured_at=observed_at,
+        expected_price_tickers=expected_price_tickers,
+        expected_rate_series=expected_rate_series,
+    )
+    if receipt.capability_passed:
+        panel = pd.read_csv(result.scoped_prices_path, low_memory=False)
+        rates = pd.read_csv(result.scoped_rates_path, low_memory=False)
+        provider_records.extend(
+            _provider_records(
+                panel,
+                rates,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                start=start,
+                as_of=as_of,
+                captured_at=observed_at,
+            )
+        )
+    package: dict[str, Any] = {
+        "schema_version": SOURCE_PACKAGE_SCHEMA_VERSION,
+        "source_package_contract_version": "2.0.0",
+        "as_of": as_of.isoformat(),
+        "requested_start": start.isoformat(),
+        "canonical_strict_validation_required": True,
+        "canonical_full_cache_pass_required": False,
+        "canonical_full_status_disclosure_required": True,
+        "scoped_data_quality_exception_used": False,
+        "consumer_capability_receipt_used": True,
+        "panel_materialized": receipt.capability_passed,
+        "global_cache_pass_claimed": receipt.global_cache_pass_claimed,
+        "canonical_prices": _file_record(prices_path),
+        "canonical_rates": _file_record(rates_path),
+        "canonical_manifest": (
+            _file_record(manifest_path)
+            if manifest_path is not None and manifest_path.is_file()
+            else None
+        ),
+        "canonical_backtest_manifest": (
+            _file_record(backtest_manifest_path)
+            if backtest_manifest_path is not None and backtest_manifest_path.is_file()
+            else None
+        ),
+        "canonical_secondary_prices": (
+            _file_record(secondary_prices_path)
+            if secondary_prices_path is not None and secondary_prices_path.is_file()
+            else None
+        ),
+        "capability_policy": _file_record(capability_policy_path),
+        "data_quality_policy": _file_record(data_quality_policy_path),
+        "capability_receipt": _file_record(result.receipt_path),
+        "canonical_data_quality_report": _file_record(result.full_report_path),
+        "canonical_data_quality_evidence": full_evidence.to_dict(),
+        "panel_data_quality_report": _file_record(result.scoped_report_path),
+        "panel_data_quality_evidence": scoped_evidence.to_dict(),
+        "data_quality_report": _file_record(result.scoped_report_path),
+        "data_quality_evidence": scoped_evidence.to_dict(),
+        "panel": (
+            _file_record(
+                result.scoped_prices_path,
+                row_count=_csv_row_count(result.scoped_prices_path),
+            )
+            if receipt.capability_passed
+            else None
+        ),
+        "rates": (
+            _file_record(
+                result.scoped_rates_path,
+                row_count=_csv_row_count(result.scoped_rates_path),
+            )
+            if receipt.capability_passed
+            else None
+        ),
+        "provider_records": provider_records,
+        "captured_at": observed_at.isoformat(),
+        "safety": {
+            "canonical_cache_mutated": False,
+            "global_cache_pass_claimed": receipt.global_cache_pass_claimed,
+            "scoped_data_quality_exception_used": False,
+            "consumer_capability_receipt_used": True,
+            "cross_consumer_reuse_allowed": False,
+            "daily_operation_authorized": False,
+            "prospective_values_used": False,
+            "feature_selection_executed": False,
+            "model_training_executed": False,
+            "candidate_search_executed": False,
+            "strategy_backtest_executed": False,
+            "target_weights_generated": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+    }
+    package_path = output_root / "market_panel_package.json"
+    write_json_atomic(package_path, package)
+    return {**package, "package": _file_record(package_path)}
+
+
 class DecisionTargetLabelFoundationCalculator:
     plugin_id = "decision_target_label_foundation_calculator"
     version = "v1"
@@ -247,7 +444,8 @@ def build_label_payload(
     )
     evidence = _data_quality_evidence(package, as_of=as_of)
     canonical_evidence = _mapping(package.get("canonical_data_quality_evidence"))
-    if canonical_evidence.get("passed") is not True:
+    capability_mode = package.get("consumer_capability_receipt_used") is True
+    if not capability_mode and canonical_evidence.get("passed") is not True:
         errors.extend(
             str(item)
             for item in canonical_evidence.get(
@@ -271,37 +469,40 @@ def build_label_payload(
     panel = pd.read_csv(panel_path, low_memory=False)
     panel["date"] = pd.to_datetime(panel["date"], errors="coerce")
     rates = pd.read_csv(rates_path, low_memory=False)
-    if len(panel) != int(panel_record.get("row_count") or -1):
+    panel_row_count = panel_record.get("row_count")
+    rates_row_count = rates_record.get("row_count")
+    if panel_row_count is None or len(panel) != int(panel_row_count):
         return _blocked_payload(("MARKET_PANEL_ROW_COUNT_MISMATCH",), evidence, as_of=as_of)
-    if len(rates) != int(rates_record.get("row_count") or -1):
+    if rates_row_count is None or len(rates) != int(rates_row_count):
         return _blocked_payload(("RATES_SNAPSHOT_ROW_COUNT_MISMATCH",), evidence, as_of=as_of)
     if panel["date"].notna().any() and panel["date"].max().date() > as_of:
         return _blocked_payload(("PROSPECTIVE_VALUE_ENTERED_SOURCE_PANEL",), evidence, as_of=as_of)
 
-    config = DataQualityConfig.model_validate(data_quality_policy)
-    fresh_quality = validate_data_cache(
-        prices_path=panel_path,
-        rates_path=rates_path,
-        expected_price_tickers=list(_REQUIRED_TICKERS),
-        expected_rate_series=sorted(str(item) for item in rates["series"].dropna().unique()),
-        quality_config=config,
-        as_of=as_of,
-    )
-    if not fresh_quality.passed:
-        return _blocked_payload(
-            tuple(
-                sorted(
-                    {
-                        issue.code
-                        for issue in fresh_quality.issues
-                        if issue.severity.value == "ERROR"
-                    }
-                )
-            )
-            or ("FRESH_PANEL_DATA_QUALITY_NOT_PASSED",),
-            evidence,
+    if not capability_mode:
+        config = DataQualityConfig.model_validate(data_quality_policy)
+        fresh_quality = validate_data_cache(
+            prices_path=panel_path,
+            rates_path=rates_path,
+            expected_price_tickers=list(_REQUIRED_TICKERS),
+            expected_rate_series=sorted(str(item) for item in rates["series"].dropna().unique()),
+            quality_config=config,
             as_of=as_of,
         )
+        if not fresh_quality.passed:
+            return _blocked_payload(
+                tuple(
+                    sorted(
+                        {
+                            issue.code
+                            for issue in fresh_quality.issues
+                            if issue.severity.value == "ERROR"
+                        }
+                    )
+                )
+                or ("FRESH_PANEL_DATA_QUALITY_NOT_PASSED",),
+                evidence,
+                as_of=as_of,
+            )
 
     start = date.fromisoformat(str(_mapping(policy.get("research_context")).get("requested_start")))
     panel = panel.loc[
@@ -392,6 +593,7 @@ def build_label_payload(
     if not label_rows:
         return _blocked_payload(("NO_MATURE_LABEL_ROWS",), evidence, as_of=as_of)
     summary = _ready_summary(label_rows, prices=prices, horizons=horizons)
+    data_quality_scope = _data_quality_scope_summary(package)
     evaluation = {
         "requested_range": {
             "start": start.isoformat(),
@@ -414,6 +616,9 @@ def build_label_payload(
             "canonical_rates_sha256": _mapping(package.get("canonical_rates")).get("sha256"),
             "data_quality_evidence_id": evidence.evidence_id,
             "scoped_data_quality_exception_used": False,
+            "capability_receipt_id": data_quality_scope.get("capability_receipt_id"),
+            "full_canonical_status": data_quality_scope.get("full_canonical_status"),
+            "global_cache_pass_claimed": data_quality_scope.get("global_cache_pass_claimed"),
         },
     }
     commitment = hashlib.sha256(canonical_json_bytes(evaluation)).hexdigest()
@@ -423,6 +628,7 @@ def build_label_payload(
         "task_id": "TRADING-2460",
         "status": READY_STATUS,
         "data_quality_evidence": evidence.to_dict(),
+        "data_quality_scope": data_quality_scope,
         "evaluation": evaluation,
         "evaluation_commitment_sha256": commitment,
         "label_foundation_summary": summary,
@@ -464,6 +670,7 @@ def validate_label_payload(
         ("label_foundation_summary", "LABEL_SUMMARY_MISMATCH"),
         ("status", "LABEL_STATUS_MISMATCH"),
         ("data_quality_evidence", "LABEL_DATA_QUALITY_EVIDENCE_MISMATCH"),
+        ("data_quality_scope", "LABEL_DATA_QUALITY_SCOPE_MISMATCH"),
     )
     for field, code in comparisons:
         if payload.get(field) != rebuilt.get(field):
@@ -506,6 +713,7 @@ def render_label_markdown(payload: Mapping[str, Any]) -> str:
     status = str(payload.get("status") or "")
     summary = _mapping(payload.get("label_foundation_summary"))
     evidence = _mapping(payload.get("data_quality_evidence"))
+    scope = _mapping(payload.get("data_quality_scope"))
     if status == BLOCKED_STATUS:
         blockers = ", ".join(str(item) for item in payload.get("strict_validation_errors", ()))
         return "\n".join(
@@ -527,6 +735,9 @@ def render_label_markdown(payload: Mapping[str, Any]) -> str:
         "",
         f"- 结论：`{status}`",
         f"- 数据质量：`{evidence.get('status')}`",
+        f"- DQ capability：`{scope.get('capability_id') or 'legacy_full_cache'}`",
+        f"- Full canonical DQ：`{scope.get('full_canonical_status') or evidence.get('status')}`",
+        f"- Global cache PASS claim：`{scope.get('global_cache_pass_claimed')}`",
         f"- 研究窗口：`{summary.get('evaluated_start')}` 至 `{summary.get('evaluated_end')}`",
         f"- 共同交易日：{summary.get('common_price_sessions')}",
         f"- 成熟标签行：{summary.get('label_row_count')}",
@@ -570,7 +781,11 @@ def _source_contract_errors(
     as_of: date,
 ) -> list[str]:
     errors: list[str] = []
-    if policy.get("schema_version") != "decision_target_capability_audit_policy.v1":
+    policy_schema = policy.get("schema_version")
+    if policy_schema not in {
+        "decision_target_capability_audit_policy.v1",
+        "decision_target_capability_audit_policy.v2",
+    }:
         errors.append("LABEL_POLICY_SCHEMA_INVALID")
     if package.get("schema_version") != SOURCE_PACKAGE_SCHEMA_VERSION:
         errors.append("SOURCE_PACKAGE_SCHEMA_INVALID")
@@ -590,10 +805,31 @@ def _source_contract_errors(
         errors.append("CANONICAL_STRICT_DATA_QUALITY_NOT_REQUIRED")
     if package.get("scoped_data_quality_exception_used") is not False:
         errors.append("SCOPED_DATA_QUALITY_EXCEPTION_FORBIDDEN")
-    if _mapping(policy.get("data_quality")).get("scoped_exception_allowed") is not False:
+    data_quality = _mapping(policy.get("data_quality"))
+    if data_quality.get("scoped_exception_allowed") is not False:
         errors.append("LABEL_POLICY_SCOPED_EXCEPTION_BOUNDARY_INVALID")
-    if _mapping(policy.get("data_quality")).get("canonical_full_cache_pass_required") is not True:
-        errors.append("LABEL_POLICY_CANONICAL_DQ_BOUNDARY_INVALID")
+    if policy_schema == "decision_target_capability_audit_policy.v1":
+        if data_quality.get("canonical_full_cache_pass_required") is not True:
+            errors.append("LABEL_POLICY_CANONICAL_DQ_BOUNDARY_INVALID")
+        if package.get("consumer_capability_receipt_used") not in {None, False}:
+            errors.append("UNAUTHORIZED_CAPABILITY_RECEIPT_MODE")
+    else:
+        expected_v2 = (
+            data_quality.get("canonical_full_cache_validation_required") is True
+            and data_quality.get("canonical_full_cache_pass_required") is False
+            and data_quality.get("canonical_full_status_disclosure_required") is True
+            and data_quality.get("consumer_capability_receipt_required") is True
+            and data_quality.get("accepted_capability_statuses") == ["PASS"]
+            and data_quality.get("cross_consumer_reuse_allowed") is False
+            and data_quality.get("daily_operation_authorized") is False
+            and package.get("consumer_capability_receipt_used") is True
+            and package.get("canonical_full_status_disclosure_required") is True
+            and package.get("global_cache_pass_claimed")
+            == (_mapping(package.get("canonical_data_quality_evidence")).get("status") == "PASS")
+        )
+        if not expected_v2:
+            errors.append("LABEL_POLICY_CAPABILITY_DQ_BOUNDARY_INVALID")
+        errors.extend(_capability_receipt_errors(package, data_quality=data_quality))
     target_policy = _mapping(policy.get("decision_targets"))
     if _mapping(target_policy.get("primary")).get("target_id") != "QQQ_MINUS_SGOV":
         errors.append("PRIMARY_DECISION_TARGET_INVALID")
@@ -648,6 +884,10 @@ def _source_file_commitment_errors(package: Mapping[str, Any]) -> list[str]:
         "canonical_manifest",
         "canonical_backtest_manifest",
         "canonical_secondary_prices",
+        "capability_policy",
+        "data_quality_policy",
+        "capability_receipt",
+        "panel_data_quality_report",
     )
     for record_id in required_records:
         record = _mapping(package.get(record_id))
@@ -684,7 +924,98 @@ def _source_file_commitment_errors(package: Mapping[str, Any]) -> list[str]:
         errors.append("DATA_QUALITY_REPORT_PATH_MISMATCH")
     if not package.get("provider_records"):
         errors.append("PROVIDER_RECORDS_MISSING")
+    canonical_evidence = _mapping(package.get("canonical_data_quality_evidence"))
+    canonical_report = _mapping(package.get("canonical_data_quality_report"))
+    if canonical_evidence.get("report_sha256") != canonical_report.get("sha256"):
+        errors.append("CANONICAL_DATA_QUALITY_REPORT_SHA256_MISMATCH")
+    if str(canonical_evidence.get("report_path") or "") != str(canonical_report.get("path") or ""):
+        errors.append("CANONICAL_DATA_QUALITY_REPORT_PATH_MISMATCH")
     return errors
+
+
+def _capability_receipt_errors(
+    package: Mapping[str, Any],
+    *,
+    data_quality: Mapping[str, Any],
+) -> list[str]:
+    receipt_record = _mapping(package.get("capability_receipt"))
+    capability_policy_record = _mapping(package.get("capability_policy"))
+    dq_policy_record = _mapping(package.get("data_quality_policy"))
+    if not receipt_record or not capability_policy_record or not dq_policy_record:
+        return ["CAPABILITY_RECEIPT_BINDING_MISSING"]
+    try:
+        receipt = verify_consumer_data_capability_receipt(
+            Path(str(receipt_record.get("path") or "")),
+            capability_policy_path=Path(str(capability_policy_record.get("path") or "")),
+            data_quality_policy_path=Path(str(dq_policy_record.get("path") or "")),
+        )
+    except ValueError:
+        return ["CAPABILITY_RECEIPT_VERIFICATION_FAILED"]
+    expected = (
+        receipt.capability_id == data_quality.get("capability_id")
+        and receipt.capability_version == data_quality.get("capability_version")
+        and receipt.consumer_id == data_quality.get("capability_consumer_id")
+        and receipt.consumer_version == data_quality.get("capability_consumer_version")
+        and receipt.required_price_tickers
+        == tuple(sorted(str(item) for item in data_quality.get("required_tickers", ())))
+        and receipt.required_rate_series
+        == tuple(sorted(str(item) for item in data_quality.get("required_rate_series", ())))
+        and receipt.cross_consumer_reuse_allowed is False
+        and receipt.daily_operation_authorized is False
+        and receipt.production_effect == "none"
+        and receipt.broker_action == "none"
+    )
+    if not expected:
+        return ["CAPABILITY_RECEIPT_CONSUMER_SCOPE_MISMATCH"]
+    if not receipt.capability_passed:
+        return ["CAPABILITY_RECEIPT_NOT_PASSED"]
+    return []
+
+
+def _data_quality_scope_summary(package: Mapping[str, Any]) -> dict[str, Any]:
+    canonical = _mapping(package.get("canonical_data_quality_evidence"))
+    if package.get("consumer_capability_receipt_used") is not True:
+        return {
+            "mode": "canonical_full_cache",
+            "capability_id": None,
+            "capability_version": None,
+            "capability_receipt_id": None,
+            "full_canonical_status": canonical.get("status"),
+            "global_cache_pass_claimed": canonical.get("passed") is True,
+            "cross_consumer_reuse_allowed": False,
+            "daily_operation_authorized": False,
+        }
+    record = _mapping(package.get("capability_receipt"))
+    try:
+        receipt = ConsumerDataCapabilityReceipt.from_json_bytes(
+            Path(str(record.get("path") or "")).read_bytes()
+        )
+    except (OSError, ValueError):
+        return {
+            "mode": "consumer_capability_receipt",
+            "capability_id": None,
+            "capability_version": None,
+            "capability_receipt_id": None,
+            "full_canonical_status": canonical.get("status"),
+            "global_cache_pass_claimed": False,
+            "cross_consumer_reuse_allowed": False,
+            "daily_operation_authorized": False,
+        }
+    return {
+        "mode": "consumer_capability_receipt",
+        "capability_id": receipt.capability_id,
+        "capability_version": receipt.capability_version,
+        "capability_receipt_id": receipt.receipt_id,
+        "consumer_id": receipt.consumer_id,
+        "consumer_version": receipt.consumer_version,
+        "full_canonical_status": receipt.full_quality.status,
+        "scoped_status": receipt.scoped_quality.status,
+        "global_cache_pass_claimed": receipt.global_cache_pass_claimed,
+        "isolated_global_error_codes": list(receipt.isolated_global_error_codes),
+        "unisolated_global_error_codes": list(receipt.unisolated_global_error_codes),
+        "cross_consumer_reuse_allowed": receipt.cross_consumer_reuse_allowed,
+        "daily_operation_authorized": receipt.daily_operation_authorized,
+    }
 
 
 def _ready_summary(
@@ -820,6 +1151,30 @@ def _quality_evidence(
         blocking_issues=tuple(
             sorted({issue.code for issue in report.issues if issue.severity.value == "ERROR"})
         ),
+    )
+
+
+def _receipt_quality_evidence(
+    receipt: ConsumerDataCapabilityReceipt,
+    quality: CapabilityQualityBinding,
+    *,
+    contract_id: str,
+) -> DataQualityEvidence:
+    blocking = tuple(sorted({issue.code for issue in quality.issues if issue.severity == "ERROR"}))
+    return DataQualityEvidence(
+        contract_id=contract_id,
+        policy_id="DATA_QUALITY_CACHE_GATE",
+        policy_version="data_quality_cache_gate.v2",
+        status=quality.status,
+        passed=quality.status in {"PASS", "PASS_WITH_WARNINGS"},
+        checked_at=receipt.generated_at,
+        as_of=receipt.as_of,
+        report_path=str(Path(quality.report.path)),
+        report_sha256=quality.report.sha256,
+        error_count=quality.error_count,
+        warning_count=quality.warning_count,
+        checked_input_count=2,
+        blocking_issues=blocking,
     )
 
 

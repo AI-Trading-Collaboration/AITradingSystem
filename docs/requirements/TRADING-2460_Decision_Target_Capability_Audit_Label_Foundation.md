@@ -1,8 +1,8 @@
 # TRADING-2460：Decision Target Capability Audit 第一批 Label Foundation
 
-最后更新：2026-07-25
+最后更新：2026-07-26
 
-状态：`BASELINE_DONE_REAL_DATA_BLOCKED_BY_CANONICAL_DQ`
+状态：`BASELINE_DONE_REAL_LABEL_FOUNDATION_READY`
 
 稳定任务 ID：`TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION`
 
@@ -96,14 +96,19 @@ return 合成为本批 score。
   adjusted close 或 ticker 缺失，必须 fail closed；
 - protocol freeze 后的未来 observation 另立 batch，不在本批访问。
 
-现有 canonical cache 仍因 31 条 `^VIX` non-session 行处于全局 DQ `FAIL`。TRADING-2459 的 QLD
-scoped exception 不可复用。因此正式数据 package 只能在以下任一条件成立后生成：
+V1 历史 package 因 31 条 `^VIX` non-session 行在全局 DQ `FAIL` 处 fail closed；TRADING-2459
+的 QLD scoped exception 仍不可复用。2026-07-26 Owner 通过
+`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
+批准长期 consumer capability receipt 工程方案与本任务首个 pilot。V2 每次仍必须运行、保存并披露
+full canonical DQ；只有 reviewed policy 预先冻结 price-only `QQQ/SPY/SGOV`、空 rate scope、
+window、fields 与
+consumer identity，所有 global ERROR 都有 structured `affected_instruments`、被 policy 明确允许且
+与 required scope 完全不相交，同时 exact projection 使用同一 `validate_data_cache` 得到 strict
+`PASS` 时，才允许生成 capability receipt 与 label panel。
 
-1. `DATA-GOV-001_D0B2B` canonical strict PASS；或
-2. Owner 另行批准、记录并验证只消费 `SPY/QQQ/SGOV` 与所需 rates 的本任务 scoped input policy。
-
-在此之前允许实现和测试合同，但真实运行必须输出 `BLOCKED_DATA_QUALITY`，不得静默过滤 `^VIX`
-后声称 canonical PASS。
+V2 capability PASS 不得声称 canonical full-cache PASS，不授权 daily operation、其他 consumer、
+D0B2B、model、strategy、paper-shadow、production 或 broker。任何 manifest/publication/schema/
+parse、unknown-scope、required-scope 或 scoped warning/error 仍输出 `BLOCKED_DATA_QUALITY_OR_SOURCE`。
 
 ## Purge / embargo readiness contract
 
@@ -178,6 +183,24 @@ Validator 必须从冻结 source package 重建 rows、summary、Markdown 和 co
 
 ## 进展记录
 
+- 2026-07-26：Owner批准DATA-GOV-002长期capability receipt工程线与TRADING-2460首个pilot；
+  新增v2 label policy、reviewed `decision_target_label_core` capability policy、typed/content-derived
+  receipt、immutable source capture、structured affected-instrument attribution、content-bound
+  requested-window authority、source projection/verifier与tamper tests。V1历史BLOCKED证据不改写。
+- 2026-07-26：首个真实 pilot 证明 label builder 只消费价格；初次将 DGS3MO 纳入 required
+  scope 时 scoped DQ 以 `rates_empty` 正确 fail closed，随后按真实 transitive dependency
+  closure 将 v2 policy 修正为 price-only QQQ/SPY/SGOV、空 rate scope。
+- 2026-07-26：真实 `2021-02-22..2026-07-24` v2 build 得到 capability receipt
+  `dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`。
+  Full canonical DQ=`FAIL`，唯一 ERROR=`prices_non_market_session_date`、affected=`^VIX`；
+  scoped QQQ/SPY/SGOV DQ=`PASS`，global PASS claim=false。Label status=
+  `LABEL_FOUNDATION_READY`，common sessions=`1362`、rows=`5412`，四个 horizon 分别为
+  1d=`1361`、5d=`1357`、10d=`1352`、20d=`1342`，content-derived validator 0 errors。
+  DATA-GOV-002 Phase A 已完成 formal validation 收口：architecture=`654 passed`、
+  report=`57 passed`、reproducibility=`23 passed`、contract=`275 passed`、
+  integration=`995 passed`、Full failure-fix rerun=`7292 passed / 3 skipped / 643 warnings`；
+  Full artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。
+  下一步由 strategy research owner 预注册 Batch 2 split/model ladder/metrics。
 - 2026-07-26：clean-main formal closeout通过：focused=`100 passed`、
   report-validation=`57 passed`、reproducibility=`23 passed`、
   contract-validation=`275 passed`、architecture-fitness=`648 passed`、

@@ -1,0 +1,128 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  title: null
+  domain: Data Foundation / consumer capability-scoped strict DQ receipts
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform
+    engineering：另行选择第二个性质不同的read-only consumer后启动Phase B generic adapter
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
+    receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
+    attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
+    v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path strict
+    PASS和structured disjoint attribution可隔离无关instrument问题。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 首个真实`2021-02-22..2026-07-24`run必须保持full DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped
+      QQQ/SPY/SGOV=`PASS`、global pass claim/reuse/daily authorization均false，同时生成verified
+      receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
+      Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1587
+    row_sha256: 67cf2622f03917320563981a721c50d48b53ee018334985b1952fb41a7521961
+    cell_count: 8
+    all_cells:
+    - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+    - Data Foundation / consumer capability-scoped strict DQ receipts
+    - P0
+    - BASELINE_DONE
+    - strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform engineering：另行选择第二个性质不同的read-only
+      consumer后启动Phase B generic adapter
+    - 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
+      receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
+      attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
+      v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path
+      strict PASS和structured disjoint attribution可隔离无关instrument问题。
+    - 首个真实`2021-02-22..2026-07-24`run必须保持full DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped
+      QQQ/SPY/SGOV=`PASS`、global pass claim/reuse/daily authorization均false，同时生成verified
+      receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
+      Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。
+    - 2026-07-26：Phase A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
+      claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
+      passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
+      B不自动启动。
+    raw_line: '|DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS|Data
+      Foundation / consumer capability-scoped strict DQ receipts|P0|BASELINE_DONE|strategy
+      research owner：复核首个真实label coverage并预注册Batch 2；data platform engineering：另行选择第二个性质不同的read-only
+      consumer后启动Phase B generic adapter|详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
+      receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
+      attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
+      v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path
+      strict PASS和structured disjoint attribution可隔离无关instrument问题。|首个真实`2021-02-22..2026-07-24`run必须保持full
+      DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped QQQ/SPY/SGOV=`PASS`、global
+      pass claim/reuse/daily authorization均false，同时生成verified receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
+      Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。|2026-07-26：Phase
+      A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
+      claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
+      passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
+      B不自动启动。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-67cf2622f03917320563981a
+  task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform
+      engineering：另行选择第二个性质不同的read-only consumer后启动Phase B generic adapter
+    notes: 2026-07-26：Phase A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
+      claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
+      passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
+      B不自动启动。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:67cf2622f03917320563981a721c50d48b53ee018334985b1952fb41a7521961
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  - Data Foundation / consumer capability-scoped strict DQ receipts
+  - P0
+  - BASELINE_DONE
+  - strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform engineering：另行选择第二个性质不同的read-only
+    consumer后启动Phase B generic adapter
+  - 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
+    receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
+    attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
+    v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path strict
+    PASS和structured disjoint attribution可隔离无关instrument问题。
+  - 首个真实`2021-02-22..2026-07-24`run必须保持full DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped
+    QQQ/SPY/SGOV=`PASS`、global pass claim/reuse/daily authorization均false，同时生成verified
+    receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
+    Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。
+  - 2026-07-26：Phase A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
+    claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
+    passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
+    B不自动启动。
+  docs_links:
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  terminal: false
+  raw_row_sha256: 67cf2622f03917320563981a721c50d48b53ee018334985b1952fb41a7521961
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5308316769a766a29e16cceefe193a9b2cce0789c22c500d0bfed79c68df34ce

@@ -1,0 +1,117 @@
+schema_version: decision_target_capability_audit_policy.v2
+policy_id: decision_target_capability_audit_label_foundation_v2
+version: 2.0.0
+status: OWNER_APPROVED_BATCH1_CAPABILITY_RECEIPT
+owner: project_owner_and_research_governance
+owner_decision: owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1
+rationale: >-
+  保留v1的决策目标、收益、horizon、时间与安全语义，只把数据门禁从整份daily cache
+  解耦为reviewed consumer capability receipt。全局DQ仍必须运行和披露；只有预先冻结的
+  price-only QQQ/SPY/SGOV scope取得same-code-path strict PASS，且全局错误有结构化、与scope
+  完全不相交的instrument attribution时，才可生成label panel。
+intended_effect: >-
+  让Decision Target Label Foundation绑定自己的exact transitive input closure，避免被非依赖
+  instrument问题永久阻塞；本政策不声明global cache PASS，不授权其他consumer、daily operation、
+  特征、模型、策略阈值、仓位或候选家族。
+validation_evidence: >-
+  由clean fixture、required-instrument failure、out-of-scope VIX non-session、unstructured
+  blocker、scope/policy/source/report/panel/receipt tamper、标签恒等式、时间区间与双构建覆盖；
+  真实数据必须产生exact verified capability receipt。
+review_condition: >-
+  第二批开始前复核capability isolation、target usefulness、label coverage与split semantics；
+  任何target、horizon、return convention、capability scope、可隔离issue code或时间边界变化
+  都必须发布新政策版本并取得Owner批准。
+research_context:
+  market_regime_id: unified_primary_2021
+  research_window_id: exact_qqq_sgov_tqqq_validated_window
+  requested_start: '2021-02-22'
+  as_of_semantics: runtime_argument
+  historical_seen_only: true
+  prospective_values_allowed: false
+decision_targets:
+  primary:
+    target_id: QQQ_MINUS_SGOV
+    asset: QQQ
+    benchmark: SGOV
+    role: primary_deployment_opportunity_target
+  diagnostics:
+    - target_id: SPY_MINUS_SGOV
+      asset: SPY
+      benchmark: SGOV
+      role: broad_market_risk_premium_control
+    - target_id: QQQ_MINUS_SPY
+      asset: QQQ
+      benchmark: SPY
+      role: nasdaq_relative_selection_control
+  accounting_identity:
+    expression: QQQ_MINUS_SGOV = SPY_MINUS_SGOV + QQQ_MINUS_SPY
+    validation_required: true
+horizons:
+  - horizon_id: 1d
+    sessions: 1
+  - horizon_id: 5d
+    sessions: 5
+  - horizon_id: 10d
+    sessions: 10
+  - horizon_id: 20d
+    sessions: 20
+return_convention:
+  price_field: adj_close
+  return_type: total_return
+  interval: decision_close_to_hth_future_common_session_close
+  label_start: first_future_common_session
+  label_end: hth_future_common_session
+  label_available_on_session: label_end
+risk_diagnostics:
+  per_asset:
+    - future_max_drawdown
+    - future_worst_1d_return
+  assets:
+    - QQQ
+    - SPY
+    - SGOV
+data_quality:
+  policy_id: DATA_QUALITY_CACHE_GATE
+  policy_version: data_quality_cache_gate.v2
+  canonical_full_cache_validation_required: true
+  canonical_full_cache_pass_required: false
+  canonical_full_status_disclosure_required: true
+  same_validation_code_path_required: validate_data_cache
+  scoped_exception_allowed: false
+  consumer_capability_receipt_required: true
+  capability_policy_path: config/data_quality/decision_target_label_core_capability_v1.yaml
+  capability_id: decision_target_label_core
+  capability_version: 1.0.0
+  capability_consumer_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  capability_consumer_version: 2.0.0
+  accepted_capability_statuses:
+    - PASS
+  cross_consumer_reuse_allowed: false
+  daily_operation_authorized: false
+  panel_revalidation_required: true
+  required_tickers:
+    - QQQ
+    - SGOV
+    - SPY
+  required_rate_series: []
+split_readiness:
+  label_interval_emitted: true
+  label_maturity_gate: label_available_on_session <= training_as_of
+  purge_rule: purge_training_rows_whose_label_interval_overlaps_validation_or_test
+  embargo_policy_status: DEFERRED_TO_NEXT_BATCH
+  embargo_sessions: null
+  ungoverned_numeric_embargo_allowed: false
+safety:
+  research_only: true
+  historical_seen_only: true
+  prospective_values_used: false
+  feature_selection_executed: false
+  model_training_executed: false
+  candidate_search_executed: false
+  strategy_logic_changed: false
+  target_weights_changed: false
+  official_action_universe_changed: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none

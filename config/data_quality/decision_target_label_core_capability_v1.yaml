@@ -1,0 +1,43 @@
+schema_version: data_quality_consumer_capability_policy.v1
+policy_id: decision_target_label_core_capability_v1
+policy_version: 1.0.0
+status: OWNER_APPROVED_PHASE_A_PILOT
+owner: data_platform_owner_and_strategy_research_owner
+owner_decision_id: owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1
+capability_id: decision_target_label_core
+capability_version: 1.0.0
+consumer_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+consumer_version: 2.0.0
+requested_start: '2021-02-22'
+required_price_tickers:
+  - QQQ
+  - SGOV
+  - SPY
+required_rate_series: []
+required_price_fields:
+  - adj_close
+  - close
+  - date
+  - high
+  - low
+  - open
+  - source
+  - ticker
+  - volume
+accepted_scoped_statuses:
+  - PASS
+allowed_global_error_codes:
+  - prices_non_market_session_date
+global_error_attribution_rule: ALL_AFFECTED_INSTRUMENTS_OUTSIDE_REQUIRED_SCOPE
+full_canonical_validation_required: true
+same_validation_code_path: validate_data_cache
+full_status_disclosure_required: true
+cross_consumer_reuse_allowed: false
+daily_operation_authorized: false
+production_effect: none
+broker_action: none
+review_condition: >-
+  Phase A只有在clean、required-scope failure、仅VIX out-of-scope failure、unstructured
+  blocker、scope/policy/source/report/panel/receipt tamper全部按设计通过，且首个真实
+  2021-02-22起canonical build经人工复核后，才可评估Phase B generic adapter；任何新增
+  issue code、ticker、series、field、consumer、window或复用范围必须发布新版本并取得Owner批准。

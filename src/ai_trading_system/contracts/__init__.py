@@ -9,6 +9,14 @@ from ai_trading_system.contracts.data_quality import (
     DataQualityEvidence,
     DataQualityEvidenceError,
 )
+from ai_trading_system.contracts.data_quality_capability import (
+    CapabilityFileBinding,
+    CapabilityIssueBinding,
+    CapabilityQualityBinding,
+    ConsumerDataCapabilityPolicy,
+    ConsumerDataCapabilityReceipt,
+    DataQualityCapabilityContractError,
+)
 from ai_trading_system.contracts.data_quality_consumer_authorization import (
     DataQualityConsumerAuthorizationAttestation,
     DataQualityConsumerAuthorizationContractError,
@@ -130,6 +138,7 @@ __all__ = [
     "DataQualityContractRef",
     "DataQualityConsumerAuthorizationAttestation",
     "DataQualityConsumerAuthorizationContractError",
+    "DataQualityCapabilityContractError",
     "DataQualityDateWindow",
     "DataQualityEvidence",
     "DataQualityEvidenceError",
@@ -141,6 +150,11 @@ __all__ = [
     "DataQualityPolicyBinding",
     "DataQualityReportBinding",
     "DataQualityValidatorBinding",
+    "CapabilityFileBinding",
+    "CapabilityIssueBinding",
+    "CapabilityQualityBinding",
+    "ConsumerDataCapabilityPolicy",
+    "ConsumerDataCapabilityReceipt",
     "DeprecationContractError",
     "DeprecationRecord",
     "DateRange",

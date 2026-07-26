@@ -12,6 +12,12 @@ from ai_trading_system.data.download_publication import (
     resolve_download_publication,
     resolve_download_publication_if_present,
 )
+from ai_trading_system.data.quality_capability import (
+    ConsumerDataCapabilityBuildResult,
+    build_consumer_data_capability,
+    load_reviewed_consumer_data_capability_policy,
+    verify_consumer_data_capability_receipt,
+)
 from ai_trading_system.data.quality_consumer_authorization import (
     DAILY_SCORE_CONSUMER_AUTHORIZATION_TOKEN,
     DAILY_SCORE_CONSUMER_ID,
@@ -34,12 +40,16 @@ __all__ = [
     "DAILY_SCORE_CONSUMER_ID",
     "DAILY_SCORE_CONSUMER_VERSION",
     "DataQualityConsumerAuthorizationError",
+    "ConsumerDataCapabilityBuildResult",
     "ValidatedDownloadPublication",
     "build_data_quality_consumer_authorization_attestation",
+    "build_consumer_data_capability",
+    "load_reviewed_consumer_data_capability_policy",
     "load_reviewed_data_quality_consumer_authorization_policy",
     "publish_download_transaction",
     "resolve_download_publication",
     "resolve_download_publication_if_present",
     "verify_data_quality_consumer_authorization",
+    "verify_consumer_data_capability_receipt",
     "write_data_quality_consumer_authorization_attestation",
 ]

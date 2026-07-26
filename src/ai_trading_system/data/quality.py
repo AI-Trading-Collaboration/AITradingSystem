@@ -113,6 +113,7 @@ class DataQualityIssue:
     rows: int | None = None
     sample: str | None = None
     source: str | None = None
+    affected_instruments: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -137,6 +138,121 @@ class DataFileSnapshot:
     @property
     def sha256(self) -> str | None:
         return None if self.content is None else sha256(self.content).hexdigest()
+
+
+@dataclass(frozen=True)
+class DataQualityRequestedWindowAuthority:
+    """Content-bound authority for validating a governed derived input window."""
+
+    policy_id: str
+    policy_version: str
+    policy_sha256: str
+    capability_id: str
+    capability_version: str
+    consumer_id: str
+    consumer_version: str
+    requested_window_start: date
+    requested_window_end: date
+    as_of: date
+    prices_sha256: str
+    rates_sha256: str
+    expected_price_tickers: tuple[str, ...]
+    expected_rate_series: tuple[str, ...]
+    canonical_source_sha256s: tuple[str, ...]
+    full_report_sha256: str
+    unisolated_global_error_codes: tuple[str, ...]
+    production_effect: str = "none"
+
+    def __post_init__(self) -> None:
+        text_values = (
+            self.policy_id,
+            self.policy_version,
+            self.capability_id,
+            self.capability_version,
+            self.consumer_id,
+            self.consumer_version,
+        )
+        checksum_values = (
+            self.policy_sha256,
+            self.prices_sha256,
+            self.rates_sha256,
+            self.full_report_sha256,
+            *self.canonical_source_sha256s,
+        )
+        if any(not value or value != value.strip() for value in text_values):
+            raise ValueError("requested-window authority text fields must be normalized")
+        if any(
+            len(value) != 64 or any(character not in "0123456789abcdef" for character in value)
+            for value in checksum_values
+        ):
+            raise ValueError("requested-window authority checksums must be lowercase SHA-256")
+        if (
+            self.requested_window_start > self.requested_window_end
+            or self.requested_window_end > self.as_of
+        ):
+            raise ValueError("requested-window authority date range is invalid")
+        if not self.expected_price_tickers:
+            raise ValueError("requested-window authority requires price scope")
+        if tuple(sorted(set(self.expected_price_tickers))) != self.expected_price_tickers:
+            raise ValueError("requested-window authority price scope must be sorted and unique")
+        if tuple(sorted(set(self.expected_rate_series))) != self.expected_rate_series:
+            raise ValueError("requested-window authority rate scope must be sorted and unique")
+        if not self.canonical_source_sha256s:
+            raise ValueError("requested-window authority requires canonical source lineage")
+        if self.unisolated_global_error_codes:
+            raise ValueError("authority cannot carry unisolated global errors")
+        if self.production_effect != "none":
+            raise ValueError("requested-window authority cannot create production effects")
+
+    @property
+    def authority_id(self) -> str:
+        material = json.dumps(
+            {
+                "schema_version": "data_quality_requested_window_authority.v1",
+                "policy_id": self.policy_id,
+                "policy_version": self.policy_version,
+                "policy_sha256": self.policy_sha256,
+                "capability_id": self.capability_id,
+                "capability_version": self.capability_version,
+                "consumer_id": self.consumer_id,
+                "consumer_version": self.consumer_version,
+                "requested_window_start": self.requested_window_start.isoformat(),
+                "requested_window_end": self.requested_window_end.isoformat(),
+                "as_of": self.as_of.isoformat(),
+                "prices_sha256": self.prices_sha256,
+                "rates_sha256": self.rates_sha256,
+                "expected_price_tickers": list(self.expected_price_tickers),
+                "expected_rate_series": list(self.expected_rate_series),
+                "canonical_source_sha256s": list(self.canonical_source_sha256s),
+                "full_report_sha256": self.full_report_sha256,
+                "unisolated_global_error_codes": list(self.unisolated_global_error_codes),
+                "production_effect": self.production_effect,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return f"dq_window_authority_{sha256(material).hexdigest()}"
+
+    def matches(
+        self,
+        *,
+        requested_window: tuple[date, date],
+        as_of: date,
+        expected_price_tickers: list[str],
+        expected_rate_series: list[str],
+        prices_snapshot: DataFileSnapshot,
+        rates_snapshot: DataFileSnapshot,
+    ) -> bool:
+        return (
+            requested_window == (self.requested_window_start, self.requested_window_end)
+            and as_of == self.as_of
+            and tuple(sorted(set(expected_price_tickers))) == self.expected_price_tickers
+            and tuple(sorted(set(expected_rate_series))) == self.expected_rate_series
+            and prices_snapshot.sha256 == self.prices_sha256
+            and rates_snapshot.sha256 == self.rates_sha256
+            and not self.unisolated_global_error_codes
+        )
 
 
 def capture_data_file_snapshots(paths: Mapping[str, Path]) -> dict[str, DataFileSnapshot]:
@@ -192,6 +308,7 @@ class DataQualityReport:
     requested_window_start: date | None = None
     requested_window_end: date | None = None
     market_calendar_source: str = NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE
+    requested_window_authority_id: str | None = None
 
     @property
     def error_count(self) -> int:
@@ -233,8 +350,15 @@ def validate_data_cache(
     file_snapshots: Mapping[str, DataFileSnapshot] | None = None,
     requested_window: tuple[date, date] | None = None,
     download_publication_resolution: DownloadPublicationResolution | None = None,
+    requested_window_authority: DataQualityRequestedWindowAuthority | None = None,
+    checked_at: datetime | None = None,
 ) -> DataQualityReport:
     issues: list[DataQualityIssue] = []
+    observed_checked_at = checked_at or datetime.now(UTC)
+    if observed_checked_at.tzinfo is None or observed_checked_at.utcoffset() is None:
+        raise ValueError("checked_at must be timezone-aware")
+    if checked_at is not None and observed_checked_at.date() < as_of:
+        raise ValueError("checked_at cannot precede as_of")
     marketstack_reconciliation_records: tuple[MarketstackReconciliationRecord, ...] = ()
     explicit_requested_window = _validate_requested_window(
         requested_window,
@@ -254,6 +378,38 @@ def validate_data_cache(
         if file_snapshots is None
         else _validated_file_snapshots(input_paths, file_snapshots)
     )
+    requested_window_authority_verified = False
+    if requested_window_authority is not None:
+        if manifest_path is not None:
+            issues.append(
+                DataQualityIssue(
+                    Severity.ERROR,
+                    "requested_window_authority_manifest_conflict",
+                    (
+                        "derived requested-window authority 与 canonical manifest "
+                        "不得同时作为窗口权威。"
+                    ),
+                    source="数据质量窗口权威",
+                )
+            )
+        elif explicit_requested_window is None or not requested_window_authority.matches(
+            requested_window=explicit_requested_window,
+            as_of=as_of,
+            expected_price_tickers=expected_price_tickers,
+            expected_rate_series=expected_rate_series,
+            prices_snapshot=snapshots["prices"],
+            rates_snapshot=snapshots["rates"],
+        ):
+            issues.append(
+                DataQualityIssue(
+                    Severity.ERROR,
+                    "requested_window_authority_mismatch",
+                    "derived requested-window authority 与输入、scope、window 或 as_of 不一致。",
+                    source="数据质量窗口权威",
+                )
+            )
+        else:
+            requested_window_authority_verified = True
 
     prices, price_summary = _read_csv(snapshots["prices"], issues, "prices")
     rates, rate_summary = _read_csv(snapshots["rates"], issues, "rates")
@@ -284,7 +440,7 @@ def validate_data_cache(
                     DataQualityIssue(
                         Severity.ERROR,
                         "download_publication_invalid",
-                        ("canonical download publication 无法验证：" f"{resolution.error}"),
+                        (f"canonical download publication 无法验证：{resolution.error}"),
                         source="下载审计清单",
                     )
                 )
@@ -308,7 +464,7 @@ def validate_data_cache(
             issues=issues,
             canonical_publication=canonical_publication,
         )
-    elif explicit_requested_window is not None:
+    elif explicit_requested_window is not None and requested_window_authority is None:
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
@@ -386,7 +542,8 @@ def validate_data_cache(
                 issues=issues,
             )
 
-    if rates is not None:
+    skip_scoped_rates = requested_window_authority_verified and not expected_rate_series
+    if rates is not None and not skip_scoped_rates:
         rate_summary = _validate_rates(
             rates,
             rate_summary,
@@ -398,7 +555,7 @@ def validate_data_cache(
         )
 
     return DataQualityReport(
-        checked_at=datetime.now(UTC),
+        checked_at=observed_checked_at,
         as_of=as_of,
         price_summary=price_summary,
         rate_summary=rate_summary,
@@ -416,6 +573,11 @@ def validate_data_cache(
         ),
         marketstack_reconciliation_records=marketstack_reconciliation_records,
         issues=tuple(issues),
+        requested_window_authority_id=(
+            requested_window_authority.authority_id
+            if requested_window_authority_verified and requested_window_authority is not None
+            else None
+        ),
     )
 
 
@@ -454,6 +616,10 @@ def render_data_quality_report(report: DataQualityReport) -> str:
         *(
             [
                 f"- Requested window：{_requested_window_label(report)}",
+                (
+                    "- Requested-window authority："
+                    f"{report.requested_window_authority_id or 'canonical download publication'}"
+                ),
                 f"- 市场日历口径：{report.market_calendar_source}",
                 "- 市场日历限制：规则日历不包含未预先编码的临时休市；"
                 "此类事件必须通过受治理的 calendar 更新处理。",
@@ -471,8 +637,8 @@ def render_data_quality_report(report: DataQualityReport) -> str:
     else:
         lines.extend(
             [
-                "| 级别 | 来源 | Code | 行数 | 说明 | 样例 |",
-                "|---|---|---|---:|---|---|",
+                "| 级别 | 来源 | Code | 受影响标的 | 行数 | 说明 | 样例 |",
+                "|---|---|---|---|---:|---|---|",
             ]
         )
         for issue in report.issues:
@@ -481,6 +647,7 @@ def render_data_quality_report(report: DataQualityReport) -> str:
                 f"{_severity_label(issue.severity)} | "
                 f"{_escape_markdown_table(_issue_source(issue))} | "
                 f"{issue.code} | "
+                f"{_escape_markdown_table(', '.join(issue.affected_instruments))} | "
                 f"{issue.rows if issue.rows is not None else ''} | "
                 f"{_escape_markdown_table(issue.message)} | "
                 f"{_escape_markdown_table(issue.sample or '')} |"
@@ -693,10 +860,7 @@ def _read_secondary_prices_csv(
             DataQualityIssue(
                 Severity.ERROR,
                 "secondary_prices_file_unreadable",
-                (
-                    "第二行情源 Marketstack 文件无法读取："
-                    f"{snapshot.read_error or 'unknown error'}"
-                ),
+                (f"第二行情源 Marketstack 文件无法读取：{snapshot.read_error or 'unknown error'}"),
                 source="第二行情源 Marketstack",
             )
         )
@@ -1252,14 +1416,21 @@ def _check_price_market_calendar_dates(
     severity: Severity,
 ) -> None:
     start, end = requested_window
-    observed_dates = {
-        value.date()
-        for value in frame.loc[frame["_date"].notna(), "_date"]
-        if start <= value.date() <= end
-    }
+    window_rows = frame.loc[
+        frame["_date"].notna() & frame["_date"].map(lambda value: start <= value.date() <= end)
+    ].copy()
+    observed_dates = {value.date() for value in window_rows["_date"]}
     non_sessions = sorted(value for value in observed_dates if not is_us_equity_trading_day(value))
     if not non_sessions:
         return
+    non_session_rows = window_rows.loc[
+        window_rows["_date"].map(lambda value: value.date() in set(non_sessions))
+    ]
+    affected_instruments = (
+        tuple(sorted(str(value) for value in non_session_rows["ticker"].dropna().unique()))
+        if "ticker" in non_session_rows.columns
+        else ()
+    )
     issues.append(
         DataQualityIssue(
             severity,
@@ -1268,6 +1439,7 @@ def _check_price_market_calendar_dates(
             rows=len(non_sessions),
             sample=", ".join(value.isoformat() for value in non_sessions[:10]),
             source=source,
+            affected_instruments=affected_instruments,
         )
     )
 
@@ -1313,10 +1485,7 @@ def _check_price_requested_window(
             DataQualityIssue(
                 severity,
                 "prices_requested_window_coverage_missing",
-                (
-                    "价格数据未逐 ticker 完整覆盖 requested window 内的 US equity "
-                    "trading sessions。"
-                ),
+                ("价格数据未逐 ticker 完整覆盖 requested window 内的 US equity trading sessions。"),
                 rows=len(boundary_missing),
                 sample=", ".join(boundary_missing[:10]),
                 source=source,
@@ -1657,13 +1826,15 @@ def _check_price_moves(
     )
     if ratio_jump.any():
         known_split = data.apply(
-            lambda row: _matches_known_split_event(
-                ticker=str(row["ticker"]),
-                value_date=row["_date"].date(),
-                adjustment_ratio_change=float(row["_adjustment_ratio_change"]),
-                quality_config=quality_config,
-            )
-            is not None,
+            lambda row: (
+                _matches_known_split_event(
+                    ticker=str(row["ticker"]),
+                    value_date=row["_date"].date(),
+                    adjustment_ratio_change=float(row["_adjustment_ratio_change"]),
+                    quality_config=quality_config,
+                )
+                is not None
+            ),
             axis=1,
         )
         split_ratio_jump = ratio_jump & known_split
@@ -2458,7 +2629,7 @@ def _marketstack_reconciliation_section(report: DataQualityReport) -> list[str]:
         "",
         "## Marketstack reconciliation",
         "",
-        ("- 明细 CSV：与本 Markdown 同目录，文件名后缀为 " "`_marketstack_reconciliation.csv`。"),
+        ("- 明细 CSV：与本 Markdown 同目录，文件名后缀为 `_marketstack_reconciliation.csv`。"),
         "- 规则边界：只归因和记录，不改写主价格缓存、第二行情源缓存、评分或回测真值。",
         "",
         "| 级别 | 分类 | 行数 |",
@@ -2469,10 +2640,7 @@ def _marketstack_reconciliation_section(report: DataQualityReport) -> list[str]:
         key=lambda item: (item[0][0].value, item[0][1]),
     ):
         lines.append(
-            "| "
-            f"{_severity_label(severity)} | "
-            f"{_escape_markdown_table(classification)} | "
-            f"{count} |"
+            f"| {_severity_label(severity)} | {_escape_markdown_table(classification)} | {count} |"
         )
 
     lines.extend(

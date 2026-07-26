@@ -978,31 +978,41 @@ flowchart LR
     U -.-> N["No QLD signal / style / free candidate<br/>no automatic weights / paper-shadow / production / broker"]
 ```
 
-TRADING-2460 启动 Strategy Style Discovery 的 Decision Target Capability Audit 第一批，但只建立
-label foundation，不训练模型或选择策略风格。Canonical `prices_daily.csv` / `rates_daily.csv` 必须
-先对完整预期 universe 调用 `validate_data_cache`；只有 strict PASS 后，才允许物化
-QQQ/SPY/SGOV adjusted-close 隔离 panel 并再次调用同一 validator。TRADING-2459 的 QLD scoped
-exception 明确不可复用，所以当前 31 条 `^VIX` non-session blocker 会让正式 run 输出
-`BLOCKED_DATA_QUALITY_OR_SOURCE`，不会先过滤 VIX 再声称 canonical PASS。通过 DQ 后，calculator
-按 1/5/10/20 个未来共同交易 session 生成 primary `QQQ_MINUS_SGOV` 与 diagnostics
-`SPY_MINUS_SGOV`、`QQQ_MINUS_SPY`，同时记录 label start/end/available-on-session 和三资产未来
-max drawdown / worst-1d。Content-derived validator 从 source package 重建全部 rows、summary、
-commitment 与中文 Markdown；label interval 和 maturity gate 给后续 purged walk-forward 使用，
-数值 embargo 留待下一批 reviewed policy。本批不执行 feature selection、model training、
-candidate search、strategy backtest 或权重生成，paper-shadow/production/broker 均不改变。
+DATA-GOV-002 / TRADING-2460 v2 在 full canonical DQ 与 consumer 可消费性之间增加受治理的
+capability receipt 层。每次 build 仍从同一次 immutable source-byte capture 对完整预期 universe
+调用 `validate_data_cache` 并保存 full report；任何 manifest/publication/schema/parse blocker、
+没有 structured attribution 的 ERROR，或触及 frozen QQQ/SPY/SGOV scope 的 ERROR，仍会阻断。
+首个 reviewed policy 只允许 `prices_non_market_session_date` 在
+`affected_instruments` 非空且全部位于 required scope 外时被隔离。随后系统从同一 canonical bytes
+机械投影 price-only QQQ/SPY/SGOV（空 rate scope），使用 content-bound requested-window authority 再次调用
+`validate_data_cache`；只有 scoped status 为 exact `PASS` 才发布
+`data_quality_consumer_capability_receipt.v1`。Receipt 同时绑定 policy/source/report/panel hashes、
+full/scoped status、isolated/unisolated codes，并固定
+`global_cache_pass_claimed=false`（full 非 PASS 时）、`cross_consumer_reuse_allowed=false`、
+`daily_operation_authorized=false`。它不是 QLD exception，也不替代 D0B2B 或允许其他 consumer。
+Verified receipt 后，TRADING-2460 calculator 才按 1/5/10/20 个未来共同交易 session 生成 primary
+`QQQ_MINUS_SGOV` 与 diagnostics `SPY_MINUS_SGOV`、`QQQ_MINUS_SPY`，记录 label
+start/end/available-on-session 和三资产未来 max drawdown / worst-1d。Content-derived validator
+重建 receipt、source projection、全部 label rows、summary、commitment 与中文 Markdown；数值
+embargo 留待下一批 reviewed policy。本批不执行 feature selection、model training、candidate
+search、strategy backtest 或权重生成，paper-shadow/production/broker 均不改变。
 
 ```mermaid
 flowchart LR
-    C1["Canonical full cache<br/>QQQ / SPY / SGOV + rates"] --> G1["validate_data_cache<br/>strict full-universe gate"]
-    G1 -->|FAIL| B1["BLOCKED_DATA_QUALITY_OR_SOURCE<br/>no real labels"]
-    G1 -->|PASS| P1["Content-addressed three-asset panel<br/>same validator rerun"]
-    P1 --> L1["1 / 5 / 10 / 20-session labels<br/>decision + interval + availability"]
+    C1["Immutable canonical source bytes<br/>full expected universe"] --> G1["validate_data_cache<br/>full canonical report"]
+    G1 --> A1{"Every ERROR structured,<br/>policy-allowed and outside frozen scope?"}
+    A1 -->|No| B1["BLOCKED_DATA_QUALITY_OR_SOURCE<br/>no capability"]
+    A1 -->|Yes / no ERROR| P1["Exact price-only QQQ / SPY / SGOV projection"]
+    P1 --> W1["Content-bound requested-window authority<br/>same validate_data_cache"]
+    W1 -->|not exact PASS| B1
+    W1 -->|PASS| C2["Content-derived capability receipt<br/>full status still disclosed"]
+    C2 --> L1["1 / 5 / 10 / 20-session labels<br/>decision + interval + availability"]
     L1 --> X1["QQQ-SGOV primary<br/>SPY-SGOV + QQQ-SPY diagnostics"]
     L1 --> R1["Future max drawdown<br/>future worst 1d"]
     X1 --> V1["Content-derived rebuild<br/>identity + source + tamper validation"]
     R1 --> V1
-    V1 --> A1["Primary + summary + Chinese report<br/>envelope + run ledger"]
-    A1 -.-> N1["No model / search / backtest / weights<br/>no paper-shadow / production / broker"]
+    V1 --> O1["Primary + summary + Chinese report<br/>envelope + run ledger"]
+    O1 -.-> N1["No global PASS overclaim / reuse / daily authorization<br/>no model / weights / production / broker"]
 ```
 
 ARCH-004E 新增持续 DevEx/ownership 控制链：`config/architecture/devex_ownership_policy.yaml` 以互斥 specific rule + fail-closed fallback 为全部 source/test/support Python 文件生成 deterministic module/test manifests，并将 code、policy、data、artifact、runtime 五类 owner 分开记录；changed-file impact selector 只提供 focused feedback，shared aggregate 或 unknown path 会升级到 architecture coordinator/full gate，绝不替代 phase full validation。ARCH-004C dependency/direct-writer ratchet、manifest freshness、ownership coverage 与 aggregate reproducibility 被汇总为单一 architecture fitness；`scripts/run_validation_tier.py architecture-fitness` 从 generated test manifest 解析测试集合，不维护第二份手写路径。module/experiment/report scaffold 只创建 skeleton/spec/fragment，并在目标存在时 fail closed；4 个 fragment 只生成覆盖 report registry、artifact catalog、system flow 三个 target 的 shadow index，现有 aggregate 仍是 source-of-truth 且由 coordinator 独占。engineering surface inventory 只链接上述 control artifacts，不改变既有 report schema 的核心解释。该链路只改研发治理，不改变 scheduler cadence、研究结果、报告结论、DQ/PIT、阈值、权重、promotion、paper-shadow、production 或 broker。
