@@ -1,6 +1,6 @@
 # ARCH-004G2 Validation Runtime Budget 与 Immutable Fixture Reuse
 
-最后更新：2026-07-23
+最后更新：2026-07-26
 
 ## 任务信息
 
@@ -77,6 +77,58 @@ module-level validator + explicit kwargs/semantic key；不得把validator ident
 qualname，也不得缓存可变closure capture。实施前冻结same-command baseline、至少20%且30秒绝对收益门槛，
 并证明source/config/policy/output byte drift立即miss、FAIL/exception不缓存、原node/tamper/E2E全部保留；
 任一条件不满足即撤回。
+
+### 2026-07-26：Smoothed binding closure identity 有界实现冻结
+
+本切片采用 `SINGLE_LANE`，不改变 `cached_artifact_validation` 的公共API、callable object identity、
+fingerprint scope、PASS-only store或跨session生命周期。只允许修改
+`dynamic_v3_system_target_smoothed_promotion.py` 中两处动态callable：
+
+- `_source_binding.<locals>.cached_validator`捕获`validator`、`validator_key`、`artifact_id`和`root`。
+  这些值最终原样传给下层同一个content-addressed cache；动态closure本身没有额外validation语义，
+  反而使外层`hardening._source_binding`每次看到不同callable object。
+- `_validate_binding.<locals>.<lambda>`捕获已生成的可变`validation` dict。该lambda只把dict返回给
+  `method._validate_custom_binding`，却以新callable identity重复做完整artifact fingerprint；不得把该
+  mutable capture纳入缓存。
+
+冻结实现为删除两层动态callable，直接把调用方提供的既有module-level `validator`和
+`validator_key`交给原有下层helper。所有artifact id/root仍由同一binding解析，validator仍由原对象身份
+区分；不新增semantic alias，不按qualname合并，也不缓存validator返回dict。若调用方未来传入动态validator，
+现有object identity仍会自然miss。
+
+同命令pre-change baseline：
+
+- command=`python tests/profile_smoothed_validation_chain.py --output
+  outputs/validation_runtime/smoothed_validation_baseline_20260726T_current.json`；
+- artifact SHA-256=`53c3a63283f13ad2726e5c4d8ceacbfa8db718272a7f3277758dc4a17e2094`，
+  size=`43531 bytes`；
+- wall=`105.232568s`、calls=`281`、hits/misses=`193/88`、bypasses=`0`、
+  validator executions=`88`。
+
+预冻结保留门槛为after wall同时改善至少20%和30秒，即`<=75.232568s`；并且两个动态validator行必须
+消失或不再产生逐调用miss，source/config/policy/output byte drift仍立即miss，FAIL/exception仍不缓存，
+原promotion hardening/tamper/E2E node保持。任一条件不满足即byte-exact撤回实现；不为本切片额外运行Full。
+
+实际结论=`REJECTED_THRESHOLD_MISS`：
+
+- after artifact=`outputs/validation_runtime/smoothed_validation_after_20260726T_current.json`，
+  SHA-256=`fa9e1e1a3b3787839b47a4335eaa9ee86ceb12acab62530ac686a68cc99bba6a`，
+  size=`40774 bytes`；
+- after wall=`93.999076s`，相对same-command baseline只改善`11.233492s / 10.67%`，未达到
+  `<=75.232568s`；
+- calls/hits/misses/executions从`281/193/88/88`变为`221/193/28/28`，两个动态validator行消失，
+  证明identity假设成立，但60次lookup/execution指标下降没有转化为足够wall收益；
+- model target/recorded-owner authority/market cache/weekly producer/weekly validator分别为
+  `0.0454/46.1991/0.0010/39.8381/7.8675s`。authority自身的自然波动再次说明不能把嵌套累计
+  fingerprint时间线性外推为端到端收益；
+- focused hardening在候选tree为`7 passed`，Ruff PASS；Black对该历史production文件的
+  would-reformat在pre-change `HEAD`可独立复现，未引入整文件格式改写；
+- production source、targeted test和diagnostic script均已byte-exact恢复到base；没有cache contract、
+  producer/validator、fixture、DQ/PIT、策略或production行为变更。
+
+本候选不得重开为同类closure微优化。ARCH-004G2继续`IN_PROGRESS`，后续只在新自然Full或新的调用级
+证据显示可同时跨越20%与30秒门槛时，登记更高杠杆的producer DAG / immutable authority候选；不为寻找
+性能收益额外运行Full。
 
 ## Wave13 Full 后续增量（2026-07-23）
 

@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 9ea47024d717b3b6b10bca67eeed5454deee12ccbde42289545425f227377e49
+baseline_checksum: 102ba22b7c9bec8f6d5ec34d93c344ed80358935ef89f2264f79f5a6c91e27a7
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 908
 fragment_count: 908
@@ -59,8 +59,8 @@ fragments:
   fragment_checksum: ebc5df49aadd26fcab8fe50786847d140f49abf131d4beb2ba3cd7ebf2272ba2
 - task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   path: registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
-  file_sha256: 46fc172e72ec9b3522dae46884976a4619d95dd2b9e019f073644e9af175b05a
-  fragment_checksum: acb84508a41771e663c0f763b5ca77c4579e732e5643bfa5700f3a4f35136bef
+  file_sha256: 87b561ed6020f44fb0c20ce28eeb511e38f33fb399af20a746afe1589b7ea6bd
+  fragment_checksum: 353800cc9101d2bcc05d44f9a25fbb624c8e4a90e5a774515780049f4bb4adf8
 - task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
   path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
   file_sha256: 40b87f64194a8c6feca1146460967acd23d4ae1235efe954026feac5cd3a93a8
@@ -3657,8 +3657,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: ed39d5b09ecdb91be138d68c21be24f498808d8927213a4aaefbfe7d9a454650
-  rendered_sha256: ed39d5b09ecdb91be138d68c21be24f498808d8927213a4aaefbfe7d9a454650
+  source_sha256: 2e42e9673d523f928970dfecf30c1e97ca8412002c343dfc98d25379446cf4ae
+  rendered_sha256: 2e42e9673d523f928970dfecf30c1e97ca8412002c343dfc98d25379446cf4ae
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3680,4 +3680,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 9199ca050d7912a26e69cd95b098fe1f7f588af32b8cc009e9e72a589c2eb79b
+index_checksum: b2678cbe778b8ce4b7353bb018bf27e8df21bb20d35ae7ae99adc63cb167f9df

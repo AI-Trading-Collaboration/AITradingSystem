@@ -26878,3 +26878,92 @@ phase_arch_004g2_smoothed_validation_observability:
     cached_data_mutated: false
     production_effect: none
     broker_action: none
+
+phase_arch_004g2_smoothed_closure_threshold_miss:
+  schema_version: arch_004g2_closure_threshold_compatibility.v1
+  status: IN_PROGRESS
+  boundary_id: ARCH-004G2-SMOOTHED-CLOSURE-THRESHOLD-MISS
+  task_ids:
+  - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+  owner_authorization: owner_continuation:ARCH-004G2:2026-07-26:continue_engineering_line
+  prior_sections_immutability:
+    source_commit: 0f4bdb404bc72de5151af9f86a02061fc0e49835
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 2ed23d02218aecd23da9fe72068a341e662fbf51
+    raw_byte_count: 1691172
+    raw_sha256: 246c9ddd4114f419cf43b5529c2a4df7afe96811690ba7b843c76afb7d6a2bcd
+    append_offset: 1691172
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: ARCH-004G2-SMOOTHED-CLOSURE-THRESHOLD-MISS
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_004g2_smoothed_validation_observability
+    current_hash_authority: phase_arch_004g2_smoothed_closure_threshold_miss.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+  - tests/test_arch_004_refactor_policy.py
+  new_source_paths: []
+  sources:
+  - path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+    sha256: 1fcfd4a04cc6f5347497de97d402a7bbbc11d8db86c670370aa19c2d3833093a
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 2e42e9673d523f928970dfecf30c1e97ca8412002c343dfc98d25379446cf4ae
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 5b96bb5b6e6135ee309b05292380d4fa85112f7ba4d1a8ae04004c65d4763566
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 56fc2f39b3fb3e3bcf9d4ce5830244b58d487632000456e1ae1283acea8e03cd
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: e37af2ec50b8ce2d078dd5bc170534c4d6b7cbb379afb1dafe635df2a391c7e0
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+    sha256: 87b561ed6020f44fb0c20ce28eeb511e38f33fb399af20a746afe1589b7ea6bd
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: def2e88e264487c10f6425a4a2b323a850afe297aa5ef2a35b0829eb7ae77930
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: REJECTED_THRESHOLD_MISS
+    focused_smoothed_promotion: PASS_7
+    same_command_baseline_seconds: 105.232568
+    same_command_after_seconds: 93.999076
+    absolute_improvement_seconds: 11.233492
+    relative_improvement_percent: 10.67
+    required_after_max_seconds: 75.232568
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_initial: FAIL_2_AUTHORITY_DRIFT
+    architecture_rerun: PASS_662
+    contract: NOT_RUN_CANDIDATE_REVERTED
+    full: NOT_RUN_THRESHOLD_MISS
+  safety:
+    candidate_retained: false
+    production_source_byte_exact_base: true
+    targeted_test_byte_exact_base: true
+    diagnostic_script_byte_exact_base: true
+    stable_full_improvement_claimed: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: false
+    cached_data_mutated: false
+    production_effect: none
+    broker_action: none

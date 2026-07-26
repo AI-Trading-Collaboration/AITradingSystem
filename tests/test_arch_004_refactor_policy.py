@@ -348,7 +348,14 @@ ARCH_004G2_OBSERVABILITY_HISTORICAL_PREFIX_BYTE_COUNT = 1_685_075
 ARCH_004G2_OBSERVABILITY_HISTORICAL_PREFIX_SHA256 = (
     "7baa6d2b94ebcd4cf8ca9edded4ea94359f3ed1b4f5c703083032de7294a9df7"
 )
-LATEST_COMPATIBILITY_SECTION = ARCH_004G2_OBSERVABILITY_SECTION
+ARCH_004G2_CLOSURE_THRESHOLD_SECTION = "phase_arch_004g2_smoothed_closure_threshold_miss"
+ARCH_004G2_CLOSURE_THRESHOLD_BASE_COMMIT = "0f4bdb404bc72de5151af9f86a02061fc0e49835"
+ARCH_004G2_CLOSURE_THRESHOLD_BASELINE_GIT_BLOB = "2ed23d02218aecd23da9fe72068a341e662fbf51"
+ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT = 1_691_172
+ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_SHA256 = (
+    "246c9ddd4114f419cf43b5529c2a4df7afe96811690ba7b843c76afb7d6a2bcd"
+)
+LATEST_COMPATIBILITY_SECTION = ARCH_004G2_CLOSURE_THRESHOLD_SECTION
 ARCH_004G2_OBSERVABILITY_NEW_SOURCE_PATHS = frozenset(
     {"tests/profile_smoothed_validation_chain.py"}
 )
@@ -869,6 +876,25 @@ def _arch_004g2_observability_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _arch_004g2_closure_threshold_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{ARCH_004G2_CLOSURE_THRESHOLD_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == ARCH_004G2_CLOSURE_THRESHOLD_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -1288,6 +1314,33 @@ def _assert_arch_004g2_observability_historical_prefix_immutable(
     expected_marker = f"\n{ARCH_004G2_OBSERVABILITY_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker), (
         "ARCH-004G2 observability must be appended after the exact DEVX-002 push-v2 blob"
+    )
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_arch_004g2_closure_threshold_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, (
+        "ARCH-004G2 closure-threshold historical prefix differs from the immutable "
+        "observability blob"
+    )
+    assert (
+        hashlib.sha256(historical_prefix).hexdigest()
+        == ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_SHA256
+    )
+    suffix = current_bytes[ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{ARCH_004G2_CLOSURE_THRESHOLD_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker), (
+        "ARCH-004G2 closure-threshold authority must be appended after the exact "
+        "observability blob"
     )
     assert current_bytes.count(expected_marker) == 1
 
@@ -1901,6 +1954,28 @@ def _arch_004g2_observability_source_paths() -> frozenset[str]:
 
 
 @cache
+def _arch_004g2_closure_threshold_superseded_live_source_paths() -> frozenset[str]:
+    _assert_arch_004g2_closure_threshold_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _arch_004g2_closure_threshold_base_baseline_blob(),
+    )
+    baseline = _compatibility_baseline()
+    phase = baseline[ARCH_004G2_CLOSURE_THRESHOLD_SECTION]
+    paths = phase["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _arch_004g2_closure_threshold_source_paths() -> frozenset[str]:
+    baseline = _compatibility_baseline()
+    phase = baseline[ARCH_004G2_CLOSURE_THRESHOLD_SECTION]
+    sources = phase["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -2474,12 +2549,36 @@ def _arch_004g2_observability_prior_active_source_mismatches() -> frozenset[str]
     return _latest_active_source_mismatches(ARCH_004G2_OBSERVABILITY_SECTION)
 
 
+@cache
+def _arch_004g2_closure_threshold_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(ARCH_004G2_CLOSURE_THRESHOLD_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if ARCH_004G2_OBSERVABILITY_SECTION in baseline:
+    if ARCH_004G2_CLOSURE_THRESHOLD_SECTION in baseline:
+        current_superseded_paths = (
+            _arch_004g2_closure_threshold_superseded_live_source_paths()
+        )
+        assert (
+            _arch_004g2_closure_threshold_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+            | _trading_2459_doc_closeout_source_paths()
+            | _data_gov_002_source_paths()
+            | _devx_002_source_paths()
+            | _devx_002_push_v2_source_paths()
+            | _arch_004g2_observability_source_paths()
+            | _arch_004g2_closure_threshold_source_paths()
+        )
+        authority_section = ARCH_004G2_CLOSURE_THRESHOLD_SECTION
+    elif ARCH_004G2_OBSERVABILITY_SECTION in baseline:
         current_superseded_paths = _arch_004g2_observability_superseded_live_source_paths()
         assert (
             _arch_004g2_observability_prior_active_source_mismatches()
@@ -6403,9 +6502,12 @@ def test_arch_004g2_observability_is_append_only_current_hash_authority() -> Non
         _arch_004g2_observability_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_004G2_OBSERVABILITY_SECTION
+    assert next(reversed(baseline)) == ARCH_004G2_CLOSURE_THRESHOLD_SECTION
     assert list(baseline).index(DEVX_002_PUSH_V2_SECTION) < list(baseline).index(
         ARCH_004G2_OBSERVABILITY_SECTION
+    )
+    assert list(baseline).index(ARCH_004G2_OBSERVABILITY_SECTION) < list(baseline).index(
+        ARCH_004G2_CLOSURE_THRESHOLD_SECTION
     )
     phase = baseline[ARCH_004G2_OBSERVABILITY_SECTION]
 
@@ -6451,9 +6553,6 @@ def test_arch_004g2_observability_is_append_only_current_hash_authority() -> Non
     assert set(source_paths) == superseded | ARCH_004G2_OBSERVABILITY_NEW_SOURCE_PATHS
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
-    for source in sources:
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
-
     assert phase["validation"] == {
         "engineering_status": "FORMAL_VALIDATION_PASS",
         "focused_validation_session": "PASS_81_SKIPPED_1",
@@ -6471,6 +6570,88 @@ def test_arch_004g2_observability_is_append_only_current_hash_authority() -> Non
     assert phase["safety"] == {
         "stable_full_improvement_claimed": False,
         "optimization_authorized": False,
+        "strategy_logic_changed": False,
+        "strategy_threshold_changed": False,
+        "data_flow_changed": False,
+        "cached_data_mutated": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_arch_004g2_closure_threshold_miss_is_append_only_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    _assert_arch_004g2_closure_threshold_historical_prefix_immutable(
+        current_bytes,
+        _arch_004g2_closure_threshold_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == ARCH_004G2_CLOSURE_THRESHOLD_SECTION
+    phase = baseline[ARCH_004G2_CLOSURE_THRESHOLD_SECTION]
+
+    assert phase["schema_version"] == "arch_004g2_closure_threshold_compatibility.v1"
+    assert phase["status"] == "IN_PROGRESS"
+    assert phase["boundary_id"] == "ARCH-004G2-SMOOTHED-CLOSURE-THRESHOLD-MISS"
+    assert phase["task_ids"] == [
+        "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
+    ]
+    assert phase["owner_authorization"] == (
+        "owner_continuation:ARCH-004G2:2026-07-26:continue_engineering_line"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": ARCH_004G2_CLOSURE_THRESHOLD_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": ARCH_004G2_CLOSURE_THRESHOLD_BASELINE_GIT_BLOB,
+        "raw_byte_count": ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_SHA256,
+        "append_offset": ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _arch_004g2_closure_threshold_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": "ARCH-004G2-SMOOTHED-CLOSURE-THRESHOLD-MISS",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": ARCH_004G2_OBSERVABILITY_SECTION,
+        "current_hash_authority": f"{ARCH_004G2_CLOSURE_THRESHOLD_SECTION}.sources",
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["source_delta_paths"]) == superseded
+    assert phase["new_source_paths"] == []
+
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == superseded
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["validation"] == {
+        "engineering_status": "REJECTED_THRESHOLD_MISS",
+        "focused_smoothed_promotion": "PASS_7",
+        "same_command_baseline_seconds": 105.232568,
+        "same_command_after_seconds": 93.999076,
+        "absolute_improvement_seconds": 11.233492,
+        "relative_improvement_percent": 10.67,
+        "required_after_max_seconds": 75.232568,
+        "task_registry": "PASS_BYTE_IDENTICAL",
+        "architecture_initial": "FAIL_2_AUTHORITY_DRIFT",
+        "architecture_rerun": "PASS_662",
+        "contract": "NOT_RUN_CANDIDATE_REVERTED",
+        "full": "NOT_RUN_THRESHOLD_MISS",
+    }
+    assert phase["safety"] == {
+        "candidate_retained": False,
+        "production_source_byte_exact_base": True,
+        "targeted_test_byte_exact_base": True,
+        "diagnostic_script_byte_exact_base": True,
+        "stable_full_improvement_claimed": False,
         "strategy_logic_changed": False,
         "strategy_threshold_changed": False,
         "data_flow_changed": False,
@@ -6519,6 +6700,17 @@ def test_arch_004g2_observability_rejects_historical_prefix_tamper() -> None:
     tampered[ARCH_004G2_OBSERVABILITY_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_arch_004g2_observability_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_arch_004g2_closure_threshold_rejects_historical_prefix_tamper() -> None:
+    base_blob = _arch_004g2_closure_threshold_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_arch_004g2_closure_threshold_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )
