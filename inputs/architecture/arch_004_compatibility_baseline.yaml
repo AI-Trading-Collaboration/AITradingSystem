@@ -27125,3 +27125,155 @@ phase_data_gov_002_capability_receipt_phase_b1:
     cached_data_mutated: false
     production_effect: none
     broker_action: none
+
+phase_trading_2458_candidate_family_retirement_v1:
+  schema_version: trading_2458_candidate_family_retirement_compatibility.v1
+  status: COMPLETE
+  boundary_id: TRADING-2458-CANDIDATE-FAMILY-RETIREMENT-V4
+  task_ids:
+  - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
+  owner_authorization: owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family
+  prior_sections_immutability:
+    source_commit: b8463faac3579f9b3084458f62a27d2a4f21b2b1
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 4cca325113e225c9f6b8cd031d14bdec8c4b6999
+    raw_byte_count: 1703744
+    raw_sha256: 475e75e34c2b38ed086dc3795aa7d03090e2834a248dbdc34a2d71de28c5b8db
+    append_offset: 1703744
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+  - src/ai_trading_system/dynamic_v3_clean_selection_trading2452.py
+  - src/ai_trading_system/dynamic_v3_trading2452_historical_evaluator.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_dynamic_v3_clean_selection_trading2452.py
+  supersession:
+    superseded_by_phase: TRADING-2458-CANDIDATE-FAMILY-RETIREMENT-V4
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_002_capability_receipt_phase_b1
+    current_hash_authority: phase_trading_2458_candidate_family_retirement_v1.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/research/trading2458_candidate_family_retirement_v1.yaml
+  - docs/research/trading2458_candidate_family_retirement.md
+  - src/ai_trading_system/trading2458_candidate_family_retirement.py
+  - tests/test_trading2458_candidate_family_retirement.py
+  source_delta_paths:
+  - config/research/trading2458_candidate_family_retirement_v1.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+  - docs/research/trading2458_candidate_family_retirement.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+  - src/ai_trading_system/dynamic_v3_clean_selection_trading2452.py
+  - src/ai_trading_system/dynamic_v3_trading2452_historical_evaluator.py
+  - src/ai_trading_system/trading2458_candidate_family_retirement.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_dynamic_v3_clean_selection_trading2452.py
+  - tests/test_trading2458_candidate_family_retirement.py
+  sources:
+  - path: config/research/trading2458_candidate_family_retirement_v1.yaml
+    sha256: f60874d43fc97979eea8c2b923fb8627011bd72f55112516bfa556c1a97e1d75
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: 1195721baddd7b00f46ecdd3780decc623435c9cb11a3783b3a145c018d22260
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
+    sha256: b378f33ac147dab2f3edd05bfc645f5027124fb1887dbfed4a561df203467add
+    hash_normalization: git_eol_lf
+  - path: docs/research/trading2458_candidate_family_retirement.md
+    sha256: 4152eeebe4b21fb40873b104c1af379b662c3a6a1828710fcc8fc8ea5bc01042
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 3c8eb18ce91afd5fdc4e77981b02b30aa58b43803756a01108b4168bbb1e81a1
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 9fd32f65c475fb7c47c5e07b59f48996ea1f51e122cfa0ffa3a6b3f0f75a98d9
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 2259ece460bb15deaa1cc046aa71cfc764fe3ba855a80935789b20691e153c3c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: ea0593506c74fcd4e268f87a8ff4541bd5f570a33b4c969457514fec49ad9abf
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: e458c6131b008cbdc76f3958ca86a6ca45d1f3cd1ff0cf2b277a509121b5cc9d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 0768939339ee664491a0df180fce73420d16919d80e51ec81561d8b4266f94ed
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 82fe35e626be4e644547412cc5a6c999336e0d1b8fe3d6f64d5f619912a8ed82
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 2f15d226306431540d39e7ec1d43668543ed73aff35f93c34e48b88c8124db09
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 50689a3f2b3e31ec437cd00f09003fcf81f502245cd3cf4e7bf89363f11546f8
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/18/187e589211bc90f393371ab013797585fe29cc7e5a8a76309721fee6ab2c0ae7.yaml
+    sha256: 3cd88e1dda37c8afd9608236612e204f69b29e4144d48fa308012df00234275b
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/dynamic_v3_clean_selection_trading2452.py
+    sha256: b2190410582804cc9dfa7978ec3656903423f7723a74462e98a5096a55d9fbaa
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/dynamic_v3_trading2452_historical_evaluator.py
+    sha256: e7a242fd7b340788fcb6f4e2dabffb35876ec1086971e3968b1bf94250dc6275
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/trading2458_candidate_family_retirement.py
+    sha256: d5085a617fe11c45f25bfd1f66f6107466c6d68f0727fcbc7d424197ed58feeb
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 8b53780eedc50b28a1d6527fc3c184ff14333f69960f912a97baefdc516134ae
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 0d6a06cdbd74b099116517f8402f14222f5ecc7920de383d084348caf1c44b1e
+    hash_normalization: git_eol_lf
+  - path: tests/test_dynamic_v3_clean_selection_trading2452.py
+    sha256: af25af97dea29dfe87af64b4e6b2a7f8d2e00163e09d32d483f963b1fc30e1b4
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2458_candidate_family_retirement.py
+    sha256: d6dd4dbe69ee7691d00dc5405155ea238b5e7a7a011bde060254b40fea67d02b
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: PRIOR_CARRIER_VALIDATED_V4_RECOMPUTE_PENDING
+    v3_closeout_focused: PASS_64
+    v3_closeout_architecture: PASS_665
+    v3_closeout_contract: PASS_275
+    v3_closeout_full: PASS_7338_SKIPPED_4_WARNINGS_642
+    v3_carrier_drift: FAIL_MAIN_ADVANCED_TO_B8463FAAC
+    v4_exact_base: b8463faac3579f9b3084458f62a27d2a4f21b2b1
+    v4_formal_validation: DEFERRED_TO_CLOSEOUT_AUTHORITY
+  safety:
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    historical_artifact_bytes_changed: false
+    candidate_family_reopened: false
+    prospective_accessed: false
+    paper_shadow_changed: false
+    production_effect: none
+    broker_action: none

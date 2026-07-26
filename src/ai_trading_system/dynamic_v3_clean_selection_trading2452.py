@@ -260,6 +260,14 @@ def write_trading2452_package(
     package_root: Path = DEFAULT_PACKAGE_ROOT,
     project_root: Path = PROJECT_ROOT,
 ) -> dict[str, Any]:
+    from ai_trading_system.trading2458_candidate_family_retirement import (
+        require_candidate_family_action_allowed,
+    )
+
+    require_candidate_family_action_allowed(
+        "package_write",
+        project_root=project_root,
+    )
     package_root.mkdir(parents=True, exist_ok=True)
     payloads = build_trading2452_package(
         package_root=package_root,

@@ -39,6 +39,9 @@ from ai_trading_system.platform.artifacts.writer import (
     write_json_atomic,
     write_markdown_atomic,
 )
+from ai_trading_system.trading2458_candidate_family_retirement import (
+    candidate_family_action_decision,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = "dynamic_v3_trading2452_historical_seen_evaluator.v1"
@@ -87,6 +90,22 @@ def run_trading2452_historical_seen_evaluator(
     workers: int = DEFAULT_WORKERS,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
+    retirement_decision = candidate_family_action_decision("historical_evaluator_rerun")
+    if not retirement_decision["allowed"]:
+        return {
+            "status": retirement_decision["status"],
+            "run_id": None,
+            "run_dir": None,
+            "validation": {
+                "status": "NOT_RUN_RETIRED_CANDIDATE_FAMILY",
+            },
+            "retirement_decision": retirement_decision,
+            "data_quality_gate_executed": False,
+            "workers_started": False,
+            "artifacts_written": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        }
     if workers <= 0:
         raise DynamicV3Trading2452EvaluatorError("workers must be positive")
     generated = generated_at or datetime.now(UTC)

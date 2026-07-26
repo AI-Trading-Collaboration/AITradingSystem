@@ -347,6 +347,11 @@ def test_runtime_data_quality_failure_stops_before_evaluator(
     consistency_start: date,
     issues: tuple[DataQualityIssue, ...],
 ) -> None:
+    monkeypatch.setattr(
+        evaluator_module,
+        "candidate_family_action_decision",
+        lambda _action: {"allowed": True},
+    )
     selection = yaml.safe_load(
         (DEFAULT_PACKAGE_ROOT / "selection_rule.yaml").read_text(encoding="utf-8")
     )

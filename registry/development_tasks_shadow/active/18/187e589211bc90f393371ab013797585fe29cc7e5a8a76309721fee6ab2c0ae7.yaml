@@ -11,54 +11,61 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: strategy governance：落实Owner批准的`RETIRE_CURRENT_FAMILY`治理状态并验证历史证据保持只读；任何新hypothesis/generator或role-correct
+  next_owner: integration coordinator：在exact main `b8463faac`完成v4共享authority重算、最终验证与ff-only发布；任何新hypothesis/generator或role-correct
     gate另立任务
   requirement_refs:
   - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner已批准`owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family`：正式退役TRADING-2452所冻结的四template、七axis、300-candidate
-    family；禁止继续单轴调参、候选扩张、selection或promotion复用。原package、TRADING-2453/2458证据保持immutable
-    historical evidence；本决定不退役研究平台、不影响equal-risk forward-aging或QLD角色，也不授权新generator/gate/prospective/production。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner批准的退役policy
+    exact绑定TRADING-2452四template、七axis、300-candidate identity和九个immutable package
+    artifact；历史read/identity/diagnostic validation保留，package write/rebuild、evaluator
+    rerun、search/selection/watchlist/paper-shadow/promotion/production/broker全部fail
+    closed。原package、TRADING-2453/2458 bytes/hash不改；通用研究平台、equal-risk forward-aging与QLD角色不在退役范围。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 退役状态必须进入受治理policy/registry和报告边界；任何consumer不得把该family重新解释为active/selectable；历史artifact
-      byte/hash不改；新hypothesis/generator和role-correct gate必须独立预注册、使用新family id并取得Owner授权；focused/architecture/contract与所需Full通过后收口。
+    text: 退役状态进入受治理policy/registry和content-derived中文报告；consumer在DQ/output/worker或目录创建前阻断；policy/source/record/unknown-action
+      tamper fail closed；新family必须新identity、独立预注册、无污染selection protocol与新Owner授权；focused/architecture/contract/Full通过后收口。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1580
-    row_sha256: 0ebf2e449e8f28a869a050cb71354c1e71dbabc743a3f6761ae33f880e582d4c
+    row_sha256: db3eca2e87772fd235d4e31be8ed58577d721420ed0c8ac730e7bc0b2496fa8d
     cell_count: 8
     all_cells:
     - TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
     - Strategy research / frozen constraint evidence narrow causal diagnostic
     - P0
     - IN_PROGRESS
-    - strategy governance：落实Owner批准的`RETIRE_CURRENT_FAMILY`治理状态并验证历史证据保持只读；任何新hypothesis/generator或role-correct
+    - integration coordinator：在exact main `b8463faac`完成v4共享authority重算、最终验证与ff-only发布；任何新hypothesis/generator或role-correct
       gate另立任务
-    - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner已批准`owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family`：正式退役TRADING-2452所冻结的四template、七axis、300-candidate
-      family；禁止继续单轴调参、候选扩张、selection或promotion复用。原package、TRADING-2453/2458证据保持immutable
-      historical evidence；本决定不退役研究平台、不影响equal-risk forward-aging或QLD角色，也不授权新generator/gate/prospective/production。
-    - 退役状态必须进入受治理policy/registry和报告边界；任何consumer不得把该family重新解释为active/selectable；历史artifact
-      byte/hash不改；新hypothesis/generator和role-correct gate必须独立预注册、使用新family id并取得Owner授权；focused/architecture/contract与所需Full通过后收口。
-    - 2026-07-26：clean-main工程集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
-      passed / 4 skipped / 643 warnings`；这不替代仍为`IN_PROGRESS`的family退役治理，也不开放新generator、prospective、paper-shadow、promotion、production或broker。
+    - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner批准的退役policy
+      exact绑定TRADING-2452四template、七axis、300-candidate identity和九个immutable package
+      artifact；历史read/identity/diagnostic validation保留，package write/rebuild、evaluator
+      rerun、search/selection/watchlist/paper-shadow/promotion/production/broker全部fail
+      closed。原package、TRADING-2453/2458 bytes/hash不改；通用研究平台、equal-risk forward-aging与QLD角色不在退役范围。
+    - 退役状态进入受治理policy/registry和content-derived中文报告；consumer在DQ/output/worker或目录创建前阻断；policy/source/record/unknown-action
+      tamper fail closed；新family必须新identity、独立预注册、无污染selection protocol与新Owner授权；focused/architecture/contract/Full通过后收口。
+    - 2026-07-26：v3最终归档树focused/architecture/contract/Full=`64/665/275/7338 passed`但验证期间main推进到`b8463faac`，按ff-only停止；v4从该exact
+      main重算DATA-GOV-002重叠载体并重新验证。`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC|Strategy research / frozen
-      constraint evidence narrow causal diagnostic|P0|IN_PROGRESS|strategy governance：落实Owner批准的`RETIRE_CURRENT_FAMILY`治理状态并验证历史证据保持只读；任何新hypothesis/generator或role-correct
-      gate另立任务|详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner已批准`owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family`：正式退役TRADING-2452所冻结的四template、七axis、300-candidate
-      family；禁止继续单轴调参、候选扩张、selection或promotion复用。原package、TRADING-2453/2458证据保持immutable
-      historical evidence；本决定不退役研究平台、不影响equal-risk forward-aging或QLD角色，也不授权新generator/gate/prospective/production。|退役状态必须进入受治理policy/registry和报告边界；任何consumer不得把该family重新解释为active/selectable；历史artifact
-      byte/hash不改；新hypothesis/generator和role-correct gate必须独立预注册、使用新family id并取得Owner授权；focused/architecture/contract与所需Full通过后收口。|2026-07-26：clean-main工程集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
-      passed / 4 skipped / 643 warnings`；这不替代仍为`IN_PROGRESS`的family退役治理，也不开放新generator、prospective、paper-shadow、promotion、production或broker。|'
+      constraint evidence narrow causal diagnostic|P0|IN_PROGRESS|integration coordinator：在exact
+      main `b8463faac`完成v4共享authority重算、最终验证与ff-only发布；任何新hypothesis/generator或role-correct
+      gate另立任务|详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner批准的退役policy
+      exact绑定TRADING-2452四template、七axis、300-candidate identity和九个immutable package
+      artifact；历史read/identity/diagnostic validation保留，package write/rebuild、evaluator
+      rerun、search/selection/watchlist/paper-shadow/promotion/production/broker全部fail
+      closed。原package、TRADING-2453/2458 bytes/hash不改；通用研究平台、equal-risk forward-aging与QLD角色不在退役范围。|退役状态进入受治理policy/registry和content-derived中文报告；consumer在DQ/output/worker或目录创建前阻断；policy/source/record/unknown-action
+      tamper fail closed；新family必须新identity、独立预注册、无污染selection protocol与新Owner授权；focused/architecture/contract/Full通过后收口。|2026-07-26：v3最终归档树focused/architecture/contract/Full=`64/665/275/7338
+      passed`但验证期间main推进到`b8463faac`，按ff-only停止；v4从该exact main重算DATA-GOV-002重叠载体并重新验证。`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-0ebf2e449e8f28a869a050cb
+  event_id: legacy-import-db3eca2e87772fd235d4e31b
   task_id: TRADING-2458_CONSTRAINT_CAUSAL_DIAGNOSTIC
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -71,13 +78,13 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: strategy governance：落实Owner批准的`RETIRE_CURRENT_FAMILY`治理状态并验证历史证据保持只读；任何新hypothesis/generator或role-correct
+    next_owner: integration coordinator：在exact main `b8463faac`完成v4共享authority重算、最终验证与ff-only发布；任何新hypothesis/generator或role-correct
       gate另立任务
-    notes: 2026-07-26：clean-main工程集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
-      passed / 4 skipped / 643 warnings`；这不替代仍为`IN_PROGRESS`的family退役治理，也不开放新generator、prospective、paper-shadow、promotion、production或broker。
+    notes: 2026-07-26：v3最终归档树focused/architecture/contract/Full=`64/665/275/7338 passed`但验证期间main推进到`b8463faac`，按ff-only停止；v4从该exact
+      main重算DATA-GOV-002重叠载体并重新验证。`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:0ebf2e449e8f28a869a050cb71354c1e71dbabc743a3f6761ae33f880e582d4c
+  - sha256:db3eca2e87772fd235d4e31be8ed58577d721420ed0c8ac730e7bc0b2496fa8d
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -85,18 +92,20 @@ projection:
   - Strategy research / frozen constraint evidence narrow causal diagnostic
   - P0
   - IN_PROGRESS
-  - strategy governance：落实Owner批准的`RETIRE_CURRENT_FAMILY`治理状态并验证历史证据保持只读；任何新hypothesis/generator或role-correct
+  - integration coordinator：在exact main `b8463faac`完成v4共享authority重算、最终验证与ff-only发布；任何新hypothesis/generator或role-correct
     gate另立任务
-  - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner已批准`owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family`：正式退役TRADING-2452所冻结的四template、七axis、300-candidate
-    family；禁止继续单轴调参、候选扩张、selection或promotion复用。原package、TRADING-2453/2458证据保持immutable
-    historical evidence；本决定不退役研究平台、不影响equal-risk forward-aging或QLD角色，也不授权新generator/gate/prospective/production。
-  - 退役状态必须进入受治理policy/registry和报告边界；任何consumer不得把该family重新解释为active/selectable；历史artifact
-    byte/hash不改；新hypothesis/generator和role-correct gate必须独立预注册、使用新family id并取得Owner授权；focused/architecture/contract与所需Full通过后收口。
-  - 2026-07-26：clean-main工程集成已通过focused=`100`、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及Full=`7281
-    passed / 4 skipped / 643 warnings`；这不替代仍为`IN_PROGRESS`的family退役治理，也不开放新generator、prospective、paper-shadow、promotion、production或broker。
+  - 详见 `docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md`。Owner批准的退役policy
+    exact绑定TRADING-2452四template、七axis、300-candidate identity和九个immutable package
+    artifact；历史read/identity/diagnostic validation保留，package write/rebuild、evaluator
+    rerun、search/selection/watchlist/paper-shadow/promotion/production/broker全部fail
+    closed。原package、TRADING-2453/2458 bytes/hash不改；通用研究平台、equal-risk forward-aging与QLD角色不在退役范围。
+  - 退役状态进入受治理policy/registry和content-derived中文报告；consumer在DQ/output/worker或目录创建前阻断；policy/source/record/unknown-action
+    tamper fail closed；新family必须新identity、独立预注册、无污染selection protocol与新Owner授权；focused/architecture/contract/Full通过后收口。
+  - 2026-07-26：v3最终归档树focused/architecture/contract/Full=`64/665/275/7338 passed`但验证期间main推进到`b8463faac`，按ff-only停止；v4从该exact
+    main重算DATA-GOV-002重叠载体并重新验证。`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2458_Constraint_Causal_Diagnostic.md
   terminal: false
-  raw_row_sha256: 0ebf2e449e8f28a869a050cb71354c1e71dbabc743a3f6761ae33f880e582d4c
+  raw_row_sha256: db3eca2e87772fd235d4e31be8ed58577d721420ed0c8ac730e7bc0b2496fa8d
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 388e6a33b9b94a906d4d37765d68a4bb7a1d1ad41d2121cdf01e9c301169fa34
+fragment_checksum: 8008ccdcaaf954eaede7cea89957f7f1c083abf1d267567444b328448e7244bc

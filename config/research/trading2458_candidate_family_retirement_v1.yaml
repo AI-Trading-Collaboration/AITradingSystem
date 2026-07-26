@@ -1,0 +1,101 @@
+schema_version: trading2458_candidate_family_retirement_policy.v1
+policy_id: trading2458_candidate_family_retirement
+version: 1.0.0
+status: OWNER_APPROVED_RETIRED
+owner: strategy_research_owner
+effective_date: '2026-07-25'
+owner_decision: owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family
+rationale: >-
+  TRADING-2458 对冻结的 1,800 行历史证据完成 exact matched contrast；
+  七个 candidate axis 在六个 fold 上均表现为 common-mode saturation，
+  当前 candidate family 不再提供可辨识的单轴搜索空间。
+intended_effect: >-
+  保留 TRADING-2452、TRADING-2453 和 TRADING-2458 的 immutable historical
+  evidence，同时从所有主动研究、选择、晋级和执行入口移除该 family。
+validation_evidence: >-
+  TRADING-2458 content-derived diagnostic 重建 7,716 个 exact matched pairs，
+  七轴分类均为 COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION；owner 随后批准退役。
+review_condition: >-
+  本 policy 不自动到期。任何重新开放都必须建立新 family/package identity、
+  独立预注册、无污染 selection protocol 和新的 owner decision；不得修改本 policy
+  或旧 package 以恢复资格。
+expiry_condition: >-
+  仅当一份新版本 reviewed policy 明确 supersede 本 policy 且满足 reopen requirements
+  时才能改变主动消费边界；历史退役事实永久保留。
+
+retired_scope:
+  task_id: TRADING-2458
+  strategy_family_label: dynamic_v3_rescue
+  campaign_id: dynamic-v3-clean-selection-trading2452
+  package_id: dynamic-v3-clean-trading2452_11991ac7965cfcd7aa18
+  candidate_universe_id: dynamic-v3-clean-universe-trading2452_aa64f915302704bb9224
+  preregistration_id: research_preregistration_afeba0639611c7f3816f
+  selection_policy_id: dynamic_v3_clean_selection_trading2452_fold_local_v2
+  candidate_definition_version: dynamic_v3_clean_selection_trading2452_candidate_definition_v2
+  candidate_count: 300
+  template_ids:
+    - dynamic_regime_overlay_v0_3a_constraint_smooth
+    - dynamic_regime_overlay_v0_3b_drawdown_guarded
+    - dynamic_regime_overlay_v0_3c_constraint_smooth_guarded
+    - dynamic_regime_overlay_v0_3d_emergency_only_guarded
+  candidate_axes:
+    - rescue_intensity
+    - smooth_window_days
+    - constraint_buffer_bps
+    - turnover_penalty
+    - risk_off_confirmation_days
+    - rebalance_cooldown_days
+    - drawdown_guard
+  research_window:
+    requested_start: '2021-02-22'
+    evaluated_start: '2021-02-22'
+    evaluated_end: '2025-12-31'
+    prospective_untouched_start: '2026-07-22'
+
+immutable_package:
+  root: inputs/research/trading2452_dynamic_v3_clean_selection
+  artifacts:
+    campaign.json: 6b6c7d0e9b3c3617e0e97cb5c0054a5e754bf0301c2815d51bbbc6cd0f1fc6e8
+    candidate_universe.json: a47d17d5adcf37afb4ab75e0ec0e0215c8b6034021828ae448bc20ad36ccc646
+    eligibility.json: effb9b27b04ad4a529a9474da7e982c8e7312210608af6152cc656a2e2da1cf6
+    package_manifest.json: 8319cd55d727701a2ae57c556ac8bca2bbae06b2e6bc61d589b290520ff6c47f
+    preregistration.json: dfe83fae6ed00df73350e3307383a4d0758644c67d703d1eb6d49ebebcc1e467
+    research_context.json: dc77923a53ad2f9c7cfe21b13768c5178cbf5fa83bee283a3707548bc9684c7c
+    selection_rule.yaml: 895f6208fcf13013b2457580625b9207d12b942607aadf56e809ff7c47f1aabd
+    source_contract.json: 85d104da9dee78c2c337fe7c0d3c69c3f3145cf7c0efdd75c0826e3adc193441
+    window_catalog.yaml: 19a0fffc6deb468bb53a104a528bdecc23b9ff9072967174548b835dfd1169b5
+
+allowed_actions:
+  - historical_evidence_read
+  - historical_evidence_identity_validation
+  - historical_diagnostic_content_validation
+
+prohibited_actions:
+  - package_write
+  - package_rebuild_to_disk
+  - historical_evaluator_rerun
+  - candidate_expansion
+  - parameter_search
+  - candidate_selection
+  - watchlist_enrollment
+  - paper_shadow_enrollment
+  - promotion
+  - production_reuse
+  - broker_execution
+
+new_family_requirements:
+  - new_family_id
+  - new_package_id
+  - independent_preregistration
+  - uncontaminated_selection_protocol
+  - new_owner_decision
+
+safety:
+  research_only: true
+  manual_review_required: true
+  current_package_reopened: false
+  candidate_search_executed: false
+  prospective_accessed: false
+  paper_shadow_changed: false
+  production_effect: none
+  broker_action: none

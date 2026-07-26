@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1025
+module_count: 1026
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -5193,7 +5193,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_v3_clean_selection_trading2452
   path: src/ai_trading_system/dynamic_v3_clean_selection_trading2452.py
-  sha256: 48efcf0717230d38aa1f23c16666c5e8c716afad42942618b3dfc5d2379d416a
+  sha256: b2190410582804cc9dfa7978ec3656903423f7723a74462e98a5096a55d9fbaa
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -5213,7 +5213,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.dynamic_v3_trading2452_historical_evaluator
   path: src/ai_trading_system/dynamic_v3_trading2452_historical_evaluator.py
-  sha256: 5b594012b47551564d9ae875a508139b46684b5dd70e94a0779c8f5c18003d4f
+  sha256: e7a242fd7b340788fcb6f4e2dabffb35876ec1086971e3968b1bf94250dc6275
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -18855,6 +18855,26 @@ modules:
 - module_id: src.ai_trading_system.trading2453_constraint_hit_diagnosis
   path: src/ai_trading_system/trading2453_constraint_hit_diagnosis.py
   sha256: 48c6c620f857bfe1988c790c44483dbd8673a5c03fbd44687dd681095a75428e
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.trading2458_candidate_family_retirement
+  path: src/ai_trading_system/trading2458_candidate_family_retirement.py
+  sha256: d5085a617fe11c45f25bfd1f66f6107466c6d68f0727fcbc7d424197ed58feeb
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

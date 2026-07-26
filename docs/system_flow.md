@@ -559,9 +559,17 @@ bytes和inventory都由独立validator重建。正式诊断
 constraint-hit rate、delta与gate reason变化全部为0，分类一致为
 `COMMON_MODE_SATURATION_NO_AXIS_DISCRIMINATION`。因此当前证据只支持“现有family在观察设计中共同
 饱和、单轴不可辨识”的关联结论，不构成投资因果证明；owner pack建议
-`RETIRE_CURRENT_FAMILY`，任务本身不执行retire、新generator或role-correct gate。若继续研究，必须
-另立可证伪假设、结果不可见预注册与Owner授权；原package仍closed，threshold/candidate universe/
-promotion/paper-shadow/production/broker均不变。
+`RETIRE_CURRENT_FAMILY`。Owner随后批准
+`owner_decision:TRADING-2458:2026-07-25:retire_current_saturated_candidate_family`；
+`trading2458_candidate_family_retirement_v1.yaml` 以旧package九个artifact的exact SHA-256、
+package/universe/preregistration/campaign/policy identity、四template、七axis和300 candidate绑定退役
+范围。content-derived retirement record只允许历史证据读取、identity validation与既有诊断验证；
+旧package写盘、historical evaluator重跑、扩候选、调参、selection、watchlist、paper-shadow、
+promotion、production reuse和broker execution全部fail closed。Evaluator在DQ、output directory与
+worker之前返回`BLOCKED_RETIRED_CANDIDATE_FAMILY`，package writer也在目录创建前阻断。旧package
+bytes/hash不改，旧manifest eligibility仅作为历史事实保留并被退役policy supersede。若继续研究，
+必须另立可证伪假设、新family/package identity、结果不可见预注册与Owner授权；通用research
+framework、equal-risk forward aging与QLD role-limited instrument不受此次退役影响。
 
 ```mermaid
 flowchart LR
@@ -569,7 +577,9 @@ flowchart LR
     MATCH2458 --> PAIRS2458["7,716 matched pairs"]
     PAIRS2458 --> SAT2458["7 axes: zero outcome delta<br/>common-mode saturation"]
     SAT2458 --> PACK2458["Owner recommendation<br/>RETIRE_CURRENT_FAMILY"]
-    PACK2458 -.-> STOP2458["No automatic retire / new gate / new run"]
+    PACK2458 --> OWNER2458["Owner-approved RETIRED<br/>exact family identity"]
+    OWNER2458 --> HISTORY2458["Historical read / identity validation only"]
+    OWNER2458 --> STOP2458["Fail closed<br/>write / rerun / select / promote / execute"]
 ```
 
 TRADING-2457 在任何未来新策略运行之前增加通用、纯合同的selection admission层，但不替换

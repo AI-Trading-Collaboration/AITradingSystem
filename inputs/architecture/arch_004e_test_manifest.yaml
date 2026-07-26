@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1191
-test_count: 1131
+test_file_count: 1192
+test_count: 1132
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -7489,7 +7489,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 101bc4efeb043b732216bbf56de6c0cd09c585209c22d0e4341d9d804a78d5cd
+  sha256: 8b53780eedc50b28a1d6527fc3c184ff14333f69960f912a97baefdc516134ae
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7885,7 +7885,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 447a2f111c3ceeff0a4a3c482f9ce06b9db7b905bf98eada505a5438e89f62b5
+  sha256: 0d6a06cdbd74b099116517f8402f14222f5ecc7920de383d084348caf1c44b1e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -9893,7 +9893,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_dynamic_v3_clean_selection_trading2452
   path: tests/test_dynamic_v3_clean_selection_trading2452.py
-  sha256: 8957c24518dcfda558fddfd2857d2854046f834d3ae821cba707489a1a112a62
+  sha256: af25af97dea29dfe87af64b4e6b2a7f8d2e00163e09d32d483f963b1fc30e1b4
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -16026,6 +16026,22 @@ tests:
 - test_id: tests.test_trading2457_uncontaminated_selection_protocol
   path: tests/test_trading2457_uncontaminated_selection_protocol.py
   sha256: fc3159c88f83cdf1aec5e43e985a446043f2f35494da86327a92c44be80d267a
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_trading2458_candidate_family_retirement
+  path: tests/test_trading2458_candidate_family_retirement.py
+  sha256: d6dd4dbe69ee7691d00dc5405155ea238b5e7a7a011bde060254b40fea67d02b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
