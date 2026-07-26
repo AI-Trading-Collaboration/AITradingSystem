@@ -342,6 +342,25 @@ def evaluate_checkout_remote_gate(
     return blockers, warnings
 
 
+def evaluate_task_registration(
+    *,
+    mode: str,
+    stage: str,
+    task_id: str | None,
+    active_task_register: str,
+    completed_task_register: str,
+) -> tuple[bool, str]:
+    if mode == "READ_ONLY":
+        return True, "READ_ONLY"
+    active_registered = bool(task_id and task_id in active_task_register)
+    completed_registered = bool(task_id and task_id in completed_task_register)
+    if active_registered:
+        return True, "ACTIVE"
+    if stage == "CLOSEOUT" and completed_registered:
+        return True, "COMPLETED_CLOSEOUT_ONLY"
+    return False, "NONE"
+
+
 def collect_repo_state(repo: Path) -> dict[str, Any]:
     guard = repo / "scripts" / "architecture_arch005_checkout_guard.py"
     if not guard.is_file():
@@ -455,9 +474,24 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
         )
 
     task_registered = args.mode == "READ_ONLY"
+    task_registration_source = "READ_ONLY" if task_registered else "NONE"
     if args.mode != "READ_ONLY":
-        task_register = (repo / "docs" / "task_register.md").read_text(encoding="utf-8")
-        task_registered = bool(args.task_id and args.task_id in task_register)
+        active_task_register = (repo / "docs" / "task_register.md").read_text(
+            encoding="utf-8"
+        )
+        completed_task_register_path = repo / "docs" / "task_register_completed.md"
+        completed_task_register = (
+            completed_task_register_path.read_text(encoding="utf-8")
+            if completed_task_register_path.is_file()
+            else ""
+        )
+        task_registered, task_registration_source = evaluate_task_registration(
+            mode=args.mode,
+            stage=args.stage,
+            task_id=args.task_id,
+            active_task_register=active_task_register,
+            completed_task_register=completed_task_register,
+        )
         if not task_registered:
             blockers.append(
                 {
@@ -496,6 +530,7 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
         "stage": args.stage,
         "task_id": args.task_id,
         "task_registered": task_registered,
+        "task_registration_source": task_registration_source,
         "repository": repo.as_posix(),
         "git": {
             "current_branch": state["current_branch"],

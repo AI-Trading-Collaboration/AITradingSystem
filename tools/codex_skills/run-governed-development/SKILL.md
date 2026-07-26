@@ -58,6 +58,9 @@ ownership rules, integration topology, validation, and cleanup.
   validate the combined tree, and fast-forward local `main` once.
 - After local-main integration, fetch remote main, then rerun the same governed
   mode and claims as coordinator with `--stage CLOSEOUT --remote-action`.
+  A task archived in `docs/task_register_completed.md` is eligible only at this
+  `CLOSEOUT` stage; `START`, `LANE`, and `INTEGRATION` still require the task in
+  the active register.
   Require a clean local `main` and `origin/main` to be the candidate's ancestor,
   perform the repository-default ordinary non-force push, and verify both SHAs.
   Skip only for an explicit no-push request or a governed no-push condition.

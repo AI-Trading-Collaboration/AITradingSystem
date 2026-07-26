@@ -236,6 +236,50 @@ def test_non_remote_preflight_preserves_divergence_visibility_warning() -> None:
     ]
 
 
+@pytest.mark.parametrize(
+    ("stage", "expected_registered", "expected_source"),
+    [
+        ("START", False, "NONE"),
+        ("LANE", False, "NONE"),
+        ("INTEGRATION", False, "NONE"),
+        ("CLOSEOUT", True, "COMPLETED_CLOSEOUT_ONLY"),
+    ],
+)
+def test_completed_task_registration_is_closeout_only(
+    stage: str,
+    expected_registered: bool,
+    expected_source: str,
+) -> None:
+    registered, source = PREFLIGHT.evaluate_task_registration(
+        mode="SINGLE_LANE",
+        stage=stage,
+        task_id="DEVX-ARCHIVED",
+        active_task_register="|DEVX-ACTIVE|IN_PROGRESS|",
+        completed_task_register="|DEVX-ARCHIVED|DONE|",
+    )
+    assert registered is expected_registered
+    assert source == expected_source
+
+
+def test_active_and_read_only_task_registration_behavior_is_preserved() -> None:
+    active = PREFLIGHT.evaluate_task_registration(
+        mode="SINGLE_LANE",
+        stage="LANE",
+        task_id="DEVX-ACTIVE",
+        active_task_register="|DEVX-ACTIVE|IN_PROGRESS|",
+        completed_task_register="",
+    )
+    read_only = PREFLIGHT.evaluate_task_registration(
+        mode="READ_ONLY",
+        stage="START",
+        task_id=None,
+        active_task_register="",
+        completed_task_register="",
+    )
+    assert active == (True, "ACTIVE")
+    assert read_only == (True, "READ_ONLY")
+
+
 def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     skill = SKILL_PATH.read_text(encoding="utf-8")
@@ -254,3 +298,4 @@ def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
     assert "clean local `main`" in workflow
     assert "`origin_only=0`" in workflow
     assert "missing remote/upstream, remote divergence, or non-fast-forward push" in workflow
+    assert "completed.md` is eligible only" in skill

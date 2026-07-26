@@ -28443,3 +28443,100 @@ phase_ops_069_daily_input_capture_terminal_archive:
     weights_changed: false
     production_effect: none
     broker_action: none
+
+phase_devx_004_completed_task_closeout_registration:
+  schema_version: devx_004_completed_task_closeout_registration_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: DEVX-004-COMPLETED-TASK-CLOSEOUT
+  task_ids:
+  - DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
+  owner_authorization: task_register:DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION:IN_PROGRESS
+  prior_sections_immutability:
+    source_commit: 9baa0d59a204d01002a75d9c0c18516daedfaa35
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 721a566b99ec2f5c03d1e20e5ecbf3cefdcb5fb8
+    raw_byte_count: 1775827
+    raw_sha256: 31ed072dd1272da8141324b130b50312a004c252a931670afbf7dd20bffe0235
+    append_offset: 1775827
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_governed_development_skill.py
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/scripts/preflight.py
+  - tools/codex_skills/run-governed-development/SKILL.md
+  supersession:
+    superseded_by_phase: DEVX-004-COMPLETED-TASK-CLOSEOUT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_ops_069_daily_input_capture_terminal_archive
+    current_hash_authority: phase_devx_004_completed_task_closeout_registration.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  source_delta_paths:
+  - docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_governed_development_skill.py
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/scripts/preflight.py
+  - tools/codex_skills/run-governed-development/SKILL.md
+  sources:
+  - path: docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md
+    sha256: 5f39e4f4b7598ceee0961264ab20c77ae6374a5671ca8231b4912d62b08c263d
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 4c4423e6dbd9a8bdd4207f1df3fcaab30be1a3763086a039602faac703e36592
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: c0d7e2329eb5d57eab082dbae3d3ae9bdae19a41b3380b650b728ab885063e6b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: a271b10d15f681f597954f02b8cde04e33c4f9b9cf5463509c27a3c7e4be1c8a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 86e6e04b212b515a2e59553c646ba1f0e6e0465d46a9ed12fe1f3d642fe5968a
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+    sha256: c1923bb704c8e259b0caeff0da653edf93bbc5ceed7c3b6247a6353c511aa7a6
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 784c9647d80a8a23d81a53a8317ec7395867a2ccac3e2f8090361f32a5c1fcf7
+    hash_normalization: git_eol_lf
+  - path: tests/test_governed_development_skill.py
+    sha256: 761bca4525cdf4d84c7ceeea3ed1929c89bc3c295f62b6570f9cc2566266b434
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/references/workflow-modes.md
+    sha256: c3f4f1f9db526a7efcb079c72f4e514a9ccc05853ea57d97b0cae09bd9cb843b
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/scripts/preflight.py
+    sha256: 08567372816b3eb91a8b60aac707f0bf3648c64b30de1fcc797811f7cab99388
+    hash_normalization: git_eol_lf
+  - path: tools/codex_skills/run-governed-development/SKILL.md
+    sha256: 1880a148360d660cf76db41beb5e04610579abe41c41b9dae18a9f986fdec63c
+    hash_normalization: git_eol_lf
+  validation:
+    focused_skill: PASS_30
+    bundle_parity: PASS_5_FILES
+    skill_validation: PASS
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture: PASS_684
+    contract: PASS_275
+  safety:
+    completed_registration_closeout_only: true
+    earlier_stages_fail_closed: true
+    production_effect: none
+    broker_action: none

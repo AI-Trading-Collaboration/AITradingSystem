@@ -84,7 +84,9 @@ rebases, rewrites history, or repairs divergence.
 9. Verify local `main` is its ancestor and fast-forward local `main`.
 10. Fetch remote main, rerun `SINGLE_LANE` coordinator preflight with the same
     claims plus `--stage CLOSEOUT --remote-action`, ordinary-push, and verify
-    both SHAs.
+    both SHAs. A task moved to `docs/task_register_completed.md` by the validated
+    final commit is recognized only at `CLOSEOUT`; earlier stages still require
+    the active register.
 11. Audit, then delete the merged task branch when recovery is available.
 
 ### DUAL_LANE
