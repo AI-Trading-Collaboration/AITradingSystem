@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1631166
-    sha256: cd5ccd7f0e599b8441ba3b67f2355b6921ffcf1cc6a530392b0475eb27877158
+    byte_count: 1631184
+    sha256: 18bfcddc1a98820e404d94cdf2cd866f29fa44a805c1913c328ff3f3c11d8c0c
     row_count: 417
     final_newline: true
     task_id_order_sha256: 55550b8cf51a1804d92f5791cfa2fb455ca0f49c9b6bb6694afcf856792d7eb5
-    row_checksum_order_sha256: 6114b0d34d2c3acd4ac2c3f0405db9eb1372bb883501205a3c12d4e7ec262217
+    row_checksum_order_sha256: cdca83fe8b0dc8bbe0579fb5262b902f49fd22dd33b9a209bf71d1af9186ba05
     task_row_newline_counts:
       LF: 417
   - source: completed
@@ -132,7 +132,7 @@ inventory:
     VALIDATING: 268
   task_id_set_sha256: 3613681419337a6757bdc17d083834500dfb67264713f4066fa9362d52bc0cdb
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 1d5617f407ba9005e60a043d3ac6c1a00ecc584bc954512323f4856967cbb930
+  owner_set_sha256: 6f144b596067eb963b373daf5f223d9cffd60c15715c8fc453699eca9f0a57a6
   docs_link_set_sha256: efe0a6f0d0d8887bfd57c3df426a4926e82941a58e96c28ceea0340e40d45702
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3029,7 +3029,7 @@ inventory:
   - task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
     source: active
     line_number: 2006
-    row_sha256: d95241145d439319a22b4628af656ef2d6c6eae321ddad31be9dd2020342d693
+    row_sha256: c0c06691eb8c62bbed23af452067c2fb7b13ece02b74799ae53b1742417938e6
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -6483,7 +6483,7 @@ consumer_characterization:
   runtime_consumer_count: 9
   test_consumer_count: 119
   script_consumer_count: 2
-  consumer_set_sha256: 9f15122aeeaa1e1e2f9258ce431ef01cb2aeb0ba4435e94a55819a4e21edd454
+  consumer_set_sha256: e963a9d98ebd5593e47a0abe8b86e5415e41532ae493665ae8752fcfada71d9a
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
     role: runtime
@@ -7199,7 +7199,7 @@ consumer_characterization:
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 11
+    reference_count: 12
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
     role: test
@@ -7322,4 +7322,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: f6583a27a0a54d883039bb8783ac02060557dbc575510aecfb7cd26f2930b6df
+baseline_checksum: 263153d3f1a74618fce99e05468d2219965d5e229d40c33e4bbf9d97414f9544

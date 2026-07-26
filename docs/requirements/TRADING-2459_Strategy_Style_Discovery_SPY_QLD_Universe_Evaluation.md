@@ -1,6 +1,6 @@
 # TRADING-2459：Strategy Style Discovery 的 SPY/QLD 宇宙评估
 
-最后更新：2026-07-25
+最后更新：2026-07-26
 
 状态：`BASELINE_DONE_ROLE_LIMITED_2X_IMPLEMENTATION_APPROVED`
 
@@ -260,7 +260,8 @@ reproducibility=`23 passed`、contract-validation=`275 passed`、
 architecture-fitness=`648 passed`、integration=`995 passed`、required
 Full=`7281 passed / 4 skipped / 643 warnings`。Full runtime artifact=
 `outputs/validation_runtime/full_20260725T185736Z/test_runtime_summary.json`。
-工程集成已满足提交条件；QLD仍仅为role-limited implementation instrument，未生成官方权重，
+工程集成commit=`0f585879650f3433008bbbfbbaf52f47dba1ae15`已进入并推送
+`main`/`origin/main`；QLD仍仅为role-limited implementation instrument，未生成官方权重，
 未开放automatic execution、paper-shadow、production或broker。
 
 ## 临时工作区生命周期
@@ -271,6 +272,10 @@ Full=`7281 passed / 4 skipped / 643 warnings`。Full runtime artifact=
 - exit condition：本任务已验证、必要证据进入受治理位置、commit/push 完成或尝试被明确放弃；
 - cleanup：退出前检查 tracked/untracked/ignored 内容，确认无唯一证据和活动进程后使用
   `git worktree remove`，随后 `git worktree prune`。
+- 2026-07-26 closeout：37项在途内容已在clean-main重放、验证并随上述commit推送；8组formal
+  evidence完成逐文件SHA-256迁移。旧worktree经tracked/untracked/ignored与活动进程审计后按
+  exact allowlist删除，目录及Git registration均已消失；实现可由`main`/remote恢复，本地取证
+  checkpoint=`95a26bcac`保留旧在途字节的恢复边界。
 
 ## 安全边界
 
