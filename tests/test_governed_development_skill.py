@@ -141,6 +141,101 @@ def test_unsafe_repository_paths_are_rejected(path: str) -> None:
         PREFLIGHT.normalize_repo_path(path)
 
 
+def _checkout_gate(
+    **overrides: object,
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    arguments: dict[str, object] = {
+        "mode": "SINGLE_LANE",
+        "role": "coordinator",
+        "stage": "CLOSEOUT",
+        "remote_action": True,
+        "current_branch": "main",
+        "audit_status": "PASS",
+        "dirty_paths": [],
+        "origin_main": "a" * 40,
+        "origin_main_vs_local_main": {
+            "origin_only": 0,
+            "local_only": 1,
+        },
+    }
+    arguments.update(overrides)
+    return PREFLIGHT.evaluate_checkout_remote_gate(**arguments)
+
+
+@pytest.mark.parametrize("local_only", [0, 1, 4])
+def test_main_closeout_remote_gate_accepts_equal_or_ancestor_remote(
+    local_only: int,
+) -> None:
+    blockers, warnings = _checkout_gate(
+        origin_main_vs_local_main={
+            "origin_only": 0,
+            "local_only": local_only,
+        }
+    )
+    assert blockers == []
+    assert warnings == []
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected_code"),
+    [
+        ({"stage": "LANE", "remote_action": False}, "MUTATION_STAGE_ON_MAIN"),
+        ({"remote_action": False}, "MAIN_CLOSEOUT_REQUIRES_REMOTE_ACTION"),
+        (
+            {"current_branch": "codex/task"},
+            "REMOTE_ACTION_REQUIRES_MAIN",
+        ),
+        ({"role": "worker"}, "REMOTE_ACTION_REQUIRES_COORDINATOR"),
+        (
+            {"dirty_paths": ["docs/task_register.md"]},
+            "REMOTE_ACTION_DIRTY_WORKTREE",
+        ),
+        ({"origin_main": None}, "REMOTE_MAIN_UNAVAILABLE"),
+        (
+            {
+                "origin_main_vs_local_main": {
+                    "origin_only": 1,
+                    "local_only": 0,
+                }
+            },
+            "REMOTE_MAIN_NOT_CANDIDATE_ANCESTOR",
+        ),
+        (
+            {"mode": "READ_ONLY"},
+            "REMOTE_ACTION_REQUIRES_GOVERNED_MODE",
+        ),
+        (
+            {"stage": "START"},
+            "REMOTE_ACTION_REQUIRES_CLOSEOUT_STAGE",
+        ),
+    ],
+)
+def test_closeout_remote_gate_fails_closed_with_typed_blockers(
+    overrides: dict[str, object],
+    expected_code: str,
+) -> None:
+    blockers, _ = _checkout_gate(**overrides)
+    assert expected_code in {row["code"] for row in blockers}
+
+
+def test_non_remote_preflight_preserves_divergence_visibility_warning() -> None:
+    blockers, warnings = _checkout_gate(
+        stage="START",
+        remote_action=False,
+        origin_main_vs_local_main={
+            "origin_only": 0,
+            "local_only": 2,
+        },
+    )
+    assert blockers == []
+    assert warnings == [
+        {
+            "code": "REMOTE_DIVERGENCE_DISCLOSED_LOCAL_ONLY",
+            "detail": '{"local_only": 2, "origin_only": 0}',
+        }
+    ]
+
+
 def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     skill = SKILL_PATH.read_text(encoding="utf-8")
@@ -150,10 +245,12 @@ def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
     assert "default closeout boundary includes local `main` and a normal push" in agents
     assert "ordinary non-force push" in agents
     assert "remote has diverged" in agents
-    assert "run the closeout preflight with\n  `--remote-action`" in skill
+    assert "`--stage CLOSEOUT --remote-action`" in skill
     assert "force-push" in skill
     assert (
         "repository default is an ordinary push after local-main integration"
         in normalized_workflow.lower()
     )
+    assert "clean local `main`" in workflow
+    assert "`origin_only=0`" in workflow
     assert "missing remote/upstream, remote divergence, or non-fast-forward push" in workflow

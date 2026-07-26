@@ -198,6 +198,150 @@ def evaluate_claims(
     return blockers, serial
 
 
+def evaluate_checkout_remote_gate(
+    *,
+    mode: str,
+    role: str,
+    stage: str,
+    remote_action: bool,
+    current_branch: str,
+    audit_status: object,
+    dirty_paths: object,
+    origin_main: object,
+    origin_main_vs_local_main: object,
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    """Evaluate branch/stage and read-only remote publication invariants."""
+
+    blockers: list[dict[str, str]] = []
+    warnings: list[dict[str, str]] = []
+    on_main = current_branch == "main"
+
+    if mode != "READ_ONLY" and on_main and stage in {"LANE", "INTEGRATION"}:
+        blockers.append(
+            {
+                "code": "MUTATION_STAGE_ON_MAIN",
+                "detail": stage,
+            }
+        )
+
+    if mode != "READ_ONLY" and on_main and stage == "CLOSEOUT":
+        if role != "coordinator":
+            blockers.append(
+                {
+                    "code": "REMOTE_ACTION_REQUIRES_COORDINATOR",
+                    "detail": role,
+                }
+            )
+        if not remote_action:
+            blockers.append(
+                {
+                    "code": "MAIN_CLOSEOUT_REQUIRES_REMOTE_ACTION",
+                    "detail": stage,
+                }
+            )
+
+    if remote_action:
+        if mode == "READ_ONLY":
+            blockers.append(
+                {
+                    "code": "REMOTE_ACTION_REQUIRES_GOVERNED_MODE",
+                    "detail": mode,
+                }
+            )
+        if stage != "CLOSEOUT":
+            blockers.append(
+                {
+                    "code": "REMOTE_ACTION_REQUIRES_CLOSEOUT_STAGE",
+                    "detail": stage,
+                }
+            )
+        if not on_main:
+            blockers.append(
+                {
+                    "code": "REMOTE_ACTION_REQUIRES_MAIN",
+                    "detail": current_branch or "<detached>",
+                }
+            )
+        if role != "coordinator" and not (mode != "READ_ONLY" and on_main and stage == "CLOSEOUT"):
+            blockers.append(
+                {
+                    "code": "REMOTE_ACTION_REQUIRES_COORDINATOR",
+                    "detail": role,
+                }
+            )
+        if audit_status == "PASS":
+            if not isinstance(dirty_paths, list):
+                blockers.append(
+                    {
+                        "code": "REMOTE_ACTION_DIRTY_INVENTORY_UNREADABLE",
+                        "detail": type(dirty_paths).__name__,
+                    }
+                )
+            elif dirty_paths:
+                blockers.append(
+                    {
+                        "code": "REMOTE_ACTION_DIRTY_WORKTREE",
+                        "detail": ",".join(str(path) for path in dirty_paths),
+                    }
+                )
+        if origin_main is None:
+            blockers.append(
+                {
+                    "code": "REMOTE_MAIN_UNAVAILABLE",
+                    "detail": "origin/main",
+                }
+            )
+        elif not isinstance(origin_main_vs_local_main, dict):
+            blockers.append(
+                {
+                    "code": "REMOTE_MAIN_ANCESTRY_UNAVAILABLE",
+                    "detail": type(origin_main_vs_local_main).__name__,
+                }
+            )
+        else:
+            origin_only = origin_main_vs_local_main.get("origin_only")
+            local_only = origin_main_vs_local_main.get("local_only")
+            if not isinstance(origin_only, int) or not isinstance(local_only, int):
+                blockers.append(
+                    {
+                        "code": "REMOTE_MAIN_ANCESTRY_UNAVAILABLE",
+                        "detail": json.dumps(
+                            origin_main_vs_local_main,
+                            sort_keys=True,
+                        ),
+                    }
+                )
+            elif origin_only:
+                blockers.append(
+                    {
+                        "code": "REMOTE_MAIN_NOT_CANDIDATE_ANCESTOR",
+                        "detail": json.dumps(
+                            origin_main_vs_local_main,
+                            sort_keys=True,
+                        ),
+                    }
+                )
+    elif isinstance(origin_main_vs_local_main, dict):
+        origin_only = origin_main_vs_local_main.get("origin_only")
+        local_only = origin_main_vs_local_main.get("local_only")
+        if (
+            isinstance(origin_only, int)
+            and isinstance(local_only, int)
+            and (origin_only or local_only)
+        ):
+            warnings.append(
+                {
+                    "code": "REMOTE_DIVERGENCE_DISCLOSED_LOCAL_ONLY",
+                    "detail": json.dumps(
+                        origin_main_vs_local_main,
+                        sort_keys=True,
+                    ),
+                }
+            )
+
+    return blockers, warnings
+
+
 def collect_repo_state(repo: Path) -> dict[str, Any]:
     guard = repo / "scripts" / "architecture_arch005_checkout_guard.py"
     if not guard.is_file():
@@ -300,9 +444,11 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
             {
                 "code": "UNEXPECTED_ACTIVE_LEASE",
                 "detail": ",".join(
-                    str(lease.get("lease_id", "<unknown>"))
-                    if isinstance(lease, dict)
-                    else "<invalid>"
+                    (
+                        str(lease.get("lease_id", "<unknown>"))
+                        if isinstance(lease, dict)
+                        else "<invalid>"
+                    )
                     for lease in unexpected_active
                 ),
             }
@@ -327,29 +473,19 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
                 "detail": f"{args.expected_base}!={state['local_main']}",
             }
         )
-    if args.mode != "READ_ONLY" and args.stage != "START" and state["current_branch"] == "main":
-        blockers.append(
-            {
-                "code": "MUTATION_STAGE_ON_MAIN",
-                "detail": args.stage,
-            }
-        )
-    if args.remote_action and state["origin_main"] is None:
-        blockers.append(
-            {
-                "code": "REMOTE_MAIN_UNAVAILABLE",
-                "detail": "origin/main",
-            }
-        )
-    elif not args.remote_action and state["origin_main_vs_local_main"]:
-        counts = state["origin_main_vs_local_main"]
-        if counts["origin_only"] or counts["local_only"]:
-            warnings.append(
-                {
-                    "code": "REMOTE_DIVERGENCE_DISCLOSED_LOCAL_ONLY",
-                    "detail": json.dumps(counts, sort_keys=True),
-                }
-            )
+    checkout_blockers, checkout_warnings = evaluate_checkout_remote_gate(
+        mode=args.mode,
+        role=args.role,
+        stage=args.stage,
+        remote_action=args.remote_action,
+        current_branch=state["current_branch"],
+        audit_status=audit.get("status"),
+        dirty_paths=audit.get("dirty_paths"),
+        origin_main=state["origin_main"],
+        origin_main_vs_local_main=state["origin_main_vs_local_main"],
+    )
+    blockers.extend(checkout_blockers)
+    warnings.extend(checkout_warnings)
 
     status = "BLOCKED" if blockers else "SERIAL_CONTRACT_WAVE_REQUIRED" if serial else "PASS"
     return {

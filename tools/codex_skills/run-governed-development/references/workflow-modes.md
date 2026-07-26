@@ -49,9 +49,19 @@ Add `--contract-change` when a global policy, shared schema, public API,
 DQ/PIT/cache identity, research window, threshold, or consumer-visible contract
 changes. Expect `SERIAL_CONTRACT_WAVE_REQUIRED`.
 
-Add `--remote-action` to the coordinator closeout preflight. The repository
-default is an ordinary push after local-main integration; this flag validates
-that a remote exists and makes the intended publication visible in the output.
+The repository default is an ordinary push after local-main integration. Fetch
+remote main first, then rerun the same governed mode and claims with:
+
+```powershell
+python <skill-root>/scripts/preflight.py --repo . `
+  --mode <SINGLE_LANE_OR_DUAL_LANE> --task-id <TASK_ID> `
+  --role coordinator --stage CLOSEOUT --remote-action `
+  <THE_SAME_LANE_AND_COORDINATOR_PATH_CLAIMS>
+```
+
+This is a read-only publication gate. It requires a clean local `main`, a
+present `origin/main`, and `origin_only=0`; it never fetches, pushes, merges,
+rebases, rewrites history, or repairs divergence.
 
 ## Mode Protocols
 
@@ -72,8 +82,9 @@ that a remote exists and makes the intended publication visible in the output.
 7. Update task status and generated governance state.
 8. Commit the validated final tree.
 9. Verify local `main` is its ancestor and fast-forward local `main`.
-10. Run closeout preflight with `--remote-action`, fetch remote main, require it
-    to be the candidate's ancestor, ordinary-push, and verify both SHAs.
+10. Fetch remote main, rerun `SINGLE_LANE` coordinator preflight with the same
+    claims plus `--stage CLOSEOUT --remote-action`, ordinary-push, and verify
+    both SHAs.
 11. Audit, then delete the merged task branch when recovery is available.
 
 ### DUAL_LANE
@@ -93,8 +104,9 @@ that a remote exists and makes the intended publication visible in the output.
    required integration/Full tiers on the final candidate.
 10. Fast-forward local `main` once. Never fast-forward sibling lanes directly in
     sequence.
-11. Run the coordinator remote gate, ordinary-push local main, and verify
-    `local main = remote main = candidate`.
+11. Fetch remote main, rerun `DUAL_LANE` coordinator preflight with the same
+    claims plus `--stage CLOSEOUT --remote-action`, ordinary-push local main,
+    and verify `local main = remote main = candidate`.
 12. Audit and clean each lane independently.
 
 ## Coordinator-Only Defaults
@@ -128,6 +140,7 @@ Stop and report on:
 - concurrent heavyweight Full runs;
 - unattributed or unique worktree residue;
 - non-fast-forward local-main integration;
+- remote closeout from a non-main or dirty checkout;
 - missing remote/upstream, remote divergence, or non-fast-forward push;
 - candidate history containing unrelated user changes or commits;
 - any push that would require merge, rebase, history rewrite, or force-push.
