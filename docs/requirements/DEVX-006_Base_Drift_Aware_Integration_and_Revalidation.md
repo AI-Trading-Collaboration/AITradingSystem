@@ -197,6 +197,13 @@ rename、wrong ancestry、dirty target、known-unrelated zero-read 与 tamper te
   收口前推进 main；若必须等待，保留已提交工程 branch，并在 task row 记录 integration blocker；
 - branch 只有在 ancestry、unique content、validation evidence、process dependency和可恢复性
   审计完成后才能删除。
+- final integration workspace：`D:\Work\AITradingSystem_integration_devx006_arch005m1`；
+  owner=`DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION`，purpose=在不读取、stash、
+  覆盖或提交primary checkout中known-unrelated用户文档的前提下，把已提交candidate迁移到
+  `6dc8a643a` latest main并重建唯一compatibility authority；exit condition=final candidate
+  通过formal/Full、ff-only进入local main并普通push后，确认runtime evidence已在canonical
+  location、无unique tracked/untracked/ignored bytes及active process依赖，再执行
+  `git worktree remove`与`git worktree prune`。清理前candidate commit和main提供恢复边界。
 
 ## 7. 进度记录
 
