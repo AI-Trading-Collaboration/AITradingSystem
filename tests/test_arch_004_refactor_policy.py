@@ -473,6 +473,24 @@ DATA_GOV_002C2_NEW_SOURCE_PATHS = frozenset(
         "tests/test_rate_issue_attribution_review_pack.py",
     }
 )
+ARCH_004G2_PAPER_WEEKLY_SECTION = (
+    "phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate"
+)
+ARCH_004G2_PAPER_WEEKLY_BASE_COMMIT = "7b883b840783d35506876b07e3c512bd709f4d76"
+ARCH_004G2_PAPER_WEEKLY_BASELINE_GIT_BLOB = "909b9dbc745a5df588beba7f6d47d1b7d3505ede"
+ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT = 1_757_969
+ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_SHA256 = (
+    "e8a0a4a0bd6b208204204505578bb96790fdbfd9e49789a4e374ceacd065dd9e"
+)
+LATEST_COMPATIBILITY_SECTION = ARCH_004G2_PAPER_WEEKLY_SECTION
+ARCH_004G2_PAPER_WEEKLY_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "docs/requirements/"
+            "ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md"
+        ),
+    }
+)
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -1151,6 +1169,25 @@ def _data_gov_002c2_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _arch_004g2_paper_weekly_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{ARCH_004G2_PAPER_WEEKLY_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == ARCH_004G2_PAPER_WEEKLY_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -1748,6 +1785,35 @@ def _assert_data_gov_002c2_historical_prefix_immutable(
     assert suffix.startswith(
         expected_marker
     ), "DATA-GOV-002C2 authority must be appended after the exact C1 blob"
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[
+        :ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT
+    ]
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-004G2 paper-weekly historical prefix differs from immutable C2 blob"
+    assert (
+        hashlib.sha256(historical_prefix).hexdigest()
+        == ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_SHA256
+    )
+    suffix = current_bytes[
+        ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT:
+    ]
+    expected_marker = f"{ARCH_004G2_PAPER_WEEKLY_SECTION}:\n".encode()
+    assert suffix.startswith(
+        expected_marker
+    ), "paper-weekly authority must be appended after the exact C2 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2536,6 +2602,28 @@ def _data_gov_002c2_source_paths() -> frozenset[str]:
 
 
 @cache
+def _arch_004g2_paper_weekly_superseded_live_source_paths() -> frozenset[str]:
+    _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _arch_004g2_paper_weekly_base_baseline_blob(),
+    )
+    baseline = _compatibility_baseline()
+    phase = baseline[ARCH_004G2_PAPER_WEEKLY_SECTION]
+    paths = phase["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _arch_004g2_paper_weekly_source_paths() -> frozenset[str]:
+    baseline = _compatibility_baseline()
+    phase = baseline[ARCH_004G2_PAPER_WEEKLY_SECTION]
+    sources = phase["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -2567,6 +2655,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _data_gov_002c1_source_paths()
     if DATA_GOV_002C2_SECTION in baseline:
         paths |= _data_gov_002c2_source_paths()
+    if ARCH_004G2_PAPER_WEEKLY_SECTION in baseline:
+        paths |= _arch_004g2_paper_weekly_source_paths()
     return paths
 
 
@@ -3160,12 +3250,45 @@ def _data_gov_002c2_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(DATA_GOV_002C2_SECTION)
 
 
+@cache
+def _arch_004g2_paper_weekly_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(ARCH_004G2_PAPER_WEEKLY_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DATA_GOV_002C2_SECTION in baseline:
+    if ARCH_004G2_PAPER_WEEKLY_SECTION in baseline:
+        current_superseded_paths = (
+            _arch_004g2_paper_weekly_superseded_live_source_paths()
+        )
+        assert (
+            _arch_004g2_paper_weekly_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+            | _trading_2459_doc_closeout_source_paths()
+            | _data_gov_002_source_paths()
+            | _devx_002_source_paths()
+            | _devx_002_push_v2_source_paths()
+            | _arch_004g2_observability_source_paths()
+            | _arch_004g2_closure_threshold_source_paths()
+            | _data_gov_002_phase_b1_source_paths()
+            | _trading_2458_retirement_source_paths()
+            | _trading_2458_closeout_source_paths()
+            | _data_gov_002_phase_b2_source_paths()
+            | _devx_003_source_paths()
+            | _data_gov_002c1_source_paths()
+            | _data_gov_002c2_source_paths()
+            | _arch_004g2_paper_weekly_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = ARCH_004G2_PAPER_WEEKLY_SECTION
+    elif DATA_GOV_002C2_SECTION in baseline:
         current_superseded_paths = _data_gov_002c2_superseded_live_source_paths()
         assert _data_gov_002c2_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
@@ -7904,7 +8027,7 @@ def test_data_gov_002c1_is_current_hash_authority() -> None:
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
 
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _data_gov_002c1_prior_active_source_mismatches()
+    assert superseded == _data_gov_002c1_superseded_live_source_paths()
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C1-DQ-ISSUE-ATTRIBUTION-READINESS-INVENTORY"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -7925,7 +8048,10 @@ def test_data_gov_002c1_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        if source["path"] in _data_gov_002c2_superseded_live_source_paths():
+        if source["path"] in (
+            _data_gov_002c2_superseded_live_source_paths()
+            | _arch_004g2_paper_weekly_superseded_live_source_paths()
+        ):
             assert re.fullmatch(r"[0-9a-f]{64}", str(source["sha256"]))
         else:
             assert _raw_source_sha256(source) == source["sha256"], source["path"]
@@ -7976,7 +8102,9 @@ def test_data_gov_002c2_is_current_hash_authority() -> None:
         _data_gov_002c2_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == DATA_GOV_002C2_SECTION
+    assert list(baseline).index(DATA_GOV_002C2_SECTION) < list(baseline).index(
+        ARCH_004G2_PAPER_WEEKLY_SECTION
+    )
     assert list(baseline).index(DATA_GOV_002C1_SECTION) < list(baseline).index(
         DATA_GOV_002C2_SECTION
     )
@@ -8007,7 +8135,7 @@ def test_data_gov_002c2_is_current_hash_authority() -> None:
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
 
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _data_gov_002c2_prior_active_source_mismatches()
+    assert superseded == _data_gov_002c2_superseded_live_source_paths()
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -8028,7 +8156,10 @@ def test_data_gov_002c2_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        if source["path"] in _arch_004g2_paper_weekly_superseded_live_source_paths():
+            assert re.fullmatch(r"[0-9a-f]{64}", str(source["sha256"]))
+        else:
+            assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     validation = phase["validation"]
     assert validation["review_pack_build"] == "PASS_6_SITES"
@@ -8076,6 +8207,104 @@ def test_data_gov_002c2_is_current_hash_authority() -> None:
         "production_effect": "none",
         "broker_action": "none",
     }
+
+
+def test_arch_004g2_paper_weekly_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
+        current_bytes,
+        _arch_004g2_paper_weekly_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == ARCH_004G2_PAPER_WEEKLY_SECTION
+    phase = baseline[ARCH_004G2_PAPER_WEEKLY_SECTION]
+
+    assert phase["schema_version"] == (
+        "arch_004g2_paper_shadow_weekly_validation_authority_candidate_"
+        "compatibility.v1"
+    )
+    assert phase["status"] in {
+        "VALIDATING_REJECTED_THRESHOLD_MISS",
+        "BASELINE_DONE_REJECTED_THRESHOLD_MISS",
+    }
+    assert phase["boundary_id"] == (
+        "ARCH-004G2-PAPER-SHADOW-WEEKLY-VALIDATION-AUTHORITY-CANDIDATE"
+    )
+    assert phase["task_ids"] == [
+        "ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": ARCH_004G2_PAPER_WEEKLY_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": ARCH_004G2_PAPER_WEEKLY_BASELINE_GIT_BLOB,
+        "raw_byte_count": ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_SHA256,
+        "append_offset": ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _arch_004g2_paper_weekly_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "ARCH-004G2-PAPER-SHADOW-WEEKLY-VALIDATION-AUTHORITY-CANDIDATE"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DATA_GOV_002C2_SECTION,
+        "current_hash_authority": (
+            f"{ARCH_004G2_PAPER_WEEKLY_SECTION}.sources"
+        ),
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["new_source_paths"]) == ARCH_004G2_PAPER_WEEKLY_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == (
+        superseded | ARCH_004G2_PAPER_WEEKLY_NEW_SOURCE_PATHS
+    )
+
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == set(phase["source_delta_paths"])
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    validation = phase["validation"]
+    assert validation["baseline"] == "PASS_5_299_34_SECONDS"
+    assert validation["contaminated_sample"] == (
+        "EXCLUDED_542_51_SECONDS_EXTERNAL_FULL"
+    )
+    assert validation["after_a"] == (
+        "PASS_5_268_69_SECONDS_THRESHOLD_MISS_10_24_PERCENT"
+    )
+    assert validation["after_b"] == "PASS_5_372_41_SECONDS_THRESHOLD_MISS"
+    assert validation["implementation_restored"] == (
+        "PASS_BLOB_6092152071797758d7413cc3d19bd5ebeac4126b"
+    )
+    assert validation["task_registry"] == "PASS_BYTE_IDENTICAL"
+    assert validation["architecture_devex"] == "PASS"
+    formal_fields = ("architecture", "contract")
+    if phase["status"] == "BASELINE_DONE_REJECTED_THRESHOLD_MISS":
+        for field in formal_fields:
+            assert str(validation[field]).startswith("PASS_")
+    else:
+        for field in formal_fields:
+            assert validation[field] == "PENDING"
+    assert validation["full"] == "NOT_RUN_IMPLEMENTATION_REJECTED"
+
+    safety = phase["safety"]
+    assert safety["candidate_result"] == "REJECTED_THRESHOLD_MISS"
+    assert safety["retained_test_implementation"] is False
+    assert safety["production_source_changed"] is False
+    assert safety["strategy_logic_changed"] is False
+    assert safety["cached_data_mutated"] is False
+    assert safety["production_effect"] == "none"
+    assert safety["broker_action"] == "none"
 
 
 def test_trading_2458_retirement_rejects_historical_prefix_tamper() -> None:
@@ -8139,6 +8368,17 @@ def test_data_gov_002c2_rejects_historical_prefix_tamper() -> None:
     tampered[DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_data_gov_002c2_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_arch_004g2_paper_weekly_rejects_historical_prefix_tamper() -> None:
+    base_blob = _arch_004g2_paper_weekly_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

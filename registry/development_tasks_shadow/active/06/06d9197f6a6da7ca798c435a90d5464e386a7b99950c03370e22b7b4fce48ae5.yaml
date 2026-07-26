@@ -11,54 +11,56 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Validation performance coordinator：等待新自然Full/调用级证据后，只登记能跨越20%且30秒门槛的更高杠杆producer
-    DAG或immutable authority候选
+  next_owner: Validation performance coordinator：等待新自然Full/调用级证据；只登记能直接减少producer
+    DAG或形成有界immutable authority且预期跨越20%与30秒的新候选
   requirement_refs:
+  - docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。v24自然Full与opt-in
-    telemetry已稳定；Smoothed closure identity候选按预冻结协议完成same-command before/after。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`
+    与 `docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md`。v24自然Full与opt-in
+    telemetry已稳定；Smoothed closure和Paper Shadow Weekly session-lifetime候选均已拒绝。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: closure候选=`REJECTED_THRESHOLD_MISS`：wall `105.232568s -> 93.999076s`，仅`-11.233492s
-      / -10.67%`，虽miss/execution `88 -> 28`且动态validator行消失，仍未达到`<=75.232568s`。source/test/script已byte-exact恢复base；不得重开同类微优化，不为性能比较额外运行Full。长期验收仍要求自然样本、P95/read-amplification与高杠杆候选的预冻结安全/收益门槛。
+    text: Paper Shadow Weekly候选=`REJECTED_THRESHOLD_MISS`：baseline=`299.34s`，无重型并发After-A/B=`268.69/372.41s`；较快样本只改善`30.65s/10.24%`，较慢样本高于冻结上限`239.472s`。目标test已byte-exact恢复，current/base
+      blob均为`6092152071797758d7413cc3d19bd5ebeac4126b`；不得重开同类scope-lifetime微优化。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1582
-    row_sha256: cbbc8900177aa585632cfda5c79b5daab5e4e08013fa4dd485677fd0e35d2583
+    row_sha256: 6123b89d009245eb72c3add1e5afebde0c15a15a4e3b490ad90aaf834c6660ba
     cell_count: 8
     all_cells:
     - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
     - P1
     - IN_PROGRESS
-    - Validation performance coordinator：等待新自然Full/调用级证据后，只登记能跨越20%且30秒门槛的更高杠杆producer
-      DAG或immutable authority候选
-    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。v24自然Full与opt-in
-      telemetry已稳定；Smoothed closure identity候选按预冻结协议完成same-command before/after。
-    - closure候选=`REJECTED_THRESHOLD_MISS`：wall `105.232568s -> 93.999076s`，仅`-11.233492s
-      / -10.67%`，虽miss/execution `88 -> 28`且动态validator行消失，仍未达到`<=75.232568s`。source/test/script已byte-exact恢复base；不得重开同类微优化，不为性能比较额外运行Full。长期验收仍要求自然样本、P95/read-amplification与高杠杆候选的预冻结安全/收益门槛。
-    - 2026-07-26：baseline/after artifacts SHA-256分别=`53c3a63283f13ad2726e5c4d8ceacbfa8db718272a7f3277758dc4a17e2094`/`fa9e1e1a3b3787839b47a4335eaa9ee86ceb12acab62530ac686a68cc99bba6a`；候选tree
-      focused=`7 passed`、Ruff PASS，生产实现已撤回。`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+    - Validation performance coordinator：等待新自然Full/调用级证据；只登记能直接减少producer DAG或形成有界immutable
+      authority且预期跨越20%与30秒的新候选
+    - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`
+      与 `docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md`。v24自然Full与opt-in
+      telemetry已稳定；Smoothed closure和Paper Shadow Weekly session-lifetime候选均已拒绝。
+    - Paper Shadow Weekly候选=`REJECTED_THRESHOLD_MISS`：baseline=`299.34s`，无重型并发After-A/B=`268.69/372.41s`；较快样本只改善`30.65s/10.24%`，较慢样本高于冻结上限`239.472s`。目标test已byte-exact恢复，current/base
+      blob均为`6092152071797758d7413cc3d19bd5ebeac4126b`；不得重开同类scope-lifetime微优化。
+    - 2026-07-27：与外部Full重叠的`542.51s`样本固定排除；有效After JUnit SHA-256=`a4cea28c5ad9ea9f11a8f78e91b57c306eeb4446b95816728e65e201a0b8a61a`/`aa3ebf1175ebbf5e5c4e62ec7a20d7fd2bc91476a883939af6eaca37161a8ba6`。候选拒绝且production未改，任务保持`IN_PROGRESS`；`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
     raw_line: '|ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE|Architecture
       / validation runtime、immutable fixture reuse与memory-aware parallelism|P1|IN_PROGRESS|Validation
-      performance coordinator：等待新自然Full/调用级证据后，只登记能跨越20%且30秒门槛的更高杠杆producer DAG或immutable
-      authority候选|详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。v24自然Full与opt-in
-      telemetry已稳定；Smoothed closure identity候选按预冻结协议完成same-command before/after。|closure候选=`REJECTED_THRESHOLD_MISS`：wall
-      `105.232568s -> 93.999076s`，仅`-11.233492s / -10.67%`，虽miss/execution `88 ->
-      28`且动态validator行消失，仍未达到`<=75.232568s`。source/test/script已byte-exact恢复base；不得重开同类微优化，不为性能比较额外运行Full。长期验收仍要求自然样本、P95/read-amplification与高杠杆候选的预冻结安全/收益门槛。|2026-07-26：baseline/after
-      artifacts SHA-256分别=`53c3a63283f13ad2726e5c4d8ceacbfa8db718272a7f3277758dc4a17e2094`/`fa9e1e1a3b3787839b47a4335eaa9ee86ceb12acab62530ac686a68cc99bba6a`；候选tree
-      focused=`7 passed`、Ruff PASS，生产实现已撤回。`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。|'
+      performance coordinator：等待新自然Full/调用级证据；只登记能直接减少producer DAG或形成有界immutable authority且预期跨越20%与30秒的新候选|详见
+      `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`
+      与 `docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md`。v24自然Full与opt-in
+      telemetry已稳定；Smoothed closure和Paper Shadow Weekly session-lifetime候选均已拒绝。|Paper
+      Shadow Weekly候选=`REJECTED_THRESHOLD_MISS`：baseline=`299.34s`，无重型并发After-A/B=`268.69/372.41s`；较快样本只改善`30.65s/10.24%`，较慢样本高于冻结上限`239.472s`。目标test已byte-exact恢复，current/base
+      blob均为`6092152071797758d7413cc3d19bd5ebeac4126b`；不得重开同类scope-lifetime微优化。|2026-07-27：与外部Full重叠的`542.51s`样本固定排除；有效After
+      JUnit SHA-256=`a4cea28c5ad9ea9f11a8f78e91b57c306eeb4446b95816728e65e201a0b8a61a`/`aa3ebf1175ebbf5e5c4e62ec7a20d7fd2bc91476a883939af6eaca37161a8ba6`。候选拒绝且production未改，任务保持`IN_PROGRESS`；`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-cbbc8900177aa585632cfda5
+  event_id: legacy-import-6123b89d009245eb72c3add1
   task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -71,13 +73,12 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: Validation performance coordinator：等待新自然Full/调用级证据后，只登记能跨越20%且30秒门槛的更高杠杆producer
-      DAG或immutable authority候选
-    notes: 2026-07-26：baseline/after artifacts SHA-256分别=`53c3a63283f13ad2726e5c4d8ceacbfa8db718272a7f3277758dc4a17e2094`/`fa9e1e1a3b3787839b47a4335eaa9ee86ceb12acab62530ac686a68cc99bba6a`；候选tree
-      focused=`7 passed`、Ruff PASS，生产实现已撤回。`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+    next_owner: Validation performance coordinator：等待新自然Full/调用级证据；只登记能直接减少producer
+      DAG或形成有界immutable authority且预期跨越20%与30秒的新候选
+    notes: 2026-07-27：与外部Full重叠的`542.51s`样本固定排除；有效After JUnit SHA-256=`a4cea28c5ad9ea9f11a8f78e91b57c306eeb4446b95816728e65e201a0b8a61a`/`aa3ebf1175ebbf5e5c4e62ec7a20d7fd2bc91476a883939af6eaca37161a8ba6`。候选拒绝且production未改，任务保持`IN_PROGRESS`；`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:cbbc8900177aa585632cfda5c79b5daab5e4e08013fa4dd485677fd0e35d2583
+  - sha256:6123b89d009245eb72c3add1e5afebde0c15a15a4e3b490ad90aaf834c6660ba
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -85,17 +86,18 @@ projection:
   - Architecture / validation runtime、immutable fixture reuse与memory-aware parallelism
   - P1
   - IN_PROGRESS
-  - Validation performance coordinator：等待新自然Full/调用级证据后，只登记能跨越20%且30秒门槛的更高杠杆producer
-    DAG或immutable authority候选
-  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`。v24自然Full与opt-in
-    telemetry已稳定；Smoothed closure identity候选按预冻结协议完成same-command before/after。
-  - closure候选=`REJECTED_THRESHOLD_MISS`：wall `105.232568s -> 93.999076s`，仅`-11.233492s
-    / -10.67%`，虽miss/execution `88 -> 28`且动态validator行消失，仍未达到`<=75.232568s`。source/test/script已byte-exact恢复base；不得重开同类微优化，不为性能比较额外运行Full。长期验收仍要求自然样本、P95/read-amplification与高杠杆候选的预冻结安全/收益门槛。
-  - 2026-07-26：baseline/after artifacts SHA-256分别=`53c3a63283f13ad2726e5c4d8ceacbfa8db718272a7f3277758dc4a17e2094`/`fa9e1e1a3b3787839b47a4335eaa9ee86ceb12acab62530ac686a68cc99bba6a`；候选tree
-    focused=`7 passed`、Ruff PASS，生产实现已撤回。`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
+  - Validation performance coordinator：等待新自然Full/调用级证据；只登记能直接减少producer DAG或形成有界immutable
+    authority且预期跨越20%与30秒的新候选
+  - 详见 `docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md`
+    与 `docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md`。v24自然Full与opt-in
+    telemetry已稳定；Smoothed closure和Paper Shadow Weekly session-lifetime候选均已拒绝。
+  - Paper Shadow Weekly候选=`REJECTED_THRESHOLD_MISS`：baseline=`299.34s`，无重型并发After-A/B=`268.69/372.41s`；较快样本只改善`30.65s/10.24%`，较慢样本高于冻结上限`239.472s`。目标test已byte-exact恢复，current/base
+    blob均为`6092152071797758d7413cc3d19bd5ebeac4126b`；不得重开同类scope-lifetime微优化。
+  - 2026-07-27：与外部Full重叠的`542.51s`样本固定排除；有效After JUnit SHA-256=`a4cea28c5ad9ea9f11a8f78e91b57c306eeb4446b95816728e65e201a0b8a61a`/`aa3ebf1175ebbf5e5c4e62ec7a20d7fd2bc91476a883939af6eaca37161a8ba6`。候选拒绝且production未改，任务保持`IN_PROGRESS`；`stable_full_improvement_claimed=false`、`strategy_logic_changed=false`、`cached_data_mutated=false`、`production_effect=none`。
   docs_links:
+  - docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md
   - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
   terminal: false
-  raw_row_sha256: cbbc8900177aa585632cfda5c79b5daab5e4e08013fa4dd485677fd0e35d2583
+  raw_row_sha256: 6123b89d009245eb72c3add1e5afebde0c15a15a4e3b490ad90aaf834c6660ba
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 353800cc9101d2bcc05d44f9a25fbb624c8e4a90e5a774515780049f4bb4adf8
+fragment_checksum: d5bc48112dca559d801109a78127fa5962eff70bfebb4fc41501be3c37eb9b7e

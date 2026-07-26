@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: b9e3f0467d44bd96f33770b4093d13fb93f5bcf59202afcc879a17369cc57ce5
+baseline_checksum: 62355bcbd2517ccaf5ec55819ed60ecfcd68f00b3d3909efc795ff8571250f5d
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 911
 fragment_count: 911
@@ -59,8 +59,8 @@ fragments:
   fragment_checksum: ebc5df49aadd26fcab8fe50786847d140f49abf131d4beb2ba3cd7ebf2272ba2
 - task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
   path: registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
-  file_sha256: 87b561ed6020f44fb0c20ce28eeb511e38f33fb399af20a746afe1589b7ea6bd
-  fragment_checksum: 353800cc9101d2bcc05d44f9a25fbb624c8e4a90e5a774515780049f4bb4adf8
+  file_sha256: 8ccf1cff0b90a344f1532a4b7815a9ee64f98b2a26c087b616a55775ea438762
+  fragment_checksum: d5bc48112dca559d801109a78127fa5962eff70bfebb4fc41501be3c37eb9b7e
 - task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
   path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
   file_sha256: 307f30e73a2fb157ab8edd51673c28e536e9e79ba9d75ff32c48c30edbfe0369
@@ -3669,8 +3669,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: a3e5fdbe83c1354ee357b9dde500af70472ee5dcc74e98fea75707bc80ef7141
-  rendered_sha256: a3e5fdbe83c1354ee357b9dde500af70472ee5dcc74e98fea75707bc80ef7141
+  source_sha256: 49bdf5f88709ff34d0ea96f90dbcf86dc3f95fdc67ca2c25084ce70fbe167b4e
+  rendered_sha256: 49bdf5f88709ff34d0ea96f90dbcf86dc3f95fdc67ca2c25084ce70fbe167b4e
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3692,4 +3692,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 5f7b08b14174051b8d3355fddb0d3f8f9cfb41862c5120f7d10639c897757c8e
+index_checksum: 255d9ab69a9030f336c48b58f0ab747f1a1d9d1a1989d0caaf9caad39527505f

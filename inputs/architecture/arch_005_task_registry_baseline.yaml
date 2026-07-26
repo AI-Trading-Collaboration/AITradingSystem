@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1637230
-    sha256: a3e5fdbe83c1354ee357b9dde500af70472ee5dcc74e98fea75707bc80ef7141
+    byte_count: 1637303
+    sha256: 49bdf5f88709ff34d0ea96f90dbcf86dc3f95fdc67ca2c25084ce70fbe167b4e
     row_count: 421
     final_newline: true
     task_id_order_sha256: 7bf0f35dafe6a5769cb643bd5ee62a9f9e05541411572569f059ec306ffe198e
-    row_checksum_order_sha256: c0962c0f61ec2bc6922639070993ce35828ec0f2ff4cd3b3ba695c98a937cb97
+    row_checksum_order_sha256: ea6c3e8bc383a7e5fa8bb9394440f8af3170fd7e927c4f1e5b1bbb67d2b07f66
     task_row_newline_counts:
       LF: 421
   - source: completed
@@ -132,8 +132,8 @@ inventory:
     VALIDATING: 267
   task_id_set_sha256: a1144bf46ae77573630e4186adf029e871f95f35512a97d4e9665462a8d57036
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: bd21d10b17cb1a49c10ba5e229e488e862ceaf0b34ecc38df677ee5560fb5609
-  docs_link_set_sha256: ce344bc618ab10b47b2937d7150372281c7e5fe23c94883eab0bb42cff065678
+  owner_set_sha256: 471fe18ffdae864294aa9aa23c4d07964cd96ae5f4b401bf2f8f9ed609203860
+  docs_link_set_sha256: 50565d956559476edb2b241d76aed2521c4a0135e70478a3fb7963ab85efbff8
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -768,7 +768,7 @@ inventory:
   - task_id: ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
     source: active
     line_number: 1582
-    row_sha256: cbbc8900177aa585632cfda5c79b5daab5e4e08013fa4dd485677fd0e35d2583
+    row_sha256: 6123b89d009245eb72c3add1e5afebde0c15a15a4e3b490ad90aaf834c6660ba
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7363,4 +7363,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: b9e3f0467d44bd96f33770b4093d13fb93f5bcf59202afcc879a17369cc57ce5
+baseline_checksum: 62355bcbd2517ccaf5ec55819ed60ecfcd68f00b3d3909efc795ff8571250f5d

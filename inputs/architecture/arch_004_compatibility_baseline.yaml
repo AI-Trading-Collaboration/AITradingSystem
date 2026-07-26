@@ -28105,3 +28105,93 @@ phase_data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack:
     cached_data_mutated: false
     production_effect: none
     broker_action: none
+phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate:
+  schema_version: arch_004g2_paper_shadow_weekly_validation_authority_candidate_compatibility.v1
+  status: VALIDATING_REJECTED_THRESHOLD_MISS
+  boundary_id: ARCH-004G2-PAPER-SHADOW-WEEKLY-VALIDATION-AUTHORITY-CANDIDATE
+  task_ids:
+  - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+  owner_authorization: task_register:ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE:IN_PROGRESS
+  prior_sections_immutability:
+    source_commit: 7b883b840783d35506876b07e3c512bd709f4d76
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 909b9dbc745a5df588beba7f6d47d1b7d3505ede
+    raw_byte_count: 1757969
+    raw_sha256: e8a0a4a0bd6b208204204505578bb96790fdbfd9e49789a4e374ceacd065dd9e
+    append_offset: 1757969
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: ARCH-004G2-PAPER-SHADOW-WEEKLY-VALIDATION-AUTHORITY-CANDIDATE
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack
+    current_hash_authority: phase_arch_004g2_paper_shadow_weekly_validation_authority_candidate.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md
+  source_delta_paths:
+  - docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md
+  - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md
+    sha256: 0a3ee526e3c2583ddf0cb7bc1d09405ef863f3ccb90e6f20a57cd02bc2f97e44
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+    sha256: b0a673e2c1c23259aad404112ac5f90924c602910721f840fe5699e5d5c240ed
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 49bdf5f88709ff34d0ea96f90dbcf86dc3f95fdc67ca2c25084ce70fbe167b4e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 6dcc14137496b8f32cb9c1d7ad8b620aa0638401ab7c4d9227f946cac25bbe6e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 309035d1cc2d8544b63fc8027add334903f77ea6a8f803fb5091d2d34a651d7c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 8f40d24c50f32dd1890e6c6b6eeb9d323065c65d068b1a6b66d88fbc583ded88
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+    sha256: 8ccf1cff0b90a344f1532a4b7815a9ee64f98b2a26c087b616a55775ea438762
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: bef628a1753c6198c5de1adf489a433a83c6d2c6476947f2b5d95a752e3cb95d
+    hash_normalization: git_eol_lf
+  validation:
+    baseline: PASS_5_299_34_SECONDS
+    contaminated_sample: EXCLUDED_542_51_SECONDS_EXTERNAL_FULL
+    after_a: PASS_5_268_69_SECONDS_THRESHOLD_MISS_10_24_PERCENT
+    after_b: PASS_5_372_41_SECONDS_THRESHOLD_MISS
+    implementation_restored: PASS_BLOB_6092152071797758d7413cc3d19bd5ebeac4126b
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture: PENDING
+    contract: PENDING
+    full: NOT_RUN_IMPLEMENTATION_REJECTED
+  safety:
+    candidate_result: REJECTED_THRESHOLD_MISS
+    retained_test_implementation: false
+    production_source_changed: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: false
+    cached_data_read: false
+    cached_data_mutated: false
+    production_effect: none
+    broker_action: none

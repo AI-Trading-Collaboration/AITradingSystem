@@ -11,6 +11,37 @@
 - dependency：G2.4 原子切片不得被打断；优先随正在迁移的 chain 分批治理
 - production effect：`none`
 
+## 2026-07-26：Paper Shadow Weekly immutable validation authority 候选
+
+新自然 Full `full_20260726T142413Z` 显示
+`tests/test_paper_shadow_weekly_review.py` 持续为稳定长尾，最近 6 个自然样本 file duration=
+`696.1/1184.3/766.2/747.6/920.2/730.7s`。代码审计确认该文件的 5 个 node 已共享一次
+module source fixture，却仍各自创建 function-scoped validation session，重复重验相同
+daily/drift/contract/ledger content DAG；两个会改变共享 source 的节点均已有 `finally`
+byte-exact restore。
+
+因此登记独立有界增量
+`ARCH-004G2_PAPER_SHADOW_WEEKLY_IMMUTABLE_VALIDATION_AUTHORITY_CANDIDATE`，只允许把目标 test
+module 的 outer PASS-only validation session 提升为 module scope，不修改 production source。
+同命令 baseline/两个 after 以较慢 after 判断，必须同时改善至少 `20%` 和 `30s`；5 个既有
+nodeid、tamper/missing-input真实失效、FAIL/exception不缓存及 validation-session 全合同必须保留。
+详细冻结范围、撤回条件和验证计划见
+`docs/requirements/ARCH-004G2_Paper_Shadow_Weekly_Immutable_Validation_Authority_Candidate.md`。
+当前状态=`IN_PROGRESS_BASELINE_FREEZE`，尚未声明收益或保留实现。
+
+Same-command pre-change baseline 已冻结为 `5 passed / 299.34s`，JUnit SHA-256=
+`22e482ec31fda6059ee4f05b8527c400ae4b8d96124f2d6b785301f861d73b18`。两个 after
+样本中较慢者必须 `<=239.472s`，否则撤回；当前转 `IN_PROGRESS_IMPLEMENTATION`。
+
+实际结论=`REJECTED_THRESHOLD_MISS`。一个与外部 Full 重叠的 `542.51s` 样本明确排除；
+无重型并发的 After-A/B=`268.69/372.41s`。较快 After-A 只改善
+`30.65s / 10.24%`，未跨越 20%；较慢 After-B 高于 baseline，最终判定
+`372.41s > 239.472s`。目标 test implementation 已撤回，current/base Git blob 均为
+`6092152071797758d7413cc3d19bd5ebeac4126b`；production source 未修改。该结果证明只延长
+validation-session 生命周期不是稳定高杠杆方案，不得重开同类微优化。任务继续
+`IN_PROGRESS`，等待能直接减少 producer DAG 构建或形成有界 immutable authority 的新自然 Full/
+调用级证据。
+
 ## 2026-07-26：v24自然Full验证与Smoothed observability slice
 
 DEVX-002 v2自然integration-boundary Full
