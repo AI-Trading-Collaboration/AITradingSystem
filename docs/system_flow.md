@@ -111,8 +111,14 @@ rebuild fast path；若descendant中的catalog、flow或aggregate已演进，则
 查询，descendant内容漂移不得改写或伪造历史证据，从而同时避免commit/hash自循环和历史evidence假漂移。tracked
 `arch_005_bootstrap_validation_bundle.v1` 以 base64 保存 handoff 所需四份 validation summary 的 exact
 raw bytes（包括 CRLF），并校验 exact path set、SHA、JSON status/exit code/tier；canonical G2 validator
-因此在 clean clone 不读取本地 `outputs/`。Git lineage 逐段验证 `handoff base -> handoff HEAD -> G2
-source base`，CI checkout 固定 `fetch-depth: 0`。整个链路
+因此在 clean clone 不读取本地 `outputs/`。ARCH-005M2 将同一验证逻辑抽为
+`portable_validation_bundle` primitive；只读入口
+`python scripts/architecture_arch005_portable_validation_bundle.py --repository . --source-base HEAD`
+直接从既有 G2.5 policy 取得 bundle/handoff path 与 exact bundle SHA，输出
+`portable_bootstrap_validation_report.v1` 到 stdout。该入口逐份披露 decoded size，并同时验证
+path/SHA/status/exit/bundle tier/runtime tier、canonical handoff frozen blobs 与 Git lineage，不创建
+sidecar、报告文件或第二事实源。Git lineage 逐段验证 `handoff base -> handoff HEAD -> requested
+source base`，CI/clean-clone checkout必须保留完整 Git history。整个链路
 `dispatch_allowed=false`、`lease_acquisition_allowed=false`、`automatic_merge_allowed=false`，不改
 task facts、策略或 production/broker。Wave 11 required focused=`75 passed`、architecture=`482 passed /
 60.07s`、contract=`266 passed / 140.76s`；最终 Full=`6710 passed / 3 skipped / 643 warnings`，

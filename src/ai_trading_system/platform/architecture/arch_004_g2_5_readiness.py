@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import base64
-import binascii
 import hashlib
 import json
 import re
@@ -40,6 +39,10 @@ from ai_trading_system.platform.architecture.parallel_control_kernel import (
 from ai_trading_system.platform.architecture.parallel_control_scheduler import (
     PilotSpec,
     build_shadow_scheduler_decision,
+)
+from ai_trading_system.platform.architecture.portable_validation_bundle import (
+    PortableValidationBundleError,
+    load_validation_bundle_bytes,
 )
 from ai_trading_system.platform.architecture.wave_readiness import (
     WaveReadinessError,
@@ -289,88 +292,16 @@ def load_source_validation_bundle(
     handoff_path: Path,
     project_root: Path,
 ) -> dict[str, bytes]:
-    root = project_root.resolve()
-    expected_bundle_sha = _sha256_text(expected_sha256, "source_validation_bundle_sha256")
-    actual_bundle_sha = _sha256_path(path)
-    if actual_bundle_sha != expected_bundle_sha:
-        raise G25ReadinessError(
-            "VALIDATION_BUNDLE_FILE_HASH_DRIFT",
-            f"expected={expected_bundle_sha} actual={actual_bundle_sha}",
+    try:
+        return load_validation_bundle_bytes(
+            path=path,
+            expected_sha256=expected_sha256,
+            handoff=handoff,
+            handoff_path=handoff_path,
+            project_root=project_root,
         )
-    payload = _mapping(_load_unique_json_path(path, "validation_bundle"), "validation_bundle")
-    _exact(
-        payload,
-        {
-            "schema_version",
-            "source_handoff_path",
-            "source_handoff_sha256",
-            "source_handoff_checksum",
-            "artifact_count",
-            "artifacts",
-            "production_effect",
-            "broker_action",
-        },
-        "VALIDATION_BUNDLE_FIELDS",
-    )
-    if payload["schema_version"] != VALIDATION_BUNDLE_SCHEMA_VERSION:
-        raise G25ReadinessError("VALIDATION_BUNDLE_SCHEMA", str(payload["schema_version"]))
-    expected_handoff_path = _relative(handoff_path, root)
-    if (
-        payload["source_handoff_path"] != expected_handoff_path
-        or payload["source_handoff_sha256"] != _sha256_path(handoff_path)
-        or payload["source_handoff_checksum"] != handoff.get("handoff_checksum")
-    ):
-        raise G25ReadinessError("VALIDATION_BUNDLE_HANDOFF_DRIFT", expected_handoff_path)
-    if payload["production_effect"] != "none" or payload["broker_action"] != "none":
-        raise G25ReadinessError("VALIDATION_BUNDLE_UNSAFE_EFFECT", str(path))
-    rows = _maps(payload["artifacts"], "validation_bundle.artifacts")
-    if payload["artifact_count"] != len(rows):
-        raise G25ReadinessError("VALIDATION_BUNDLE_COUNT_DRIFT", str(payload["artifact_count"]))
-    handoff_tiers = _mapping(handoff.get("validation_artifacts"), "handoff.validation_artifacts")
-    if set(handoff_tiers) != set(REQUIRED_VALIDATION_TIERS):
-        raise G25ReadinessError("VALIDATION_BUNDLE_HANDOFF_TIER_SET", str(sorted(handoff_tiers)))
-    decoded: dict[str, bytes] = {}
-    seen_tiers: set[str] = set()
-    for row in rows:
-        _exact(
-            row,
-            {"tier", "original_path", "sha256", "content_base64"},
-            "VALIDATION_BUNDLE_ARTIFACT_FIELDS",
-        )
-        tier = _text(row["tier"], "bundle.tier")
-        if tier in seen_tiers:
-            raise G25ReadinessError("VALIDATION_BUNDLE_DUPLICATE_TIER", tier)
-        seen_tiers.add(tier)
-        if tier not in REQUIRED_VALIDATION_TIERS:
-            raise G25ReadinessError("VALIDATION_BUNDLE_UNKNOWN_TIER", tier)
-        source = _mapping(handoff_tiers[tier], f"handoff.validation_artifacts.{tier}")
-        original_path = _portable(row["original_path"], "bundle.original_path")
-        if original_path in decoded:
-            raise G25ReadinessError("VALIDATION_BUNDLE_DUPLICATE_PATH", original_path)
-        if original_path != source.get("artifact_path"):
-            raise G25ReadinessError("VALIDATION_BUNDLE_PATH_DRIFT", tier)
-        expected_content_sha = _sha256_text(row["sha256"], "bundle.sha256")
-        if expected_content_sha != source.get("artifact_sha256"):
-            raise G25ReadinessError("VALIDATION_BUNDLE_HANDOFF_HASH_DRIFT", tier)
-        try:
-            content = base64.b64decode(
-                _text(row["content_base64"], "bundle.content_base64"), validate=True
-            )
-        except (binascii.Error, ValueError) as exc:
-            raise G25ReadinessError("VALIDATION_BUNDLE_BASE64", tier) from exc
-        actual_content_sha = hashlib.sha256(content).hexdigest()
-        if actual_content_sha != expected_content_sha:
-            raise G25ReadinessError(
-                "VALIDATION_BUNDLE_CONTENT_HASH_DRIFT",
-                f"{tier}:{expected_content_sha}->{actual_content_sha}",
-            )
-        decoded[original_path] = content
-    if seen_tiers != set(REQUIRED_VALIDATION_TIERS):
-        raise G25ReadinessError(
-            "VALIDATION_BUNDLE_TIER_SET",
-            f"expected={list(REQUIRED_VALIDATION_TIERS)} actual={sorted(seen_tiers)}",
-        )
-    return dict(sorted(decoded.items()))
+    except PortableValidationBundleError as exc:
+        raise G25ReadinessError(exc.code, exc.message) from exc
 
 
 def policy_fragments(policy: G25ReadinessPolicy) -> tuple[dict[str, object], ...]:
