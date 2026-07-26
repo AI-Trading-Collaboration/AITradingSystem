@@ -29348,3 +29348,89 @@ phase_arch_005m3_external_request_cache_multiprocess_harness_hardening:
     strategy_conclusion_changed: false
     production_effect: none
     broker_action: none
+
+phase_arch_005m1_batch2_integration_revalidation_loader:
+  schema_version: arch_005m1_batch2_integration_revalidation_loader_compatibility.v1
+  status: BASELINE_DONE_BATCH_2
+  boundary_id: ARCH-005M1-BATCH2-INTEGRATION-REVALIDATION-LOADER
+  task_ids:
+  - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+  owner_authorization: owner_continuation:ARCH-005M1:2026-07-27:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: ebeb67f6d014d4037a2559093a8e2394d96fd9dd
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 45ddf4bf3be0651b9ce86961a191e91dc5acff1a
+    raw_byte_count: 1836039
+    raw_sha256: 5f4aeb45edd474a213feece9b743c533f621a06ccad0b97d20e27bda4afb4ad3
+    append_offset: 1836039
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - src/ai_trading_system/platform/architecture/integration_revalidation.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_005_integration_revalidation.py
+  supersession:
+    superseded_by_phase: ARCH-005M1-BATCH2-INTEGRATION-REVALIDATION-LOADER
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_005m3_external_request_cache_multiprocess_harness_hardening
+    current_hash_authority: phase_arch_005m1_batch2_integration_revalidation_loader.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - src/ai_trading_system/platform/architecture/integration_revalidation.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_005_integration_revalidation.py
+  sources:
+  - {path: docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md, sha256: 30297300c177df414e1fcf283113e9e0396a3a2147207062eb2d207a854144a1, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: b5fef8cdb530d46dd1323ef1a19fdf61b7dc4740b97c58b74b1cded21b703c74, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 36d15e1435d654c82169f3db94120957f09706b3ef260c6cc234a4035bab50fe, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: da587a3870b2c06ae525fda0155dee6d7e57a51c544d61e5d846b0371fcb864e, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 4f41abf5551a513a077b20abeabf72340245afe75d23d05f8da748c016899f0e, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 250388b0afe576b55e37c72f5e5d76c618fcbc00138f85db546d593f284f59b0, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: c699ff97c431b7afc3dc7aaaf363a91436b8e2e4dfa304b37df5bc1f13f0f845, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: fa87f07c25752fa651146a6f696f35d1069f3d4249cd2285df5e4e6a6cb967c9, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml, sha256: 98bb736f01e7deb40bf738c6d8446d3ba87ada6d14eb8d040f6844270bb170c9, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/integration_revalidation.py, sha256: 28618c853869702929596519a106ac4e6d7c8cde7758c615a464ff399c117c35, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: ec715a58862d3b7c006892da3950d5d6a6f9fe83f717b17ebd3cfa5eeb141188, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_005_integration_revalidation.py, sha256: e0e56b457be2c4172db5373a2f08d5216833fe9bd1f9a734477e9b1150bb9b62, hash_normalization: git_eol_lf}
+  implementation:
+    canonical_strict_yaml_primitive_reused: true
+    local_unique_loader_removed: true
+    key_policy: STRING
+    flatten_mapping: false
+    reject_non_finite: false
+    public_error_contract_preserved: true
+    integration_plan_semantics_changed: false
+    remaining_loader_count: 2
+  validation:
+    focused: PASS_119
+    architecture: PASS_735
+    contract: PASS_275
+    full: PASS_7504_WITH_3_SKIPPED
+    post_full_architecture: PASS_735
+    post_full_contract: PASS_275
+  safety:
+    data_quality_contract_changed: false
+    strategy_conclusion_changed: false
+    production_effect: none
+    broker_action: none

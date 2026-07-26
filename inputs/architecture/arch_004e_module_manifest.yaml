@@ -14394,7 +14394,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.integration_revalidation
   path: src/ai_trading_system/platform/architecture/integration_revalidation.py
-  sha256: 8c023caacbef8e698575b859426b4775aa4cdf2370918086b9560012f254789e
+  sha256: 28618c853869702929596519a106ac4e6d7c8cde7758c615a464ff399c117c35
   rule_id: platform_architecture
   owner_profile: platform
   owners:

@@ -493,13 +493,15 @@ manifests/ownership/readiness，旧G2.5 rehearsal不可作为dispatch authority�
 `6843 passed / 1 failed / 3 skipped / 1345.61s`，修复terminal任务旧断言后failure-fix Full=
 `6844 passed / 3 skipped / 643 warnings / 1340.11s`，两个attempt均保留在append-only证据链。
 
-ARCH-005M1 Batch 1 把G2.5 readiness与GOV-006 Task Portfolio原先复制的
-`_UniqueKeySafeLoader`收敛到`ai_trading_system.yaml_loader.load_strict_yaml_text`。共享primitive
-仍使用PyYAML safe loader，并由调用方显式冻结hashable/string key、YAML merge flatten及
-non-finite/cycle策略；两个现有wrapper继续输出原有typed error类型、code及key/line detail。
-本批不迁移Wave readiness、integration revalidation、US special-closure policy或普通
-`safe_load_yaml_*`，不改变policy schema、manifest bytes、任务事实源、dispatch、DQ/PIT、策略、
-production或broker边界。
+ARCH-005M1 Batch 1～2 把G2.5 readiness、GOV-006 Task Portfolio和Integration Revalidation
+原先复制的`_UniqueKeySafeLoader`收敛到
+`ai_trading_system.yaml_loader.load_strict_yaml_text`。共享primitive仍使用PyYAML safe loader，
+并由调用方显式冻结hashable/string key、YAML merge flatten及non-finite/cycle策略；三个现有
+wrapper继续输出原有typed error类型、code及key/line/read detail。Integration Revalidation保持
+string-only、no-merge、non-finite接受及既有PyYAML cycle行为：recursive mapping在解析期拒绝，
+recursive sequence由后续schema/path contract拒绝。本批不迁移Wave readiness、US
+special-closure policy或普通`safe_load_yaml_*`，不改变policy schema、manifest bytes、
+base-drift分类、candidate creation、任务事实源、dispatch、DQ/PIT、策略、production或broker边界。
 
 TRADING-2446～2448 在 ARCH-005 S0/S1 后新增独立 strategy research restart R0～R2
 evidence-closure lane，不恢复 ARCH-004 G2.5，也不启动 candidate promotion。

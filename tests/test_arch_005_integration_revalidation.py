@@ -435,11 +435,142 @@ def test_policy_duplicate_key_fails_closed(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-    with pytest.raises(
-        IntegrationRevalidationError,
-        match="POLICY_YAML_DUPLICATE_KEY",
-    ):
+    with pytest.raises(IntegrationRevalidationError) as caught:
         load_integration_revalidation_policy(policy_path)
+    assert caught.value.code == "POLICY_YAML_DUPLICATE_KEY"
+    assert caught.value.message == "coordinator_refreshable_scopes"
+
+
+def test_policy_non_string_key_keeps_typed_line_detail(tmp_path: Path) -> None:
+    policy_path = tmp_path / "non-string-key.yaml"
+    policy_path.write_text(
+        "1: value\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(IntegrationRevalidationError) as caught:
+        load_integration_revalidation_policy(policy_path)
+    assert caught.value.code == "POLICY_YAML_NON_STRING_KEY"
+    assert caught.value.message == "line=1"
+
+
+def test_policy_merge_key_remains_unflattened_and_fails_as_read_error(
+    tmp_path: Path,
+) -> None:
+    policy_path = tmp_path / "merge.yaml"
+    policy_path.write_text(
+        "base: &base\n"
+        "  schema_version: arch_005_integration_revalidation_policy.v1\n"
+        "<<: *base\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(IntegrationRevalidationError) as caught:
+        load_integration_revalidation_policy(policy_path)
+    assert caught.value.code == "POLICY_READ_FAILED"
+    assert "tag:yaml.org,2002:merge" in caught.value.message
+    assert "line 3, column 1" in caught.value.message
+
+
+def test_policy_non_finite_value_remains_parser_accepted(tmp_path: Path) -> None:
+    policy_path = tmp_path / "non-finite.yaml"
+    policy_path.write_text(
+        "schema_version: arch_005_integration_revalidation_policy.v1\n"
+        "known_unrelated_exclusions:\n"
+        f"  - {EXCLUDED_PATH}\n"
+        "coordinator_refreshable_scopes: []\n"
+        "contract_sensitive_scopes: []\n"
+        "final_validation_tiers:\n"
+        "  - .nan\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(IntegrationRevalidationError) as caught:
+        load_integration_revalidation_policy(policy_path)
+    assert caught.value.code == "IDENTIFIER"
+    assert caught.value.message == "final_validation_tiers"
+
+
+def test_policy_cyclic_alias_keeps_read_error_boundary(tmp_path: Path) -> None:
+    policy_path = tmp_path / "cycle.yaml"
+    policy_path.write_text(
+        "schema_version: arch_005_integration_revalidation_policy.v1\n"
+        "known_unrelated_exclusions: &items\n"
+        "  self: *items\n"
+        "coordinator_refreshable_scopes: []\n"
+        "contract_sensitive_scopes: []\n"
+        "final_validation_tiers:\n"
+        "  - full\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(IntegrationRevalidationError) as caught:
+        load_integration_revalidation_policy(policy_path)
+    assert caught.value.code == "POLICY_READ_FAILED"
+    assert "recursive" in caught.value.message
+    assert "line 2, column 29" in caught.value.message
+
+
+def test_policy_cyclic_sequence_remains_parser_accepted_then_schema_rejected(
+    tmp_path: Path,
+) -> None:
+    policy_path = tmp_path / "sequence-cycle.yaml"
+    policy_path.write_text(
+        "schema_version: arch_005_integration_revalidation_policy.v1\n"
+        "known_unrelated_exclusions: &items\n"
+        "  - *items\n"
+        "coordinator_refreshable_scopes: []\n"
+        "contract_sensitive_scopes: []\n"
+        "final_validation_tiers:\n"
+        "  - full\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(IntegrationRevalidationError) as caught:
+        load_integration_revalidation_policy(policy_path)
+    assert caught.value.code == "PATH_TYPE"
+    assert caught.value.message == "path must be a string"
+
+
+@pytest.mark.parametrize(
+    ("name", "text", "expected_detail"),
+    [
+        (
+            "malformed",
+            "root: [\n",
+            "expected the node content, but found '<stream end>'",
+        ),
+        (
+            "unsafe-tag",
+            "value: !!python/object:builtins.object {}\n",
+            "tag:yaml.org,2002:python/object:builtins.object",
+        ),
+    ],
+)
+def test_policy_invalid_yaml_keeps_read_error_detail(
+    tmp_path: Path,
+    name: str,
+    text: str,
+    expected_detail: str,
+) -> None:
+    policy_path = tmp_path / f"{name}.yaml"
+    policy_path.write_text(text, encoding="utf-8")
+    with pytest.raises(IntegrationRevalidationError) as caught:
+        load_integration_revalidation_policy(policy_path)
+    assert caught.value.code == "POLICY_READ_FAILED"
+    assert expected_detail in caught.value.message
+
+
+def test_policy_read_and_utf8_failures_keep_read_error_boundary(
+    tmp_path: Path,
+) -> None:
+    missing_path = tmp_path / "missing.yaml"
+    with pytest.raises(IntegrationRevalidationError) as missing:
+        load_integration_revalidation_policy(missing_path)
+    assert missing.value.code == "POLICY_READ_FAILED"
+    assert missing_path.name in missing.value.message
+
+    invalid_utf8_path = tmp_path / "invalid-utf8.yaml"
+    invalid_utf8_path.write_bytes(b"\xff")
+    with pytest.raises(IntegrationRevalidationError) as invalid_utf8:
+        load_integration_revalidation_policy(invalid_utf8_path)
+    assert invalid_utf8.value.code == "POLICY_READ_FAILED"
+    assert "utf-8" in invalid_utf8.value.message.lower()
 
 
 def test_cli_plan_and_validate_use_ignored_read_only_evidence(tmp_path: Path) -> None:

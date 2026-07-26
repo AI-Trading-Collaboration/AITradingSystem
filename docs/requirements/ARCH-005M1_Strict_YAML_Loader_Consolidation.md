@@ -7,7 +7,7 @@
 Owner continuation：
 `owner_continuation:ARCH-005M1:2026-07-27:continue_long_term_engineering_goal`
 
-状态：`BASELINE_DONE_BATCH_1`
+状态：`BASELINE_DONE_BATCH_2`
 
 ## 1. 问题与目标
 
@@ -130,3 +130,66 @@ Batch 1 的两个wrapper必须逐项保持：
   artifacts=`architecture-fitness_20260726T200007Z`、
   `contract-validation_20260726T200525Z`。Batch 1转`BASELINE_DONE_BATCH_1`；剩余3个strict
   loader仍保留在本任务后续批次中，必须逐个characterization与迁移，未宣称全量统一完成。
+
+## 8. Batch 2：Integration Revalidation Loader
+
+### 8.1 范围与依赖
+
+Batch 2只迁移
+`platform/architecture/integration_revalidation.py`的policy loader。该loader属于并行研发
+集成控制面，当前语义为：
+
+- key只允许string；
+- 不执行YAML merge flatten；
+- duplicate key输出`POLICY_YAML_DUPLICATE_KEY`且message仅保留重复key文本；
+- non-string key输出`POLICY_YAML_NON_STRING_KEY`和1-based line；
+- malformed YAML、文件读取、UTF-8解码统一映射为`POLICY_READ_FAILED`；
+- non-finite value和cyclic alias保持PyYAML既有行为，不新增recursive post-traversal；
+  recursive mapping仍在解析期失败，recursive sequence仍由后续schema/path contract拒绝。
+
+Batch 2复用Batch 1已发布的`load_strict_yaml_text`，配置
+`key_policy=STRING`、`flatten_mapping=false`、`reject_non_finite=false`。不得修改canonical
+primitive、integration plan分类算法、policy schema、path overlap、contract claim、Git delta、
+candidate creation或validation tier语义。
+
+### 8.2 步骤
+
+1. 先补齐duplicate detail、non-string line、merge、non-finite、cyclic alias、malformed、
+   read和UTF-8 characterization；
+2. wrapper调用canonical primitive并逐code映射
+   `DUPLICATE_KEY/NON_STRING_KEY/INVALID`；
+3. 删除本地`_UniqueKeySafeLoader`与constructor；
+4. 证明reviewed policy解析结果与迁移前结构相同，更新system flow的remaining-loader边界；
+5. 刷新generated/compatibility authority，并运行focused、Architecture、Contract及最终
+   required Full；Full只在自然integration boundary运行一次。
+
+### 8.3 验收与生命周期
+
+- Batch 2前后公开error type/code/message、合法payload结构及read/UTF-8边界一致；
+- `integration_revalidation.py`不再直接定义strict loader或调用`yaml.load`；
+- Wave readiness与US special closure仍保留为后续独立批次；
+- frozen base=`ebeb67f6d014d4037a2559093a8e2394d96fd9dd`，task branch=
+  `codex/arch-005m1-strict-yaml-batch2-integration`；
+- 不创建worktree/clone/stash，不触碰既有operations worktree或known-unrelated owner文档；
+- 无DQ/PIT/strategy/backtest/report conclusion/production/broker变化。
+
+### 8.4 Batch 2进度
+
+- 2026-07-27：M3完成并推送后，READ_ONLY与SINGLE_LANE START preflight在exact
+  `main=origin/main=ebeb67f6d`、active lease=0下PASS。选择Integration Revalidation作为
+  第二批，是因为它直接服务base-drift classification和单一integration candidate规划；
+  本批不迁移另外两个remaining loader。状态进入`IN_PROGRESS_BATCH_2`。
+- 2026-07-27：Integration Revalidation wrapper已改用canonical strict primitive，本地
+  `_UniqueKeySafeLoader`与constructor删除。新增characterization覆盖duplicate detail、
+  non-string line、no-merge、non-finite、recursive mapping/sequence、malformed、unsafe tag、
+  missing file与invalid UTF-8；`tests/test_yaml_loader.py`和Integration Revalidation合计
+  `29 passed`，strict mypy与Ruff PASS。状态进入`VALIDATING_BATCH_2`，下一步刷新
+  generated/compatibility authority并运行formal gates。
+- 2026-07-27：append-only compatibility authority已绑定`ebeb67f6d`历史prefix exact
+  Git blob；完整兼容性回归`90 passed`，累计focused evidence=`119 passed`。当前12项
+  live source hash全部匹配；Architecture=`735 passed`、Contract=`275 passed`，下一步
+  运行required Full。
+- 2026-07-27：唯一required Full以`natural_integration_boundary` provenance通过：
+  `7504 passed / 3 skipped / 643 warnings`。Batch 2验收满足，状态转
+  `BASELINE_DONE_BATCH_2`；最终元数据树执行post-Full Architecture/Contract。Wave readiness
+  与US special closure仍须后续独立批次，ARCH-005M1未归档。

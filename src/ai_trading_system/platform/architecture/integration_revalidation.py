@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -8,8 +9,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
-
-import yaml
 
 from ai_trading_system.platform.architecture.checkout_guard import (
     collect_checkout_dirty_paths,
@@ -21,6 +20,11 @@ from ai_trading_system.platform.architecture.parallel_control import (
     parse_change_manifest,
 )
 from ai_trading_system.platform.artifacts.writer import write_json_atomic
+from ai_trading_system.yaml_loader import (
+    StrictYamlError,
+    StrictYamlOptions,
+    load_strict_yaml_text,
+)
 
 INTEGRATION_REVALIDATION_POLICY_SCHEMA_VERSION = (
     "arch_005_integration_revalidation_policy.v1"
@@ -41,6 +45,11 @@ _DECISIONS = {
     "SERIAL_CONTRACT_WAVE_REQUIRED",
     "BLOCKED",
 }
+_STRICT_POLICY_YAML_OPTIONS = StrictYamlOptions(
+    key_policy="STRING",
+    flatten_mapping=False,
+    reject_non_finite=False,
+)
 
 
 class IntegrationRevalidationError(ValueError):
@@ -48,35 +57,6 @@ class IntegrationRevalidationError(ValueError):
         self.code = code
         self.message = message
         super().__init__(f"{code}: {message}")
-
-
-class _UniqueKeySafeLoader(yaml.SafeLoader):
-    pass
-
-
-def _construct_unique_mapping(
-    loader: Any,
-    node: yaml.nodes.MappingNode,
-    deep: bool = False,
-) -> dict[str, object]:
-    result: dict[str, object] = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if not isinstance(key, str):
-            raise IntegrationRevalidationError(
-                "POLICY_YAML_NON_STRING_KEY",
-                f"line={key_node.start_mark.line + 1}",
-            )
-        if key in result:
-            raise IntegrationRevalidationError("POLICY_YAML_DUPLICATE_KEY", key)
-        result[key] = loader.construct_object(value_node, deep=deep)
-    return result
-
-
-_UniqueKeySafeLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_unique_mapping,
-)
 
 
 @dataclass(frozen=True)
@@ -131,14 +111,28 @@ def load_integration_revalidation_policy(
     path: Path = DEFAULT_INTEGRATION_REVALIDATION_POLICY_PATH,
 ) -> IntegrationRevalidationPolicy:
     try:
-        raw = yaml.load(
-            path.read_text(encoding="utf-8"),
-            Loader=_UniqueKeySafeLoader,
-        )
-    except IntegrationRevalidationError:
-        raise
-    except (OSError, UnicodeError, yaml.YAMLError) as exc:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
         raise IntegrationRevalidationError("POLICY_READ_FAILED", str(exc)) from exc
+    try:
+        raw = load_strict_yaml_text(
+            text,
+            options=_STRICT_POLICY_YAML_OPTIONS,
+            label=str(path),
+        )
+    except StrictYamlError as exc:
+        if exc.code == "DUPLICATE_KEY":
+            raise IntegrationRevalidationError(
+                "POLICY_YAML_DUPLICATE_KEY",
+                _strict_duplicate_key(exc.detail),
+            ) from exc
+        if exc.code == "NON_STRING_KEY":
+            raise IntegrationRevalidationError(
+                "POLICY_YAML_NON_STRING_KEY",
+                exc.detail,
+            ) from exc
+        detail = str(exc.__cause__) if exc.__cause__ is not None else exc.detail
+        raise IntegrationRevalidationError("POLICY_READ_FAILED", detail) from exc
     if not isinstance(raw, Mapping):
         raise IntegrationRevalidationError("POLICY_ROOT", "policy must be a mapping")
     expected = {
@@ -195,6 +189,17 @@ def load_integration_revalidation_policy(
         contract_sensitive_scopes=contract_sensitive,
         final_validation_tiers=tiers,
     )
+
+
+def _strict_duplicate_key(detail: str) -> str:
+    key_repr, separator, line = detail.removeprefix("key=").rpartition(" line=")
+    if not separator or not line.isdigit():
+        return detail
+    try:
+        key = ast.literal_eval(key_repr)
+    except (SyntaxError, ValueError):
+        return detail
+    return key if isinstance(key, str) else detail
 
 
 def build_integration_revalidation_plan(

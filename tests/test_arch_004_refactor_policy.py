@@ -683,7 +683,28 @@ ARCH_005M3_FROZEN_PRODUCTION_PATHS = frozenset(
         "src/ai_trading_system/external_request_cache_revalidation_coordination.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = ARCH_005M3_SECTION
+ARCH_005M1_BATCH2_SECTION = (
+    "phase_arch_005m1_batch2_integration_revalidation_loader"
+)
+ARCH_005M1_BATCH2_BASE_COMMIT = "ebeb67f6d014d4037a2559093a8e2394d96fd9dd"
+ARCH_005M1_BATCH2_BASELINE_GIT_BLOB = "45ddf4bf3be0651b9ce86961a191e91dc5acff1a"
+ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT = 1_836_039
+ARCH_005M1_BATCH2_HISTORICAL_PREFIX_SHA256 = (
+    "5f4aeb45edd474a213feece9b743c533f621a06ccad0b97d20e27bda4afb4ad3"
+)
+ARCH_005M1_BATCH2_ACTIVE_TASK_SHADOW_PATH = (
+    "registry/development_tasks_shadow/active/0a/"
+    "0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml"
+)
+ARCH_005M1_BATCH2_FROZEN_PATHS = frozenset(
+    {
+        "config/architecture/arch_005_integration_revalidation.yaml",
+        "src/ai_trading_system/platform/architecture/wave_readiness.py",
+        "src/ai_trading_system/us_equity_special_closure_policy.py",
+        "src/ai_trading_system/yaml_loader.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = ARCH_005M1_BATCH2_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -1540,6 +1561,25 @@ def _arch_005m3_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _arch_005m1_batch2_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{ARCH_005M1_BATCH2_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == ARCH_005M1_BATCH2_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -2317,6 +2357,25 @@ def _assert_arch_005m3_historical_prefix_immutable(
     )
     suffix = current_bytes[ARCH_005M3_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005M3_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_arch_005m1_batch2_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == ARCH_005M1_BATCH2_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, (
+        "ARCH-005M1 Batch 2 historical prefix differs from immutable ARCH-005M3 blob"
+    )
+    suffix = current_bytes[ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{ARCH_005M1_BATCH2_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -3304,6 +3363,26 @@ def _arch_005m3_source_paths() -> frozenset[str]:
 
 
 @cache
+def _arch_005m1_batch2_superseded_live_source_paths() -> frozenset[str]:
+    _assert_arch_005m1_batch2_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _arch_005m1_batch2_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[ARCH_005M1_BATCH2_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _arch_005m1_batch2_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[ARCH_005M1_BATCH2_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -3355,6 +3434,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _arch_005m2_source_paths()
     if ARCH_005M3_SECTION in baseline:
         paths |= _arch_005m3_source_paths()
+    if ARCH_005M1_BATCH2_SECTION in baseline:
+        paths |= _arch_005m1_batch2_source_paths()
     return paths
 
 
@@ -4023,12 +4104,53 @@ def _arch_005m3_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(ARCH_005M3_SECTION)
 
 
+@cache
+def _arch_005m1_batch2_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(ARCH_005M1_BATCH2_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if ARCH_005M3_SECTION in baseline:
+    if ARCH_005M1_BATCH2_SECTION in baseline:
+        current_superseded_paths = _arch_005m1_batch2_superseded_live_source_paths()
+        assert (
+            _arch_005m1_batch2_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _devx_trading_cleanup_source_paths()
+            | _trading_2459_doc_closeout_source_paths()
+            | _data_gov_002_source_paths()
+            | _devx_002_source_paths()
+            | _devx_002_push_v2_source_paths()
+            | _arch_004g2_observability_source_paths()
+            | _arch_004g2_closure_threshold_source_paths()
+            | _data_gov_002_phase_b1_source_paths()
+            | _trading_2458_retirement_source_paths()
+            | _trading_2458_closeout_source_paths()
+            | _data_gov_002_phase_b2_source_paths()
+            | _devx_003_source_paths()
+            | _data_gov_002c1_source_paths()
+            | _data_gov_002c2_source_paths()
+            | _trading_2461_source_paths()
+            | _arch_004g2_paper_weekly_source_paths()
+            | _ops_069_terminal_archive_source_paths()
+            | _devx_004_source_paths()
+            | _devx_001_reconciliation_source_paths()
+            | _devx_005_source_paths()
+            | _trading_2462_source_paths()
+            | _devx_006_source_paths()
+            | _arch_005m2_source_paths()
+            | _arch_005m3_source_paths()
+            | _arch_005m1_batch2_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = ARCH_005M1_BATCH2_SECTION
+    elif ARCH_005M3_SECTION in baseline:
         current_superseded_paths = _arch_005m3_superseded_live_source_paths()
         assert _arch_005m3_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
@@ -9998,6 +10120,7 @@ def test_arch_005m2_is_current_hash_authority() -> None:
     assert superseded <= current_mismatches
     assert current_mismatches - superseded <= set(
         _arch_005m3_superseded_live_source_paths()
+        | _arch_005m1_batch2_superseded_live_source_paths()
     )
     task_shadow_path = (
         ARCH_005M2_COMPLETED_TASK_SHADOW_PATH
@@ -10057,7 +10180,9 @@ def test_arch_005m3_is_current_hash_authority() -> None:
         _arch_005m3_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == ARCH_005M3_SECTION
+    assert list(baseline).index(ARCH_005M3_SECTION) < list(baseline).index(
+        ARCH_005M1_BATCH2_SECTION
+    )
     phase = baseline[ARCH_005M3_SECTION]
     assert phase["schema_version"] == (
         "arch_005m3_external_request_cache_multiprocess_harness_hardening_compatibility.v1"
@@ -10080,7 +10205,11 @@ def test_arch_005m3_is_current_hash_authority() -> None:
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _arch_005m3_prior_active_source_mismatches()
+    current_mismatches = set(_arch_005m3_prior_active_source_mismatches())
+    assert superseded <= current_mismatches
+    assert current_mismatches - superseded <= set(
+        _arch_005m1_batch2_superseded_live_source_paths()
+    )
     expected_new_paths = set(ARCH_005M3_CORE_NEW_SOURCE_PATHS)
     if phase["status"] == "COMPLETE":
         expected_new_paths.add(ARCH_005M3_COMPLETED_TASK_SHADOW_PATH)
@@ -10100,7 +10229,7 @@ def test_arch_005m3_is_current_hash_authority() -> None:
     assert [str(row["path"]) for row in sources] == expected_source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     for path in ARCH_005M3_FROZEN_PRODUCTION_PATHS:
         source = {"path": path, "hash_normalization": "git_eol_lf"}
@@ -10135,6 +10264,90 @@ def test_arch_005m3_is_current_hash_authority() -> None:
         "production_effect": "none",
         "broker_action": "none",
     }
+
+
+def test_arch_005m1_batch2_is_current_hash_authority() -> None:
+    _assert_arch_005m1_batch2_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _arch_005m1_batch2_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == ARCH_005M1_BATCH2_SECTION
+    phase = baseline[ARCH_005M1_BATCH2_SECTION]
+    assert phase["schema_version"] == (
+        "arch_005m1_batch2_integration_revalidation_loader_compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING_BATCH_2", "BASELINE_DONE_BATCH_2"}
+    assert phase["boundary_id"] == (
+        "ARCH-005M1-BATCH2-INTEGRATION-REVALIDATION-LOADER"
+    )
+    assert phase["task_ids"] == ["ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION"]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": ARCH_005M1_BATCH2_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": ARCH_005M1_BATCH2_BASELINE_GIT_BLOB,
+        "raw_byte_count": ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": ARCH_005M1_BATCH2_HISTORICAL_PREFIX_SHA256,
+        "append_offset": ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _arch_005m1_batch2_prior_active_source_mismatches()
+    assert phase["removed_live_source_paths"] == []
+    assert phase["new_source_paths"] == []
+    assert set(phase["source_delta_paths"]) == superseded
+    sources = phase["sources"]
+    assert [str(row["path"]) for row in sources] == sorted(
+        superseded,
+        key=str.casefold,
+    )
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    for path in ARCH_005M1_BATCH2_FROZEN_PATHS:
+        source = {"path": path, "hash_normalization": "git_eol_lf"}
+        assert _raw_source_sha256(source) == _source_sha256_at_commit(
+            source,
+            ARCH_005M1_BATCH2_BASE_COMMIT,
+        )
+    assert phase["implementation"] == {
+        "canonical_strict_yaml_primitive_reused": True,
+        "local_unique_loader_removed": True,
+        "key_policy": "STRING",
+        "flatten_mapping": False,
+        "reject_non_finite": False,
+        "public_error_contract_preserved": True,
+        "integration_plan_semantics_changed": False,
+        "remaining_loader_count": 2,
+    }
+    validation = phase["validation"]
+    assert validation["focused"] == "PASS_119"
+    if phase["status"] == "BASELINE_DONE_BATCH_2":
+        assert all(str(value).startswith("PASS_") for value in validation.values())
+    else:
+        assert all(
+            value == "PENDING" or str(value).startswith("PASS_")
+            for value in validation.values()
+        )
+    assert phase["safety"] == {
+        "data_quality_contract_changed": False,
+        "strategy_conclusion_changed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_arch_005m1_batch2_rejects_historical_prefix_tamper() -> None:
+    base_blob = _arch_005m1_batch2_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_arch_005m1_batch2_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
 
 
 def test_arch_005m3_rejects_historical_prefix_tamper() -> None:
