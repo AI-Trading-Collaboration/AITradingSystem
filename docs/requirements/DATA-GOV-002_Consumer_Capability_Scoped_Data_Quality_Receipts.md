@@ -7,7 +7,7 @@
 Owner 决定：
 `owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
 
-状态：`BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`
+状态：`BASELINE_DONE_PHASE_B2_REGIME_LABEL_PILOT_PHASE_C_PENDING`
 
 ## 1. 问题与目标
 
@@ -271,3 +271,42 @@ B2 交付：
   `outputs/validation_runtime/full_20260726T080607Z/test_runtime_summary.json`。B1 转
   `BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`；未迁移 runner，B2 仍须在
   独立原子变更中实施。
+- 2026-07-26：B1 commit=`b8463faac3579f9b3084458f62a27d2a4f21b2b1` 已
+  fast-forward 至 `main` 并推送 `origin/main`，任务分支清理完成。随后以该 exact base
+  启动 B2 独立分支。对 `TRADING-2316` runner、policy 和 evaluator 的读取闭包审计确认：
+  evaluator 只消费 QQQ、SMH、SPY 的 trailing `adj_close`；price projection 为运行
+  same-code-path scoped DQ 仍须保留 date/ticker/OHLCV/source 等结构字段；rates、
+  configured rate universe 和 optional marketstack 只属于旧 global DQ gate/披露，不进入
+  feature 或 label 计算。因此 B2 reviewed capability 的 `required_rate_series` 必须为空，
+  不得把旧 gate 的 rates 依赖带入 receipt。当前进入
+  `IN_PROGRESS_PHASE_B2_REGIME_LABEL_PILOT`。
+- 2026-07-26：B2 capability-only runner、tracked dependency/policy、verified materialized-input
+  re-read 与 fail-closed tests 已实现；focused parallel regression=`16 passed`。真实 canonical
+  build/verify 生成 receipt
+  `dq_capability_b453834493d1951868c5474f379942461cce29c61b74fd37b9aab69167759ab3`，
+  window=`2021-02-22..2026-07-24`，full DQ=`FAIL`、scoped DQ=`PASS`、
+  `global_cache_pass_claimed=false`、isolated error=`prices_non_market_session_date`、
+  unisolated errors=`[]`、required rates=`[]`。真实 TRADING-2316 run 只消费 receipt-bound
+  QQQ/SMH/SPY bytes，生成 label/distribution/transition rows=`7416/30/123`，安全边界保持
+  diagnostic-only、no reuse/daily/production/broker。当前转
+  `VALIDATING_PHASE_B2_REGIME_LABEL_PILOT`；Phase C typed attribution、Phase D migration/
+  inventory/expiry/revocation/cache reuse/dashboard 均未由 B2 自动启动。
+- 2026-07-26：B2 首轮 Full 在运行期间因另一项已复核任务把 `main/origin/main` 从
+  `b8463faac` 前移至 `281c8236b`，由 remote-carrier freshness tests 正确 FAIL；失败 run
+  `outputs/validation_runtime/full_20260726T093310Z/test_runtime_summary.json` 保留。B2 任务增量
+  以 task-scoped recovery stash
+  `a57e13a0b579c7c2c4d405166fafafa4dd56f813` 暂存，任务分支随后 `--ff-only` 前移到
+  `281c8236b`，从新基线恢复业务增量，并重新构建 append-only compatibility authority 与
+  generated manifests。Recovery stash 只在新基线 Full、提交、main 集成和远端推送全部确认后
+  删除。
+- 2026-07-26：新基线正式门禁完成。Focused capability regression=`16 passed`，
+  authority regression=`3 passed`，Black/Ruff/strict mypy PASS；architecture 首轮因
+  formatter 后 test manifest stale 为 `669 passed / 1 failed`，直接重新生成 manifest 后复验
+  `670 passed`。Contract/report/reproducibility/integration 分别为
+  `275 passed`、`57 passed / 62 warnings`、`23 passed`、
+  `995 passed / 642 warnings`。以旧 remote-drift 失败 summary 为 parent 的 Full 修复重跑为
+  `7350 passed / 3 skipped / 643 warnings`，runtime artifact=
+  `outputs/validation_runtime/full_20260726T102147Z/test_runtime_summary.json`。B2 转
+  `BASELINE_DONE_PHASE_B2_REGIME_LABEL_PILOT_PHASE_C_PENDING`；下一长期切片优先准备
+  Phase C typed issue attribution 与逐 issue source-owner review，Phase D consumer migration
+  和 daily/periodic/production/broker 仍未自动授权。

@@ -36,6 +36,26 @@ class PublishedConsumerDataCapabilityDiscovery:
     receipt: ConsumerDataCapabilityReceipt
 
 
+def load_consumer_data_capability_dependency(
+    path: Path,
+    *,
+    project_root: Path = PROJECT_ROOT,
+) -> ConsumerDataCapabilityDependency:
+    root = _resolved_root(project_root)
+    relative_path = _relative_path(root, path)
+    content = _read_secure(root, relative_path)
+    try:
+        payload = safe_load_yaml_text(content.decode("utf-8"))
+        if not isinstance(payload, Mapping):
+            raise TypeError("consumer dependency root must be a mapping")
+        return ConsumerDataCapabilityDependency.model_validate(dict(payload))
+    except (UnicodeDecodeError, TypeError, ValueError) as exc:
+        raise DataQualityCapabilityContractError(
+            "DQ_CAPABILITY_DEPENDENCY_INVALID",
+            f"{relative_path}: {exc}",
+        ) from exc
+
+
 def build_consumer_data_capability_dependency(
     *,
     capability_policy_path: Path,
@@ -184,6 +204,42 @@ def verify_consumer_data_capability_preflight(
         receipt_size_bytes=len(receipt_bytes),
         verified_at=checked_at,
     )
+
+
+def read_verified_consumer_data_capability_input(
+    *,
+    preflight: VerifiedConsumerDataCapabilityPreflight,
+    role: str,
+    project_root: Path = PROJECT_ROOT,
+) -> bytes:
+    if not isinstance(preflight, VerifiedConsumerDataCapabilityPreflight):
+        raise DataQualityCapabilityContractError(
+            "DQ_CAPABILITY_NOT_VERIFIED",
+            "sealed verified preflight is required",
+        )
+    checked_role = str(role).strip()
+    if not checked_role:
+        raise DataQualityCapabilityContractError(
+            "DQ_CAPABILITY_INPUT_ROLE_INVALID",
+            "materialized input role is required",
+        )
+    matches = [
+        binding for binding in preflight.receipt.materialized_inputs if binding.role == checked_role
+    ]
+    if len(matches) != 1:
+        raise DataQualityCapabilityContractError(
+            "DQ_CAPABILITY_INPUT_ROLE_INVALID",
+            checked_role,
+        )
+    binding = matches[0]
+    root = _resolved_root(project_root)
+    content = _read_secure(root, _relative_path(root, Path(binding.path)))
+    if hashlib.sha256(content).hexdigest() != binding.sha256 or len(content) != binding.size_bytes:
+        raise DataQualityCapabilityContractError(
+            "DQ_CAPABILITY_FILE_BINDING_MISMATCH",
+            checked_role,
+        )
+    return content
 
 
 def _load_discovery(
@@ -516,6 +572,8 @@ __all__ = [
     "PublishedConsumerDataCapabilityDiscovery",
     "build_consumer_data_capability_dependency",
     "consumer_data_capability_discovery_path",
+    "load_consumer_data_capability_dependency",
     "publish_consumer_data_capability_discovery",
+    "read_verified_consumer_data_capability_input",
     "verify_consumer_data_capability_preflight",
 ]

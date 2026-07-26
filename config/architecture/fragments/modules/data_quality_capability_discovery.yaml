@@ -7,8 +7,10 @@ public_contracts:
   - ConsumerDataCapabilityDependency
   - ConsumerDataCapabilityDiscoveryPointer
   - VerifiedConsumerDataCapabilityPreflight
+  - load_consumer_data_capability_dependency
   - build_consumer_data_capability_dependency
   - publish_consumer_data_capability_discovery
   - verify_consumer_data_capability_preflight
+  - read_verified_consumer_data_capability_input
 compatibility_facades: []
 deprecation_status: active_reference_architecture

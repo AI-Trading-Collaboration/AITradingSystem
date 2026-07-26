@@ -32060,8 +32060,15 @@ reports:
     artifact_globs:
       - config/research/regime_label_generator_policy.yaml
       - config/research/regime_state_machine_design_policy.yaml
+      - config/data_quality/regime_label_generator_capability_v1.yaml
+      - config/data_quality/regime_label_generator_dependency_v1.yaml
       - docs/research/regime_label_generator_diagnostic_poc.md
       - docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md
+      - outputs/data_quality/capabilities/discovery/TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC/1.0.0/*/current.json
+      - outputs/data_quality/capabilities/receipts/*.json
+      - outputs/data_quality/capabilities/builds/trading2316/*/full_canonical_data_quality_report.md
+      - outputs/data_quality/capabilities/builds/trading2316/*/scoped_data_quality_report.md
+      - outputs/data_quality/capabilities/builds/trading2316/*/capability_market_panel.csv
       - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_generation_summary.json
       - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_series.csv
       - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_pit_policy.json
@@ -32070,13 +32077,20 @@ reports:
       - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_transition_matrix.json
       - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_transition_matrix.csv
       - outputs/research_trends/regime_label_generator_diagnostic_poc/regime_label_generation_safety_boundary.json
-      - outputs/research_trends/regime_label_generator_diagnostic_poc/data_quality_2026-06-29.md
     artifact_selection_policy: latest_available
     artifact_role: regime_label_series_diagnostic_poc
     promotion_eligible: false
     paper_shadow_allowed: false
     production_allowed: false
-    data_quality_status: PASS_WITH_WARNINGS
+    data_quality_status: PASS
+    full_data_quality_status: FAIL
+    scoped_data_quality_status: PASS
+    global_cache_pass_claimed: false
+    capability_preflight_required: true
+    capability_id: regime_label_trailing_price_inputs
+    capability_version: 1.0.0
+    consumer_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+    consumer_version: 1.0.0
     validation_status: REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY
     diagnostic_only: true
     segmentation_only: true
@@ -32106,6 +32120,7 @@ reports:
       - QQQ
       - SMH
       - SPY
+    required_rate_series: []
     policy_id: regime_label_generator_policy
     policy_version: v1
     freshness_sla_days: 14

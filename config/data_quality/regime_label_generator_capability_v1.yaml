@@ -1,0 +1,42 @@
+schema_version: data_quality_consumer_capability_policy.v1
+policy_id: regime_label_generator_capability_v1
+policy_version: 1.0.0
+status: OWNER_APPROVED_PHASE_B2_PILOT
+owner: data_platform_owner_and_strategy_research_owner
+owner_decision_id: owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1
+capability_id: regime_label_trailing_price_inputs
+capability_version: 1.0.0
+consumer_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+consumer_version: 1.0.0
+requested_start: '2021-02-22'
+required_price_tickers:
+  - QQQ
+  - SMH
+  - SPY
+required_rate_series: []
+required_price_fields:
+  - adj_close
+  - close
+  - date
+  - high
+  - low
+  - open
+  - source
+  - ticker
+  - volume
+accepted_scoped_statuses:
+  - PASS
+allowed_global_error_codes:
+  - prices_non_market_session_date
+global_error_attribution_rule: ALL_AFFECTED_INSTRUMENTS_OUTSIDE_REQUIRED_SCOPE
+full_canonical_validation_required: true
+same_validation_code_path: validate_data_cache
+full_status_disclosure_required: true
+cross_consumer_reuse_allowed: false
+daily_operation_authorized: false
+production_effect: none
+broker_action: none
+review_condition: >-
+  B2只允许TRADING-2316@1.0.0读取QQQ/SMH/SPY trailing adjusted-close inputs生成
+  diagnostic-only regime labels。任何ticker、field、window、consumer、issue code、复用范围、
+  daily/periodic、TRADING-2317、production或broker用途变化都必须发布新版本并重新审批。

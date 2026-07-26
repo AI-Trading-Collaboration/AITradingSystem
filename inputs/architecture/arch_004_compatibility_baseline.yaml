@@ -27367,3 +27367,192 @@ phase_trading_2458_candidate_family_retirement_closeout:
     paper_shadow_changed: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_002_capability_receipt_phase_b2:
+  schema_version: data_gov_002_phase_b2_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: DATA-GOV-002-PHASE-B2-REGIME-LABEL-PILOT
+  task_ids:
+  - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  - TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+  owner_authorization: owner_continuation:DATA-GOV-002:2026-07-26:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: 281c8236b3b4da103b3ccb665e19d5d51e1bba42
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: e84ecbe30c6ba3d37335601590d2e839ba3d6754
+    raw_byte_count: 1716489
+    raw_sha256: 29e403addf1d6909ccd50080c58b54b3f0a6efdf0edca4490df202a3a5a042d6
+    append_offset: 1716489
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/architecture/fragments/flows/data_quality_capability.yaml
+  - config/architecture/fragments/modules/data_quality_capability_discovery.yaml
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - src/ai_trading_system/cli_commands/research_trends.py
+  - src/ai_trading_system/data/__init__.py
+  - src/ai_trading_system/data/quality_capability_discovery.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_data_quality_capability.py
+  supersession:
+    superseded_by_phase: DATA-GOV-002-PHASE-B2-REGIME-LABEL-PILOT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2458_candidate_family_retirement_closeout
+    current_hash_authority: phase_data_gov_002_capability_receipt_phase_b2.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/data_quality/regime_label_generator_capability_v1.yaml
+  - config/data_quality/regime_label_generator_dependency_v1.yaml
+  - config/research/regime_label_generator_policy.yaml
+  - docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md
+  - registry/development_tasks_shadow/active/8a/8ac717bc6cb7975c7630428801f4a29995e9505bf34902f1c4266ccd2a3f9661.yaml
+  - src/ai_trading_system/regime_label_generator_diagnostic_poc.py
+  - tests/research_trends/test_regime_label_generator_diagnostic_poc.py
+  source_delta_paths:
+  - config/architecture/fragments/flows/data_quality_capability.yaml
+  - config/architecture/fragments/modules/data_quality_capability_discovery.yaml
+  - config/data_quality/regime_label_generator_capability_v1.yaml
+  - config/data_quality/regime_label_generator_dependency_v1.yaml
+  - config/report_registry.yaml
+  - config/research/regime_label_generator_policy.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/8a/8ac717bc6cb7975c7630428801f4a29995e9505bf34902f1c4266ccd2a3f9661.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - src/ai_trading_system/cli_commands/research_trends.py
+  - src/ai_trading_system/data/__init__.py
+  - src/ai_trading_system/data/quality_capability_discovery.py
+  - src/ai_trading_system/regime_label_generator_diagnostic_poc.py
+  - tests/research_trends/test_regime_label_generator_diagnostic_poc.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_data_quality_capability.py
+  sources:
+  - path: config/architecture/fragments/flows/data_quality_capability.yaml
+    sha256: 6dc9d594fe04d4c7923a9f71861a816ff33a286071a3191bdd4663afaef002b4
+    hash_normalization: git_eol_lf
+  - path: config/architecture/fragments/modules/data_quality_capability_discovery.yaml
+    sha256: 8e3b2858572886d9cee994176af06e572a5b7d059d89467bfeb2ae660aadf811
+    hash_normalization: git_eol_lf
+  - path: config/data_quality/regime_label_generator_capability_v1.yaml
+    sha256: 8b2619099533a269940329be8e6cce2a3e1025a0a41f4f9799cc9f8f29403567
+    hash_normalization: git_eol_lf
+  - path: config/data_quality/regime_label_generator_dependency_v1.yaml
+    sha256: 57911208445dc41f719e41ac60a065c1cf18b43250ff586afcdf93526a4bd4bd
+    hash_normalization: git_eol_lf
+  - path: config/report_registry.yaml
+    sha256: 4684f25411bb85b86114c520ac9609f7bea65af460b45402f7d86442592fa7f1
+    hash_normalization: git_eol_lf
+  - path: config/research/regime_label_generator_policy.yaml
+    sha256: 59b5510e6e2ecc393f94942a1582f16179475f3807acb0311bd295a3cdb989b4
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: bbef898e33ee6aa3a92f087e9ff56816e4653be08446315988a032593dd71929
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+    sha256: 05e85028eee962e5d2ca287e1366e6bf1ba12b9c274c880a79d8446242a7ef24
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2316_Regime_Label_Generator_Diagnostic_POC.md
+    sha256: 7c9ce8710a51935a0a27c4f0f927b9987bf646284cf9b804107a558c424b9bea
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 1b881f53299e5acbafdc990008935de4987eeb0a73344553f1a1d940154afae1
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: a5388fff26b7bc9b93c426e797fc90c51618611275784b925bd2618e470ef9a0
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 1465121b4d847e052d0bd6e403b4ad8991c93015c13768478bd0796bf1c308be
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 1a620b0a2df1ec6293257099041f17257bdcca2d9198d43f2891887d0569a09c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 47bb1afba45c804ad38857b0df4d13f555dcc51668132079929cdbfbaf1384cd
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 4409893c30c7e6361d1b87163d9248147fe063e5dedd4073a754a0d2326e8043
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 86138a3790f0c7c861e83bbab319e54a943cf8d8c5f997010981bd504492a682
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/8a/8ac717bc6cb7975c7630428801f4a29995e9505bf34902f1c4266ccd2a3f9661.yaml
+    sha256: 84162e0742f4eb1958c1ff9baa39cd92fcd2f0eebde7f751015b522408ad553e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+    sha256: d3743c4a96ad9f6d4a4ab2837ed6268769fc26cf0a11e7e69dae571821342396
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/cli_commands/research_trends.py
+    sha256: db4c8299f4cc03bd33fef881603a8cef67784806c2c136bdcb48e8224fa3e95e
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/__init__.py
+    sha256: 2390150bb7b8672ceb9b8de20c14b4d02cbe0f2864a4136646bca013b4adc4c2
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/quality_capability_discovery.py
+    sha256: 9047fd3fe4ca14786aa25ef96b0f5f22e058854b0e7f9b8c9ea6357c42a0c15d
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/regime_label_generator_diagnostic_poc.py
+    sha256: fd93af4a0ea071f8d6b2752000ecbb7e4eeac72eaf2e47b3ec82628f41244034
+    hash_normalization: git_eol_lf
+  - path: tests/research_trends/test_regime_label_generator_diagnostic_poc.py
+    sha256: f8c97ef606854f5f14fd06454aab87a02933a03f5a11151039f986eb78db0896
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 594a82b7801a112d38daf4620ba5ff14fcdcaeb3fe31a4ce3f3a7a25f8770116
+    hash_normalization: git_eol_lf
+  - path: tests/test_data_quality_capability.py
+    sha256: 0c57c90389a94ba003ff88e613962de8e399b1468e942a1af23a365c432cbfbd
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: BASELINE_DONE_PHASE_B2_REGIME_LABEL_PILOT_PHASE_C_PENDING
+    focused: PASS_16
+    real_capability_receipt: PASS_FULL_FAIL_SCOPED_PASS_GLOBAL_CLAIM_FALSE
+    real_runner: PASS_7416_LABEL_ROWS_30_DISTRIBUTION_123_TRANSITION
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture_initial: FAIL_1_STALE_TEST_MANIFEST_669_PASS
+    architecture: PASS_670
+    contract: PASS_275
+    report: PASS_57_WARN_62
+    reproducibility: PASS_23
+    integration: PASS_995_WARN_642
+    full_parent: FAIL_2_REMOTE_CARRIER_DRIFT_7323_PASS_3_SKIP_643_WARN
+    full: PASS_7350_SKIP_3_WARN_643_PARENT_BOUND
+  safety:
+    consumer_migration_executed: true
+    consumer_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0
+    required_price_tickers:
+    - QQQ
+    - SMH
+    - SPY
+    required_rate_series: []
+    full_data_quality_status: FAIL
+    scoped_data_quality_status: PASS
+    global_cache_pass_claimed: false
+    capability_reused_from_other_consumer: false
+    daily_periodic_authorized: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: true
+    cached_data_mutated: false
+    production_effect: none
+    broker_action: none

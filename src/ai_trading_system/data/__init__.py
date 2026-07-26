@@ -22,7 +22,9 @@ from ai_trading_system.data.quality_capability_discovery import (
     PublishedConsumerDataCapabilityDiscovery,
     build_consumer_data_capability_dependency,
     consumer_data_capability_discovery_path,
+    load_consumer_data_capability_dependency,
     publish_consumer_data_capability_discovery,
+    read_verified_consumer_data_capability_input,
     verify_consumer_data_capability_preflight,
 )
 from ai_trading_system.data.quality_consumer_authorization import (
@@ -54,10 +56,12 @@ __all__ = [
     "build_consumer_data_capability",
     "build_consumer_data_capability_dependency",
     "consumer_data_capability_discovery_path",
+    "load_consumer_data_capability_dependency",
     "load_reviewed_consumer_data_capability_policy",
     "load_reviewed_data_quality_consumer_authorization_policy",
     "publish_download_transaction",
     "publish_consumer_data_capability_discovery",
+    "read_verified_consumer_data_capability_input",
     "resolve_download_publication",
     "resolve_download_publication_if_present",
     "verify_data_quality_consumer_authorization",

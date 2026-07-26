@@ -9,7 +9,7 @@ targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
   current_exists: true
-  current_sha256: 9ac633ef2da2ca0b50321157fee0d4605ed0229eac11806dccc5abe856296e41
+  current_sha256: 4684f25411bb85b86114c520ac9609f7bea65af460b45402f7d86442592fa7f1
   fragment_root: config/architecture/fragments/reports
   fragment_count: 5
   fragment_paths:
@@ -21,7 +21,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: 1195721baddd7b00f46ecdd3780decc623435c9cb11a3783b3a145c018d22260
+  current_sha256: bbef898e33ee6aa3a92f087e9ff56816e4653be08446315988a032593dd71929
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 6
   fragment_paths:
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 3c8eb18ce91afd5fdc4e77981b02b30aa58b43803756a01108b4168bbb1e81a1
+  current_sha256: 1b881f53299e5acbafdc990008935de4987eeb0a73344553f1a1d940154afae1
   fragment_root: config/architecture/fragments/flows
   fragment_count: 7
   fragment_paths:
@@ -107,7 +107,7 @@ fragments:
   owner: architecture_governance
   target_id: system_flow
   path: config/architecture/fragments/flows/data_quality_capability.yaml
-  sha256: 9cba920f64b2b5483b020b2425921e64e958b7aa56b75aec01369206d39cbc65
+  sha256: 6dc9d594fe04d4c7923a9f71861a816ff33a286071a3191bdd4663afaef002b4
   generated_source_of_truth_active: false
 - fragment_id: flow.growth_tilt_candidate_family_closure
   fragment_kind: flow
@@ -149,7 +149,7 @@ fragments:
   owner: data_platform
   target_id: null
   path: config/architecture/fragments/modules/data_quality_capability_discovery.yaml
-  sha256: c6370f7815c317e41af66f247966b2a21d01d009258cf6f5068169c8a2084fa3
+  sha256: 8e3b2858572886d9cee994176af06e572a5b7d059d89467bfeb2ae660aadf811
   generated_source_of_truth_active: false
 - fragment_id: module.research_framework
   fragment_kind: module

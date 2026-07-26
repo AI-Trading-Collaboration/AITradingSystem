@@ -1,0 +1,15 @@
+schema_version: data_quality_consumer_dependency.v1
+consumer_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
+consumer_version: 1.0.0
+capability_id: regime_label_trailing_price_inputs
+capability_version: 1.0.0
+capability_policy_path: config/data_quality/regime_label_generator_capability_v1.yaml
+capability_policy_sha256: 8b2619099533a269940329be8e6cce2a3e1025a0a41f4f9799cc9f8f29403567
+data_quality_policy_path: config/data_quality.yaml
+data_quality_policy_sha256: e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82
+accepted_receipt_schema_version: data_quality_consumer_capability_receipt.v1
+strict_pass_required: true
+cross_consumer_reuse_allowed: false
+daily_operation_authorized: false
+production_effect: none
+broker_action: none

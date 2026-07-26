@@ -1007,8 +1007,8 @@ start/end/available-on-session 和三资产未来 max drawdown / worst-1d。Cont
 embargo 留待下一批 reviewed policy。本批不执行 feature selection、model training、candidate
 search、strategy backtest 或权重生成，paper-shadow/production/broker 均不改变。
 
-DATA-GOV-002 Phase B1 在上述 receipt 之上增加 generic consumer adapter 的合同层，但尚不迁移
-TRADING-2460 或第二个 runner。`data_quality_consumer_dependency.v1` 把 exact
+DATA-GOV-002 Phase B1 在上述 receipt 之上增加 generic consumer adapter 的合同层。
+`data_quality_consumer_dependency.v1` 把 exact
 consumer/version、capability/version、capability policy 与 DQ policy 的 repo-relative
 path/SHA-256，以及 strict-PASS/no-reuse/no-daily/no-effect 边界冻结为 content-derived
 dependency id。Publisher 先从 root-bound、拒绝 symlink/junction 的路径读取原 receipt，重验
@@ -1020,9 +1020,18 @@ Pointer 只是 locator，不携带 PASS 权威；consumer 必须重新读取 poi
 核对 dependency/id/path/SHA/size/as-of/chronology，并再次运行完整 receipt verifier，才可取得
 caller 不能直接构造的 `VerifiedConsumerDataCapabilityPreflight`。Missing、non-canonical JSON、
 path escape、policy/source/report drift、wrong consumer/as-of、immutable collision 或 discovery
-回退全部在 evaluator 与输出之前 fail closed。Phase B2 另行迁移
-`TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`；B1 不开放 daily/periodic、
-production 或 broker。
+回退全部在 evaluator 与输出之前 fail closed。
+
+Phase B2 将第二个 read-only consumer
+`TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0` 迁移到该合同。Runner 先加载
+tracked dependency，再按 `quality_as_of` 定位 discovery pointer、取得 sealed preflight，并通过
+`read_verified_consumer_data_capability_input` 重读且复核 receipt 绑定的 `scoped_prices`
+SHA-256/size；只有 exact consumer/capability、strict scoped `PASS`、QQQ/SMH/SPY 和空 rates
+scope 全部匹配，才把同一份 verified bytes 交给 trailing-label evaluator。Runner 不再直接读取
+canonical price/rate/marketstack cache，也不在 evaluator 内运行一套独立 DQ。Full canonical DQ
+事实仍保留在 receipt 中；本次真实 run 为 full=`FAIL`、scoped=`PASS`、
+`global_cache_pass_claimed=false`。B2 不迁移 TRADING-2317，不开放 daily/periodic、production
+或 broker。
 
 ```mermaid
 flowchart LR
@@ -1038,7 +1047,9 @@ flowchart LR
     RET --> PTR
     PTR --> VP["Reverify pointer + receipt + bound files<br/>sealed strict preflight"]
     DEP --> VP
-    VP -.-> PILOT["B2 TRADING-2316 pilot<br/>not migrated in B1"]
+    VP --> VB["B2 re-read verified scoped_prices bytes<br/>SHA-256 + size recheck"]
+    VB --> PILOT["TRADING-2316 trailing-only evaluator<br/>QQQ / SMH / SPY; rates scope empty"]
+    PILOT --> PO["Diagnostic label series + matrices + safety<br/>receipt/full/scoped DQ disclosed"]
     C2 --> L1["Phase A direct verified receipt<br/>1 / 5 / 10 / 20-session labels"]
     L1 --> X1["QQQ-SGOV primary<br/>SPY-SGOV + QQQ-SPY diagnostics"]
     L1 --> R1["Future max drawdown<br/>future worst 1d"]
@@ -1046,6 +1057,7 @@ flowchart LR
     R1 --> V1
     V1 --> O1["Primary + summary + Chinese report<br/>envelope + run ledger"]
     O1 -.-> N1["No global PASS overclaim / reuse / daily authorization<br/>no model / weights / production / broker"]
+    PO -.-> N1
     VP -.-> N1
 ```
 
@@ -6305,7 +6317,7 @@ TRADING-2314 在 TRADING-2313 inconclusive actual-path validation 之后新增 l
 
 TRADING-2315 在 P1 candidate family scope reviews 之后新增 regime state machine design audit 分支。`aits research trends regime-state-machine-design-audit --mode design_audit` 读取 owner post-2302 roadmap、TRADING-2301 backlog context 和 `config/research/regime_state_machine_design_policy.yaml`，不读取 cached market / macro data，因此 data_quality_status=`NOT_APPLICABLE_STATIC_DESIGN_AUDIT`；本命令不调用 `validate_data_cache`，因为它不计算 features、scores、backtests、daily reports 或 label series，后续 TRADING-2316 一旦读取 cached data 或生成 label series 必须重新执行同源 data-quality / PIT / known-at gate。命令输出写入 `outputs/research_trends/regime_state_machine_design_audit/`，包括 design audit summary、regime label taxonomy、transition rule matrix、anti-lookahead guardrail matrix、candidate segmentation use-case matrix、label generator POC route、safety boundary，并同步 `docs/research/regime_state_machine_design_audit.md`。真实 run 当前 status=`REGIME_STATE_MACHINE_DESIGN_AUDIT_READY_DIAGNOSTIC_ONLY`，label_count=9，覆盖 `uptrend`、`late_uptrend`、`drawdown`、`panic`、`rebound`、`failed_rebound`、`range_bound`、`high_volatility`、`low_volatility`；guardrails 阻断 future outcome labeling、hindsight episode relabeling、unconfirmed same-day transitions、missing-input tradeable defaults、direct signal usage 和 promotion misread；candidate segmentation use cases 仅覆盖 volatility risk-cap、breadth proxy、AI leadership 和 liquidity rates 的 diagnostic-only interpretation。该分支只定义 TRADING-2316 diagnostic generator POC 的设计边界，不生成 regime label series、candidate signal、segmentation metrics、actual-path validation by regime、daily report integration、portfolio weights、execution cap、broker path 或 production report path；输出固定 `diagnostic_only=true`、`design_audit_only=true`、`candidate_signal_generated=false`、`regime_label_series_generated=false`、`generator_implemented=false`、`actual_path_validation_executed=false`、promotion/paper-shadow/production/broker false/none/BLOCKED。
 
-TRADING-2316 在 TRADING-2315 design audit 之后新增 regime label generator diagnostic POC 分支。`aits research trends regime-label-generator-diagnostic-poc --quality-as-of 2026-06-29 --mode diagnostic_poc` 读取 `config/research/regime_label_generator_policy.yaml`、TRADING-2315 design policy、cached adjusted-close prices for `QQQ` / `SMH` / `SPY` 和 configured rate series；命令在生成 label 前调用与 `aits validate-data` 同源的 `validate_data_cache`，若 data-quality gate 有 error 则 fail closed 且不生成 label artifacts。命令输出写入 `outputs/research_trends/regime_label_generator_diagnostic_poc/`，包括 regime label generation summary、`regime_label_series.csv`、PIT policy、distribution matrix、transition matrix、safety boundary 和 data-quality report，并同步 `docs/research/regime_label_generator_diagnostic_poc.md`。真实 run 当前 status=`REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，label_row_count=5370，distribution_row_count=30，transition_row_count=119；primary axis 覆盖 `uptrend`、`late_uptrend`、`drawdown`、`panic`、`rebound`、`failed_rebound`、`range_bound`，volatility overlay 覆盖 `high_volatility`、`low_volatility` 和 neutral overlay `normal_volatility`。该分支只提供 TRADING-2317 validation segmentation input；label 使用 trailing adjusted-close features、observed-to-date drawdown/rebound 和 trailing realized volatility，不使用 future return、future drawdown、future volatility、final peak/trough 或 hindsight relabeling。输出固定 `diagnostic_only=true`、`segmentation_only=true`、`regime_label_series_generated=true`、`candidate_signal_generated=false`、`candidate_artifact_generated=false`、`actual_path_validation_executed=false`、promotion/paper-shadow/production/broker false/none/BLOCKED，不写入 daily scoring、portfolio weights、forward observe runtime、production report path 或 broker path。
+TRADING-2316 在 TRADING-2315 design audit 之后提供 regime label generator diagnostic POC。DATA-GOV-002 Phase B2 后，`aits research trends regime-label-generator-diagnostic-poc --quality-as-of 2026-07-24 --start-date 2021-02-22 --end-date 2026-07-24 --mode diagnostic_poc` 不再接受 raw price/rate/marketstack path；它读取 `config/research/regime_label_generator_policy.yaml`、TRADING-2315 design policy和 tracked `config/data_quality/regime_label_generator_dependency_v1.yaml`，在 evaluator 与任何输出之前验证 consumer/version/as-of discovery pointer、content-addressed receipt、policy/source/projection/report bindings 与 strict scoped PASS，再从 receipt 绑定且复核 SHA-256/size 的 `scoped_prices` bytes 构建 QQQ/SMH/SPY adjusted-close matrix。Exact evaluator closure 不含 rates，因此 `required_rate_series=[]`；full canonical DQ 仍通过 capability build 的同源 `validate_data_cache` 运行和披露，不能把 scoped PASS 误写为 global PASS。命令输出 regime label generation summary、`regime_label_series.csv`、PIT policy、distribution matrix、transition matrix、safety boundary 和研究报告；DQ证据由 receipt 绑定的 full/scoped reports提供。真实 capability receipt=`dq_capability_b453834493d1951868c5474f379942461cce29c61b74fd37b9aab69167759ab3`，full DQ=`FAIL`且唯一隔离错误为范围外 `prices_non_market_session_date`，scoped DQ=`PASS`、`global_cache_pass_claimed=false`；真实 runner status=`REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC_READY_SEGMENTATION_ONLY`，actual requested range=`2021-02-22..2026-07-24`，label rows=`7416`、distribution rows=`30`、transition rows=`123`。该分支只提供 validation segmentation input；label 使用 trailing adjusted-close features、observed-to-date drawdown/rebound 和 trailing realized volatility，不使用 future return、future drawdown、future volatility、final peak/trough 或 hindsight relabeling。输出固定 `diagnostic_only=true`、`segmentation_only=true`、`regime_label_series_generated=true`、`candidate_signal_generated=false`、`candidate_artifact_generated=false`、`actual_path_validation_executed=false`、promotion/paper-shadow/production/broker false/none/BLOCKED，不写入 daily scoring、portfolio weights、forward observe runtime、production report path 或 broker path；TRADING-2317 未在本批迁移。
 
 TRADING-2317 在 TRADING-2316 label generator POC 之后新增 regime-segmented candidate validation 分支。`aits research trends regime-segmented-candidate-validation --quality-as-of 2026-06-29 --mode diagnostic_validation` 读取 `config/research/regime_segmented_candidate_validation_policy.yaml`、TRADING-2316 `regime_label_series.csv` / generation summary、scope-narrowed volatility risk-cap actual-path matrix、breadth proxy source-blocked selection scorecard、AI leadership actual-path matrix、liquidity/rates actual-path matrix，以及 cached market / macro data；命令在分段前调用与 `aits validate-data` 同源的 `validate_data_cache`，若 data-quality gate 或 TRADING-2316 label source status 不满足 policy 则 fail closed。命令输出写入 `outputs/research_trends/regime_segmented_candidate_validation/`，包括 validation summary、candidate performance matrix、coverage matrix、family blocker matrix、interpretation matrix、safety boundary 和 data-quality report，并同步 `docs/research/regime_segmented_candidate_validation.md`。真实 run 当前 status=`REGIME_SEGMENTED_CANDIDATE_VALIDATION_READY_DIAGNOSTIC_ONLY`，data_quality_status=`PASS_WITH_WARNINGS`，actual_requested_date_range=`2022-12-01..2026-06-29`，performance_row_count=294，coverage_row_count=31，family_blocker_row_count=4，interpretation_row_count=4；volatility risk-cap、AI leadership 和 liquidity pressure 可按 `primary_trend_regime` / `volatility_overlay` 分段，breadth proxy 因 source-blocked 只输出 blocker row。该分支只重新解释已有 actual-path / source-blocked evidence，不生成新 candidate signal、不执行新 actual-path validation、不改变既有 candidate verdict、不启动 forward observe、不进入 daily scoring、portfolio weights、paper-shadow、production report path 或 broker path；输出固定 `diagnostic_only=true`、`segmentation_only=true`、`actual_path_validation_consumed=true`、`new_actual_path_validation_executed=false`、`candidate_signal_generated=false`、`candidate_artifact_generated=false`、`existing_candidate_verdict_changed=false`、promotion/paper-shadow/production/broker false/none/BLOCKED。
 

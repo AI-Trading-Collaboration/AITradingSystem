@@ -1579,7 +1579,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.research_trends
   path: src/ai_trading_system/cli_commands/research_trends.py
-  sha256: 4c9729390ef4756529cb577402481a6ce41c6b8d559fbbf0e66df740085684ab
+  sha256: db4c8299f4cc03bd33fef881603a8cef67784806c2c136bdcb48e8224fa3e95e
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -2551,7 +2551,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.__init__
   path: src/ai_trading_system/data/__init__.py
-  sha256: 31494723275fbecb45ff39efe134372a3a27015b64ed1dc0afa0b42f9538b330
+  sha256: 2390150bb7b8672ceb9b8de20c14b4d02cbe0f2864a4136646bca013b4adc4c2
   rule_id: data
   owner_profile: data
   owners:
@@ -2705,7 +2705,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.quality_capability_discovery
   path: src/ai_trading_system/data/quality_capability_discovery.py
-  sha256: 8b2e4b7480adac304a8caf2c9f5c344f6e3f2e97f6e957d6331c3191fa52a556
+  sha256: 9047fd3fe4ca14786aa25ef96b0f5f22e058854b0e7f9b8c9ea6357c42a0c15d
   rule_id: data
   owner_profile: data
   owners:
@@ -15310,7 +15310,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.regime_label_generator_diagnostic_poc
   path: src/ai_trading_system/regime_label_generator_diagnostic_poc.py
-  sha256: d47a65f3ea0543db7f189dccc424312f47b65725e51351852221797ec8cf48f2
+  sha256: fd93af4a0ea071f8d6b2752000ecbb7e4eeac72eaf2e47b3ec82628f41244034
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

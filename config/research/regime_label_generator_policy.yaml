@@ -35,7 +35,7 @@ inputs:
     - SPY
   required_price_column: adj_close
   required_data_quality_gate: aits validate-data
-  required_rate_series_policy: configured_universe_macro_rates
+  required_rate_series_policy: none_evaluator_price_only
   source_type: cached_adjusted_close_price_proxy
 known_at_policy:
   policy_id: trailing_close_known_after_market_close

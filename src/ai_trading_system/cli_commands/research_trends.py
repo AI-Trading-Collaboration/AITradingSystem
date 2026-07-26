@@ -1903,25 +1903,22 @@ from ai_trading_system.regenerated_candidate_inconclusive_diagnostics import (
     run_regenerated_candidate_inconclusive_diagnostics,
 )
 from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_CAPABILITY_DEPENDENCY_PATH as DEFAULT_REGIME_LABEL_GENERATOR_CAPABILITY_DEPENDENCY_PATH,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
+    DEFAULT_CAPABILITY_PROJECT_ROOT as DEFAULT_REGIME_LABEL_GENERATOR_CAPABILITY_PROJECT_ROOT,
+)
+from ai_trading_system.regime_label_generator_diagnostic_poc import (
     DEFAULT_DESIGN_POLICY_PATH as DEFAULT_REGIME_LABEL_GENERATOR_DESIGN_POLICY_PATH,
 )
 from ai_trading_system.regime_label_generator_diagnostic_poc import (
     DEFAULT_DOCS_ROOT as DEFAULT_REGIME_LABEL_GENERATOR_DOCS_ROOT,
 )
 from ai_trading_system.regime_label_generator_diagnostic_poc import (
-    DEFAULT_MARKETSTACK_PRICES_PATH as DEFAULT_REGIME_LABEL_GENERATOR_MARKETSTACK_PRICES_PATH,
-)
-from ai_trading_system.regime_label_generator_diagnostic_poc import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_REGIME_LABEL_GENERATOR_OUTPUT_ROOT,
 )
 from ai_trading_system.regime_label_generator_diagnostic_poc import (
     DEFAULT_POLICY_PATH as DEFAULT_REGIME_LABEL_GENERATOR_POLICY_PATH,
-)
-from ai_trading_system.regime_label_generator_diagnostic_poc import (
-    DEFAULT_PRICES_PATH as DEFAULT_REGIME_LABEL_GENERATOR_PRICES_PATH,
-)
-from ai_trading_system.regime_label_generator_diagnostic_poc import (
-    DEFAULT_RATES_PATH as DEFAULT_REGIME_LABEL_GENERATOR_RATES_PATH,
 )
 from ai_trading_system.regime_label_generator_diagnostic_poc import (
     MODE as REGIME_LABEL_GENERATOR_MODE,
@@ -6132,15 +6129,12 @@ def regime_label_generator_diagnostic_poc_command(
     design_policy_path: Annotated[
         Path, typer.Option("--design-policy")
     ] = DEFAULT_REGIME_LABEL_GENERATOR_DESIGN_POLICY_PATH,
-    prices_path: Annotated[
-        Path, typer.Option("--prices-path")
-    ] = DEFAULT_REGIME_LABEL_GENERATOR_PRICES_PATH,
-    rates_path: Annotated[
-        Path, typer.Option("--rates-path")
-    ] = DEFAULT_REGIME_LABEL_GENERATOR_RATES_PATH,
-    marketstack_prices_path: Annotated[
-        Path | None, typer.Option("--marketstack-prices-path")
-    ] = DEFAULT_REGIME_LABEL_GENERATOR_MARKETSTACK_PRICES_PATH,
+    capability_dependency_path: Annotated[
+        Path, typer.Option("--capability-dependency")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_CAPABILITY_DEPENDENCY_PATH,
+    capability_project_root: Annotated[
+        Path, typer.Option("--capability-project-root")
+    ] = DEFAULT_REGIME_LABEL_GENERATOR_CAPABILITY_PROJECT_ROOT,
     quality_as_of: Annotated[str | None, typer.Option("--quality-as-of")] = None,
     start_date: Annotated[str | None, typer.Option("--start-date")] = None,
     end_date: Annotated[str | None, typer.Option("--end-date")] = None,
@@ -6155,9 +6149,8 @@ def regime_label_generator_diagnostic_poc_command(
     payload = run_regime_label_generator_diagnostic_poc(
         policy_path=policy_path,
         design_policy_path=design_policy_path,
-        prices_path=prices_path,
-        rates_path=rates_path,
-        marketstack_prices_path=marketstack_prices_path,
+        capability_dependency_path=capability_dependency_path,
+        capability_project_root=capability_project_root,
         quality_as_of=quality_as_of,
         start_date=start_date,
         end_date=end_date,

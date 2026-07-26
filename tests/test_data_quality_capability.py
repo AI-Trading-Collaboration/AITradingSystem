@@ -28,7 +28,9 @@ from ai_trading_system.data.quality_capability import (
 from ai_trading_system.data.quality_capability_discovery import (
     build_consumer_data_capability_dependency,
     consumer_data_capability_discovery_path,
+    load_consumer_data_capability_dependency,
     publish_consumer_data_capability_discovery,
+    read_verified_consumer_data_capability_input,
     verify_consumer_data_capability_preflight,
 )
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
@@ -235,6 +237,33 @@ def test_generic_dependency_discovery_and_verified_preflight_are_exact_and_idemp
     assert preflight.receipt_path.endswith(f"/{result.receipt.receipt_id}.json")
     assert preflight.receipt.global_cache_pass_claimed is False
     assert preflight.receipt.scoped_quality.status == "PASS"
+    dependency_path = root / "config/data_quality/consumer_dependency.json"
+    dependency_path.write_text(
+        dependency.model_dump_json(indent=2),
+        encoding="utf-8",
+    )
+    assert (
+        load_consumer_data_capability_dependency(
+            dependency_path,
+            project_root=root,
+        )
+        == dependency
+    )
+    scoped_bytes = read_verified_consumer_data_capability_input(
+        preflight=preflight,
+        role="scoped_prices",
+        project_root=root,
+    )
+    assert scoped_bytes == result.scoped_prices_path.read_bytes()
+    with pytest.raises(
+        DataQualityCapabilityContractError,
+        match="DQ_CAPABILITY_INPUT_ROLE_INVALID",
+    ):
+        read_verified_consumer_data_capability_input(
+            preflight=preflight,
+            role="canonical_prices",
+            project_root=root,
+        )
 
 
 def test_generic_preflight_rejects_forgery_dependency_drift_and_pointer_tamper(

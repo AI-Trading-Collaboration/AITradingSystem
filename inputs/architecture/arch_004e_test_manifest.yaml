@@ -6831,7 +6831,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.research_trends.test_regime_label_generator_diagnostic_poc
   path: tests/research_trends/test_regime_label_generator_diagnostic_poc.py
-  sha256: fedec971731e92e36f885cbeca3ef9531e2bffa7b483a987b4c8d9d650bb04e6
+  sha256: f8c97ef606854f5f14fd06454aab87a02933a03f5a11151039f986eb78db0896
   file_role: test
   rule_id: research_trend_tests
   owner_profile: quality
@@ -7489,7 +7489,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: fc2b33c0739543a3d4779bef5b044cd82fb38314925b27ce1155cd8878fa148b
+  sha256: 594a82b7801a112d38daf4620ba5ff14fcdcaeb3fe31a4ce3f3a7a25f8770116
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -9249,7 +9249,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_data_quality_capability
   path: tests/test_data_quality_capability.py
-  sha256: b215a18cbd927674944e3994e40a82435fa256d8e289c28dccf0753abb3ccd6a
+  sha256: 0c57c90389a94ba003ff88e613962de8e399b1468e942a1af23a365c432cbfbd
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
