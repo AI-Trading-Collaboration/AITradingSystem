@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 41f7fa099375c887819af4591aa3f044a4d21aac98217493456e868a3f5fc724
+baseline_checksum: 525c2157688742589f0a51f0c239d707cd6badfed058fa919d91ee43420cad9c
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 916
 fragment_count: 916
@@ -87,8 +87,8 @@ fragments:
   fragment_checksum: d4bd6255138d98e0c153f9638d6e52627bfb92abf3880aad389962a712a62d9a
 - task_id: ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
   path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
-  file_sha256: 44a490243fa43cf7a2800f96142569a52e1a464bd7bb9eab514a375a69f5c5bb
-  fragment_checksum: 59f3ea667b3df96161b3de6a1a045cf35119dd61c1afdbdedcdff88186654b0e
+  file_sha256: 0334641b5a9c767c736e5261f690eaf34b715fed107299acfc0c602bc0214dc0
+  fragment_checksum: 39ce3b2620f73400ffbdab1100ec83fbd250f79c4ddb203616ba3935d754a2c4
 - task_id: ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
   path: registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
   file_sha256: 8380ad0c7364b8bb871d2b58419a6184f43403edb7bbcdfc65b238f2e54e5b90
@@ -366,9 +366,9 @@ fragments:
   file_sha256: 0c72a39392f9df2c932209d6c725f5dc529c8e82e1b52c93192a53b074d1c56d
   fragment_checksum: d9db9c9b21157397359c4afa73b1b0dad715cd71c51f941c0c37adb4d6704a98
 - task_id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
-  path: registry/development_tasks_shadow/active/82/8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml
-  file_sha256: 04f807609a7abcac42c2cd22dbd95bdb918418c1aeb3b07eefea14168118c5c0
-  fragment_checksum: 345aa2056e4337334a849b5d3098d6e1bfea6d6d804a3a5599ffc08f2b491dcb
+  path: registry/development_tasks_shadow/completed/82/8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml
+  file_sha256: f29a57b20c4b01ee54052f08c93a0c8dc48bf498e81a4eb5c6329379aca02d72
+  fragment_checksum: b35d78c0d8101dd9cc5e35dce0f993e5fd3bf270762e15977148c681fb71b48c
 - task_id: DOC-001
   path: registry/development_tasks_shadow/active/35/354f45b40d45c4c35dfda2ceb87a3bf1ce503c82794b875661a811af7398de19.yaml
   file_sha256: 3d8d624d4f9aefb349bb8369dd63bda0b3b3354fc129af81c087d1c0b1bd44af
@@ -3689,15 +3689,15 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 05f22562e300613220421d3a27e007cc149f6cf1b6e4d33512c5bc20a0b3262b
-  rendered_sha256: 05f22562e300613220421d3a27e007cc149f6cf1b6e4d33512c5bc20a0b3262b
+  source_sha256: 064dcc2628702bf8ca1fa5a77824eadbe4095a6ac2ad89494ab33a19d130c6f6
+  rendered_sha256: 064dcc2628702bf8ca1fa5a77824eadbe4095a6ac2ad89494ab33a19d130c6f6
   byte_identical: true
   persisted_in_git: false
 - source: completed
   source_path: docs/task_register_completed.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register_completed.md
-  source_sha256: 7aa78bcd75f006079501e644c207f4035ee9938c8d3ebda23e01560e37664315
-  rendered_sha256: 7aa78bcd75f006079501e644c207f4035ee9938c8d3ebda23e01560e37664315
+  source_sha256: 15bcb104f6ef563ecfb4636ccabc524e5b2e2f3f8227ded3652915495bd2f8e2
+  rendered_sha256: 15bcb104f6ef563ecfb4636ccabc524e5b2e2f3f8227ded3652915495bd2f8e2
   byte_identical: true
   persisted_in_git: false
 replay:
@@ -3712,4 +3712,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: b6f2387f1cdf02b1f1d45e8e307705550f534f3bd2af7c01d00bab7566b27a5a
+index_checksum: 47fb160abf99b203f9e6ccb188cb9c951a79dbabdb4de5dabd366d0a6b06c1e0

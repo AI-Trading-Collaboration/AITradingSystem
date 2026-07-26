@@ -600,11 +600,19 @@ TRADING_2462_COMPLETED_TASK_SHADOW_PATH = (
     "8a124c3f1fb3cd10eddf178834b6a0d62026760cc274f49707e423203f45fa9d.yaml"
 )
 DEVX_006_SECTION = "phase_devx_006_base_drift_aware_integration_revalidation"
-DEVX_006_BASE_COMMIT = "4e6eb8aa60907fffdf82541b6fd4027ac2940b52"
-DEVX_006_BASELINE_GIT_BLOB = "d7fe14a79ae1167ee94a0e16789e0b2a82325a15"
+DEVX_006_BASE_COMMIT = "6dc8a643ae02c2cda47b4572eec452fce80251ef"
+DEVX_006_BASELINE_GIT_BLOB = "40741323a69ff5418a58633346de93cfb318af68"
 DEVX_006_HISTORICAL_PREFIX_BYTE_COUNT = 1_801_243
 DEVX_006_HISTORICAL_PREFIX_SHA256 = (
-    "2d5dc7773ee3155a3c2f2482b728b108c7f416f3dd7be2f2a4a2184f888082db"
+    "927e29db52bd81907307e710fe44d5d6455efc58a8b5543efab82944ede48dba"
+)
+DEVX_006_ACTIVE_TASK_SHADOW_PATH = (
+    "registry/development_tasks_shadow/active/82/"
+    "8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml"
+)
+DEVX_006_COMPLETED_TASK_SHADOW_PATH = (
+    "registry/development_tasks_shadow/completed/82/"
+    "8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml"
 )
 LATEST_COMPATIBILITY_SECTION = DEVX_006_SECTION
 DEVX_006_NEW_SOURCE_PATHS = frozenset(
@@ -612,10 +620,7 @@ DEVX_006_NEW_SOURCE_PATHS = frozenset(
         "config/architecture/arch_005_integration_revalidation.yaml",
         "docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md",
         "docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md",
-        (
-            "registry/development_tasks_shadow/active/82/"
-            "8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml"
-        ),
+        DEVX_006_COMPLETED_TASK_SHADOW_PATH,
         "scripts/architecture_arch005_integration_revalidation.py",
         "src/ai_trading_system/platform/architecture/integration_revalidation.py",
         "src/ai_trading_system/yaml_loader.py",
@@ -9604,7 +9609,9 @@ def test_devx_006_arch_005m1_is_current_hash_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     assert superseded == _devx_006_prior_active_source_mismatches()
     expected = superseded | DEVX_006_NEW_SOURCE_PATHS
-    assert phase["removed_live_source_paths"] == []
+    assert set(phase["removed_live_source_paths"]) == {
+        DEVX_006_ACTIVE_TASK_SHADOW_PATH
+    }
     assert set(phase["new_source_paths"]) == DEVX_006_NEW_SOURCE_PATHS
     assert set(phase["source_delta_paths"]) == expected
     sources = phase["sources"]
@@ -9622,14 +9629,18 @@ def test_devx_006_arch_005m1_is_current_hash_authority() -> None:
         "strict_yaml_batch_1_integrated_without_rebuild": True,
         "automatic_git_mutation_allowed": False,
     }
-    assert phase["validation"] == {
-        "focused": "PENDING_FINAL_TREE",
-        "architecture": "PENDING_FINAL_TREE",
-        "contract": "PENDING_FINAL_TREE",
-        "integration": "PENDING_FINAL_TREE",
-        "reproducibility": "PENDING_FINAL_TREE",
-        "full": "PENDING_FINAL_TREE",
+    validation = phase["validation"]
+    assert validation == {
+        "focused": "PASS_278",
+        "architecture": "PASS_710",
+        "contract": "PASS_275",
+        "integration": "PASS_995",
+        "reproducibility": "PASS_23",
+        "full": validation["full"],
     }
+    assert validation["full"] == "PENDING_FINAL_TREE" or str(
+        validation["full"]
+    ).startswith("PASS_")
     assert phase["safety"] == {
         "known_unrelated_opened": False,
         "strategy_conclusion_changed": False,

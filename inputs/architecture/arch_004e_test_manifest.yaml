@@ -7523,7 +7523,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: a1b556beb6854d2b1ba4a421456be7fe2d64995e6befe272f5574f419cc63712
+  sha256: 4604d88741df8128bd13f3d07881bed16d6b49831feaa3595a3bb0e533501de1
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

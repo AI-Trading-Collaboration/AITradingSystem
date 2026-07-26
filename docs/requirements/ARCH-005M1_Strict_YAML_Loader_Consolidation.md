@@ -7,7 +7,7 @@
 Owner continuation：
 `owner_continuation:ARCH-005M1:2026-07-27:continue_long_term_engineering_goal`
 
-状态：`VALIDATING_FINAL_TREE`
+状态：`BASELINE_DONE_BATCH_1`
 
 ## 1. 问题与目标
 
@@ -118,3 +118,15 @@ Batch 1 的两个wrapper必须逐项保持：
   task registry与DevEx generated views已在组合最终树各刷新一次，deprecation inventory
   仅因新增1个module与2个test file从`1030/1196`更新为`1031/1198`。状态进入
   `VALIDATING_FINAL_TREE`，最终architecture/contract/Full及compatibility authority仍须通过。
+- 2026-07-27：在`6dc8a643a` latest-main integration tree上，Batch 1 focused=`278 passed`，
+  strict mypy与Ruff PASS；组合Architecture/Contract/Integration/Reproducibility分别为
+  `710/275/995/23 passed`。append-only compatibility authority历史前缀绑定
+  `6dc8a643a:inputs/architecture/arch_004_compatibility_baseline.yaml` exact blob，31项current
+  source hash逐项一致。Batch 1仍等待required Full与post-Full治理门禁，不扩张到其余3个loader。
+- 2026-07-27：组合final tree的唯一required Full通过
+  `7454 passed / 5 skipped / 643 warnings`，artifact=`full_20260726T193718Z`。Batch 1状态
+  进入`VALIDATING_POST_FULL`；remaining三个loader继续是后续批次，不把本次Full解释为全量迁移。
+- 2026-07-27：最终归档树的post-Full Architecture/Contract分别为`710/275 passed`，
+  artifacts=`architecture-fitness_20260726T200007Z`、
+  `contract-validation_20260726T200525Z`。Batch 1转`BASELINE_DONE_BATCH_1`；剩余3个strict
+  loader仍保留在本任务后续批次中，必须逐个characterization与迁移，未宣称全量统一完成。

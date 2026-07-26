@@ -4,7 +4,7 @@
 
 - 稳定任务 ID：`DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION`
 - 优先级：`P0`
-- 状态：`VALIDATING_FINAL_TREE`
+- 状态：`COMPLETE`
 - owner：developer workflow / architecture control-plane owner
 - owner decision：
   `owner_decision:DEVX-006:2026-07-27:approve_base_drift_aware_single_integration_v1`
@@ -238,3 +238,32 @@ rename、wrong ancestry、dirty target、known-unrelated zero-read 与 tamper te
   `codex/integration-20260727-devx006-arch005m1`。该候选同时接入已focused验证的
   ARCH-005M1 Batch 1，shared/generated只在最新final tree刷新一次；状态进入
   `VALIDATING_FINAL_TREE`。
+- 2026-07-27：首次final-tree Architecture运行中，main/origin由`4e6eb8aa6`推进到
+  `6dc8a643a`的TRADING-2462 governed workspace cleanup；结果为`708 passed / 2 failed`，
+  两个失败均是Wave14/15 carrier按设计报告`CARRIER_PUSH_DRIFT`，runtime artifact=
+  `architecture-fitness_20260726T191629Z`，不得改写为PASS。对已提交candidate
+  `aa2ce0840`执行第二次真实plan得到
+  `integration-revalidation-e8b52f6d7da28c3cdd37`、decision=
+  `READY_FOR_SINGLE_INTEGRATION_CANDIDATE`：唯一overlap为coordinator-refreshable
+  compatibility baseline，TRADING requirement变化为unrelated，0 blocker、0 contract
+  conflict、0 undeclared path。primary checkout因known-unrelated用户文档dirty而不允许
+  rebase/stash；按已登记生命周期把同一candidate迁至
+  `D:\Work\AITradingSystem_integration_devx006_arch005m1`，基于`6dc8a643a`重建最终authority
+  并重新执行formal gates。
+- 2026-07-27：`6dc8a643a` latest-main最终树完成pre-Full formal验证：focused=`278 passed`；
+  Architecture=`710 passed`，artifact=`architecture-fitness_20260726T192555Z`；
+  Contract=`275 passed`，artifact=`contract-validation_20260726T192807Z`；
+  Integration=`995 passed / 642 warnings`，artifact=`integration_20260726T193030Z`；
+  Reproducibility=`23 passed`，artifact=`reproducibility_20260726T193128Z`。canonical/installed
+  skill 5文件逐字节一致；task shadow与DevEx deterministic validate均PASS。portable bootstrap
+  bundle按tracked bundle、handoff checksum和4份artifact SHA恢复历史runtime inputs，不使用
+  link或跳过验证。required Full仍待单次natural-boundary运行。
+- 2026-07-27：唯一natural-boundary Full通过：`7454 passed / 5 skipped / 643 warnings /
+  1203.09s`，artifact=`full_20260726T193718Z`。没有串行替代、没有第二次Full、没有
+  production或broker行为。状态进入`VALIDATING_POST_FULL`，等待最终Architecture/Contract
+  治理门禁、任务归档、commit/ff-only/push与workspace lifecycle closeout。
+- 2026-07-27：最终归档树的post-Full Architecture=`710 passed`，artifact=
+  `architecture-fitness_20260726T200007Z`；Contract=`275 passed`，artifact=
+  `contract-validation_20260726T200525Z`。DEVX-006实现、真实两次base-drift pilot、typed
+  stop/ready分类、final-tree门禁与任务证据闭合，状态转`COMPLETE`；标准commit、ff-only、
+  ordinary push及temporary-workspace清理由研发流程继续执行，不改变功能验收结论。

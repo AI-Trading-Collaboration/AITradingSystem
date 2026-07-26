@@ -95,44 +95,44 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1639807
-    sha256: 05f22562e300613220421d3a27e007cc149f6cf1b6e4d33512c5bc20a0b3262b
-    row_count: 423
+    byte_count: 1638384
+    sha256: 064dcc2628702bf8ca1fa5a77824eadbe4095a6ac2ad89494ab33a19d130c6f6
+    row_count: 422
     final_newline: true
-    task_id_order_sha256: aeabefcde92128faee73675e651dcf0da11b30f0781f5ef324d488caabac1641
-    row_checksum_order_sha256: 601c7bca8306a302c271ad5316577bf7e119249364135ad6631e932d46adcbb5
+    task_id_order_sha256: fa85c8aa01791db1a6147012dfea4328be5fc269ba1dd4bbb06c5436375704ae
+    row_checksum_order_sha256: 903808379e396fddb00c1e2bfc4f931cc2db712129587c1c7d6dc9ccbe76d5c8
     task_row_newline_counts:
-      LF: 423
+      LF: 422
   - source: completed
     path: docs/task_register_completed.md
-    byte_count: 1084574
-    sha256: 7aa78bcd75f006079501e644c207f4035ee9938c8d3ebda23e01560e37664315
-    row_count: 493
+    byte_count: 1085884
+    sha256: 15bcb104f6ef563ecfb4636ccabc524e5b2e2f3f8227ded3652915495bd2f8e2
+    row_count: 494
     final_newline: true
-    task_id_order_sha256: 7024b255602828f5e8948b323cc08702e524c1a6931e8467281ca9c37fecde59
-    row_checksum_order_sha256: 68dde58da55bb5e3a3dbf309c534e268abe2099ec0c4e68058a7ed8641d36c53
+    task_id_order_sha256: baf92ebd34cf27fdb2de68b36287c3bebc4cda069267ebdae3cd05efbc7d9212
+    row_checksum_order_sha256: 836831a1d2772717c20cf7bd3b2c406374a9de63133c3c5a7ae2624ad20e1a84
     task_row_newline_counts:
-      LF: 493
-  active_task_count: 423
-  completed_task_count: 493
+      LF: 494
+  active_task_count: 422
+  completed_task_count: 494
   total_task_count: 916
   unique_task_count: 916
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
-    BASELINE_DONE: 114
+    BASELINE_DONE: 115
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
-    DONE: 481
+    DONE: 482
     DROPPED: 12
     IN_PROGRESS: 8
     PROPOSED: 11
     READY: 1
-    VALIDATING: 269
+    VALIDATING: 267
   task_id_set_sha256: 9cc042626a6d9634f959a3b9947753563a63588791256714c2a1fe2387e90199
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 35546c99918581e54a95f7e5caadfb11bf3480d407173826a8426a4cd4d1e32b
+  owner_set_sha256: b2decb5d1a8911a235db6993126bf6b0429854af27662e07b26626ac8109e57d
   docs_link_set_sha256: e5d4d6751f0113e0b758ebaaef8c0b173ca77e0153208267326adcda1d9b694c
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3008,7 +3008,7 @@ inventory:
   - task_id: ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
     source: active
     line_number: 1961
-    row_sha256: a8a3e23541381093eec7ac3291e9970c523e08fcb02d12c90f6659aef03dfe95
+    row_sha256: 52df6c003d1d88622367ab84287d8d879736e73340ba4f4564c12883ec4a421d
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -3086,13 +3086,6 @@ inventory:
     source: active
     line_number: 2031
     row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
-    cell_count: 8
-    field_projection: first_eight_cells_legacy_v1
-    history_completeness: LEGACY_HISTORY_PARTIAL
-  - task_id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
-    source: active
-    line_number: 2032
-    row_sha256: 9d6a20988eeb8d7a279fe5c8674551c41edf623ec08fb0dec247f6093b704d9c
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -6547,6 +6540,13 @@ inventory:
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
+  - task_id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+    source: completed
+    line_number: 510
+    row_sha256: c49b2ce797c054169df5679db6aca0ccee5eb09bd202167345c57f27e8ce55f0
+    cell_count: 8
+    field_projection: first_eight_cells_legacy_v1
+    history_completeness: LEGACY_HISTORY_PARTIAL
 consumer_characterization:
   status: PASS_CHARACTERIZED
   consumer_count: 131
@@ -7398,4 +7398,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 41f7fa099375c887819af4591aa3f044a4d21aac98217493456e868a3f5fc724
+baseline_checksum: 525c2157688742589f0a51f0c239d707cd6badfed058fa919d91ee43420cad9c
