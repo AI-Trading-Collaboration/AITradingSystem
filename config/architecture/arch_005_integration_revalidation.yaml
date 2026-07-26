@@ -1,0 +1,22 @@
+schema_version: arch_005_integration_revalidation_policy.v1
+known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+coordinator_refreshable_scopes:
+  - inputs/architecture
+  - registry/development_tasks_shadow
+contract_sensitive_scopes:
+  - AGENTS.md
+  - config/architecture/arch_005_parallel_control_policy.yaml
+  - config/data_quality
+  - config/scoring
+  - config/strategy
+  - src/ai_trading_system/backtesting
+  - src/ai_trading_system/data
+  - src/ai_trading_system/scoring
+  - tools/codex_skills/run-governed-development
+final_validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  - full
+  - integration
+  - reproducibility

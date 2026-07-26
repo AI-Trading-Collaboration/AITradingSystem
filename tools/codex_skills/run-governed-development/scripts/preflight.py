@@ -361,6 +361,192 @@ def evaluate_task_registration(
     return False, "NONE"
 
 
+def evaluate_base_drift(
+    *,
+    stage: str,
+    current_branch: str,
+    expected_base: str | None,
+    local_main: str,
+    head: str,
+    expected_base_is_head_ancestor: bool | None,
+    integration_plan: dict[str, Any] | None,
+    reviewed_reconciliation_plan_id: str | None,
+) -> tuple[list[dict[str, str]], list[dict[str, str]], list[dict[str, str]]]:
+    blockers: list[dict[str, str]] = []
+    serial: list[dict[str, str]] = []
+    warnings: list[dict[str, str]] = []
+    if expected_base is None or expected_base == local_main:
+        if reviewed_reconciliation_plan_id is not None:
+            blockers.append(
+                {
+                    "code": "UNEXPECTED_RECONCILIATION_APPROVAL",
+                    "detail": reviewed_reconciliation_plan_id,
+                }
+            )
+        return blockers, serial, warnings
+    if (
+        stage == "LANE"
+        and current_branch != "main"
+        and expected_base_is_head_ancestor is True
+    ):
+        warnings.append(
+            {
+                "code": "BASE_DRIFT_DEFERRED_TO_INTEGRATION_PLAN",
+                "detail": f"{expected_base}!={local_main}",
+            }
+        )
+        return blockers, serial, warnings
+    if integration_plan is None:
+        blockers.append(
+            {
+                "code": "EXPECTED_BASE_MISMATCH",
+                "detail": f"{expected_base}!={local_main}",
+            }
+        )
+        return blockers, serial, warnings
+    expected_bindings = {
+        "frozen_base": expected_base,
+        "lane_head": head,
+        "latest_main": local_main,
+    }
+    for field, expected in expected_bindings.items():
+        if integration_plan.get(field) != expected:
+            blockers.append(
+                {
+                    "code": "INTEGRATION_REVALIDATION_BINDING_MISMATCH",
+                    "detail": (
+                        f"{field}:{integration_plan.get(field)!r}!={expected!r}"
+                    ),
+                }
+            )
+    decision = integration_plan.get("decision")
+    if decision == "READY_FOR_SINGLE_INTEGRATION_CANDIDATE":
+        if reviewed_reconciliation_plan_id is not None:
+            blockers.append(
+                {
+                    "code": "UNEXPECTED_RECONCILIATION_APPROVAL",
+                    "detail": reviewed_reconciliation_plan_id,
+                }
+            )
+        if stage != "INTEGRATION":
+            blockers.append(
+                {
+                    "code": "INTEGRATION_REVALIDATION_STAGE_MISMATCH",
+                    "detail": stage,
+                }
+            )
+        elif integration_plan.get("candidate_creation_allowed") is not True:
+            blockers.append(
+                {
+                    "code": "INTEGRATION_CANDIDATE_NOT_ALLOWED",
+                    "detail": str(integration_plan.get("candidate_creation_allowed")),
+                }
+            )
+    elif decision == "SERIAL_CONTRACT_WAVE_REQUIRED":
+        serial.append(
+            {
+                "code": "SERIAL_CONTRACT_WAVE_REQUIRED",
+                "detail": str(integration_plan.get("plan_id", "<missing>")),
+            }
+        )
+    elif decision == "RECONCILIATION_REQUIRED":
+        plan_id = str(integration_plan.get("plan_id", "<missing>"))
+        if (
+            stage == "INTEGRATION"
+            and reviewed_reconciliation_plan_id == plan_id
+            and integration_plan.get("reviewed_reconciliation_required") is True
+        ):
+            warnings.append(
+                {
+                    "code": "REVIEWED_BASE_DRIFT_RECONCILIATION",
+                    "detail": plan_id,
+                }
+            )
+        else:
+            blockers.append(
+                {
+                    "code": "BASE_DRIFT_RECONCILIATION_REQUIRED",
+                    "detail": plan_id,
+                }
+            )
+    else:
+        blockers.append(
+            {
+                "code": "INTEGRATION_REVALIDATION_NOT_READY",
+                "detail": str(decision),
+            }
+        )
+    return blockers, serial, warnings
+
+
+def load_validated_integration_plan(
+    *,
+    repo: Path,
+    plan_argument: str | None,
+    manifest_argument: str | None,
+) -> dict[str, Any] | None:
+    if plan_argument is None and manifest_argument is None:
+        return None
+    if plan_argument is None or manifest_argument is None:
+        raise PreflightError(
+            "--integration-revalidation-plan and --change-manifest are required together"
+        )
+    plan_path = _resolve_repo_file(repo, plan_argument, "integration revalidation plan")
+    manifest_path = _resolve_repo_file(repo, manifest_argument, "change manifest")
+    validator = repo / "scripts" / "architecture_arch005_integration_revalidation.py"
+    if not validator.is_file():
+        raise PreflightError(f"integration revalidation validator missing: {validator}")
+    _run(
+        [
+            sys.executable,
+            str(validator),
+            "validate",
+            "--repository",
+            str(repo),
+            "--manifest",
+            str(manifest_path),
+            "--plan",
+            str(plan_path),
+        ],
+        repo,
+    )
+    try:
+        payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise PreflightError(f"integration revalidation plan is unreadable: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise PreflightError("integration revalidation plan must be a JSON object")
+    return payload
+
+
+def _resolve_repo_file(repo: Path, raw: str, field: str) -> Path:
+    candidate = Path(raw)
+    resolved = (repo / candidate).resolve() if not candidate.is_absolute() else candidate.resolve()
+    try:
+        resolved.relative_to(repo)
+    except ValueError as exc:
+        raise PreflightError(f"{field} escapes repository: {raw}") from exc
+    if not resolved.is_file():
+        raise PreflightError(f"{field} missing: {resolved}")
+    return resolved
+
+
+def _git_is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool | None:
+    completed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if completed.returncode == 0:
+        return True
+    if completed.returncode == 1:
+        return False
+    return None
+
+
 def collect_repo_state(repo: Path) -> dict[str, Any]:
     guard = repo / "scripts" / "architecture_arch005_checkout_guard.py"
     if not guard.is_file():
@@ -426,6 +612,20 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
     blockers.extend(claim_blockers)
     serial.extend(claim_serial)
     state = collect_repo_state(repo)
+    integration_plan: dict[str, Any] | None = None
+    try:
+        integration_plan = load_validated_integration_plan(
+            repo=repo,
+            plan_argument=args.integration_revalidation_plan,
+            manifest_argument=args.change_manifest,
+        )
+    except PreflightError as exc:
+        blockers.append(
+            {
+                "code": "INTEGRATION_REVALIDATION_INVALID",
+                "detail": str(exc),
+            }
+        )
 
     audit = state["worktree_audit"]
     if audit.get("status") != "PASS":
@@ -500,13 +700,24 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
                 }
             )
 
-    if args.expected_base and args.expected_base != state["local_main"]:
-        blockers.append(
-            {
-                "code": "EXPECTED_BASE_MISMATCH",
-                "detail": f"{args.expected_base}!={state['local_main']}",
-            }
-        )
+    expected_base_is_head_ancestor = (
+        _git_is_ancestor(repo, args.expected_base, state["head"])
+        if args.expected_base
+        else None
+    )
+    base_blockers, base_serial, base_warnings = evaluate_base_drift(
+        stage=args.stage,
+        current_branch=state["current_branch"],
+        expected_base=args.expected_base,
+        local_main=state["local_main"],
+        head=state["head"],
+        expected_base_is_head_ancestor=expected_base_is_head_ancestor,
+        integration_plan=integration_plan,
+        reviewed_reconciliation_plan_id=args.reviewed_reconciliation_plan_id,
+    )
+    blockers.extend(base_blockers)
+    serial.extend(base_serial)
+    warnings.extend(base_warnings)
     checkout_blockers, checkout_warnings = evaluate_checkout_remote_gate(
         mode=args.mode,
         role=args.role,
@@ -556,6 +767,16 @@ def build_result(args: argparse.Namespace) -> dict[str, Any]:
         "claims": claims,
         "coordinator_paths": coordinator_paths,
         "contract_change": args.contract_change,
+        "integration_revalidation": (
+            {
+                "plan_id": integration_plan.get("plan_id"),
+                "plan_sha256": integration_plan.get("plan_sha256"),
+                "decision": integration_plan.get("decision"),
+            }
+            if integration_plan is not None
+            else None
+        ),
+        "reviewed_reconciliation_plan_id": args.reviewed_reconciliation_plan_id,
         "remote_action_requested": args.remote_action,
         "blockers": blockers,
         "serial_requirements": serial,
@@ -573,6 +794,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stage", choices=STAGES, default="START")
     parser.add_argument("--task-id")
     parser.add_argument("--expected-base")
+    parser.add_argument("--integration-revalidation-plan")
+    parser.add_argument("--change-manifest")
+    parser.add_argument("--reviewed-reconciliation-plan-id")
     parser.add_argument("--claim", action="append", default=[], help="lane=repo/path")
     parser.add_argument("--coordinator-path", action="append", default=[])
     parser.add_argument("--allow-active-lease", action="append", default=[])

@@ -15,9 +15,6 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-import yaml
-from yaml.nodes import MappingNode
-
 from ai_trading_system.platform.architecture.bootstrap_handoff import (
     REQUIRED_VALIDATION_TIERS,
     BootstrapHandoffError,
@@ -49,6 +46,11 @@ from ai_trading_system.platform.architecture.wave_readiness import (
     extract_validated_archive,
 )
 from ai_trading_system.platform.artifacts import canonical_json_bytes, write_json_atomic
+from ai_trading_system.yaml_loader import (
+    StrictYamlError,
+    StrictYamlOptions,
+    load_strict_yaml_text,
+)
 
 POLICY_SCHEMA_VERSION = "arch_004_g2_5_readiness_policy.v1"
 OWNERSHIP_SNAPSHOT_SCHEMA_VERSION = "arch_004_g2_5_ownership_snapshot.v1"
@@ -123,37 +125,10 @@ class G25ReadinessError(ValueError):
         super().__init__(f"{code}: {message}")
 
 
-class _UniqueKeySafeLoader(yaml.SafeLoader):
-    pass
-
-
-def _construct_unique_mapping(
-    loader: _UniqueKeySafeLoader, node: MappingNode, deep: bool = False
-) -> dict[object, object]:
-    loader.flatten_mapping(node)
-    result: dict[object, object] = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)  # type: ignore[no-untyped-call]
-        try:
-            duplicate = key in result
-        except TypeError as exc:
-            raise G25ReadinessError(
-                "YAML_UNHASHABLE_KEY", f"line={key_node.start_mark.line + 1}"
-            ) from exc
-        if duplicate:
-            raise G25ReadinessError(
-                "YAML_DUPLICATE_KEY",
-                f"key={key!r} line={key_node.start_mark.line + 1}",
-            )
-        result[key] = loader.construct_object(  # type: ignore[no-untyped-call]
-            value_node, deep=deep
-        )
-    return result
-
-
-_UniqueKeySafeLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_unique_mapping,
+_STRICT_YAML_OPTIONS = StrictYamlOptions(
+    key_policy="HASHABLE",
+    flatten_mapping=True,
+    reject_non_finite=False,
 )
 
 
@@ -1479,10 +1454,16 @@ def _load_unique_yaml_path(path: Path, label: str) -> object:
     except (OSError, UnicodeDecodeError) as exc:
         raise G25ReadinessError("YAML_READ", f"{label}:{path}") from exc
     try:
-        return yaml.load(text, Loader=_UniqueKeySafeLoader)
-    except G25ReadinessError:
-        raise
-    except yaml.YAMLError as exc:
+        return load_strict_yaml_text(
+            text,
+            options=_STRICT_YAML_OPTIONS,
+            label=f"{label}:{path}",
+        )
+    except StrictYamlError as exc:
+        if exc.code == "DUPLICATE_KEY":
+            raise G25ReadinessError("YAML_DUPLICATE_KEY", exc.detail) from exc
+        if exc.code == "UNHASHABLE_KEY":
+            raise G25ReadinessError("YAML_UNHASHABLE_KEY", exc.detail) from exc
         raise G25ReadinessError("YAML_PARSE", f"{label}:{path}") from exc
 
 

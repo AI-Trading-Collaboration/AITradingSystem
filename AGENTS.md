@@ -243,6 +243,28 @@ reviewed serial contract wave first. Recompute both lanes from its new exact bas
 do not let a consumer continue from a stale contract merely because its files do
 not overlap.
 
+When a clean task lane still descends from its frozen base but local `main`
+advances, do not create replacement v2/v3 worktrees merely to make the base SHA
+current. Continue lane-focused work on the frozen base. At the natural integration
+boundary, generate and validate `integration_revalidation_plan.v1` from the real
+frozen-base/lane-head/latest-main Git deltas. Unrelated drift may proceed through
+one latest-main coordinator candidate; reviewed generated/shared overlap must be
+rebuilt once on that final tree; domain overlap requires reviewed coordinator
+reconciliation; contract-sensitive or consumer-semantic drift requires the
+smallest serial contract wave. Undeclared paths, wrong ancestry or identity,
+dirty target state, missing evidence, and plan tamper fail closed.
+
+For domain-only `RECONCILIATION_REQUIRED`, the integration preflight may continue
+without rebuilding the lane only when the coordinator supplies the exact
+validated plan id through the reviewed-reconciliation argument. Record that id
+in the preflight result and reconcile only the reported overlap rows in the one
+latest-main candidate.
+
+The drift plan is read-only authority. It must not automatically rebase, merge,
+cherry-pick, commit, push, delete, clean, or mutate task status. Heavyweight
+formal validation remains bound to the final integration candidate, not to each
+intermediate frozen lane or main advancement.
+
 If the skill is unavailable or damaged, follow the equivalent rules in this file
 and the ARCH-005 operating model manually, report the skill issue, and remain
 fail closed. Skill availability never weakens task registration, checkout audit,
@@ -346,6 +368,13 @@ authorization.
 For `SINGLE_LANE`, require local `main` to be an ancestor of the validated task
 commit and use `git merge --ff-only <task-branch>`. Do not create an empty or
 redundant post-merge commit.
+
+If `main` advanced after the task branch froze, first use the governed
+base-drift plan above. A compatible lane must be reconciled into one candidate
+created from latest local `main`; do not require the frozen task commit itself
+to be a direct fast-forward target. Refresh shared/generated state and run final
+validation on that candidate before applying the normal local-main fast-forward
+and remote-push gates.
 
 For `DUAL_LANE`, do not fast-forward sibling branches into `main` one after the
 other: after the first fast-forward the second sibling necessarily diverges.

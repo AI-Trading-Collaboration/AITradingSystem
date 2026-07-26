@@ -35,6 +35,40 @@ python <skill-root>/scripts/preflight.py --repo . --mode SINGLE_LANE `
   --claim task=src/example.py --claim task=tests/test_example.py
 ```
 
+If the task lane still descends from `<FROZEN_BASE>` but local `main` has
+advanced, `--stage LANE` reports
+`BASE_DRIFT_DEFERRED_TO_INTEGRATION_PLAN` and does not require a replacement
+branch. Before `INTEGRATION`, build the read-only plan:
+
+```powershell
+python scripts/architecture_arch005_integration_revalidation.py plan `
+  --repository . --manifest <CHANGE_MANIFEST_JSON> `
+  --frozen-base <FROZEN_BASE> --lane-head <LANE_HEAD> `
+  --latest-main <LOCAL_MAIN> --output <PLAN_JSON>
+```
+
+Then rerun preflight on the clean committed lane:
+
+```powershell
+python <skill-root>/scripts/preflight.py --repo . --mode SINGLE_LANE `
+  --task-id <TASK_ID> --role coordinator --stage INTEGRATION `
+  --expected-base <FROZEN_BASE> `
+  --integration-revalidation-plan <PLAN_JSON> `
+  --change-manifest <CHANGE_MANIFEST_JSON> `
+  --coordinator-path docs/task_register.md `
+  --claim task=src/example.py
+```
+
+The validator rebuilds `integration_revalidation_plan.v1` from the same
+repository. Only `READY_FOR_SINGLE_INTEGRATION_CANDIDATE` permits one
+latest-main coordinator candidate. `RECONCILIATION_REQUIRED` keeps the lane and
+requires one reviewed coordinator reconciliation; after reviewing the exact
+overlap rows, rerun the same integration preflight with
+`--reviewed-reconciliation-plan-id <PLAN_ID>`. The id must exactly match the
+validated plan and is recorded in the preflight result.
+`SERIAL_CONTRACT_WAVE_REQUIRED` requires the smallest reviewed contract wave;
+`BLOCKED` or any binding/tamper failure stops integration.
+
 Dual lane:
 
 ```powershell
@@ -79,15 +113,19 @@ rebases, rewrites history, or repairs divergence.
 4. Rerun lane preflight on the task branch.
 5. Implement only declared task/coordinator paths.
 6. Run focused and applicable formal validation.
-7. Update task status and generated governance state.
-8. Commit the validated final tree.
-9. Verify local `main` is its ancestor and fast-forward local `main`.
-10. Fetch remote main, rerun `SINGLE_LANE` coordinator preflight with the same
+7. If main advanced, keep the frozen task branch and obtain a validated
+   `integration_revalidation_plan.v1`; do not create v2/v3 replacement lanes.
+8. Form one latest-main candidate, reconcile reviewed domain overlap once, and
+   regenerate coordinator-refreshable views once.
+9. Update task status and generated governance state.
+10. Run heavyweight formal validation on the candidate final tree and commit it.
+11. Verify local `main` is its ancestor and fast-forward local `main`.
+12. Fetch remote main, rerun `SINGLE_LANE` coordinator preflight with the same
     claims plus `--stage CLOSEOUT --remote-action`, ordinary-push, and verify
     both SHAs. A task moved to `docs/task_register_completed.md` by the validated
     final commit is recognized only at `CLOSEOUT`; earlier stages still require
     the active register.
-11. Audit, then delete the merged task branch when recovery is available.
+13. Audit, then delete the merged task branch when recovery is available.
 
 ### DUAL_LANE
 
@@ -99,6 +137,8 @@ rebases, rewrites history, or repairs divergence.
 5. Give each lane disjoint owned paths and lane-focused validation.
 6. Keep coordinator-only files out of both workers.
 7. Create a coordinator integration branch from the frozen common base.
+   If main has advanced, first obtain one validated base-drift plan and create
+   the coordinator candidate from latest main; do not rebuild both domain lanes.
 8. Absorb changes in this order:
    `contract -> adapter -> domain -> tests/fragments -> shared wiring/docs ->
    generated views`.

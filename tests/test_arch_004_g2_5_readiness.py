@@ -4,6 +4,7 @@ import base64
 import copy
 import hashlib
 import json
+import math
 import subprocess
 from contextlib import nullcontext
 from pathlib import Path
@@ -240,6 +241,39 @@ def test_bounded_yaml_loader_rejects_duplicate_keys(tmp_path: Path, label: str) 
 
     with pytest.raises(G25ReadinessError, match="YAML_DUPLICATE_KEY"):
         readiness_module._load_unique_yaml_path(path, label)
+
+
+def test_bounded_yaml_loader_preserves_hashable_merge_and_non_finite_semantics(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "semantics.yaml"
+    path.write_text(
+        "base: &base\n"
+        "  enabled: true\n"
+        "child:\n"
+        "  <<: *base\n"
+        "  value: .nan\n"
+        "1: numeric-key\n",
+        encoding="utf-8",
+    )
+
+    payload = readiness_module._load_unique_yaml_path(path, "semantics")
+
+    assert payload["base"] == {"enabled": True}
+    assert payload["child"]["enabled"] is True
+    assert math.isnan(payload["child"]["value"])
+    assert payload[1] == "numeric-key"
+
+
+def test_bounded_yaml_loader_preserves_unhashable_key_error(tmp_path: Path) -> None:
+    path = tmp_path / "unhashable.yaml"
+    path.write_text("? [left, right]\n: value\n", encoding="utf-8")
+
+    with pytest.raises(G25ReadinessError) as caught:
+        readiness_module._load_unique_yaml_path(path, "unhashable")
+
+    assert caught.value.code == "YAML_UNHASHABLE_KEY"
+    assert "line=1" in str(caught.value)
 
 
 def test_ci_checkout_keeps_full_git_history_for_lineage_validation() -> None:

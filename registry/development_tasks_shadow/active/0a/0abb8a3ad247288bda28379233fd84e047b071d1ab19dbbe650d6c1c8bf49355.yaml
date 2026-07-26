@@ -11,45 +11,56 @@ task_record:
   created_by: null
   priority: P2
   accountable_owner: null
-  next_owner: architecture platform maintainer
-  requirement_refs: []
+  next_owner: architecture platform maintainer：完成latest-main组合候选compatibility authority与architecture/contract/required
+    Full；其余3个loader后续分批复核
+  requirement_refs:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 盘点task/change/compatibility/governance控制面中的重复strict
-    YAML parsing和错误边界，冻结单一canonical loader contract后分批迁移；不得改变schema或放宽fail-closed。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md`。只读inventory确认5个strict
+    loader存在string/hashable key、merge flatten、non-finite/cycle及错误边界差异；不得一次性强制统一。Batch
+    1只迁移语义相同的G2.5和Task Portfolio。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate key/unsafe
-      tag/encoding负例PASS，architecture/contract gates无回退。
+    text: canonical primitive拒绝unsafe tag/duplicate/unhashable并保留可配置语义；两个wrapper原错误类型、code、key/line、read/UTF-8、merge/nonfinite/cycle行为及合法payload结构不变；focused/architecture/contract/required
+      Full通过；remaining loaders显式保留；无DQ/PIT/strategy/production/broker变化。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1961
-    row_sha256: 379a1aa15f6f841b8492a6542578e40bf5c25f109190ec19b02415ce42bbde24
+    row_sha256: a8a3e23541381093eec7ac3291e9970c523e08fcb02d12c90f6659aef03dfe95
     cell_count: 8
     all_cells:
     - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
     - Architecture maintenance / strict YAML loader consolidation
     - P2
-    - PROPOSED
-    - architecture platform maintainer
-    - 盘点task/change/compatibility/governance控制面中的重复strict YAML parsing和错误边界，冻结单一canonical
-      loader contract后分批迁移；不得改变schema或放宽fail-closed。
-    - 重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate key/unsafe
-      tag/encoding负例PASS，architecture/contract gates无回退。
-    - 2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。
+    - VALIDATING
+    - architecture platform maintainer：完成latest-main组合候选compatibility authority与architecture/contract/required
+      Full；其余3个loader后续分批复核
+    - 详见 `docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md`。只读inventory确认5个strict
+      loader存在string/hashable key、merge flatten、non-finite/cycle及错误边界差异；不得一次性强制统一。Batch
+      1只迁移语义相同的G2.5和Task Portfolio。
+    - canonical primitive拒绝unsafe tag/duplicate/unhashable并保留可配置语义；两个wrapper原错误类型、code、key/line、read/UTF-8、merge/nonfinite/cycle行为及合法payload结构不变；focused/architecture/contract/required
+      Full通过；remaining loaders显式保留；无DQ/PIT/strategy/production/broker变化。
+    - 2026-07-27：frozen候选=`49b2ccf30`；已通过DEVX-006 exact plan接入`4e6eb8aa6` latest-main单一候选，未创建v2/v3。task/DevEx
+      generated views仅在最终树刷新一次，deprecation counts更新为module/test=`1031/1198`；等待compatibility
+      authority与final formal gates。
     raw_line: '|ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION|Architecture maintenance
-      / strict YAML loader consolidation|P2|PROPOSED|architecture platform maintainer|盘点task/change/compatibility/governance控制面中的重复strict
-      YAML parsing和错误边界，冻结单一canonical loader contract后分批迁移；不得改变schema或放宽fail-closed。|重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate
-      key/unsafe tag/encoding负例PASS，architecture/contract gates无回退。|2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。|'
+      / strict YAML loader consolidation|P2|VALIDATING|architecture platform maintainer：完成latest-main组合候选compatibility
+      authority与architecture/contract/required Full；其余3个loader后续分批复核|详见 `docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md`。只读inventory确认5个strict
+      loader存在string/hashable key、merge flatten、non-finite/cycle及错误边界差异；不得一次性强制统一。Batch
+      1只迁移语义相同的G2.5和Task Portfolio。|canonical primitive拒绝unsafe tag/duplicate/unhashable并保留可配置语义；两个wrapper原错误类型、code、key/line、read/UTF-8、merge/nonfinite/cycle行为及合法payload结构不变；focused/architecture/contract/required
+      Full通过；remaining loaders显式保留；无DQ/PIT/strategy/production/broker变化。|2026-07-27：frozen候选=`49b2ccf30`；已通过DEVX-006
+      exact plan接入`4e6eb8aa6` latest-main单一候选，未创建v2/v3。task/DevEx generated views仅在最终树刷新一次，deprecation
+      counts更新为module/test=`1031/1198`；等待compatibility authority与final formal gates。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-379a1aa15f6f841b8492a654
+  event_id: legacy-import-a8a3e23541381093eec7ac32
   task_id: ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -59,29 +70,37 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: VALIDATING
   payload:
     priority: P2
-    next_owner: architecture platform maintainer
-    notes: 2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。
+    next_owner: architecture platform maintainer：完成latest-main组合候选compatibility authority与architecture/contract/required
+      Full；其余3个loader后续分批复核
+    notes: 2026-07-27：frozen候选=`49b2ccf30`；已通过DEVX-006 exact plan接入`4e6eb8aa6` latest-main单一候选，未创建v2/v3。task/DevEx
+      generated views仅在最终树刷新一次，deprecation counts更新为module/test=`1031/1198`；等待compatibility
+      authority与final formal gates。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:379a1aa15f6f841b8492a6542578e40bf5c25f109190ec19b02415ce42bbde24
+  - sha256:a8a3e23541381093eec7ac3291e9970c523e08fcb02d12c90f6659aef03dfe95
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
   - Architecture maintenance / strict YAML loader consolidation
   - P2
-  - PROPOSED
-  - architecture platform maintainer
-  - 盘点task/change/compatibility/governance控制面中的重复strict YAML parsing和错误边界，冻结单一canonical
-    loader contract后分批迁移；不得改变schema或放宽fail-closed。
-  - 重复实现收敛、原错误类型/路径/line-column语义有characterization、malformed/duplicate key/unsafe
-    tag/encoding负例PASS，architecture/contract gates无回退。
-  - 2026-07-23：Wave11独立审计登记的维护项；不阻断G4/D0B。
-  docs_links: []
+  - VALIDATING
+  - architecture platform maintainer：完成latest-main组合候选compatibility authority与architecture/contract/required
+    Full；其余3个loader后续分批复核
+  - 详见 `docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md`。只读inventory确认5个strict
+    loader存在string/hashable key、merge flatten、non-finite/cycle及错误边界差异；不得一次性强制统一。Batch
+    1只迁移语义相同的G2.5和Task Portfolio。
+  - canonical primitive拒绝unsafe tag/duplicate/unhashable并保留可配置语义；两个wrapper原错误类型、code、key/line、read/UTF-8、merge/nonfinite/cycle行为及合法payload结构不变；focused/architecture/contract/required
+    Full通过；remaining loaders显式保留；无DQ/PIT/strategy/production/broker变化。
+  - 2026-07-27：frozen候选=`49b2ccf30`；已通过DEVX-006 exact plan接入`4e6eb8aa6` latest-main单一候选，未创建v2/v3。task/DevEx
+    generated views仅在最终树刷新一次，deprecation counts更新为module/test=`1031/1198`；等待compatibility
+    authority与final formal gates。
+  docs_links:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
   terminal: false
-  raw_row_sha256: 379a1aa15f6f841b8492a6542578e40bf5c25f109190ec19b02415ce42bbde24
+  raw_row_sha256: a8a3e23541381093eec7ac3291e9970c523e08fcb02d12c90f6659aef03dfe95
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 41ab7b9e18e6c33fb6397f4a2c042e54c8bba73d756926392722ece7d9cb4c29
+fragment_checksum: 59f3ea667b3df96161b3de6a1a045cf35119dd61c1afdbdedcdff88186654b0e

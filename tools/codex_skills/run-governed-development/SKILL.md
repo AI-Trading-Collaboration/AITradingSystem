@@ -32,6 +32,15 @@ row and supporting requirement, then rerun preflight before implementation.
 - On `BLOCKED`, stop mutation and resolve the typed reasons. Do not bypass
   worktree audit, active lease, task registration, base, path, or coordinator
   ownership failures.
+- When a clean task lane still descends from its frozen base but local `main`
+  advances, continue lane-focused work without creating a replacement branch.
+  At `INTEGRATION`, build and validate an `integration_revalidation_plan.v1`.
+  Only `READY_FOR_SINGLE_INTEGRATION_CANDIDATE` permits one latest-main
+  coordinator candidate. Reconciliation, serial-contract, undeclared-path, and
+  invalid-evidence decisions remain typed stop conditions. A domain-only
+  `RECONCILIATION_REQUIRED` plan may continue without rebuilding the lane only
+  when the coordinator explicitly supplies its exact reviewed plan id at the
+  integration stage.
 
 Read [workflow-modes.md](references/workflow-modes.md) for command forms,
 ownership rules, integration topology, validation, and cleanup.
@@ -48,6 +57,10 @@ ownership rules, integration topology, validation, and cleanup.
   only at the natural integration boundary.
 - Preserve DQ/PIT, research-window, threshold, evidence-lineage, production, and
   broker boundaries.
+- Base-drift planning is read-only. It never authorizes automatic rebase,
+  merge, cherry-pick, commit, push, cleanup, or task mutation. Discard
+  coordinator-refreshable lane bytes and regenerate those views once on the
+  final candidate; bind heavyweight formal validation only to that final tree.
 
 ## Integrate and Close
 
@@ -75,6 +88,9 @@ ownership rules, integration topology, validation, and cleanup.
 ## Resources
 
 - Run `scripts/preflight.py` for deterministic repository and claim checks.
+- Run `scripts/architecture_arch005_integration_revalidation.py plan|validate`
+  through the repository when a frozen lane reaches an integration boundary
+  after local main has advanced.
 - Run `scripts/verify_bundle_parity.py` to compare the Git canonical bundle with
   the installed `$CODEX_HOME` bundle.
 - Load [workflow-modes.md](references/workflow-modes.md) when executing a task.

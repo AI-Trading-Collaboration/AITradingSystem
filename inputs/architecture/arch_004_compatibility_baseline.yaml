@@ -28926,3 +28926,155 @@ phase_trading_2462_tail_risk_robustness_falsification_audit:
     paper_shadow_changed: false
     production_effect: none
     broker_action: none
+
+phase_devx_006_base_drift_aware_integration_revalidation:
+  schema_version: devx_006_base_drift_aware_integration_revalidation_compatibility.v1
+  status: VALIDATING_FINAL_TREE
+  boundary_id: DEVX-006-ARCH-005M1-LATEST-MAIN-INTEGRATION
+  task_ids:
+  - DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+  - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+  owner_authorization: owner_decision:DEVX-006:2026-07-27:approve_base_drift_aware_single_integration_v1
+  prior_sections_immutability:
+    source_commit: 4e6eb8aa60907fffdf82541b6fd4027ac2940b52
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: d7fe14a79ae1167ee94a0e16789e0b2a82325a15
+    raw_byte_count: 1801243
+    raw_sha256: 2d5dc7773ee3155a3c2f2482b728b108c7f416f3dd7be2f2a4a2184f888082db
+    append_offset: 1801243
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - AGENTS.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
+  - src/ai_trading_system/platform/architecture/task_portfolio_normalization.py
+  - tests/test_arch_004_g2_5_readiness.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_gov_006_task_portfolio_normalization.py
+  - tests/test_governed_development_skill.py
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/scripts/preflight.py
+  - tools/codex_skills/run-governed-development/SKILL.md
+  supersession:
+    superseded_by_phase: DEVX-006-ARCH-005M1-LATEST-MAIN-INTEGRATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2462_tail_risk_robustness_falsification_audit
+    current_hash_authority: phase_devx_006_base_drift_aware_integration_revalidation.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/architecture/arch_005_integration_revalidation.yaml
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md
+  - registry/development_tasks_shadow/active/82/8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml
+  - scripts/architecture_arch005_integration_revalidation.py
+  - src/ai_trading_system/platform/architecture/integration_revalidation.py
+  - src/ai_trading_system/yaml_loader.py
+  - tests/test_arch_005_integration_revalidation.py
+  - tests/test_yaml_loader.py
+  source_delta_paths:
+  - AGENTS.md
+  - config/architecture/arch_005_integration_revalidation.yaml
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - registry/development_tasks_shadow/active/82/8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml
+  - scripts/architecture_arch005_integration_revalidation.py
+  - src/ai_trading_system/platform/architecture/__init__.py
+  - src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
+  - src/ai_trading_system/platform/architecture/integration_revalidation.py
+  - src/ai_trading_system/platform/architecture/task_portfolio_normalization.py
+  - src/ai_trading_system/yaml_loader.py
+  - tests/test_arch_004_g2_5_readiness.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_arch_005_integration_revalidation.py
+  - tests/test_gov_006_task_portfolio_normalization.py
+  - tests/test_governed_development_skill.py
+  - tests/test_yaml_loader.py
+  - tools/codex_skills/run-governed-development/references/workflow-modes.md
+  - tools/codex_skills/run-governed-development/scripts/preflight.py
+  - tools/codex_skills/run-governed-development/SKILL.md
+  sources:
+  - {path: AGENTS.md, sha256: 8dc4ace6c9d17f87d607426db91cff9de67f0a5fcaee57e63ae80c00ec57761c, hash_normalization: git_eol_lf}
+  - {path: config/architecture/arch_005_integration_revalidation.yaml, sha256: 0c36e877f7a370b4ff531bad0a84b3670a8f4b4b357cd1fca0e9ed7dc0a159e3, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md, sha256: 66a0f104b182a406a560b8ef6303e6805a84915dc8a6a8644dee985717137975, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md, sha256: bc87efc3992f6b7a39e0d2f28739b357d061c6a1a9867199c135a64e0f2937b4, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: 86894b8db5011a7f42fa896e1efac8d29f664353e86423ecb5ea06c7e9d712e8, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 05f22562e300613220421d3a27e007cc149f6cf1b6e4d33512c5bc20a0b3262b, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 7f27fb70bbb87d26db2563b9b4ce0e1e71e53b34f4cfda691c13fdb817d72ec9, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: db1ce264b3bf25506dd5912172be096c669ce057877128edfbb9c01a701bbb89, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 15d58c6e6e9ec39b5f5910fe515361dafd41ae1959546dca3e4626302e36e1de, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 1dff7588b20effb42a8bb325d7cf871d66f88a95707d088f348b01dd997740fc, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: dd01648adc9204c95a49506edb32e87ad125426a391561e83908c8f3b476ca86, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 4f95a78b2be42b6fd6a1305fc3304027f0759e58ade663530b5030a53d442da7, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: ebad62e0ebc2ab0ac525af1eaaaba8551ca59aef6e2d44b48461c377127bf3b6, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml, sha256: 44a490243fa43cf7a2800f96142569a52e1a464bd7bb9eab514a375a69f5c5bb, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/82/8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml, sha256: 04f807609a7abcac42c2cd22dbd95bdb918418c1aeb3b07eefea14168118c5c0, hash_normalization: git_eol_lf}
+  - {path: scripts/architecture_arch005_integration_revalidation.py, sha256: 3044e3281d0deaacce23ef4a3fbfc1f57bfcadfac3015807e7f296eb382399a4, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/__init__.py, sha256: e703d1ddad9e68164f79d376afe105db432bfe5b9ee9a06e30e186e30f9dd56b, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py, sha256: 7ec4213c75ddf2b398a8e70d2f19a28b36cda55d94bae025c5c21d7cbe5d909a, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/integration_revalidation.py, sha256: 8c023caacbef8e698575b859426b4775aa4cdf2370918086b9560012f254789e, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/task_portfolio_normalization.py, sha256: 74380621af12e7615dc4cffd6de7e00c45e34fdc5f71e258e0c3ce93f82ff4b0, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/yaml_loader.py, sha256: 448d848025b65420b7864b1496da6776000e4b43ac75b1f08f773f842ef9c63c, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_g2_5_readiness.py, sha256: e8999d42db52f49225c087543a03ba26438a9781c47beb9dc28f3b634fd8c3ca, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: a1b556beb6854d2b1ba4a421456be7fe2d64995e6befe272f5574f419cc63712, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 1cc5a8d4f5680a9075b59692ca2df54794cd08cd9df192b90929ae01a22b1043, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_005_integration_revalidation.py, sha256: 8d946568173f1dc5ec285c69c83ffde0a12c9c1981c737ea3b06d417304dd16c, hash_normalization: git_eol_lf}
+  - {path: tests/test_gov_006_task_portfolio_normalization.py, sha256: f5e6a68eba2f0ca59937ca34e6edb2e0f8dfd65fd68994bcdb0b591af1335d72, hash_normalization: git_eol_lf}
+  - {path: tests/test_governed_development_skill.py, sha256: 5ed4626a0bf4604e3233377dd30416994b321a5940dd5995c7b7ddba495abb0e, hash_normalization: git_eol_lf}
+  - {path: tests/test_yaml_loader.py, sha256: ed0076da60f7e9436e98ef9659ea118215e98b488463ff5da1fbd2497d66cfe0, hash_normalization: git_eol_lf}
+  - {path: tools/codex_skills/run-governed-development/references/workflow-modes.md, sha256: f27eddf7e484c14f2981623131a17de887e568527e08ed74af672048ee630552, hash_normalization: git_eol_lf}
+  - {path: tools/codex_skills/run-governed-development/scripts/preflight.py, sha256: 2df024851244ae3a39c389f6fdf540a61affac8f413a4864b24adbb1a81efa91, hash_normalization: git_eol_lf}
+  - {path: tools/codex_skills/run-governed-development/SKILL.md, sha256: c522b52f77d5262c0e11c70817a01ae4b84193e8ab9ec17f5ceefb95aee4b066, hash_normalization: git_eol_lf}
+  implementation:
+    frozen_lane_continues_during_main_drift: true
+    real_git_delta_classification: true
+    coordinator_refresh_once: true
+    reviewed_reconciliation_plan_id: integration-revalidation-927fbb12af85ec52da7a
+    strict_yaml_batch_1_integrated_without_rebuild: true
+    automatic_git_mutation_allowed: false
+  evidence:
+    frozen_base: bc8496b11039f3d6a8d2bc837e821c298e04c9cf
+    devx_lane_head: 98cac4eee001f40a411f8baf07090d997e2ea9d5
+    arch_005m1_lane_head: 49b2ccf30b46f07c53d4191bcdfafc59bbe8aaa2
+    latest_main: 4e6eb8aa60907fffdf82541b6fd4027ac2940b52
+    integration_plan_decision: RECONCILIATION_REQUIRED
+    integration_plan_blockers: 0
+    integration_plan_contract_conflicts: 0
+    integration_plan_undeclared_paths: 0
+  validation:
+    focused: PENDING_FINAL_TREE
+    architecture: PENDING_FINAL_TREE
+    contract: PENDING_FINAL_TREE
+    integration: PENDING_FINAL_TREE
+    reproducibility: PENDING_FINAL_TREE
+    full: PENDING_FINAL_TREE
+  safety:
+    known_unrelated_opened: false
+    strategy_conclusion_changed: false
+    data_quality_contract_changed: false
+    production_effect: none
+    broker_action: none

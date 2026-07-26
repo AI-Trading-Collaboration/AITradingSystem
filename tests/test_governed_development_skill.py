@@ -280,6 +280,145 @@ def test_active_and_read_only_task_registration_behavior_is_preserved() -> None:
     assert read_only == (True, "READ_ONLY")
 
 
+def _base_drift(
+    **overrides: object,
+) -> tuple[
+    list[dict[str, str]],
+    list[dict[str, str]],
+    list[dict[str, str]],
+]:
+    arguments: dict[str, object] = {
+        "stage": "INTEGRATION",
+        "current_branch": "codex/task",
+        "expected_base": "a" * 40,
+        "local_main": "b" * 40,
+        "head": "c" * 40,
+        "expected_base_is_head_ancestor": True,
+        "integration_plan": None,
+        "reviewed_reconciliation_plan_id": None,
+    }
+    arguments.update(overrides)
+    return PREFLIGHT.evaluate_base_drift(**arguments)
+
+
+def test_lane_continues_on_frozen_base_until_integration_boundary() -> None:
+    blockers, serial, warnings = _base_drift(stage="LANE")
+    assert blockers == []
+    assert serial == []
+    assert warnings == [
+        {
+            "code": "BASE_DRIFT_DEFERRED_TO_INTEGRATION_PLAN",
+            "detail": f"{'a' * 40}!={'b' * 40}",
+        }
+    ]
+
+
+def test_integration_base_drift_still_blocks_without_validated_plan() -> None:
+    blockers, serial, warnings = _base_drift()
+    assert serial == []
+    assert warnings == []
+    assert blockers == [
+        {
+            "code": "EXPECTED_BASE_MISMATCH",
+            "detail": f"{'a' * 40}!={'b' * 40}",
+        }
+    ]
+
+
+def test_ready_plan_unlocks_exactly_one_integration_candidate() -> None:
+    plan = {
+        "plan_id": "integration-revalidation-ready",
+        "plan_sha256": "d" * 64,
+        "frozen_base": "a" * 40,
+        "lane_head": "c" * 40,
+        "latest_main": "b" * 40,
+        "decision": "READY_FOR_SINGLE_INTEGRATION_CANDIDATE",
+        "candidate_creation_allowed": True,
+    }
+    blockers, serial, warnings = _base_drift(integration_plan=plan)
+    assert blockers == []
+    assert serial == []
+    assert warnings == []
+
+
+@pytest.mark.parametrize(
+    ("decision", "expected_kind", "expected_code"),
+    [
+        (
+            "RECONCILIATION_REQUIRED",
+            "blocker",
+            "BASE_DRIFT_RECONCILIATION_REQUIRED",
+        ),
+        (
+            "SERIAL_CONTRACT_WAVE_REQUIRED",
+            "serial",
+            "SERIAL_CONTRACT_WAVE_REQUIRED",
+        ),
+        ("BLOCKED", "blocker", "INTEGRATION_REVALIDATION_NOT_READY"),
+    ],
+)
+def test_non_ready_drift_plans_remain_typed_stop_conditions(
+    decision: str,
+    expected_kind: str,
+    expected_code: str,
+) -> None:
+    plan = {
+        "plan_id": "integration-revalidation-stop",
+        "plan_sha256": "d" * 64,
+        "frozen_base": "a" * 40,
+        "lane_head": "c" * 40,
+        "latest_main": "b" * 40,
+        "decision": decision,
+        "candidate_creation_allowed": False,
+    }
+    blockers, serial, warnings = _base_drift(integration_plan=plan)
+    assert warnings == []
+    selected = serial if expected_kind == "serial" else blockers
+    assert expected_code in {row["code"] for row in selected}
+
+
+def test_exact_reviewed_reconciliation_id_keeps_lane_without_rebuild() -> None:
+    plan = {
+        "plan_id": "integration-revalidation-reconcile",
+        "plan_sha256": "d" * 64,
+        "frozen_base": "a" * 40,
+        "lane_head": "c" * 40,
+        "latest_main": "b" * 40,
+        "decision": "RECONCILIATION_REQUIRED",
+        "candidate_creation_allowed": False,
+        "reviewed_reconciliation_required": True,
+    }
+    blockers, serial, warnings = _base_drift(
+        integration_plan=plan,
+        reviewed_reconciliation_plan_id=plan["plan_id"],
+    )
+    assert blockers == []
+    assert serial == []
+    assert warnings == [
+        {
+            "code": "REVIEWED_BASE_DRIFT_RECONCILIATION",
+            "detail": plan["plan_id"],
+        }
+    ]
+
+
+def test_drift_plan_must_bind_exact_lane_and_latest_main() -> None:
+    plan = {
+        "plan_id": "integration-revalidation-wrong",
+        "plan_sha256": "d" * 64,
+        "frozen_base": "a" * 40,
+        "lane_head": "f" * 40,
+        "latest_main": "e" * 40,
+        "decision": "READY_FOR_SINGLE_INTEGRATION_CANDIDATE",
+        "candidate_creation_allowed": True,
+    }
+    blockers, _, _ = _base_drift(integration_plan=plan)
+    mismatches = [
+        row for row in blockers if row["code"] == "INTEGRATION_REVALIDATION_BINDING_MISMATCH"
+    ]
+    assert len(mismatches) == 2
+
+
 def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     skill = SKILL_PATH.read_text(encoding="utf-8")
@@ -299,3 +438,5 @@ def test_default_remote_push_contract_is_consistent_and_fail_closed() -> None:
     assert "`origin_only=0`" in workflow
     assert "missing remote/upstream, remote divergence, or non-fast-forward push" in workflow
     assert "completed.md` is eligible only" in skill
+    assert "integration_revalidation_plan.v1" in skill
+    assert "--integration-revalidation-plan" in workflow

@@ -487,6 +487,14 @@ manifests/ownership/readiness，旧G2.5 rehearsal不可作为dispatch authority�
 `6843 passed / 1 failed / 3 skipped / 1345.61s`，修复terminal任务旧断言后failure-fix Full=
 `6844 passed / 3 skipped / 643 warnings / 1340.11s`，两个attempt均保留在append-only证据链。
 
+ARCH-005M1 Batch 1 把G2.5 readiness与GOV-006 Task Portfolio原先复制的
+`_UniqueKeySafeLoader`收敛到`ai_trading_system.yaml_loader.load_strict_yaml_text`。共享primitive
+仍使用PyYAML safe loader，并由调用方显式冻结hashable/string key、YAML merge flatten及
+non-finite/cycle策略；两个现有wrapper继续输出原有typed error类型、code及key/line detail。
+本批不迁移Wave readiness、integration revalidation、US special-closure policy或普通
+`safe_load_yaml_*`，不改变policy schema、manifest bytes、任务事实源、dispatch、DQ/PIT、策略、
+production或broker边界。
+
 TRADING-2446～2448 在 ARCH-005 S0/S1 后新增独立 strategy research restart R0～R2
 evidence-closure lane，不恢复 ARCH-004 G2.5，也不启动 candidate promotion。
 `aits research ops strategy-restart-preflight` 先调用与 `aits validate-data` 同源的 cached-data gate，
@@ -1175,6 +1183,23 @@ flowchart LR
 ```
 
 ARCH-005S4E 补齐isolated worktree迁移后的退出事务：S4D v1.1在受保护`main`上拒绝domain mutation，shared mutation仅允许`integration-coordinator`；`architecture_arch005_checkout_reconciliation.py prepare|prepare-recovery`读取source/target checkout identity、Git common dir、base/head/ref、explicit owned/generated/retained roles及exact status/raw SHA-256/normalized blob，生成带canonical checksum的`checkout_handoff.v1`。目标形成reviewed commits后，`audit`只沿target first-parent历史验证source residue，输出`checkout_reconciliation_report.v1`，把路径分为exact target、target历史已取代、source clean/stat-only、generated需重建、retained unique、known-unrelated zero-read、mixed、lineage missing或unattributed。只有exact/history-proven path进入coordinator cleanup allowlist；报告固定`automatic_cleanup_allowed=false`，不会restore、delete、commit、merge、push或切换task source。generated views只能在最终canonical source上由coordinator重建，unique/mixed/unattributed一律保留并fail closed。该治理链不读取市场数据、不运行DQ/provider/策略/运营流程，不改变scheduler cadence、研究结论、阈值、权重、promotion、paper-shadow、production或broker。
+
+DEVX-006 在 frozen lane 与 latest main 之间增加只读 base-drift 分类层。`config/architecture/arch_005_integration_revalidation.yaml`冻结known-unrelated exact exclusion、coordinator-refreshable scope、contract-sensitive scope和final validation tiers；`architecture_arch005_integration_revalidation.py plan|validate`从同一Git repository解析frozen base、lane head、latest main、`change_manifest.v1`、真实`base..head` path delta、rename old/new、contract claims和checkout cleanliness，生成content-addressed `integration_revalidation_plan.v1`。unrelated drift与reviewed generated/shared overlap只允许形成一个latest-main coordinator candidate，且shared bytes必须在final tree重建；domain overlap输出`RECONCILIATION_REQUIRED`，只有integration coordinator显式提交与validated plan完全一致的`--reviewed-reconciliation-plan-id`后才能在同一个latest-main candidate人工reconcile；contract/DQ/PIT/cache/consumer语义冲突输出`SERIAL_CONTRACT_WAVE_REQUIRED`，undeclared path、wrong ancestry/identity、dirty target与tamper输出`BLOCKED`。known-unrelated path在Git status/diff pathspec阶段即排除，不先读取后过滤。planner固定`automatic_git_mutation_allowed=false`：不自动rebase、merge、cherry-pick、commit、push、cleanup或修改task source；lane focused evidence只在READY时可复用，architecture/contract/integration/reproducibility/Full仍只绑定最终candidate。该链不读取市场数据、不改变策略结论、阈值、权重、production或broker。
+
+```mermaid
+flowchart LR
+    FB["Frozen base + change_manifest.v1"] --> DP["Read-only Git delta + ancestry"]
+    LH["Lane head"] --> DP
+    MM["Latest main"] --> DP
+    POL["Reviewed drift policy"] --> CL["Path / contract classifier"]
+    DP --> CL
+    CL --> READY["READY: one coordinator candidate"]
+    CL --> REC["RECONCILIATION_REQUIRED"]
+    CL --> SERIAL["SERIAL_CONTRACT_WAVE_REQUIRED"]
+    CL --> BLOCK["BLOCKED"]
+    READY --> REFRESH["Refresh shared/generated once"]
+    REFRESH --> FINAL["Final-tree formal validation once"]
+```
 
 ARCH-004F2 以 `docs/research/current_research_strategy_execution_chain.md` 建立研究执行链路的人读权威说明：owner question 先转为 hypothesis/preregistration，再解析 `ResearchEvaluationContext`，经过 source provenance、DQ/PIT gate、feature/label/signal、candidate/baseline、target/execution、backtest/cost/risk、robustness/holdout/falsification、evidence multi-axis state、ReviewDecision/OwnerDecision，最后由 canonical artifact/envelope/run ledger 进入分层报告。文档逐步链接真实配置、源码和 artifact，并把 `CANONICAL`、已验证 `REFERENCE`、待迁移 `LEGACY`、`BLOCKED` 与 `PLANNED` 分开；其中 2022-12-01 AI regime 与 2021-02-22 QQQ/SGOV/TQQQ primary window 明确不可互换。B0～B4 的 research-only公式和当前 evidence limitation 被记录，B5/B6、growth-tilt PIT replay/promotion仍保持 blocked；fixed cadence只产生 observation/review/proposal，不能自动调参、改权重或 promotion。该说明不运行上游、不改变计算或报告结论，F2 后续 runtime migration仍必须逐 slice parity。
 

@@ -9,15 +9,17 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-import yaml
-from yaml.nodes import MappingNode
-
 from ai_trading_system.platform.architecture.task_registry_shadow import (
     ACTIVE_REGISTER_PATH,
     COMPLETED_REGISTER_PATH,
     LegacyRegisterDocument,
     LegacyTaskRow,
     load_legacy_documents,
+)
+from ai_trading_system.yaml_loader import (
+    StrictYamlError,
+    StrictYamlOptions,
+    load_strict_yaml_text,
 )
 
 POLICY_SCHEMA_VERSION = "gov_006_portfolio_normalization_policy.v2"
@@ -78,37 +80,10 @@ class TaskPortfolioNormalizationError(ValueError):
         super().__init__(f"{code}: {message}")
 
 
-class _UniqueKeySafeLoader(yaml.SafeLoader):
-    pass
-
-
-def _construct_unique_mapping(
-    loader: _UniqueKeySafeLoader, node: MappingNode, deep: bool = False
-) -> dict[object, object]:
-    loader.flatten_mapping(node)
-    result: dict[object, object] = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)  # type: ignore[no-untyped-call]
-        try:
-            duplicate = key in result
-        except TypeError as exc:
-            raise TaskPortfolioNormalizationError(
-                "POLICY_UNHASHABLE_KEY", f"line={key_node.start_mark.line + 1}"
-            ) from exc
-        if duplicate:
-            raise TaskPortfolioNormalizationError(
-                "POLICY_DUPLICATE_KEY",
-                f"key={key!r} line={key_node.start_mark.line + 1}",
-            )
-        result[key] = loader.construct_object(  # type: ignore[no-untyped-call]
-            value_node, deep=deep
-        )
-    return result
-
-
-_UniqueKeySafeLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_unique_mapping,
+_STRICT_YAML_OPTIONS = StrictYamlOptions(
+    key_policy="HASHABLE",
+    flatten_mapping=True,
+    reject_non_finite=False,
 )
 
 
@@ -780,10 +755,22 @@ def _parse_normalization_policy(raw: bytes, *, path: Path) -> dict[str, Any]:
     except UnicodeDecodeError as exc:
         raise TaskPortfolioNormalizationError("POLICY_NOT_UTF8", str(path)) from exc
     try:
-        payload = yaml.load(text, Loader=_UniqueKeySafeLoader)
-    except TaskPortfolioNormalizationError:
-        raise
-    except yaml.YAMLError as exc:
+        payload = load_strict_yaml_text(
+            text,
+            options=_STRICT_YAML_OPTIONS,
+            label=str(path),
+        )
+    except StrictYamlError as exc:
+        if exc.code == "DUPLICATE_KEY":
+            raise TaskPortfolioNormalizationError(
+                "POLICY_DUPLICATE_KEY",
+                exc.detail,
+            ) from exc
+        if exc.code == "UNHASHABLE_KEY":
+            raise TaskPortfolioNormalizationError(
+                "POLICY_UNHASHABLE_KEY",
+                exc.detail,
+            ) from exc
         raise TaskPortfolioNormalizationError("POLICY_YAML", str(path)) from exc
     if not isinstance(payload, dict):
         raise TaskPortfolioNormalizationError("POLICY_NOT_MAPPING", str(path))

@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1030
+module_count: 1031
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -14141,7 +14141,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
-  sha256: cd6bcaf5b6eea6de05aca2aa2da0e6b6278b9e54f7119fe563fa9f1029c32c83
+  sha256: e703d1ddad9e68164f79d376afe105db432bfe5b9ee9a06e30e186e30f9dd56b
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -14164,7 +14164,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.arch_004_g2_5_readiness
   path: src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
-  sha256: 1ab1e846c77bfeeb8b2618411e80483c3696a29045ec0d6100fcf315e79bb797
+  sha256: 7ec4213c75ddf2b398a8e70d2f19a28b36cda55d94bae025c5c21d7cbe5d909a
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -14392,6 +14392,29 @@ modules:
   - architecture-fitness
   - contract-validation
   shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.integration_revalidation
+  path: src/ai_trading_system/platform/architecture/integration_revalidation.py
+  sha256: 8c023caacbef8e698575b859426b4775aa4cdf2370918086b9560012f254789e
+  rule_id: platform_architecture
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: architecture_platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.parallel_control
   path: src/ai_trading_system/platform/architecture/parallel_control.py
   sha256: d4a53fa3c25dc7de54b3819048c2651fb4349b6da1e470b9749fdc07ee5e83a6
@@ -14532,7 +14555,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.task_portfolio_normalization
   path: src/ai_trading_system/platform/architecture/task_portfolio_normalization.py
-  sha256: 7cc728ff9adde611d012a08046e519602767aa86add7f01ac32cea5a98896d6d
+  sha256: 74380621af12e7615dc4cffd6de7e00c45e34fdc5f71e258e0c3ce93f82ff4b0
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -21578,7 +21601,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.yaml_loader
   path: src/ai_trading_system/yaml_loader.py
-  sha256: da23077f5924f20d681129cf4578ed9dd805139696718a5a5a27d5a0fe52e9d2
+  sha256: 448d848025b65420b7864b1496da6776000e4b43ac75b1f08f773f842ef9c63c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

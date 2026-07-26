@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -494,6 +495,39 @@ def test_governance_policy_loader_rejects_duplicate_keys(tmp_path: Path) -> None
         load_normalization_policy(path)
 
     assert error.value.code == "POLICY_DUPLICATE_KEY"
+
+
+def test_governance_policy_loader_preserves_hashable_merge_and_non_finite_semantics(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "semantics.yaml"
+    path.write_text(
+        "base: &base\n"
+        "  enabled: true\n"
+        "child:\n"
+        "  <<: *base\n"
+        "  value: .nan\n"
+        "1: numeric-key\n",
+        encoding="utf-8",
+    )
+
+    payload = load_normalization_policy(path)
+
+    assert payload["base"] == {"enabled": True}
+    assert payload["child"]["enabled"] is True
+    assert math.isnan(payload["child"]["value"])
+    assert payload[1] == "numeric-key"
+
+
+def test_governance_policy_loader_preserves_unhashable_key_error(tmp_path: Path) -> None:
+    path = tmp_path / "unhashable.yaml"
+    path.write_text("? [left, right]\n: value\n", encoding="utf-8")
+
+    with pytest.raises(TaskPortfolioNormalizationError) as caught:
+        load_normalization_policy(path)
+
+    assert caught.value.code == "POLICY_UNHASHABLE_KEY"
+    assert "line=1" in str(caught.value)
 
 
 @pytest.mark.parametrize(
