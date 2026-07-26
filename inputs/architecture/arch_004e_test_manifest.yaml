@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1198
-test_count: 1138
+test_file_count: 1199
+test_count: 1139
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -7523,7 +7523,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 4604d88741df8128bd13f3d07881bed16d6b49831feaa3595a3bb0e533501de1
+  sha256: ed87111aeb260ca61fa5dfef47ad06e97966da675fde6361269b2d9fa55dd743
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7919,7 +7919,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 1cc5a8d4f5680a9075b59692ca2df54794cd08cd9df192b90929ae01a22b1043
+  sha256: cf252991730565589287a7b9e40a7cee568318dfbf9a8fcce1a9f3694ae77e08
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8116,6 +8116,22 @@ tests:
 - test_id: tests.test_arch_005_task_registry_shadow
   path: tests/test_arch_005_task_registry_shadow.py
   sha256: 6067add5b76d18539ced82068c8fcafaf0e700192b6a3e0235e7299be50e99b5
+  file_role: test
+  rule_id: parallel_control_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: architecture
+  suite: architecture-fitness
+  covered_module_prefixes:
+  - src/ai_trading_system/platform/architecture/
+- test_id: tests.test_arch_005m2_portable_validation_bundle
+  path: tests/test_arch_005m2_portable_validation_bundle.py
+  sha256: 9386d6a02438a784f962baaeebf348ee06431ad674d81dc651ecfc2d66b6bd48
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality

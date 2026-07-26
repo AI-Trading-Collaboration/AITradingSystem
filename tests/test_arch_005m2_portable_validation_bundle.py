@@ -332,6 +332,8 @@ def test_clean_local_clone_cli_needs_no_validation_outputs(tmp_path: Path) -> No
     subprocess.run(
         [
             "git",
+            "-c",
+            "core.longpaths=true",
             "clone",
             "--quiet",
             "--no-hardlinks",

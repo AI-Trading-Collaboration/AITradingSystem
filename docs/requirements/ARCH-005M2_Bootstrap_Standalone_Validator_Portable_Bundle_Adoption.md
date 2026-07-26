@@ -7,7 +7,7 @@
 Owner continuation：
 `owner_continuation:ARCH-005M2:2026-07-27:continue_long_term_engineering_goal`
 
-状态：`VALIDATING_CLEAN_CLONE`
+状态：`COMPLETE`
 
 ## 1. 问题与目标
 
@@ -114,3 +114,26 @@ bytes、artifact SHA、路径和 G2.5 结论不变。
   `untracked_outputs_read=false`。Ruff与strict mypy PASS；focused并行pytest=
   `56 passed`（clean-clone case待候选commit后运行，避免用未提交working-tree bytes冒充
   clean-clone证据）。状态进入`VALIDATING_CLEAN_CLONE`。
+- 2026-07-27：candidate commit=`6af08fb99`。首个clean-clone attempt在checkout阶段因
+  portable-lineage历史路径超过Windows Git默认路径长度失败，validator未启动，未改写为
+  PASS；测试改为显式`git -c core.longpaths=true clone --no-hardlinks`后，完整checkout
+  中确认`outputs/validation_runtime`不存在，standalone CLI PASS。合并focused/docs复验=
+  `57 passed`；当前进入generated/compatibility与formal final-tree验证。
+- 2026-07-27：task registry与DEVEX generated views已刷新并validate PASS；
+  deprecation inventory同步为`modules=1032/tests=1199/direct writers=856`，
+  expanded focused regression=`174 passed`（含完整compatibility authority回归）。
+  append-only compatibility authority绑定
+  frozen base的exact blob/byte-count/SHA，保留全部历史bytes并登记当前source hashes；
+  当前状态为`VALIDATING_FINAL_TREE`，下一步执行Architecture、Contract、
+  Reproducibility、Integration与required Full gates。
+- 2026-07-27：final-tree formal gates全部PASS：Architecture=`723 passed`、
+  Contract=`275 passed`、Reproducibility=`23 passed`、Integration=`995 passed`；
+  natural-boundary required Full=`7469 passed / 3 skipped / 643 warnings`。实现、历史
+  evidence边界、clean-clone portability与no-production/no-broker约束均满足，任务进入
+  `COMPLETE`并归档；后续若扩展bundle schema或支持shallow archive须另立任务。
+- 2026-07-27：归档后首次post-Full Architecture保留为`721 passed / 2 failed`：
+  active shadow移除使若干历史path回到旧hash，两个历史authority测试仍错误要求“曾被
+  supersede的path必须永久保持mismatch”；当前M2 exact-hash authority本身未失败。修正为
+  允许由最新M2 supersession ledger解释该reversion后，focused=`4 passed`，
+  post-Full Architecture重跑=`723 passed`、Contract=`275 passed`。失败证据未改写，
+  Full未重复运行。

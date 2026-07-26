@@ -29084,3 +29084,150 @@ phase_devx_006_base_drift_aware_integration_revalidation:
     data_quality_contract_changed: false
     production_effect: none
     broker_action: none
+
+phase_arch_005m2_portable_bootstrap_bundle_adoption:
+  schema_version: arch_005m2_portable_bootstrap_bundle_adoption_compatibility.v1
+  status: COMPLETE
+  boundary_id: ARCH-005M2-PORTABLE-BOOTSTRAP-BUNDLE-ADOPTION
+  task_ids:
+  - ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  owner_authorization: owner_continuation:ARCH-005M2:2026-07-27:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: b3ce8d70e3917522d9abdaf4d168f812ff47878e
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: e8a3a7977c981be1ee64f518f2e112296bc535a5
+    raw_byte_count: 1813310
+    raw_sha256: 3ad1154dd078384bfbaf897036b8485d43d313952846deef61bc42ab9880048d
+    append_offset: 1813310
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/artifact_catalog.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: ARCH-005M2-PORTABLE-BOOTSTRAP-BUNDLE-ADOPTION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_devx_006_base_drift_aware_integration_revalidation
+    current_hash_authority: phase_arch_005m2_portable_bootstrap_bundle_adoption.sources
+  removed_live_source_paths:
+  - registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+  new_source_paths:
+  - docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md
+  - registry/development_tasks_shadow/completed/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+  - scripts/architecture_arch005_portable_validation_bundle.py
+  - src/ai_trading_system/platform/architecture/portable_validation_bundle.py
+  - tests/test_arch_005m2_portable_validation_bundle.py
+  source_delta_paths:
+  - docs/artifact_catalog.md
+  - docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - registry/development_tasks_shadow/completed/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml
+  - scripts/architecture_arch005_portable_validation_bundle.py
+  - src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py
+  - src/ai_trading_system/platform/architecture/portable_validation_bundle.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_arch_005m2_portable_validation_bundle.py
+  sources:
+  - {path: docs/artifact_catalog.md, sha256: 905da965b94347312d3bd34472f27cc02b30b227b21251f608d9f4863c5a1c47, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md, sha256: 7e0efedd6c1057955a2a6dba90e55ffe1b3d5a6ff1b40570f8bd9d4fc9b6bfa3, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: be3c9e5cbd4b56853e6b9117fb16391fb5a1419ca79fba23a91340aedb9dccca, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 2a897fa40933f0a53fc803bec4f6a9ed33359f0122e9e75b136d966c70af59e6, hash_normalization: git_eol_lf}
+  - {path: docs/task_register_completed.md, sha256: 0514ede66fb0b983f791982d1bbfdd3b759815939ae1c32b6c201f64796d9fd6, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 49d48d2ecb856596a11bbad105849272d34550a0acae64540ebd21dd98430386, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: a8bcaae85591bed0a9304b7667d4dde2223dba9a7b94157331449294b15b0d39, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 360fef397195b16de3ff89c9b36c35ef69637e19bc2e2b6bced33242c4c264d5, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: d8507196ecd3aabefef8da51d8d3854d8ba3d506253b9ef67fc6d098eb45293c, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 9d372e2ed854e4f44d892bfc4b44b72b538523a51d599329a191bf72b4c0f160, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: b295ab1996353e347d04e7709559c53657bce58f89a5fb1f28eadaca0d9d0e21, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 04b2dabb24a94424a9eaa997e64dc45a7a422a20551bb4bc2f10238ec8b13244, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml, sha256: 64d5c3c62f03fdd98c723240ca98980c048aeae05661ab99aa144d73b98ed9f3, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml, sha256: 15a32ebb592813e65c70a4c20af7ef6ca7533f779f46c5ba2e5b15618e7af94e, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml, sha256: 65a5653745d93456f936515ab4ee10d8379af6bb33b264eb3a95d2aab0227da0, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml, sha256: c97ea4be00693b8ee7163846d9aa64c18075f546024dc683df720d437845bb7b, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/c3/c381b25072ea135344a2576c2b622a9d2b3a891d53775df866277c77fada39f1.yaml, sha256: edbfff5a92d2b5642586c2f43ecef9eba4fa77c4be22f1bfda8cbdd8db3703df, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml, sha256: 5cefbf27ca28db5126e7ea5794a37ed8edb3dc0add41612ee7613f9d69a41501, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml, sha256: c8a459f37993e2bab8d9a30434e542dc56460f2a393d04c34029285f35bb73ac, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml, sha256: 607a1bdf07c1b6832a56ca89426c3fec619609d91c5526a629135b09760ac5e4, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml, sha256: 79e470100430a530598c0f7a9ed316a4faaeb2cc6bf2fb735d76b86a4386b0fc, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml, sha256: 31020b0e4d08ed7ecb07efdfe81d977366efa6572cb67581276f271cfd623915, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/completed/76/76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415.yaml, sha256: a44faa2758411303529814ebfe03401eb112e4ce66a9837e2b45a1fa7a3cf23e, hash_normalization: git_eol_lf}
+  - {path: scripts/architecture_arch005_portable_validation_bundle.py, sha256: ec139dbfc44f39df36ee39867d79ab3eb7a48e3dec6b79c7688c82dc9672aaf6, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py, sha256: 21ba810081aabf7aab12e0fddb2c537621e5a75e98c31f51b3f5adbf474a5884, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/platform/architecture/portable_validation_bundle.py, sha256: c1b627f7b6c5147f4240591ecc9ef51a50a57348ad3a1d3c94b92587f8737ad5, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: ed87111aeb260ca61fa5dfef47ad06e97966da675fde6361269b2d9fa55dd743, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: cf252991730565589287a7b9e40a7cee568318dfbf9a8fcce1a9f3694ae77e08, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_005m2_portable_validation_bundle.py, sha256: 9386d6a02438a784f962baaeebf348ee06431ad674d81dc651ecfc2d66b6bd48, hash_normalization: git_eol_lf}
+  implementation:
+    existing_bundle_schema_reused: arch_005_bootstrap_validation_bundle.v1
+    second_source_of_truth_created: false
+    standalone_validator_reads_untracked_outputs: false
+    historical_handoff_or_summary_bytes_changed: false
+    g2_5_loader_signature_changed: false
+    clean_clone_cli_passed: true
+    clean_clone_validation_runtime_outputs_present: false
+  evidence:
+    frozen_base: b3ce8d70e3917522d9abdaf4d168f812ff47878e
+    implementation_candidate: 6af08fb990bf75455798c396bcf93ea8536b5e32
+    clean_clone_windows_longpaths_enabled: true
+    clean_clone_cli_status: PASS
+  validation:
+    focused: PASS_174
+    architecture: PASS_723
+    contract: PASS_275
+    integration: PASS_995
+    reproducibility: PASS_23
+    full: PASS_7469_WITH_3_SKIPPED
+    post_full_architecture: PASS_723
+    post_full_contract: PASS_275
+  safety:
+    known_unrelated_opened: false
+    strategy_conclusion_changed: false
+    data_quality_contract_changed: false
+    production_effect: none
+    broker_action: none
