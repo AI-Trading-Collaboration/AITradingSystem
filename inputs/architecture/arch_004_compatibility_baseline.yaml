@@ -28852,7 +28852,7 @@ phase_trading_2462_tail_risk_robustness_falsification_audit:
     sha256: c5f5cc3b896cb77c202c8b4ee53bb38c0464a18593b6e98c2f0d101e37dd4bec
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-2462_Tail_Risk_Capability_Robustness_Falsification_Audit.md
-    sha256: f746f1e7d33397d76c8294f35fc51c0a6c4bf068284cbdcd8b383dbb29c7dd2b
+    sha256: e2a104f0585f26a0abf6688990288a6a096a00c3e2cfe5dd9412223049ff3324
     hash_normalization: git_eol_lf
   - path: docs/research/decision_target_tail_risk_robustness_audit.md
     sha256: a3e6af5e8f0c6eb44102360e6421b21d308136fecc94b321714870ec2431267f

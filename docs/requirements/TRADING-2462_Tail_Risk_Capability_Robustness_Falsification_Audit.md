@@ -185,3 +185,25 @@ evidence与 review condition。结果只允许：
   `mypy --strict --follow-imports=skip`通过；直接追踪全import graph仍显示基线既有215项
   跨模块类型债务，未把它改写为本任务PASS或在本任务内修复。最终机械结论、route及所有
   no-overlay/no-candidate/no-weights/no-QLD-signal/no-production边界不变。
+- 2026-07-27：final candidate=`4e6eb8aa60907fffdf82541b6fd4027ac2940b52`已ff-only进入
+  local `main`并ordinary push，核验`local main = origin/main = candidate`。五个worktree
+  均通过target-bound `checkout_worktree_audit.v2`，tracked dirty paths与untracked files均为
+  0；独立process检查没有发现依赖目标目录的外部进程。v1-v5的5份checkout intent与28份lease
+  event已迁移至canonical根工作区，33份文件逐SHA256校验零差异；v5当前策略输出与八个正式
+  runtime artifact目录也已迁移，合计10个目录、33个文件逐SHA256零差异，TRADING-2461上游
+  9个source output文件在根工作区逐SHA256一致。
+- 2026-07-27：临时工作区删除allowlist冻结为
+  `D:\Work\AITradingSystem_t2462_tailrisk`、`D:\Work\AITradingSystem_t2462_tailrisk_v2`、
+  `D:\Work\AITradingSystem_t2462_tailrisk_v3`、
+  `D:\Work\AITradingSystem_t2462_tailrisk_v4`与
+  `D:\Work\AITradingSystem_t2462_tailrisk_v5`。v1-v4已由`git worktree remove --force`
+  删除并完成`git worktree prune`，释放354,172,077 bytes（337.76 MiB）已审计ignored
+  outputs/cache，另加tracked checkout副本；v5将在本记录通过post-change gates、提交并发布后
+  以相同方式自清理，届时五个worktree合计释放592,911,909 bytes（565.44 MiB）已审计ignored
+  bytes，另加tracked checkout副本。v1-v4中间formal输出与旧策略构建均被v5 final evidence
+  取代；Full生成的daily-ops测试诊断和Python/test caches判定为可丢弃中间物。
+- 恢复边界：tracked实现可由保留branch及reviewed commits恢复；最终策略证据、formal runtime
+  artifacts与lease audit trail保留在canonical根工作区。已删除或待删除的ignored cache、
+  被取代的中间构建和测试诊断不承诺逐字节恢复；没有production、broker、scheduler或当前
+  validation依赖这些worktree。v5 lease=`lease-7ba2072a743b31482497`已以
+  `outcome=completed`释放。
