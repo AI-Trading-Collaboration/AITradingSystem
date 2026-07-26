@@ -7,7 +7,7 @@
 Owner 决定：
 `owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
 
-状态：`BASELINE_DONE_PHASE_A_CONTRACT_AND_TRADING_2460_PILOT`
+状态：`BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`
 
 ## 1. 问题与目标
 
@@ -145,13 +145,45 @@ Phase A 退出：
 
 依赖：Phase A 至少一个真实 canonical run 和 tamper evidence PASS，且复核没有误隔离。
 
+Phase B 按以下顺序实施，避免把共享合同与 consumer 行为迁移混在同一原子变更：
+
+#### B1：generic dependency/discovery/preflight contract
+
 交付：
 
-- framework-level verifier/preflight；
-- consumer dependency declaration；
-- capability discovery pointer 和 immutable receipt retention；
-- research runner 在 evaluator 前统一 fail closed；
-- 第二个性质不同的 read-only consumer pilot。
+- `data_quality_consumer_dependency.v1`：冻结 consumer、capability、policy、DQ policy 与
+  exact consumer-side safety boundary；
+- `data_quality_consumer_capability_discovery_pointer.v1`：只负责按
+  consumer/version/as-of 定位 content-addressed immutable receipt，不携带或推导 PASS 权威；
+- verifier-only `VerifiedConsumerDataCapabilityPreflight`：必须重新验证 pointer bytes、
+  receipt bytes、content-addressed path、policy/source/projection/report 和 strict PASS 后才可创建；
+- publication 必须先确认 immutable receipt 已存在且 byte-identical，再原子更新可变 discovery
+  pointer；pointer 缺失、路径越界、symlink/junction、SHA/size/id/as-of/consumer/policy drift
+  全部 fail closed；
+- focused contract/tamper/containment/idempotency tests 与 system-flow 更新。
+
+B1 不迁移任何 consumer runner，不改变现有 TRADING-2460 输出或 receipt bytes。
+
+#### B2：第二 read-only consumer pilot
+
+冻结候选为 `TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`，原因：
+
+- 它在 evaluator 前直接读取 canonical price cache 并运行 DQ，且所有输出保持
+  diagnostic/segmentation-only、`production_effect=none`；
+- 它使用 trailing-only price features 生成当时可见的 regime label，与 Phase A 使用未来区间
+  构建 decision-target label 的时间方向和消费逻辑不同；
+- 它不依赖 QLD，不复用 QLD scoped evidence，也不是 daily/periodic consumer；
+- 其 exact transitive input closure 必须由现有 reviewed regime-label policy 和实际读取路径复核，
+  rates 若只作为旧 global gate 输入而不被 evaluator 消费，不得虚构为 required series。
+
+B2 交付：
+
+- reviewed capability policy 与 consumer dependency declaration；
+- runner 在 evaluator 和任何输出写入前只接受 exact verified preflight；
+- legacy direct-DQ 与 capability 路径的成功/失败、安全字段和产物语义 characterization；
+- required-scope/global-out-of-scope/tamper/wrong-consumer/wrong-as-of tests；
+- 至少一次真实 canonical build/verify；没有真实 strict PASS 时只能保持 `BLOCKED_INPUT`，
+  不得用 fixture PASS 宣称 pilot 完成。
 
 不得自动迁移 daily/periodic consumer。
 
@@ -218,3 +250,24 @@ Phase A 退出：
   `outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。
   Phase A 转 `BASELINE_DONE`；Phase B 需另行选择第二个性质不同的 read-only consumer，
   不由本次验收自动启动。
+- 2026-07-26：Project owner 要求继续按长期工程目标推进；Phase B 启动为两个原子阶段。
+  B1 先冻结 generic dependency/discovery/verifier-only preflight contract，不迁 consumer；
+  B2 候选冻结为 `TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`。选择依据是其
+  trailing-only、diagnostic-only、真实读取 canonical price cache 的消费闭包，与 Phase A
+  future decision-target label 性质不同；B2 实现前仍须从 reviewed policy 与实际读取路径证明
+  exact ticker/field/window closure，禁止把旧 global gate 中未被 evaluator 消费的 rates
+  虚构为依赖。当前状态进入 `IN_PROGRESS_PHASE_B1_GENERIC_ADAPTER_CONTRACT`。
+- 2026-07-26：B1 generic adapter 已实现 typed dependency、consumer/version/as-of scoped
+  discovery pointer、content-addressed immutable receipt retention，以及 verifier-only sealed
+  preflight。Consumer 只能在 pointer、receipt、policy、source、projection、full/scoped report
+  和 strict `PASS` 全部重新验证后取得 preflight；missing、path escape、symlink/junction、
+  SHA/size/id/as-of/consumer/policy drift、pointer regression 和 immutable collision 均 fail
+  closed。Focused contract/tamper regression=`8 passed`；architecture-fitness=`664 passed`，
+  contract-validation=`275 passed`，report-validation=`57 passed / 62 warnings`，
+  reproducibility=`23 passed`，integration=`995 passed / 643 warnings`。当前进入
+  required Full。首次 Full 的 `7320 passed / 3 skipped / 642 warnings` 后发现一项历史
+  observability 断言被 B1 状态回填补丁误改；目标修复回归=`3 passed`，随后使用失败 summary
+  作为 parent 的 Full 修复重跑=`7321 passed / 3 skipped / 642 warnings`，runtime artifact=
+  `outputs/validation_runtime/full_20260726T080607Z/test_runtime_summary.json`。B1 转
+  `BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`；未迁移 runner，B2 仍须在
+  独立原子变更中实施。

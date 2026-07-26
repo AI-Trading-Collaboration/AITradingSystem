@@ -12,5 +12,9 @@ stages:
   - scoped_validate_data_cache
   - content_derived_capability_receipt
   - exact_consumer_verification
+  - generic_consumer_dependency_declaration
+  - content_addressed_receipt_retention
+  - consumer_version_as_of_discovery_pointer
+  - sealed_strict_preflight_reverification
 compatibility_flow_entry_required: true
 generated_source_of_truth_active: false

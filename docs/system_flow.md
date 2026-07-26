@@ -997,6 +997,23 @@ start/end/available-on-session 和三资产未来 max drawdown / worst-1d。Cont
 embargo 留待下一批 reviewed policy。本批不执行 feature selection、model training、candidate
 search、strategy backtest 或权重生成，paper-shadow/production/broker 均不改变。
 
+DATA-GOV-002 Phase B1 在上述 receipt 之上增加 generic consumer adapter 的合同层，但尚不迁移
+TRADING-2460 或第二个 runner。`data_quality_consumer_dependency.v1` 把 exact
+consumer/version、capability/version、capability policy 与 DQ policy 的 repo-relative
+path/SHA-256，以及 strict-PASS/no-reuse/no-daily/no-effect 边界冻结为 content-derived
+dependency id。Publisher 先从 root-bound、拒绝 symlink/junction 的路径读取原 receipt，重验
+policy、canonical/materialized inputs、full/scoped reports、projection 与 strict PASS；随后将
+canonical receipt bytes 幂等保留到
+`outputs/data_quality/capabilities/receipts/<receipt_id>.json`，最后才原子更新按
+consumer/version/as-of 分区的 `data_quality_consumer_capability_discovery_pointer.v1`。
+Pointer 只是 locator，不携带 PASS 权威；consumer 必须重新读取 pointer 与 retained receipt、
+核对 dependency/id/path/SHA/size/as-of/chronology，并再次运行完整 receipt verifier，才可取得
+caller 不能直接构造的 `VerifiedConsumerDataCapabilityPreflight`。Missing、non-canonical JSON、
+path escape、policy/source/report drift、wrong consumer/as-of、immutable collision 或 discovery
+回退全部在 evaluator 与输出之前 fail closed。Phase B2 另行迁移
+`TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`；B1 不开放 daily/periodic、
+production 或 broker。
+
 ```mermaid
 flowchart LR
     C1["Immutable canonical source bytes<br/>full expected universe"] --> G1["validate_data_cache<br/>full canonical report"]
@@ -1006,13 +1023,20 @@ flowchart LR
     P1 --> W1["Content-bound requested-window authority<br/>same validate_data_cache"]
     W1 -->|not exact PASS| B1
     W1 -->|PASS| C2["Content-derived capability receipt<br/>full status still disclosed"]
-    C2 --> L1["1 / 5 / 10 / 20-session labels<br/>decision + interval + availability"]
+    C2 --> RET["B1 immutable retained receipt<br/>content-addressed bytes"]
+    DEP["B1 exact consumer dependency<br/>policy + DQ policy hashes"] --> PTR["Consumer/version/as-of discovery pointer<br/>locator only"]
+    RET --> PTR
+    PTR --> VP["Reverify pointer + receipt + bound files<br/>sealed strict preflight"]
+    DEP --> VP
+    VP -.-> PILOT["B2 TRADING-2316 pilot<br/>not migrated in B1"]
+    C2 --> L1["Phase A direct verified receipt<br/>1 / 5 / 10 / 20-session labels"]
     L1 --> X1["QQQ-SGOV primary<br/>SPY-SGOV + QQQ-SPY diagnostics"]
     L1 --> R1["Future max drawdown<br/>future worst 1d"]
     X1 --> V1["Content-derived rebuild<br/>identity + source + tamper validation"]
     R1 --> V1
     V1 --> O1["Primary + summary + Chinese report<br/>envelope + run ledger"]
     O1 -.-> N1["No global PASS overclaim / reuse / daily authorization<br/>no model / weights / production / broker"]
+    VP -.-> N1
 ```
 
 ARCH-004E 新增持续 DevEx/ownership 控制链：`config/architecture/devex_ownership_policy.yaml` 以互斥 specific rule + fail-closed fallback 为全部 source/test/support Python 文件生成 deterministic module/test manifests，并将 code、policy、data、artifact、runtime 五类 owner 分开记录；changed-file impact selector 只提供 focused feedback，shared aggregate 或 unknown path 会升级到 architecture coordinator/full gate，绝不替代 phase full validation。ARCH-004C dependency/direct-writer ratchet、manifest freshness、ownership coverage 与 aggregate reproducibility 被汇总为单一 architecture fitness；`scripts/run_validation_tier.py architecture-fitness` 从 generated test manifest 解析测试集合，不维护第二份手写路径。module/experiment/report scaffold 只创建 skeleton/spec/fragment，并在目标存在时 fail closed；4 个 fragment 只生成覆盖 report registry、artifact catalog、system flow 三个 target 的 shadow index，现有 aggregate 仍是 source-of-truth 且由 coordinator 独占。engineering surface inventory 只链接上述 control artifacts，不改变既有 report schema 的核心解释。该链路只改研发治理，不改变 scheduler cadence、研究结果、报告结论、DQ/PIT、阈值、权重、promotion、paper-shadow、production 或 broker。

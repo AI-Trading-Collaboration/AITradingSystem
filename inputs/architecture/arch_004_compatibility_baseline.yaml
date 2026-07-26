@@ -26967,3 +26967,161 @@ phase_arch_004g2_smoothed_closure_threshold_miss:
     cached_data_mutated: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_002_capability_receipt_phase_b1:
+  schema_version: data_gov_002_phase_b1_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: DATA-GOV-002-PHASE-B1-GENERIC-ADAPTER
+  task_ids:
+  - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  owner_authorization: owner_continuation:DATA-GOV-002:2026-07-26:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: 463e38c6e88babb9df3d715ed8fb80ee58686cae
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 6922d14c28ff0faaa8e0b4948eb1e333486d0286
+    raw_byte_count: 1695520
+    raw_sha256: cdb5308abdb66aa4f7bd59332b90ec6c3095dacdcc907c254bbfe5ebe43c384d
+    append_offset: 1695520
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/architecture/fragments/flows/data_quality_capability.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/contracts/data_quality_capability.py
+  - src/ai_trading_system/data/__init__.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_data_quality_capability.py
+  supersession:
+    superseded_by_phase: DATA-GOV-002-PHASE-B1-GENERIC-ADAPTER
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_004g2_smoothed_closure_threshold_miss
+    current_hash_authority: phase_data_gov_002_capability_receipt_phase_b1.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - config/architecture/fragments/flows/data_quality_capability.yaml
+  - config/architecture/fragments/modules/data_quality_capability_discovery.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/contracts/data_quality_capability.py
+  - src/ai_trading_system/data/__init__.py
+  - src/ai_trading_system/data/quality_capability_discovery.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_data_quality_capability.py
+  new_source_paths:
+  - config/architecture/fragments/modules/data_quality_capability_discovery.yaml
+  - src/ai_trading_system/data/quality_capability_discovery.py
+  sources:
+  - path: config/architecture/fragments/flows/data_quality_capability.yaml
+    sha256: 9cba920f64b2b5483b020b2425921e64e958b7aa56b75aec01369206d39cbc65
+    hash_normalization: git_eol_lf
+  - path: config/architecture/fragments/modules/data_quality_capability_discovery.yaml
+    sha256: c6370f7815c317e41af66f247966b2a21d01d009258cf6f5068169c8a2084fa3
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: e5cc704d4f297d022fc3f67d6e442d942267760dacb7a1eba754240fa3ffc567
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+    sha256: aa70e107a20a7aeb9f2f4d8f24674efc00ad179989efcc5d8653d9926e106518
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 23d49d2f47be184622a8dbb5dcc9e303ecab06b6f54cd44067ff83e51a642bf8
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 94ce89767a6e72ada3951171fe11f5244032fe6cf682fba65995f1307d073840
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 38b0992f3ea3db84ac5af33557a1cb22961b216fbafaeb3c53e709c1658e0cf7
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: c43b147a55e88eb57b4710fe6e26cd4694246f35a6916d4494d2db8b5d05df07
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 03b3fa0f3e01a2c863da0236f64f07835a51cdfb11db1607e10106cf9534c73c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 477bcd6776aac984b7b8a91eefd1c7fdcb3a2fcbb63321d46404eba6913b1572
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: a13d738470f26baf57f510a14b4debd632a8303592ef8593ba330db7d80ca040
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 8e26e8592ef57a6f203d86623b7090e0e6c9793312efb74f3e72035840fb5235
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 87e70dca8f89c5f63886b169c095edac8cddeaba5f24ef1c41ac666f52da918d
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+    sha256: 9c82e131aa153a06e3e0ca4c331593b32e75be2f31f73ab85505dce8c0ae76ba
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/__init__.py
+    sha256: 78ac5a8e3c2ad37c346b23da5fe7e02334f874fac0a1d03d8b7cd0874daa2599
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/data_quality_capability.py
+    sha256: e726a2c2b9b565eb56938622524c5e80d9b6e06452466147f063e16991e37131
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/__init__.py
+    sha256: 31494723275fbecb45ff39efe134372a3a27015b64ed1dc0afa0b42f9538b330
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/quality_capability_discovery.py
+    sha256: 8b2e4b7480adac304a8caf2c9f5c344f6e3f2e97f6e957d6331c3191fa52a556
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 101bc4efeb043b732216bbf56de6c0cd09c585209c22d0e4341d9d804a78d5cd
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 447a2f111c3ceeff0a4a3c482f9ce06b9db7b905bf98eada505a5438e89f62b5
+    hash_normalization: git_eol_lf
+  - path: tests/test_data_quality_capability.py
+    sha256: b215a18cbd927674944e3994e40a82435fa256d8e289c28dccf0753abb3ccd6a
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING
+    focused: PASS_8
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture_initial: FAIL_19_AUTHORITY_DRIFT
+    architecture_intermediate: FAIL_2_MANIFEST_AND_COUNT_DRIFT
+    architecture_rerun: PASS_664
+    contract: PASS_275
+    report: PASS_57_WARN_62
+    reproducibility: PASS_23
+    integration: PASS_995_WARN_643
+    full_initial: FAIL_1_HISTORICAL_EXPECTATION_PATCH_7320_PASS_3_SKIP_642_WARN
+    full_fix_regression: PASS_3
+    full: PASS_7321_SKIP_3_WARN_642_PARENT_BOUND
+  safety:
+    consumer_migration_executed: false
+    daily_periodic_authorized: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: true
+    cached_data_mutated: false
+    production_effect: none
+    broker_action: none

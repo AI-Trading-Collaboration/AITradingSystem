@@ -11,72 +11,71 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform
-    engineering：另行选择第二个性质不同的read-only consumer后启动Phase B generic adapter
+  next_owner: data platform engineering：在独立B2分支迁移并真实验证TRADING-2316 read-only pilot；先证明exact
+    ticker/field/window closure
   requirement_refs:
   - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
-    receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
-    attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
-    v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path strict
-    PASS和structured disjoint attribution可隔离无关instrument问题。
+    receipt层。Phase A已完成；2026-07-26 project owner要求继续按长期目标推进，Phase B拆为B1共享合同与B2 consumer迁移。B2冻结`TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`，因为其trailing-only
+    regime label、diagnostic-only安全边界和真实canonical price读取与future decision-target label性质不同；exact
+    ticker/field/window closure仍须在B2实现前证明，未被evaluator消费的rates不得虚构为依赖。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 首个真实`2021-02-22..2026-07-24`run必须保持full DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped
-      QQQ/SPY/SGOV=`PASS`、global pass claim/reuse/daily authorization均false，同时生成verified
-      receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
-      Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。
+    text: B1：typed dependency、consumer/version/as-of scoped discovery pointer、immutable
+      receipt retention、verifier-only strict preflight，以及missing/path/symlink/SHA/size/id/as-of/consumer/policy/source/projection/report
+      tamper全部fail closed；不得改变Phase A receipt bytes或迁移任何runner。B2：runner在evaluator和输出前消费exact
+      verified preflight，legacy parity、安全边界和真实canonical build/verify通过；无真实strict PASS时保持`BLOCKED_INPUT`。Phase
+      C-D再完成typed issue attribution与逐consumer治理；daily/periodic/production/broker始终不得自动开放。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1587
-    row_sha256: 67cf2622f03917320563981a721c50d48b53ee018334985b1952fb41a7521961
+    row_sha256: e2cbae92b2ec1f1e8c2fe61802944ba8c830b63ed292611fa637b79994d1846c
     cell_count: 8
     all_cells:
     - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
     - Data Foundation / consumer capability-scoped strict DQ receipts
     - P0
-    - BASELINE_DONE
-    - strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform engineering：另行选择第二个性质不同的read-only
-      consumer后启动Phase B generic adapter
+    - IN_PROGRESS
+    - data platform engineering：在独立B2分支迁移并真实验证TRADING-2316 read-only pilot；先证明exact
+      ticker/field/window closure
     - 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
-      receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
-      attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
-      v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path
-      strict PASS和structured disjoint attribution可隔离无关instrument问题。
-    - 首个真实`2021-02-22..2026-07-24`run必须保持full DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped
-      QQQ/SPY/SGOV=`PASS`、global pass claim/reuse/daily authorization均false，同时生成verified
-      receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
-      Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。
-    - 2026-07-26：Phase A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
-      claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
-      passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
-      B不自动启动。
+      receipt层。Phase A已完成；2026-07-26 project owner要求继续按长期目标推进，Phase B拆为B1共享合同与B2 consumer迁移。B2冻结`TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`，因为其trailing-only
+      regime label、diagnostic-only安全边界和真实canonical price读取与future decision-target
+      label性质不同；exact ticker/field/window closure仍须在B2实现前证明，未被evaluator消费的rates不得虚构为依赖。
+    - B1：typed dependency、consumer/version/as-of scoped discovery pointer、immutable
+      receipt retention、verifier-only strict preflight，以及missing/path/symlink/SHA/size/id/as-of/consumer/policy/source/projection/report
+      tamper全部fail closed；不得改变Phase A receipt bytes或迁移任何runner。B2：runner在evaluator和输出前消费exact
+      verified preflight，legacy parity、安全边界和真实canonical build/verify通过；无真实strict PASS时保持`BLOCKED_INPUT`。Phase
+      C-D再完成typed issue attribution与逐consumer治理；daily/periodic/production/broker始终不得自动开放。
+    - 2026-07-26：Phase A receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full/scoped=`FAIL/PASS`、label
+      rows=`5412`。B1已转`BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`：focused=`8`、architecture=`664`、contract=`275`、report=`57`、reproducibility=`23`、integration=`995`均PASS；parent-bound
+      Full修复重跑=`7321 passed / 3 skipped / 642 warnings`。B1未迁移runner，B2保持独立原子变更。
     raw_line: '|DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS|Data
-      Foundation / consumer capability-scoped strict DQ receipts|P0|BASELINE_DONE|strategy
-      research owner：复核首个真实label coverage并预注册Batch 2；data platform engineering：另行选择第二个性质不同的read-only
-      consumer后启动Phase B generic adapter|详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
-      receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
-      attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
-      v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path
-      strict PASS和structured disjoint attribution可隔离无关instrument问题。|首个真实`2021-02-22..2026-07-24`run必须保持full
-      DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped QQQ/SPY/SGOV=`PASS`、global
-      pass claim/reuse/daily authorization均false，同时生成verified receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
-      Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。|2026-07-26：Phase
-      A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
-      claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
-      passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
-      B不自动启动。|'
+      Foundation / consumer capability-scoped strict DQ receipts|P0|IN_PROGRESS|data
+      platform engineering：在独立B2分支迁移并真实验证TRADING-2316 read-only pilot；先证明exact ticker/field/window
+      closure|详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
+      receipt层。Phase A已完成；2026-07-26 project owner要求继续按长期目标推进，Phase B拆为B1共享合同与B2 consumer迁移。B2冻结`TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`，因为其trailing-only
+      regime label、diagnostic-only安全边界和真实canonical price读取与future decision-target
+      label性质不同；exact ticker/field/window closure仍须在B2实现前证明，未被evaluator消费的rates不得虚构为依赖。|B1：typed
+      dependency、consumer/version/as-of scoped discovery pointer、immutable receipt
+      retention、verifier-only strict preflight，以及missing/path/symlink/SHA/size/id/as-of/consumer/policy/source/projection/report
+      tamper全部fail closed；不得改变Phase A receipt bytes或迁移任何runner。B2：runner在evaluator和输出前消费exact
+      verified preflight，legacy parity、安全边界和真实canonical build/verify通过；无真实strict PASS时保持`BLOCKED_INPUT`。Phase
+      C-D再完成typed issue attribution与逐consumer治理；daily/periodic/production/broker始终不得自动开放。|2026-07-26：Phase
+      A receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full/scoped=`FAIL/PASS`、label
+      rows=`5412`。B1已转`BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`：focused=`8`、architecture=`664`、contract=`275`、report=`57`、reproducibility=`23`、integration=`995`均PASS；parent-bound
+      Full修复重跑=`7321 passed / 3 skipped / 642 warnings`。B1未迁移runner，B2保持独立原子变更。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-67cf2622f03917320563981a
+  event_id: legacy-import-e2cbae92b2ec1f1e8c2fe618
   task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -86,43 +85,41 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: BASELINE_DONE
+  to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform
-      engineering：另行选择第二个性质不同的read-only consumer后启动Phase B generic adapter
-    notes: 2026-07-26：Phase A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
-      claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
-      passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
-      B不自动启动。
+    next_owner: data platform engineering：在独立B2分支迁移并真实验证TRADING-2316 read-only pilot；先证明exact
+      ticker/field/window closure
+    notes: 2026-07-26：Phase A receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full/scoped=`FAIL/PASS`、label
+      rows=`5412`。B1已转`BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`：focused=`8`、architecture=`664`、contract=`275`、report=`57`、reproducibility=`23`、integration=`995`均PASS；parent-bound
+      Full修复重跑=`7321 passed / 3 skipped / 642 warnings`。B1未迁移runner，B2保持独立原子变更。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:67cf2622f03917320563981a721c50d48b53ee018334985b1952fb41a7521961
+  - sha256:e2cbae92b2ec1f1e8c2fe61802944ba8c830b63ed292611fa637b79994d1846c
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
   - Data Foundation / consumer capability-scoped strict DQ receipts
   - P0
-  - BASELINE_DONE
-  - strategy research owner：复核首个真实label coverage并预注册Batch 2；data platform engineering：另行选择第二个性质不同的read-only
-    consumer后启动Phase B generic adapter
+  - IN_PROGRESS
+  - data platform engineering：在独立B2分支迁移并真实验证TRADING-2316 read-only pilot；先证明exact
+    ticker/field/window closure
   - 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Owner决定`owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`：建立长期capability
-    receipt层。Phase A typed policy/receipt、immutable source capture、structured issue
-    attribution、price-only scope、content-bound window authority、materializer/verifier与TRADING-2460
-    v2 binding已实现；full canonical DQ仍运行并披露，只有reviewed frozen scope、same-code-path strict
-    PASS和structured disjoint attribution可隔离无关instrument问题。
-  - 首个真实`2021-02-22..2026-07-24`run必须保持full DQ=`FAIL`、唯一isolated error=`prices_non_market_session_date@^VIX`、scoped
-    QQQ/SPY/SGOV=`PASS`、global pass claim/reuse/daily authorization均false，同时生成verified
-    receipt与5412行labels；focused/architecture/contract/integration/reproducibility/required
-    Full通过后Phase A转`BASELINE_DONE`。Phase B-D依次完成generic adapter、issue attribution和逐consumer迁移，均不得自动开放daily/production/broker。
-  - 2026-07-26：Phase A正式验收完成。receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`；full/scoped=`FAIL/PASS`、global
-    claim=false、label status=`LABEL_FOUNDATION_READY`、rows=`5412`、validator 0 errors；architecture/report/reproducibility/contract/integration均PASS，带parent-run的Full修复重跑=`7292
-    passed / 3 skipped / 643 warnings`，artifact=`outputs/validation_runtime/full_20260726T022008Z/test_runtime_summary.json`。Phase
-    B不自动启动。
+    receipt层。Phase A已完成；2026-07-26 project owner要求继续按长期目标推进，Phase B拆为B1共享合同与B2 consumer迁移。B2冻结`TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC@1.0.0`，因为其trailing-only
+    regime label、diagnostic-only安全边界和真实canonical price读取与future decision-target label性质不同；exact
+    ticker/field/window closure仍须在B2实现前证明，未被evaluator消费的rates不得虚构为依赖。
+  - B1：typed dependency、consumer/version/as-of scoped discovery pointer、immutable
+    receipt retention、verifier-only strict preflight，以及missing/path/symlink/SHA/size/id/as-of/consumer/policy/source/projection/report
+    tamper全部fail closed；不得改变Phase A receipt bytes或迁移任何runner。B2：runner在evaluator和输出前消费exact
+    verified preflight，legacy parity、安全边界和真实canonical build/verify通过；无真实strict PASS时保持`BLOCKED_INPUT`。Phase
+    C-D再完成typed issue attribution与逐consumer治理；daily/periodic/production/broker始终不得自动开放。
+  - 2026-07-26：Phase A receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full/scoped=`FAIL/PASS`、label
+    rows=`5412`。B1已转`BASELINE_DONE_PHASE_B1_GENERIC_ADAPTER_CONTRACT_B2_PENDING`：focused=`8`、architecture=`664`、contract=`275`、report=`57`、reproducibility=`23`、integration=`995`均PASS；parent-bound
+    Full修复重跑=`7321 passed / 3 skipped / 642 warnings`。B1未迁移runner，B2保持独立原子变更。
   docs_links:
   - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
   terminal: false
-  raw_row_sha256: 67cf2622f03917320563981a721c50d48b53ee018334985b1952fb41a7521961
+  raw_row_sha256: e2cbae92b2ec1f1e8c2fe61802944ba8c830b63ed292611fa637b79994d1846c
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 5308316769a766a29e16cceefe193a9b2cce0789c22c500d0bfed79c68df34ce
+fragment_checksum: 5653f2916b0ab7321c3a4bac60f33f0125c21b9170f9a0c478cbe43801d036d9
