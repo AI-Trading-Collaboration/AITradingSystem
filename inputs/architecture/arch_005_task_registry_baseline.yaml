@@ -105,18 +105,18 @@ inventory:
       LF: 421
   - source: completed
     path: docs/task_register_completed.md
-    byte_count: 1080623
-    sha256: 2c3eaa30afabdc910b0aef54a2150e9c38b4a631b2402b6d6ffe81cbe35a23d3
-    row_count: 490
+    byte_count: 1081969
+    sha256: 3a7665b5e1e555c8921f0c5cea064d31858793141404fd52ebf5fef24478223a
+    row_count: 491
     final_newline: true
-    task_id_order_sha256: 04539344f75896805d522f0834c61369fe34ae4f4754f57da94fbdd5c4a69cbd
-    row_checksum_order_sha256: e520c326c7e1d92589e6da32d9833a5a9a7c7f3d9972c26912f1d4d241042128
+    task_id_order_sha256: a8ba2bc29594c29a96b0bf881176a543e5d8ea0b09c96703da609c2e21f2caf6
+    row_checksum_order_sha256: 70e41a40299188cf39e40187b6ac510c0cd39621fdbc6b8d432b225df650a7ab
     task_row_newline_counts:
-      LF: 490
+      LF: 491
   active_task_count: 421
-  completed_task_count: 490
-  total_task_count: 911
-  unique_task_count: 911
+  completed_task_count: 491
+  total_task_count: 912
+  unique_task_count: 912
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
@@ -124,16 +124,16 @@ inventory:
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
-    DONE: 478
+    DONE: 479
     DROPPED: 12
     IN_PROGRESS: 9
     PROPOSED: 12
     READY: 1
     VALIDATING: 267
-  task_id_set_sha256: a1144bf46ae77573630e4186adf029e871f95f35512a97d4e9665462a8d57036
+  task_id_set_sha256: 01f801419ead04dca3caa587aea6ff6ca2bb2e2279281cedfc94818844abc73e
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: bd21d10b17cb1a49c10ba5e229e488e862ceaf0b34ecc38df677ee5560fb5609
-  docs_link_set_sha256: ce344bc618ab10b47b2937d7150372281c7e5fe23c94883eab0bb42cff065678
+  owner_set_sha256: 506cc32de583c2a46bc765688bdaef21ce789ee5b91c90a7aa0f803ac0e79498
+  docs_link_set_sha256: 27410fdfdb0bd5b44640ea1763a556a05d636bf89fe8f7112274fdd590ec9944
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -6512,6 +6512,13 @@ inventory:
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
+  - task_id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+    source: completed
+    line_number: 507
+    row_sha256: b79d5f09d0e77a76e270142257f21618f433a5e0cfbf6481bc823a48ea0e4740
+    cell_count: 8
+    field_projection: first_eight_cells_legacy_v1
+    history_completeness: LEGACY_HISTORY_PARTIAL
 consumer_characterization:
   status: PASS_CHARACTERIZED
   consumer_count: 131
@@ -7363,4 +7370,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: b9e3f0467d44bd96f33770b4093d13fb93f5bcf59202afcc879a17369cc57ce5
+baseline_checksum: fe8a0d0c0ec7b71a0c57af0fd1b1e00710dfe725b525c14907cc99144932875f

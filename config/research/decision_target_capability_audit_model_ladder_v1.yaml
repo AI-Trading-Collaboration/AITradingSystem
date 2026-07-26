@@ -1,0 +1,308 @@
+schema_version: decision_target_capability_audit_model_ladder_policy.v1
+policy_id: decision_target_capability_audit_model_ladder_v1
+version: 1.0.0
+status: OWNER_APPROVED_HISTORICAL_SEEN_PILOT
+owner: project_owner_and_research_governance
+owner_decision: owner_decision:TRADING-2461:2026-07-26:approve_decision_target_capability_audit_batch2_v1
+rationale: >-
+  先用固定、简单、可解释的模型阶梯判断系统对decision targets的跨fold能力，再由能力约束
+  后续策略风格。全部阈值是historical-seen pilot baseline，只用于防止结果驱动解释，不构成
+  promotion或收益保证。
+intended_effect: >-
+  区分broad equity risk premium、Nasdaq leadership、QQQ-defensive allocation与tail-risk
+  判断能力；若证据不稳定则保持mixed/no-skill，不创建candidate family。
+validation_evidence: >-
+  exact input commitment、row-order fail-closed、train-only feature standardization、
+  label-maturity/purge/embargo、deterministic ridge、fold metrics、style mapping、tamper与
+  double-build测试；真实run必须由content-derived validator重建。
+review_condition: >-
+  Batch 2完成后由Owner复核。任何label、horizon、feature family、lookback、fold、embargo、
+  model、penalty、metric或classification变化必须发布新版本，不得按结果调整v1。
+research_context:
+  research_window_id: exact_qqq_sgov_tqqq_validated_window
+  requested_start: '2021-02-22'
+  historical_seen_only: true
+  prospective_values_allowed: false
+input_authority:
+  label_schema_version: decision_target_capability_audit_label_foundation.v1
+  label_status: LABEL_FOUNDATION_READY
+  label_row_count: 5412
+  common_session_count: 1362
+  source_package_schema_version: decision_target_market_panel.v1
+  capability_receipt_schema_version: data_quality_consumer_capability_receipt.v1
+  capability_receipt_id: dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059
+  capability_id: decision_target_label_core
+  capability_version: 1.0.0
+  capability_consumer_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  capability_consumer_version: 2.0.0
+  full_canonical_status: FAIL
+  scoped_status: PASS
+  global_cache_pass_claimed: false
+  required_price_tickers:
+    - QQQ
+    - SGOV
+    - SPY
+  required_rate_series: []
+  expected_files:
+    label_payload:
+      sha256: 3b41ca325d7f1110173593b25d35e1fab7e9409e3ace61d9e959f117b7553b80
+      size_bytes: 9560259
+    source_package:
+      sha256: eb86292a470a1ab13c54a52b3b9c21ee98eeb9c547460057903d6d18e53d554e
+      size_bytes: 17945
+    market_panel:
+      sha256: 155093a99e0c258e89268745a4579c6a0e8838fa7aa363466044a5a722137150
+      size_bytes: 306380
+    capability_receipt:
+      sha256: 624623557c2552b9090469f070cb177cadf6bc8b71940f97772a13c629d85afa
+      size_bytes: 13315
+targets:
+  return:
+    - QQQ_MINUS_SGOV
+    - SPY_MINUS_SGOV
+    - QQQ_MINUS_SPY
+  tail:
+    - QQQ_FUTURE_MAX_DRAWDOWN
+    - QQQ_FUTURE_WORST_1D_RETURN
+  horizons:
+    - 1d
+    - 5d
+    - 10d
+    - 20d
+  accounting_identity: QQQ_MINUS_SGOV = SPY_MINUS_SGOV + QQQ_MINUS_SPY
+split_policy:
+  split_id: expanding_purged_walk_forward_18m_6m_v1
+  decision_universe: intersection_of_all_horizon_decision_dates
+  initial_train_sessions: 378
+  minimum_train_rows: 252
+  test_sessions: 126
+  minimum_final_test_sessions: 63
+  include_final_partial_fold: true
+  embargo_sessions: 20
+  label_maturity_required: true
+  purge_label_test_overlap_required: true
+  purge_label_embargo_overlap_required: true
+  train_transform_fit_scope: train_only
+  rationale: >-
+    378 sessions约为18个月初始训练，126 sessions约为半年测试；20-session embargo等于最大label
+    horizon。最终partial fold只有在至少63 sessions时保留。该schedule在读取Batch 2结果前冻结。
+feature_policy:
+  annualization_sessions: 252
+  minimum_history_sessions: 120
+  family_order:
+    - PRICE_TREND
+    - VOLATILITY_DRAWDOWN
+    - CROSS_ASSET_STATE
+  features:
+    - feature_id: qqq_return_5
+      family: PRICE_TREND
+      kind: total_return
+      asset: QQQ
+      sessions: 5
+    - feature_id: qqq_return_20
+      family: PRICE_TREND
+      kind: total_return
+      asset: QQQ
+      sessions: 20
+    - feature_id: qqq_return_60
+      family: PRICE_TREND
+      kind: total_return
+      asset: QQQ
+      sessions: 60
+    - feature_id: spy_return_5
+      family: PRICE_TREND
+      kind: total_return
+      asset: SPY
+      sessions: 5
+    - feature_id: spy_return_20
+      family: PRICE_TREND
+      kind: total_return
+      asset: SPY
+      sessions: 20
+    - feature_id: spy_return_60
+      family: PRICE_TREND
+      kind: total_return
+      asset: SPY
+      sessions: 60
+    - feature_id: sgov_return_20
+      family: PRICE_TREND
+      kind: total_return
+      asset: SGOV
+      sessions: 20
+    - feature_id: sgov_return_60
+      family: PRICE_TREND
+      kind: total_return
+      asset: SGOV
+      sessions: 60
+    - feature_id: qqq_spy_relative_5
+      family: PRICE_TREND
+      kind: relative_return
+      asset: QQQ
+      benchmark: SPY
+      sessions: 5
+    - feature_id: qqq_spy_relative_20
+      family: PRICE_TREND
+      kind: relative_return
+      asset: QQQ
+      benchmark: SPY
+      sessions: 20
+    - feature_id: qqq_spy_relative_60
+      family: PRICE_TREND
+      kind: relative_return
+      asset: QQQ
+      benchmark: SPY
+      sessions: 60
+    - feature_id: qqq_sgov_relative_20
+      family: PRICE_TREND
+      kind: relative_return
+      asset: QQQ
+      benchmark: SGOV
+      sessions: 20
+    - feature_id: qqq_sgov_relative_60
+      family: PRICE_TREND
+      kind: relative_return
+      asset: QQQ
+      benchmark: SGOV
+      sessions: 60
+    - feature_id: spy_sgov_relative_20
+      family: PRICE_TREND
+      kind: relative_return
+      asset: SPY
+      benchmark: SGOV
+      sessions: 20
+    - feature_id: spy_sgov_relative_60
+      family: PRICE_TREND
+      kind: relative_return
+      asset: SPY
+      benchmark: SGOV
+      sessions: 60
+    - feature_id: qqq_volatility_20
+      family: VOLATILITY_DRAWDOWN
+      kind: realized_volatility
+      asset: QQQ
+      sessions: 20
+    - feature_id: qqq_volatility_60
+      family: VOLATILITY_DRAWDOWN
+      kind: realized_volatility
+      asset: QQQ
+      sessions: 60
+    - feature_id: spy_volatility_20
+      family: VOLATILITY_DRAWDOWN
+      kind: realized_volatility
+      asset: SPY
+      sessions: 20
+    - feature_id: spy_volatility_60
+      family: VOLATILITY_DRAWDOWN
+      kind: realized_volatility
+      asset: SPY
+      sessions: 60
+    - feature_id: qqq_drawdown_60
+      family: VOLATILITY_DRAWDOWN
+      kind: current_drawdown
+      asset: QQQ
+      sessions: 60
+    - feature_id: qqq_drawdown_120
+      family: VOLATILITY_DRAWDOWN
+      kind: current_drawdown
+      asset: QQQ
+      sessions: 120
+    - feature_id: spy_drawdown_60
+      family: VOLATILITY_DRAWDOWN
+      kind: current_drawdown
+      asset: SPY
+      sessions: 60
+    - feature_id: spy_drawdown_120
+      family: VOLATILITY_DRAWDOWN
+      kind: current_drawdown
+      asset: SPY
+      sessions: 120
+    - feature_id: qqq_spy_volatility_gap_20
+      family: CROSS_ASSET_STATE
+      kind: difference
+      left_feature: qqq_volatility_20
+      right_feature: spy_volatility_20
+    - feature_id: qqq_spy_volatility_gap_60
+      family: CROSS_ASSET_STATE
+      kind: difference
+      left_feature: qqq_volatility_60
+      right_feature: spy_volatility_60
+    - feature_id: qqq_spy_drawdown_gap_120
+      family: CROSS_ASSET_STATE
+      kind: difference
+      left_feature: qqq_drawdown_120
+      right_feature: spy_drawdown_120
+    - feature_id: qqq_sgov_return_gap_60
+      family: CROSS_ASSET_STATE
+      kind: difference
+      left_feature: qqq_return_60
+      right_feature: sgov_return_60
+    - feature_id: spy_sgov_return_gap_60
+      family: CROSS_ASSET_STATE
+      kind: difference
+      left_feature: spy_return_60
+      right_feature: sgov_return_60
+model_policy:
+  primary_classification_model: M1_RIDGE_LINEAR
+  primary_classification_feature_prefix: CROSS_ASSET_STATE
+  standardization_zero_scale_epsilon: 1.0e-12
+  models:
+    - model_id: M0_TRAIN_MEAN
+      kind: train_mean
+      classification_eligible: false
+    - model_id: M1_RIDGE_LINEAR
+      kind: ridge
+      ridge_penalty: 1.0
+      classification_eligible: true
+    - model_id: M2_RIDGE_INTERACTION
+      kind: ridge_interaction
+      ridge_penalty: 4.0
+      classification_eligible: false
+  interactions:
+    - interaction_id: trend_x_volatility
+      left_feature: qqq_return_20
+      right_feature: qqq_volatility_20
+    - interaction_id: leadership_x_market
+      left_feature: qqq_spy_relative_20
+      right_feature: spy_return_20
+    - interaction_id: drawdown_x_defensive_gap
+      left_feature: qqq_drawdown_120
+      right_feature: qqq_sgov_return_gap_60
+metric_policy:
+  quintile_count: 5
+  minimum_rows_per_metric: 20
+  tail_targets_directional_metric_applicable: false
+classification_policy:
+  status: TEMPORARY_PILOT_BASELINE
+  owner: project_owner_and_research_governance
+  rationale: >-
+    在historical-seen能力审计中要求多数fold同向、median和pooled rank skill、M0 RMSE增量及正
+    quintile spread共同成立；阈值只用于阻止脆弱结果被升级为风格结论。
+  review_condition: >-
+    Batch 2输出后必须人工复核；任何新family需另立任务，不能直接消费本pilot阈值。
+  minimum_valid_folds: 6
+  minimum_positive_spearman_folds: 5
+  minimum_median_spearman: 0.03
+  minimum_pooled_spearman: 0.05
+  minimum_median_rmse_improvement_vs_m0: 0.0
+  minimum_median_quintile_spread: 0.0
+  minimum_median_directional_uplift_vs_m0: 0.0
+  minimum_passing_horizons: 2
+  required_medium_or_long_horizons:
+    - 10d
+    - 20d
+safety:
+  research_only: true
+  historical_seen_only: true
+  prospective_accessed: false
+  candidate_family_created: false
+  candidate_search_executed: false
+  parameter_search_executed: false
+  strategy_backtest_executed: false
+  transaction_cost_model_applied: false
+  target_weights_generated: false
+  action_universe_changed: false
+  qld_used_as_signal: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none

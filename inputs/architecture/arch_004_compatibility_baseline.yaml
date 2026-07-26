@@ -28105,3 +28105,158 @@ phase_data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack:
     cached_data_mutated: false
     production_effect: none
     broker_action: none
+
+phase_trading_2461_decision_target_capability_audit_model_ladder:
+  schema_version: trading_2461_decision_target_capability_audit_model_ladder_compatibility.v1
+  status: COMPLETE
+  boundary_id: TRADING-2461-DECISION-TARGET-CAPABILITY-AUDIT-BATCH2
+  task_ids:
+  - TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  owner_authorization: owner_decision:TRADING-2461:2026-07-26:approve_decision_target_capability_audit_batch2_v1
+  prior_sections_immutability:
+    source_commit: 7b883b840783d35506876b07e3c512bd709f4d76
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 909b9dbc745a5df588beba7f6d47d1b7d3505ede
+    raw_byte_count: 1757969
+    raw_sha256: e8a0a4a0bd6b208204204505578bb96790fdbfd9e49789a4e374ceacd065dd9e
+    append_offset: 1757969
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/system_flow.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2461-DECISION-TARGET-CAPABILITY-AUDIT-BATCH2
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_002c2_rate_row_issue_attribution_source_owner_review_pack
+    current_hash_authority: phase_trading_2461_decision_target_capability_audit_model_ladder.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/research/decision_target_capability_audit_model_ladder_v1.yaml
+  - config/research/experiments/decision_target_capability_audit_model_ladder.yaml
+  - docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+  - docs/research/decision_target_capability_audit_model_ladder.md
+  - registry/development_tasks_shadow/completed/8f/8f94232414037d95253e1089454c402ee929cfea494b338d55145a38cdb7a374.yaml
+  - src/ai_trading_system/research_framework/plugins/decision_target_capability_audit_model_ladder.py
+  - tests/research_strategies/test_decision_target_capability_audit_model_ladder.py
+  source_delta_paths:
+  - config/report_registry.yaml
+  - config/research/decision_target_capability_audit_model_ladder_v1.yaml
+  - config/research/experiments/decision_target_capability_audit_model_ladder.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+  - docs/research/decision_target_capability_audit_model_ladder.md
+  - docs/system_flow.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/completed/8f/8f94232414037d95253e1089454c402ee929cfea494b338d55145a38cdb7a374.yaml
+  - src/ai_trading_system/research_framework/plugins/decision_target_capability_audit_model_ladder.py
+  - tests/research_strategies/test_decision_target_capability_audit_model_ladder.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  sources:
+  - path: config/report_registry.yaml
+    sha256: ea8abb7694fba9c1b98a1c999f1624b0227e8640d7993ac0081e816ed848a141
+    hash_normalization: git_eol_lf
+  - path: config/research/decision_target_capability_audit_model_ladder_v1.yaml
+    sha256: 9b84ac832cced4823367c75e2670e22652c7dbeba8dd0aa5bbc30942287b9b19
+    hash_normalization: git_eol_lf
+  - path: config/research/experiments/decision_target_capability_audit_model_ladder.yaml
+    sha256: c7cafcd2a68849e3b02dec4c74bd9e138723c2d0c887d736561e4cf56fed0ff0
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: dbbbbda1bd33e2f9376ae29357fedf475d5d833de4233a5b134615479580e217
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+    sha256: 9eb5d45cbd8cbe249423a4d15c90e84b0aa0d65cd6570a5c78b212433c06b293
+    hash_normalization: git_eol_lf
+  - path: docs/research/decision_target_capability_audit_model_ladder.md
+    sha256: c982b6072b2f593fb20e5c8f51864ea4b9f38efe0e1610a6db525d460b2d8359
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 08cdd45a4d3c0338883ba48752f198328f4c2ea3310f8a8c9ca207d4bab7521f
+    hash_normalization: git_eol_lf
+  - path: docs/task_register_completed.md
+    sha256: 3a7665b5e1e555c8921f0c5cea064d31858793141404fd52ebf5fef24478223a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 47b6776fa0c9afad88b7930c8bb38332f5ab5babfda9a1de01d8ad917664681d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 511b690fb58ddab935a0eaf1ea2c6fa79f295da7c641fb6a8e49cdd628c01124
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: ce3b0c7a6d7436df6d144e9649ca6e212b412eca984363163061f5c3240bc6e4
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 32496279fd9704f92265ee4d8ef0578f0b00490f82ee32fe222fb97789554ef6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 1a968437cbea3dfd17d89fdc0497447faf55140a66daf39c6f0b23cf1f5e1352
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 884c56f0b2f00e6043a965909f2d513e596ef33642cb650ee4029ca2e18c6f24
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 3d7f0d1b0f9b34785c61b94325a9df956cce0fe7f46be3f490aad7b3eacd4bac
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/8f/8f94232414037d95253e1089454c402ee929cfea494b338d55145a38cdb7a374.yaml
+    sha256: a92f43626b6da978e9f12dfead489e2e78bedfc09f520e772faedea0c3a6577e
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/research_framework/plugins/decision_target_capability_audit_model_ladder.py
+    sha256: 89a3822d419a7c49cf2a74fa46de16153a2e8605f56d6546804f86cf23b7bfc9
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_decision_target_capability_audit_model_ladder.py
+    sha256: b1b00f71ee7e07927c74d968d580320adf95d95baf7ee97330098f62ddf308bd
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: e859a78e173c114c05be5bfb98dfbb410152eecfbaf7cd4436c33a855ccaf2fd
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004f3_reporting_architecture.py
+    sha256: 238c1dd98f52a6754440521676e346400d96d30da5fbed05a08a2e1955aaf558
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: e6dcb0151431b5cf07a324540808108d7ecfa566670f89e74b705071e96affb6
+    hash_normalization: git_eol_lf
+  validation:
+    focused_and_authority: PASS_15
+    reporting_architecture: PASS_17
+    deprecation: PASS_9
+    architecture: PASS_678
+    contract: PASS_275
+    report: PASS_57_WARN_62
+    reproducibility: PASS_23
+    full: PASS_7394_SKIP_4_WARN_643
+    post_full_architecture: PASS_678
+    post_full_contract: PASS_275
+  safety:
+    historical_seen_only: true
+    promotion_authorized: false
+    strategy_family_created: false
+    risk_overlay_authorized: false
+    qld_signal_role_changed: false
+    prospective_accessed: false
+    paper_shadow_changed: false
+    production_effect: none
+    broker_action: none

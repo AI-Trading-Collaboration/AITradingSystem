@@ -1007,6 +1007,20 @@ start/end/available-on-session 和三资产未来 max drawdown / worst-1d。Cont
 embargo 留待下一批 reviewed policy。本批不执行 feature selection、model training、candidate
 search、strategy backtest 或权重生成，paper-shadow/production/broker 均不改变。
 
+TRADING-2461 Batch 2 从上述真实 label/package/panel/receipt 各自 exact path/size/SHA-256 建立
+immutable input snapshot，在结果读取前冻结共同 horizon decision universe、120-session feature
+warmup、378-session initial train、126-session test、20-session embargo、final partial floor、
+PRICE_TREND→VOLATILITY_DRAWDOWN→CROSS_ASSET_STATE family prefix，以及
+M0 train mean→M1 ridge→M2 limited interaction ladder。每个 outer fold 只允许
+label-available-on-session 不晚于 train cutoff 的 rows，label interval 与 test/embargo 相交时 purge，
+standardization 只 fit train。Style classification 只消费预注册 M1/full-prefix，不允许事后挑 M2、
+family 或 horizon。真实 `2021-02-22..2026-07-24` source 的实际 feature/label evaluation 为
+`2021-08-11..2026-06-25`，7 folds / 118,300 predictions；三类 excess-return target 均无 horizon
+通过，QQQ future worst-1d 在1d/5d/10d通过，max drawdown仅5d单点通过，机械结论为
+`TAIL_RISK_ONLY_SKILL`。这只是 historical-seen pilot，下一步只能由Owner决定是否另立tail-risk
+robustness任务；不创建candidate、不跑策略回测、不生成权重，QLD不进入signal/style，
+paper-shadow/promotion/production/broker不改变。
+
 DATA-GOV-002 Phase B1 在上述 receipt 之上增加 generic consumer adapter 的合同层。
 `data_quality_consumer_dependency.v1` 把 exact
 consumer/version、capability/version、capability policy 与 DQ policy 的 repo-relative
@@ -1083,7 +1097,12 @@ flowchart LR
     X1 --> V1["Content-derived rebuild<br/>identity + source + tamper validation"]
     R1 --> V1
     V1 --> O1["Primary + summary + Chinese report<br/>envelope + run ledger"]
+    O1 --> S2["Batch 2 exact snapshot<br/>purged walk-forward"]
+    S2 --> M2["M0 mean / M1 ridge / M2 interaction<br/>fixed feature prefixes"]
+    M2 --> C3["M1/full-prefix capability gates<br/>7 folds / 118,300 predictions"]
+    C3 --> T2["TAIL_RISK_ONLY_SKILL<br/>return targets unsupported"]
     O1 -.-> N1["No global PASS overclaim / reuse / daily authorization<br/>no model / weights / production / broker"]
+    T2 -.-> N1
     PO -.-> N1
     VP -.-> N1
     ES["C1 canonical emitter sources<br/>+ reviewed capability policies"] --> INV["AST readiness inventory<br/>69 stable emission sites"]

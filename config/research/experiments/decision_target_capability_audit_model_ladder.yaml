@@ -1,0 +1,83 @@
+schema_version: experiment_spec.v1
+experiment_id: decision_target_capability_audit_model_ladder
+spec_version: decision_target_capability_audit_model_ladder.experiment.v1
+status: owner_approved_batch2_historical_seen_pilot
+owner: research_governance
+task_register_id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+calculator_plugin:
+  plugin_id: decision_target_capability_model_ladder_calculator
+  version: v1
+report_plugin:
+  plugin_id: decision_target_capability_model_ladder_report
+  version: v1
+inputs:
+  - input_id: audit_policy
+    document_kind: structured
+    role: preregistered_split_model_metric_and_classification_policy
+    required: true
+    default_path: config/research/decision_target_capability_audit_model_ladder_v1.yaml
+  - input_id: input_snapshot
+    document_kind: structured
+    role: content_addressed_batch1_label_panel_and_capability_receipt_snapshot
+    required: true
+    default_path: outputs/research_strategies/decision_target_capability_audit_model_ladder/source/input_snapshot.json
+  - input_id: requirement_text
+    document_kind: text
+    role: owner_decision_and_interpretation_boundary
+    required: true
+    default_path: docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+outputs:
+  - output_id: primary
+    artifact_kind: primary_json
+    root: output
+    filename: decision_target_capability_audit_model_ladder.json
+    artifact_path_key: json_path
+  - output_id: capability_summary
+    artifact_kind: section_json
+    root: output
+    filename: decision_target_capability_audit_model_ladder_summary.json
+    artifact_path_key: summary_path
+    payload_key: capability_summary
+    section_report_type: decision_target_capability_audit_model_ladder_summary
+  - output_id: reader_markdown
+    artifact_kind: markdown
+    root: docs
+    filename: decision_target_capability_audit_model_ladder.md
+    artifact_path_key: markdown_path
+  - output_id: envelope
+    artifact_kind: envelope_json
+    root: output
+    filename: decision_target_capability_audit_model_ladder.envelope.json
+  - output_id: run_ledger
+    artifact_kind: run_ledger_json
+    root: output
+    filename: decision_target_capability_audit_model_ladder.run_ledger.json
+legacy_status_mappings:
+  - legacy_status: CAPABILITY_AUDIT_READY
+    canonical_status: PASS
+  - legacy_status: BLOCKED_INPUT_OR_PROTOCOL
+    canonical_status: BLOCKED
+report:
+  report_id: decision_target_capability_audit_model_ladder
+  title: Decision Target Capability Audit Model Ladder
+  audience: researcher
+  reader_tier: research_review_pack
+  cadence: manual
+  canonical_source: ai_trading_system.research_framework.plugins.decision_target_capability_audit_model_ladder:build_capability_payload
+  section_provider: ai_trading_system.research_framework.plugins.decision_target_capability_audit_model_ladder:capability_summary
+  view_model: ai_trading_system.research_framework.plugins.decision_target_capability_audit_model_ladder:capability_view_model
+  renderer: ai_trading_system.research_framework.plugins.decision_target_capability_audit_model_ladder:render_capability_markdown
+  artifact_globs:
+    - outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.json
+    - outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder_summary.json
+    - docs/research/decision_target_capability_audit_model_ladder.md
+  freshness_sla_days: 0
+  owner_action: review_capability_matrix_before_authoring_any_new_candidate_family
+  actionable: false
+  lifecycle: CURRENT
+strict_default: true
+data_quality_required: true
+investment_facing_envelope: false
+manual_review_required: true
+production_effect: none
+broker_action: none
