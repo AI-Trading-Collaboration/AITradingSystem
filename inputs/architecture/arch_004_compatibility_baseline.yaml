@@ -29024,7 +29024,7 @@ phase_devx_006_base_drift_aware_integration_revalidation:
   - {path: AGENTS.md, sha256: 8dc4ace6c9d17f87d607426db91cff9de67f0a5fcaee57e63ae80c00ec57761c, hash_normalization: git_eol_lf}
   - {path: config/architecture/arch_005_integration_revalidation.yaml, sha256: 0c36e877f7a370b4ff531bad0a84b3670a8f4b4b357cd1fca0e9ed7dc0a159e3, hash_normalization: git_eol_lf}
   - {path: docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md, sha256: d2a09983f8d81cc2f8ca65326499b71de14c05e4914102c3344ca94c66b35586, hash_normalization: git_eol_lf}
-  - {path: docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md, sha256: c8437c96c66a1bbf9f83c856bda380ed17f9e178f11e4ba74e241b34c06ab090, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md, sha256: 642a1cea7567621fdbd709562740151dc1806bb052039f73dce9ebed010f2619, hash_normalization: git_eol_lf}
   - {path: docs/system_flow.md, sha256: 86894b8db5011a7f42fa896e1efac8d29f664353e86423ecb5ea06c7e9d712e8, hash_normalization: git_eol_lf}
   - {path: docs/task_register.md, sha256: 064dcc2628702bf8ca1fa5a77824eadbe4095a6ac2ad89494ab33a19d130c6f6, hash_normalization: git_eol_lf}
   - {path: docs/task_register_completed.md, sha256: 15bcb104f6ef563ecfb4636ccabc524e5b2e2f3f8227ded3652915495bd2f8e2, hash_normalization: git_eol_lf}

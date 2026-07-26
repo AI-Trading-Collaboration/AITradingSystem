@@ -267,3 +267,11 @@ rename、wrong ancestry、dirty target、known-unrelated zero-read 与 tamper te
   `contract-validation_20260726T200525Z`。DEVX-006实现、真实两次base-drift pilot、typed
   stop/ready分类、final-tree门禁与任务证据闭合，状态转`COMPLETE`；标准commit、ff-only、
   ordinary push及temporary-workspace清理由研发流程继续执行，不改变功能验收结论。
+- 2026-07-27：标准closeout完成。`main=origin/main=56d877054fb667ce8c2450dc29687ee82e7f4ced`；
+  temporary-workspace删除allowlist仅为
+  `D:\Work\AITradingSystem_integration_devx006_arch005m1`，释放`260,070,606 bytes`
+  （`248.02 MiB`）并执行`git worktree prune`。删除前确认tracked/untracked=0、外部依赖
+  process=0；7组正式Architecture/Contract/Integration/Reproducibility/Full artifacts已
+  逐文件SHA-256迁入主工作区。未保留的唯一内容仅为Full测试生成的3个weight-calibration
+  cache文件与6个daily-ops failure fixture outputs，其恢复方式是重跑相应测试；tracked
+  实现仍可由commit与保留分支恢复，known-unrelated owner文档全程未读、未改、未提交。
