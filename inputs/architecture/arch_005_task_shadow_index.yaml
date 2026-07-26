@@ -1,10 +1,10 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 411007f2e4cd1394d31b22f4bcb2f284fecc20d55a99c8ee5b178b83f6483c8a
+baseline_checksum: 049eb1739653f45367492de781bbb4316e4c39dde9bd327efb3c993bb5889369
 source_of_truth: LEGACY_MARKDOWN_ONLY
-task_count: 909
-fragment_count: 909
+task_count: 910
+fragment_count: 910
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -329,6 +329,10 @@ fragments:
   path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
   file_sha256: e70eec0f967cf2c6fa19a11a757f4c5c617a803f40ab3e554fd5040bfaca18ed
   fragment_checksum: aceb6d70c2db312a3a85bae738eea332ba9cc32da0ef7b7937c3ebb87b64046a
+- task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
+  path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  file_sha256: 1c4ec8e8423c32639c4cada640b3fc3b6c5bbed14f0c585fdd60f5b436ceb01c
+  fragment_checksum: b1b4e0a2392a485adc17eaf9548e583f583c7f6d2bdd01a0947b3850a71a6677
 - task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
   path: registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
   file_sha256: d3743c4a96ad9f6d4a4ab2837ed6268769fc26cf0a11e7e69dae571821342396
@@ -3661,8 +3665,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 96c4e210b5f55588676e26be7323578192f36e1cc2eb587a43834047df9da5cf
-  rendered_sha256: 96c4e210b5f55588676e26be7323578192f36e1cc2eb587a43834047df9da5cf
+  source_sha256: dc89a768d3916e40070e92d4d59818700a845800871759219021ab4de61897d5
+  rendered_sha256: dc89a768d3916e40070e92d4d59818700a845800871759219021ab4de61897d5
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3684,4 +3688,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 2bdb56901b782eea697b0ebcd2efa25e469dda20ea9da382e019958abd2cdad0
+index_checksum: cd372616dfa294e931572e36244fd82c378afa83e4716f2fac0ddf387b0dfc40

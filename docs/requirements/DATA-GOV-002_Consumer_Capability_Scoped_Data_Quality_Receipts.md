@@ -7,7 +7,7 @@
 Owner 决定：
 `owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
 
-状态：`BASELINE_DONE_PHASE_B2_REGIME_LABEL_PILOT_PHASE_C_PENDING`
+状态：`BASELINE_DONE_PHASE_C1_READINESS_INVENTORY_OWNER_REVIEW_PENDING`
 
 ## 1. 问题与目标
 
@@ -310,3 +310,18 @@ B2 交付：
   `BASELINE_DONE_PHASE_B2_REGIME_LABEL_PILOT_PHASE_C_PENDING`；下一长期切片优先准备
   Phase C typed issue attribution 与逐 issue source-owner review，Phase D consumer migration
   和 daily/periodic/production/broker 仍未自动授权。
+- 2026-07-26：Phase C1 readiness inventory 已进入正式验证。AST scanner从canonical
+  `quality.py`和`quality_execution.py`机械枚举69个emission sites，其中static/template/dynamic
+  分别为56/11/2；只有`prices_non_market_session_date`对应的1个site已有reviewed authority，
+  其余68个固定`OWNER_REVIEW_REQUIRED`。Tracked JSON/validation/Markdown由source/policy bytes
+  content-derived重建，未新增allowed code、typed schema或consumer migration。Focused DQ
+  regression=`104 passed`；正式architecture/contract/report/reproducibility/Full仍待本切片
+  final-tree闭合。
+- 2026-07-26：Phase C1正式门禁闭合并转`BASELINE_DONE`。Architecture首轮
+  `668 passed / 6 failed`只捕获新增report后的冻结计数、documentation coverage、deprecation
+  inventory和历史supersession ratchet漂移；逐项修复后architecture=`674 passed`。
+  Contract/report/reproducibility/integration=`275/57/23/995 passed`，natural-boundary
+  Full=`7376 passed / 3 skipped / 643 warnings`，artifact=
+  `outputs/validation_runtime/full_20260726T130144Z/test_runtime_summary.json`。Phase C整体仍未
+  完成；下一步是独立C2 source-owner review，不得把C1 inventory解释为typed attribution或
+  新隔离授权。

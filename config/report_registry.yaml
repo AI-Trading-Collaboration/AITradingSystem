@@ -20927,6 +20927,32 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: dq_issue_attribution_readiness_inventory
+    title: DQ Issue Attribution Readiness Inventory
+    group: governance
+    cadence: ad_hoc
+    audience: project_owner
+    owner: data_platform
+    command: python scripts/data_quality_issue_attribution_inventory.py --repo-root .
+    artifact_globs:
+      - inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json
+      - inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json
+      - docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md
+      - docs/requirements/DATA-GOV-002C1_DQ_Issue_Attribution_Readiness_Inventory.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 0
+    freshness_rationale: >-
+      DATA-GOV-002C1 is a source-bound, content-derived readiness baseline. Its
+      validator rebuilds the inventory from the canonical emitter and reviewed
+      capability-policy bytes, so any source or policy change requires an
+      immediate refresh before source-owner review. Unreviewed sites remain
+      GLOBAL_OR_UNKNOWN_SCOPE and do not gain isolation authority.
+    owner_action: review_exact_sites_before_typed_attribution_contract_wave
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: decision_target_capability_audit_label_foundation
     title: Decision Target Capability Audit Batch 1 Label Foundation
     group: research

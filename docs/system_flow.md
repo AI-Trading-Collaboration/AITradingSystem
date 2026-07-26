@@ -1033,6 +1033,20 @@ canonical price/rate/marketstack cache，也不在 evaluator 内运行一套独�
 `global_cache_pass_claimed=false`。B2 不迁移 TRADING-2317，不开放 daily/periodic、production
 或 broker。
 
+DATA-GOV-002 Phase C1 增加独立的 attribution readiness inventory，不改变上述 receipt 或
+consumer 路径。`python scripts/data_quality_issue_attribution_inventory.py --repo-root .`
+以 AST 机械扫描 canonical `quality.py` 的 `DataQualityIssue(...)` 和
+`quality_execution.py` 的 `_provenance_issue(...)` call sites，同时只计数并披露其他模块中的
+noncanonical constructors；它从 reviewed capability policies 汇总既有 authority，绑定
+source/policy SHA-256，并输出 content-derived JSON、validation JSON 和中文 Markdown。
+Validator 从同一 source/policy bytes 重建全部 stable site identities，拒绝 omission、duplicate、
+source/policy/output drift 或安全字段变化。当前69个canonical sites中只有
+`prices_non_market_session_date`对应的1个site已有reviewed attribution authority；其余68个保持
+`GLOBAL_OR_UNKNOWN_SCOPE` / `OWNER_REVIEW_REQUIRED`，全部新migration eligibility为false。
+Inventory 不解析message/sample推断scope，不增加allowed code，不修改full/scoped DQ、consumer、
+cache、daily/periodic、production或broker行为；它只为后续逐site source-owner review和独立
+typed-attribution contract wave提供事实输入。
+
 ```mermaid
 flowchart LR
     C1["Immutable canonical source bytes<br/>full expected universe"] --> G1["validate_data_cache<br/>full canonical report"]
@@ -1059,6 +1073,10 @@ flowchart LR
     O1 -.-> N1["No global PASS overclaim / reuse / daily authorization<br/>no model / weights / production / broker"]
     PO -.-> N1
     VP -.-> N1
+    ES["C1 canonical emitter sources<br/>+ reviewed capability policies"] --> INV["AST readiness inventory<br/>69 stable emission sites"]
+    INV --> IQ["1 reviewed site<br/>68 owner-review-required sites"]
+    IQ --> CW["Future typed-attribution contract wave<br/>separate reviewed task"]
+    INV -.-> NA["No new isolation authority<br/>no DQ / consumer behavior change"]
 ```
 
 ARCH-004E 新增持续 DevEx/ownership 控制链：`config/architecture/devex_ownership_policy.yaml` 以互斥 specific rule + fail-closed fallback 为全部 source/test/support Python 文件生成 deterministic module/test manifests，并将 code、policy、data、artifact、runtime 五类 owner 分开记录；changed-file impact selector 只提供 focused feedback，shared aggregate 或 unknown path 会升级到 architecture coordinator/full gate，绝不替代 phase full validation。ARCH-004C dependency/direct-writer ratchet、manifest freshness、ownership coverage 与 aggregate reproducibility 被汇总为单一 architecture fitness；`scripts/run_validation_tier.py architecture-fitness` 从 generated test manifest 解析测试集合，不维护第二份手写路径。module/experiment/report scaffold 只创建 skeleton/spec/fragment，并在目标存在时 fail closed；4 个 fragment 只生成覆盖 report registry、artifact catalog、system flow 三个 target 的 shadow index，现有 aggregate 仍是 source-of-truth 且由 coordinator 独占。engineering surface inventory 只链接上述 control artifacts，不改变既有 report schema 的核心解释。该链路只改研发治理，不改变 scheduler cadence、研究结果、报告结论、DQ/PIT、阈值、权重、promotion、paper-shadow、production 或 broker。
