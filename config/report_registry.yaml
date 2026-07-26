@@ -21024,6 +21024,48 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: decision_target_capability_audit_model_ladder
+    title: Decision Target Capability Audit Batch 2 Model Ladder
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: research_framework.run_experiment
+    artifact_globs:
+      - config/research/decision_target_capability_audit_model_ladder_v1.yaml
+      - config/research/experiments/decision_target_capability_audit_model_ladder.yaml
+      - docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/source/input_snapshot.json
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_label_payload.json
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_source_package.json
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_market_panel.csv
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/source/batch1_capability_receipt.json
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.json
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder_summary.json
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.envelope.json
+      - outputs/research_strategies/decision_target_capability_audit_model_ladder/decision_target_capability_audit_model_ladder.run_ledger.json
+      - docs/research/decision_target_capability_audit_model_ladder.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 0
+    freshness_rationale: >-
+      TRADING-2461 exact-binds the TRADING-2460 v2 label payload, source
+      package, QQQ/SPY/SGOV panel and capability receipt, then evaluates a
+      preregistered train-mean/ridge/limited-interaction ladder through
+      session-indexed expanding purged walk-forward. Label maturity, 20-session
+      embargo, train-only transforms, fixed feature-family prefixes, fold
+      metrics and style classification are content-derived. The real
+      historical-seen result is TAIL_RISK_ONLY_SKILL: no excess-return target
+      passes any horizon; QQQ future worst-1d passes 1d/5d/10d while future max
+      drawdown passes only 5d and is not target-supported. This is pilot
+      evidence for owner review, not prospective performance, candidate,
+      strategy backtest, target weight, QLD signal, promotion or production
+      authorization.
+    owner_action: review_tail_risk_only_pilot_before_any_new_family
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: growth_tilt_baseline_capability_graph
     title: Growth Tilt Baseline Capability Graph
     group: research
