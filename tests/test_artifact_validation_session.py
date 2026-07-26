@@ -20,10 +20,131 @@ from ai_trading_system.platform.artifacts import validation_session as validatio
 from ai_trading_system.platform.artifacts.validation_session import (
     ArtifactFingerprintInventory,
     ArtifactFingerprintScope,
+    ArtifactValidationSessionTelemetry,
     artifact_content_identity,
     artifact_validation_session,
     cached_artifact_validation,
 )
+
+
+def test_validation_session_telemetry_is_opt_in_and_nested_contexts_share() -> None:
+    with artifact_validation_session() as disabled:
+        assert disabled is None
+
+    with artifact_validation_session(collect_telemetry=True) as telemetry:
+        assert isinstance(telemetry, ArtifactValidationSessionTelemetry)
+        with artifact_validation_session() as nested:
+            assert nested is telemetry
+
+    assert telemetry.to_dict() == {
+        "schema_version": "artifact_validation_session_telemetry.v1",
+        "call_count": 0,
+        "cache_lookup_count": 0,
+        "cache_hit_count": 0,
+        "cache_miss_count": 0,
+        "cache_bypass_count": 0,
+        "cache_invalidation_count": 0,
+        "validator_execution_count": 0,
+        "cache_store_count": 0,
+        "result_not_cached_count": 0,
+        "total_seconds": 0,
+        "semantic_key_seconds": 0,
+        "fingerprint_seconds": 0,
+        "deepcopy_seconds": 0,
+        "validator_seconds": 0,
+        "validators": {},
+    }
+
+
+def test_validation_session_telemetry_records_hit_miss_and_stages(
+    tmp_path: Path,
+) -> None:
+    artifact_id = "artifact-telemetry"
+    artifact_root = tmp_path / artifact_id
+    artifact_root.mkdir()
+    payload_path = artifact_root / "payload.txt"
+    payload_path.write_text("first", encoding="utf-8")
+    calls = 0
+
+    def validator(*, item_id: str, output_dir: Path) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        return {
+            "status": "PASS",
+            "content": (output_dir / item_id / "payload.txt").read_text(encoding="utf-8"),
+        }
+
+    with artifact_validation_session(collect_telemetry=True) as telemetry:
+        assert telemetry is not None
+        for _ in range(2):
+            cached_artifact_validation(
+                validator=validator,
+                validator_key="item_id",
+                artifact_id=artifact_id,
+                root=tmp_path,
+            )
+        payload_path.write_text("second", encoding="utf-8")
+        cached_artifact_validation(
+            validator=validator,
+            validator_key="item_id",
+            artifact_id=artifact_id,
+            root=tmp_path,
+        )
+
+    observed = telemetry.to_dict()
+    assert calls == 2
+    assert observed["call_count"] == 3
+    assert observed["cache_lookup_count"] == 3
+    assert observed["cache_hit_count"] == 1
+    assert observed["cache_miss_count"] == 2
+    assert observed["cache_bypass_count"] == 0
+    assert observed["cache_invalidation_count"] == 0
+    assert observed["validator_execution_count"] == 2
+    assert observed["cache_store_count"] == 2
+    assert observed["result_not_cached_count"] == 0
+    assert observed["total_seconds"] > 0
+    assert observed["semantic_key_seconds"] > 0
+    assert observed["fingerprint_seconds"] > 0
+    assert observed["deepcopy_seconds"] > 0
+    assert observed["validator_seconds"] > 0
+    validator_rows = observed["validators"]
+    assert isinstance(validator_rows, dict)
+    assert len(validator_rows) == 1
+    assert next(iter(validator_rows)).endswith(".validator@1")
+
+
+def test_validation_session_telemetry_distinguishes_cache_bypass(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "artifact-bypass"
+    artifact_root.mkdir()
+    (artifact_root / "payload.txt").write_text("payload", encoding="utf-8")
+    calls = 0
+
+    def validator(*, output_dir: Path) -> dict[str, Any]:
+        nonlocal calls
+        assert output_dir == artifact_root
+        calls += 1
+        return {"status": "PASS"}
+
+    with artifact_validation_session(collect_telemetry=True) as telemetry:
+        assert telemetry is not None
+        cached_artifact_validation(
+            validator=validator,
+            validator_kwargs={"output_dir": artifact_root},
+            artifact_root=artifact_root,
+            semantic_key={"unsupported"},
+        )
+
+    observed = telemetry.to_dict()
+    assert calls == 1
+    assert observed["call_count"] == 1
+    assert observed["cache_lookup_count"] == 0
+    assert observed["cache_hit_count"] == 0
+    assert observed["cache_miss_count"] == 0
+    assert observed["cache_bypass_count"] == 1
+    assert observed["validator_execution_count"] == 1
+    assert observed["cache_store_count"] == 0
 
 
 def test_validation_session_reuses_only_unchanged_pass_artifact(tmp_path: Path) -> None:

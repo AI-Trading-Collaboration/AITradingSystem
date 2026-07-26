@@ -14581,7 +14581,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.artifacts.validation_session
   path: src/ai_trading_system/platform/artifacts/validation_session.py
-  sha256: 5d301ad10646bcede4f3e589839cc4d9c16ba83d6047d6d8e272cfd4dbc4a038
+  sha256: 332e34d90c9126ae386c0162e8241a41da823b5741dc1e1904e9e4572dd7ca9a
   rule_id: platform_artifacts
   owner_profile: platform
   owners:

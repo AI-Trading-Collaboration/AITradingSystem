@@ -18,6 +18,7 @@ from enum import Enum
 from functools import wraps
 from hashlib import sha256
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Literal, ParamSpec, TypeVar
 from zoneinfo import ZoneInfo
 
@@ -74,6 +75,88 @@ class ArtifactFingerprintScope:
     discover_bound_paths: bool = True
 
 
+@dataclass
+class _ValidatorSessionTelemetry:
+    call_count: int = 0
+    cache_lookup_count: int = 0
+    cache_hit_count: int = 0
+    cache_miss_count: int = 0
+    cache_bypass_count: int = 0
+    cache_invalidation_count: int = 0
+    validator_execution_count: int = 0
+    cache_store_count: int = 0
+    result_not_cached_count: int = 0
+    total_seconds: float = 0.0
+    semantic_key_seconds: float = 0.0
+    fingerprint_seconds: float = 0.0
+    deepcopy_seconds: float = 0.0
+    validator_seconds: float = 0.0
+
+    def to_dict(self) -> dict[str, int | float]:
+        return {
+            "call_count": self.call_count,
+            "cache_lookup_count": self.cache_lookup_count,
+            "cache_hit_count": self.cache_hit_count,
+            "cache_miss_count": self.cache_miss_count,
+            "cache_bypass_count": self.cache_bypass_count,
+            "cache_invalidation_count": self.cache_invalidation_count,
+            "validator_execution_count": self.validator_execution_count,
+            "cache_store_count": self.cache_store_count,
+            "result_not_cached_count": self.result_not_cached_count,
+            "total_seconds": self.total_seconds,
+            "semantic_key_seconds": self.semantic_key_seconds,
+            "fingerprint_seconds": self.fingerprint_seconds,
+            "deepcopy_seconds": self.deepcopy_seconds,
+            "validator_seconds": self.validator_seconds,
+        }
+
+
+@dataclass
+class ArtifactValidationSessionTelemetry:
+    """Opt-in counters and timings for one synchronous validation session."""
+
+    validators: dict[str, _ValidatorSessionTelemetry] = field(default_factory=dict)
+
+    def _validator(self, validator_id: str) -> _ValidatorSessionTelemetry:
+        return self.validators.setdefault(validator_id, _ValidatorSessionTelemetry())
+
+    def to_dict(self) -> dict[str, Any]:
+        rows = {
+            validator_id: telemetry.to_dict()
+            for validator_id, telemetry in sorted(self.validators.items())
+        }
+        integer_fields = (
+            "call_count",
+            "cache_lookup_count",
+            "cache_hit_count",
+            "cache_miss_count",
+            "cache_bypass_count",
+            "cache_invalidation_count",
+            "validator_execution_count",
+            "cache_store_count",
+            "result_not_cached_count",
+        )
+        timing_fields = (
+            "total_seconds",
+            "semantic_key_seconds",
+            "fingerprint_seconds",
+            "deepcopy_seconds",
+            "validator_seconds",
+        )
+        return {
+            "schema_version": "artifact_validation_session_telemetry.v1",
+            **{
+                field_name: sum(int(row[field_name]) for row in rows.values())
+                for field_name in integer_fields
+            },
+            **{
+                field_name: sum(float(row[field_name]) for row in rows.values())
+                for field_name in timing_fields
+            },
+            "validators": rows,
+        }
+
+
 @dataclass(frozen=True)
 class _FileDigestMemo:
     signature: _FileSignature
@@ -89,6 +172,7 @@ class _ValidationSessionState:
     active: bool = True
     validations: dict[_ValidationKey, dict[str, Any]] = field(default_factory=dict)
     validator_refs: dict[int, Callable[..., dict[str, Any]]] = field(default_factory=dict)
+    telemetry: ArtifactValidationSessionTelemetry | None = None
 
 
 @dataclass(frozen=True)
@@ -1237,17 +1321,25 @@ def artifact_fingerprint(
 
 
 @contextmanager
-def artifact_validation_session() -> Iterator[None]:
+def artifact_validation_session(
+    *,
+    collect_telemetry: bool = False,
+) -> Iterator[ArtifactValidationSessionTelemetry | None]:
     """Reuse stable PASS reports in one active synchronous execution context."""
     current = _VALIDATION_SESSION.get()
     owner = _execution_owner()
     if current is not None and current.active and current.owner == owner:
-        yield
+        if collect_telemetry and current.telemetry is None:
+            current.telemetry = ArtifactValidationSessionTelemetry()
+        yield current.telemetry
         return
-    state = _ValidationSessionState(owner=owner)
+    state = _ValidationSessionState(
+        owner=owner,
+        telemetry=(ArtifactValidationSessionTelemetry() if collect_telemetry else None),
+    )
     token = _VALIDATION_SESSION.set(state)
     try:
-        yield
+        yield state.telemetry
     finally:
         state.active = False
         _VALIDATION_SESSION.reset(token)
@@ -1465,54 +1557,133 @@ def cached_artifact_validation(
     validator_name = f"{validator_module}.{validator_qualname}"
     validator_token = id(validator)
     session.validator_refs.setdefault(validator_token, validator)
-    try:
-        semantic_payload = {
-            "schema_version": "artifact-validation-cache-key.v2",
-            "validator": validator_name,
-            "validator_version": validator_version,
-            "validator_kwargs": call_kwargs,
-            "semantic_key": semantic_key,
-            "artifact_root": str(resolved_root),
-            "fingerprint_mode": fingerprint_mode,
-            "fingerprint_scope": _scope_descriptor(scope),
-        }
-        semantic_digest = sha256(_canonical_json_bytes(semantic_payload)).hexdigest()
-    except (TypeError, ValueError, OverflowError, OSError, RecursionError, RuntimeError):
-        return validator(**call_kwargs)
+    telemetry = (
+        session.telemetry._validator(f"{validator_name}@{validator_version}")
+        if session.telemetry is not None
+        else None
+    )
+    if telemetry is not None:
+        telemetry.call_count += 1
+    call_started = perf_counter() if telemetry is not None else 0.0
+
+    def run_validator() -> dict[str, Any]:
+        if telemetry is not None:
+            telemetry.validator_execution_count += 1
+        validator_started = perf_counter() if telemetry is not None else 0.0
+        try:
+            return validator(**call_kwargs)
+        finally:
+            if telemetry is not None:
+                telemetry.validator_seconds += perf_counter() - validator_started
+
     def current_fingerprint() -> str:
-        if compatibility_mode:
-            return _compatibility_artifact_fingerprint(fingerprint_root)
-        return artifact_fingerprint(fingerprint_root, scope=scope)
+        fingerprint_started = perf_counter() if telemetry is not None else 0.0
+        try:
+            if compatibility_mode:
+                return _compatibility_artifact_fingerprint(fingerprint_root)
+            return artifact_fingerprint(fingerprint_root, scope=scope)
+        finally:
+            if telemetry is not None:
+                telemetry.fingerprint_seconds += perf_counter() - fingerprint_started
 
     try:
-        before_fingerprint = current_fingerprint()
-    except (_UncacheableFingerprintScope, OSError, ValueError, RuntimeError):
-        return validator(**call_kwargs)
-    key = (validator_token, semantic_digest, before_fingerprint)
-    cached = session.validations.get(key)
-    if cached is not None:
+        semantic_started = perf_counter() if telemetry is not None else 0.0
         try:
-            cached_result = deepcopy(cached)
-        except Exception:  # noqa: BLE001 - cache copy failure must degrade to revalidation.
-            session.validations.pop(key, None)
+            semantic_payload = {
+                "schema_version": "artifact-validation-cache-key.v2",
+                "validator": validator_name,
+                "validator_version": validator_version,
+                "validator_kwargs": call_kwargs,
+                "semantic_key": semantic_key,
+                "artifact_root": str(resolved_root),
+                "fingerprint_mode": fingerprint_mode,
+                "fingerprint_scope": _scope_descriptor(scope),
+            }
+            semantic_digest = sha256(_canonical_json_bytes(semantic_payload)).hexdigest()
+        except (
+            TypeError,
+            ValueError,
+            OverflowError,
+            OSError,
+            RecursionError,
+            RuntimeError,
+        ):
+            if telemetry is not None:
+                telemetry.cache_bypass_count += 1
+            return run_validator()
+        finally:
+            if telemetry is not None:
+                telemetry.semantic_key_seconds += perf_counter() - semantic_started
+
+        try:
+            before_fingerprint = current_fingerprint()
+        except (_UncacheableFingerprintScope, OSError, ValueError, RuntimeError):
+            if telemetry is not None:
+                telemetry.cache_bypass_count += 1
+            return run_validator()
+        key = (validator_token, semantic_digest, before_fingerprint)
+        if telemetry is not None:
+            telemetry.cache_lookup_count += 1
+        cached = session.validations.get(key)
+        if cached is None:
+            if telemetry is not None:
+                telemetry.cache_miss_count += 1
         else:
+            copy_started = perf_counter() if telemetry is not None else 0.0
+            copy_recorded = False
             try:
-                confirmed_fingerprint = current_fingerprint()
-            except (_UncacheableFingerprintScope, OSError, ValueError, RuntimeError):
-                return validator(**call_kwargs)
-            if confirmed_fingerprint == before_fingerprint:
-                return cached_result
-            before_fingerprint = confirmed_fingerprint
-            key = (validator_token, semantic_digest, before_fingerprint)
-    validation = validator(**call_kwargs)
-    try:
-        after_fingerprint = current_fingerprint()
-    except (_UncacheableFingerprintScope, OSError, ValueError, RuntimeError):
-        return validation
-    if validation.get("status") == "PASS" and after_fingerprint == before_fingerprint:
+                cached_result = deepcopy(cached)
+            except Exception:  # noqa: BLE001 - cache copy failure must degrade to revalidation.
+                session.validations.pop(key, None)
+                if telemetry is not None:
+                    telemetry.cache_invalidation_count += 1
+            else:
+                if telemetry is not None:
+                    telemetry.deepcopy_seconds += perf_counter() - copy_started
+                    copy_recorded = True
+                try:
+                    confirmed_fingerprint = current_fingerprint()
+                except (_UncacheableFingerprintScope, OSError, ValueError, RuntimeError):
+                    if telemetry is not None:
+                        telemetry.cache_bypass_count += 1
+                    return run_validator()
+                if confirmed_fingerprint == before_fingerprint:
+                    if telemetry is not None:
+                        telemetry.cache_hit_count += 1
+                    return cached_result
+                if telemetry is not None:
+                    telemetry.cache_invalidation_count += 1
+                before_fingerprint = confirmed_fingerprint
+                key = (validator_token, semantic_digest, before_fingerprint)
+            finally:
+                if telemetry is not None and not copy_recorded:
+                    telemetry.deepcopy_seconds += perf_counter() - copy_started
+
+        validation = run_validator()
         try:
-            cached_validation = deepcopy(validation)
-        except Exception:  # noqa: BLE001 - unsupported report values simply disable caching.
+            after_fingerprint = current_fingerprint()
+        except (_UncacheableFingerprintScope, OSError, ValueError, RuntimeError):
+            if telemetry is not None:
+                telemetry.result_not_cached_count += 1
             return validation
-        session.validations[key] = cached_validation
-    return validation
+        if validation.get("status") == "PASS" and after_fingerprint == before_fingerprint:
+            copy_started = perf_counter() if telemetry is not None else 0.0
+            try:
+                cached_validation = deepcopy(validation)
+            except Exception:  # noqa: BLE001 - unsupported report values disable caching.
+                if telemetry is not None:
+                    telemetry.result_not_cached_count += 1
+                return validation
+            finally:
+                if telemetry is not None:
+                    telemetry.deepcopy_seconds += perf_counter() - copy_started
+            session.validations[key] = cached_validation
+            if telemetry is not None:
+                telemetry.cache_store_count += 1
+        else:
+            if telemetry is not None:
+                telemetry.result_not_cached_count += 1
+        return validation
+    finally:
+        if telemetry is not None:
+            telemetry.total_seconds += perf_counter() - call_started

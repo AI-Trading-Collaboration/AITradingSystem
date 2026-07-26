@@ -3,9 +3,9 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1190
+test_file_count: 1191
 test_count: 1131
-support_file_count: 59
+support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
 tests:
@@ -236,6 +236,22 @@ tests:
 - test_id: tests.manual_portfolio_guardrail_helpers
   path: tests/manual_portfolio_guardrail_helpers.py
   sha256: 3a4e9304d6e6cf161ebe4c52964ac10e96c56e074beab90e47f5819623f2534f
+  file_role: test_support
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.profile_smoothed_validation_chain
+  path: tests/profile_smoothed_validation_chain.py
+  sha256: 907f61c4b2dfa0337cf98ca6c6ad10fdbff29ff4e25ea599b6af92a1b80852c8
   file_role: test_support
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7473,7 +7489,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: d288ae66369b1215fe95b076f88d805e96f10c63f5341ef334309d6f42b525c8
+  sha256: d35b51063a1563a5e10782b9772f6bd2a9702c2cc59c8cff975a513c336fd1f8
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7869,7 +7885,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 5b55fc481e1851616e5182812858296de845b3bec68b3bf7b90c8d87a74e244d
+  sha256: bcde277cdaab6be22ce26b3ef747c06370d6afedf4790b72d64dc0e5baaa5266
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8113,7 +8129,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_artifact_validation_session
   path: tests/test_artifact_validation_session.py
-  sha256: f5b8010c9598303bf0759e2e92daa9f6579701fcc3fe6eb798ccd6a812e17cd8
+  sha256: 29cf2b184b8b0078b2945e0884e0429235c53f4f01b647fdf9979568fbae6daa
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

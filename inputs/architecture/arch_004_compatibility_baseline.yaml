@@ -26760,3 +26760,121 @@ phase_devx_002_default_ordinary_push_v2:
     data_flow_changed: false
     production_effect: none
     broker_action: none
+
+phase_arch_004g2_smoothed_validation_observability:
+  schema_version: arch_004g2_validation_observability_compatibility.v1
+  status: IN_PROGRESS
+  boundary_id: ARCH-004G2-VALIDATION-OBSERVABILITY
+  task_ids:
+  - ARCH-004G2_VALIDATION_RUNTIME_BUDGET_AND_FIXTURE_REUSE
+  owner_authorization: owner_continuation:ARCH-004G2:2026-07-26:continue_engineering_line
+  prior_sections_immutability:
+    source_commit: 4bcdc69bbd2c7dd1c3c57610213201a47496d0c1
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 44aa4869574c1ce330a58f1ac097fb33f12c5a3f
+    raw_byte_count: 1685075
+    raw_sha256: 7baa6d2b94ebcd4cf8ca9edded4ea94359f3ed1b4f5c703083032de7294a9df7
+    append_offset: 1685075
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+  - src/ai_trading_system/platform/artifacts/validation_session.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_artifact_validation_session.py
+  supersession:
+    superseded_by_phase: ARCH-004G2-VALIDATION-OBSERVABILITY
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_devx_002_default_ordinary_push_v2
+    current_hash_authority: phase_arch_004g2_smoothed_validation_observability.sources
+  removed_live_source_paths: []
+  source_delta_paths:
+  - docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+  - src/ai_trading_system/platform/artifacts/validation_session.py
+  - tests/profile_smoothed_validation_chain.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_artifact_validation_session.py
+  new_source_paths:
+  - tests/profile_smoothed_validation_chain.py
+  sources:
+  - path: docs/requirements/ARCH-004G2_Validation_Runtime_Budget_and_Fixture_Reuse.md
+    sha256: 820998c03512a98b53b1c950027e27dd2c3f766149f09187fe97234730de2ad9
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: ed39d5b09ecdb91be138d68c21be24f498808d8927213a4aaefbfe7d9a454650
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: d828c18c53c7e44c21360f330106a6de2c750e21d19ef356fa196fc3fe212668
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 425c1e4cffa25f8761039c6179bdaebf2b572522b326528c9a74f2883aed5082
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 7a6bf721d154b0969597261efe07adf575f2ce2d6b8efaac3c4cf0ddd72dba07
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 38727b762e6a63e8f5f74c463e73dd0b085509f01d293a67f060b4d2eec12997
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 235057830ecae70854065293d3010e8201880daf199fc18451109472a1f9919d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 58212bb587126b69954574fa470bce58bc43968e1f3f26703839b93b113e36ce
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/06/06d9197f6a6da7ca798c435a90d5464e386a7b99950c03370e22b7b4fce48ae5.yaml
+    sha256: 46fc172e72ec9b3522dae46884976a4619d95dd2b9e019f073644e9af175b05a
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/artifacts/validation_session.py
+    sha256: 332e34d90c9126ae386c0162e8241a41da823b5741dc1e1904e9e4572dd7ca9a
+    hash_normalization: git_eol_lf
+  - path: tests/profile_smoothed_validation_chain.py
+    sha256: 907f61c4b2dfa0337cf98ca6c6ad10fdbff29ff4e25ea599b6af92a1b80852c8
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: d35b51063a1563a5e10782b9772f6bd2a9702c2cc59c8cff975a513c336fd1f8
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: bcde277cdaab6be22ce26b3ef747c06370d6afedf4790b72d64dc0e5baaa5266
+    hash_normalization: git_eol_lf
+  - path: tests/test_artifact_validation_session.py
+    sha256: 29cf2b184b8b0078b2945e0884e0429235c53f4f01b647fdf9979568fbae6daa
+    hash_normalization: git_eol_lf
+  validation:
+    engineering_status: FORMAL_VALIDATION_PASS
+    focused_validation_session: PASS_81_SKIPPED_1
+    diagnostic_artifact: outputs/validation_runtime/smoothed_validation_observation_20260726T045543Z.json
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    architecture_initial: FAIL_22_AUTHORITY_DRIFT
+    architecture_rerun: PASS_660
+    contract: PASS_275
+    full: NOT_RUN_OBSERVABILITY_ONLY
+  safety:
+    stable_full_improvement_claimed: false
+    optimization_authorized: false
+    strategy_logic_changed: false
+    strategy_threshold_changed: false
+    data_flow_changed: false
+    cached_data_mutated: false
+    production_effect: none
+    broker_action: none

@@ -11,6 +11,73 @@
 - dependency：G2.4 原子切片不得被打断；优先随正在迁移的 chain 分批治理
 - production effect：`none`
 
+## 2026-07-26：v24自然Full验证与Smoothed observability slice
+
+DEVX-002 v2自然integration-boundary Full
+`outputs/validation_runtime/full_20260726T041711Z/test_runtime_summary.json` 已验证v24：
+
+- `7308 passed / 3 skipped / 643 warnings / 1110.96s`；
+- exact collection=`7311 nodes / 1131 files / 16 workers`；
+- v24匹配`1108 files / 6994 nodes`，scheduler=`applied`、`fallback=false`；
+- profile、telemetry、performance、validation provenance均为`PASS`；
+- tail idle max/total=`16.8255s / 178.5643s`，相对v23未跟踪文件造成的
+  `211.69s / 3042.92s`尾部风险明显收敛。
+
+该run只能证明v24在扩展集合上正确应用。当前集合比seed新增23个文件，且只有一个自然样本，因此
+不得刷新为`COMPLETE`、不得声明稳定全局提速，`stable_full_improvement_claimed=false`。
+
+下一有界切片冻结为observability-only：
+
+1. 在`artifact_validation_session`增加默认关闭、仅在调用方显式持有outer session时采集的
+   call/cache telemetry；
+2. telemetry至少区分lookup、hit、miss、bypass、invalidation、validator execution、cache store与
+   non-cacheable result，并记录semantic key、fingerprint、deep-copy与真实validator阶段耗时；
+3. 用真实Smoothed Weekly no-due-window链生成一次diagnostic artifact，分开记录model target、
+   recorded-owner authority、market cache、weekly producer与weekly validator阶段；
+4. 输出per-validator执行时间和hit/miss，不改变任何producer/validator调用、fixture日期、DQ/PIT、
+   tamper/fail-closed覆盖、worker/distribution、策略逻辑或生产行为；
+5. 本切片不实施fixture reuse、跨worker store或scheduler调整，也不为性能比较额外运行Full。只有诊断
+   证明重复工作且后续切片预冻结收益/安全退出门槛后，才可选择有界优化。
+
+安全边界固定为`strategy_logic_changed=false`、`cached_data_mutated=false`、
+`production_effect=none`、`broker_action=none`。
+
+本切片实现与首份真实诊断已完成：
+
+- `artifact_validation_session(collect_telemetry=True)`只在调用方显式启用时采集；既有调用默认
+  `telemetry=None`，缓存判定、key、validator、PASS-only store与fail-closed行为不变；
+- focused validation-session suite=`81 passed / 1 skipped`；唯一skip为Windows缺少`os.fork`的
+  既有平台条件用例；
+- append-only compatibility authority=
+  `phase_arch_004g2_smoothed_validation_observability`；历史section保持byte-immutable；
+- formal validation=`architecture-fitness 660 passed`、`contract-validation 275 passed`；
+- Ruff与`py_compile`通过；新增diagnostic和触达deprecation test为Black-clean。固定Black 26.5.0
+  对`validation_session.py`、其既有专项test及`test_arch_004_refactor_policy.py`的would-reformat可在
+  `HEAD`原文件独立复现，本轮已撤回误触发的formatter扩散且不混入历史格式噪声；
+- diagnostic artifact=
+  `outputs/validation_runtime/smoothed_validation_observation_20260726T045543Z.json`；
+- real-chain wall=`112.9795s`；stage分别为model target=`0.0621s`、recorded-owner authority=
+  `62.4423s`、market cache=`0.0009s`、Weekly producer=`42.8457s`、Weekly validator=`7.5806s`；
+- validation calls=`281`、lookups=`281`、hits=`193`、misses=`88`、bypasses=`0`、
+  invalidations=`0`、validator executions/cache stores=`88/88`、not-cached=`0`；
+- 嵌套call累计fingerprint=`105.6439s`、validator=`41.4044s`、semantic key=`0.0440s`、
+  deepcopy=`0.0073s`。这些是调用累计值，会因嵌套而超过wall，不得相加冒充端到端耗时。
+
+调用级证据把下一候选收敛到Smoothed binding closure identity/fingerprint：
+
+- `_source_binding.<locals>.cached_validator`为`17 calls / 17 misses / 0 hits`，
+  validator/fingerprint累计=`15.8273s / 8.1985s`；
+- `_validate_binding.<locals>.<lambda>`为`43 calls / 43 misses / 0 hits`，真实validator仅
+  `0.0001s`，但fingerprint累计=`21.0251s`；
+- 其他稳定validator大多呈现`1 miss + N hits`，证明session边界本身已经工作，不能用扩大outer
+  session或缩短fixture替代closure identity治理。
+
+本轮只形成候选，不自动实施优化。下一切片必须先审计两个closure捕获的全部状态，优先评估迁移为
+module-level validator + explicit kwargs/semantic key；不得把validator identity从object identity直接放宽为
+qualname，也不得缓存可变closure capture。实施前冻结same-command baseline、至少20%且30秒绝对收益门槛，
+并证明source/config/policy/output byte drift立即miss、FAIL/exception不缓存、原node/tamper/E2E全部保留；
+任一条件不满足即撤回。
+
 ## Wave13 Full 后续增量（2026-07-23）
 
 Wave13 GOV-006 N1 correctness 已以 failure-fix Full=
