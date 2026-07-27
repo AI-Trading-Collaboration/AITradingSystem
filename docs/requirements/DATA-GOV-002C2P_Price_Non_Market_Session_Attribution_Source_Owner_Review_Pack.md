@@ -201,3 +201,12 @@ Review pack 不是批准记录。即使工程建议为 `CONTRACT_WAVE_CANDIDATE`
   `PENDING_SOURCE_OWNER_DECISION`及所有runtime/schema/isolation/consumer
   authorization仍保持pending/false；下一责任方为price source owner，任何runtime
   contract wave必须等待其显式决定并另建serial任务。
+- 2026-07-27：price source owner决定`APPROVE_FOR_CONTRACT_WAVE`，并明确
+  primary role/calendar、exact source artifact/checksum、snapshot-local ordinal、
+  versioned digest、calendar/special-closure drift re-review、incomplete-global及C3前
+  policy/consumer/production冻结七项conditions。C2P pack继续作为owner实际审阅的
+  immutable historical evidence，pack ID和bytes均不重写；C3P decision authority按
+  exact SHA=`c6b9bd2ee23f3aee4c65e21f1bf7673ec41e72af7239cd5e4a3877ebc8962af7`
+  绑定它。原CLI的default rebuild在decision存在时fail closed，`--check`校验冻结证据与
+  decision binding。Runtime后续变化由C3P current inventory和contract tests治理，不反向
+  改写本review pack。

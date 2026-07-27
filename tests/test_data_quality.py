@@ -746,6 +746,17 @@ def test_explicit_window_rejects_distinct_non_market_session_date(
     issue = next(item for item in report.issues if item.code == "prices_non_market_session_date")
     assert issue.rows == 1
     assert issue.sample == "2026-05-02"
+    assert issue.attribution_scope_status == "COMPLETE"
+    assert issue.attribution_incomplete_reasons == ()
+    assert issue.affected_instruments == ("MSFT",)
+    assert issue.typed_attribution is not None
+    assert issue.typed_attribution.source.sha256 == report.price_summary.sha256
+    assert issue.typed_attribution.affected_dates == (date(2026, 5, 2),)
+    assert issue.typed_attribution.affected_fields == ("date",)
+    assert len(issue.typed_attribution.affected_rows) == 1
+    markdown = render_data_quality_report(report)
+    assert "## Typed issue attribution" in markdown
+    assert "price_non_market_session_row_digest.v1" in markdown
 
 
 def test_explicit_window_rejects_non_finite_price_and_rate_values(

@@ -357,3 +357,12 @@ B2 交付：
   reporting/deprecation ratchet、generated freshness与compatibility authority漂移，直接修正后
   闭合；未降级或绕过门禁。Source-owner decision仍pending，C3/runtime/schema/isolation/
   consumer migration均未授权。
+- 2026-07-27：price source owner对C2P exact site决定
+  `APPROVE_FOR_CONTRACT_WAVE`，C3P最小serial contract wave进入验证。新增decision
+  authority绑定原review pack exact SHA、`primary_market_prices`、reviewed XNYS calendar
+  function AST与special-closure policy；typed issue contract记录exact source
+  artifact/checksum、requested window、ticker/rate/source/date/field/row六维scope及全部
+  trigger row identities。`canonical_row_digest.v1`字段、type-tagged normalization和
+  snapshot-local ordinal语义已冻结。Secondary/unapproved source或任一归因维度不完整时清空
+  legacy affected scope并保持`GLOBAL_OR_UNKNOWN_SCOPE`。C3P未修改capability policy YAML、
+  classifier、receipt schema或consumer；任何dimensional adoption仍须另行owner review。

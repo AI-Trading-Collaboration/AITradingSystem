@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1034
+module_count: 1035
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -2015,7 +2015,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.__init__
   path: src/ai_trading_system/contracts/__init__.py
-  sha256: 78ac5a8e3c2ad37c346b23da5fe7e02334f874fac0a1d03d8b7cd0874daa2599
+  sha256: 588b979f91f7f07d4721ece3bfa5f74df4e7b21c860c843d48d49299fb15ed9b
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2060,6 +2060,28 @@ modules:
 - module_id: src.ai_trading_system.contracts.data_quality
   path: src/ai_trading_system/contracts/data_quality.py
   sha256: 86022574a4f6ffc707c3dbcbd73bfcac926a02564c53270cf309ed5dd3db2112
+  rule_id: contracts
+  owner_profile: architecture
+  owners:
+    code_owner: architecture_governance
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: architecture_governance
+    runtime_owner: architecture_governance
+  layer: contracts
+  category: semantic_and_platform_contracts
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004*.py
+  - tests/test_core_contracts.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.contracts.data_quality_attribution
+  path: src/ai_trading_system/contracts/data_quality_attribution.py
+  sha256: 026a198884b5fdc30431b2b204fc1b9d7e5982694e26e4fd6604bbfeeeacf56c
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2683,7 +2705,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.quality
   path: src/ai_trading_system/data/quality.py
-  sha256: 003573c01e0a879a8585a77076f4c32a366c016fb40596c3d721e942b4ddb64b
+  sha256: 5d3221f06c3d3523dc1e62a17fc12a9295503986b4d84f6b227e739d3f957e5e
   rule_id: data
   owner_profile: data
   owners:

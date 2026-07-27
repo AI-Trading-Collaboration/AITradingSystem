@@ -1,0 +1,63 @@
+schema_version: data_quality_price_non_market_session_attribution_decision.v1
+decision_id: owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1
+decision_version: "1.0.0"
+status: REVIEWED_APPROVED
+decision: APPROVE_FOR_CONTRACT_WAVE
+decided_at: "2026-07-27"
+owner: project_owner_price_source_owner
+review_pack:
+  path: inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
+  pack_id: dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714
+  sha256: c6b9bd2ee23f3aee4c65e21f1bf7673ec41e72af7239cd5e4a3877ebc8962af7
+approved_site_id: dq_issue_site_312625a26da21428b763
+approved_issue_code: prices_non_market_session_date
+approved_source_role: primary_market_prices
+scope_taxonomy: DISTINCT_NON_SESSION_DATE_ROW_SET
+row_digest:
+  schema_version: price_non_market_session_row_digest.v1
+  fields:
+    - date
+    - ticker
+    - open
+    - high
+    - low
+    - close
+    - adj_close
+    - volume
+  source_ordinal_scope: EXACT_SOURCE_SNAPSHOT_ONLY
+  canonical_json_encoding: UTF-8
+  canonical_json_key_order: SORTED
+  canonical_json_separators: COMMA_COLON_NO_WHITESPACE
+  value_encoding: EXPLICIT_TYPE_TAGGED
+reviewed_calendar:
+  calendar_id: XNYS
+  calendar_source: >-
+    NYSE regular full-day holiday rules: weekends, New Year's Day, Martin Luther
+    King Jr. Day, Washington's Birthday, Good Friday, Memorial Day, Juneteenth
+    (2022 onward), Independence Day, Labor Day, Thanksgiving Day, and Christmas
+    Day; combined with the reviewed
+    config/data/us_equity_special_closure_registry.yaml registry.
+  runtime_source_path: src/ai_trading_system/trading_calendar.py
+  calendar_function: is_us_equity_trading_day
+  calendar_function_ast_sha256: 082cc81df7ee0d9adcc5fd42fd44d1e3f615450f4752f8116376413eafa202b9
+  special_closure_policy_path: config/data/us_equity_special_closure_registry.yaml
+  special_closure_policy_id: us_equity_special_closure_registry
+  special_closure_policy_version: "1.0.0"
+  special_closure_policy_sha256: c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4
+conditions:
+  primary_market_prices_us_equity_calendar_only: true
+  row_attribution_requires_exact_source_artifact_checksum: true
+  source_ordinal_scope: EXACT_SOURCE_SNAPSHOT_ONLY
+  canonical_row_digest_defined_in_c3: true
+  calendar_or_special_closure_drift_requires_review: true
+  incomplete_attribution_scope: GLOBAL_OR_UNKNOWN_SCOPE
+  pre_c3_policy_consumer_production_change_authorized: false
+review_condition:
+  - primary price asset coverage or source role changes
+  - price row schema or canonical normalization changes
+  - requested-window semantics change
+  - US equity calendar implementation changes
+  - special-closure policy id, version, or bytes change
+  - issue emitter or attribution completeness rules change
+production_effect: none
+broker_action: none

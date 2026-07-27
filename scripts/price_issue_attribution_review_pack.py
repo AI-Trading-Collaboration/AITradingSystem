@@ -4,6 +4,10 @@ import argparse
 import json
 from pathlib import Path
 
+from ai_trading_system.contracts.data_quality_attribution import (
+    DataQualityAttributionContractError,
+    load_price_non_market_session_attribution_decision,
+)
 from ai_trading_system.data.price_issue_attribution_review_pack import (
     DEFAULT_JSON_PATH,
     DEFAULT_MARKDOWN_PATH,
@@ -29,13 +33,79 @@ def main() -> int:
 
     repo_root = args.repo_root.resolve()
     json_path = args.json_output if args.json_output is not None else repo_root / DEFAULT_JSON_PATH
+    decision_path = (
+        repo_root
+        / "config/data_quality/price_non_market_session_attribution_decision_v1.yaml"
+    )
     if args.check:
+        if args.json_output is None and decision_path.exists():
+            try:
+                decision = load_price_non_market_session_attribution_decision(
+                    decision_path,
+                    project_root=repo_root,
+                )
+            except DataQualityAttributionContractError as exc:
+                print(
+                    json.dumps(
+                        {
+                            "status": "FAIL",
+                            "error_code": exc.code,
+                            "error": exc.message,
+                            "production_effect": "none",
+                            "broker_action": "none",
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                    )
+                )
+                return 1
+            print(
+                json.dumps(
+                    {
+                        "status": "PASS",
+                        "lifecycle": "FROZEN_REVIEW_EVIDENCE",
+                        "decision_id": decision.decision_id,
+                        "decision_sha256": decision.sha256,
+                        "review_pack_id": decision.review_pack_id,
+                        "review_pack_sha256": decision.review_pack_sha256,
+                        "production_effect": "none",
+                        "broker_action": "none",
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 0
         validation = load_and_validate_price_issue_attribution_review_pack(
             repo_root=repo_root,
             pack_path=json_path,
         )
         print(json.dumps(validation, ensure_ascii=False, indent=2, sort_keys=True))
         return 0 if validation["status"] == "PASS" else 1
+
+    if (
+        args.json_output is None
+        and decision_path.exists()
+    ):
+        print(
+            json.dumps(
+                {
+                    "status": "FROZEN",
+                    "message": (
+                        "owner-reviewed C2P pack is immutable after C3 decision; "
+                        "use --check to validate its exact decision binding"
+                    ),
+                    "production_effect": "none",
+                    "broker_action": "none",
+                },
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
 
     markdown_path = (
         args.markdown_output

@@ -1,6 +1,6 @@
 # DATA-GOV-002 Phase C：DQ Issue Attribution Readiness Inventory
 
-- inventory_id：`dq_issue_attribution_inventory_03821e2e3dc483446249d52c`
+- inventory_id：`dq_issue_attribution_inventory_46d72c5be356c737467d8ef5`
 - status：`SOURCE_OWNER_REVIEW_REQUIRED`
 - 当前结论：本 inventory 不是新 issue 隔离授权；未 review 项继续 `GLOBAL_OR_UNKNOWN_SCOPE`。
 - message/sample scope inference：`false`

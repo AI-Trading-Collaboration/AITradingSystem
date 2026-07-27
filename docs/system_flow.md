@@ -1132,17 +1132,45 @@ daily/periodic、production 和 broker 均未授权。
 
 DATA-GOV-002C2P 对 C1 中唯一已有 instrument-level pilot authority 的
 `prices_non_market_session_date` site 增加独立、非授权性的六维 source-owner review pack。
-`python scripts/price_issue_attribution_review_pack.py --repo-root .` 绑定 exact C1 inventory、
-proposal、canonical `quality.py`、reviewed `config/data_quality.yaml`、US equity calendar
-runtime、special-closure loader 与 reviewed registry bytes。Builder 明确区分现有
+该历史 pack 在 owner 作出决定前绑定了 exact C1 inventory、proposal、canonical
+`quality.py`、reviewed `config/data_quality.yaml`、US equity calendar runtime、
+special-closure loader 与 reviewed registry bytes。Builder 明确区分现有
 `rows=distinct non-session date count`、前 10 个 sample dates 和完整 trigger source-row
 集合；后者必须具备 normalized non-empty ticker、source ordinal 与 canonical row digest。
-Validator 从全部绑定 bytes 重建 pack，拒绝 site、scope taxonomy、requested-window、
-calendar/special-closure authority、DQ policy、proposal 或输出漂移。Price ticker、空 rate
-scope、source role、exact trigger-date set、`date` field 和 row identity 六维建议均保持
-`PENDING_SOURCE_OWNER_DECISION`；缺任一维时继续 `GLOBAL_OR_UNKNOWN_SCOPE`。本 pack 不修改
-`DataQualityIssue`、既有 instrument-only policy、full/scoped DQ 或 consumer，也不授权
-window/row isolation、C3 runtime contract、daily/periodic、production 或 broker 行为。
+Owner 决定后该 pack 不再随 runtime 重建；`python
+scripts/price_issue_attribution_review_pack.py --repo-root . --check`改为校验 immutable pack
+ID/SHA 与 C3 decision authority 的 exact binding。任何人不得用新 runtime bytes 覆盖 owner
+实际审阅的历史证据。
+
+DATA-GOV-002C3P 记录 owner decision
+`APPROVE_FOR_CONTRACT_WAVE`，并只为上述 exact site 增加 optional
+`data_quality_issue_attribution.v1`。Decision authority 同时绑定 immutable C2P pack、
+`primary_market_prices`、reviewed XNYS calendar function AST、special-closure policy
+id/version/SHA、requested window 和 `price_non_market_session_row_digest.v1`。Digest v1
+固定字段为 `date,ticker,open,high,low,close,adj_close,volume`，使用显式 type-tagged
+canonical JSON；`source_ordinal`仅在 exact source snapshot SHA 内稳定。Price validator
+在 CSV 解析顺序上添加零基 ordinal，完整 primary issue记录 ticker/rate/source/date/field/row
+六维 scope和全部 trigger rows；secondary source、空 ticker、缺 checksum/window、digest
+失败或 calendar authority 漂移均不生成 complete attribution，并清空 legacy
+`affected_instruments`保持`GLOBAL_OR_UNKNOWN_SCOPE`。DQ Markdown report完整披露decision、
+source artifact、calendar binding和每条row identity。Capability policy YAML、classifier、
+receipt schema和consumer均未在C3改变；现有instrument-only pilot仅兼容消费complete primary
+issue，任何dimensional classifier adoption仍需独立owner review。
+
+```mermaid
+flowchart LR
+    RP["C2P immutable review pack<br/>pack id + exact SHA"] --> DA["C3 reviewed decision authority"]
+    CAL["Reviewed XNYS calendar function AST<br/>special-closure id/version/SHA"] --> DA
+    SRC["Captured price CSV snapshot<br/>path + exact SHA"] --> PV["validate_data_cache<br/>physical source ordinal"]
+    DA --> PV
+    PV --> NS{"prices_non_market_session_date?"}
+    NS -->|No| BASE["Existing DQ path"]
+    NS -->|Complete approved primary scope| TA["data_quality_issue_attribution.v1<br/>six dimensions + all trigger rows"]
+    NS -->|Any dimension missing / secondary| GLOBAL["GLOBAL_OR_UNKNOWN_SCOPE<br/>affected_instruments cleared"]
+    TA --> REP["Auditable DQ Markdown report"]
+    GLOBAL --> REP
+    TA --> LEGACY["Existing instrument-only classifier<br/>policy unchanged"]
+```
 
 ```mermaid
 flowchart LR

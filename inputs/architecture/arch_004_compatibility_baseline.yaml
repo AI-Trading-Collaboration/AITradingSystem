@@ -30781,3 +30781,161 @@ phase_trading_2463_decision_target_redesign_s4_o1_preregistration_freeze:
     active_shadow_weights_written: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_002c3p_price_non_market_session_typed_attribution_contract:
+  schema_version: data_gov_002c3p_price_non_market_session_typed_attribution_compatibility.v1
+  status: VALIDATING
+  boundary_id: DATA-GOV-002C3P-PRICE-NON-MARKET-SESSION-TYPED-ATTRIBUTION-CONTRACT
+  task_ids:
+  - DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  owner_authorization: owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1
+  prior_sections_immutability:
+    source_commit: ae5de3cce5606445b340d25713e1e55ba1c2ce3d
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 574fc17bad2991bf6b9ae70d2af0f2d76038cac5
+    raw_byte_count: 1934282
+    raw_sha256: 0ba5180c77c55b62c38670dce529bbb748428630e72389e1efe50e8051a30b4c
+    append_offset: 1934282
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/report_registry.yaml
+  - docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md
+  - docs/data_quality/rate_issue_attribution_review_pack_v1.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json
+  - inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - scripts/price_issue_attribution_review_pack.py
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/data/quality.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_data_quality.py
+  - tests/test_price_issue_attribution_review_pack.py
+  supersession:
+    superseded_by_phase: DATA-GOV-002C3P-PRICE-NON-MARKET-SESSION-TYPED-ATTRIBUTION-CONTRACT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2463_decision_target_redesign_s4_o1_preregistration_freeze
+    current_hash_authority: phase_data_gov_002c3p_price_non_market_session_typed_attribution_contract.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/data_quality/price_non_market_session_attribution_decision_v1.yaml
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - src/ai_trading_system/contracts/data_quality_attribution.py
+  - tests/test_price_issue_attribution_contract.py
+  source_delta_paths:
+  - config/data_quality/price_non_market_session_attribution_decision_v1.yaml
+  - config/report_registry.yaml
+  - docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md
+  - docs/data_quality/rate_issue_attribution_review_pack_v1.md
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json
+  - inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - scripts/price_issue_attribution_review_pack.py
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/contracts/data_quality_attribution.py
+  - src/ai_trading_system/data/quality.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_data_quality.py
+  - tests/test_price_issue_attribution_contract.py
+  - tests/test_price_issue_attribution_review_pack.py
+  sources:
+  - {path: config/data_quality/price_non_market_session_attribution_decision_v1.yaml, sha256: 13d96662f0f1551ed0d5630c1817bcff048ea99da071148ebd95406d274dee05, hash_normalization: git_eol_lf}
+  - {path: config/report_registry.yaml, sha256: 3691e6019a3fad8f30d0462732949f378445fce5ca539af82819300de996129b, hash_normalization: git_eol_lf}
+  - {path: docs/data_quality/dq_issue_attribution_readiness_inventory_v1.md, sha256: e47e504d372305f4a6cf247453ed8133a1e749f8ba08a929344ba17e344c7426, hash_normalization: git_eol_lf}
+  - {path: docs/data_quality/rate_issue_attribution_review_pack_v1.md, sha256: 2f45517b81c552840ac9fe171ceee47b9f2552fb138340065b44281b4b779f20, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md, sha256: cedf625528ebf26ee7179cab930569212b71062fd1ad482c9de667685296266f, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md, sha256: 52443e69cd7324868bae200c0b1bc129667041a869971ccd43fcbcfbdf13b06f, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md, sha256: 35f001b8cee1a1b7ca52c3ca34354eafea3442e3dbc8a726fa465c7898a4c594, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: 314a82f5f7cb31ee0f4d45e327319141de065322d2fae87f5b9e964a2e9def62, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 2f424799410aa808519f03688d8de6998491ca8e69d599ccad4bd9b7c62546a2, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 6ca1261e96f04367508455b2395b6a1817832a10cfabcdc909a3a702601d1254, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: 4cce5c69c7711e102bc882bede958fd3daa7b95dfb41d6199322723a3d256966, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: f05b197248597966889bde30fbf83eca82147bc3c159d6bf95d41f46ed0ea23a, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: c297c8c09cc6be74fc79177ee81c2f4df795434f446c383b439a72ffcd632c87, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: 5bb0e066132b4704ace954c78f30508593dbdad7c747cd4205e4185ff31d4297, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 52080cefc993be1c7cb1056ac843c3d8fd14ccc61e85f6cf04c437774f8a346a, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 225f60e073089080a4cefc8817c74afb0d91be00b191bd4260a9c3232ee8e087, hash_normalization: git_eol_lf}
+  - {path: inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json, sha256: 5df81c2e407349cd66d7c5d80751535f5051456fb421a486244a74708d1208ed, hash_normalization: git_eol_lf}
+  - {path: inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.validation.json, sha256: 30b4895a98f1e2de52eadd6fc77c5ed7a9d658bd13981483273bfca4dc4a8577, hash_normalization: git_eol_lf}
+  - {path: inputs/data_quality/rate_issue_attribution_review_pack_v1.json, sha256: 39a9f97d27ab9f3d7e26b7f718e2eff78b560dc407c7141936191191cad4bad1, hash_normalization: git_eol_lf}
+  - {path: inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json, sha256: a94f9c0982dc7c45579193a0bea04e0d5c3e686f3ad508773d11af9988cf1c00, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml, sha256: 021303f20a41ea9c819ed9d6285860bbffceb56d596953dbad7cae87f0cae613, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml, sha256: 7f6481ae1a97e329cbec754bc57c64abf2756257eb38078fbcaeb15b42447f9b, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml, sha256: fcf08f6577bb8d45346fa9d7dde0008375a02a4bf4bdfcbabafcdfe09a7c0d30, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml, sha256: 550c38bda95f50095a7b59d44fe3f394cb4081830e5b4cd077cf3c921e8a2805, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml, sha256: b73b6dff8653c624587c505d12da0d43c27b14e7878e962213b0ae803274ec6e, hash_normalization: git_eol_lf}
+  - {path: scripts/price_issue_attribution_review_pack.py, sha256: ff0ebe7cd2eeafe1f76e3be490f76170e80c4a84899d2cf6f1cc7c07c639b528, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/contracts/__init__.py, sha256: 588b979f91f7f07d4721ece3bfa5f74df4e7b21c860c843d48d49299fb15ed9b, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/contracts/data_quality_attribution.py, sha256: 026a198884b5fdc30431b2b204fc1b9d7e5982694e26e4fd6604bbfeeeacf56c, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/data/quality.py, sha256: 5d3221f06c3d3523dc1e62a17fc12a9295503986b4d84f6b227e739d3f957e5e, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: 97f82b56e67c9a0869b3eee4c1892f77db6ee7be1a0a3529b0bc2bc2b60454e0, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: 67c2a7fe842930a5f6c83178644503e3a5b9870bfc76e7b622c721efce53f5e1, hash_normalization: git_eol_lf}
+  - {path: tests/test_data_quality.py, sha256: 09f857d8c024febfddc4220a1f9295990f5a37031331c07a364e3ccebf407eea, hash_normalization: git_eol_lf}
+  - {path: tests/test_price_issue_attribution_contract.py, sha256: 9e0c29e3447fee52c9a5830b29305ffa805bad8be976ccd552981a6762eaae85, hash_normalization: git_eol_lf}
+  - {path: tests/test_price_issue_attribution_review_pack.py, sha256: 940751ee7b2fb4524985e4daad2c6f3eff94a18645fd06c16670dc3e99f7c534, hash_normalization: git_eol_lf}
+  implementation:
+    exact_site_count: 1
+    approved_source_role: primary_market_prices
+    typed_attribution_schema: data_quality_issue_attribution.v1
+    row_digest_schema: price_non_market_session_row_digest.v1
+    source_ordinal_scope: EXACT_SOURCE_SNAPSHOT_ONLY
+    incomplete_scope: GLOBAL_OR_UNKNOWN_SCOPE
+    c2p_review_pack_frozen: true
+    calendar_drift_requires_review: true
+    capability_policy_changed: false
+    consumer_migrated: false
+  validation:
+    focused: PASS_96
+    strict_mypy: PASS
+    ruff: PASS
+    architecture: PENDING
+    contract: PENDING
+    report: PENDING
+    reproducibility: PENDING
+    integration: PENDING
+    full: PENDING
+  safety:
+    data_quality_contract_changed: true
+    capability_policy_or_classifier_changed: false
+    strategy_conclusion_changed: false
+    production_effect: none
+    broker_action: none

@@ -20985,9 +20985,10 @@ reports:
     cadence: ad_hoc
     audience: project_owner
     owner: data_platform
-    command: python scripts/price_issue_attribution_review_pack.py --repo-root .
+    command: python scripts/price_issue_attribution_review_pack.py --repo-root . --check
     artifact_globs:
       - config/data_quality/price_non_market_session_attribution_review_v1.yaml
+      - config/data_quality/price_non_market_session_attribution_decision_v1.yaml
       - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
       - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.validation.json
       - docs/data_quality/price_non_market_session_attribution_review_pack_v1.md
@@ -20995,11 +20996,11 @@ reports:
     artifact_selection_policy: latest_available
     freshness_sla_days: 0
     freshness_rationale: >-
-      DATA-GOV-002C2P binds the exact C1 price site, canonical DQ source,
-      reviewed DQ policy, US equity calendar implementation, special-closure
-      authority and non-authoritative proposal bytes. Any input change requires
-      an immediate rebuild before the price source owner records a decision.
-    owner_action: decide_price_non_market_session_attribution_before_c3_contract_wave
+      DATA-GOV-002C2P is frozen after the source-owner decision. The check binds
+      the immutable reviewed pack bytes to the C3 decision authority; runtime,
+      calendar or special-closure drift requires a new review rather than
+      rewriting the reviewed evidence.
+    owner_action: preserve_frozen_review_evidence_and_re_review_on_bound_authority_drift
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false

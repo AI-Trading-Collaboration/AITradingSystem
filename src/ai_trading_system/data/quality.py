@@ -19,6 +19,18 @@ from ai_trading_system.config import (
     PriceQualityConfig,
     RateQualityConfig,
 )
+from ai_trading_system.contracts.data_quality_attribution import (
+    ATTRIBUTION_SCOPE_COMPLETE,
+    ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN,
+    PRIMARY_MARKET_PRICES_SOURCE_ROLE,
+    SECONDARY_MARKET_PRICES_SOURCE_ROLE,
+    DataQualityAttributionContractError,
+    DataQualityIssueAttribution,
+    DataQualitySourceArtifactBinding,
+    build_price_non_market_session_attribution,
+    build_reviewed_calendar_binding,
+    load_price_non_market_session_attribution_decision,
+)
 from ai_trading_system.data.download_publication import (
     DownloadPublicationError,
     ValidatedDownloadPublication,
@@ -114,6 +126,36 @@ class DataQualityIssue:
     sample: str | None = None
     source: str | None = None
     affected_instruments: tuple[str, ...] = ()
+    attribution_scope_status: str | None = None
+    attribution_incomplete_reasons: tuple[str, ...] = ()
+    typed_attribution: DataQualityIssueAttribution | None = None
+
+    def __post_init__(self) -> None:
+        if self.attribution_scope_status is None:
+            if self.attribution_incomplete_reasons or self.typed_attribution is not None:
+                raise ValueError("unscoped issue cannot carry typed attribution state")
+            return
+        if self.attribution_scope_status == ATTRIBUTION_SCOPE_COMPLETE:
+            if (
+                self.typed_attribution is None
+                or self.attribution_incomplete_reasons
+                or self.typed_attribution.issue_code != self.code
+                or self.typed_attribution.affected_price_tickers
+                != self.affected_instruments
+            ):
+                raise ValueError("complete issue attribution is internally inconsistent")
+            return
+        if self.attribution_scope_status == ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN:
+            if (
+                self.typed_attribution is not None
+                or not self.attribution_incomplete_reasons
+                or self.affected_instruments
+            ):
+                raise ValueError("incomplete issue attribution must remain global")
+            return
+        raise ValueError(
+            f"unsupported attribution_scope_status={self.attribution_scope_status!r}"
+        )
 
 
 @dataclass(frozen=True)
@@ -511,6 +553,7 @@ def validate_data_cache(
             as_of,
             issues,
             source="价格主源",
+            source_role=PRIMARY_MARKET_PRICES_SOURCE_ROLE,
             prices_path=prices_path,
             backtest_manifest_context=backtest_manifest_context,
             requested_window=explicit_requested_window,
@@ -529,6 +572,7 @@ def validate_data_cache(
             as_of,
             issues,
             source="第二行情源 Marketstack",
+            source_role=SECONDARY_MARKET_PRICES_SOURCE_ROLE,
             error_severity=_secondary_price_self_check_error_severity(quality_config),
             requested_window=explicit_requested_window,
         )
@@ -653,10 +697,117 @@ def render_data_quality_report(report: DataQualityReport) -> str:
                 f"{_escape_markdown_table(issue.sample or '')} |"
             )
 
+    attributed_issues = [
+        issue for issue in report.issues if issue.attribution_scope_status is not None
+    ]
+    if attributed_issues:
+        lines.extend(_typed_issue_attribution_section(attributed_issues))
+
     if report.marketstack_reconciliation_records:
         lines.extend(_marketstack_reconciliation_section(report))
 
     return "\n".join(lines) + "\n"
+
+
+def _typed_issue_attribution_section(
+    issues: list[DataQualityIssue],
+) -> list[str]:
+    lines = ["", "## Typed issue attribution", ""]
+    for issue in issues:
+        lines.extend(
+            [
+                f"### `{issue.code}` / {_escape_markdown_table(_issue_source(issue))}",
+                "",
+                f"- Scope status：`{issue.attribution_scope_status}`",
+            ]
+        )
+        attribution = issue.typed_attribution
+        if attribution is None:
+            lines.extend(
+                [
+                    (
+                        "- Incomplete reasons："
+                        + ", ".join(
+                            f"`{reason}`"
+                            for reason in issue.attribution_incomplete_reasons
+                        )
+                    ),
+                    "- Legacy affected instruments：已清空；保持 global。",
+                    "",
+                ]
+            )
+            continue
+        lines.extend(
+            [
+                (
+                    f"- Decision：`{attribution.decision_id}@"
+                    f"{attribution.decision_version}`；"
+                    f"`{attribution.decision_path}`；"
+                    f"sha256=`{attribution.decision_sha256}`"
+                ),
+                (
+                    f"- Source artifact：role=`{attribution.source.source_role}`；"
+                    f"path=`{attribution.source.path}`；"
+                    f"sha256=`{attribution.source.sha256}`"
+                ),
+                (
+                    "- Requested window："
+                    f"`{attribution.requested_window_start.isoformat()}` — "
+                    f"`{attribution.requested_window_end.isoformat()}`"
+                ),
+                (
+                    f"- Calendar：`{attribution.calendar.calendar_id}` / "
+                    f"`{attribution.calendar.calendar_function}`；"
+                    "function AST sha256="
+                    f"`{attribution.calendar.calendar_function_ast_sha256}`"
+                ),
+                (
+                    "- Special closure policy："
+                    f"`{attribution.calendar.special_closure_policy_id}@"
+                    f"{attribution.calendar.special_closure_policy_version}`；"
+                    f"sha256=`{attribution.calendar.special_closure_policy_sha256}`"
+                ),
+                (
+                    "- Affected price tickers："
+                    + ", ".join(
+                        f"`{value}`" for value in attribution.affected_price_tickers
+                    )
+                ),
+                "- Affected rate series：无",
+                (
+                    "- Affected source roles："
+                    + ", ".join(
+                        f"`{value}`" for value in attribution.affected_source_roles
+                    )
+                ),
+                (
+                    "- Affected dates："
+                    + ", ".join(
+                        f"`{value.isoformat()}`" for value in attribution.affected_dates
+                    )
+                ),
+                (
+                    "- Affected fields："
+                    + ", ".join(f"`{value}`" for value in attribution.affected_fields)
+                ),
+                (
+                    f"- Row identity：`{attribution.row_digest_schema_version}`；"
+                    f"fields=`{','.join(attribution.row_digest_fields)}`；"
+                    f"ordinal scope=`{attribution.source_ordinal_scope}`"
+                ),
+                "",
+                "| Source ordinal | Date | Ticker | Canonical row digest |",
+                "|---:|---|---|---|",
+            ]
+        )
+        for row in attribution.affected_rows:
+            lines.append(
+                f"| {row.source_ordinal} | {row.observed_date.isoformat()} | "
+                f"{_escape_markdown_table(row.ticker)} | "
+                f"`{row.canonical_row_digest}` |"
+            )
+        lines.append("")
+    return lines
 
 
 def write_data_quality_report(report: DataQualityReport, output_path: Path) -> Path:
@@ -1125,6 +1276,7 @@ def _validate_prices(
     issues: list[DataQualityIssue],
     *,
     source: str = "价格主源",
+    source_role: str = PRIMARY_MARKET_PRICES_SOURCE_ROLE,
     error_severity: Severity = Severity.ERROR,
     prices_path: Path | None = None,
     backtest_manifest_context: dict[str, Any] | None = None,
@@ -1142,6 +1294,7 @@ def _validate_prices(
         return summary
 
     frame = prices.copy()
+    frame["_source_ordinal"] = range(len(frame))
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
     invalid_dates = frame["_date"].isna()
     if invalid_dates.any():
@@ -1182,6 +1335,8 @@ def _validate_prices(
             requested_window=requested_window,
             issues=issues,
             source=source,
+            source_role=source_role,
+            source_summary=summary,
             severity=error_severity,
         )
         _check_price_requested_window(
@@ -1413,6 +1568,8 @@ def _check_price_market_calendar_dates(
     issues: list[DataQualityIssue],
     *,
     source: str,
+    source_role: str,
+    source_summary: DataFileSummary,
     severity: Severity,
 ) -> None:
     start, end = requested_window
@@ -1425,10 +1582,23 @@ def _check_price_market_calendar_dates(
         return
     non_session_rows = window_rows.loc[
         window_rows["_date"].map(lambda value: value.date() in set(non_sessions))
-    ]
+    ].copy()
+    typed_attribution, incomplete_reasons = (
+        _build_price_non_market_session_typed_attribution(
+            non_session_rows,
+            requested_window=requested_window,
+            source_role=source_role,
+            source_summary=source_summary,
+        )
+    )
+    attribution_scope_status = (
+        ATTRIBUTION_SCOPE_COMPLETE
+        if typed_attribution is not None
+        else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
+    )
     affected_instruments = (
-        tuple(sorted(str(value) for value in non_session_rows["ticker"].dropna().unique()))
-        if "ticker" in non_session_rows.columns
+        typed_attribution.affected_price_tickers
+        if typed_attribution is not None
         else ()
     )
     issues.append(
@@ -1440,8 +1610,42 @@ def _check_price_market_calendar_dates(
             sample=", ".join(value.isoformat() for value in non_sessions[:10]),
             source=source,
             affected_instruments=affected_instruments,
+            attribution_scope_status=attribution_scope_status,
+            attribution_incomplete_reasons=incomplete_reasons,
+            typed_attribution=typed_attribution,
         )
     )
+
+
+def _build_price_non_market_session_typed_attribution(
+    trigger_rows: pd.DataFrame,
+    *,
+    requested_window: tuple[date, date],
+    source_role: str,
+    source_summary: DataFileSummary,
+) -> tuple[DataQualityIssueAttribution | None, tuple[str, ...]]:
+    try:
+        decision = load_price_non_market_session_attribution_decision()
+        source_binding = DataQualitySourceArtifactBinding(
+            source_role=source_role,
+            path=source_summary.path.resolve().as_posix(),
+            sha256=source_summary.sha256 or "",
+        )
+        attribution = build_price_non_market_session_attribution(
+            decision=decision,
+            source=source_binding,
+            requested_window=requested_window,
+            calendar=build_reviewed_calendar_binding(decision),
+            trigger_rows=cast(
+                list[Mapping[str, object]],
+                trigger_rows.to_dict(orient="records"),
+            ),
+        )
+    except DataQualityAttributionContractError as exc:
+        return None, (exc.code,)
+    except (OSError, UnicodeError, ValueError):
+        return None, ("ATTRIBUTION_AUTHORITY_INVALID",)
+    return attribution, ()
 
 
 def _check_price_requested_window(

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
 
+from ai_trading_system.contracts.data_quality_attribution import (
+    load_price_non_market_session_attribution_decision,
+)
 from ai_trading_system.data.price_issue_attribution_review_pack import (
     AUTHORITY_FALSE_FIELDS,
     DEFAULT_JSON_PATH,
@@ -14,7 +18,6 @@ from ai_trading_system.data.price_issue_attribution_review_pack import (
     PriceIssueAttributionReviewError,
     ReviewPackPaths,
     build_price_issue_attribution_review_pack,
-    load_and_validate_price_issue_attribution_review_pack,
     render_price_issue_attribution_review_markdown,
     validate_price_issue_attribution_review_pack,
 )
@@ -29,13 +32,16 @@ from ai_trading_system.platform.artifacts import (
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_real_review_pack_is_fresh_and_keeps_decision_pending() -> None:
-    built = build_price_issue_attribution_review_pack(repo_root=PROJECT_ROOT)
-    tracked = load_strict_json_path(PROJECT_ROOT / DEFAULT_JSON_PATH)
+def test_real_review_pack_is_frozen_by_exact_owner_decision_binding() -> None:
+    tracked = _tracked_review_pack()
+    decision = load_price_non_market_session_attribution_decision()
 
-    assert tracked == built
-    assert built["status"] == "SOURCE_OWNER_DECISION_PENDING"
-    assert built["summary"] == {
+    assert decision.review_pack_id == tracked["review_pack_id"]
+    assert decision.review_pack_sha256 == sha256(
+        (PROJECT_ROOT / DEFAULT_JSON_PATH).read_bytes()
+    ).hexdigest()
+    assert tracked["status"] == "SOURCE_OWNER_DECISION_PENDING"
+    assert tracked["summary"] == {
         "candidate_site_count": 1,
         "distinct_non_session_date_row_set_site_count": 1,
         "caller_supplied_severity_site_count": 1,
@@ -46,7 +52,7 @@ def test_real_review_pack_is_fresh_and_keeps_decision_pending() -> None:
         "runtime_attribution_implemented_site_count": 0,
         "new_issue_isolation_authorized_site_count": 0,
     }
-    candidate = built["candidate"]
+    candidate = tracked["candidate"]
     assert candidate["site_id"] == EXPECTED_SITE_ID
     assert candidate["issue_code"] == EXPECTED_ISSUE_CODE
     assert candidate["source_owner_decision"] == "PENDING_SOURCE_OWNER_DECISION"
@@ -54,7 +60,7 @@ def test_real_review_pack_is_fresh_and_keeps_decision_pending() -> None:
 
 
 def test_review_pack_separates_distinct_dates_from_trigger_rows() -> None:
-    candidate = build_price_issue_attribution_review_pack(repo_root=PROJECT_ROOT)["candidate"]
+    candidate = _tracked_review_pack()["candidate"]
 
     assert candidate["current_rows_semantics"] == "DISTINCT_NON_SESSION_DATE_COUNT"
     assert candidate["current_sample_semantics"] == ("FIRST_TEN_DISTINCT_NON_SESSION_DATES")
@@ -75,7 +81,7 @@ def test_review_pack_separates_distinct_dates_from_trigger_rows() -> None:
 
 
 def test_review_pack_exposes_all_six_dimensions_and_fail_closed_conditions() -> None:
-    built = build_price_issue_attribution_review_pack(repo_root=PROJECT_ROOT)
+    built = _tracked_review_pack()
     candidate = built["candidate"]
 
     assert candidate["affected_price_tickers_rule"] == (
@@ -100,7 +106,7 @@ def test_review_pack_exposes_all_six_dimensions_and_fail_closed_conditions() -> 
 
 
 def test_review_pack_binds_calendar_authority_and_keeps_all_authority_false() -> None:
-    built = build_price_issue_attribution_review_pack(repo_root=PROJECT_ROOT)
+    built = _tracked_review_pack()
     binding_roles = {item["role"] for item in built["input_bindings"]}
 
     assert {
@@ -119,14 +125,15 @@ def test_review_pack_binds_calendar_authority_and_keeps_all_authority_false() ->
     assert built["safety"]["consumer_migration_executed"] is False
 
 
-def test_validator_rejects_output_tamper() -> None:
-    built = build_price_issue_attribution_review_pack(repo_root=PROJECT_ROOT)
+def test_validator_rejects_output_tamper(tmp_path: Path) -> None:
+    root = _minimal_repo(tmp_path)
+    built = build_price_issue_attribution_review_pack(repo_root=root)
     tampered = deepcopy(built)
     tampered["candidate"]["source_owner_decision"] = "APPROVE_FOR_CONTRACT_WAVE"
 
     validation = validate_price_issue_attribution_review_pack(
         tampered,
-        repo_root=PROJECT_ROOT,
+        repo_root=root,
     )
 
     assert validation["status"] == "FAIL"
@@ -134,7 +141,7 @@ def test_validator_rejects_output_tamper() -> None:
 
 
 def test_markdown_exposes_pending_and_no_authorization_boundaries() -> None:
-    built = build_price_issue_attribution_review_pack(repo_root=PROJECT_ROOT)
+    built = _tracked_review_pack()
     markdown = render_price_issue_attribution_review_markdown(built)
 
     assert markdown == (PROJECT_ROOT / DEFAULT_MARKDOWN_PATH).read_text(encoding="utf-8")
@@ -255,11 +262,8 @@ def test_proposal_tamper_fails_closed(
 
 
 def test_loader_and_path_containment_fail_closed(tmp_path: Path) -> None:
-    validation = load_and_validate_price_issue_attribution_review_pack(
-        repo_root=PROJECT_ROOT,
-        pack_path=PROJECT_ROOT / DEFAULT_JSON_PATH,
-    )
-    assert validation["status"] == "PASS"
+    decision = load_price_non_market_session_attribution_decision()
+    assert decision.review_pack_id == _tracked_review_pack()["review_pack_id"]
 
     paths = ReviewPackPaths(repo_root=tmp_path)
     with pytest.raises(
@@ -267,6 +271,12 @@ def test_loader_and_path_containment_fail_closed(tmp_path: Path) -> None:
         match="escapes repository",
     ):
         paths.resolve("../outside.json")
+
+
+def _tracked_review_pack() -> dict[str, object]:
+    payload = load_strict_json_path(PROJECT_ROOT / DEFAULT_JSON_PATH)
+    assert isinstance(payload, dict)
+    return payload
 
 
 def _minimal_repo(tmp_path: Path) -> Path:

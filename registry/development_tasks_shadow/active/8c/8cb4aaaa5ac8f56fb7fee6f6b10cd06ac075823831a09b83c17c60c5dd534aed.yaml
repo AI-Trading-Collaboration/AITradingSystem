@@ -1,0 +1,124 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  title: null
+  domain: Data Foundation / Phase C price non-market-session typed attribution serial
+    contract wave
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform engineering coordinator：刷新C1派生rate review pack，生成base-drift
+    plan并在latest-main integration candidate独占重跑formal/Full；通过后转BASELINE_DONE
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+    decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。同一emitter也用于secondary
+    price self-check，但本次只批准`primary_market_prices`；secondary/incomplete必须保持global。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Decision exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row
+      contract；ordinal仅snapshot-local；digest v1字段/规范/版本明确；complete primary填充，任一缺失清空legacy
+      affected scope并fail closed；policy/consumer bytes不变；focused/formal/Full PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2043
+    row_sha256: 79fb301315e0978b95b9cfc6bd9c60248d45bfdcb580348937602ff93e8598c5
+    cell_count: 8
+    all_cells:
+    - DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+    - Data Foundation / Phase C price non-market-session typed attribution serial
+      contract wave
+    - P0
+    - VALIDATING
+    - data platform engineering coordinator：刷新C1派生rate review pack，生成base-drift plan并在latest-main
+      integration candidate独占重跑formal/Full；通过后转BASELINE_DONE
+    - 详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+      decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。同一emitter也用于secondary
+      price self-check，但本次只批准`primary_market_prices`；secondary/incomplete必须保持global。
+    - Decision exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row
+      contract；ordinal仅snapshot-local；digest v1字段/规范/版本明确；complete primary填充，任一缺失清空legacy
+      affected scope并fail closed；policy/consumer bytes不变；focused/formal/Full PASS；`production_effect=none`、`broker_action=none`。
+    - 2026-07-28：实现与focused/Ruff/mypy完成；formal Architecture 755、Contract 275、Report
+      57、Reproducibility 23、Integration 995均PASS。首个可审计Full为7591 passed/6 failed/3
+      skipped：2项为origin/main前进至b2a819b后的typed CARRIER_PUSH_DRIFT，1项为并发Full下external-cache
+      PermissionError，3项为C1 inventory刷新导致既有rate review pack派生freshness漂移；扩充claims刷新派生pack并转latest-main
+      integration candidate，不改变rate/capability policy、consumer、production或broker边界。
+    raw_line: '|DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE|Data
+      Foundation / Phase C price non-market-session typed attribution serial contract
+      wave|P0|VALIDATING|data platform engineering coordinator：刷新C1派生rate review pack，生成base-drift
+      plan并在latest-main integration candidate独占重跑formal/Full；通过后转BASELINE_DONE|详见
+      `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+      decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。同一emitter也用于secondary
+      price self-check，但本次只批准`primary_market_prices`；secondary/incomplete必须保持global。|Decision
+      exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row contract；ordinal仅snapshot-local；digest
+      v1字段/规范/版本明确；complete primary填充，任一缺失清空legacy affected scope并fail closed；policy/consumer
+      bytes不变；focused/formal/Full PASS；`production_effect=none`、`broker_action=none`。|2026-07-28：实现与focused/Ruff/mypy完成；formal
+      Architecture 755、Contract 275、Report 57、Reproducibility 23、Integration 995均PASS。首个可审计Full为7591
+      passed/6 failed/3 skipped：2项为origin/main前进至b2a819b后的typed CARRIER_PUSH_DRIFT，1项为并发Full下external-cache
+      PermissionError，3项为C1 inventory刷新导致既有rate review pack派生freshness漂移；扩充claims刷新派生pack并转latest-main
+      integration candidate，不改变rate/capability policy、consumer、production或broker边界。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-79fb301315e0978b95b9cfc6
+  task_id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: data platform engineering coordinator：刷新C1派生rate review pack，生成base-drift
+      plan并在latest-main integration candidate独占重跑formal/Full；通过后转BASELINE_DONE
+    notes: 2026-07-28：实现与focused/Ruff/mypy完成；formal Architecture 755、Contract 275、Report
+      57、Reproducibility 23、Integration 995均PASS。首个可审计Full为7591 passed/6 failed/3
+      skipped：2项为origin/main前进至b2a819b后的typed CARRIER_PUSH_DRIFT，1项为并发Full下external-cache
+      PermissionError，3项为C1 inventory刷新导致既有rate review pack派生freshness漂移；扩充claims刷新派生pack并转latest-main
+      integration candidate，不改变rate/capability policy、consumer、production或broker边界。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:79fb301315e0978b95b9cfc6bd9c60248d45bfdcb580348937602ff93e8598c5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  - Data Foundation / Phase C price non-market-session typed attribution serial contract
+    wave
+  - P0
+  - VALIDATING
+  - data platform engineering coordinator：刷新C1派生rate review pack，生成base-drift plan并在latest-main
+    integration candidate独占重跑formal/Full；通过后转BASELINE_DONE
+  - 详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+    decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。同一emitter也用于secondary
+    price self-check，但本次只批准`primary_market_prices`；secondary/incomplete必须保持global。
+  - Decision exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row contract；ordinal仅snapshot-local；digest
+    v1字段/规范/版本明确；complete primary填充，任一缺失清空legacy affected scope并fail closed；policy/consumer
+    bytes不变；focused/formal/Full PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-07-28：实现与focused/Ruff/mypy完成；formal Architecture 755、Contract 275、Report
+    57、Reproducibility 23、Integration 995均PASS。首个可审计Full为7591 passed/6 failed/3 skipped：2项为origin/main前进至b2a819b后的typed
+    CARRIER_PUSH_DRIFT，1项为并发Full下external-cache PermissionError，3项为C1 inventory刷新导致既有rate
+    review pack派生freshness漂移；扩充claims刷新派生pack并转latest-main integration candidate，不改变rate/capability
+    policy、consumer、production或broker边界。
+  docs_links:
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
+  terminal: false
+  raw_row_sha256: 79fb301315e0978b95b9cfc6bd9c60248d45bfdcb580348937602ff93e8598c5
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 37c11ae2d82ed3c0d2dcd30a4fc92c337ea1bba1a2ae06fb7ef94566ff395129
