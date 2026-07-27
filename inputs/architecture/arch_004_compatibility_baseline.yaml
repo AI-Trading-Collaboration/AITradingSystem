@@ -30884,7 +30884,7 @@ phase_data_gov_002c3p_price_non_market_session_typed_attribution_contract:
   - {path: docs/data_quality/rate_issue_attribution_review_pack_v1.md, sha256: 2f45517b81c552840ac9fe171ceee47b9f2552fb138340065b44281b4b779f20, hash_normalization: git_eol_lf}
   - {path: docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md, sha256: cedf625528ebf26ee7179cab930569212b71062fd1ad482c9de667685296266f, hash_normalization: git_eol_lf}
   - {path: docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md, sha256: 52443e69cd7324868bae200c0b1bc129667041a869971ccd43fcbcfbdf13b06f, hash_normalization: git_eol_lf}
-  - {path: docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md, sha256: 49ad34323b5fd1e4c1914776935972731309e69499ff71d7c835a32b192b9014, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md, sha256: 867064439b4ab0dcb811f59a472423d3e19f4a5c034c616321abebac3b3c3ea2, hash_normalization: git_eol_lf}
   - {path: docs/system_flow.md, sha256: 314a82f5f7cb31ee0f4d45e327319141de065322d2fae87f5b9e964a2e9def62, hash_normalization: git_eol_lf}
   - {path: docs/task_register.md, sha256: 413667761d3aced22f8a46692145364fb4bb1f82322326caf2732d09e233bf03, hash_normalization: git_eol_lf}
   - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 6ca1261e96f04367508455b2395b6a1817832a10cfabcdc909a3a702601d1254, hash_normalization: git_eol_lf}

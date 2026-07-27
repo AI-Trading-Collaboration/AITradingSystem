@@ -246,3 +246,20 @@ Incomplete 时：
   C3 typed contract基线转`BASELINE_DONE`；后续dimensional classifier adoption、
   capability policy或consumer迁移继续要求独立owner评审，当前
   `production_effect=none`、`broker_action=none`。
+- 2026-07-28：local/remote closeout已完成，`main=origin/main=
+  917cf6d80285de57ab336b39e277dc315aae7aba`。临时分支唯一实现审计确认
+  decision、contract、runtime与focused test核心blob在旧候选和最终main逐文件相同；
+  共享文档/生成物由最终candidate supersede，无唯一未保留实现或证据，也无本任务
+  worktree。批准的本地分支删除allowlist恰为：
+  `codex/data-gov-002c3p-price-attribution-contract`、
+  `codex/data-gov-002c3p-integration`、
+  `codex/data-gov-002c3p-integration-final`、
+  `codex/data-gov-002c3p-integration-s4`及
+  `codex/data-gov-002c3p-cleanup-closeout`；不得扩展到其他branch/worktree。
+  Canonical retained evidence为main commit、本文记录的旧commit/plan id，以及
+  `outputs/architecture/data_gov_002c3p_change_manifest.v1.json`
+  （raw SHA-256=`6765f25bdd3cfc142449c0a86ce2b5b57a5a36eec5ae5e5fa38d66ae697b6db1`）
+  与`outputs/architecture/data_gov_002c3p_integration_revalidation_plan.v1.json`
+  （raw SHA-256=`cff1171c1fb08a28e64dda1b1866a78f43f63f4f104a4346d118b65a50f7af09`）。
+  分支删除只移除local refs，不删除commits/artifacts；短期可由本文commit SHA或Git
+  reflog恢复，远端main为长期canonical recovery boundary。
