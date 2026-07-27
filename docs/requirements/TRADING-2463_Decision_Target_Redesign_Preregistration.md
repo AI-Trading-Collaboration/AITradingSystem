@@ -2,7 +2,7 @@
 
 最后更新：2026-07-27
 
-状态：`READY`
+状态：`IN_PROGRESS_S1_S2_COMPLETE_S3_NOT_STARTED`
 
 稳定任务 ID：`TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION`
 
@@ -10,6 +10,7 @@ Owner 决策：
 
 - `owner_decision:TRADING-2462:2026-07-27:close_current_tail_risk_capability_path_v1`
 - `owner_decision:TRADING-2463:2026-07-27:authorize_decision_target_redesign_preregistration_v1`
+- `owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`
 - `owner_decision:TRADING-2459:2026-07-27:defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`
 
 ## 1. 决策与目标
@@ -70,6 +71,11 @@ sensitivity/stress role，不能静默替代项目默认。
 所有可能影响投资解释的 threshold、sample floor、horizon、classification gate 或 review boundary
 必须在结果读取前进入 reviewed policy，记录 owner、版本、rationale、planned evidence 和 review
 condition。本任务不得以未解释 numeric literal 冻结这些政策。
+
+S1/S2 当前权威设计包：
+`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`。
+该文件只完成 option、PIT/DQ/coverage/falsification 设计，不选择 target，不冻结 numeric
+policy，不启动 S3/S4 或任何 capability computation。
 
 ## 4. 阶段与依赖
 
@@ -165,3 +171,18 @@ condition。本任务不得以未解释 numeric literal 冻结这些政策。
   cleanup coordinator；退出条件是owner另行授权释放或迁移该排除项，随后确认无活动
   进程、无未迁移唯一证据并通过checkout audit，再执行`git worktree remove`与
   `git worktree prune`。在此之前不得强制清理。
+- 2026-07-27：Owner要求继续推进S1+S2。已形成
+  `TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`，定义一个
+  decision problem、三类非激活action semantics与四个target design options，并冻结
+  PIT/DQ/source feasibility、coverage dimensions、sample-floor governance、共同及
+  option-specific falsification axes、leakage/selection-contamination停止条件。所有numeric
+  horizon/threshold/sample floor保持`OWNER_REVIEW_REQUIRED`；`selected_target=NONE`，
+  S3/S4未启动，未读取新结果、未访问prospective、未运行模型/Decision Value Audit/
+  risk overlay/candidate/backtest/weights。
+- 2026-07-27：S1/S2 phase-exit验证通过：focused=`133 passed`、Architecture=`756 passed`、
+  Contract=`275 passed`、Reproducibility=`23 passed`、Integration=`995 passed /
+  642 warnings`、Full=`7581 passed / 5 skipped / 642 warnings`。Full provenance绑定
+  `TRADING-2463-S1-S2-20260727`与`natural_integration_boundary`。五类runtime evidence、
+  checkout intent与当前lease events按7项显式路径白名单迁移到canonical
+  `D:\Work\AITradingSystem`，共27个文件逐文件SHA-256一致。阶段仍停在S2，
+  `production_effect=none`、`broker_action=none`。
