@@ -11,11 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.platform.architecture.checkout_guard import (
-    CheckoutLeaseGuard,
-    collect_checkout_dirty_paths,
-    load_checkout_guard_policy,
-)
+from ai_trading_system.platform.architecture.checkout_guard import CheckoutLeaseGuard
 from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -79,6 +75,7 @@ class OpsReleasePromotionPolicy:
     required_critical_paths: tuple[str, ...]
     lock_relative_path: str
     active_daily_lease_required_count: int
+    pre_switch_checkout_policy_source: str
     automatic_latest_selection: bool
     automatic_stash_clean_reset: bool
     previous_release_retained: bool
@@ -189,6 +186,10 @@ def load_ops_release_promotion_policy(
             promotion.get("active_daily_lease_required_count"),
             "active_daily_lease_required_count",
         ),
+        pre_switch_checkout_policy_source=_text(
+            promotion.get("pre_switch_checkout_policy_source"),
+            "pre_switch_checkout_policy_source",
+        ),
         automatic_latest_selection=_bool(
             promotion.get("automatic_latest_selection"),
             "automatic_latest_selection",
@@ -267,6 +268,7 @@ def load_ops_release_promotion_policy(
         or policy.automatic_latest_selection
         or policy.automatic_stash_clean_reset
         or not policy.previous_release_retained
+        or policy.pre_switch_checkout_policy_source != "coordinator_candidate"
         or policy.required_validation_tiers != _REQUIRED_VALIDATION_TIERS
         or policy.required_critical_paths != _REQUIRED_CRITICAL_PATHS
         or not policy.installed_distribution_inventory_required
@@ -557,7 +559,10 @@ def inspect_runtime_provenance(
     remote_commit = _git_text(root, "rev-parse", checked_policy.reviewed_remote_ref)
     runtime_common = _git_common_dir(root)
     development_common = _git_common_dir(dev_root)
-    dirty_paths = _governed_dirty_paths(root)
+    dirty_paths = _governed_dirty_paths(
+        root,
+        policy_source_root=dev_root,
+    )
     if dirty_paths:
         raise OpsReleasePromotionError("RUNTIME_CHECKOUT_DIRTY", ",".join(dirty_paths))
     if head != candidate_commit or remote_commit != candidate_commit:
@@ -1132,7 +1137,10 @@ def promote_ops_release(
     previous_commit: str | None = None
     switched = False
     try:
-        dirty_paths = _governed_dirty_paths(root)
+        dirty_paths = _governed_dirty_paths(
+            root,
+            policy_source_root=coordinator,
+        )
         if dirty_paths:
             raise OpsReleasePromotionError(
                 "PROMOTION_RUNTIME_DIRTY",
@@ -1456,15 +1464,32 @@ def _inspect_runtime_git_exclusions(
     }
 
 
-def _governed_dirty_paths(root: Path) -> tuple[str, ...]:
-    policy = load_checkout_guard_policy(
-        root / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
+def _governed_dirty_paths(
+    root: Path,
+    *,
+    policy_source_root: Path | None = None,
+) -> tuple[str, ...]:
+    policy_root = (
+        root.resolve()
+        if policy_source_root is None
+        else policy_source_root.resolve()
     )
-    exclusions = tuple(item.path for item in policy.known_unrelated_exclusions)
-    dirty_paths: tuple[str, ...] = collect_checkout_dirty_paths(
-        root,
-        exclusions=exclusions,
+    guard = CheckoutLeaseGuard(
+        project_root=root,
+        policy_path=(
+            policy_root
+            / "config"
+            / "architecture"
+            / "arch_005_s4d_checkout_guard.yaml"
+        ),
+        parallel_policy_path=(
+            policy_root
+            / "config"
+            / "architecture"
+            / "arch_005_parallel_control_policy.yaml"
+        ),
     )
+    dirty_paths: tuple[str, ...] = guard.audit_worktree().dirty_paths
     return dirty_paths
 
 

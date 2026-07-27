@@ -71,6 +71,7 @@ def test_policy_fails_closed_on_latest_and_scheduler_duplication() -> None:
         "/artifacts/",
         "/data/derived/",
     )
+    assert policy.pre_switch_checkout_policy_source == "coordinator_candidate"
     assert policy.scheduler_entry_count == 1
     assert policy.windows_task_scheduler_entries_allowed is False
 
@@ -553,9 +554,37 @@ def test_promotion_switches_exact_commit_and_writes_append_only_events(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     development = tmp_path / "development"
-    previous_commit = _init_release_repo(development)
+    _init_release_repo(development)
+    checkout_policy = (
+        development
+        / "config"
+        / "architecture"
+        / "arch_005_s4d_checkout_guard.yaml"
+    )
+    checkout_policy.write_text(
+        "schema_version: arch_005_s4d_checkout_guard_policy.v1\n",
+        encoding="utf-8",
+    )
+    _git(development, "add", checkout_policy.relative_to(development).as_posix())
+    _git(development, "commit", "-m", "old runtime checkout policy")
+    previous_commit = _git(development, "rev-parse", "HEAD")
+    repository_root = Path(__file__).resolve().parents[1]
+    checkout_policy.write_text(
+        (
+            repository_root
+            / "config"
+            / "architecture"
+            / "arch_005_s4d_checkout_guard.yaml"
+        ).read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     (development / "tracked.txt").write_text("release\n", encoding="utf-8")
-    _git(development, "add", "tracked.txt")
+    _git(
+        development,
+        "add",
+        "tracked.txt",
+        checkout_policy.relative_to(development).as_posix(),
+    )
     _git(development, "commit", "-m", "release")
     candidate_commit = _git(development, "rev-parse", "HEAD")
     _git(development, "update-ref", "refs/remotes/origin/main", candidate_commit)
@@ -622,6 +651,46 @@ def test_promotion_switches_exact_commit_and_writes_append_only_events(
     assert not (
         runtime / "outputs" / "operations" / "deployment" / "promotion.lock"
     ).exists()
+
+
+def test_coordinator_policy_still_blocks_dirty_old_runtime(
+    tmp_path: Path,
+) -> None:
+    development = tmp_path / "development"
+    _init_release_repo(development)
+    checkout_policy = (
+        development
+        / "config"
+        / "architecture"
+        / "arch_005_s4d_checkout_guard.yaml"
+    )
+    checkout_policy.write_text(
+        "schema_version: arch_005_s4d_checkout_guard_policy.v1\n",
+        encoding="utf-8",
+    )
+    _git(development, "add", checkout_policy.relative_to(development).as_posix())
+    _git(development, "commit", "-m", "old runtime checkout policy")
+    previous_commit = _git(development, "rev-parse", "HEAD")
+    repository_root = Path(__file__).resolve().parents[1]
+    checkout_policy.write_text(
+        (
+            repository_root
+            / "config"
+            / "architecture"
+            / "arch_005_s4d_checkout_guard.yaml"
+        ).read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    _git(development, "add", checkout_policy.relative_to(development).as_posix())
+    _git(development, "commit", "-m", "candidate checkout policy")
+    runtime = tmp_path / "runtime"
+    _clone_independent(development, runtime, previous_commit)
+    (runtime / "unexpected.txt").write_text("dirty\n", encoding="utf-8")
+
+    assert promotion._governed_dirty_paths(
+        runtime,
+        policy_source_root=development,
+    ) == ("unexpected.txt",)
 
 
 def test_promotion_failure_rolls_back_previous_commit(

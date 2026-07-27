@@ -50,8 +50,12 @@
   `/outputs/`、`/artifacts/`、`/data/derived/` patterns 写入该 independent clone 自己的
   `.git/info/exclude`；只允许替换空白/注释-only 初始文件，既有未知 rule、缺失/额外
   pattern、Git path/common-dir 或 live SHA 漂移均 fail closed。该 runtime-only contract
-  不改变开发 checkout 的 `.gitignore`、known-unrelated 或 dirty semantics。Promotion
-  只能显式选择 receipt 中的 commit，使用 promotion
+  不改变开发 checkout 的 `.gitignore`、known-unrelated 或 dirty semantics。跨 release
+  promotion 在切换前必须用已验证 coordinator candidate 的 checkout-guard policy 解释
+  clean/dirty 规则，但 audited repository、Git identity、tracked/untracked/staged inventory
+  与 diff checks 始终绑定 permanent runtime；旧 runtime 自带的旧 policy schema 不是
+  pre-switch 解析 authority。schema mismatch 不得通过手工 checkout、复制 policy 或跳过
+  clean gate 绕过。Promotion 只能显式选择 receipt 中的 commit，使用 promotion
   lock、active daily lease exclusion 和 append-only transaction events；不得自动选择
   latest、stash/clean/reset 或删除旧 state/ledger/data。`daily-run` 先取得 checkout WRITE
   lease，再验证/写 scheduler preflight，因此被阻断的 preflight evidence 也不会成为第二

@@ -402,7 +402,10 @@ journal 和失败回滚，绝不自动选择 latest 或清理 runtime。Deployme
 inventory/fingerprint、唯一 Codex automation observed state、required env 名称和最小
 credential-scope attestation。Permanent runtime 的 Git metadata 还必须安装并冻结 reviewed
 exact runtime-generated exclusions（仅 `outputs/artifacts/data/derived`），receipt/preflight
-逐 byte live revalidate；development dirty semantics 不变。Active
+逐 byte live revalidate；development dirty semantics 不变。跨 release pre-switch clean audit
+由已验证 coordinator candidate 的 checkout policy 解释，但 audited Git identity、dirty
+inventory 与 staged/unstaged diff checks 始终绑定 permanent runtime；旧 release 自带 policy
+schema 不参与解析，且不得靠手工 checkout 或复制 policy 绕过。Active
 receipt、marker、release、remote、clean audit、runtime executable/import 任一缺失或漂移均 fail
 closed。`daily-run` 先取得 checkout WRITE lease，再执行并写 scheduler preflight；人工运行只有
 显式 `--manual-execution` 才可进入，active scheduler checkout 禁止混用 manual mode。
@@ -410,7 +413,8 @@ closed。`daily-run` 先取得 checkout WRITE lease，再执行并写 scheduler 
 ```mermaid
 flowchart LR
     EXCLUDE["Reviewed runtime-only Git exclusions<br/>exact bytes + SHA + patterns"] --> RC["Owner-approved release candidate<br/>remote main + exact six-tier evidence"]
-    RC --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
+    RC --> AUDIT["Pre-switch runtime clean audit<br/>candidate policy + exact runtime target"]
+    AUDIT --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
     PROMOTE --> ACCEPT["Active deployment receipt<br/>independent clone + runtime/environment fingerprint + scheduler observation"]
     ACCEPT --> TRIG["Only external trigger<br/>aits ops daily-run"]
     TRIG --> WRITE["Checkout WRITE lease"]

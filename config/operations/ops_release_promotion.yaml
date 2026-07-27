@@ -1,6 +1,6 @@
 schema_version: ops_release_promotion_policy.v1
 policy_id: ops_release_promotion_v1
-version: 1.1.0
+version: 1.2.0
 status: REVIEWED_OWNER_GATED
 owner: operations_owner_and_project_owner
 reviewed_at: 2026-07-27
@@ -43,6 +43,7 @@ receipts:
 promotion:
   lock_relative_path: outputs/operations/deployment/promotion.lock
   active_daily_lease_required_count: 0
+  pre_switch_checkout_policy_source: coordinator_candidate
   automatic_latest_selection: false
   automatic_stash_clean_reset: false
   previous_release_retained: true

@@ -11,7 +11,7 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：完成 runtime-only reviewed Git exclude contract、新 candidate 六类 formal
+  next_owner: Codex：修复 cross-release promotion policy authority、新 candidate 六类 formal
     gates、promotion 与唯一 automation 原位切换；operations owner：复核 deployment acceptance
     与下一合法 scheduler run
   requirement_refs:
@@ -20,74 +20,82 @@ task_record:
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-    数据/consumer 隔离与首个稳定部署 serial contract wave 已实现；candidate `992734147...` 已六类 PASS
-    并推送，独立 runtime 与 152,402 files SHA migration PASS；复核发现旧共享 `.git/info/exclude`
-    隐藏 8,129 个 runtime state/artifact paths，新 clone 正确 fail closed，现追加受 receipt/preflight
-    live verification 的 runtime-only exact exclude contract。
+    数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
+    exclude 已实现；candidate `f462836e3...` 六类 PASS 且 local/remote main 一致。真实旧 release
+    promotion 在切换前发现旧 runtime checkout-policy schema 不能作为新 coordinator dirty audit
+    authority，正确 fail closed，未写 transaction 或切换 HEAD。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git
-      common dir、runtime-local pinned executable/environment fingerprint、owner-reviewed
-      exact release/validation receipt、reviewed exact runtime Git exclude、唯一 scheduler
-      entry、最小权限 credential attestation、promotion lock/active-run exclusion、失败回滚与
-      previous release retention；marker/receipt/exclude 缺失或漂移 fail closed；dev dirty
-      semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
+    text: 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；跨 release pre-switch
+      dirty inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target，旧 runtime
+      policy schema 不得阻断合法升级或被静默忽略；独立 runtime 必须有不同 git common dir、runtime-local pinned
+      executable/environment fingerprint、owner-reviewed exact release/validation receipt、reviewed
+      exact runtime Git exclude、唯一 scheduler entry、最小权限 credential attestation、promotion
+      lock/active-run exclusion、失败回滚与 previous release retention；marker/receipt/exclude
+      缺失或漂移 fail closed；dev dirty semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader
+      Brief；无 weights/broker/trading。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1589
-    row_sha256: d2f3fd7e967bd3d61de1ffdbfaab1b7217e547e5aaa5e14fd2ac9a2b11198b2c
+    row_sha256: 9971077a7fcd2a23f57f05398c364b9e79e5c849bc7688a01cc2dedae1450317
     cell_count: 8
     all_cells:
     - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
     - Operations / objective blocker taxonomy and consumer dependency DAG
     - P0
     - VALIDATING
-    - Codex：完成 runtime-only reviewed Git exclude contract、新 candidate 六类 formal gates、promotion
+    - Codex：修复 cross-release promotion policy authority、新 candidate 六类 formal gates、promotion
       与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
       run
     - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-      数据/consumer 隔离与首个稳定部署 serial contract wave 已实现；candidate `992734147...` 已六类
-      PASS 并推送，独立 runtime 与 152,402 files SHA migration PASS；复核发现旧共享 `.git/info/exclude`
-      隐藏 8,129 个 runtime state/artifact paths，新 clone 正确 fail closed，现追加受 receipt/preflight
-      live verification 的 runtime-only exact exclude contract。
-    - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git common
-      dir、runtime-local pinned executable/environment fingerprint、owner-reviewed exact
-      release/validation receipt、reviewed exact runtime Git exclude、唯一 scheduler entry、最小权限
-      credential attestation、promotion lock/active-run exclusion、失败回滚与 previous release
-      retention；marker/receipt/exclude 缺失或漂移 fail closed；dev dirty semantics不放宽；下一合法
-      run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
-    - 2026-07-27：`992734147...` 已 Fast=`340`、Architecture=`741`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7547
-      passed / 5 skipped`，local/remote main一致；migration=`152402 files / 36596615302
-      bytes` PASS，旧 runtime保留。当前 blocker=`RUNTIME_GIT_EXCLUDE_CONTRACT_MISSING`；禁止复制隐藏
-      exclude、放宽 clean gate、junction或删除历史 state，先完成最小 serial contract wave并生成新 exact-commit
-      validation evidence；`production_effect=none`。
-    raw_line: '|OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG|Operations /
-      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：完成
-      runtime-only reviewed Git exclude contract、新 candidate 六类 formal gates、promotion
-      与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
-      run|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-      数据/consumer 隔离与首个稳定部署 serial contract wave 已实现；candidate `992734147...` 已六类
-      PASS 并推送，独立 runtime 与 152,402 files SHA migration PASS；复核发现旧共享 `.git/info/exclude`
-      隐藏 8,129 个 runtime state/artifact paths，新 clone 正确 fail closed，现追加受 receipt/preflight
-      live verification 的 runtime-only exact exclude contract。|单源失败不阻断无关 source/consumer；缺依赖
-      consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git common dir、runtime-local pinned executable/environment
+      数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
+      exclude 已实现；candidate `f462836e3...` 六类 PASS 且 local/remote main 一致。真实旧 release
+      promotion 在切换前发现旧 runtime checkout-policy schema 不能作为新 coordinator dirty audit
+      authority，正确 fail closed，未写 transaction 或切换 HEAD。
+    - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；跨 release pre-switch dirty
+      inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target，旧 runtime policy
+      schema 不得阻断合法升级或被静默忽略；独立 runtime 必须有不同 git common dir、runtime-local pinned executable/environment
       fingerprint、owner-reviewed exact release/validation receipt、reviewed exact runtime
       Git exclude、唯一 scheduler entry、最小权限 credential attestation、promotion lock/active-run
       exclusion、失败回滚与 previous release retention；marker/receipt/exclude 缺失或漂移 fail
       closed；dev dirty semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无
-      weights/broker/trading。|2026-07-27：`992734147...` 已 Fast=`340`、Architecture=`741`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7547
-      passed / 5 skipped`，local/remote main一致；migration=`152402 files / 36596615302
-      bytes` PASS，旧 runtime保留。当前 blocker=`RUNTIME_GIT_EXCLUDE_CONTRACT_MISSING`；禁止复制隐藏
-      exclude、放宽 clean gate、junction或删除历史 state，先完成最小 serial contract wave并生成新 exact-commit
-      validation evidence；`production_effect=none`。|'
+      weights/broker/trading。
+    - 2026-07-27：`f462836e3...` 已 Fast=`340`、Architecture=`743`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7550
+      passed / 5 skipped` 并推送；runtime exclude receipt=`ops_runtime_git_exclude_8f16227e...`，runtime-self
+      audit clean。当前 blocker=`CROSS_RELEASE_CHECKOUT_POLICY_SCHEMA_MISMATCH`；禁止手工
+      checkout、跳过 clean gate或复制 policy，先完成 coordinator-policy/target-runtime serial
+      fix、真实 ancestor regression、新 immutable compatibility authority 与新 exact-commit
+      formal evidence；`production_effect=none`。
+    raw_line: '|OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG|Operations /
+      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：修复
+      cross-release promotion policy authority、新 candidate 六类 formal gates、promotion
+      与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
+      run|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
+      数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
+      exclude 已实现；candidate `f462836e3...` 六类 PASS 且 local/remote main 一致。真实旧 release
+      promotion 在切换前发现旧 runtime checkout-policy schema 不能作为新 coordinator dirty audit
+      authority，正确 fail closed，未写 transaction 或切换 HEAD。|单源失败不阻断无关 source/consumer；缺依赖
+      consumer 显式 `BLOCKED`；跨 release pre-switch dirty inventory 必须由已验证 coordinator
+      policy 解释并审计 exact runtime target，旧 runtime policy schema 不得阻断合法升级或被静默忽略；独立
+      runtime 必须有不同 git common dir、runtime-local pinned executable/environment fingerprint、owner-reviewed
+      exact release/validation receipt、reviewed exact runtime Git exclude、唯一 scheduler
+      entry、最小权限 credential attestation、promotion lock/active-run exclusion、失败回滚与
+      previous release retention；marker/receipt/exclude 缺失或漂移 fail closed；dev dirty
+      semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。|2026-07-27：`f462836e3...`
+      已 Fast=`340`、Architecture=`743`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7550
+      passed / 5 skipped` 并推送；runtime exclude receipt=`ops_runtime_git_exclude_8f16227e...`，runtime-self
+      audit clean。当前 blocker=`CROSS_RELEASE_CHECKOUT_POLICY_SCHEMA_MISMATCH`；禁止手工
+      checkout、跳过 clean gate或复制 policy，先完成 coordinator-policy/target-runtime serial
+      fix、真实 ancestor regression、新 immutable compatibility authority 与新 exact-commit
+      formal evidence；`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-d2f3fd7e967bd3d61de1ffdb
+  event_id: legacy-import-9971077a7fcd2a23f57f0539
   task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -100,17 +108,18 @@ initial_event:
   to_status: VALIDATING
   payload:
     priority: P0
-    next_owner: Codex：完成 runtime-only reviewed Git exclude contract、新 candidate 六类
-      formal gates、promotion 与唯一 automation 原位切换；operations owner：复核 deployment acceptance
+    next_owner: Codex：修复 cross-release promotion policy authority、新 candidate 六类 formal
+      gates、promotion 与唯一 automation 原位切换；operations owner：复核 deployment acceptance
       与下一合法 scheduler run
-    notes: 2026-07-27：`992734147...` 已 Fast=`340`、Architecture=`741`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7547
-      passed / 5 skipped`，local/remote main一致；migration=`152402 files / 36596615302
-      bytes` PASS，旧 runtime保留。当前 blocker=`RUNTIME_GIT_EXCLUDE_CONTRACT_MISSING`；禁止复制隐藏
-      exclude、放宽 clean gate、junction或删除历史 state，先完成最小 serial contract wave并生成新 exact-commit
-      validation evidence；`production_effect=none`。
+    notes: 2026-07-27：`f462836e3...` 已 Fast=`340`、Architecture=`743`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7550
+      passed / 5 skipped` 并推送；runtime exclude receipt=`ops_runtime_git_exclude_8f16227e...`，runtime-self
+      audit clean。当前 blocker=`CROSS_RELEASE_CHECKOUT_POLICY_SCHEMA_MISMATCH`；禁止手工
+      checkout、跳过 clean gate或复制 policy，先完成 coordinator-policy/target-runtime serial
+      fix、真实 ancestor regression、新 immutable compatibility authority 与新 exact-commit
+      formal evidence；`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:d2f3fd7e967bd3d61de1ffdbfaab1b7217e547e5aaa5e14fd2ac9a2b11198b2c
+  - sha256:9971077a7fcd2a23f57f05398c364b9e79e5c849bc7688a01cc2dedae1450317
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -118,28 +127,29 @@ projection:
   - Operations / objective blocker taxonomy and consumer dependency DAG
   - P0
   - VALIDATING
-  - Codex：完成 runtime-only reviewed Git exclude contract、新 candidate 六类 formal gates、promotion
+  - Codex：修复 cross-release promotion policy authority、新 candidate 六类 formal gates、promotion
     与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
     run
   - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-    数据/consumer 隔离与首个稳定部署 serial contract wave 已实现；candidate `992734147...` 已六类 PASS
-    并推送，独立 runtime 与 152,402 files SHA migration PASS；复核发现旧共享 `.git/info/exclude`
-    隐藏 8,129 个 runtime state/artifact paths，新 clone 正确 fail closed，现追加受 receipt/preflight
-    live verification 的 runtime-only exact exclude contract。
-  - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git common
-    dir、runtime-local pinned executable/environment fingerprint、owner-reviewed exact
-    release/validation receipt、reviewed exact runtime Git exclude、唯一 scheduler entry、最小权限
-    credential attestation、promotion lock/active-run exclusion、失败回滚与 previous release
-    retention；marker/receipt/exclude 缺失或漂移 fail closed；dev dirty semantics不放宽；下一合法
-    run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
-  - 2026-07-27：`992734147...` 已 Fast=`340`、Architecture=`741`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7547
-    passed / 5 skipped`，local/remote main一致；migration=`152402 files / 36596615302
-    bytes` PASS，旧 runtime保留。当前 blocker=`RUNTIME_GIT_EXCLUDE_CONTRACT_MISSING`；禁止复制隐藏
-    exclude、放宽 clean gate、junction或删除历史 state，先完成最小 serial contract wave并生成新 exact-commit
-    validation evidence；`production_effect=none`。
+    数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
+    exclude 已实现；candidate `f462836e3...` 六类 PASS 且 local/remote main 一致。真实旧 release
+    promotion 在切换前发现旧 runtime checkout-policy schema 不能作为新 coordinator dirty audit
+    authority，正确 fail closed，未写 transaction 或切换 HEAD。
+  - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；跨 release pre-switch dirty
+    inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target，旧 runtime policy
+    schema 不得阻断合法升级或被静默忽略；独立 runtime 必须有不同 git common dir、runtime-local pinned executable/environment
+    fingerprint、owner-reviewed exact release/validation receipt、reviewed exact runtime
+    Git exclude、唯一 scheduler entry、最小权限 credential attestation、promotion lock/active-run
+    exclusion、失败回滚与 previous release retention；marker/receipt/exclude 缺失或漂移 fail closed；dev
+    dirty semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
+  - 2026-07-27：`f462836e3...` 已 Fast=`340`、Architecture=`743`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7550
+    passed / 5 skipped` 并推送；runtime exclude receipt=`ops_runtime_git_exclude_8f16227e...`，runtime-self
+    audit clean。当前 blocker=`CROSS_RELEASE_CHECKOUT_POLICY_SCHEMA_MISMATCH`；禁止手工 checkout、跳过
+    clean gate或复制 policy，先完成 coordinator-policy/target-runtime serial fix、真实 ancestor
+    regression、新 immutable compatibility authority 与新 exact-commit formal evidence；`production_effect=none`。
   docs_links:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   terminal: false
-  raw_row_sha256: d2f3fd7e967bd3d61de1ffdbfaab1b7217e547e5aaa5e14fd2ac9a2b11198b2c
+  raw_row_sha256: 9971077a7fcd2a23f57f05398c364b9e79e5c849bc7688a01cc2dedae1450317
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: a0d4d6e737d4d8e07c0add5b0dee8258e9c6dcfdc410d490bcd1af1c4be10097
+fragment_checksum: 4f2f36b224e296901d47e60aed522a8952779cdb4aba15f71ef554aef28dfb67

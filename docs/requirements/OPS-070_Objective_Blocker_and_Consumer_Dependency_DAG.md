@@ -514,3 +514,31 @@ owner acceptance 均通过后才能成为 active runtime。下一合法 provider
   Reproducibility/Full 后，才允许安装 runtime exclude、重验 migrated state、promotion、
   automation 切换与 activation。当前仍 `VALIDATING`，无 daily/provider/weights/broker/
   trading effect。
+
+### 2026-07-27 cross-release promotion policy blocker
+
+- runtime-only exclude contract candidate
+  `f462836e3d599ad7e718a487045c3cc1d2ed20a8` 已通过
+  Fast=`340`、Architecture=`743`、Contract=`275`、Integration=`995`、
+  Reproducibility=`23`、Full=`7550 passed / 5 skipped`，并已 fast-forward/push，
+  `local main = origin/main = candidate`。permanent runtime 的 exact exclude installation
+  receipt=`ops_runtime_git_exclude_8f16227e8bb4f4715f0cb0111cad901f5acfef76`，
+  migrated 8,129 个 runtime paths 随后由 runtime-self audit 证明 clean。
+- 第一次真实 promotion 从已接受旧 release
+  `925315059b88ee781e9dae7960d232714a610566` 启动时，在 checkout 切换、evidence copy
+  和 transaction event 之前 fail closed。根因是 `_governed_dirty_paths` 从旧 runtime
+  tree 读取 `arch_005_s4d_checkout_guard_policy.v1`，而新 promotion implementation
+  只接受当前 policy schema；runtime HEAD 未改变、promotion lock 已释放、
+  transaction file count=0、scheduler 未激活。
+- 最佳直接修复是让 pre-switch dirty inventory 使用已验证 coordinator candidate 的
+  checkout-guard policy，同时把 audited repository 明确绑定为 permanent runtime。
+  runtime 自带旧 policy 不得成为跨 release 切换的解析 authority，但 target dirty paths、
+  known-unrelated exclusions、unstaged/staged diff checks 仍必须完整执行。禁止以手工
+  checkout candidate、跳过 clean gate、临时复制 policy 或捕获 schema error 后继续作为
+  workaround。
+- 新 regression 必须建立真实 ancestor runtime commit，其旧 checkout policy schema 与
+  candidate 不同，并证明 promotion 可从该旧 release 事务式切换；同时注入 runtime
+  dirty path 证明 coordinator policy 不会降低 fail-closed dirty gate。该修复必须追加
+  immutable compatibility section、重新生成 views、形成新的 exact-commit 六档正式
+  validation 与 release receipt，之后才重试 promotion。当前仍 `VALIDATING`，
+  `production_effect=none`，无 provider/weights/broker/trading action。

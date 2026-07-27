@@ -29886,3 +29886,101 @@ phase_ops_070_runtime_git_exclusion_contract:
     active_shadow_weights_written: false
     production_effect: none
     broker_action: none
+
+phase_ops_070_cross_release_promotion_policy_authority:
+  schema_version: ops_070_cross_release_promotion_policy_compatibility.v1
+  status: VALIDATING_CROSS_RELEASE_POLICY
+  boundary_id: OPS-070-CROSS-RELEASE-PROMOTION-POLICY
+  task_ids:
+  - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
+  owner_authorization: owner_decision:OPS-070:2026-07-27:proceed_with_stable_deployment_method
+  prior_sections_immutability:
+    source_commit: f462836e3d599ad7e718a487045c3cc1d2ed20a8
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 7846080de69beca5900a4260f8eac27b13150a42
+    raw_byte_count: 1873407
+    raw_sha256: 60474696d6e9a66dfc64149da02f557d526a07d27217a820f2720a5acfb4f0df
+    append_offset: 1873407
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/operations/ops_release_promotion.yaml
+  - docs/artifact_catalog.md
+  - docs/operations/operations_runbook.md
+  - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
+  - src/ai_trading_system/ops_release_promotion.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_ops_release_promotion.py
+  supersession:
+    superseded_by_phase: OPS-070-CROSS-RELEASE-PROMOTION-POLICY
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_ops_070_runtime_git_exclusion_contract
+    current_hash_authority: phase_ops_070_cross_release_promotion_policy_authority.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - config/operations/ops_release_promotion.yaml
+  - docs/artifact_catalog.md
+  - docs/operations/operations_runbook.md
+  - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
+  - src/ai_trading_system/ops_release_promotion.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_ops_release_promotion.py
+  sources:
+  - {path: config/operations/ops_release_promotion.yaml, sha256: 7252bc0347d8ccfa2a7f5bdffdc9ae20595d0c1fa015c75d9484d95f09ab772b, hash_normalization: git_eol_lf}
+  - {path: docs/artifact_catalog.md, sha256: c7325850edc787be0ec9b611575113eb1afd81fe9ee4d9a5c75b108f081e23fc, hash_normalization: git_eol_lf}
+  - {path: docs/operations/operations_runbook.md, sha256: 42175988c9eb348e3e916775bb3c1e64c5f0e44365ce74ad6382ab680ddf2d3c, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md, sha256: f0a61d9e16104d60aece8f124a0651b14f498da7235b17c8029e6ddefe880d21, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: d3b7b1bf410337cfe0c314d63690b4619665801d5994a262b628cb0b5865d06b, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 1436d482c1797a73c57735460cc115ac58ba63decfe6bc8f4755f2f95aeeb3a3, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: ea6b7ffc4ec204e55d92a601cc6bbabe8f6e5f4cdbc3b0dbf7f683cb534cf1fc, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 67de86b8e7fba09c0b6e3bf44cde245841a1770cb69d47137d446157305840c7, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: f0feed4dfd39f168b3eec7f742125c98a375c5549313e2f82ac4cb0335893e0f, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: f19c793d5526deb82a4bb8f78decdb60803a4b5a5f37d5541a27af3fe280ac05, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 31f637a41d6f3fa8e8b0aa2d08f18932f70bc144086d4227924a2acfe396e1de, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml, sha256: bb2af310a0d956ad09a8acb6e44a5640cb8484be9724291697357c96f5acae4a, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/ops_release_promotion.py, sha256: f05eeb8af3d3364262045a758394ea70ec2f0c6deca5f3d436e4f49da0d0e96c, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: 10886048fee97b4bdc432f3813b7792f9022a483bf84d145e16f1fa9b732e695, hash_normalization: git_eol_lf}
+  - {path: tests/test_ops_release_promotion.py, sha256: 266d1263c845474dd16983e85ba32464789e23fe77b170371b8824b583fefa9b, hash_normalization: git_eol_lf}
+  implementation:
+    pre_switch_policy_source: coordinator_candidate
+    audited_repository_binding: permanent_runtime
+    old_runtime_policy_parsed: false
+    dirty_inventory_and_diff_checks_preserved: true
+    manual_checkout_workaround_allowed: false
+    policy_copy_workaround_allowed: false
+    real_ancestor_schema_regression: true
+    transaction_event_started_before_clean_audit: false
+    runtime_head_changed_on_schema_blocker: false
+  validation:
+    focused: PENDING
+    architecture: PENDING
+    contract: PENDING
+    integration: PENDING
+    reproducibility: PENDING
+    full: PENDING
+  safety:
+    data_quality_contract_changed: false
+    strategy_logic_changed: false
+    production_weights_written: false
+    active_shadow_weights_written: false
+    production_effect: none
+    broker_action: none
