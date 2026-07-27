@@ -405,7 +405,11 @@ exact runtime-generated exclusions（仅 `outputs/artifacts/data/derived`），r
 逐 byte live revalidate；development dirty semantics 不变。跨 release pre-switch clean audit
 由已验证 coordinator candidate 的 checkout policy 解释，但 audited Git identity、dirty
 inventory 与 staged/unstaged diff checks 始终绑定 permanent runtime；旧 release 自带 policy
-schema 不参与解析，且不得靠手工 checkout 或复制 policy 绕过。Active
+schema 不参与解析，且不得靠手工 checkout 或复制 policy 绕过。切换后的 provenance 与
+active receipt live validation 改由 exact runtime release 自身的 checkout policy 完成，
+development root 仅证明 Git common-dir 隔离，因此 temporary lane 可按生命周期清理；
+runtime Python probe 清除继承的 `PYTHONPATH`/`PYTHONHOME`，避免 coordinator source 污染
+runtime-local import identity。Active
 receipt、marker、release、remote、clean audit、runtime executable/import 任一缺失或漂移均 fail
 closed。`daily-run` 先取得 checkout WRITE lease，再执行并写 scheduler preflight；人工运行只有
 显式 `--manual-execution` 才可进入，active scheduler checkout 禁止混用 manual mode。
@@ -415,7 +419,8 @@ flowchart LR
     EXCLUDE["Reviewed runtime-only Git exclusions<br/>exact bytes + SHA + patterns"] --> RC["Owner-approved release candidate<br/>remote main + exact six-tier evidence"]
     RC --> AUDIT["Pre-switch runtime clean audit<br/>candidate policy + exact runtime target"]
     AUDIT --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
-    PROMOTE --> ACCEPT["Active deployment receipt<br/>independent clone + runtime/environment fingerprint + scheduler observation"]
+    PROMOTE --> SELF["Post-switch self-audit<br/>runtime policy + sanitized Python probe"]
+    SELF --> ACCEPT["Active deployment receipt<br/>independent clone + runtime/environment fingerprint + scheduler observation"]
     ACCEPT --> TRIG["Only external trigger<br/>aits ops daily-run"]
     TRIG --> WRITE["Checkout WRITE lease"]
     WRITE --> PREFLIGHT["Receipt-gated scheduler checkout preflight"]

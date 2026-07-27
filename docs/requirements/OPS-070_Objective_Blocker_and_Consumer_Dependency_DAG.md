@@ -546,3 +546,27 @@ owner acceptance 均通过后才能成为 active runtime。下一合法 provider
   immutable compatibility section、重新生成 views、形成新的 exact-commit 六档正式
   validation 与 release receipt，之后才重试 promotion。当前仍 `VALIDATING`，
   `production_effect=none`，无 provider/weights/broker/trading action。
+
+### 2026-07-27 post-switch runtime self-containment blocker
+
+- candidate `a994a9d03028263d00d1682a39bcdded93c58c47` 已通过 Fast=`340`、
+  Architecture=`747`、Contract=`275`、Integration=`995`、Reproducibility=`23`、
+  Full=`7555 passed / 5 skipped`，并完成 local-main fast-forward 与普通 remote push。
+  第一次晋升重试因 coordinator 临时 `PYTHONPATH` 被 runtime probe 子进程继承而
+  `RUNTIME_PACKAGE_OUTSIDE_CHECKOUT`，事务已回滚且保留 immutable event；清除调用进程的
+  临时路径后，第二次晋升到 `PROMOTED_NOT_ACTIVATED`，runtime self-audit 为 clean。
+- 部署前复核进一步确认：post-switch `inspect_runtime_provenance` 仍从 temporary
+  development lane 读取 checkout policy。即使 runtime release 完全自足，按既定 exit
+  condition 清理该 lane 后，active receipt 的 live validation 也会因开发目录缺失或后续
+  policy drift 失效。把临时 lane 永久保留会违反本节生命周期，也会制造新的隐藏 scheduler
+  依赖，不能作为 workaround。
+- 最佳直接修复是把 pre-switch audit 与 post-switch audit 分开：promotion 在切换前继续
+  使用 exact coordinator candidate policy 审计旧 runtime；切换成功后，runtime provenance
+  必须只使用已切换 exact release 自身的 checkout policy，development root 仅证明 Git
+  common-dir 独立。同时 runtime probe 必须从子进程环境移除 `PYTHONPATH` 与
+  `PYTHONHOME`，防止 coordinator import path 污染 runtime-local executable 证明。
+  regression 必须证明 retired/invalid development policy 不影响 post-switch self-audit，
+  并证明 probe environment 不携带两项 Python path override。完成新的 exact-commit 六档
+  正式门禁、release/promotion/acceptance 后，才可清理 temporary lane、激活唯一 automation；
+  当前保持 `VALIDATING`、`scheduler_activation=false`、`daily_run=false`、
+  `production_effect=none`。

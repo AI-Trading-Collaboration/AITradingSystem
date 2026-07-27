@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -284,6 +285,87 @@ def test_runtime_provenance_rejects_global_editable_import(
             runtime_python=runtime_python,
             candidate_commit=commit,
         )
+
+
+def test_runtime_provenance_uses_runtime_policy_after_switch(
+    release_repository: ReleaseRepository,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    development, commit, _validation, _critical = release_repository
+    runtime = tmp_path / "runtime"
+    _clone_independent(development, runtime, commit)
+    runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
+    runtime_python.parent.mkdir(parents=True)
+    runtime_python.write_bytes(b"runtime")
+    monkeypatch.setattr(
+        promotion,
+        "_runtime_probe",
+        lambda **_: _probe_payload(runtime, runtime_python),
+    )
+    (
+        development
+        / "config"
+        / "architecture"
+        / "arch_005_s4d_checkout_guard.yaml"
+    ).write_text("schema_version: retired_policy.v0\n", encoding="utf-8")
+
+    payload = inspect_runtime_provenance(
+        runtime_root=runtime,
+        development_root=development,
+        runtime_python=runtime_python,
+        candidate_commit=commit,
+    )
+
+    assert payload["head_commit"] == commit
+    assert payload["development_checkout_root"] == str(development.resolve())
+    assert payload["dirty_path_count"] == 0
+
+
+def test_runtime_probe_removes_coordinator_python_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    runtime_python = runtime / ".venv" / "Scripts" / "python.exe"
+    observed: dict[str, object] = {}
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        observed["env"] = kwargs["env"]
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "executable": str(runtime_python),
+                    "module_file": str(
+                        runtime / "src" / "ai_trading_system" / "__init__.py"
+                    ),
+                    "project_root": str(runtime),
+                    "installed_distributions": [
+                        {"name": "ai-trading-system", "version": "0.1.0"}
+                    ],
+                }
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setenv("PYTHONPATH", str(tmp_path / "coordinator-src"))
+    monkeypatch.setenv("PYTHONHOME", str(tmp_path / "coordinator-home"))
+    monkeypatch.setattr(promotion.subprocess, "run", fake_run)
+
+    payload = promotion._runtime_probe(
+        runtime_root=runtime,
+        runtime_python=runtime_python,
+        package_module="ai_trading_system",
+    )
+
+    environment = observed["env"]
+    assert isinstance(environment, dict)
+    assert "PYTHONPATH" not in environment
+    assert "PYTHONHOME" not in environment
+    assert payload["project_root"] == str(runtime)
 
 
 def test_runtime_git_exclusion_install_is_exact_and_rejects_unknown_rules(

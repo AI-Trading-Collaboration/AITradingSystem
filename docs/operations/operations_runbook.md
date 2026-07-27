@@ -55,7 +55,11 @@
   clean/dirty 规则，但 audited repository、Git identity、tracked/untracked/staged inventory
   与 diff checks 始终绑定 permanent runtime；旧 runtime 自带的旧 policy schema 不是
   pre-switch 解析 authority。schema mismatch 不得通过手工 checkout、复制 policy 或跳过
-  clean gate 绕过。Promotion 只能显式选择 receipt 中的 commit，使用 promotion
+  clean gate 绕过。切换完成后的 runtime provenance 与 active receipt live validation
+  必须改用 exact runtime release 自身的 checkout policy；development root 仅用于证明
+  Git common-dir 独立，不得成为临时 worktree 的长期 scheduler 依赖。runtime-local Python
+  probe 必须清除继承的 `PYTHONPATH` 与 `PYTHONHOME`，防止 coordinator import path 污染
+  executable/package-root 证明。Promotion 只能显式选择 receipt 中的 commit，使用 promotion
   lock、active daily lease exclusion 和 append-only transaction events；不得自动选择
   latest、stash/clean/reset 或删除旧 state/ledger/data。`daily-run` 先取得 checkout WRITE
   lease，再验证/写 scheduler preflight，因此被阻断的 preflight evidence 也不会成为第二

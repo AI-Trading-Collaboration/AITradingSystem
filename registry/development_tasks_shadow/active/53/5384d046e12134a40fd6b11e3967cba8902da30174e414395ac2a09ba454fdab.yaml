@@ -11,26 +11,27 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：完成 cross-release promotion policy authority、审计更正、新 candidate 六类
-    formal gates、promotion 与唯一 automation 原位切换；operations owner：复核 deployment acceptance
-    与下一合法 scheduler run
+  next_owner: Codex：完成 post-switch runtime self-containment 修复、新 candidate 六类 formal
+    gates、promotion、temporary lane cleanup 与唯一 automation 原位切换；operations owner：复核
+    deployment acceptance 与下一合法 scheduler run
   requirement_refs:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-    数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
-    exclude 已实现；candidate `65e11baa8...` 六类 PASS 且 local/remote main 一致。真实旧 release
-    promotion 在切换前因旧 policy schema 正确 fail closed；runtime HEAD 未变、无 PREPARED/SWITCHED/candidate
-    evidence，但递归复核确认保留了一个 `04_ROLLED_BACK.json` no-op rollback 事件，纠正先前非递归 count=0
-    误报。
+    数据/consumer 隔离、独立 runtime、152,402 files SHA migration、runtime-only exact Git exclude、cross-release
+    coordinator policy 与递归 failure-event audit 已实现；candidate `a994a9d03...` 六类 PASS
+    且 local/remote main 一致，真实 promotion 已到 `PROMOTED_NOT_ACTIVATED`。激活前发现 runtime
+    probe 会继承 coordinator `PYTHONPATH`，且 post-switch live audit 仍依赖 temporary development
+    policy；两者均保持 fail-closed 并进入最小 serial contract 修复。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；跨 release pre-switch
-      dirty inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target，旧 runtime
-      policy schema 不得阻断合法升级或被静默忽略；失败事件 inventory 必须递归且区分 PREPARED/SWITCHED/no-op
-      rollback；独立 runtime 必须有不同 git common dir、runtime-local pinned executable/environment
+      dirty inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target；post-switch
+      provenance 必须由 exact runtime release 自身 policy 自足审计，临时 development root 仅证明
+      Git common-dir 独立且不得成为 scheduler 生命周期依赖；runtime probe 必须移除 `PYTHONPATH`/`PYTHONHOME`
+      污染；失败事件 inventory 必须递归；独立 runtime 必须有 runtime-local pinned executable/environment
       fingerprint、owner-reviewed exact release/validation receipt、reviewed exact runtime
       Git exclude、唯一 scheduler entry、最小权限 credential attestation、promotion lock/active-run
       exclusion、失败回滚与 previous release retention；marker/receipt/exclude 缺失或漂移 fail
@@ -42,61 +43,62 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1589
-    row_sha256: 5767b4ab6ab598ed264ec2e250fa635d7767ad8e667623b7452bb89fa85e6ae5
+    row_sha256: fcc98bfdbbe56f130f4c4db5ecb943a7de5c6558735594529d8205566fb6a2e9
     cell_count: 8
     all_cells:
     - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
     - Operations / objective blocker taxonomy and consumer dependency DAG
     - P0
     - VALIDATING
-    - Codex：完成 cross-release promotion policy authority、审计更正、新 candidate 六类 formal
-      gates、promotion 与唯一 automation 原位切换；operations owner：复核 deployment acceptance
-      与下一合法 scheduler run
+    - Codex：完成 post-switch runtime self-containment 修复、新 candidate 六类 formal gates、promotion、temporary
+      lane cleanup 与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法
+      scheduler run
     - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-      数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
-      exclude 已实现；candidate `65e11baa8...` 六类 PASS 且 local/remote main 一致。真实旧 release
-      promotion 在切换前因旧 policy schema 正确 fail closed；runtime HEAD 未变、无 PREPARED/SWITCHED/candidate
-      evidence，但递归复核确认保留了一个 `04_ROLLED_BACK.json` no-op rollback 事件，纠正先前非递归 count=0
-      误报。
+      数据/consumer 隔离、独立 runtime、152,402 files SHA migration、runtime-only exact Git
+      exclude、cross-release coordinator policy 与递归 failure-event audit 已实现；candidate
+      `a994a9d03...` 六类 PASS 且 local/remote main 一致，真实 promotion 已到 `PROMOTED_NOT_ACTIVATED`。激活前发现
+      runtime probe 会继承 coordinator `PYTHONPATH`，且 post-switch live audit 仍依赖 temporary
+      development policy；两者均保持 fail-closed 并进入最小 serial contract 修复。
     - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；跨 release pre-switch dirty
-      inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target，旧 runtime policy
-      schema 不得阻断合法升级或被静默忽略；失败事件 inventory 必须递归且区分 PREPARED/SWITCHED/no-op rollback；独立
-      runtime 必须有不同 git common dir、runtime-local pinned executable/environment fingerprint、owner-reviewed
+      inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target；post-switch provenance
+      必须由 exact runtime release 自身 policy 自足审计，临时 development root 仅证明 Git common-dir
+      独立且不得成为 scheduler 生命周期依赖；runtime probe 必须移除 `PYTHONPATH`/`PYTHONHOME` 污染；失败事件
+      inventory 必须递归；独立 runtime 必须有 runtime-local pinned executable/environment fingerprint、owner-reviewed
       exact release/validation receipt、reviewed exact runtime Git exclude、唯一 scheduler
       entry、最小权限 credential attestation、promotion lock/active-run exclusion、失败回滚与
       previous release retention；marker/receipt/exclude 缺失或漂移 fail closed；dev dirty
       semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
-    - 2026-07-27：cross-release fix candidate `65e11baa8...` 已 Fast=`340`、Architecture=`745`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7553
-      passed / 5 skipped` 并推送；runtime 仍为 `925315059...`，scheduler 未激活。当前步骤是把 failure-transaction
-      递归 inventory 更正纳入 immutable authority 并生成最终 exact-commit evidence；禁止删除该失败事件或手工
-      checkout；`production_effect=none`。
+    - 2026-07-27：`a994a9d03...` 已 Fast=`340`、Architecture=`747`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7555
+      passed / 5 skipped` 并推送；promotion 首次因 inherited `PYTHONPATH` 回滚，使用无污染调用后到 `PROMOTED_NOT_ACTIVATED`，runtime
+      self-audit clean。当前在直接修复 probe environment 与 post-switch policy self-containment；修复须形成新的
+      exact-commit 六档证据再 promotion/acceptance，scheduler 仍未激活，`production_effect=none`。
     raw_line: '|OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG|Operations /
       objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：完成
-      cross-release promotion policy authority、审计更正、新 candidate 六类 formal gates、promotion
-      与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
-      run|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-      数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
-      exclude 已实现；candidate `65e11baa8...` 六类 PASS 且 local/remote main 一致。真实旧 release
-      promotion 在切换前因旧 policy schema 正确 fail closed；runtime HEAD 未变、无 PREPARED/SWITCHED/candidate
-      evidence，但递归复核确认保留了一个 `04_ROLLED_BACK.json` no-op rollback 事件，纠正先前非递归 count=0
-      误报。|单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；跨 release pre-switch
-      dirty inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target，旧 runtime
-      policy schema 不得阻断合法升级或被静默忽略；失败事件 inventory 必须递归且区分 PREPARED/SWITCHED/no-op
-      rollback；独立 runtime 必须有不同 git common dir、runtime-local pinned executable/environment
-      fingerprint、owner-reviewed exact release/validation receipt、reviewed exact runtime
-      Git exclude、唯一 scheduler entry、最小权限 credential attestation、promotion lock/active-run
-      exclusion、失败回滚与 previous release retention；marker/receipt/exclude 缺失或漂移 fail
-      closed；dev dirty semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无
-      weights/broker/trading。|2026-07-27：cross-release fix candidate `65e11baa8...`
-      已 Fast=`340`、Architecture=`745`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7553
-      passed / 5 skipped` 并推送；runtime 仍为 `925315059...`，scheduler 未激活。当前步骤是把 failure-transaction
-      递归 inventory 更正纳入 immutable authority 并生成最终 exact-commit evidence；禁止删除该失败事件或手工
-      checkout；`production_effect=none`。|'
+      post-switch runtime self-containment 修复、新 candidate 六类 formal gates、promotion、temporary
+      lane cleanup 与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法
+      scheduler run|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
+      数据/consumer 隔离、独立 runtime、152,402 files SHA migration、runtime-only exact Git
+      exclude、cross-release coordinator policy 与递归 failure-event audit 已实现；candidate
+      `a994a9d03...` 六类 PASS 且 local/remote main 一致，真实 promotion 已到 `PROMOTED_NOT_ACTIVATED`。激活前发现
+      runtime probe 会继承 coordinator `PYTHONPATH`，且 post-switch live audit 仍依赖 temporary
+      development policy；两者均保持 fail-closed 并进入最小 serial contract 修复。|单源失败不阻断无关 source/consumer；缺依赖
+      consumer 显式 `BLOCKED`；跨 release pre-switch dirty inventory 必须由已验证 coordinator
+      policy 解释并审计 exact runtime target；post-switch provenance 必须由 exact runtime release
+      自身 policy 自足审计，临时 development root 仅证明 Git common-dir 独立且不得成为 scheduler 生命周期依赖；runtime
+      probe 必须移除 `PYTHONPATH`/`PYTHONHOME` 污染；失败事件 inventory 必须递归；独立 runtime 必须有 runtime-local
+      pinned executable/environment fingerprint、owner-reviewed exact release/validation
+      receipt、reviewed exact runtime Git exclude、唯一 scheduler entry、最小权限 credential
+      attestation、promotion lock/active-run exclusion、失败回滚与 previous release retention；marker/receipt/exclude
+      缺失或漂移 fail closed；dev dirty semantics不放宽；下一合法 run 才验收 PIT/score/dashboard/Reader
+      Brief；无 weights/broker/trading。|2026-07-27：`a994a9d03...` 已 Fast=`340`、Architecture=`747`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7555
+      passed / 5 skipped` 并推送；promotion 首次因 inherited `PYTHONPATH` 回滚，使用无污染调用后到 `PROMOTED_NOT_ACTIVATED`，runtime
+      self-audit clean。当前在直接修复 probe environment 与 post-switch policy self-containment；修复须形成新的
+      exact-commit 六档证据再 promotion/acceptance，scheduler 仍未激活，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-5767b4ab6ab598ed264ec2e2
+  event_id: legacy-import-fcc98bfdbbe56f130f4c4db5
   task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -109,16 +111,16 @@ initial_event:
   to_status: VALIDATING
   payload:
     priority: P0
-    next_owner: Codex：完成 cross-release promotion policy authority、审计更正、新 candidate
-      六类 formal gates、promotion 与唯一 automation 原位切换；operations owner：复核 deployment
-      acceptance 与下一合法 scheduler run
-    notes: 2026-07-27：cross-release fix candidate `65e11baa8...` 已 Fast=`340`、Architecture=`745`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7553
-      passed / 5 skipped` 并推送；runtime 仍为 `925315059...`，scheduler 未激活。当前步骤是把 failure-transaction
-      递归 inventory 更正纳入 immutable authority 并生成最终 exact-commit evidence；禁止删除该失败事件或手工
-      checkout；`production_effect=none`。
+    next_owner: Codex：完成 post-switch runtime self-containment 修复、新 candidate 六类 formal
+      gates、promotion、temporary lane cleanup 与唯一 automation 原位切换；operations owner：复核
+      deployment acceptance 与下一合法 scheduler run
+    notes: 2026-07-27：`a994a9d03...` 已 Fast=`340`、Architecture=`747`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7555
+      passed / 5 skipped` 并推送；promotion 首次因 inherited `PYTHONPATH` 回滚，使用无污染调用后到 `PROMOTED_NOT_ACTIVATED`，runtime
+      self-audit clean。当前在直接修复 probe environment 与 post-switch policy self-containment；修复须形成新的
+      exact-commit 六档证据再 promotion/acceptance，scheduler 仍未激活，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:5767b4ab6ab598ed264ec2e250fa635d7767ad8e667623b7452bb89fa85e6ae5
+  - sha256:fcc98bfdbbe56f130f4c4db5ecb943a7de5c6558735594529d8205566fb6a2e9
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -126,30 +128,31 @@ projection:
   - Operations / objective blocker taxonomy and consumer dependency DAG
   - P0
   - VALIDATING
-  - Codex：完成 cross-release promotion policy authority、审计更正、新 candidate 六类 formal gates、promotion
-    与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
-    run
+  - Codex：完成 post-switch runtime self-containment 修复、新 candidate 六类 formal gates、promotion、temporary
+    lane cleanup 与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法
+    scheduler run
   - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
-    数据/consumer 隔离、独立 runtime、152,402 files SHA migration 与 runtime-only exact Git
-    exclude 已实现；candidate `65e11baa8...` 六类 PASS 且 local/remote main 一致。真实旧 release
-    promotion 在切换前因旧 policy schema 正确 fail closed；runtime HEAD 未变、无 PREPARED/SWITCHED/candidate
-    evidence，但递归复核确认保留了一个 `04_ROLLED_BACK.json` no-op rollback 事件，纠正先前非递归 count=0
-    误报。
+    数据/consumer 隔离、独立 runtime、152,402 files SHA migration、runtime-only exact Git exclude、cross-release
+    coordinator policy 与递归 failure-event audit 已实现；candidate `a994a9d03...` 六类 PASS
+    且 local/remote main 一致，真实 promotion 已到 `PROMOTED_NOT_ACTIVATED`。激活前发现 runtime
+    probe 会继承 coordinator `PYTHONPATH`，且 post-switch live audit 仍依赖 temporary development
+    policy；两者均保持 fail-closed 并进入最小 serial contract 修复。
   - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；跨 release pre-switch dirty
-    inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target，旧 runtime policy
-    schema 不得阻断合法升级或被静默忽略；失败事件 inventory 必须递归且区分 PREPARED/SWITCHED/no-op rollback；独立
-    runtime 必须有不同 git common dir、runtime-local pinned executable/environment fingerprint、owner-reviewed
+    inventory 必须由已验证 coordinator policy 解释并审计 exact runtime target；post-switch provenance
+    必须由 exact runtime release 自身 policy 自足审计，临时 development root 仅证明 Git common-dir
+    独立且不得成为 scheduler 生命周期依赖；runtime probe 必须移除 `PYTHONPATH`/`PYTHONHOME` 污染；失败事件
+    inventory 必须递归；独立 runtime 必须有 runtime-local pinned executable/environment fingerprint、owner-reviewed
     exact release/validation receipt、reviewed exact runtime Git exclude、唯一 scheduler
     entry、最小权限 credential attestation、promotion lock/active-run exclusion、失败回滚与 previous
     release retention；marker/receipt/exclude 缺失或漂移 fail closed；dev dirty semantics不放宽；下一合法
     run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
-  - 2026-07-27：cross-release fix candidate `65e11baa8...` 已 Fast=`340`、Architecture=`745`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7553
-    passed / 5 skipped` 并推送；runtime 仍为 `925315059...`，scheduler 未激活。当前步骤是把 failure-transaction
-    递归 inventory 更正纳入 immutable authority 并生成最终 exact-commit evidence；禁止删除该失败事件或手工
-    checkout；`production_effect=none`。
+  - 2026-07-27：`a994a9d03...` 已 Fast=`340`、Architecture=`747`、Contract=`275`、Integration=`995`、Reproducibility=`23`、Full=`7555
+    passed / 5 skipped` 并推送；promotion 首次因 inherited `PYTHONPATH` 回滚，使用无污染调用后到 `PROMOTED_NOT_ACTIVATED`，runtime
+    self-audit clean。当前在直接修复 probe environment 与 post-switch policy self-containment；修复须形成新的
+    exact-commit 六档证据再 promotion/acceptance，scheduler 仍未激活，`production_effect=none`。
   docs_links:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   terminal: false
-  raw_row_sha256: 5767b4ab6ab598ed264ec2e250fa635d7767ad8e667623b7452bb89fa85e6ae5
+  raw_row_sha256: fcc98bfdbbe56f130f4c4db5ecb943a7de5c6558735594529d8205566fb6a2e9
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 973f92f36d7d9199e18ac6301baa5e1ea46e79716ad93f2f2d8a867f8df1dc28
+fragment_checksum: ec13a3933eaa892bcd2763647e0e85eb879bc8d9fd84a063a2d84ca48ff7ac07

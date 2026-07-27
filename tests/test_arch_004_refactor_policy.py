@@ -812,7 +812,20 @@ OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT = 1_879_635
 OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_SHA256 = (
     "19a4d39134dc9833bdcfe7d0b413f2dfb973a811d5744f00c69b90c0cf7fc142"
 )
-LATEST_COMPATIBILITY_SECTION = OPS_070_FAILURE_AUDIT_SECTION
+OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION = (
+    "phase_ops_070_runtime_self_containment"
+)
+OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT = (
+    "a994a9d03028263d00d1682a39bcdded93c58c47"
+)
+OPS_070_RUNTIME_SELF_CONTAINMENT_BASELINE_GIT_BLOB = (
+    "2a7f474a1893d2676f815f71a71ba822803195fc"
+)
+OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT = 1_883_797
+OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_SHA256 = (
+    "283f2be42e0ba970f4695e96b6b463b1f22ed81ddf76fa31b031fac7b822bfa3"
+)
+LATEST_COMPATIBILITY_SECTION = OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -1806,6 +1819,26 @@ def _ops_070_failure_audit_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _ops_070_runtime_self_containment_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == OPS_070_RUNTIME_SELF_CONTAINMENT_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -2735,6 +2768,35 @@ def _assert_ops_070_failure_audit_historical_prefix_immutable(
         OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT:
     ]
     expected_marker = f"\n{OPS_070_FAILURE_AUDIT_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert (
+        len(base_blob)
+        == OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[
+        :OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
+    ]
+    assert historical_prefix == base_blob, (
+        "OPS-070 runtime self-containment historical prefix differs from "
+        "immutable failure-audit correction blob"
+    )
+    suffix = current_bytes[
+        OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT:
+    ]
+    expected_marker = (
+        f"\n{OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION}:\n".encode()
+    )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -3864,6 +3926,30 @@ def _ops_070_failure_audit_source_paths() -> frozenset[str]:
 
 
 @cache
+def _ops_070_runtime_self_containment_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_070_runtime_self_containment_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _ops_070_runtime_self_containment_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -4626,12 +4712,38 @@ def _ops_070_failure_audit_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(OPS_070_FAILURE_AUDIT_SECTION)
 
 
+@cache
+def _ops_070_runtime_self_containment_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
+    )
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if OPS_070_FAILURE_AUDIT_SECTION in baseline:
+    if OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION in baseline:
+        current_superseded_paths = (
+            _ops_070_runtime_self_containment_superseded_live_source_paths()
+        )
+        assert (
+            _ops_070_runtime_self_containment_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
+    elif OPS_070_FAILURE_AUDIT_SECTION in baseline:
         current_superseded_paths = (
             _ops_070_failure_audit_superseded_live_source_paths()
         )
@@ -11437,13 +11549,15 @@ def test_ops_070_cross_release_policy_rejects_historical_prefix_tamper() -> None
         )
 
 
-def test_ops_070_promotion_failure_audit_is_current_hash_authority() -> None:
+def test_ops_070_promotion_failure_audit_is_immutable_historical_authority() -> None:
     _assert_ops_070_failure_audit_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_failure_audit_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == OPS_070_FAILURE_AUDIT_SECTION
+    assert list(baseline).index(OPS_070_FAILURE_AUDIT_SECTION) < list(
+        baseline
+    ).index(OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION)
     phase = baseline[OPS_070_FAILURE_AUDIT_SECTION]
     assert (
         phase["schema_version"]
@@ -11468,7 +11582,6 @@ def test_ops_070_promotion_failure_audit_is_current_hash_authority() -> None:
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _ops_070_failure_audit_prior_active_source_mismatches()
     assert phase["removed_live_source_paths"] == []
     assert phase["new_source_paths"] == []
     assert set(phase["source_delta_paths"]) == superseded
@@ -11479,7 +11592,13 @@ def test_ops_070_promotion_failure_audit_is_current_hash_authority() -> None:
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert (
+            _source_sha256_at_commit(
+                source,
+                OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT,
+            )
+            == source["sha256"]
+        ), source["path"]
     assert phase["implementation"] == {
         "recursive_transaction_inventory": True,
         "observed_event_states": ["ROLLED_BACK"],
@@ -11512,6 +11631,94 @@ def test_ops_070_failure_audit_rejects_historical_prefix_tamper() -> None:
     tampered[OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_ops_070_failure_audit_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_ops_070_runtime_self_containment_is_current_hash_authority() -> None:
+    _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_070_runtime_self_containment_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
+    phase = baseline[OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION]
+    assert (
+        phase["schema_version"]
+        == "ops_070_runtime_self_containment_compatibility.v1"
+    )
+    assert phase["status"] in {
+        "VALIDATING_RUNTIME_SELF_CONTAINMENT",
+        "RUNTIME_SELF_CONTAINMENT_ACCEPTED",
+    }
+    assert phase["boundary_id"] == "OPS-070-RUNTIME-SELF-CONTAINMENT"
+    assert phase["task_ids"] == [
+        "OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": OPS_070_RUNTIME_SELF_CONTAINMENT_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (
+            OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert (
+        superseded
+        == _ops_070_runtime_self_containment_prior_active_source_mismatches()
+    )
+    assert phase["removed_live_source_paths"] == []
+    assert phase["new_source_paths"] == []
+    assert set(phase["source_delta_paths"]) == superseded
+    sources = phase["sources"]
+    assert [str(row["path"]) for row in sources] == sorted(
+        superseded,
+        key=str.casefold,
+    )
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "pre_switch_policy_source": "coordinator_candidate",
+        "post_switch_policy_source": "exact_runtime_release",
+        "development_root_role": "git_common_dir_isolation_only",
+        "temporary_development_lane_runtime_dependency": False,
+        "runtime_probe_pythonpath_removed": True,
+        "runtime_probe_pythonhome_removed": True,
+        "runtime_local_executable_required": True,
+        "runtime_local_package_required": True,
+    }
+    validation = phase["validation"]
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "data_quality_contract_changed": False,
+        "strategy_logic_changed": False,
+        "production_weights_written": False,
+        "active_shadow_weights_written": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_ops_070_runtime_self_containment_rejects_historical_prefix_tamper() -> None:
+    base_blob = _ops_070_runtime_self_containment_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[
+        OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

@@ -559,10 +559,10 @@ def inspect_runtime_provenance(
     remote_commit = _git_text(root, "rev-parse", checked_policy.reviewed_remote_ref)
     runtime_common = _git_common_dir(root)
     development_common = _git_common_dir(dev_root)
-    dirty_paths = _governed_dirty_paths(
-        root,
-        policy_source_root=dev_root,
-    )
+    # Post-switch provenance must be self-contained in the exact runtime release.
+    # The development checkout only proves Git isolation and may be retired after
+    # deployment; binding live audits to it would make scheduler preflight fragile.
+    dirty_paths = _governed_dirty_paths(root)
     if dirty_paths:
         raise OpsReleasePromotionError("RUNTIME_CHECKOUT_DIRTY", ",".join(dirty_paths))
     if head != candidate_commit or remote_commit != candidate_commit:
@@ -1351,10 +1351,18 @@ def _runtime_probe(
         "print(json.dumps({'executable':sys.executable,'module_file':m.__file__,"
         "'project_root':str(c.PROJECT_ROOT),'installed_distributions':d}))"
     )
+    probe_environment = os.environ.copy()
+    # The coordinator may need PYTHONPATH to load the candidate CLI before a
+    # release is installed. That path must never influence the runtime-local
+    # interpreter probe or make a valid isolated runtime appear to import from
+    # the development checkout.
+    probe_environment.pop("PYTHONPATH", None)
+    probe_environment.pop("PYTHONHOME", None)
     try:
         result = subprocess.run(
             (str(runtime_python), "-c", code),
             cwd=runtime_root,
+            env=probe_environment,
             check=False,
             text=True,
             capture_output=True,
