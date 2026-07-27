@@ -2,7 +2,7 @@
 
 最后更新：2026-07-28
 
-状态：`IN_PROGRESS_S3_PACK_COMPLETE_OWNER_SELECTION_REQUIRED_S4_NOT_STARTED`
+状态：`IN_PROGRESS_S4_O1_SELECTED_POLICY_REVIEW_REQUIRED_CAPABILITY_AUDIT_NOT_STARTED`
 
 稳定任务 ID：`TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION`
 
@@ -12,6 +12,7 @@ Owner 决策：
 - `owner_decision:TRADING-2463:2026-07-27:authorize_decision_target_redesign_preregistration_v1`
 - `owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`
 - `owner_decision:TRADING-2463:2026-07-28:enter_s3_target_selection_pack_v1`
+- `owner_decision:TRADING-2463:2026-07-28:select_o1_relative_opportunity_spread_single_target_for_s4_v1`
 - `owner_decision:TRADING-2459:2026-07-27:defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`
 
 ## 1. 决策与目标
@@ -82,6 +83,13 @@ S3 当前权威选择包：
 `docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`。
 该文件只形成 Owner 可审阅的 option triage、单/双 target 选择、policy gap 与显式选择位；
 在 Owner 选择前，`selected_target=NONE`，不得启动 S4 或任何 capability computation。
+
+S4 当前权威 preregistration freeze proposal：
+`docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md`。
+Owner 已选择 O1 单 target，但尚未批准 numeric pilot policy bundle；当前
+`selected_target=RELATIVE_OPPORTUNITY_SPREAD`、`target_structure=SINGLE_TARGET`、
+`numeric_policy_frozen=false`。在 Owner 审阅 numeric policy 前不得读取新 coverage/result，
+未来 capability audit 仍须另立任务。
 
 ## 4. 阶段与依赖
 
@@ -208,4 +216,19 @@ S3 当前权威选择包：
   643 warnings`。Full provenance绑定`TRADING-2463-S3-20260728`与
   `natural_integration_boundary`。五类runtime evidence、checkout intent与当前lease
   events按7项显式路径白名单迁移到canonical `D:\Work\AITradingSystem`，共29个文件
+  逐文件SHA-256一致；post-Full Architecture/Contract仍待最终tracked state验证。
+- 2026-07-28：Owner以
+  `owner_decision:TRADING-2463:2026-07-28:select_o1_relative_opportunity_spread_single_target_for_s4_v1`
+  选择 O1 `RELATIVE_OPPORTUNITY_SPREAD` 单 target 并授权进入 S4。S4 freeze proposal 已冻结
+  target form、label、direction、unit、single-target structure、action-role 与禁止项；5-session
+  horizon、split、coverage floor、primary metric 和 capability gate 组成
+  `TRADING_2463_O1_S4_PILOT_V1_PROPOSAL`，状态为 `OWNER_REVIEW_REQUIRED_NOT_ACTIVE`。
+  当前未读取新 count/result、未训练模型，`numeric_policy_frozen=false`、
+  `capability_audit_started=false`。
+- 2026-07-28：S4 entry phase-exit验证通过：focused=`139 passed`、
+  Architecture=`762 passed`、Contract=`275 passed`、Reproducibility=`23 passed`、
+  Integration=`995 passed / 642 warnings`、Full=`7587 passed / 5 skipped /
+  642 warnings`。Full provenance绑定`TRADING-2463-S4-ENTRY-20260728`与
+  `natural_integration_boundary`。五类runtime evidence、checkout intent与当前lease
+  events按7项显式路径白名单迁移到canonical `D:\Work\AITradingSystem`，共19个文件
   逐文件SHA-256一致；post-Full Architecture/Contract仍待最终tracked state验证。

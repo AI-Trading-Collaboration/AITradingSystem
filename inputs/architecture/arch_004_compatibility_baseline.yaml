@@ -30690,3 +30690,94 @@ phase_trading_2463_decision_target_redesign_s3_target_selection_pack:
     active_shadow_weights_written: false
     production_effect: none
     broker_action: none
+
+phase_trading_2463_decision_target_redesign_s4_o1_preregistration_freeze:
+  schema_version: trading_2463_decision_target_redesign_s4_o1_preregistration_freeze_compatibility.v1
+  status: S4_POLICY_REVIEW_REQUIRED
+  boundary_id: TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-FREEZE
+  task_ids:
+  - TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
+  owner_authorizations:
+  - owner_decision:TRADING-2463:2026-07-28:select_o1_relative_opportunity_spread_single_target_for_s4_v1
+  prior_sections_immutability:
+    source_commit: f625b8bffd004ee0beafde00962eec2299cd3e27
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: f57b0ec0b2c31ee010b3f84c3a6301739e3033d1
+    raw_byte_count: 1929057
+    raw_sha256: 813e2400f4dff24194ebb640e44ffc8bbc25a68f595331148114ade7b0bb5182
+    append_offset: 1929057
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/a0/a022ba7f79e435805c2c428b903604715852fe7334cada5e4433fb600493a515.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-FREEZE
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2463_decision_target_redesign_s3_target_selection_pack
+    current_hash_authority: phase_trading_2463_decision_target_redesign_s4_o1_preregistration_freeze.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md
+  source_delta_paths:
+  - docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md
+  - docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/a0/a022ba7f79e435805c2c428b903604715852fe7334cada5e4433fb600493a515.yaml
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - {path: docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md, sha256: bf7b6ce8a0fb2332dbcfb350bb12ea4bcd9fe7b7356d1fed09cf6964f8f483c2, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md, sha256: 680601fa8b3b4fafa7cddcbd4625827efdc1ebd49becb1dacec9a89104e02744, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: bbb34aefbf351dc7fa47a16356a7827e9003b818f39e480877e8d1ce45b8d7d1, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 23c53d051b038399a65b5c9c9468d8242876806eee9c267ff1ec35a8d630c07f, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 1645e47cb17d103978245caeb54877613d8ec7e540dd7feb030220f12daabcb6, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: 4d09e1b9a5241824ca65115366a87ede5e896945bb2788a6ad12158c84460e87, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/a0/a022ba7f79e435805c2c428b903604715852fe7334cada5e4433fb600493a515.yaml, sha256: 31a7c18063cade454b6ba2c99eb9ff2a728547d1abadf2b94157a978967a6b7e, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: 7df4d49b781391572d4e18644a290840d4bb70289f851e44b7d98da72af613b5, hash_normalization: git_eol_lf}
+  implementation:
+    s3_complete: true
+    s4_started: true
+    selected_target: RELATIVE_OPPORTUNITY_SPREAD
+    target_structure: SINGLE_TARGET
+    primary_target: RELATIVE_OPPORTUNITY_SPREAD
+    secondary_target: NONE
+    risk_veto_target: NONE
+    policy_proposal_id: TRADING_2463_O1_S4_PILOT_V1_PROPOSAL
+    policy_proposal_active: false
+    numeric_policy_frozen: false
+    primary_horizon: UNAPPROVED_PROPOSAL_5_COMMON_SESSIONS
+    canonical_dq_strict_pass_required: true
+    new_results_read: false
+    prospective_accessed: false
+    model_training_executed: false
+    capability_audit_started: false
+    decision_value_audit_started: false
+    risk_overlay_created: false
+    candidate_backtest_weights_created: false
+    qld_automatic_selection_enabled: false
+  validation:
+    focused: PASS_139
+    architecture: PASS_762
+    contract: PASS_275
+    full: PASS_7587_SKIPPED_5
+    integration: PASS_995
+    reproducibility: PASS_23
+    post_full_architecture: PASS_762
+    post_full_contract: PASS_275
+  safety:
+    data_quality_contract_changed: false
+    strategy_logic_changed: false
+    production_weights_written: false
+    active_shadow_weights_written: false
+    production_effect: none
+    broker_action: none
