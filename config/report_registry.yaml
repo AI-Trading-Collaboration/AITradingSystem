@@ -20979,6 +20979,32 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: price_non_market_session_attribution_source_owner_review_pack
+    title: Price Non-Market-Session Attribution Source-Owner Review Pack
+    group: governance
+    cadence: ad_hoc
+    audience: project_owner
+    owner: data_platform
+    command: python scripts/price_issue_attribution_review_pack.py --repo-root .
+    artifact_globs:
+      - config/data_quality/price_non_market_session_attribution_review_v1.yaml
+      - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
+      - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.validation.json
+      - docs/data_quality/price_non_market_session_attribution_review_pack_v1.md
+      - docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 0
+    freshness_rationale: >-
+      DATA-GOV-002C2P binds the exact C1 price site, canonical DQ source,
+      reviewed DQ policy, US equity calendar implementation, special-closure
+      authority and non-authoritative proposal bytes. Any input change requires
+      an immediate rebuild before the price source owner records a decision.
+    owner_action: decide_price_non_market_session_attribution_before_c3_contract_wave
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none
   - report_id: decision_target_capability_audit_label_foundation
     title: Decision Target Capability Audit Batch 1 Label Foundation
     group: research

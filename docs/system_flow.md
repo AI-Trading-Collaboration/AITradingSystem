@@ -1130,6 +1130,20 @@ move issue 的完整 row/window evidence 必须同时包含 trigger row 和同 s
 Window/row-level isolation、typed runtime schema、capability classifier、consumer migration、
 daily/periodic、production 和 broker 均未授权。
 
+DATA-GOV-002C2P 对 C1 中唯一已有 instrument-level pilot authority 的
+`prices_non_market_session_date` site 增加独立、非授权性的六维 source-owner review pack。
+`python scripts/price_issue_attribution_review_pack.py --repo-root .` 绑定 exact C1 inventory、
+proposal、canonical `quality.py`、reviewed `config/data_quality.yaml`、US equity calendar
+runtime、special-closure loader 与 reviewed registry bytes。Builder 明确区分现有
+`rows=distinct non-session date count`、前 10 个 sample dates 和完整 trigger source-row
+集合；后者必须具备 normalized non-empty ticker、source ordinal 与 canonical row digest。
+Validator 从全部绑定 bytes 重建 pack，拒绝 site、scope taxonomy、requested-window、
+calendar/special-closure authority、DQ policy、proposal 或输出漂移。Price ticker、空 rate
+scope、source role、exact trigger-date set、`date` field 和 row identity 六维建议均保持
+`PENDING_SOURCE_OWNER_DECISION`；缺任一维时继续 `GLOBAL_OR_UNKNOWN_SCOPE`。本 pack 不修改
+`DataQualityIssue`、既有 instrument-only policy、full/scoped DQ 或 consumer，也不授权
+window/row isolation、C3 runtime contract、daily/periodic、production 或 broker 行为。
+
 ```mermaid
 flowchart LR
     C1["Immutable canonical source bytes<br/>full expected universe"] --> G1["validate_data_cache<br/>full canonical report"]

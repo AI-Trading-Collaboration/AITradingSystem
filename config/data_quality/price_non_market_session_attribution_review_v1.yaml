@@ -1,0 +1,99 @@
+schema_version: data_quality_price_non_market_session_attribution_review_proposal.v1
+proposal_id: price_non_market_session_attribution_review_v1
+proposal_version: "1.0.0"
+status: PROPOSED_FOR_SOURCE_OWNER_REVIEW
+task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+parent_owner_decision_id: owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1
+proposal_owner: data_platform_engineering
+required_source_owner: price_source_owner
+canonical_source_role: primary_market_prices
+candidate_source_domain: prices
+review_condition: >-
+  Re-review when the price row schema, requested-window semantics, US equity
+  calendar authority, special-closure registry, issue emitter, DQ policy, or
+  capability-isolation contract changes.
+window_or_row_level_isolation_authorized: false
+new_issue_isolation_authorized: false
+runtime_contract_change_authorized: false
+capability_policy_change_authorized: false
+consumer_migration_authorized: false
+candidate:
+  site_id: dq_issue_site_312625a26da21428b763
+  issue_code: prices_non_market_session_date
+  emitter_function: _check_price_market_calendar_dates
+  severity_contract: CALLER_SUPPLIED
+  scope_taxonomy: DISTINCT_NON_SESSION_DATE_ROW_SET
+  predicate_id: OBSERVED_DATE_IS_NOT_A_REVIEWED_US_EQUITY_TRADING_SESSION
+  current_rows_semantics: DISTINCT_NON_SESSION_DATE_COUNT
+  current_sample_semantics: FIRST_TEN_DISTINCT_NON_SESSION_DATES
+  affected_price_tickers_rule: DISTINCT_NORMALIZED_NON_EMPTY_TICKERS_FROM_ALL_TRIGGER_ROWS
+  affected_rate_series: []
+  affected_source_roles:
+    - primary_market_prices
+  affected_date_rule: DISTINCT_NON_SESSION_DATES_WITHIN_REQUESTED_WINDOW
+  affected_window_rule: REQUESTED_WINDOW_INCLUSIVE
+  affected_fields:
+    - date
+  row_identity_fields:
+    - source_ordinal
+    - canonical_row_digest
+  affected_rows_rule: ALL_TRIGGER_ROWS_WITH_SOURCE_ORDINAL_AND_CANONICAL_ROW_DIGEST
+  trigger_row_dependencies:
+    - ALL_ROWS_WITH_NON_SESSION_DATE_WITHIN_REQUESTED_WINDOW
+  policy_dependencies:
+    - governance.policy_id
+    - governance.policy_version
+    - governance.status
+  attribution_completeness_requirements:
+    - REQUESTED_WINDOW_START_AND_END_ARE_EXPLICIT
+    - EVERY_TRIGGER_DATE_IS_PARSEABLE_AND_WITHIN_REQUESTED_WINDOW
+    - EVERY_TRIGGER_ROW_HAS_A_NORMALIZED_NON_EMPTY_TICKER
+    - EVERY_TRIGGER_ROW_HAS_A_STABLE_SOURCE_ORDINAL
+    - EVERY_TRIGGER_ROW_HAS_A_CANONICAL_ROW_DIGEST
+    - ALL_TRIGGER_ROWS_FOR_EACH_DISTINCT_NON_SESSION_DATE_ARE_INCLUDED
+    - CALENDAR_SOURCE_AND_SPECIAL_CLOSURE_POLICY_ARE_EXACTLY_BOUND
+  incomplete_when:
+    - REQUESTED_WINDOW_IS_MISSING_OR_INVALID
+    - TRIGGER_DATE_SET_IS_EMPTY
+    - ANY_TRIGGER_DATE_IS_UNPARSEABLE_OR_OUTSIDE_REQUESTED_WINDOW
+    - ANY_TRIGGER_ROW_TICKER_IS_MISSING_OR_BLANK
+    - ANY_TRIGGER_ROW_SOURCE_ORDINAL_IS_MISSING_OR_DUPLICATED
+    - ANY_TRIGGER_ROW_CANONICAL_DIGEST_IS_MISSING_OR_INVALID
+    - TRIGGER_ROW_SET_IS_NOT_COMPLETE_FOR_EVERY_TRIGGER_DATE
+    - CALENDAR_AUTHORITY_OR_SPECIAL_CLOSURE_BINDING_IS_MISSING_OR_STALE
+  false_isolation_risks:
+    - DISTINCT_DATE_COUNT_MISTAKEN_FOR_TRIGGER_ROW_COUNT
+    - FIRST_TEN_SAMPLE_DATES_MISTAKEN_FOR_COMPLETE_DATE_SCOPE
+    - LEGACY_AFFECTED_INSTRUMENTS_MISTAKEN_FOR_COMPLETE_ROW_ATTRIBUTION
+    - BLANK_TICKER_SILENTLY_DROPPED_FROM_AFFECTED_SCOPE
+    - CALENDAR_POLICY_DRIFT_CHANGES_TRIGGER_DATES
+    - REQUESTED_WINDOW_DRIFT_CHANGES_TRIGGER_ROWS
+  required_runtime_contract_tests:
+    - MULTIPLE_TICKERS_ON_ONE_NON_SESSION_DATE
+    - ONE_TICKER_ON_MULTIPLE_NON_SESSION_DATES
+    - DUPLICATE_SOURCE_ROWS_RETAIN_DISTINCT_ORDINAL_IDENTITIES
+    - BLANK_OR_MISSING_TICKER_FAILS_CLOSED
+    - INVALID_OR_OUT_OF_WINDOW_DATE_FAILS_CLOSED
+    - CALENDAR_OR_SPECIAL_CLOSURE_DRIFT_FAILS_CLOSED
+    - MESSAGE_AND_SAMPLE_ARE_NEVER_PARSED_FOR_SCOPE
+    - UNKNOWN_OR_INCOMPLETE_ATTRIBUTION_REMAINS_GLOBAL
+  proposed_contract_wave_disposition: CONTRACT_WAVE_CANDIDATE
+  source_owner_decision: PENDING_SOURCE_OWNER_DECISION
+  source_owner_questions:
+    - >-
+      Confirm that primary_market_prices is the only canonical source role for
+      this issue.
+    - >-
+      Confirm that every source row on every distinct non-session date inside
+      the requested window belongs to the affected row set.
+    - >-
+      Confirm that the affected date scope is the exact distinct trigger-date
+      set rather than a contiguous interval.
+    - >-
+      Confirm that date is the only defective field while ticker,
+      source_ordinal, and canonical_row_digest are identity evidence.
+    - >-
+      Confirm that missing ticker, row identity, requested-window, or calendar
+      authority must keep the issue GLOBAL_OR_UNKNOWN_SCOPE.
+production_effect: none
+broker_action: none

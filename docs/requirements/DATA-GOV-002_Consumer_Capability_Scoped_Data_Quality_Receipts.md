@@ -340,3 +340,20 @@ B2 交付：
   `BASELINE_DONE_PHASE_C2_REVIEW_PACK_SOURCE_OWNER_DECISION_PENDING`；下一责任人是 rate
   source owner，对 6 个 site 逐项 `APPROVE_FOR_CONTRACT_WAVE`、`REVISE` 或 `REJECT`。
   在决定齐备前不得建立 C3 runtime contract wave，也不得把工程建议解释为现行隔离权威。
+- 2026-07-27：Phase C2P price review-pack工程基线已闭合并转`BASELINE_DONE`。
+  唯一自然边界Full=`7578 passed / 3 skipped`，post-Full Architecture/Contract=
+  `751/275 passed`；review pack现交price source owner对exact price site作
+  `APPROVE_FOR_CONTRACT_WAVE`、`REVISE`或`REJECT`决定。Decision仍pending，
+  不授权runtime contract、隔离或consumer migration。
+  Exact scope仅为C1既有instrument-level pilot site
+  `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；pack显式区分现有
+  `rows` distinct-date count、前10个sample dates和完整trigger source-row set，并提出
+  ticker/rate/source/date/field/row六维规则。除C1/quality/DQ policy/proposal外，实际
+  trigger predicate所依赖的calendar runtime、special-closure loader和reviewed registry亦
+  逐byte绑定，避免calendar authority漂移。Pack ID=
+  `dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；Ruff、strict mypy、
+  focused与Architecture/Contract/Report/Reproducibility/Integration=
+  `15/741/275/57/23/995 passed`。首轮Architecture的`725 passed / 16 failed`准确暴露
+  reporting/deprecation ratchet、generated freshness与compatibility authority漂移，直接修正后
+  闭合；未降级或绕过门禁。Source-owner decision仍pending，C3/runtime/schema/isolation/
+  consumer migration均未授权。

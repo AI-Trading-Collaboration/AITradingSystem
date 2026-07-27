@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1033
+module_count: 1034
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -2640,6 +2640,28 @@ modules:
 - module_id: src.ai_trading_system.data.market_data
   path: src/ai_trading_system/data/market_data.py
   sha256: c185e9e38bf2943167204154863f6fbf1af64bae0911fd5a61d396ecc9e91e13
+  rule_id: data
+  owner_profile: data
+  owners:
+    code_owner: data_platform
+    policy_owner: data_governance
+    data_owner: data_governance
+    artifact_owner: data_governance
+    runtime_owner: data_operations
+  layer: domain
+  category: data_pipeline
+  public_contract: false
+  deprecation_status: active
+  test_globs:
+  - tests/test_data*.py
+  - tests/trading_engine/test_*data*.py
+  validation_tiers:
+  - fast-unit
+  - reproducibility
+  shared_integration: false
+- module_id: src.ai_trading_system.data.price_issue_attribution_review_pack
+  path: src/ai_trading_system/data/price_issue_attribution_review_pack.py
+  sha256: b7e1d370c8d237dc0db0b4c82232befedd23ba608bee2fee27641548180c1873
   rule_id: data
   owner_profile: data
   owners:

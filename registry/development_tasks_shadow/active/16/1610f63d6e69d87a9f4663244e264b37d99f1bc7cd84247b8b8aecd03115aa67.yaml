@@ -1,0 +1,131 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  title: null
+  domain: Data Foundation / Phase C price non-market-session six-dimension source-owner
+    review pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: price source owner：对exact site逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定前不得启动runtime
+    contract wave
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+    scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+    pilot authority不自动授权source/date/window/field/row runtime attribution。工程pack已完成，blocker为source-owner
+    decision仍pending。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Deterministic builder/validator/Markdown绑定C1 inventory、canonical source、DQ
+      policy、calendar runtime、special-closure loader/registry与proposal bytes；明确distinct
+      date count、全部trigger rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+      migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2027
+    row_sha256: cb393997a9be8215f793d82ea96aeb0132c3d28c2f1ac26430d4d6b250caf537
+    cell_count: 8
+    all_cells:
+    - DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+    - Data Foundation / Phase C price non-market-session six-dimension source-owner
+      review pack
+    - P0
+    - BASELINE_DONE
+    - price source owner：对exact site逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定前不得启动runtime
+      contract wave
+    - 详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+      scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+      pilot authority不自动授权source/date/window/field/row runtime attribution。工程pack已完成，blocker为source-owner
+      decision仍pending。
+    - Deterministic builder/validator/Markdown绑定C1 inventory、canonical source、DQ policy、calendar
+      runtime、special-closure loader/registry与proposal bytes；明确distinct date count、全部trigger
+      rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+      migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。
+    - 2026-07-27：工程基线闭合并转`BASELINE_DONE`。Pack ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；Ruff/strict
+      mypy/pack check PASS，集成focused=`147 passed`，Architecture/Contract/Report/Reproducibility/Integration=`751/275/57/23/995
+      passed`；唯一自然边界Full=`7578 passed / 3 skipped / 642 warnings`，post-Full Architecture/Contract=`751/275
+      passed`。Base-drift plan=`integration-revalidation-9808139c73d5d06e411b`、0 blockers/contract
+      conflicts/undeclared task paths；所有source-owner decision与新增授权仍pending/false。
+    raw_line: '|DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK|Data
+      Foundation / Phase C price non-market-session six-dimension source-owner review
+      pack|P0|BASELINE_DONE|price source owner：对exact site逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定前不得启动runtime
+      contract wave|详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+      scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+      pilot authority不自动授权source/date/window/field/row runtime attribution。工程pack已完成，blocker为source-owner
+      decision仍pending。|Deterministic builder/validator/Markdown绑定C1 inventory、canonical
+      source、DQ policy、calendar runtime、special-closure loader/registry与proposal bytes；明确distinct
+      date count、全部trigger rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+      migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。|2026-07-27：工程基线闭合并转`BASELINE_DONE`。Pack
+      ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；Ruff/strict
+      mypy/pack check PASS，集成focused=`147 passed`，Architecture/Contract/Report/Reproducibility/Integration=`751/275/57/23/995
+      passed`；唯一自然边界Full=`7578 passed / 3 skipped / 642 warnings`，post-Full Architecture/Contract=`751/275
+      passed`。Base-drift plan=`integration-revalidation-9808139c73d5d06e411b`、0 blockers/contract
+      conflicts/undeclared task paths；所有source-owner decision与新增授权仍pending/false。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-cb393997a9be8215f793d82e
+  task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: price source owner：对exact site逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定前不得启动runtime
+      contract wave
+    notes: 2026-07-27：工程基线闭合并转`BASELINE_DONE`。Pack ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；Ruff/strict
+      mypy/pack check PASS，集成focused=`147 passed`，Architecture/Contract/Report/Reproducibility/Integration=`751/275/57/23/995
+      passed`；唯一自然边界Full=`7578 passed / 3 skipped / 642 warnings`，post-Full Architecture/Contract=`751/275
+      passed`。Base-drift plan=`integration-revalidation-9808139c73d5d06e411b`、0 blockers/contract
+      conflicts/undeclared task paths；所有source-owner decision与新增授权仍pending/false。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:cb393997a9be8215f793d82ea96aeb0132c3d28c2f1ac26430d4d6b250caf537
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  - Data Foundation / Phase C price non-market-session six-dimension source-owner
+    review pack
+  - P0
+  - BASELINE_DONE
+  - price source owner：对exact site逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定前不得启动runtime
+    contract wave
+  - 详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+    scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+    pilot authority不自动授权source/date/window/field/row runtime attribution。工程pack已完成，blocker为source-owner
+    decision仍pending。
+  - Deterministic builder/validator/Markdown绑定C1 inventory、canonical source、DQ policy、calendar
+    runtime、special-closure loader/registry与proposal bytes；明确distinct date count、全部trigger
+    rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+    migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。
+  - 2026-07-27：工程基线闭合并转`BASELINE_DONE`。Pack ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；Ruff/strict
+    mypy/pack check PASS，集成focused=`147 passed`，Architecture/Contract/Report/Reproducibility/Integration=`751/275/57/23/995
+    passed`；唯一自然边界Full=`7578 passed / 3 skipped / 642 warnings`，post-Full Architecture/Contract=`751/275
+    passed`。Base-drift plan=`integration-revalidation-9808139c73d5d06e411b`、0 blockers/contract
+    conflicts/undeclared task paths；所有source-owner decision与新增授权仍pending/false。
+  docs_links:
+  - docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md
+  terminal: false
+  raw_row_sha256: cb393997a9be8215f793d82ea96aeb0132c3d28c2f1ac26430d4d6b250caf537
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ae829b190e5f83209ef72b01240542d27acc6e66212559ee4f693e6155a261d1

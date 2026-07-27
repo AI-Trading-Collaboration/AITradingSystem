@@ -1,0 +1,21 @@
+{
+  "broker_action": "none",
+  "checks": {
+    "c1_inventory_current_and_exact_site": true,
+    "content_derived_rebuild": true,
+    "distinct_date_and_trigger_row_semantics_separated": true,
+    "no_new_runtime_or_isolation_authority": true,
+    "safety_boundary": true,
+    "six_dimension_proposal_complete": true,
+    "source_owner_decision_pending": true,
+    "source_policy_and_calendar_bindings": true
+  },
+  "error_count": 0,
+  "errors": [],
+  "expected_review_pack_id": "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714",
+  "production_effect": "none",
+  "review_pack_id": "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714",
+  "schema_version": "data_quality_price_non_market_session_attribution_review_validation.v1",
+  "status": "PASS",
+  "task_id": "DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK"
+}

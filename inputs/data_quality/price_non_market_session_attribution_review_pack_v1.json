@@ -1,0 +1,394 @@
+{
+  "authority": {
+    "capability_policy_change_authorized": false,
+    "consumer_migration_authorized": false,
+    "message_or_sample_scope_inference_allowed": false,
+    "new_issue_isolation_authorized": false,
+    "review_pack_is_authorization": false,
+    "runtime_contract_change_authorized": false,
+    "source_owner_decision_recorded": false,
+    "window_or_row_level_isolation_authorized": false
+  },
+  "c1_inventory_id": "dq_issue_attribution_inventory_03821e2e3dc483446249d52c",
+  "calendar_authority": {
+    "calendar_function": "is_us_equity_trading_day",
+    "calendar_function_ast_sha256": "082cc81df7ee0d9adcc5fd42fd44d1e3f615450f4752f8116376413eafa202b9",
+    "special_closure_policy_bound": true
+  },
+  "candidate": {
+    "affected_date_rule": "DISTINCT_NON_SESSION_DATES_WITHIN_REQUESTED_WINDOW",
+    "affected_fields": [
+      "date"
+    ],
+    "affected_price_tickers_rule": "DISTINCT_NORMALIZED_NON_EMPTY_TICKERS_FROM_ALL_TRIGGER_ROWS",
+    "affected_rate_series": [],
+    "affected_rows_rule": "ALL_TRIGGER_ROWS_WITH_SOURCE_ORDINAL_AND_CANONICAL_ROW_DIGEST",
+    "affected_source_roles": [
+      "primary_market_prices"
+    ],
+    "affected_window_rule": "REQUESTED_WINDOW_INCLUSIVE",
+    "attribution_completeness_requirements": [
+      "REQUESTED_WINDOW_START_AND_END_ARE_EXPLICIT",
+      "EVERY_TRIGGER_DATE_IS_PARSEABLE_AND_WITHIN_REQUESTED_WINDOW",
+      "EVERY_TRIGGER_ROW_HAS_A_NORMALIZED_NON_EMPTY_TICKER",
+      "EVERY_TRIGGER_ROW_HAS_A_STABLE_SOURCE_ORDINAL",
+      "EVERY_TRIGGER_ROW_HAS_A_CANONICAL_ROW_DIGEST",
+      "ALL_TRIGGER_ROWS_FOR_EACH_DISTINCT_NON_SESSION_DATE_ARE_INCLUDED",
+      "CALENDAR_SOURCE_AND_SPECIAL_CLOSURE_POLICY_ARE_EXACTLY_BOUND"
+    ],
+    "c1_existing_policy_authorized": true,
+    "c1_owner_review_status": "EXISTING_OWNER_REVIEWED_PILOT",
+    "c1_phase_c_migration_eligible": false,
+    "c1_scope_status": "EXISTING_POLICY_AUTHORIZED_INSTRUMENT_SCOPE",
+    "calendar_function_ast_sha256": "082cc81df7ee0d9adcc5fd42fd44d1e3f615450f4752f8116376413eafa202b9",
+    "current_rows_semantics": "DISTINCT_NON_SESSION_DATE_COUNT",
+    "current_sample_semantics": "FIRST_TEN_DISTINCT_NON_SESSION_DATES",
+    "emitter_function": "_check_price_market_calendar_dates",
+    "emitter_function_ast_sha256": "74d8804c42155ea1e3652c5b2c3ce3dd83ce024de0103947ea045f662c819d36",
+    "false_isolation_risks": [
+      "DISTINCT_DATE_COUNT_MISTAKEN_FOR_TRIGGER_ROW_COUNT",
+      "FIRST_TEN_SAMPLE_DATES_MISTAKEN_FOR_COMPLETE_DATE_SCOPE",
+      "LEGACY_AFFECTED_INSTRUMENTS_MISTAKEN_FOR_COMPLETE_ROW_ATTRIBUTION",
+      "BLANK_TICKER_SILENTLY_DROPPED_FROM_AFFECTED_SCOPE",
+      "CALENDAR_POLICY_DRIFT_CHANGES_TRIGGER_DATES",
+      "REQUESTED_WINDOW_DRIFT_CHANGES_TRIGGER_ROWS"
+    ],
+    "incomplete_when": [
+      "REQUESTED_WINDOW_IS_MISSING_OR_INVALID",
+      "TRIGGER_DATE_SET_IS_EMPTY",
+      "ANY_TRIGGER_DATE_IS_UNPARSEABLE_OR_OUTSIDE_REQUESTED_WINDOW",
+      "ANY_TRIGGER_ROW_TICKER_IS_MISSING_OR_BLANK",
+      "ANY_TRIGGER_ROW_SOURCE_ORDINAL_IS_MISSING_OR_DUPLICATED",
+      "ANY_TRIGGER_ROW_CANONICAL_DIGEST_IS_MISSING_OR_INVALID",
+      "TRIGGER_ROW_SET_IS_NOT_COMPLETE_FOR_EVERY_TRIGGER_DATE",
+      "CALENDAR_AUTHORITY_OR_SPECIAL_CLOSURE_BINDING_IS_MISSING_OR_STALE"
+    ],
+    "issue_code": "prices_non_market_session_date",
+    "message_or_sample_scope_inference_allowed": false,
+    "new_issue_isolation_authorized": false,
+    "policy_dependencies": [
+      "governance.policy_id",
+      "governance.policy_version",
+      "governance.status"
+    ],
+    "predicate_id": "OBSERVED_DATE_IS_NOT_A_REVIEWED_US_EQUITY_TRADING_SESSION",
+    "proposed_contract_wave_disposition": "CONTRACT_WAVE_CANDIDATE",
+    "required_runtime_contract_tests": [
+      "MULTIPLE_TICKERS_ON_ONE_NON_SESSION_DATE",
+      "ONE_TICKER_ON_MULTIPLE_NON_SESSION_DATES",
+      "DUPLICATE_SOURCE_ROWS_RETAIN_DISTINCT_ORDINAL_IDENTITIES",
+      "BLANK_OR_MISSING_TICKER_FAILS_CLOSED",
+      "INVALID_OR_OUT_OF_WINDOW_DATE_FAILS_CLOSED",
+      "CALENDAR_OR_SPECIAL_CLOSURE_DRIFT_FAILS_CLOSED",
+      "MESSAGE_AND_SAMPLE_ARE_NEVER_PARSED_FOR_SCOPE",
+      "UNKNOWN_OR_INCOMPLETE_ATTRIBUTION_REMAINS_GLOBAL"
+    ],
+    "row_identity_fields": [
+      "source_ordinal",
+      "canonical_row_digest"
+    ],
+    "runtime_attribution_implemented": false,
+    "scope_taxonomy": "DISTINCT_NON_SESSION_DATE_ROW_SET",
+    "severity_contract": "CALLER_SUPPLIED",
+    "site_id": "dq_issue_site_312625a26da21428b763",
+    "source_line": 1435,
+    "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
+    "source_owner_questions": [
+      "Confirm that primary_market_prices is the only canonical source role for this issue.",
+      "Confirm that every source row on every distinct non-session date inside the requested window belongs to the affected row set.",
+      "Confirm that the affected date scope is the exact distinct trigger-date set rather than a contiguous interval.",
+      "Confirm that date is the only defective field while ticker, source_ordinal, and canonical_row_digest are identity evidence.",
+      "Confirm that missing ticker, row identity, requested-window, or calendar authority must keep the issue GLOBAL_OR_UNKNOWN_SCOPE."
+    ],
+    "source_path": "src/ai_trading_system/data/quality.py",
+    "trigger_row_dependencies": [
+      "ALL_ROWS_WITH_NON_SESSION_DATE_WITHIN_REQUESTED_WINDOW"
+    ],
+    "window_or_row_level_isolation_authorized": false
+  },
+  "contract_wave_recommendation": {
+    "candidate_issue_code": "prices_non_market_session_date",
+    "capability_classifier_change_required": true,
+    "consumer_migration_authorized": false,
+    "contract_wave_started": false,
+    "preserve_existing_instrument_only_rule_until_separate_approval": true,
+    "price_ticker_attribution_must_be_complete_and_non_empty": true,
+    "runtime_schema_change_required": true,
+    "serial_contract_wave_required_after_approval": true,
+    "source_owner_decision_required": true,
+    "status": "READY_FOR_SOURCE_OWNER_DECISION",
+    "trigger_date_set_must_be_complete_and_non_empty": true,
+    "trigger_row_identity_must_be_complete": true,
+    "unknown_or_incomplete_attribution_remains_global": true,
+    "window_or_row_level_isolation_authorized": false
+  },
+  "dq_policy_governance": {
+    "owner": "data_platform_owner",
+    "policy_id": "DATA_QUALITY_CACHE_GATE",
+    "policy_version": "data_quality_cache_gate.v2",
+    "review_condition": "阈值、研究窗口、输入角色、freshness/coverage 语义或 canonical validator 发生变化时必须重新评审并提升版本。",
+    "reviewed_at": "2026-07-25",
+    "role": "data_quality",
+    "status": "REVIEWED"
+  },
+  "input_bindings": [
+    {
+      "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
+      "role": "c1_readiness_inventory",
+      "sha256": "b7762a834f3d3f2c6c9d7e740b92fd7825bce5f819e52abb164482622440a80c",
+      "size_bytes": 85428
+    },
+    {
+      "path": "config/data_quality/price_non_market_session_attribution_review_v1.yaml",
+      "role": "source_owner_review_proposal",
+      "sha256": "37e014898732f9bbd6b4dbf83773716ca196b91ff0db8aaeeafaf71018ead8b5",
+      "size_bytes": 4724
+    },
+    {
+      "path": "src/ai_trading_system/data/quality.py",
+      "role": "canonical_dq_source",
+      "sha256": "003573c01e0a879a8585a77076f4c32a366c016fb40596c3d721e942b4ddb64b",
+      "size_bytes": 101983
+    },
+    {
+      "path": "config/data_quality.yaml",
+      "role": "reviewed_dq_policy",
+      "sha256": "e374f76f58621cc557b4fe47038d41a4cce6b6833089ddf0ec25fcce7fff1c82",
+      "size_bytes": 9002
+    },
+    {
+      "path": "src/ai_trading_system/trading_calendar.py",
+      "role": "calendar_runtime_source",
+      "sha256": "ec34df0b571b9250579499d4227f08c809cb79ec6f648c37445488a2c82de8d7",
+      "size_bytes": 10918
+    },
+    {
+      "path": "src/ai_trading_system/us_equity_special_closure_policy.py",
+      "role": "special_closure_policy_loader",
+      "sha256": "beced9b60de2653d57eeddd0de403f507f76f17e724daa391238c1be5ff247ab",
+      "size_bytes": 12239
+    },
+    {
+      "path": "config/data/us_equity_special_closure_registry.yaml",
+      "role": "reviewed_special_closure_policy",
+      "sha256": "c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4",
+      "size_bytes": 1487
+    }
+  ],
+  "parent_owner_decision_id": "owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1",
+  "price_policy_snapshot": {
+    "consistency_start_date": "2021-02-22",
+    "extreme_daily_return_abs": 0.5,
+    "known_split_events": {
+      "AMZN": [
+        {
+          "effective_date": "2022-06-06",
+          "note": "The split was effective after the 2022-06-03 close and AMZN began split-adjusted trading on 2022-06-06.",
+          "owner": "data_platform_owner",
+          "ratio": 20,
+          "review_condition": "Issuer correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-25",
+          "source_name": "Amazon Investor Relations stock split FAQ",
+          "source_url": "https://ir.aboutamazon.com/faqs/default.aspx/1000/",
+          "status": "REVIEWED"
+        }
+      ],
+      "AVGO": [
+        {
+          "effective_date": "2024-07-15",
+          "note": "Broadcom common stock began trading on a split-adjusted basis at market open.",
+          "owner": "data_platform_owner",
+          "ratio": 10,
+          "review_condition": "Issuer correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-23",
+          "source_name": "Broadcom fiscal 2024 second quarter results press release",
+          "source_url": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announces-second-quarter-fiscal-year-2024-financial",
+          "status": "REVIEWED"
+        }
+      ],
+      "GOOG": [
+        {
+          "effective_date": "2022-07-18",
+          "note": "Alphabet executed the split after the 2022-07-15 close and GOOG began split-adjusted trading on 2022-07-18.",
+          "owner": "data_platform_owner",
+          "ratio": 20,
+          "review_condition": "Issuer correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-25",
+          "source_name": "Alphabet Q2 2022 earnings release",
+          "source_url": "https://abc.xyz/assets/investor/static/pdf/2022Q2_alphabet_earnings_release.pdf",
+          "status": "REVIEWED"
+        }
+      ],
+      "LRCX": [
+        {
+          "effective_date": "2024-10-03",
+          "note": "Lam Research common stock began trading on a post-split basis at market open.",
+          "owner": "data_platform_owner",
+          "ratio": 10,
+          "review_condition": "Issuer correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-23",
+          "source_name": "Lam Research stock split press release",
+          "source_url": "https://newsroom.lamresearch.com/2024-05-21-Lam-Research-Corporation-Announces-10-Billion-Share-Repurchase-Authorization-and-a-10-for-1-Stock-Split",
+          "status": "REVIEWED"
+        }
+      ],
+      "NOW": [
+        {
+          "effective_date": "2025-12-18",
+          "note": "ServiceNow common stock was expected to begin trading on a split-adjusted basis.",
+          "owner": "data_platform_owner",
+          "ratio": 5,
+          "review_condition": "Issuer correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-23",
+          "source_name": "ServiceNow 5-for-1 stock split press release",
+          "source_url": "https://investor.servicenow.com/news/news-details/2025/ServiceNow-Shareholders-Approve-5-for-1-Stock-Split/default.aspx",
+          "status": "REVIEWED"
+        }
+      ],
+      "NVDA": [
+        {
+          "effective_date": "2021-07-20",
+          "note": "NVIDIA common stock began trading on a four-for-one split-adjusted basis on 2021-07-20.",
+          "owner": "data_platform_owner",
+          "ratio": 4,
+          "review_condition": "Issuer correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-25",
+          "source_name": "NVIDIA 2021 Stock Split FAQ",
+          "source_url": "https://investor.nvidia.com/files/doc_downloads/doc_faq/06/21/NVIDIA-2021-Stock-Split-FAQ.pdf",
+          "status": "REVIEWED"
+        },
+        {
+          "effective_date": "2024-06-10",
+          "note": "NVIDIA common stock began trading split-adjusted at market open.",
+          "owner": "data_platform_owner",
+          "ratio": 10,
+          "review_condition": "Issuer correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-23",
+          "source_name": "NVIDIA 2024 Stock Split FAQ",
+          "source_url": "https://investor.nvidia.com/files/doc_downloads/2024/06/nvidia-2024-stock-split_faq_investors.pdf",
+          "status": "REVIEWED"
+        }
+      ],
+      "SMH": [
+        {
+          "effective_date": "2023-05-05",
+          "note": "VanEck Semiconductor ETF split-adjusted trading date.",
+          "owner": "data_platform_owner",
+          "ratio": 2,
+          "review_condition": "Sponsor correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-23",
+          "source_name": "VanEck Semiconductor ETF share split press release",
+          "source_url": "https://www.vaneck.com/us/en/press-releases/smh-vaneck-semiconductor-etf-share-split-press-release.pdf",
+          "status": "REVIEWED"
+        }
+      ],
+      "SOXX": [
+        {
+          "effective_date": "2024-03-07",
+          "note": "iShares Semiconductor ETF split effective date.",
+          "owner": "data_platform_owner",
+          "ratio": 3,
+          "review_condition": "Sponsor/exchange correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-23",
+          "source_name": "OCC information memo 53942 for SOXX split",
+          "source_url": "https://www.miaxglobal.com/sites/default/files/alert-files/SOXX_Split_53942.pdf",
+          "status": "REVIEWED"
+        }
+      ],
+      "TQQQ": [
+        {
+          "effective_date": "2022-01-13",
+          "note": "TQQQ began trading at its two-for-one post-split price before market open on 2022-01-13.",
+          "owner": "data_platform_owner",
+          "ratio": 2,
+          "review_condition": "Sponsor correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-25",
+          "source_name": "ProShares December 2021 ETF share split filing",
+          "source_url": "https://www.proshares.com/globalassets/proshares/documents/8k/pstii_8k_12222021.pdf",
+          "status": "REVIEWED"
+        },
+        {
+          "effective_date": "2025-11-20",
+          "note": "TQQQ began trading at its two-for-one post-split price before market open on 2025-11-20.",
+          "owner": "data_platform_owner",
+          "ratio": 2,
+          "review_condition": "Sponsor correction, provider adjustment-policy change, or observed ratio/date drift.",
+          "reviewed_at": "2026-07-25",
+          "source_name": "ProShares November 2025 ETF share split announcement",
+          "source_url": "https://www.proshares.com/press-releases/proshares-announces-etf-share-splits5",
+          "status": "REVIEWED"
+        }
+      ]
+    },
+    "known_split_match_window_days": 5,
+    "known_split_ratio_tolerance_abs": 0.08,
+    "max_stale_calendar_days": 7,
+    "secondary_source_adj_close_error_pct": 0.05,
+    "secondary_source_adj_close_warning_pct": 0.01,
+    "secondary_source_excluded_tickers": [
+      "^VIX"
+    ],
+    "secondary_source_min_overlap_ratio": 0.8,
+    "secondary_source_self_check_fail_closed": false,
+    "suspicious_adjustment_ratio_change_abs": 0.25,
+    "suspicious_daily_return_abs": 0.2,
+    "ticker_return_threshold_overrides": {
+      "^VIX": {
+        "extreme_daily_return_abs": 2.0,
+        "suspicious_daily_return_abs": 1.0
+      }
+    },
+    "volume_optional_tickers": [
+      "^VIX"
+    ]
+  },
+  "proposal": {
+    "broker_action": "none",
+    "candidate_source_domain": "prices",
+    "canonical_source_role": "primary_market_prices",
+    "capability_policy_change_authorized": false,
+    "consumer_migration_authorized": false,
+    "new_issue_isolation_authorized": false,
+    "parent_owner_decision_id": "owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1",
+    "production_effect": "none",
+    "proposal_id": "price_non_market_session_attribution_review_v1",
+    "proposal_owner": "data_platform_engineering",
+    "proposal_version": "1.0.0",
+    "required_source_owner": "price_source_owner",
+    "review_condition": "Re-review when the price row schema, requested-window semantics, US equity calendar authority, special-closure registry, issue emitter, DQ policy, or capability-isolation contract changes.",
+    "runtime_contract_change_authorized": false,
+    "schema_version": "data_quality_price_non_market_session_attribution_review_proposal.v1",
+    "status": "PROPOSED_FOR_SOURCE_OWNER_REVIEW",
+    "task_id": "DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK",
+    "window_or_row_level_isolation_authorized": false
+  },
+  "review_pack_id": "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714",
+  "safety": {
+    "broker_action": "none",
+    "cached_data_mutated": false,
+    "cached_data_read": false,
+    "capability_policy_or_classifier_changed": false,
+    "consumer_migration_executed": false,
+    "data_quality_behavior_changed": false,
+    "data_quality_issue_schema_changed": false,
+    "data_quality_policy_changed": false,
+    "new_issue_isolation_authorized": false,
+    "production_effect": "none",
+    "strategy_logic_changed": false,
+    "window_or_row_level_isolation_authorized": false
+  },
+  "schema_version": "data_quality_price_non_market_session_attribution_review_pack.v1",
+  "status": "SOURCE_OWNER_DECISION_PENDING",
+  "summary": {
+    "caller_supplied_severity_site_count": 1,
+    "candidate_site_count": 1,
+    "complete_trigger_row_identity_required": true,
+    "current_rows_value_is_distinct_date_count": true,
+    "current_rows_value_is_source_row_count": false,
+    "distinct_non_session_date_row_set_site_count": 1,
+    "new_issue_isolation_authorized_site_count": 0,
+    "pending_source_owner_decision_count": 1,
+    "runtime_attribution_implemented_site_count": 0
+  },
+  "task_id": "DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK"
+}
