@@ -30082,6 +30082,7 @@ phase_ops_070_runtime_self_containment:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   - docs/system_flow.md
   - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
   - inputs/architecture/arch_004e_module_manifest.yaml
   - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
@@ -30103,6 +30104,7 @@ phase_ops_070_runtime_self_containment:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   - docs/system_flow.md
   - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
   - inputs/architecture/arch_004e_module_manifest.yaml
   - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
@@ -30116,6 +30118,7 @@ phase_ops_070_runtime_self_containment:
   - {path: docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md, sha256: 4c0fdaa966a3e36525ad6cda80fa63439db7677d898632aeef428d3b1933aaf2, hash_normalization: git_eol_lf}
   - {path: docs/system_flow.md, sha256: 5dff5a706e2da3ad85779700bbffea5ec6eef77afc78911d5f663eb24340fa0f, hash_normalization: git_eol_lf}
   - {path: docs/task_register.md, sha256: 16c522a5f5fe6f95d39894a1051885c8a8b583d89d581aeaed48d5adab5bd2bf, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 64a5a021838af0a5b1ce884e1638c3ddb9bd75b06bbdd127b2d21c063fd36e17, hash_normalization: git_eol_lf}
   - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 61bd88e4c53b6ad37b5f869fe9aa00ba74cfeb78c7d92237ab349752ed480b2c, hash_normalization: git_eol_lf}
   - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 3fca1b20da97d89b24b2c6b9ec98bcc873052fce244deed3a52e51aa7f66ee52, hash_normalization: git_eol_lf}
   - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 3243516568d48844eccb01e4e91ecf3d33a4a2196d60ce02d1beb081b8086f04, hash_normalization: git_eol_lf}
