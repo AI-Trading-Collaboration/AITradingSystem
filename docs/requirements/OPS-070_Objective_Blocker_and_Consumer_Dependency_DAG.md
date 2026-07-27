@@ -529,7 +529,11 @@ owner acceptance 均通过后才能成为 active runtime。下一合法 provider
   和 transaction event 之前 fail closed。根因是 `_governed_dirty_paths` 从旧 runtime
   tree 读取 `arch_005_s4d_checkout_guard_policy.v1`，而新 promotion implementation
   只接受当前 policy schema；runtime HEAD 未改变、promotion lock 已释放、
-  transaction file count=0、scheduler 未激活。
+  scheduler 未激活。初次非递归 inventory 曾把 transaction file count 误报为 0；
+  递归复核确认系统按既有异常路径留下一个 immutable
+  `04_ROLLED_BACK.json` no-op rollback event（`previous_commit=null`），但没有
+  `PREPARED`、`SWITCHED` 或 candidate evidence。该更正保留失败审计，不把 no-op
+  rollback 误述为 checkout 已发生切换。
 - 最佳直接修复是让 pre-switch dirty inventory 使用已验证 coordinator candidate 的
   checkout-guard policy，同时把 audited repository 明确绑定为 permanent runtime。
   runtime 自带旧 policy 不得成为跨 release 切换的解析 authority，但 target dirty paths、
