@@ -1,40 +1,47 @@
-schema_version: ops_scheduler_checkout_policy.v1
-policy_id: ops_scheduler_checkout_v1
-version: 1.0.0
-status: REVIEWED_ENGINEERING_READY_OWNER_DEPLOYMENT_REQUIRED
+schema_version: ops_scheduler_checkout_policy.v2
+policy_id: ops_scheduler_checkout_v2
+version: 2.0.0
+status: REVIEWED_RECEIPT_GATED_DEPLOYMENT
 owner: operations_owner_and_project_owner
-reviewed_at: 2026-07-25
+reviewed_at: 2026-07-27
 rationale: >
-  Daily provider capture must run from a pinned clean checkout that is isolated
-  from active development changes. The existing checkout lease guard remains
-  the in-checkout writer authority; this policy proves the external scheduler
-  selected the intended checkout and release commit before that guard runs.
+  Daily provider capture must run from an owner-accepted exact release in an
+  independent Git clone with a runtime-local executable. A different path alone
+  is insufficient because linked worktrees share Git metadata and a global
+  editable aits entrypoint can still execute development code.
 environment:
   scheduler_marker_name: AITS_EXTERNAL_SCHEDULER
   scheduler_marker_value: "1"
   checkout_root_name: AITS_OPS_CHECKOUT_ROOT
   release_commit_name: AITS_OPS_RELEASE_COMMIT
   development_checkout_root_name: AITS_DEVELOPMENT_CHECKOUT_ROOT
+  deployment_receipt_name: AITS_OPS_DEPLOYMENT_RECEIPT
+  runtime_python_name: AITS_OPS_PYTHON
 repository:
   expected_remote: git@github.com:AI-Trading-Collaboration/AITradingSystem.git
+  reviewed_remote_ref: refs/remotes/origin/main
   exact_release_commit_required: true
   clean_checkout_required: true
   independent_from_development_checkout: true
+  independent_git_common_dir_required: true
   current_process_must_run_from_ops_checkout: true
 trigger:
   unified_external_trigger:
     - aits
     - ops
     - daily-run
+  manual_execution_option: --manual-execution
   separate_periodic_scheduler_entries_allowed: false
 deployment:
-  activation_authorized: false
-  scheduler_installed: false
-  scheduler_enabled: false
-  owner_action_required: >
-    Provision the isolated checkout, pin AITS_OPS_RELEASE_COMMIT, scope
-    credentials, install the one daily-run scheduler entry, and record owner
-    acceptance before changing activation_authorized.
+  activation_mode: ACTIVE_OWNER_ACCEPTED_RECEIPT_REQUIRED
+  acceptance_schema: ops_deployment_acceptance.v1
+  active_receipt_relative_path: outputs/operations/deployment/active.json
+  runtime_python_must_be_below_checkout: true
+  imported_package_must_be_below_checkout: true
+  scheduler_id: aitradingsystem-pit
+  scheduler_entry_count: 1
+  scheduler_provider: codex_automation
+  windows_task_scheduler_entries_allowed: false
 safety:
   production_effect: none
   production_weight_write: false
@@ -42,6 +49,6 @@ safety:
   broker_action: false
   trading_action: false
 review_condition: >
-  Review when the repository remote, environment contract, checkout identity,
-  release pinning, scheduler trigger, deployment state, credential scope, or
-  safety boundary changes.
+  Review when the repository remote/ref, environment contract, checkout or Git
+  common-dir identity, executable provenance, release receipt, scheduler trigger,
+  deployment acceptance, credential scope, or safety boundary changes.

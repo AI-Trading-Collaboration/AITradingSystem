@@ -1,144 +1,220 @@
 from __future__ import annotations
 
+import json
 import subprocess
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import typer
 
 import ai_trading_system.cli_commands.ops as ops_cli
+import ai_trading_system.ops_scheduler_checkout as scheduler_checkout
 from ai_trading_system.ops_scheduler_checkout import (
     DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
     inspect_ops_scheduler_checkout,
     load_ops_scheduler_checkout_policy,
 )
 
+EXPECTED_REMOTE = "git@github.com:AI-Trading-Collaboration/AITradingSystem.git"
+
 
 @pytest.fixture
-def isolated_checkout(tmp_path: Path) -> tuple[Path, str]:
-    root = tmp_path / "ops-checkout"
-    root.mkdir()
-    (root / "tracked.txt").write_text("ops\n", encoding="utf-8")
-    _git(root, "init")
-    _git(root, "config", "user.email", "ops-checkout@example.com")
-    _git(root, "config", "user.name", "Ops Checkout")
-    _git(
-        root,
-        "remote",
-        "add",
-        "origin",
-        "git@github.com:AI-Trading-Collaboration/AITradingSystem.git",
-    )
-    _git(root, "add", ".")
-    _git(root, "commit", "-m", "fixture")
-    return root, _git(root, "rev-parse", "HEAD")
+def independent_checkouts(tmp_path: Path) -> tuple[Path, Path, str]:
+    development = tmp_path / "development"
+    checkout = tmp_path / "ops-checkout"
+    _init_repo(development, "development")
+    checkout_commit = _init_repo(checkout, "ops")
+    return development, checkout, checkout_commit
 
 
-def test_policy_keeps_scheduler_deployment_owner_gated() -> None:
+def test_policy_requires_receipt_gated_independent_clone() -> None:
     policy = load_ops_scheduler_checkout_policy(
         DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH
     )
 
-    assert policy.status == "REVIEWED_ENGINEERING_READY_OWNER_DEPLOYMENT_REQUIRED"
+    assert policy.status == "REVIEWED_RECEIPT_GATED_DEPLOYMENT"
     assert policy.unified_external_trigger == ("aits", "ops", "daily-run")
+    assert policy.manual_execution_option == "--manual-execution"
     assert policy.separate_periodic_scheduler_entries_allowed is False
-    assert policy.activation_authorized is False
-    assert policy.scheduler_installed is False
-    assert policy.scheduler_enabled is False
+    assert policy.independent_git_common_dir_required is True
+    assert policy.activation_mode == "ACTIVE_OWNER_ACCEPTED_RECEIPT_REQUIRED"
+    assert policy.scheduler_provider == "codex_automation"
+    assert policy.scheduler_entry_count == 1
+    assert policy.windows_task_scheduler_entries_allowed is False
 
 
-def test_clean_exact_independent_checkout_passes_without_authorizing_activation(
-    isolated_checkout: tuple[Path, str],
-    tmp_path: Path,
+def test_clean_exact_independent_clone_passes_candidate_only(
+    independent_checkouts: tuple[Path, Path, str],
 ) -> None:
-    checkout, commit = isolated_checkout
-    development_root = tmp_path / "development"
-    development_root.mkdir()
+    development, checkout, commit = independent_checkouts
     payload = inspect_ops_scheduler_checkout(
-        project_root=development_root,
-        env={
-            "AITS_EXTERNAL_SCHEDULER": "1",
-            "AITS_OPS_CHECKOUT_ROOT": str(checkout),
-            "AITS_OPS_RELEASE_COMMIT": commit,
-            "AITS_DEVELOPMENT_CHECKOUT_ROOT": str(development_root),
-        },
+        project_root=development,
+        env=_scheduler_env(development, checkout, commit),
     )
 
     assert payload["status"] == "PASS"
     assert payload["scheduler_execution_ready"] is True
     assert payload["activation_authorized"] is False
-    assert payload["scheduler_installed"] is False
-    assert payload["scheduler_enabled"] is False
+    assert payload["owner_deployment_required"] is True
+    assert payload["git_common_dir"] != payload["development_git_common_dir"]
     assert payload["production_effect"] == "none"
 
 
+def test_linked_worktree_fails_independent_git_common_dir(tmp_path: Path) -> None:
+    development = tmp_path / "development"
+    commit = _init_repo(development, "shared")
+    checkout = tmp_path / "linked-ops"
+    _git(development, "worktree", "add", "--detach", str(checkout), commit)
+
+    payload = inspect_ops_scheduler_checkout(
+        project_root=development,
+        env=_scheduler_env(development, checkout, commit),
+    )
+
+    assert payload["status"] == "BLOCKED"
+    assert "OPS_CHECKOUT_INDEPENDENT_GIT_COMMON_DIR" in payload["blocker_codes"]
+    assert payload["git_common_dir"] == payload["development_git_common_dir"]
+
+
 def test_runtime_preflight_requires_current_process_to_use_isolated_checkout(
-    isolated_checkout: tuple[Path, str],
-    tmp_path: Path,
+    independent_checkouts: tuple[Path, Path, str],
 ) -> None:
-    checkout, commit = isolated_checkout
-    development_root = tmp_path / "development"
-    development_root.mkdir()
-    env = {
-        "AITS_EXTERNAL_SCHEDULER": "1",
-        "AITS_OPS_CHECKOUT_ROOT": str(checkout),
-        "AITS_OPS_RELEASE_COMMIT": commit,
-        "AITS_DEVELOPMENT_CHECKOUT_ROOT": str(development_root),
-    }
+    development, checkout, commit = independent_checkouts
+    env = _scheduler_env(development, checkout, commit)
 
     isolated = inspect_ops_scheduler_checkout(
         project_root=checkout,
         env=env,
         require_current_process_checkout=True,
     )
-    development = inspect_ops_scheduler_checkout(
-        project_root=development_root,
+    development_process = inspect_ops_scheduler_checkout(
+        project_root=development,
         env=env,
         require_current_process_checkout=True,
     )
 
     assert isolated["status"] == "PASS"
-    assert development["status"] == "BLOCKED"
-    assert "OPS_CHECKOUT_CURRENT_PROCESS_CHECKOUT" in development["blocker_codes"]
+    assert development_process["status"] == "BLOCKED"
+    assert "OPS_CHECKOUT_CURRENT_PROCESS_CHECKOUT" in development_process["blocker_codes"]
 
 
 def test_dirty_or_unpinned_checkout_fails_closed(
-    isolated_checkout: tuple[Path, str],
-    tmp_path: Path,
+    independent_checkouts: tuple[Path, Path, str],
 ) -> None:
-    checkout, commit = isolated_checkout
-    development_root = tmp_path / "development"
-    development_root.mkdir()
+    development, checkout, commit = independent_checkouts
     (checkout / "untracked.txt").write_text("dirty\n", encoding="utf-8")
 
     payload = inspect_ops_scheduler_checkout(
-        project_root=development_root,
-        env={
-            "AITS_EXTERNAL_SCHEDULER": "1",
-            "AITS_OPS_CHECKOUT_ROOT": str(checkout),
-            "AITS_OPS_RELEASE_COMMIT": "0" * 40,
-            "AITS_DEVELOPMENT_CHECKOUT_ROOT": str(development_root),
-        },
+        project_root=development,
+        env=_scheduler_env(development, checkout, "0" * 40),
     )
 
     assert payload["status"] == "BLOCKED"
     assert "OPS_CHECKOUT_EXACT_RELEASE_COMMIT" in payload["blocker_codes"]
+    assert "OPS_CHECKOUT_REVIEWED_REMOTE_REF" in payload["blocker_codes"]
     assert "OPS_CHECKOUT_CLEAN_CHECKOUT" in payload["blocker_codes"]
     assert payload["head_commit"] == commit
-    assert payload["scheduler_execution_ready"] is False
 
 
-def test_external_scheduler_marker_blocks_daily_before_checkout_guard(
+def test_active_scheduler_mode_requires_receipt_and_runtime_python(
+    independent_checkouts: tuple[Path, Path, str],
+) -> None:
+    development, checkout, commit = independent_checkouts
+
+    payload = inspect_ops_scheduler_checkout(
+        project_root=checkout,
+        env=_scheduler_env(development, checkout, commit),
+        require_current_process_checkout=True,
+        require_active_deployment=True,
+    )
+
+    assert payload["status"] == "BLOCKED"
+    assert "OPS_CHECKOUT_ACTIVE_DEPLOYMENT_RECEIPT" in payload["blocker_codes"]
+    assert payload["activation_authorized"] is False
+
+
+def test_valid_active_receipt_authorizes_scheduler_mode(
+    independent_checkouts: tuple[Path, Path, str],
     monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    development, checkout, commit = independent_checkouts
+    receipt = checkout / "outputs" / "operations" / "deployment" / "active.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text(
+        json.dumps(
+            {
+                "deployment_id": "ops_deployment_fixture",
+                "release": {"candidate_commit": commit},
+            }
+        ),
+        encoding="utf-8",
+    )
+    runtime_python = checkout / ".venv" / "Scripts" / "python.exe"
+    runtime_python.parent.mkdir(parents=True)
+    runtime_python.write_bytes(b"fixture")
+    monkeypatch.setattr(
+        scheduler_checkout,
+        "load_ops_release_promotion_policy",
+        lambda *_args, **_kwargs: object(),
+    )
+    monkeypatch.setattr(
+        scheduler_checkout,
+        "validate_ops_deployment_acceptance",
+        lambda *_args, **_kwargs: None,
+    )
+
+    env = _scheduler_env(development, checkout, commit)
+    env["AITS_OPS_DEPLOYMENT_RECEIPT"] = str(receipt)
+    env["AITS_OPS_PYTHON"] = str(runtime_python)
+    payload = inspect_ops_scheduler_checkout(
+        project_root=checkout,
+        env=env,
+        require_current_process_checkout=True,
+        require_active_deployment=True,
+    )
+
+    assert payload["status"] == "PASS"
+    assert payload["activation_authorized"] is True
+    assert payload["scheduler_installed"] is True
+    assert payload["scheduler_enabled"] is True
+    assert payload["owner_deployment_required"] is False
+
+
+def test_scheduler_preflight_writes_only_inside_checkout_write_guard(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     calls: list[str] = []
     monkeypatch.setenv("AITS_EXTERNAL_SCHEDULER", "1")
+    monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(
+        ops_cli,
+        "load_ops_scheduler_checkout_policy",
+        lambda: SimpleNamespace(
+            scheduler_marker_name="AITS_EXTERNAL_SCHEDULER",
+            active_receipt_relative_path="outputs/operations/deployment/active.json",
+        ),
+    )
+
+    @contextmanager
+    def fake_guard(**_kwargs: object) -> Iterator[None]:
+        calls.append("guard_enter")
+        try:
+            yield
+        finally:
+            calls.append("guard_exit")
+
+    monkeypatch.setattr(ops_cli, "hold_daily_checkout_guard", fake_guard)
     monkeypatch.setattr(
         ops_cli,
         "inspect_ops_scheduler_checkout",
-        lambda **_: {
+        lambda **_: calls.append("preflight_inspected")
+        or {
             "status": "BLOCKED",
-            "blocker_codes": ["OPS_CHECKOUT_CLEAN_CHECKOUT"],
+            "blocker_codes": ["OPS_CHECKOUT_ACTIVE_DEPLOYMENT_RECEIPT"],
         },
     )
     monkeypatch.setattr(
@@ -146,18 +222,123 @@ def test_external_scheduler_marker_blocks_daily_before_checkout_guard(
         "write_ops_scheduler_checkout_preflight",
         lambda *_args, **_kwargs: calls.append("preflight_written"),
     )
+
+    with pytest.raises(typer.Exit):
+        ops_cli.daily_ops_run_command()
+
+    assert calls == [
+        "guard_enter",
+        "preflight_inspected",
+        "preflight_written",
+        "guard_exit",
+    ]
+
+
+def test_active_receipt_detects_missing_scheduler_marker(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    calls: list[str] = []
+    active_receipt = tmp_path / "outputs" / "operations" / "deployment" / "active.json"
+    active_receipt.parent.mkdir(parents=True)
+    active_receipt.write_text("{}\n", encoding="utf-8")
+    monkeypatch.delenv("AITS_EXTERNAL_SCHEDULER", raising=False)
+    monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(
         ops_cli,
-        "hold_daily_checkout_guard",
-        lambda **_: (_ for _ in ()).throw(
-            AssertionError("checkout guard must not run after scheduler preflight block")
+        "load_ops_scheduler_checkout_policy",
+        lambda: SimpleNamespace(
+            scheduler_marker_name="AITS_EXTERNAL_SCHEDULER",
+            active_receipt_relative_path="outputs/operations/deployment/active.json",
         ),
+    )
+
+    @contextmanager
+    def fake_guard(**_kwargs: object) -> Iterator[None]:
+        calls.append("guard")
+        yield
+
+    monkeypatch.setattr(ops_cli, "hold_daily_checkout_guard", fake_guard)
+    monkeypatch.setattr(
+        ops_cli,
+        "inspect_ops_scheduler_checkout",
+        lambda **_: {
+            "status": "BLOCKED",
+            "blocker_codes": ["OPS_CHECKOUT_SCHEDULER_MARKER"],
+        },
+    )
+    monkeypatch.setattr(
+        ops_cli,
+        "write_ops_scheduler_checkout_preflight",
+        lambda *_args, **_kwargs: calls.append("written"),
     )
 
     with pytest.raises(typer.Exit):
         ops_cli.daily_ops_run_command()
 
-    assert calls == ["preflight_written"]
+    assert calls == ["guard", "written"]
+
+
+def test_daily_run_without_scheduler_or_manual_mode_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    calls: list[str] = []
+    monkeypatch.delenv("AITS_EXTERNAL_SCHEDULER", raising=False)
+    monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(
+        ops_cli,
+        "load_ops_scheduler_checkout_policy",
+        lambda: SimpleNamespace(
+            scheduler_marker_name="AITS_EXTERNAL_SCHEDULER",
+            active_receipt_relative_path="outputs/operations/deployment/active.json",
+        ),
+    )
+
+    @contextmanager
+    def fake_guard(**_kwargs: object) -> Iterator[None]:
+        calls.append("guard")
+        yield
+
+    monkeypatch.setattr(ops_cli, "hold_daily_checkout_guard", fake_guard)
+
+    with pytest.raises(typer.Exit):
+        ops_cli.daily_ops_run_command()
+
+    assert calls == ["guard"]
+
+
+def _scheduler_env(development: Path, checkout: Path, commit: str) -> dict[str, str]:
+    return {
+        "AITS_EXTERNAL_SCHEDULER": "1",
+        "AITS_OPS_CHECKOUT_ROOT": str(checkout),
+        "AITS_OPS_RELEASE_COMMIT": commit,
+        "AITS_DEVELOPMENT_CHECKOUT_ROOT": str(development),
+    }
+
+
+def _init_repo(root: Path, content: str) -> str:
+    root.mkdir()
+    checkout_policy = (
+        Path(__file__).resolve().parents[1]
+        / "config"
+        / "architecture"
+        / "arch_005_s4d_checkout_guard.yaml"
+    )
+    target_policy = root / "config" / "architecture" / checkout_policy.name
+    target_policy.parent.mkdir(parents=True)
+    target_policy.write_text(checkout_policy.read_text(encoding="utf-8"), encoding="utf-8")
+    (root / ".gitignore").write_text("outputs/\n.venv/\n", encoding="utf-8")
+    (root / "tracked.txt").write_text(f"{content}\n", encoding="utf-8")
+    _git(root, "init")
+    _git(root, "config", "user.email", "ops-checkout@example.com")
+    _git(root, "config", "user.name", "Ops Checkout")
+    _git(root, "remote", "add", "origin", EXPECTED_REMOTE)
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "fixture")
+    commit = _git(root, "rev-parse", "HEAD")
+    _git(root, "update-ref", "refs/remotes/origin/main", commit)
+    return commit
 
 
 def _git(root: Path, *args: str) -> str:

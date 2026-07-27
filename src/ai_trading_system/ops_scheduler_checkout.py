@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -8,10 +9,19 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-import yaml
-
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.ops_release_promotion import (
+    OpsReleasePromotionError,
+    load_ops_release_promotion_policy,
+    validate_ops_deployment_acceptance,
+)
+from ai_trading_system.platform.architecture.checkout_guard import (
+    CheckoutGuardError,
+    collect_checkout_dirty_paths,
+    load_checkout_guard_policy,
+)
 from ai_trading_system.platform.artifacts import write_json_atomic, write_markdown_atomic
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH = (
     PROJECT_ROOT / "config" / "operations" / "ops_scheduler_checkout.yaml"
@@ -29,16 +39,27 @@ class OpsSchedulerCheckoutPolicy:
     checkout_root_name: str
     release_commit_name: str
     development_checkout_root_name: str
+    deployment_receipt_name: str
+    runtime_python_name: str
     expected_remote: str
+    reviewed_remote_ref: str
     exact_release_commit_required: bool
     clean_checkout_required: bool
     independent_from_development_checkout: bool
+    independent_git_common_dir_required: bool
     current_process_must_run_from_ops_checkout: bool
     unified_external_trigger: tuple[str, ...]
+    manual_execution_option: str
     separate_periodic_scheduler_entries_allowed: bool
-    activation_authorized: bool
-    scheduler_installed: bool
-    scheduler_enabled: bool
+    activation_mode: str
+    acceptance_schema: str
+    active_receipt_relative_path: str
+    runtime_python_must_be_below_checkout: bool
+    imported_package_must_be_below_checkout: bool
+    scheduler_id: str
+    scheduler_entry_count: int
+    scheduler_provider: str
+    windows_task_scheduler_entries_allowed: bool
 
 
 GitRunner = Callable[..., subprocess.CompletedProcess[str]]
@@ -47,13 +68,13 @@ GitRunner = Callable[..., subprocess.CompletedProcess[str]]
 def load_ops_scheduler_checkout_policy(
     path: Path = DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
 ) -> OpsSchedulerCheckoutPolicy:
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload = safe_load_yaml_path(path)
     if not isinstance(payload, Mapping):
         raise ValueError("ops scheduler checkout policy must be a mapping")
-    if payload.get("schema_version") != "ops_scheduler_checkout_policy.v1":
+    if payload.get("schema_version") != "ops_scheduler_checkout_policy.v2":
         raise ValueError("unsupported ops scheduler checkout policy schema")
-    if payload.get("status") != "REVIEWED_ENGINEERING_READY_OWNER_DEPLOYMENT_REQUIRED":
-        raise ValueError("ops scheduler checkout policy must remain owner-deployment gated")
+    if payload.get("status") != "REVIEWED_RECEIPT_GATED_DEPLOYMENT":
+        raise ValueError("ops scheduler checkout policy must remain receipt gated")
     environment = _mapping(payload.get("environment"), "environment")
     repository = _mapping(payload.get("repository"), "repository")
     trigger = _mapping(payload.get("trigger"), "trigger")
@@ -99,7 +120,19 @@ def load_ops_scheduler_checkout_policy(
             environment.get("development_checkout_root_name"),
             "development_checkout_root_name",
         ),
+        deployment_receipt_name=_text(
+            environment.get("deployment_receipt_name"),
+            "deployment_receipt_name",
+        ),
+        runtime_python_name=_text(
+            environment.get("runtime_python_name"),
+            "runtime_python_name",
+        ),
         expected_remote=_text(repository.get("expected_remote"), "expected_remote"),
+        reviewed_remote_ref=_text(
+            repository.get("reviewed_remote_ref"),
+            "reviewed_remote_ref",
+        ),
         exact_release_commit_required=_bool(
             repository.get("exact_release_commit_required"),
             "exact_release_commit_required",
@@ -112,37 +145,72 @@ def load_ops_scheduler_checkout_policy(
             repository.get("independent_from_development_checkout"),
             "independent_from_development_checkout",
         ),
+        independent_git_common_dir_required=_bool(
+            repository.get("independent_git_common_dir_required"),
+            "independent_git_common_dir_required",
+        ),
         current_process_must_run_from_ops_checkout=_bool(
             repository.get("current_process_must_run_from_ops_checkout"),
             "current_process_must_run_from_ops_checkout",
         ),
         unified_external_trigger=tuple(trigger_command),
+        manual_execution_option=_text(
+            trigger.get("manual_execution_option"),
+            "manual_execution_option",
+        ),
         separate_periodic_scheduler_entries_allowed=_bool(
             trigger.get("separate_periodic_scheduler_entries_allowed"),
             "separate_periodic_scheduler_entries_allowed",
         ),
-        activation_authorized=_bool(
-            deployment.get("activation_authorized"),
-            "activation_authorized",
+        activation_mode=_text(
+            deployment.get("activation_mode"),
+            "activation_mode",
         ),
-        scheduler_installed=_bool(
-            deployment.get("scheduler_installed"),
-            "scheduler_installed",
+        acceptance_schema=_text(
+            deployment.get("acceptance_schema"),
+            "acceptance_schema",
         ),
-        scheduler_enabled=_bool(
-            deployment.get("scheduler_enabled"),
-            "scheduler_enabled",
+        active_receipt_relative_path=_relative_text(
+            deployment.get("active_receipt_relative_path"),
+            "active_receipt_relative_path",
+        ),
+        runtime_python_must_be_below_checkout=_bool(
+            deployment.get("runtime_python_must_be_below_checkout"),
+            "runtime_python_must_be_below_checkout",
+        ),
+        imported_package_must_be_below_checkout=_bool(
+            deployment.get("imported_package_must_be_below_checkout"),
+            "imported_package_must_be_below_checkout",
+        ),
+        scheduler_id=_text(deployment.get("scheduler_id"), "scheduler_id"),
+        scheduler_entry_count=_positive_int(
+            deployment.get("scheduler_entry_count"),
+            "scheduler_entry_count",
+        ),
+        scheduler_provider=_text(
+            deployment.get("scheduler_provider"),
+            "scheduler_provider",
+        ),
+        windows_task_scheduler_entries_allowed=_bool(
+            deployment.get("windows_task_scheduler_entries_allowed"),
+            "windows_task_scheduler_entries_allowed",
         ),
     )
     if (
         not policy.exact_release_commit_required
         or not policy.clean_checkout_required
         or not policy.independent_from_development_checkout
+        or not policy.independent_git_common_dir_required
         or not policy.current_process_must_run_from_ops_checkout
+        or policy.manual_execution_option != "--manual-execution"
         or policy.separate_periodic_scheduler_entries_allowed
-        or policy.activation_authorized
-        or policy.scheduler_installed
-        or policy.scheduler_enabled
+        or policy.activation_mode != "ACTIVE_OWNER_ACCEPTED_RECEIPT_REQUIRED"
+        or policy.acceptance_schema != "ops_deployment_acceptance.v1"
+        or not policy.runtime_python_must_be_below_checkout
+        or not policy.imported_package_must_be_below_checkout
+        or policy.scheduler_entry_count != 1
+        or policy.scheduler_provider != "codex_automation"
+        or policy.windows_task_scheduler_entries_allowed
     ):
         raise ValueError("scheduler checkout/deployment safety invariants invalid")
     return policy
@@ -155,7 +223,10 @@ def inspect_ops_scheduler_checkout(
     env: Mapping[str, str] | None = None,
     checkout_root: Path | None = None,
     release_commit: str | None = None,
+    deployment_receipt_path: Path | None = None,
+    runtime_python: Path | None = None,
     require_current_process_checkout: bool = False,
+    require_active_deployment: bool = False,
     runner: GitRunner = subprocess.run,
     observed_at: datetime | None = None,
 ) -> dict[str, object]:
@@ -169,6 +240,14 @@ def inspect_ops_scheduler_checkout(
         raw_root = checked_env.get(policy.checkout_root_name)
         configured_root = Path(raw_root) if raw_root else None
     configured_commit = release_commit or checked_env.get(policy.release_commit_name)
+    configured_receipt = deployment_receipt_path
+    if configured_receipt is None:
+        raw_receipt = checked_env.get(policy.deployment_receipt_name)
+        configured_receipt = Path(raw_receipt) if raw_receipt else None
+    configured_python = runtime_python
+    if configured_python is None:
+        raw_python = checked_env.get(policy.runtime_python_name)
+        configured_python = Path(raw_python) if raw_python else None
     raw_development_root = checked_env.get(policy.development_checkout_root_name)
     development_candidate = Path(raw_development_root) if raw_development_root else None
     development_root = (
@@ -236,9 +315,13 @@ def inspect_ops_scheduler_checkout(
 
     head_commit: str | None = None
     remote: str | None = None
+    remote_commit: str | None = None
+    ops_git_common_dir: str | None = None
+    development_git_common_dir: str | None = None
     dirty_paths: tuple[str, ...] = ()
     git_errors: list[str] = []
     if root_exists:
+        assert resolved_root is not None
         head_commit, head_error = _git_text(
             runner,
             resolved_root,
@@ -249,20 +332,51 @@ def inspect_ops_scheduler_checkout(
             resolved_root,
             ("remote", "get-url", "origin"),
         )
-        dirty_text, dirty_error = _git_text(
+        remote_commit, remote_ref_error = _git_text(
             runner,
             resolved_root,
-            ("status", "--porcelain", "--untracked-files=all"),
+            ("rev-parse", policy.reviewed_remote_ref),
         )
-        for error in (head_error, remote_error, dirty_error):
+        ops_git_common_dir, ops_common_error = _git_text(
+            runner,
+            resolved_root,
+            ("rev-parse", "--path-format=absolute", "--git-common-dir"),
+        )
+        if development_root is not None and development_root.is_dir():
+            development_git_common_dir, development_common_error = _git_text(
+                runner,
+                development_root,
+                ("rev-parse", "--path-format=absolute", "--git-common-dir"),
+            )
+        else:
+            development_common_error = "development checkout root unavailable"
+        try:
+            guard_policy = load_checkout_guard_policy(
+                resolved_root
+                / "config"
+                / "architecture"
+                / "arch_005_s4d_checkout_guard.yaml"
+            )
+            exclusions = tuple(
+                item.path for item in guard_policy.known_unrelated_exclusions
+            )
+            dirty_paths = collect_checkout_dirty_paths(
+                resolved_root,
+                exclusions=exclusions,
+            )
+            dirty_error = None
+        except (OSError, ValueError, CheckoutGuardError) as exc:
+            dirty_error = f"{type(exc).__name__}: {exc}"
+        for error in (
+            head_error,
+            remote_error,
+            remote_ref_error,
+            ops_common_error,
+            development_common_error,
+            dirty_error,
+        ):
             if error:
                 git_errors.append(error)
-        if dirty_text:
-            dirty_paths = tuple(
-                line[3:].strip() if len(line) > 3 else line.strip()
-                for line in dirty_text.splitlines()
-                if line.strip()
-            )
     check("git_checkout_readable", root_exists and not git_errors, git_errors)
     check(
         "exact_release_commit",
@@ -273,6 +387,29 @@ def inspect_ops_scheduler_checkout(
         "expected_remote",
         remote == policy.expected_remote,
         {"expected": policy.expected_remote, "observed": remote},
+    )
+    check(
+        "reviewed_remote_ref",
+        bool(commit_valid and remote_commit == configured_commit),
+        {
+            "ref": policy.reviewed_remote_ref,
+            "expected": configured_commit,
+            "observed": remote_commit,
+        },
+    )
+    common_dir_independent = (
+        ops_git_common_dir is not None
+        and development_git_common_dir is not None
+        and os.path.normcase(str(Path(ops_git_common_dir).resolve()))
+        != os.path.normcase(str(Path(development_git_common_dir).resolve()))
+    )
+    check(
+        "independent_git_common_dir",
+        bool(common_dir_independent),
+        {
+            "ops": ops_git_common_dir,
+            "development": development_git_common_dir,
+        },
     )
     check(
         "clean_checkout",
@@ -288,9 +425,79 @@ def inspect_ops_scheduler_checkout(
             "matches": current_checkout_matches,
         },
     )
+    receipt_payload: Mapping[str, object] | None = None
+    receipt_error: str | None = None
+    resolved_receipt = (
+        configured_receipt.resolve() if configured_receipt is not None else None
+    )
+    resolved_python = configured_python.resolve() if configured_python is not None else None
+    if require_active_deployment:
+        try:
+            if resolved_root is None or development_root is None:
+                raise ValueError("checkout roots unavailable")
+            if resolved_receipt is None or not resolved_receipt.is_file():
+                raise ValueError("active deployment receipt missing")
+            expected_receipt = (
+                resolved_root / policy.active_receipt_relative_path
+            ).resolve()
+            if resolved_receipt != expected_receipt:
+                raise ValueError(
+                    f"active deployment receipt path mismatch: {resolved_receipt}"
+                )
+            if resolved_python is None:
+                raise ValueError("runtime python missing")
+            loaded = json.loads(resolved_receipt.read_text(encoding="utf-8"))
+            if not isinstance(loaded, Mapping):
+                raise ValueError("active deployment receipt must be mapping")
+            receipt_payload = loaded
+            promotion_policy = load_ops_release_promotion_policy(
+                resolved_root
+                / "config"
+                / "operations"
+                / "ops_release_promotion.yaml"
+            )
+            validate_ops_deployment_acceptance(
+                receipt_payload,
+                policy=promotion_policy,
+                runtime_root=resolved_root,
+                development_root=development_root,
+                runtime_python=resolved_python,
+                verify_live_runtime=True,
+            )
+            release = receipt_payload.get("release")
+            if not isinstance(release, Mapping) or release.get(
+                "candidate_commit"
+            ) != configured_commit:
+                raise ValueError("deployment receipt release mismatch")
+        except (
+            OSError,
+            ValueError,
+            json.JSONDecodeError,
+            OpsReleasePromotionError,
+        ) as exc:
+            receipt_error = f"{type(exc).__name__}: {exc}"
+    check(
+        "active_deployment_receipt",
+        (not require_active_deployment) or receipt_error is None,
+        {
+            "required": require_active_deployment,
+            "path": str(resolved_receipt) if resolved_receipt else None,
+            "deployment_id": (
+                receipt_payload.get("deployment_id")
+                if receipt_payload is not None
+                else None
+            ),
+            "error": receipt_error,
+        },
+    )
     failed = [str(item["check_id"]) for item in checks if item["status"] != "PASS"]
+    active = (
+        require_active_deployment
+        and receipt_error is None
+        and receipt_payload is not None
+    )
     return {
-        "schema_version": "ops_scheduler_checkout_preflight.v1",
+        "schema_version": "ops_scheduler_checkout_preflight.v2",
         "policy_id": policy.policy_id,
         "policy_version": policy.version,
         "policy_path": _relative_path(policy_path, project_root),
@@ -301,12 +508,23 @@ def inspect_ops_scheduler_checkout(
         "checkout_root": str(resolved_root) if resolved_root else None,
         "release_commit": configured_commit,
         "head_commit": head_commit,
+        "reviewed_remote_commit": remote_commit,
+        "git_common_dir": ops_git_common_dir,
+        "development_git_common_dir": development_git_common_dir,
         "unified_external_trigger": list(policy.unified_external_trigger),
         "scheduler_execution_ready": not failed,
-        "activation_authorized": False,
-        "scheduler_installed": False,
-        "scheduler_enabled": False,
-        "owner_deployment_required": True,
+        "active_deployment_required": require_active_deployment,
+        "deployment_receipt": str(resolved_receipt) if resolved_receipt else None,
+        "deployment_id": (
+            receipt_payload.get("deployment_id")
+            if receipt_payload is not None
+            else None
+        ),
+        "runtime_python": str(resolved_python) if resolved_python else None,
+        "activation_authorized": active,
+        "scheduler_installed": active,
+        "scheduler_enabled": active,
+        "owner_deployment_required": not active,
         "production_effect": "none",
         "production_weight_write": False,
         "active_shadow_weight_write": False,
@@ -353,19 +571,27 @@ def _preflight_markdown(payload: Mapping[str, object]) -> str:
         f"- checkout：`{payload.get('checkout_root') or 'MISSING'}`",
         f"- release commit：`{payload.get('release_commit') or 'MISSING'}`",
         f"- scheduler execution ready：`{str(payload['scheduler_execution_ready']).lower()}`",
-        "- activation authorized：`false`（等待 owner deployment）",
+        f"- active deployment required：`{str(payload['active_deployment_required']).lower()}`",
+        f"- activation authorized：`{str(payload['activation_authorized']).lower()}`",
+        f"- deployment id：`{payload.get('deployment_id') or 'MISSING'}`",
         "- production_effect：`none`",
         "",
         "| check | status |",
         "|---|---|",
     ]
-    for item in payload["checks"]:
+    raw_checks = payload.get("checks")
+    if not isinstance(raw_checks, list):
+        raise ValueError("ops scheduler checkout preflight checks must be list")
+    for raw_item in raw_checks:
+        if not isinstance(raw_item, Mapping):
+            raise ValueError("ops scheduler checkout preflight check must be mapping")
+        item = raw_item
         lines.append(f"| {item['check_id']} | {item['status']} |")
     lines.extend(
         [
             "",
-            "Preflight PASS 不安装或启用 scheduler；owner 必须独立完成 checkout、release pin、",
-            "credential scope 与系统 scheduler deployment。",
+            "Candidate-only PASS 不代表 scheduler 已启用；scheduler mode 只有 active owner-",
+            "accepted deployment receipt 与全部 live identity checks PASS 才可继续。",
             "",
         ]
     )
@@ -388,6 +614,20 @@ def _bool(value: object, field: str) -> bool:
     if not isinstance(value, bool):
         raise ValueError(f"ops scheduler checkout policy {field} must be boolean")
     return value
+
+
+def _positive_int(value: object, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"ops scheduler checkout policy {field} must be positive integer")
+    return value
+
+
+def _relative_text(value: object, field: str) -> str:
+    text = _text(value, field)
+    path = Path(text)
+    if path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"ops scheduler checkout policy {field} must be relative")
+    return text
 
 
 def _relative_path(path: Path, project_root: Path) -> str:

@@ -560,6 +560,7 @@ def test_closure_failure_and_failed_downgrade_never_leave_pass_manifest(
         [
             "ops",
             "daily-run",
+            "--manual-execution",
             "--as-of",
             AS_OF.isoformat(),
             "--skip-risk-event-openai-precheck",

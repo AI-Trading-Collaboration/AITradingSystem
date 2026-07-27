@@ -29647,3 +29647,140 @@ phase_arch_005m1_batch4_us_equity_special_closure_loader:
     strategy_conclusion_changed: false
     production_effect: none
     broker_action: none
+
+phase_ops_070_stable_ops_deployment_release:
+  schema_version: ops_070_stable_ops_deployment_release_compatibility.v1
+  status: VALIDATING_DEPLOYMENT
+  boundary_id: OPS-070-STABLE-OPS-DEPLOYMENT-RELEASE
+  task_ids:
+  - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
+  - DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  owner_authorization: owner_decision:OPS-070:2026-07-27:proceed_with_stable_deployment_method
+  prior_sections_immutability:
+    source_commit: 00d98ddaa2828852c1086ea9176935643e11e205
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 2872030cfea709051e775d868797cae834d0185d
+    raw_byte_count: 1857331
+    raw_sha256: f6efbcf88720d27a233e6b42f185029aaf21afdd8895f671b48dc0da13508d98
+    append_offset: 1857331
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/operations/ops_scheduler_checkout.yaml
+  - docs/artifact_catalog.md
+  - docs/operations/operations_runbook.md
+  - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
+  - src/ai_trading_system/cli_commands/ops.py
+  - src/ai_trading_system/ops_scheduler_checkout.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_ops_daily.py
+  - tests/test_ops_daily_finalization.py
+  - tests/test_ops_scheduler_checkout.py
+  supersession:
+    superseded_by_phase: OPS-070-STABLE-OPS-DEPLOYMENT-RELEASE
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_005m1_batch4_us_equity_special_closure_loader
+    current_hash_authority: phase_ops_070_stable_ops_deployment_release.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/operations/ops_release_promotion.yaml
+  - docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - src/ai_trading_system/ops_release_promotion.py
+  - tests/test_ops_release_promotion.py
+  source_delta_paths:
+  - config/operations/ops_release_promotion.yaml
+  - config/operations/ops_scheduler_checkout.yaml
+  - docs/artifact_catalog.md
+  - docs/operations/operations_runbook.md
+  - docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md
+  - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - src/ai_trading_system/cli_commands/ops.py
+  - src/ai_trading_system/ops_release_promotion.py
+  - src/ai_trading_system/ops_scheduler_checkout.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_ops_daily.py
+  - tests/test_ops_daily_finalization.py
+  - tests/test_ops_release_promotion.py
+  - tests/test_ops_scheduler_checkout.py
+  sources:
+  - {path: config/operations/ops_release_promotion.yaml, sha256: 8ea4584a86d19b5509ef0b8a4507853121a9ca576911650ff9370fb4b31a2405, hash_normalization: git_eol_lf}
+  - {path: config/operations/ops_scheduler_checkout.yaml, sha256: b5e883a3d0e041342a7c348f0e93fbac19293db2941214e499c1bf11c8b6e447, hash_normalization: git_eol_lf}
+  - {path: docs/artifact_catalog.md, sha256: e6bbe7cc7361c9ec0452e810b3758fffb3a413786f40d525401b1e408301f8b6, hash_normalization: git_eol_lf}
+  - {path: docs/operations/operations_runbook.md, sha256: 0cb8deab0913ed3a768caf2af97dfab3c0a06b65e1454e1cf6c414f203597e60, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md, sha256: 9dbc09c599c8f0ed530597e6bddae8403464f73f4b83744c66efb2b1d0e25e88, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md, sha256: 9d2699ff0a6e8c2bd63c130b669e85edd24b783b7a3c00a72628a05a84c23b9b, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: f37236e8cf548b14ac0ac5ee006045af68cceb73b86909c7aa7f9b5cb9a4f884, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: e414da6ef6da72eb1ad7d47000f8f1c880d84b0858acd9d124233b77a9aee439, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 93ad47c7ecd92f869b39211478767665733d436d1a91d57d77e954329cf29e30, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_architecture_fitness.yaml, sha256: bcab46718669ef9eeca72fce4199b28244780a76df9d9e0ee8622e4595dc13e9, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 004507da673396a746bcd794e3e2353ab1575408c9e4cdefdd94cb561be9d9b0, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: d44514dc0330e53d708e294785b9d9e0182e6d5d161c407fff6a1b3e8ef3c998, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004g_deprecation_inventory.yaml, sha256: a43a8cf2674c8017a1b30b55f2962f4dc05ce3e75db485f5c687aa040405f304, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: 3d50bd704336fae39d6871f9b19b98ba7bd5856cbd16365ca99a628aa09a9a8d, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: ea6d0de17eb10c3fcdc7a78d766ac8c481157be46e6b06a0bd910882b1efea4c, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml, sha256: 702267a66f962827d1afe688ee722fe622ff4258b8a88ecee0ab3289f5d2f86d, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml, sha256: b5f4d0c0e76e6fffd1f55120d5f14f5254f7945c3fe2a24acfc74df46b39af5b, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/cli_commands/ops.py, sha256: 3e1711f31e64f03757fb949eebcf9d5933643a6f991be4b2f337251fb7789743, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/ops_release_promotion.py, sha256: 9a5b232c6dc14480f270924ea8bbc89b703fd7929370e3e56e55786fe91d3223, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/ops_scheduler_checkout.py, sha256: e16c11d7c027f1adb6bbafea58b5ce516d93181b9d1d2858bd2f4a4e7bcc7a0c, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: 3bcd72445648eb208dcd60608c5f60b9ef6d05932671a22797e085375d2dc81e, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004g_deprecation.py, sha256: c3bae0b58067f97175bb5d2c606c896e2ec63dfd505562c2077039c77365dceb, hash_normalization: git_eol_lf}
+  - {path: tests/test_ops_daily.py, sha256: 5c3f68b8141f684dd13cad9753c41d5321ddf32a7a0938126b21c16994271791, hash_normalization: git_eol_lf}
+  - {path: tests/test_ops_daily_finalization.py, sha256: a9961b99b184c1fa2db8b5aec2471732e397e26b59670a6bae11e1c2450dae0d, hash_normalization: git_eol_lf}
+  - {path: tests/test_ops_release_promotion.py, sha256: 162cf869e9f6302a9178fc7d4ea2aa2fe44efc703c1ea7441868e78a22ddaa48, hash_normalization: git_eol_lf}
+  - {path: tests/test_ops_scheduler_checkout.py, sha256: 2bd7ab51385f7f548a2b640cff980f12a7e7f3fb5fe6c156e56ecbdeca010707, hash_normalization: git_eol_lf}
+  implementation:
+    independent_runtime_git_common_dir_required: true
+    exact_reviewed_remote_main_required: true
+    runtime_local_python_and_import_required: true
+    release_candidate_and_deployment_receipts_content_derived: true
+    validation_artifacts_bound_to_candidate_commit: true
+    required_validation_tier_set_exact: true
+    portable_validation_evidence_migrated_to_runtime: true
+    required_critical_path_set_exact: true
+    runtime_distribution_inventory_fingerprinted: true
+    transactional_promotion_with_rollback: true
+    checkout_write_guard_precedes_preflight_writes: true
+    single_codex_scheduler_entry_required: true
+    manual_execution_requires_explicit_flag: true
+    generated_shared_views_coordinator_refresh_once: true
+  validation:
+    focused: PENDING
+    architecture: PENDING
+    contract: PENDING
+    integration: PENDING
+    reproducibility: PENDING
+    full: PENDING
+  safety:
+    data_quality_contract_changed: false
+    strategy_logic_changed: false
+    production_weights_written: false
+    active_shadow_weights_written: false
+    production_effect: none
+    broker_action: none

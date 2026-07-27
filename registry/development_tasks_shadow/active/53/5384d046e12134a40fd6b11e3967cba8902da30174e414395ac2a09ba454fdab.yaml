@@ -11,75 +11,79 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: operations owner：下一合法 scheduler run 复核 PIT/score/Reader Brief；Codex：只在新
-    run 暴露客观 blocker 时继续修复
+  next_owner: Codex：完成 formal gates、main/remote release、独立 runtime clone/evidence
+    migration 与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法
+    scheduler run
   requirement_refs:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
-    publication resolver、retained FMP forward PIT canonical projection、required-kind
-    coverage、component-scoped source revision与source/consumer artifact ownership已实现；真实
-    run 已证明 publication/DQ PASS，旧 aggregate drift 工程 blocker也已关闭。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
+    数据/consumer 隔离已实现；稳定部署 serial contract wave 已实现 release/deployment content-derived
+    receipt、independent common-dir/runtime-local import、transactional promote/rollback、single
+    scheduler observation、credential name-only attestation、WRITE-before-preflight
+    与 explicit manual mode；当前进入 final validation/deployment。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-      attempt/lease/recovery均可审计；PASS reuse只绑定component-owned raw/normalized/report
-      artifacts，consumer-owned aggregate必须排除且披露；publication relocation只豁免transaction-bound绝对root且filename
-      exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与下一真实provider-ready
-      session验收PASS；无weights/broker/trading。
+    text: 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git
+      common dir、runtime-local pinned executable、owner-reviewed exact release/validation
+      receipt、唯一 scheduler entry、最小权限 credential attestation、promotion lock/active-run
+      exclusion、失败回滚与 previous release retention；marker/receipt 缺失 fail closed；known-unrelated
+      exclusion 不得读取；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1589
-    row_sha256: d1ec1363191fca5e1cec01a209635f29152b9c4308ee1858dd1372607a66cd1d
+    row_sha256: aca6c8240c221bf141a84809f94a45c4ef8e79e0e56e2b9cd66cf6b067699a04
     cell_count: 8
     all_cells:
     - OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
     - Operations / objective blocker taxonomy and consumer dependency DAG
     - P0
     - VALIDATING
-    - operations owner：下一合法 scheduler run 复核 PIT/score/Reader Brief；Codex：只在新 run
-      暴露客观 blocker 时继续修复
-    - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
-      publication resolver、retained FMP forward PIT canonical projection、required-kind
-      coverage、component-scoped source revision与source/consumer artifact ownership已实现；真实
-      run 已证明 publication/DQ PASS，旧 aggregate drift 工程 blocker也已关闭。
-    - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-      attempt/lease/recovery均可审计；PASS reuse只绑定component-owned raw/normalized/report
-      artifacts，consumer-owned aggregate必须排除且披露；publication relocation只豁免transaction-bound绝对root且filename
-      exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与下一真实provider-ready
-      session验收PASS；无weights/broker/trading。
-    - 2026-07-25：release `23d4da3aa` 的唯一真实 run `operations_run_330847ca56adc301c4ee1d6d`
-      为34/34 terminal、overall FAILED；market/capture/strict DQ、SEC、freshness、schedule
-      observe、secret scan PASS，确认第一项闭环。FMP 21个旧state artifacts中20个 source-owned bytes
-      exact，只有旧consumer扩展的aggregate漂移；v5修复后真实只读复验20/20 PASS、旧state SHA不变、provider
-      request=false，aggregate mutation可复用且normalized tamper仍fail closed。正式验证focused=`114+68`、fast/architecture/contract=`340/624/275
-      passed`，Ruff PASS。保持`VALIDATING`仅因下一合法scheduler run尚未形成PIT/score/Reader Brief终态；不重跑旧key。`production_effect=none`。
+    - Codex：完成 formal gates、main/remote release、独立 runtime clone/evidence migration
+      与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
+      run
+    - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
+      数据/consumer 隔离已实现；稳定部署 serial contract wave 已实现 release/deployment content-derived
+      receipt、independent common-dir/runtime-local import、transactional promote/rollback、single
+      scheduler observation、credential name-only attestation、WRITE-before-preflight
+      与 explicit manual mode；当前进入 final validation/deployment。
+    - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git common
+      dir、runtime-local pinned executable、owner-reviewed exact release/validation
+      receipt、唯一 scheduler entry、最小权限 credential attestation、promotion lock/active-run
+      exclusion、失败回滚与 previous release retention；marker/receipt 缺失 fail closed；known-unrelated
+      exclusion 不得读取；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
+    - 2026-07-27：实现与 fault-injection/focused 已完成；初次门禁后由 coordinator 刷新 task/DevEx
+      views，进度记录完成后执行 final-tree 最后一次 deterministic refresh；fast-unit=`340 passed`。首轮
+      Architecture=`703 passed / 36 failed`，仅为 manifest stale 与 append-only current-hash
+      authority drift，未降级并按正式流程刷新。当前需闭合 formal gates、local/remote release、独立 clone与
+      receipt activation；旧 linked runtime/state/evidence继续保留，不 clean/reset/delete；`production_effect=none`。
     raw_line: '|OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG|Operations /
-      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|operations
-      owner：下一合法 scheduler run 复核 PIT/score/Reader Brief；Codex：只在新 run 暴露客观 blocker
-      时继续修复|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
-      publication resolver、retained FMP forward PIT canonical projection、required-kind
-      coverage、component-scoped source revision与source/consumer artifact ownership已实现；真实
-      run 已证明 publication/DQ PASS，旧 aggregate drift 工程 blocker也已关闭。|单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-      attempt/lease/recovery均可审计；PASS reuse只绑定component-owned raw/normalized/report
-      artifacts，consumer-owned aggregate必须排除且披露；publication relocation只豁免transaction-bound绝对root且filename
-      exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与下一真实provider-ready
-      session验收PASS；无weights/broker/trading。|2026-07-25：release `23d4da3aa` 的唯一真实
-      run `operations_run_330847ca56adc301c4ee1d6d` 为34/34 terminal、overall FAILED；market/capture/strict
-      DQ、SEC、freshness、schedule observe、secret scan PASS，确认第一项闭环。FMP 21个旧state artifacts中20个
-      source-owned bytes exact，只有旧consumer扩展的aggregate漂移；v5修复后真实只读复验20/20 PASS、旧state
-      SHA不变、provider request=false，aggregate mutation可复用且normalized tamper仍fail closed。正式验证focused=`114+68`、fast/architecture/contract=`340/624/275
-      passed`，Ruff PASS。保持`VALIDATING`仅因下一合法scheduler run尚未形成PIT/score/Reader Brief终态；不重跑旧key。`production_effect=none`。|'
+      objective blocker taxonomy and consumer dependency DAG|P0|VALIDATING|Codex：完成
+      formal gates、main/remote release、独立 runtime clone/evidence migration 与唯一 automation
+      原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler run|详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
+      数据/consumer 隔离已实现；稳定部署 serial contract wave 已实现 release/deployment content-derived
+      receipt、independent common-dir/runtime-local import、transactional promote/rollback、single
+      scheduler observation、credential name-only attestation、WRITE-before-preflight
+      与 explicit manual mode；当前进入 final validation/deployment。|单源失败不阻断无关 source/consumer；缺依赖
+      consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git common dir、runtime-local pinned executable、owner-reviewed
+      exact release/validation receipt、唯一 scheduler entry、最小权限 credential attestation、promotion
+      lock/active-run exclusion、失败回滚与 previous release retention；marker/receipt 缺失
+      fail closed；known-unrelated exclusion 不得读取；下一合法 run 才验收 PIT/score/dashboard/Reader
+      Brief；无 weights/broker/trading。|2026-07-27：实现与 fault-injection/focused 已完成；初次门禁后由
+      coordinator 刷新 task/DevEx views，进度记录完成后执行 final-tree 最后一次 deterministic refresh；fast-unit=`340
+      passed`。首轮 Architecture=`703 passed / 36 failed`，仅为 manifest stale 与 append-only
+      current-hash authority drift，未降级并按正式流程刷新。当前需闭合 formal gates、local/remote release、独立
+      clone与 receipt activation；旧 linked runtime/state/evidence继续保留，不 clean/reset/delete；`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-d1ec1363191fca5e1cec01a2
+  event_id: legacy-import-aca6c8240c221bf141a84809
   task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -92,17 +96,17 @@ initial_event:
   to_status: VALIDATING
   payload:
     priority: P0
-    next_owner: operations owner：下一合法 scheduler run 复核 PIT/score/Reader Brief；Codex：只在新
-      run 暴露客观 blocker 时继续修复
-    notes: 2026-07-25：release `23d4da3aa` 的唯一真实 run `operations_run_330847ca56adc301c4ee1d6d`
-      为34/34 terminal、overall FAILED；market/capture/strict DQ、SEC、freshness、schedule
-      observe、secret scan PASS，确认第一项闭环。FMP 21个旧state artifacts中20个 source-owned bytes
-      exact，只有旧consumer扩展的aggregate漂移；v5修复后真实只读复验20/20 PASS、旧state SHA不变、provider
-      request=false，aggregate mutation可复用且normalized tamper仍fail closed。正式验证focused=`114+68`、fast/architecture/contract=`340/624/275
-      passed`，Ruff PASS。保持`VALIDATING`仅因下一合法scheduler run尚未形成PIT/score/Reader Brief终态；不重跑旧key。`production_effect=none`。
+    next_owner: Codex：完成 formal gates、main/remote release、独立 runtime clone/evidence
+      migration 与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法
+      scheduler run
+    notes: 2026-07-27：实现与 fault-injection/focused 已完成；初次门禁后由 coordinator 刷新 task/DevEx
+      views，进度记录完成后执行 final-tree 最后一次 deterministic refresh；fast-unit=`340 passed`。首轮
+      Architecture=`703 passed / 36 failed`，仅为 manifest stale 与 append-only current-hash
+      authority drift，未降级并按正式流程刷新。当前需闭合 formal gates、local/remote release、独立 clone与
+      receipt activation；旧 linked runtime/state/evidence继续保留，不 clean/reset/delete；`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:d1ec1363191fca5e1cec01a209635f29152b9c4308ee1858dd1372607a66cd1d
+  - sha256:aca6c8240c221bf141a84809f94a45c4ef8e79e0e56e2b9cd66cf6b067699a04
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -110,26 +114,27 @@ projection:
   - Operations / objective blocker taxonomy and consumer dependency DAG
   - P0
   - VALIDATING
-  - operations owner：下一合法 scheduler run 复核 PIT/score/Reader Brief；Codex：只在新 run 暴露客观
-    blocker 时继续修复
-  - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4、relocation-aware
-    publication resolver、retained FMP forward PIT canonical projection、required-kind
-    coverage、component-scoped source revision与source/consumer artifact ownership已实现；真实
-    run 已证明 publication/DQ PASS，旧 aggregate drift 工程 blocker也已关闭。
-  - 单源失败不阻断无关source/consumer；缺依赖consumer显式`BLOCKED`且不得运行；overall仍严格`FAIL/BLOCKED`；source
-    attempt/lease/recovery均可审计；PASS reuse只绑定component-owned raw/normalized/report
-    artifacts，consumer-owned aggregate必须排除且披露；publication relocation只豁免transaction-bound绝对root且filename
-    exact；forward PIT consumer必须验证自己的snapshot kind coverage；旧state/ledger不可改写；正式validation与下一真实provider-ready
-    session验收PASS；无weights/broker/trading。
-  - 2026-07-25：release `23d4da3aa` 的唯一真实 run `operations_run_330847ca56adc301c4ee1d6d`
-    为34/34 terminal、overall FAILED；market/capture/strict DQ、SEC、freshness、schedule
-    observe、secret scan PASS，确认第一项闭环。FMP 21个旧state artifacts中20个 source-owned bytes
-    exact，只有旧consumer扩展的aggregate漂移；v5修复后真实只读复验20/20 PASS、旧state SHA不变、provider request=false，aggregate
-    mutation可复用且normalized tamper仍fail closed。正式验证focused=`114+68`、fast/architecture/contract=`340/624/275
-    passed`，Ruff PASS。保持`VALIDATING`仅因下一合法scheduler run尚未形成PIT/score/Reader Brief终态；不重跑旧key。`production_effect=none`。
+  - Codex：完成 formal gates、main/remote release、独立 runtime clone/evidence migration
+    与唯一 automation 原位切换；operations owner：复核 deployment acceptance 与下一合法 scheduler
+    run
+  - 详见 `docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`。S1-S4
+    数据/consumer 隔离已实现；稳定部署 serial contract wave 已实现 release/deployment content-derived
+    receipt、independent common-dir/runtime-local import、transactional promote/rollback、single
+    scheduler observation、credential name-only attestation、WRITE-before-preflight
+    与 explicit manual mode；当前进入 final validation/deployment。
+  - 单源失败不阻断无关 source/consumer；缺依赖 consumer 显式 `BLOCKED`；独立 runtime 必须有不同 git common
+    dir、runtime-local pinned executable、owner-reviewed exact release/validation receipt、唯一
+    scheduler entry、最小权限 credential attestation、promotion lock/active-run exclusion、失败回滚与
+    previous release retention；marker/receipt 缺失 fail closed；known-unrelated exclusion
+    不得读取；下一合法 run 才验收 PIT/score/dashboard/Reader Brief；无 weights/broker/trading。
+  - 2026-07-27：实现与 fault-injection/focused 已完成；初次门禁后由 coordinator 刷新 task/DevEx views，进度记录完成后执行
+    final-tree 最后一次 deterministic refresh；fast-unit=`340 passed`。首轮 Architecture=`703
+    passed / 36 failed`，仅为 manifest stale 与 append-only current-hash authority drift，未降级并按正式流程刷新。当前需闭合
+    formal gates、local/remote release、独立 clone与 receipt activation；旧 linked runtime/state/evidence继续保留，不
+    clean/reset/delete；`production_effect=none`。
   docs_links:
   - docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
   terminal: false
-  raw_row_sha256: d1ec1363191fca5e1cec01a209635f29152b9c4308ee1858dd1372607a66cd1d
+  raw_row_sha256: aca6c8240c221bf141a84809f94a45c4ef8e79e0e56e2b9cd66cf6b067699a04
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 32d0cb8b5f661c05e459788e82d44db97eb9b413d94a91f6913b95797e48daa9
+fragment_checksum: 5524807b44c62641fe13d10bd17eaca6a2ff415921024a0f4eb664a2bf8fbb68

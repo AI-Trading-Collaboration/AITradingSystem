@@ -31,7 +31,32 @@
 - OPS-070 S2 起，`daily_input_capture_policy.v5` 把每个 `source/session` 的 max attempts、retry delay、retryable blocker codes、lease TTL、recovery mode、`source_revision` 与 artifact ownership 作为 reviewed policy。source state 位于 `outputs/daily_input_capture/source_control/{as_of}/{component}/state.json`；只有显式 `supersedes_source_revisions` 的 component 才写入 `revisions/{source_revision}/state.json` 并保留旧 terminal bytes。逐 attempt 保存 stable blocker、sanitized error、retry eligibility/delay、lease/idempotency 和 artifact checksum。活动 lease 只阻断对应 component；过期 lease 必须先原子移入 `lease_history` 再取得新 lease。未变且已验证 PASS 的 source revision 必须按原 key 幂等复用；复用 authority 只包含 component-owned raw/normalized/report artifacts，可能被下游重建的 consumer-owned aggregate manifest 必须从 authority 排除并在结果中显式披露，任何 source-owned path/SHA/size 集漂移仍 fail closed。只允许 reviewed superseding revision 重开对应 component，quota、permission、credential、schema、filesystem、active lease 和 attempt exhaustion 均保持独立 blocker，不消耗其他 source budget。
 - OPS-070 live-fix 起，`download_manifest.csv.output_path` 的绝对 checkout 前缀不再作为 immutable transaction 的跨 checkout 身份。Resolver 仍逐字段校验 transaction、role、source events、window、row count、checksum 与 artifact filename，只允许已经由 transaction SHA 绑定的历史绝对路径迁移到当前 clean runtime root；新 generation 的 pre-commit 校验仍要求当前 root exact path，filename/path tamper 继续 fail closed。交易日 capture 后新增 `pit_snapshots_project_fmp_forward`：只从同批 retained raw payload 重算 normalized CSV，与 capture normalized bytes exact 比对后原子投影到 canonical PIT/report 路径，固定 `provider_request_performed=false`。PIT build、validate 与 pipeline health 均要求非空 `fmp_forward_pit` snapshot kind；同一 `source_id=fmp_valuation_expectations` 的 analyst/history rows 不得替代该 coverage。
 - OPS-070 S3 起，gap ledger 同时生成并验证 `daily_input_capture_recovery_queue.v1`。`market_macro` 只进入 `READY_FOR_MANUAL_RECOVERY`，SEC 为 `OWNER_REVIEW_REQUIRED` 非 PIT raw 评估，FMP PIT/valuation 与 official sources 为 `INSUFFICIENT_DATA/HISTORICAL_RECAPTURE_FORBIDDEN`。queue 固定 `automatic_execution_allowed=false`、`historical_strict_pit_backfill_allowed=false`、`consumer_cutover_allowed=false`，不请求 provider、不改旧 manifest/run terminal。当前没有自动 recovery executor。
-- OPS-070 S4 的工程门禁由 `config/operations/ops_scheduler_checkout.yaml` 与 `aits ops scheduler-checkout-preflight` 提供。外部 scheduler 设置 reviewed marker 后，`aits ops daily-run` 必须先证明当前进程运行于独立、clean、exact 40-char release commit、reviewed remote 的 ops checkout，再进入既有 checkout WRITE guard。preflight PASS 仍固定 `activation_authorized=false`；真实 checkout provisioning、credential scope、系统 scheduler 安装/启用与 owner acceptance 是外部部署步骤，未获准前不得模拟或建立第二 scheduler entry。
+- OPS-070 S4 的长期门禁由 `config/operations/ops_scheduler_checkout.yaml`、
+  `config/operations/ops_release_promotion.yaml`、`aits ops release-candidate`、
+  `aits ops release-promote`、`aits ops deployment-acceptance` 和
+  `aits ops scheduler-checkout-preflight` 共同提供。外部 scheduler 必须使用独立 Git
+  clone（Git common dir 不得与开发 checkout 相同）、owner-approved exact
+  `origin/main` release、且 `git_commit` 与 candidate commit 完全相同的
+  `fast-unit`、`architecture-fitness`、`contract-validation`、`integration`、
+  `reproducibility`、`full` 六类 PASS validation artifacts（集合必须 exact、不得缺失或
+  重复）；receipt 中的 validation/critical commitment 必须使用 checkout-relative path，
+  promotion 要把六类 evidence 原子复制到 permanent runtime 同相对路径并在切换后重验，
+  不得依赖可清理 development lane 的绝对路径。关键 commitment 集合固定覆盖 promotion/
+  scheduler/checkout policies、CLI/modules、runbook 与 `pyproject.toml`。runtime-local
+  `.venv/Scripts/python.exe`、完整 installed-distribution inventory/fingerprint 与 active
+  `ops_deployment_acceptance.v1` receipt；仅换 cwd、linked worktree 或全局 editable
+  `aits` 均 fail closed。Promotion 只能显式选择 receipt 中的 commit，使用 promotion
+  lock、active daily lease exclusion 和 append-only transaction events；不得自动选择
+  latest、stash/clean/reset 或删除旧 state/ledger/data。`daily-run` 先取得 checkout WRITE
+  lease，再验证/写 scheduler preflight，因此被阻断的 preflight evidence 也不会成为第二
+  writer。scheduler mode 缺 marker、active receipt 或 runtime provenance 一律阻断；
+  非 scheduler 人工执行必须显式提供 `--manual-execution`，active runtime 禁止混用该
+  option。唯一 external trigger 仍是现有 Codex automation `aitradingsystem-pit` 中的
+  `aits ops daily-run`，Windows Task Scheduler entry 必须为 0；不得建立第二 scheduler。
+  Deployment acceptance 只记录获准 credential 名称和 attestation，不记录 secret value，
+  并要求 FMP credential group 与 `SEC_USER_AGENT`；broker/production/active-shadow
+  credential 均禁止。工程/promotion/acceptance 固定 `production_effect=none` 且不运行
+  daily；只有下一合法 provider-ready session 的唯一 trigger 才能做运营验收。
 - Wave14稳定commit/push后的运营修复验收仍只能以`aits ops daily-run`作为唯一外部scheduler trigger，并选择最近已完成且超过provider-ready buffer的U.S. equity trading day。不得删除或手改2026-07-22既有FAILED state/ledger；若新as-of可执行，则使用其正常run-control key验证download→strict DQ→PIT→score→dashboard/latest→Reader Brief全链，并按due条件记录其他cadence为EXECUTED/SKIPPED/LIMITED/INSUFFICIENT_DATA。该验收不写production或active shadow weights，不触发broker/order/trading。
 - 人工运行登记任务应使用`aits ops periodic-dispatch`并显式提供`--task-id`、daily/DQ canonical status、`--data-quality-evidence-id`、至少一个`--source-artifact-id`、`--owner-decision-id`和`--confirm-manual-dispatch`；ad-hoc另需`--explicit-trigger`。该入口复用workflow/date lock、idempotency、attempt和terminal RunLedger，未解析placeholder或非allowlist命令前缀会在runner前BLOCKED。`config/operations/periodic_control.yaml`仍固定`automatic_command_dispatch_enabled=false`，不得把人工入口登记为第二个外部scheduler。
 - `scheduled_tasks.yaml` 的 daily task可用 `activation_condition=always|trading_day_only|closed_market_only` 声明 market-session条件；未声明等同 `always`，未知值加载失败。每个 daily task 还必须显式声明 `dependencies`；未知、重复、自依赖、逆序依赖、未知 capture component 或带依赖的 `always_run` 在配置加载时 fail closed。Conditional alternative（例如 trading-day capture 与 closed-market live fetch）按实际 plan 过滤后进入同一 canonical WorkflowSpec。`ops_daily.py`与canonical shadow/runtime spec必须使用同一activation和DAG解析，不允许重新硬编码另一套条件。

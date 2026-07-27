@@ -392,14 +392,26 @@ S3 由 gap ledger 派生 `daily_input_capture_recovery_queue.v1`：market/macro 
 raw recovery 准备，SEC 需要 non-PIT owner review，PIT-sensitive FMP/official sources 禁止历史
 recapture。queue 不自动执行、不改旧 terminal、不产生 strict PIT 或 consumer authorization。
 
-S4 在现有 checkout WRITE guard 前增加 external scheduler checkout preflight。reviewed env contract
-必须指向与开发工作区不同的 clean checkout、exact release commit 和 reviewed origin；同一进程必须
-确实从该 ops checkout 运行。preflight 只证明 engineering readiness，真实 scheduler/credential
-deployment 仍保持 owner-gated、未安装、未启用。
+S4 的稳定部署补强把 path-level checkout 分离升级为 receipt-gated independent clone。
+Release candidate 必须等于 reviewed `origin/main` exact commit，并冻结 candidate-bound 六类
+正式 validation、固定关键 policy/CLI/module/runbook/`pyproject.toml` hashes 与
+checkout-relative path；显式 promotion 使用 lock、active daily lease exclusion、validation
+evidence 到 permanent runtime 的原子迁移、切换后 live revalidation、append-only transaction
+journal 和失败回滚，绝不自动选择 latest 或清理 runtime。Deployment acceptance 进一步绑定
+不同 Git common dir、runtime-local Python/editable import root、installed-distribution
+inventory/fingerprint、唯一 Codex automation observed state、required env 名称和最小
+credential-scope attestation。Active
+receipt、marker、release、remote、clean audit、runtime executable/import 任一缺失或漂移均 fail
+closed。`daily-run` 先取得 checkout WRITE lease，再执行并写 scheduler preflight；人工运行只有
+显式 `--manual-execution` 才可进入，active scheduler checkout 禁止混用 manual mode。
 
 ```mermaid
 flowchart LR
-    TRIG["Only external trigger<br/>aits ops daily-run"] --> PREFLIGHT["External mode: pinned clean ops checkout preflight"]
+    RC["Owner-approved release candidate<br/>remote main + exact six-tier evidence"] --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
+    PROMOTE --> ACCEPT["Active deployment receipt<br/>independent clone + runtime/environment fingerprint + scheduler observation"]
+    ACCEPT --> TRIG["Only external trigger<br/>aits ops daily-run"]
+    TRIG --> WRITE["Checkout WRITE lease"]
+    WRITE --> PREFLIGHT["Receipt-gated scheduler checkout preflight"]
     PREFLIGHT --> CAPTURE["capture_daily_inputs umbrella"]
     CAPTURE --> MM["Market + macro canonical download<br/>source lease + governed retry"]
     CAPTURE --> FPIT["FMP forward PIT<br/>source lease"]

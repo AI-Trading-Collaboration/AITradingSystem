@@ -380,3 +380,115 @@ steps 继续作为等价 step dependency，不能读取不存在的 capture mani
   当前工程 blocker 已关闭，但不宣称 2026-07-24 旧 run 转为 PASS，也不再调用
   `daily-run`；下一合法 XNYS scheduler run 必须真实通过 projection、PIT、score、
   dashboard、Reader Brief 与 finalization 后，OPS-070 才能完成运营验收。
+
+## 2026-07-27 S4 稳定部署补强
+
+### 新 blocker 与最佳方案
+
+本轮只读审计确认 `D:\Work\AITradingSystem_ops_runtime_20260725` 虽然 clean、detached
+且路径独立，但仍是开发仓库的 linked worktree，共享同一 Git common dir；其 HEAD
+落后当前 local/remote main 50 commits。系统 `aits.exe` 还是 Python 3.11 全局 editable
+entrypoint，实际 import 指向 `D:\Work\AITradingSystem\src\ai_trading_system`，旧 runtime
+没有自己的 Python environment。仅修改 scheduler cwd 会继续执行开发 checkout 代码，
+不能形成稳定隔离。
+
+最佳方案是完成最小 serial public-contract wave：
+
+1. release candidate receipt 冻结 owner-reviewed exact remote/main commit、该 exact
+   commit 上的 `fast-unit`、`architecture-fitness`、`contract-validation`、
+   `integration`、`reproducibility`、`full` 六类正式 PASS validation artifacts 及其
+   SHA-256（集合不得缺失、重复或混入其他 tier）、关键 scheduler/policy/CLI hashes、
+   previous release 和 `production_effect=none`；所有 commitment 使用 checkout-relative
+   path，promotion 原子迁移六类 evidence 到 permanent runtime 后再从该 root live
+   revalidate，不允许 active receipt 长期依赖可清理 development lane 的绝对路径；
+2. deployment acceptance receipt 冻结独立 clone identity、runtime-local executable/import
+   provenance、唯一 scheduler action/cadence/working directory/env contract、最小权限
+   credential attestation 和 owner decision，不记录 secret value；
+3. 显式 promote/rollback transaction 使用 promotion lock，先排除 active daily
+   lease/process，再验证 candidate、fetch reviewed remote、切换 exact detached commit、
+   建立/验证 pinned runtime environment，并在任何失败时恢复 previous accepted release；
+4. scheduler mode 必须同时有 marker 与 active deployment receipt；缺任一项 fail closed。
+   仍只保留现有 Codex automation `aitradingsystem-pit` 作为唯一 external trigger，不安装
+   Windows Task Scheduler，也不允许 daily-run 隐式选择 latest main；
+5. checkout clean 检查复用 target-bound、known-unrelated-aware audit；任何 excluded path
+   不得被打开、hash、复制或修改。所有 activation 前 mutation 只产生
+   `production_effect=none` 的工程/部署证据，不触发 provider、weights、broker 或 trading。
+
+现有 linked runtime 和其中 153,363 个 ignored runtime files 保留为 canonical
+运营证据源，不 reset/clean/delete；新独立 clone 只有在证据迁移、hash/identity 校验和
+owner acceptance 均通过后才能成为 active runtime。下一合法 provider-ready XNYS session
+仍是最终 operational acceptance，工程验证不得提前重跑 `daily-run`。
+
+### 稳定性验收
+
+- linked worktree、wrong common-dir、wrong origin/ref/ancestry、tampered receipt/config/hash、
+  global editable executable、wrong import root、missing marker/receipt 均 fail closed；
+- release validation tier 集合不完整、重复、未知或任一 artifact 的 `git_commit` 与
+  candidate commit 不同均 fail closed，不得用旧提交的 PASS 或 focused-only 结果背书；
+- required critical path 集合不完整/重复、commitment 越出 checkout、promotion evidence
+  copy 冲突/漂移、runtime installed-distribution inventory/fingerprint 缺失或变化均
+  fail closed；
+- missing/duplicate/disabled/wrong-action scheduler entry、credential over-scope 或 secret
+  value 泄漏均 fail closed；
+- promotion 与 active daily lease/process 冲突时不切换；prepare/switch/verify 任一中断
+  可恢复 previous release，并保留 immutable transaction evidence；
+- repeated promotion/rollback 幂等；旧 state、ledger、capture bytes、DQ/PIT/report evidence
+  不删除、不改写，ignored runtime data 不丢失；
+- preflight/diagnostic 写入顺序遵守 WRITE guard，known-unrelated exact exclusion 不被读取；
+- focused、Architecture、Contract、Integration、Reproducibility 与 Full parallel validation
+  在最终 integration candidate 通过；生成视图只由 coordinator 在最终树刷新一次；
+- automation 原位切换前保持当前 external state，不产生第二 scheduler；切换后先做纯
+  identity/deployment preflight，再等待下一合法 session 的唯一 daily-run 验收。
+
+### 稳定部署 workspace 生命周期
+
+- owning task：`OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG`
+- temporary development lane：
+  `D:\Work\AITradingSystem_ops070_stability_dev_20260727`
+- purpose：从 exact local main 建立 clean `SINGLE_LANE` worktree，实现和验证上述 serial
+  contract wave；不得混入当前 DATA-GOV-002C2P checkout 或 excluded owner research。
+- exit condition：最终 candidate 通过正式验证、local main fast-forward、remote main 普通
+  push、独立 runtime 部署证据完成后，审计无唯一未提交/ignored evidence或活动进程，
+  使用 `git worktree remove` 清理并 `git worktree prune`。失败时保留并在本节记录
+  blocker、risk、next owner 与下一退出条件。
+- permanent runtime clone：`D:\Work\AITradingSystem_ops_runtime`
+- purpose：独立 Git common dir、owner-approved exact release、runtime-local pinned Python
+  environment、唯一 Codex automation 的长期运行根；不得通过 junction 共享开发 checkout
+  的 data/outputs，不得使用全局 editable `aits`。
+- exit condition：只有 owner 明确退役，且全部 canonical state/ledger/data/outputs/
+  deployment transactions 已迁移并逐项校验、无 active process/lease/scheduler 引用、
+  previous release 与 rollback evidence 有受治理归宿后才可删除；否则永久保留。
+
+### 2026-07-27 实现与验证进度
+
+- 已完成 release candidate、transactional promotion/rollback、deployment acceptance、
+  independent Git common-dir、runtime-local Python/import provenance、唯一 Codex scheduler
+  observed-state、credential name-only attestation、WRITE guard before preflight write 与显式
+  `--manual-execution` 合同；release receipt 额外要求六类 required validation tier
+  集合 exact 且每个 PASS artifact 的 `git_commit` 与 candidate commit 完全一致，禁止
+  拿旧提交、缺失 tier 或 focused-only 的 PASS 为新 release 背书；commitment 已改为
+  checkout-relative，promotion 会迁移 validation evidence 并在永久 runtime 重验；required
+  critical path set 与 installed-distribution environment fingerprint 也已固定；
+  相关 focused regression 为 `96 passed`，追加 credential/
+  canonical candidate evidence 后的 scheduler/promotion focused 为 `22 passed`，最终树将
+  统一复验。
+- 初次门禁定位 stale authority 后，task shadow 与 DevEx generated views 已由 coordinator
+  刷新；task registry=`917 tasks / 420 active / 497 completed / 55 ambiguous legacy rows /
+  131 consumers`，DevEx=`1033 modules / 1200 tests / 0 ownership violations`。本进度记录会
+  改变 task source bytes，因此在 final tree 还需执行最后一次 deterministic refresh；
+  此后不再在 lane 中间反复刷新。
+- clean lane 缺少四个被 Git ignore、但 bootstrap handoff 明确绑定的历史 validation
+  artifacts。按 handoff 的 exact path/SHA 从主 checkout 复制到 lane 后才允许生成 task
+  registry；四个 SHA 分别为
+  `5afc81...`（fast-unit）、`a7c070...`（architecture-fitness）、
+  `6994b8...`（contract）和 `1785c2...`（full）。它们仅用于 deterministic
+  generated-view bootstrap，不进入 tracked change，也未读取 known-unrelated exclusion。
+- `fast-unit` 已在刷新 task registry 后正式通过 `340 passed`，artifact 为
+  `outputs/validation_runtime/fast-unit_20260727T022631Z/test_runtime_summary.json`。
+  首轮 Architecture 为 `703 passed / 36 failed`，失败均为预期的 DevEx manifest stale
+  与 append-only compatibility current-hash authority drift；未降级门禁，已运行 canonical
+  DevEx generator，并正在追加新的 OPS-070 current authority 后重跑。
+- 当前状态转为 `VALIDATING`。在 formal Architecture/Contract/Integration/
+  Reproducibility/Full、local-main fast-forward、普通 push、独立 clone evidence migration、
+  runtime-local environment、automation 原位切换与 active deployment receipt 全部闭合前，
+  不得把 stable deployment 写成 accepted；下一合法 daily scheduler run 仍是运营终验。

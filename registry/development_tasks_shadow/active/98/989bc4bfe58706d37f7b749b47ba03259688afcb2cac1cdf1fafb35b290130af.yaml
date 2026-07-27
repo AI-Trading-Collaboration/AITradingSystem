@@ -1,0 +1,116 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  title: null
+  domain: Developer experience / reduce generated-view dirty-path amplification
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: architecture coordinator：先做task-shadow v2 side-by-side parity与consumer
+    inventory；project owner：parity完整后另审source cutover
+  requirement_refs:
+  - docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。OPS-070审计确认task
+    fragment中的Markdown line number会级联污染后续fragments，compatibility baseline与report/catalog/flow
+    monolith是中央冲突热点；独立runtime已隔离daily，本任务只降低开发冲突放大。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: worker仅改leaf；shared/generated只在final candidate由coordinator刷新一次。Task shadow
+      v2移出per-fragment line/partition且保持raw row/cells/hash；compatibility改content-addressed
+      section+hash-chain index；report/catalog/flow full-entry fragments必须byte-identical/100%
+      coverage/0 silent drop；所有cutover另需owner批准；Full PASS；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2029
+    row_sha256: 46bd7ea496c5e1938ab059643bde4ab6108ef16138857b4a028dfcc0833436dc
+    cell_count: 8
+    all_cells:
+    - DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+    - Developer experience / reduce generated-view dirty-path amplification
+    - P1
+    - PROPOSED
+    - architecture coordinator：先做task-shadow v2 side-by-side parity与consumer inventory；project
+      owner：parity完整后另审source cutover
+    - 详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。OPS-070审计确认task
+      fragment中的Markdown line number会级联污染后续fragments，compatibility baseline与report/catalog/flow
+      monolith是中央冲突热点；独立runtime已隔离daily，本任务只降低开发冲突放大。
+    - worker仅改leaf；shared/generated只在final candidate由coordinator刷新一次。Task shadow v2移出per-fragment
+      line/partition且保持raw row/cells/hash；compatibility改content-addressed section+hash-chain
+      index；report/catalog/flow full-entry fragments必须byte-identical/100% coverage/0
+      silent drop；所有cutover另需owner批准；Full PASS；`production_effect=none`。
+    - 2026-07-27：登记PROPOSED，未授权ARCH-005 S5或source-of-truth cutover。现有inactive shallow
+      fragments不得直接启用；先完成131个task-register literal consumers及report/catalog/flow direct
+      consumers inventory、v1/v2 parity与rollback。
+    raw_line: '|DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2|Developer
+      experience / reduce generated-view dirty-path amplification|P1|PROPOSED|architecture
+      coordinator：先做task-shadow v2 side-by-side parity与consumer inventory；project
+      owner：parity完整后另审source cutover|详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。OPS-070审计确认task
+      fragment中的Markdown line number会级联污染后续fragments，compatibility baseline与report/catalog/flow
+      monolith是中央冲突热点；独立runtime已隔离daily，本任务只降低开发冲突放大。|worker仅改leaf；shared/generated只在final
+      candidate由coordinator刷新一次。Task shadow v2移出per-fragment line/partition且保持raw
+      row/cells/hash；compatibility改content-addressed section+hash-chain index；report/catalog/flow
+      full-entry fragments必须byte-identical/100% coverage/0 silent drop；所有cutover另需owner批准；Full
+      PASS；`production_effect=none`。|2026-07-27：登记PROPOSED，未授权ARCH-005 S5或source-of-truth
+      cutover。现有inactive shallow fragments不得直接启用；先完成131个task-register literal consumers及report/catalog/flow
+      direct consumers inventory、v1/v2 parity与rollback。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-46bd7ea496c5e1938ab05964
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: architecture coordinator：先做task-shadow v2 side-by-side parity与consumer
+      inventory；project owner：parity完整后另审source cutover
+    notes: 2026-07-27：登记PROPOSED，未授权ARCH-005 S5或source-of-truth cutover。现有inactive
+      shallow fragments不得直接启用；先完成131个task-register literal consumers及report/catalog/flow
+      direct consumers inventory、v1/v2 parity与rollback。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:46bd7ea496c5e1938ab059643bde4ab6108ef16138857b4a028dfcc0833436dc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  - Developer experience / reduce generated-view dirty-path amplification
+  - P1
+  - PROPOSED
+  - architecture coordinator：先做task-shadow v2 side-by-side parity与consumer inventory；project
+    owner：parity完整后另审source cutover
+  - 详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。OPS-070审计确认task
+    fragment中的Markdown line number会级联污染后续fragments，compatibility baseline与report/catalog/flow
+    monolith是中央冲突热点；独立runtime已隔离daily，本任务只降低开发冲突放大。
+  - worker仅改leaf；shared/generated只在final candidate由coordinator刷新一次。Task shadow v2移出per-fragment
+    line/partition且保持raw row/cells/hash；compatibility改content-addressed section+hash-chain
+    index；report/catalog/flow full-entry fragments必须byte-identical/100% coverage/0
+    silent drop；所有cutover另需owner批准；Full PASS；`production_effect=none`。
+  - 2026-07-27：登记PROPOSED，未授权ARCH-005 S5或source-of-truth cutover。现有inactive shallow
+    fragments不得直接启用；先完成131个task-register literal consumers及report/catalog/flow direct
+    consumers inventory、v1/v2 parity与rollback。
+  docs_links:
+  - docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md
+  terminal: false
+  raw_row_sha256: 46bd7ea496c5e1938ab059643bde4ab6108ef16138857b4a028dfcc0833436dc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ae0acd60153c95f520c571bef80daf1b951afb99692e8efac160d4abcf594c9d

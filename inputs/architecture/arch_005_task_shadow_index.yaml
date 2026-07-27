@@ -1,10 +1,10 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: c1fa9ca09c64fd2983ce60b899840a774cf47ad794b0b1863297b317998e3432
+baseline_checksum: cd73650d626088f3bf33d5874b8837cfbffaa668c35a7fa08d522c7d4b798a13
 source_of_truth: LEGACY_MARKDOWN_ONLY
-task_count: 916
-fragment_count: 916
+task_count: 917
+fragment_count: 917
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -369,6 +369,10 @@ fragments:
   path: registry/development_tasks_shadow/completed/82/8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml
   file_sha256: f29a57b20c4b01ee54052f08c93a0c8dc48bf498e81a4eb5c6329379aca02d72
   fragment_checksum: b35d78c0d8101dd9cc5e35dce0f993e5fd3bf270762e15977148c681fb71b48c
+- task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  file_sha256: b5f4d0c0e76e6fffd1f55120d5f14f5254f7945c3fe2a24acfc74df46b39af5b
+  fragment_checksum: ae0acd60153c95f520c571bef80daf1b951afb99692e8efac160d4abcf594c9d
 - task_id: DOC-001
   path: registry/development_tasks_shadow/active/35/354f45b40d45c4c35dfda2ceb87a3bf1ce503c82794b875661a811af7398de19.yaml
   file_sha256: 3d8d624d4f9aefb349bb8369dd63bda0b3b3354fc129af81c087d1c0b1bd44af
@@ -627,8 +631,8 @@ fragments:
   fragment_checksum: 48e2d57d5475382ca8a0ea651f3a51d2bcd10f6f01aba820a009b63db76cb648
 - task_id: OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG
   path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
-  file_sha256: 7b0504d43d320f5f6bf714d8753332e08289ef6b1c0ee8918404b895ab93e8e4
-  fragment_checksum: 32d0cb8b5f661c05e459788e82d44db97eb9b413d94a91f6913b95797e48daa9
+  file_sha256: 702267a66f962827d1afe688ee722fe622ff4258b8a88ecee0ab3289f5d2f86d
+  fragment_checksum: 5524807b44c62641fe13d10bd17eaca6a2ff415921024a0f4eb664a2bf8fbb68
 - task_id: PIT-001
   path: registry/development_tasks_shadow/active/6b/6bcf100bd2ed48230eec76b5a35417a9a97dd5c4abb4de3c8f63dd936d77d1c5.yaml
   file_sha256: a911424e3b6369882090891306131075be4dd8048f6cc701a9d15aa7a1ba73f3
@@ -3689,8 +3693,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 07e5c814e6a6b14127930732f53ed716558c6b2a5948ceb17e87bd5d75c6feba
-  rendered_sha256: 07e5c814e6a6b14127930732f53ed716558c6b2a5948ceb17e87bd5d75c6feba
+  source_sha256: e414da6ef6da72eb1ad7d47000f8f1c880d84b0858acd9d124233b77a9aee439
+  rendered_sha256: e414da6ef6da72eb1ad7d47000f8f1c880d84b0858acd9d124233b77a9aee439
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3712,4 +3716,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 1f6d0437f934ac2bd9ae2cbffdd01efc6c0b201c1ad024a729b42077a0beab04
+index_checksum: 605ea26846169492f3ec6729b34b7400259c433ce39971ccd8032daba24090a1

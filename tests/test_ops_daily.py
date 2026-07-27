@@ -832,6 +832,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
         [
             "ops",
             "daily-run",
+            "--manual-execution",
             "--as-of",
             "2026-05-06",
             "--skip-risk-event-openai-precheck",

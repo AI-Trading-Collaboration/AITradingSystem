@@ -1,0 +1,95 @@
+schema_version: ops_release_promotion_policy.v1
+policy_id: ops_release_promotion_v1
+version: 1.0.0
+status: REVIEWED_OWNER_GATED
+owner: operations_owner_and_project_owner
+reviewed_at: 2026-07-27
+rationale: >
+  Ops releases must be selected explicitly from validated, pushed remote main
+  and promoted through a journaled transaction. Daily execution must never
+  select latest main, mutate release state, or repair a failed promotion.
+repository:
+  expected_remote: git@github.com:AI-Trading-Collaboration/AITradingSystem.git
+  reviewed_remote_ref: refs/remotes/origin/main
+  candidate_must_equal_reviewed_remote_ref: true
+  independent_git_common_dir_required: true
+receipts:
+  release_candidate_schema: ops_release_candidate.v1
+  deployment_acceptance_schema: ops_deployment_acceptance.v1
+  promotion_transaction_schema: ops_release_promotion_transaction.v1
+  active_receipt_relative_path: outputs/operations/deployment/active.json
+  history_relative_path: outputs/operations/deployment/history
+  transaction_relative_path: outputs/operations/deployment/transactions
+  evidence_relative_path: outputs/operations/deployment/evidence
+  required_validation_tiers:
+    - fast-unit
+    - architecture-fitness
+    - contract-validation
+    - integration
+    - reproducibility
+    - full
+  required_critical_paths:
+    - config/architecture/arch_005_parallel_control_policy.yaml
+    - config/architecture/arch_005_s4d_checkout_guard.yaml
+    - config/operations/ops_release_promotion.yaml
+    - config/operations/ops_scheduler_checkout.yaml
+    - docs/operations/operations_runbook.md
+    - pyproject.toml
+    - src/ai_trading_system/cli_commands/ops.py
+    - src/ai_trading_system/ops_release_promotion.py
+    - src/ai_trading_system/ops_scheduler_checkout.py
+promotion:
+  lock_relative_path: outputs/operations/deployment/promotion.lock
+  active_daily_lease_required_count: 0
+  automatic_latest_selection: false
+  automatic_stash_clean_reset: false
+  previous_release_retained: true
+runtime:
+  python_relative_path: .venv/Scripts/python.exe
+  package_module: ai_trading_system
+  distribution_name: ai-trading-system
+  installed_distribution_inventory_required: true
+  executable_must_be_below_checkout: true
+  imported_package_must_be_below_checkout: true
+scheduler:
+  provider: codex_automation
+  scheduler_id: aitradingsystem-pit
+  scheduler_entry_count: 1
+  unified_external_trigger:
+    - aits
+    - ops
+    - daily-run
+  windows_task_scheduler_entries_allowed: false
+  required_environment_names:
+    - AITS_EXTERNAL_SCHEDULER
+    - AITS_OPS_CHECKOUT_ROOT
+    - AITS_OPS_RELEASE_COMMIT
+    - AITS_DEVELOPMENT_CHECKOUT_ROOT
+    - AITS_OPS_DEPLOYMENT_RECEIPT
+    - AITS_OPS_PYTHON
+credentials:
+  allowed_secret_names:
+    - FMP_API_KEY
+    - FINANCIAL_MODELING_PREP_API_KEY
+    - FRED_API_KEY
+    - SEC_USER_AGENT
+  required_credential_groups:
+    - [FMP_API_KEY, FINANCIAL_MODELING_PREP_API_KEY]
+    - [SEC_USER_AGENT]
+  forbidden_name_patterns:
+    - BROKER
+    - IBKR
+    - PRODUCTION_WEIGHT
+    - ACTIVE_SHADOW_WEIGHT
+  secret_values_must_not_be_recorded: true
+safety:
+  production_effect: none
+  production_weight_write: false
+  active_shadow_weight_write: false
+  broker_action: false
+  trading_action: false
+review:
+  owner: operations_owner_and_project_owner
+  condition: >
+    Re-review remote/ref, validation requirements, runtime provenance, scheduler
+    identity, credential scope, transaction semantics, or safety boundary changes.

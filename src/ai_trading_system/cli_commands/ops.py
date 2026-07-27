@@ -98,6 +98,15 @@ from ai_trading_system.ops_daily import (
 from ai_trading_system.ops_daily import (
     run_daily_ops_plan_controlled as run_daily_ops_plan,
 )
+from ai_trading_system.ops_release_promotion import (
+    DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+    OpsReleasePromotionError,
+    activate_ops_deployment,
+    build_ops_deployment_acceptance,
+    build_ops_release_candidate,
+    load_ops_release_promotion_policy,
+    promote_ops_release,
+)
 from ai_trading_system.ops_scheduler_checkout import (
     DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
     inspect_ops_scheduler_checkout,
@@ -644,6 +653,21 @@ def scheduler_checkout_preflight_command(
         Path,
         typer.Option(help="reviewed ops scheduler checkout policy。"),
     ] = DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
+    deployment_receipt: Annotated[
+        Path | None,
+        typer.Option(help="active owner-accepted deployment receipt。"),
+    ] = None,
+    runtime_python: Annotated[
+        Path | None,
+        typer.Option(help="runtime-local Python executable。"),
+    ] = None,
+    require_active_deployment: Annotated[
+        bool,
+        typer.Option(
+            "--require-active-deployment/--candidate-only",
+            help="是否要求 active deployment receipt 与 live runtime provenance。",
+        ),
+    ] = False,
     output_json: Annotated[
         Path,
         typer.Option(help="preflight JSON 输出路径。"),
@@ -661,7 +685,10 @@ def scheduler_checkout_preflight_command(
             env=os.environ,
             checkout_root=checkout_root,
             release_commit=release_commit,
+            deployment_receipt_path=deployment_receipt,
+            runtime_python=runtime_python,
             require_current_process_checkout=False,
+            require_active_deployment=require_active_deployment,
         )
         write_ops_scheduler_checkout_preflight(
             payload,
@@ -675,10 +702,226 @@ def scheduler_checkout_preflight_command(
     console.print(f"[{style}]Ops scheduler checkout preflight：{payload['status']}[/{style}]")
     console.print(f"JSON：{output_json}")
     console.print(f"Markdown：{output_markdown}")
-    console.print("activation_authorized=false；scheduler_installed/enabled=false")
+    console.print(
+        "activation_authorized="
+        f"{str(payload['activation_authorized']).lower()}；"
+        f"deployment_id={payload.get('deployment_id') or 'MISSING'}"
+    )
     console.print("production_effect=none；weights/broker/trading action=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
+
+
+@ops_app.command("release-candidate")
+def ops_release_candidate_command(
+    candidate_commit: Annotated[
+        str,
+        typer.Option(help="必须等于 reviewed origin/main 的 exact 40-char commit。"),
+    ],
+    owner_decision_ref: Annotated[
+        str,
+        typer.Option(help="显式 owner_decision:* release approval reference。"),
+    ],
+    validation_artifact: Annotated[
+        list[Path],
+        typer.Option(
+            "--validation-artifact",
+            help=(
+                "可重复；必须提供 candidate-bound fast-unit、Architecture、Contract、"
+                "Integration、Reproducibility、Full 六类 exact PASS JSON。"
+            ),
+        ),
+    ],
+    critical_path: Annotated[
+        list[Path],
+        typer.Option(
+            "--critical-path",
+            help="可重复；必须与 reviewed policy 的 required critical path 集合完全相同。",
+        ),
+    ],
+    output_json: Annotated[
+        Path,
+        typer.Option(help="release candidate receipt JSON 输出路径。"),
+    ],
+    previous_release_commit: Annotated[
+        str | None,
+        typer.Option(help="上一 owner-accepted exact release；首发可为空。"),
+    ] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed release promotion policy。"),
+    ] = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+) -> None:
+    """生成 content-derived、owner-gated ops release candidate receipt。"""
+    try:
+        payload = build_ops_release_candidate(
+            project_root=PROJECT_ROOT,
+            candidate_commit=candidate_commit,
+            validation_artifact_paths=validation_artifact,
+            critical_path_commitments=critical_path,
+            owner_decision_ref=owner_decision_ref,
+            previous_release_commit=previous_release_commit,
+            policy_path=policy_path,
+        )
+        write_json_atomic(output_json, payload)
+    except (OSError, ValueError, OpsReleasePromotionError) as exc:
+        console.print(f"[red]Ops release candidate：BLOCKED ({exc})[/red]")
+        console.print("production_effect=none；weights/broker/trading action=false")
+        raise typer.Exit(code=1) from exc
+    console.print("[green]Ops release candidate：PASS[/green]")
+    console.print(f"release_id={payload['release_id']}；JSON={output_json}")
+    console.print("production_effect=none；weights/broker/trading action=false")
+
+
+@ops_app.command("release-promote")
+def ops_release_promote_command(
+    runtime_root: Annotated[
+        Path,
+        typer.Option(help="已登记、独立 Git clone 的 permanent runtime root。"),
+    ],
+    release_candidate: Annotated[
+        Path,
+        typer.Option(help="owner-approved release candidate receipt。"),
+    ],
+    runtime_python: Annotated[
+        Path | None,
+        typer.Option(help="runtime-local Python；默认读取 promotion policy 相对路径。"),
+    ] = None,
+    development_root: Annotated[
+        Path,
+        typer.Option(help="开发 checkout，用于证明 Git common dir 独立。"),
+    ] = PROJECT_ROOT,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed release promotion policy。"),
+    ] = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+) -> None:
+    """事务化切换 exact release；不激活 scheduler，不运行 daily。"""
+    try:
+        policy = load_ops_release_promotion_policy(policy_path)
+        selected_python = runtime_python or (
+            runtime_root / policy.runtime_python_relative_path
+        )
+        payload, event_path = promote_ops_release(
+            coordinator_root=PROJECT_ROOT,
+            runtime_root=runtime_root,
+            development_root=development_root,
+            release_candidate_path=release_candidate,
+            runtime_python=selected_python,
+            policy_path=policy_path,
+        )
+    except (OSError, ValueError, OpsReleasePromotionError) as exc:
+        console.print(f"[red]Ops release promotion：BLOCKED/ROLLED_BACK ({exc})[/red]")
+        console.print("scheduler_activation=false；daily_run=false；production_effect=none")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]Ops release promotion：{payload['state']}[/green]")
+    console.print(f"transaction={payload['transaction_id']}；event={event_path}")
+    console.print("scheduler_activation=false；daily_run=false；production_effect=none")
+
+
+@ops_app.command("deployment-acceptance")
+def ops_deployment_acceptance_command(
+    runtime_root: Annotated[Path, typer.Option(help="独立 permanent runtime root。")],
+    release_candidate: Annotated[Path, typer.Option(help="release candidate receipt。")],
+    scheduler_observation: Annotated[
+        Path,
+        typer.Option(help="唯一 Codex automation observed-state JSON。"),
+    ],
+    promotion_event: Annotated[
+        Path,
+        typer.Option(help="同 release 的 PROMOTED_NOT_ACTIVATED transaction event。"),
+    ],
+    credential_attestation_ref: Annotated[
+        str,
+        typer.Option(help="owner_attestation:* 最小权限凭证声明；不含 secret value。"),
+    ],
+    owner_decision_ref: Annotated[
+        str,
+        typer.Option(help="owner_decision:* deployment acceptance reference。"),
+    ],
+    output_json: Annotated[
+        Path,
+        typer.Option(help="deployment acceptance candidate JSON。"),
+    ],
+    credential_name: Annotated[
+        list[str] | None,
+        typer.Option("--credential-name", help="可重复；只记录获准 secret 名称。"),
+    ] = None,
+    runtime_python: Annotated[
+        Path | None,
+        typer.Option(help="runtime-local Python；默认读取 promotion policy 相对路径。"),
+    ] = None,
+    development_root: Annotated[
+        Path,
+        typer.Option(help="开发 checkout，用于证明 Git common dir 独立。"),
+    ] = PROJECT_ROOT,
+    previous_acceptance: Annotated[
+        Path | None,
+        typer.Option(help="上一 active acceptance receipt；首发可为空。"),
+    ] = None,
+    activate: Annotated[
+        bool,
+        typer.Option(
+            "--activate/--candidate-only",
+            help="仅在 owner 已确认 scheduler observed state 后写 active receipt。",
+        ),
+    ] = False,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed release promotion policy。"),
+    ] = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+) -> None:
+    """构建并可选激活 owner-accepted deployment receipt；不运行 daily。"""
+    try:
+        policy = load_ops_release_promotion_policy(policy_path)
+        selected_python = runtime_python or (
+            runtime_root / policy.runtime_python_relative_path
+        )
+        release_payload = load_strict_json_path(release_candidate)
+        scheduler_payload = load_strict_json_path(scheduler_observation)
+        if not isinstance(release_payload, Mapping) or not isinstance(
+            scheduler_payload, Mapping
+        ):
+            raise ValueError("release/scheduler payload must be mappings")
+        payload = build_ops_deployment_acceptance(
+            release_candidate=release_payload,
+            release_candidate_path=release_candidate,
+            runtime_root=runtime_root,
+            development_root=development_root,
+            runtime_python=selected_python,
+            scheduler_observation=scheduler_payload,
+            promotion_event_path=promotion_event,
+            credential_names=credential_name or [],
+            credential_attestation_ref=credential_attestation_ref,
+            owner_decision_ref=owner_decision_ref,
+            previous_acceptance_path=previous_acceptance,
+            policy_path=policy_path,
+        )
+        write_json_atomic(output_json, payload)
+        active_path = (
+            activate_ops_deployment(
+                payload,
+                runtime_root=runtime_root,
+                policy_path=policy_path,
+            )
+            if activate
+            else None
+        )
+    except (
+        OSError,
+        ValueError,
+        StrictJsonContractError,
+        OpsReleasePromotionError,
+    ) as exc:
+        console.print(f"[red]Ops deployment acceptance：BLOCKED ({exc})[/red]")
+        console.print("daily_run=false；production_effect=none")
+        raise typer.Exit(code=1) from exc
+    state = "ACTIVE_OWNER_ACCEPTED" if active_path is not None else "CANDIDATE_ONLY"
+    console.print(f"[green]Ops deployment acceptance：{state}[/green]")
+    console.print(f"deployment_id={payload['deployment_id']}；JSON={output_json}")
+    if active_path is not None:
+        console.print(f"active_receipt={active_path}")
+    console.print("daily_run=false；weights/broker/trading action=false")
 
 
 @ops_app.command("daily-plan")
@@ -2053,43 +2296,79 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
         )
         try:
             checkout_policy = load_ops_scheduler_checkout_policy()
-            if checkout_policy.scheduler_marker_name in os.environ:
-                preflight = inspect_ops_scheduler_checkout(
-                    project_root=PROJECT_ROOT,
-                    env=os.environ,
-                    require_current_process_checkout=True,
-                )
-                timestamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
-                write_ops_scheduler_checkout_preflight(
-                    preflight,
-                    json_path=(
-                        PROJECT_ROOT
-                        / "outputs"
-                        / "reports"
-                        / f"ops_scheduler_checkout_preflight_{timestamp}.json"
-                    ),
-                    markdown_path=(
-                        PROJECT_ROOT
-                        / "outputs"
-                        / "reports"
-                        / f"ops_scheduler_checkout_preflight_{timestamp}.md"
-                    ),
-                )
-                if preflight["status"] != "PASS":
+            active_receipt = (
+                PROJECT_ROOT / checkout_policy.active_receipt_relative_path
+            ).resolve()
+            manual_execution = kwargs.get("manual_execution") is True
+            scheduler_context = (
+                checkout_policy.scheduler_marker_name in os.environ
+                or active_receipt.is_file()
+            )
+            with hold_daily_checkout_guard(
+                project_root=PROJECT_ROOT,
+                task_id="OPS-DAILY-UNIFIED-TRIGGER",
+                thread_id=thread_id,
+            ):
+                if scheduler_context and manual_execution:
                     console.print(
-                        "[red]Ops scheduler checkout preflight：BLOCKED "
-                        f"({','.join(preflight['blocker_codes'])})[/red]"
+                        "[red]Ops daily execution mode：BLOCKED "
+                        "(OPS_DAILY_EXECUTION_MODE_CONFLICT)[/red]"
                     )
                     console.print(
                         "provider_request=false；cache_mutation=false；"
                         "production_effect=none"
                     )
                     raise typer.Exit(code=1)
-            with hold_daily_checkout_guard(
-                project_root=PROJECT_ROOT,
-                task_id="OPS-DAILY-UNIFIED-TRIGGER",
-                thread_id=thread_id,
-            ):
+                if not scheduler_context and not manual_execution:
+                    console.print(
+                        "[red]Ops daily execution mode：BLOCKED "
+                        "(OPS_DAILY_EXECUTION_MODE_UNDECLARED)[/red]"
+                    )
+                    console.print(
+                        "显式人工运行必须提供 --manual-execution；"
+                        "scheduler 必须提供 reviewed marker/receipt env。"
+                    )
+                    console.print(
+                        "provider_request=false；cache_mutation=false；"
+                        "production_effect=none"
+                    )
+                    raise typer.Exit(code=1)
+                if scheduler_context:
+                    preflight = inspect_ops_scheduler_checkout(
+                        project_root=PROJECT_ROOT,
+                        env=os.environ,
+                        require_current_process_checkout=True,
+                        require_active_deployment=True,
+                    )
+                    timestamp = datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
+                    write_ops_scheduler_checkout_preflight(
+                        preflight,
+                        json_path=(
+                            PROJECT_ROOT
+                            / "outputs"
+                            / "reports"
+                            / f"ops_scheduler_checkout_preflight_{timestamp}.json"
+                        ),
+                        markdown_path=(
+                            PROJECT_ROOT
+                            / "outputs"
+                            / "reports"
+                            / f"ops_scheduler_checkout_preflight_{timestamp}.md"
+                        ),
+                    )
+                    if preflight["status"] != "PASS":
+                        blocker_codes = preflight.get("blocker_codes")
+                        if not isinstance(blocker_codes, list):
+                            blocker_codes = ["OPS_CHECKOUT_PREFLIGHT_INVALID"]
+                        console.print(
+                            "[red]Ops scheduler checkout preflight：BLOCKED "
+                            f"({','.join(str(item) for item in blocker_codes)})[/red]"
+                        )
+                        console.print(
+                            "provider_request=false；cache_mutation=false；"
+                            "production_effect=none"
+                        )
+                        raise typer.Exit(code=1)
                 command(*args, **kwargs)
         except (OSError, ValueError) as exc:
             console.print(f"[red]Ops scheduler checkout policy/preflight：BLOCKED ({exc})[/red]")
@@ -2190,6 +2469,13 @@ def daily_ops_run_command(
         str | None,
         typer.Option(help="可选固定 run id；默认由 as_of 和 UTC 时间生成。"),
     ] = None,
+    manual_execution: Annotated[
+        bool,
+        typer.Option(
+            "--manual-execution",
+            help="显式人工运行声明；active scheduler checkout 禁止与 scheduler mode 混用。",
+        ),
+    ] = False,
     legacy_output_mode: Annotated[
         str,
         typer.Option(help="Legacy outputs/reports 兼容模式：mirror 或 off。"),
