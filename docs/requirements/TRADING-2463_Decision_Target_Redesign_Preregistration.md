@@ -144,3 +144,9 @@ condition。本任务不得以未解释 numeric literal 冻结这些政策。
   base-drift流程留待latest-main integration candidate验证；第三项为新增架构测试后的
   `arch_004e_test_manifest` deterministic rebuild差异。后续先在冻结lane刷新必要DevEx生成物，
   再提交lane并生成/验证`integration_revalidation_plan.v1`，不在旧base上伪造formal PASS。
+- 2026-07-27：冻结lane提交=`3f8dad2fed0e96a45d9761892bdf1290a9fd66d0`。由真实
+  frozen-base/lane-head/latest-main delta生成并验证
+  `integration-revalidation-3012426f9b2096e54293`；结论=`RECONCILIATION_REQUIRED`。
+  Coordinator仅人工融合`docs/task_register.md`与compatibility测试的domain overlap，
+  其余task-only owner决定保持不变；共享task-shadow/DevEx投影在latest-main final tree统一
+  重建。DATA-GOV-002C2P的实现、证据与append-only authority完整保留。

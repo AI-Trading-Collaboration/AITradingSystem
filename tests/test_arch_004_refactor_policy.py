@@ -849,7 +849,28 @@ DATA_GOV_002C2P_NEW_SOURCE_PATHS = frozenset(
         "tests/test_price_issue_attribution_review_pack.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = DATA_GOV_002C2P_SECTION
+TRADING_2463_SECTION = (
+    "phase_trading_2463_decision_target_redesign_preregistration"
+)
+TRADING_2463_BASE_COMMIT = "b99b8b95ada8feb2c784fbc00625d4275084e755"
+TRADING_2463_BASELINE_GIT_BLOB = "b19597710ce51f18ed486aa34ed65060dbad2009"
+TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT = 1_900_553
+TRADING_2463_HISTORICAL_PREFIX_SHA256 = (
+    "5dc068652e5be2a447ebd19d4f13a36245dc0805c336705c3a6bd336cb5359fc"
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2463_SECTION
+TRADING_2463_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "docs/requirements/"
+            "TRADING-2463_Decision_Target_Redesign_Preregistration.md"
+        ),
+        (
+            "registry/development_tasks_shadow/active/a0/"
+            "a022ba7f79e435805c2c428b903604715852fe7334cada5e4433fb600493a515.yaml"
+        ),
+    }
+)
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -1874,6 +1895,25 @@ def _data_gov_002c2p_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2463_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2463_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2463_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -2843,6 +2883,26 @@ def _assert_data_gov_002c2p_historical_prefix_immutable(
     )
     suffix = current_bytes[DATA_GOV_002C2P_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DATA_GOV_002C2P_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2463_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == TRADING_2463_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, (
+        "TRADING-2463 historical prefix differs from immutable "
+        "DATA-GOV-002C2P authority blob"
+    )
+    suffix = current_bytes[TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{TRADING_2463_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -4004,6 +4064,26 @@ def _data_gov_002c2p_source_paths() -> frozenset[str]:
 
 
 @cache
+def _trading_2463_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2463_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2463_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2463_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2463_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2463_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -4065,6 +4145,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _ops_070_stable_release_source_paths()
     if DATA_GOV_002C2P_SECTION in baseline:
         paths |= _data_gov_002c2p_source_paths()
+    if TRADING_2463_SECTION in baseline:
+        paths |= _trading_2463_source_paths()
     return paths
 
 
@@ -4782,12 +4864,34 @@ def _data_gov_002c2p_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(DATA_GOV_002C2P_SECTION)
 
 
+@cache
+def _trading_2463_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2463_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DATA_GOV_002C2P_SECTION in baseline:
+    if TRADING_2463_SECTION in baseline:
+        current_superseded_paths = _trading_2463_superseded_live_source_paths()
+        assert (
+            _trading_2463_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2463_SECTION
+    elif DATA_GOV_002C2P_SECTION in baseline:
         current_superseded_paths = _data_gov_002c2p_superseded_live_source_paths()
         assert (
             _data_gov_002c2p_prior_active_source_mismatches()
@@ -9886,9 +9990,10 @@ def test_devx_003_is_preserved_historical_authority() -> None:
         | _arch_005m2_superseded_live_source_paths()
         | _arch_005m3_superseded_live_source_paths()
         | _arch_005m1_batch3_superseded_live_source_paths()
-        | _arch_005m1_batch4_superseded_live_source_paths()
-        | _ops_070_stable_release_superseded_live_source_paths()
-    )
+            | _arch_005m1_batch4_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _trading_2463_superseded_live_source_paths()
+        )
     assert phase["supersession"] == {
         "superseded_by_phase": "DEVX-003-GOVERNED-CLOSEOUT-REMOTE-PREFLIGHT",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -9997,9 +10102,10 @@ def test_data_gov_002c1_is_preserved_historical_authority() -> None:
         | _arch_005m2_superseded_live_source_paths()
         | _arch_005m3_superseded_live_source_paths()
         | _arch_005m1_batch3_superseded_live_source_paths()
-        | _arch_005m1_batch4_superseded_live_source_paths()
-        | _ops_070_stable_release_superseded_live_source_paths()
-    )
+            | _arch_005m1_batch4_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _trading_2463_superseded_live_source_paths()
+        )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C1-DQ-ISSUE-ATTRIBUTION-READINESS-INVENTORY"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -10115,9 +10221,10 @@ def test_data_gov_002c2_is_preserved_historical_authority() -> None:
         | _arch_005m2_superseded_live_source_paths()
         | _arch_005m3_superseded_live_source_paths()
         | _arch_005m1_batch3_superseded_live_source_paths()
-        | _arch_005m1_batch4_superseded_live_source_paths()
-        | _ops_070_stable_release_superseded_live_source_paths()
-    )
+            | _arch_005m1_batch4_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _trading_2463_superseded_live_source_paths()
+        )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -10240,6 +10347,7 @@ def test_trading_2461_model_ladder_is_preserved_historical_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2461-DECISION-TARGET-CAPABILITY-AUDIT-BATCH2",
@@ -10357,6 +10465,7 @@ def test_arch_004g2_paper_weekly_is_preserved_historical_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": ("ARCH-004G2-PAPER-SHADOW-WEEKLY-VALIDATION-AUTHORITY-CANDIDATE"),
@@ -10460,6 +10569,7 @@ def test_ops_069_terminal_archive_is_preserved_historical_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": "OPS-069-TERMINAL-ARCHIVE",
@@ -10557,6 +10667,7 @@ def test_devx_004_is_preserved_historical_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["removed_live_source_paths"] == []
     assert set(phase["new_source_paths"]) == DEVX_004_NEW_SOURCE_PATHS
@@ -10680,6 +10791,7 @@ def test_devx_005_is_preserved_historical_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     expected = superseded | DEVX_005_NEW_SOURCE_PATHS
     assert phase["removed_live_source_paths"] == []
@@ -10756,6 +10868,7 @@ def test_trading_2462_tail_risk_audit_is_preserved_historical_authority() -> Non
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": ("TRADING-2462-TAIL-RISK-ROBUSTNESS-FALSIFICATION-AUDIT"),
@@ -10863,6 +10976,7 @@ def test_devx_006_arch_005m1_is_current_hash_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     expected = superseded | DEVX_006_NEW_SOURCE_PATHS
     assert set(phase["removed_live_source_paths"]) == {
@@ -10938,6 +11052,7 @@ def test_arch_005m2_is_current_hash_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     task_shadow_path = (
         ARCH_005M2_COMPLETED_TASK_SHADOW_PATH
@@ -11025,6 +11140,7 @@ def test_arch_005m3_is_current_hash_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     expected_new_paths = set(ARCH_005M3_CORE_NEW_SOURCE_PATHS)
     if phase["status"] == "COMPLETE":
@@ -11115,6 +11231,7 @@ def test_arch_005m1_batch2_is_current_hash_authority() -> None:
         | _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["removed_live_source_paths"] == []
     assert phase["new_source_paths"] == []
@@ -11199,6 +11316,7 @@ def test_arch_005m1_batch3_is_current_hash_authority() -> None:
         _arch_005m1_batch4_superseded_live_source_paths()
         | _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["removed_live_source_paths"] == []
     assert phase["new_source_paths"] == []
@@ -11286,6 +11404,7 @@ def test_arch_005m1_batch4_is_current_hash_authority() -> None:
     assert superseded ^ current_mismatches <= set(
         _ops_070_stable_release_superseded_live_source_paths()
         | _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     expected_removed_paths = (
         {ARCH_005M1_BATCH4_ACTIVE_TASK_SHADOW_PATH}
@@ -11733,6 +11852,7 @@ def test_ops_070_runtime_self_containment_is_current_hash_authority() -> None:
     )
     assert superseded ^ current_mismatches <= set(
         _data_gov_002c2p_superseded_live_source_paths()
+        | _trading_2463_superseded_live_source_paths()
     )
     assert phase["removed_live_source_paths"] == []
     assert phase["new_source_paths"] == []
@@ -11794,13 +11914,15 @@ def test_arch_005m1_batch4_rejects_historical_prefix_tamper() -> None:
         )
 
 
-def test_data_gov_002c2p_is_current_hash_authority() -> None:
+def test_data_gov_002c2p_is_immutable_historical_authority() -> None:
     _assert_data_gov_002c2p_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_002c2p_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == DATA_GOV_002C2P_SECTION
+    assert list(baseline).index(DATA_GOV_002C2P_SECTION) < list(
+        baseline
+    ).index(TRADING_2463_SECTION)
     phase = baseline[DATA_GOV_002C2P_SECTION]
     assert phase["schema_version"] == (
         "data_gov_002c2p_price_non_market_session_attribution_compatibility.v1"
@@ -11823,7 +11945,6 @@ def test_data_gov_002c2p_is_current_hash_authority() -> None:
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _data_gov_002c2p_prior_active_source_mismatches()
     assert phase["removed_live_source_paths"] == []
     assert set(phase["new_source_paths"]) == set(DATA_GOV_002C2P_NEW_SOURCE_PATHS)
     assert set(phase["source_delta_paths"]) == (superseded | set(DATA_GOV_002C2P_NEW_SOURCE_PATHS))
@@ -11835,7 +11956,10 @@ def test_data_gov_002c2p_is_current_hash_authority() -> None:
     assert [str(row["path"]) for row in sources] == expected_source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert (
+            _source_sha256_at_commit(source, TRADING_2463_BASE_COMMIT)
+            == source["sha256"]
+        ), source["path"]
     assert phase["implementation"] == {
         "exact_site_count": 1,
         "scope_taxonomy": "DISTINCT_NON_SESSION_DATE_ROW_SET",
@@ -11874,6 +11998,112 @@ def test_data_gov_002c2p_rejects_historical_prefix_tamper() -> None:
     tampered[DATA_GOV_002C2P_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_data_gov_002c2p_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2463_is_current_hash_authority() -> None:
+    _assert_trading_2463_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2463_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2463_SECTION
+    phase = baseline[TRADING_2463_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2463_decision_target_redesign_preregistration_compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING_S0", "S0_READY"}
+    assert phase["boundary_id"] == (
+        "TRADING-2463-DECISION-TARGET-REDESIGN-PREREGISTRATION-S0"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"
+    ]
+    assert phase["owner_authorizations"] == [
+        (
+            "owner_decision:TRADING-2462:2026-07-27:"
+            "close_current_tail_risk_capability_path_v1"
+        ),
+        (
+            "owner_decision:TRADING-2463:2026-07-27:"
+            "authorize_decision_target_redesign_preregistration_v1"
+        ),
+        (
+            "owner_decision:TRADING-2459:2026-07-27:"
+            "defer_qld_automatic_selection_and_production_governance_until_"
+            "canonical_dq_strict_pass_v1"
+        ),
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2463_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2463_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2463_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [
+        WAVE14_S2_PROHIBITED_USER_PATH
+    ]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _trading_2463_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2463-DECISION-TARGET-REDESIGN-PREREGISTRATION-S0"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DATA_GOV_002C2P_SECTION,
+        "current_hash_authority": f"{TRADING_2463_SECTION}.sources",
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["new_source_paths"]) == TRADING_2463_NEW_SOURCE_PATHS
+    expected = superseded | TRADING_2463_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "task_shadow_rebuilt": True,
+        "append_only_authority_added": True,
+        "historical_sections_rewritten": False,
+        "decision_target_research_started": False,
+        "decision_value_audit_started": False,
+        "risk_overlay_created": False,
+        "candidate_backtest_weights_created": False,
+        "qld_automatic_selection_enabled": False,
+    }
+    validation = phase["validation"]
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "data_quality_contract_changed": False,
+        "strategy_logic_changed": False,
+        "production_weights_written": False,
+        "active_shadow_weights_written": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2463_rejects_historical_prefix_tamper() -> None:
+    base_blob = _trading_2463_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2463_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )
