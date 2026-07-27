@@ -33,6 +33,7 @@
 - OPS-070 S3 起，gap ledger 同时生成并验证 `daily_input_capture_recovery_queue.v1`。`market_macro` 只进入 `READY_FOR_MANUAL_RECOVERY`，SEC 为 `OWNER_REVIEW_REQUIRED` 非 PIT raw 评估，FMP PIT/valuation 与 official sources 为 `INSUFFICIENT_DATA/HISTORICAL_RECAPTURE_FORBIDDEN`。queue 固定 `automatic_execution_allowed=false`、`historical_strict_pit_backfill_allowed=false`、`consumer_cutover_allowed=false`，不请求 provider、不改旧 manifest/run terminal。当前没有自动 recovery executor。
 - OPS-070 S4 的长期门禁由 `config/operations/ops_scheduler_checkout.yaml`、
   `config/operations/ops_release_promotion.yaml`、`aits ops release-candidate`、
+  `aits ops runtime-git-exclusions-install`、
   `aits ops release-promote`、`aits ops deployment-acceptance` 和
   `aits ops scheduler-checkout-preflight` 共同提供。外部 scheduler 必须使用独立 Git
   clone（Git common dir 不得与开发 checkout 相同）、owner-approved exact
@@ -45,7 +46,12 @@
   scheduler/checkout policies、CLI/modules、runbook 与 `pyproject.toml`。runtime-local
   `.venv/Scripts/python.exe`、完整 installed-distribution inventory/fingerprint 与 active
   `ops_deployment_acceptance.v1` receipt；仅换 cwd、linked worktree 或全局 editable
-  `aits` 均 fail closed。Promotion 只能显式选择 receipt 中的 commit，使用 promotion
+  `aits` 均 fail closed。Permanent runtime 另须由 installer 把 reviewed exact
+  `/outputs/`、`/artifacts/`、`/data/derived/` patterns 写入该 independent clone 自己的
+  `.git/info/exclude`；只允许替换空白/注释-only 初始文件，既有未知 rule、缺失/额外
+  pattern、Git path/common-dir 或 live SHA 漂移均 fail closed。该 runtime-only contract
+  不改变开发 checkout 的 `.gitignore`、known-unrelated 或 dirty semantics。Promotion
+  只能显式选择 receipt 中的 commit，使用 promotion
   lock、active daily lease exclusion 和 append-only transaction events；不得自动选择
   latest、stash/clean/reset 或删除旧 state/ledger/data。`daily-run` 先取得 checkout WRITE
   lease，再验证/写 scheduler preflight，因此被阻断的 preflight evidence 也不会成为第二

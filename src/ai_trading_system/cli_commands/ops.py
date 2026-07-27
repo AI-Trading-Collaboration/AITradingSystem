@@ -104,6 +104,7 @@ from ai_trading_system.ops_release_promotion import (
     activate_ops_deployment,
     build_ops_deployment_acceptance,
     build_ops_release_candidate,
+    install_ops_runtime_git_exclusions,
     load_ops_release_promotion_policy,
     promote_ops_release,
 )
@@ -771,6 +772,42 @@ def ops_release_candidate_command(
     console.print("[green]Ops release candidate：PASS[/green]")
     console.print(f"release_id={payload['release_id']}；JSON={output_json}")
     console.print("production_effect=none；weights/broker/trading action=false")
+
+
+@ops_app.command("runtime-git-exclusions-install")
+def ops_runtime_git_exclusions_install_command(
+    runtime_root: Annotated[
+        Path,
+        typer.Option(help="已登记、独立 Git clone 的 permanent runtime root。"),
+    ],
+    development_root: Annotated[
+        Path,
+        typer.Option(help="开发 checkout，用于证明 Git common dir 独立。"),
+    ] = PROJECT_ROOT,
+    output_json: Annotated[
+        Path,
+        typer.Option(help="runtime-only Git exclude 安装证据 JSON。"),
+    ] = Path("outputs/operations/deployment/runtime_git_exclusion_installation.json"),
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="reviewed release promotion policy。"),
+    ] = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+) -> None:
+    """安装并冻结 reviewed runtime-only Git exclusions；不运行 daily。"""
+    try:
+        payload = install_ops_runtime_git_exclusions(
+            runtime_root=runtime_root,
+            development_root=development_root,
+            policy_path=policy_path,
+        )
+        write_json_atomic(output_json, payload)
+    except (OSError, ValueError, OpsReleasePromotionError) as exc:
+        console.print(f"[red]Ops runtime Git exclusions：BLOCKED ({exc})[/red]")
+        console.print("daily_run=false；production_effect=none")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]Ops runtime Git exclusions：{payload['action']}[/green]")
+    console.print(f"installation_id={payload['installation_id']}；JSON={output_json}")
+    console.print("daily_run=false；production_effect=none")
 
 
 @ops_app.command("release-promote")

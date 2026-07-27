@@ -7523,7 +7523,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 3bcd72445648eb208dcd60608c5f60b9ef6d05932671a22797e085375d2dc81e
+  sha256: fa7377cd107e042af1c06a75b6c1b2dd9f46121d70a9a4cf5070c3173a3597ed
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -12873,7 +12873,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_ops_release_promotion
   path: tests/test_ops_release_promotion.py
-  sha256: 162cf869e9f6302a9178fc7d4ea2aa2fe44efc703c1ea7441868e78a22ddaa48
+  sha256: 35638718c45d9372d3d4d9beedc181f6d61df799714dffb4b2a00e60aea79028
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

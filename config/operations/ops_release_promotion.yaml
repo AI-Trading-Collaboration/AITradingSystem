@@ -1,6 +1,6 @@
 schema_version: ops_release_promotion_policy.v1
 policy_id: ops_release_promotion_v1
-version: 1.0.0
+version: 1.1.0
 status: REVIEWED_OWNER_GATED
 owner: operations_owner_and_project_owner
 reviewed_at: 2026-07-27
@@ -8,6 +8,8 @@ rationale: >
   Ops releases must be selected explicitly from validated, pushed remote main
   and promoted through a journaled transaction. Daily execution must never
   select latest main, mutate release state, or repair a failed promotion.
+  Permanent runtime-generated state uses an exact, receipt-bound local Git
+  exclusion contract so development checkout dirty semantics remain strict.
 repository:
   expected_remote: git@github.com:AI-Trading-Collaboration/AITradingSystem.git
   reviewed_remote_ref: refs/remotes/origin/main
@@ -49,6 +51,11 @@ runtime:
   package_module: ai_trading_system
   distribution_name: ai-trading-system
   installed_distribution_inventory_required: true
+  git_exclude_managed: true
+  git_exclude_patterns:
+    - /outputs/
+    - /artifacts/
+    - /data/derived/
   executable_must_be_below_checkout: true
   imported_package_must_be_below_checkout: true
 scheduler:

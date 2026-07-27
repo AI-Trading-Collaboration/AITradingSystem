@@ -1139,7 +1139,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.ops
   path: src/ai_trading_system/cli_commands/ops.py
-  sha256: 3e1711f31e64f03757fb949eebcf9d5933643a6f991be4b2f337251fb7789743
+  sha256: 76eaf6909b2e65f79a9d2cc9f7b48b0023a0abf09f0c03ff7f0ae6737306ea7a
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -13918,7 +13918,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_release_promotion
   path: src/ai_trading_system/ops_release_promotion.py
-  sha256: 9a5b232c6dc14480f270924ea8bbc89b703fd7929370e3e56e55786fe91d3223
+  sha256: e9221cd3026ad1c38b32517f74fcaecd98aa4f1f091e876e3d0ed0b5a71fb3b5
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

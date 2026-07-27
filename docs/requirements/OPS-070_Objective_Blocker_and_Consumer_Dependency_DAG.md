@@ -492,3 +492,25 @@ owner acceptance 均通过后才能成为 active runtime。下一合法 provider
   Reproducibility/Full、local-main fast-forward、普通 push、独立 clone evidence migration、
   runtime-local environment、automation 原位切换与 active deployment receipt 全部闭合前，
   不得把 stable deployment 写成 accepted；下一合法 daily scheduler run 仍是运营终验。
+
+### 2026-07-27 runtime ignore contract blocker
+
+- candidate `992734147b4e25a300694f07c1d7323d37641501` 已完成六类 exact-commit PASS
+  validation、local-main fast-forward 与普通 push；Full=`7547 passed / 5 skipped`。
+- 独立 runtime 已建立且 152,402 个旧 ignored files（36,596,615,302 bytes）完成逐文件
+  SHA-256 迁移，旧 linked runtime 保留。首次迁移 attempt 因并发 target parent
+  `Path.resolve()` false negative 失败关闭；reparse scan=0，第二 attempt 完整重验后 PASS。
+- candidate checkout 复核发现其中 8,129 个文件（5,817,538,553 bytes）只因旧共享
+  `.git/info/exclude` 才被视为 ignored；独立 clone 未继承该隐藏 local state，因此
+  checkout guard 正确将它们列为 dirty。直接复制旧 exclude、添加未审计
+  `.git/info/exclude`、放宽 clean gate、junction 或删除历史 state 都不是可接受方案。
+- 最佳直接修复是追加最小 serial contract wave：reviewed policy 固定 runtime-only
+  Git exclude patterns（仅 `/outputs/`、`/artifacts/`、`/data/derived/`），installer 只能
+  在 independent clone 的 exact Git path 原子写入 canonical managed block；任何 existing
+  unknown line、缺失/额外 pattern、path/common-dir drift 都 fail closed。deployment receipt
+  与 scheduler preflight 必须冻结并 live revalidate exclude path/bytes/SHA-256/patterns。
+  Dev checkout 的 `.gitignore`、known-unrelated exclusion 与 dirty semantics 均不改变。
+- 该 contract 通过新 candidate 的 focused/Architecture/Contract/Integration/
+  Reproducibility/Full 后，才允许安装 runtime exclude、重验 migrated state、promotion、
+  automation 切换与 activation。当前仍 `VALIDATING`，无 daily/provider/weights/broker/
+  trading effect。

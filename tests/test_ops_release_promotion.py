@@ -13,6 +13,7 @@ from ai_trading_system.ops_release_promotion import (
     build_ops_deployment_acceptance,
     build_ops_release_candidate,
     inspect_runtime_provenance,
+    install_ops_runtime_git_exclusions,
     load_ops_release_promotion_policy,
     promote_ops_release,
     validate_ops_deployment_acceptance,
@@ -64,6 +65,12 @@ def test_policy_fails_closed_on_latest_and_scheduler_duplication() -> None:
     assert policy.required_validation_tiers == REQUIRED_VALIDATION_TIERS
     assert policy.required_critical_paths == REQUIRED_CRITICAL_PATHS
     assert policy.installed_distribution_inventory_required is True
+    assert policy.git_exclude_managed is True
+    assert policy.git_exclude_patterns == (
+        "/outputs/",
+        "/artifacts/",
+        "/data/derived/",
+    )
     assert policy.scheduler_entry_count == 1
     assert policy.windows_task_scheduler_entries_allowed is False
 
@@ -278,6 +285,45 @@ def test_runtime_provenance_rejects_global_editable_import(
         )
 
 
+def test_runtime_git_exclusion_install_is_exact_and_rejects_unknown_rules(
+    release_repository: ReleaseRepository,
+    tmp_path: Path,
+) -> None:
+    development, commit, _validation, _critical = release_repository
+    runtime = tmp_path / "runtime"
+    _clone_independent(development, runtime, commit)
+
+    repeated = install_ops_runtime_git_exclusions(
+        runtime_root=runtime,
+        development_root=development,
+        policy_path=development / "config" / "operations" / "ops_release_promotion.yaml",
+        observed_at=OBSERVED_AT,
+    )
+
+    assert repeated["status"] == "PASS"
+    assert repeated["action"] == "REUSED_EXACT"
+    assert repeated["git_exclude"]["patterns"] == [
+        "/outputs/",
+        "/artifacts/",
+        "/data/derived/",
+    ]
+    exclude_path = Path(repeated["git_exclude"]["absolute_path"])
+    exclude_path.write_text("/unknown/\n", encoding="utf-8")
+    with pytest.raises(
+        OpsReleasePromotionError,
+        match="RUNTIME_GIT_EXCLUDE_EXISTING_RULES",
+    ):
+        install_ops_runtime_git_exclusions(
+            runtime_root=runtime,
+            development_root=development,
+            policy_path=development
+            / "config"
+            / "operations"
+            / "ops_release_promotion.yaml",
+            observed_at=OBSERVED_AT,
+        )
+
+
 def test_deployment_acceptance_binds_unique_scheduler_and_credentials(
     release_repository: ReleaseRepository,
     tmp_path: Path,
@@ -337,6 +383,11 @@ def test_deployment_acceptance_binds_unique_scheduler_and_credentials(
     assert payload["runtime"]["installed_distributions"] == [
         {"name": "ai-trading-system", "version": "0.1.0"},
         {"name": "PyYAML", "version": "6.0.2"},
+    ]
+    assert payload["runtime"]["git_exclude"]["patterns"] == [
+        "/outputs/",
+        "/artifacts/",
+        "/data/derived/",
     ]
     assert len(payload["runtime"]["environment_fingerprint"]) == 64
     environment_fingerprint = payload["runtime"]["environment_fingerprint"]
@@ -810,6 +861,12 @@ def _clone_independent(source: Path, target: Path, commit: str) -> None:
     _git(target, "remote", "set-url", "origin", EXPECTED_REMOTE)
     _git(target, "checkout", "--detach", commit)
     _git(target, "update-ref", "refs/remotes/origin/main", _git(source, "rev-parse", "HEAD"))
+    install_ops_runtime_git_exclusions(
+        runtime_root=target,
+        development_root=source,
+        policy_path=source / "config" / "operations" / "ops_release_promotion.yaml",
+        observed_at=OBSERVED_AT,
+    )
 
 
 def _git(root: Path, *args: str) -> str:

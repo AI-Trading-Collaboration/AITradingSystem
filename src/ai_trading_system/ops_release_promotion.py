@@ -9,7 +9,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.platform.architecture.checkout_guard import (
@@ -46,6 +45,14 @@ _REQUIRED_CRITICAL_PATHS = (
     "src/ai_trading_system/ops_release_promotion.py",
     "src/ai_trading_system/ops_scheduler_checkout.py",
 )
+_RUNTIME_GIT_EXCLUDE_PATTERNS = (
+    "/outputs/",
+    "/artifacts/",
+    "/data/derived/",
+)
+_RUNTIME_GIT_EXCLUDE_HEADER = (
+    "# AITradingSystem managed ops runtime exclusions: ops_release_promotion_v1"
+)
 
 
 class OpsReleasePromotionError(RuntimeError):
@@ -79,6 +86,8 @@ class OpsReleasePromotionPolicy:
     package_module: str
     distribution_name: str
     installed_distribution_inventory_required: bool
+    git_exclude_managed: bool
+    git_exclude_patterns: tuple[str, ...]
     executable_must_be_below_checkout: bool
     imported_package_must_be_below_checkout: bool
     scheduler_provider: str
@@ -205,6 +214,14 @@ def load_ops_release_promotion_policy(
             runtime.get("installed_distribution_inventory_required"),
             "installed_distribution_inventory_required",
         ),
+        git_exclude_managed=_bool(
+            runtime.get("git_exclude_managed"),
+            "git_exclude_managed",
+        ),
+        git_exclude_patterns=_text_tuple(
+            runtime.get("git_exclude_patterns"),
+            "git_exclude_patterns",
+        ),
         executable_must_be_below_checkout=_bool(
             runtime.get("executable_must_be_below_checkout"),
             "executable_must_be_below_checkout",
@@ -253,6 +270,8 @@ def load_ops_release_promotion_policy(
         or policy.required_validation_tiers != _REQUIRED_VALIDATION_TIERS
         or policy.required_critical_paths != _REQUIRED_CRITICAL_PATHS
         or not policy.installed_distribution_inventory_required
+        or not policy.git_exclude_managed
+        or policy.git_exclude_patterns != _RUNTIME_GIT_EXCLUDE_PATTERNS
         or not policy.executable_must_be_below_checkout
         or not policy.imported_package_must_be_below_checkout
         or policy.scheduler_entry_count != 1
@@ -429,6 +448,92 @@ def validate_ops_release_candidate(
         )
 
 
+def install_ops_runtime_git_exclusions(
+    *,
+    runtime_root: Path,
+    development_root: Path,
+    policy_path: Path = DEFAULT_OPS_RELEASE_PROMOTION_POLICY_PATH,
+    observed_at: datetime | None = None,
+) -> dict[str, object]:
+    policy = load_ops_release_promotion_policy(policy_path)
+    root = runtime_root.resolve()
+    development = development_root.resolve()
+    if not root.is_dir() or not development.is_dir():
+        raise OpsReleasePromotionError(
+            "RUNTIME_ROOT_MISSING",
+            f"runtime={root};development={development}",
+        )
+    runtime_common = _git_common_dir(root)
+    development_common = _git_common_dir(development)
+    if _path_key(runtime_common) == _path_key(development_common):
+        raise OpsReleasePromotionError(
+            "RUNTIME_GIT_COMMON_DIR_SHARED",
+            str(runtime_common),
+        )
+    remote = _git_text(root, "remote", "get-url", "origin")
+    if remote != policy.expected_remote:
+        raise OpsReleasePromotionError(
+            "RUNTIME_REMOTE_MISMATCH",
+            remote,
+        )
+    active_leases = _active_checkout_leases(
+        runtime_root=root,
+        policy_source_root=development,
+    )
+    if active_leases:
+        raise OpsReleasePromotionError(
+            "RUNTIME_GIT_EXCLUDE_ACTIVE_LEASE",
+            ",".join(active_leases),
+        )
+    exclude_path = _runtime_git_exclude_path(root)
+    expected = _runtime_git_exclude_bytes(policy)
+    previous = exclude_path.read_bytes() if exclude_path.is_file() else b""
+    if previous == expected:
+        action = "REUSED_EXACT"
+    else:
+        try:
+            previous_text = previous.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise OpsReleasePromotionError(
+                "RUNTIME_GIT_EXCLUDE_EXISTING_INVALID",
+                str(exclude_path),
+            ) from exc
+        behavioral_lines = [
+            line.strip()
+            for line in previous_text.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        if behavioral_lines:
+            raise OpsReleasePromotionError(
+                "RUNTIME_GIT_EXCLUDE_EXISTING_RULES",
+                ",".join(behavioral_lines),
+            )
+        _write_bytes_atomic(exclude_path, expected)
+        action = "INSTALLED"
+    commitment = _inspect_runtime_git_exclusions(root, policy)
+    payload: dict[str, object] = {
+        "schema_version": "ops_runtime_git_exclusion_installation.v1",
+        "status": "PASS",
+        "action": action,
+        "runtime_root": str(root),
+        "development_root": str(development),
+        "runtime_git_common_dir": str(runtime_common),
+        "development_git_common_dir": str(development_common),
+        "runtime_origin": remote,
+        "previous_size_bytes": len(previous),
+        "previous_sha256": hashlib.sha256(previous).hexdigest(),
+        "git_exclude": commitment,
+        "installed_at": _aware(observed_at).isoformat(),
+        **_safety_boundary(),
+    }
+    payload["installation_id"] = _content_id(
+        "ops_runtime_git_exclude_",
+        payload,
+        "installation_id",
+    )
+    return payload
+
+
 def inspect_runtime_provenance(
     *,
     runtime_root: Path,
@@ -469,6 +574,7 @@ def inspect_runtime_provenance(
             "RUNTIME_GIT_COMMON_DIR_SHARED",
             str(runtime_common),
         )
+    git_exclude = _inspect_runtime_git_exclusions(root, checked_policy)
     if checked_policy.executable_must_be_below_checkout and not python_path.is_relative_to(root):
         raise OpsReleasePromotionError(
             "RUNTIME_PYTHON_OUTSIDE_CHECKOUT",
@@ -529,6 +635,7 @@ def inspect_runtime_provenance(
         "package_module": checked_policy.package_module,
         "package_file": str(module_file),
         "project_root": str(project_root),
+        "git_exclude": git_exclude,
         "installed_distributions": installed_distributions,
         "environment_fingerprint": environment_fingerprint,
     }
@@ -898,6 +1005,7 @@ def validate_ops_deployment_acceptance(
             "package_module",
             "package_file",
             "project_root",
+            "git_exclude",
             "installed_distributions",
             "environment_fingerprint",
         )
@@ -1299,15 +1407,65 @@ def _distribution_fingerprint(rows: Sequence[Mapping[str, str]]) -> str:
     ).hexdigest()
 
 
+def _runtime_git_exclude_bytes(policy: OpsReleasePromotionPolicy) -> bytes:
+    text = "\n".join(
+        (_RUNTIME_GIT_EXCLUDE_HEADER, *policy.git_exclude_patterns, "")
+    )
+    return text.encode("utf-8")
+
+
+def _runtime_git_exclude_path(root: Path) -> Path:
+    common = _git_common_dir(root)
+    raw = _git_text(
+        root,
+        "rev-parse",
+        "--path-format=absolute",
+        "--git-path",
+        "info/exclude",
+    )
+    path = Path(raw).resolve()
+    if not path.is_relative_to(common):
+        raise OpsReleasePromotionError(
+            "RUNTIME_GIT_EXCLUDE_PATH_OUTSIDE_COMMON_DIR",
+            str(path),
+        )
+    return path
+
+
+def _inspect_runtime_git_exclusions(
+    root: Path,
+    policy: OpsReleasePromotionPolicy,
+) -> dict[str, object]:
+    path = _runtime_git_exclude_path(root)
+    if not path.is_file():
+        raise OpsReleasePromotionError(
+            "RUNTIME_GIT_EXCLUDE_MISSING",
+            str(path),
+        )
+    expected = _runtime_git_exclude_bytes(policy)
+    observed = path.read_bytes()
+    if observed != expected:
+        raise OpsReleasePromotionError(
+            "RUNTIME_GIT_EXCLUDE_DRIFT",
+            str(path),
+        )
+    return {
+        **_single_file_commitment(path, root=_git_common_dir(root)),
+        "patterns": list(policy.git_exclude_patterns),
+        "managed": True,
+    }
+
+
 def _governed_dirty_paths(root: Path) -> tuple[str, ...]:
     policy = load_checkout_guard_policy(
         root / "config" / "architecture" / "arch_005_s4d_checkout_guard.yaml"
     )
     exclusions = tuple(item.path for item in policy.known_unrelated_exclusions)
-    return cast(
-        tuple[str, ...],
-        collect_checkout_dirty_paths(root, exclusions=exclusions),
+    dirty_paths: tuple[str, ...] = collect_checkout_dirty_paths(
+        root,
+        exclusions=exclusions,
     )
+    return dirty_paths
 
 
 def _copy_release_validation_evidence(
@@ -1626,6 +1784,28 @@ def _write_json_exclusive(path: Path, payload: Mapping[str, object]) -> None:
     except Exception:
         path.unlink(missing_ok=True)
         raise
+
+
+def _write_bytes_atomic(path: Path, content: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.aits-ops-runtime-exclude.tmp")
+    if temporary.exists():
+        raise OpsReleasePromotionError(
+            "RUNTIME_GIT_EXCLUDE_TEMP_CONFLICT",
+            str(temporary),
+        )
+    try:
+        descriptor = os.open(
+            temporary,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+        )
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _release_promotion_lock(path: Path, *, transaction_id: str) -> None:

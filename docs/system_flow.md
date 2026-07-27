@@ -400,14 +400,17 @@ evidence 到 permanent runtime 的原子迁移、切换后 live revalidation、a
 journal 和失败回滚，绝不自动选择 latest 或清理 runtime。Deployment acceptance 进一步绑定
 不同 Git common dir、runtime-local Python/editable import root、installed-distribution
 inventory/fingerprint、唯一 Codex automation observed state、required env 名称和最小
-credential-scope attestation。Active
+credential-scope attestation。Permanent runtime 的 Git metadata 还必须安装并冻结 reviewed
+exact runtime-generated exclusions（仅 `outputs/artifacts/data/derived`），receipt/preflight
+逐 byte live revalidate；development dirty semantics 不变。Active
 receipt、marker、release、remote、clean audit、runtime executable/import 任一缺失或漂移均 fail
 closed。`daily-run` 先取得 checkout WRITE lease，再执行并写 scheduler preflight；人工运行只有
 显式 `--manual-execution` 才可进入，active scheduler checkout 禁止混用 manual mode。
 
 ```mermaid
 flowchart LR
-    RC["Owner-approved release candidate<br/>remote main + exact six-tier evidence"] --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
+    EXCLUDE["Reviewed runtime-only Git exclusions<br/>exact bytes + SHA + patterns"] --> RC["Owner-approved release candidate<br/>remote main + exact six-tier evidence"]
+    RC --> PROMOTE["Locked exact promotion<br/>portable evidence copy + revalidation + rollback"]
     PROMOTE --> ACCEPT["Active deployment receipt<br/>independent clone + runtime/environment fingerprint + scheduler observation"]
     ACCEPT --> TRIG["Only external trigger<br/>aits ops daily-run"]
     TRIG --> WRITE["Checkout WRITE lease"]
