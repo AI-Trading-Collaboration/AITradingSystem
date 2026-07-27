@@ -9,6 +9,15 @@
 Owner 决策：
 `owner_decision:TRADING-2462:2026-07-27:approve_tail_risk_capability_robustness_falsification_audit_v1`
 
+最终 Owner disposition：
+`owner_decision:TRADING-2462:2026-07-27:close_current_tail_risk_capability_path_v1`
+
+Owner 已接受本任务的机械结论并关闭当前
+`QQQ_FUTURE_WORST_1D_RETURN` tail-risk capability path。该能力不得进入 Decision Value
+Audit、risk overlay、candidate/backtest/weights 或其他执行链。后续研究只可通过独立
+`TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION` 重新定义 decision target；
+不得把本任务的部分通过项继承为新 target 的正面能力证明。
+
 ## 1. 目标
 
 本任务承接 TRADING-2461 的 `TAIL_RISK_ONLY_SKILL`，主动证伪当前系统对
@@ -207,3 +216,6 @@ evidence与 review condition。结果只允许：
   被取代的中间构建和测试诊断不承诺逐字节恢复；没有production、broker、scheduler或当前
   validation依赖这些worktree。v5 lease=`lease-7ba2072a743b31482497`已以
   `outcome=completed`释放。
+- 2026-07-27：Owner 正式选择关闭当前tail-risk capability path，并授权另立TRADING-2463
+  只做decision-target redesign预注册。Decision Value Audit、risk overlay、
+  candidate/backtest/weights继续关闭；本任务历史evidence与机械结论保持不变。

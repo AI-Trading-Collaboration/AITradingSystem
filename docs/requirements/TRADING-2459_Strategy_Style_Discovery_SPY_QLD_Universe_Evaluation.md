@@ -10,7 +10,8 @@ Owner 决策：
 
 - `owner_decision:TRADING-2459:2026-07-25:spy_reference_now_qld_research_before_action_universe`；
 - `owner_decision:TRADING-2459:2026-07-25:approve_scoped_five_asset_dq_to_avoid_qld_block`；
-- `owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`。
+- `owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`；
+- `owner_decision:TRADING-2459:2026-07-27:defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`。
 
 ## 目标
 
@@ -209,6 +210,10 @@ tracking 和风险规则选择；不得按本次历史收益动态挑选工具�
 该决定尚未定义“可信上升趋势”、“接近 2x”的数值容差、risk-gate binding、instrument selector、
 forward-shadow 验收和去杠杆/退出规则。因此当前只完成角色登记；automatic selection、
 official target weights、paper-shadow、production 和 broker 继续关闭。
+
+2026-07-27，Owner 进一步决定：QLD automatic selection与production governance等待canonical
+DQ strict PASS后再审。在此之前不冻结上述治理参数、不启动forward-shadow、不把scoped
+research-only DQ例外扩展给任何其他consumer；QLD现有role-limited implementation身份保持不变。
 
 ## 阶段与验收
 

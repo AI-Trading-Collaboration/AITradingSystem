@@ -2,7 +2,7 @@
 
 本文是未完成任务、后续优化、阻塞项、基础版遗留问题和 owner 配合事项的统一登记表。只有真正完成或明确不再需要的任务归档在 `docs/task_register_completed.md`；`BASELINE_DONE` 仍保留在本文，`docs/implementation_backlog.md` 继续负责长期模块路线图。
 
-最后更新：2026-07-26
+最后更新：2026-07-27
 
 ## 使用规则
 
@@ -52,6 +52,15 @@
 本节只保留仍需推进、验证、owner 输入、外部条件解除或基础版后续缺口关闭的任务。只有 `DONE` 和 `DROPPED` 任务归档在 `docs/task_register_completed.md`。
 
 最新增量：
+
+2026-07-27：Owner 以
+`owner_decision:TRADING-2462:2026-07-27:close_current_tail_risk_capability_path_v1`
+关闭当前 `QQQ_FUTURE_WORST_1D_RETURN` tail-risk capability path，并以
+`owner_decision:TRADING-2463:2026-07-27:authorize_decision_target_redesign_preregistration_v1`
+授权另立 TRADING-2463，只做 decision problem、target label/availability、PIT/DQ、coverage 与
+falsification 的预注册设计。Decision Value Audit、risk overlay、candidate/backtest/weights
+继续关闭。Owner 同时决定 QLD automatic selection与production governance等待canonical DQ
+strict PASS后再审；现有role-limited implementation身份不变。
 
 2026-07-25：Owner 以
 `owner_decision:TRADING-2458:2026-07-25:approve_narrow_constraint_causal_diagnostic_v1`
@@ -2003,13 +2012,19 @@ YYYY-MM-DD: 从 <旧状态> 改为 <新状态>，原因：<触发条件、实现
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
-|TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE|Strategy research / SPY reference adoption and QLD incremental action-universe evaluation|P0|BASELINE_DONE|strategy research owner：治理可信趋势、near-2x数值容差、risk-gate binding、非自动implementation selector、forward-shadow验收及去杠杆/退出规则；D0B2B strict PASS后按同政策重跑|详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地：独立趋势模型与风险门先决定目标QQQ-equivalent exposure；只有目标接近2x时执行层才可考虑QLD。QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由；本决定不直接生成weights、paper-shadow、production或broker action。|政策manifest和portfolio decision contract已区分primary action assets、role-limited implementation instruments与signal inputs；QLD只在independent trend/risk/exposure decision之后参与执行实现比较；不得按本次历史收益切换；scoped DQ/lineage、v2双构建、tamper和角色边界focused验证PASS；official target weights、paper-shadow、production和broker保持不变。剩余治理完成且forward shadow通过后，仍须额外Owner决定才能开放自动或生产使用。|2026-07-26：37项在途内容已从reviewed main重放并以append-only compatibility authority收口；focused=`100`、Ruff/Black/strict mypy、report=`57`、reproducibility=`23`、contract=`275`、architecture=`648`、integration=`995`及required Full=`7281 passed / 4 skipped / 643 warnings`全部PASS。集成commit=`0f585879650f3433008bbbfbbaf52f47dba1ae15`已进入并推送`main`/`origin/main`，旧worktree完成证据迁移和审计后已删除。canonical full-cache仍因31条`^VIX` non-session行FAIL；例外不供其他consumer复用，D0B2B strict PASS后必须重跑。|
+|TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE|Strategy research / SPY reference adoption and QLD incremental action-universe evaluation|P0|BASELINE_DONE|data platform先取得canonical DQ strict PASS并按冻结政策重跑；strategy owner随后再审QLD automatic selection与production governance|详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地，但2026-07-27进一步决定automatic selection与production governance等待canonical DQ strict PASS后再审。独立趋势模型与风险门仍须先决定目标QQQ-equivalent exposure；QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由。|政策manifest和portfolio decision contract已区分primary action assets、role-limited implementation instruments与signal inputs；QLD只在independent trend/risk/exposure decision之后参与执行实现比较；不得按本次历史收益切换；canonical strict PASS前不冻结可信趋势、near-2x容差、risk-gate binding、selector、forward-shadow或退出参数；official target weights、paper-shadow、production和broker保持不变。|2026-07-27：Owner decision=`defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`。2026-07-26工程与formal收口仍有效；canonical full-cache尚未strict PASS，scoped例外不供其他consumer复用。|
 
 ## TRADING-2460 Decision Target Capability Audit 第一批
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
 |TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION|Strategy Style Discovery / decision-target capability audit batch-1 label foundation|P0|BASELINE_DONE|strategy research owner：复核真实label coverage并预注册Batch 2 split/model ladder/metrics；data platform按DATA-GOV-002完成Phase A正式验收|详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。V1历史BLOCKED证据保留；Owner批准DATA-GOV-002后，v2以reviewed `decision_target_label_core` receipt绑定price-only QQQ/SPY/SGOV exact scope。真实`2021-02-22..2026-07-24`run在full DQ=`FAIL`且`^VIX` blocker明确隔离时取得scoped=`PASS`，生成5412行label；未声称global PASS，QLD exception未复用，不训练模型、不做feature/candidate/parameter search、策略回测或权重生成。|Receipt必须绑定exact consumer/policy/source/window/full+scoped reports/materialized inputs；unknown/relevant/global source blocker与scoped warning/error fail closed；label逐decision date输出三类gross excess return、forward total return、future max drawdown/worst-1d、interval/available-at；validator重建receipt projection、rows/summary/Markdown并拒绝tamper；full status、global pass claim和no-reuse/no-daily边界在报告可见；formal validation通过；`production_effect=none`、`broker_action=none`。|2026-07-26：首个真实v2 receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full唯一ERROR=`prices_non_market_session_date`、affected=`^VIX`、scoped QQQ/SPY/SGOV=`PASS`、global claim=false；label status=`LABEL_FOUNDATION_READY`、common sessions=`1362`、rows=`5412`、content-derived validator 0 errors。正式tiers由DATA-GOV-002 Phase A收口。|
+
+## TRADING-2463 Decision Target Redesign 预注册
+
+|ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
+|---|---|---|---|---|---|---|---|
+|TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION|Strategy Style Discovery / decision-target redesign preregistration|P0|READY|strategy research coordinator：形成decision problem、target design options、PIT/DQ/coverage/falsification owner pack；project owner随后选择target或关闭本轮redesign|详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`。Owner已关闭当前tail-risk capability path并授权独立redesign预注册；不得进入Decision Value Audit、risk overlay、candidate/backtest/weights。QLD automatic selection与production governance等待canonical DQ strict PASS后再审。|Owner决定可追溯；旧tail-risk capability不再具备后续资格；redesign pack覆盖action/label/availability/PIT/DQ/coverage/falsification；target选择先于任何模型或evaluation；未选择target不形成active policy；task consistency与适用治理门禁PASS；`production_effect=none`、`broker_action=none`。|2026-07-27：以`owner_decision:TRADING-2463:2026-07-27:authorize_decision_target_redesign_preregistration_v1`登记为READY。本次仅完成S0任务初始化，不实施S1～S4，不访问prospective，不改变策略、QLD角色、paper-shadow、production或broker。|
 
 ## OPS-067 当前修复
 
