@@ -30454,7 +30454,7 @@ phase_trading_2463_decision_target_redesign_preregistration:
   sources:
   - {path: docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md, sha256: 73b9c45db0cee85d9afa410fe90d397cbe7f43df37c77df0da3fa267e63a2e64, hash_normalization: git_eol_lf}
   - {path: docs/requirements/TRADING-2462_Tail_Risk_Capability_Robustness_Falsification_Audit.md, sha256: 5398d49f222b1ad4aabcd224c697ef9221b3b4d6e6aba5e9e921dd01de39c3b2, hash_normalization: git_eol_lf}
-  - {path: docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md, sha256: 366ca1efb748a65483ed7afcacd814a862d558bc8a528bc0859ce4c0be9387e9, hash_normalization: git_eol_lf}
+  - {path: docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md, sha256: 79d5d3c095f7838f623dab5c5c9838badef8f92e10636c681066545d6d9d9f13, hash_normalization: git_eol_lf}
   - {path: docs/task_register.md, sha256: 095ad3adef7e63b50a7b282b5fcd9893f06bbf385ce4ebc8f74e72b3305d7189, hash_normalization: git_eol_lf}
   - {path: docs/task_register_completed.md, sha256: 7a39a6a021edefbcae993d6bf402b7fc1678f88d2e4376b9b1ffa0b8d5a96390, hash_normalization: git_eol_lf}
   - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 85dd84a722cad844436308ac33fe79d2c4e865eb40b2cbf2fb93de724742ec8d, hash_normalization: git_eol_lf}

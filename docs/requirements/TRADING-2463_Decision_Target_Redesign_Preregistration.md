@@ -156,3 +156,12 @@ condition。本任务不得以未解释 numeric literal 冻结这些政策。
   `7578 passed / 5 skipped / 643 warnings`，post-Full Architecture/Contract为
   `753/275 passed`。未启动S1～S4、未访问prospective、未生成策略候选/回测/权重；
   `production_effect=none`、`broker_action=none`。
+- 2026-07-27：最终验证证据已按22项显式白名单迁移到canonical
+  `D:\Work\AITradingSystem`，共52个文件逐文件SHA-256一致。临时worktree
+  `D:\Work\AITradingSystem_t2463_target_redesign`暂予保留，因为其中存在已登记的
+  `known_unrelated_exclusion`，治理规则禁止本任务读取、复制、修改或删除该文件。
+  保留风险仅为本地磁盘占用及旧branch/worktree残留，不改变代码、研究结论、生产或
+  券商状态；其余validation/cache为可再生或已迁移证据。下一责任人为项目owner/Codex
+  cleanup coordinator；退出条件是owner另行授权释放或迁移该排除项，随后确认无活动
+  进程、无未迁移唯一证据并通过checkout audit，再执行`git worktree remove`与
+  `git worktree prune`。在此之前不得强制清理。
