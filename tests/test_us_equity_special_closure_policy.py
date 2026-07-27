@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from hashlib import sha256
+from math import nan
 from pathlib import Path
 from typing import Any
 
@@ -100,8 +101,117 @@ def test_policy_rejects_duplicate_yaml_mapping_keys(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="unable to load"):
+    with pytest.raises(ValueError) as caught:
         load_us_equity_special_closure_policy(policy_path)
+    assert str(caught.value) == (
+        f"unable to load US equity special-closure policy: {policy_path.resolve()}"
+    )
+
+
+@pytest.mark.parametrize(
+    "policy_text",
+    [
+        "closures: [",
+        'value: !!python/object/apply:os.system ["echo hi"]\n',
+        "? [a, b]\n: value\n",
+        "schema_version: &root\n  self: *root\n",
+    ],
+)
+def test_policy_preserves_wrapped_yaml_parse_failures(
+    tmp_path: Path,
+    policy_text: str,
+) -> None:
+    policy_path = tmp_path / "invalid.yaml"
+    policy_path.write_text(policy_text, encoding="utf-8")
+
+    with pytest.raises(ValueError) as caught:
+        load_us_equity_special_closure_policy(policy_path)
+    assert str(caught.value) == (
+        f"unable to load US equity special-closure policy: {policy_path.resolve()}"
+    )
+
+
+def test_policy_preserves_yaml_merge_flattening(tmp_path: Path) -> None:
+    policy_text = DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH.read_text(encoding="utf-8")
+    merged_text = policy_text.replace(
+        "source_requirements:\n"
+        "  accepted_source_classes:\n"
+        "    - official_exchange_notice\n"
+        "  accepted_https_hosts:\n"
+        "    - www.nyse.com\n",
+        "source_requirements:\n"
+        "  <<: &source_requirements\n"
+        "    accepted_source_classes:\n"
+        "      - official_exchange_notice\n"
+        "    accepted_https_hosts:\n"
+        "      - www.nyse.com\n",
+    )
+    assert merged_text != policy_text
+    policy_path = tmp_path / "merged.yaml"
+    policy_path.write_text(merged_text, encoding="utf-8")
+
+    policy = load_us_equity_special_closure_policy(policy_path)
+
+    assert policy.accepted_source_classes == ("official_exchange_notice",)
+    assert policy.accepted_https_hosts == ("www.nyse.com",)
+
+
+def test_policy_preserves_hashable_non_string_key_parse_boundary(tmp_path: Path) -> None:
+    policy_text = DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH.read_text(encoding="utf-8")
+    policy_path = tmp_path / "non_string_key.yaml"
+    policy_path.write_text(
+        policy_text.replace(
+            "source_requirements:\n",
+            "source_requirements:\n  1: accepted_by_yaml_loader\n",
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError):
+        load_us_equity_special_closure_policy(policy_path)
+
+
+def test_policy_preserves_non_finite_semantic_validation_boundary(tmp_path: Path) -> None:
+    payload = _base_policy_payload()
+    payload["rationale"] = nan
+
+    with pytest.raises(ValueError, match="rationale must be a non-empty string"):
+        load_us_equity_special_closure_policy(_write_policy(tmp_path, payload))
+
+    payload["rationale"] = "1e999"
+    policy = load_us_equity_special_closure_policy(_write_policy(tmp_path, payload))
+    assert policy.rationale == "1e999"
+
+
+def test_policy_preserves_recursive_sequence_semantic_boundary(tmp_path: Path) -> None:
+    policy_text = DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH.read_text(encoding="utf-8")
+    prefix, separator, _ = policy_text.partition("closures:")
+    assert separator
+    policy_path = tmp_path / "recursive_sequence.yaml"
+    policy_path.write_text(
+        f"{prefix}closures: &closures\n  - *closures\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="closure must be a mapping"):
+        load_us_equity_special_closure_policy(policy_path)
+
+
+def test_policy_preserves_read_and_utf8_failure_contract(tmp_path: Path) -> None:
+    missing = tmp_path / "missing.yaml"
+    with pytest.raises(ValueError) as caught:
+        load_us_equity_special_closure_policy(missing)
+    assert str(caught.value) == (
+        f"unable to load US equity special-closure policy: {missing.resolve()}"
+    )
+
+    invalid_utf8 = tmp_path / "invalid_utf8.yaml"
+    invalid_utf8.write_bytes(b"\xff")
+    with pytest.raises(ValueError) as caught:
+        load_us_equity_special_closure_policy(invalid_utf8)
+    assert str(caught.value) == (
+        f"unable to load US equity special-closure policy: {invalid_utf8.resolve()}"
+    )
 
 
 def test_policy_rejects_unknown_closure_type(tmp_path: Path) -> None:

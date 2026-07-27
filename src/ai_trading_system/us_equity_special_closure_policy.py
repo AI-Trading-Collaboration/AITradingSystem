@@ -10,10 +10,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-import yaml
-from yaml.constructor import ConstructorError
-from yaml.nodes import MappingNode
-from yaml.resolver import BaseResolver
+from ai_trading_system.yaml_loader import (
+    StrictYamlError,
+    StrictYamlOptions,
+    load_strict_yaml_text,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH = Path(
@@ -56,46 +57,10 @@ _SOURCE_KEYS = frozenset(
         "published_on",
     }
 )
-
-
-class _UniqueKeySafeLoader(yaml.SafeLoader):
-    """Safe YAML loader that rejects duplicate mapping keys."""
-
-
-def _construct_unique_mapping(
-    loader: _UniqueKeySafeLoader,
-    node: MappingNode,
-    deep: bool = False,
-) -> dict[Any, Any]:
-    loader.flatten_mapping(node)
-    mapping: dict[Any, Any] = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)  # type: ignore[no-untyped-call]
-        try:
-            if key in mapping:
-                raise ConstructorError(
-                    "while constructing a mapping",
-                    node.start_mark,
-                    f"found duplicate key {key!r}",
-                    key_node.start_mark,
-                )
-        except TypeError as exc:
-            raise ConstructorError(
-                "while constructing a mapping",
-                node.start_mark,
-                "found an unhashable mapping key",
-                key_node.start_mark,
-            ) from exc
-        mapping[key] = loader.construct_object(  # type: ignore[no-untyped-call]
-            value_node,
-            deep=deep,
-        )
-    return mapping
-
-
-_UniqueKeySafeLoader.add_constructor(
-    BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_unique_mapping,
+_STRICT_YAML_OPTIONS = StrictYamlOptions(
+    key_policy="HASHABLE",
+    flatten_mapping=True,
+    reject_non_finite=False,
 )
 
 
@@ -155,8 +120,12 @@ def load_us_equity_special_closure_policy(
     resolved_path = path.resolve()
     try:
         policy_bytes = resolved_path.read_bytes()
-        raw = yaml.load(policy_bytes.decode("utf-8"), Loader=_UniqueKeySafeLoader)
-    except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
+        raw = load_strict_yaml_text(
+            policy_bytes.decode("utf-8"),
+            options=_STRICT_YAML_OPTIONS,
+            label=str(resolved_path),
+        )
+    except (OSError, UnicodeDecodeError, StrictYamlError) as exc:
         raise ValueError(
             f"unable to load US equity special-closure policy: {resolved_path}"
         ) from exc

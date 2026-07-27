@@ -21396,7 +21396,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.us_equity_special_closure_policy
   path: src/ai_trading_system/us_equity_special_closure_policy.py
-  sha256: 7a50326b594cdf3e0c730db9e3ac7590c970ccf6d1d442e828963944111bdcd8
+  sha256: beced9b60de2653d57eeddd0de403f507f76f17e724daa391238c1be5ff247ab
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

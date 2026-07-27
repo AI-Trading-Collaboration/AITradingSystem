@@ -29523,3 +29523,127 @@ phase_arch_005m1_batch3_wave_readiness_loader:
     strategy_conclusion_changed: false
     production_effect: none
     broker_action: none
+
+phase_arch_005m1_batch4_us_equity_special_closure_loader:
+  schema_version: arch_005m1_batch4_us_equity_special_closure_loader_compatibility.v1
+  status: COMPLETE
+  boundary_id: ARCH-005M1-BATCH4-US-EQUITY-SPECIAL-CLOSURE-LOADER
+  task_ids:
+  - ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION
+  owner_authorization: owner_continuation:ARCH-005M1:2026-07-27:continue_long_term_engineering_goal
+  prior_sections_immutability:
+    source_commit: ad22819f3aa666d7ac920b6b3583fff588279f73
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 3b97c4e575042ec9dacb14952b344afdbb306e70
+    raw_byte_count: 1846974
+    raw_sha256: bb1d82dad109a91461ee5d7de854b48582ef982e0403761f983c25197c895201
+    append_offset: 1846974
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - src/ai_trading_system/us_equity_special_closure_policy.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_us_equity_special_closure_policy.py
+  supersession:
+    superseded_by_phase: ARCH-005M1-BATCH4-US-EQUITY-SPECIAL-CLOSURE-LOADER
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_arch_005m1_batch3_wave_readiness_loader
+    current_hash_authority: phase_arch_005m1_batch4_us_equity_special_closure_loader.sources
+  removed_live_source_paths:
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  new_source_paths:
+  - registry/development_tasks_shadow/completed/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  source_delta_paths:
+  - docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - registry/development_tasks_shadow/completed/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml
+  - src/ai_trading_system/us_equity_special_closure_policy.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_us_equity_special_closure_policy.py
+  sources:
+  - {path: docs/requirements/ARCH-005M1_Strict_YAML_Loader_Consolidation.md, sha256: 4add00ccf134abcd9aa78ee5533c2ba22c6458d45863c705dbdf2ced5169741b, hash_normalization: git_eol_lf}
+  - {path: docs/system_flow.md, sha256: 6cd96a2e722b48ca4f8ab01230f078effb92782eed873620082b54c41e77876c, hash_normalization: git_eol_lf}
+  - {path: docs/task_register.md, sha256: 07e5c814e6a6b14127930732f53ed716558c6b2a5948ceb17e87bd5d75c6feba, hash_normalization: git_eol_lf}
+  - {path: docs/task_register_completed.md, sha256: 6905789953861004b081088a43e547dbba6cfe7027fd988c73b2c7cadc45d4fe, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml, sha256: 1ecbd3f0ba494c685d000c6f79586900b351bfef9f59f328d483805e3a81dba0, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_module_manifest.yaml, sha256: 572824e261813ed4c2739fabfbcd6ee29663c3e0b794744b90a87d79154d850a, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_004e_test_manifest.yaml, sha256: 62c85afb1c8254527d33b2a145a9bda1b700f43250bc8cd6b81fcd948512b529, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_registry_baseline.yaml, sha256: b9e969fe8a0c80d8ad9dd3c86a7d0bdca1351d657c6afb008922df1fca68d75d, hash_normalization: git_eol_lf}
+  - {path: inputs/architecture/arch_005_task_shadow_index.yaml, sha256: ea7aefc9efd33517a1aa42db84fe1cef61daa3c8e26fd937c39e40697cd3055a, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml, sha256: 444b78ea6f691fce2e8f03f446d52b32412e5db55f968d663146c23b0b66d791, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml, sha256: c3fbd55be4694e21619fb7236813339a69ccf7d8f87a7491654f5e62950c8b9a, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml, sha256: 5e49eebd634fb296f59468450451fcfa02ba4a5683ac5964a7ae2825873e6a1a, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml, sha256: 720d79de300df344386950625552199d38596fb0d851fa29f43bad074dc157d1, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml, sha256: 4e5c26ebf89fad072f1fcb443be7a330fc8488b274bc296d528f4c595a3b56ed, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml, sha256: 7454e2f3f9667b0eb961e474a0e2fbaf9bcb58dac4424739f04ec5597bcdd84e, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml, sha256: e2bf6323d907ed93d1b46ef4d4c514b14ef2bb56ef09bff0b5bb319960cc2ee8, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml, sha256: e5c878606874ad6a96d61e2187574a619ca7a0b1cc642378474791151bc50c50, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml, sha256: edfeeb9e3740a62b5cc5dda9fb05ff6ad421af7b6d17544d3991fcd7028712dd, hash_normalization: git_eol_lf}
+  - {path: registry/development_tasks_shadow/completed/0a/0abb8a3ad247288bda28379233fd84e047b071d1ab19dbbe650d6c1c8bf49355.yaml, sha256: 23ee50ec06449ac3f44a19f9d3c19bb66400f8a3ec04f5ab62ffdffa2e89e8eb, hash_normalization: git_eol_lf}
+  - {path: src/ai_trading_system/us_equity_special_closure_policy.py, sha256: beced9b60de2653d57eeddd0de403f507f76f17e724daa391238c1be5ff247ab, hash_normalization: git_eol_lf}
+  - {path: tests/test_arch_004_refactor_policy.py, sha256: afbcfe2061022cbc75c0bbca3d23d0e93ac87ba153ee1c887716a566fbb5f430, hash_normalization: git_eol_lf}
+  - {path: tests/test_us_equity_special_closure_policy.py, sha256: 6ed48b9373774aa40e0b0e1ce81182436fd995bde73b7bd468fb85aa70b7cd76, hash_normalization: git_eol_lf}
+  implementation:
+    canonical_strict_yaml_primitive_reused: true
+    local_unique_loader_removed: true
+    key_policy: HASHABLE
+    flatten_mapping: true
+    reject_non_finite: false
+    wrapped_value_error_contract_preserved: true
+    policy_bytes_and_hash_changed: false
+    calendar_decision_semantics_changed: false
+    remaining_production_loader_count: 0
+  validation:
+    focused: PASS_125
+    consumer_regression: PASS_76
+    strict_mypy: PASS
+    ruff: PASS
+    architecture: PASS_739
+    contract: PASS_275
+    full: PASS_7525_WITH_3_SKIPPED
+    post_full_architecture: PASS_739
+    post_full_contract: PASS_275
+  safety:
+    calendar_policy_bytes_changed: false
+    data_quality_contract_changed: false
+    strategy_conclusion_changed: false
+    production_effect: none
+    broker_action: none

@@ -7,7 +7,7 @@
 Owner continuation：
 `owner_continuation:ARCH-005M1:2026-07-27:continue_long_term_engineering_goal`
 
-状态：`BASELINE_DONE_BATCH_3`
+状态：`COMPLETE`
 
 ## 1. 问题与目标
 
@@ -258,3 +258,71 @@ worktree或known-unrelated文档；无DQ/PIT/strategy/backtest/report conclusion
   `BASELINE_DONE_BATCH_3`但post字段仍为`PENDING`时由compatibility lifecycle断言按设计
   fail closed（`736 passed / 1 failed`）；恢复`VALIDATING_BATCH_3`、写入已确认Contract
   证据后复跑Architecture=`737 passed`，再原子完成状态与post字段，未使用workaround。
+
+## 10. Batch 4：US Equity Special Closure Loader
+
+### 10.1 合同与范围
+
+Batch 4只迁移`us_equity_special_closure_policy.py`内读取
+`config/data/us_equity_special_closure_registry.yaml`的production loader。迁移必须保持：
+
+- 任意hashable key可进入后续semantic validation，unhashable key在parse阶段拒绝；
+- 执行YAML merge flatten；
+- 不执行canonical non-finite/cyclic-alias后遍历，维持PyYAML与后续schema validation现状；
+- duplicate、unhashable、malformed、unsafe tag、读取失败和invalid UTF-8继续统一包装为
+  `ValueError("unable to load US equity special-closure policy: <resolved path>")`；
+- 合法policy的dataclass结构、resolved path、原始文件bytes SHA256、calendar source和
+  default-process cache行为全部不变；
+- policy schema、source qualification、closure日期规则、DQ gate、trading calendar、
+  strategy/backtest/report conclusion、production和broker边界全部不变。
+
+Batch 4不得修改canonical primitive、日历policy文件、普通`safe_load_yaml_*`或任何投资解释
+规则。完成后production本地`_UniqueKeySafeLoader`剩余数量为0，ARCH-005M1可归档。
+
+### 10.2 步骤与验收
+
+1. 先扩充characterization，覆盖duplicate、unhashable、merge、hashable non-string、
+   non-finite、recursive mapping/sequence、malformed、unsafe tag、missing file和invalid UTF-8；
+2. 用`StrictYamlOptions(HASHABLE, flatten_mapping=true, reject_non_finite=false)`接入
+   canonical parser，并把全部`StrictYamlError`映射回原wrapped `ValueError`；
+3. 删除production module内本地loader class/constructor及直接`yaml.load`依赖；
+4. 证明reviewed policy结构与原始bytes hash不变，并扩展相关DQ/trading-calendar回归；
+5. 更新system flow、generated views、任务归档和append-only compatibility authority；
+6. 运行focused、strict mypy、Ruff、Architecture、Contract及唯一required Full。
+
+### 10.3 生命周期
+
+- frozen base=`ad22819f3aa666d7ac920b6b3583fff588279f73`；
+- branch=`codex/arch-005m1-strict-yaml-batch4-special-closure`；
+- 不创建额外worktree、clone、stash或cache，不触碰既有operations worktree；
+- 不读取、hash、复制、修改或提交known-unrelated owner文档；
+- `production_effect=none`、`broker_action=none`。
+
+### 10.4 Batch 4进度
+
+- 2026-07-27：Batch 3已在`ad22819f3`推送并clean closeout。READ_ONLY和SINGLE_LANE
+  START preflight在`main=origin/main=ad22819f3`、active lease=0下PASS；baseline
+  `tests/test_us_equity_special_closure_policy.py=13 passed`。只读characterization确认本
+  wrapper是最后一个hashable-key、merge-flatten、no-post-traversal loader，状态进入
+  `IN_PROGRESS_BATCH_4`。
+- 2026-07-27：wrapper已接入canonical strict primitive，本地loader class/constructor和
+  production直接`yaml.load`删除；新增characterization锁定wrapped error、merge、
+  hashable non-string、non-finite、recursive mapping/sequence、missing file及invalid UTF-8。
+  canonical+special-closure focused=`31 passed`，strict mypy和Ruff PASS；trading calendar、
+  DQ execution/discovery回归=`76 passed`。production源码检索确认本地strict loader复制数量
+  为0，状态进入`VALIDATING_BATCH_4`。
+- 2026-07-27：append-only compatibility authority绑定`ad22819f3`历史prefix exact Git
+  blob；兼容性回归=`94 passed`，累计focused evidence=`125 passed`。当前authority只允许
+  special-closure module、对应test、治理与generated state变化，日历policy bytes、canonical
+  loader、前四个migrated wrapper及trading-calendar consumer保持frozen。
+- 2026-07-27：pre-Full Architecture=`739 passed`、Contract=`275 passed`；generated
+  DevEx/task views可复现，compatibility current hash无漂移。下一步执行本批唯一required Full。
+- 2026-07-27：唯一required Full以`natural_integration_boundary` provenance通过：
+  `7525 passed / 3 skipped / 642 warnings`。状态进入`VALIDATING_POST_FULL_BATCH_4`；
+  post-Full门禁通过后将ARCH-005M1从active register迁入completed register。
+- 2026-07-27：post-Full Architecture=`739 passed`、Contract=`275 passed`。四批迁移已将
+  production本地strict YAML loader复制数量归零，任务从active register迁入completed
+  register；最终生成式任务视图、append-only compatibility authority与归档树门禁同步收口。
+- 2026-07-27：最终归档树Architecture首跑=`738 passed / 1 failed`，准确发现
+  compatibility测试修订后DevEx test manifest未重新生成；直接刷新canonical DevEx manifest
+  并验证PASS，未使用workaround，随后进入最终归档树Architecture/Contract复跑。
