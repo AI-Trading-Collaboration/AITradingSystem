@@ -8,7 +8,7 @@
 Owner decision：
 `owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 ## 1. 决策原文
 
@@ -231,3 +231,18 @@ Incomplete 时：
   （SHA-256=`3e80a767b883e3d422b3ed3c3ba4edcb83028128556f2a08d67db5089d15df88`），
   仍无blocker/contract conflict。最终C3候选改从该exact main重建，S4转不可变历史
   权威，C3继续作为唯一当前hash authority。
+- 2026-07-28：exact S4-base C3 candidate=
+  `af37b804f48c2aff3f7a262107343e56f8146ce5`在无并发pytest/Full、clean
+  governed worktree和active integration lease下完成最终门禁：
+  focused=`44 passed`、Ruff=`PASS`、strict mypy=`PASS`、
+  Architecture=`764 passed`、Contract=`275 passed`、Report=`57 passed`、
+  Reproducibility=`23 passed`、Integration=`995 passed`；唯一自然边界独占
+  Full=`7606 passed / 3 skipped / 642 warnings`，runtime artifact=
+  `outputs/validation_runtime/full_20260727T173947Z/test_runtime_summary.json`。
+  post-Full final tracked-state Architecture=`764 passed`
+  （`outputs/validation_runtime/architecture-fitness_20260727T180732Z/test_runtime_summary.json`）、
+  Contract=`275 passed`
+  （`outputs/validation_runtime/contract-validation_20260727T180907Z/test_runtime_summary.json`）。
+  C3 typed contract基线转`BASELINE_DONE`；后续dimensional classifier adoption、
+  capability policy或consumer迁移继续要求独立owner评审，当前
+  `production_effect=none`、`broker_action=none`。
