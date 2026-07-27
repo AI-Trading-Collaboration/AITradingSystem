@@ -11,24 +11,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner：复核S1/S2 design/falsification pack并决定是否进入S3 target选择包；未获指示前strategy
-    coordinator停在S2
+  next_owner: project owner：审阅S3 target-selection decision pack，选择O1、O2、O4进入S4或关闭本轮redesign；未获选择前strategy
+    coordinator停止
   requirement_refs:
   - docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md
   - docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md
+  - docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`
-    与 `docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`。S1/S2已定义decision
-    problem、非激活action semantics、四个target options、PIT/DQ/source feasibility、coverage/sample-floor
-    governance、falsification与leakage停止条件；`selected_target=NONE`，S3/S4未启动。不得进入Decision
-    Value Audit、risk overlay、candidate/backtest/weights；QLD automatic selection与production
-    governance等待canonical DQ strict PASS后再审。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`
+    与 `docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`。S3 pack已完成九项Owner问题、option
+    triage、单/双target结构、action mapping、policy gaps、mandatory/diagnostic axes与multiple-testing停止规则。设计层推荐O1单target；O2/O4
+    defer，O3当前不具备S4资格。Owner选择前`selected_target=NONE`；不得进入S4、Decision Value Audit、risk
+    overlay、candidate/backtest/weights。QLD automatic selection与production governance等待canonical
+    DQ strict PASS后再审。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: Owner决定可追溯；旧tail-risk capability不再具备后续资格；S1/S2 pack完整覆盖action/label/availability/PIT/DQ/coverage/falsification且不读取新结果；所有numeric
-      horizon/threshold/sample floor保持owner-review slot；target选择先于任何模型或evaluation；task
+    text: S3 pack逐项回答九个Owner选择问题并明确保留/淘汰理由、单/双target边界、尚未冻结的numeric policy与停止条件；不读取新结果、不访问prospective、不训练模型；Owner选择一个target进入S4或关闭redesign；task
       consistency与适用治理门禁PASS；`production_effect=none`、`broker_action=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
@@ -36,44 +36,43 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2027
-    row_sha256: 2106cfc94de0f9b2f1569b8bf72252675ea1a81f00e1411b3c7513738169994a
+    row_sha256: 0e8742722887bcb2d2e55e3511d705afc8ebb036fdb87987c0a22cc21f8d85e8
     cell_count: 8
     all_cells:
     - TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
     - Strategy Style Discovery / decision-target redesign preregistration
     - P0
     - IN_PROGRESS
-    - project owner：复核S1/S2 design/falsification pack并决定是否进入S3 target选择包；未获指示前strategy
-      coordinator停在S2
-    - 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`
-      与 `docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`。S1/S2已定义decision
-      problem、非激活action semantics、四个target options、PIT/DQ/source feasibility、coverage/sample-floor
-      governance、falsification与leakage停止条件；`selected_target=NONE`，S3/S4未启动。不得进入Decision
-      Value Audit、risk overlay、candidate/backtest/weights；QLD automatic selection与production
-      governance等待canonical DQ strict PASS后再审。
-    - Owner决定可追溯；旧tail-risk capability不再具备后续资格；S1/S2 pack完整覆盖action/label/availability/PIT/DQ/coverage/falsification且不读取新结果；所有numeric
-      horizon/threshold/sample floor保持owner-review slot；target选择先于任何模型或evaluation；task
+    - project owner：审阅S3 target-selection decision pack，选择O1、O2、O4进入S4或关闭本轮redesign；未获选择前strategy
+      coordinator停止
+    - 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`
+      与 `docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`。S3 pack已完成九项Owner问题、option
+      triage、单/双target结构、action mapping、policy gaps、mandatory/diagnostic axes与multiple-testing停止规则。设计层推荐O1单target；O2/O4
+      defer，O3当前不具备S4资格。Owner选择前`selected_target=NONE`；不得进入S4、Decision Value Audit、risk
+      overlay、candidate/backtest/weights。QLD automatic selection与production governance等待canonical
+      DQ strict PASS后再审。
+    - S3 pack逐项回答九个Owner选择问题并明确保留/淘汰理由、单/双target边界、尚未冻结的numeric policy与停止条件；不读取新结果、不访问prospective、不训练模型；Owner选择一个target进入S4或关闭redesign；task
       consistency与适用治理门禁PASS；`production_effect=none`、`broker_action=none`。
-    - 2026-07-27：S0已闭合；Owner以`owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`要求推进S1+S2，当前已完成设计包并停在S2。S3需要Owner审阅option与policy
-      gaps后再进入；未访问prospective，未改变策略、QLD角色、paper-shadow、production或broker。
+    - 2026-07-28：Owner授权进入S3，选择包现已完成。非实证推荐O1 `RELATIVE_OPPORTUNITY_SPREAD`单target；该推荐未激活target，`selected_target=NONE`。下一步只接受Owner显式选择或关闭决定；S4及所有capability
+      computation未启动，未改变策略、QLD角色、paper-shadow、production或broker。
     raw_line: '|TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION|Strategy Style
       Discovery / decision-target redesign preregistration|P0|IN_PROGRESS|project
-      owner：复核S1/S2 design/falsification pack并决定是否进入S3 target选择包；未获指示前strategy coordinator停在S2|详见
-      `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`
-      与 `docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`。S1/S2已定义decision
-      problem、非激活action semantics、四个target options、PIT/DQ/source feasibility、coverage/sample-floor
-      governance、falsification与leakage停止条件；`selected_target=NONE`，S3/S4未启动。不得进入Decision
-      Value Audit、risk overlay、candidate/backtest/weights；QLD automatic selection与production
-      governance等待canonical DQ strict PASS后再审。|Owner决定可追溯；旧tail-risk capability不再具备后续资格；S1/S2
-      pack完整覆盖action/label/availability/PIT/DQ/coverage/falsification且不读取新结果；所有numeric
-      horizon/threshold/sample floor保持owner-review slot；target选择先于任何模型或evaluation；task
-      consistency与适用治理门禁PASS；`production_effect=none`、`broker_action=none`。|2026-07-27：S0已闭合；Owner以`owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`要求推进S1+S2，当前已完成设计包并停在S2。S3需要Owner审阅option与policy
-      gaps后再进入；未访问prospective，未改变策略、QLD角色、paper-shadow、production或broker。|'
+      owner：审阅S3 target-selection decision pack，选择O1、O2、O4进入S4或关闭本轮redesign；未获选择前strategy
+      coordinator停止|详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`
+      与 `docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`。S3 pack已完成九项Owner问题、option
+      triage、单/双target结构、action mapping、policy gaps、mandatory/diagnostic axes与multiple-testing停止规则。设计层推荐O1单target；O2/O4
+      defer，O3当前不具备S4资格。Owner选择前`selected_target=NONE`；不得进入S4、Decision Value Audit、risk
+      overlay、candidate/backtest/weights。QLD automatic selection与production governance等待canonical
+      DQ strict PASS后再审。|S3 pack逐项回答九个Owner选择问题并明确保留/淘汰理由、单/双target边界、尚未冻结的numeric
+      policy与停止条件；不读取新结果、不访问prospective、不训练模型；Owner选择一个target进入S4或关闭redesign；task
+      consistency与适用治理门禁PASS；`production_effect=none`、`broker_action=none`。|2026-07-28：Owner授权进入S3，选择包现已完成。非实证推荐O1
+      `RELATIVE_OPPORTUNITY_SPREAD`单target；该推荐未激活target，`selected_target=NONE`。下一步只接受Owner显式选择或关闭决定；S4及所有capability
+      computation未启动，未改变策略、QLD角色、paper-shadow、production或broker。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-2106cfc94de0f9b2f1569b8b
+  event_id: legacy-import-0e8742722887bcb2d2e55e35
   task_id: TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -86,13 +85,13 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: project owner：复核S1/S2 design/falsification pack并决定是否进入S3 target选择包；未获指示前strategy
-      coordinator停在S2
-    notes: 2026-07-27：S0已闭合；Owner以`owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`要求推进S1+S2，当前已完成设计包并停在S2。S3需要Owner审阅option与policy
-      gaps后再进入；未访问prospective，未改变策略、QLD角色、paper-shadow、production或broker。
+    next_owner: project owner：审阅S3 target-selection decision pack，选择O1、O2、O4进入S4或关闭本轮redesign；未获选择前strategy
+      coordinator停止
+    notes: 2026-07-28：Owner授权进入S3，选择包现已完成。非实证推荐O1 `RELATIVE_OPPORTUNITY_SPREAD`单target；该推荐未激活target，`selected_target=NONE`。下一步只接受Owner显式选择或关闭决定；S4及所有capability
+      computation未启动，未改变策略、QLD角色、paper-shadow、production或broker。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:2106cfc94de0f9b2f1569b8bf72252675ea1a81f00e1411b3c7513738169994a
+  - sha256:0e8742722887bcb2d2e55e3511d705afc8ebb036fdb87987c0a22cc21f8d85e8
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -100,23 +99,23 @@ projection:
   - Strategy Style Discovery / decision-target redesign preregistration
   - P0
   - IN_PROGRESS
-  - project owner：复核S1/S2 design/falsification pack并决定是否进入S3 target选择包；未获指示前strategy
-    coordinator停在S2
-  - 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`
-    与 `docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`。S1/S2已定义decision
-    problem、非激活action semantics、四个target options、PIT/DQ/source feasibility、coverage/sample-floor
-    governance、falsification与leakage停止条件；`selected_target=NONE`，S3/S4未启动。不得进入Decision
-    Value Audit、risk overlay、candidate/backtest/weights；QLD automatic selection与production
-    governance等待canonical DQ strict PASS后再审。
-  - Owner决定可追溯；旧tail-risk capability不再具备后续资格；S1/S2 pack完整覆盖action/label/availability/PIT/DQ/coverage/falsification且不读取新结果；所有numeric
-    horizon/threshold/sample floor保持owner-review slot；target选择先于任何模型或evaluation；task
+  - project owner：审阅S3 target-selection decision pack，选择O1、O2、O4进入S4或关闭本轮redesign；未获选择前strategy
+    coordinator停止
+  - 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`
+    与 `docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`。S3 pack已完成九项Owner问题、option
+    triage、单/双target结构、action mapping、policy gaps、mandatory/diagnostic axes与multiple-testing停止规则。设计层推荐O1单target；O2/O4
+    defer，O3当前不具备S4资格。Owner选择前`selected_target=NONE`；不得进入S4、Decision Value Audit、risk
+    overlay、candidate/backtest/weights。QLD automatic selection与production governance等待canonical
+    DQ strict PASS后再审。
+  - S3 pack逐项回答九个Owner选择问题并明确保留/淘汰理由、单/双target边界、尚未冻结的numeric policy与停止条件；不读取新结果、不访问prospective、不训练模型；Owner选择一个target进入S4或关闭redesign；task
     consistency与适用治理门禁PASS；`production_effect=none`、`broker_action=none`。
-  - 2026-07-27：S0已闭合；Owner以`owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`要求推进S1+S2，当前已完成设计包并停在S2。S3需要Owner审阅option与policy
-    gaps后再进入；未访问prospective，未改变策略、QLD角色、paper-shadow、production或broker。
+  - 2026-07-28：Owner授权进入S3，选择包现已完成。非实证推荐O1 `RELATIVE_OPPORTUNITY_SPREAD`单target；该推荐未激活target，`selected_target=NONE`。下一步只接受Owner显式选择或关闭决定；S4及所有capability
+    computation未启动，未改变策略、QLD角色、paper-shadow、production或broker。
   docs_links:
   - docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md
   - docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md
+  - docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md
   terminal: false
-  raw_row_sha256: 2106cfc94de0f9b2f1569b8bf72252675ea1a81f00e1411b3c7513738169994a
+  raw_row_sha256: 0e8742722887bcb2d2e55e3511d705afc8ebb036fdb87987c0a22cc21f8d85e8
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: e0f5a40159c8c40584c0d39f5a9bf020bdb099e8dd59b9cdbafe2958d14dc932
+fragment_checksum: ad0459184d8d72bccfce4de7f95bb30c20f44edecd970324142125e34169a8aa

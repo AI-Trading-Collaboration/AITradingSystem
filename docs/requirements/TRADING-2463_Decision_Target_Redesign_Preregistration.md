@@ -1,8 +1,8 @@
 # TRADING-2463：Decision Target Redesign 预注册
 
-最后更新：2026-07-27
+最后更新：2026-07-28
 
-状态：`IN_PROGRESS_S1_S2_COMPLETE_S3_NOT_STARTED`
+状态：`IN_PROGRESS_S3_PACK_COMPLETE_OWNER_SELECTION_REQUIRED_S4_NOT_STARTED`
 
 稳定任务 ID：`TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION`
 
@@ -11,6 +11,7 @@ Owner 决策：
 - `owner_decision:TRADING-2462:2026-07-27:close_current_tail_risk_capability_path_v1`
 - `owner_decision:TRADING-2463:2026-07-27:authorize_decision_target_redesign_preregistration_v1`
 - `owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`
+- `owner_decision:TRADING-2463:2026-07-28:enter_s3_target_selection_pack_v1`
 - `owner_decision:TRADING-2459:2026-07-27:defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`
 
 ## 1. 决策与目标
@@ -76,6 +77,11 @@ S1/S2 当前权威设计包：
 `docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`。
 该文件只完成 option、PIT/DQ/coverage/falsification 设计，不选择 target，不冻结 numeric
 policy，不启动 S3/S4 或任何 capability computation。
+
+S3 当前权威选择包：
+`docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`。
+该文件只形成 Owner 可审阅的 option triage、单/双 target 选择、policy gap 与显式选择位；
+在 Owner 选择前，`selected_target=NONE`，不得启动 S4 或任何 capability computation。
 
 ## 4. 阶段与依赖
 
@@ -186,3 +192,20 @@ policy，不启动 S3/S4 或任何 capability computation。
   checkout intent与当前lease events按7项显式路径白名单迁移到canonical
   `D:\Work\AITradingSystem`，共27个文件逐文件SHA-256一致。阶段仍停在S2，
   `production_effect=none`、`broker_action=none`。
+- 2026-07-28：Owner以
+  `owner_decision:TRADING-2463:2026-07-28:enter_s3_target_selection_pack_v1`
+  授权进入S3。当前只构建Owner target-selection decision pack；不读取新结果、不访问
+  prospective、不训练模型、不冻结未经Owner选择的target或numeric policy，不进入S4、
+  Decision Value Audit、risk overlay、candidate/backtest/weights。S3退出仍要求Owner明确
+  选择一个target进入S4，或关闭本轮redesign。
+- 2026-07-28：S3 target-selection decision pack已完成。基于经济语义、政策负担、可审计性
+  与可证伪性，非实证推荐O1 `RELATIVE_OPPORTUNITY_SPREAD`作为单target进入Owner选择位；
+  O2/O4明确defer，O3因utility/action policy gaps不具备S4资格。该推荐未激活target；
+  `selected_target=NONE`，等待Owner选择O1、O2、O4或关闭redesign，S4仍未启动。
+- 2026-07-28：S3 phase-exit pre-Full/final Full验证通过：focused=`136 passed`、
+  Architecture=`759 passed`、Contract=`275 passed`、Reproducibility=`23 passed`、
+  Integration=`995 passed / 642 warnings`、Full=`7584 passed / 5 skipped /
+  643 warnings`。Full provenance绑定`TRADING-2463-S3-20260728`与
+  `natural_integration_boundary`。五类runtime evidence、checkout intent与当前lease
+  events按7项显式路径白名单迁移到canonical `D:\Work\AITradingSystem`，共29个文件
+  逐文件SHA-256一致；post-Full Architecture/Contract仍待最终tracked state验证。

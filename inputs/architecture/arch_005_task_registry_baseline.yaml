@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1641204
-    sha256: 1997994ba8eab580c387441a2e51e59aca303c7da95c2c4f5a6029974d21b5d9
+    byte_count: 1641317
+    sha256: ce1313316149eba61a1cb20a9ae2733b1c18cae5e6c441cfcd810888e3a780d5
     row_count: 422
     final_newline: true
     task_id_order_sha256: c8f5927553a7bb19bb3b3cc95a5ad756edb76622514acc837d83bddfbd40d8a3
-    row_checksum_order_sha256: 6b355186125d1c90f873b1caac1dbf231a10e9cce3225a39118eecefa4f67bd9
+    row_checksum_order_sha256: 5a56c63999f72ca9f2dfb2040f643000880435282f694476b6ccf4c30f8b226e
     task_row_newline_counts:
       LF: 422
   - source: completed
@@ -132,8 +132,8 @@ inventory:
     VALIDATING: 267
   task_id_set_sha256: d8e6dd9cceb55544aaf0a152d82aaadb3bdedcc523141ffe14bb5e6d9683e410
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: c667f5da5e4f806eb1ee2d114a4768eb2e87497cbf46d6ed4a22900f295c49c9
-  docs_link_set_sha256: a7f1fc81caaf7e954fa66a83bd7ab04bc284334c4e396a134e5ad7fae12b48af
+  owner_set_sha256: 460c0c83cf7b184e7176653c03c5cc4300a364cfbc27c951dff071672ecbdd75
+  docs_link_set_sha256: 4b2951d204e5982546174ddce51a739e227739f5593f2c76c2eb2db3a0cae56c
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -3029,7 +3029,7 @@ inventory:
   - task_id: TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
     source: active
     line_number: 2027
-    row_sha256: 2106cfc94de0f9b2f1569b8bf72252675ea1a81f00e1411b3c7513738169994a
+    row_sha256: 0e8742722887bcb2d2e55e3511d705afc8ebb036fdb87987c0a22cc21f8d85e8
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7419,4 +7419,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 68931cf82d959017a0809ff41e789c111fa241859161c2ccbc3bf97a81a176ae
+baseline_checksum: d80c040bed54b7fbbdbf41b3fad793d3ce89b7e070e626e83b0e9f4d11382c30

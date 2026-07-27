@@ -879,12 +879,29 @@ TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT = 1_919_220
 TRADING_2463_S1_S2_HISTORICAL_PREFIX_SHA256 = (
     "2490b1af2d4477fba56198a82c9f24153efe6f897be97889d5919e3662c66afb"
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2463_S1_S2_SECTION
 TRADING_2463_S1_S2_NEW_SOURCE_PATHS = frozenset(
     {
         (
             "docs/requirements/"
             "TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md"
+        ),
+    }
+)
+TRADING_2463_S3_SECTION = (
+    "phase_trading_2463_decision_target_redesign_s3_target_selection_pack"
+)
+TRADING_2463_S3_BASE_COMMIT = "b2a819b105bcc9c30a0952e64796ab3493f267d2"
+TRADING_2463_S3_BASELINE_GIT_BLOB = "cd856d81a08cbfc1d5f76c585c27064cb40186bb"
+TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT = 1_924_119
+TRADING_2463_S3_HISTORICAL_PREFIX_SHA256 = (
+    "c34aeca2b5a4df16051e70c6b87790bd003e34fbe3e720b9d5279c8b7a8f352d"
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2463_S3_SECTION
+TRADING_2463_S3_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "docs/requirements/"
+            "TRADING-2463_S3_Target_Selection_Decision_Pack.md"
         ),
     }
 )
@@ -1950,6 +1967,25 @@ def _trading_2463_s1_s2_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2463_s3_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2463_S3_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2463_S3_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -2963,6 +2999,28 @@ def _assert_trading_2463_s1_s2_historical_prefix_immutable(
         TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT:
     ]
     expected_marker = f"\n{TRADING_2463_S1_S2_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2463_s3_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == TRADING_2463_S3_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[
+        :TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT
+    ]
+    assert historical_prefix == base_blob, (
+        "TRADING-2463 S3 historical prefix differs from immutable "
+        "TRADING-2463 S1/S2 authority blob"
+    )
+    suffix = current_bytes[TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{TRADING_2463_S3_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -4164,6 +4222,26 @@ def _trading_2463_s1_s2_source_paths() -> frozenset[str]:
 
 
 @cache
+def _trading_2463_s3_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2463_s3_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2463_s3_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2463_S3_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2463_s3_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2463_S3_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _arch_005s4e_superseded_live_source_paths() | _arch_005s4d_s2_superseded_live_source_paths()
@@ -4229,6 +4307,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _trading_2463_source_paths()
     if TRADING_2463_S1_S2_SECTION in baseline:
         paths |= _trading_2463_s1_s2_source_paths()
+    if TRADING_2463_S3_SECTION in baseline:
+        paths |= _trading_2463_s3_source_paths()
     return paths
 
 
@@ -4956,12 +5036,36 @@ def _trading_2463_s1_s2_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(TRADING_2463_S1_S2_SECTION)
 
 
+@cache
+def _trading_2463_s3_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2463_S3_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2463_S1_S2_SECTION in baseline:
+    if TRADING_2463_S3_SECTION in baseline:
+        current_superseded_paths = _trading_2463_s3_superseded_live_source_paths()
+        assert (
+            _trading_2463_s3_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_superseded_live_source_paths()
+            | _trading_2463_s1_s2_superseded_live_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2463_S3_SECTION
+    elif TRADING_2463_S1_S2_SECTION in baseline:
         current_superseded_paths = (
             _trading_2463_s1_s2_superseded_live_source_paths()
         )
@@ -12209,13 +12313,15 @@ def test_trading_2463_is_immutable_historical_authority() -> None:
     }
 
 
-def test_trading_2463_s1_s2_is_current_hash_authority() -> None:
+def test_trading_2463_s1_s2_is_immutable_historical_authority() -> None:
     _assert_trading_2463_s1_s2_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s1_s2_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2463_S1_S2_SECTION
+    assert list(baseline).index(TRADING_2463_S1_S2_SECTION) < list(
+        baseline
+    ).index(TRADING_2463_S3_SECTION)
     phase = baseline[TRADING_2463_S1_S2_SECTION]
     assert phase["schema_version"] == (
         "trading_2463_decision_target_redesign_s1_s2_compatibility.v1"
@@ -12246,10 +12352,6 @@ def test_trading_2463_s1_s2_is_current_hash_authority() -> None:
         WAVE14_S2_PROHIBITED_USER_PATH
     ]
     superseded = set(phase["superseded_live_source_paths"])
-    assert (
-        superseded
-        == _trading_2463_s1_s2_prior_active_source_mismatches()
-    )
     assert phase["supersession"] == {
         "superseded_by_phase": (
             "TRADING-2463-DECISION-TARGET-REDESIGN-S1-S2"
@@ -12275,7 +12377,10 @@ def test_trading_2463_s1_s2_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert (
+            _source_sha256_at_commit(source, TRADING_2463_S3_BASE_COMMIT)
+            == source["sha256"]
+        ), source["path"]
     assert phase["implementation"] == {
         "s1_decision_problem_complete": True,
         "s1_target_option_count": 4,
@@ -12306,6 +12411,156 @@ def test_trading_2463_s1_s2_is_current_hash_authority() -> None:
         "production_effect": "none",
         "broker_action": "none",
     }
+
+
+def test_trading_2463_s3_is_current_hash_authority() -> None:
+    _assert_trading_2463_s3_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2463_s3_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2463_S3_SECTION
+    phase = baseline[TRADING_2463_S3_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2463_decision_target_redesign_s3_target_selection_"
+        "compatibility.v1"
+    )
+    assert phase["status"] in {
+        "VALIDATING_S3",
+        "S3_PACK_COMPLETE_OWNER_SELECTION_REQUIRED",
+    }
+    assert phase["boundary_id"] == (
+        "TRADING-2463-DECISION-TARGET-REDESIGN-S3"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"
+    ]
+    assert phase["owner_authorizations"] == [
+        (
+            "owner_decision:TRADING-2463:2026-07-28:"
+            "enter_s3_target_selection_pack_v1"
+        ),
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2463_S3_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2463_S3_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2463_S3_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [
+        WAVE14_S2_PROHIBITED_USER_PATH
+    ]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _trading_2463_s3_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2463-DECISION-TARGET-REDESIGN-S3"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2463_S1_S2_SECTION,
+        "current_hash_authority": f"{TRADING_2463_S3_SECTION}.sources",
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["new_source_paths"]) == TRADING_2463_S3_NEW_SOURCE_PATHS
+    expected = superseded | TRADING_2463_S3_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "s3_pack_complete": True,
+        "s3_option_count": 4,
+        "recommended_target": "RELATIVE_OPPORTUNITY_SPREAD",
+        "selected_target": "NONE",
+        "target_structure": "UNSELECTED",
+        "o2_deferred": True,
+        "o3_s4_eligible": False,
+        "o4_deferred": True,
+        "numeric_policy_frozen": False,
+        "s4_started": False,
+        "new_results_read": False,
+        "prospective_accessed": False,
+        "model_training_executed": False,
+        "capability_audit_started": False,
+        "decision_value_audit_started": False,
+        "risk_overlay_created": False,
+        "candidate_backtest_weights_created": False,
+        "qld_automatic_selection_enabled": False,
+    }
+    validation = phase["validation"]
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "data_quality_contract_changed": False,
+        "strategy_logic_changed": False,
+        "production_weights_written": False,
+        "active_shadow_weights_written": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2463_s3_pack_requires_owner_selection_before_s4() -> None:
+    pack_path = (
+        Path()
+        / "docs"
+        / "requirements"
+        / "TRADING-2463_S3_Target_Selection_Decision_Pack.md"
+    )
+    pack = pack_path.read_text(encoding="utf-8")
+    required_tokens = {
+        "S3_PACK_COMPLETE_OWNER_SELECTION_REQUIRED_S4_NOT_STARTED",
+        "RECOMMENDED_FOR_OWNER_SELECTION",
+        "RELATIVE_OPPORTUNITY_SPREAD",
+        "PATH_LOSS_BUDGET_EVENT",
+        "ACTION_REGRET_OR_NET_UTILITY",
+        "SEPARATE_OPPORTUNITY_AND_PATH_RISK",
+        "SELECT_O1_SINGLE_TARGET_FOR_S4",
+        "`S3=PACK_COMPLETE_OWNER_SELECTION_REQUIRED`",
+        "`S4=NOT_STARTED`",
+        "`recommended_target=RELATIVE_OPPORTUNITY_SPREAD`",
+        "`selected_target=NONE`",
+        "`target_structure=UNSELECTED`",
+        "`numeric_policy_frozen=false`",
+        "`new_results_read=false`",
+        "`prospective_accessed=false`",
+        "`model_training_executed=false`",
+        "`capability_audit_started=false`",
+        "`decision_value_audit_started=false`",
+        "`risk_overlay_created=false`",
+        "`candidate_backtest_weights_created=false`",
+        "`qld_automatic_selection_enabled=false`",
+        "`production_effect=none`",
+        "`broker_action=none`",
+    }
+    missing = sorted(token for token in required_tokens if token not in pack)
+    assert missing == []
+    assert "S3 不冻结 numeric policy" in pack
+    assert "O3 因 policy gaps 不提供直接 S4 选择位" in pack
+
+
+def test_trading_2463_s3_rejects_historical_prefix_tamper() -> None:
+    base_blob = _trading_2463_s3_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2463_s3_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
 
 
 def test_trading_2463_s1_s2_pack_stops_before_target_selection() -> None:
