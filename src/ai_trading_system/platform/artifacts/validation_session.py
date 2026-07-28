@@ -438,6 +438,10 @@ def _bounded_path_totals(
     total_components: int,
     source: Path,
 ) -> tuple[int, int]:
+    if "\x00" in path_text:
+        raise _UncacheableFingerprintScope(
+            f"commitment path contains an embedded NUL: {source}"
+        )
     if path_text in seen:
         return total_bytes, total_components
     try:

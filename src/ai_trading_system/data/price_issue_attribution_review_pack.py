@@ -701,11 +701,23 @@ def _function_ast_hash(source_path: Path, function_name: str) -> str:
         raise PriceIssueAttributionReviewError(
             f"bound source must contain one function {function_name}"
         )
-    material = ast.dump(
-        matches[0],
-        annotate_fields=True,
-        include_attributes=False,
-    ).encode("utf-8")
+    try:
+        canonical_dump = ast.dump(
+            matches[0],
+            annotate_fields=True,
+            include_attributes=False,
+            show_empty=True,
+        )
+    except TypeError:
+        # Python <3.13 always emitted empty AST fields and has no show_empty
+        # argument. Newer runtimes add an empty PEP 695 type_params field;
+        # omit it so the reviewed function authority is version-stable.
+        canonical_dump = ast.dump(
+            matches[0],
+            annotate_fields=True,
+            include_attributes=False,
+        )
+    material = canonical_dump.replace(", type_params=[]", "").encode("utf-8")
     return sha256(material).hexdigest()
 
 

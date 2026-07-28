@@ -40,7 +40,7 @@ def test_reviewed_decision_binds_exact_pack_calendar_and_digest_contract() -> No
     decision = load_price_non_market_session_attribution_decision()
 
     assert decision.review_pack_id == (
-        "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714"
+        "dq_price_issue_attribution_review_0731caba2f2b6280dda3385b"
     )
     assert decision.approved_source_role == PRIMARY_MARKET_PRICES_SOURCE_ROLE
     assert decision.row_digest_schema_version == (
@@ -63,12 +63,12 @@ def test_reviewed_decision_binds_exact_pack_calendar_and_digest_contract() -> No
             "ATTRIBUTION_DECISION_VALUE_MISMATCH",
         ),
         (
-            "c6b9bd2ee23f3aee4c65e21f1bf7673ec41e72af7239cd5e4a3877ebc8962af7",
+            "e1f3841dc27a9bee78c79fe07250acfe006941ed252235c23c13b3b8017a3449",
             "f" * 64,
             "REVIEW_PACK_BYTES_DRIFTED",
         ),
         (
-            "082cc81df7ee0d9adcc5fd42fd44d1e3f615450f4752f8116376413eafa202b9",
+            "23ab933d7013e15b73d912aa09258adc4c7ba252a36330190d66735d1b70f01c",
             "f" * 64,
             "CALENDAR_POLICY_REVIEW_REQUIRED",
         ),

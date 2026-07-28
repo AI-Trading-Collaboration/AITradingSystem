@@ -1,14 +1,14 @@
 schema_version: data_quality_price_non_market_session_attribution_decision.v1
 decision_id: owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1
-decision_version: "1.0.0"
+decision_version: "1.0.1"
 status: REVIEWED_APPROVED
 decision: APPROVE_FOR_CONTRACT_WAVE
 decided_at: "2026-07-27"
 owner: project_owner_price_source_owner
 review_pack:
   path: inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
-  pack_id: dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714
-  sha256: c6b9bd2ee23f3aee4c65e21f1bf7673ec41e72af7239cd5e4a3877ebc8962af7
+  pack_id: dq_price_issue_attribution_review_0731caba2f2b6280dda3385b
+  sha256: e1f3841dc27a9bee78c79fe07250acfe006941ed252235c23c13b3b8017a3449
 approved_site_id: dq_issue_site_312625a26da21428b763
 approved_issue_code: prices_non_market_session_date
 approved_source_role: primary_market_prices
@@ -39,7 +39,7 @@ reviewed_calendar:
     config/data/us_equity_special_closure_registry.yaml registry.
   runtime_source_path: src/ai_trading_system/trading_calendar.py
   calendar_function: is_us_equity_trading_day
-  calendar_function_ast_sha256: 082cc81df7ee0d9adcc5fd42fd44d1e3f615450f4752f8116376413eafa202b9
+  calendar_function_ast_sha256: 23ab933d7013e15b73d912aa09258adc4c7ba252a36330190d66735d1b70f01c
   special_closure_policy_path: config/data/us_equity_special_closure_registry.yaml
   special_closure_policy_id: us_equity_special_closure_registry
   special_closure_policy_version: "1.0.0"

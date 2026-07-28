@@ -12,9 +12,9 @@
   },
   "error_count": 0,
   "errors": [],
-  "expected_review_pack_id": "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714",
+  "expected_review_pack_id": "dq_price_issue_attribution_review_0731caba2f2b6280dda3385b",
   "production_effect": "none",
-  "review_pack_id": "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714",
+  "review_pack_id": "dq_price_issue_attribution_review_0731caba2f2b6280dda3385b",
   "schema_version": "data_quality_price_non_market_session_attribution_review_validation.v1",
   "status": "PASS",
   "task_id": "DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK"

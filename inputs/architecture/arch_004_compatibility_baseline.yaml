@@ -31167,9 +31167,13 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   known_unrelated_exclusions:
   - docs/research/growth_tilt_owner_diagnosis_pack.md
   superseded_live_source_paths:
+  - config/data_quality/price_non_market_session_attribution_decision_v1.yaml
   - config/operations/runtime_control.yaml
   - docs/artifact_catalog.md
+  - docs/data_quality/price_non_market_session_attribution_review_pack_v1.md
+  - docs/data_quality/rate_issue_attribution_review_pack_v1.md
   - docs/operations/operations_runbook.md
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
   - docs/runbooks/scheduled_task_orchestration.md
   - docs/system_flow.md
   - docs/task_register.md
@@ -31179,6 +31183,10 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - inputs/architecture/arch_004g_deprecation_inventory.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
+  - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.validation.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
   - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
   - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
   - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
@@ -31202,12 +31210,18 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
   - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
   - src/ai_trading_system/cli_commands/ops.py
+  - src/ai_trading_system/contracts/data_quality_attribution.py
   - src/ai_trading_system/contracts/operations.py
+  - src/ai_trading_system/data/price_issue_attribution_review_pack.py
+  - src/ai_trading_system/data/rate_issue_attribution_review_pack.py
   - src/ai_trading_system/ops_daily.py
+  - src/ai_trading_system/platform/artifacts/validation_session.py
   - src/ai_trading_system/platform/operations/runtime_control.py
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004f1_operations_control_plane.py
   - tests/test_arch_004g_deprecation.py
+  - tests/test_price_issue_attribution_contract.py
+  - tests/test_trading2453_constraint_hit_diagnosis.py
   supersession:
     superseded_by_phase: OPS-071-DAILY-TERMINAL-RECOVERY-AND-LINEAGE-AVAILABILITY
     scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
@@ -31222,9 +31236,13 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - tests/test_artifact_lineage.py
   - tests/trading_engine/test_safety_boundaries.py
   source_delta_paths:
+  - config/data_quality/price_non_market_session_attribution_decision_v1.yaml
   - config/operations/runtime_control.yaml
   - docs/artifact_catalog.md
+  - docs/data_quality/price_non_market_session_attribution_review_pack_v1.md
+  - docs/data_quality/rate_issue_attribution_review_pack_v1.md
   - docs/operations/operations_runbook.md
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
   - docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
   - docs/runbooks/scheduled_task_orchestration.md
   - docs/system_flow.md
@@ -31235,6 +31253,10 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - inputs/architecture/arch_004g_deprecation_inventory.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
+  - inputs/data_quality/price_non_market_session_attribution_review_pack_v1.validation.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+  - inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
   - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
   - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
   - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
@@ -31259,27 +31281,45 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
   - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
   - src/ai_trading_system/cli_commands/ops.py
+  - src/ai_trading_system/contracts/data_quality_attribution.py
   - src/ai_trading_system/contracts/operations.py
+  - src/ai_trading_system/data/price_issue_attribution_review_pack.py
+  - src/ai_trading_system/data/rate_issue_attribution_review_pack.py
   - src/ai_trading_system/ops_daily.py
+  - src/ai_trading_system/platform/artifacts/validation_session.py
   - src/ai_trading_system/platform/operations/runtime_control.py
   - src/ai_trading_system/reports/artifact_lineage.py
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004f1_operations_control_plane.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_artifact_lineage.py
+  - tests/test_price_issue_attribution_contract.py
+  - tests/test_trading2453_constraint_hit_diagnosis.py
   - tests/trading_engine/test_safety_boundaries.py
   sources:
+  - path: config/data_quality/price_non_market_session_attribution_decision_v1.yaml
+    sha256: 5bd7481e9a62ac8ce3520fca83891b57c3054d5f9cd8a84db7e3905e490c1271
+    hash_normalization: git_eol_lf
   - path: config/operations/runtime_control.yaml
     sha256: ae07bcb33b4684512aba4b434383cb483330bdbb564778296143d9846e6acc29
     hash_normalization: git_eol_lf
   - path: docs/artifact_catalog.md
     sha256: 1ff99f204b385fec44e6a05c8a2c0b734a03cf4ce06e7d2ce787b0a6724b8106
     hash_normalization: git_eol_lf
+  - path: docs/data_quality/price_non_market_session_attribution_review_pack_v1.md
+    sha256: eebdd446139957c10162d79e37d8ad88fa92fcfd00f44a23526a9c85bf8c5f98
+    hash_normalization: git_eol_lf
+  - path: docs/data_quality/rate_issue_attribution_review_pack_v1.md
+    sha256: 399672ce02783572adbe6c1cbf1c7d0874d4517e2714e7d427e995b3260338c5
+    hash_normalization: git_eol_lf
   - path: docs/operations/operations_runbook.md
     sha256: 7d012644568334c047776c0b66ed6bdf28053d94d626df659f052814621d94f0
     hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
+    sha256: 78166fb178269e92deed94b1353a9fb7e7ad509c24734beaedcd99c2712c4202
+    hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
-    sha256: 054ed331bf1b9337594ba4444909c95ec6797f119da8b1d74c041dab696cf461
+    sha256: a580d9db75299c45b133bac1f69aff8e64bc304558a87cb2de363d754448ab52
     hash_normalization: git_eol_lf
   - path: docs/runbooks/scheduled_task_orchestration.md
     sha256: 29b565b3b3f89baa212b437e94ba0bb2df5d2043f9253db8d53d303c9c31a1b6
@@ -31288,25 +31328,37 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 8a18985fa0629064a5af95dbac61bf9fbe12483039e0f0216d3d00f203c7953e
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: e2d9a865f823d554caea88df67669d245aa25de163e406580ba830e608bc404b
+    sha256: ced340508007b42bd1705a56730c9f356129e55028860c6936e851c643ef93e2
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: dff19b251214bdd034a56505aaf1224879be577901a860bdac900bcb530ed315
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
-    sha256: 963be87bbb266cda6d795e07f5dd89315883574452dc9a96a05739d278325274
+    sha256: df398c62626c7e9535cdf3606364b7132b1222f60fb98ea7902ccfce9e0e8eee
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 791206cdae567ad89818b1f5f97d922de1c705d521a01757948d6c271fa8c0c4
+    sha256: a410a528930b90299f6e65e03e1ed9cd5a7a3bfbceb07c0aac357597f5a32a80
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: 6dc6aace1cb35d3feebe814d96418eb2f3410045a78b599bfb25771b2aa21a90
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 2a9f72de43344233c3d7d9ad404750b34b0bb6af523fd2e6e8df522a864166ee
+    sha256: cbaa8263bfae5a9df6c20649a496331a5d37762b78336e7eb361952e158bb93d
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: bbb4a0e9d230b608504c7e394b934d2704483bf6077b03a57ad241058ff35a17
+    sha256: 0ad4721671eb0d6ee8c30535d854cafde48a3eaefc414740ed1acf44db786c52
+    hash_normalization: git_eol_lf
+  - path: inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
+    sha256: e1f3841dc27a9bee78c79fe07250acfe006941ed252235c23c13b3b8017a3449
+    hash_normalization: git_eol_lf
+  - path: inputs/data_quality/price_non_market_session_attribution_review_pack_v1.validation.json
+    sha256: 1562a361ade1001cd026ccd85bb627330135769a3406f1cef30cda39557c1869
+    hash_normalization: git_eol_lf
+  - path: inputs/data_quality/rate_issue_attribution_review_pack_v1.json
+    sha256: f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318
+    hash_normalization: git_eol_lf
+  - path: inputs/data_quality/rate_issue_attribution_review_pack_v1.validation.json
+    sha256: a7424232073c8f724b1bf8f24366ac38e54a2fe089ef063c02e6290bc508c3b2
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
     sha256: 33f6a553b368f3ddaefc2f944ca8f66b77075a0f11a2480e5279642bb8eb5db7
@@ -31360,7 +31412,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: c3fb56bfd7aa397e3c71cd62527b03c9b767200284c0c432e6c52325d80b7133
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e5/e5f589af3b9ef8a214af03d22b50895bc1b0da243b00134c8da95c88f95a9623.yaml
-    sha256: 4777e382ab16d0334d769683123bb6bf2dd3e20f2fe10d8e06e6063a1f856784
+    sha256: c5cf937107dced284ed9f114eaff1ca02adb4cc19f8fa3eb0d24b7d80ed1a875
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
     sha256: b7f2647b6fb81dec9beed3d0be584ed3205f43a1050d81cd92007f01314cc63f
@@ -31380,11 +31432,23 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - path: src/ai_trading_system/cli_commands/ops.py
     sha256: 307d5e08ba0d7fc714f191a9cb64d3acf0eb2bd338f2aa155637957023767ecc
     hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/data_quality_attribution.py
+    sha256: d958df7dd50bf1da62bf947105f3afe01e893593763d93794eb3928d0649b63c
+    hash_normalization: git_eol_lf
   - path: src/ai_trading_system/contracts/operations.py
     sha256: bb2c86e3446f80b7e46fe6f21770eda236dfe8bfeb74b4fa9cb2cd1680b8db45
     hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/price_issue_attribution_review_pack.py
+    sha256: b56a3f6c64287c4fd40982e1e47ceefcac4909a3ba218c36bd6cd8a7bace5a1e
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/rate_issue_attribution_review_pack.py
+    sha256: 13487c7d649224b91bf343b886521c61ef696d554aa8485205b4576188054242
+    hash_normalization: git_eol_lf
   - path: src/ai_trading_system/ops_daily.py
     sha256: 3c55d52882241c5672032a041283613918da20790b399c063d5ae69b526e1458
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/platform/artifacts/validation_session.py
+    sha256: b277ae148a4447549d91f24de667d90803c5f0f04d80b3736abc6056a3a67c79
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/platform/operations/runtime_control.py
     sha256: 0201a217d913364064ecc3ad4ca7c5efaef585f937e9c70fa826a46ce83af02d
@@ -31404,6 +31468,12 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - path: tests/test_artifact_lineage.py
     sha256: 1ac92f5df25b02aaabe7b25e2f0ec78cef827f352d34af0623b37af7db091310
     hash_normalization: git_eol_lf
+  - path: tests/test_price_issue_attribution_contract.py
+    sha256: 37c593b38a1ce77fcc9698d0c422ca1dea4f24fe4a3328d5c34abc9d57bfc97a
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2453_constraint_hit_diagnosis.py
+    sha256: 564fd4c8c746d73e1da271c4fbd198cf3c1f4a864fe652e43c4fb02f8edbe7ca
+    hash_normalization: git_eol_lf
   - path: tests/trading_engine/test_safety_boundaries.py
     sha256: 4f1f2b72ddc74099a6eb3a7299ece8dfd2237cb124cfc4c45a1ed08990a9e683
     hash_normalization: git_eol_lf
@@ -31419,7 +31489,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     lineage_topology_safety_strict: true
     lineage_governed_absence: INSUFFICIENT_DATA
   validation:
-    focused: PASS_205
+    focused: PASS_195_SKIPPED_1
     fast: PENDING
     architecture: PENDING
     contract: PENDING

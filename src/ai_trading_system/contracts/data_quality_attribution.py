@@ -35,11 +35,11 @@ PRICE_NON_MARKET_SESSION_ATTRIBUTION_DECISION_ID = (
     "owner_decision:DATA-GOV-002C3P:2026-07-27:"
     "approve_price_non_market_session_contract_wave_v1"
 )
-PRICE_NON_MARKET_SESSION_ATTRIBUTION_DECISION_VERSION = "1.0.0"
+PRICE_NON_MARKET_SESSION_ATTRIBUTION_DECISION_VERSION = "1.0.1"
 PRICE_NON_MARKET_SESSION_ATTRIBUTION_DECISION_STATUS = "REVIEWED_APPROVED"
 PRICE_NON_MARKET_SESSION_ATTRIBUTION_DECISION = "APPROVE_FOR_CONTRACT_WAVE"
 PRICE_NON_MARKET_SESSION_REVIEW_PACK_ID = (
-    "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714"
+    "dq_price_issue_attribution_review_0731caba2f2b6280dda3385b"
 )
 PRICE_NON_MARKET_SESSION_SITE_ID = "dq_issue_site_312625a26da21428b763"
 PRICE_NON_MARKET_SESSION_ISSUE_CODE = "prices_non_market_session_date"
@@ -859,11 +859,22 @@ def _function_ast_hash(source_path: Path, function_name: str) -> str:
             "CALENDAR_POLICY_REVIEW_REQUIRED",
             f"expected one function named {function_name}",
         )
-    material = ast.dump(
-        matches[0],
-        annotate_fields=True,
-        include_attributes=False,
-    ).encode("utf-8")
+    try:
+        canonical_dump = ast.dump(
+            matches[0],
+            annotate_fields=True,
+            include_attributes=False,
+            show_empty=True,
+        )
+    except TypeError:
+        # Python <3.13 always emitted empty AST fields and has no show_empty
+        # argument. Exclude the newer empty PEP 695 field from the authority.
+        canonical_dump = ast.dump(
+            matches[0],
+            annotate_fields=True,
+            include_attributes=False,
+        )
+    material = canonical_dump.replace(", type_params=[]", "").encode("utf-8")
     return sha256(material).hexdigest()
 
 

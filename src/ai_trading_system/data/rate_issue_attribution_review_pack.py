@@ -788,11 +788,22 @@ def _function_ast_hashes(
                 continue
             if node.name in result:
                 raise RateIssueAttributionReviewError(f"canonical function duplicated: {node.name}")
-            material = ast.dump(
-                node,
-                annotate_fields=True,
-                include_attributes=False,
-            ).encode("utf-8")
+            try:
+                canonical_dump = ast.dump(
+                    node,
+                    annotate_fields=True,
+                    include_attributes=False,
+                    show_empty=True,
+                )
+            except TypeError:
+                # Python <3.13 always emitted empty AST fields and has no
+                # show_empty argument. Exclude the newer empty PEP 695 field.
+                canonical_dump = ast.dump(
+                    node,
+                    annotate_fields=True,
+                    include_attributes=False,
+                )
+            material = canonical_dump.replace(", type_params=[]", "").encode("utf-8")
             result[node.name] = sha256(material).hexdigest()
     if set(result) != expected_functions:
         raise RateIssueAttributionReviewError(

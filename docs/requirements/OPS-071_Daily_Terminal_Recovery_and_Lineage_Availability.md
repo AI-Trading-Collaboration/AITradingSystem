@@ -163,5 +163,16 @@ disposition 分开：
   进度写入 `docs/task_register.md` 后尚未刷新 ARCH-005 S0/S1 generated registry，
   不属于业务逻辑失败。直接刷新 task registry baseline/index/shadows、devex 与兼容性
   当前哈希权威后，必须再次从 Fast 起跑完整六档。
+- 2026-07-28：完成上述刷新后的 Fast/Architecture/Contract/Integration/
+  Reproducibility 分别为 `341/773/276/995/24 passed`；Full 为
+  `7591 passed / 25 failed / 3 skipped`。失败已复现并归因为四类真实 blocker：
+  Python 3.11/3.14的`ast.dump()`空字段默认值不同，导致frozen XNYS calendar与
+  price/rate source-owner review pack authority非确定；Windows embedded-NUL
+  commitment path 在 `Path.resolve()` 前未 fail closed；TRADING-2453 HHI 测试使用
+  不适合浮点归约顺序的 exact equality。修复必须分别更新受评审 authority/派生物、
+  在 path 构造前拒绝 NUL、把测试改为 tolerance assertion，并以原失败 Full receipt
+  作为 `failure_fix_rerun` parent 重跑最终候选；不得用忽略测试、串行掩盖或旧 artifact
+  回退替代。AST authority必须先规范为解释器版本无关，再用runtime Python重建
+  price/rate派生证据。
 - 待完成：正式六档 validation、新 exact release promotion、automation exact release 更新
   与 2026-07-27 runtime recovery operational acceptance。

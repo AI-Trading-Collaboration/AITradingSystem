@@ -13737,7 +13737,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_price_issue_attribution_contract
   path: tests/test_price_issue_attribution_contract.py
-  sha256: 9e0c29e3447fee52c9a5830b29305ffa805bad8be976ccd552981a6762eaae85
+  sha256: 37c593b38a1ce77fcc9698d0c422ca1dea4f24fe4a3328d5c34abc9d57bfc97a
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -16155,7 +16155,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_trading2453_constraint_hit_diagnosis
   path: tests/test_trading2453_constraint_hit_diagnosis.py
-  sha256: 4e07fc1ea026ddfb202c37d24a2da86a939294a7c3c18468fff02f64d694c05a
+  sha256: 564fd4c8c746d73e1da271c4fbd198cf3c1f4a864fe652e43c4fb02f8edbe7ca
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

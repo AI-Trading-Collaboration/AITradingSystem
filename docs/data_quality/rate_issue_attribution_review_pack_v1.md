@@ -1,6 +1,6 @@
 # DATA-GOV-002C2 Rate Row Issue Attribution Source-Owner Review Pack
 
-- Review pack ID：`dq_rate_issue_attribution_review_b598da480819c534fbb9d471`
+- Review pack ID：`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`
 - 状态：`SOURCE_OWNER_DECISION_PENDING`
 - 候选 site：`6`
 - Scope taxonomy：single-row=`4`，row-pair=`2`

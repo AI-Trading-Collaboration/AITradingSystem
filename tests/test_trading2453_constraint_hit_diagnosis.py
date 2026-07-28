@@ -96,14 +96,23 @@ def test_s0_s3_recomputes_classifies_and_builds_owner_options(
         ]["null_count"]
         == 0
     )
-    assert report["aggregations"]["concentration"] == {
+    concentration = report["aggregations"]["concentration"]
+    assert {
+        key: concentration[key]
+        for key in (
+            "candidate_template_unique_count",
+            "policy_hash_unique_count",
+        )
+    } == {
         "candidate_template_unique_count": 3,
-        "candidate_template_max_share": 1602 / 1800,
-        "candidate_template_hhi": (1602 / 1800) ** 2 + (102 / 1800) ** 2 + (96 / 1800) ** 2,
         "policy_hash_unique_count": 300,
-        "policy_hash_max_share": 6 / 1800,
-        "policy_hash_hhi": 300 * (6 / 1800) ** 2,
     }
+    assert concentration["candidate_template_max_share"] == pytest.approx(1602 / 1800)
+    assert concentration["candidate_template_hhi"] == pytest.approx(
+        (1602 / 1800) ** 2 + (102 / 1800) ** 2 + (96 / 1800) ** 2
+    )
+    assert concentration["policy_hash_max_share"] == pytest.approx(6 / 1800)
+    assert concentration["policy_hash_hhi"] == pytest.approx(300 * (6 / 1800) ** 2)
     semantic_audit = report["s2_semantic_audit"]
     assert semantic_audit["status"] == "COMPLETE"
     assert semantic_audit["primary_classification"] == "POLICY_ROLE_MISMATCH_REQUIRES_OWNER_REVIEW"
@@ -166,14 +175,21 @@ def test_s0_s3_recomputes_classifies_and_builds_owner_options(
     assert owner_pack["options"][1]["same_package_replay_allowed"] is False
     assert owner_pack["options"][2]["new_authorization_required"] is True
     assert len(owner_pack["evidence"]["fold_constraint_summary"]) == 6
-    assert owner_pack["evidence"]["fold_constraint_summary"][0]["constraint_hit_rate"] == {
+    fold_one_hit_rate = owner_pack["evidence"]["fold_constraint_summary"][0][
+        "constraint_hit_rate"
+    ]
+    assert {
+        key: value
+        for key, value in fold_one_hit_rate.items()
+        if key != "mean"
+    } == {
         "observation_count": 300,
         "present_count": 300,
         "null_count": 0,
         "minimum": 0.816631,
         "maximum": 0.816631,
-        "mean": 0.816631,
     }
+    assert fold_one_hit_rate["mean"] == pytest.approx(0.816631)
     assert "直接放宽 max_constraint_hit_rate=0.65" in owner_pack["prohibited_actions"]
     assert bundle["manifest"]["completed_stages"] == ["S0", "S1", "S2", "S3"]
     assert bundle["manifest"]["original_trading2452_result_status_changed"] is False

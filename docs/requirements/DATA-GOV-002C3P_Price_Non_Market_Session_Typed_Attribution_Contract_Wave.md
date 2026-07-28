@@ -263,3 +263,15 @@ Incomplete 时：
   （raw SHA-256=`cff1171c1fb08a28e64dda1b1866a78f43f63f4f104a4346d118b65a50f7af09`）。
   分支删除只移除local refs，不删除commits/artifacts；短期可由本文commit SHA或Git
   reflog恢复，远端main为长期canonical recovery boundary。
+- 2026-07-28：OPS-071最终候选Full发现 frozen price review pack 与当前受约束
+  source bytes 不一致。Project owner要求修复阻塞并完成当日恢复，作为
+  `owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`
+  的最小authority refresh：使用canonical builder重建pack，得到
+  `dq_price_issue_attribution_review_0731caba2f2b6280dda3385b`、raw SHA-256
+  `e1f3841dc27a9bee78c79fe07250acfe006941ed252235c23c13b3b8017a3449`；
+  decision version升至`1.0.1`并绑定新bytes。Calendar function AST与special-closure
+  policy语义未变化；AST hash canonicalization显式保留empty fields并排除新版本空
+  `type_params`字段，使Python 3.11/3.14均得到
+  `23ab933d7013e15b73d912aa09258adc4c7ba252a36330190d66735d1b70f01c`。
+  七项owner conditions、typed attribution语义、DQ policy、consumer和production
+  边界均未改变。

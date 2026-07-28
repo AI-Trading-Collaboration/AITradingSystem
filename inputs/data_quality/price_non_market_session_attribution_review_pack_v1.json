@@ -9,10 +9,10 @@
     "source_owner_decision_recorded": false,
     "window_or_row_level_isolation_authorized": false
   },
-  "c1_inventory_id": "dq_issue_attribution_inventory_03821e2e3dc483446249d52c",
+  "c1_inventory_id": "dq_issue_attribution_inventory_46d72c5be356c737467d8ef5",
   "calendar_authority": {
     "calendar_function": "is_us_equity_trading_day",
-    "calendar_function_ast_sha256": "082cc81df7ee0d9adcc5fd42fd44d1e3f615450f4752f8116376413eafa202b9",
+    "calendar_function_ast_sha256": "23ab933d7013e15b73d912aa09258adc4c7ba252a36330190d66735d1b70f01c",
     "special_closure_policy_bound": true
   },
   "candidate": {
@@ -40,11 +40,11 @@
     "c1_owner_review_status": "EXISTING_OWNER_REVIEWED_PILOT",
     "c1_phase_c_migration_eligible": false,
     "c1_scope_status": "EXISTING_POLICY_AUTHORIZED_INSTRUMENT_SCOPE",
-    "calendar_function_ast_sha256": "082cc81df7ee0d9adcc5fd42fd44d1e3f615450f4752f8116376413eafa202b9",
+    "calendar_function_ast_sha256": "23ab933d7013e15b73d912aa09258adc4c7ba252a36330190d66735d1b70f01c",
     "current_rows_semantics": "DISTINCT_NON_SESSION_DATE_COUNT",
     "current_sample_semantics": "FIRST_TEN_DISTINCT_NON_SESSION_DATES",
     "emitter_function": "_check_price_market_calendar_dates",
-    "emitter_function_ast_sha256": "74d8804c42155ea1e3652c5b2c3ce3dd83ce024de0103947ea045f662c819d36",
+    "emitter_function_ast_sha256": "71b78966a6395859c76c77907edf13966ecb679418830509eaacd8eb16764072",
     "false_isolation_risks": [
       "DISTINCT_DATE_COUNT_MISTAKEN_FOR_TRIGGER_ROW_COUNT",
       "FIRST_TEN_SAMPLE_DATES_MISTAKEN_FOR_COMPLETE_DATE_SCOPE",
@@ -91,7 +91,7 @@
     "scope_taxonomy": "DISTINCT_NON_SESSION_DATE_ROW_SET",
     "severity_contract": "CALLER_SUPPLIED",
     "site_id": "dq_issue_site_312625a26da21428b763",
-    "source_line": 1435,
+    "source_line": 1605,
     "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
     "source_owner_questions": [
       "Confirm that primary_market_prices is the only canonical source role for this issue.",
@@ -135,8 +135,8 @@
     {
       "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
       "role": "c1_readiness_inventory",
-      "sha256": "b7762a834f3d3f2c6c9d7e740b92fd7825bce5f819e52abb164482622440a80c",
-      "size_bytes": 85428
+      "sha256": "5df81c2e407349cd66d7c5d80751535f5051456fb421a486244a74708d1208ed",
+      "size_bytes": 85436
     },
     {
       "path": "config/data_quality/price_non_market_session_attribution_review_v1.yaml",
@@ -147,8 +147,8 @@
     {
       "path": "src/ai_trading_system/data/quality.py",
       "role": "canonical_dq_source",
-      "sha256": "003573c01e0a879a8585a77076f4c32a366c016fb40596c3d721e942b4ddb64b",
-      "size_bytes": 101983
+      "sha256": "5d3221f06c3d3523dc1e62a17fc12a9295503986b4d84f6b227e739d3f957e5e",
+      "size_bytes": 110247
     },
     {
       "path": "config/data_quality.yaml",
@@ -362,7 +362,7 @@
     "task_id": "DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK",
     "window_or_row_level_isolation_authorized": false
   },
-  "review_pack_id": "dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714",
+  "review_pack_id": "dq_price_issue_attribution_review_0731caba2f2b6280dda3385b",
   "safety": {
     "broker_action": "none",
     "cached_data_mutated": false,
