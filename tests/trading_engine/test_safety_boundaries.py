@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import os
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Protocol, cast
@@ -72,20 +73,25 @@ def test_real_broker_adapter_stubs_cannot_submit_orders(
 def test_non_trading_engine_modules_do_not_import_broker_adapters() -> None:
     violations: list[str] = []
     source_root = PROJECT_ROOT / "src" / "ai_trading_system"
-    for path in source_root.rglob("*.py"):
-        if _is_in_trading_engine(path):
-            continue
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    if alias.name.startswith("ai_trading_system.trading_engine.brokers"):
-                        violations.append(f"{path}: import {alias.name}")
-            elif isinstance(node, ast.ImportFrom):
-                module = node.module or ""
-                if module.startswith("ai_trading_system.trading_engine.brokers"):
-                    imported = ", ".join(alias.name for alias in node.names)
-                    violations.append(f"{path}: from {module} import {imported}")
+    for directory, directory_names, file_names in os.walk(source_root):
+        directory_names[:] = sorted(name for name in directory_names if name != "__pycache__")
+        for file_name in sorted(file_names):
+            if not file_name.endswith(".py"):
+                continue
+            path = Path(directory) / file_name
+            if _is_in_trading_engine(path):
+                continue
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name.startswith("ai_trading_system.trading_engine.brokers"):
+                            violations.append(f"{path}: import {alias.name}")
+                elif isinstance(node, ast.ImportFrom):
+                    module = node.module or ""
+                    if module.startswith("ai_trading_system.trading_engine.brokers"):
+                        imported = ", ".join(alias.name for alias in node.names)
+                        violations.append(f"{path}: from {module} import {imported}")
 
     assert violations == []
 

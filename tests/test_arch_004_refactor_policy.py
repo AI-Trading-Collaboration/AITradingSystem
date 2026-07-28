@@ -939,6 +939,7 @@ OPS_071_NEW_SOURCE_PATHS = frozenset(
         ),
         "src/ai_trading_system/reports/artifact_lineage.py",
         "tests/test_artifact_lineage.py",
+        "tests/trading_engine/test_safety_boundaries.py",
     }
 )
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(

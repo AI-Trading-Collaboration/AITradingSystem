@@ -152,5 +152,11 @@ disposition 分开：
 - 2026-07-28：旧 lineage graph 由 8 个 missing families、11 个 unavailable edges 与
   2 个 stale signal warnings 形成 `PASS_WITH_WARNINGS`，blocking issue=0；未补造任何
   missing artifact。
+- 2026-07-28：最新 main 协调候选的正式 Integration 首轮为
+  `994 passed / 1 failed`；唯一失败是并行 worker 清理 `__pycache__` 时与
+  safety-boundary test 的 `Path.rglob()` 递归扫描竞态，业务 recovery/scheduler 测试均
+  已通过。按 owner 要求直接修复该 validation blocker：源码安全扫描改为确定性
+  `os.walk()` 并在递归前排除 `__pycache__`，随后必须重新生成兼容性权威并从 Fast
+  起重跑六档正式 validation；不得以串行重跑或忽略失败替代修复。
 - 待完成：正式六档 validation、新 exact release promotion、automation exact release 更新
   与 2026-07-27 runtime recovery operational acceptance。

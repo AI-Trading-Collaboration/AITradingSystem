@@ -31220,6 +31220,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - registry/development_tasks_shadow/active/e5/e5f589af3b9ef8a214af03d22b50895bc1b0da243b00134c8da95c88f95a9623.yaml
   - src/ai_trading_system/reports/artifact_lineage.py
   - tests/test_artifact_lineage.py
+  - tests/trading_engine/test_safety_boundaries.py
   source_delta_paths:
   - config/operations/runtime_control.yaml
   - docs/artifact_catalog.md
@@ -31266,6 +31267,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - tests/test_arch_004f1_operations_control_plane.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_artifact_lineage.py
+  - tests/trading_engine/test_safety_boundaries.py
   sources:
   - path: config/operations/runtime_control.yaml
     sha256: ae07bcb33b4684512aba4b434383cb483330bdbb564778296143d9846e6acc29
@@ -31277,7 +31279,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 7d012644568334c047776c0b66ed6bdf28053d94d626df659f052814621d94f0
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
-    sha256: b7c9c3168dff9e71399df90dc7a5f89801b2dd67fbdb3d50a03fadada07fdd54
+    sha256: aaaa47d47376cbf3a37881376b4d6195f999b948eb321d9cb8bfac3bb64784fa
     hash_normalization: git_eol_lf
   - path: docs/runbooks/scheduled_task_orchestration.md
     sha256: 29b565b3b3f89baa212b437e94ba0bb2df5d2043f9253db8d53d303c9c31a1b6
@@ -31286,7 +31288,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 8a18985fa0629064a5af95dbac61bf9fbe12483039e0f0216d3d00f203c7953e
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 9e4a2fafcbc79104bc6d985ce82130fdae6ff1eb599e18720596ee5c19fdbbfb
+    sha256: 85a3f09de406023767005d1e7fbf75695dd5b68542bceac675d2ffde1615f26e
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: dff19b251214bdd034a56505aaf1224879be577901a860bdac900bcb530ed315
@@ -31295,7 +31297,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 963be87bbb266cda6d795e07f5dd89315883574452dc9a96a05739d278325274
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 925317200ebfe3bf0b02c0c85106b3928db5e8d9ffa4de4c9353836bca2dbf51
+    sha256: 791206cdae567ad89818b1f5f97d922de1c705d521a01757948d6c271fa8c0c4
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: 6dc6aace1cb35d3feebe814d96418eb2f3410045a78b599bfb25771b2aa21a90
@@ -31391,7 +31393,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: c10e6f5f5ccf1282579ebf90fa98fef90ef4bec72e33aad12bc0d0933e46927f
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: 542acd488addb993bbf87e61c2ffc9c4d3a0999813614fc065f8c5289c532a78
+    sha256: 04c0e00dbaff765d0e13cd45c518e32e106d42fcc4c19797d5e34d7b72da821c
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004f1_operations_control_plane.py
     sha256: bbdd04b0f81519c9afc98326210c82803e6fcb5f16c00f4891b36d499facf1b4
@@ -31401,6 +31403,9 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     hash_normalization: git_eol_lf
   - path: tests/test_artifact_lineage.py
     sha256: 1ac92f5df25b02aaabe7b25e2f0ec78cef827f352d34af0623b37af7db091310
+    hash_normalization: git_eol_lf
+  - path: tests/trading_engine/test_safety_boundaries.py
+    sha256: 4f1f2b72ddc74099a6eb3a7299ece8dfd2237cb124cfc4c45a1ed08990a9e683
     hash_normalization: git_eol_lf
   implementation:
     terminal_parent_statuses:
