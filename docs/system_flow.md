@@ -1172,6 +1172,41 @@ flowchart LR
     TA --> LEGACY["Existing instrument-only classifier<br/>policy unchanged"]
 ```
 
+DATA-GOV-002C3 记录 rate source-owner decision
+`owner_decision:DATA-GOV-002C3:2026-07-28:approve_rate_row_issue_attribution_contract_wave_v1`，
+只为 C2 exact 六个 rate sites 增加
+`data_quality_rate_issue_attribution.v1`。Decision authority 绑定 final-tree fresh C1/C2
+pack bytes、`primary_macro_rates`、requested window 和 `rate_row_digest.v1`；digest 固定
+`date,series,value`，使用可区分 null、invalid lexical value、finite、`nan/+inf/-inf` 的
+explicit type tags，`source_ordinal`仍只在exact source snapshot SHA内有效。
+
+四个single-row issue记录全部trigger rows；两个move issue同时记录trigger与同series前一有效
+观测。`rates_out_of_range` evidence保存实际命中的min/max plausible threshold；
+extreme/suspicious move保存实际阈值、observed change和predecessor identity。Invalid date永不
+形成window authority，invalid value/non-finite在日期不可解析时最多保留完整series authority。
+空series、缺source checksum/window/predecessor、未批准source、digest/threshold或decision
+drift全部清空legacy affected scope并保持`GLOBAL_OR_UNKNOWN_SCOPE`。DQ Markdown report披露
+decision/source/series/date/field/row/threshold/predecessor。纯contract helper只证明
+`ALL_AFFECTED_RATE_SERIES_OUTSIDE_REQUIRED_SCOPE`的保守disjointness；active capability
+policy allowlist、`quality_capability._classify_global_errors`、consumer、daily/periodic和
+production/broker均未在C3采用rate issue。
+
+```mermaid
+flowchart LR
+    RP["C2 fresh review pack<br/>6 exact site identities"] --> RD["C3 rate source-owner decision"]
+    SRC["Captured primary rates CSV<br/>path + exact SHA + source ordinals"] --> RV["validate_data_cache"]
+    RD --> RV
+    RV --> RI{"Approved rate issue?"}
+    RI -->|Single row complete| SR["Typed trigger row<br/>series-only isolation scope"]
+    RI -->|Move pair complete| MR["Typed predecessor + trigger<br/>actual thresholds/change"]
+    RI -->|Any dimension incomplete| RG["GLOBAL_OR_UNKNOWN_SCOPE<br/>legacy affected scope cleared"]
+    SR --> RR["Auditable DQ Markdown report"]
+    MR --> RR
+    RG --> RR
+    SR -.-> FC["Pure disjointness contract evidence<br/>not active policy adoption"]
+    MR -.-> FC
+```
+
 ```mermaid
 flowchart LR
     C1["Immutable canonical source bytes<br/>full expected universe"] --> G1["validate_data_cache<br/>full canonical report"]

@@ -1,13 +1,13 @@
 # DATA-GOV-002：Consumer Capability-Scoped Data Quality Receipts
 
-最后更新：2026-07-26
+最后更新：2026-07-28
 
 稳定任务 ID：`DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS`
 
 Owner 决定：
 `owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
 
-状态：`BASELINE_DONE_PHASE_C2_REVIEW_PACK_SOURCE_OWNER_DECISION_PENDING`
+状态：`IN_PROGRESS_PHASE_C3_RATE_CONTRACT_BASELINE_DONE_GLOBAL_DQ_STRICT_FAIL`
 
 ## 1. 问题与目标
 
@@ -366,3 +366,19 @@ B2 交付：
   snapshot-local ordinal语义已冻结。Secondary/unapproved source或任一归因维度不完整时清空
   legacy affected scope并保持`GLOBAL_OR_UNKNOWN_SCOPE`。C3P未修改capability policy YAML、
   classifier、receipt schema或consumer；任何dimensional adoption仍须另行owner review。
+- 2026-07-28：Owner 以 rate source-owner 身份批准 current C2 exact pack
+  `dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698` 的六个 site 全部进入最小
+  C3 serial typed contract wave。Decision=
+  `owner_decision:DATA-GOV-002C3:2026-07-28:approve_rate_row_issue_attribution_contract_wave_v1`。
+  C3仅实现 checksum-bound rate source/series/date/field/row/threshold/predecessor contract
+  与false-isolation evidence；active capability policy adoption、consumer migration、Phase D、
+  daily/periodic、production和broker仍未授权。
+- 2026-07-28：C3 rate typed contract正式闭合并转`BASELINE_DONE`。六个exact rate
+  site保留canonical constructor identity，typed scope绑定primary source checksum、
+  series/date/field/row、versioned digest、实际threshold及move predecessor；任何缺项继续
+  `GLOBAL_OR_UNKNOWN_SCOPE`。Architecture/Contract/Report/Reproducibility/Integration=
+  `775/276/57/24/995 passed`，parent-bound Full=`7629 passed / 3 skipped`。随后真实
+  canonical `aits validate-data`（as-of=`2026-07-27`）仍为strict `FAIL`：manifest/price
+  window停在`2026-07-24`、primary `^VIX`保留31个non-XNYS rows、26个ticker缺
+  `2026-07-27`。因此Phase C contract完成不等于global DQ恢复；QLD自动选择、capability
+  adoption、Phase D及生产治理继续等待独立canonical strict PASS和新Owner评审。

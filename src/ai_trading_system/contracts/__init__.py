@@ -74,6 +74,17 @@ from ai_trading_system.contracts.operations import (
     build_operations_shadow_plan,
     resolve_operations_due,
 )
+from ai_trading_system.contracts.rate_data_quality_attribution import (
+    DataQualityAffectedRateRow,
+    RateDataQualityAttributionContractError,
+    RateDataQualityIssueAttribution,
+    RateIssuePolicyEvidence,
+    RateRowIssueAttributionDecision,
+    build_rate_issue_attribution,
+    canonical_rate_row_digest,
+    load_rate_row_issue_attribution_decision,
+    rate_series_disjoint_isolation_eligible,
+)
 from ai_trading_system.contracts.report_audit import (
     ReportAuditContractError,
     ReportAuditIndexViewModel,
@@ -152,6 +163,7 @@ __all__ = [
     "CoverageInterval",
     "DataQualityContractRef",
     "DataQualityAffectedPriceRow",
+    "DataQualityAffectedRateRow",
     "DataQualityAttributionContractError",
     "DataQualityCalendarBinding",
     "DataQualityConsumerAuthorizationAttestation",
@@ -200,6 +212,10 @@ __all__ = [
     "PolicyRef",
     "PolicyRole",
     "PriceNonMarketSessionAttributionDecision",
+    "RateDataQualityAttributionContractError",
+    "RateDataQualityIssueAttribution",
+    "RateIssuePolicyEvidence",
+    "RateRowIssueAttributionDecision",
     "OwnerActionItem",
     "OwnerDailyBriefViewModel",
     "ReaderTier",
@@ -245,7 +261,9 @@ __all__ = [
     "canonical_status_from_legacy",
     "canonical_json_value",
     "canonical_price_row_digest",
+    "canonical_rate_row_digest",
     "build_price_non_market_session_attribution",
+    "build_rate_issue_attribution",
     "build_reviewed_calendar_binding",
     "build_operations_shadow_plan",
     "apply_periodic_research_review",
@@ -254,4 +272,6 @@ __all__ = [
     "resolve_complete_research_context",
     "resolve_operations_due",
     "load_price_non_market_session_attribution_decision",
+    "load_rate_row_issue_attribution_decision",
+    "rate_series_disjoint_isolation_eligible",
 ]

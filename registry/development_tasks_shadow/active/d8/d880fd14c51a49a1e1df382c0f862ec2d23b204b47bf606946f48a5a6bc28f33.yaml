@@ -11,64 +11,60 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: rate source owner：对6个exact sites逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定未齐备前不得启动C3
-    runtime contract wave
+  next_owner: DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed
+    contract wave；policy adoption/consumer migration另审
   requirement_refs:
   - docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Exact
-    scope固定C1建议的6个static rate sites；C2区分4个single-row与2个current-plus-previous-observation
-    move issues，绑定source/DQ policy/C1 inventory/proposal bytes，所有decision slots保持pending。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+    pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+    invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: Deterministic builder/validator/Markdown与tracked artifacts恰好覆盖6 sites；site/code/function/severity/source-role和scope
-      taxonomy可重建；缺series/date/predecessor等不完整条件fail closed；tamper/freshness/formal验证PASS；不修改DataQualityIssue、capability
-      policy/classifier、full/scoped DQ或consumer；`new_issue_isolation_authorized=false`、`production_effect=none`、`broker_action=none`。
+    text: C3 final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound
+      typed rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+      capability policy、迁consumer或开放daily/periodic/production/broker。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2036
-    row_sha256: 3f88e9358009b435f625557a7d6eab4e6689a2bf879309eb226febbb9757d29b
+    row_sha256: 8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
     cell_count: 8
     all_cells:
     - DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
     - Data Foundation / Phase C first rate row issue source-owner review pack
     - P0
     - BASELINE_DONE
-    - rate source owner：对6个exact sites逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定未齐备前不得启动C3
-      runtime contract wave
-    - 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Exact
-      scope固定C1建议的6个static rate sites；C2区分4个single-row与2个current-plus-previous-observation
-      move issues，绑定source/DQ policy/C1 inventory/proposal bytes，所有decision slots保持pending。
-    - Deterministic builder/validator/Markdown与tracked artifacts恰好覆盖6 sites；site/code/function/severity/source-role和scope
-      taxonomy可重建；缺series/date/predecessor等不完整条件fail closed；tamper/freshness/formal验证PASS；不修改DataQualityIssue、capability
-      policy/classifier、full/scoped DQ或consumer；`new_issue_isolation_authorized=false`、`production_effect=none`、`broker_action=none`。
-    - 2026-07-26：C2工程基线闭合。Pack ID=`dq_rate_issue_attribution_review_0957cfde306cb37b760f1005`；focused
-      DQ/C2=`166/11 passed`，architecture/contract/report/reproducibility/integration=`676/275/57/23/995
-      passed`，唯一Full=`7389 passed/3 skipped/643 warnings`。所有6项decision仍pending，runtime/隔离授权为0；下一责任人rate
-      source owner，C3继续锁定。
+    - DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed contract
+      wave；policy adoption/consumer migration另审
+    - 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+      pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+      invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。
+    - C3 final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound
+      typed rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+      capability policy、迁consumer或开放daily/periodic/production/broker。
+    - 2026-07-28：C3保留canonical constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+      inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。
     raw_line: '|DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK|Data
-      Foundation / Phase C first rate row issue source-owner review pack|P0|BASELINE_DONE|rate
-      source owner：对6个exact sites逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定未齐备前不得启动C3
-      runtime contract wave|详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Exact
-      scope固定C1建议的6个static rate sites；C2区分4个single-row与2个current-plus-previous-observation
-      move issues，绑定source/DQ policy/C1 inventory/proposal bytes，所有decision slots保持pending。|Deterministic
-      builder/validator/Markdown与tracked artifacts恰好覆盖6 sites；site/code/function/severity/source-role和scope
-      taxonomy可重建；缺series/date/predecessor等不完整条件fail closed；tamper/freshness/formal验证PASS；不修改DataQualityIssue、capability
-      policy/classifier、full/scoped DQ或consumer；`new_issue_isolation_authorized=false`、`production_effect=none`、`broker_action=none`。|2026-07-26：C2工程基线闭合。Pack
-      ID=`dq_rate_issue_attribution_review_0957cfde306cb37b760f1005`；focused DQ/C2=`166/11
-      passed`，architecture/contract/report/reproducibility/integration=`676/275/57/23/995
-      passed`，唯一Full=`7389 passed/3 skipped/643 warnings`。所有6项decision仍pending，runtime/隔离授权为0；下一责任人rate
-      source owner，C3继续锁定。|'
+      Foundation / Phase C first rate row issue source-owner review pack|P0|BASELINE_DONE|DATA-GOV-002C3
+      engineering coordinator：只按exact approved bundle执行最小typed contract wave；policy
+      adoption/consumer migration另审|详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+      pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+      invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。|C3
+      final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound typed
+      rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+      capability policy、迁consumer或开放daily/periodic/production/broker。|2026-07-28：C3保留canonical
+      constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+      inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-3f88e9358009b435f625557a
+  event_id: legacy-import-8f376507448e44d888fec05f
   task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -81,15 +77,13 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: rate source owner：对6个exact sites逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定未齐备前不得启动C3
-      runtime contract wave
-    notes: 2026-07-26：C2工程基线闭合。Pack ID=`dq_rate_issue_attribution_review_0957cfde306cb37b760f1005`；focused
-      DQ/C2=`166/11 passed`，architecture/contract/report/reproducibility/integration=`676/275/57/23/995
-      passed`，唯一Full=`7389 passed/3 skipped/643 warnings`。所有6项decision仍pending，runtime/隔离授权为0；下一责任人rate
-      source owner，C3继续锁定。
+    next_owner: DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed
+      contract wave；policy adoption/consumer migration另审
+    notes: 2026-07-28：C3保留canonical constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+      inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:3f88e9358009b435f625557a7d6eab4e6689a2bf879309eb226febbb9757d29b
+  - sha256:8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -97,21 +91,19 @@ projection:
   - Data Foundation / Phase C first rate row issue source-owner review pack
   - P0
   - BASELINE_DONE
-  - rate source owner：对6个exact sites逐项APPROVE_FOR_CONTRACT_WAVE/REVISE/REJECT；决定未齐备前不得启动C3
-    runtime contract wave
-  - 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Exact
-    scope固定C1建议的6个static rate sites；C2区分4个single-row与2个current-plus-previous-observation
-    move issues，绑定source/DQ policy/C1 inventory/proposal bytes，所有decision slots保持pending。
-  - Deterministic builder/validator/Markdown与tracked artifacts恰好覆盖6 sites；site/code/function/severity/source-role和scope
-    taxonomy可重建；缺series/date/predecessor等不完整条件fail closed；tamper/freshness/formal验证PASS；不修改DataQualityIssue、capability
-    policy/classifier、full/scoped DQ或consumer；`new_issue_isolation_authorized=false`、`production_effect=none`、`broker_action=none`。
-  - 2026-07-26：C2工程基线闭合。Pack ID=`dq_rate_issue_attribution_review_0957cfde306cb37b760f1005`；focused
-    DQ/C2=`166/11 passed`，architecture/contract/report/reproducibility/integration=`676/275/57/23/995
-    passed`，唯一Full=`7389 passed/3 skipped/643 warnings`。所有6项decision仍pending，runtime/隔离授权为0；下一责任人rate
-    source owner，C3继续锁定。
+  - DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed contract
+    wave；policy adoption/consumer migration另审
+  - 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+    pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+    invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。
+  - C3 final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound typed
+    rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+    capability policy、迁consumer或开放daily/periodic/production/broker。
+  - 2026-07-28：C3保留canonical constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+    inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。
   docs_links:
   - docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
   terminal: false
-  raw_row_sha256: 3f88e9358009b435f625557a7d6eab4e6689a2bf879309eb226febbb9757d29b
+  raw_row_sha256: 8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: e2b69ebbfc9df460a2382289e4a45e1e6305844a26c334224f316a447d55b574
+fragment_checksum: 087d3155913302c1a0e05453d36156012e8426034884a7fa209f1dbb413a63eb

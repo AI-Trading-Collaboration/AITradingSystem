@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import json
 import math
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
@@ -30,6 +30,14 @@ from ai_trading_system.contracts.data_quality_attribution import (
     build_price_non_market_session_attribution,
     build_reviewed_calendar_binding,
     load_price_non_market_session_attribution_decision,
+)
+from ai_trading_system.contracts.rate_data_quality_attribution import (
+    PRIMARY_MACRO_RATES_SOURCE_ROLE,
+    RateDataQualityAttributionContractError,
+    RateDataQualityIssueAttribution,
+    RateIssuePolicyEvidence,
+    build_rate_issue_attribution,
+    load_rate_row_issue_attribution_decision,
 )
 from ai_trading_system.data.download_publication import (
     DownloadPublicationError,
@@ -128,7 +136,7 @@ class DataQualityIssue:
     affected_instruments: tuple[str, ...] = ()
     attribution_scope_status: str | None = None
     attribution_incomplete_reasons: tuple[str, ...] = ()
-    typed_attribution: DataQualityIssueAttribution | None = None
+    typed_attribution: DataQualityIssueAttribution | RateDataQualityIssueAttribution | None = None
 
     def __post_init__(self) -> None:
         if self.attribution_scope_status is None:
@@ -140,8 +148,7 @@ class DataQualityIssue:
                 self.typed_attribution is None
                 or self.attribution_incomplete_reasons
                 or self.typed_attribution.issue_code != self.code
-                or self.typed_attribution.affected_price_tickers
-                != self.affected_instruments
+                or self.typed_attribution.affected_price_tickers != self.affected_instruments
             ):
                 raise ValueError("complete issue attribution is internally inconsistent")
             return
@@ -153,9 +160,7 @@ class DataQualityIssue:
             ):
                 raise ValueError("incomplete issue attribution must remain global")
             return
-        raise ValueError(
-            f"unsupported attribution_scope_status={self.attribution_scope_status!r}"
-        )
+        raise ValueError(f"unsupported attribution_scope_status={self.attribution_scope_status!r}")
 
 
 @dataclass(frozen=True)
@@ -728,8 +733,7 @@ def _typed_issue_attribution_section(
                     (
                         "- Incomplete reasons："
                         + ", ".join(
-                            f"`{reason}`"
-                            for reason in issue.attribution_incomplete_reasons
+                            f"`{reason}`" for reason in issue.attribution_incomplete_reasons
                         )
                     ),
                     "- Legacy affected instruments：已清空；保持 global。",
@@ -756,35 +760,12 @@ def _typed_issue_attribution_section(
                     f"`{attribution.requested_window_end.isoformat()}`"
                 ),
                 (
-                    f"- Calendar：`{attribution.calendar.calendar_id}` / "
-                    f"`{attribution.calendar.calendar_function}`；"
-                    "function AST sha256="
-                    f"`{attribution.calendar.calendar_function_ast_sha256}`"
-                ),
-                (
-                    "- Special closure policy："
-                    f"`{attribution.calendar.special_closure_policy_id}@"
-                    f"{attribution.calendar.special_closure_policy_version}`；"
-                    f"sha256=`{attribution.calendar.special_closure_policy_sha256}`"
-                ),
-                (
-                    "- Affected price tickers："
-                    + ", ".join(
-                        f"`{value}`" for value in attribution.affected_price_tickers
-                    )
-                ),
-                "- Affected rate series：无",
-                (
                     "- Affected source roles："
-                    + ", ".join(
-                        f"`{value}`" for value in attribution.affected_source_roles
-                    )
+                    + ", ".join(f"`{value}`" for value in attribution.affected_source_roles)
                 ),
                 (
                     "- Affected dates："
-                    + ", ".join(
-                        f"`{value.isoformat()}`" for value in attribution.affected_dates
-                    )
+                    + ", ".join(f"`{value.isoformat()}`" for value in attribution.affected_dates)
                 ),
                 (
                     "- Affected fields："
@@ -795,18 +776,86 @@ def _typed_issue_attribution_section(
                     f"fields=`{','.join(attribution.row_digest_fields)}`；"
                     f"ordinal scope=`{attribution.source_ordinal_scope}`"
                 ),
-                "",
-                "| Source ordinal | Date | Ticker | Canonical row digest |",
-                "|---:|---|---|---|",
             ]
         )
-        for row in attribution.affected_rows:
-            lines.append(
-                f"| {row.source_ordinal} | {row.observed_date.isoformat()} | "
-                f"{_escape_markdown_table(row.ticker)} | "
-                f"`{row.canonical_row_digest}` |"
-            )
+        if isinstance(attribution, RateDataQualityIssueAttribution):
+            lines.extend(_typed_rate_issue_attribution_details(attribution))
+        else:
+            lines.extend(_typed_price_issue_attribution_details(attribution))
         lines.append("")
+    return lines
+
+
+def _typed_price_issue_attribution_details(
+    attribution: DataQualityIssueAttribution,
+) -> list[str]:
+    lines = [
+        (
+            f"- Calendar：`{attribution.calendar.calendar_id}` / "
+            f"`{attribution.calendar.calendar_function}`；"
+            "function AST sha256="
+            f"`{attribution.calendar.calendar_function_ast_sha256}`"
+        ),
+        (
+            "- Special closure policy："
+            f"`{attribution.calendar.special_closure_policy_id}@"
+            f"{attribution.calendar.special_closure_policy_version}`；"
+            f"sha256=`{attribution.calendar.special_closure_policy_sha256}`"
+        ),
+        (
+            "- Affected price tickers："
+            + ", ".join(f"`{value}`" for value in attribution.affected_price_tickers)
+        ),
+        "- Affected rate series：无",
+        "",
+        "| Source ordinal | Date | Ticker | Canonical row digest |",
+        "|---:|---|---|---|",
+    ]
+    for row in attribution.affected_rows:
+        lines.append(
+            f"| {row.source_ordinal} | {row.observed_date.isoformat()} | "
+            f"{_escape_markdown_table(row.ticker)} | "
+            f"`{row.canonical_row_digest}` |"
+        )
+    return lines
+
+
+def _typed_rate_issue_attribution_details(
+    attribution: RateDataQualityIssueAttribution,
+) -> list[str]:
+    lines = [
+        "- Affected price tickers：无",
+        (
+            "- Affected rate series："
+            + ", ".join(f"`{value}`" for value in attribution.affected_rate_series)
+        ),
+        f"- Isolation scope：`{attribution.isolation_scope}`",
+        "",
+        "| Source ordinal | Date | Series | Role | Canonical row digest |",
+        "|---:|---|---|---|---|",
+    ]
+    for row in attribution.affected_rows:
+        lines.append(
+            f"| {row.source_ordinal} | "
+            f"{'' if row.observed_date is None else row.observed_date.isoformat()} | "
+            f"{_escape_markdown_table(row.rate_series)} | {row.row_role} | "
+            f"`{row.canonical_row_digest}` |"
+        )
+    if attribution.policy_evidence:
+        lines.extend(
+            [
+                "",
+                "| Trigger ordinal | Policy values | Observed change |",
+                "|---:|---|---:|",
+            ]
+        )
+        for evidence in attribution.policy_evidence:
+            policy_values = ", ".join(f"{key}={value}" for key, value in evidence.policy_values)
+            lines.append(
+                f"| {evidence.trigger_source_ordinal} | "
+                f"{_escape_markdown_table(policy_values)} | "
+                f"{'' if evidence.observed_change is None else evidence.observed_change} |"
+            )
     return lines
 
 
@@ -1371,6 +1420,7 @@ def _validate_rates(
     issues: list[DataQualityIssue],
     *,
     requested_window: tuple[date, date] | None = None,
+    source_role: str = PRIMARY_MACRO_RATES_SOURCE_ROLE,
 ) -> DataFileSummary:
     if rates.empty:
         issues.append(
@@ -1389,11 +1439,19 @@ def _validate_rates(
         return summary
 
     frame = rates.copy()
+    frame["_source_ordinal"] = range(len(frame))
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
     frame["_value"] = pd.to_numeric(frame["value"], errors="coerce")
 
     invalid_dates = frame["_date"].isna()
     if invalid_dates.any():
+        typed_attribution, incomplete_reasons = _build_rate_typed_attribution(
+            issue_code="rates_invalid_date",
+            row_groups=_single_rate_row_groups(frame.loc[invalid_dates]),
+            source_summary=summary,
+            source_role=source_role,
+            requested_window=requested_window,
+        )
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
@@ -1402,11 +1460,25 @@ def _validate_rates(
                 rows=int(invalid_dates.sum()),
                 sample=_sample_rows(frame.loc[invalid_dates], ["date", "series"]),
                 source="FRED 宏观序列",
+                attribution_scope_status=(
+                    ATTRIBUTION_SCOPE_COMPLETE
+                    if typed_attribution is not None
+                    else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
+                ),
+                attribution_incomplete_reasons=incomplete_reasons,
+                typed_attribution=typed_attribution,
             )
         )
 
     invalid_values = frame["_value"].isna()
     if invalid_values.any():
+        typed_attribution, incomplete_reasons = _build_rate_typed_attribution(
+            issue_code="rates_invalid_value",
+            row_groups=_single_rate_row_groups(frame.loc[invalid_values]),
+            source_summary=summary,
+            source_role=source_role,
+            requested_window=requested_window,
+        )
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
@@ -1415,11 +1487,25 @@ def _validate_rates(
                 rows=int(invalid_values.sum()),
                 sample=_sample_rows(frame.loc[invalid_values], ["date", "series", "value"]),
                 source="FRED 宏观序列",
+                attribution_scope_status=(
+                    ATTRIBUTION_SCOPE_COMPLETE
+                    if typed_attribution is not None
+                    else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
+                ),
+                attribution_incomplete_reasons=incomplete_reasons,
+                typed_attribution=typed_attribution,
             )
         )
     if requested_window is not None:
         non_finite_values = frame["_value"].notna() & ~frame["_value"].map(_is_finite_numeric)
         if non_finite_values.any():
+            typed_attribution, incomplete_reasons = _build_rate_typed_attribution(
+                issue_code="rates_non_finite_value",
+                row_groups=_single_rate_row_groups(frame.loc[non_finite_values]),
+                source_summary=summary,
+                source_role=source_role,
+                requested_window=requested_window,
+            )
             issues.append(
                 DataQualityIssue(
                     Severity.ERROR,
@@ -1431,6 +1517,13 @@ def _validate_rates(
                         ["date", "series", "value"],
                     ),
                     source="FRED 宏观序列",
+                    attribution_scope_status=(
+                        ATTRIBUTION_SCOPE_COMPLETE
+                        if typed_attribution is not None
+                        else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
+                    ),
+                    attribution_incomplete_reasons=incomplete_reasons,
+                    typed_attribution=typed_attribution,
                 )
             )
 
@@ -1438,12 +1531,93 @@ def _validate_rates(
     _check_expected_values(
         frame, "series", expected_series, "rates", issues, source="FRED 宏观序列"
     )
-    _check_rate_ranges(frame, quality_config, issues)
+    _check_rate_ranges(
+        frame,
+        quality_config,
+        issues,
+        source_summary=summary,
+        source_role=source_role,
+        requested_window=requested_window,
+    )
     _check_rate_staleness(frame, expected_series, quality_config, as_of, issues)
-    _check_rate_moves(frame, quality_config, issues)
+    _check_rate_moves(
+        frame,
+        quality_config,
+        issues,
+        source_summary=summary,
+        source_role=source_role,
+        requested_window=requested_window,
+    )
 
     valid_dates = frame.loc[frame["_date"].notna(), "_date"]
     return _summary_with_dates(summary, valid_dates)
+
+
+def _single_rate_row_groups(
+    rows: pd.DataFrame,
+) -> tuple[tuple[Mapping[str, object], ...], ...]:
+    return tuple((cast(dict[str, object], row.to_dict()),) for _, row in rows.iterrows())
+
+
+def _rate_move_row_groups(
+    source_frame: pd.DataFrame,
+    trigger_rows: pd.DataFrame,
+) -> tuple[tuple[Mapping[str, object], ...], ...]:
+    by_ordinal = {
+        int(row["_source_ordinal"]): cast(dict[str, object], row.to_dict())
+        for _, row in source_frame.iterrows()
+    }
+    groups: list[tuple[Mapping[str, object], ...]] = []
+    for _, trigger in trigger_rows.iterrows():
+        previous_ordinal = trigger.get("_previous_source_ordinal")
+        trigger_payload = cast(dict[str, object], trigger.to_dict())
+        if previous_ordinal is None or pd.isna(previous_ordinal):
+            groups.append((trigger_payload,))
+            continue
+        previous_payload = by_ordinal.get(int(previous_ordinal))
+        if previous_payload is None:
+            groups.append((trigger_payload,))
+            continue
+        groups.append((previous_payload, trigger_payload))
+    return tuple(groups)
+
+
+def _build_rate_typed_attribution(
+    *,
+    issue_code: str,
+    row_groups: Sequence[Sequence[Mapping[str, object]]],
+    source_summary: DataFileSummary,
+    source_role: str,
+    requested_window: tuple[date, date] | None,
+    policy_evidence: Sequence[RateIssuePolicyEvidence] = (),
+) -> tuple[RateDataQualityIssueAttribution | None, tuple[str, ...]]:
+    typed_attribution: RateDataQualityIssueAttribution | None = None
+    incomplete_reasons: tuple[str, ...] = ()
+    if requested_window is None:
+        incomplete_reasons = ("REQUESTED_WINDOW_UNAVAILABLE",)
+    elif source_summary.sha256 is None:
+        incomplete_reasons = ("SOURCE_ARTIFACT_CHECKSUM_UNAVAILABLE",)
+    else:
+        try:
+            decision = load_rate_row_issue_attribution_decision()
+            typed_attribution = build_rate_issue_attribution(
+                decision=decision,
+                issue_code=issue_code,
+                source=DataQualitySourceArtifactBinding(
+                    source_role=source_role,
+                    path=source_summary.path.resolve().as_posix(),
+                    sha256=source_summary.sha256,
+                ),
+                requested_window=requested_window,
+                row_groups=row_groups,
+                policy_evidence=policy_evidence,
+            )
+        except (
+            DataQualityAttributionContractError,
+            RateDataQualityAttributionContractError,
+        ) as exc:
+            incomplete_reasons = (exc.code,)
+    return typed_attribution, incomplete_reasons
 
 
 def _check_required_columns(
@@ -1583,13 +1757,11 @@ def _check_price_market_calendar_dates(
     non_session_rows = window_rows.loc[
         window_rows["_date"].map(lambda value: value.date() in set(non_sessions))
     ].copy()
-    typed_attribution, incomplete_reasons = (
-        _build_price_non_market_session_typed_attribution(
-            non_session_rows,
-            requested_window=requested_window,
-            source_role=source_role,
-            source_summary=source_summary,
-        )
+    typed_attribution, incomplete_reasons = _build_price_non_market_session_typed_attribution(
+        non_session_rows,
+        requested_window=requested_window,
+        source_role=source_role,
+        source_summary=source_summary,
     )
     attribution_scope_status = (
         ATTRIBUTION_SCOPE_COMPLETE
@@ -1597,9 +1769,7 @@ def _check_price_market_calendar_dates(
         else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
     )
     affected_instruments = (
-        typed_attribution.affected_price_tickers
-        if typed_attribution is not None
-        else ()
+        typed_attribution.affected_price_tickers if typed_attribution is not None else ()
     )
     issues.append(
         DataQualityIssue(
@@ -2656,6 +2826,10 @@ def _check_rate_ranges(
     frame: pd.DataFrame,
     quality_config: DataQualityConfig,
     issues: list[DataQualityIssue],
+    *,
+    source_summary: DataFileSummary,
+    source_role: str,
+    requested_window: tuple[date, date] | None,
 ) -> None:
     min_values = frame["series"].map(
         lambda series: _rate_min_plausible_value(str(series), quality_config.rates)
@@ -2667,14 +2841,56 @@ def _check_rate_ranges(
         (frame["_value"] < min_values) | (frame["_value"] > max_values)
     )
     if invalid.any():
+        invalid_rows = frame.loc[invalid].copy()
+        evidence = tuple(
+            RateIssuePolicyEvidence(
+                trigger_source_ordinal=int(row["_source_ordinal"]),
+                policy_values=(
+                    (
+                        "max_plausible_value",
+                        float(
+                            _rate_max_plausible_value(
+                                str(row["series"]),
+                                quality_config.rates,
+                            )
+                        ),
+                    ),
+                    (
+                        "min_plausible_value",
+                        float(
+                            _rate_min_plausible_value(
+                                str(row["series"]),
+                                quality_config.rates,
+                            )
+                        ),
+                    ),
+                ),
+            )
+            for _, row in invalid_rows.iterrows()
+        )
+        typed_attribution, incomplete_reasons = _build_rate_typed_attribution(
+            issue_code="rates_out_of_range",
+            row_groups=_single_rate_row_groups(invalid_rows),
+            source_summary=source_summary,
+            source_role=source_role,
+            requested_window=requested_window,
+            policy_evidence=evidence,
+        )
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_out_of_range",
                 "FRED 宏观序列包含超出配置合理范围的数值",
                 rows=int(invalid.sum()),
-                sample=_sample_rows(frame.loc[invalid], ["date", "series", "value"]),
+                sample=_sample_rows(invalid_rows, ["date", "series", "value"]),
                 source="FRED 宏观序列",
+                attribution_scope_status=(
+                    ATTRIBUTION_SCOPE_COMPLETE
+                    if typed_attribution is not None
+                    else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
+                ),
+                attribution_incomplete_reasons=incomplete_reasons,
+                typed_attribution=typed_attribution,
             )
         )
 
@@ -2726,6 +2942,10 @@ def _check_rate_moves(
     frame: pd.DataFrame,
     quality_config: DataQualityConfig,
     issues: list[DataQualityIssue],
+    *,
+    source_summary: DataFileSummary,
+    source_role: str,
+    requested_window: tuple[date, date] | None,
 ) -> None:
     data = frame.loc[frame["_date"].notna() & frame["_value"].notna()].copy()
     data = _filter_rate_consistency_window(data, quality_config)
@@ -2734,6 +2954,7 @@ def _check_rate_moves(
 
     data = data.sort_values(["series", "_date"])
     data["_change"] = data.groupby("series")["_value"].diff().abs()
+    data["_previous_source_ordinal"] = data.groupby("series")["_source_ordinal"].shift(1)
     suspicious_thresholds = data["series"].map(
         lambda series: _rate_suspicious_daily_change_abs(str(series), quality_config.rates)
     )
@@ -2744,25 +2965,112 @@ def _check_rate_moves(
     suspicious = (data["_change"] > suspicious_thresholds) & ~extreme
 
     if extreme.any():
+        extreme_rows = data.loc[extreme].copy()
+        extreme_evidence = tuple(
+            RateIssuePolicyEvidence(
+                trigger_source_ordinal=int(row["_source_ordinal"]),
+                policy_values=(
+                    (
+                        "extreme_daily_change_abs",
+                        float(
+                            _rate_extreme_daily_change_abs(
+                                str(row["series"]),
+                                quality_config.rates,
+                            )
+                        ),
+                    ),
+                ),
+                observed_change=(
+                    float(row["_change"]) if math.isfinite(float(row["_change"])) else None
+                ),
+            )
+            for _, row in extreme_rows.iterrows()
+        )
+        typed_attribution, incomplete_reasons = _build_rate_typed_attribution(
+            issue_code="rates_extreme_daily_change",
+            row_groups=_rate_move_row_groups(frame, extreme_rows),
+            source_summary=source_summary,
+            source_role=source_role,
+            requested_window=requested_window,
+            policy_evidence=extreme_evidence,
+        )
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_extreme_daily_change",
                 "FRED 宏观序列包含极端单日变化",
                 rows=int(extreme.sum()),
-                sample=_sample_rows(data.loc[extreme], ["date", "series", "value", "_change"]),
+                sample=_sample_rows(
+                    extreme_rows,
+                    ["date", "series", "value", "_change"],
+                ),
                 source="FRED 宏观序列",
+                attribution_scope_status=(
+                    ATTRIBUTION_SCOPE_COMPLETE
+                    if typed_attribution is not None
+                    else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
+                ),
+                attribution_incomplete_reasons=incomplete_reasons,
+                typed_attribution=typed_attribution,
             )
         )
     if suspicious.any():
+        suspicious_rows = data.loc[suspicious].copy()
+        suspicious_evidence = tuple(
+            RateIssuePolicyEvidence(
+                trigger_source_ordinal=int(row["_source_ordinal"]),
+                policy_values=(
+                    (
+                        "extreme_daily_change_abs",
+                        float(
+                            _rate_extreme_daily_change_abs(
+                                str(row["series"]),
+                                quality_config.rates,
+                            )
+                        ),
+                    ),
+                    (
+                        "suspicious_daily_change_abs",
+                        float(
+                            _rate_suspicious_daily_change_abs(
+                                str(row["series"]),
+                                quality_config.rates,
+                            )
+                        ),
+                    ),
+                ),
+                observed_change=(
+                    float(row["_change"]) if math.isfinite(float(row["_change"])) else None
+                ),
+            )
+            for _, row in suspicious_rows.iterrows()
+        )
+        typed_attribution, incomplete_reasons = _build_rate_typed_attribution(
+            issue_code="rates_suspicious_daily_change",
+            row_groups=_rate_move_row_groups(frame, suspicious_rows),
+            source_summary=source_summary,
+            source_role=source_role,
+            requested_window=requested_window,
+            policy_evidence=suspicious_evidence,
+        )
         issues.append(
             DataQualityIssue(
                 Severity.WARNING,
                 "rates_suspicious_daily_change",
                 "FRED 宏观序列包含可疑单日变化",
                 rows=int(suspicious.sum()),
-                sample=_sample_rows(data.loc[suspicious], ["date", "series", "value", "_change"]),
+                sample=_sample_rows(
+                    suspicious_rows,
+                    ["date", "series", "value", "_change"],
+                ),
                 source="FRED 宏观序列",
+                attribution_scope_status=(
+                    ATTRIBUTION_SCOPE_COMPLETE
+                    if typed_attribution is not None
+                    else ATTRIBUTION_SCOPE_GLOBAL_OR_UNKNOWN
+                ),
+                attribution_incomplete_reasons=incomplete_reasons,
+                typed_attribution=typed_attribution,
             )
         )
 

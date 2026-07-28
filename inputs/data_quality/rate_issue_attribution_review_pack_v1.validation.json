@@ -11,9 +11,9 @@
   },
   "error_count": 0,
   "errors": [],
-  "expected_review_pack_id": "dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698",
+  "expected_review_pack_id": "dq_rate_issue_attribution_review_216045a1ebe282194028e1f8",
   "production_effect": "none",
-  "review_pack_id": "dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698",
+  "review_pack_id": "dq_rate_issue_attribution_review_216045a1ebe282194028e1f8",
   "schema_version": "data_quality_rate_issue_attribution_review_validation.v1",
   "status": "PASS",
   "task_id": "DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK"

@@ -1,6 +1,6 @@
 # DATA-GOV-002C2：Rate Row Issue Attribution Source-Owner Review Pack
 
-最后更新：2026-07-26
+最后更新：2026-07-28
 
 稳定任务 ID：`DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK`
 
@@ -10,7 +10,7 @@
 Owner continuation：
 `owner_continuation:DATA-GOV-002C2:2026-07-26:continue_long_term_engineering_goal`
 
-状态：`BASELINE_DONE_SOURCE_OWNER_DECISION_PENDING`
+状态：`BASELINE_DONE_OWNER_APPROVED_C3_ACTIVE`
 
 ## 1. 背景与问题
 
@@ -136,3 +136,22 @@ Review pack 只能给出 `CONTRACT_WAVE_CANDIDATE`、`REVISION_REQUIRED` 或
   `outputs/validation_runtime/full_20260726T142413Z/test_runtime_summary.json`。本结果只证明
   source-owner review pack 已可决策，不构成逐 site 批准；C3、typed runtime attribution、
   capability policy 变更和 consumer migration 继续锁定。
+- 2026-07-28：跨 Python authority 与 canonical DQ source freshness 重建后的 current pack
+  为 `dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`，SHA-256=
+  `f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`，validator=`PASS`。
+  Project owner 以 `data_platform_rate_quality_owner` 身份决定六项全部
+  `APPROVE_FOR_CONTRACT_WAVE`，decision id=
+  `owner_decision:DATA-GOV-002C3:2026-07-28:approve_rate_row_issue_attribution_contract_wave_v1`。
+  Exact conditions与C3分阶段验收记录在
+  `DATA-GOV-002C3_Rate_Row_Issue_Typed_Attribution_Contract_Wave.md`；policy adoption、
+  consumer migration、daily/periodic、production和broker仍未授权。
+- 2026-07-28：C3 final-tree freshness重建后，C1 inventory保持69 sites且六项
+  site/code/taxonomy与Owner批准bundle完全一致；fresh pack=
+  `dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA-256=
+  `1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`。
+  C3 decision authority exact绑定该fresh derived pack；pre-contract Owner-reviewed pack
+  id/SHA作为批准起点保留，未发生候选扩张或scope扩权。
+- 2026-07-28：下游C3最小serial contract wave已通过全部formal及parent-bound Full并转
+  `BASELINE_DONE`；C2继续作为不可变source-owner decision history。C3没有把任何rate code
+  加入active capability policy，也没有迁移consumer。真实canonical DQ仍strict `FAIL`，
+  后续adoption/QLD/生产治理不得据此自动启动。

@@ -8,7 +8,7 @@
     "runtime_contract_change_authorized": false,
     "source_owner_decision_recorded": false
   },
-  "c1_inventory_id": "dq_issue_attribution_inventory_46d72c5be356c737467d8ef5",
+  "c1_inventory_id": "dq_issue_attribution_inventory_3075487848a6d6b56087c34a",
   "candidates": [
     {
       "affected_price_tickers": [],
@@ -34,7 +34,7 @@
         "_change"
       ],
       "emitter_function": "_check_rate_moves",
-      "emitter_function_ast_sha256": "b3593a9368857c8843ac858282c2adb40862b4806d7b1f8bf4c97132d11f955a",
+      "emitter_function_ast_sha256": "a7669f504c46ee9029e14e04a481157db2f83963787c9f07e1fbef1a958e4a45",
       "identity_fields": [
         "date",
         "series"
@@ -62,7 +62,7 @@
       "scope_taxonomy": "CURRENT_AND_PREVIOUS_VALID_OBSERVATION",
       "severity": "ERROR",
       "site_id": "dq_issue_site_85549de0f1e9ab739a74",
-      "source_line": 2748,
+      "source_line": 2998,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 move issue 的完整 row scope 必须同时包含当前行和前一有效观测？",
@@ -91,7 +91,7 @@
       ],
       "derived_fields": [],
       "emitter_function": "_validate_rates",
-      "emitter_function_ast_sha256": "d2ca29f3aaff9801dd598440ca5a4781fdd1769336e4d6f80bcf37318901ef2c",
+      "emitter_function_ast_sha256": "a8f3c4c9f9bdb23f2bf33fc966921e06e5159201e0850dcec8ae4cdfd6861f9f",
       "identity_fields": [
         "series"
       ],
@@ -112,7 +112,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_0e7f3d74bfa489801c83",
-      "source_line": 1398,
+      "source_line": 1456,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 invalid date 不阻止按 non-empty series 做保守 series-level attribution？",
@@ -141,7 +141,7 @@
       ],
       "derived_fields": [],
       "emitter_function": "_validate_rates",
-      "emitter_function_ast_sha256": "d2ca29f3aaff9801dd598440ca5a4781fdd1769336e4d6f80bcf37318901ef2c",
+      "emitter_function_ast_sha256": "a8f3c4c9f9bdb23f2bf33fc966921e06e5159201e0850dcec8ae4cdfd6861f9f",
       "identity_fields": [
         "date",
         "series"
@@ -163,7 +163,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_f337897b3d0d0b8e2842",
-      "source_line": 1411,
+      "source_line": 1483,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 value 缺失或非数值只影响触发行及其 series？",
@@ -192,7 +192,7 @@
       ],
       "derived_fields": [],
       "emitter_function": "_validate_rates",
-      "emitter_function_ast_sha256": "d2ca29f3aaff9801dd598440ca5a4781fdd1769336e4d6f80bcf37318901ef2c",
+      "emitter_function_ast_sha256": "a8f3c4c9f9bdb23f2bf33fc966921e06e5159201e0850dcec8ae4cdfd6861f9f",
       "identity_fields": [
         "date",
         "series"
@@ -214,7 +214,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_dcc6dcab7a17c225b404",
-      "source_line": 1424,
+      "source_line": 1510,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 Infinity/non-finite 只影响触发行及其 series？",
@@ -243,7 +243,7 @@
       ],
       "derived_fields": [],
       "emitter_function": "_check_rate_ranges",
-      "emitter_function_ast_sha256": "32b62e34c89934038e8f9e7101c9ddb480034825d85701c9cc345a17c87f1de0",
+      "emitter_function_ast_sha256": "086348ea8fd80da11bf61443f7b4934db15c08b2fca00edfa9638d92791fd5f5",
       "identity_fields": [
         "date",
         "series"
@@ -269,7 +269,7 @@
       "scope_taxonomy": "SINGLE_SOURCE_ROW",
       "severity": "ERROR",
       "site_id": "dq_issue_site_6421117ee905a6da1438",
-      "source_line": 2671,
+      "source_line": 2880,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 configured plausible range 的越界只影响触发行及其 series？",
@@ -301,7 +301,7 @@
         "_change"
       ],
       "emitter_function": "_check_rate_moves",
-      "emitter_function_ast_sha256": "b3593a9368857c8843ac858282c2adb40862b4806d7b1f8bf4c97132d11f955a",
+      "emitter_function_ast_sha256": "a7669f504c46ee9029e14e04a481157db2f83963787c9f07e1fbef1a958e4a45",
       "identity_fields": [
         "date",
         "series"
@@ -330,7 +330,7 @@
       "scope_taxonomy": "CURRENT_AND_PREVIOUS_VALID_OBSERVATION",
       "severity": "WARNING",
       "site_id": "dq_issue_site_df1c184d09e3c55d3e71",
-      "source_line": 2759,
+      "source_line": 3057,
       "source_owner_decision": "PENDING_SOURCE_OWNER_DECISION",
       "source_owner_questions": [
         "是否确认 warning 也使用与 extreme move 相同的完整 row-pair attribution？",
@@ -373,8 +373,8 @@
     {
       "path": "inputs/data_quality/dq_issue_attribution_readiness_inventory_v1.json",
       "role": "c1_readiness_inventory",
-      "sha256": "5df81c2e407349cd66d7c5d80751535f5051456fb421a486244a74708d1208ed",
-      "size_bytes": 85436
+      "sha256": "3378dd95b2a8226a5e0835b84382236983f72dab2d90f3569f1cfa957b6f9324",
+      "size_bytes": 85438
     },
     {
       "path": "config/data_quality/rate_row_issue_attribution_review_v1.yaml",
@@ -385,8 +385,8 @@
     {
       "path": "src/ai_trading_system/data/quality.py",
       "role": "canonical_dq_source",
-      "sha256": "5d3221f06c3d3523dc1e62a17fc12a9295503986b4d84f6b227e739d3f957e5e",
-      "size_bytes": 110247
+      "sha256": "6c553f225441cd5b1caac11ba24cc3edfd84c3ca72ffb2e2cf8242f4944b780e",
+      "size_bytes": 122665
     },
     {
       "path": "config/data_quality.yaml",
@@ -433,7 +433,7 @@
     },
     "suspicious_daily_change_abs": 0.75
   },
-  "review_pack_id": "dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698",
+  "review_pack_id": "dq_rate_issue_attribution_review_216045a1ebe282194028e1f8",
   "safety": {
     "broker_action": "none",
     "cached_data_mutated": false,
