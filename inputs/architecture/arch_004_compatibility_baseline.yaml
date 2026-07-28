@@ -31220,6 +31220,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - tests/test_arch_004_refactor_policy.py
   - tests/test_arch_004f1_operations_control_plane.py
   - tests/test_arch_004g_deprecation.py
+  - tests/test_ops_release_promotion.py
   - tests/test_price_issue_attribution_contract.py
   - tests/test_trading2453_constraint_hit_diagnosis.py
   supersession:
@@ -31293,6 +31294,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - tests/test_arch_004f1_operations_control_plane.py
   - tests/test_arch_004g_deprecation.py
   - tests/test_artifact_lineage.py
+  - tests/test_ops_release_promotion.py
   - tests/test_price_issue_attribution_contract.py
   - tests/test_trading2453_constraint_hit_diagnosis.py
   - tests/trading_engine/test_safety_boundaries.py
@@ -31313,40 +31315,40 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 399672ce02783572adbe6c1cbf1c7d0874d4517e2714e7d427e995b3260338c5
     hash_normalization: git_eol_lf
   - path: docs/operations/operations_runbook.md
-    sha256: 7d012644568334c047776c0b66ed6bdf28053d94d626df659f052814621d94f0
+    sha256: d363d78636408d72104f5279743093c4e2b4a3837c28f9017cf2cdef6b039371
     hash_normalization: git_eol_lf
   - path: docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
     sha256: 78166fb178269e92deed94b1353a9fb7e7ad509c24734beaedcd99c2712c4202
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
-    sha256: a580d9db75299c45b133bac1f69aff8e64bc304558a87cb2de363d754448ab52
+    sha256: 2f65358ee8da1aac519dcbdc1008ac04c44c1b7f5f446f169c831d36b0c82df5
     hash_normalization: git_eol_lf
   - path: docs/runbooks/scheduled_task_orchestration.md
     sha256: 29b565b3b3f89baa212b437e94ba0bb2df5d2043f9253db8d53d303c9c31a1b6
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
-    sha256: 8a18985fa0629064a5af95dbac61bf9fbe12483039e0f0216d3d00f203c7953e
+    sha256: b5fc8afdec84f4ec249a08c473d4c9ae69f34353bad8a9857b23353a7cf0beda
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: ced340508007b42bd1705a56730c9f356129e55028860c6936e851c643ef93e2
+    sha256: 979ff3759806a8b46d1fbda917c7df0f69f530f2bad79bcf289838c42732c7fd
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-    sha256: dff19b251214bdd034a56505aaf1224879be577901a860bdac900bcb530ed315
+    sha256: 1a3d902ee5543449e84ff7f7cd7f7aa1590355ae9e5f7353b5391b4c7eeebe0b
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_module_manifest.yaml
     sha256: df398c62626c7e9535cdf3606364b7132b1222f60fb98ea7902ccfce9e0e8eee
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: a410a528930b90299f6e65e03e1ed9cd5a7a3bfbceb07c0aac357597f5a32a80
+    sha256: 552b85a086abf662cbee1c03e86fbf73b571485ea794ea82aec9bd95b23bbc5a
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: 6dc6aace1cb35d3feebe814d96418eb2f3410045a78b599bfb25771b2aa21a90
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: cbaa8263bfae5a9df6c20649a496331a5d37762b78336e7eb361952e158bb93d
+    sha256: ed30d78539f95fba574d3e256a7bf2f60a103da073c0d63f4f2fb2578d419f29
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 0ad4721671eb0d6ee8c30535d854cafde48a3eaefc414740ed1acf44db786c52
+    sha256: 0c09a7a91c59f5c551a8c87233e38bcf95e2a12bebf3c1d039c1b337f7932fe6
     hash_normalization: git_eol_lf
   - path: inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json
     sha256: e1f3841dc27a9bee78c79fe07250acfe006941ed252235c23c13b3b8017a3449
@@ -31412,7 +31414,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: c3fb56bfd7aa397e3c71cd62527b03c9b767200284c0c432e6c52325d80b7133
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e5/e5f589af3b9ef8a214af03d22b50895bc1b0da243b00134c8da95c88f95a9623.yaml
-    sha256: c5cf937107dced284ed9f114eaff1ca02adb4cc19f8fa3eb0d24b7d80ed1a875
+    sha256: 094bbb456f5a3581e310a4dbed2b75c3b0fbb56e13df10907659f0ab609a0086
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
     sha256: b7f2647b6fb81dec9beed3d0be584ed3205f43a1050d81cd92007f01314cc63f
@@ -31468,6 +31470,9 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
   - path: tests/test_artifact_lineage.py
     sha256: 1ac92f5df25b02aaabe7b25e2f0ec78cef827f352d34af0623b37af7db091310
     hash_normalization: git_eol_lf
+  - path: tests/test_ops_release_promotion.py
+    sha256: 1244dcff077622f4fd92dc2903881e84cff3a6b3d50c81d855524179a6263377
+    hash_normalization: git_eol_lf
   - path: tests/test_price_issue_attribution_contract.py
     sha256: 37c593b38a1ce77fcc9698d0c422ca1dea4f24fe4a3328d5c34abc9d57bfc97a
     hash_normalization: git_eol_lf
@@ -31489,7 +31494,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     lineage_topology_safety_strict: true
     lineage_governed_absence: INSUFFICIENT_DATA
   validation:
-    focused: PASS_195_SKIPPED_1
+    focused: PENDING
     fast: PENDING
     architecture: PENDING
     contract: PENDING

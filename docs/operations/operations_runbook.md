@@ -51,6 +51,13 @@
   `.git/info/exclude`；只允许替换空白/注释-only 初始文件，既有未知 rule、缺失/额外
   pattern、Git path/common-dir 或 live SHA 漂移均 fail closed。该 runtime-only contract
   不改变开发 checkout 的 `.gitignore`、known-unrelated 或 dirty semantics。跨 release
+  由 daily 更新的 `outputs/current_effective_weights.json` 是运行时审计产物，不得由
+  Git追踪；否则exclude对tracked file无效，并在合法daily后永久阻断下一次promotion。
+  从旧release迁移时必须先把live bytes按SHA-256/size存入deployment migration evidence，
+  仅为checkout切换临时恢复旧tracked baseline，切换后再原样还原为ignored artifact并
+  验证byte-identical；不得重算、解释、批准或修改其中的weights，也不得把该窄迁移扩展
+  为任意dirty-path allowlist。
+  跨 release
   promotion 在切换前必须用已验证 coordinator candidate 的 checkout-guard policy 解释
   clean/dirty 规则，但 audited repository、Git identity、tracked/untracked/staged inventory
   与 diff checks 始终绑定 permanent runtime；旧 runtime 自带的旧 policy schema 不是

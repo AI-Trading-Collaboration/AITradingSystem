@@ -33,6 +33,27 @@ REQUIRED_VALIDATION_TIERS = (
     "reproducibility",
     "full",
 )
+
+
+def test_current_effective_weights_is_runtime_only_not_tracked() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [
+            "git",
+            "ls-files",
+            "--error-unmatch",
+            "--",
+            "outputs/current_effective_weights.json",
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+
+
 REQUIRED_CRITICAL_PATHS = (
     "config/architecture/arch_005_parallel_control_policy.yaml",
     "config/architecture/arch_005_s4d_checkout_guard.yaml",

@@ -174,5 +174,15 @@ disposition 分开：
   作为 `failure_fix_rerun` parent 重跑最终候选；不得用忽略测试、串行掩盖或旧 artifact
   回退替代。AST authority必须先规范为解释器版本无关，再用runtime Python重建
   price/rate派生证据。
+- 2026-07-28：blocker-fix candidate=`a30719847e357a0d740891e5ac2a97363670a5d7`
+  的正式Fast/Architecture/Contract/Integration/Reproducibility/Full全部PASS，
+  Full为`7616 passed / 3 skipped`且以原失败receipt执行`failure_fix_rerun`；
+  local/remote main已同步。首次promotion在切换前由
+  `PROMOTION_RUNTIME_DIRTY: outputs/current_effective_weights.json`阻断并自动回滚。
+  根因是该daily runtime artifact仍被Git追踪，故managed `/outputs/` exclusion无法
+  生效；这会在每次合法daily写入后永久阻断下一次release promotion。耐久修复必须
+  将该文件从版本控制移除、保留为ignored runtime artifact，并对旧runtime live bytes
+  做一次checksum-bound、byte-identical迁移保全；不得删除证据、放宽任意dirty path、
+  重新计算或改写weights。新候选须重新完成六档validation后再promotion。
 - 待完成：正式六档 validation、新 exact release promotion、automation exact release 更新
   与 2026-07-27 runtime recovery operational acceptance。
