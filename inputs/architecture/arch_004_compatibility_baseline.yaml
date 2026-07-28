@@ -31279,7 +31279,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 7d012644568334c047776c0b66ed6bdf28053d94d626df659f052814621d94f0
     hash_normalization: git_eol_lf
   - path: docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
-    sha256: aaaa47d47376cbf3a37881376b4d6195f999b948eb321d9cb8bfac3bb64784fa
+    sha256: 054ed331bf1b9337594ba4444909c95ec6797f119da8b1d74c041dab696cf461
     hash_normalization: git_eol_lf
   - path: docs/runbooks/scheduled_task_orchestration.md
     sha256: 29b565b3b3f89baa212b437e94ba0bb2df5d2043f9253db8d53d303c9c31a1b6
@@ -31288,7 +31288,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 8a18985fa0629064a5af95dbac61bf9fbe12483039e0f0216d3d00f203c7953e
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 85a3f09de406023767005d1e7fbf75695dd5b68542bceac675d2ffde1615f26e
+    sha256: e2d9a865f823d554caea88df67669d245aa25de163e406580ba830e608bc404b
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: dff19b251214bdd034a56505aaf1224879be577901a860bdac900bcb530ed315
@@ -31303,10 +31303,10 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: 6dc6aace1cb35d3feebe814d96418eb2f3410045a78b599bfb25771b2aa21a90
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 495331c9bd7411a88ba48e5ff1e0ddddb22c4f2425b3f3a026a01f7fd307ac6d
+    sha256: 2a9f72de43344233c3d7d9ad404750b34b0bb6af523fd2e6e8df522a864166ee
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: aa063675327994df2134eb236ff9dc52c96a29f86e00c9b6296fa3177d13aefd
+    sha256: bbb4a0e9d230b608504c7e394b934d2704483bf6077b03a57ad241058ff35a17
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
     sha256: 33f6a553b368f3ddaefc2f944ca8f66b77075a0f11a2480e5279642bb8eb5db7
@@ -31360,7 +31360,7 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     sha256: c3fb56bfd7aa397e3c71cd62527b03c9b767200284c0c432e6c52325d80b7133
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e5/e5f589af3b9ef8a214af03d22b50895bc1b0da243b00134c8da95c88f95a9623.yaml
-    sha256: c2fee6329f59158cb4af6309f7fba1d556b5ae0edeb1d0a349fd94147ddc0ccd
+    sha256: 4777e382ab16d0334d769683123bb6bf2dd3e20f2fe10d8e06e6063a1f856784
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
     sha256: b7f2647b6fb81dec9beed3d0be584ed3205f43a1050d81cd92007f01314cc63f
@@ -31419,8 +31419,8 @@ phase_ops_071_daily_terminal_recovery_and_lineage_availability:
     lineage_topology_safety_strict: true
     lineage_governed_absence: INSUFFICIENT_DATA
   validation:
-    focused: PASS_156
-    fast: PASS_341
+    focused: PASS_205
+    fast: PENDING
     architecture: PENDING
     contract: PENDING
     integration: PENDING

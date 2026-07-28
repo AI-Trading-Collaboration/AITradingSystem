@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 9d2625c9f340ca02fb26976f46cc94ddc1e7c89ce9d5f9c964968b90716f1af5
+baseline_checksum: f83dcde9dec344fbc6f60f587385fca71bd0ddfc9e1996d961f31aea0f085e72
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 921
 fragment_count: 921
@@ -643,8 +643,8 @@ fragments:
   fragment_checksum: 1767c353d5d9db8bb108db29a2e36f9248fe6a83c7945b6cbb8efd6da61108b6
 - task_id: OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
   path: registry/development_tasks_shadow/active/e5/e5f589af3b9ef8a214af03d22b50895bc1b0da243b00134c8da95c88f95a9623.yaml
-  file_sha256: c2fee6329f59158cb4af6309f7fba1d556b5ae0edeb1d0a349fd94147ddc0ccd
-  fragment_checksum: d4a2e9926c95b6499c20f4ba6350dadd12b83f2a3f8065f91bfb65b1a86af5f1
+  file_sha256: 4777e382ab16d0334d769683123bb6bf2dd3e20f2fe10d8e06e6063a1f856784
+  fragment_checksum: 22e4975105e27f716c4503f25c25bdda6816b92eaf192d3ad4a4cd0616cd6d6c
 - task_id: PIT-001
   path: registry/development_tasks_shadow/active/6b/6bcf100bd2ed48230eec76b5a35417a9a97dd5c4abb4de3c8f63dd936d77d1c5.yaml
   file_sha256: 73f010887c82fdd21bda41f37892977901d24c7e2bf4b5b40f2b89ea76ff6d7d
@@ -3709,8 +3709,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 9e4a2fafcbc79104bc6d985ce82130fdae6ff1eb599e18720596ee5c19fdbbfb
-  rendered_sha256: 9e4a2fafcbc79104bc6d985ce82130fdae6ff1eb599e18720596ee5c19fdbbfb
+  source_sha256: e2d9a865f823d554caea88df67669d245aa25de163e406580ba830e608bc404b
+  rendered_sha256: e2d9a865f823d554caea88df67669d245aa25de163e406580ba830e608bc404b
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3732,4 +3732,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 06ce7eebd4b8b7b4964d57132c1db77567cfedd10596e5737208e10b24d41f44
+index_checksum: 7e8bfa6db506b272f8565baf525aea4746c9479be9c13309b6f14532af915996

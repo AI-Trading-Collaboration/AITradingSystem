@@ -158,5 +158,10 @@ disposition 分开：
   已通过。按 owner 要求直接修复该 validation blocker：源码安全扫描改为确定性
   `os.walk()` 并在递归前排除 `__pycache__`，随后必须重新生成兼容性权威并从 Fast
   起重跑六档正式 validation；不得以串行重跑或忽略失败替代修复。
+- 2026-07-28：竞态修复后 focused=`205 passed`；新候选 Fast 首轮为
+  `340 passed / 1 failed`，失败码为 `S0_DOCUMENT_DRIFT`。根因是本次 blocker
+  进度写入 `docs/task_register.md` 后尚未刷新 ARCH-005 S0/S1 generated registry，
+  不属于业务逻辑失败。直接刷新 task registry baseline/index/shadows、devex 与兼容性
+  当前哈希权威后，必须再次从 Fast 起跑完整六档。
 - 待完成：正式六档 validation、新 exact release promotion、automation exact release 更新
   与 2026-07-27 runtime recovery operational acceptance。

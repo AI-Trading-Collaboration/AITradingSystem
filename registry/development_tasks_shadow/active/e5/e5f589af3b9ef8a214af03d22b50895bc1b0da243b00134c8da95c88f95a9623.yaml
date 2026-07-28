@@ -11,8 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex：完成正式验证、release promotion与2026-07-27 recovery acceptance；operations
-    owner：复核 recovery receipt和下一日常scheduler行为
+  next_owner: Codex：刷新generated registry并重跑正式验证、完成release promotion与2026-07-27 recovery
+    acceptance；operations owner：复核 recovery receipt和下一日常scheduler行为
   requirement_refs:
   - docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
   module_ids: []
@@ -20,12 +20,14 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`要求补齐容错并让当日case可恢复。Recovery
     request/receipt、immutable parent archive、selective report-tail replay和lineage
-    availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。
+    availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。Integration首轮唯一失败的并行源码扫描竞态已耐久修复；修复后Fast唯一失败为任务进度变更后的ARCH-005
+    S0/S1 generated registry stale，必须直接刷新而非忽略。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 显式recovery parent/state SHA/release/deployment receipt/replay boundary；原terminal
       immutable；只重放幂等且无provider/weights/broker副作用的slice；每parent最多一个child；lineage缺失保留为INSUFFICIENT_DATA
-      warning且不补造，结构/安全错误继续FAIL；Fast/Architecture/Contract/Integration/Reproducibility/Full
+      warning且不补造，结构/安全错误继续FAIL；源码安全扫描排除cache并保持确定性；generated registry/current hash
+      authority fresh；Fast/Architecture/Contract/Integration/Reproducibility/Full
       PASS；新exact release promotion后2026-07-27从artifact_lineage恢复并完成Reader Brief/quality/terminal
       PASS；`production_effect=none`。
   production_effect: UNKNOWN_LEGACY
@@ -34,43 +36,46 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 1599
-    row_sha256: e3f73aaea262ca22cfecb6fe61716e291e5b58d6fe8151a5b6dcc75565ea4895
+    row_sha256: c876a81277f78ad0b363544954147e6bb38c41934211cc57862cb702a68a87f2
     cell_count: 8
     all_cells:
     - OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
     - Operations / governed same-as-of recovery and lineage availability
     - P0
     - IN_PROGRESS
-    - Codex：完成正式验证、release promotion与2026-07-27 recovery acceptance；operations owner：复核
-      recovery receipt和下一日常scheduler行为
+    - Codex：刷新generated registry并重跑正式验证、完成release promotion与2026-07-27 recovery acceptance；operations
+      owner：复核 recovery receipt和下一日常scheduler行为
     - 详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`要求补齐容错并让当日case可恢复。Recovery
       request/receipt、immutable parent archive、selective report-tail replay和lineage
-      availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。
+      availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。Integration首轮唯一失败的并行源码扫描竞态已耐久修复；修复后Fast唯一失败为任务进度变更后的ARCH-005
+      S0/S1 generated registry stale，必须直接刷新而非忽略。
     - 显式recovery parent/state SHA/release/deployment receipt/replay boundary；原terminal
       immutable；只重放幂等且无provider/weights/broker副作用的slice；每parent最多一个child；lineage缺失保留为INSUFFICIENT_DATA
-      warning且不补造，结构/安全错误继续FAIL；Fast/Architecture/Contract/Integration/Reproducibility/Full
+      warning且不补造，结构/安全错误继续FAIL；源码安全扫描排除cache并保持确定性；generated registry/current hash
+      authority fresh；Fast/Architecture/Contract/Integration/Reproducibility/Full
       PASS；新exact release promotion后2026-07-27从artifact_lineage恢复并完成Reader Brief/quality/terminal
       PASS；`production_effect=none`。
-    - 2026-07-28：READ_ONLY/START/LANE preflight PASS；contract/runtime/CLI/lineage实现完成，focused
-      parallel tests 65 passed。旧2026-07-27 graph现为PASS_WITH_WARNINGS、0 blocking、21
-      warnings；下一步正式验证、promotion及runtime recovery。
+    - 2026-07-28：focused 205通过；正式Integration首轮994通过/1竞态失败已修复。新候选Fast首轮340通过/1 `S0_DOCUMENT_DRIFT`，下一步刷新S0/S1、devex和compatibility后再次从Fast起跑六档，再promotion及runtime
+      recovery。
     raw_line: '|OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY|Operations
-      / governed same-as-of recovery and lineage availability|P0|IN_PROGRESS|Codex：完成正式验证、release
-      promotion与2026-07-27 recovery acceptance；operations owner：复核 recovery receipt和下一日常scheduler行为|详见
-      `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`要求补齐容错并让当日case可恢复。Recovery
+      / governed same-as-of recovery and lineage availability|P0|IN_PROGRESS|Codex：刷新generated
+      registry并重跑正式验证、完成release promotion与2026-07-27 recovery acceptance；operations
+      owner：复核 recovery receipt和下一日常scheduler行为|详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`要求补齐容错并让当日case可恢复。Recovery
       request/receipt、immutable parent archive、selective report-tail replay和lineage
-      availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。|显式recovery parent/state
-      SHA/release/deployment receipt/replay boundary；原terminal immutable；只重放幂等且无provider/weights/broker副作用的slice；每parent最多一个child；lineage缺失保留为INSUFFICIENT_DATA
-      warning且不补造，结构/安全错误继续FAIL；Fast/Architecture/Contract/Integration/Reproducibility/Full
+      availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。Integration首轮唯一失败的并行源码扫描竞态已耐久修复；修复后Fast唯一失败为任务进度变更后的ARCH-005
+      S0/S1 generated registry stale，必须直接刷新而非忽略。|显式recovery parent/state SHA/release/deployment
+      receipt/replay boundary；原terminal immutable；只重放幂等且无provider/weights/broker副作用的slice；每parent最多一个child；lineage缺失保留为INSUFFICIENT_DATA
+      warning且不补造，结构/安全错误继续FAIL；源码安全扫描排除cache并保持确定性；generated registry/current hash
+      authority fresh；Fast/Architecture/Contract/Integration/Reproducibility/Full
       PASS；新exact release promotion后2026-07-27从artifact_lineage恢复并完成Reader Brief/quality/terminal
-      PASS；`production_effect=none`。|2026-07-28：READ_ONLY/START/LANE preflight PASS；contract/runtime/CLI/lineage实现完成，focused
-      parallel tests 65 passed。旧2026-07-27 graph现为PASS_WITH_WARNINGS、0 blocking、21
-      warnings；下一步正式验证、promotion及runtime recovery。|'
+      PASS；`production_effect=none`。|2026-07-28：focused 205通过；正式Integration首轮994通过/1竞态失败已修复。新候选Fast首轮340通过/1
+      `S0_DOCUMENT_DRIFT`，下一步刷新S0/S1、devex和compatibility后再次从Fast起跑六档，再promotion及runtime
+      recovery。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-e3f73aaea262ca22cfecb6fe
+  event_id: legacy-import-c876a81277f78ad0b3635449
   task_id: OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -83,14 +88,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: Codex：完成正式验证、release promotion与2026-07-27 recovery acceptance；operations
-      owner：复核 recovery receipt和下一日常scheduler行为
-    notes: 2026-07-28：READ_ONLY/START/LANE preflight PASS；contract/runtime/CLI/lineage实现完成，focused
-      parallel tests 65 passed。旧2026-07-27 graph现为PASS_WITH_WARNINGS、0 blocking、21
-      warnings；下一步正式验证、promotion及runtime recovery。
+    next_owner: Codex：刷新generated registry并重跑正式验证、完成release promotion与2026-07-27 recovery
+      acceptance；operations owner：复核 recovery receipt和下一日常scheduler行为
+    notes: 2026-07-28：focused 205通过；正式Integration首轮994通过/1竞态失败已修复。新候选Fast首轮340通过/1
+      `S0_DOCUMENT_DRIFT`，下一步刷新S0/S1、devex和compatibility后再次从Fast起跑六档，再promotion及runtime
+      recovery。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:e3f73aaea262ca22cfecb6fe61716e291e5b58d6fe8151a5b6dcc75565ea4895
+  - sha256:c876a81277f78ad0b363544954147e6bb38c41934211cc57862cb702a68a87f2
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -98,22 +103,23 @@ projection:
   - Operations / governed same-as-of recovery and lineage availability
   - P0
   - IN_PROGRESS
-  - Codex：完成正式验证、release promotion与2026-07-27 recovery acceptance；operations owner：复核
-    recovery receipt和下一日常scheduler行为
+  - Codex：刷新generated registry并重跑正式验证、完成release promotion与2026-07-27 recovery acceptance；operations
+    owner：复核 recovery receipt和下一日常scheduler行为
   - 详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`要求补齐容错并让当日case可恢复。Recovery
     request/receipt、immutable parent archive、selective report-tail replay和lineage
-    availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。
+    availability语义已实现；真实失败state副本已证明attempt=2可复用23个upstream steps。Integration首轮唯一失败的并行源码扫描竞态已耐久修复；修复后Fast唯一失败为任务进度变更后的ARCH-005
+    S0/S1 generated registry stale，必须直接刷新而非忽略。
   - 显式recovery parent/state SHA/release/deployment receipt/replay boundary；原terminal
     immutable；只重放幂等且无provider/weights/broker副作用的slice；每parent最多一个child；lineage缺失保留为INSUFFICIENT_DATA
-    warning且不补造，结构/安全错误继续FAIL；Fast/Architecture/Contract/Integration/Reproducibility/Full
-    PASS；新exact release promotion后2026-07-27从artifact_lineage恢复并完成Reader Brief/quality/terminal
+    warning且不补造，结构/安全错误继续FAIL；源码安全扫描排除cache并保持确定性；generated registry/current hash
+    authority fresh；Fast/Architecture/Contract/Integration/Reproducibility/Full PASS；新exact
+    release promotion后2026-07-27从artifact_lineage恢复并完成Reader Brief/quality/terminal
     PASS；`production_effect=none`。
-  - 2026-07-28：READ_ONLY/START/LANE preflight PASS；contract/runtime/CLI/lineage实现完成，focused
-    parallel tests 65 passed。旧2026-07-27 graph现为PASS_WITH_WARNINGS、0 blocking、21 warnings；下一步正式验证、promotion及runtime
+  - 2026-07-28：focused 205通过；正式Integration首轮994通过/1竞态失败已修复。新候选Fast首轮340通过/1 `S0_DOCUMENT_DRIFT`，下一步刷新S0/S1、devex和compatibility后再次从Fast起跑六档，再promotion及runtime
     recovery。
   docs_links:
   - docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
   terminal: false
-  raw_row_sha256: e3f73aaea262ca22cfecb6fe61716e291e5b58d6fe8151a5b6dcc75565ea4895
+  raw_row_sha256: c876a81277f78ad0b363544954147e6bb38c41934211cc57862cb702a68a87f2
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: d4a2e9926c95b6499c20f4ba6350dadd12b83f2a3f8065f91bfb65b1a86af5f1
+fragment_checksum: 22e4975105e27f716c4503f25c25bdda6816b92eaf192d3ad4a4cd0616cd6d6c
