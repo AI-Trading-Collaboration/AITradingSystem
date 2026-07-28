@@ -1,0 +1,125 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
+  title: null
+  domain: Strategy Style Discovery / decision-target redesign preregistration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy owner：如需验证O1 capability，等待canonical DQ strict PASS后另立capability-audit任务并取得Owner新授权
+  requirement_refs:
+  - docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md
+  - docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md
+  - docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md
+  - docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`、`docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`
+    与 `docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md`。Owner先关闭旧tail-risk
+    path，再选择O1 `RELATIVE_OPPORTUNITY_SPREAD` single target，并以 `approve_s4_o1_pilot_policy_bundle_v1`
+    批准结果读取前的 `TRADING_2463_O1_S4_PILOT_V1` reviewed freeze。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Target/action/label/availability/PIT/DQ/coverage/falsification合同完整；冻结5-session
+      single horizon、无sensitivity horizon、expanding purged walk-forward、effective-sample与fold/regime/event
+      floors、OOF MSE skill及robustness gates；未读取新count/result、未访问prospective、未训练模型；capability
+      audit、Decision Value Audit、risk overlay、candidate/backtest/weights、QLD automatic
+      selection、paper-shadow、production与broker均未启动；适用治理门禁PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 510
+    row_sha256: c9c83ebdd03cb6159b027d53896ec4bd5c1c8f35aaf2155b23d69f188a9d4100
+    cell_count: 8
+    all_cells:
+    - TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
+    - Strategy Style Discovery / decision-target redesign preregistration
+    - P0
+    - DONE
+    - strategy owner：如需验证O1 capability，等待canonical DQ strict PASS后另立capability-audit任务并取得Owner新授权
+    - 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`、`docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`
+      与 `docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md`。Owner先关闭旧tail-risk
+      path，再选择O1 `RELATIVE_OPPORTUNITY_SPREAD` single target，并以 `approve_s4_o1_pilot_policy_bundle_v1`
+      批准结果读取前的 `TRADING_2463_O1_S4_PILOT_V1` reviewed freeze。
+    - Target/action/label/availability/PIT/DQ/coverage/falsification合同完整；冻结5-session
+      single horizon、无sensitivity horizon、expanding purged walk-forward、effective-sample与fold/regime/event
+      floors、OOF MSE skill及robustness gates；未读取新count/result、未访问prospective、未训练模型；capability
+      audit、Decision Value Audit、risk overlay、candidate/backtest/weights、QLD automatic
+      selection、paper-shadow、production与broker均未启动；适用治理门禁PASS。
+    - 2026-07-28：S1～S4在preregistration freeze边界完成，`numeric_policy_frozen=true`、`capability_audit_started=false`。base-drift
+      plan=`integration-revalidation-d9cf7dfd2ab0fcfd8aca`按reviewed reconciliation接入latest-main
+      candidate；未来audit是独立新任务；`production_effect=none`、`broker_action=none`。
+    raw_line: '|TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION|Strategy Style
+      Discovery / decision-target redesign preregistration|P0|DONE|strategy owner：如需验证O1
+      capability，等待canonical DQ strict PASS后另立capability-audit任务并取得Owner新授权|详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`、`docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`
+      与 `docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md`。Owner先关闭旧tail-risk
+      path，再选择O1 `RELATIVE_OPPORTUNITY_SPREAD` single target，并以 `approve_s4_o1_pilot_policy_bundle_v1`
+      批准结果读取前的 `TRADING_2463_O1_S4_PILOT_V1` reviewed freeze。|Target/action/label/availability/PIT/DQ/coverage/falsification合同完整；冻结5-session
+      single horizon、无sensitivity horizon、expanding purged walk-forward、effective-sample与fold/regime/event
+      floors、OOF MSE skill及robustness gates；未读取新count/result、未访问prospective、未训练模型；capability
+      audit、Decision Value Audit、risk overlay、candidate/backtest/weights、QLD automatic
+      selection、paper-shadow、production与broker均未启动；适用治理门禁PASS。|2026-07-28：S1～S4在preregistration
+      freeze边界完成，`numeric_policy_frozen=true`、`capability_audit_started=false`。base-drift
+      plan=`integration-revalidation-d9cf7dfd2ab0fcfd8aca`按reviewed reconciliation接入latest-main
+      candidate；未来audit是独立新任务；`production_effect=none`、`broker_action=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c9c83ebdd03cb6159b027d53
+  task_id: TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: strategy owner：如需验证O1 capability，等待canonical DQ strict PASS后另立capability-audit任务并取得Owner新授权
+    notes: 2026-07-28：S1～S4在preregistration freeze边界完成，`numeric_policy_frozen=true`、`capability_audit_started=false`。base-drift
+      plan=`integration-revalidation-d9cf7dfd2ab0fcfd8aca`按reviewed reconciliation接入latest-main
+      candidate；未来audit是独立新任务；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:c9c83ebdd03cb6159b027d53896ec4bd5c1c8f35aaf2155b23d69f188a9d4100
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION
+  - Strategy Style Discovery / decision-target redesign preregistration
+  - P0
+  - DONE
+  - strategy owner：如需验证O1 capability，等待canonical DQ strict PASS后另立capability-audit任务并取得Owner新授权
+  - 详见 `docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md`、`docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md`、`docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md`
+    与 `docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md`。Owner先关闭旧tail-risk
+    path，再选择O1 `RELATIVE_OPPORTUNITY_SPREAD` single target，并以 `approve_s4_o1_pilot_policy_bundle_v1`
+    批准结果读取前的 `TRADING_2463_O1_S4_PILOT_V1` reviewed freeze。
+  - Target/action/label/availability/PIT/DQ/coverage/falsification合同完整；冻结5-session
+    single horizon、无sensitivity horizon、expanding purged walk-forward、effective-sample与fold/regime/event
+    floors、OOF MSE skill及robustness gates；未读取新count/result、未访问prospective、未训练模型；capability
+    audit、Decision Value Audit、risk overlay、candidate/backtest/weights、QLD automatic
+    selection、paper-shadow、production与broker均未启动；适用治理门禁PASS。
+  - 2026-07-28：S1～S4在preregistration freeze边界完成，`numeric_policy_frozen=true`、`capability_audit_started=false`。base-drift
+    plan=`integration-revalidation-d9cf7dfd2ab0fcfd8aca`按reviewed reconciliation接入latest-main
+    candidate；未来audit是独立新任务；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md
+  - docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md
+  - docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md
+  - docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md
+  terminal: true
+  raw_row_sha256: c9c83ebdd03cb6159b027d53896ec4bd5c1c8f35aaf2155b23d69f188a9d4100
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a70f6765f9f3a9a083b48a65c040fcbad75ca177038c925be8b9f5e3e95c3319

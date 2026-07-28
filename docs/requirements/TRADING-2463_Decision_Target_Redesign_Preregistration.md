@@ -2,7 +2,7 @@
 
 最后更新：2026-07-28
 
-状态：`IN_PROGRESS_S4_O1_SELECTED_POLICY_REVIEW_REQUIRED_CAPABILITY_AUDIT_NOT_STARTED`
+状态：`COMPLETE_S4_O1_POLICY_FROZEN_CAPABILITY_AUDIT_SEPARATE_NOT_STARTED`
 
 稳定任务 ID：`TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION`
 
@@ -13,6 +13,7 @@ Owner 决策：
 - `owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1`
 - `owner_decision:TRADING-2463:2026-07-28:enter_s3_target_selection_pack_v1`
 - `owner_decision:TRADING-2463:2026-07-28:select_o1_relative_opportunity_spread_single_target_for_s4_v1`
+- `owner_decision:TRADING-2463:2026-07-28:approve_s4_o1_pilot_policy_bundle_v1`
 - `owner_decision:TRADING-2459:2026-07-27:defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`
 
 ## 1. 决策与目标
@@ -84,12 +85,13 @@ S3 当前权威选择包：
 该文件只形成 Owner 可审阅的 option triage、单/双 target 选择、policy gap 与显式选择位；
 在 Owner 选择前，`selected_target=NONE`，不得启动 S4 或任何 capability computation。
 
-S4 当前权威 preregistration freeze proposal：
+S4 当前权威 reviewed preregistration freeze：
 `docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md`。
-Owner 已选择 O1 单 target，但尚未批准 numeric pilot policy bundle；当前
+Owner 已选择 O1 单 target并批准完整 Pilot Bundle v1；当前
 `selected_target=RELATIVE_OPPORTUNITY_SPREAD`、`target_structure=SINGLE_TARGET`、
-`numeric_policy_frozen=false`。在 Owner 审阅 numeric policy 前不得读取新 coverage/result，
-未来 capability audit 仍须另立任务。
+`primary_horizon=5_COMMON_SESSIONS`、`numeric_policy_frozen=true`，Policy ID 为
+`TRADING_2463_O1_S4_PILOT_V1`。本次批准未读取新 coverage/result；未来 capability audit
+仍须另立任务并取得新的 Owner 授权。
 
 ## 4. 阶段与依赖
 
@@ -232,3 +234,16 @@ Owner 已选择 O1 单 target，但尚未批准 numeric pilot policy bundle；�
   `natural_integration_boundary`。五类runtime evidence、checkout intent与当前lease
   events按7项显式路径白名单迁移到canonical `D:\Work\AITradingSystem`，共19个文件
   逐文件SHA-256一致；post-Full Architecture/Contract仍待最终tracked state验证。
+- 2026-07-28：Owner以
+  `owner_decision:TRADING-2463:2026-07-28:approve_s4_o1_pilot_policy_bundle_v1`
+  批准完整 S4 O1 Pilot Bundle v1。`TRADING_2463_O1_S4_PILOT_V1` 现为
+  `REVIEWED_ACTIVE_PREREGISTRATION_FREEZE`，冻结 single primary horizon=`5 common
+  sessions`、无 sensitivity horizon、expanding purged walk-forward、effective-sample 与
+  fold/regime/event coverage floors、OOF MSE skill primary gate、bootstrap/fold/rank
+  robustness gate及 mandatory falsification axes。审批前后均未读取新 count/result、
+  未访问 prospective、未训练模型；capability audit、Decision Value Audit、risk overlay、
+  candidate/backtest/weights、QLD automatic selection、paper-shadow、production与broker
+  均未启动。S4 policy 的业务退出条件已经满足；base-drift plan
+  `integration-revalidation-d9cf7dfd2ab0fcfd8aca` 已通过 exact reviewed reconciliation，
+  本任务在 latest-main final candidate 上归档 `DONE`。未来 capability audit 必须等待
+  canonical DQ strict `PASS`、另立任务并取得新的 Owner 授权。

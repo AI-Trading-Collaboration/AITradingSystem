@@ -2,7 +2,7 @@
 
 最后更新：2026-07-28
 
-状态：`S4_IN_PROGRESS_NUMERIC_POLICY_OWNER_REVIEW_REQUIRED_CAPABILITY_AUDIT_NOT_STARTED`
+状态：`S4_COMPLETE_O1_PILOT_POLICY_FROZEN_CAPABILITY_AUDIT_NOT_STARTED`
 
 所属任务：`TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION`
 
@@ -10,24 +10,28 @@
 
 `owner_decision:TRADING-2463:2026-07-28:select_o1_relative_opportunity_spread_single_target_for_s4_v1`
 
+Pilot policy 批准决策：
+
+`owner_decision:TRADING-2463:2026-07-28:approve_s4_o1_pilot_policy_bundle_v1`
+
 ## 1. 本阶段边界
 
 Owner 已选择 O1 `RELATIVE_OPPORTUNITY_SPREAD` 作为本轮唯一 target，并授权进入 S4。
-本文件只把该选择转化为结果读取前的 preregistration freeze proposal。Owner 尚未批准本文件
-第 5 节的 numeric pilot policy bundle，因此当前：
+Owner 已在任何新 count/result、模型输出或 prospective evidence 被读取前，批准本文件
+第 5 节完整 Pilot Bundle v1。该 bundle 现为 reviewed preregistration freeze，因此当前：
 
 - `selected_target=RELATIVE_OPPORTUNITY_SPREAD`
 - `target_structure=SINGLE_TARGET`
 - `primary_target=RELATIVE_OPPORTUNITY_SPREAD`
 - `secondary_target=NONE`
 - `risk_veto_target=NONE`
-- `numeric_policy_frozen=false`
+- `numeric_policy_frozen=true`
 - `capability_audit_started=false`
 
-S4 不读取新 label count、fold/regime/event coverage、模型输出、capability result 或 prospective
-evidence，不运行模型、Decision Value Audit、risk overlay、candidate、backtest、weights、
-paper-shadow、production 或 broker action。未来 capability audit 必须另立任务，不能由本文件
-自动启动。
+本次批准只完成 S4 policy freeze，不授权读取新 label count、fold/regime/event coverage、
+模型输出、capability result 或 prospective evidence，不授权运行模型、Decision Value Audit、
+risk overlay、candidate、backtest、weights、paper-shadow、production 或 broker action。
+未来 capability audit 必须另立任务并取得新的 Owner 授权，不能由本文件自动启动。
 
 ## 2. Owner 选择已经冻结的 Target Contract
 
@@ -105,21 +109,23 @@ instrument，automatic selection 与 production governance 继续等待 canonica
   - `INSUFFICIENT_ROBUSTNESS_EVIDENCE`
 - capability 通过不等于 strategy value、action selection、risk overlay 或 promotion 通过。
 
-## 5. S4 Pilot Policy Bundle v1 Proposal
+## 5. S4 Pilot Policy Bundle v1 Reviewed Freeze
 
-Policy ID：`TRADING_2463_O1_S4_PILOT_V1_PROPOSAL`
+Policy ID：`TRADING_2463_O1_S4_PILOT_V1`
 
 Policy owner：project owner
 
-Policy status：`OWNER_REVIEW_REQUIRED_NOT_ACTIVE`
+Policy status：`REVIEWED_ACTIVE_PREREGISTRATION_FREEZE`
+
+Proposal predecessor：`TRADING_2463_O1_S4_PILOT_V1_PROPOSAL`
 
 Rationale：本 bundle 以每周相对机会判断为经济单位，使用半年度 outer fold 取得可复核的
 时间稳定性，并按 `H` 折减重叠 label。所有数字均在不读取本轮新 count、fold result 或模型输出
-的前提下提出；它们是需 Owner 审阅的 pilot baseline，不是已证明最优的参数。
+的前提下提出并获 Owner 批准；它们是结果读取前冻结的 pilot baseline，不是已证明最优的参数。
 
-### 5.1 推荐数值
+### 5.1 冻结数值
 
-|policy slot|proposal|结果无关 rationale|
+|policy slot|reviewed freeze|结果无关 rationale|
 |---|---:|---|
 |primary horizon `H`|5 common sessions|对应约一周相对机会；比 20-session target 提供更多近似独立 observation，且不改变最终 action cadence|
 |sensitivity horizons|none|最小化 multiplicity；后续新增必须新版本|
@@ -138,7 +144,7 @@ Rationale：本 bundle 以每周相对机会判断为经济单位，使用半年
 若 autocorrelation ESS 小于表内 non-overlap floor，以较小值为准并 fail closed；不得用 raw row
 count 取代 effective sample。
 
-### 5.2 推荐 Primary Gate
+### 5.2 冻结 Primary Gate
 
 Primary score：
 
@@ -146,7 +152,7 @@ Primary score：
 OOF_MSE_SKILL = 1 - OOF_MSE_MODEL / OOF_MSE_TRAIN_MEAN_BASELINE
 ```
 
-推荐 capability gate：
+冻结 capability gate：
 
 1. `OOF_MSE_SKILL` point estimate 至少为 `0.02`；
 2. 以 5-session moving-block bootstrap 计算的 one-sided 95% lower confidence bound 大于 `0`；
@@ -157,14 +163,13 @@ OOF_MSE_SKILL = 1 - OOF_MSE_MODEL / OOF_MSE_TRAIN_MEAN_BASELINE
 7. exact reconstruction、DQ、coverage、multiple-testing ledger 任一失败均覆盖上述数值结果。
 
 `0.02` 是拒绝统计上可见但经济上过小 improvement 的 pilot minimum practical effect；
-`-0.10` 是限制单个时期显著反向失效的 pilot instability bound。两者必须由 Owner 显式批准，
-未来 audit 不得根据结果下调。
+`-0.10` 是限制单个时期显著反向失效的 pilot instability bound。Owner 已随完整 bundle
+显式批准两者；未来 audit 不得根据结果下调。
 
 ### 5.3 Review 与失效条件
 
-本 proposal 在下列任一情况发生时自动失效并需新版本：
+本 reviewed freeze 在下列任一情况发生时自动失效并需新版本：
 
-- Owner 未显式批准而开始读取 coverage count 或结果；
 - target、horizon、action semantics、canonical DQ contract 或 source lineage 改变；
 - future audit 增加 sensitivity horizon、model family、target transformation 或 metric；
 - 实际可用窗口无法满足本 bundle 的 coverage floor；
@@ -211,37 +216,31 @@ OOF_MSE_SKILL = 1 - OOF_MSE_MODEL / OOF_MSE_TRAIN_MEAN_BASELINE
 未运行的 proposal 不计为 empirical attempt，但已知并讨论过的设计选项必须留在 ledger 的
 design history 中。
 
-## 8. Owner Review 选择位
+## 8. Owner Review 处置
 
-### A. 批准完整 Pilot Bundle v1（推荐）
+### 已选择：批准完整 Pilot Bundle v1
 
-`owner_decision:TRADING-2463:YYYY-MM-DD:approve_s4_o1_pilot_policy_bundle_v1`
+`owner_decision:TRADING-2463:2026-07-28:approve_s4_o1_pilot_policy_bundle_v1`
 
-批准后本任务只完成 S4 freeze 与治理验证；capability audit 仍须另立新任务和新授权。
+该决策批准第 5 节完整 bundle，不作逐项修改。当前任务只完成 S4 freeze 与治理验证；
+capability audit 仍须另立新任务和新授权。
 
-### B. 只修改 Horizon
+以下未选择选项仅作为本轮审阅历史保留：
 
-Owner 指定一个新的 single primary `H` 及 decision-cadence rationale；其余数字必须按新 `H`
-重新推导并形成 v2 proposal，不能直接沿用本表。
-
-### C. 要求逐项重审
-
-保持 `numeric_policy_frozen=false`，由 Owner 指定需要修改的 split、coverage、metric 或 gate。
-
-### D. 关闭 O1 S4
-
-不批准 numeric policy，关闭本轮 redesign；未来重启需新任务。
+- 只修改 Horizon；
+- 要求逐项重审；
+- 关闭 O1 S4。
 
 ## 9. 当前停止点
 
 - `S1=COMPLETE`
 - `S2=COMPLETE`
 - `S3=COMPLETE_O1_SELECTED`
-- `S4=IN_PROGRESS_OWNER_POLICY_REVIEW_REQUIRED`
+- `S4=COMPLETE_O1_POLICY_FROZEN`
 - `selected_target=RELATIVE_OPPORTUNITY_SPREAD`
 - `target_structure=SINGLE_TARGET`
-- `primary_horizon=UNAPPROVED_PROPOSAL_5_COMMON_SESSIONS`
-- `numeric_policy_frozen=false`
+- `primary_horizon=5_COMMON_SESSIONS`
+- `numeric_policy_frozen=true`
 - `new_results_read=false`
 - `prospective_accessed=false`
 - `model_training_executed=false`
@@ -269,3 +268,20 @@ Owner 指定一个新的 single primary `H` 及 decision-cadence rationale；其
 迁移到 canonical `D:\Work\AITradingSystem`，共 19 个文件逐文件 SHA-256 一致。
 post-Full Architecture/Contract 仍须在最终 tracked state 上通过。以上验证只证明 S4 entry
 governance tree 一致，不批准 proposal 数字、不构成 capability evidence，也不启动未来 audit。
+
+## 11. Pilot Bundle 批准与任务停止
+
+2026-07-28，Owner 以
+`owner_decision:TRADING-2463:2026-07-28:approve_s4_o1_pilot_policy_bundle_v1`
+批准第 5 节完整 bundle。批准发生时：
+
+- 未读取新 label count、coverage count、fold/regime/event result 或 capability result；
+- 未访问 prospective，未训练模型；
+- 未启动 capability audit、Decision Value Audit 或 risk overlay；
+- 未创建 candidate、backtest、weights 或 QLD automatic selection；
+- `production_effect=none`、`broker_action=none`。
+
+因此 S4 的退出条件已经满足，TRADING-2463 在 preregistration freeze 边界结项。后续若要验证
+O1 capability，必须以 `TRADING_2463_O1_S4_PILOT_V1` 为输入另立 capability-audit 任务，
+先满足 canonical DQ strict `PASS`，再取得新的 Owner 授权；本文件不授予该后续任务任何
+自动启动权。
