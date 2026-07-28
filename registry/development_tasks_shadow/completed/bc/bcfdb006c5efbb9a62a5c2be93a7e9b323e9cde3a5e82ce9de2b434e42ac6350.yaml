@@ -1,0 +1,109 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
+  title: null
+  domain: Data Foundation / canonical daily window, source-calendar and adjustment
+    semantics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations owner：观察下一合法canonical daily；DATA-GOV owner另行选择ACL、D0C或逐consumer
+    slice
+  requirement_refs:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。方案A
+    engineering与formal证据保持有效；新合法`as_of=2026-07-27`唯一daily chain形成strict receipt及完整PIT/score/report/finalization
+    operational evidence。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: reviewed `daily_default.v1` strict DQ为0 error/0 warning；publication/window/calendar/adjustment/implementation
+      authority精确绑定；exact daily-score authorization成立；terminal PASS且旧FAILED keys immutable；无look-ahead、`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 516
+    row_sha256: e76ec24ad3a5734504a18cd684f5cd54d73771110ca8572c49e0b99833cbca8d
+    cell_count: 8
+    all_cells:
+    - DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
+    - Data Foundation / canonical daily window, source-calendar and adjustment semantics
+    - P0
+    - DONE
+    - operations owner：观察下一合法canonical daily；DATA-GOV owner另行选择ACL、D0C或逐consumer slice
+    - 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。方案A
+      engineering与formal证据保持有效；新合法`as_of=2026-07-27`唯一daily chain形成strict receipt及完整PIT/score/report/finalization
+      operational evidence。
+    - reviewed `daily_default.v1` strict DQ为0 error/0 warning；publication/window/calendar/adjustment/implementation
+      authority精确绑定；exact daily-score authorization成立；terminal PASS且旧FAILED keys immutable；无look-ahead、`production_effect=none`。
+    - 2026-07-29：receipt=`dq_execution_28af63a1...`、SHA=`6a4319f1...6a58`、status=`PASS`；`daily_score_daily@1.0.0`
+      authorization=`true`，automatic non-daily/generic cutover=`false`。Recovery child=`daily_ops_run:2026-07-27:20260728T072717Z`
+      terminal PASS；Reader Brief=`OK`、finalization/report quality=`PASS_WITH_WARNINGS`且0
+      blocking。任务归档DONE；不自动授权G4C、QLD、production或broker。
+    raw_line: '|DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION|Data Foundation
+      / canonical daily window, source-calendar and adjustment semantics|P0|DONE|operations
+      owner：观察下一合法canonical daily；DATA-GOV owner另行选择ACL、D0C或逐consumer slice|详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。方案A
+      engineering与formal证据保持有效；新合法`as_of=2026-07-27`唯一daily chain形成strict receipt及完整PIT/score/report/finalization
+      operational evidence。|reviewed `daily_default.v1` strict DQ为0 error/0 warning；publication/window/calendar/adjustment/implementation
+      authority精确绑定；exact daily-score authorization成立；terminal PASS且旧FAILED keys immutable；无look-ahead、`production_effect=none`。|2026-07-29：receipt=`dq_execution_28af63a1...`、SHA=`6a4319f1...6a58`、status=`PASS`；`daily_score_daily@1.0.0`
+      authorization=`true`，automatic non-daily/generic cutover=`false`。Recovery child=`daily_ops_run:2026-07-27:20260728T072717Z`
+      terminal PASS；Reader Brief=`OK`、finalization/report quality=`PASS_WITH_WARNINGS`且0
+      blocking。任务归档DONE；不自动授权G4C、QLD、production或broker。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e76ec24ad3a5734504a18cd6
+  task_id: DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: operations owner：观察下一合法canonical daily；DATA-GOV owner另行选择ACL、D0C或逐consumer
+      slice
+    notes: 2026-07-29：receipt=`dq_execution_28af63a1...`、SHA=`6a4319f1...6a58`、status=`PASS`；`daily_score_daily@1.0.0`
+      authorization=`true`，automatic non-daily/generic cutover=`false`。Recovery child=`daily_ops_run:2026-07-27:20260728T072717Z`
+      terminal PASS；Reader Brief=`OK`、finalization/report quality=`PASS_WITH_WARNINGS`且0
+      blocking。任务归档DONE；不自动授权G4C、QLD、production或broker。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e76ec24ad3a5734504a18cd684f5cd54d73771110ca8572c49e0b99833cbca8d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
+  - Data Foundation / canonical daily window, source-calendar and adjustment semantics
+  - P0
+  - DONE
+  - operations owner：观察下一合法canonical daily；DATA-GOV owner另行选择ACL、D0C或逐consumer slice
+  - 详见 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。方案A
+    engineering与formal证据保持有效；新合法`as_of=2026-07-27`唯一daily chain形成strict receipt及完整PIT/score/report/finalization
+    operational evidence。
+  - reviewed `daily_default.v1` strict DQ为0 error/0 warning；publication/window/calendar/adjustment/implementation
+    authority精确绑定；exact daily-score authorization成立；terminal PASS且旧FAILED keys immutable；无look-ahead、`production_effect=none`。
+  - 2026-07-29：receipt=`dq_execution_28af63a1...`、SHA=`6a4319f1...6a58`、status=`PASS`；`daily_score_daily@1.0.0`
+    authorization=`true`，automatic non-daily/generic cutover=`false`。Recovery child=`daily_ops_run:2026-07-27:20260728T072717Z`
+    terminal PASS；Reader Brief=`OK`、finalization/report quality=`PASS_WITH_WARNINGS`且0
+    blocking。任务归档DONE；不自动授权G4C、QLD、production或broker。
+  docs_links:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
+  terminal: true
+  raw_row_sha256: e76ec24ad3a5734504a18cd684f5cd54d73771110ca8572c49e0b99833cbca8d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: ea2395715f18cf90331d60c6659de5ee775e60e99ea2c6a539167432fcfc4bce

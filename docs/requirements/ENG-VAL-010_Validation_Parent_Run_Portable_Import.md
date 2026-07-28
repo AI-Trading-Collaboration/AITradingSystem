@@ -1,8 +1,8 @@
 # ENG-VAL-010 Validation Parent Run Portable Import
 
-最后更新：2026-07-24
+最后更新：2026-07-29
 
-状态：`VALIDATING`
+状态：`DONE`
 
 稳定任务 ID：`ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT`
 
@@ -124,8 +124,8 @@ worktree guard 误判为业务或共享路径脏写；其他 untracked/modified 
 3. `COMPLETE`：focused/static、generated authority 与
    architecture/contract/integration/reproducibility 已在 exact candidate PASS。
 4. `COMPLETE`：以 `failure_fix_rerun` + parent summary + import proof 完成第二次 exact-tree Full。
-5. `IN_PROGRESS`：刷新并验证 compatibility/deprecation/source hashes，执行 post-Full gates；
-   由 OPS-067 coordinator 提交、push 后进入 canonical daily acceptance。
+5. `COMPLETE`：刷新并验证 compatibility/deprecation/source hashes，执行 post-Full gates；
+   由 OPS-067 coordinator 提交、push 后完成 canonical daily acceptance。
 
 ## 安全边界
 
@@ -184,3 +184,9 @@ worktree guard 误判为业务或共享路径脏写；其他 untracked/modified 
   architecture/contract/integration/reproducibility=`577/274/993/23 passed`。工程门禁闭合，
   仍保持 `VALIDATING`，待最终 evidence commit 的 exact-tree repeat gates、正常 push 和
   OPS-067 canonical daily acceptance 后统一归档。
+- 2026-07-29：OPS-067 canonical daily acceptance 已由 recovery child
+  `daily_ops_run:2026-07-27:20260728T072717Z` terminal `PASS` 与同次
+  Reader Brief/report-quality/finalization evidence关闭；portable import 的历史失败 parent、
+  proof 与 replacement Full bytes保持不变。本任务不再存在独立退出条件，按既有登记与
+  OPS-067/D0B2B 同波次转 `DONE`。本关闭只归档已验证 developer validation capability，
+  `production_effect=none`，不改变 runtime、DQ/PIT、strategy、weights 或 broker 行为。

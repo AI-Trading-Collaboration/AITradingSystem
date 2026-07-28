@@ -12,8 +12,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
-    durability或逐consumer独立授权
+  next_owner: data platform owner + project owner：在ACL、D0C crash durability或逐consumer
+    migration中选择下一独立slice
   requirement_refs:
   - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
@@ -22,21 +22,21 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
     supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-    formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
-    semantic缺口，当前无可消费strict PASS receipt。
+    engineering、D0B3 first-consumer authorization及D0B2B operational acceptance已闭合；exact
+    strict receipt只授权`daily_score_daily@1.0.0`，不自动扩大consumer范围。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
       receipt/publication/source/window/policy/validator/input/report/calendar authority；strict
-      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
-      run PASS前G4C、其余consumer与automatic non-daily均false。
+      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其他consumer、automatic
+      non-daily、production与broker须独立授权。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1594
-    row_sha256: 49f3336cb63bc0ee5599f76c655f64f4eca707f71d6e8602ffa0f378ffc19cbd
+    row_sha256: bda9e81d7a3b80b591b4dc0fc7bdab1b227a49e0c65b14006b087c0edf6e504a
     cell_count: 8
     all_cells:
     - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
@@ -44,36 +44,34 @@ task_record:
       lineage
     - P0
     - IN_PROGRESS
-    - data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
-      durability或逐consumer独立授权
+    - data platform owner + project owner：在ACL、D0C crash durability或逐consumer migration中选择下一独立slice
     - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
       supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-      formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
-      semantic缺口，当前无可消费strict PASS receipt。
+      engineering、D0B3 first-consumer authorization及D0B2B operational acceptance已闭合；exact
+      strict receipt只授权`daily_score_daily@1.0.0`，不自动扩大consumer范围。
     - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
       receipt/publication/source/window/policy/validator/input/report/calendar authority；strict
-      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
-      run PASS前G4C、其余consumer与automatic non-daily均false。
-    - 2026-07-25：Wave15 failure-fix Full=`7180/0`保留；`as_of=2026-07-24`真实run为3 errors+1
-      warning并在DQ fail closed。DATA-GOV parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash
-      durability、production和broker继续关闭。
+      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其他consumer、automatic
+      non-daily、production与broker须独立授权。
+    - 2026-07-29：D0B2B以`as_of=2026-07-27` receipt `dq_execution_28af63a1...`=`PASS
+      / 0 error / 0 warning`和terminal PASS完整链转DONE；OPS-067同步关闭。DATA-GOV parent保持`IN_PROGRESS`，等待Owner选择ACL、D0C或逐consumer下一slice；`production_effect=none`。
     raw_line: '|DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE|Data Foundation /
       immutable snapshots, canonical DQ evidence, lifecycle and lineage|P0|IN_PROGRESS|data
-      platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
-      durability或逐consumer独立授权|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
+      platform owner + project owner：在ACL、D0C crash durability或逐consumer migration中选择下一独立slice|详见
+      `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
       supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-      formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
-      semantic缺口，当前无可消费strict PASS receipt。|canonical数据采用staged immutable snapshot
-      + validated manifest + atomic pointer；首consumer绑定exact receipt/publication/source/window/policy/validator/input/report/calendar
-      authority；strict PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
-      run PASS前G4C、其余consumer与automatic non-daily均false。|2026-07-25：Wave15 failure-fix
-      Full=`7180/0`保留；`as_of=2026-07-24`真实run为3 errors+1 warning并在DQ fail closed。DATA-GOV
-      parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash durability、production和broker继续关闭。|'
+      engineering、D0B3 first-consumer authorization及D0B2B operational acceptance已闭合；exact
+      strict receipt只授权`daily_score_daily@1.0.0`，不自动扩大consumer范围。|canonical数据采用staged
+      immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact receipt/publication/source/window/policy/validator/input/report/calendar
+      authority；strict PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其他consumer、automatic
+      non-daily、production与broker须独立授权。|2026-07-29：D0B2B以`as_of=2026-07-27` receipt
+      `dq_execution_28af63a1...`=`PASS / 0 error / 0 warning`和terminal PASS完整链转DONE；OPS-067同步关闭。DATA-GOV
+      parent保持`IN_PROGRESS`，等待Owner选择ACL、D0C或逐consumer下一slice；`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-49f3336cb63bc0ee5599f76c
+  event_id: legacy-import-bda9e81d7a3b80b591b4dc0f
   task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -86,14 +84,13 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
-      durability或逐consumer独立授权
-    notes: 2026-07-25：Wave15 failure-fix Full=`7180/0`保留；`as_of=2026-07-24`真实run为3
-      errors+1 warning并在DQ fail closed。DATA-GOV parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash
-      durability、production和broker继续关闭。
+    next_owner: data platform owner + project owner：在ACL、D0C crash durability或逐consumer
+      migration中选择下一独立slice
+    notes: 2026-07-29：D0B2B以`as_of=2026-07-27` receipt `dq_execution_28af63a1...`=`PASS
+      / 0 error / 0 warning`和terminal PASS完整链转DONE；OPS-067同步关闭。DATA-GOV parent保持`IN_PROGRESS`，等待Owner选择ACL、D0C或逐consumer下一slice；`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:49f3336cb63bc0ee5599f76c655f64f4eca707f71d6e8602ffa0f378ffc19cbd
+  - sha256:bda9e81d7a3b80b591b4dc0fc7bdab1b227a49e0c65b14006b087c0edf6e504a
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -101,23 +98,21 @@ projection:
   - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
   - P0
   - IN_PROGRESS
-  - data platform owner + project owner；先关闭D0B2B operational acceptance，再推进ACL/crash
-    durability或逐consumer独立授权
+  - data platform owner + project owner：在ACL、D0C crash durability或逐consumer migration中选择下一独立slice
   - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、G4/D0B
     supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-    formal工程基线与D0B3 first-consumer authorization已闭合；首个真实daily暴露window/calendar/adjustment
-    semantic缺口，当前无可消费strict PASS receipt。
+    engineering、D0B3 first-consumer authorization及D0B2B operational acceptance已闭合；exact
+    strict receipt只授权`daily_score_daily@1.0.0`，不自动扩大consumer范围。
   - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
     receipt/publication/source/window/policy/validator/input/report/calendar authority；strict
-    PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；D0B2B真实canonical
-    run PASS前G4C、其余consumer与automatic non-daily均false。
-  - 2026-07-25：Wave15 failure-fix Full=`7180/0`保留；`as_of=2026-07-24`真实run为3 errors+1
-    warning并在DQ fail closed。DATA-GOV parent仍`IN_PROGRESS`；D0B2B为当前P0 blocker，ACL/crash
-    durability、production和broker继续关闭。
+    PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；其他consumer、automatic
+    non-daily、production与broker须独立授权。
+  - 2026-07-29：D0B2B以`as_of=2026-07-27` receipt `dq_execution_28af63a1...`=`PASS /
+    0 error / 0 warning`和terminal PASS完整链转DONE；OPS-067同步关闭。DATA-GOV parent保持`IN_PROGRESS`，等待Owner选择ACL、D0C或逐consumer下一slice；`production_effect=none`。
   docs_links:
   - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   terminal: false
-  raw_row_sha256: 49f3336cb63bc0ee5599f76c655f64f4eca707f71d6e8602ffa0f378ffc19cbd
+  raw_row_sha256: bda9e81d7a3b80b591b4dc0fc7bdab1b227a49e0c65b14006b087c0edf6e504a
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 110f258b8726fdf6f05ffb771996655a03029f8f2c7420932025ea720e6904ce
+fragment_checksum: 147c2a1c388c0ad973c3b3fa0cb361f4f658501e332bd11bc2185cdaa2e527b0

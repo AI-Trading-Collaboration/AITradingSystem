@@ -31940,3 +31940,257 @@ phase_ops_071_operational_acceptance_closeout:
     qld_automatic_selection_enabled: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_001_d0b2b_ops067_operational_closeout:
+  schema_version: data_gov_001_d0b2b_ops067_operational_closeout_compatibility.v1
+  status: COMPLETE
+  boundary_id: DATA-GOV-001-D0B2B-OPS-067-OPERATIONAL-CLOSEOUT
+  task_ids:
+  - DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION
+  - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+  - ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
+  owner_authorization: owner_direction:2026-07-29:continue_blocked_tasks_in_sequence
+  prior_sections_immutability:
+    source_commit: 0bf517fb9c24e065e0cf0c69abb02e2d7dde8371
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 6619747de0f2691f2c69142994e21354b4c43963
+    raw_byte_count: 2013250
+    raw_sha256: 44f4cf48ec284c1c26e997664421c23515fffe2331939bc6cba23a5170de34e4
+    append_offset: 2013250
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
+  - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+  - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
+  - registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
+  - registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
+  - registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/7b/7b04799972c59b71610e961e1ef5b68bb12230cdbf7f125bd217d27f2a281504.yaml
+  - registry/development_tasks_shadow/active/8a/8ac717bc6cb7975c7630428801f4a29995e9505bf34902f1c4266ccd2a3f9661.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - registry/development_tasks_shadow/active/bc/bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: DATA-GOV-001-D0B2B-OPS-067-OPERATIONAL-CLOSEOUT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_THREE_ARCHIVE_MOVES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_ops_071_operational_acceptance_closeout
+    current_hash_authority: phase_data_gov_001_d0b2b_ops067_operational_closeout.sources
+  removed_live_source_paths:
+  - registry/development_tasks_shadow/active/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/active/bc/bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml
+  - registry/development_tasks_shadow/active/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  new_source_paths:
+  - registry/development_tasks_shadow/completed/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/completed/bc/bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml
+  - registry/development_tasks_shadow/completed/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  source_delta_paths:
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
+  - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+  - registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+  - registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+  - registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
+  - registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
+  - registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
+  - registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
+  - registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+  - registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/7b/7b04799972c59b71610e961e1ef5b68bb12230cdbf7f125bd217d27f2a281504.yaml
+  - registry/development_tasks_shadow/active/8a/8ac717bc6cb7975c7630428801f4a29995e9505bf34902f1c4266ccd2a3f9661.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
+  - registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+  - registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - registry/development_tasks_shadow/completed/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/completed/bc/bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml
+  - registry/development_tasks_shadow/completed/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
+    sha256: 78d8f1b6af894643f5e9a91cd40421a272ed22b0e466673bf03bef6c7bd459da
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+    sha256: 1502c25e0d90786864ef9197792f30f1bfdf226d1f913cfd84bb1e113c39116f
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/ENG-VAL-010_Validation_Parent_Run_Portable_Import.md
+    sha256: c457dc98f0ab48c0c29722ee0571df7e9bf538d0df77a7ba3d85c916ba3b638f
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
+    sha256: 653d5f148553356650f6617cb59fbca21bb290f36554cf2fcb696be24e3c04a5
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 23bd9ffc8c55903da6395e3e9ff1d8ee47784e68c1f3814981a7cc9fc17ef6f2
+    hash_normalization: git_eol_lf
+  - path: docs/task_register_completed.md
+    sha256: e9c26f1aed9d97370d349e098ee772947bcde61fda4a2a9c3077d464d14c4a58
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 95ad9124ba0b73dbd1239739f9247f98ca817e35831c30741325122889386b16
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: c4967d9516c71af4ca332a9957a6056f3eb114c5dc692e74cf75e3c171208696
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: ef2315d5ea2e38d2c05ae9a9b607ca86cc6604963adf455e1134681c1ec4dfc4
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+    sha256: 4dc2b7d12354976a90d102baae717e8574950f20fd152ca636a57ce8e17804f3
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
+    sha256: 791ca09630ed8c84f13060d56ee327baac0af5dfa919883781824f5df151bcce
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
+    sha256: fb3bfe1ae81dc596b588ef68c77eb3e7c39a7c36c0b8fea36b1dec7915fa3377
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
+    sha256: abd6a522a82ff0a2383c351ab6110e9b72f4ab4024838f9d49ee916b9223e100
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
+    sha256: 1335db3c17731cb9340cdfe2561e56c84ac2f85892a248f4c7ed952a4f138dcd
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/53/5384d046e12134a40fd6b11e3967cba8902da30174e414395ac2a09ba454fdab.yaml
+    sha256: be8edfcba214075fc7a87e1b66617e75abecb950a46a55efae897be8f3f2e508
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
+    sha256: c88cab042544027a3444f07b45cb3d79bb2357ae6b49930e134c652c0e1ab852
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
+    sha256: 023325155e14ab1f1085beef5b0ce9a98a43aa894bd8955bea1924bc2d28c367
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
+    sha256: c11f4cd5a0fb844362f5fa2a1bb3182d910ec7b5b205f47bc1f1fec9be5e71ee
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
+    sha256: cfc45e172cbceb057699ab967e8b300d8fc6bdca44910b36d5e7eed250d1c497
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+    sha256: 136beea2078a9aefdfe698ad8aeef3871498ac3e1ffd0e05b1b954bd0c7fddb0
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/7b/7b04799972c59b71610e961e1ef5b68bb12230cdbf7f125bd217d27f2a281504.yaml
+    sha256: 0fefbcdc9e67855cabc2ee132c788b504f5b0f2a6046b63a5dc19ddc70ed28db
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/8a/8ac717bc6cb7975c7630428801f4a29995e9505bf34902f1c4266ccd2a3f9661.yaml
+    sha256: f5556db9d2ee0bf30d5b23f755e5e1ae6b00ee4aa6e67f010245e322b3bc5ac6
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+    sha256: 0edd5c722a505d6badc4acfce97386947879176490ca66fc6a3507c8685ba10e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+    sha256: a1f47f48e59ed15524f8a6a80d146379de6ca881919488b64975a5031fea5ed0
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
+    sha256: afe536465bc3cec233730e579ce2decece04e636565fe22e3e25390981063cba
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+    sha256: ed436f4ca47c6d1c0850ed970293c46ab6910c7c1af33da140b220981a60f940
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+    sha256: 16df1daa15c16a339e9c6d8ea89b536f6a4c0278ca651d5a5f963f105627e1a5
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+    sha256: cabe1230784c59db3b646342895a545770f59d5f4027fb9824ecb7c5e612fe74
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+    sha256: eb69e12b29ecbacdceafa93da682c4a0560a7a4ab5124069186b2a293f499543
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
+    sha256: 24eeb9631ea72ff6c5b13f923a2edf95d6237df93bb99dfd9f662bed939b5540
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
+    sha256: 07ca5651a218b55a30095f8edc2dd4a93e34d86c6e05c9f8c527917b7b4ac8b3
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
+    sha256: 6038edb15c9297a678e65ea9d23af855ccf05a61a97bbbd35461765d2eca49ce
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+    sha256: b781df5822cc0ff0b6901d51f43c6ce6d18c75956953b6244278a0a4c90c6909
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+    sha256: 9ad444a9511f92040e2e8f6696f278581d9fea6b258804cbf0519f88826e1395
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/bc/bcfdb006c5efbb9a62a5c2be93a7e9b323e9cde3a5e82ce9de2b434e42ac6350.yaml
+    sha256: e791e0189e005cc15a1127c01568e0ea1b62f62ba4e9884e9561c099aea46ee9
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+    sha256: 5beeecc509fcb0b09c4eb8a26fe4fa4711790fe44c239ac9da156ae35f79e9f2
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 30eba96f8ef6db46ec87bb36141bbbd47ac91e44f87df67e67eab43d6b47a0c4
+    hash_normalization: git_eol_lf
+  implementation:
+    canonical_as_of: '2026-07-27'
+    strict_dq_receipt_id: dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4
+    strict_dq_status: PASS
+    strict_dq_error_count: 0
+    strict_dq_warning_count: 0
+    daily_score_consumer_authorized: true
+    automatic_non_daily_dispatch: false
+    generic_consumer_cutover_allowed: false
+    child_terminal_status: PASS
+    reader_brief_status: OK
+    finalization_status: PASS_WITH_WARNINGS
+    report_quality_status: PASS_WITH_WARNINGS
+    quality_blocking_issue_count: 0
+  validation:
+    task_registry: PASS_BYTE_IDENTICAL
+    focused_initial: FAIL_91_PASS_43_FAIL_COMPATIBILITY_AUTHORITY_STALE
+    focused: PASS_136_TESTS
+    architecture: PASS_779_TESTS
+    contract: PASS_276_TESTS
+    release_full: PASS_7617_TESTS_EXACT_RELEASE_REUSED_NO_RUNTIME_OR_DATA_FLOW_CHANGE
+  safety:
+    runtime_behavior_changed: false
+    data_flow_changed: false
+    cached_data_mutated: false
+    provider_replayed: false
+    automatic_non_daily_enabled: false
+    qld_automatic_selection_enabled: false
+    production_weights_written: false
+    active_shadow_weights_written: false
+    production_effect: none
+    broker_action: none

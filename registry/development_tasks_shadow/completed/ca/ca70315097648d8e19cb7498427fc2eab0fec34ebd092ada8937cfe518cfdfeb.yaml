@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+  title: null
+  domain: Operations / canonical Reader Brief and report quality fail-closed finalization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations owner：后续日常观察；power-loss durability继续由DATA-GOV D0C独立跟踪
+  requirement_refs:
+  - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
+    bounded transient replace retry、strict finalization、portable parent import及formal/Full已完成；`as_of=2026-07-27`
+    canonical chain实际到达finalization。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
+      fail closed；最终 Reader Brief bytes由同次finalization evidence覆盖；manifest closure后才发布成功；旧FAILED
+      bytes保持；不声称power-loss atomic；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 517
+    row_sha256: 2a168f6f5a4187eb92d90583779218bab3eca17c3f510c7cff9a413b5fb003e0
+    cell_count: 8
+    all_cells:
+    - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+    - Operations / canonical Reader Brief and report quality fail-closed finalization
+    - P0
+    - DONE
+    - operations owner：后续日常观察；power-loss durability继续由DATA-GOV D0C独立跟踪
+    - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
+      bounded transient replace retry、strict finalization、portable parent import及formal/Full已完成；`as_of=2026-07-27`
+      canonical chain实际到达finalization。
+    - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization
+      fail closed；最终 Reader Brief bytes由同次finalization evidence覆盖；manifest closure后才发布成功；旧FAILED
+      bytes保持；不声称power-loss atomic；`production_effect=none`。
+    - 2026-07-29：recovery child state SHA=`5fc5369f...e99f9`、terminal=`PASS`；manifest
+      SHA=`306c61e9...37649`；finalization SHA=`5ee26724...6efde`=`PASS_WITH_WARNINGS`、Reader
+      Brief quality SHA=`6e25902a...0123`=`OK`、report quality SHA=`af76905b...3e38`=`PASS_WITH_WARNINGS`，均0
+      blocking。任务归档DONE；无weights/broker/trading。
+    raw_line: '|OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION|Operations /
+      canonical Reader Brief and report quality fail-closed finalization|P0|DONE|operations
+      owner：后续日常观察；power-loss durability继续由DATA-GOV D0C独立跟踪|详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
+      bounded transient replace retry、strict finalization、portable parent import及formal/Full已完成；`as_of=2026-07-27`
+      canonical chain实际到达finalization。|Report quality `FAIL` 与 Reader Brief quality
+      `FAILED` CLI/step/finalization fail closed；最终 Reader Brief bytes由同次finalization
+      evidence覆盖；manifest closure后才发布成功；旧FAILED bytes保持；不声称power-loss atomic；`production_effect=none`。|2026-07-29：recovery
+      child state SHA=`5fc5369f...e99f9`、terminal=`PASS`；manifest SHA=`306c61e9...37649`；finalization
+      SHA=`5ee26724...6efde`=`PASS_WITH_WARNINGS`、Reader Brief quality SHA=`6e25902a...0123`=`OK`、report
+      quality SHA=`af76905b...3e38`=`PASS_WITH_WARNINGS`，均0 blocking。任务归档DONE；无weights/broker/trading。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2a168f6f5a4187eb92d90583
+  task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: operations owner：后续日常观察；power-loss durability继续由DATA-GOV D0C独立跟踪
+    notes: 2026-07-29：recovery child state SHA=`5fc5369f...e99f9`、terminal=`PASS`；manifest
+      SHA=`306c61e9...37649`；finalization SHA=`5ee26724...6efde`=`PASS_WITH_WARNINGS`、Reader
+      Brief quality SHA=`6e25902a...0123`=`OK`、report quality SHA=`af76905b...3e38`=`PASS_WITH_WARNINGS`，均0
+      blocking。任务归档DONE；无weights/broker/trading。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2a168f6f5a4187eb92d90583779218bab3eca17c3f510c7cff9a413b5fb003e0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
+  - Operations / canonical Reader Brief and report quality fail-closed finalization
+  - P0
+  - DONE
+  - operations owner：后续日常观察；power-loss durability继续由DATA-GOV D0C独立跟踪
+  - 详见 `docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md`。Windows
+    bounded transient replace retry、strict finalization、portable parent import及formal/Full已完成；`as_of=2026-07-27`
+    canonical chain实际到达finalization。
+  - Report quality `FAIL` 与 Reader Brief quality `FAILED` CLI/step/finalization fail
+    closed；最终 Reader Brief bytes由同次finalization evidence覆盖；manifest closure后才发布成功；旧FAILED
+    bytes保持；不声称power-loss atomic；`production_effect=none`。
+  - 2026-07-29：recovery child state SHA=`5fc5369f...e99f9`、terminal=`PASS`；manifest
+    SHA=`306c61e9...37649`；finalization SHA=`5ee26724...6efde`=`PASS_WITH_WARNINGS`、Reader
+    Brief quality SHA=`6e25902a...0123`=`OK`、report quality SHA=`af76905b...3e38`=`PASS_WITH_WARNINGS`，均0
+    blocking。任务归档DONE；无weights/broker/trading。
+  docs_links:
+  - docs/requirements/OPS-067_Reader_Brief_Quality_Fail_Closed_Finalization.md
+  terminal: true
+  raw_row_sha256: 2a168f6f5a4187eb92d90583779218bab3eca17c3f510c7cff9a413b5fb003e0
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 3264a90fc07fc57aca5523c21c5bf03a3a3074b6fd4945bd3b622a2c408ae5ed

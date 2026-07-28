@@ -1,8 +1,8 @@
 # DATA-GOV-001 D0B2B Canonical Daily Acceptance Remediation
 
-最后更新：2026-07-25
+最后更新：2026-07-29
 
-状态：`IN_PROGRESS`
+状态：`DONE`
 
 稳定任务 ID：
 `DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION`
@@ -257,6 +257,45 @@ Owner 已通过
   `integration_20260725T033839Z`、`reproducibility_20260725T033936Z`和
   `full_20260725T034024Z`。
 
-剩余唯一业务验收是退出标准第1和第7项：在新合法provider-ready trading date通过唯一入口
-`aits ops daily-run`形成新的strict canonical evidence。不得自动安排`2026-07-24`同key重试，
-不得直接运行PIT/score等子命令，也不因工程验证通过而把旧strict canonical receipt写成可用。
+2026-07-29 operational acceptance 已关闭剩余退出标准第1和第7项：
+
+- 新合法 provider-ready date 为 `as_of=2026-07-27`，唯一 canonical parent run 为
+  `daily_ops_run:2026-07-27:20260728T003327Z`；该 run 已实际完成 capture、strict DQ、
+  PIT 与 score。其 report-tail blocker 由 OPS-071 的 governed recovery child
+  `daily_ops_run:2026-07-27:20260728T072717Z` 在 attempt=`2` 关闭，未重复 23 个
+  upstream completed steps，只从 `artifact_lineage` 重放 11 个幂等 report/finalization
+  tail steps。
+- strict DQ receipt 为
+  `dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`，
+  runtime path 为
+  `outputs/data_quality/executions/dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4/receipt.json`，
+  SHA-256=`6a4319f15f65a06345f08965c04cada01083d00a478e06febfdfd21f5ef56a58`。
+  Receipt 精确记录 `daily_default.v1`、requested window
+  `2021-02-22..2026-07-27`、evaluated window `2021-02-22..2026-07-24`、
+  `status=PASS`、`error_count=0`、`warning_count=0`，并绑定 calendar policy 与
+  implementation source bytes。
+- exact daily-score authorization 为
+  `dq_consumer_authorization_fe8360fab72bb976f3b799dba3a7bb933561cc34fa47b3ad7040a9e5fe5fcc02`，
+  attestation SHA-256=
+  `6f87e196aa97ee53e17c79aad46634e615305ccb0d89c915275cab42c9fa9ec3`。
+  `daily_score_daily@1.0.0` 的 `consumer_dispatch_authorized=true`；
+  `automatic_non_daily_dispatch=false`、`generic_consumer_cutover_allowed=false`。
+- recovery child state SHA-256=
+  `5fc5369f80dbad299951e0103753b339a2c8f03741b757afb433eb77506e99f9`，
+  terminal=`PASS`、blocker codes=`[]`。最终 bundle manifest SHA-256=
+  `306c61e9fdcac79f026beab0c8f88f87352fc2f2bdab6b34f8b7127bdf737649`，
+  status=`PASS_WITH_SKIPS`、`production_effect=none`。
+- finalization=`PASS_WITH_WARNINGS`，其 JSON SHA-256=
+  `5ee267249a6a5c5ad4589a7cffc9b20c754a265659d923a4ca8810c2cf06efde`；
+  Reader Brief quality=`OK`，JSON SHA-256=
+  `6e25902afe5d4a209e3978b7c0ce3d507db97918bf9d54e11804429dbe800123`；
+  report quality=`PASS_WITH_WARNINGS`，JSON SHA-256=
+  `af76905bf233a8bc47c4bce9800637e908bdb98cc8b321863d0f079d04753e38`。
+  两类 warning 均为 0 blocking，不把缺失历史 artifact 补造为 available。
+- 旧 `2026-07-22`、`2026-07-23`、`2026-07-24` FAILED state/ledger 未编辑、未删除、
+  未换 key 重试。D0B2B 仅据新合法 canonical evidence 转 `DONE`。
+
+本关闭不授权 G4C、其他 consumer、automatic non-daily、QLD automatic selection、
+production governance、production/active-shadow weights、broker/order/trading。DATA-GOV
+parent 保持 `IN_PROGRESS`，后续 ACL、D0C crash durability 或逐 consumer migration
+必须继续按独立任务与 Owner 授权推进。

@@ -1,8 +1,8 @@
 # OPS-067 Reader Brief / Report Quality Fail-Closed Finalization
 
-最后更新：2026-07-24
+最后更新：2026-07-29
 
-状态：`IN_PROGRESS`
+状态：`DONE`
 
 稳定任务 ID：`OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION`
 
@@ -206,3 +206,23 @@ checkout 在 Full 中重新 materialize owner 明确保护的研究文档。修�
   工程状态进入 `ENGINEERING_COMPLETE_AWAITING_CANONICAL_DAILY_ACCEPTANCE`；完成最终
   evidence commit 的 exact-tree repeat gates 与正常 push 后，才接管唯一 scheduler trigger
   `aits ops daily-run`。
+- 2026-07-29：运营验收关闭。新合法 `as_of=2026-07-27` canonical parent 完成
+  strict DQ/PIT/score，OPS-071 governed recovery child
+  `daily_ops_run:2026-07-27:20260728T072717Z` 只重放 `artifact_lineage` 起 11 个
+  report/finalization tail steps并复用 23 个 upstream completed steps。Child state
+  SHA-256=`5fc5369f80dbad299951e0103753b339a2c8f03741b757afb433eb77506e99f9`，
+  attempt=`2`、terminal=`PASS`、blocker codes=`[]`；bundle manifest SHA-256=
+  `306c61e9fdcac79f026beab0c8f88f87352fc2f2bdab6b34f8b7127bdf737649`，
+  status=`PASS_WITH_SKIPS`。
+- 2026-07-29：最终 `daily_ops_finalization_2026-07-27.json` SHA-256=
+  `5ee267249a6a5c5ad4589a7cffc9b20c754a265659d923a4ca8810c2cf06efde`，
+  status=`PASS_WITH_WARNINGS`；`reader_brief_quality_2026-07-27.json` SHA-256=
+  `6e25902afe5d4a209e3978b7c0ce3d507db97918bf9d54e11804429dbe800123`，
+  status=`OK`；`report_quality_gate_2026-07-27.json` SHA-256=
+  `af76905bf233a8bc47c4bce9800637e908bdb98cc8b321863d0f079d04753e38`，
+  status=`PASS_WITH_WARNINGS`。最终 Reader Brief JSON/HTML bytes由同次 manifest 与
+  finalization evidence绑定，quality warning均为0 blocking；`production_effect=none`。
+- 2026-07-29：OPS-067 转 `DONE`。旧 FAILED state/ledger 保留；本验收只证明正常执行与
+  可捕获异常的 fail-closed finalization，不声称跨文件 power-loss atomic。DATA-GOV D0C
+  crash/power-loss durability 仍是独立未完成范围；本关闭不授权 weights、production、
+  broker/order/trading。

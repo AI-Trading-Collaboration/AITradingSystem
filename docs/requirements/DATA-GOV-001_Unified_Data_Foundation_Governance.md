@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0B3_FIRST_CONSUMER_BASELINE_DONE_D0B2B_OPERATIONAL_ACCEPTANCE_BLOCKED`
+- current phase：`D0B2B_OPERATIONAL_ACCEPTANCE_DONE_NEXT_SLICE_OWNER_SELECTION`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -23,16 +23,21 @@ D0B3 采用独立、consumer-scoped authorization attestation 绑定 D0B2 public
 DQ receipt；不改写历史 receipt/publication bytes 或其中的全局 false safety 字段。其余 consumer、
 `PASS_WITH_WARNINGS`、真实 periodic/provider、production 与 broker 继续关闭。
 
-2026-07-25 的首个真实 post-Wave15 canonical daily acceptance 已证明 publication
-transaction、完整文件 binding、`daily_default.v1` propagation 与 strict fail-closed 生效，但没有
-产生可消费的 strict PASS receipt。运行在 DQ 阶段因 publication-window containment、
-source-specific `^VIX` session、未编码的 `2025-01-09` special closure 和 5 个未治理
-adjustment warnings 停止。D0B2 的 formal engineering closeout 保留为历史事实，同时新增
-`DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION` 重新收口 operational
-semantic acceptance；详见
-`docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。
-该子任务当前为 `BLOCKED_OWNER_INPUT`，下一 consumer、G4C、automatic non-daily、
-production 与 broker 均不因既有 Wave15 baseline 自动开放。
+2026-07-25 的首个真实 post-Wave15 canonical daily acceptance 证明 publication
+transaction、完整文件 binding、`daily_default.v1` propagation 与 strict fail-closed 生效，
+但因 publication-window containment、source-specific `^VIX` session、未编码的
+`2025-01-09` special closure 和 5 个未治理 adjustment warnings 未产生可消费 receipt。
+这些历史 FAILED state/ledger 继续保持 immutable。
+
+2026-07-29，`DATA-GOV-001_D0B2B_CANONICAL_DAILY_ACCEPTANCE_REMEDIATION`
+以新合法 `as_of=2026-07-27` canonical evidence 完成 operational acceptance：
+strict receipt
+`dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`
+为 `PASS / 0 error / 0 warning`，exact `daily_score_daily@1.0.0` authorization 为 true，
+完整 PIT/score/report/Reader Brief/finalization 链由 terminal PASS recovery child关闭。
+D0B2B 与 OPS-067 均已转 `DONE`。DATA-GOV parent 仍为 `IN_PROGRESS`，下一步须由 Owner
+在 ACL、D0C crash durability 或逐 consumer migration 中选择独立 slice；G4C、其他
+consumer、automatic non-daily、production 与 broker 不因本次关闭自动开放。
 
 后续将数据能力作为独立的逻辑系统长期治理，但当前不拆 repository、部署单元或服务。Data Foundation 负责生产和证明事实；Knowledge & Insight Core、报告和网页只能消费其机器可读 contract，不能反向覆盖数据、质量状态或 lineage。
 
