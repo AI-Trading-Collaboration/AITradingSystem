@@ -1,13 +1,13 @@
 # OPS-071：Daily Terminal Recovery 与 Lineage Availability
 
-最后更新：2026-07-28
+最后更新：2026-07-29
 
 稳定任务 ID：`OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY`
 
 Owner 决定：
 `owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`
 
-状态：`IN_PROGRESS`
+状态：`DONE`
 
 ## 1. 问题
 
@@ -184,5 +184,49 @@ disposition 分开：
   将该文件从版本控制移除、保留为ignored runtime artifact，并对旧runtime live bytes
   做一次checksum-bound、byte-identical迁移保全；不得删除证据、放宽任意dirty path、
   重新计算或改写weights。新候选须重新完成六档validation后再promotion。
-- 待完成：正式六档 validation、新 exact release promotion、automation exact release 更新
-  与 2026-07-27 runtime recovery operational acceptance。
+- 2026-07-28：tracked-to-ignored 耐久修复候选
+  `556f93a421f76ea09a61f6f791b973e0b749bf54` 完成 Fast / Architecture /
+  Contract / Integration / Reproducibility / Full 六档正式验证，结果分别为
+  `341 / 773 / 276 / 995 / 24 / 7617 passed`，Full 另有
+  `3 skipped / 639 warnings`。Owner-approved release 为
+  `ops_release_589c7f40a2f2e1a753530641926f882550caef86`。
+- 2026-07-28：旧 runtime 的 `outputs/current_effective_weights.json` 以
+  `ops071_current_effective_weights_a20efe290a3be5d834515f8af93266cff1c4504943926e021e7b05b03d6eb8c8`
+  receipt 完成 checksum-bound 迁移；原始、archive 与 restore bytes 的 SHA-256 均为
+  `a20efe290a3be5d834515f8af93266cff1c4504943926e021e7b05b03d6eb8c8`，
+  size=`763`，`bytes_modified=false`、`weights_recomputed=false`、
+  `byte_identical_restore_verified=true`。
+- 2026-07-28：release promotion 到
+  `PROMOTED_NOT_ACTIVATED` 后形成 active owner-accepted deployment
+  `ops_deployment_137332aacf307325fe93c2b72ddebfadd1de17c9`；runtime HEAD 与 reviewed
+  remote commit 均为 `556f93a421...`，唯一 scheduler entry 为
+  `aitradingsystem-pit`，统一入口仍为 `aits ops daily-run`，禁止的 credential names
+  为空，`production_effect=none`。
+- 2026-07-28：按唯一入口对 parent
+  `daily_ops_run:2026-07-27:20260728T003327Z` 执行一次 governed recovery child
+  `daily_ops_run:2026-07-27:20260728T072717Z`。Recovery receipt 绑定
+  parent state SHA-256=`6ffa981fc2b7e5c41bdf7f1ce1e72b5cb058797e533610dc7f4b88017cf93e6d`、
+  parent ledger SHA-256=`7820758c6fda00ab94fd6f71595d6201b9d11a2a873d25e96f7b20de30ec5bb9`
+  与 active deployment receipt SHA-256=
+  `b9047444a0681fb73cbbf7461ea6746acacca77fb7faabe81e45f0d2541a4dc4`；
+  child attempt=`2`，从 `artifact_lineage` 开始，只重放 11 个 report/finalization
+  tail steps，并复用 23 个 capture/DQ/PIT/score 等 upstream completed steps。
+- 2026-07-28：recovery child terminal=`PASS`、blocker codes=`[]`；artifact lineage
+  为 `PASS_WITH_WARNINGS`（0 blocking / 21 warnings），Reader Brief 为 `OK`
+  （13/13 checks PASS），report quality 为 `PASS_WITH_WARNINGS`
+  （0 blocking；legacy section warnings 保持可见），canonical finalization 为
+  `PASS_WITH_WARNINGS`，允许的 source daily status 为 `PASS_WITH_SKIPS`。未补造
+  missing lineage artifact，未重复 provider/capture/DQ/PIT/score，未写
+  production/active-shadow weights，未触发 broker/order/trading。
+- 2026-07-29：六项退出标准均由 exact runtime evidence 满足，任务转 `DONE`。
+  Active ops runtime 与 immutable parent/child/deployment/migration artifacts 继续作为
+  运营事实保留，不属于临时工作区清理对象。下一合法 scheduler run 的日常观察由
+  operations owner 继续执行；扩大 recovery boundary、改变 lineage availability contract
+  或处理新的 runtime blocker 必须另立任务。OPS-071 完成不自动关闭
+  `DATA-GOV-001_D0B2B`，也不授权 QLD automatic selection、production governance 或
+  broker 行为；这些事项仍须使用 exact canonical strict DQ receipt 独立复核。
+- 2026-07-29：closeout registry/development manifest 均 PASS；focused 最终为
+  `144 passed`，Architecture 为 `777 passed`，Contract 为 `276 passed`。本次仅固化
+  运营验收、任务归档与 append-only compatibility authority，未改变 runtime/data flow，
+  因此复用 exact release `556f93a421...` 已通过的 Full=`7617 passed`，不另行制造
+  等价 runtime candidate。
