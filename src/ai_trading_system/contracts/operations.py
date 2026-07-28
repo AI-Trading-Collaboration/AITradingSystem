@@ -29,10 +29,13 @@ class DueRule(StrEnum):
 class OperationsRunDecision(StrEnum):
     START_NEW = "START_NEW"
     RESUME = "RESUME"
+    RECOVERY = "RECOVERY"
     ALREADY_COMPLETE = "ALREADY_COMPLETE"
     BLOCKED_CONCURRENT = "BLOCKED_CONCURRENT"
     BLOCKED_RETRY_EXHAUSTED = "BLOCKED_RETRY_EXHAUSTED"
     BLOCKED_UNSAFE_RESUME = "BLOCKED_UNSAFE_RESUME"
+    BLOCKED_TERMINAL_RECOVERY_REQUIRED = "BLOCKED_TERMINAL_RECOVERY_REQUIRED"
+    BLOCKED_INVALID_RECOVERY = "BLOCKED_INVALID_RECOVERY"
 
 
 class OperationsDispatchMode(StrEnum):
@@ -657,6 +660,174 @@ class OperationsExecutionState:
 
 
 @dataclass(frozen=True)
+class OperationsRecoveryRequest:
+    schema_version: ClassVar[str] = "operations_recovery_request.v1"
+
+    parent_run_id: str
+    recovery_from_step_id: str
+    reason_code: str
+    parent_manifest_path: str
+    parent_manifest_sha256: str
+    parent_release_commit: str
+    current_release_commit: str
+    deployment_receipt_path: str
+    deployment_receipt_sha256: str
+    requested_at: datetime
+
+    def __post_init__(self) -> None:
+        for value, field in (
+            (self.parent_run_id, "parent_run_id"),
+            (self.recovery_from_step_id, "recovery_from_step_id"),
+            (self.reason_code, "reason_code"),
+            (self.parent_manifest_path, "parent_manifest_path"),
+            (self.deployment_receipt_path, "deployment_receipt_path"),
+        ):
+            _nonempty(value, field)
+        for value, field in (
+            (self.parent_manifest_sha256, "parent_manifest_sha256"),
+            (self.deployment_receipt_sha256, "deployment_receipt_sha256"),
+        ):
+            _hex_digest(value, field, length=64)
+        for value, field in (
+            (self.parent_release_commit, "parent_release_commit"),
+            (self.current_release_commit, "current_release_commit"),
+        ):
+            _hex_digest(value, field, length=40)
+        _aware_datetime(self.requested_at, "requested_at")
+        if self.parent_release_commit == self.current_release_commit:
+            raise OperationsContractError(
+                "RECOVERY_RELEASE_UNCHANGED",
+                self.current_release_commit,
+            )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "parent_run_id": self.parent_run_id,
+            "recovery_from_step_id": self.recovery_from_step_id,
+            "reason_code": self.reason_code,
+            "parent_manifest_path": self.parent_manifest_path,
+            "parent_manifest_sha256": self.parent_manifest_sha256,
+            "parent_release_commit": self.parent_release_commit,
+            "current_release_commit": self.current_release_commit,
+            "deployment_receipt_path": self.deployment_receipt_path,
+            "deployment_receipt_sha256": self.deployment_receipt_sha256,
+            "requested_at": self.requested_at.isoformat(),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, object]) -> OperationsRecoveryRequest:
+        return cls(
+            parent_run_id=str(payload.get("parent_run_id", "")),
+            recovery_from_step_id=str(payload.get("recovery_from_step_id", "")),
+            reason_code=str(payload.get("reason_code", "")),
+            parent_manifest_path=str(payload.get("parent_manifest_path", "")),
+            parent_manifest_sha256=str(payload.get("parent_manifest_sha256", "")),
+            parent_release_commit=str(payload.get("parent_release_commit", "")),
+            current_release_commit=str(payload.get("current_release_commit", "")),
+            deployment_receipt_path=str(payload.get("deployment_receipt_path", "")),
+            deployment_receipt_sha256=str(payload.get("deployment_receipt_sha256", "")),
+            requested_at=_datetime_value(payload.get("requested_at"), "requested_at"),
+        )
+
+
+@dataclass(frozen=True)
+class OperationsRecoveryReceipt:
+    schema_version: ClassVar[str] = "operations_recovery_receipt.v1"
+
+    idempotency_key: str
+    workflow_id: str
+    workflow_spec_id: str
+    as_of: date
+    parent_run_id: str
+    child_run_id: str
+    parent_status: CanonicalStatus
+    parent_attempt: int
+    child_attempt: int
+    recovery_from_step_id: str
+    replay_step_ids: tuple[str, ...]
+    reused_completed_step_ids: tuple[str, ...]
+    parent_state_archive_path: str
+    parent_state_sha256: str
+    parent_ledger_archive_path: str
+    parent_ledger_sha256: str
+    request: OperationsRecoveryRequest
+    authorized_at: datetime
+
+    def __post_init__(self) -> None:
+        for value, field in (
+            (self.idempotency_key, "idempotency_key"),
+            (self.workflow_id, "workflow_id"),
+            (self.workflow_spec_id, "workflow_spec_id"),
+            (self.parent_run_id, "parent_run_id"),
+            (self.child_run_id, "child_run_id"),
+            (self.recovery_from_step_id, "recovery_from_step_id"),
+            (self.parent_state_archive_path, "parent_state_archive_path"),
+            (self.parent_ledger_archive_path, "parent_ledger_archive_path"),
+        ):
+            _nonempty(value, field)
+        if self.parent_status not in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED}:
+            raise OperationsContractError(
+                "RECOVERY_PARENT_STATUS_INVALID",
+                self.parent_status.value,
+            )
+        if (
+            isinstance(self.parent_attempt, bool)
+            or self.parent_attempt < 1
+            or isinstance(self.child_attempt, bool)
+            or self.child_attempt != self.parent_attempt + 1
+        ):
+            raise OperationsContractError(
+                "RECOVERY_ATTEMPT_SEQUENCE_INVALID",
+                self.child_run_id,
+            )
+        for value, field in (
+            (self.parent_state_sha256, "parent_state_sha256"),
+            (self.parent_ledger_sha256, "parent_ledger_sha256"),
+        ):
+            _hex_digest(value, field, length=64)
+        if not self.replay_step_ids or self.replay_step_ids[0] != self.recovery_from_step_id:
+            raise OperationsContractError(
+                "RECOVERY_REPLAY_BOUNDARY_INVALID",
+                self.recovery_from_step_id,
+            )
+        if set(self.replay_step_ids) & set(self.reused_completed_step_ids):
+            raise OperationsContractError(
+                "RECOVERY_REPLAY_REUSE_OVERLAP",
+                self.child_run_id,
+            )
+        _aware_datetime(self.authorized_at, "authorized_at")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "idempotency_key": self.idempotency_key,
+            "workflow_id": self.workflow_id,
+            "workflow_spec_id": self.workflow_spec_id,
+            "as_of": self.as_of.isoformat(),
+            "parent_run_id": self.parent_run_id,
+            "child_run_id": self.child_run_id,
+            "parent_status": self.parent_status.value,
+            "parent_attempt": self.parent_attempt,
+            "child_attempt": self.child_attempt,
+            "recovery_from_step_id": self.recovery_from_step_id,
+            "replay_step_ids": list(self.replay_step_ids),
+            "reused_completed_step_ids": list(self.reused_completed_step_ids),
+            "parent_state_archive_path": self.parent_state_archive_path,
+            "parent_state_sha256": self.parent_state_sha256,
+            "parent_ledger_archive_path": self.parent_ledger_archive_path,
+            "parent_ledger_sha256": self.parent_ledger_sha256,
+            "request": self.request.to_dict(),
+            "authorized_at": self.authorized_at.isoformat(),
+            "production_effect": "none",
+            "production_weight_write": False,
+            "active_shadow_weight_write": False,
+            "broker_action": False,
+            "trading_action": False,
+        }
+
+
+@dataclass(frozen=True)
 class OperationsRunControlResolution:
     schema_version: ClassVar[str] = "operations_run_control_resolution.v1"
 
@@ -668,6 +839,9 @@ class OperationsRunControlResolution:
     attempt: int
     resume_completed_step_ids: tuple[str, ...] = ()
     blocker_codes: tuple[str, ...] = ()
+    recovery_parent_run_id: str | None = None
+    recovery_from_step_id: str | None = None
+    recovery_receipt_path: str | None = None
 
     def __post_init__(self) -> None:
         _nonempty(self.idempotency_key, "idempotency_key")
@@ -693,6 +867,22 @@ class OperationsRunControlResolution:
         object.__setattr__(self, "blocker_codes", blockers)
         if self.decision.value.startswith("BLOCKED_") and not blockers:
             raise OperationsContractError("RUN_CONTROL_BLOCKER_REQUIRED", self.workflow_id)
+        recovery_fields = (
+            self.recovery_parent_run_id,
+            self.recovery_from_step_id,
+            self.recovery_receipt_path,
+        )
+        if self.decision is OperationsRunDecision.RECOVERY:
+            if any(value is None or not value.strip() for value in recovery_fields):
+                raise OperationsContractError(
+                    "RUN_CONTROL_RECOVERY_BINDING_REQUIRED",
+                    self.workflow_id,
+                )
+        elif any(value is not None for value in recovery_fields):
+            raise OperationsContractError(
+                "RUN_CONTROL_RECOVERY_BINDING_UNEXPECTED",
+                self.workflow_id,
+            )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -705,6 +895,9 @@ class OperationsRunControlResolution:
             "attempt": self.attempt,
             "resume_completed_step_ids": list(self.resume_completed_step_ids),
             "blocker_codes": list(self.blocker_codes),
+            "recovery_parent_run_id": self.recovery_parent_run_id,
+            "recovery_from_step_id": self.recovery_from_step_id,
+            "recovery_receipt_path": self.recovery_receipt_path,
         }
 
 
@@ -836,6 +1029,13 @@ def _nonempty(value: str, field: str) -> str:
     if not value.strip():
         raise OperationsContractError("REQUIRED_OPERATIONS_FIELD_EMPTY", field)
     return value
+
+
+def _hex_digest(value: str, field: str, *, length: int) -> str:
+    normalized = value.strip().lower()
+    if len(normalized) != length or any(char not in "0123456789abcdef" for char in normalized):
+        raise OperationsContractError("INVALID_OPERATIONS_DIGEST", field)
+    return normalized
 
 
 def _date_value(value: object, field: str) -> date:

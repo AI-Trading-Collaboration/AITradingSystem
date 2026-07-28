@@ -1291,6 +1291,38 @@ ARCH-004F1.4 已把上述控制层切入唯一 daily CLI 路径：`aits ops dail
 
 OPS-070 真实 provider-ready 验收进一步修正 canonical key 的 policy binding：`DailyOpsPlan.workflow_semantic_revision` 显式组合 `config/scheduled_tasks.yaml` 的 reviewed `policy_version` 与 `config/operations/daily_input_capture.yaml` 的 reviewed `policy_version`，并写入 `WorkflowSpec.semantic_revision` 后参与 `spec_id` 与 `operations_idempotency_key` 哈希。这样，改变 XNYS capture 资格、source attempt、lease 或 recovery 语义的 reviewed capture policy 修订会生成新 spec/key，而相同 policy revision 的重复触发仍复用原 key 并受原 run/step attempt budget 限制。旧 FAILED state/ledger 不删除、不改写，也不得通过改 flag、提高旧 budget 或伪造 key 恢复；daily plan shadow 与真实 controlled runner 必须携带同一 semantic revision。该绑定只控制可审计执行身份，不放宽 DQ/PIT/score 门禁，不修改 production/active shadow weights，也不触发 broker/trading。
 
+OPS-071 在同一 canonical key 上增加显式 terminal child recovery。普通重触发遇到 terminal
+`FAILED/BLOCKED` 仍返回 `BLOCKED_TERMINAL_RECOVERY_REQUIRED`；只有完整
+`OperationsRecoveryRequest` 才进入恢复验证。Request/receipt 绑定 exact parent run、manifest
+path/SHA、parent/current release commit、active deployment receipt path/SHA、reason 和
+replay-from step；current release 必须不同，spec 必须相同，parent run attempt 尚有余量，replay
+slice 必须全部 idempotent 且起点属于 reviewed report-tail allowlist。Control plane 在修改 current
+state 前把 parent state/ledger exact bytes 冻结到
+`outputs/run_control/daily/recovery/<idempotency-key>/attempt_<n>/`，然后仅重置 boundary 及其
+downstream 的 attempt-local budget；boundary 之前已 PASS steps 在 child report 中以 canonical
+recovery skip 记录。每个 terminal parent 只能生成一个 child receipt，receipt/state/manifest/
+deployment drift、same-release、non-idempotent/provider-sensitive replay 或第二 child 均 fail closed。
+Artifact lineage 同时把 topology/safety 与 availability 分离：required family/edge placeholder
+继续存在；未到期、manual 或历史 paper-shadow/weekly/readiness/owner evidence 缺失标记
+`INSUFFICIENT_DATA` 并使 validation 为 `PASS_WITH_WARNINGS`，而未知/畸形 topology、duplicate
+node、unsafe production effect、strict data/PIT 缺失仍为 blocking FAIL。全链不补造 artifact，
+不重复 capture/provider/DQ/PIT/score，不写 production/active-shadow weights，不触发
+broker/order/trading。
+
+```mermaid
+flowchart LR
+    P["Terminal FAILED / BLOCKED parent"] --> R["Explicit recovery request"]
+    R --> G["Parent + spec + release change + deployment receipt + idempotent slice gates"]
+    G --> A["Freeze parent state / ledger + recovery receipt"]
+    A --> S["Reuse PASS upstream; replay report tail"]
+    S --> L["Lineage topology/safety strict"]
+    L -->|"Optional/history unavailable"| W["PASS_WITH_WARNINGS + INSUFFICIENT_DATA"]
+    L -->|"Malformed / unsafe / strict data missing"| F["FAIL closed"]
+    W --> C["Reader Brief + quality + terminal closure"]
+    G -->|"invalid / second child"| F
+    C -.-> N["production_effect=none / no weights / no broker"]
+```
+
 OPS-067 在这条 controlled path 上增加 canonical finalization hard gate。普通 steps 全部完成后，
 lease 仍保持 active；系统冻结 executor metadata，生成 current-run dashboard、daily decision
 summary、blocked-only order intent candidates 和最终 Reader Brief，再对最终 Reader Brief bytes

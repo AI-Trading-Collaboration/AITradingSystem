@@ -26,6 +26,7 @@ from ai_trading_system.contracts.data_quality_execution import (
     DataQualityExecutionContractError,
     VerifiedDataQualityPreflight,
 )
+from ai_trading_system.contracts.operations import OperationsRecoveryRequest
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.daily_input_capture import (
     DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
@@ -672,11 +673,17 @@ def scheduler_checkout_preflight_command(
     output_json: Annotated[
         Path,
         typer.Option(help="preflight JSON 输出路径。"),
-    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.json",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports"
+    / "ops_scheduler_checkout_preflight.json",
     output_markdown: Annotated[
         Path,
         typer.Option(help="preflight Markdown 输出路径。"),
-    ] = PROJECT_ROOT / "outputs" / "reports" / "ops_scheduler_checkout_preflight.md",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports"
+    / "ops_scheduler_checkout_preflight.md",
 ) -> None:
     """只读检查 pinned clean ops checkout；不安装或启用 scheduler。"""
     try:
@@ -836,9 +843,7 @@ def ops_release_promote_command(
     """事务化切换 exact release；不激活 scheduler，不运行 daily。"""
     try:
         policy = load_ops_release_promotion_policy(policy_path)
-        selected_python = runtime_python or (
-            runtime_root / policy.runtime_python_relative_path
-        )
+        selected_python = runtime_python or (runtime_root / policy.runtime_python_relative_path)
         payload, event_path = promote_ops_release(
             coordinator_root=PROJECT_ROOT,
             runtime_root=runtime_root,
@@ -911,14 +916,10 @@ def ops_deployment_acceptance_command(
     """构建并可选激活 owner-accepted deployment receipt；不运行 daily。"""
     try:
         policy = load_ops_release_promotion_policy(policy_path)
-        selected_python = runtime_python or (
-            runtime_root / policy.runtime_python_relative_path
-        )
+        selected_python = runtime_python or (runtime_root / policy.runtime_python_relative_path)
         release_payload = load_strict_json_path(release_candidate)
         scheduler_payload = load_strict_json_path(scheduler_observation)
-        if not isinstance(release_payload, Mapping) or not isinstance(
-            scheduler_payload, Mapping
-        ):
+        if not isinstance(release_payload, Mapping) or not isinstance(scheduler_payload, Mapping):
             raise ValueError("release/scheduler payload must be mappings")
         payload = build_ops_deployment_acceptance(
             release_candidate=release_payload,
@@ -1067,9 +1068,7 @@ def daily_ops_plan_command(
     style = (
         "green"
         if status == "READY"
-        else "yellow"
-        if status in {"READY_WITH_SKIPS", "READY_WITH_BLOCKED_BRANCHES"}
-        else "red"
+        else "yellow" if status in {"READY_WITH_SKIPS", "READY_WITH_BLOCKED_BRANCHES"} else "red"
     )
     missing_env = plan.missing_env_vars(os.environ)
     console.print(f"[{style}]每日运行计划：{status}[/{style}]")
@@ -2006,9 +2005,10 @@ def _validate_daily_ops_finalization_closure(
 
 
 def _is_resumed_daily_step(result: object) -> bool:
-    return getattr(result, "status", None) == "SKIPPED" and str(
-        getattr(result, "skip_reason", "") or ""
-    ).startswith("Canonical resume")
+    reason = str(getattr(result, "skip_reason", "") or "")
+    return getattr(result, "status", None) == "SKIPPED" and reason.startswith(
+        ("Canonical resume", "Canonical recovery")
+    )
 
 
 def _freeze_executor_metadata_before_finalization(
@@ -2293,6 +2293,7 @@ def _run_daily_ops_with_completion_callback(
     env: Mapping[str, str],
     run_id: str,
     diagnostics_dir: Path,
+    recovery_request: OperationsRecoveryRequest | None,
 ) -> DailyOpsRunReport:
     runner_parameters = inspect.signature(run_daily_ops_plan).parameters
     runner_kwargs: dict[str, Any] = {
@@ -2301,6 +2302,8 @@ def _run_daily_ops_with_completion_callback(
         "run_id": run_id,
         "diagnostics_dir": diagnostics_dir,
     }
+    if "recovery_request" in runner_parameters:
+        runner_kwargs["recovery_request"] = recovery_request
     if "completion_callback" in runner_parameters:
         return run_daily_ops_plan(
             plan,
@@ -2333,13 +2336,10 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
         )
         try:
             checkout_policy = load_ops_scheduler_checkout_policy()
-            active_receipt = (
-                PROJECT_ROOT / checkout_policy.active_receipt_relative_path
-            ).resolve()
+            active_receipt = (PROJECT_ROOT / checkout_policy.active_receipt_relative_path).resolve()
             manual_execution = kwargs.get("manual_execution") is True
             scheduler_context = (
-                checkout_policy.scheduler_marker_name in os.environ
-                or active_receipt.is_file()
+                checkout_policy.scheduler_marker_name in os.environ or active_receipt.is_file()
             )
             with hold_daily_checkout_guard(
                 project_root=PROJECT_ROOT,
@@ -2352,8 +2352,7 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
                         "(OPS_DAILY_EXECUTION_MODE_CONFLICT)[/red]"
                     )
                     console.print(
-                        "provider_request=false；cache_mutation=false；"
-                        "production_effect=none"
+                        "provider_request=false；cache_mutation=false；" "production_effect=none"
                     )
                     raise typer.Exit(code=1)
                 if not scheduler_context and not manual_execution:
@@ -2366,8 +2365,7 @@ def _checkout_guarded_daily_command(command: Callable[..., None]) -> Callable[..
                         "scheduler 必须提供 reviewed marker/receipt env。"
                     )
                     console.print(
-                        "provider_request=false；cache_mutation=false；"
-                        "production_effect=none"
+                        "provider_request=false；cache_mutation=false；" "production_effect=none"
                     )
                     raise typer.Exit(code=1)
                 if scheduler_context:
@@ -2506,6 +2504,23 @@ def daily_ops_run_command(
         str | None,
         typer.Option(help="可选固定 run id；默认由 as_of 和 UTC 时间生成。"),
     ] = None,
+    recovery_parent_run_id: Annotated[
+        str | None,
+        typer.Option(
+            help=(
+                "受控 terminal recovery 的 exact parent run id；"
+                "必须与另两个 recovery 参数同时提供。"
+            )
+        ),
+    ] = None,
+    recovery_from_step: Annotated[
+        str | None,
+        typer.Option(help="受控 terminal recovery 的 report-only replay 起点。"),
+    ] = None,
+    recovery_reason_code: Annotated[
+        str | None,
+        typer.Option(help="受控 terminal recovery 的稳定 reason code。"),
+    ] = None,
     manual_execution: Annotated[
         bool,
         typer.Option(
@@ -2552,6 +2567,18 @@ def daily_ops_run_command(
         run_id=resolved_run_id,
         default_observed_at=run_generated_at,
     )
+    try:
+        recovery_request = _build_daily_terminal_recovery_request(
+            as_of=plan_date,
+            run_output_root=run_output_root,
+            parent_run_id=recovery_parent_run_id,
+            recovery_from_step=recovery_from_step,
+            recovery_reason_code=recovery_reason_code,
+            requested_at=run_generated_at,
+            env=os.environ,
+        )
+    except (OSError, ValueError, StrictJsonContractError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
     reports_dir = PROJECT_ROOT / "outputs" / "reports"
     plan_report_path = plan_output_path or default_daily_ops_plan_path(
@@ -2598,6 +2625,9 @@ def daily_ops_run_command(
         run_output_root=run_output_root,
         resolved_run_id=resolved_run_id,
         legacy_mode=legacy_mode,
+        recovery_parent_run_id=recovery_parent_run_id,
+        recovery_from_step=recovery_from_step,
+        recovery_reason_code=recovery_reason_code,
     )
     finalization_result: DailyOpsCanonicalFinalizationResult | None = None
 
@@ -2834,6 +2864,7 @@ def daily_ops_run_command(
             env=os.environ,
             run_id=resolved_run_id,
             diagnostics_dir=run_paths.reports_dir / "diagnostics",
+            recovery_request=recovery_request,
         )
     except DailyOpsCanonicalFinalizationError as exc:
         console.print(f"[red]Canonical finalization：FAILED ({exc.code})[/red]")
@@ -3609,6 +3640,73 @@ def _as_data_quality_execution_error(
     return DataQualityExecutionError("DQ_RECEIPT_MISSING", str(exc))
 
 
+def _build_daily_terminal_recovery_request(
+    *,
+    as_of: date,
+    run_output_root: Path,
+    parent_run_id: str | None,
+    recovery_from_step: str | None,
+    recovery_reason_code: str | None,
+    requested_at: datetime,
+    env: Mapping[str, str],
+) -> OperationsRecoveryRequest | None:
+    supplied = (parent_run_id, recovery_from_step, recovery_reason_code)
+    if not any(value is not None for value in supplied):
+        return None
+    if any(value is None or not value.strip() for value in supplied):
+        raise ValueError(
+            "recovery_parent_run_id、recovery_from_step、recovery_reason_code " "必须同时完整提供"
+        )
+    assert parent_run_id is not None
+    assert recovery_from_step is not None
+    assert recovery_reason_code is not None
+
+    current_release_commit = env.get("AITS_OPS_RELEASE_COMMIT", "").strip().lower()
+    deployment_receipt_raw = env.get("AITS_OPS_DEPLOYMENT_RECEIPT", "").strip()
+    if not current_release_commit:
+        raise ValueError("terminal recovery requires AITS_OPS_RELEASE_COMMIT")
+    if not deployment_receipt_raw:
+        raise ValueError("terminal recovery requires AITS_OPS_DEPLOYMENT_RECEIPT")
+    deployment_receipt_path = Path(deployment_receipt_raw).resolve()
+    deployment_payload = load_strict_json_path(deployment_receipt_path)
+    if not isinstance(deployment_payload, Mapping):
+        raise ValueError("active deployment receipt must be a JSON object")
+
+    manifest_matches: list[tuple[Path, Mapping[str, object]]] = []
+    daily_root = run_output_root.resolve() / "daily"
+    for manifest_path in sorted(daily_root.glob("*/*/manifest.json")):
+        try:
+            payload = load_strict_json_path(manifest_path)
+        except StrictJsonContractError:
+            continue
+        if isinstance(payload, Mapping) and payload.get("run_id") == parent_run_id:
+            manifest_matches.append((manifest_path.resolve(), payload))
+    if len(manifest_matches) != 1:
+        raise ValueError(
+            "terminal recovery requires exactly one parent run manifest: "
+            f"parent_run_id={parent_run_id};matches={len(manifest_matches)}"
+        )
+    parent_manifest_path, parent_manifest = manifest_matches[0]
+    if parent_manifest.get("as_of") != as_of.isoformat():
+        raise ValueError(
+            "terminal recovery parent manifest as_of mismatch: "
+            f"expected={as_of.isoformat()};actual={parent_manifest.get('as_of')}"
+        )
+    parent_release_commit = str(parent_manifest.get("git_commit", "")).strip().lower()
+    return OperationsRecoveryRequest(
+        parent_run_id=parent_run_id,
+        recovery_from_step_id=recovery_from_step,
+        reason_code=recovery_reason_code,
+        parent_manifest_path=str(parent_manifest_path),
+        parent_manifest_sha256=sha256_path(parent_manifest_path),
+        parent_release_commit=parent_release_commit,
+        current_release_commit=current_release_commit,
+        deployment_receipt_path=str(deployment_receipt_path),
+        deployment_receipt_sha256=sha256_path(deployment_receipt_path),
+        requested_at=requested_at,
+    )
+
+
 def _daily_run_manifest_command(
     *,
     plan_date: date,
@@ -3627,6 +3725,9 @@ def _daily_run_manifest_command(
     run_output_root: Path,
     resolved_run_id: str,
     legacy_mode: str,
+    recovery_parent_run_id: str | None,
+    recovery_from_step: str | None,
+    recovery_reason_code: str | None,
 ) -> tuple[str, ...]:
     command = [
         "aits",
@@ -3672,6 +3773,12 @@ def _daily_run_manifest_command(
         command.extend(["--plan-output-path", str(plan_output_path)])
     if output_path is not None:
         command.extend(["--output-path", str(output_path)])
+    if recovery_parent_run_id is not None:
+        command.extend(["--recovery-parent-run-id", recovery_parent_run_id])
+    if recovery_from_step is not None:
+        command.extend(["--recovery-from-step", recovery_from_step])
+    if recovery_reason_code is not None:
+        command.extend(["--recovery-reason-code", recovery_reason_code])
     return tuple(command)
 
 

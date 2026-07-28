@@ -1,8 +1,8 @@
 schema_version: operations_runtime_control_policy.v1
 policy_id: operations_runtime_control_v1
 owner: system_operations
-version: 1.0.0
-status: active_arch_004f1
+version: 1.1.0
+status: active_ops_071
 policy_metadata:
   rationale: >
     Prevent overlapping workflow runs, duplicate completion, unsafe retries, and
@@ -13,17 +13,36 @@ policy_metadata:
     bounded run-attempt budget, and resume only when every affected step is
     explicitly idempotent. Non-daily runtime leases may only be reached by the
     explicit evidence-gated manual dispatcher while automatic periodic command
-    execution remains disabled in periodic_control.yaml.
+    execution remains disabled in periodic_control.yaml. OPS-071 additionally
+    permits one explicit same-as-of terminal recovery child after a reviewed
+    release change. The child must bind the immutable parent state/run manifest,
+    active deployment receipt, reason code, and a report-only replay boundary.
   validation_evidence: >
     ARCH-004F1 focused tests cover concurrent acquisition, stale-lock recovery,
     duplicate completed triggers, retry exhaustion, safe resume, unsafe
     non-idempotent resume, owner-only release, and atomic state persistence.
+    OPS-071 tests cover immutable parent archives, exact parent/release/deployment
+    binding, one-child limit, selective report-tail replay, and tamper rejection.
   review_condition: >
-    Review before changing lock TTL, attempt budget, resume eligibility,
-    daily executor cut-in, non-daily manual dispatch, or automatic periodic
-    execution behavior.
+    Review before changing lock TTL, attempt budget, resume/recovery eligibility,
+    allowed recovery boundary, daily executor cut-in, non-daily manual dispatch,
+    or automatic periodic execution behavior.
 lock_ttl_seconds: 21600
 max_run_attempts: 2
 resume_idempotent_steps: true
 legacy_daily_executor_cut_in_enabled: true
 non_daily_dispatch_enabled: true
+terminal_recovery_enabled: true
+terminal_recovery_requires_release_change: true
+terminal_recovery_allowed_from_step_ids:
+  - artifact_lineage
+  - validate_artifact_lineage
+  - report_index
+  - documentation_contract
+  - research_governance_summary
+  - reader_brief
+  - report_quality_gate
+  - validate_reader_brief
+  - dynamic_v3_rescue_schedule_observe
+  - pipeline_health
+  - secret_hygiene

@@ -57,7 +57,7 @@ def test_artifact_lineage_passes_complete_required_families(tmp_path: Path) -> N
     assert "Artifact Lineage Graph" in markdown
 
 
-def test_artifact_lineage_blocks_missing_owner_review_family(tmp_path: Path) -> None:
+def test_artifact_lineage_limits_missing_owner_review_family(tmp_path: Path) -> None:
     _write_data_cache(tmp_path)
     report_ids = [
         report_id
@@ -71,15 +71,39 @@ def test_artifact_lineage_blocks_missing_owner_review_family(tmp_path: Path) -> 
         report_index_payload=_report_index(tmp_path, report_ids=report_ids),
     )
 
-    issue_ids = {issue["issue_id"] for issue in payload["blocking_issues"]}
+    blocking_issue_ids = {issue["issue_id"] for issue in payload["blocking_issues"]}
+    warning_issue_ids = {issue["issue_id"] for issue in payload["warning_issues"]}
     edge_status = {
         edge["edge_id"]: edge["status"]
         for edge in payload["edges"]
         if edge["edge_id"] == "readiness_reports__to__owner_reviews"
     }
-    assert payload["lineage_status"] == "FAIL"
-    assert "required_family_owner_reviews" in issue_ids
-    assert edge_status == {"readiness_reports__to__owner_reviews": "MISSING_NODE"}
+    assert payload["lineage_status"] == "PASS_WITH_WARNINGS"
+    assert "required_family_owner_reviews" not in blocking_issue_ids
+    assert "required_family_owner_reviews" in warning_issue_ids
+    assert edge_status == {"readiness_reports__to__owner_reviews": "INSUFFICIENT_DATA"}
+
+
+def test_artifact_lineage_still_blocks_malformed_required_edge(tmp_path: Path) -> None:
+    _write_data_cache(tmp_path)
+    payload = build_artifact_lineage_payload(
+        as_of=RUN_DATE,
+        project_root=tmp_path,
+        report_index_payload=_report_index(tmp_path),
+    )
+    payload["edges"] = [
+        edge
+        for edge in payload["edges"]
+        if edge["edge_id"] != "readiness_reports__to__owner_reviews"
+    ]
+
+    validation = validate_artifact_lineage_payload(payload)
+
+    assert validation["validation_status"] == "FAIL"
+    assert any(
+        issue["issue_id"] == "required_edge_contract_readiness_reports_to_owner_reviews"
+        for issue in validation["blocking_issues"]
+    )
 
 
 def test_artifact_lineage_blocks_unsafe_node_production_effect(tmp_path: Path) -> None:
@@ -282,8 +306,7 @@ def _write_data_cache(tmp_path: Path) -> None:
     price_path = tmp_path / "data" / "raw" / "prices_daily.csv"
     price_path.parent.mkdir(parents=True, exist_ok=True)
     price_path.write_text(
-        "date,ticker,open,high,low,close,adj_close,volume\n"
-        "2026-05-04,NVDA,1,1,1,1,1,100\n",
+        "date,ticker,open,high,low,close,adj_close,volume\n" "2026-05-04,NVDA,1,1,1,1,1,100\n",
         encoding="utf-8",
     )
 

@@ -30,6 +30,7 @@ class FamilySpec:
     label: str
     report_ids: tuple[str, ...]
     path_patterns: tuple[str, ...] = ()
+    availability_required_for_daily: bool = False
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,7 @@ FAMILY_SPECS: tuple[FamilySpec, ...] = (
             "data/processed/features_daily.csv",
             "data/processed/scores_daily.csv",
         ),
+        availability_required_for_daily=True,
     ),
     FamilySpec("cache_catalog", "Cache catalog", ("cache_catalog",)),
     FamilySpec("refresh_audit", "Refresh audit", ("data_refresh_audit",)),
@@ -59,6 +61,7 @@ FAMILY_SPECS: tuple[FamilySpec, ...] = (
         "PIT manifest",
         ("pit_source_manifest",),
         ("data/raw/pit_snapshots/manifest.csv",),
+        availability_required_for_daily=True,
     ),
     FamilySpec(
         "signal_artifacts",
@@ -193,7 +196,10 @@ def build_artifact_lineage_payload(
                 "Edges are family-level audit dependencies, not proof that every row-level "
                 "value is PIT-safe."
             ),
-            "Missing or stale source artifacts must be repaired upstream, not in this report.",
+            (
+                "Missing historical, not-due, or owner-governed artifacts remain explicit "
+                "INSUFFICIENT_DATA limitations and are not fabricated."
+            ),
         ],
         "required_node_families": list(REQUIRED_FAMILIES),
         "nodes": nodes,
@@ -267,21 +273,88 @@ def validate_artifact_lineage_payload(payload: Mapping[str, Any]) -> dict[str, A
         details={"duplicate_node_ids": duplicate_node_ids},
     )
 
-    for family in REQUIRED_FAMILIES:
+    family_specs = {spec.family_id: spec for spec in FAMILY_SPECS}
+    unknown_families = sorted(
+        {
+            _text(node.get("family"))
+            for node in nodes
+            if _text(node.get("family")) not in family_specs
+        }
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        check_id="known_family_contract",
+        passed=not unknown_families,
+        severity="BLOCKING",
+        message="lineage nodes must use reviewed family ids.",
+        recommended_action="remove_unknown_lineage_families_or_review_the_contract",
+        details={"unknown_families": unknown_families},
+    )
+
+    for spec in FAMILY_SPECS:
+        family = spec.family_id
         family_nodes = [node for node in nodes if _text(node.get("family")) == family]
-        available = [node for node in family_nodes if bool(node.get("exists"))]
-        passed = bool(available)
         _append_check(
             checks,
             blocking_issues,
+            check_id=f"required_family_contract_{family}",
+            passed=bool(family_nodes),
+            severity="BLOCKING",
+            message=f"required lineage family node is absent from the graph: {family}.",
+            recommended_action=f"restore_{family}_placeholder_or_artifact_node",
+            family=family,
+        )
+        available = [node for node in family_nodes if bool(node.get("exists"))]
+        passed = bool(available)
+        severity = "BLOCKING" if spec.availability_required_for_daily else "WARNING"
+        issue_target = blocking_issues if severity == "BLOCKING" else warning_issues
+        _append_check(
+            checks,
+            issue_target,
             check_id=f"required_family_{family}",
             passed=passed,
-            severity="BLOCKING",
+            severity=severity,
             message=f"required lineage family has no available artifact: {family}.",
-            recommended_action=f"restore_or_generate_{family}_artifact_before_lineage_validation",
+            recommended_action=(
+                f"restore_or_generate_{family}_artifact_before_daily_completion"
+                if severity == "BLOCKING"
+                else f"record_{family}_as_insufficient_data_until_governed_artifact_exists"
+            ),
             family=family,
         )
 
+    allowed_edge_pairs = {
+        (spec.from_family, spec.to_family, spec.relationship) for spec in EDGE_SPECS
+    }
+    unknown_edges = sorted(
+        {
+            (
+                _text(edge.get("from_family")),
+                _text(edge.get("to_family")),
+                _text(edge.get("relationship")),
+            )
+            for edge in edges
+            if (
+                _text(edge.get("from_family")),
+                _text(edge.get("to_family")),
+                _text(edge.get("relationship")),
+            )
+            not in allowed_edge_pairs
+        }
+    )
+    _append_check(
+        checks,
+        blocking_issues,
+        check_id="known_edge_contract",
+        passed=not unknown_edges,
+        severity="BLOCKING",
+        message="lineage edges must use reviewed family relationships.",
+        recommended_action="remove_unknown_lineage_edges_or_review_the_contract",
+        details={"unknown_edges": [list(item) for item in unknown_edges]},
+    )
+
+    known_node_ids = set(node_ids)
     for spec in EDGE_SPECS:
         matching_edges = [
             edge
@@ -289,18 +362,41 @@ def validate_artifact_lineage_payload(payload: Mapping[str, Any]) -> dict[str, A
             if _text(edge.get("from_family")) == spec.from_family
             and _text(edge.get("to_family")) == spec.to_family
         ]
-        passed = any(_text(edge.get("status")) == PASS_STATUS for edge in matching_edges)
+        topology_passed = any(
+            _text(edge.get("relationship")) == spec.relationship
+            and _text(edge.get("from_node_id")) in known_node_ids
+            and _text(edge.get("to_node_id")) in known_node_ids
+            for edge in matching_edges
+        )
         _append_check(
             checks,
             blocking_issues,
-            check_id=f"required_edge_{spec.from_family}_to_{spec.to_family}",
-            passed=passed,
+            check_id=f"required_edge_contract_{spec.from_family}_to_{spec.to_family}",
+            passed=topology_passed,
             severity="BLOCKING",
             message=(
-                "required lineage dependency edge is missing or points to missing nodes: "
+                "required lineage dependency edge topology is absent or malformed: "
                 f"{spec.from_family}->{spec.to_family}."
             ),
-            recommended_action="restore_upstream_and_downstream_artifacts_before_lineage_validation",
+            recommended_action="restore_required_lineage_edge_topology",
+            details={"relationship": spec.relationship},
+        )
+        availability_passed = any(
+            _text(edge.get("status")) == PASS_STATUS for edge in matching_edges
+        )
+        _append_check(
+            checks,
+            warning_issues,
+            check_id=f"required_edge_{spec.from_family}_to_{spec.to_family}",
+            passed=availability_passed,
+            severity="WARNING",
+            message=(
+                "required lineage dependency edge has insufficient artifact availability: "
+                f"{spec.from_family}->{spec.to_family}."
+            ),
+            recommended_action=(
+                "retain_the_edge_as_insufficient_data_until_governed_artifacts_exist"
+            ),
             details={"relationship": spec.relationship},
         )
 
@@ -569,10 +665,7 @@ def _lineage_nodes(
 
 
 def _lineage_edges(nodes: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
-    representative = {
-        family: _representative_node(nodes, family)
-        for family in REQUIRED_FAMILIES
-    }
+    representative = {family: _representative_node(nodes, family) for family in REQUIRED_FAMILIES}
     edges: list[dict[str, Any]] = []
     for spec in EDGE_SPECS:
         source = representative.get(spec.from_family)
@@ -581,7 +674,7 @@ def _lineage_edges(nodes: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         target_id = "" if target is None else _text(target.get("node_id"))
         source_available = bool(source is not None and source.get("exists"))
         target_available = bool(target is not None and target.get("exists"))
-        status = PASS_STATUS if source_available and target_available else "MISSING_NODE"
+        status = PASS_STATUS if source_available and target_available else "INSUFFICIENT_DATA"
         edges.append(
             {
                 "edge_id": f"{spec.from_family}__to__{spec.to_family}",
@@ -630,14 +723,17 @@ def _node_from_report(
         "freshness_status": _text(report.get("freshness_status"), "UNKNOWN"),
         "production_effect": production_effect,
         "sha256": (
-            ""
-            if artifact_ref is None or artifact_ref.sha256 is None
-            else artifact_ref.sha256
+            "" if artifact_ref is None or artifact_ref.sha256 is None else artifact_ref.sha256
         ),
         "size_bytes": None if artifact_ref is None else artifact_ref.size_bytes,
         "artifact_type": "" if artifact_ref is None else artifact_ref.artifact_type,
         "source": "report_index",
         "required_family": True,
+        "availability_disposition": (
+            "AVAILABLE"
+            if bool(report.get("exists")) and artifact_path is not None and artifact_path.exists()
+            else "INSUFFICIENT_DATA"
+        ),
         "reader_impact": _reader_impact(spec.family_id),
     }
 
@@ -661,6 +757,7 @@ def _node_from_path(*, spec: FamilySpec, path: Path, source_pattern: str) -> dic
         "artifact_type": artifact_ref.artifact_type,
         "source": "configured_data_path",
         "required_family": True,
+        "availability_disposition": ("AVAILABLE" if artifact_ref.exists else "INSUFFICIENT_DATA"),
         "reader_impact": _reader_impact(spec.family_id),
     }
 
@@ -674,14 +771,15 @@ def _missing_family_node(spec: FamilySpec) -> dict[str, Any]:
         "title": f"{spec.label} missing",
         "artifact_path": "",
         "exists": False,
-        "status": "MISSING",
-        "freshness_status": "MISSING",
+        "status": "INSUFFICIENT_DATA",
+        "freshness_status": "INSUFFICIENT_DATA",
         "production_effect": PRODUCTION_EFFECT,
         "sha256": "",
         "size_bytes": None,
         "artifact_type": "missing",
         "source": "required_family_placeholder",
         "required_family": True,
+        "availability_disposition": "INSUFFICIENT_DATA",
         "reader_impact": _reader_impact(spec.family_id),
     }
 
@@ -707,7 +805,7 @@ def _family_coverage(nodes: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]
             {
                 "family": spec.family_id,
                 "label": spec.label,
-                "status": "AVAILABLE" if available else "MISSING",
+                "status": "AVAILABLE" if available else "INSUFFICIENT_DATA",
                 "node_count": len(family_nodes),
                 "available_node_count": len(available),
                 "required": True,
@@ -832,7 +930,10 @@ def _next_action(status: str) -> str:
     if status == FAIL_STATUS:
         return "restore_missing_lineage_artifacts_or_edges_before_paper_shadow_decision_audit"
     if status == WARN_STATUS:
-        return "review_stale_lineage_artifacts_before_using_chain_as_complete_audit_context"
+        return (
+            "treat_missing_or_stale_lineage_families_as_insufficient_data_"
+            "until_governed_artifacts_exist"
+        )
     return "continue_candidate_research_chain_audit"
 
 

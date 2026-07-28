@@ -75,6 +75,17 @@ dependency-blocked step 在 daily report 为 `BLOCKED`，ledger 为 `SKIPPED`，
 `run_status/run_blocker_codes`。`validate-data`失败不得执行score/report consumer，但不再阻止PIT/SEC
 sibling或always-run closure。该切换不启用non-daily dispatch。
 
+OPS-071 为已经 terminal `FAILED` / `BLOCKED` 的同一 as-of 增加显式 child recovery，而不是
+自动重试或删除旧 state。恢复仍通过唯一 `aits ops daily-run` 入口，且必须一次性提供
+`--recovery-parent-run-id`、`--recovery-from-step`、`--recovery-reason-code`；control plane 将
+parent manifest、旧/新 release、active deployment receipt、workflow spec、attempt budget 与
+idempotent replay slice 逐项绑定，并先冻结原 state/ledger bytes 和 recovery receipt。当前 reviewed
+boundary 仅允许从 `artifact_lineage` 或更后的 report/finalization step 开始，每个 terminal parent
+最多一个 child；capture/provider/DQ/PIT/score 不会重放。Lineage 中未到期、manual 或历史
+paper-shadow/weekly/readiness/owner evidence 缺失时保留 placeholder 和 warning，以
+`INSUFFICIENT_DATA` 表示 availability；topology、安全边界和 strict data/PIT 仍 fail closed。
+该机制不建立第二 scheduler、不扩展 provider budget、不写 weights，也不触发 broker/trading。
+
 F1.5在每次`daily-run`的canonical metadata目录additive写`periodic_operations_plan_YYYY-MM-DD.json`。该文件覆盖14 weekly、6 biweekly、6 monthly和15 ad-hoc任务，每项独立保存one-step WorkflowSpec、typed due resolution、non-executing RunLedger和原command template；缺DQ/artifact/owner evidence的due项BLOCKED，非period-end或event未触发项NOT_DUE。`automatic_command_dispatch_enabled=false`，因此daily trigger不执行这些命令。Operator只有在持有完整evidence/owner decision时才可显式调用`aits ops periodic-dispatch ... --confirm-manual-dispatch`；未解析`{...}`/`<...>`、自然语言manual checkpoint、非allowlist前缀、duplicate/concurrent/attempt exhausted均fail closed。该manual command不是外部scheduler entry。
 
 ## Closed-Market Mode

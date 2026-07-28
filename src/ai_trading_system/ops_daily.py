@@ -20,7 +20,10 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.contracts.data_quality_execution import (
     DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
 )
-from ai_trading_system.contracts.operations import OperationsRunDecision
+from ai_trading_system.contracts.operations import (
+    OperationsRecoveryRequest,
+    OperationsRunDecision,
+)
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.core import (
     ArtifactRef,
@@ -215,11 +218,7 @@ class DailyOpsPlan:
 
     def status(self, env: Mapping[str, str] | None = None) -> str:
         if self.missing_env_vars(env):
-            return (
-                "READY_WITH_BLOCKED_BRANCHES"
-                if self.dependency_aware
-                else "BLOCKED_ENV"
-            )
+            return "READY_WITH_BLOCKED_BRANCHES" if self.dependency_aware else "BLOCKED_ENV"
         if any(not step.enabled for step in self.steps):
             return "READY_WITH_SKIPS"
         return "READY"
@@ -394,11 +393,9 @@ def _enforce_scheduled_daily_plan(plan: DailyOpsPlan) -> None:
         if step_id is None:
             continue
         step = step_by_id[step_id]
-        expected_dependencies = tuple(sorted(
-            dependency
-            for dependency in task.dependencies
-            if dependency in step_by_id
-        ))
+        expected_dependencies = tuple(
+            sorted(dependency for dependency in task.dependencies if dependency in step_by_id)
+        )
         if step.dependencies != expected_dependencies:
             raise ValueError(
                 f"daily ops step {step_id} dependency drift: "
@@ -406,16 +403,11 @@ def _enforce_scheduled_daily_plan(plan: DailyOpsPlan) -> None:
             )
         expected_capture_components = (
             task.required_capture_components
-            if (
-                "capture_daily_inputs" in step_by_id
-                and step_by_id["capture_daily_inputs"].enabled
-            )
+            if ("capture_daily_inputs" in step_by_id and step_by_id["capture_daily_inputs"].enabled)
             else ()
         )
         if step.required_capture_components != expected_capture_components:
-            raise ValueError(
-                f"daily ops step {step_id} capture component dependency drift"
-            )
+            raise ValueError(f"daily ops step {step_id} capture component dependency drift")
         if step.always_run is not task.always_run:
             raise ValueError(f"daily ops step {step_id} always_run drift")
         if (
@@ -1765,11 +1757,13 @@ def build_daily_ops_plan(
     steps = [
         replace(
             step,
-            dependencies=tuple(sorted(
-                dependency
-                for dependency in scheduled_task_by_step[step.step_id].dependencies
-                if dependency in active_step_ids
-            )),
+            dependencies=tuple(
+                sorted(
+                    dependency
+                    for dependency in scheduled_task_by_step[step.step_id].dependencies
+                    if dependency in active_step_ids
+                )
+            ),
             required_capture_components=(
                 scheduled_task_by_step[step.step_id].required_capture_components
                 if capture_active
@@ -1926,10 +1920,7 @@ def run_daily_ops_plan(
             blocked_at = datetime.now(tz=UTC)
             blocker_codes = (
                 *dependency_blockers,
-                *(
-                    f"MISSING_ENV:{env_var}"
-                    for env_var in missing_step_env
-                ),
+                *(f"MISSING_ENV:{env_var}" for env_var in missing_step_env),
             )
             blocker_summary = ",".join(blocker_codes)
             if execution_observer is not None:
@@ -2124,6 +2115,7 @@ def run_daily_ops_plan_controlled(
     runtime_control_policy_path: Path = DEFAULT_OPERATIONS_RUNTIME_CONTROL_POLICY_PATH,
     completion_callback: DailyOpsCompletionCallback | None = None,
     terminal_failure_callback: DailyOpsTerminalFailureCallback | None = None,
+    recovery_request: OperationsRecoveryRequest | None = None,
 ) -> DailyOpsRunReport:
     policy = (
         runtime_control.policy
@@ -2176,6 +2168,7 @@ def run_daily_ops_plan_controlled(
         as_of=plan.as_of,
         run_id=resolved_run_id,
         now=acquired_at,
+        recovery_request=recovery_request,
     )
     if acquisition.lease is None:
         return _daily_run_control_nonexecution_report(
@@ -2186,6 +2179,11 @@ def run_daily_ops_plan_controlled(
         )
 
     resumed = frozenset(acquisition.resolution.resume_completed_step_ids)
+    resume_reason = (
+        "Canonical recovery：replay boundary 之前的步骤已由 parent terminal evidence 复用。"
+        if acquisition.resolution.decision is OperationsRunDecision.RECOVERY
+        else "Canonical resume：相同 idempotency key 的步骤已 PASS。"
+    )
     controlled_plan = replace(
         plan,
         steps=tuple(
@@ -2193,7 +2191,7 @@ def run_daily_ops_plan_controlled(
                 replace(
                     step,
                     enabled=False,
-                    skip_reason="Canonical resume：相同 idempotency key 的步骤已 PASS。",
+                    skip_reason=resume_reason,
                 )
                 if step.step_id in resumed
                 else step
@@ -3094,9 +3092,7 @@ def _daily_step_dependency_blockers(
     for component_id in step.required_capture_components:
         status = component_status.get(component_id, "MISSING")
         if status != "PASS":
-            blockers.append(
-                f"CAPTURE_COMPONENT_NOT_PASS:{component_id}:{status}"
-            )
+            blockers.append(f"CAPTURE_COMPONENT_NOT_PASS:{component_id}:{status}")
     return tuple(blockers)
 
 
@@ -3588,10 +3584,7 @@ def _json_status_artifact_error(
             f"expected={expected_type}:{expected_schema_version!r} "
             f"actual={schema_version!r}"
         )
-    if (
-        expected_report_type is not None
-        and payload.get("report_type") != expected_report_type
-    ):
+    if expected_report_type is not None and payload.get("report_type") != expected_report_type:
         return (
             f"artifact_status_report_type_invalid: {path} "
             f"expected={expected_report_type!r} actual={payload.get('report_type')!r}"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -15,6 +16,7 @@ from ai_trading_system.contracts.operations import (
     OperationsDueContext,
     OperationsDuePolicy,
     OperationsDueResolution,
+    OperationsRecoveryRequest,
     OperationsRunDecision,
     OperationsShadowPlan,
     PeriodicOperationsPlan,
@@ -47,6 +49,7 @@ from ai_trading_system.ops_daily import (
     write_daily_ops_plan,
     write_daily_ops_shadow_plan,
 )
+from ai_trading_system.platform.artifacts import sha256_path
 from ai_trading_system.platform.operations import (
     OperationsRunControl,
     OperationsRuntimeControlError,
@@ -84,6 +87,8 @@ def _runtime_policy(
     max_run_attempts: int = 2,
     daily_cut_in: bool = False,
     non_daily_dispatch: bool = False,
+    terminal_recovery: bool = False,
+    terminal_recovery_allowed_from_step_ids: tuple[str, ...] = (),
 ) -> OperationsRuntimeControlPolicy:
     return OperationsRuntimeControlPolicy(
         policy_id="test_runtime_control_v1",
@@ -94,6 +99,9 @@ def _runtime_policy(
         resume_idempotent_steps=True,
         legacy_daily_executor_cut_in_enabled=daily_cut_in,
         non_daily_dispatch_enabled=non_daily_dispatch,
+        terminal_recovery_enabled=terminal_recovery,
+        terminal_recovery_requires_release_change=True,
+        terminal_recovery_allowed_from_step_ids=(terminal_recovery_allowed_from_step_ids),
     )
 
 
@@ -104,6 +112,58 @@ def _daily_env() -> dict[str, str]:
         "SEC_USER_AGENT": "AITradingSystem test@example.com",
         "OPENAI_API_KEY": "",
     }
+
+
+def _recovery_request(
+    tmp_path: Path,
+    *,
+    parent_run_id: str,
+    as_of: date,
+    recovery_from_step_id: str = "second",
+    parent_release_commit: str = "a" * 40,
+    current_release_commit: str = "b" * 40,
+) -> OperationsRecoveryRequest:
+    manifest_path = tmp_path / "parent_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "daily_run_manifest",
+                "run_id": parent_run_id,
+                "as_of": as_of.isoformat(),
+                "git_commit": parent_release_commit,
+                "status": "FAILED",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    deployment_receipt_path = tmp_path / "active.json"
+    deployment_receipt_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "ops_deployment_acceptance.v1",
+                "status": "ACTIVE_OWNER_ACCEPTED",
+                "release": {"candidate_commit": current_release_commit},
+                "runtime": {"head_commit": current_release_commit},
+                "production_effect": "none",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return OperationsRecoveryRequest(
+        parent_run_id=parent_run_id,
+        recovery_from_step_id=recovery_from_step_id,
+        reason_code="OPS_071_TEST_REMEDIATION",
+        parent_manifest_path=str(manifest_path),
+        parent_manifest_sha256=sha256_path(manifest_path),
+        parent_release_commit=parent_release_commit,
+        current_release_commit=current_release_commit,
+        deployment_receipt_path=str(deployment_receipt_path),
+        deployment_receipt_sha256=sha256_path(deployment_receipt_path),
+        requested_at=datetime(2026, 7, 28, tzinfo=UTC),
+    )
 
 
 def _write_daily_pass_status_artifacts(plan) -> None:
@@ -1074,6 +1134,184 @@ def test_runtime_control_policy_enables_daily_and_explicit_non_daily_cut_in() ->
     assert policy.resume_idempotent_steps is True
     assert policy.legacy_daily_executor_cut_in_enabled is True
     assert policy.non_daily_dispatch_enabled is True
+    assert policy.terminal_recovery_enabled is True
+    assert policy.terminal_recovery_requires_release_change is True
+    assert "artifact_lineage" in policy.terminal_recovery_allowed_from_step_ids
+
+
+def test_runtime_control_terminal_recovery_archives_parent_and_replays_boundary(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 27)
+    now = datetime(2026, 7, 28, tzinfo=UTC)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("second",),
+        ),
+    )
+    spec = _runtime_spec(second_max_attempts=1)
+    parent = control.acquire(spec=spec, as_of=as_of, run_id="parent", now=now)
+    assert parent.lease is not None
+    parent.lease.start_step("first", at=now)
+    parent.lease.pass_step("first", at=now)
+    parent.lease.start_step("second", at=now)
+    parent.lease.finish(
+        CanonicalStatus.FAILED,
+        blocker_codes=("DAILY_STEP_FAILED:second",),
+        at=now,
+    )
+    state_path = control.root / "states" / f"{parent.resolution.idempotency_key}.json"
+    parent_state_bytes = state_path.read_bytes()
+
+    request = _recovery_request(
+        tmp_path,
+        parent_run_id="parent",
+        as_of=as_of,
+    )
+    recovered = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="child",
+        now=now + timedelta(minutes=1),
+        recovery_request=request,
+    )
+
+    assert recovered.resolution.decision is OperationsRunDecision.RECOVERY
+    assert recovered.resolution.resume_completed_step_ids == ("first",)
+    assert recovered.resolution.recovery_parent_run_id == "parent"
+    assert recovered.resolution.recovery_from_step_id == "second"
+    assert recovered.lease is not None
+    assert recovered.lease.state.step_attempt_count("second") == 0
+    receipt_path = Path(str(recovered.resolution.recovery_receipt_path))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    archive_path = Path(receipt["parent_state_archive_path"])
+    assert archive_path.read_bytes() == parent_state_bytes
+    assert receipt["parent_state_sha256"] == hashlib.sha256(parent_state_bytes).hexdigest()
+    assert receipt["replay_step_ids"] == ["second"]
+    assert receipt["reused_completed_step_ids"] == ["first"]
+
+    recovered.lease.start_step("second", at=now + timedelta(minutes=1))
+    recovered.lease.pass_step("second", at=now + timedelta(minutes=1))
+    recovered.lease.finish(CanonicalStatus.PASS, at=now + timedelta(minutes=1))
+    assert json.loads(state_path.read_text(encoding="utf-8"))["status"] == "PASS"
+
+
+def test_runtime_control_terminal_failure_requires_explicit_recovery(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 27)
+    now = datetime(2026, 7, 28, tzinfo=UTC)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("second",),
+        ),
+    )
+    spec = _runtime_spec(second_max_attempts=1)
+    parent = control.acquire(spec=spec, as_of=as_of, run_id="parent", now=now)
+    assert parent.lease is not None
+    parent.lease.start_step("first", at=now)
+    parent.lease.pass_step("first", at=now)
+    parent.lease.start_step("second", at=now)
+    parent.lease.finish(
+        CanonicalStatus.FAILED,
+        blocker_codes=("DAILY_STEP_FAILED:second",),
+        at=now,
+    )
+
+    blocked = control.acquire(spec=spec, as_of=as_of, run_id="child", now=now)
+
+    assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_TERMINAL_RECOVERY_REQUIRED
+    assert blocked.resolution.blocker_codes == ("EXPLICIT_TERMINAL_RECOVERY_REQUEST_REQUIRED",)
+    assert blocked.lease is None
+
+
+def test_runtime_control_recovery_rejects_tampered_deployment_receipt(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 27)
+    now = datetime(2026, 7, 28, tzinfo=UTC)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("second",),
+        ),
+    )
+    spec = _runtime_spec(second_max_attempts=1)
+    parent = control.acquire(spec=spec, as_of=as_of, run_id="parent", now=now)
+    assert parent.lease is not None
+    parent.lease.start_step("first", at=now)
+    parent.lease.pass_step("first", at=now)
+    parent.lease.start_step("second", at=now)
+    parent.lease.finish(
+        CanonicalStatus.FAILED,
+        blocker_codes=("DAILY_STEP_FAILED:second",),
+        at=now,
+    )
+    request = _recovery_request(
+        tmp_path,
+        parent_run_id="parent",
+        as_of=as_of,
+    )
+    Path(request.deployment_receipt_path).write_text("{}", encoding="utf-8")
+
+    blocked = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="child",
+        now=now,
+        recovery_request=request,
+    )
+
+    assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_INVALID_RECOVERY
+    assert blocked.resolution.blocker_codes == (
+        "RECOVERY_DEPLOYMENT_RECEIPT_INVALID_SHA256_MISMATCH",
+    )
+    assert blocked.lease is None
+
+
+def test_runtime_control_recovery_rejects_non_idempotent_replay(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 7, 27)
+    now = datetime(2026, 7, 28, tzinfo=UTC)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("first",),
+        ),
+    )
+    spec = _runtime_spec(first_idempotent=False, second_max_attempts=1)
+    parent = control.acquire(spec=spec, as_of=as_of, run_id="parent", now=now)
+    assert parent.lease is not None
+    parent.lease.finish(
+        CanonicalStatus.FAILED,
+        blocker_codes=("MANUAL_TERMINAL_FAILURE",),
+        at=now,
+    )
+    request = _recovery_request(
+        tmp_path,
+        parent_run_id="parent",
+        as_of=as_of,
+        recovery_from_step_id="first",
+    )
+
+    blocked = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="child",
+        now=now,
+        recovery_request=request,
+    )
+
+    assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_INVALID_RECOVERY
+    assert blocked.resolution.blocker_codes == ("RECOVERY_REPLAY_NON_IDEMPOTENT",)
+    assert blocked.lease is None
 
 
 def test_runtime_control_blocks_concurrent_workflow_date_acquisition(tmp_path: Path) -> None:
@@ -1560,6 +1798,82 @@ def test_controlled_daily_executor_resumes_without_repeating_completed_step(
     )
 
 
+def test_controlled_daily_executor_recovery_replays_only_report_tail(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            daily_cut_in=True,
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("artifact_lineage",),
+        ),
+    )
+
+    def failing_lineage_runner(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command,
+            1 if "validate-artifact-lineage" in command else 0,
+            stdout="",
+            stderr="lineage failed",
+        )
+
+    failed = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=failing_lineage_runner,
+        run_id="parent",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
+    assert failed.status == "FAIL"
+    assert failed.failed_step is not None
+    assert failed.failed_step.step_id == "validate_artifact_lineage"
+
+    request = _recovery_request(
+        tmp_path,
+        parent_run_id="parent",
+        as_of=as_of,
+        recovery_from_step_id="artifact_lineage",
+    )
+    recovery_calls: list[tuple[str, ...]] = []
+
+    def passing_runner(command, **kwargs):
+        recovery_calls.append(tuple(command))
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    recovered = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=passing_runner,
+        run_id="child",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+        recovery_request=request,
+    )
+
+    assert recovered.status == "PASS_WITH_SKIPS"
+    assert any("artifact-lineage" in command for command in recovery_calls)
+    assert not any("capture-daily-inputs" in command for command in recovery_calls)
+    assert not any("score-daily" in command for command in recovery_calls)
+    assert any(
+        result.step_id == "capture_daily_inputs"
+        and str(result.skip_reason).startswith("Canonical recovery")
+        for result in recovered.step_results
+    )
+
+
 def test_controlled_daily_executor_blocks_concurrent_trigger_before_runner(
     tmp_path: Path,
 ) -> None:
@@ -1641,9 +1955,7 @@ def test_controlled_daily_executor_blocks_rerun_after_capture_attempt_budget_is_
     )
     assert failed.status == "FAIL"
     assert exhausted.status == "RUN_CONTROL_BLOCKED_RETRY_EXHAUSTED"
-    assert {
-        item for item in (exhausted.failed_step.error or "").split(",")
-    } == {
+    assert {item for item in (exhausted.failed_step.error or "").split(",")} == {
         "STEP_ATTEMPT_BUDGET_EXHAUSTED:capture_daily_inputs",
         "STEP_ATTEMPT_BUDGET_EXHAUSTED:pipeline_health",
         "STEP_ATTEMPT_BUDGET_EXHAUSTED:secret_hygiene",
@@ -1771,16 +2083,12 @@ def test_controlled_daily_executor_records_partial_capture_branch_isolation(
         skip_risk_event_openai_precheck=True,
     )
     _write_daily_pass_status_artifacts(plan)
-    capture_step = next(
-        step for step in plan.steps if step.step_id == "capture_daily_inputs"
-    )
+    capture_step = next(step for step in plan.steps if step.step_id == "capture_daily_inputs")
     manifest = json.loads(capture_step.produced_paths[0].read_text(encoding="utf-8"))
     manifest["status"] = "PARTIAL_CAPTURE"
-    next(
-        row
-        for row in manifest["component_results"]
-        if row["component_id"] == "fmp_forward_pit"
-    )["status"] = "FAIL"
+    next(row for row in manifest["component_results"] if row["component_id"] == "fmp_forward_pit")[
+        "status"
+    ] = "FAIL"
     capture_step.produced_paths[0].write_text(json.dumps(manifest), encoding="utf-8")
     calls: list[str] = []
 
