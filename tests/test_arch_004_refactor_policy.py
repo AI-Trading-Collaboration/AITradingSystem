@@ -748,9 +748,7 @@ ARCH_005M1_BATCH4_FROZEN_PATHS = frozenset(
 )
 OPS_070_STABLE_RELEASE_SECTION = "phase_ops_070_stable_ops_deployment_release"
 OPS_070_STABLE_RELEASE_BASE_COMMIT = "00d98ddaa2828852c1086ea9176935643e11e205"
-OPS_070_STABLE_RELEASE_BASELINE_GIT_BLOB = (
-    "2872030cfea709051e775d868797cae834d0185d"
-)
+OPS_070_STABLE_RELEASE_BASELINE_GIT_BLOB = "2872030cfea709051e775d868797cae834d0185d"
 OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT = 1_857_331
 OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_SHA256 = (
     "f6efbcf88720d27a233e6b42f185029aaf21afdd8895f671b48dc0da13508d98"
@@ -758,10 +756,7 @@ OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_SHA256 = (
 OPS_070_STABLE_RELEASE_NEW_SOURCE_PATHS = frozenset(
     {
         "config/operations/ops_release_promotion.yaml",
-        (
-            "docs/requirements/"
-            "DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md"
-        ),
+        ("docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md"),
         (
             "registry/development_tasks_shadow/active/98/"
             "989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml"
@@ -772,53 +767,33 @@ OPS_070_STABLE_RELEASE_NEW_SOURCE_PATHS = frozenset(
 )
 OPS_070_RUNTIME_EXCLUDE_SECTION = "phase_ops_070_runtime_git_exclusion_contract"
 OPS_070_RUNTIME_EXCLUDE_BASE_COMMIT = "992734147b4e25a300694f07c1d7323d37641501"
-OPS_070_RUNTIME_EXCLUDE_BASELINE_GIT_BLOB = (
-    "7c830fb0840a890b619538af6b904f810e2703ce"
-)
+OPS_070_RUNTIME_EXCLUDE_BASELINE_GIT_BLOB = "7c830fb0840a890b619538af6b904f810e2703ce"
 OPS_070_RUNTIME_EXCLUDE_HISTORICAL_PREFIX_BYTE_COUNT = 1_867_053
 OPS_070_RUNTIME_EXCLUDE_HISTORICAL_PREFIX_SHA256 = (
     "fff12d89d6b61ab394e622257203baf28f461a1a61d472c343aa031470f5862e"
 )
-OPS_070_CROSS_RELEASE_POLICY_SECTION = (
-    "phase_ops_070_cross_release_promotion_policy_authority"
-)
-OPS_070_CROSS_RELEASE_POLICY_BASE_COMMIT = (
-    "f462836e3d599ad7e718a487045c3cc1d2ed20a8"
-)
-OPS_070_CROSS_RELEASE_POLICY_BASELINE_GIT_BLOB = (
-    "7846080de69beca5900a4260f8eac27b13150a42"
-)
+OPS_070_CROSS_RELEASE_POLICY_SECTION = "phase_ops_070_cross_release_promotion_policy_authority"
+OPS_070_CROSS_RELEASE_POLICY_BASE_COMMIT = "f462836e3d599ad7e718a487045c3cc1d2ed20a8"
+OPS_070_CROSS_RELEASE_POLICY_BASELINE_GIT_BLOB = "7846080de69beca5900a4260f8eac27b13150a42"
 OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_BYTE_COUNT = 1_873_407
 OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_SHA256 = (
     "60474696d6e9a66dfc64149da02f557d526a07d27217a820f2720a5acfb4f0df"
 )
-OPS_070_FAILURE_AUDIT_SECTION = (
-    "phase_ops_070_promotion_failure_audit_correction"
-)
+OPS_070_FAILURE_AUDIT_SECTION = "phase_ops_070_promotion_failure_audit_correction"
 OPS_070_FAILURE_AUDIT_BASE_COMMIT = "65e11baa8c2727f0f38e829fd21b600cf654df8e"
-OPS_070_FAILURE_AUDIT_BASELINE_GIT_BLOB = (
-    "0e300266173dfa83e195a6ae960b1156655fdd4f"
-)
+OPS_070_FAILURE_AUDIT_BASELINE_GIT_BLOB = "0e300266173dfa83e195a6ae960b1156655fdd4f"
 OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT = 1_879_635
 OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_SHA256 = (
     "19a4d39134dc9833bdcfe7d0b413f2dfb973a811d5744f00c69b90c0cf7fc142"
 )
-OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION = (
-    "phase_ops_070_runtime_self_containment"
-)
-OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT = (
-    "a994a9d03028263d00d1682a39bcdded93c58c47"
-)
-OPS_070_RUNTIME_SELF_CONTAINMENT_BASELINE_GIT_BLOB = (
-    "2a7f474a1893d2676f815f71a71ba822803195fc"
-)
+OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION = "phase_ops_070_runtime_self_containment"
+OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT = "a994a9d03028263d00d1682a39bcdded93c58c47"
+OPS_070_RUNTIME_SELF_CONTAINMENT_BASELINE_GIT_BLOB = "2a7f474a1893d2676f815f71a71ba822803195fc"
 OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT = 1_883_797
 OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_SHA256 = (
     "283f2be42e0ba970f4695e96b6b463b1f22ed81ddf76fa31b031fac7b822bfa3"
 )
-DATA_GOV_002C2P_SECTION = (
-    "phase_data_gov_002c2p_price_non_market_session_attribution_review_pack"
-)
+DATA_GOV_002C2P_SECTION = "phase_data_gov_002c2p_price_non_market_session_attribution_review_pack"
 DATA_GOV_002C2P_BASE_COMMIT = "8d1effbd77b34e8e7dc6a95a751562b46746c3d7"
 DATA_GOV_002C2P_BASELINE_GIT_BLOB = "7067c34834cb0c069c3e35f10b9bcf32e73e1b02"
 DATA_GOV_002C2P_HISTORICAL_PREFIX_BYTE_COUNT = 1_889_484
@@ -839,19 +814,14 @@ DATA_GOV_002C2P_NEW_SOURCE_PATHS = frozenset(
             "Source_Owner_Review_Pack.md"
         ),
         "inputs/data_quality/price_non_market_session_attribution_review_pack_v1.json",
-        (
-            "inputs/data_quality/"
-            "price_non_market_session_attribution_review_pack_v1.validation.json"
-        ),
+        ("inputs/data_quality/price_non_market_session_attribution_review_pack_v1.validation.json"),
         DATA_GOV_002C2P_ACTIVE_TASK_SHADOW_PATH,
         "scripts/price_issue_attribution_review_pack.py",
         "src/ai_trading_system/data/price_issue_attribution_review_pack.py",
         "tests/test_price_issue_attribution_review_pack.py",
     }
 )
-TRADING_2463_SECTION = (
-    "phase_trading_2463_decision_target_redesign_preregistration"
-)
+TRADING_2463_SECTION = "phase_trading_2463_decision_target_redesign_preregistration"
 TRADING_2463_BASE_COMMIT = "b99b8b95ada8feb2c784fbc00625d4275084e755"
 TRADING_2463_BASELINE_GIT_BLOB = "b19597710ce51f18ed486aa34ed65060dbad2009"
 TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT = 1_900_553
@@ -860,10 +830,7 @@ TRADING_2463_HISTORICAL_PREFIX_SHA256 = (
 )
 TRADING_2463_NEW_SOURCE_PATHS = frozenset(
     {
-        (
-            "docs/requirements/"
-            "TRADING-2463_Decision_Target_Redesign_Preregistration.md"
-        ),
+        ("docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md"),
         (
             "registry/development_tasks_shadow/active/a0/"
             "a022ba7f79e435805c2c428b903604715852fe7334cada5e4433fb600493a515.yaml"
@@ -881,15 +848,10 @@ TRADING_2463_S1_S2_HISTORICAL_PREFIX_SHA256 = (
 )
 TRADING_2463_S1_S2_NEW_SOURCE_PATHS = frozenset(
     {
-        (
-            "docs/requirements/"
-            "TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md"
-        ),
+        ("docs/requirements/TRADING-2463_S1_S2_Decision_Target_Design_And_Falsification_Pack.md"),
     }
 )
-TRADING_2463_S3_SECTION = (
-    "phase_trading_2463_decision_target_redesign_s3_target_selection_pack"
-)
+TRADING_2463_S3_SECTION = "phase_trading_2463_decision_target_redesign_s3_target_selection_pack"
 TRADING_2463_S3_BASE_COMMIT = "b2a819b105bcc9c30a0952e64796ab3493f267d2"
 TRADING_2463_S3_BASELINE_GIT_BLOB = "cd856d81a08cbfc1d5f76c585c27064cb40186bb"
 TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT = 1_924_119
@@ -898,15 +860,10 @@ TRADING_2463_S3_HISTORICAL_PREFIX_SHA256 = (
 )
 TRADING_2463_S3_NEW_SOURCE_PATHS = frozenset(
     {
-        (
-            "docs/requirements/"
-            "TRADING-2463_S3_Target_Selection_Decision_Pack.md"
-        ),
+        ("docs/requirements/TRADING-2463_S3_Target_Selection_Decision_Pack.md"),
     }
 )
-TRADING_2463_S4_SECTION = (
-    "phase_trading_2463_decision_target_redesign_s4_o1_preregistration_freeze"
-)
+TRADING_2463_S4_SECTION = "phase_trading_2463_decision_target_redesign_s4_o1_preregistration_freeze"
 TRADING_2463_S4_BASE_COMMIT = "f625b8bffd004ee0beafde00962eec2299cd3e27"
 TRADING_2463_S4_BASELINE_GIT_BLOB = "f57b0ec0b2c31ee010b3f84c3a6301739e3033d1"
 TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT = 1_929_057
@@ -933,10 +890,7 @@ DATA_GOV_002C3P_HISTORICAL_PREFIX_SHA256 = (
 )
 DATA_GOV_002C3P_NEW_SOURCE_PATHS = frozenset(
     {
-        (
-            "config/data_quality/"
-            "price_non_market_session_attribution_decision_v1.yaml"
-        ),
+        ("config/data_quality/price_non_market_session_attribution_decision_v1.yaml"),
         (
             "docs/requirements/"
             "DATA-GOV-002C3P_Price_Non_Market_Session_Typed_"
@@ -953,17 +907,12 @@ DATA_GOV_002C3P_NEW_SOURCE_PATHS = frozenset(
 TRADING_2463_S4_APPROVAL_SECTION = (
     "phase_trading_2463_decision_target_redesign_s4_o1_pilot_policy_freeze"
 )
-TRADING_2463_S4_APPROVAL_BASE_COMMIT = (
-    "96a3efbfa8f48dea8c9f56a7e83be9f9279562ef"
-)
-TRADING_2463_S4_APPROVAL_BASELINE_GIT_BLOB = (
-    "c7d3258c3f9699c15887492828196eacdda697e1"
-)
+TRADING_2463_S4_APPROVAL_BASE_COMMIT = "96a3efbfa8f48dea8c9f56a7e83be9f9279562ef"
+TRADING_2463_S4_APPROVAL_BASELINE_GIT_BLOB = "c7d3258c3f9699c15887492828196eacdda697e1"
 TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT = 1_947_570
 TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_SHA256 = (
     "03304eb4b0fe0ad19f8265cf71d6adc3c96333be06a81f3e5b7d98c6ef14a39b"
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2463_S4_APPROVAL_SECTION
 TRADING_2463_ACTIVE_TASK_SHADOW_PATH = (
     "registry/development_tasks_shadow/active/a0/"
     "a022ba7f79e435805c2c428b903604715852fe7334cada5e4433fb600493a515.yaml"
@@ -972,8 +921,25 @@ TRADING_2463_COMPLETED_TASK_SHADOW_PATH = (
     "registry/development_tasks_shadow/completed/a0/"
     "a022ba7f79e435805c2c428b903604715852fe7334cada5e4433fb600493a515.yaml"
 )
-TRADING_2463_S4_APPROVAL_NEW_SOURCE_PATHS = frozenset(
-    {TRADING_2463_COMPLETED_TASK_SHADOW_PATH}
+TRADING_2463_S4_APPROVAL_NEW_SOURCE_PATHS = frozenset({TRADING_2463_COMPLETED_TASK_SHADOW_PATH})
+OPS_071_SECTION = "phase_ops_071_daily_terminal_recovery_and_lineage_availability"
+OPS_071_BASE_COMMIT = "a7c487ecc6905464df8ed5f314c516a36ca17e4e"
+OPS_071_BASELINE_GIT_BLOB = "0c0658437a3ad9336009e557c7832ca724f32baa"
+OPS_071_HISTORICAL_PREFIX_BYTE_COUNT = 1_960_651
+OPS_071_HISTORICAL_PREFIX_SHA256 = (
+    "cf30423f71748ba8860762406e925901483d14b39be54c4be6db3e28f012c067"
+)
+LATEST_COMPATIBILITY_SECTION = OPS_071_SECTION
+OPS_071_NEW_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md",
+        (
+            "registry/development_tasks_shadow/active/e5/"
+            "e5f589af3b9ef8a214af03d22b50895bc1b0da243b00134c8da95c88f95a9623.yaml"
+        ),
+        "src/ai_trading_system/reports/artifact_lineage.py",
+        "tests/test_artifact_lineage.py",
+    }
 )
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
@@ -1884,10 +1850,7 @@ def _arch_005m1_batch4_base_baseline_blob() -> bytes:
 
 @cache
 def _ops_070_stable_release_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{OPS_070_STABLE_RELEASE_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{OPS_070_STABLE_RELEASE_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -1904,10 +1867,7 @@ def _ops_070_stable_release_base_baseline_blob() -> bytes:
 
 @cache
 def _ops_070_runtime_exclude_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{OPS_070_RUNTIME_EXCLUDE_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{OPS_070_RUNTIME_EXCLUDE_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -1924,10 +1884,7 @@ def _ops_070_runtime_exclude_base_baseline_blob() -> bytes:
 
 @cache
 def _ops_070_cross_release_policy_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{OPS_070_CROSS_RELEASE_POLICY_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{OPS_070_CROSS_RELEASE_POLICY_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -1944,10 +1901,7 @@ def _ops_070_cross_release_policy_base_baseline_blob() -> bytes:
 
 @cache
 def _ops_070_failure_audit_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{OPS_070_FAILURE_AUDIT_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{OPS_070_FAILURE_AUDIT_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -1965,8 +1919,7 @@ def _ops_070_failure_audit_base_baseline_blob() -> bytes:
 @cache
 def _ops_070_runtime_self_containment_base_baseline_blob() -> bytes:
     object_name = (
-        f"{OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+        f"{OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     )
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
@@ -2001,9 +1954,7 @@ def _data_gov_002c2p_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2463_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2463_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2463_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2020,9 +1971,7 @@ def _trading_2463_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2463_s1_s2_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2463_S1_S2_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2463_S1_S2_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2039,9 +1988,7 @@ def _trading_2463_s1_s2_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2463_s3_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2463_S3_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2463_S3_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2058,9 +2005,7 @@ def _trading_2463_s3_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2463_s4_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2463_S4_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2463_S4_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2077,9 +2022,7 @@ def _trading_2463_s4_base_baseline_blob() -> bytes:
 
 @cache
 def _data_gov_002c3p_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{DATA_GOV_002C3P_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{DATA_GOV_002C3P_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2096,10 +2039,7 @@ def _data_gov_002c3p_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2463_s4_approval_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2463_S4_APPROVAL_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2463_S4_APPROVAL_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2107,6 +2047,23 @@ def _trading_2463_s4_approval_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2463_S4_APPROVAL_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _ops_071_base_baseline_blob() -> bytes:
+    object_name = f"{OPS_071_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == OPS_071_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -2948,16 +2905,10 @@ def _assert_ops_070_stable_release_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    assert hashlib.sha256(base_blob).hexdigest() == OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
-        "OPS-070 stable release historical prefix differs from immutable "
-        "ARCH-005M1 Batch 4 blob"
+        "OPS-070 stable release historical prefix differs from immutable ARCH-005M1 Batch 4 blob"
     )
     suffix = current_bytes[OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_070_STABLE_RELEASE_SECTION}:\n".encode()
@@ -2970,13 +2921,8 @@ def _assert_ops_070_runtime_exclude_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == OPS_070_RUNTIME_EXCLUDE_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == OPS_070_RUNTIME_EXCLUDE_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :OPS_070_RUNTIME_EXCLUDE_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    assert hashlib.sha256(base_blob).hexdigest() == OPS_070_RUNTIME_EXCLUDE_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:OPS_070_RUNTIME_EXCLUDE_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
         "OPS-070 runtime Git exclusion historical prefix differs from immutable "
         "stable deployment release blob"
@@ -2991,24 +2937,17 @@ def _assert_ops_070_cross_release_policy_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
 ) -> None:
-    assert (
-        len(base_blob)
-        == OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_BYTE_COUNT
-    )
+    assert len(base_blob) == OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_BYTE_COUNT
     assert (
         hashlib.sha256(base_blob).hexdigest()
         == OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_SHA256
     )
-    historical_prefix = current_bytes[
-        :OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    historical_prefix = current_bytes[:OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
         "OPS-070 cross-release policy historical prefix differs from immutable "
         "runtime Git exclusion contract blob"
     )
-    suffix = current_bytes[
-        OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_BYTE_COUNT:
-    ]
+    suffix = current_bytes[OPS_070_CROSS_RELEASE_POLICY_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_070_CROSS_RELEASE_POLICY_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
@@ -3019,20 +2958,13 @@ def _assert_ops_070_failure_audit_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    assert hashlib.sha256(base_blob).hexdigest() == OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
         "OPS-070 failure audit historical prefix differs from immutable "
         "cross-release promotion policy blob"
     )
-    suffix = current_bytes[
-        OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT:
-    ]
+    suffix = current_bytes[OPS_070_FAILURE_AUDIT_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_070_FAILURE_AUDIT_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
@@ -3042,10 +2974,7 @@ def _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
 ) -> None:
-    assert (
-        len(base_blob)
-        == OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
-    )
+    assert len(base_blob) == OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
     assert (
         hashlib.sha256(base_blob).hexdigest()
         == OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_SHA256
@@ -3057,12 +2986,8 @@ def _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
         "OPS-070 runtime self-containment historical prefix differs from "
         "immutable failure-audit correction blob"
     )
-    suffix = current_bytes[
-        OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT:
-    ]
-    expected_marker = (
-        f"\n{OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION}:\n".encode()
-    )
+    suffix = current_bytes[OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -3072,10 +2997,7 @@ def _assert_data_gov_002c2p_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == DATA_GOV_002C2P_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == DATA_GOV_002C2P_HISTORICAL_PREFIX_SHA256
-    )
+    assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_002C2P_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DATA_GOV_002C2P_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
         "DATA-GOV-002C2P historical prefix differs from immutable "
@@ -3092,14 +3014,10 @@ def _assert_trading_2463_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2463_HISTORICAL_PREFIX_SHA256
-    )
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
-        "TRADING-2463 historical prefix differs from immutable "
-        "DATA-GOV-002C2P authority blob"
+        "TRADING-2463 historical prefix differs from immutable DATA-GOV-002C2P authority blob"
     )
     suffix = current_bytes[TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_SECTION}:\n".encode()
@@ -3112,20 +3030,12 @@ def _assert_trading_2463_s1_s2_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2463_S1_S2_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_S1_S2_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
-        "TRADING-2463 S1/S2 historical prefix differs from immutable "
-        "TRADING-2463 S0 authority blob"
+        "TRADING-2463 S1/S2 historical prefix differs from immutable TRADING-2463 S0 authority blob"
     )
-    suffix = current_bytes[
-        TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT:
-    ]
+    suffix = current_bytes[TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_S1_S2_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
@@ -3136,16 +3046,10 @@ def _assert_trading_2463_s3_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2463_S3_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_S3_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
-        "TRADING-2463 S3 historical prefix differs from immutable "
-        "TRADING-2463 S1/S2 authority blob"
+        "TRADING-2463 S3 historical prefix differs from immutable TRADING-2463 S1/S2 authority blob"
     )
     suffix = current_bytes[TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_S3_SECTION}:\n".encode()
@@ -3158,16 +3062,10 @@ def _assert_trading_2463_s4_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2463_S4_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_S4_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
-        "TRADING-2463 S4 historical prefix differs from immutable "
-        "TRADING-2463 S3 authority blob"
+        "TRADING-2463 S4 historical prefix differs from immutable TRADING-2463 S3 authority blob"
     )
     suffix = current_bytes[TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_S4_SECTION}:\n".encode()
@@ -3180,14 +3078,10 @@ def _assert_data_gov_002c3p_historical_prefix_immutable(
     base_blob: bytes,
 ) -> None:
     assert len(base_blob) == DATA_GOV_002C3P_HISTORICAL_PREFIX_BYTE_COUNT
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == DATA_GOV_002C3P_HISTORICAL_PREFIX_SHA256
-    )
+    assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_002C3P_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DATA_GOV_002C3P_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
-        "DATA-GOV-002C3P historical prefix differs from immutable "
-        "TRADING-2463 S4 authority blob"
+        "DATA-GOV-002C3P historical prefix differs from immutable TRADING-2463 S4 authority blob"
     )
     suffix = current_bytes[DATA_GOV_002C3P_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DATA_GOV_002C3P_SECTION}:\n".encode()
@@ -3199,25 +3093,33 @@ def _assert_trading_2463_s4_approval_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
 ) -> None:
+    assert len(base_blob) == TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT
     assert (
-        len(base_blob)
-        == TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT
+        hashlib.sha256(base_blob).hexdigest() == TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_SHA256
     )
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_SHA256
-    )
-    historical_prefix = current_bytes[
-        :TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT
-    ]
+    historical_prefix = current_bytes[:TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT]
     assert historical_prefix == base_blob, (
         "TRADING-2463 S4 approval historical prefix differs from immutable "
         "DATA-GOV-002C3P authority blob"
     )
-    suffix = current_bytes[
-        TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT:
-    ]
+    suffix = current_bytes[TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_S4_APPROVAL_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_ops_071_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    assert len(base_blob) == OPS_071_HISTORICAL_PREFIX_BYTE_COUNT
+    assert hashlib.sha256(base_blob).hexdigest() == OPS_071_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:OPS_071_HISTORICAL_PREFIX_BYTE_COUNT]
+    assert historical_prefix == base_blob, (
+        "OPS-071 historical prefix differs from immutable TRADING-2463 S4 approval authority blob"
+    )
+    suffix = current_bytes[OPS_071_HISTORICAL_PREFIX_BYTE_COUNT:]
+    expected_marker = f"\n{OPS_071_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -4309,9 +4211,7 @@ def _ops_070_cross_release_policy_superseded_live_source_paths() -> frozenset[st
 
 @cache
 def _ops_070_cross_release_policy_source_paths() -> frozenset[str]:
-    sources = _compatibility_baseline()[OPS_070_CROSS_RELEASE_POLICY_SECTION][
-        "sources"
-    ]
+    sources = _compatibility_baseline()[OPS_070_CROSS_RELEASE_POLICY_SECTION]["sources"]
     assert isinstance(sources, list)
     return frozenset(str(source["path"]) for source in sources)
 
@@ -4322,9 +4222,7 @@ def _ops_070_failure_audit_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_failure_audit_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[OPS_070_FAILURE_AUDIT_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[OPS_070_FAILURE_AUDIT_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -4337,9 +4235,7 @@ def _ops_070_failure_audit_source_paths() -> frozenset[str]:
 
 
 @cache
-def _ops_070_runtime_self_containment_superseded_live_source_paths() -> (
-    frozenset[str]
-):
+def _ops_070_runtime_self_containment_superseded_live_source_paths() -> frozenset[str]:
     _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_runtime_self_containment_base_baseline_blob(),
@@ -4353,9 +4249,7 @@ def _ops_070_runtime_self_containment_superseded_live_source_paths() -> (
 
 @cache
 def _ops_070_runtime_self_containment_source_paths() -> frozenset[str]:
-    sources = _compatibility_baseline()[OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION][
-        "sources"
-    ]
+    sources = _compatibility_baseline()[OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION]["sources"]
     assert isinstance(sources, list)
     return frozenset(str(source["path"]) for source in sources)
 
@@ -4384,9 +4278,7 @@ def _trading_2463_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[TRADING_2463_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[TRADING_2463_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -4404,9 +4296,7 @@ def _trading_2463_s1_s2_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s1_s2_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[TRADING_2463_S1_S2_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[TRADING_2463_S1_S2_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -4417,9 +4307,7 @@ def _data_gov_002c3p_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_002c3p_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[DATA_GOV_002C3P_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[DATA_GOV_002C3P_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -4437,9 +4325,7 @@ def _trading_2463_s3_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s3_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[TRADING_2463_S3_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[TRADING_2463_S3_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -4457,9 +4343,7 @@ def _trading_2463_s4_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s4_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[TRADING_2463_S4_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[TRADING_2463_S4_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -4493,9 +4377,25 @@ def _trading_2463_s4_approval_superseded_live_source_paths() -> frozenset[str]:
 
 @cache
 def _trading_2463_s4_approval_source_paths() -> frozenset[str]:
-    sources = _compatibility_baseline()[TRADING_2463_S4_APPROVAL_SECTION][
-        "sources"
-    ]
+    sources = _compatibility_baseline()[TRADING_2463_S4_APPROVAL_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _ops_071_superseded_live_source_paths() -> frozenset[str]:
+    _assert_ops_071_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_071_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[OPS_071_SECTION]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _ops_071_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[OPS_071_SECTION]["sources"]
     assert isinstance(sources, list)
     return frozenset(str(source["path"]) for source in sources)
 
@@ -4509,6 +4409,7 @@ def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
         | _trading_2463_s4_superseded_live_source_paths()
         | _data_gov_002c3p_superseded_live_source_paths()
         | _trading_2463_s4_approval_superseded_live_source_paths()
+        | _ops_071_superseded_live_source_paths()
     )
 
 
@@ -4586,6 +4487,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _data_gov_002c3p_source_paths()
     if TRADING_2463_S4_APPROVAL_SECTION in baseline:
         paths |= _trading_2463_s4_approval_source_paths()
+    if OPS_071_SECTION in baseline:
+        paths |= _ops_071_source_paths()
     return paths
 
 
@@ -5290,12 +5193,8 @@ def _ops_070_failure_audit_prior_active_source_mismatches() -> frozenset[str]:
 
 
 @cache
-def _ops_070_runtime_self_containment_prior_active_source_mismatches() -> (
-    frozenset[str]
-):
-    return _latest_active_source_mismatches(
-        OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
-    )
+def _ops_070_runtime_self_containment_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION)
 
 
 @cache
@@ -5333,18 +5232,40 @@ def _trading_2463_s4_approval_prior_active_source_mismatches() -> frozenset[str]
     return _latest_active_source_mismatches(TRADING_2463_S4_APPROVAL_SECTION)
 
 
+@cache
+def _ops_071_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(OPS_071_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2463_S4_APPROVAL_SECTION in baseline:
-        current_superseded_paths = (
-            _trading_2463_s4_approval_superseded_live_source_paths()
+    if OPS_071_SECTION in baseline:
+        current_superseded_paths = _ops_071_superseded_live_source_paths()
+        assert _ops_071_prior_active_source_mismatches() == current_superseded_paths
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_superseded_live_source_paths()
+            | _trading_2463_s1_s2_superseded_live_source_paths()
+            | _trading_2463_s3_superseded_live_source_paths()
+            | _trading_2463_s4_superseded_live_source_paths()
+            | _data_gov_002c3p_superseded_live_source_paths()
+            | _trading_2463_s4_approval_superseded_live_source_paths()
+            | current_superseded_paths
         )
+        authority_section = OPS_071_SECTION
+    elif TRADING_2463_S4_APPROVAL_SECTION in baseline:
+        current_superseded_paths = _trading_2463_s4_approval_superseded_live_source_paths()
         assert (
-            _trading_2463_s4_approval_prior_active_source_mismatches()
-            == current_superseded_paths
+            _trading_2463_s4_approval_prior_active_source_mismatches() == current_superseded_paths
         )
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
@@ -5364,10 +5285,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         authority_section = TRADING_2463_S4_APPROVAL_SECTION
     elif DATA_GOV_002C3P_SECTION in baseline:
         current_superseded_paths = _data_gov_002c3p_superseded_live_source_paths()
-        assert (
-            _data_gov_002c3p_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _data_gov_002c3p_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5385,10 +5303,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         authority_section = DATA_GOV_002C3P_SECTION
     elif TRADING_2463_S4_SECTION in baseline:
         current_superseded_paths = _trading_2463_s4_superseded_live_source_paths()
-        assert (
-            _trading_2463_s4_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _trading_2463_s4_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5405,10 +5320,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         authority_section = TRADING_2463_S4_SECTION
     elif TRADING_2463_S3_SECTION in baseline:
         current_superseded_paths = _trading_2463_s3_superseded_live_source_paths()
-        assert (
-            _trading_2463_s3_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _trading_2463_s3_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5423,13 +5335,8 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = TRADING_2463_S3_SECTION
     elif TRADING_2463_S1_S2_SECTION in baseline:
-        current_superseded_paths = (
-            _trading_2463_s1_s2_superseded_live_source_paths()
-        )
-        assert (
-            _trading_2463_s1_s2_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        current_superseded_paths = _trading_2463_s1_s2_superseded_live_source_paths()
+        assert _trading_2463_s1_s2_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5444,10 +5351,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         authority_section = TRADING_2463_S1_S2_SECTION
     elif TRADING_2463_SECTION in baseline:
         current_superseded_paths = _trading_2463_superseded_live_source_paths()
-        assert (
-            _trading_2463_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _trading_2463_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5461,10 +5365,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         authority_section = TRADING_2463_SECTION
     elif DATA_GOV_002C2P_SECTION in baseline:
         current_superseded_paths = _data_gov_002c2p_superseded_live_source_paths()
-        assert (
-            _data_gov_002c2p_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _data_gov_002c2p_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5476,9 +5377,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = DATA_GOV_002C2P_SECTION
     elif OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION in baseline:
-        current_superseded_paths = (
-            _ops_070_runtime_self_containment_superseded_live_source_paths()
-        )
+        current_superseded_paths = _ops_070_runtime_self_containment_superseded_live_source_paths()
         assert (
             _ops_070_runtime_self_containment_prior_active_source_mismatches()
             == current_superseded_paths
@@ -5493,13 +5392,8 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
     elif OPS_070_FAILURE_AUDIT_SECTION in baseline:
-        current_superseded_paths = (
-            _ops_070_failure_audit_superseded_live_source_paths()
-        )
-        assert (
-            _ops_070_failure_audit_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        current_superseded_paths = _ops_070_failure_audit_superseded_live_source_paths()
+        assert _ops_070_failure_audit_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5509,9 +5403,7 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = OPS_070_FAILURE_AUDIT_SECTION
     elif OPS_070_CROSS_RELEASE_POLICY_SECTION in baseline:
-        current_superseded_paths = (
-            _ops_070_cross_release_policy_superseded_live_source_paths()
-        )
+        current_superseded_paths = _ops_070_cross_release_policy_superseded_live_source_paths()
         assert (
             _ops_070_cross_release_policy_prior_active_source_mismatches()
             == current_superseded_paths
@@ -5524,13 +5416,8 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = OPS_070_CROSS_RELEASE_POLICY_SECTION
     elif OPS_070_RUNTIME_EXCLUDE_SECTION in baseline:
-        current_superseded_paths = (
-            _ops_070_runtime_exclude_superseded_live_source_paths()
-        )
-        assert (
-            _ops_070_runtime_exclude_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        current_superseded_paths = _ops_070_runtime_exclude_superseded_live_source_paths()
+        assert _ops_070_runtime_exclude_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -5538,46 +5425,29 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = OPS_070_RUNTIME_EXCLUDE_SECTION
     elif OPS_070_STABLE_RELEASE_SECTION in baseline:
-        current_superseded_paths = (
-            _ops_070_stable_release_superseded_live_source_paths()
-        )
-        assert (
-            _ops_070_stable_release_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        current_superseded_paths = _ops_070_stable_release_superseded_live_source_paths()
+        assert _ops_070_stable_release_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
-            _arch_005s4d_s2_all_superseded_live_source_paths()
-            | current_superseded_paths
+            _arch_005s4d_s2_all_superseded_live_source_paths() | current_superseded_paths
         )
         authority_section = OPS_070_STABLE_RELEASE_SECTION
     elif ARCH_005M1_BATCH4_SECTION in baseline:
         current_superseded_paths = _arch_005m1_batch4_superseded_live_source_paths()
-        assert (
-            _arch_005m1_batch4_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _arch_005m1_batch4_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
-            _arch_005s4d_s2_all_superseded_live_source_paths()
-            | current_superseded_paths
+            _arch_005s4d_s2_all_superseded_live_source_paths() | current_superseded_paths
         )
         authority_section = ARCH_005M1_BATCH4_SECTION
     elif ARCH_005M1_BATCH3_SECTION in baseline:
         current_superseded_paths = _arch_005m1_batch3_superseded_live_source_paths()
-        assert (
-            _arch_005m1_batch3_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _arch_005m1_batch3_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
-            _arch_005s4d_s2_all_superseded_live_source_paths()
-            | current_superseded_paths
+            _arch_005s4d_s2_all_superseded_live_source_paths() | current_superseded_paths
         )
         authority_section = ARCH_005M1_BATCH3_SECTION
     elif ARCH_005M1_BATCH2_SECTION in baseline:
         current_superseded_paths = _arch_005m1_batch2_superseded_live_source_paths()
-        assert (
-            _arch_005m1_batch2_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        assert _arch_005m1_batch2_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _devx_trading_cleanup_source_paths()
@@ -10558,10 +10428,10 @@ def test_devx_003_is_preserved_historical_authority() -> None:
         | _arch_005m2_superseded_live_source_paths()
         | _arch_005m3_superseded_live_source_paths()
         | _arch_005m1_batch3_superseded_live_source_paths()
-            | _arch_005m1_batch4_superseded_live_source_paths()
-            | _ops_070_stable_release_superseded_live_source_paths()
-            | _trading_2463_all_superseded_live_source_paths()
-        )
+        | _arch_005m1_batch4_superseded_live_source_paths()
+        | _ops_070_stable_release_superseded_live_source_paths()
+        | _trading_2463_all_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": "DEVX-003-GOVERNED-CLOSEOUT-REMOTE-PREFLIGHT",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -10670,10 +10540,10 @@ def test_data_gov_002c1_is_preserved_historical_authority() -> None:
         | _arch_005m2_superseded_live_source_paths()
         | _arch_005m3_superseded_live_source_paths()
         | _arch_005m1_batch3_superseded_live_source_paths()
-            | _arch_005m1_batch4_superseded_live_source_paths()
-            | _ops_070_stable_release_superseded_live_source_paths()
-            | _trading_2463_all_superseded_live_source_paths()
-        )
+        | _arch_005m1_batch4_superseded_live_source_paths()
+        | _ops_070_stable_release_superseded_live_source_paths()
+        | _trading_2463_all_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C1-DQ-ISSUE-ATTRIBUTION-READINESS-INVENTORY"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -10789,10 +10659,10 @@ def test_data_gov_002c2_is_preserved_historical_authority() -> None:
         | _arch_005m2_superseded_live_source_paths()
         | _arch_005m3_superseded_live_source_paths()
         | _arch_005m1_batch3_superseded_live_source_paths()
-            | _arch_005m1_batch4_superseded_live_source_paths()
-            | _ops_070_stable_release_superseded_live_source_paths()
-            | _trading_2463_all_superseded_live_source_paths()
-        )
+        | _arch_005m1_batch4_superseded_live_source_paths()
+        | _ops_070_stable_release_superseded_live_source_paths()
+        | _trading_2463_all_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": ("DATA-GOV-002C2-RATE-ISSUE-ATTRIBUTION-SOURCE-OWNER-REVIEW-PACK"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -11547,9 +11417,7 @@ def test_devx_006_arch_005m1_is_current_hash_authority() -> None:
         | _trading_2463_all_superseded_live_source_paths()
     )
     expected = superseded | DEVX_006_NEW_SOURCE_PATHS
-    assert set(phase["removed_live_source_paths"]) == {
-        DEVX_006_ACTIVE_TASK_SHADOW_PATH
-    }
+    assert set(phase["removed_live_source_paths"]) == {DEVX_006_ACTIVE_TASK_SHADOW_PATH}
     assert set(phase["new_source_paths"]) == DEVX_006_NEW_SOURCE_PATHS
     assert set(phase["source_delta_paths"]) == expected
     sources = phase["sources"]
@@ -11623,17 +11491,13 @@ def test_arch_005m2_is_current_hash_authority() -> None:
         | _trading_2463_all_superseded_live_source_paths()
     )
     task_shadow_path = (
-        ARCH_005M2_COMPLETED_TASK_SHADOW_PATH
-        if phase["status"] == "COMPLETE"
-        else None
+        ARCH_005M2_COMPLETED_TASK_SHADOW_PATH if phase["status"] == "COMPLETE" else None
     )
     expected_new_paths = set(ARCH_005M2_CORE_NEW_SOURCE_PATHS)
     if task_shadow_path is not None:
         expected_new_paths.add(task_shadow_path)
     expected_removed_paths = (
-        {ARCH_005M2_ACTIVE_TASK_SHADOW_PATH}
-        if phase["status"] == "COMPLETE"
-        else set()
+        {ARCH_005M2_ACTIVE_TASK_SHADOW_PATH} if phase["status"] == "COMPLETE" else set()
     )
     assert set(phase["removed_live_source_paths"]) == expected_removed_paths
     assert set(phase["new_source_paths"]) == expected_new_paths
@@ -11714,9 +11578,7 @@ def test_arch_005m3_is_current_hash_authority() -> None:
     if phase["status"] == "COMPLETE":
         expected_new_paths.add(ARCH_005M3_COMPLETED_TASK_SHADOW_PATH)
     expected_removed_paths = (
-        {ARCH_005M3_ACTIVE_TASK_SHADOW_PATH}
-        if phase["status"] == "COMPLETE"
-        else set()
+        {ARCH_005M3_ACTIVE_TASK_SHADOW_PATH} if phase["status"] == "COMPLETE" else set()
     )
     assert set(phase["removed_live_source_paths"]) == expected_removed_paths
     assert set(phase["new_source_paths"]) == expected_new_paths
@@ -11953,9 +11815,7 @@ def test_arch_005m1_batch4_is_current_hash_authority() -> None:
         "arch_005m1_batch4_us_equity_special_closure_loader_compatibility.v1"
     )
     assert phase["status"] in {"VALIDATING_BATCH_4", "COMPLETE"}
-    assert phase["boundary_id"] == (
-        "ARCH-005M1-BATCH4-US-EQUITY-SPECIAL-CLOSURE-LOADER"
-    )
+    assert phase["boundary_id"] == ("ARCH-005M1-BATCH4-US-EQUITY-SPECIAL-CLOSURE-LOADER")
     assert phase["task_ids"] == ["ARCH-005M1_STRICT_YAML_LOADER_CONSOLIDATION"]
     assert phase["prior_sections_immutability"] == {
         "source_commit": ARCH_005M1_BATCH4_BASE_COMMIT,
@@ -11975,14 +11835,10 @@ def test_arch_005m1_batch4_is_current_hash_authority() -> None:
         | _trading_2463_all_superseded_live_source_paths()
     )
     expected_removed_paths = (
-        {ARCH_005M1_BATCH4_ACTIVE_TASK_SHADOW_PATH}
-        if phase["status"] == "COMPLETE"
-        else set()
+        {ARCH_005M1_BATCH4_ACTIVE_TASK_SHADOW_PATH} if phase["status"] == "COMPLETE" else set()
     )
     expected_new_paths = (
-        {ARCH_005M1_BATCH4_COMPLETED_TASK_SHADOW_PATH}
-        if phase["status"] == "COMPLETE"
-        else set()
+        {ARCH_005M1_BATCH4_COMPLETED_TASK_SHADOW_PATH} if phase["status"] == "COMPLETE" else set()
     )
     assert set(phase["removed_live_source_paths"]) == expected_removed_paths
     assert set(phase["new_source_paths"]) == expected_new_paths
@@ -12094,10 +11950,7 @@ def test_ops_070_stable_release_is_immutable_historical_authority() -> None:
         "generated_shared_views_coordinator_refresh_once": True,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12125,22 +11978,17 @@ def test_ops_070_runtime_git_exclusion_is_immutable_historical_authority() -> No
         _ops_070_runtime_exclude_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(OPS_070_RUNTIME_EXCLUDE_SECTION) < list(
-        baseline
-    ).index(OPS_070_CROSS_RELEASE_POLICY_SECTION)
-    phase = baseline[OPS_070_RUNTIME_EXCLUDE_SECTION]
-    assert (
-        phase["schema_version"]
-        == "ops_070_runtime_git_exclusion_contract_compatibility.v1"
+    assert list(baseline).index(OPS_070_RUNTIME_EXCLUDE_SECTION) < list(baseline).index(
+        OPS_070_CROSS_RELEASE_POLICY_SECTION
     )
+    phase = baseline[OPS_070_RUNTIME_EXCLUDE_SECTION]
+    assert phase["schema_version"] == "ops_070_runtime_git_exclusion_contract_compatibility.v1"
     assert phase["status"] in {
         "VALIDATING_RUNTIME_EXCLUDE",
         "RUNTIME_EXCLUDE_ACCEPTED",
     }
     assert phase["boundary_id"] == "OPS-070-RUNTIME-GIT-EXCLUSION-CONTRACT"
-    assert phase["task_ids"] == [
-        "OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"
-    ]
+    assert phase["task_ids"] == ["OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"]
     assert phase["prior_sections_immutability"] == {
         "source_commit": OPS_070_RUNTIME_EXCLUDE_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
@@ -12179,10 +12027,7 @@ def test_ops_070_runtime_git_exclusion_is_immutable_historical_authority() -> No
         "migration_bytes_deleted": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12210,22 +12055,17 @@ def test_ops_070_cross_release_policy_is_immutable_historical_authority() -> Non
         _ops_070_cross_release_policy_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(OPS_070_CROSS_RELEASE_POLICY_SECTION) < list(
-        baseline
-    ).index(OPS_070_FAILURE_AUDIT_SECTION)
-    phase = baseline[OPS_070_CROSS_RELEASE_POLICY_SECTION]
-    assert (
-        phase["schema_version"]
-        == "ops_070_cross_release_promotion_policy_compatibility.v1"
+    assert list(baseline).index(OPS_070_CROSS_RELEASE_POLICY_SECTION) < list(baseline).index(
+        OPS_070_FAILURE_AUDIT_SECTION
     )
+    phase = baseline[OPS_070_CROSS_RELEASE_POLICY_SECTION]
+    assert phase["schema_version"] == "ops_070_cross_release_promotion_policy_compatibility.v1"
     assert phase["status"] in {
         "VALIDATING_CROSS_RELEASE_POLICY",
         "CROSS_RELEASE_POLICY_ACCEPTED",
     }
     assert phase["boundary_id"] == "OPS-070-CROSS-RELEASE-PROMOTION-POLICY"
-    assert phase["task_ids"] == [
-        "OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"
-    ]
+    assert phase["task_ids"] == ["OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"]
     assert phase["prior_sections_immutability"] == {
         "source_commit": OPS_070_CROSS_RELEASE_POLICY_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
@@ -12266,10 +12106,7 @@ def test_ops_070_cross_release_policy_is_immutable_historical_authority() -> Non
         "runtime_head_changed_on_schema_blocker": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12297,22 +12134,17 @@ def test_ops_070_promotion_failure_audit_is_immutable_historical_authority() -> 
         _ops_070_failure_audit_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(OPS_070_FAILURE_AUDIT_SECTION) < list(
-        baseline
-    ).index(OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION)
-    phase = baseline[OPS_070_FAILURE_AUDIT_SECTION]
-    assert (
-        phase["schema_version"]
-        == "ops_070_promotion_failure_audit_correction_compatibility.v1"
+    assert list(baseline).index(OPS_070_FAILURE_AUDIT_SECTION) < list(baseline).index(
+        OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
     )
+    phase = baseline[OPS_070_FAILURE_AUDIT_SECTION]
+    assert phase["schema_version"] == "ops_070_promotion_failure_audit_correction_compatibility.v1"
     assert phase["status"] in {
         "VALIDATING_AUDIT_CORRECTION",
         "AUDIT_CORRECTION_ACCEPTED",
     }
     assert phase["boundary_id"] == "OPS-070-PROMOTION-FAILURE-AUDIT-CORRECTION"
-    assert phase["task_ids"] == [
-        "OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"
-    ]
+    assert phase["task_ids"] == ["OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"]
     assert phase["prior_sections_immutability"] == {
         "source_commit": OPS_070_FAILURE_AUDIT_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
@@ -12353,10 +12185,7 @@ def test_ops_070_promotion_failure_audit_is_immutable_historical_authority() -> 
         "prior_nonrecursive_count_retracted": True,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12384,40 +12213,29 @@ def test_ops_070_runtime_self_containment_is_current_hash_authority() -> None:
         _ops_070_runtime_self_containment_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(
-        OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
-    ) < list(baseline).index(DATA_GOV_002C2P_SECTION)
-    phase = baseline[OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION]
-    assert (
-        phase["schema_version"]
-        == "ops_070_runtime_self_containment_compatibility.v1"
+    assert list(baseline).index(OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION) < list(baseline).index(
+        DATA_GOV_002C2P_SECTION
     )
+    phase = baseline[OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION]
+    assert phase["schema_version"] == "ops_070_runtime_self_containment_compatibility.v1"
     assert phase["status"] in {
         "VALIDATING_RUNTIME_SELF_CONTAINMENT",
         "RUNTIME_SELF_CONTAINMENT_ACCEPTED",
     }
     assert phase["boundary_id"] == "OPS-070-RUNTIME-SELF-CONTAINMENT"
-    assert phase["task_ids"] == [
-        "OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"
-    ]
+    assert phase["task_ids"] == ["OPS-070_OBJECTIVE_BLOCKER_AND_CONSUMER_DEPENDENCY_DAG"]
     assert phase["prior_sections_immutability"] == {
         "source_commit": OPS_070_RUNTIME_SELF_CONTAINMENT_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
         "git_blob_sha1": OPS_070_RUNTIME_SELF_CONTAINMENT_BASELINE_GIT_BLOB,
-        "raw_byte_count": (
-            OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
-        ),
+        "raw_byte_count": (OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT),
         "raw_sha256": OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_SHA256,
-        "append_offset": (
-            OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT
-        ),
+        "append_offset": (OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT),
         "current_section_must_be_eof": True,
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    current_mismatches = set(
-        _ops_070_runtime_self_containment_prior_active_source_mismatches()
-    )
+    current_mismatches = set(_ops_070_runtime_self_containment_prior_active_source_mismatches())
     assert superseded ^ current_mismatches <= set(
         _data_gov_002c2p_superseded_live_source_paths()
         | _trading_2463_all_superseded_live_source_paths()
@@ -12444,10 +12262,7 @@ def test_ops_070_runtime_self_containment_is_current_hash_authority() -> None:
         "runtime_local_package_required": True,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12461,9 +12276,7 @@ def test_ops_070_runtime_self_containment_is_current_hash_authority() -> None:
 def test_ops_070_runtime_self_containment_rejects_historical_prefix_tamper() -> None:
     base_blob = _ops_070_runtime_self_containment_base_baseline_blob()
     tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
-    tampered[
-        OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT - 1
-    ] ^= 1
+    tampered[OPS_070_RUNTIME_SELF_CONTAINMENT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_ops_070_runtime_self_containment_historical_prefix_immutable(
             bytes(tampered),
@@ -12488,9 +12301,9 @@ def test_data_gov_002c2p_is_immutable_historical_authority() -> None:
         _data_gov_002c2p_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(DATA_GOV_002C2P_SECTION) < list(
-        baseline
-    ).index(TRADING_2463_SECTION)
+    assert list(baseline).index(DATA_GOV_002C2P_SECTION) < list(baseline).index(
+        TRADING_2463_SECTION
+    )
     phase = baseline[DATA_GOV_002C2P_SECTION]
     assert phase["schema_version"] == (
         "data_gov_002c2p_price_non_market_session_attribution_compatibility.v1"
@@ -12524,10 +12337,9 @@ def test_data_gov_002c2p_is_immutable_historical_authority() -> None:
     assert [str(row["path"]) for row in sources] == expected_source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert (
-            _source_sha256_at_commit(source, TRADING_2463_BASE_COMMIT)
-            == source["sha256"]
-        ), source["path"]
+        assert _source_sha256_at_commit(source, TRADING_2463_BASE_COMMIT) == source["sha256"], (
+            source["path"]
+        )
     assert phase["implementation"] == {
         "exact_site_count": 1,
         "scope_taxonomy": "DISTINCT_NON_SESSION_DATE_ROW_SET",
@@ -12586,17 +12398,10 @@ def test_trading_2463_is_immutable_historical_authority() -> None:
         "trading_2463_decision_target_redesign_preregistration_compatibility.v1"
     )
     assert phase["status"] in {"VALIDATING_S0", "S0_READY"}
-    assert phase["boundary_id"] == (
-        "TRADING-2463-DECISION-TARGET-REDESIGN-PREREGISTRATION-S0"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2463-DECISION-TARGET-REDESIGN-PREREGISTRATION-S0")
+    assert phase["task_ids"] == ["TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"]
     assert phase["owner_authorizations"] == [
-        (
-            "owner_decision:TRADING-2462:2026-07-27:"
-            "close_current_tail_risk_capability_path_v1"
-        ),
+        ("owner_decision:TRADING-2462:2026-07-27:close_current_tail_risk_capability_path_v1"),
         (
             "owner_decision:TRADING-2463:2026-07-27:"
             "authorize_decision_target_redesign_preregistration_v1"
@@ -12616,14 +12421,10 @@ def test_trading_2463_is_immutable_historical_authority() -> None:
         "append_offset": TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT,
         "current_section_must_be_eof": True,
     }
-    assert phase["known_unrelated_exclusions"] == [
-        WAVE14_S2_PROHIBITED_USER_PATH
-    ]
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2463-DECISION-TARGET-REDESIGN-PREREGISTRATION-S0"
-        ),
+        "superseded_by_phase": ("TRADING-2463-DECISION-TARGET-REDESIGN-PREREGISTRATION-S0"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": DATA_GOV_002C2P_SECTION,
@@ -12643,8 +12444,7 @@ def test_trading_2463_is_immutable_historical_authority() -> None:
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
         assert (
-            _source_sha256_at_commit(source, TRADING_2463_S1_S2_BASE_COMMIT)
-            == source["sha256"]
+            _source_sha256_at_commit(source, TRADING_2463_S1_S2_BASE_COMMIT) == source["sha256"]
         ), source["path"]
     assert phase["implementation"] == {
         "task_shadow_rebuilt": True,
@@ -12657,10 +12457,7 @@ def test_trading_2463_is_immutable_historical_authority() -> None:
         "qld_automatic_selection_enabled": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12677,25 +12474,18 @@ def test_trading_2463_s1_s2_is_immutable_historical_authority() -> None:
         _trading_2463_s1_s2_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(TRADING_2463_S1_S2_SECTION) < list(
-        baseline
-    ).index(TRADING_2463_S3_SECTION)
+    assert list(baseline).index(TRADING_2463_S1_S2_SECTION) < list(baseline).index(
+        TRADING_2463_S3_SECTION
+    )
     phase = baseline[TRADING_2463_S1_S2_SECTION]
     assert phase["schema_version"] == (
         "trading_2463_decision_target_redesign_s1_s2_compatibility.v1"
     )
     assert phase["status"] in {"VALIDATING_S1_S2", "S1_S2_COMPLETE"}
-    assert phase["boundary_id"] == (
-        "TRADING-2463-DECISION-TARGET-REDESIGN-S1-S2"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2463-DECISION-TARGET-REDESIGN-S1-S2")
+    assert phase["task_ids"] == ["TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"]
     assert phase["owner_authorizations"] == [
-        (
-            "owner_decision:TRADING-2463:2026-07-27:"
-            "proceed_s1_s2_design_and_falsification_pack_v1"
-        ),
+        ("owner_decision:TRADING-2463:2026-07-27:proceed_s1_s2_design_and_falsification_pack_v1"),
     ]
     assert phase["prior_sections_immutability"] == {
         "source_commit": TRADING_2463_S1_S2_BASE_COMMIT,
@@ -12706,16 +12496,12 @@ def test_trading_2463_s1_s2_is_immutable_historical_authority() -> None:
         "append_offset": TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT,
         "current_section_must_be_eof": True,
     }
-    assert phase["known_unrelated_exclusions"] == [
-        WAVE14_S2_PROHIBITED_USER_PATH
-    ]
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
     new_sources = set(phase["new_source_paths"])
     assert superseded == set(phase["source_delta_paths"]) - new_sources
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2463-DECISION-TARGET-REDESIGN-S1-S2"
-        ),
+        "superseded_by_phase": ("TRADING-2463-DECISION-TARGET-REDESIGN-S1-S2"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": TRADING_2463_SECTION,
@@ -12734,10 +12520,9 @@ def test_trading_2463_s1_s2_is_immutable_historical_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert (
-            _source_sha256_at_commit(source, TRADING_2463_S3_BASE_COMMIT)
-            == source["sha256"]
-        ), source["path"]
+        assert _source_sha256_at_commit(source, TRADING_2463_S3_BASE_COMMIT) == source["sha256"], (
+            source["path"]
+        )
     assert phase["implementation"] == {
         "s1_decision_problem_complete": True,
         "s1_target_option_count": 4,
@@ -12756,10 +12541,7 @@ def test_trading_2463_s1_s2_is_immutable_historical_authority() -> None:
         "qld_automatic_selection_enabled": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12776,29 +12558,21 @@ def test_trading_2463_s3_is_immutable_historical_authority() -> None:
         _trading_2463_s3_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(TRADING_2463_S3_SECTION) < list(
-        baseline
-    ).index(TRADING_2463_S4_SECTION)
+    assert list(baseline).index(TRADING_2463_S3_SECTION) < list(baseline).index(
+        TRADING_2463_S4_SECTION
+    )
     phase = baseline[TRADING_2463_S3_SECTION]
     assert phase["schema_version"] == (
-        "trading_2463_decision_target_redesign_s3_target_selection_"
-        "compatibility.v1"
+        "trading_2463_decision_target_redesign_s3_target_selection_compatibility.v1"
     )
     assert phase["status"] in {
         "VALIDATING_S3",
         "S3_PACK_COMPLETE_OWNER_SELECTION_REQUIRED",
     }
-    assert phase["boundary_id"] == (
-        "TRADING-2463-DECISION-TARGET-REDESIGN-S3"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2463-DECISION-TARGET-REDESIGN-S3")
+    assert phase["task_ids"] == ["TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"]
     assert phase["owner_authorizations"] == [
-        (
-            "owner_decision:TRADING-2463:2026-07-28:"
-            "enter_s3_target_selection_pack_v1"
-        ),
+        ("owner_decision:TRADING-2463:2026-07-28:enter_s3_target_selection_pack_v1"),
     ]
     assert phase["prior_sections_immutability"] == {
         "source_commit": TRADING_2463_S3_BASE_COMMIT,
@@ -12809,16 +12583,12 @@ def test_trading_2463_s3_is_immutable_historical_authority() -> None:
         "append_offset": TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT,
         "current_section_must_be_eof": True,
     }
-    assert phase["known_unrelated_exclusions"] == [
-        WAVE14_S2_PROHIBITED_USER_PATH
-    ]
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
     new_sources = set(phase["new_source_paths"])
     assert superseded == set(phase["source_delta_paths"]) - new_sources
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2463-DECISION-TARGET-REDESIGN-S3"
-        ),
+        "superseded_by_phase": ("TRADING-2463-DECISION-TARGET-REDESIGN-S3"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": TRADING_2463_S1_S2_SECTION,
@@ -12837,10 +12607,9 @@ def test_trading_2463_s3_is_immutable_historical_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert (
-            _source_sha256_at_commit(source, TRADING_2463_S4_BASE_COMMIT)
-            == source["sha256"]
-        ), source["path"]
+        assert _source_sha256_at_commit(source, TRADING_2463_S4_BASE_COMMIT) == source["sha256"], (
+            source["path"]
+        )
     assert phase["implementation"] == {
         "s3_pack_complete": True,
         "s3_option_count": 4,
@@ -12862,10 +12631,7 @@ def test_trading_2463_s3_is_immutable_historical_authority() -> None:
         "qld_automatic_selection_enabled": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12890,19 +12656,14 @@ def test_trading_2463_s4_is_immutable_historical_authority() -> None:
     )
     phase = baseline[TRADING_2463_S4_SECTION]
     assert phase["schema_version"] == (
-        "trading_2463_decision_target_redesign_s4_o1_"
-        "preregistration_freeze_compatibility.v1"
+        "trading_2463_decision_target_redesign_s4_o1_preregistration_freeze_compatibility.v1"
     )
     assert phase["status"] in {
         "VALIDATING_S4_ENTRY",
         "S4_POLICY_REVIEW_REQUIRED",
     }
-    assert phase["boundary_id"] == (
-        "TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-FREEZE"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-FREEZE")
+    assert phase["task_ids"] == ["TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"]
     assert phase["owner_authorizations"] == [
         (
             "owner_decision:TRADING-2463:2026-07-28:"
@@ -12918,9 +12679,7 @@ def test_trading_2463_s4_is_immutable_historical_authority() -> None:
         "append_offset": TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT,
         "current_section_must_be_eof": True,
     }
-    assert phase["known_unrelated_exclusions"] == [
-        WAVE14_S2_PROHIBITED_USER_PATH
-    ]
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
     new_sources = set(phase["new_source_paths"])
     assert superseded == set(phase["source_delta_paths"]) - new_sources
@@ -12929,11 +12688,10 @@ def test_trading_2463_s4_is_immutable_historical_authority() -> None:
     assert current_mismatches - superseded <= set(
         _data_gov_002c3p_superseded_live_source_paths()
         | _trading_2463_s4_approval_superseded_live_source_paths()
+        | _ops_071_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-FREEZE"
-        ),
+        "superseded_by_phase": ("TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-FREEZE"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": TRADING_2463_S3_SECTION,
@@ -12982,10 +12740,7 @@ def test_trading_2463_s4_is_immutable_historical_authority() -> None:
         "qld_automatic_selection_enabled": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
@@ -12996,76 +12751,54 @@ def test_trading_2463_s4_is_immutable_historical_authority() -> None:
     }
 
 
-def test_trading_2463_s4_approval_is_current_hash_authority() -> None:
+def test_trading_2463_s4_approval_is_immutable_historical_authority() -> None:
     _assert_trading_2463_s4_approval_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s4_approval_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2463_S4_APPROVAL_SECTION
+    assert list(baseline).index(TRADING_2463_S4_APPROVAL_SECTION) < list(baseline).index(
+        OPS_071_SECTION
+    )
     phase = baseline[TRADING_2463_S4_APPROVAL_SECTION]
     assert phase["schema_version"] == (
-        "trading_2463_decision_target_redesign_s4_o1_"
-        "pilot_policy_freeze_compatibility.v1"
+        "trading_2463_decision_target_redesign_s4_o1_pilot_policy_freeze_compatibility.v1"
     )
     assert phase["status"] in {
         "VALIDATING_S4_POLICY_FREEZE",
         "S4_COMPLETE_O1_POLICY_FROZEN",
     }
-    assert phase["boundary_id"] == (
-        "TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-POLICY-FREEZE"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-POLICY-FREEZE")
+    assert phase["task_ids"] == ["TRADING-2463_DECISION_TARGET_REDESIGN_PREREGISTRATION"]
     assert phase["owner_authorizations"] == [
-        (
-            "owner_decision:TRADING-2463:2026-07-28:"
-            "approve_s4_o1_pilot_policy_bundle_v1"
-        ),
+        ("owner_decision:TRADING-2463:2026-07-28:approve_s4_o1_pilot_policy_bundle_v1"),
     ]
     assert phase["prior_sections_immutability"] == {
         "source_commit": TRADING_2463_S4_APPROVAL_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
         "git_blob_sha1": TRADING_2463_S4_APPROVAL_BASELINE_GIT_BLOB,
-        "raw_byte_count": (
-            TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT
-        ),
+        "raw_byte_count": (TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT),
         "raw_sha256": TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_SHA256,
-        "append_offset": (
-            TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT
-        ),
+        "append_offset": (TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT),
         "current_section_must_be_eof": True,
     }
-    assert phase["known_unrelated_exclusions"] == [
-        WAVE14_S2_PROHIBITED_USER_PATH
-    ]
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert (
-        superseded
-        == _trading_2463_s4_approval_prior_active_source_mismatches()
-    )
+    current_mismatches = set(_trading_2463_s4_approval_prior_active_source_mismatches())
+    assert superseded <= current_mismatches
+    assert current_mismatches - superseded <= set(_ops_071_superseded_live_source_paths())
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-POLICY-FREEZE"
-        ),
+        "superseded_by_phase": ("TRADING-2463-DECISION-TARGET-REDESIGN-S4-O1-POLICY-FREEZE"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": DATA_GOV_002C3P_SECTION,
-        "current_hash_authority": (
-            f"{TRADING_2463_S4_APPROVAL_SECTION}.sources"
-        ),
+        "current_hash_authority": (f"{TRADING_2463_S4_APPROVAL_SECTION}.sources"),
     }
-    assert set(phase["removed_live_source_paths"]) == {
+    assert set(phase["removed_live_source_paths"]) == {TRADING_2463_ACTIVE_TASK_SHADOW_PATH}
+    assert set(phase["new_source_paths"]) == TRADING_2463_S4_APPROVAL_NEW_SOURCE_PATHS
+    expected = (superseded | TRADING_2463_S4_APPROVAL_NEW_SOURCE_PATHS) - {
         TRADING_2463_ACTIVE_TASK_SHADOW_PATH
     }
-    assert (
-        set(phase["new_source_paths"])
-        == TRADING_2463_S4_APPROVAL_NEW_SOURCE_PATHS
-    )
-    expected = (
-        superseded | TRADING_2463_S4_APPROVAL_NEW_SOURCE_PATHS
-    ) - {TRADING_2463_ACTIVE_TASK_SHADOW_PATH}
     assert set(phase["source_delta_paths"]) == (
         superseded | TRADING_2463_S4_APPROVAL_NEW_SOURCE_PATHS
     )
@@ -13080,7 +12813,7 @@ def test_trading_2463_s4_approval_is_current_hash_authority() -> None:
     assert TRADING_2463_COMPLETED_TASK_SHADOW_PATH in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "s4_complete": True,
         "selected_target": "RELATIVE_OPPORTUNITY_SPREAD",
@@ -13131,13 +12864,84 @@ def test_trading_2463_s4_approval_is_current_hash_authority() -> None:
         "qld_automatic_selection_enabled": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": False,
         "strategy_logic_changed": False,
+        "production_weights_written": False,
+        "active_shadow_weights_written": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_ops_071_is_current_hash_authority() -> None:
+    _assert_ops_071_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_071_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == OPS_071_SECTION
+    phase = baseline[OPS_071_SECTION]
+    assert phase["schema_version"] == (
+        "ops_071_daily_terminal_recovery_and_lineage_availability_compatibility.v1"
+    )
+    assert phase["status"] == "VALIDATING"
+    assert phase["boundary_id"] == ("OPS-071-DAILY-TERMINAL-RECOVERY-AND-LINEAGE-AVAILABILITY")
+    assert phase["task_ids"] == ["OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY"]
+    assert phase["owner_authorization"] == (
+        "owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": OPS_071_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": OPS_071_BASELINE_GIT_BLOB,
+        "raw_byte_count": OPS_071_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": OPS_071_HISTORICAL_PREFIX_SHA256,
+        "append_offset": OPS_071_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _ops_071_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": ("OPS-071-DAILY-TERMINAL-RECOVERY-AND-LINEAGE-AVAILABILITY"),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2463_S4_APPROVAL_SECTION,
+        "current_hash_authority": f"{OPS_071_SECTION}.sources",
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["new_source_paths"]) == OPS_071_NEW_SOURCE_PATHS
+    expected = superseded | OPS_071_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert len(source_paths) == len(set(source_paths))
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "terminal_parent_statuses": ["BLOCKED", "FAILED"],
+        "recovery_requires_release_change": True,
+        "parent_state_and_ledger_archive_immutable": True,
+        "per_parent_child_limit": 1,
+        "replay_boundary": "REPORT_TAIL_ALLOWLIST_ONLY",
+        "upstream_capture_dq_pit_score_reused": True,
+        "lineage_topology_safety_strict": True,
+        "lineage_governed_absence": "INSUFFICIENT_DATA",
+    }
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS")
+        for value in phase["validation"].values()
+    )
+    assert phase["safety"] == {
+        "data_quality_contract_changed": False,
+        "strategy_conclusion_changed": False,
         "production_weights_written": False,
         "active_shadow_weights_written": False,
         "production_effect": "none",
@@ -13150,10 +12954,7 @@ def test_trading_2463_s4_freeze_records_approved_policy_and_stops() -> None:
         Path()
         / "docs"
         / "requirements"
-        / (
-            "TRADING-2463_S4_O1_Relative_Opportunity_Spread_"
-            "Preregistration_Freeze.md"
-        )
+        / ("TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md")
     )
     freeze = freeze_path.read_text(encoding="utf-8")
     required_tokens = {
@@ -13187,11 +12988,20 @@ def test_trading_2463_s4_freeze_records_approved_policy_and_stops() -> None:
 def test_trading_2463_s4_approval_rejects_historical_prefix_tamper() -> None:
     base_blob = _trading_2463_s4_approval_base_baseline_blob()
     tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
-    tampered[
-        TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT - 1
-    ] ^= 1
+    tampered[TRADING_2463_S4_APPROVAL_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2463_s4_approval_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_ops_071_rejects_historical_prefix_tamper() -> None:
+    base_blob = _ops_071_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[OPS_071_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_ops_071_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )
@@ -13210,10 +13020,7 @@ def test_trading_2463_s4_rejects_historical_prefix_tamper() -> None:
 
 def test_trading_2463_s3_pack_requires_owner_selection_before_s4() -> None:
     pack_path = (
-        Path()
-        / "docs"
-        / "requirements"
-        / "TRADING-2463_S3_Target_Selection_Decision_Pack.md"
+        Path() / "docs" / "requirements" / "TRADING-2463_S3_Target_Selection_Decision_Pack.md"
     )
     pack = pack_path.read_text(encoding="utf-8")
     required_tokens = {
@@ -13336,19 +13143,17 @@ def test_data_gov_002c3p_is_immutable_historical_authority() -> None:
         "append_offset": DATA_GOV_002C3P_HISTORICAL_PREFIX_BYTE_COUNT,
         "current_section_must_be_eof": True,
     }
-    assert phase["known_unrelated_exclusions"] == [
-        WAVE14_S2_PROHIBITED_USER_PATH
-    ]
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
     current_mismatches = set(_data_gov_002c3p_prior_active_source_mismatches())
     assert superseded <= current_mismatches
     assert current_mismatches - superseded <= set(
         _trading_2463_s4_approval_superseded_live_source_paths()
+        | _ops_071_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": (
-            "DATA-GOV-002C3P-PRICE-NON-MARKET-SESSION-TYPED-"
-            "ATTRIBUTION-CONTRACT"
+            "DATA-GOV-002C3P-PRICE-NON-MARKET-SESSION-TYPED-ATTRIBUTION-CONTRACT"
         ),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
@@ -13388,10 +13193,7 @@ def test_data_gov_002c3p_is_immutable_historical_authority() -> None:
         "consumer_migrated": False,
     }
     validation = phase["validation"]
-    assert all(
-        value == "PENDING" or str(value).startswith("PASS")
-        for value in validation.values()
-    )
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
     assert phase["safety"] == {
         "data_quality_contract_changed": True,
         "capability_policy_or_classifier_changed": False,
