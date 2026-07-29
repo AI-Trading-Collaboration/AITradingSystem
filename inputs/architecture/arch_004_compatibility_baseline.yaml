@@ -32492,3 +32492,187 @@ phase_data_gov_001_d0c_crash_durability:
     active_shadow_weights_written: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_001_d0d_store_acl_verification:
+  schema_version: data_gov_001_d0d_store_acl_compatibility.v1
+  status: COMPLETE
+  boundary_id: DATA-GOV-001-D0D-STORE-ACL
+  task_ids:
+  - DATA-GOV-001_D0D_STORE_ACL_VERIFICATION
+  owner_authorization: owner_direction:2026-07-29:continue_d0c_acl_consumer_sequence
+  prior_sections_immutability:
+    source_commit: debebc3c7e9f887a399f942e2f41215c2f75591e
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: c01ef09ef302263933d7452ec422d33808128ecf
+    raw_byte_count: 2047661
+    raw_sha256: 8f55629c56c7a9b435002eb27f4f507aaca0911ef80d9201655cd41f471da7ae
+    append_offset: 2047661
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
+  - registry/development_tasks_shadow/completed/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/completed/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: DATA-GOV-001-D0D-STORE-ACL
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_001_d0c_crash_durability
+    current_hash_authority: phase_data_gov_001_d0d_store_acl_verification.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/data/data_foundation_acl.yaml
+  - docs/requirements/DATA-GOV-001_D0D_Store_ACL_Verification.md
+  - registry/development_tasks_shadow/completed/84/84826b0985384bc07750c838e36ec9502160e9838f3711b35ca7ccafebb97425.yaml
+  - scripts/data_foundation_acl_rehearsal.py
+  - src/ai_trading_system/data/access_control.py
+  - tests/test_data_foundation_access_control.py
+  source_delta_paths:
+  - config/data/data_foundation_acl.yaml
+  - docs/requirements/DATA-GOV-001_D0D_Store_ACL_Verification.md
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
+  - registry/development_tasks_shadow/completed/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+  - registry/development_tasks_shadow/completed/84/84826b0985384bc07750c838e36ec9502160e9838f3711b35ca7ccafebb97425.yaml
+  - registry/development_tasks_shadow/completed/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+  - scripts/data_foundation_acl_rehearsal.py
+  - src/ai_trading_system/data/access_control.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_data_foundation_access_control.py
+  sources:
+  - path: config/data/data_foundation_acl.yaml
+    sha256: b692e64661469c82b8a26d90a98b643bc16ccd8c68b709ffe76cc363c6453e6d
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-001_D0D_Store_ACL_Verification.md
+    sha256: 8f6fdac2463d9f1892bc75ac12e6f45da79b484915a921a83f05b6d7894b82a8
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+    sha256: e5c1f1260ae8af443533f352f3f00081ceadeca5ca992d7eb2e90ff88a45c33b
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: ef9f190bd2d32593f2a0609eceab22680578d29dc2a4053e85dcb27edb9fa4ec
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 73ef03a0aac5358ce52a5a7ccca0f72d300a794e22220ded7e2c066e4a84582a
+    hash_normalization: git_eol_lf
+  - path: docs/task_register_completed.md
+    sha256: 3c83102fe52c2be6d97015923b2d55f190ccf79aee61906db6f6e4d90c6fc7bb
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: cd7da8c5195c07d2f949ebf231f30e0aa9625e983ec29627c828dfa74503b74e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: bdec67a3a905b80784dfb0f3b87bcfba91a3a62cca23083807f9a270f1c4b94b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 1b3c5476a0285f631cb669c0e23706eb9ead2cc569300222c2812987837bf2d9
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 134a064e2418cea3e1220bda93d99358f95cd5af698b9f7c2b50b6e78e244b36
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 1269213912cb28c54fcfd0ec8a1969e53da9d223bfdb1a4380325cfb025eff53
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 05fb258e0ca47dc1d49d5b8027ee5f67a5990dd8ffa15da06272cd60f6203cce
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 819d9ea373464438637be5005b805667601d421dcd738327a530a7a402519cfd
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
+    sha256: 5cb5eab10b9e33940a4a020dc1ae79c0fbec8d8db009232de2f54d8cd35273fa
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
+    sha256: e0853d78666e1f1a0484d8779dc42b9be048b4a7c40c20b5426525b42c390b48
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/84/84826b0985384bc07750c838e36ec9502160e9838f3711b35ca7ccafebb97425.yaml
+    sha256: 3c609432de50f0b1b8e92ea4ed9ab75bcaeaa12e878bc8308fc434de06f6b79a
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
+    sha256: e175c9fbd4a1bc5865fd6e219632e0fc6df88509119ee99c1d08e27a745b8f05
+    hash_normalization: git_eol_lf
+  - path: scripts/data_foundation_acl_rehearsal.py
+    sha256: 9c13c422ae1abdae5ccf6213cbdacf9b1d01d8883e2d519968758a6a45a4a83d
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/access_control.py
+    sha256: 02f89af3eaa9eef5c801ecaa4e748e031e7258643fc56faf28df09add07a5d8c
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 6005abd97b0bd3acf89ecfe8252123c81c60d49e2c1e13933329c4ea09c715e1
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: ef22c1c2bcea775e0cd41a2e76bd7d8d9df91e91d3a1cc47efbbb84546f3a4d9
+    hash_normalization: git_eol_lf
+  - path: tests/test_data_foundation_access_control.py
+    sha256: 15445f8505186a3d54ead967ff5dc0456da25556ed18a7ff08151b04dda4a434
+    hash_normalization: git_eol_lf
+  implementation:
+    policy_version: data_foundation_store_acl_isolation.v1
+    policy_status: PILOT_BASELINE
+    scope: ISOLATED_REHEARSAL_ONLY
+    platform_profile: WINDOWS_NTFS_RESTRICTED_TOKEN.v1
+    bundle_id: data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea
+    bundle_sha256: 0e34f6f5e3cbcd273721651f49c74ac196548cf24df186396d68c328410c04cc
+    attestation_id: store_acl_attestation_ca3499e0650954d9cde4962fb78a6fa1
+    attestation_sha256: 5d11335a790b5dc3df8718ff2d329680615c6c10b083d28038e7815b47e7eda7
+    validator_module_sha256: 02f89af3eaa9eef5c801ecaa4e748e031e7258643fc56faf28df09add07a5d8c
+    cleanup_receipt_sha256: a9741506c605eb9ed9a8c66920a45d3df293f1e796076be976e2692140669311
+    native_writer_probe: true
+    restricted_reader_probe: true
+    restricted_unapproved_probe: true
+    acl_change_denied: true
+    child_inheritance_verified: true
+    live_rehearsal_store_cleaned: true
+    posix_profile: BLOCKED_PENDING_DISTINCT_IDENTITY_REHEARSAL
+    d0a_false_flags_rewritten: false
+    consumer_cutover_allowed: false
+  validation:
+    task_registry: PASS_BYTE_IDENTICAL
+    acl_focused: PASS_16_TESTS
+    focused: PASS_138_TESTS_1_SKIPPED
+    compatibility_focused: PASS_142_TESTS
+    architecture_initial: FAIL_782_PASS_1_FAIL_DEVEX_TEST_MANIFEST_STALE
+    architecture: PASS_783_TESTS
+    contract: PASS_276_TESTS
+    report: PASS_57_TESTS_62_WARNINGS
+    reproducibility: PASS_24_TESTS
+    integration: PASS_995_TESTS_643_WARNINGS
+    full: PASS_7668_TESTS_3_SKIPPED_644_WARNINGS
+  safety:
+    runtime_behavior_changed: true
+    data_flow_changed: true
+    historical_manifest_rewritten: false
+    generic_consumer_migration_started: false
+    cached_data_mutated: false
+    provider_replayed: false
+    automatic_non_daily_enabled: false
+    qld_automatic_selection_enabled: false
+    production_weights_written: false
+    active_shadow_weights_written: false
+    production_effect: none
+    broker_action: none

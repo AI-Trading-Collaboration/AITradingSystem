@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0C_COMPLETE_ACL_TASK_REGISTRATION_NEXT`
+- current phase：`D0D_COMPLETE_CONSUMER_MIGRATION_TASK_REGISTRATION_NEXT`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -48,7 +48,25 @@ reference-safe GC、checksum backup/restore rehearsal 和独立
 restore绑定的独立attestation中给出scoped PASS。D0C final-tree
 Architecture/Contract/Report/Reproducibility/Integration=`782/276/57/24/995 passed`，
 natural-boundary Full=`7651 passed / 3 skipped / 644 warnings`，任务已转`DONE`。下一步按Owner
-顺序另立ACL验收任务；ACL与逐consumer migration尚未启动。
+顺序另立ACL验收任务；逐consumer migration尚未启动。
+
+2026-07-29，D0D 已建立 reviewed ACL policy、Windows local fixed NTFS protected-DACL
+inspector/apply、restricted-token native enforcement probe、独立
+`data_store_acl_attestation.v1`与cleaned rehearsal bundle。Exact isolated store
+bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`为`PASS`；
+writer、reader、unapproved token、ACL-change和child inheritance均经过native kernel
+probe，live store在evidence落盘后已清理。该PASS只覆盖exact isolated store/policy/SID set，
+不回写D0A历史`store_acl_verified=false`，不授权generic consumer cutover，也不覆盖POSIX、
+administrator/root、offline或network/object store。D0D转`VALIDATING`等待formal closeout；
+在此之前不得进入逐consumer migration。
+
+2026-07-29，D0D Architecture/Contract/Report/Reproducibility/Integration=
+`783/276/57/24/995 passed`，natural-boundary Full=
+`7668 passed / 3 skipped / 644 warnings`并完成scoped ACL formal exit，任务转`DONE`。
+下一步按Owner顺序另立per-consumer migration任务；迁移必须逐consumer绑定exact
+publication、strict DQ、durability、ACL policy/attestation与consumer authorization，
+不得翻转generic global cutover。QLD automatic selection、production weights与broker仍须
+等待canonical DQ strict PASS后的独立复审和明确授权。
 
 后续将数据能力作为独立的逻辑系统长期治理，但当前不拆 repository、部署单元或服务。Data Foundation 负责生产和证明事实；Knowledge & Insight Core、报告和网页只能消费其机器可读 contract，不能反向覆盖数据、质量状态或 lineage。
 
@@ -151,6 +169,14 @@ restore 演练。D0A 的逻辑原子性与线程级测试不能替代 D0C；在 
 或 backup/restore 已闭环。D0C还要把publication replay input的`row_count`从当前metadata自洽校验升级为
 基于immutable CSV bytes的重新计算，并加入content/metadata mismatch负例；该P2缺口不降低Wave14
 artifact/source SHA、size、transaction和manifest语义绑定门禁，但在长期replay完整性关闭前不得省略。
+
+D0D 负责 exact store 的 OS access-control enforcement。Reviewed policy把writer、reader、
+recovery与forbidden broad-write identities解析成stable SID/uid/gid，绑定protected DACL/mode、
+live descriptor digest、native positive/negative token probe和independent attestation。D0D
+PASS只说明被验收store/policy/principal set满足权限边界；它不能修改D0A immutable false flags，
+不能抵御same-principal恶意写入、administrator/root或offline介质，也不能代替per-consumer
+publication/DQ/durability/ACL exact binding。当前Windows NTFS isolated profile已形成scoped PASS，
+POSIX profile保持typed blocked，generic cutover继续false。
 
 ### D1：P1 统一运行时与可重放 lineage
 

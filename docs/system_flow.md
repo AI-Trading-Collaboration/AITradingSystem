@@ -260,6 +260,37 @@ flowchart LR
     DA -.-> BND["ACL false / cutover false / production none"]
 ```
 
+D0D在D0C之后新增独立的exact-store ACL evidence层，不改写D0A manifest/result。Reviewed
+`data_foundation_store_acl_isolation.v1`只允许空的isolated rehearsal root：Windows local fixed
+NTFS profile使用current process user SID作为trusted writer，`BUILTIN\Users`作为restricted
+reader，`LOCAL_SYSTEM`/`BUILTIN\Administrators`作为recovery，protected DACL中不存在broad
+write。Apply与inspect分离，resolved containment、reparse、nonempty root、policy/principal/
+descriptor drift全部fail closed。
+
+Native probe以Windows restricted token实际验证reader可读但write/delete/change-ACL被拒，
+unapproved token的read/write被拒，writer可create/replace/read/delete，新child只继承reviewed
+四项ACE。`data_store_acl_attestation.v1`绑定policy bytes、exact root identity、stable SIDs、
+live SDDL digest和probe receipt；live重算PASS后先持久化attestation，再由trusted writer清理
+rehearsal root并生成cleanup receipt。Canonical bundle位于
+`outputs/validation_runtime/data_foundation_d0d_20260729T034500Z/rehearsal_bundle.json`。
+该PASS只覆盖已验收Windows isolated store；POSIX、production store、same-principal恶意行为、
+administrator/root、offline/network/object store均在scope外。D0A
+`store_acl_verified=false`和generic cutover=false继续immutable，下一步consumer还必须另行绑定
+exact DQ/publication/durability/ACL evidence。
+
+```mermaid
+flowchart LR
+    POL["Reviewed ACL policy bytes"] --> ROOT["Empty contained isolated store"]
+    ROOT --> ACL["Protected native DACL"]
+    ACL --> INS["Exact SID / rights / inheritance inspector"]
+    INS --> TOK["Kernel restricted-token probes"]
+    TOK --> ATT["Scoped ACL attestation"]
+    ATT --> LIVE["Independent live recomputation"]
+    LIVE --> EVI["Content-addressed evidence"]
+    EVI --> CLN["Trusted-writer cleanup receipt"]
+    CLN -.-> BND["Historical ACL false / generic cutover false / production none"]
+```
+
 W12-S2在D0A能力之上建立D0B1 canonical执行证据与G4 native consumer preflight。无显式`--as-of`时，
 direct `aits validate-data`与`aits ops daily-run`共用`America/New_York`最近已完成交易日和收盘后3小时
 provider-ready buffer；`operations_as_of`只用于scheduler/due/calendar，`data_quality_as_of`取daily plan中

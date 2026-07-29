@@ -1,0 +1,41 @@
+policy:
+  schema_version: data_foundation_store_acl_policy.v1
+  policy_id: data_foundation_store_acl_isolation
+  policy_version: data_foundation_store_acl_isolation.v1
+  status: PILOT_BASELINE
+  owner: data platform owner
+  rationale: >-
+    Verify an exact local store's native OS permission boundary before any
+    consumer-specific migration; historical publication safety flags remain
+    immutable and false.
+  review_condition: >-
+    Re-review before binding a production store, changing principals, adding a
+    filesystem profile, or authorizing any consumer.
+  scope: ISOLATED_REHEARSAL_ONLY
+  claim_boundary:
+    production_effect: none
+    broker_action: none
+    historical_manifest_store_acl_verified: false
+    generic_consumer_cutover_allowed: false
+  windows_ntfs:
+    status: SUPPORTED_FOR_ISOLATED_REHEARSAL
+    writer_selector: CURRENT_PROCESS_USER
+    reader_sid: S-1-5-32-545
+    recovery_sids:
+      - S-1-5-18
+      - S-1-5-32-544
+    forbidden_broad_write_sids:
+      - S-1-1-0
+      - S-1-5-11
+    writer_rights: FULL_CONTROL
+    reader_rights: READ_EXECUTE
+    recovery_rights: FULL_CONTROL
+    inheritance: OBJECT_AND_CONTAINER
+    dacl_protected: true
+  posix_local:
+    status: BLOCKED_PENDING_DISTINCT_IDENTITY_REHEARSAL
+    required_evidence:
+      - exact_writer_uid
+      - exact_reader_gid
+      - independent_reader_token
+      - negative_write_delete_chmod_probe

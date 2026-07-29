@@ -1,10 +1,10 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 772aa253c1ad95ddb28d3ef9d52ed6a13720611e50851795de29980a6b6c4924
+baseline_checksum: 93008c9b9f0c922b990f5fe822b78a2d5a1af3eca8e464d0115e63a6044e55c4
 source_of_truth: LEGACY_MARKDOWN_ONLY
-task_count: 923
-fragment_count: 923
+task_count: 924
+fragment_count: 924
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -329,10 +329,14 @@ fragments:
   path: registry/development_tasks_shadow/completed/2b/2b6d10466cd918423872ff06908426f99658bec79eeb588f5c19abfb16eb40e4.yaml
   file_sha256: 1d5883274046c0316b2545b9a9bb5478e9b0c4554e1de4ce1a666656eeee48cd
   fragment_checksum: 28b6e21da986b609ad6db315e88db2290bd6ac6f2a936cb13d6e63a88ecf00a8
+- task_id: DATA-GOV-001_D0D_STORE_ACL_VERIFICATION
+  path: registry/development_tasks_shadow/completed/84/84826b0985384bc07750c838e36ec9502160e9838f3711b35ca7ccafebb97425.yaml
+  file_sha256: 3c609432de50f0b1b8e92ea4ed9ab75bcaeaa12e878bc8308fc434de06f6b79a
+  fragment_checksum: 8a3af70feb5b7fdf3ddc03e94591c9200383128a99787d865fa773bc25936d84
 - task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   path: registry/development_tasks_shadow/active/5b/5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c.yaml
-  file_sha256: 8dbb6b7cbdc12dfa236d6bb94f9afc91c1544fcb690e0e81dc5fdcc1215e0f3f
-  fragment_checksum: 4414ddc0cdffb33b4b7bf2a12abd2cbba2602b0c6c38dacd1a59b7ca28113433
+  file_sha256: 5cb5eab10b9e33940a4a020dc1ae79c0fbec8d8db009232de2f54d8cd35273fa
+  fragment_checksum: f911ca57f6e0384f72044a933ee91004f762cdfb910fa285c8f1755494afa9df
 - task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
   path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
   file_sha256: eb69e12b29ecbacdceafa93da682c4a0560a7a4ab5124069186b2a293f499543
@@ -443,8 +447,8 @@ fragments:
   fragment_checksum: 28ca723b6b3e38f335c0ef362383920803e03ff190c29c738e25a977bf7051e0
 - task_id: ENG-VAL-010_VALIDATION_PARENT_RUN_PORTABLE_IMPORT
   path: registry/development_tasks_shadow/completed/28/2832c2647b0ebf371274429f2fda1908702e29ee428932ff137afb98871e3eca.yaml
-  file_sha256: dce47ac39d04b68eba585d11e5095249814052f50148434f986bd9954701b002
-  fragment_checksum: c8969b3abe7f739472f50a56b77034211af98532b696cacf79cf1640e795b0e1
+  file_sha256: e0853d78666e1f1a0484d8779dc42b9be048b4a7c40c20b5426525b42c390b48
+  fragment_checksum: dce2a5c235449c9aeff45071dba52e93ca4d8b5795f874fb546a10b4694ad1df
 - task_id: EVIDENCE-001
   path: registry/development_tasks_shadow/completed/84/84a989057820461997b995cb811ca87ad21ce35ea391fe263711b4a0f6b1c9f1.yaml
   file_sha256: 7bbc7fb4856289aa7d3d0998c91e7df78dbdcbd2f4947b9d3abff3d13702c139
@@ -635,8 +639,8 @@ fragments:
   fragment_checksum: 0af72431dc86e23519ef864e0609ce0979dd6f81bed42cc12c332bdc84b43e53
 - task_id: OPS-067_READER_BRIEF_QUALITY_FAIL_CLOSED_FINALIZATION
   path: registry/development_tasks_shadow/completed/ca/ca70315097648d8e19cb7498427fc2eab0fec34ebd092ada8937cfe518cfdfeb.yaml
-  file_sha256: ad2bc9915c3766d507df5843083f2c48254591936f7b550cbf3b456026558447
-  fragment_checksum: 92549eed3f510ea9f3275ed736905a2608f9711dce135473ac350599af081c86
+  file_sha256: e175c9fbd4a1bc5865fd6e219632e0fc6df88509119ee99c1d08e27a745b8f05
+  fragment_checksum: b1ea6f87139858ed9e465247965245815d20b8b476b1a473f1f712018a928dca
 - task_id: OPS-068_2026_07_21_DAILY_GAP_RECOVERY
   path: registry/development_tasks_shadow/completed/9d/9dd21402a1abc63d94ac7a64ad1fac93c09d13564ab383ee4f9146ce7693fde7.yaml
   file_sha256: 007b1aa67987960efb4ada9245213125f0c47685580571b33c85a230329ecf46
@@ -3717,15 +3721,15 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 3ac97f7b5266432cea71d67794fe8c30f782a4ba916241de1c3f660d2bfcaa1a
-  rendered_sha256: 3ac97f7b5266432cea71d67794fe8c30f782a4ba916241de1c3f660d2bfcaa1a
+  source_sha256: 73ef03a0aac5358ce52a5a7ccca0f72d300a794e22220ded7e2c066e4a84582a
+  rendered_sha256: 73ef03a0aac5358ce52a5a7ccca0f72d300a794e22220ded7e2c066e4a84582a
   byte_identical: true
   persisted_in_git: false
 - source: completed
   source_path: docs/task_register_completed.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register_completed.md
-  source_sha256: d4767cadbf0e5c552312cafc5f1f8713aff24e52fbc076d773c7c604b1d3e548
-  rendered_sha256: d4767cadbf0e5c552312cafc5f1f8713aff24e52fbc076d773c7c604b1d3e548
+  source_sha256: 3c83102fe52c2be6d97015923b2d55f190ccf79aee61906db6f6e4d90c6fc7bb
+  rendered_sha256: 3c83102fe52c2be6d97015923b2d55f190ccf79aee61906db6f6e4d90c6fc7bb
   byte_identical: true
   persisted_in_git: false
 replay:
@@ -3740,4 +3744,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 60f84e09672820a5d96404400df322859e4cf8abe9c50d3422d8fba2636818fd
+index_checksum: e23ba0746e651198b0d2c0565a99a8e9229dd0f5a8335591a07be090bed1b957

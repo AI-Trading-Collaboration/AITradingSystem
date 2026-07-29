@@ -12,31 +12,28 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: data platform owner + project owner：按既定顺序另立ACL验收任务，ACL完成后再推进逐consumer
-    migration
+  next_owner: data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+    consumer；不得批量翻转generic cutover
   requirement_refs:
-  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
-  - docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`、G4/D0B
-    supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-    engineering、D0B3 first-consumer authorization、D0B2B operational acceptance及D0C
-    crash durability均已闭合；ACL与其他consumer仍不得越序。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+    supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+    Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
-      receipt/publication/source/window/policy/validator/input/report/calendar authority；D0C已关闭crash/restore/GC基础，下一独立slice验收ACL，最后逐consumer迁移；strict
-      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；automatic non-daily、production与broker须独立授权。
+    text: 每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+      PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+      automatic selection、production与broker均须独立授权。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 1594
-    row_sha256: b54e21f68c4ba5c6e32e73e10ac6d6836f7f1537ce66fd51ba1fb78427fd6a8c
+    row_sha256: 53034d131dec7bf964cfcec63eecac29827d2d2fb4850832005cec6fbcdcf89e
     cell_count: 8
     all_cells:
     - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
@@ -44,35 +41,32 @@ task_record:
       lineage
     - P0
     - IN_PROGRESS
-    - data platform owner + project owner：按既定顺序另立ACL验收任务，ACL完成后再推进逐consumer migration
-    - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`、G4/D0B
-      supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-      engineering、D0B3 first-consumer authorization、D0B2B operational acceptance及D0C
-      crash durability均已闭合；ACL与其他consumer仍不得越序。
-    - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
-      receipt/publication/source/window/policy/validator/input/report/calendar authority；D0C已关闭crash/restore/GC基础，下一独立slice验收ACL，最后逐consumer迁移；strict
-      PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；automatic non-daily、production与broker须独立授权。
-    - 2026-07-29：D0C bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、final-tree
-      formal tiers与natural-boundary Full均PASS并转`DONE`；`store_acl_verified=false`、generic
-      consumer cutover=false，下一步只登记ACL任务，`production_effect=none`。
+    - data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+      consumer；不得批量翻转generic cutover
+    - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+      supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+      Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。
+    - 每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+      PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+      automatic selection、production与broker均须独立授权。
+    - 2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+      passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+      migration，`production_effect=none`。
     raw_line: '|DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE|Data Foundation /
       immutable snapshots, canonical DQ evidence, lifecycle and lineage|P0|IN_PROGRESS|data
-      platform owner + project owner：按既定顺序另立ACL验收任务，ACL完成后再推进逐consumer migration|详见
-      `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`、G4/D0B
-      supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-      engineering、D0B3 first-consumer authorization、D0B2B operational acceptance及D0C
-      crash durability均已闭合；ACL与其他consumer仍不得越序。|canonical数据采用staged immutable snapshot
-      + validated manifest + atomic pointer；首consumer绑定exact receipt/publication/source/window/policy/validator/input/report/calendar
-      authority；D0C已关闭crash/restore/GC基础，下一独立slice验收ACL，最后逐consumer迁移；strict PASS
-      only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；automatic non-daily、production与broker须独立授权。|2026-07-29：D0C
-      bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、final-tree
-      formal tiers与natural-boundary Full均PASS并转`DONE`；`store_acl_verified=false`、generic
-      consumer cutover=false，下一步只登记ACL任务，`production_effect=none`。|'
+      platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact consumer；不得批量翻转generic
+      cutover|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+      supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+      Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。|每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+      PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+      automatic selection、production与broker均须独立授权。|2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+      passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+      migration，`production_effect=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b54e21f68c4ba5c6e32e73e1
+  event_id: legacy-import-53034d131dec7bf964cfcec6
   task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -85,14 +79,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: data platform owner + project owner：按既定顺序另立ACL验收任务，ACL完成后再推进逐consumer
-      migration
-    notes: 2026-07-29：D0C bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、final-tree
-      formal tiers与natural-boundary Full均PASS并转`DONE`；`store_acl_verified=false`、generic
-      consumer cutover=false，下一步只登记ACL任务，`production_effect=none`。
+    next_owner: data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+      consumer；不得批量翻转generic cutover
+    notes: 2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+      passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+      migration，`production_effect=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b54e21f68c4ba5c6e32e73e10ac6d6836f7f1537ce66fd51ba1fb78427fd6a8c
+  - sha256:53034d131dec7bf964cfcec63eecac29827d2d2fb4850832005cec6fbcdcf89e
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -100,22 +94,20 @@ projection:
   - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
   - P0
   - IN_PROGRESS
-  - data platform owner + project owner：按既定顺序另立ACL验收任务，ACL完成后再推进逐consumer migration
-  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、`docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`、G4/D0B
-    supporting requirement与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。D0A/D0B1/D0B2
-    engineering、D0B3 first-consumer authorization、D0B2B operational acceptance及D0C
-    crash durability均已闭合；ACL与其他consumer仍不得越序。
-  - canonical数据采用staged immutable snapshot + validated manifest + atomic pointer；首consumer绑定exact
-    receipt/publication/source/window/policy/validator/input/report/calendar authority；D0C已关闭crash/restore/GC基础，下一独立slice验收ACL，最后逐consumer迁移；strict
-    PASS only，missing/warning/FAIL/drift/tamper在runner与artifact前归零；automatic non-daily、production与broker须独立授权。
-  - 2026-07-29：D0C bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、final-tree
-    formal tiers与natural-boundary Full均PASS并转`DONE`；`store_acl_verified=false`、generic
-    consumer cutover=false，下一步只登记ACL任务，`production_effect=none`。
+  - data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+    consumer；不得批量翻转generic cutover
+  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+    supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+    Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。
+  - 每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+    PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+    automatic selection、production与broker均须独立授权。
+  - 2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+    passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+    migration，`production_effect=none`。
   docs_links:
-  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
-  - docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md
   - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
   terminal: false
-  raw_row_sha256: b54e21f68c4ba5c6e32e73e10ac6d6836f7f1537ce66fd51ba1fb78427fd6a8c
+  raw_row_sha256: 53034d131dec7bf964cfcec63eecac29827d2d2fb4850832005cec6fbcdcf89e
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 4414ddc0cdffb33b4b7bf2a12abd2cbba2602b0c6c38dacd1a59b7ca28113433
+fragment_checksum: f911ca57f6e0384f72044a933ee91004f762cdfb910fa285c8f1755494afa9df
