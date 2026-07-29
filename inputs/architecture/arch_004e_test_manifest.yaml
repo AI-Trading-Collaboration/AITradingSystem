@@ -2177,7 +2177,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_capability_audit_contract
   path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
-  sha256: 310b0aba475e075523b780163ba4be6486b36855b52f559c5b72f2b8a481b6be
+  sha256: f66d1b6ef7e3a06d54cecd74bcb52765fc06389bb5d3ec5772887bbf3cb29638
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7540,7 +7540,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 044e1c1818a2f954e9e45897b196199f035cbd4f3fbde5cc25268bf43de1505c
+  sha256: 953d3764f5ff320fbe125f85b5423af167d0c6571dd4baf6e58fae32a9e34221
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

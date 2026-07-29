@@ -73,6 +73,36 @@ def test_proposal_is_inactive_and_binds_exact_authority() -> None:
     assert str(dq["execution_gate"]).startswith("BLOCK until")
 
 
+def test_recovery_audit_binds_exact_chain_without_materializing() -> None:
+    proposal = _load_yaml(PROPOSAL_PATH)
+    recovery = proposal["dq_recovery_audit"]
+    assert isinstance(recovery, dict)
+    assert recovery["status"] == "PASS_EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED"
+    assert recovery["source_workspace_kind"] == "PERMANENT_RUNTIME_CLONE"
+    assert recovery["source_portability"] == (
+        "LOCAL_EVIDENCE_SOURCE_NOT_REPOSITORY_AUTHORITY"
+    )
+    assert recovery["receipt_sha256_verified"] is True
+    assert recovery["authorization_sha256_verified"] is True
+    assert recovery["publication_pointer_sha256_verified"] is True
+    assert recovery["publication_transaction_sha256_verified"] is True
+    inputs = recovery["immutable_inputs"]
+    assert isinstance(inputs, dict)
+    assert set(inputs) == {"prices", "rates", "secondary_prices"}
+    assert all(
+        isinstance(item, dict) and item["verified"] is True
+        for item in inputs.values()
+    )
+    assert recovery["historical_acceptance_contract_validation"] == "PASS"
+    assert recovery["current_runtime_live_projection_matches_receipt_inputs"] is False
+    assert recovery["current_main_live_projection_matches_receipt_inputs"] is False
+    assert recovery["direct_copy_over_live_data_raw_allowed"] is False
+    assert recovery["materialization_executed"] is False
+    assert recovery["dq_rerun_executed"] is False
+    assert recovery["production_effect"] == "none"
+    assert recovery["broker_action"] == "none"
+
+
 def test_recommended_family_exactly_reuses_reviewed_m1_prefix() -> None:
     proposal = _load_yaml(PROPOSAL_PATH)
     historical = _load_yaml(HISTORICAL_POLICY_PATH)
@@ -124,6 +154,8 @@ def test_decision_pack_and_task_register_preserve_owner_gate() -> None:
     assert "require_new_o1_model_feature_family_pack_v1" in decision_pack
     assert "hold_o1_capability_audit_v1" in decision_pack
     assert "`receipt.json` 的实际 bytes" in decision_pack
+    assert "PASS_EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED" in decision_pack
+    assert "`materialize_isolated_candidate`" in decision_pack
     assert (
         "|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|"
         in task_register

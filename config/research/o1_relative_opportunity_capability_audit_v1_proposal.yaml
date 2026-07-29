@@ -48,6 +48,65 @@ dq_authority:
     or a separately reviewed fresh canonical strict PASS receipt is generated and
     this proposal is versioned before any real eligibility count is read.
 
+dq_recovery_audit:
+  status: PASS_EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED
+  audited_on: 2026-07-30
+  source_workspace_id: OPS_070_PERMANENT_RUNTIME_CLONE
+  source_workspace_path: D:/Work/AITradingSystem_ops_runtime
+  source_workspace_kind: PERMANENT_RUNTIME_CLONE
+  source_portability: LOCAL_EVIDENCE_SOURCE_NOT_REPOSITORY_AUTHORITY
+  lifecycle_authority: docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md
+  source_workspace_mutated: false
+  receipt_sha256_verified: true
+  authorization_id: dq_consumer_authorization_fe8360fab72bb976f3b799dba3a7bb933561cc34fa47b3ad7040a9e5fe5fcc02
+  authorization_sha256: 6f87e196aa97ee53e17c79aad46634e615305ccb0d89c915275cab42c9fa9ec3
+  authorization_sha256_verified: true
+  publication_pointer_path: >-
+    data/raw/.download_publications/pointer_history/download_composite/
+    data_pointer_1d00ce511e10f10dc617c640c12d3484.json
+  publication_pointer_sha256: 65f652f79ed07c0cc074dc1cc09fe444fa912fa21580df6ebb2eee340926199f
+  publication_pointer_sha256_verified: true
+  publication_transaction_id: download_txn_80b403268d6023acaf33b0608630b908
+  publication_transaction_sha256: 9ed6e7ec705633bec21e032a25f48ca93fd7ef0ead899bbe857b0f30591d7778
+  publication_transaction_sha256_verified: true
+  immutable_inputs:
+    prices:
+      path: >-
+        data/raw/.download_publications/members/
+        80a4e32678f85f79601421845a9caf481c21a29b831c8356879b488a7e25ae61/
+        prices_daily.csv
+      sha256: 80a4e32678f85f79601421845a9caf481c21a29b831c8356879b488a7e25ae61
+      size_bytes: 4774797
+      verified: true
+    rates:
+      path: >-
+        data/raw/.download_publications/members/
+        a647879c1291e75f9285b38c0174c7687056a1a2dbf4cf15d6b6e17e9f81a795/
+        rates_daily.csv
+      sha256: a647879c1291e75f9285b38c0174c7687056a1a2dbf4cf15d6b6e17e9f81a795
+      size_bytes: 153348
+      verified: true
+    secondary_prices:
+      path: >-
+        data/raw/.download_publications/members/
+        1536c952027be0277b49d41908e99b721e884857a94860eed112e58720f89491/
+        prices_marketstack_daily.csv
+      sha256: 1536c952027be0277b49d41908e99b721e884857a94860eed112e58720f89491
+      size_bytes: 3188060
+      verified: true
+  historical_acceptance_contract_validation: PASS
+  current_runtime_live_projection_matches_receipt_inputs: false
+  current_main_live_projection_matches_receipt_inputs: false
+  permitted_next_action: >-
+    After Owner option A, or a complete reviewed option-B family, use the
+    existing data_foundation_consumer_migration isolated-candidate path to
+    materialize and revalidate the exact immutable transaction.
+  direct_copy_over_live_data_raw_allowed: false
+  materialization_executed: false
+  dq_rerun_executed: false
+  production_effect: none
+  broker_action: none
+
 recommended_single_family:
   option_id: ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE
   recommended: true

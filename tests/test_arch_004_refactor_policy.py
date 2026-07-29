@@ -1149,7 +1149,16 @@ TRADING_2464_DECISION_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2464_DECISION_SECTION
+TRADING_2464_DQ_RECOVERY_SECTION = "phase_trading_2464_dq_recovery_source_audit"
+TRADING_2464_DQ_RECOVERY_BASE_COMMIT = "ca5c67616e6c950cffcd7ef08f34b754bd0972c3"
+TRADING_2464_DQ_RECOVERY_BASELINE_GIT_BLOB = "05228db1bf089b68810a2fd79774109907277f3a"
+TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_BYTE_COUNT = 2_092_026
+TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_SHA256 = (
+    "b6103d3914c5a5bd355d078ecc45587454f6cb01e53a33327fbfedc3e7e61c97"
+)
+TRADING_2464_DQ_RECOVERY_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2464_DQ_RECOVERY_NEW_SOURCE_PATHS = frozenset()
+LATEST_COMPATIBILITY_SECTION = TRADING_2464_DQ_RECOVERY_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2439,6 +2448,25 @@ def _trading_2464_decision_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2464_dq_recovery_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2464_DQ_RECOVERY_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2464_DQ_RECOVERY_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -3653,6 +3681,27 @@ def _assert_trading_2464_decision_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2464_DECISION_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2464_dq_recovery_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2464 DQ recovery historical prefix differs from immutable "
+        "decision-pack authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2464_DQ_RECOVERY_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -5117,6 +5166,34 @@ def _trading_2464_decision_all_current_authority_paths() -> frozenset[str]:
 
 
 @cache
+def _trading_2464_dq_recovery_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2464_dq_recovery_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_dq_recovery_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2464_DQ_RECOVERY_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2464_dq_recovery_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2464_DQ_RECOVERY_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2464_dq_recovery_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2464_dq_recovery_superseded_live_source_paths()
+        | _trading_2464_dq_recovery_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     return (
         _trading_2463_superseded_live_source_paths()
@@ -5228,6 +5305,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _devx_007_source_paths()
     if TRADING_2464_DECISION_SECTION in baseline:
         paths |= _trading_2464_decision_source_paths()
+    if TRADING_2464_DQ_RECOVERY_SECTION in baseline:
+        paths |= _trading_2464_dq_recovery_source_paths()
     return paths
 
 
@@ -6021,12 +6100,43 @@ def _trading_2464_decision_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(TRADING_2464_DECISION_SECTION)
 
 
+@cache
+def _trading_2464_dq_recovery_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2464_DQ_RECOVERY_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2464_DECISION_SECTION in baseline:
+    if TRADING_2464_DQ_RECOVERY_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2464_dq_recovery_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2464_dq_recovery_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_all_superseded_live_source_paths()
+            | _data_gov_001_d0d_superseded_live_source_paths()
+            | _data_gov_001_d0d_source_paths()
+            | _data_gov_001_d0e_superseded_live_source_paths()
+            | _data_gov_001_d0e_source_paths()
+            | _devx_007_all_current_authority_paths()
+            | _trading_2464_decision_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2464_DQ_RECOVERY_SECTION
+    elif TRADING_2464_DECISION_SECTION in baseline:
         current_superseded_paths = (
             _trading_2464_decision_superseded_live_source_paths()
         )
@@ -14826,7 +14936,9 @@ def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> N
         _trading_2464_decision_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2464_DECISION_SECTION
+    assert list(baseline).index(TRADING_2464_DECISION_SECTION) < list(
+        baseline
+    ).index(TRADING_2464_DQ_RECOVERY_SECTION)
     phase = baseline[TRADING_2464_DECISION_SECTION]
     assert phase["schema_version"] == (
         "trading_2464_o1_model_feature_owner_decision_pack_compatibility.v1"
@@ -14879,7 +14991,7 @@ def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> N
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "proposal_status": "OWNER_REVIEW_REQUIRED_NOT_ACTIVE",
         "activation_allowed": False,
@@ -14903,6 +15015,100 @@ def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> N
         for value in validation.values()
     )
     assert phase["safety"] == {
+        "runtime_behavior_changed": False,
+        "data_flow_changed": False,
+        "strategy_research_started": False,
+        "cached_data_mutated": False,
+        "provider_replayed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2464_dq_recovery_is_append_only_current_hash_authority() -> None:
+    _assert_trading_2464_dq_recovery_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_dq_recovery_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2464_DQ_RECOVERY_SECTION
+    phase = baseline[TRADING_2464_DQ_RECOVERY_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2464_dq_recovery_source_audit_compatibility.v1"
+    )
+    assert phase["status"] == "BLOCKED_OWNER_INPUT"
+    assert phase["boundary_id"] == "TRADING-2464-DQ-RECOVERY-SOURCE-AUDIT"
+    assert phase["task_ids"] == [
+        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
+    ]
+    assert phase["owner_authorization"] == (
+        "owner_instruction:TRADING-2464:2026-07-30:continue_progress_v1"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2464_DQ_RECOVERY_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2464_DQ_RECOVERY_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _trading_2464_dq_recovery_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2464-DQ-RECOVERY-SOURCE-AUDIT",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2464_DECISION_SECTION,
+        "current_hash_authority": f"{TRADING_2464_DQ_RECOVERY_SECTION}.sources",
+    }
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2464_DQ_RECOVERY_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == TRADING_2464_DQ_RECOVERY_NEW_SOURCE_PATHS
+    expected = (
+        superseded - TRADING_2464_DQ_RECOVERY_REMOVED_SOURCE_PATHS
+    ) | TRADING_2464_DQ_RECOVERY_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "recovery_status": "PASS_EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED",
+        "source_workspace_id": "OPS_070_PERMANENT_RUNTIME_CLONE",
+        "source_workspace_mutated": False,
+        "receipt_sha256_verified": True,
+        "authorization_sha256_verified": True,
+        "pointer_sha256_verified": True,
+        "transaction_sha256_verified": True,
+        "immutable_member_count": 3,
+        "immutable_members_verified": True,
+        "historical_acceptance_contract_validation": "PASS",
+        "live_projection_matches_receipt_inputs": False,
+        "direct_copy_over_live_data_raw_allowed": False,
+        "materialization_executed": False,
+        "dq_rerun_executed": False,
+        "coverage_read": False,
+        "model_training_executed": False,
+    }
+    validation = phase["validation"]
+    assert validation["recovery_contract"] == "PASS_5_TESTS"
+    assert validation["task_registry"] == "PASS_BYTE_IDENTICAL"
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "runtime_workspace_mutated": False,
+        "live_data_raw_overwritten": False,
         "runtime_behavior_changed": False,
         "data_flow_changed": False,
         "strategy_research_started": False,

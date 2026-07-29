@@ -97,6 +97,14 @@ worktree。需求文字、receipt ID 与 expected SHA 不能替代执行输入�
 exact bytes，或对新的 canonical strict PASS receipt 发布 reviewed policy version 后，才能
 读取真实 coverage。
 
+后续只读审计确认 OPS-070 permanent runtime clone
+`D:\Work\AITradingSystem_ops_runtime` 保留 receipt、authorization、pointer、transaction
+及三份 immutable input members，全部 exact hash 与现有 historical-acceptance validator
+均 `PASS`。因此 evidence 可恢复，但尚未 materialize。当前 main/runtime live
+`data/raw` 已与 receipt input bytes 不同；不得只复制 receipt 或覆盖 live projection。
+Owner 选择 A（或批准完整 B）后，才允许通过既有 isolated-candidate 路径 materialize 并
+重新执行 strict validation。
+
 ## 5. 执行拓扑与任务波次
 
 推荐拓扑：
@@ -242,6 +250,8 @@ run identity 和一个 attempt ledger。
 - `model_feature_family_authority=UNRESOLVED_BEFORE_RESULT_READ`
 - `model_feature_family_proposal=OWNER_REVIEW_REQUIRED_NOT_ACTIVE`
 - `required_dq_receipt_bytes_present=false`
+- `dq_exact_chain_recoverable_from_ops_runtime=true`
+- `dq_isolated_candidate_materialized=false`
 - `new_results_read=false`
 - `prospective_accessed=false`
 - `model_training_executed=false`
@@ -263,3 +273,8 @@ run identity 和一个 attempt ledger。
   推荐 exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，但不得把实现者推荐写成
   Owner approval。另发现 expected D0B2B receipt bytes 不在当前已登记 worktree，故真实
   coverage 还有独立 evidence-byte gate。
+- 2026-07-30：扩大只读恢复审计后，在 OPS-070 permanent runtime clone 找到 exact
+  receipt 与 immutable publication chain；receipt、authorization、pointer、transaction
+  和三份 member 全部 SHA 验证通过，现有 historical-acceptance contract validator
+  `PASS`。因 live `data/raw` 已后移，禁止只复制 receipt；等待 Owner 选择后才可在 isolated
+  candidate materialize/revalidate。

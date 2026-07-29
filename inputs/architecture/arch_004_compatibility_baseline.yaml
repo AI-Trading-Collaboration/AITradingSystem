@@ -33223,3 +33223,117 @@ phase_trading_2464_o1_model_feature_owner_decision_pack:
     provider_replayed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2464_dq_recovery_source_audit:
+  schema_version: trading_2464_dq_recovery_source_audit_compatibility.v1
+  status: BLOCKED_OWNER_INPUT
+  boundary_id: TRADING-2464-DQ-RECOVERY-SOURCE-AUDIT
+  task_ids:
+  - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+  owner_authorization: owner_instruction:TRADING-2464:2026-07-30:continue_progress_v1
+  prior_sections_immutability:
+    source_commit: ca5c67616e6c950cffcd7ef08f34b754bd0972c3
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 05228db1bf089b68810a2fd79774109907277f3a
+    raw_byte_count: 2092026
+    raw_sha256: b6103d3914c5a5bd355d078ecc45587454f6cb01e53a33327fbfedc3e7e61c97
+    append_offset: 2092026
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml
+  - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: TRADING-2464-DQ-RECOVERY-SOURCE-AUDIT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2464_o1_model_feature_owner_decision_pack
+    current_hash_authority: phase_trading_2464_dq_recovery_source_audit.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml
+  - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml
+    sha256: 0102d57f5f6b4d7e2e1ec5cf34fcdc783f16dd5f1cedf19133e8caf4549387c1
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
+    sha256: 8974c3b57ec0c23857d4e831b75148f814f26e2a76d3f671ce3e5a244eb0aa91
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+    sha256: 528cf8427deed26e3e8299f21a8555bb12dee13232a7212522141bc97acd1db1
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 70cfcdaeb2dbb1ed1d7fb1e546716ec20974937160e694dd30319732ba817b92
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: a5ad3e8d348bb9825a6ca84cc3c0bde42aba49b0643e50b02ac252f7ac8ba341
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: b7e15b09612acf57c4b1a7cf52a5a149229ca8d7185c8b2fa9fee86f130edc1d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: cce2e5e65d1d17a8b95ec7fcf4460acaa016cce285084d0d0ae1e48540794ba1
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+    sha256: e449b604b69f1c594f1cc5deb83e5c61620747ec4d08b7d9cc483afd31b5c32a
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+    sha256: f66d1b6ef7e3a06d54cecd74bcb52765fc06389bb5d3ec5772887bbf3cb29638
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 953d3764f5ff320fbe125f85b5423af167d0c6571dd4baf6e58fae32a9e34221
+    hash_normalization: git_eol_lf
+  implementation:
+    recovery_status: PASS_EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED
+    source_workspace_id: OPS_070_PERMANENT_RUNTIME_CLONE
+    source_workspace_mutated: false
+    receipt_sha256_verified: true
+    authorization_sha256_verified: true
+    pointer_sha256_verified: true
+    transaction_sha256_verified: true
+    immutable_member_count: 3
+    immutable_members_verified: true
+    historical_acceptance_contract_validation: PASS
+    live_projection_matches_receipt_inputs: false
+    direct_copy_over_live_data_raw_allowed: false
+    materialization_executed: false
+    dq_rerun_executed: false
+    coverage_read: false
+    model_training_executed: false
+  validation:
+    recovery_contract: PASS_5_TESTS
+    historical_acceptance: PASS_EXACT_CHAIN
+    task_registry: PASS_BYTE_IDENTICAL
+    generated_architecture: PASS_1039_MODULES_1208_TESTS
+    authority: PASS_146_TESTS
+    architecture: PASS_787_TESTS
+    contract: PASS_276_TESTS
+  safety:
+    runtime_workspace_mutated: false
+    live_data_raw_overwritten: false
+    runtime_behavior_changed: false
+    data_flow_changed: false
+    strategy_research_started: false
+    cached_data_mutated: false
+    provider_replayed: false
+    production_effect: none
+    broker_action: none

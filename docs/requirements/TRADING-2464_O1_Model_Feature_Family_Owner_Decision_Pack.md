@@ -60,6 +60,38 @@ serial contract wave 与决策材料，但没有给出 exact model/feature famil
 
 不得复制不明来源文件、伪造 receipt，或用 TRADING-2460 的 scoped exception 替代。
 
+### 3.1 只读恢复审计结论
+
+2026-07-30 继续进行精确路径审计后，确认 OPS-070 已治理的 permanent runtime clone
+`D:\Work\AITradingSystem_ops_runtime` 保留完整历史链；该目录的生命周期权威是
+`docs/requirements/OPS-070_Objective_Blocker_and_Consumer_Dependency_DAG.md`，本轮没有
+修改其任何字节。
+
+只读验证结果：
+
+- receipt 实际 SHA-256 与 expected SHA 完全一致；
+- consumer authorization
+  `dq_consumer_authorization_fe8360fab72bb976f3b799dba3a7bb933561cc34fa47b3ad7040a9e5fe5fcc02`
+  的 SHA-256 完全一致；
+- discovery pointer SHA-256=
+  `65f652f79ed07c0cc074dc1cc09fe444fa912fa21580df6ebb2eee340926199f`；
+- transaction=`download_txn_80b403268d6023acaf33b0608630b908`，snapshot SHA-256=
+  `9ed6e7ec705633bec21e032a25f48ca93fd7ef0ead899bbe857b0f30591d7778`；
+- prices、rates、secondary_prices 三个 immutable member 的实际 SHA 与 receipt
+  逐项一致；
+- 现有 `foundation_consumer_migration` historical-acceptance、pointer、transaction
+  contract validator 全链 `PASS`。
+
+因此状态从“没有可恢复来源”修正为
+`PASS_EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED`。但 runtime clone 与主 checkout 当前 live
+`data/raw` 已向后推进，三份 live projection 均不等于 receipt 当时的 input bytes；仅复制
+`receipt.json` 仍然无效，也不得覆盖 live `data/raw`。
+
+安全恢复路径是：Owner 选择 A（或批准完整 B）后，使用既有
+`materialize_isolated_candidate` 路径从 immutable transaction 生成 isolated candidate，
+逐对象校验并在隔离目录重验 strict DQ。选择前没有 materialize、没有 DQ rerun、没有
+coverage/model run。
+
 ## 4. 推荐选项 A
 
 推荐：
