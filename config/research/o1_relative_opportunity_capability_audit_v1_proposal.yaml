@@ -1,0 +1,140 @@
+schema_version: o1_relative_opportunity_capability_audit_policy_proposal.v1
+policy_id: TRADING_2464_O1_CAPABILITY_AUDIT_CONTRACT_V1_PROPOSAL
+version: 1.0.0-proposal
+status: OWNER_REVIEW_REQUIRED_NOT_ACTIVE
+owner: project_owner_and_strategy_research_owner
+task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+activation_allowed: false
+required_owner_decision: >-
+  owner_decision:TRADING-2464:2026-07-30:
+  approve_o1_m1_ridge_cross_asset_state_single_family_v1
+rationale: >-
+  在读取任何本轮真实 coverage、prediction 或 capability result 前，把 O1 的唯一
+  model/feature family 显式交给 Owner 选择。本 proposal 推荐复用既有 reviewed
+  deterministic ridge 与 CROSS_ASSET_STATE cumulative prefix，原因是它不新增自动搜索、
+  tree/boosting、interaction 或结果驱动 feature subset；TRADING-2461 的既知负面结果必须
+  进入 contamination/attempt ledger，不能被描述为独立新发现。
+
+execution_commitment:
+  exact_base_sha: c6a88ecb337d2cd5ea231bd3c56f2f2bb8269d53
+  historical_seen_only: true
+  new_o1_result_read: false
+  prospective_accessed: false
+  model_training_executed: false
+  coverage_audit_executed: false
+
+target_authority:
+  policy_id: TRADING_2463_O1_S4_PILOT_V1
+  path: docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md
+  sha256: 3f44a9e0c404661e9abeed20c8141884794f440cc4822beaa2f0a155bd719766
+  target_id: RELATIVE_OPPORTUNITY_SPREAD
+  label: QQQ_FORWARD_TOTAL_RETURN - SGOV_FORWARD_TOTAL_RETURN
+  primary_horizon_common_sessions: 5
+  sensitivity_horizons: []
+  inherit_all_non_model_policy_slots_exactly: true
+
+dq_authority:
+  required_receipt_id: dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4
+  required_receipt_path: outputs/data_quality/executions/dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4/receipt.json
+  required_receipt_sha256: 6a4319f15f65a06345f08965c04cada01083d00a478e06febfdfd21f5ef56a58
+  documented_status: PASS
+  documented_error_count: 0
+  documented_warning_count: 0
+  requested_window: 2021-02-22..2026-07-27
+  evaluated_window: 2021-02-22..2026-07-24
+  local_receipt_bytes_present_at_proposal_time: false
+  execution_gate: >-
+    BLOCK until the exact required receipt bytes are restored and hash-verified,
+    or a separately reviewed fresh canonical strict PASS receipt is generated and
+    this proposal is versioned before any real eligibility count is read.
+
+recommended_single_family:
+  option_id: ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE
+  recommended: true
+  activation_status: PENDING_OWNER_DECISION
+  historical_policy_path: config/research/decision_target_capability_audit_model_ladder_v1.yaml
+  historical_policy_sha256: 9b84ac832cced4823367c75e2670e22652c7dbeba8dd0aa5bbc30942287b9b19
+  model_id: M1_RIDGE_LINEAR
+  model_kind: ridge
+  ridge_penalty: 1.0
+  fit_intercept_as_train_target_mean: true
+  train_only_standardization: true
+  standardization_zero_scale_epsilon: 1.0e-12
+  interaction_terms_allowed: false
+  automatic_hyperparameter_search_allowed: false
+  family_prefix: CROSS_ASSET_STATE
+  family_prefix_is_cumulative: true
+  feature_id_count: 28
+  feature_ids:
+    - qqq_return_5
+    - qqq_return_20
+    - qqq_return_60
+    - spy_return_5
+    - spy_return_20
+    - spy_return_60
+    - sgov_return_20
+    - sgov_return_60
+    - qqq_spy_relative_5
+    - qqq_spy_relative_20
+    - qqq_spy_relative_60
+    - qqq_sgov_relative_20
+    - qqq_sgov_relative_60
+    - spy_sgov_relative_20
+    - spy_sgov_relative_60
+    - qqq_volatility_20
+    - qqq_volatility_60
+    - spy_volatility_20
+    - spy_volatility_60
+    - qqq_drawdown_60
+    - qqq_drawdown_120
+    - spy_drawdown_60
+    - spy_drawdown_120
+    - qqq_spy_volatility_gap_20
+    - qqq_spy_volatility_gap_60
+    - qqq_spy_drawdown_gap_120
+    - qqq_sgov_return_gap_60
+    - spy_sgov_return_gap_60
+  prohibited_in_same_attempt:
+    - M2_RIDGE_INTERACTION
+    - feature_subset_selection
+    - tree_or_boosting
+    - neural_network
+    - ensemble
+    - automatic_search
+    - result_driven_transform
+
+owner_options:
+  - option_id: ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE
+    effect: >-
+      Activate exactly the recommended single family after receipt-byte closure;
+      record TRADING-2461 as historical contamination and proceed to synthetic
+      builder/validator before coverage-only audit.
+  - option_id: REQUIRE_NEW_O1_MODEL_FEATURE_FAMILY_PACK
+    effect: >-
+      Keep this proposal inactive and require a new reviewed version with exact
+      feature ids, transformations, model semantics, rationale and attempt-family
+      treatment before any real count/result read.
+  - option_id: HOLD_O1_CAPABILITY_AUDIT
+    effect: >-
+      Keep TRADING-2464 blocked and do not restore/run DQ, build the audit, read
+      coverage, train a model or create capability evidence.
+
+multiple_testing_and_contamination:
+  prior_known_attempt_task: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  prior_family_known: true
+  prior_o1_results_known: true
+  treat_as_independent_novel_family: false
+  append_only_attempt_ledger_required: true
+  new_family_after_result_read_allowed: false
+
+safety:
+  decision_value_audit_started: false
+  risk_overlay_created: false
+  candidate_family_created: false
+  strategy_backtest_executed: false
+  target_weights_generated: false
+  qld_automatic_selection_enabled: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none

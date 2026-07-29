@@ -1,6 +1,6 @@
 # TRADING-2464：O1 Relative Opportunity Spread Capability Audit
 
-最后更新：2026-07-29
+最后更新：2026-07-30
 
 稳定任务 ID：
 `TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT`
@@ -82,6 +82,20 @@ BLOCKED_POLICY_GAP_MODEL_FAMILY_NOT_FROZEN
 ```
 
 只能在结果读取前由 Owner 批准 policy addendum/new version；实现者不得自行选择模型。
+
+2026-07-30，Owner 要求继续推进。该指令被解释为授权审计当前状态、准备 serial
+contract wave 和 Owner 决策材料，不被扩大解释为替 Owner 选择 exact model/feature
+family。已新增
+`docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`
+与 inactive proposal
+`config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml`。推荐显式复用
+`M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，但在 Owner 选择前仍为
+`OWNER_REVIEW_REQUIRED_NOT_ACTIVE`。
+
+同时发现 D0B2B authority 记录的 exact receipt bytes 当前不在主工作区或三个已登记
+worktree。需求文字、receipt ID 与 expected SHA 不能替代执行输入；必须恢复并 hash-verify
+exact bytes，或对新的 canonical strict PASS receipt 发布 reviewed policy version 后，才能
+读取真实 coverage。
 
 ## 5. 执行拓扑与任务波次
 
@@ -223,9 +237,11 @@ run identity 和一个 attempt ledger。
 ## 8. 当前停止点
 
 - `status=BLOCKED_OWNER_INPUT`
-- `data_prerequisite=SATISFIED_BY_D0B2B_STRICT_PASS`
+- `data_prerequisite=DOCUMENTED_D0B2B_STRICT_PASS_BUT_RECEIPT_BYTES_MISSING`
 - `owner_authorization_for_capability_audit=false`
 - `model_feature_family_authority=UNRESOLVED_BEFORE_RESULT_READ`
+- `model_feature_family_proposal=OWNER_REVIEW_REQUIRED_NOT_ACTIVE`
+- `required_dq_receipt_bytes_present=false`
 - `new_results_read=false`
 - `prospective_accessed=false`
 - `model_training_executed=false`
@@ -242,3 +258,8 @@ run identity 和一个 attempt ledger。
   exact commit 并提出 serial-contract、coverage-only early-stop 和单次 canonical run；
   本文件仅采纳与仓库 S4/DQ/Owner 边界一致的内容。网页 UI、自述或回答质量均不构成后端
   路由、研究政策或 capability evidence。
+- 2026-07-30：Owner 要求继续推进；完成 read-only checkout/lease/base audit，并在未读取
+  新 O1 count/result 的前提下形成 model/feature family 决策包与 inactive proposal。
+  推荐 exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，但不得把实现者推荐写成
+  Owner approval。另发现 expected D0B2B receipt bytes 不在当前已登记 worktree，故真实
+  coverage 还有独立 evidence-byte gate。

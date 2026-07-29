@@ -11,67 +11,69 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner / strategy research owner：审阅并签发独立 capability-audit 启动授权；在任何真实
-    count/result 前确认 authoritative model/feature family identity
+  next_owner: project owner / strategy research owner：在 model/feature family 决策包中选择
+    A/B/C；若继续，先恢复并核验 exact D0B2B receipt bytes
   requirement_refs:
+  - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`。复用
-    `TRADING_2463_O1_S4_PILOT_V1`，不得修改 target、5-session horizon、coverage floor、primary
-    gate、model family 或 mandatory falsification；先做 serial contract wave，再做 deterministic
-    fixture/validator 与 coverage-only early stop，最后才允许一次 canonical historical-seen-only
-    capability run。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+    与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。2026-07-30
+    的继续推进指令授权 serial-contract 准备，不替代 exact model/feature family 选择；inactive proposal
+    推荐显式复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，不得自动激活。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: Owner 新授权与 exact-base/input commitment 完整；canonical DQ strict `PASS/0/0`
-      exact绑定；model/feature family 在真实 count/result 前已有 reviewed authority；coverage
-      任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value
-      Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
+    text: Owner exact decision 与 exact-base/input commitment 完整；canonical DQ strict
+      receipt bytes 存在且 SHA 验证通过，或新 receipt 经 reviewed version 绑定；model/feature family
+      在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
+      并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2034
-    row_sha256: 8a43ea0576012d4a0db1a5fc39f0cd10bcbcff3f9d4694ed375436b7e2c44092
+    row_sha256: 6df25b5e5498200c1760eb18f68a2c0e84c2916e4689a89e206bf32e3cdad07e
     cell_count: 8
     all_cells:
     - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
     - Strategy Style Discovery / O1 relative-opportunity capability evidence
     - P0
     - BLOCKED_OWNER_INPUT
-    - project owner / strategy research owner：审阅并签发独立 capability-audit 启动授权；在任何真实
-      count/result 前确认 authoritative model/feature family identity
-    - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`。复用
-      `TRADING_2463_O1_S4_PILOT_V1`，不得修改 target、5-session horizon、coverage floor、primary
-      gate、model family 或 mandatory falsification；先做 serial contract wave，再做 deterministic
-      fixture/validator 与 coverage-only early stop，最后才允许一次 canonical historical-seen-only
-      capability run。
-    - Owner 新授权与 exact-base/input commitment 完整；canonical DQ strict `PASS/0/0` exact绑定；model/feature
-      family 在真实 count/result 前已有 reviewed authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
-      并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-    - 2026-07-29：根据 Owner 要求与网页 Pro exact-commit 审阅建立规划；数据前置 blocker 已由 D0B2B strict
-      PASS 解除，但研究启动授权仍未发生，故保持 `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。
+    - project owner / strategy research owner：在 model/feature family 决策包中选择 A/B/C；若继续，先恢复并核验
+      exact D0B2B receipt bytes
+    - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+      与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。2026-07-30
+      的继续推进指令授权 serial-contract 准备，不替代 exact model/feature family 选择；inactive proposal
+      推荐显式复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，不得自动激活。
+    - Owner exact decision 与 exact-base/input commitment 完整；canonical DQ strict receipt
+      bytes 存在且 SHA 验证通过，或新 receipt 经 reviewed version 绑定；model/feature family 在任何真实
+      count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式
+      run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
+    - 2026-07-30：read-only preflight PASS，未读取新 O1 count/result；形成 Owner 决策包与 inactive
+      proposal。发现 D0B2B 文档记录的 receipt ID/SHA 存在，但 exact `receipt.json` bytes 不在当前主工作区或三个已登记
+      worktree，故保持 `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|Strategy
       Style Discovery / O1 relative-opportunity capability evidence|P0|BLOCKED_OWNER_INPUT|project
-      owner / strategy research owner：审阅并签发独立 capability-audit 启动授权；在任何真实 count/result
-      前确认 authoritative model/feature family identity|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`。复用
-      `TRADING_2463_O1_S4_PILOT_V1`，不得修改 target、5-session horizon、coverage floor、primary
-      gate、model family 或 mandatory falsification；先做 serial contract wave，再做 deterministic
-      fixture/validator 与 coverage-only early stop，最后才允许一次 canonical historical-seen-only
-      capability run。|Owner 新授权与 exact-base/input commitment 完整；canonical DQ strict
-      `PASS/0/0` exact绑定；model/feature family 在真实 count/result 前已有 reviewed authority；coverage
+      owner / strategy research owner：在 model/feature family 决策包中选择 A/B/C；若继续，先恢复并核验
+      exact D0B2B receipt bytes|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+      与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。2026-07-30
+      的继续推进指令授权 serial-contract 准备，不替代 exact model/feature family 选择；inactive proposal
+      推荐显式复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，不得自动激活。|Owner exact decision
+      与 exact-base/input commitment 完整；canonical DQ strict receipt bytes 存在且 SHA 验证通过，或新
+      receipt 经 reviewed version 绑定；model/feature family 在任何真实 count/result 前已有 authority；coverage
       任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value
-      Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-29：根据
-      Owner 要求与网页 Pro exact-commit 审阅建立规划；数据前置 blocker 已由 D0B2B strict PASS 解除，但研究启动授权仍未发生，故保持
+      Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-30：read-only
+      preflight PASS，未读取新 O1 count/result；形成 Owner 决策包与 inactive proposal。发现 D0B2B
+      文档记录的 receipt ID/SHA 存在，但 exact `receipt.json` bytes 不在当前主工作区或三个已登记 worktree，故保持
       `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-8a43ea0576012d4a0db1a5fc
+  event_id: legacy-import-6df25b5e5498200c1760eb18
   task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -84,13 +86,14 @@ initial_event:
   to_status: BLOCKED_OWNER_INPUT
   payload:
     priority: P0
-    next_owner: project owner / strategy research owner：审阅并签发独立 capability-audit 启动授权；在任何真实
-      count/result 前确认 authoritative model/feature family identity
-    notes: 2026-07-29：根据 Owner 要求与网页 Pro exact-commit 审阅建立规划；数据前置 blocker 已由 D0B2B
-      strict PASS 解除，但研究启动授权仍未发生，故保持 `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。
+    next_owner: project owner / strategy research owner：在 model/feature family 决策包中选择
+      A/B/C；若继续，先恢复并核验 exact D0B2B receipt bytes
+    notes: 2026-07-30：read-only preflight PASS，未读取新 O1 count/result；形成 Owner 决策包与
+      inactive proposal。发现 D0B2B 文档记录的 receipt ID/SHA 存在，但 exact `receipt.json` bytes
+      不在当前主工作区或三个已登记 worktree，故保持 `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:8a43ea0576012d4a0db1a5fc39f0cd10bcbcff3f9d4694ed375436b7e2c44092
+  - sha256:6df25b5e5498200c1760eb18f68a2c0e84c2916e4689a89e206bf32e3cdad07e
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -98,21 +101,23 @@ projection:
   - Strategy Style Discovery / O1 relative-opportunity capability evidence
   - P0
   - BLOCKED_OWNER_INPUT
-  - project owner / strategy research owner：审阅并签发独立 capability-audit 启动授权；在任何真实 count/result
-    前确认 authoritative model/feature family identity
-  - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`。复用
-    `TRADING_2463_O1_S4_PILOT_V1`，不得修改 target、5-session horizon、coverage floor、primary
-    gate、model family 或 mandatory falsification；先做 serial contract wave，再做 deterministic
-    fixture/validator 与 coverage-only early stop，最后才允许一次 canonical historical-seen-only
-    capability run。
-  - Owner 新授权与 exact-base/input commitment 完整；canonical DQ strict `PASS/0/0` exact绑定；model/feature
-    family 在真实 count/result 前已有 reviewed authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
-    并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-  - 2026-07-29：根据 Owner 要求与网页 Pro exact-commit 审阅建立规划；数据前置 blocker 已由 D0B2B strict
-    PASS 解除，但研究启动授权仍未发生，故保持 `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。
+  - project owner / strategy research owner：在 model/feature family 决策包中选择 A/B/C；若继续，先恢复并核验
+    exact D0B2B receipt bytes
+  - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+    与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。2026-07-30
+    的继续推进指令授权 serial-contract 准备，不替代 exact model/feature family 选择；inactive proposal
+    推荐显式复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，不得自动激活。
+  - Owner exact decision 与 exact-base/input commitment 完整；canonical DQ strict receipt
+    bytes 存在且 SHA 验证通过，或新 receipt 经 reviewed version 绑定；model/feature family 在任何真实
+    count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式
+    run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
+  - 2026-07-30：read-only preflight PASS，未读取新 O1 count/result；形成 Owner 决策包与 inactive
+    proposal。发现 D0B2B 文档记录的 receipt ID/SHA 存在，但 exact `receipt.json` bytes 不在当前主工作区或三个已登记
+    worktree，故保持 `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。
   docs_links:
+  - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
   terminal: false
-  raw_row_sha256: 8a43ea0576012d4a0db1a5fc39f0cd10bcbcff3f9d4694ed375436b7e2c44092
+  raw_row_sha256: 6df25b5e5498200c1760eb18f68a2c0e84c2916e4689a89e206bf32e3cdad07e
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 7bbeaac880af73dce48da5157d341a3a73950babda9c0b5b075bc59b1fc53ebb
+fragment_checksum: fb2d6c3c98e9ba6ffdf224d4128e815aa7f7dd837e83052eace0a890344f9722
