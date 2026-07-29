@@ -32194,3 +32194,102 @@ phase_data_gov_001_d0b2b_ops067_operational_closeout:
     active_shadow_weights_written: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_002_phase_c_parent_governance_reconciliation:
+  schema_version: data_gov_002_phase_c_parent_governance_reconciliation_compatibility.v1
+  status: COMPLETE
+  boundary_id: DATA-GOV-002-PHASE-C-PARENT-GOVERNANCE-RECONCILIATION
+  task_ids:
+  - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  owner_authorization: owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1
+  prior_sections_immutability:
+    source_commit: b646fc9ae169f266a6b93fda572af20ebdfcffe8
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 0ee89819f30e676e81eec34219a3cef9de0f86cf
+    raw_byte_count: 2032331
+    raw_sha256: dd8f1cd82bdea8f5eb288d4457a664fe36bf33f98aaa3a2771bbad8ce92099f1
+    append_offset: 2032331
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: DATA-GOV-002-PHASE-C-PARENT-GOVERNANCE-RECONCILIATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_PARENT_REQUIREMENT_SOURCE
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_001_d0b2b_ops067_operational_closeout
+    current_hash_authority: phase_data_gov_002_phase_c_parent_governance_reconciliation.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+    sha256: a670245b69aca4a15b189be1413dc7feb36315c550949380dfab49b5e1d23974
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 24cb955bcc1c3fa0f06c017c7610f060933dfe78faf72bd2de8532573789cf84
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 24203082e350afb48d85c72df284538ddd0e4de927abffd69173b5fd29f8738b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: f62471e8adfd1589bdd95db6d22ffc60c8d0afe4705db041af12dd4a67e937fa
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 26ef2d8532dc52b357bbc7a51fc6a1c14a3ad172d9fe933ce3e20dc84204f6ef
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/ac/acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252.yaml
+    sha256: fef9d70c025e0fd028aaa47eebbcb264ac0b885222bdbea9f58c74ccc105531b
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 34eec259ad4427ed6f5f0306a8a5424961aabbfcacfb6237c5d1eb0bab77c6dc
+    hash_normalization: git_eol_lf
+  engineering_state:
+    price_c3p_typed_contract: BASELINE_DONE
+    rate_c3_typed_contract: BASELINE_DONE
+    canonical_as_of: '2026-07-27'
+    canonical_strict_dq_status: PASS
+    canonical_strict_dq_receipt_id: dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4
+    canonical_strict_dq_error_count: 0
+    canonical_strict_dq_warning_count: 0
+    consumer_specific_adoption_authorized: false
+    phase_d_authorized: false
+  next_owner_gate:
+    decision_required: true
+    decision_scope: CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE
+    multiple_real_batches_required: true
+    false_isolation_review_required: true
+    active_policy_change_allowed_before_decision: false
+    consumer_change_allowed_before_decision: false
+  validation:
+    task_registry: PASS_BYTE_IDENTICAL
+    architecture_devex: PASS
+    focused: PASS_44_TESTS
+    architecture_initial: FAIL_780_PASS_1_FAIL_PRIOR_AUTHORITY_SUPERSESSION_COVERAGE
+    architecture: PASS_781_TESTS
+    contract: PASS_276_TESTS
+  safety:
+    runtime_behavior_changed: false
+    data_flow_changed: false
+    cached_data_mutated: false
+    provider_replayed: false
+    capability_policy_changed: false
+    classifier_changed: false
+    consumer_changed: false
+    qld_automatic_selection_enabled: false
+    production_effect: none
+    broker_action: none

@@ -978,15 +978,9 @@ OPS_071_COMPLETED_TASK_SHADOW_PATH = (
 OPS_071_CLOSEOUT_NEW_SOURCE_PATHS = frozenset({OPS_071_COMPLETED_TASK_SHADOW_PATH})
 OPS_071_CLOSEOUT_REMOVED_SOURCE_PATHS = frozenset({OPS_071_ACTIVE_TASK_SHADOW_PATH})
 LATEST_COMPATIBILITY_SECTION = OPS_071_CLOSEOUT_SECTION
-DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION = (
-    "phase_data_gov_001_d0b2b_ops067_operational_closeout"
-)
-DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASE_COMMIT = (
-    "0bf517fb9c24e065e0cf0c69abb02e2d7dde8371"
-)
-DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASELINE_GIT_BLOB = (
-    "6619747de0f2691f2c69142994e21354b4c43963"
-)
+DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION = "phase_data_gov_001_d0b2b_ops067_operational_closeout"
+DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASE_COMMIT = "0bf517fb9c24e065e0cf0c69abb02e2d7dde8371"
+DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASELINE_GIT_BLOB = "6619747de0f2691f2c69142994e21354b4c43963"
 DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT = 2_013_250
 DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_SHA256 = (
     "44f4cf48ec284c1c26e997664421c23515fffe2331939bc6cba23a5170de34e4"
@@ -1030,6 +1024,17 @@ DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_NEW_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION
+DATA_GOV_002_PARENT_RECONCILIATION_SECTION = (
+    "phase_data_gov_002_phase_c_parent_governance_reconciliation"
+)
+DATA_GOV_002_PARENT_RECONCILIATION_BASE_COMMIT = "b646fc9ae169f266a6b93fda572af20ebdfcffe8"
+DATA_GOV_002_PARENT_RECONCILIATION_BASELINE_GIT_BLOB = "0ee89819f30e676e81eec34219a3cef9de0f86cf"
+DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT = 2_032_331
+DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_SHA256 = (
+    "dd8f1cd82bdea8f5eb288d4457a664fe36bf33f98aaa3a2771bbad8ce92099f1"
+)
+DATA_GOV_002_PARENT_RECONCILIATION_NEW_SOURCE_PATHS = frozenset()
+LATEST_COMPATIBILITY_SECTION = DATA_GOV_002_PARENT_RECONCILIATION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2197,8 +2202,7 @@ def _ops_071_closeout_base_baseline_blob() -> bytes:
 @cache
 def _data_gov_001_d0b2b_ops067_closeout_base_baseline_blob() -> bytes:
     object_name = (
-        f"{DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+        f"{DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
     )
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
@@ -2207,6 +2211,25 @@ def _data_gov_001_d0b2b_ops067_closeout_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _data_gov_002_parent_reconciliation_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{DATA_GOV_002_PARENT_RECONCILIATION_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == DATA_GOV_002_PARENT_RECONCILIATION_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -3317,6 +3340,27 @@ def _assert_data_gov_001_d0b2b_ops067_closeout_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_data_gov_002_parent_reconciliation_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "DATA-GOV-002 parent reconciliation historical prefix differs from "
+        "immutable D0B2B/OPS-067 closeout authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{DATA_GOV_002_PARENT_RECONCILIATION_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -4654,6 +4698,26 @@ def _data_gov_001_d0b2b_ops067_closeout_source_paths() -> frozenset[str]:
 
 
 @cache
+def _data_gov_002_parent_reconciliation_superseded_live_source_paths() -> frozenset[str]:
+    _assert_data_gov_002_parent_reconciliation_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _data_gov_002_parent_reconciliation_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[DATA_GOV_002_PARENT_RECONCILIATION_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _data_gov_002_parent_reconciliation_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[DATA_GOV_002_PARENT_RECONCILIATION_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     return (
         _trading_2463_superseded_live_source_paths()
@@ -4749,6 +4813,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _ops_071_source_paths()
     if DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION in baseline:
         paths |= _data_gov_001_d0b2b_ops067_closeout_source_paths()
+    if DATA_GOV_002_PARENT_RECONCILIATION_SECTION in baseline:
+        paths |= _data_gov_002_parent_reconciliation_source_paths()
     return paths
 
 
@@ -5511,12 +5577,49 @@ def _data_gov_001_d0b2b_ops067_closeout_prior_active_source_mismatches() -> froz
     return _latest_active_source_mismatches(DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION)
 
 
+@cache
+def _data_gov_002_parent_reconciliation_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(DATA_GOV_002_PARENT_RECONCILIATION_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION in baseline:
+    if DATA_GOV_002_PARENT_RECONCILIATION_SECTION in baseline:
+        current_superseded_paths = (
+            _data_gov_002_parent_reconciliation_superseded_live_source_paths()
+        )
+        assert (
+            _data_gov_002_parent_reconciliation_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_superseded_live_source_paths()
+            | _trading_2463_s1_s2_superseded_live_source_paths()
+            | _trading_2463_s3_superseded_live_source_paths()
+            | _trading_2463_s4_superseded_live_source_paths()
+            | _data_gov_002c3p_superseded_live_source_paths()
+            | _trading_2463_s4_approval_superseded_live_source_paths()
+            | _ops_071_superseded_live_source_paths()
+            | _data_gov_002c3_rate_superseded_live_source_paths()
+            | _data_gov_002c3_rate_source_paths()
+            | _ops_071_closeout_superseded_live_source_paths()
+            | _ops_071_closeout_source_paths()
+            | _data_gov_001_d0b2b_ops067_closeout_superseded_live_source_paths()
+            | _data_gov_001_d0b2b_ops067_closeout_source_paths()
+            | current_superseded_paths
+        )
+        authority_section = DATA_GOV_002_PARENT_RECONCILIATION_SECTION
+    elif DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION in baseline:
         current_superseded_paths = (
             _data_gov_001_d0b2b_ops067_closeout_superseded_live_source_paths()
         )
@@ -13436,6 +13539,7 @@ def test_ops_071_operational_acceptance_closeout_is_current_hash_authority() -> 
     assert current_mismatches - superseded <= set(
         _data_gov_001_d0b2b_ops067_closeout_superseded_live_source_paths()
         | _data_gov_001_d0b2b_ops067_closeout_source_paths()
+        | _data_gov_002_parent_reconciliation_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": "OPS-071-OPERATIONAL-ACCEPTANCE-CLOSEOUT",
@@ -13500,7 +13604,9 @@ def test_data_gov_001_d0b2b_ops067_closeout_is_current_hash_authority() -> None:
         _data_gov_001_d0b2b_ops067_closeout_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION
+    assert list(baseline).index(DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION) < list(baseline).index(
+        DATA_GOV_002_PARENT_RECONCILIATION_SECTION
+    )
     phase = baseline[DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION]
     assert phase["schema_version"] == (
         "data_gov_001_d0b2b_ops067_operational_closeout_compatibility.v1"
@@ -13519,35 +13625,29 @@ def test_data_gov_001_d0b2b_ops067_closeout_is_current_hash_authority() -> None:
         "source_commit": DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
         "git_blob_sha1": DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_BASELINE_GIT_BLOB,
-        "raw_byte_count": (
-            DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT
-        ),
+        "raw_byte_count": (DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT),
         "raw_sha256": DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_SHA256,
-        "append_offset": (
-            DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT
-        ),
+        "append_offset": (DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT),
         "current_section_must_be_eof": True,
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == (
-        _data_gov_001_d0b2b_ops067_closeout_prior_active_source_mismatches()
+    current_mismatches = set(_data_gov_001_d0b2b_ops067_closeout_prior_active_source_mismatches())
+    assert superseded <= current_mismatches
+    assert current_mismatches - superseded <= set(
+        _data_gov_002_parent_reconciliation_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": "DATA-GOV-001-D0B2B-OPS-067-OPERATIONAL-CLOSEOUT",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_THREE_ARCHIVE_MOVES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": OPS_071_CLOSEOUT_SECTION,
-        "current_hash_authority": (
-            f"{DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION}.sources"
-        ),
+        "current_hash_authority": (f"{DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION}.sources"),
     }
     assert set(phase["removed_live_source_paths"]) == (
         DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_REMOVED_SOURCE_PATHS
     )
-    assert set(phase["new_source_paths"]) == (
-        DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_NEW_SOURCE_PATHS
-    )
+    assert set(phase["new_source_paths"]) == (DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_NEW_SOURCE_PATHS)
     expected = (
         superseded - DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_REMOVED_SOURCE_PATHS
     ) | DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_NEW_SOURCE_PATHS
@@ -13561,7 +13661,7 @@ def test_data_gov_001_d0b2b_ops067_closeout_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "canonical_as_of": "2026-07-27",
         "strict_dq_receipt_id": (
@@ -13581,9 +13681,7 @@ def test_data_gov_001_d0b2b_ops067_closeout_is_current_hash_authority() -> None:
     }
     validation = phase["validation"]
     assert validation["task_registry"] == "PASS_BYTE_IDENTICAL"
-    assert validation["focused_initial"] == (
-        "FAIL_91_PASS_43_FAIL_COMPATIBILITY_AUTHORITY_STALE"
-    )
+    assert validation["focused_initial"] == ("FAIL_91_PASS_43_FAIL_COMPATIBILITY_AUTHORITY_STALE")
     assert all(
         value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
         for value in validation.values()
@@ -13597,6 +13695,97 @@ def test_data_gov_001_d0b2b_ops067_closeout_is_current_hash_authority() -> None:
         "qld_automatic_selection_enabled": False,
         "production_weights_written": False,
         "active_shadow_weights_written": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_data_gov_002_parent_reconciliation_is_current_hash_authority() -> None:
+    _assert_data_gov_002_parent_reconciliation_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _data_gov_002_parent_reconciliation_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == DATA_GOV_002_PARENT_RECONCILIATION_SECTION
+    phase = baseline[DATA_GOV_002_PARENT_RECONCILIATION_SECTION]
+    assert phase["schema_version"] == (
+        "data_gov_002_phase_c_parent_governance_reconciliation_compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING", "COMPLETE"}
+    assert phase["boundary_id"] == "DATA-GOV-002-PHASE-C-PARENT-GOVERNANCE-RECONCILIATION"
+    assert phase["task_ids"] == ["DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS"]
+    assert phase["owner_authorization"] == (
+        "owner_decision:DATA-GOV-002:2026-07-26:"
+        "approve_long_term_capability_receipt_engineering_v1"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": DATA_GOV_002_PARENT_RECONCILIATION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": DATA_GOV_002_PARENT_RECONCILIATION_BASELINE_GIT_BLOB,
+        "raw_byte_count": DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_SHA256,
+        "append_offset": DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _data_gov_002_parent_reconciliation_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": "DATA-GOV-002-PHASE-C-PARENT-GOVERNANCE-RECONCILIATION",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_PARENT_REQUIREMENT_SOURCE",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION),
+        "current_hash_authority": (f"{DATA_GOV_002_PARENT_RECONCILIATION_SECTION}.sources"),
+    }
+    assert phase["removed_live_source_paths"] == []
+    assert set(phase["new_source_paths"]) == (DATA_GOV_002_PARENT_RECONCILIATION_NEW_SOURCE_PATHS)
+    expected = superseded | DATA_GOV_002_PARENT_RECONCILIATION_NEW_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["engineering_state"] == {
+        "price_c3p_typed_contract": "BASELINE_DONE",
+        "rate_c3_typed_contract": "BASELINE_DONE",
+        "canonical_as_of": "2026-07-27",
+        "canonical_strict_dq_status": "PASS",
+        "canonical_strict_dq_receipt_id": (
+            "dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4"
+        ),
+        "canonical_strict_dq_error_count": 0,
+        "canonical_strict_dq_warning_count": 0,
+        "consumer_specific_adoption_authorized": False,
+        "phase_d_authorized": False,
+    }
+    assert phase["next_owner_gate"] == {
+        "decision_required": True,
+        "decision_scope": "CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE",
+        "multiple_real_batches_required": True,
+        "false_isolation_review_required": True,
+        "active_policy_change_allowed_before_decision": False,
+        "consumer_change_allowed_before_decision": False,
+    }
+    validation = phase["validation"]
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "runtime_behavior_changed": False,
+        "data_flow_changed": False,
+        "cached_data_mutated": False,
+        "provider_replayed": False,
+        "capability_policy_changed": False,
+        "classifier_changed": False,
+        "consumer_changed": False,
+        "qld_automatic_selection_enabled": False,
         "production_effect": "none",
         "broker_action": "none",
     }
@@ -13666,6 +13855,17 @@ def test_data_gov_001_d0b2b_ops067_closeout_rejects_historical_prefix_tamper() -
     tampered[DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_data_gov_001_d0b2b_ops067_closeout_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_data_gov_002_parent_reconciliation_rejects_historical_prefix_tamper() -> None:
+    base_blob = _data_gov_002_parent_reconciliation_base_baseline_blob()
+    tampered = bytearray(COMPATIBILITY_BASELINE_PATH.read_bytes())
+    tampered[DATA_GOV_002_PARENT_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_data_gov_002_parent_reconciliation_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

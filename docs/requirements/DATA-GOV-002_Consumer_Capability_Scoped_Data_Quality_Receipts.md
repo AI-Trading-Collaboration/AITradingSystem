@@ -7,7 +7,7 @@
 Owner 决定：
 `owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1`
 
-状态：`IN_PROGRESS_PHASE_C3_RATE_CONTRACT_BASELINE_DONE_GLOBAL_DQ_STRICT_FAIL`
+状态：`IN_PROGRESS_PHASE_C_CONTRACT_BASELINES_DONE_ADOPTION_REVIEW_PENDING`
 
 ## 1. 问题与目标
 
@@ -213,6 +213,40 @@ B2 交付：
 
 不删除 full canonical receipt，不把局部 PASS 聚合为全局 PASS。
 
+### Phase C → Phase D 过渡决策门（尚未授权）
+
+截至 2026-07-29，工程前置事实已更新为：
+
+- price C3P 与 rate C3 typed attribution contract 均已转 `BASELINE_DONE`；
+- price contract 只覆盖 reviewed US equity calendar 约束下、checksum-bound
+  `primary_market_prices` 的 exact approved site；rate contract只覆盖
+  checksum-bound `primary_macro_rates` 的 exact approved six-site bundle；
+- 任一 source/ticker-or-series/date/window/field/row/threshold/predecessor 等必需维度
+  不完整时，现行行为仍保持 `GLOBAL_OR_UNKNOWN_SCOPE`；
+- D0B2B/OPS-067 在 exact `main=b646fc9ae169f266a6b93fda572af20ebdfcffe8`
+  已证明 canonical as-of=`2026-07-27` 的 strict DQ=`PASS`，receipt=
+  `dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`，
+  errors/warnings=`0/0`；该 PASS 只恢复已审阅的 daily score consumer，不自动授权
+  generic consumer cutover、automatic non-daily dispatch 或 capability adoption；
+- 两个 read-only pilot 已存在，但“多个真实批次 + false-isolation review”尚未形成
+  Phase D 的独立 Owner 决策证据。
+
+下一次 Owner 决策必须针对 consumer-specific adoption review，而不是泛化批准。决策上下文
+至少要绑定：
+
+1. exact capability id/version、consumer id/version 与 dependency closure；
+2. exact capability policy artifact/checksum、拟采用的 issue site/code 和 typed
+   attribution contract/decision bytes；
+3. 每个真实批次的 full/scoped receipt、source artifact/checksum、requested/evaluated
+   window 与 attribution completeness；
+4. false-isolation 正例、反例、unknown/incomplete 样本以及撤销/回滚条件；
+5. 明确选择 `AUTHORIZE_CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE`、
+   `HOLD_FOR_MORE_FALSE_ISOLATION_EVIDENCE` 或 `REJECT_ADOPTION`。
+
+在该决定形成前，不得修改 active capability policy、classifier allowlist、consumer，
+不得启用 QLD automatic selection、daily/periodic generic cutover、production 或 broker
+行为。Phase D 仍须在多个真实批次证据闭合后另获 Owner 授权。
+
 ## 5. 安全和投资边界
 
 - 本任务只改变数据消费授权粒度，不改变任何 strategy target、feature、threshold、模型、权重或
@@ -382,3 +416,20 @@ B2 交付：
   window停在`2026-07-24`、primary `^VIX`保留31个non-XNYS rows、26个ticker缺
   `2026-07-27`。因此Phase C contract完成不等于global DQ恢复；QLD自动选择、capability
   adoption、Phase D及生产治理继续等待独立canonical strict PASS和新Owner评审。
+- 2026-07-29：在后续 D0B2B/OPS-067 operational closeout 已进入
+  `main=b646fc9ae169f266a6b93fda572af20ebdfcffe8` 后重对齐 parent 状态。Canonical
+  as-of=`2026-07-27` strict DQ 已由 receipt
+  `dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`
+  证明为 `PASS`（errors/warnings=`0/0`）；这取代上一条在 C3 closeout 当时记录的
+  `FAIL` 作为当前 operational fact，但不改写该历史失败证据。Price C3P 与 rate C3
+  contract 均保持 `BASELINE_DONE`，本次只对齐 parent/task/append-only governance
+  authority并展开下一次 consumer-specific adoption review 决策上下文；未修改 runtime、
+  capability policy、classifier、consumer、cached data 或 system flow，
+  `production_effect=none`、`broker_action=none`。短生命周期隔离 worktree=
+  `D:\Work\AITradingSystem_worktrees\data-gov-002-phase-c-parent-reconciliation-20260729`；
+  退出条件为验证、提交、local-main/remote-main安全同步、唯一内容审计和租约释放完成，
+  届时移除该 worktree 与任务分支。该 worktree 的 task-registry generator 需要 tracked
+  bootstrap handoff 引用的 4 份 ignored historical validation runtime summaries；从 canonical
+  root 按 tracked path 只复制 exact bytes，并在复制前后校验 tracked SHA-256，不修改证据内容、
+  handoff 或验证结论。这 4 份副本只服务隔离生成/验证，随 worktree 一并删除，canonical root
+  证据保留。

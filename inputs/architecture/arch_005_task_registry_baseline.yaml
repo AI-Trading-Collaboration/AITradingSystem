@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1638128
-    sha256: 23bd9ffc8c55903da6395e3e9ff1d8ee47784e68c1f3814981a7cc9fc17ef6f2
+    byte_count: 1638133
+    sha256: 24cb955bcc1c3fa0f06c017c7610f060933dfe78faf72bd2de8532573789cf84
     row_count: 420
     final_newline: true
     task_id_order_sha256: cf0928a80878f2ba9ce0570c6b46bfe236466059ed85e947777662860422bf28
-    row_checksum_order_sha256: 2544217b2e1baa7cad5bbdfe556b23692dace089025915b7323272fa305fc3e7
+    row_checksum_order_sha256: c80f5049a3240fe4594df77a710ccfffece75eb5b4a2c5088ab2146119f3e6be
     task_row_newline_counts:
       LF: 420
   - source: completed
@@ -132,7 +132,7 @@ inventory:
     VALIDATING: 266
   task_id_set_sha256: c935f1ffce7626738007110c2f1a60db51026d92998a0d4f482ef684e024628b
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: e58755b28f5a025e8c50372e8664c74889b556e380a8122f095721c0c89d0a9b
+  owner_set_sha256: 7b1c0f3938cdd7e0501a9433856af31845574f48a62ddb7ea9f87707184fd770
   docs_link_set_sha256: 0c2e210c19552307ebe0ef3c029d3c8e553521b46cb6d953ac16f79fef4e9f1e
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -796,7 +796,7 @@ inventory:
   - task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
     source: active
     line_number: 1595
-    row_sha256: 0680886f574c7ec19db003e14b516090d53c24d8cfc06021651d074b3052d07c
+    row_sha256: 649be2db475b3d0840c1be3b2563ef2837ed559c620883be07ec26ba36a39007
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7440,4 +7440,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 9683555cdcd3002ed69b598dd3407c44817d38e9f400ff2c8a53b48a4d780ea8
+baseline_checksum: 659703ba5ec23972405e8d073afaa13ab2626f4f91f7d05f9564d06402ac5068
