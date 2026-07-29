@@ -54,6 +54,10 @@ def test_proposal_is_inactive_and_binds_exact_authority() -> None:
 
     assert proposal["status"] == "OWNER_REVIEW_REQUIRED_NOT_ACTIVE"
     assert proposal["activation_allowed"] is False
+    assert proposal["required_owner_decision"] == (
+        "owner_decision:TRADING-2464:2026-07-30:"
+        "approve_o1_m1_ridge_cross_asset_state_single_family_v1"
+    )
     assert target["policy_id"] == "TRADING_2463_O1_S4_PILOT_V1"
     assert target["sha256"] == _sha256(S4_PATH)
     assert target["primary_horizon_common_sessions"] == 5

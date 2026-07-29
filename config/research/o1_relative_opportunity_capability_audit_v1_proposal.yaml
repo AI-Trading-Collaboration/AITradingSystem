@@ -5,9 +5,7 @@ status: OWNER_REVIEW_REQUIRED_NOT_ACTIVE
 owner: project_owner_and_strategy_research_owner
 task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
 activation_allowed: false
-required_owner_decision: >-
-  owner_decision:TRADING-2464:2026-07-30:
-  approve_o1_m1_ridge_cross_asset_state_single_family_v1
+required_owner_decision: "owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1"
 rationale: >-
   在读取任何本轮真实 coverage、prediction 或 capability result 前，把 O1 的唯一
   model/feature family 显式交给 Owner 选择。本 proposal 推荐复用既有 reviewed

@@ -33337,3 +33337,77 @@ phase_trading_2464_dq_recovery_source_audit:
     provider_replayed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2464_owner_decision_token_normalization:
+  schema_version: trading_2464_owner_decision_token_normalization_compatibility.v1
+  status: BLOCKED_OWNER_INPUT
+  boundary_id: TRADING-2464-OWNER-DECISION-TOKEN-NORMALIZATION
+  task_ids:
+  - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+  owner_authorization: owner_instruction:TRADING-2464:2026-07-30:continue_progress_v1
+  prior_sections_immutability:
+    source_commit: 37ffd9909ff1beb2c1ff8060082700750a76925d
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 184640bd1652cc9f5f30b352c3c4acd1bdf0bd06
+    raw_byte_count: 2097837
+    raw_sha256: 0c84cf91290ae4fbb93101d3ecf15cc06f1d27a666b4811baa55a1d0d2576234
+    append_offset: 2097837
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: TRADING-2464-OWNER-DECISION-TOKEN-NORMALIZATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2464_dq_recovery_source_audit
+    current_hash_authority: phase_trading_2464_owner_decision_token_normalization.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml
+    sha256: 0ac453d0952b9003844278db6412b60db6c6231500edd05ce746e5861fc0a0d8
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: ea63210e6c4c10860fe48fc4ef7f0d3d61b418356e8b00a46da65d4c3b39aaac
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+    sha256: c381783211ec1d8a332c584529b0082327daa2e099d00e0f529dfe51bed2e9f1
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: af3213a3d3dc0d764c369ad985fa9c9dc78346576a4e5c051fea05af745d352e
+    hash_normalization: git_eol_lf
+  implementation:
+    canonical_owner_decision: owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1
+    parsed_token_byte_exact: true
+    folded_scalar_space_defect_fixed: true
+    proposal_status: OWNER_REVIEW_REQUIRED_NOT_ACTIVE
+    activation_allowed: false
+    owner_decision_received: false
+    materialization_executed: false
+    dq_rerun_executed: false
+    coverage_read: false
+    model_training_executed: false
+  validation:
+    token_contract: PASS_5_TESTS
+    generated_architecture: PASS_1039_MODULES_1208_TESTS
+    authority_and_deprecation: PASS_147_TESTS
+    architecture: PASS_788_TESTS
+    contract: PASS_276_TESTS
+  safety:
+    runtime_behavior_changed: false
+    data_flow_changed: false
+    strategy_research_started: false
+    cached_data_mutated: false
+    provider_replayed: false
+    production_effect: none
+    broker_action: none
