@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`READY_COVERAGE_ONLY_RUNNER_PUBLISH`
+状态：`CLOSED_INSUFFICIENT_COVERAGE_OR_DQ`
 
 production effect：`none`
 
@@ -253,7 +253,7 @@ run identity 和一个 attempt ledger。
 
 ## 8. 当前执行点
 
-- `status=READY_COVERAGE_ONLY_RUNNER_PUBLISH`
+- `status=CLOSED_INSUFFICIENT_COVERAGE_OR_DQ`
 - `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
 - `synthetic_builder_validator=PASS_SYNTHETIC_ONLY_DETERMINISTIC_INDEPENDENT_RECONSTRUCTION`
 - `data_prerequisite=ISOLATED_CANDIDATE_STRICT_DQ_PASS_0_0`
@@ -283,10 +283,17 @@ run identity 和一个 attempt ledger。
 - `event_ledger_id=o1_event_ledger_9969f27e7c578b658c500c2f3b71a610`
 - `event_ledger_sha256=d714af0779e6edb97f9ed143192c7b8858e70f21196e96be190b837cc0deb476`
 - `event_count=171_fomc_43_cpi_64_nfp_64`
-- `real_coverage_read_allowed_now=true_coverage_only`
+- `real_coverage_read_allowed_now=false_single_run_consumed`
 - `coverage_runner_implementation=PASS_SYNTHETIC_CONTROLLED_FIXTURES_ONLY`
-- `coverage_audit_executed=false`
-- `new_results_read=false`
+- `coverage_audit_executed=true`
+- `coverage_source_commit=1bf9fb13245064ec2a505ea864e2e127ad445d41`
+- `coverage_report_id=o1_coverage_report_9b5708c6c36ac69cc7355fee8567a953`
+- `coverage_report_sha256=bbed79b499b57274dd49bede0c37219894233964732fcde5656626933781ada7`
+- `coverage_gate_id=o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93`
+- `coverage_gate_sha256=a97ee44832a41aeb90a6f9a18b0358eb81cefec4d491438deb6fd27b624f31b8`
+- `coverage_failed_checks=F01_train_98_lt_100;F02_test_23.71930136737_lt_24;volatility_high_2_folds_lt_3;current_drawdown_low_13_lt_15`
+- `mechanical_classification=INSUFFICIENT_COVERAGE_OR_DQ`
+- `new_results_read=true_coverage_only`
 - `prospective_accessed=false`
 - `model_training_executed=false`
 - `decision_value_audit_started=false`
@@ -379,6 +386,11 @@ run identity 和一个 attempt ledger。
 - exit condition / cleanup：coverage/canonical/final evidence 已转入 canonical governed
   artifact location并逐 byte 核验，且无 active process、scheduler 或后续 acceptance 依赖；
   满足后按 8.1 的同一 absolute-root allowlist 审计并清理，不能单独删除本目录来破坏证据链。
+- current retained evidence：唯一目录已由 published commit
+  `1bf9fb13245064ec2a505ea864e2e127ad445d41` 创建；`coverage_report.json` 与
+  `coverage_gate.json` 已逐 byte 绑定到 active policy。因 candidate、official source 与
+  coverage failure chain 仍是最终机械结论的唯一复验证据，本轮保留整个 8.1 absolute root，
+  不单独清理子目录。
 
 ## 9. 进度记录
 
@@ -492,3 +504,23 @@ run identity 和一个 attempt ledger。
   `1043/1212`，所有 removal gate 仍关闭。真实 coverage 继续为未执行；下一步只允许
   commit、fast-forward local `main`、ordinary push，然后从该 published exact commit 在
   8.3 唯一目录运行一次。
+- 2026-07-30：runner commit
+  `1bf9fb13245064ec2a505ea864e2e127ad445d41` 已 fast-forward 到 local `main` 并 ordinary
+  push，确认 local main 与 origin/main 相同。随后只在 8.3 唯一目录执行一次真实
+  coverage-only run；DQ 继续为 `PASS/0/0`，6 个 completed outer folds、total OOF effective
+  sample=`146 >= 120`，FOMC/CPI/NFP event coverage 均 PASS，但四个 mandatory floor
+  失败：F01 train=`98 < 100`、F02 test ESS=`23.71930136737 < 24`、volatility HIGH
+  fold count=`2 < 3`、current_drawdown LOW effective sample=`13 < 15`。因此 gate
+  `o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93` 机械输出
+  `INSUFFICIENT_COVERAGE_OR_DQ`。没有调整 threshold、fold、horizon、regime 或 event，
+  没有第二次 run；canonical policy update、model training、canonical run 与 production
+  全部保持 false，当前 O1 capability path 关闭。
+- 2026-07-30：coverage report/gate exact SHA 已进入独立 serial evidence-binding
+  closeout；active policy 状态=`CLOSED_INSUFFICIENT_COVERAGE_OR_DQ`，single-run
+  permission 已消耗。O1 五文件回归=`38/38`、authority/deprecation=`155/155`、
+  Architecture=`796/796`
+  （`outputs/validation_runtime/architecture-fitness_20260729T214458Z/`）、
+  Contract=`276/276`
+  （`outputs/validation_runtime/contract-validation_20260729T214645Z/`）。任务转为
+  `BASELINE_DONE`；若未来重开必须另立新任务和结果读取前 preregistration，不得从本结果
+  反向调整本 attempt 的设计。

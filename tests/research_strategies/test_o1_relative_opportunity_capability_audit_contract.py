@@ -156,7 +156,7 @@ def test_recommended_family_exactly_reuses_reviewed_m1_prefix() -> None:
     assert family["automatic_hyperparameter_search_allowed"] is False
 
 
-def test_owner_a_activates_only_the_serial_contract_freeze() -> None:
+def test_owner_a_decision_and_mechanical_closeout_remain_registered() -> None:
     decision_pack = DECISION_PACK_PATH.read_text(encoding="utf-8")
     task_register = TASK_REGISTER_PATH.read_text(encoding="utf-8")
     assert "OWNER_APPROVED_A_SERIAL_CONTRACT_FROZEN" in decision_pack
@@ -170,7 +170,7 @@ def test_owner_a_activates_only_the_serial_contract_freeze() -> None:
         "|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|"
         in task_register
     )
-    assert "|P0|IN_PROGRESS|" in next(
+    assert "|P0|BASELINE_DONE|" in next(
         line
         for line in task_register.splitlines()
         if line.startswith(
@@ -189,7 +189,7 @@ def test_active_policy_binds_owner_exact_base_s4_and_dq_transaction() -> None:
     assert isinstance(data, dict)
 
     assert policy["status"] == (
-        "OWNER_APPROVED_EVENT_LEDGER_FROZEN_COVERAGE_ONLY_READY"
+        "CLOSED_INSUFFICIENT_COVERAGE_OR_DQ"
     )
     assert policy["owner_decision"] == (
         "owner_decision:TRADING-2464:2026-07-30:"
@@ -208,9 +208,52 @@ def test_active_policy_binds_owner_exact_base_s4_and_dq_transaction() -> None:
     assert target["sha256"] == _sha256(S4_PATH)
     assert historical["sha256"] == _sha256(HISTORICAL_POLICY_PATH)
     assert binding["contract_integration_commit_required_before_real_data_access"] is True
-    assert binding["real_coverage_read_allowed_now"] is True
+    assert binding["real_coverage_read_allowed_now"] is False
+    assert binding["coverage_attempt_consumed"] is True
+    assert binding["canonical_run_allowed_now"] is False
     assert binding["model_training_allowed_now"] is False
     assert binding["maximum_canonical_runs"] == 1
+
+    coverage = policy["coverage_evidence"]
+    assert isinstance(coverage, dict)
+    assert coverage["status"] == "BLOCKED_INSUFFICIENT_COVERAGE_OR_DQ"
+    assert coverage["source_commit_sha"] == (
+        "1bf9fb13245064ec2a505ea864e2e127ad445d41"
+    )
+    assert coverage["report"] == {
+        "report_id": "o1_coverage_report_9b5708c6c36ac69cc7355fee8567a953",
+        "path": (
+            "outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/"
+            "o1_coverage_only_v1/coverage_report.json"
+        ),
+        "sha256": (
+            "bbed79b499b57274dd49bede0c37219894233964732fcde5656626933781ada7"
+        ),
+        "byte_size": 29645,
+    }
+    assert coverage["gate"] == {
+        "gate_id": "o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93",
+        "path": (
+            "outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/"
+            "o1_coverage_only_v1/coverage_gate.json"
+        ),
+        "sha256": (
+            "a97ee44832a41aeb90a6f9a18b0358eb81cefec4d491438deb6fd27b624f31b8"
+        ),
+        "byte_size": 1983,
+    }
+    assert {
+        row["check_id"] for row in coverage["failed_mandatory_checks"]
+    } == {
+        "F01_TRAIN_EFFECTIVE_SAMPLE",
+        "F02_TEST_EFFECTIVE_SAMPLE",
+        "REGIME_VOLATILITY_HIGH_FOLD_COUNT",
+        "REGIME_CURRENT_DRAWDOWN_LOW_EFFECTIVE_SAMPLE",
+    }
+    assert coverage["mechanical_classification"] == "INSUFFICIENT_COVERAGE_OR_DQ"
+    assert all(value is False for value in coverage["next_authorization"].values())
+    assert coverage["single_run_consumed"] is True
+    assert coverage["result_driven_retry_allowed"] is False
 
     receipt = data["historical_receipt"]
     publication = data["publication"]
@@ -386,13 +429,13 @@ def test_proposal_keeps_every_downstream_action_disabled() -> None:
     assert contamination["new_family_after_result_read_allowed"] is False
 
 
-def test_active_contract_keeps_every_runtime_and_downstream_action_disabled() -> None:
+def test_active_contract_records_coverage_but_keeps_downstream_actions_disabled() -> None:
     policy = _load_yaml(ACTIVE_POLICY_PATH)
     safety = policy["safety"]
     assert isinstance(safety, dict)
     assert safety == {
-        "new_o1_result_read": False,
-        "coverage_audit_executed": False,
+        "new_o1_result_read": True,
+        "coverage_audit_executed": True,
         "model_training_executed": False,
         "prospective_accessed": False,
         "decision_value_audit_started": False,

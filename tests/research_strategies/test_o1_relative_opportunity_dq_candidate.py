@@ -372,6 +372,8 @@ def _write_audit_policy(project_root: Path, source_root: Path) -> Path:
     payload = yaml.safe_load(AUDIT_POLICY_PATH.read_text(encoding="utf-8"))
     payload["status"] = "OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING"
     payload["execution_binding"]["real_coverage_read_allowed_now"] = False
+    payload["safety"]["coverage_audit_executed"] = False
+    payload["safety"]["new_o1_result_read"] = False
     payload["data_contract"]["recovery"]["source_workspace_path"] = source_root.as_posix()
     audit_path = project_root / "config/research/o1_relative_opportunity_capability_audit_v1.yaml"
     audit_path.parent.mkdir(parents=True)

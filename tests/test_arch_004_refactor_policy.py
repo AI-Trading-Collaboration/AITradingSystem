@@ -1289,7 +1289,22 @@ TRADING_2464_COVERAGE_RUNNER_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2464_COVERAGE_RUNNER_SECTION
+TRADING_2464_COVERAGE_GATE_BINDING_SECTION = (
+    "phase_trading_2464_o1_coverage_gate_evidence_binding"
+)
+TRADING_2464_COVERAGE_GATE_BINDING_BASE_COMMIT = (
+    "1bf9fb13245064ec2a505ea864e2e127ad445d41"
+)
+TRADING_2464_COVERAGE_GATE_BINDING_BASELINE_GIT_BLOB = (
+    "d97477b6fb6a3c115ab0e4d8912173a19c7f93af"
+)
+TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_BYTE_COUNT = 2_151_072
+TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_SHA256 = (
+    "30442ca142396c5da82fd4d5e9753f51d330a4b720b738aed53307e9fa4d91da"
+)
+TRADING_2464_COVERAGE_GATE_BINDING_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2464_COVERAGE_GATE_BINDING_NEW_SOURCE_PATHS = frozenset()
+LATEST_COMPATIBILITY_SECTION = TRADING_2464_COVERAGE_GATE_BINDING_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2742,6 +2757,26 @@ def _trading_2464_coverage_runner_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2464_coverage_gate_binding_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2464_COVERAGE_GATE_BINDING_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2464_COVERAGE_GATE_BINDING_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -4129,6 +4164,26 @@ def _assert_trading_2464_coverage_runner_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2464_COVERAGE_RUNNER_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2464_coverage_gate_binding_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2464 coverage gate binding historical prefix differs from "
+        "immutable coverage-runner authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2464_COVERAGE_GATE_BINDING_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -5839,6 +5894,36 @@ def _trading_2464_coverage_runner_all_current_authority_paths() -> frozenset[str
 
 
 @cache
+def _trading_2464_coverage_gate_binding_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2464_coverage_gate_binding_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_coverage_gate_binding_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2464_COVERAGE_GATE_BINDING_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2464_coverage_gate_binding_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2464_COVERAGE_GATE_BINDING_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2464_coverage_gate_binding_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2464_coverage_gate_binding_superseded_live_source_paths()
+        | _trading_2464_coverage_gate_binding_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     return (
         _trading_2463_superseded_live_source_paths()
@@ -6803,12 +6888,54 @@ def _trading_2464_coverage_runner_prior_active_source_mismatches() -> frozenset[
     return _latest_active_source_mismatches(TRADING_2464_COVERAGE_RUNNER_SECTION)
 
 
+@cache
+def _trading_2464_coverage_gate_binding_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(
+        TRADING_2464_COVERAGE_GATE_BINDING_SECTION
+    )
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2464_COVERAGE_RUNNER_SECTION in baseline:
+    if TRADING_2464_COVERAGE_GATE_BINDING_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2464_coverage_gate_binding_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2464_coverage_gate_binding_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_all_superseded_live_source_paths()
+            | _data_gov_001_d0d_superseded_live_source_paths()
+            | _data_gov_001_d0d_source_paths()
+            | _data_gov_001_d0e_superseded_live_source_paths()
+            | _data_gov_001_d0e_source_paths()
+            | _devx_007_all_current_authority_paths()
+            | _trading_2464_decision_all_current_authority_paths()
+            | _trading_2464_dq_recovery_all_current_authority_paths()
+            | _trading_2464_owner_token_all_current_authority_paths()
+            | _trading_2464_contract_all_current_authority_paths()
+            | _trading_2464_synthetic_all_current_authority_paths()
+            | _trading_2464_isolated_dq_all_current_authority_paths()
+            | _trading_2464_event_attempt_runner_all_current_authority_paths()
+            | _trading_2464_event_raw_replay_all_current_authority_paths()
+            | _trading_2464_event_gate_binding_all_current_authority_paths()
+            | _trading_2464_coverage_runner_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2464_COVERAGE_GATE_BINDING_SECTION
+    elif TRADING_2464_COVERAGE_RUNNER_SECTION in baseline:
         current_superseded_paths = (
             _trading_2464_coverage_runner_superseded_live_source_paths()
         )
@@ -16716,7 +16843,9 @@ def test_trading_2464_coverage_runner_is_append_only_current_hash_authority() ->
         _trading_2464_coverage_runner_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2464_COVERAGE_RUNNER_SECTION
+    assert list(baseline).index(TRADING_2464_COVERAGE_RUNNER_SECTION) < list(
+        baseline
+    ).index(TRADING_2464_COVERAGE_GATE_BINDING_SECTION)
     phase = baseline[TRADING_2464_COVERAGE_RUNNER_SECTION]
     assert phase["schema_version"] == (
         "trading_2464_o1_coverage_only_runner_compatibility.v1"
@@ -16737,7 +16866,13 @@ def test_trading_2464_coverage_runner_is_append_only_current_hash_authority() ->
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _trading_2464_coverage_runner_prior_active_source_mismatches()
+    current_prior_drift = set(
+        _trading_2464_coverage_runner_prior_active_source_mismatches()
+    )
+    assert superseded <= current_prior_drift
+    assert current_prior_drift - superseded <= set(
+        _trading_2464_coverage_gate_binding_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2464-O1-COVERAGE-ONLY-RUNNER",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
@@ -16762,7 +16897,7 @@ def test_trading_2464_coverage_runner_is_append_only_current_hash_authority() ->
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "source_base_sha": TRADING_2464_COVERAGE_RUNNER_BASE_COMMIT,
         "runner_schema": "o1_relative_opportunity_coverage_report.v1",
@@ -16780,6 +16915,129 @@ def test_trading_2464_coverage_runner_is_append_only_current_hash_authority() ->
     )
     assert phase["safety"] == {
         "real_coverage_read": False,
+        "model_training_executed": False,
+        "predictions_generated": False,
+        "metrics_generated": False,
+        "canonical_run_executed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2464_coverage_gate_binding_is_append_only_current_hash_authority() -> None:
+    _assert_trading_2464_coverage_gate_binding_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_coverage_gate_binding_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2464_COVERAGE_GATE_BINDING_SECTION
+    phase = baseline[TRADING_2464_COVERAGE_GATE_BINDING_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2464_o1_coverage_gate_evidence_binding_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2464-O1-COVERAGE-GATE-EVIDENCE-BINDING"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2464_COVERAGE_GATE_BINDING_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2464_COVERAGE_GATE_BINDING_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (
+            TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == (
+        _trading_2464_coverage_gate_binding_prior_active_source_mismatches()
+    )
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2464-O1-COVERAGE-GATE-EVIDENCE-BINDING"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2464_COVERAGE_RUNNER_SECTION,
+        "current_hash_authority": (
+            f"{TRADING_2464_COVERAGE_GATE_BINDING_SECTION}.sources"
+        ),
+    }
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2464_COVERAGE_GATE_BINDING_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2464_COVERAGE_GATE_BINDING_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2464_COVERAGE_GATE_BINDING_NEW_SOURCE_PATHS
+    ) - TRADING_2464_COVERAGE_GATE_BINDING_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "runner_execution_commit": (
+            "1bf9fb13245064ec2a505ea864e2e127ad445d41"
+        ),
+        "active_policy_status": "CLOSED_INSUFFICIENT_COVERAGE_OR_DQ",
+        "coverage_report_id": (
+            "o1_coverage_report_9b5708c6c36ac69cc7355fee8567a953"
+        ),
+        "coverage_report_sha256": (
+            "bbed79b499b57274dd49bede0c37219894233964732fcde5656626933781ada7"
+        ),
+        "coverage_report_byte_size": 29645,
+        "coverage_gate_id": "o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93",
+        "coverage_gate_sha256": (
+            "a97ee44832a41aeb90a6f9a18b0358eb81cefec4d491438deb6fd27b624f31b8"
+        ),
+        "coverage_gate_byte_size": 1983,
+        "data_quality_status": "PASS_0_ERRORS_0_WARNINGS",
+        "completed_outer_fold_count": 6,
+        "total_oof_effective_sample": 146.0,
+        "failed_mandatory_checks": {
+            "F01_TRAIN_EFFECTIVE_SAMPLE": "98.0_LT_100",
+            "F02_TEST_EFFECTIVE_SAMPLE": "23.71930136737_LT_24",
+            "REGIME_VOLATILITY_HIGH_FOLD_COUNT": "2_LT_3",
+            "REGIME_CURRENT_DRAWDOWN_LOW_EFFECTIVE_SAMPLE": "13.0_LT_15",
+        },
+        "mandatory_event_families_passed": ["FOMC", "CPI", "NFP"],
+        "mechanical_classification": "INSUFFICIENT_COVERAGE_OR_DQ",
+        "single_run_consumed": True,
+        "result_driven_retry_allowed": False,
+        "canonical_policy_update_eligible": False,
+        "model_training_allowed_now": False,
+        "canonical_run_allowed_now": False,
+        "canonical_run_executed": False,
+    }
+    validation = phase["validation"]
+    assert validation["policy_and_runner_regression"] == "PASS_16_TESTS"
+    assert validation["task_registry"] == "PASS_BYTE_IDENTICAL_927_TASKS"
+    assert validation["generated_architecture"] == "PASS_1043_MODULES_1212_TESTS"
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "coverage_audit_executed": True,
+        "new_o1_result_read": True,
+        "prospective_accessed": False,
         "model_training_executed": False,
         "predictions_generated": False,
         "metrics_generated": False,

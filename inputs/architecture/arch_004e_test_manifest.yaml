@@ -2194,7 +2194,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_capability_audit_contract
   path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
-  sha256: 8c838463099dd9e8343390adc48af4373879c8263d873a105c8b762eadb4e1f7
+  sha256: cc0846c90731a25b77ca4e2cb471cf83d77a29d5d34630cb590ddc9b52fae6fe
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -2211,7 +2211,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_coverage
   path: tests/research_strategies/test_o1_relative_opportunity_coverage.py
-  sha256: b887b37775cba7fc9d4a30b7d923344f14f1749d29ce77b6fe89860044795793
+  sha256: 21242204e1192549dde653db76f3c94d67148139bfb3ebed8d82ceca6cb62091
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -2228,7 +2228,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_dq_candidate
   path: tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
-  sha256: 60f4f40e7391ecd0918dd34c60c7908942485b5bde559304c8c3f37b2f085ffc
+  sha256: 46c4788b124069cccb721b33d03f329e4abbd1ea2b61949363da66888666aa30
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7608,7 +7608,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 09468bf498d53aae882c01ad529e3189fce5a2f00016eb91eb7907337b3b2fca
+  sha256: 1893220df93aabd152e2532881895c6f46c7091a324b5b161e4c2224426f9dd6
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

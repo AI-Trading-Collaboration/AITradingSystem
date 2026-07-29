@@ -1,7 +1,7 @@
 schema_version: o1_relative_opportunity_capability_audit_policy.v1
 policy_id: TRADING_2464_O1_CAPABILITY_AUDIT_V1
 version: 1.0.0
-status: OWNER_APPROVED_EVENT_LEDGER_FROZEN_COVERAGE_ONLY_READY
+status: CLOSED_INSUFFICIENT_COVERAGE_OR_DQ
 owner: project_owner_and_strategy_research_owner
 owner_decision: owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1
 task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
@@ -41,7 +41,9 @@ execution_binding:
   exact_policy_path_and_sha_recorded_in_run_manifest: true
   historical_seen_only: true
   prospective_accessed: false
-  real_coverage_read_allowed_now: true
+  real_coverage_read_allowed_now: false
+  coverage_attempt_consumed: true
+  canonical_run_allowed_now: false
   model_training_allowed_now: false
   maximum_canonical_runs: 1
   random_seed: 2464
@@ -168,6 +170,55 @@ event_attempt_freeze_evidence:
     new_o1_result_read: false
     production_effect: none
     broker_action: none
+
+coverage_evidence:
+  schema_version: o1_relative_opportunity_coverage_evidence.v1
+  status: BLOCKED_INSUFFICIENT_COVERAGE_OR_DQ
+  generated_at: '2026-07-29T21:29:05.436564+00:00'
+  output_root: D:/Work/AITradingSystem/outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_coverage_only_v1
+  source_commit_sha: 1bf9fb13245064ec2a505ea864e2e127ad445d41
+  report:
+    report_id: o1_coverage_report_9b5708c6c36ac69cc7355fee8567a953
+    path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_coverage_only_v1/coverage_report.json
+    sha256: bbed79b499b57274dd49bede0c37219894233964732fcde5656626933781ada7
+    byte_size: 29645
+  gate:
+    gate_id: o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93
+    path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_coverage_only_v1/coverage_gate.json
+    sha256: a97ee44832a41aeb90a6f9a18b0358eb81cefec4d491438deb6fd27b624f31b8
+    byte_size: 1983
+  data_quality:
+    status: PASS
+    error_count: 0
+    warning_count: 0
+  failed_mandatory_checks:
+    - check_id: F01_TRAIN_EFFECTIVE_SAMPLE
+      observed: 98.0
+      threshold: 100
+    - check_id: F02_TEST_EFFECTIVE_SAMPLE
+      observed: 23.71930136737
+      threshold: 24
+    - check_id: REGIME_VOLATILITY_HIGH_FOLD_COUNT
+      observed: 2
+      threshold: 3
+    - check_id: REGIME_CURRENT_DRAWDOWN_LOW_EFFECTIVE_SAMPLE
+      observed: 13.0
+      threshold: 15
+  passing_context:
+    completed_outer_fold_count: 6
+    total_oof_effective_sample: 146.0
+    minimum_total_oof_effective_sample: 120
+    mandatory_event_families_passed: [FOMC, CPI, NFP]
+  mechanical_classification: INSUFFICIENT_COVERAGE_OR_DQ
+  next_authorization:
+    coverage_only_gate_passed: false
+    canonical_policy_update_eligible: false
+    model_training_allowed_now: false
+    canonical_run_allowed_now: false
+    canonical_run_executed: false
+    production_allowed: false
+  single_run_consumed: true
+  result_driven_retry_allowed: false
 
 target_contract:
   target_id: RELATIVE_OPPORTUNITY_SPREAD
@@ -440,8 +491,8 @@ execution_sequence:
   - MECHANICAL_CLASSIFICATION
 
 safety:
-  new_o1_result_read: false
-  coverage_audit_executed: false
+  new_o1_result_read: true
+  coverage_audit_executed: true
   model_training_executed: false
   prospective_accessed: false
   decision_value_audit_started: false

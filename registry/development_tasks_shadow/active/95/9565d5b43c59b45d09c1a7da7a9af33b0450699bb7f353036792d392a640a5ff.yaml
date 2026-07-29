@@ -11,8 +11,9 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact
-    commit；随后只在已登记唯一目录执行一次真实 coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
+  next_owner: strategy research owner：当前 O1 capability path 已机械关闭；若未来重开，必须另立新任务和结果读取前
+    preregistration，不得复用本 attempt 结果调整 threshold/fold/horizon/regime/event。保留唯一 candidate/event/coverage
+    evidence root 供复验。
   requirement_refs:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
@@ -21,61 +22,62 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
-    DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
-    coverage output 尚不存在。
+    A exact 复用 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；published runner commit=`1bf9fb13245064ec2a505ea864e2e127ad445d41`。DQ
+    gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`、event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`、coverage
+    gate=`o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93`；最终 class=`INSUFFICIENT_COVERAGE_OR_DQ`。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate
-      从 exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-      family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
-      ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
+    text: 唯一 coverage run 中 DQ=`PASS/0/0`、6 folds、total OOF effective sample=146、三类
+      event coverage PASS；F01 train 98<100、F02 test ESS 23.71930136737<24、volatility
+      HIGH 2<3 folds、current_drawdown LOW effective sample 13<15，任一 FAIL 即机械关闭。report/gate
+      exact SHA 已绑定；未训练模型、未生成prediction/metric、未访问prospective、未运行canonical/falsification；所有下游继续false。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2034
-    row_sha256: 356df7e4c202aab154f639a24712fb6ac22d9a2704401e31ad33d4162dd367cf
+    row_sha256: 8e7f5d29cc7f850e274b1b2fcb1d92dd65908329e99c32f47efe0e57dec44b9d
     cell_count: 8
     all_cells:
     - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
     - Strategy Style Discovery / O1 relative-opportunity capability evidence
     - P0
-    - IN_PROGRESS
-    - Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact commit；随后只在已登记唯一目录执行一次真实
-      coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
+    - BASELINE_DONE
+    - strategy research owner：当前 O1 capability path 已机械关闭；若未来重开，必须另立新任务和结果读取前 preregistration，不得复用本
+      attempt 结果调整 threshold/fold/horizon/regime/event。保留唯一 candidate/event/coverage
+      evidence root 供复验。
     - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
-      DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
-      coverage output 尚不存在。
-    - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从
-      exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-      family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
-      ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
-    - 2026-07-30：发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
-      targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
-      training/canonical/production继续false。`production_effect=none`、`broker_action=none`。
+      A exact 复用 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；published runner commit=`1bf9fb13245064ec2a505ea864e2e127ad445d41`。DQ
+      gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`、event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`、coverage
+      gate=`o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93`；最终 class=`INSUFFICIENT_COVERAGE_OR_DQ`。
+    - 唯一 coverage run 中 DQ=`PASS/0/0`、6 folds、total OOF effective sample=146、三类 event
+      coverage PASS；F01 train 98<100、F02 test ESS 23.71930136737<24、volatility HIGH
+      2<3 folds、current_drawdown LOW effective sample 13<15，任一 FAIL 即机械关闭。report/gate
+      exact SHA 已绑定；未训练模型、未生成prediction/metric、未访问prospective、未运行canonical/falsification；所有下游继续false。
+    - 2026-07-30：runner 发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`。随后从已发布
+      exact commit 只运行一次 coverage；没有阈值或设计修改、没有第二次run。`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|Strategy
-      Style Discovery / O1 relative-opportunity capability evidence|P0|IN_PROGRESS|Codex
-      coordinator：发布已通过 formal validation 的 coverage-only runner exact commit；随后只在已登记唯一目录执行一次真实
-      coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+      Style Discovery / O1 relative-opportunity capability evidence|P0|BASELINE_DONE|strategy
+      research owner：当前 O1 capability path 已机械关闭；若未来重开，必须另立新任务和结果读取前 preregistration，不得复用本
+      attempt 结果调整 threshold/fold/horizon/regime/event。保留唯一 candidate/event/coverage
+      evidence root 供复验。|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
-      DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
-      coverage output 尚不存在。|Owner exact decision 与 exact-base/input commitment 完整；在
-      isolated candidate 从 exact transaction materialize 并逐对象核验，strict DQ revalidation
-      `PASS/0/0`；model/feature family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official
-      response与checksum，attempt ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。|2026-07-30：发布前
-      O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
-      targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
-      training/canonical/production继续false。`production_effect=none`、`broker_action=none`。|'
+      A exact 复用 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；published runner commit=`1bf9fb13245064ec2a505ea864e2e127ad445d41`。DQ
+      gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`、event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`、coverage
+      gate=`o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93`；最终 class=`INSUFFICIENT_COVERAGE_OR_DQ`。|唯一
+      coverage run 中 DQ=`PASS/0/0`、6 folds、total OOF effective sample=146、三类 event
+      coverage PASS；F01 train 98<100、F02 test ESS 23.71930136737<24、volatility HIGH
+      2<3 folds、current_drawdown LOW effective sample 13<15，任一 FAIL 即机械关闭。report/gate
+      exact SHA 已绑定；未训练模型、未生成prediction/metric、未访问prospective、未运行canonical/falsification；所有下游继续false。|2026-07-30：runner
+      发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`。随后从已发布
+      exact commit 只运行一次 coverage；没有阈值或设计修改、没有第二次run。`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-356df7e4c202aab154f639a2
+  event_id: legacy-import-8e7f5d29cc7f850e274b1b2f
   task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -85,42 +87,42 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact
-      commit；随后只在已登记唯一目录执行一次真实 coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
-    notes: 2026-07-30：发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
-      targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
-      training/canonical/production继续false。`production_effect=none`、`broker_action=none`。
+    next_owner: strategy research owner：当前 O1 capability path 已机械关闭；若未来重开，必须另立新任务和结果读取前
+      preregistration，不得复用本 attempt 结果调整 threshold/fold/horizon/regime/event。保留唯一
+      candidate/event/coverage evidence root 供复验。
+    notes: 2026-07-30：runner 发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`。随后从已发布
+      exact commit 只运行一次 coverage；没有阈值或设计修改、没有第二次run。`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:356df7e4c202aab154f639a24712fb6ac22d9a2704401e31ad33d4162dd367cf
+  - sha256:8e7f5d29cc7f850e274b1b2fcb1d92dd65908329e99c32f47efe0e57dec44b9d
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   - Strategy Style Discovery / O1 relative-opportunity capability evidence
   - P0
-  - IN_PROGRESS
-  - Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact commit；随后只在已登记唯一目录执行一次真实
-    coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
+  - BASELINE_DONE
+  - strategy research owner：当前 O1 capability path 已机械关闭；若未来重开，必须另立新任务和结果读取前 preregistration，不得复用本
+    attempt 结果调整 threshold/fold/horizon/regime/event。保留唯一 candidate/event/coverage
+    evidence root 供复验。
   - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
-    DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
-    coverage output 尚不存在。
-  - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact
-    transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-    family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
-    ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
-  - 2026-07-30：发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
-    targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
-    training/canonical/production继续false。`production_effect=none`、`broker_action=none`。
+    A exact 复用 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；published runner commit=`1bf9fb13245064ec2a505ea864e2e127ad445d41`。DQ
+    gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`、event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`、coverage
+    gate=`o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93`；最终 class=`INSUFFICIENT_COVERAGE_OR_DQ`。
+  - 唯一 coverage run 中 DQ=`PASS/0/0`、6 folds、total OOF effective sample=146、三类 event
+    coverage PASS；F01 train 98<100、F02 test ESS 23.71930136737<24、volatility HIGH
+    2<3 folds、current_drawdown LOW effective sample 13<15，任一 FAIL 即机械关闭。report/gate
+    exact SHA 已绑定；未训练模型、未生成prediction/metric、未访问prospective、未运行canonical/falsification；所有下游继续false。
+  - 2026-07-30：runner 发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`。随后从已发布
+    exact commit 只运行一次 coverage；没有阈值或设计修改、没有第二次run。`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
   terminal: false
-  raw_row_sha256: 356df7e4c202aab154f639a24712fb6ac22d9a2704401e31ad33d4162dd367cf
+  raw_row_sha256: 8e7f5d29cc7f850e274b1b2fcb1d92dd65908329e99c32f47efe0e57dec44b9d
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 41a49cdb81ebbd92b88057fcbb927aeba6ca86222070a6f98a8da100f3f98a9a
+fragment_checksum: af45ca2393a151fee159d57bc626946771320ed3e3c15e082b70d8e37330f408

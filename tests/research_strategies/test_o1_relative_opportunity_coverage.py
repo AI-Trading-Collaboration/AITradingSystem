@@ -233,6 +233,13 @@ def _runner_fixture(
     retained_root = tmp_path / "retained"
     retained_root.mkdir()
     policy = yaml.safe_load(POLICY_PATH.read_text(encoding="utf-8"))
+    policy["status"] = "OWNER_APPROVED_EVENT_LEDGER_FROZEN_COVERAGE_ONLY_READY"
+    policy["execution_binding"]["real_coverage_read_allowed_now"] = True
+    policy["execution_binding"].pop("coverage_attempt_consumed", None)
+    policy["execution_binding"].pop("canonical_run_allowed_now", None)
+    policy["safety"]["new_o1_result_read"] = False
+    policy["safety"]["coverage_audit_executed"] = False
+    policy.pop("coverage_evidence", None)
     policy["isolated_dq_evidence"]["output_root"] = retained_root.as_posix()
     policy_path = project_root / "config/research/o1_policy.yaml"
     policy_path.parent.mkdir(parents=True)

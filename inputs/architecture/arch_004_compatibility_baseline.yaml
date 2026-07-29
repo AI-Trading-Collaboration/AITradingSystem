@@ -34360,3 +34360,141 @@ phase_trading_2464_o1_coverage_only_runner:
     canonical_run_executed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2464_o1_coverage_gate_evidence_binding:
+  schema_version: trading_2464_o1_coverage_gate_evidence_binding_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2464-O1-COVERAGE-GATE-EVIDENCE-BINDING
+  task_ids:
+  - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+  prior_sections_immutability:
+    source_commit: 1bf9fb13245064ec2a505ea864e2e127ad445d41
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: d97477b6fb6a3c115ab0e4d8912173a19c7f93af
+    raw_byte_count: 2151072
+    raw_sha256: 30442ca142396c5da82fd4d5e9753f51d330a4b720b738aed53307e9fa4d91da
+    append_offset: 2151072
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/research_strategies/test_o1_relative_opportunity_coverage.py
+  - tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: TRADING-2464-O1-COVERAGE-GATE-EVIDENCE-BINDING
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2464_o1_coverage_only_runner
+    current_hash_authority: phase_trading_2464_o1_coverage_gate_evidence_binding.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/research_strategies/test_o1_relative_opportunity_coverage.py
+  - tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+    sha256: 1195c84ac0e980e5450eaa7c22f082f2bd1fc2adc053da73ecfbbafa291798ca
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+    sha256: 7c60445f66971beee412f1613f247f704b3681ea19afcd93259ff687609ccf75
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 01e4c090969a2da4ee1297d65977eb8ea46db76e9dbed89ceb5b0c30686e0c78
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: f20591be333309651750351e7a300c5d547a57f1a5c11837e6430d5c42c8865e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 43771873a918dcf8d4cbd99cb764019951d7ee5436d798dbd80d95b1067d111e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 6774a6f2cc46c4176d92cfa7b8eb848f2ac2859e81c601501c431c4cfe4a7be2
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: ea0406c0206a235a75c45461303d45b71e85153abee3c00b2a6b803e739b69db
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: d67ed888533fb8a6f5d4392fc9bcb2c7f173c74b97bf3d501d8fe1b8cc0a296b
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+    sha256: 241805c3dceafe1e0decab41ac0d02f3bcb5a5c6c10781a7d07dbb75a0344b1c
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+    sha256: cc0846c90731a25b77ca4e2cb471cf83d77a29d5d34630cb590ddc9b52fae6fe
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_coverage.py
+    sha256: 21242204e1192549dde653db76f3c94d67148139bfb3ebed8d82ceca6cb62091
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
+    sha256: 46c4788b124069cccb721b33d03f329e4abbd1ea2b61949363da66888666aa30
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 1893220df93aabd152e2532881895c6f46c7091a324b5b161e4c2224426f9dd6
+    hash_normalization: git_eol_lf
+  implementation:
+    runner_execution_commit: 1bf9fb13245064ec2a505ea864e2e127ad445d41
+    active_policy_status: CLOSED_INSUFFICIENT_COVERAGE_OR_DQ
+    coverage_report_id: o1_coverage_report_9b5708c6c36ac69cc7355fee8567a953
+    coverage_report_sha256: bbed79b499b57274dd49bede0c37219894233964732fcde5656626933781ada7
+    coverage_report_byte_size: 29645
+    coverage_gate_id: o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93
+    coverage_gate_sha256: a97ee44832a41aeb90a6f9a18b0358eb81cefec4d491438deb6fd27b624f31b8
+    coverage_gate_byte_size: 1983
+    data_quality_status: PASS_0_ERRORS_0_WARNINGS
+    completed_outer_fold_count: 6
+    total_oof_effective_sample: 146.0
+    failed_mandatory_checks:
+      F01_TRAIN_EFFECTIVE_SAMPLE: 98.0_LT_100
+      F02_TEST_EFFECTIVE_SAMPLE: 23.71930136737_LT_24
+      REGIME_VOLATILITY_HIGH_FOLD_COUNT: 2_LT_3
+      REGIME_CURRENT_DRAWDOWN_LOW_EFFECTIVE_SAMPLE: 13.0_LT_15
+    mandatory_event_families_passed:
+    - FOMC
+    - CPI
+    - NFP
+    mechanical_classification: INSUFFICIENT_COVERAGE_OR_DQ
+    single_run_consumed: true
+    result_driven_retry_allowed: false
+    canonical_policy_update_eligible: false
+    model_training_allowed_now: false
+    canonical_run_allowed_now: false
+    canonical_run_executed: false
+  validation:
+    policy_and_runner_regression: PASS_16_TESTS
+    task_registry: PASS_BYTE_IDENTICAL_927_TASKS
+    generated_architecture: PASS_1043_MODULES_1212_TESTS
+    authority_and_deprecation: PASS_155_TESTS
+    architecture: PASS_796_TESTS_ARTIFACT_20260729T214458Z
+    contract: PASS_276_TESTS_ARTIFACT_20260729T214645Z
+  safety:
+    coverage_audit_executed: true
+    new_o1_result_read: true
+    prospective_accessed: false
+    model_training_executed: false
+    predictions_generated: false
+    metrics_generated: false
+    canonical_run_executed: false
+    production_effect: none
+    broker_action: none

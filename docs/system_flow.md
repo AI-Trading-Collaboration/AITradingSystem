@@ -357,11 +357,12 @@ official domain、HTTP/source status、index→release inventory、attempt famil
 还要求 BLS 正文日期与 archive URL 日期一致；只生成新命名的 replay manifest/gate 与此前
 不存在的 event ledger。superseding replay gate PASS 前仍不得读取 coverage 或训练模型。
 
-当前 superseding replay gate 已 PASS，并由 active policy 逐 SHA 绑定 replay manifest、
-171-row event ledger、原始 append-only attempt ledger 与 replay gate；只有
-`real_coverage_read_allowed_now=true` 的 coverage-only 读取被打开。该状态不允许模型训练、
-canonical run、falsification 结果读取或任何生产行为；coverage runner 必须从此合同集成后的
-exact commit 启动，并在任何 floor 不足时立即输出 `INSUFFICIENT_COVERAGE_OR_DQ`。
+superseding replay gate PASS 后，active policy 曾逐 SHA 绑定 replay manifest、171-row event
+ledger、原始 append-only attempt ledger 与 replay gate，并只打开一次 coverage-only 读取。
+coverage runner 已从 published exact commit
+`1bf9fb13245064ec2a505ea864e2e127ad445d41` 在已登记唯一目录执行；该 single-run 授权已消耗，
+`real_coverage_read_allowed_now=false`，模型训练、canonical run、falsification 结果读取与
+任何生产行为继续关闭。
 
 synthetic-only 路径由
 `src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_capability_audit.py`
@@ -379,13 +380,13 @@ replay gate，再计算 eligibility、5-session non-overlap/autocorrelation ESS�
 regime tertile 与 event episode coverage。报告不保存逐行 target/feature，不生成 prediction 或
 metric；event UTC occurrence date 若不是 common session，只进入 missing count，不平移到相邻
 交易日。event/attempt ledger、fold/regime/event/effective sample 任一不足即机械输出
-`INSUFFICIENT_COVERAGE_OR_DQ` 并停止。coverage PASS 也只允许后续 serial policy binding，
-runner 自身继续输出 `model_training_allowed_now=false` 与
-`canonical_run_allowed_now=false`。只有 coverage evidence 完成 exact binding 后才可允许一个
-exact-tree canonical run，随后全部 mandatory falsification 与 independent validation 必须
-通过；最终结论只能是四个 reviewed capability class 之一，且任何正面 class 都不授权
-Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production
-或 broker action。
+`INSUFFICIENT_COVERAGE_OR_DQ` 并停止。实际 gate 因 F01 train、F02 test ESS、volatility HIGH
+fold count 与 current_drawdown LOW effective sample 四个 floor 失败，已输出该 class；DQ
+仍为 `PASS/0/0`，total OOF 与三类 event coverage 通过也不能抵消任一 mandatory FAIL。
+report/gate SHA 已进入 serial evidence binding，未改变任何 threshold、fold、horizon、regime
+或 event，且没有第二次 run。canonical policy update、model training、canonical run、
+falsification、Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、
+paper-shadow、production 与 broker action 均未启动。
 
 ```mermaid
 flowchart LR
@@ -399,9 +400,9 @@ flowchart LR
     RP -->|"raw / policy / DQ / inventory mismatch"| ICQ
     RP --> EL
     LG --> EL["Freeze FOMC/CPI/NFP event ledger"]
-    EL --> COV["Exact evidence binding<br/>Coverage-only eligibility / ESS / regime / event gate"]
-    COV -->|"FAIL / insufficient"| ICQ["INSUFFICIENT_COVERAGE_OR_DQ"]
-    COV -->|"PASS"| RUN["One canonical historical-seen-only run"]
+    EL --> COV["Published exact single run<br/>Coverage-only eligibility / ESS / regime / event gate"]
+    COV -->|"Observed 4 mandatory FAILs"| ICQ["INSUFFICIENT_COVERAGE_OR_DQ<br/>current path closed"]
+    COV -.->|"PASS path not reached"| RUN["One canonical historical-seen-only run"]
     RUN --> FAL["All mandatory falsification axes"]
     FAL --> VAL["Independent reconstruction validator"]
     VAL --> CLS["Mechanical four-class conclusion"]
