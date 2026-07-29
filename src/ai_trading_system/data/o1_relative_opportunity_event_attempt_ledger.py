@@ -61,6 +61,54 @@ _FED_RELEASE_PATTERN: Final = re.compile(
 )
 _SHA_PATTERN: Final = re.compile(r"[0-9a-f]{64}")
 _EASTERN: Final = ZoneInfo("America/New_York")
+_BLS_TIMESTAMP_PATTERN: Final = re.compile(
+    r"(?:embargoed|For release)\s+until\s+"
+    # Employment Situation pages place the official USDL release identifier
+    # between "until" and the embargo time; the identifier is bounded rather
+    # than accepting arbitrary intervening text.
+    r"(?:(?P<release_id>USDL[-\s]?\d{2,4}[-–]\d{3,5})\s+)?"
+    r"(?P<hour>\d{1,2}):(?P<minute>\d{2})\s*"
+    r"(?P<period>a\.?m\.?|p\.?m\.?)\s*"
+    r"(?:\((?P<zone_parenthesized>ET|EDT|EST)\)|"
+    r"(?P<zone_plain>ET|EDT|EST))\s*"
+    r"(?:(?P<weekday>Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+)?"
+    r"(?P<month>January|February|March|April|May|June|July|August|"
+    r"September|October|November|December)\s+"
+    r"(?P<day>\d{1,2}),\s+(?P<year>\d{4})",
+    re.IGNORECASE,
+)
+_MONTH_NUMBERS: Final = {
+    month.lower(): number
+    for number, month in enumerate(
+        (
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ),
+        start=1,
+    )
+}
+_WEEKDAYS: Final = (
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+)
+_REPLAY_SOURCE_MANIFEST_NAME: Final = "event_source_manifest_replay_v1.json"
+_REPLAY_GATE_NAME: Final = "event_attempt_freeze_gate_replay_v1.json"
+_REPLAY_MODE: Final = "CHECKSUM_VERIFIED_OFFLINE_REPLAY_NO_NETWORK"
 
 
 class O1EventAttemptFreezeError(RuntimeError):
@@ -321,6 +369,191 @@ def freeze_o1_event_and_attempt_ledgers(
     )
 
 
+def replay_o1_event_and_attempt_ledgers_from_retained_sources(
+    *,
+    output_root: Path,
+    project_root: Path,
+    generated_at: datetime,
+    initial_source_manifest_sha256: str,
+    initial_attempt_ledger_sha256: str,
+    initial_gate_sha256: str,
+    audit_policy_path: Path = DEFAULT_AUDIT_POLICY_PATH,
+    source_commit_sha: str | None = None,
+    cli_argv: Sequence[str] = (),
+) -> O1EventAttemptFreezeResult:
+    """Reparse one immutable blocked acquisition without network access or overwrite."""
+
+    timestamp = _aware_utc(generated_at)
+    root = project_root.resolve(strict=True)
+    policy_path = _contained_file(root, audit_policy_path, "O1_EVENT_POLICY_MISSING")
+    policy = _load_yaml_mapping(policy_path, "O1_EVENT_POLICY_INVALID")
+    _validate_policy(policy)
+    policy_sha256 = sha256_path(policy_path)
+    software_identity = _software_identity(
+        project_root=root,
+        source_commit_sha=source_commit_sha,
+        cli_argv=cli_argv,
+    )
+    dq_binding = _verify_dq_gate(policy=policy, project_root=root)
+    resolved_output = _existing_output_root(
+        project_root=root,
+        output_root=output_root,
+        policy=policy,
+    )
+
+    initial_source_path = _contained_file(
+        resolved_output,
+        Path("event_source_manifest.json"),
+        "O1_EVENT_REPLAY_INITIAL_SOURCE_MANIFEST_MISSING",
+    )
+    initial_attempt_path = _contained_file(
+        resolved_output,
+        Path("attempt_ledger.json"),
+        "O1_EVENT_REPLAY_INITIAL_ATTEMPT_LEDGER_MISSING",
+    )
+    initial_gate_path = _contained_file(
+        resolved_output,
+        Path("event_attempt_freeze_gate.json"),
+        "O1_EVENT_REPLAY_INITIAL_GATE_MISSING",
+    )
+    initial_source = _load_verified_json(
+        initial_source_path,
+        expected_sha256=initial_source_manifest_sha256,
+        code="O1_EVENT_REPLAY_INITIAL_SOURCE_MANIFEST_TAMPERED",
+    )
+    initial_attempt = _load_verified_json(
+        initial_attempt_path,
+        expected_sha256=initial_attempt_ledger_sha256,
+        code="O1_EVENT_REPLAY_INITIAL_ATTEMPT_LEDGER_TAMPERED",
+    )
+    initial_gate = _load_verified_json(
+        initial_gate_path,
+        expected_sha256=initial_gate_sha256,
+        code="O1_EVENT_REPLAY_INITIAL_GATE_TAMPERED",
+    )
+    _validate_replay_authority(
+        initial_source_path=initial_source_path,
+        initial_source=initial_source,
+        initial_attempt_path=initial_attempt_path,
+        initial_attempt=initial_attempt,
+        initial_gate=initial_gate,
+        policy_sha256=policy_sha256,
+        dq_binding=dq_binding,
+    )
+
+    replay_source_path = resolved_output / _REPLAY_SOURCE_MANIFEST_NAME
+    event_ledger_path = resolved_output / "event_ledger.json"
+    replay_gate_path = resolved_output / _REPLAY_GATE_NAME
+    for candidate in (replay_source_path, event_ledger_path, replay_gate_path):
+        if candidate.exists():
+            _fail(
+                "O1_EVENT_REPLAY_OUTPUT_EXISTS",
+                "refusing to overwrite a replay artifact",
+                path=candidate,
+            )
+
+    request_records, source_bodies, retained_artifact_paths = _verify_retained_sources(
+        output_root=resolved_output,
+        source_manifest=initial_source,
+    )
+    discovered = _rediscover_retained_release_urls(
+        policy=policy,
+        request_records=request_records,
+        source_bodies=source_bodies,
+    )
+    event_rows = [
+        _event_row(
+            family=_text(record["event_family"], "event family"),
+            source_record=record,
+            body=source_bodies[index],
+        )
+        for index, record in enumerate(request_records)
+        if record["source_role"] == "RELEASE"
+    ]
+    event_rows.sort(key=lambda row: (str(row["event_timestamp"]), str(row["event_family"])))
+    _validate_event_rows(event_rows, blockers=[])
+
+    replay_provenance = {
+        "mode": _REPLAY_MODE,
+        "network_accessed": False,
+        "raw_source_refetched": False,
+        "parser_correction": "BLS_USDL_IDENTIFIER_BETWEEN_EMBARGO_LABEL_AND_TIME_V1",
+        "initial_failure_artifacts": {
+            "event_source_manifest": _artifact_binding(
+                initial_source_path,
+                initial_source,
+            ),
+            "attempt_ledger": _artifact_binding(
+                initial_attempt_path,
+                initial_attempt,
+            ),
+            "event_attempt_freeze_gate": _artifact_binding(
+                initial_gate_path,
+                initial_gate,
+            ),
+        },
+        "initial_blocker_codes": sorted(
+            {
+                _text(item["code"], "initial blocker code")
+                for item in _sequence(initial_source["blockers"], "initial blockers")
+                if isinstance(item, Mapping)
+            }
+        ),
+        "retained_request_count": len(request_records),
+        "retained_unique_artifact_count": len(retained_artifact_paths),
+        "retained_unique_artifact_bytes": sum(
+            path.stat().st_size for path in retained_artifact_paths
+        ),
+    }
+    source_manifest = _build_source_manifest(
+        policy=policy,
+        generated_at=timestamp,
+        status=PASS_STATUS,
+        requests=request_records,
+        discovered=discovered,
+        blockers=[],
+        software_identity=software_identity,
+        replay_provenance=replay_provenance,
+    )
+    event_ledger = _build_event_ledger(
+        policy=policy,
+        generated_at=timestamp,
+        source_manifest=source_manifest,
+        events=event_rows,
+    )
+
+    write_json_atomic(replay_source_path, source_manifest)
+    write_json_atomic(event_ledger_path, event_ledger)
+    gate = _build_gate(
+        policy=policy,
+        policy_path=policy_path,
+        policy_sha256=policy_sha256,
+        dq_binding=dq_binding,
+        generated_at=timestamp,
+        status=PASS_STATUS,
+        source_manifest_path=replay_source_path,
+        source_manifest=source_manifest,
+        attempt_ledger_path=initial_attempt_path,
+        attempt_ledger=initial_attempt,
+        event_ledger_path=event_ledger_path,
+        event_ledger=event_ledger,
+        blockers=[],
+        software_identity=software_identity,
+        replay_provenance=replay_provenance,
+    )
+    validate_o1_event_attempt_freeze_gate(gate)
+    write_json_atomic(replay_gate_path, gate)
+    return O1EventAttemptFreezeResult(
+        status=PASS_STATUS,
+        output_root=resolved_output,
+        source_manifest_path=replay_source_path,
+        attempt_ledger_path=initial_attempt_path,
+        event_ledger_path=event_ledger_path,
+        gate_path=replay_gate_path,
+        gate=gate,
+    )
+
+
 def validate_o1_event_attempt_freeze_gate(gate: Mapping[str, object]) -> None:
     if gate.get("schema_version") != FREEZE_GATE_SCHEMA_VERSION:
         _fail("O1_EVENT_GATE_SCHEMA_INVALID", str(gate.get("schema_version")))
@@ -336,8 +569,15 @@ def validate_o1_event_attempt_freeze_gate(gate: Mapping[str, object]) -> None:
     authorization = _mapping(gate.get("next_authorization"), "next_authorization")
     coverage_allowed = authorization.get("coverage_only_gate_allowed")
     training_allowed = authorization.get("model_training_allowed")
-    if training_allowed is not False:
-        _fail("O1_EVENT_GATE_SCOPE_INVALID", "model training must remain false")
+    if (
+        training_allowed is not False
+        or authorization.get("canonical_run_allowed") is not False
+        or authorization.get("production_allowed") is not False
+    ):
+        _fail(
+            "O1_EVENT_GATE_SCOPE_INVALID",
+            "model training, canonical run, and production must remain false",
+        )
     artifacts = _mapping(gate.get("artifacts"), "artifacts")
     if status == PASS_STATUS:
         if coverage_allowed is not True or not isinstance(artifacts.get("event_ledger"), Mapping):
@@ -516,19 +756,31 @@ def _event_row(
 
 
 def _parse_bls_release_timestamp(url: str, body: bytes) -> datetime:
-    release_date = _date_from_release_url(url, _BLS_RELEASE_PATTERN)
+    release_date_from_url = _date_from_release_url(url, _BLS_RELEASE_PATTERN)
     text = _visible_text(body)
-    match = re.search(
-        r"(?:embargoed|For release)\s+until\s+"
-        r"(?P<hour>\d{1,2}):(?P<minute>\d{2})\s*"
-        r"(?P<period>a\.?m\.?|p\.?m\.?)\s*"
-        r"(?:\((?:ET|EDT|EST)\)|(?:ET|EDT|EST))?",
-        text,
-        re.IGNORECASE,
-    )
+    match = _BLS_TIMESTAMP_PATTERN.search(text)
     if match is None:
         _fail("O1_EVENT_BLS_TIMESTAMP_MISSING", url)
-    return _local_release_datetime(release_date, match)
+    release_date_from_body = date(
+        int(match.group("year")),
+        _MONTH_NUMBERS[match.group("month").lower()],
+        int(match.group("day")),
+    )
+    if release_date_from_body != release_date_from_url:
+        _fail(
+            "O1_EVENT_BLS_RELEASE_DATE_MISMATCH",
+            (
+                f"url={release_date_from_url.isoformat()} "
+                f"body={release_date_from_body.isoformat()} endpoint={url}"
+            ),
+        )
+    weekday = match.group("weekday")
+    if weekday is not None and weekday.lower() != _WEEKDAYS[release_date_from_body.weekday()]:
+        _fail(
+            "O1_EVENT_BLS_RELEASE_WEEKDAY_MISMATCH",
+            f"date={release_date_from_body.isoformat()} weekday={weekday} endpoint={url}",
+        )
+    return _local_release_datetime(release_date_from_body, match)
 
 
 def _parse_fomc_release_timestamp(url: str, body: bytes) -> datetime:
@@ -631,6 +883,7 @@ def _build_source_manifest(
     discovered: Mapping[str, Sequence[str]],
     blockers: Sequence[Mapping[str, object]],
     software_identity: Mapping[str, object],
+    replay_provenance: Mapping[str, object] | None = None,
 ) -> Mapping[str, object]:
     start, end = _research_window(policy)
     family_status = {
@@ -667,6 +920,8 @@ def _build_source_manifest(
         "blockers": list(blockers),
         "claim_boundary": _claim_boundary(),
     }
+    if replay_provenance is not None:
+        body["replay_provenance"] = dict(replay_provenance)
     return {"manifest_id": f"o1_event_source_{_digest(body)[:32]}", **body}
 
 
@@ -743,6 +998,7 @@ def _build_gate(
     event_ledger: Mapping[str, object] | None,
     blockers: Sequence[Mapping[str, object]],
     software_identity: Mapping[str, object],
+    replay_provenance: Mapping[str, object] | None = None,
 ) -> Mapping[str, object]:
     artifacts: dict[str, object] = {
         "event_source_manifest": _artifact_binding(source_manifest_path, source_manifest),
@@ -780,6 +1036,8 @@ def _build_gate(
         },
         "claim_boundary": _claim_boundary(),
     }
+    if replay_provenance is not None:
+        body["replay_provenance"] = dict(replay_provenance)
     return {"gate_id": f"o1_event_attempt_gate_{_digest(body)[:32]}", **body}
 
 
@@ -787,7 +1045,11 @@ def _artifact_binding(
     path: Path,
     payload: Mapping[str, object],
 ) -> Mapping[str, object]:
-    identity = payload.get("manifest_id") or payload.get("ledger_id")
+    identity = (
+        payload.get("manifest_id")
+        or payload.get("ledger_id")
+        or payload.get("gate_id")
+    )
     return {
         "id": identity,
         "path": path.as_posix(),
@@ -902,6 +1164,312 @@ def _new_output_root(
     if project_root not in resolved.parents:
         _fail("O1_EVENT_OUTPUT_ROOT_INVALID", "workspace escaped project root", path=resolved)
     return resolved
+
+
+def _existing_output_root(
+    *,
+    project_root: Path,
+    output_root: Path,
+    policy: Mapping[str, object],
+) -> Path:
+    evidence = _mapping(policy["isolated_dq_evidence"], "isolated_dq_evidence")
+    allowed_parent = Path(_text(evidence["output_root"], "isolated DQ output root"))
+    allowed_parent = allowed_parent.resolve(strict=True)
+    resolved = output_root.resolve(strict=True)
+    if (
+        resolved.parent != allowed_parent
+        or resolved.name != "o1_event_attempt_freeze_v1"
+        or project_root not in resolved.parents
+        or not resolved.is_dir()
+    ):
+        _fail(
+            "O1_EVENT_REPLAY_OUTPUT_ROOT_INVALID",
+            f"expected retained root below {allowed_parent.as_posix()}",
+            path=resolved,
+        )
+    return resolved
+
+
+def _load_verified_json(
+    path: Path,
+    *,
+    expected_sha256: str,
+    code: str,
+) -> Mapping[str, object]:
+    expected = _sha(expected_sha256, f"{path.name} expected sha256")
+    observed = sha256_path(path)
+    if observed != expected:
+        _fail(code, f"expected={expected} actual={observed}", path=path)
+    return _load_json_mapping(path, code)
+
+
+def _validate_replay_authority(
+    *,
+    initial_source_path: Path,
+    initial_source: Mapping[str, object],
+    initial_attempt_path: Path,
+    initial_attempt: Mapping[str, object],
+    initial_gate: Mapping[str, object],
+    policy_sha256: str,
+    dq_binding: Mapping[str, object],
+) -> None:
+    _validate_content_addressed_id(
+        initial_source,
+        id_field="manifest_id",
+        prefix="o1_event_source_",
+        code="O1_EVENT_REPLAY_INITIAL_SOURCE_MANIFEST_ID_MISMATCH",
+    )
+    _validate_content_addressed_id(
+        initial_attempt,
+        id_field="ledger_id",
+        prefix="o1_attempt_ledger_",
+        code="O1_EVENT_REPLAY_INITIAL_ATTEMPT_LEDGER_ID_MISMATCH",
+    )
+    validate_o1_event_attempt_freeze_gate(initial_gate)
+    if (
+        initial_source.get("schema_version") != SOURCE_MANIFEST_SCHEMA_VERSION
+        or initial_source.get("status") != BLOCKED_STATUS
+        or initial_gate.get("status") != BLOCKED_STATUS
+    ):
+        _fail(
+            "O1_EVENT_REPLAY_INITIAL_STATUS_INVALID",
+            "replay requires the immutable blocked source acquisition",
+        )
+    blockers = [
+        _mapping(item, "initial blocker")
+        for item in _sequence(initial_source.get("blockers"), "initial blockers")
+    ]
+    if not blockers or any(
+        item.get("code") != "O1_EVENT_BLS_TIMESTAMP_MISSING"
+        or item.get("event_family") != "NFP"
+        for item in blockers
+    ):
+        _fail(
+            "O1_EVENT_REPLAY_BLOCKER_SCOPE_INVALID",
+            "only the reviewed NFP timestamp parser defect may be replayed",
+        )
+    if initial_gate.get("blockers") != initial_source.get("blockers"):
+        _fail("O1_EVENT_REPLAY_BLOCKER_MISMATCH", "gate/source blockers differ")
+    current_attempt = _mapping(initial_attempt.get("current_attempt"), "current_attempt")
+    if (
+        initial_attempt.get("schema_version") != ATTEMPT_LEDGER_SCHEMA_VERSION
+        or initial_attempt.get("status") != "PRE_RESULT_FROZEN"
+        or initial_attempt.get("append_only") is not True
+        or current_attempt.get("attempt_family_id")
+        != "O1_M1_RIDGE_CROSS_ASSET_STATE_V1"
+        or current_attempt.get("source_status_at_freeze") != BLOCKED_STATUS
+        or current_attempt.get("coverage_read") is not False
+        or current_attempt.get("result_read") is not False
+        or current_attempt.get("model_trained") is not False
+    ):
+        _fail(
+            "O1_EVENT_REPLAY_ATTEMPT_SCOPE_INVALID",
+            "initial attempt is not the untouched pre-result family",
+        )
+    if initial_gate.get("attempt_family_id") != current_attempt.get("attempt_family_id"):
+        _fail("O1_EVENT_REPLAY_ATTEMPT_FAMILY_MISMATCH", "gate/attempt family differs")
+    source_identity = initial_source.get("software_identity")
+    if (
+        source_identity != initial_attempt.get("software_identity")
+        or source_identity != initial_gate.get("software_identity")
+    ):
+        _fail(
+            "O1_EVENT_REPLAY_SOFTWARE_IDENTITY_MISMATCH",
+            "initial artifacts do not bind one software identity",
+        )
+    audit_policy = _mapping(initial_gate.get("audit_policy"), "initial gate audit_policy")
+    attempt_policy = _mapping(initial_attempt.get("audit_policy"), "initial attempt policy")
+    if (
+        audit_policy.get("sha256_at_execution") != policy_sha256
+        or attempt_policy.get("sha256_at_freeze") != policy_sha256
+        or audit_policy.get("owner_decision") != attempt_policy.get("owner_decision")
+    ):
+        _fail(
+            "O1_EVENT_REPLAY_POLICY_IDENTITY_MISMATCH",
+            "initial artifacts do not bind the active unchanged policy",
+        )
+    if initial_gate.get("dq_gate") != dq_binding or initial_attempt.get("dq_gate") != dq_binding:
+        _fail("O1_EVENT_REPLAY_DQ_IDENTITY_MISMATCH", "initial DQ binding changed")
+    artifacts = _mapping(initial_gate.get("artifacts"), "initial gate artifacts")
+    _verify_artifact_binding(
+        _mapping(artifacts.get("event_source_manifest"), "initial source binding"),
+        expected_path=initial_source_path,
+        payload=initial_source,
+    )
+    _verify_artifact_binding(
+        _mapping(artifacts.get("attempt_ledger"), "initial attempt binding"),
+        expected_path=initial_attempt_path,
+        payload=initial_attempt,
+    )
+    if artifacts.get("event_ledger") is not None:
+        _fail("O1_EVENT_REPLAY_INITIAL_SCOPE_INVALID", "blocked gate bound an event ledger")
+
+
+def _validate_content_addressed_id(
+    payload: Mapping[str, object],
+    *,
+    id_field: str,
+    prefix: str,
+    code: str,
+) -> None:
+    identity = payload.get(id_field)
+    if not isinstance(identity, str):
+        _fail(code, str(identity))
+    body = {key: value for key, value in payload.items() if key != id_field}
+    if identity != f"{prefix}{_digest(body)[:32]}":
+        _fail(code, identity)
+
+
+def _verify_artifact_binding(
+    binding: Mapping[str, object],
+    *,
+    expected_path: Path,
+    payload: Mapping[str, object],
+) -> None:
+    bound_path = Path(_text(binding.get("path"), "artifact binding path")).resolve(strict=True)
+    if bound_path != expected_path:
+        _fail(
+            "O1_EVENT_REPLAY_ARTIFACT_PATH_MISMATCH",
+            f"expected={expected_path.as_posix()} actual={bound_path.as_posix()}",
+        )
+    expected_identity = (
+        payload.get("manifest_id")
+        or payload.get("ledger_id")
+        or payload.get("gate_id")
+    )
+    if (
+        binding.get("id") != expected_identity
+        or binding.get("sha256") != sha256_path(expected_path)
+        or binding.get("byte_size") != expected_path.stat().st_size
+    ):
+        _fail(
+            "O1_EVENT_REPLAY_ARTIFACT_BINDING_MISMATCH",
+            expected_path.as_posix(),
+        )
+
+
+def _verify_retained_sources(
+    *,
+    output_root: Path,
+    source_manifest: Mapping[str, object],
+) -> tuple[
+    list[Mapping[str, object]],
+    dict[int, bytes],
+    tuple[Path, ...],
+]:
+    raw_root = (output_root / "raw_primary_sources").resolve(strict=True)
+    if not raw_root.is_dir():
+        _fail("O1_EVENT_REPLAY_RAW_ROOT_INVALID", "not a directory", path=raw_root)
+    requests = [
+        _mapping(item, "retained source request")
+        for item in _sequence(source_manifest.get("requests"), "retained source requests")
+    ]
+    if not requests:
+        _fail("O1_EVENT_REPLAY_REQUESTS_EMPTY", "no retained source requests")
+    seen_requests: set[tuple[str, str, str]] = set()
+    referenced_paths: set[Path] = set()
+    bodies: dict[int, bytes] = {}
+    for index, record in enumerate(requests):
+        family = _text(record.get("event_family"), "event family")
+        source_role = _text(record.get("source_role"), "source role")
+        endpoint = _text(record.get("endpoint"), "source endpoint")
+        final_url = _text(record.get("final_url"), "source final_url")
+        _require_official_url(endpoint)
+        _require_official_url(final_url)
+        request_key = (family, source_role, endpoint)
+        if (
+            family not in REQUIRED_EVENT_FAMILIES
+            or source_role not in {"INDEX", "RELEASE"}
+            or request_key in seen_requests
+        ):
+            _fail("O1_EVENT_REPLAY_REQUEST_SCOPE_INVALID", str(request_key))
+        seen_requests.add(request_key)
+        if (
+            record.get("provider_name") != _provider_name(family)
+            or record.get("provider_class") != "primary_source"
+            or record.get("request_parameters") != {}
+            or record.get("http_status") != 200
+            or record.get("status") != "PASS"
+            or record.get("error") is not None
+        ):
+            _fail("O1_EVENT_REPLAY_SOURCE_NOT_COMPLETE", endpoint)
+        artifact_path = _contained_file(
+            output_root,
+            Path(_text(record.get("artifact_path"), "source artifact path")),
+            "O1_EVENT_REPLAY_RAW_ARTIFACT_MISSING",
+        )
+        if raw_root not in artifact_path.parents:
+            _fail(
+                "O1_EVENT_REPLAY_RAW_ARTIFACT_ESCAPE",
+                endpoint,
+                path=artifact_path,
+            )
+        body = artifact_path.read_bytes()
+        expected_sha = _sha(record.get("checksum"), "source checksum")
+        if (
+            hashlib.sha256(body).hexdigest() != expected_sha
+            or len(body) != record.get("byte_size")
+        ):
+            _fail(
+                "O1_EVENT_REPLAY_RAW_ARTIFACT_TAMPERED",
+                endpoint,
+                path=artifact_path,
+            )
+        referenced_paths.add(artifact_path)
+        bodies[index] = body
+    observed_paths = {
+        path.resolve()
+        for path in raw_root.rglob("*")
+        if path.is_file()
+    }
+    if observed_paths != referenced_paths:
+        _fail(
+            "O1_EVENT_REPLAY_RAW_INVENTORY_MISMATCH",
+            (
+                f"referenced={len(referenced_paths)} "
+                f"observed={len(observed_paths)}"
+            ),
+        )
+    return requests, bodies, tuple(sorted(referenced_paths))
+
+
+def _rediscover_retained_release_urls(
+    *,
+    policy: Mapping[str, object],
+    request_records: Sequence[Mapping[str, object]],
+    source_bodies: Mapping[int, bytes],
+) -> Mapping[str, list[str]]:
+    discovered: dict[str, list[str]] = {family: [] for family in REQUIRED_EVENT_FAMILIES}
+    retained_releases: dict[str, list[str]] = {
+        family: [] for family in REQUIRED_EVENT_FAMILIES
+    }
+    for index, record in enumerate(request_records):
+        family = _text(record["event_family"], "event family")
+        role = _text(record["source_role"], "source role")
+        endpoint = _text(record["endpoint"], "source endpoint")
+        if role == "INDEX":
+            discovered[family].extend(
+                _discover_release_urls(
+                    family=family,
+                    index_url=endpoint,
+                    body=source_bodies[index],
+                    policy=policy,
+                )
+            )
+        else:
+            retained_releases[family].append(endpoint)
+    for family in REQUIRED_EVENT_FAMILIES:
+        discovered[family] = sorted(set(discovered[family]))
+        retained_releases[family] = sorted(set(retained_releases[family]))
+        if discovered[family] != retained_releases[family]:
+            _fail(
+                "O1_EVENT_REPLAY_RELEASE_INVENTORY_MISMATCH",
+                (
+                    f"family={family} discovered={len(discovered[family])} "
+                    f"retained={len(retained_releases[family])}"
+                ),
+            )
+    return discovered
 
 
 def _research_window(policy: Mapping[str, object]) -> tuple[date, date]:

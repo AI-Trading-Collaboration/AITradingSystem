@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`
+状态：`IN_PROGRESS_EVENT_RAW_REPLAY_PARSER_CORRECTION`
 
 production effect：`none`
 
@@ -253,7 +253,7 @@ run identity 和一个 attempt ledger。
 
 ## 8. 当前执行点
 
-- `status=READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`
+- `status=IN_PROGRESS_EVENT_RAW_REPLAY_PARSER_CORRECTION`
 - `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
 - `synthetic_builder_validator=PASS_SYNTHETIC_ONLY_DETERMINISTIC_INDEPENDENT_RECONSTRUCTION`
 - `data_prerequisite=ISOLATED_CANDIDATE_STRICT_DQ_PASS_0_0`
@@ -269,6 +269,14 @@ run identity 和一个 attempt ledger。
 - `fresh_dq_receipt_id=dq_execution_d80529d1c713fee5f8602830912c14c2bdca64a59c64d943fbedd7c044d677cb`
 - `fresh_dq_receipt_sha256=6f37031a57b363189862b63a6bab396ff33b5f678b37bbb34ff4261be55ebe08`
 - `fresh_dq_window=requested_2021-02-22_to_2026-07-27_evaluated_to_2026-07-24`
+- `official_source_acquisition_completed=true`
+- `official_source_request_count=179_all_http_200_and_checksum_bound`
+- `initial_event_source_gate=BLOCKED_PARSER_DEFECT_NOT_EMPIRICAL_COVERAGE`
+- `initial_event_source_gate_id=o1_event_attempt_gate_596130e1136f86dc2f3c8918f7b80f4c`
+- `retained_raw_primary_source_files=179`
+- `retained_raw_primary_source_bytes=160417518`
+- `raw_replay_required=true`
+- `raw_refetch_allowed=false`
 - `coverage_audit_executed=false`
 - `new_results_read=false`
 - `prospective_accessed=false`
@@ -314,12 +322,25 @@ run identity 和一个 attempt ledger。
 - source discipline：每个 HTTP response 记录 endpoint、request parameters、download
   timestamp、status、byte size 与 SHA-256；event row 必须能追溯到一个保存的 exact
   official response，不得使用 current-view 推断未知 historical schedule-known-at；
-- acquisition boundary：2026-07-30 实测登录态 Chrome 可以读取 BLS archive/PDF，并可见
-  release header 的 exact embargo timestamp；同一 URL 的 CLI 请求返回 HTTP 403，而当前
-  browser-control 下载接口没有向项目暴露可复验的原始 PDF 路径。浏览器可见性不能替代
-  official bytes、checksum 与 source manifest，因此不得用截图、搜索摘要、镜像或 current
-  view 拼装 event row。runner 必须把官方 403 response bytes/状态/checksum 写入同一 root
-  的 blocker manifest，并保持 coverage/model training 关闭；
+- acquisition boundary：2026-07-30 登录态 Chrome 预检可以读取 BLS archive/PDF，但
+  browser-control 下载接口没有向项目暴露可复验的原始 PDF 路径；早期 CLI 探测曾返回
+  HTTP 403，因此 runner 仍必须以实际 response 为准。发布后 exact runner 的唯一正式采集
+  共完成 179 个 official HTTP 200 response，逐项保存 bytes、size 与 SHA-256。浏览器可见性
+  仍不能替代 official bytes、checksum 与 source manifest；
+- first-run preservation：首次正式采集生成的
+  `event_source_manifest.json`、`attempt_ledger.json` 与
+  `event_attempt_freeze_gate.json` 作为 immutable failure evidence 保留。它们分别绑定
+  source commit `9105dcb32fa4029ca9770f264f4072045b0c5932`、179 份 raw official
+  response、唯一 attempt family 与 blocked gate，不得覆盖、删除或改写；
+- parser defect finding：CPI 64/64、FOMC 43/43 release 解析通过；NFP 64/64 official
+  页面均在 `embargoed until` 与 `8:30 a.m. (ET)` 之间插入 `USDL-xx-xxxx` release
+  identifier。现有 parser 错误要求时间紧随 `until`，因此
+  `O1_EVENT_BLS_TIMESTAMP_MISSING` 是工程缺陷，不是 empirical coverage/DQ 结论；
+- replay correction：只能在同一 exact root 内，从 retained manifest 逐项复验
+  path/size/SHA-256/domain/status 后离线重放；禁止重新下载、创建第二 workspace、覆盖首次
+  工件或读取 coverage/result。修复必须接受有界 BLS release identifier、校验 BLS 正文日期
+  与 archive URL 日期一致，并生成新命名的 superseding replay manifest/gate；原始 attempt
+  ledger 继续约束同一个 family，不得借 replay 增加或更换模型/特征 family；
 - retention：与 candidate 一同保留到 coverage/canonical/final classification closeout；
   coverage 只能读取 freeze gate 精确绑定的 ledger bytes；
 - exit condition：event/attempt/coverage/run evidence 已转入 canonical governed artifact
@@ -385,3 +406,27 @@ run identity 和一个 attempt ledger。
   `outputs/validation_runtime/contract-validation_20260729T192955Z/test_runtime_summary.json`）。
   当前只允许完成 task-branch commit、local-main fast-forward 与 ordinary push；真实 source
   acquisition 必须从发布后的 exact commit 在同一已登记 root 执行。
+- 2026-07-30：从已发布 exact commit
+  `9105dcb32fa4029ca9770f264f4072045b0c5932` 执行唯一 registered source
+  acquisition。179 个 Federal Reserve/BLS 请求全部 HTTP 200，保存
+  `179 files / 160417518 bytes`；首次 source manifest、attempt ledger 与 blocked gate
+  SHA-256 分别为
+  `4d7cc17dc8d4347d57b7df7912309ef60a1dfe62c3247b330ce24f7c18571575`、
+  `8656a70679c7d8f87a95efa707c1973fec4adbc6fa8d9cab493a01788b934a09`、
+  `fb13674801feebbb234846c2499159da604e85680e0a2dff07a3e3b9f04e6003`。
+  初始 gate 因 64 个 `O1_EVENT_BLS_TIMESTAMP_MISSING` 关闭 coverage/model training；
+  随后只读审计确认所有 blocker 都来自 NFP 页面 header 中合法的 `USDL` identifier
+  插入格式，是 parser defect。下一步先修复 parser 与 immutable raw replay path；在
+  superseding replay gate PASS 前不得把初始机械 class 当作研究结论，也不得进入 coverage。
+- 2026-07-30：完成 bounded `USDL` header parser correction 与 checksum-verified
+  offline replay path。修复要求 BLS 正文日期/weekday 与 archive URL 日期一致；replay
+  只接受 initial manifest/attempt/gate 三个显式 SHA，逐项复验 179 份 retained official
+  bytes、index→release inventory、policy/DQ/attempt identity，且 API 没有 fetcher。
+  实际 retained bytes 的只读预演为 `179 requests / 179 artifacts / 171 events`
+  （FOMC 43 / CPI 64 / NFP 64），未创建 replay 输出。focused=`11/11`、
+  authority/deprecation=`152/152`、Architecture=`793/793`
+  （`outputs/validation_runtime/architecture-fitness_20260729T200434Z/`）、
+  Contract=`276/276`
+  （`outputs/validation_runtime/contract-validation_20260729T200622Z/`）。
+  下一步只允许发布该 exact code commit，再从该 commit 在同一 root 执行一次 offline
+  replay；发布前不得生成 superseding gate。

@@ -2228,7 +2228,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_event_attempt_ledger
   path: tests/research_strategies/test_o1_relative_opportunity_event_attempt_ledger.py
-  sha256: bd57af79a8233ac57a07675876ec62906925c093ccc76fa6a28bf8a6ddd19c45
+  sha256: 9fe24a6247e3aa2076abb201e0b8e1f68c44d4fcbcac972f784eaebc60266f1f
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7591,7 +7591,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: fb56e0b343d6dfee03d5e3a54a143a1fa646cb46f9f47aadda60dc58467bf399
+  sha256: dd14c80721b69378776b68413c1a0e1a172cdf5d4c2a347c96de12b67a9547a7
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

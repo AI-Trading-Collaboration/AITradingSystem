@@ -2793,7 +2793,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.o1_relative_opportunity_event_attempt_ledger
   path: src/ai_trading_system/data/o1_relative_opportunity_event_attempt_ledger.py
-  sha256: 44c5ba4b96040f839fb9d7db76688934a9696d47686304ea9c51d9a49074e890
+  sha256: 244e42838ffcd0696c956f90bfa29e735c3989f681bca56a92544f93e20e540f
   rule_id: data
   owner_profile: data
   owners:

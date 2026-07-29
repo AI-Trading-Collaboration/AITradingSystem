@@ -33960,3 +33960,139 @@ phase_trading_2464_o1_event_attempt_freeze_runner:
     new_o1_result_read: false
     production_effect: none
     broker_action: none
+
+phase_trading_2464_o1_event_raw_replay_parser_correction:
+  schema_version: trading_2464_o1_event_raw_replay_parser_correction_compatibility.v1
+  status: IN_PROGRESS
+  boundary_id: TRADING-2464-O1-EVENT-RAW-REPLAY-PARSER-CORRECTION
+  task_ids:
+  - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+  prior_sections_immutability:
+    source_commit: 9105dcb32fa4029ca9770f264f4072045b0c5932
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: c6ce20311b709920b9ce14c8b9ba01f79c36f624
+    raw_byte_count: 2129937
+    raw_sha256: 245b21a35804378121fbaa2f9bd98e31cfc2bcb29e76547f30e5784ff973c9fa
+    append_offset: 2129937
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - scripts/trading2464_o1_event_attempt_ledger.py
+  - src/ai_trading_system/data/o1_relative_opportunity_event_attempt_ledger.py
+  - tests/research_strategies/test_o1_relative_opportunity_event_attempt_ledger.py
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: TRADING-2464-O1-EVENT-RAW-REPLAY-PARSER-CORRECTION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2464_o1_event_attempt_freeze_runner
+    current_hash_authority: phase_trading_2464_o1_event_raw_replay_parser_correction.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - scripts/trading2464_o1_event_attempt_ledger.py
+  - src/ai_trading_system/data/o1_relative_opportunity_event_attempt_ledger.py
+  - tests/research_strategies/test_o1_relative_opportunity_event_attempt_ledger.py
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+    sha256: dc091807a3986c55fd99963dfeaef43c7e33ca92d206c755ab457a4573b875c3
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: aca60fee226280fd05781ca6891ba4dac671b539128863b264981f062ea2c1c1
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: c92658e9ea33d98cf42ef0eb623e83d84bc6539ad4608b1333bd53604174540a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: f6fbe35e49261caf901d8ea45659c29cecfc8e37c41f4e2db581bcf09c953010
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: d6a47b5df3be8b403998959535b4dc8275cb9ebea5d7218855bf4f8edd756e88
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 60e2a95e46cb9917adabc286b28088b33e41688ca65abd98a4c8fcb1e078ce0f
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: a39883307419e67cb6e552c5295befe331f4fcb243b2bde3a955b5ea4dd87bb9
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: a148d6bb07ccd6d77397ad8bcd7b2bd3ab3eee72ac9b75f71afc74ba56916cff
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+    sha256: 6ef1366a5861a7971f8c051f4314c112efd0de5fc521bbf619f07e2987d7733c
+    hash_normalization: git_eol_lf
+  - path: scripts/trading2464_o1_event_attempt_ledger.py
+    sha256: eca2b5b91706ec20d01be02da05874b97ff1bab4ab3244f8dd3ef37a3e06ae3f
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/o1_relative_opportunity_event_attempt_ledger.py
+    sha256: 244e42838ffcd0696c956f90bfa29e735c3989f681bca56a92544f93e20e540f
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_event_attempt_ledger.py
+    sha256: 9fe24a6247e3aa2076abb201e0b8e1f68c44d4fcbcac972f784eaebc60266f1f
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: dd14c80721b69378776b68413c1a0e1a172cdf5d4c2a347c96de12b67a9547a7
+    hash_normalization: git_eol_lf
+  implementation:
+    source_base_sha: 9105dcb32fa4029ca9770f264f4072045b0c5932
+    initial_source_manifest_id: o1_event_source_f43095d127388efbdba0eae9462ddd70
+    initial_source_manifest_sha256: 4d7cc17dc8d4347d57b7df7912309ef60a1dfe62c3247b330ce24f7c18571575
+    initial_attempt_ledger_id: o1_attempt_ledger_c7ecea31599de705f420dc0713096663
+    initial_attempt_ledger_sha256: 8656a70679c7d8f87a95efa707c1973fec4adbc6fa8d9cab493a01788b934a09
+    initial_gate_id: o1_event_attempt_gate_596130e1136f86dc2f3c8918f7b80f4c
+    initial_gate_sha256: fb13674801feebbb234846c2499159da604e85680e0a2dff07a3e3b9f04e6003
+    initial_blocker_code: O1_EVENT_BLS_TIMESTAMP_MISSING
+    initial_blocker_count: 64
+    retained_request_count: 179
+    retained_unique_artifact_count: 179
+    retained_unique_artifact_bytes: 160417518
+    read_only_replay_event_count: 171
+    read_only_replay_family_counts:
+      FOMC: 43
+      CPI: 64
+      NFP: 64
+    replay_mode: CHECKSUM_VERIFIED_OFFLINE_REPLAY_NO_NETWORK
+    raw_refetch_allowed: false
+    initial_artifact_overwrite_allowed: false
+    replay_executed: false
+    coverage_read: false
+    model_training_executed: false
+  validation:
+    runner_and_replay_focused: PASS_11_TESTS
+    actual_raw_read_only_preflight: PASS_179_REQUESTS_179_ARTIFACTS_171_EVENTS
+    task_registry: PASS_BYTE_IDENTICAL_927_TASKS
+    generated_architecture: PASS_1042_MODULES_1211_TESTS
+    authority_and_deprecation: PASS_152_TESTS
+    architecture: PASS_793_TESTS
+    contract: PASS_276_TESTS
+  safety:
+    official_source_bytes_requested_once: true
+    initial_failure_artifacts_immutable: true
+    raw_source_refetched: false
+    replay_artifacts_generated: false
+    event_ledger_generated: false
+    coverage_audit_executed: false
+    model_training_executed: false
+    new_o1_result_read: false
+    production_effect: none
+    broker_action: none

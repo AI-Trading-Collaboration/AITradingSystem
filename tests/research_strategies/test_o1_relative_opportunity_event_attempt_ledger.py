@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -15,6 +15,7 @@ from ai_trading_system.data.o1_relative_opportunity_event_attempt_ledger import 
     O1EventAttemptFreezeError,
     SourceFetch,
     freeze_o1_event_and_attempt_ledgers,
+    replay_o1_event_and_attempt_ledgers_from_retained_sources,
     validate_o1_event_attempt_freeze_gate,
 )
 
@@ -222,6 +223,160 @@ def test_duplicate_event_ids_fail_closed() -> None:
     assert exc.value.code == "O1_EVENT_DUPLICATE_ID"
 
 
+def test_bls_parser_accepts_bounded_usdl_identifier_and_checks_body_date() -> None:
+    timestamp = ledger_module._parse_bls_release_timestamp(
+        "https://www.bls.gov/news.release/archives/empsit_01052024.htm",
+        (
+            b"Transmission of material in this news release is embargoed until "
+            b"USDL-24-0006 8:30 a.m. (ET) Friday, January 5, 2024"
+        ),
+    )
+    assert timestamp.astimezone(UTC).isoformat() == "2024-01-05T13:30:00+00:00"
+
+    with pytest.raises(O1EventAttemptFreezeError) as exc:
+        ledger_module._parse_bls_release_timestamp(
+            "https://www.bls.gov/news.release/archives/empsit_01052024.htm",
+            (
+                b"Transmission of material in this news release is embargoed until "
+                b"USDL-24-0006 8:30 a.m. (ET) Monday, January 8, 2024"
+            ),
+        )
+    assert exc.value.code == "O1_EVENT_BLS_RELEASE_DATE_MISMATCH"
+
+
+def test_blocked_parser_acquisition_replays_without_refetch_or_overwrite(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_root, policy_path, output_root = _project_fixture(tmp_path)
+    original_parser = ledger_module._parse_bls_release_timestamp
+
+    def reject_nfp_for_initial_freeze(url: str, body: bytes) -> datetime:
+        if "/empsit_" in url:
+            raise O1EventAttemptFreezeError("O1_EVENT_BLS_TIMESTAMP_MISSING", url)
+        return original_parser(url, body)
+
+    monkeypatch.setattr(
+        ledger_module,
+        "_parse_bls_release_timestamp",
+        reject_nfp_for_initial_freeze,
+    )
+    initial = freeze_o1_event_and_attempt_ledgers(
+        output_root=output_root,
+        project_root=project_root,
+        generated_at=GENERATED_AT,
+        audit_policy_path=policy_path.relative_to(project_root),
+        fetcher=_fixture_fetcher(),
+        source_commit_sha="a" * 40,
+    )
+    monkeypatch.setattr(
+        ledger_module,
+        "_parse_bls_release_timestamp",
+        original_parser,
+    )
+    assert initial.status == BLOCKED_STATUS
+    immutable_before = {
+        path.name: path.read_bytes()
+        for path in (
+            initial.source_manifest_path,
+            initial.attempt_ledger_path,
+            initial.gate_path,
+        )
+    }
+
+    replay = replay_o1_event_and_attempt_ledgers_from_retained_sources(
+        output_root=output_root,
+        project_root=project_root,
+        generated_at=GENERATED_AT + timedelta(minutes=1),
+        audit_policy_path=policy_path.relative_to(project_root),
+        initial_source_manifest_sha256=ledger_module.sha256_path(
+            initial.source_manifest_path
+        ),
+        initial_attempt_ledger_sha256=ledger_module.sha256_path(
+            initial.attempt_ledger_path
+        ),
+        initial_gate_sha256=ledger_module.sha256_path(initial.gate_path),
+        source_commit_sha="b" * 40,
+    )
+
+    assert replay.status == PASS_STATUS
+    assert replay.source_manifest_path.name == "event_source_manifest_replay_v1.json"
+    assert replay.gate_path.name == "event_attempt_freeze_gate_replay_v1.json"
+    assert replay.attempt_ledger_path == initial.attempt_ledger_path
+    assert replay.event_ledger_path is not None
+    replay_events = json.loads(replay.event_ledger_path.read_text(encoding="utf-8"))
+    assert len(replay_events["events"]) == 3
+    assert replay.gate["replay_provenance"]["network_accessed"] is False
+    assert replay.gate["next_authorization"]["coverage_only_gate_allowed"] is True
+    for path in (
+        initial.source_manifest_path,
+        initial.attempt_ledger_path,
+        initial.gate_path,
+    ):
+        assert path.read_bytes() == immutable_before[path.name]
+
+
+def test_retained_replay_rejects_raw_byte_tamper_before_writing_outputs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    project_root, policy_path, output_root = _project_fixture(tmp_path)
+    original_parser = ledger_module._parse_bls_release_timestamp
+
+    def reject_nfp_for_initial_freeze(url: str, body: bytes) -> datetime:
+        if "/empsit_" in url:
+            raise O1EventAttemptFreezeError("O1_EVENT_BLS_TIMESTAMP_MISSING", url)
+        return original_parser(url, body)
+
+    monkeypatch.setattr(
+        ledger_module,
+        "_parse_bls_release_timestamp",
+        reject_nfp_for_initial_freeze,
+    )
+    initial = freeze_o1_event_and_attempt_ledgers(
+        output_root=output_root,
+        project_root=project_root,
+        generated_at=GENERATED_AT,
+        audit_policy_path=policy_path.relative_to(project_root),
+        fetcher=_fixture_fetcher(),
+        source_commit_sha="a" * 40,
+    )
+    monkeypatch.setattr(
+        ledger_module,
+        "_parse_bls_release_timestamp",
+        original_parser,
+    )
+    manifest = json.loads(initial.source_manifest_path.read_text(encoding="utf-8"))
+    nfp_release = next(
+        item
+        for item in manifest["requests"]
+        if item["event_family"] == "NFP" and item["source_role"] == "RELEASE"
+    )
+    raw_path = output_root / nfp_release["artifact_path"]
+    raw_path.write_bytes(raw_path.read_bytes() + b"TAMPER")
+
+    with pytest.raises(O1EventAttemptFreezeError) as exc:
+        replay_o1_event_and_attempt_ledgers_from_retained_sources(
+            output_root=output_root,
+            project_root=project_root,
+            generated_at=GENERATED_AT + timedelta(minutes=1),
+            audit_policy_path=policy_path.relative_to(project_root),
+            initial_source_manifest_sha256=ledger_module.sha256_path(
+                initial.source_manifest_path
+            ),
+            initial_attempt_ledger_sha256=ledger_module.sha256_path(
+                initial.attempt_ledger_path
+            ),
+            initial_gate_sha256=ledger_module.sha256_path(initial.gate_path),
+            source_commit_sha="b" * 40,
+        )
+
+    assert exc.value.code == "O1_EVENT_REPLAY_RAW_ARTIFACT_TAMPERED"
+    assert not (output_root / "event_source_manifest_replay_v1.json").exists()
+    assert not (output_root / "event_attempt_freeze_gate_replay_v1.json").exists()
+    assert not (output_root / "event_ledger.json").exists()
+
+
 def _project_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
     project_root = tmp_path / "project"
     project_root.mkdir(parents=True)
@@ -282,7 +437,7 @@ def _fixture_responses() -> dict[str, bytes]:
         ),
         "https://www.bls.gov/news.release/archives/empsit_03052021.htm": (
             b"<p>Transmission of material in this release is embargoed until "
-            b"8:30 a.m. (ET) Friday, March 5, 2021.</p>"
+            b"USDL-21-0306 8:30 a.m. (ET) Friday, March 5, 2021.</p>"
         ),
         "https://www.federalreserve.gov/newsevents/pressreleases/monetary20210317a.htm": (
             b"<p>For release at 2:00 p.m. EDT</p>"

@@ -347,6 +347,15 @@ blocker manifest 与 pre-result append-only attempt ledger，机械保持
 `coverage_only_gate_allowed=false`、`model_training_allowed=false`。网页登录可见内容、截图、
 搜索摘要、镜像与 current-view reconstruction 都不能替代 exact official bytes。
 
+首次正式采集已从 published commit `9105dcb32fa4029ca9770f264f4072045b0c5932`
+保存 179 个 official HTTP 200 response。NFP 页面的 bounded `USDL-xx-xxxx` header 格式暴露
+parser defect 后，首次 blocked manifest/attempt/gate 继续 immutable 保留；修复路径只能使用
+`--replay-retained-sources`，在同一 workspace 逐项复验 initial artifact SHA、raw path/size/SHA、
+official domain、HTTP/source status、index→release inventory、attempt family、DQ/policy identity，
+再从 retained bytes 离线重建 event row。该路径不接收 fetcher、不访问网络、不覆盖首次工件，
+还要求 BLS 正文日期与 archive URL 日期一致；只生成新命名的 replay manifest/gate 与此前
+不存在的 event ledger。superseding replay gate PASS 前仍不得读取 coverage 或训练模型。
+
 synthetic-only 路径由
 `src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_capability_audit.py`
 实现，只接受 `data_role=SYNTHETIC_FIXTURE_ONLY`。它复用 reviewed feature builder，并用独立
@@ -370,6 +379,9 @@ flowchart LR
     IC --> SDQ["Observed strict DQ PASS / 0 / 0<br/>same-store gate retained"]
     SDQ --> LG["Official source manifest<br/>+ append-only attempt ledger"]
     LG -->|"source bytes / timestamps unavailable"| ICQ
+    LG -->|"reviewed parser defect only"| RP["Checksum-verified offline raw replay<br/>no refetch / no overwrite"]
+    RP -->|"raw / policy / DQ / inventory mismatch"| ICQ
+    RP --> EL
     LG --> EL["Freeze FOMC/CPI/NFP event ledger"]
     EL --> COV["Coverage-only eligibility gate"]
     COV -->|"FAIL / insufficient"| ICQ["INSUFFICIENT_COVERAGE_OR_DQ"]

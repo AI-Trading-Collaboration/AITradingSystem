@@ -1232,7 +1232,22 @@ TRADING_2464_EVENT_ATTEMPT_RUNNER_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION
+TRADING_2464_EVENT_RAW_REPLAY_SECTION = (
+    "phase_trading_2464_o1_event_raw_replay_parser_correction"
+)
+TRADING_2464_EVENT_RAW_REPLAY_BASE_COMMIT = (
+    "9105dcb32fa4029ca9770f264f4072045b0c5932"
+)
+TRADING_2464_EVENT_RAW_REPLAY_BASELINE_GIT_BLOB = (
+    "c6ce20311b709920b9ce14c8b9ba01f79c36f624"
+)
+TRADING_2464_EVENT_RAW_REPLAY_HISTORICAL_PREFIX_BYTE_COUNT = 2_129_937
+TRADING_2464_EVENT_RAW_REPLAY_HISTORICAL_PREFIX_SHA256 = (
+    "245b21a35804378121fbaa2f9bd98e31cfc2bcb29e76547f30e5784ff973c9fa"
+)
+TRADING_2464_EVENT_RAW_REPLAY_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2464_EVENT_RAW_REPLAY_NEW_SOURCE_PATHS = frozenset()
+LATEST_COMPATIBILITY_SECTION = TRADING_2464_EVENT_RAW_REPLAY_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2625,6 +2640,26 @@ def _trading_2464_event_attempt_runner_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2464_event_raw_replay_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2464_EVENT_RAW_REPLAY_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2464_EVENT_RAW_REPLAY_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -3952,6 +3987,26 @@ def _assert_trading_2464_event_attempt_runner_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2464_event_raw_replay_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2464_EVENT_RAW_REPLAY_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2464_EVENT_RAW_REPLAY_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2464 event raw replay historical prefix differs from immutable "
+        "event/attempt-runner authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2464_EVENT_RAW_REPLAY_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -5578,6 +5633,34 @@ def _trading_2464_event_attempt_runner_all_current_authority_paths() -> frozense
 
 
 @cache
+def _trading_2464_event_raw_replay_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2464_event_raw_replay_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_event_raw_replay_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2464_EVENT_RAW_REPLAY_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2464_event_raw_replay_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2464_EVENT_RAW_REPLAY_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2464_event_raw_replay_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2464_event_raw_replay_superseded_live_source_paths()
+        | _trading_2464_event_raw_replay_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     return (
         _trading_2463_superseded_live_source_paths()
@@ -5701,6 +5784,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _trading_2464_isolated_dq_source_paths()
     if TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION in baseline:
         paths |= _trading_2464_event_attempt_runner_source_paths()
+    if TRADING_2464_EVENT_RAW_REPLAY_SECTION in baseline:
+        paths |= _trading_2464_event_raw_replay_source_paths()
     return paths
 
 
@@ -6523,12 +6608,49 @@ def _trading_2464_event_attempt_runner_prior_active_source_mismatches() -> froze
     return _latest_active_source_mismatches(TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION)
 
 
+@cache
+def _trading_2464_event_raw_replay_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2464_EVENT_RAW_REPLAY_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION in baseline:
+    if TRADING_2464_EVENT_RAW_REPLAY_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2464_event_raw_replay_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2464_event_raw_replay_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_all_superseded_live_source_paths()
+            | _data_gov_001_d0d_superseded_live_source_paths()
+            | _data_gov_001_d0d_source_paths()
+            | _data_gov_001_d0e_superseded_live_source_paths()
+            | _data_gov_001_d0e_source_paths()
+            | _devx_007_all_current_authority_paths()
+            | _trading_2464_decision_all_current_authority_paths()
+            | _trading_2464_dq_recovery_all_current_authority_paths()
+            | _trading_2464_owner_token_all_current_authority_paths()
+            | _trading_2464_contract_all_current_authority_paths()
+            | _trading_2464_synthetic_all_current_authority_paths()
+            | _trading_2464_isolated_dq_all_current_authority_paths()
+            | _trading_2464_event_attempt_runner_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2464_EVENT_RAW_REPLAY_SECTION
+    elif TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION in baseline:
         current_superseded_paths = (
             _trading_2464_event_attempt_runner_superseded_live_source_paths()
         )
@@ -16017,7 +16139,9 @@ def test_trading_2464_event_attempt_runner_is_append_only_current_hash_authority
         _trading_2464_event_attempt_runner_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION
+    assert list(baseline).index(TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION) < list(
+        baseline
+    ).index(TRADING_2464_EVENT_RAW_REPLAY_SECTION)
     phase = baseline[TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION]
     assert phase["schema_version"] == (
         "trading_2464_o1_event_attempt_freeze_runner_compatibility.v1"
@@ -16065,7 +16189,7 @@ def test_trading_2464_event_attempt_runner_is_append_only_current_hash_authority
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "source_base_sha": TRADING_2464_EVENT_ATTEMPT_RUNNER_BASE_COMMIT,
         "source_manifest_schema": "o1_relative_opportunity_event_source_manifest.v1",
@@ -16088,6 +16212,110 @@ def test_trading_2464_event_attempt_runner_is_append_only_current_hash_authority
     assert phase["safety"] == {
         "official_source_bytes_requested": False,
         "browser_visible_content_promoted_to_source": False,
+        "event_ledger_generated": False,
+        "coverage_audit_executed": False,
+        "model_training_executed": False,
+        "new_o1_result_read": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2464_event_raw_replay_is_append_only_current_hash_authority() -> None:
+    _assert_trading_2464_event_raw_replay_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_event_raw_replay_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2464_EVENT_RAW_REPLAY_SECTION
+    phase = baseline[TRADING_2464_EVENT_RAW_REPLAY_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2464_o1_event_raw_replay_parser_correction_compatibility.v1"
+    )
+    assert phase["status"] == "IN_PROGRESS"
+    assert phase["boundary_id"] == "TRADING-2464-O1-EVENT-RAW-REPLAY-PARSER-CORRECTION"
+    assert phase["task_ids"] == [
+        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2464_EVENT_RAW_REPLAY_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2464_EVENT_RAW_REPLAY_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2464_EVENT_RAW_REPLAY_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2464_EVENT_RAW_REPLAY_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2464_EVENT_RAW_REPLAY_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _trading_2464_event_raw_replay_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2464-O1-EVENT-RAW-REPLAY-PARSER-CORRECTION",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION,
+        "current_hash_authority": f"{TRADING_2464_EVENT_RAW_REPLAY_SECTION}.sources",
+    }
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2464_EVENT_RAW_REPLAY_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == TRADING_2464_EVENT_RAW_REPLAY_NEW_SOURCE_PATHS
+    expected = (
+        superseded | TRADING_2464_EVENT_RAW_REPLAY_NEW_SOURCE_PATHS
+    ) - TRADING_2464_EVENT_RAW_REPLAY_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "source_base_sha": TRADING_2464_EVENT_RAW_REPLAY_BASE_COMMIT,
+        "initial_source_manifest_id": "o1_event_source_f43095d127388efbdba0eae9462ddd70",
+        "initial_source_manifest_sha256": (
+            "4d7cc17dc8d4347d57b7df7912309ef60a1dfe62c3247b330ce24f7c18571575"
+        ),
+        "initial_attempt_ledger_id": "o1_attempt_ledger_c7ecea31599de705f420dc0713096663",
+        "initial_attempt_ledger_sha256": (
+            "8656a70679c7d8f87a95efa707c1973fec4adbc6fa8d9cab493a01788b934a09"
+        ),
+        "initial_gate_id": "o1_event_attempt_gate_596130e1136f86dc2f3c8918f7b80f4c",
+        "initial_gate_sha256": (
+            "fb13674801feebbb234846c2499159da604e85680e0a2dff07a3e3b9f04e6003"
+        ),
+        "initial_blocker_code": "O1_EVENT_BLS_TIMESTAMP_MISSING",
+        "initial_blocker_count": 64,
+        "retained_request_count": 179,
+        "retained_unique_artifact_count": 179,
+        "retained_unique_artifact_bytes": 160417518,
+        "read_only_replay_event_count": 171,
+        "read_only_replay_family_counts": {"FOMC": 43, "CPI": 64, "NFP": 64},
+        "replay_mode": "CHECKSUM_VERIFIED_OFFLINE_REPLAY_NO_NETWORK",
+        "raw_refetch_allowed": False,
+        "initial_artifact_overwrite_allowed": False,
+        "replay_executed": False,
+        "coverage_read": False,
+        "model_training_executed": False,
+    }
+    validation = phase["validation"]
+    assert validation["runner_and_replay_focused"] == "PASS_11_TESTS"
+    assert validation["actual_raw_read_only_preflight"] == (
+        "PASS_179_REQUESTS_179_ARTIFACTS_171_EVENTS"
+    )
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "official_source_bytes_requested_once": True,
+        "initial_failure_artifacts_immutable": True,
+        "raw_source_refetched": False,
+        "replay_artifacts_generated": False,
         "event_ledger_generated": False,
         "coverage_audit_executed": False,
         "model_training_executed": False,
