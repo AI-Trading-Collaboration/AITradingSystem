@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1211
-test_count: 1151
+test_file_count: 1212
+test_count: 1152
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -2177,7 +2177,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_capability_audit_builder
   path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_builder.py
-  sha256: 66b4cda3736a54a42962981fdf62707668f705a767c5bc8c343010cbccda3e62
+  sha256: a3380229e70bb421d8d9ea374752698ed058694f4868d2c3aeac1398d64d43af
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -2194,7 +2194,24 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_capability_audit_contract
   path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
-  sha256: 68d78f3f77119c064e3c1ba04d44e50767043a2bac98069754cc7102f48f8a1f
+  sha256: 8c838463099dd9e8343390adc48af4373879c8263d873a105c8b762eadb4e1f7
+  file_role: test
+  rule_id: research_strategy_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: research_strategy
+  suite: slow-research-regression
+  covered_module_prefixes:
+  - src/ai_trading_system/research_quality/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.research_strategies.test_o1_relative_opportunity_coverage
+  path: tests/research_strategies/test_o1_relative_opportunity_coverage.py
+  sha256: b887b37775cba7fc9d4a30b7d923344f14f1749d29ce77b6fe89860044795793
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -2211,7 +2228,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.research_strategies.test_o1_relative_opportunity_dq_candidate
   path: tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
-  sha256: af7182ac45542015f5de3c5166e0a22f63516ee3894f7f3a2fe69f7f8a951480
+  sha256: 60f4f40e7391ecd0918dd34c60c7908942485b5bde559304c8c3f37b2f085ffc
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7591,7 +7608,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 6486032a223c3f8b09705cb91a98563e807fb8bb92ba658d467d05ebd6e711c1
+  sha256: 09468bf498d53aae882c01ad529e3189fce5a2f00016eb91eb7907337b3b2fca
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7987,7 +8004,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 89376a67cf752ae95832a1550996d72c67ea70467b6c855389fae7377732df74
+  sha256: 737a9db75505ed6cf9ecf95aa8de8255f7d6063a1c51284e5e9bb712f94759fc
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

@@ -327,10 +327,11 @@ TRADING-2464 的 O1 capability audit 不复用 D0E 的 `daily_score_daily` consu
 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，active serial contract 固定
 `TRADING_2463_O1_S4_PILOT_V1`、historical receipt、publication transaction、28 个 feature、
 split/coverage/metric/falsification 与四类机械结论。active contract 本身仍保持
-`real_coverage_read_allowed_now=false` 和 `model_training_allowed_now=false`；必须先集成
-contract，再完成 synthetic-only builder/independent validator。之后只能从 OPS-070 permanent
-runtime clone 的 exact immutable transaction 物化新的 isolated candidate，逐对象核验并在该
-candidate 上得到 strict DQ `PASS / 0 / 0`。该门禁现已由
+`model_training_allowed_now=false`；`real_coverage_read_allowed_now` 只在 synthetic、
+isolated DQ 与 event replay evidence 全部串行绑定后推进为 `true`，且只授权 coverage-only。
+contract 集成后已完成 synthetic-only builder/independent validator；随后从 OPS-070 permanent
+runtime clone 的 exact immutable transaction 物化唯一 isolated candidate，逐对象核验并在该
+candidate 上得到 strict DQ `PASS / 0 / 0`。该门禁由
 `src/ai_trading_system/data/o1_relative_opportunity_dq_candidate.py` 闭合：它在 canonical
 DQ 后立即停止，既不生成 D0E daily consumer authorization，也不 dispatch consumer；进程若在
 摘要阶段中断，只允许复验同一候选的唯一 copy manifest/publication/receipt 并补写 gate，不得
@@ -370,9 +371,18 @@ synthetic-only 路径由
 训练。真实数据角色、policy/source SHA 漂移、重复 key、可见性顺序错误或 payload tamper
 均 fail closed。
 
-真实读取首先只能进入 coverage-only gate；event/attempt ledger、fold/regime/event/effective
-sample 任一不足即机械输出 `INSUFFICIENT_COVERAGE_OR_DQ` 并停止。只有 coverage PASS 才允许
-一个 exact-tree canonical run，随后全部 mandatory falsification 与 independent validation 必须
+真实读取首先只能进入
+`src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_coverage.py` 的
+single-run coverage-only gate。它先逐 SHA 复验 active policy、strict DQ gate、candidate
+prices/rates/secondary_prices、replay source manifest/event ledger、pre-result attempt ledger 与
+replay gate，再计算 eligibility、5-session non-overlap/autocorrelation ESS、fold-train-only
+regime tertile 与 event episode coverage。报告不保存逐行 target/feature，不生成 prediction 或
+metric；event UTC occurrence date 若不是 common session，只进入 missing count，不平移到相邻
+交易日。event/attempt ledger、fold/regime/event/effective sample 任一不足即机械输出
+`INSUFFICIENT_COVERAGE_OR_DQ` 并停止。coverage PASS 也只允许后续 serial policy binding，
+runner 自身继续输出 `model_training_allowed_now=false` 与
+`canonical_run_allowed_now=false`。只有 coverage evidence 完成 exact binding 后才可允许一个
+exact-tree canonical run，随后全部 mandatory falsification 与 independent validation 必须
 通过；最终结论只能是四个 reviewed capability class 之一，且任何正面 class 都不授权
 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production
 或 broker action。
@@ -389,7 +399,7 @@ flowchart LR
     RP -->|"raw / policy / DQ / inventory mismatch"| ICQ
     RP --> EL
     LG --> EL["Freeze FOMC/CPI/NFP event ledger"]
-    EL --> COV["Coverage-only eligibility gate"]
+    EL --> COV["Exact evidence binding<br/>Coverage-only eligibility / ESS / regime / event gate"]
     COV -->|"FAIL / insufficient"| ICQ["INSUFFICIENT_COVERAGE_OR_DQ"]
     COV -->|"PASS"| RUN["One canonical historical-seen-only run"]
     RUN --> FAL["All mandatory falsification axes"]

@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import shutil
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 
 from ai_trading_system.research_framework.plugins.o1_relative_opportunity_capability_audit import (
     DATA_ROLE,
@@ -27,6 +29,23 @@ HISTORICAL_MODEL_POLICY_PATH = (
     PROJECT_ROOT / "config/research/decision_target_capability_audit_model_ladder_v1.yaml"
 )
 SOURCE_COMMIT_SHA = "b346aaa622de1c9671527fda4b89b84f2c08ac83"
+
+
+@pytest.fixture(autouse=True)
+def _bind_historical_synthetic_stage_policy(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep synthetic-stage tests bound to their original pre-coverage gate."""
+
+    payload = yaml.safe_load(AUDIT_POLICY_PATH.read_text(encoding="utf-8"))
+    payload["execution_binding"]["real_coverage_read_allowed_now"] = False
+    staged_path = tmp_path / AUDIT_POLICY_PATH.name
+    staged_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sys.modules[__name__], "AUDIT_POLICY_PATH", staged_path)
 
 
 def test_synthetic_builder_is_deterministic_and_independently_reconstructs() -> None:

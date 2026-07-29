@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`
+状态：`READY_COVERAGE_ONLY_RUNNER_PUBLISH`
 
 production effect：`none`
 
@@ -253,7 +253,7 @@ run identity 和一个 attempt ledger。
 
 ## 8. 当前执行点
 
-- `status=READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`
+- `status=READY_COVERAGE_ONLY_RUNNER_PUBLISH`
 - `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
 - `synthetic_builder_validator=PASS_SYNTHETIC_ONLY_DETERMINISTIC_INDEPENDENT_RECONSTRUCTION`
 - `data_prerequisite=ISOLATED_CANDIDATE_STRICT_DQ_PASS_0_0`
@@ -284,6 +284,7 @@ run identity 和一个 attempt ledger。
 - `event_ledger_sha256=d714af0779e6edb97f9ed143192c7b8858e70f21196e96be190b837cc0deb476`
 - `event_count=171_fomc_43_cpi_64_nfp_64`
 - `real_coverage_read_allowed_now=true_coverage_only`
+- `coverage_runner_implementation=PASS_SYNTHETIC_CONTROLLED_FIXTURES_ONLY`
 - `coverage_audit_executed=false`
 - `new_results_read=false`
 - `prospective_accessed=false`
@@ -354,6 +355,30 @@ run identity 和一个 attempt ledger。
   location并逐 byte 核验，且无 active process 或后续 acceptance 依赖；
 - cleanup：与 8.1 使用同一最终 absolute-root allowlist；失败或 source 不足时保留已下载
   primary bytes与 blocker manifest，不创建第二目录。
+
+### 8.3 Coverage-only output 生命周期登记
+
+- exact root：
+  `D:/Work/AITradingSystem/outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_coverage_only_v1`；
+- owner task：`TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT`；
+- purpose：从发布后的 exact runner commit 逐 SHA 复验 active policy、strict DQ gate、
+  candidate 三份 immutable input、replay source manifest/event ledger/attempt ledger/gate，
+  然后只计算 eligibility、fold/ESS、fold-train-only regime tertile 与 event-episode coverage；
+- creation precondition：coverage runner focused/formal validation PASS、commit 已 fast-forward
+  至 local/remote `main`、exact root 不存在、source commit 等于运行时 Git HEAD；
+- single-run boundary：runner 不提供 resume、overwrite、second-candidate 或结果导向重跑；
+  gate 为 PASS 或 `INSUFFICIENT_COVERAGE_OR_DQ` 都使该目录 immutable；
+- governed outputs：`coverage_report.json` 与 `coverage_gate.json`。报告不保存逐行 target、
+  feature、prediction、metric 或模型参数；非 common-session event 只记为 missing，不平移到
+  相邻交易日；
+- authorization boundary：coverage PASS 也只把
+  `canonical_policy_update_eligible=true`；`model_training_allowed_now=false` 与
+  `canonical_run_allowed_now=false` 继续保持，必须另做 exact evidence serial binding 后才可
+  启动 canonical runner；
+- retention：与 8.1/8.2 的 exact candidate/event evidence 一同保留到任务机械分类收口；
+- exit condition / cleanup：coverage/canonical/final evidence 已转入 canonical governed
+  artifact location并逐 byte 核验，且无 active process、scheduler 或后续 acceptance 依赖；
+  满足后按 8.1 的同一 absolute-root allowlist 审计并清理，不能单独删除本目录来破坏证据链。
 
 ## 9. 进度记录
 
@@ -449,3 +474,21 @@ run identity 和一个 attempt ledger。
   checksum；只授权 coverage-only，model training/canonical run/production 仍关闭。
   active policy 已串行绑定 exact evidence；下一步从该合同集成 commit 实现 coverage-only
   runner，不得在同一 wave 读取 eligibility count。
+- 2026-07-30：coverage-only runner 已在 controlled/synthetic fixtures 上实现并完成首轮
+  parallel focused `11/11 PASS`。runner 在任何真实 eligibility 读取前逐 SHA 复验 policy、
+  DQ/event/attempt evidence 与三份 candidate input；随后只输出 fold/ESS、train-only
+  regime tertile 和 event-episode coverage，不保存逐行 target/features，不训练模型、不生成
+  prediction/metric。active policy 推进到 coverage-ready 后，历史 synthetic builder tests
+  曾因继续读取 active policy 而出现 5 项回归；修复是测试专用 pre-coverage policy copy，
+  production synthetic validator 的 `real_coverage_read_allowed_now=false` fail-closed 检查
+  保持不变，回归恢复 `5/5 PASS`。当前仍未读取真实 coverage；下一步必须先完成
+  runner/formal validation、发布 exact commit，再在 8.3 唯一目录执行一次。
+- 2026-07-30：coverage-only runner 发布前门禁完成。O1 五文件并行 focused=`38/38`，
+  authority/deprecation=`154/154`，Ruff targeted=`PASS`，Architecture=`795/795`
+  （`outputs/validation_runtime/architecture-fitness_20260729T211248Z/`），
+  Contract=`276/276`
+  （`outputs/validation_runtime/contract-validation_20260729T211446Z/`）。deprecation
+  inventory 只因新增一个 module 与一个 test file，从 `1042/1211` 机械更新为
+  `1043/1212`，所有 removal gate 仍关闭。真实 coverage 继续为未执行；下一步只允许
+  commit、fast-forward local `main`、ordinary push，然后从该 published exact commit 在
+  8.3 唯一目录运行一次。

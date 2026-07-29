@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1042
+module_count: 1043
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -16881,6 +16881,28 @@ modules:
 - module_id: src.ai_trading_system.research_framework.plugins.o1_relative_opportunity_capability_audit
   path: src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_capability_audit.py
   sha256: 6b7fb0da08e0d884183b413e2bb1c7b7104a9748da10a4f6546e6eb2601c6ea2
+  rule_id: research_framework
+  owner_profile: research
+  owners:
+    code_owner: research_platform
+    policy_owner: research_governance
+    data_owner: research_data_governance
+    artifact_owner: research_governance
+    runtime_owner: research_operations
+  layer: application
+  category: research_experiment_platform
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004d_*.py
+  - tests/test_arch_004e_*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.research_framework.plugins.o1_relative_opportunity_coverage
+  path: src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_coverage.py
+  sha256: fd6b180c46620e6c5cb760886df2acfa9d8c4dc6ebc078314bff7a77b46e9b26
   rule_id: research_framework
   owner_profile: research
   owners:

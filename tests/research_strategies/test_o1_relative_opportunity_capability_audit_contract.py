@@ -189,7 +189,7 @@ def test_active_policy_binds_owner_exact_base_s4_and_dq_transaction() -> None:
     assert isinstance(data, dict)
 
     assert policy["status"] == (
-        "OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING"
+        "OWNER_APPROVED_EVENT_LEDGER_FROZEN_COVERAGE_ONLY_READY"
     )
     assert policy["owner_decision"] == (
         "owner_decision:TRADING-2464:2026-07-30:"
@@ -208,7 +208,7 @@ def test_active_policy_binds_owner_exact_base_s4_and_dq_transaction() -> None:
     assert target["sha256"] == _sha256(S4_PATH)
     assert historical["sha256"] == _sha256(HISTORICAL_POLICY_PATH)
     assert binding["contract_integration_commit_required_before_real_data_access"] is True
-    assert binding["real_coverage_read_allowed_now"] is False
+    assert binding["real_coverage_read_allowed_now"] is True
     assert binding["model_training_allowed_now"] is False
     assert binding["maximum_canonical_runs"] == 1
 

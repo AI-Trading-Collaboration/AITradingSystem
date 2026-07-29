@@ -11,9 +11,8 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex coordinator：完成 exact replay evidence serial binding 并发布；随后从其集成
-    commit 实现/验证 coverage-only runner。当前只允许读取 eligibility/coverage，不允许训练、canonical
-    run 或结果驱动修改。
+  next_owner: Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact
+    commit；随后只在已登记唯一目录执行一次真实 coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
   requirement_refs:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
@@ -22,8 +21,9 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`。isolated
-    DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
+    DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
+    coverage output 尚不存在。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate
@@ -36,47 +36,46 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2034
-    row_sha256: 2846f895b6dabc1448f1729648c5d2a4583f14fc27af14377f97d5f31c9bf4c7
+    row_sha256: 356df7e4c202aab154f639a24712fb6ac22d9a2704401e31ad33d4162dd367cf
     cell_count: 8
     all_cells:
     - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
     - Strategy Style Discovery / O1 relative-opportunity capability evidence
     - P0
     - IN_PROGRESS
-    - Codex coordinator：完成 exact replay evidence serial binding 并发布；随后从其集成 commit
-      实现/验证 coverage-only runner。当前只允许读取 eligibility/coverage，不允许训练、canonical run
-      或结果驱动修改。
+    - Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact commit；随后只在已登记唯一目录执行一次真实
+      coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
     - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`。isolated
-      DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`。
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
+      DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
+      coverage output 尚不存在。
     - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从
       exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
       family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
       ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
-    - 2026-07-30：published replay commit=`9dc8f48b4`；唯一 offline replay PASS，171 events（43/64/64），首次
-      failure artifacts immutable。active policy 逐 SHA 绑定 manifest/event ledger/attempt/gate，`real_coverage_read_allowed_now=true`
-      仅指 coverage-only；model training/canonical/production 继续 false。`production_effect=none`、`broker_action=none`。
+    - 2026-07-30：发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
+      targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
+      training/canonical/production继续false。`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|Strategy
       Style Discovery / O1 relative-opportunity capability evidence|P0|IN_PROGRESS|Codex
-      coordinator：完成 exact replay evidence serial binding 并发布；随后从其集成 commit 实现/验证
-      coverage-only runner。当前只允许读取 eligibility/coverage，不允许训练、canonical run 或结果驱动修改。|详见
-      `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+      coordinator：发布已通过 formal validation 的 coverage-only runner exact commit；随后只在已登记唯一目录执行一次真实
+      coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`。isolated
-      DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`。|Owner
-      exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact
-      transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-      family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
-      ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。|2026-07-30：published
-      replay commit=`9dc8f48b4`；唯一 offline replay PASS，171 events（43/64/64），首次 failure
-      artifacts immutable。active policy 逐 SHA 绑定 manifest/event ledger/attempt/gate，`real_coverage_read_allowed_now=true`
-      仅指 coverage-only；model training/canonical/production 继续 false。`production_effect=none`、`broker_action=none`。|'
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
+      DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
+      coverage output 尚不存在。|Owner exact decision 与 exact-base/input commitment 完整；在
+      isolated candidate 从 exact transaction materialize 并逐对象核验，strict DQ revalidation
+      `PASS/0/0`；model/feature family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official
+      response与checksum，attempt ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。|2026-07-30：发布前
+      O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
+      targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
+      training/canonical/production继续false。`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-2846f895b6dabc1448f17296
+  event_id: legacy-import-356df7e4c202aab154f639a2
   task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -89,16 +88,14 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: Codex coordinator：完成 exact replay evidence serial binding 并发布；随后从其集成
-      commit 实现/验证 coverage-only runner。当前只允许读取 eligibility/coverage，不允许训练、canonical
-      run 或结果驱动修改。
-    notes: 2026-07-30：published replay commit=`9dc8f48b4`；唯一 offline replay PASS，171
-      events（43/64/64），首次 failure artifacts immutable。active policy 逐 SHA 绑定 manifest/event
-      ledger/attempt/gate，`real_coverage_read_allowed_now=true` 仅指 coverage-only；model
-      training/canonical/production 继续 false。`production_effect=none`、`broker_action=none`。
+    next_owner: Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact
+      commit；随后只在已登记唯一目录执行一次真实 coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
+    notes: 2026-07-30：发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
+      targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
+      training/canonical/production继续false。`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:2846f895b6dabc1448f1729648c5d2a4583f14fc27af14377f97d5f31c9bf4c7
+  - sha256:356df7e4c202aab154f639a24712fb6ac22d9a2704401e31ad33d4162dd367cf
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -106,23 +103,24 @@ projection:
   - Strategy Style Discovery / O1 relative-opportunity capability evidence
   - P0
   - IN_PROGRESS
-  - Codex coordinator：完成 exact replay evidence serial binding 并发布；随后从其集成 commit 实现/验证
-    coverage-only runner。当前只允许读取 eligibility/coverage，不允许训练、canonical run 或结果驱动修改。
+  - Codex coordinator：发布已通过 formal validation 的 coverage-only runner exact commit；随后只在已登记唯一目录执行一次真实
+    coverage gate。任何 floor 不足立即机械关闭，不训练模型、不做结果驱动修改。
   - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`。isolated
-    DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_COVERAGE_ONLY_RUNNER_PUBLISH`。isolated
+    DQ gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`；event gate=`o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`；真实
+    coverage output 尚不存在。
   - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact
     transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
     family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
     ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
-  - 2026-07-30：published replay commit=`9dc8f48b4`；唯一 offline replay PASS，171 events（43/64/64），首次
-    failure artifacts immutable。active policy 逐 SHA 绑定 manifest/event ledger/attempt/gate，`real_coverage_read_allowed_now=true`
-    仅指 coverage-only；model training/canonical/production 继续 false。`production_effect=none`、`broker_action=none`。
+  - 2026-07-30：发布前 O1 focused=`38/38`、authority/deprecation=`154/154`、Architecture=`795/795`、Contract=`276/276`、Ruff
+    targeted=`PASS`。runner只输出eligibility/fold/ESS/regime/event coverage，不保存逐行target/features，不生成prediction/metric；真实coverage尚未执行，model
+    training/canonical/production继续false。`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
   terminal: false
-  raw_row_sha256: 2846f895b6dabc1448f1729648c5d2a4583f14fc27af14377f97d5f31c9bf4c7
+  raw_row_sha256: 356df7e4c202aab154f639a24712fb6ac22d9a2704401e31ad33d4162dd367cf
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 1793dd6af3e143d5c265366b61a7bfb456065bc4a2158afcc9a81521d7c8ac07
+fragment_checksum: 41a49cdb81ebbd92b88057fcbb927aeba6ca86222070a6f98a8da100f3f98a9a
