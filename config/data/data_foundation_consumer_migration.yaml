@@ -1,0 +1,58 @@
+schema_version: data_foundation_consumer_migration_policy.v1
+policy_id: data_foundation_daily_score_consumer_migration
+policy_version: 1.0.0
+status: REVIEWED
+owner: data_platform_owner
+rationale: >-
+  Establish the first consumer-scoped Data Foundation migration on one isolated
+  store identity. The candidate must revalidate immutable publication, strict
+  data quality, durable copy activation, ACL enforcement, and the reviewed
+  daily_score_daily authorization before any consumer runner is invoked.
+review_condition: >-
+  Re-review before changing the consumer, execution profile, source acceptance
+  evidence, ACL or durability policy, candidate-store boundary, or any
+  production/scheduler/broker effect.
+consumer:
+  consumer_id: daily_score_daily
+  consumer_version: 1.0.0
+  execution_profile_id: daily_default.v1
+  accepted_data_quality_statuses: [PASS]
+  required_input_roles: [prices, rates, secondary_prices]
+historical_source_acceptance:
+  as_of: 2026-07-27
+  receipt_id: dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4
+  receipt_path: outputs/data_quality/executions/dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4/receipt.json
+  receipt_sha256: 6a4319f15f65a06345f08965c04cada01083d00a478e06febfdfd21f5ef56a58
+  authorization_id: dq_consumer_authorization_fe8360fab72bb976f3b799dba3a7bb933561cc34fa47b3ad7040a9e5fe5fcc02
+  authorization_path: outputs/data_quality/consumer_authorizations/dq_consumer_authorization_fe8360fab72bb976f3b799dba3a7bb933561cc34fa47b3ad7040a9e5fe5fcc02/attestation.json
+  authorization_sha256: 6f87e196aa97ee53e17c79aad46634e615305ccb0d89c915275cab42c9fa9ec3
+  publication_transaction_id: download_txn_80b403268d6023acaf33b0608630b908
+  publication_transaction_sha256: 9ed6e7ec705633bec21e032a25f48ca93fd7ef0ead899bbe857b0f30591d7778
+  publication_discovery_pointer_sha256: 65f652f79ed07c0cc074dc1cc09fe444fa912fa21580df6ebb2eee340926199f
+capability_evidence:
+  d0c_bundle_path: outputs/validation_runtime/data_foundation_d0c_20260729T030000Z/rehearsal_bundle.json
+  d0c_bundle_id: data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f
+  d0c_bundle_sha256: e70bac12b8f962309fcf6c468931cae1392cc4520e3c1cab029495ea8ce2ed20
+  d0d_bundle_path: outputs/validation_runtime/data_foundation_d0d_20260729T034500Z/rehearsal_bundle.json
+  d0d_bundle_id: data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea
+  d0d_bundle_sha256: 0e34f6f5e3cbcd273721651f49c74ac196548cf24df186396d68c328410c04cc
+candidate:
+  allowed_output_parent: outputs/validation_runtime
+  source_publication_dir: data/raw
+  candidate_publication_dir: data/raw
+  publication_store_dir: .download_publications
+  legacy_projection_files:
+    - download_manifest.csv
+    - prices_daily.csv
+    - prices_marketstack_daily.csv
+    - rates_daily.csv
+  retained_for_revalidation: true
+claim_boundary:
+  historical_false_fields_rewritten: false
+  generic_consumer_cutover_allowed: false
+  automatic_non_daily_dispatch: false
+  qld_automatic_selection_enabled: false
+  production_weights_written: false
+  active_shadow_weights_written: false
+  production_effect: none
+  broker_action: none

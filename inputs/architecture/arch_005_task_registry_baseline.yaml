@@ -105,18 +105,18 @@ inventory:
       LF: 420
   - source: completed
     path: docs/task_register_completed.md
-    byte_count: 1098666
-    sha256: 3c83102fe52c2be6d97015923b2d55f190ccf79aee61906db6f6e4d90c6fc7bb
-    row_count: 504
+    byte_count: 1100362
+    sha256: 618e110bcfb7db707513d8cfef242f5db55185c93fa86ed56e9bf17238b851a6
+    row_count: 505
     final_newline: true
-    task_id_order_sha256: b4f93bee837f9f6a28848696ab5718ba76c1fe7a0749cb1ba2463eeefec3ddbb
-    row_checksum_order_sha256: 00214d9b01ecdca8ebdadfe6d0b1f41c2b2ffaa5d5f02d8d0bd46ab6487e2228
+    task_id_order_sha256: c65595c72580555492a481430434fee60b9399a70bd878b2dba18ab1ea829f1c
+    row_checksum_order_sha256: 2695f6987215d4f4d4eaf8ff239bb5b1d646d299c72b304d58554ef0961c568b
     task_row_newline_counts:
-      LF: 504
+      LF: 505
   active_task_count: 420
-  completed_task_count: 504
-  total_task_count: 924
-  unique_task_count: 924
+  completed_task_count: 505
+  total_task_count: 925
+  unique_task_count: 925
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
@@ -124,16 +124,16 @@ inventory:
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
-    DONE: 492
+    DONE: 493
     DROPPED: 12
     IN_PROGRESS: 6
     PROPOSED: 10
     READY: 1
     VALIDATING: 266
-  task_id_set_sha256: 89a61a60b4aa59f821a95cb1e0fa54957548a92d47495ce3b8643d2e7c362c84
+  task_id_set_sha256: 7c0202317fbf5c4edd0dff160dbad7e66e908513a723b9e09595069a75db26a7
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 740c9f5d47bd9a94d0ac86bb33e2684d410641b4b925a0336652f22965bfe4c5
-  docs_link_set_sha256: c8b47fc1f6d214ed8b4d0cad14a6d0c77e2e695de62f2750967448b2a4a44eb6
+  owner_set_sha256: 9a4295f14c2a0c5854a5f68212ee67b2df568278a9f4e3bba4dcc48bae04b6c2
+  docs_link_set_sha256: 16d198ae0ac51b43fc494ba3c5ec5dce1272072b40cfa643ec1d66f8cb07051d
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -6603,6 +6603,13 @@ inventory:
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
+  - task_id: DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION
+    source: completed
+    line_number: 526
+    row_sha256: 7deed9312090677447e4c50e2ad07a350c4c912dcdc83f51f898eee59a52f6fa
+    cell_count: 8
+    field_projection: first_eight_cells_legacy_v1
+    history_completeness: LEGACY_HISTORY_PARTIAL
 consumer_characterization:
   status: PASS_CHARACTERIZED
   consumer_count: 131
@@ -7454,4 +7461,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 93008c9b9f0c922b990f5fe822b78a2d5a1af3eca8e464d0115e63a6044e55c4
+baseline_checksum: fe655bd2ab7da809b202649cc6ec9648b5088b11e53682f1559faa7936bfe26e

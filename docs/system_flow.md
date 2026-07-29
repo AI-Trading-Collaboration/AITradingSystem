@@ -291,6 +291,37 @@ flowchart LR
     CLN -.-> BND["Historical ACL false / generic cutover false / production none"]
 ```
 
+D0E把上述能力收敛到首个exact consumer，但不声明generic cutover。Reviewed
+`data_foundation_daily_score_consumer_migration@1.0.0`只接受
+`daily_score_daily@1.0.0`与`daily_default.v1`。Runner从historical canonical
+publication读取exact immutable bytes与receipt/authorization lineage，通过既有
+`LEGACY_LOCAL_CACHE_IMPORT`合同在新的isolated candidate root发布candidate-specific
+transaction与manifest；historical manifest的absolute path不被改写，也不能拿不同store的
+D0C/D0D bundle拼贴same-store PASS。
+
+Candidate root先应用D0D reviewed ACL，再在同一resolved store上验证durable publication、
+执行strict DQ（仅`PASS / 0 errors / 0 warnings`）、生成新的content-addressed consumer
+authorization，并由verifier重算publication、copy manifest、native ACL、filesystem profile、
+validator source hashes与exact store identity。只有该闭环全部PASS才返回不可伪造的
+`VerifiedConsumerMigration`给controlled read rehearsal。Canonical isolated bundle位于
+`outputs/validation_runtime/data_foundation_d0e_20260729T045400Z/rehearsal_bundle.json`；
+它只授权该consumer的isolated read，继续保持
+`generic_consumer_cutover_allowed=false`、`automatic_non_daily_dispatch=false`、
+`qld_automatic_selection_enabled=false`、`production_effect=none`与`broker_action=none`。
+
+```mermaid
+flowchart LR
+    HIST["Historical canonical bytes + lineage"] --> IMP["LEGACY_LOCAL_CACHE_IMPORT"]
+    IMP --> PUB["Candidate-specific immutable publication"]
+    ACL["Reviewed native ACL"] --> STORE["One exact isolated store identity"]
+    PUB --> STORE
+    STORE --> DQ["Strict DQ PASS / 0 / 0"]
+    DQ --> AUTH["daily_score_daily@1.0.0 authorization"]
+    AUTH --> CAP["VerifiedConsumerMigration"]
+    CAP --> READ["Controlled isolated read rehearsal"]
+    READ -.-> BOUNDARY["No generic cutover / QLD / production / broker"]
+```
+
 W12-S2在D0A能力之上建立D0B1 canonical执行证据与G4 native consumer preflight。无显式`--as-of`时，
 direct `aits validate-data`与`aits ops daily-run`共用`America/New_York`最近已完成交易日和收盘后3小时
 provider-ready buffer；`operations_as_of`只用于scheduler/due/calendar，`data_quality_as_of`取daily plan中

@@ -32676,3 +32676,164 @@ phase_data_gov_001_d0d_store_acl_verification:
     active_shadow_weights_written: false
     production_effect: none
     broker_action: none
+
+phase_data_gov_001_d0e_daily_score_consumer_migration:
+  schema_version: data_gov_001_d0e_daily_score_consumer_migration_compatibility.v1
+  status: COMPLETE
+  boundary_id: DATA-GOV-001-D0E-DAILY-SCORE-CONSUMER-MIGRATION
+  task_ids:
+  - DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION
+  owner_authorization: owner_direction:2026-07-29:continue_d0c_acl_consumer_sequence
+  prior_sections_immutability:
+    source_commit: 96576231f1dd4841eb40ea89b1154560063767ff
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 09656a391d5597fa2bd754cfdd42be37a64f3f4a
+    raw_byte_count: 2057578
+    raw_sha256: c2e3cd274dfbda3cd383734190149ce02af1006659cd5d1c8f98705a50c4ee4d
+    append_offset: 2057578
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/system_flow.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: DATA-GOV-001-D0E-DAILY-SCORE-CONSUMER-MIGRATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_data_gov_001_d0d_store_acl_verification
+    current_hash_authority: phase_data_gov_001_d0e_daily_score_consumer_migration.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/data/data_foundation_consumer_migration.yaml
+  - docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md
+  - registry/development_tasks_shadow/completed/de/de47583d6b7bc0d0fc4bbe203e500abd3f219b4b9db801bffdf549651a29732f.yaml
+  - scripts/data_foundation_consumer_migration_rehearsal.py
+  - src/ai_trading_system/data/foundation_consumer_migration.py
+  - tests/test_data_foundation_consumer_migration.py
+  source_delta_paths:
+  - config/data/data_foundation_consumer_migration.yaml
+  - docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  - docs/system_flow.md
+  - docs/task_register_completed.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/completed/de/de47583d6b7bc0d0fc4bbe203e500abd3f219b4b9db801bffdf549651a29732f.yaml
+  - scripts/data_foundation_consumer_migration_rehearsal.py
+  - src/ai_trading_system/data/foundation_consumer_migration.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_data_foundation_consumer_migration.py
+  sources:
+  - path: config/data/data_foundation_consumer_migration.yaml
+    sha256: 5e0d49fe90b04a24b1150866a38d9c3baf29395213691fcc5236a4a3cd424781
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md
+    sha256: f273375cfa5c2d1fda5dfc4123e36f42f71ddcbc002e5b3fa205ee1a132deff1
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+    sha256: ffc31a6a0d918a3d8755e675cd34cf11c5be0641c2b1a1a252abe45e85e15fdc
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: c60ed6a2f7aa3ba6bc2526914b891e4da0a116a79cef6460c91f363121f0469c
+    hash_normalization: git_eol_lf
+  - path: docs/task_register_completed.md
+    sha256: 618e110bcfb7db707513d8cfef242f5db55185c93fa86ed56e9bf17238b851a6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 6c7ff05d24739dfdadbc3186fa2eea866fb11f7c9e0b4aea792936be1fcb72b0
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 54630935be60d115ae95657f7fc2d04b6b3461e2245e6a56ac54f90e02c9807b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: ca5010b91f9c148ed0bb8dbcfda3055bed03645f897f37b0966383c1bc028f54
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 77095cedba40c6efb104d2913c74f39c301b8514e7a0427f881f85f2829739e6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: d8af667dec2c6b2631fc7f3e998dea523e5ac46c4249e1d6879e09d4a8b88d65
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 349ba2f3f73e67fff0eb223ccce28fb3940ecbe5a36e270d7a88c03ac2e563f7
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 095ba862bf188f7e66259fcf7d651259a9f458da4ef1f048061a384c7dd85e8e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/completed/de/de47583d6b7bc0d0fc4bbe203e500abd3f219b4b9db801bffdf549651a29732f.yaml
+    sha256: 6fd85a0c7e8ddb36f069aeb7fd698df84085f39404f6b812fbb73f97f60b0118
+    hash_normalization: git_eol_lf
+  - path: scripts/data_foundation_consumer_migration_rehearsal.py
+    sha256: 036375621addb6a2dde7ab0db06b141a81ead1ec2975e821823c149b62a28899
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/foundation_consumer_migration.py
+    sha256: fa983d7f8570ccdd70cd6b04acae639d078171e903ea38b53d5b8c904be5d1a8
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: cdade5768edb405cdc6b96617ffff5827c41d70df2e65ea1b1fc9ba7caa178df
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: c1c74aeb7739afba4220801fa20bd654e6cd90cf3d6e537c4a8f3c4b9b3464f3
+    hash_normalization: git_eol_lf
+  - path: tests/test_data_foundation_consumer_migration.py
+    sha256: 84a77635ddfcc5b4f570cb427f0ff12cbee1a6cbde28dff2ea1149a438f0f357
+    hash_normalization: git_eol_lf
+  implementation:
+    policy_version: data_foundation_daily_score_consumer_migration@1.0.0
+    policy_status: REVIEWED
+    scope: DAILY_SCORE_ISOLATED_CONSUMER_ONLY
+    consumer_id: daily_score_daily
+    consumer_version: 1.0.0
+    execution_profile_id: daily_default.v1
+    bundle_id: data_foundation_consumer_migration_bundle_e19d0f959975c54f400025919921d3f6
+    bundle_sha256: 5d98a99ae2c85c9d68806eb2cbcbb02af8e66ab1d1d6c365a809d4591feca91c
+    attestation_id: consumer_migration_7950b0d7aade644f54c4b56c8776029e
+    attestation_sha256: 3825ae5a4724f27a1384d9a887625abefb54eeefebe1ed1a34f1c3238bd7c5f4
+    candidate_publication_transaction_id: download_txn_009597c98f1ed98fbee9c30751b82dae
+    strict_dq_receipt_id: dq_execution_bd26331c12cd528eb4cad10cc9ec514edbde82c2e425a3e351e7ae042fb81ca2
+    consumer_authorization_id: dq_consumer_authorization_b83501f9007a103b6816a4de0515e7925b6e0bbf021619021c5138dce2b1bc7f
+    store_identity: consumer_store_0ed4fdbbf09c059d67aa3219520d9264
+    historical_manifest_rewritten: false
+    generic_consumer_cutover_allowed: false
+  validation:
+    task_registry: PASS_BYTE_IDENTICAL
+    focused: PASS_155_TESTS
+    compatibility_focused: PASS_143_TESTS
+    architecture: PASS_784_TESTS
+    contract: PASS_276_TESTS
+    report: PASS_57_TESTS_62_WARNINGS
+    reproducibility: PASS_24_TESTS
+    integration: PASS_995_TESTS_642_WARNINGS
+    full: PASS_7677_TESTS_3_SKIPPED_644_WARNINGS
+    post_full_architecture: PASS_784_TESTS
+    post_full_contract: PASS_276_TESTS
+  safety:
+    runtime_behavior_changed: true
+    data_flow_changed: true
+    historical_manifest_rewritten: false
+    generic_consumer_cutover_allowed: false
+    automatic_non_daily_enabled: false
+    qld_automatic_selection_enabled: false
+    cached_data_mutated: false
+    provider_replayed: false
+    production_weights_written: false
+    active_shadow_weights_written: false
+    production_effect: none
+    broker_action: none

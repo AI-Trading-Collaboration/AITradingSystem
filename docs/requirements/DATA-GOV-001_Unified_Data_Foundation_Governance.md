@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0D_COMPLETE_CONSUMER_MIGRATION_TASK_REGISTRATION_NEXT`
+- current phase：`D0E_DAILY_SCORE_MIGRATION_COMPLETE_NEXT_CONSUMER_SEPARATE_AUTHORIZATION_REQUIRED`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -65,8 +65,20 @@ administrator/root、offline或network/object store。D0D转`VALIDATING`等待fo
 `7668 passed / 3 skipped / 644 warnings`并完成scoped ACL formal exit，任务转`DONE`。
 下一步按Owner顺序另立per-consumer migration任务；迁移必须逐consumer绑定exact
 publication、strict DQ、durability、ACL policy/attestation与consumer authorization，
-不得翻转generic global cutover。QLD automatic selection、production weights与broker仍须
-等待canonical DQ strict PASS后的独立复审和明确授权。
+ 不得翻转generic global cutover。QLD automatic selection、production weights与broker仍须
+ 等待canonical DQ strict PASS后的独立复审和明确授权。
+
+2026-07-29，D0E 已把首个且唯一的 `daily_score_daily@1.0.0` 迁移能力闭合在同一
+isolated candidate store identity。Historical publication bytes通过canonical
+`LEGACY_LOCAL_CACHE_IMPORT`生成candidate-specific immutable transaction/manifest，
+随后在同一root依次绑定durability、native ACL、strict DQ `PASS / 0 error / 0 warning`、
+新的consumer authorization与controlled read rehearsal。Bundle=
+`data_foundation_consumer_migration_bundle_e19d0f959975c54f400025919921d3f6`；
+focused/compatibility=`155/143 passed`，formal tiers=`784/276/57/24/995 passed`，
+natural-boundary Full=`7677 passed / 3 skipped / 644 warnings`，D0E转`DONE`。
+该结论不改写historical manifest/D0A false fields，不授权generic或non-daily consumer，
+也不改变QLD、scheduler、weights、production或broker。后续consumer必须另立exact任务并重新
+建立same-store evidence，不得批量继承D0E capability。
 
 后续将数据能力作为独立的逻辑系统长期治理，但当前不拆 repository、部署单元或服务。Data Foundation 负责生产和证明事实；Knowledge & Insight Core、报告和网页只能消费其机器可读 contract，不能反向覆盖数据、质量状态或 lineage。
 
