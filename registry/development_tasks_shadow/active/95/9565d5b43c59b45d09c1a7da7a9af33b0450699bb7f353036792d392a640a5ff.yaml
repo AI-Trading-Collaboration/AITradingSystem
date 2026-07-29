@@ -11,9 +11,9 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event
-    ledger 与 append-only attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取
-    coverage 或训练模型
+  next_owner: Codex coordinator：完成 event/attempt runner task-branch commit、local-main
+    fast-forward 与 ordinary push，再从发布后的 exact commit 执行唯一 registered source acquisition；exact
+    workspace 为 retained candidate 下 `o1_event_attempt_freeze_v1`，执行前仍必须不存在；完成前 `real_coverage_read_allowed_now=false`
   requirement_refs:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
@@ -22,65 +22,68 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
-    candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
-    daily consumer、coverage 或模型。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`。isolated
+    candidate fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。runner
+    只接受 Federal Reserve/BLS official archive bytes；网页登录可读但不能导出 exact bytes 不构成可用来源。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate
       从 exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-      family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
-      并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
+      family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
+      ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2034
-    row_sha256: d22a170bbe157a1701d665bba980e8e44de205606c6fa4fc3c47afa237b65f80
+    row_sha256: 78a6b4c880d9834392c25ff1826ad4bb8e3d08d7a5004b8a22903837629a53b5
     cell_count: 8
     all_cells:
     - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
     - Strategy Style Discovery / O1 relative-opportunity capability evidence
     - P0
     - IN_PROGRESS
-    - Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event ledger 与
-      append-only attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取 coverage
-      或训练模型
+    - Codex coordinator：完成 event/attempt runner task-branch commit、local-main fast-forward
+      与 ordinary push，再从发布后的 exact commit 执行唯一 registered source acquisition；exact
+      workspace 为 retained candidate 下 `o1_event_attempt_freeze_v1`，执行前仍必须不存在；完成前
+      `real_coverage_read_allowed_now=false`
     - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
-      candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
-      daily consumer、coverage 或模型。
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`。isolated
+      candidate fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。runner
+      只接受 Federal Reserve/BLS official archive bytes；网页登录可读但不能导出 exact bytes 不构成可用来源。
     - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从
       exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-      family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
-      并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-    - 2026-07-30：isolated DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh receipt
-      已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
-      后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
-      read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。
+      family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
+      ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
+    - 2026-07-30：runner focused=`8/8`、authority/deprecation=`151/151`、Architecture=`792/792`、Contract=`276/276`，generated
+      architecture=`1042 modules/1211 tests`，task registry=`927 byte-identical`。网页登录/CLI差异按
+      fail-closed source risk 保留；当前只集成 runner exact commit，尚未创建 event root、请求 official
+      source、读取 coverage 或训练模型。`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|Strategy
       Style Discovery / O1 relative-opportunity capability evidence|P0|IN_PROGRESS|Codex
-      coordinator：从已保留的同一 candidate/store identity 冻结 primary event ledger 与 append-only
-      attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取 coverage 或训练模型|详见
-      `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+      coordinator：完成 event/attempt runner task-branch commit、local-main fast-forward
+      与 ordinary push，再从发布后的 exact commit 执行唯一 registered source acquisition；exact
+      workspace 为 retained candidate 下 `o1_event_attempt_freeze_v1`，执行前仍必须不存在；完成前
+      `real_coverage_read_allowed_now=false`|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
-      candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
-      daily consumer、coverage 或模型。|Owner exact decision 与 exact-base/input commitment
-      完整；在 isolated candidate 从 exact transaction materialize 并逐对象核验，strict DQ revalidation
-      `PASS/0/0`；model/feature family 在任何真实 count/result 前已有 authority；coverage 任一不足即
-      `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk
-      overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-30：isolated
-      DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh receipt 已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
-      后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
-      read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。|'
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`。isolated
+      candidate fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。runner
+      只接受 Federal Reserve/BLS official archive bytes；网页登录可读但不能导出 exact bytes 不构成可用来源。|Owner
+      exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact
+      transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
+      family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
+      ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。|2026-07-30：runner
+      focused=`8/8`、authority/deprecation=`151/151`、Architecture=`792/792`、Contract=`276/276`，generated
+      architecture=`1042 modules/1211 tests`，task registry=`927 byte-identical`。网页登录/CLI差异按
+      fail-closed source risk 保留；当前只集成 runner exact commit，尚未创建 event root、请求 official
+      source、读取 coverage 或训练模型。`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-d22a170bbe157a1701d665bb
+  event_id: legacy-import-78a6b4c880d9834392c25ff1
   task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -93,16 +96,17 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event
-      ledger 与 append-only attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取
-      coverage 或训练模型
-    notes: 2026-07-30：isolated DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh
-      receipt 已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
-      后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
-      read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。
+    next_owner: Codex coordinator：完成 event/attempt runner task-branch commit、local-main
+      fast-forward 与 ordinary push，再从发布后的 exact commit 执行唯一 registered source acquisition；exact
+      workspace 为 retained candidate 下 `o1_event_attempt_freeze_v1`，执行前仍必须不存在；完成前
+      `real_coverage_read_allowed_now=false`
+    notes: 2026-07-30：runner focused=`8/8`、authority/deprecation=`151/151`、Architecture=`792/792`、Contract=`276/276`，generated
+      architecture=`1042 modules/1211 tests`，task registry=`927 byte-identical`。网页登录/CLI差异按
+      fail-closed source risk 保留；当前只集成 runner exact commit，尚未创建 event root、请求 official
+      source、读取 coverage 或训练模型。`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:d22a170bbe157a1701d665bba980e8e44de205606c6fa4fc3c47afa237b65f80
+  - sha256:78a6b4c880d9834392c25ff1826ad4bb8e3d08d7a5004b8a22903837629a53b5
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -110,25 +114,26 @@ projection:
   - Strategy Style Discovery / O1 relative-opportunity capability evidence
   - P0
   - IN_PROGRESS
-  - Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event ledger 与 append-only
-    attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取 coverage 或训练模型
+  - Codex coordinator：完成 event/attempt runner task-branch commit、local-main fast-forward
+    与 ordinary push，再从发布后的 exact commit 执行唯一 registered source acquisition；exact workspace
+    为 retained candidate 下 `o1_event_attempt_freeze_v1`，执行前仍必须不存在；完成前 `real_coverage_read_allowed_now=false`
   - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
-    candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
-    daily consumer、coverage 或模型。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`。isolated
+    candidate fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。runner
+    只接受 Federal Reserve/BLS official archive bytes；网页登录可读但不能导出 exact bytes 不构成可用来源。
   - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact
     transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-    family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
-    并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-  - 2026-07-30：isolated DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh receipt
-    已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
-    后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
-    read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。
+    family 在任何真实 count/result 前已有 authority；event row逐项绑定保存的official response与checksum，attempt
+    ledger在结果前append-only冻结；coverage任一不足即`INSUFFICIENT_COVERAGE_OR_DQ`并关闭；正式run只允许四类机械结论；成功也不自动授权任何下游。
+  - 2026-07-30：runner focused=`8/8`、authority/deprecation=`151/151`、Architecture=`792/792`、Contract=`276/276`，generated
+    architecture=`1042 modules/1211 tests`，task registry=`927 byte-identical`。网页登录/CLI差异按
+    fail-closed source risk 保留；当前只集成 runner exact commit，尚未创建 event root、请求 official
+    source、读取 coverage 或训练模型。`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
   terminal: false
-  raw_row_sha256: d22a170bbe157a1701d665bba980e8e44de205606c6fa4fc3c47afa237b65f80
+  raw_row_sha256: 78a6b4c880d9834392c25ff1826ad4bb8e3d08d7a5004b8a22903837629a53b5
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: d82e5364482bd97367ed4eb24aae51b86484c6f3496a4067cc7e559ee48ffd23
+fragment_checksum: b5aac9c5d4ea6f99f6cb27f5e406645df7fd8ab618a920e20907d6dc153d5828

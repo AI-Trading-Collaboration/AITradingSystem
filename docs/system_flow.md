@@ -336,6 +336,17 @@ DQ 后立即停止，既不生成 D0E daily consumer authorization，也不 disp
 摘要阶段中断，只允许复验同一候选的唯一 copy manifest/publication/receipt 并补写 gate，不得
 重物化或重跑 DQ。不得复制 receipt 或覆盖 live `data/raw`。
 
+event/attempt freeze 由
+`src/ai_trading_system/data/o1_relative_opportunity_event_attempt_ledger.py` 执行。它先逐 byte
+复验上述 DQ gate，再从 exact execution commit 只请求 Federal Reserve/BLS 官方 HTTPS
+archive；每个 response 的 endpoint、参数、download timestamp、HTTP status、byte size、
+SHA-256 与 raw artifact path 都进入 source manifest。只有 FOMC/CPI/NFP 三族 release bytes
+和实际 release timestamp 全部可追溯时才生成 event ledger 并打开 coverage-only gate。
+官方 source 的 403、空发现、timestamp 缺失或非官方 redirect 会在同一 retained root 写入
+blocker manifest 与 pre-result append-only attempt ledger，机械保持
+`coverage_only_gate_allowed=false`、`model_training_allowed=false`。网页登录可见内容、截图、
+搜索摘要、镜像与 current-view reconstruction 都不能替代 exact official bytes。
+
 synthetic-only 路径由
 `src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_capability_audit.py`
 实现，只接受 `data_role=SYNTHETIC_FIXTURE_ONLY`。它复用 reviewed feature builder，并用独立
@@ -357,8 +368,10 @@ flowchart LR
     CT --> SY["Synthetic-only dataset builder<br/>+ independent formula validator"]
     SY --> IC["Materialize exact immutable transaction<br/>into isolated candidate"]
     IC --> SDQ["Observed strict DQ PASS / 0 / 0<br/>same-store gate retained"]
-    SDQ --> LG["Freeze event + append-only attempt ledgers"]
-    LG --> COV["Coverage-only eligibility gate"]
+    SDQ --> LG["Official source manifest<br/>+ append-only attempt ledger"]
+    LG -->|"source bytes / timestamps unavailable"| ICQ
+    LG --> EL["Freeze FOMC/CPI/NFP event ledger"]
+    EL --> COV["Coverage-only eligibility gate"]
     COV -->|"FAIL / insufficient"| ICQ["INSUFFICIENT_COVERAGE_OR_DQ"]
     COV -->|"PASS"| RUN["One canonical historical-seen-only run"]
     RUN --> FAL["All mandatory falsification axes"]

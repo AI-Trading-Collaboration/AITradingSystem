@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS_EVENT_AND_ATTEMPT_LEDGER_FREEZE`
+状态：`READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`
 
 production effect：`none`
 
@@ -253,7 +253,7 @@ run identity 和一个 attempt ledger。
 
 ## 8. 当前执行点
 
-- `status=IN_PROGRESS_EVENT_AND_ATTEMPT_LEDGER_FREEZE`
+- `status=READY_EVENT_ATTEMPT_RUNNER_INTEGRATION`
 - `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
 - `synthetic_builder_validator=PASS_SYNTHETIC_ONLY_DETERMINISTIC_INDEPENDENT_RECONSTRUCTION`
 - `data_prerequisite=ISOLATED_CANDIDATE_STRICT_DQ_PASS_0_0`
@@ -296,6 +296,36 @@ run identity 和一个 attempt ledger。
   artifact location并核验 hash，且没有 active process、scheduler 或后续 acceptance 依赖；
 - cleanup：退出条件满足后，先审计 tracked/untracked/ignored unique evidence，再按 exact absolute
   allowlist 删除该 root；若失败或中止，必须在本任务文件记录风险、next owner 与新 exit condition。
+
+### 8.2 Event / attempt freeze workspace 生命周期登记
+
+- exact root：
+  `D:/Work/AITradingSystem/outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1`
+- raw primary-source root：上述目录下 `raw_primary_sources/`；只允许 Federal Reserve
+  `federalreserve.gov` 与 BLS `bls.gov` 的 official archive bytes；
+- governed outputs：`event_source_manifest.json`、`event_ledger.json`、
+  `attempt_ledger.json` 与 `event_attempt_freeze_gate.json`；
+- purpose：在任何 eligibility/coverage count 读取前，冻结 FOMC/CPI/NFP release
+  occurrence timestamps、source/known-at/available-at lineage，以及唯一
+  `O1_M1_RIDGE_CROSS_ASSET_STATE_V1` attempt family；
+- creation precondition：ledger runner focused validation PASS、exact root 不存在、
+  existing isolated DQ gate SHA 仍为
+  `ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca`；
+- source discipline：每个 HTTP response 记录 endpoint、request parameters、download
+  timestamp、status、byte size 与 SHA-256；event row 必须能追溯到一个保存的 exact
+  official response，不得使用 current-view 推断未知 historical schedule-known-at；
+- acquisition boundary：2026-07-30 实测登录态 Chrome 可以读取 BLS archive/PDF，并可见
+  release header 的 exact embargo timestamp；同一 URL 的 CLI 请求返回 HTTP 403，而当前
+  browser-control 下载接口没有向项目暴露可复验的原始 PDF 路径。浏览器可见性不能替代
+  official bytes、checksum 与 source manifest，因此不得用截图、搜索摘要、镜像或 current
+  view 拼装 event row。runner 必须把官方 403 response bytes/状态/checksum 写入同一 root
+  的 blocker manifest，并保持 coverage/model training 关闭；
+- retention：与 candidate 一同保留到 coverage/canonical/final classification closeout；
+  coverage 只能读取 freeze gate 精确绑定的 ledger bytes；
+- exit condition：event/attempt/coverage/run evidence 已转入 canonical governed artifact
+  location并逐 byte 核验，且无 active process 或后续 acceptance 依赖；
+- cleanup：与 8.1 使用同一最终 absolute-root allowlist；失败或 source 不足时保留已下载
+  primary bytes与 blocker manifest，不创建第二目录。
 
 ## 9. 进度记录
 
@@ -340,3 +370,18 @@ run identity 和一个 attempt ledger。
   candidate objects、receipt 与 source inventory，并仅补写 gate。该中断不计作第二次
   empirical attempt；当前候选继续按 8.1 保留，下一步仅允许冻结 event/attempt ledger，
   coverage 与训练仍关闭。
+- 2026-07-30：event/attempt runner 已完成实现并通过首轮 parallel focused `8/8`。runner
+  先复验 exact DQ gate，再冻结唯一
+  `O1_M1_RIDGE_CROSS_ASSET_STATE_V1` append-only attempt family；只接受
+  `federalreserve.gov`/`bls.gov` HTTPS，保存每个官方响应并绑定 status/size/SHA-256。
+  任一 mandatory family 的 index、release discovery、release bytes 或 timestamp 失败，
+  都只生成 blocker source manifest、attempt ledger 与 blocked gate，不生成 event ledger，
+  不授权 coverage、canonical run 或模型训练。真实 source acquisition 只能从该 runner
+  集成后的 exact commit 执行，避免未提交代码成为 evidence authority。
+- 2026-07-30：runner wave 正式验证通过：authority/deprecation=`151/151`，
+  Architecture=`792/792`（runtime artifact
+  `outputs/validation_runtime/architecture-fitness_20260729T192754Z/test_runtime_summary.json`），
+  Contract=`276/276`（runtime artifact
+  `outputs/validation_runtime/contract-validation_20260729T192955Z/test_runtime_summary.json`）。
+  当前只允许完成 task-branch commit、local-main fast-forward 与 ordinary push；真实 source
+  acquisition 必须从发布后的 exact commit 在同一已登记 root 执行。

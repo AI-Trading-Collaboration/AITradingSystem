@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1041
+module_count: 1042
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -2772,6 +2772,28 @@ modules:
 - module_id: src.ai_trading_system.data.o1_relative_opportunity_dq_candidate
   path: src/ai_trading_system/data/o1_relative_opportunity_dq_candidate.py
   sha256: 9009f9a00e7ed261218c136ea4d729d454b73bffb461feb03cd9f2cfdd5c1556
+  rule_id: data
+  owner_profile: data
+  owners:
+    code_owner: data_platform
+    policy_owner: data_governance
+    data_owner: data_governance
+    artifact_owner: data_governance
+    runtime_owner: data_operations
+  layer: domain
+  category: data_pipeline
+  public_contract: false
+  deprecation_status: active
+  test_globs:
+  - tests/test_data*.py
+  - tests/trading_engine/test_*data*.py
+  validation_tiers:
+  - fast-unit
+  - reproducibility
+  shared_integration: false
+- module_id: src.ai_trading_system.data.o1_relative_opportunity_event_attempt_ledger
+  path: src/ai_trading_system/data/o1_relative_opportunity_event_attempt_ledger.py
+  sha256: 44c5ba4b96040f839fb9d7db76688934a9696d47686304ea9c51d9a49074e890
   rule_id: data
   owner_profile: data
   owners:
