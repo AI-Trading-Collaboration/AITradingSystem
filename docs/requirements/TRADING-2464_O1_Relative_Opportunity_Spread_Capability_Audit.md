@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS_ISOLATED_DQ_PENDING`
+状态：`IN_PROGRESS_EVENT_AND_ATTEMPT_LEDGER_FREEZE`
 
 production effect：`none`
 
@@ -253,17 +253,23 @@ run identity 和一个 attempt ledger。
 
 ## 8. 当前执行点
 
-- `status=IN_PROGRESS_ISOLATED_DQ_PENDING`
+- `status=IN_PROGRESS_EVENT_AND_ATTEMPT_LEDGER_FREEZE`
 - `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
 - `synthetic_builder_validator=PASS_SYNTHETIC_ONLY_DETERMINISTIC_INDEPENDENT_RECONSTRUCTION`
-- `data_prerequisite=EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED`
+- `data_prerequisite=ISOLATED_CANDIDATE_STRICT_DQ_PASS_0_0`
 - `owner_authorization_for_capability_audit=true`
 - `owner_option=A_ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE`
 - `model_feature_family_authority=OWNER_APPROVED_BEFORE_RESULT_READ`
 - `model_feature_family_proposal=SUPERSEDED_BY_ACTIVE_CONTRACT_FREEZE`
-- `required_dq_receipt_bytes_present=false`
+- `required_dq_receipt_bytes_present=true_in_retained_candidate`
 - `dq_exact_chain_recoverable_from_ops_runtime=true`
-- `dq_isolated_candidate_materialized=false`
+- `dq_isolated_candidate_materialized=true`
+- `dq_gate_id=o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`
+- `dq_gate_sha256=ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca`
+- `fresh_dq_receipt_id=dq_execution_d80529d1c713fee5f8602830912c14c2bdca64a59c64d943fbedd7c044d677cb`
+- `fresh_dq_receipt_sha256=6f37031a57b363189862b63a6bab396ff33b5f678b37bbb34ff4261be55ebe08`
+- `fresh_dq_window=requested_2021-02-22_to_2026-07-27_evaluated_to_2026-07-24`
+- `coverage_audit_executed=false`
 - `new_results_read=false`
 - `prospective_accessed=false`
 - `model_training_executed=false`
@@ -273,6 +279,23 @@ run identity 和一个 attempt ledger。
 - `qld_automatic_selection_enabled=false`
 - `production_effect=none`
 - `broker_action=none`
+
+### 8.1 Isolated candidate 生命周期登记
+
+- owner task：`TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT`
+- exact output root：
+  `D:/Work/AITradingSystem/outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z`
+- candidate project root：上述目录下 `candidate_project/`
+- source root：`D:/Work/AITradingSystem_ops_runtime`，只读，禁止任何 mutation；
+- purpose：从 frozen immutable transaction materialize candidate-specific publication，
+  逐对象校验，并运行 fresh canonical strict DQ；
+- creation precondition：DQ runner focused validation PASS，且 output root 不存在；
+- retention：若 strict DQ PASS，保留到 coverage-only 与可能的单次 canonical run 均完成，
+  因为后续必须复用同一 candidate/store identity；
+- exit condition：所需 receipt、copy manifest、coverage/run evidence 已进入 canonical governed
+  artifact location并核验 hash，且没有 active process、scheduler 或后续 acceptance 依赖；
+- cleanup：退出条件满足后，先审计 tracked/untracked/ignored unique evidence，再按 exact absolute
+  allowlist 删除该 root；若失败或中止，必须在本任务文件记录风险、next owner 与新 exit condition。
 
 ## 9. 进度记录
 
@@ -303,3 +326,17 @@ run identity 和一个 attempt ledger。
   reviewed 28-feature cumulative prefix、purged/embargo fold membership 与 event episode
   window；deterministic double-build、authority/input/tamper 负例和既有 model-ladder 回归
   focused `9/9 PASS`。该波次没有读取真实数据、coverage 或 result，也没有训练模型。
+- 2026-07-30：在 exact base `bca4cddddf5bd266f96b828f09423d015605c43b`
+  实现 O1 专用 isolated DQ 编排层。它复用 reviewed candidate materializer 与 canonical DQ，
+  但在 strict DQ 后立即停止，不生成 daily consumer authorization、不 dispatch consumer、
+  不读取 coverage、不训练模型。runner/recovery/scope/tamper 聚焦验证为 `11/11 PASS`。
+- 2026-07-30：唯一已登记候选从 OPS-070 exact historical transaction 成功物化，三份
+  immutable member 逐对象 SHA/size 复验通过；fresh receipt
+  `dq_execution_d80529d1c713fee5f8602830912c14c2bdca64a59c64d943fbedd7c044d677cb`
+  为 strict `PASS/0/0`，requested `2021-02-22..2026-07-27`，evaluated
+  `2021-02-22..2026-07-24`。首次进程在 DQ 完成后因摘要读取错误访问不存在的
+  invocation `.value` 字段而中止；未创建第二候选、未重跑 DQ。修复为解析 canonical
+  `value_json` 后，使用新增 fail-closed resume 路径复验唯一 copy manifest、publication、
+  candidate objects、receipt 与 source inventory，并仅补写 gate。该中断不计作第二次
+  empirical attempt；当前候选继续按 8.1 保留，下一步仅允许冻结 event/attempt ledger，
+  coverage 与训练仍关闭。

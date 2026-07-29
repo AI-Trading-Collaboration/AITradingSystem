@@ -64,6 +64,47 @@ synthetic_validation_contract:
   coverage_classification_allowed: false
   model_training_allowed: false
 
+isolated_dq_evidence:
+  schema_version: o1_relative_opportunity_dq_gate.v1
+  status: PASS
+  generated_at: '2026-07-29T18:30:00+00:00'
+  audit_policy_sha256_at_execution: e1dc0f7255b0ed78d703e3ab569e17c36c9e41d5238cc9aaea970a40c5eb243e
+  output_root: D:/Work/AITradingSystem/outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z
+  candidate_project_root: D:/Work/AITradingSystem/outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/candidate_project
+  retained_for_same_store_coverage: true
+  recovery_mode: VERIFIED_EXISTING_CANDIDATE_AFTER_SUMMARY_INTERRUPTION
+  gate:
+    gate_id: o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2
+    path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_dq_gate.json
+    sha256: ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca
+  candidate_publication:
+    transaction_id: download_txn_598b53a12ea3de4d18cc20be70f2439e
+    transaction_sha256: 07e94986a6df80d33e92f9dc4198bac0e2ab8d0b943b27f97508da047c4d85a8
+    discovery_pointer_sha256: a7f5cdc055a08af6dbc2fc336e085a0b9fd7965b4a52f36627f4fd46d169bbb4
+  copy_manifest:
+    copy_manifest_id: consumer_copy_3a5984c5cdf3a9f334990273026aef8c
+    sha256: 309ac2ea94af7e60732299e99c30fbc4a164739a3a482a017b64d786df5ad35d
+  source_inventory_sha256: 8484d04c02125629bc8ed80b43d23a2b42012b81abb9da7a7df843257e5da4f6
+  fresh_receipt:
+    receipt_id: dq_execution_d80529d1c713fee5f8602830912c14c2bdca64a59c64d943fbedd7c044d677cb
+    receipt_sha256: 6f37031a57b363189862b63a6bab396ff33b5f678b37bbb34ff4261be55ebe08
+    execution_profile_id: daily_default.v1
+    as_of: '2026-07-27'
+    requested_start: '2021-02-22'
+    requested_end: '2026-07-27'
+    evaluated_start: '2021-02-22'
+    evaluated_end: '2026-07-24'
+    error_count: 0
+    warning_count: 0
+  claim_boundary:
+    source_workspace_mutated: false
+    daily_consumer_dispatched: false
+    coverage_audit_executed: false
+    model_training_executed: false
+    new_o1_result_read: false
+    production_effect: none
+    broker_action: none
+
 target_contract:
   target_id: RELATIVE_OPPORTUNITY_SPREAD
   form: CONTINUOUS

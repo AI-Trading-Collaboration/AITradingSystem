@@ -11,9 +11,9 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY`
-    builder/independent validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate
-    生命周期，从 immutable transaction materialize 并逐对象核验，再运行 fresh strict DQ
+  next_owner: Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event
+    ledger 与 append-only attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取
+    coverage 或训练模型
   requirement_refs:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
@@ -22,10 +22,9 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
-    double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
-    `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
-    `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
+    candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
+    daily consumer、coverage 或模型。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate
@@ -38,49 +37,50 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2034
-    row_sha256: 5e6bf4401d43d95d09534a32e031d7091b9b8503b1829caeb1060b2c15e81eb1
+    row_sha256: d22a170bbe157a1701d665bba980e8e44de205606c6fa4fc3c47afa237b65f80
     cell_count: 8
     all_cells:
     - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
     - Strategy Style Discovery / O1 relative-opportunity capability evidence
     - P0
     - IN_PROGRESS
-    - Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY` builder/independent
-      validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate 生命周期，从 immutable
-      transaction materialize 并逐对象核验，再运行 fresh strict DQ
+    - Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event ledger 与
+      append-only attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取 coverage
+      或训练模型
     - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
-      double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
-      `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
-      `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
+      candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
+      daily consumer、coverage 或模型。
     - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从
       exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
       family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
       并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-    - 2026-07-30：Owner A serial contract 已集成；synthetic builder/validator 及既有 model-ladder
-      回归 focused `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result 或训练模型。`production_effect=none`、`broker_action=none`。
+    - 2026-07-30：isolated DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh receipt
+      已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
+      后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
+      read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|Strategy
       Style Discovery / O1 relative-opportunity capability evidence|P0|IN_PROGRESS|Codex
-      coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY` builder/independent
-      validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate 生命周期，从 immutable
-      transaction materialize 并逐对象核验，再运行 fresh strict DQ|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+      coordinator：从已保留的同一 candidate/store identity 冻结 primary event ledger 与 append-only
+      attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取 coverage 或训练模型|详见
+      `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
-      double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
-      `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
-      `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。|Owner exact
-      decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact transaction
-      materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature family 在任何真实
-      count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式
-      run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-30：Owner
-      A serial contract 已集成；synthetic builder/validator 及既有 model-ladder 回归 focused
-      `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result 或训练模型。`production_effect=none`、`broker_action=none`。|'
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
+      candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
+      daily consumer、coverage 或模型。|Owner exact decision 与 exact-base/input commitment
+      完整；在 isolated candidate 从 exact transaction materialize 并逐对象核验，strict DQ revalidation
+      `PASS/0/0`；model/feature family 在任何真实 count/result 前已有 authority；coverage 任一不足即
+      `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk
+      overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-30：isolated
+      DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh receipt 已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
+      后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
+      read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-5e6bf4401d43d95d09534a32
+  event_id: legacy-import-d22a170bbe157a1701d665bb
   task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -93,15 +93,16 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY`
-      builder/independent validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate
-      生命周期，从 immutable transaction materialize 并逐对象核验，再运行 fresh strict DQ
-    notes: 2026-07-30：Owner A serial contract 已集成；synthetic builder/validator 及既有
-      model-ladder 回归 focused `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result
-      或训练模型。`production_effect=none`、`broker_action=none`。
+    next_owner: Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event
+      ledger 与 append-only attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取
+      coverage 或训练模型
+    notes: 2026-07-30：isolated DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh
+      receipt 已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
+      后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
+      read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:5e6bf4401d43d95d09534a32e031d7091b9b8503b1829caeb1060b2c15e81eb1
+  - sha256:d22a170bbe157a1701d665bba980e8e44de205606c6fa4fc3c47afa237b65f80
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -109,25 +110,25 @@ projection:
   - Strategy Style Discovery / O1 relative-opportunity capability evidence
   - P0
   - IN_PROGRESS
-  - Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY` builder/independent
-    validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate 生命周期，从 immutable
-    transaction materialize 并逐对象核验，再运行 fresh strict DQ
+  - Codex coordinator：从已保留的同一 candidate/store identity 冻结 primary event ledger 与 append-only
+    attempt ledger；完成前 `real_coverage_read_allowed_now=false`，不得读取 coverage 或训练模型
   - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
-    double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
-    `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
-    `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`EVENT_AND_ATTEMPT_LEDGER_FREEZE`。isolated
+    candidate 已从 OPS-070 exact transaction 物化并逐对象复验，fresh canonical DQ=`PASS/0/0`；gate=`o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2`。不得运行
+    daily consumer、coverage 或模型。
   - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact
     transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
     family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
     并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-  - 2026-07-30：Owner A serial contract 已集成；synthetic builder/validator 及既有 model-ladder
-    回归 focused `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result 或训练模型。`production_effect=none`、`broker_action=none`。
+  - 2026-07-30：isolated DQ runner/recovery focused=`11/11 PASS`；唯一候选与 fresh receipt
+    已严格复验，requested=`2021-02-22..2026-07-27`、evaluated=`2021-02-22..2026-07-24`。DQ
+    后摘要字段错误通过同候选 resume 修复，没有第二次物化或 DQ；source mutation/daily consumer/coverage/model/result
+    read 均为 false。候选继续保留到 same-store coverage/canonical closeout；`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
   terminal: false
-  raw_row_sha256: 5e6bf4401d43d95d09534a32e031d7091b9b8503b1829caeb1060b2c15e81eb1
+  raw_row_sha256: d22a170bbe157a1701d665bba980e8e44de205606c6fa4fc3c47afa237b65f80
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 55962c255a41367866c8a6ad981efa620478638287114285054107453ffbc1df
+fragment_checksum: d82e5364482bd97367ed4eb24aae51b86484c6f3496a4067cc7e559ee48ffd23

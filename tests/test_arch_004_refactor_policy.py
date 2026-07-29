@@ -1129,9 +1129,7 @@ DEVX_007_NEW_SOURCE_PATHS = frozenset(
         "tools/codex_skills/run-web-pro-git-review/references/prompt-template.md",
     }
 )
-TRADING_2464_DECISION_SECTION = (
-    "phase_trading_2464_o1_model_feature_owner_decision_pack"
-)
+TRADING_2464_DECISION_SECTION = "phase_trading_2464_o1_model_feature_owner_decision_pack"
 TRADING_2464_DECISION_BASE_COMMIT = "c6a88ecb337d2cd5ea231bd3c56f2f2bb8269d53"
 TRADING_2464_DECISION_BASELINE_GIT_BLOB = "e4772f6afd5d5c8b90d76e36567526a47b464418"
 TRADING_2464_DECISION_HISTORICAL_PREFIX_BYTE_COUNT = 2_085_488
@@ -1143,10 +1141,7 @@ TRADING_2464_DECISION_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml",
         "docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md",
-        (
-            "tests/research_strategies/"
-            "test_o1_relative_opportunity_capability_audit_contract.py"
-        ),
+        ("tests/research_strategies/" "test_o1_relative_opportunity_capability_audit_contract.py"),
     }
 )
 TRADING_2464_DQ_RECOVERY_SECTION = "phase_trading_2464_dq_recovery_source_audit"
@@ -1158,9 +1153,7 @@ TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_SHA256 = (
 )
 TRADING_2464_DQ_RECOVERY_REMOVED_SOURCE_PATHS = frozenset()
 TRADING_2464_DQ_RECOVERY_NEW_SOURCE_PATHS = frozenset()
-TRADING_2464_OWNER_TOKEN_SECTION = (
-    "phase_trading_2464_owner_decision_token_normalization"
-)
+TRADING_2464_OWNER_TOKEN_SECTION = "phase_trading_2464_owner_decision_token_normalization"
 TRADING_2464_OWNER_TOKEN_BASE_COMMIT = "37ffd9909ff1beb2c1ff8060082700750a76925d"
 TRADING_2464_OWNER_TOKEN_BASELINE_GIT_BLOB = "184640bd1652cc9f5f30b352c3c4acd1bdf0bd06"
 TRADING_2464_OWNER_TOKEN_HISTORICAL_PREFIX_BYTE_COUNT = 2_097_837
@@ -1169,9 +1162,7 @@ TRADING_2464_OWNER_TOKEN_HISTORICAL_PREFIX_SHA256 = (
 )
 TRADING_2464_OWNER_TOKEN_REMOVED_SOURCE_PATHS = frozenset()
 TRADING_2464_OWNER_TOKEN_NEW_SOURCE_PATHS = frozenset()
-TRADING_2464_CONTRACT_SECTION = (
-    "phase_trading_2464_o1_owner_a_serial_contract_freeze"
-)
+TRADING_2464_CONTRACT_SECTION = "phase_trading_2464_o1_owner_a_serial_contract_freeze"
 TRADING_2464_CONTRACT_BASE_COMMIT = "428cfa78149a7f037e8cfdeee8d2646833f413a5"
 TRADING_2464_CONTRACT_BASELINE_GIT_BLOB = "543f42c4a10aa16cfaf56344c3a5f1807260affb"
 TRADING_2464_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT = 2_101_342
@@ -1182,9 +1173,7 @@ TRADING_2464_CONTRACT_REMOVED_SOURCE_PATHS = frozenset()
 TRADING_2464_CONTRACT_NEW_SOURCE_PATHS = frozenset(
     {"config/research/o1_relative_opportunity_capability_audit_v1.yaml"}
 )
-TRADING_2464_SYNTHETIC_SECTION = (
-    "phase_trading_2464_o1_synthetic_builder_validator"
-)
+TRADING_2464_SYNTHETIC_SECTION = "phase_trading_2464_o1_synthetic_builder_validator"
 TRADING_2464_SYNTHETIC_BASE_COMMIT = "b346aaa622de1c9671527fda4b89b84f2c08ac83"
 TRADING_2464_SYNTHETIC_BASELINE_GIT_BLOB = "227f23053217d1f5d8909d059da3fa69e7988237"
 TRADING_2464_SYNTHETIC_HISTORICAL_PREFIX_BYTE_COUNT = 2_107_718
@@ -1198,13 +1187,25 @@ TRADING_2464_SYNTHETIC_NEW_SOURCE_PATHS = frozenset(
             "src/ai_trading_system/research_framework/plugins/"
             "o1_relative_opportunity_capability_audit.py"
         ),
-        (
-            "tests/research_strategies/"
-            "test_o1_relative_opportunity_capability_audit_builder.py"
-        ),
+        ("tests/research_strategies/" "test_o1_relative_opportunity_capability_audit_builder.py"),
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2464_SYNTHETIC_SECTION
+TRADING_2464_ISOLATED_DQ_SECTION = "phase_trading_2464_o1_isolated_candidate_strict_dq"
+TRADING_2464_ISOLATED_DQ_BASE_COMMIT = "bca4cddddf5bd266f96b828f09423d015605c43b"
+TRADING_2464_ISOLATED_DQ_BASELINE_GIT_BLOB = "afde750e69d6dc5de3e622f01acf710f55dccb13"
+TRADING_2464_ISOLATED_DQ_HISTORICAL_PREFIX_BYTE_COUNT = 2_114_987
+TRADING_2464_ISOLATED_DQ_HISTORICAL_PREFIX_SHA256 = (
+    "e28c2e2de2081c8117eea27dec995d3f10d36c377b53f0fcae3e839866ebb582"
+)
+TRADING_2464_ISOLATED_DQ_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2464_ISOLATED_DQ_NEW_SOURCE_PATHS = frozenset(
+    {
+        "scripts/trading2464_o1_dq_candidate.py",
+        "src/ai_trading_system/data/o1_relative_opportunity_dq_candidate.py",
+        ("tests/research_strategies/" "test_o1_relative_opportunity_dq_candidate.py"),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2464_ISOLATED_DQ_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2477,9 +2478,7 @@ def _devx_007_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2464_decision_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2464_DECISION_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2464_DECISION_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2496,9 +2495,7 @@ def _trading_2464_decision_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2464_dq_recovery_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2464_DQ_RECOVERY_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2464_DQ_RECOVERY_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2515,9 +2512,7 @@ def _trading_2464_dq_recovery_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2464_owner_token_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2464_OWNER_TOKEN_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2464_OWNER_TOKEN_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2534,9 +2529,7 @@ def _trading_2464_owner_token_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2464_contract_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2464_CONTRACT_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2464_CONTRACT_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2553,9 +2546,7 @@ def _trading_2464_contract_base_baseline_blob() -> bytes:
 
 @cache
 def _trading_2464_synthetic_base_baseline_blob() -> bytes:
-    object_name = (
-        f"{TRADING_2464_SYNTHETIC_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
-    )
+    object_name = f"{TRADING_2464_SYNTHETIC_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
         check=True,
@@ -2570,6 +2561,23 @@ def _trading_2464_synthetic_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2464_isolated_dq_base_baseline_blob() -> bytes:
+    object_name = f"{TRADING_2464_ISOLATED_DQ_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2464_ISOLATED_DQ_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -2577,15 +2585,15 @@ def _assert_wave11_historical_prefix_immutable(
     assert len(base_blob) == WAVE11_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == WAVE11_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:WAVE11_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "Wave11 historical prefix differs from the immutable base blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "Wave11 historical prefix differs from the immutable base blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == WAVE11_HISTORICAL_PREFIX_SHA256
     wave11_suffix = current_bytes[WAVE11_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{WAVE11_SECTION}:\n".encode()
-    assert wave11_suffix.startswith(expected_marker), (
-        "Wave11 must be appended after the exact base blob with one blank line"
-    )
+    assert wave11_suffix.startswith(
+        expected_marker
+    ), "Wave11 must be appended after the exact base blob with one blank line"
     assert wave11_suffix.count(expected_marker) == 1
 
 
@@ -2596,15 +2604,15 @@ def _assert_docs_gov_historical_prefix_immutable(
     assert len(base_blob) == DOCS_GOV_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DOCS_GOV_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DOCS_GOV_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DOCS-GOV historical prefix differs from the immutable Wave11 closeout blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DOCS-GOV historical prefix differs from the immutable Wave11 closeout blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == DOCS_GOV_HISTORICAL_PREFIX_SHA256
     docs_gov_suffix = current_bytes[DOCS_GOV_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DOCS_GOV_SECTION}:\n".encode()
-    assert docs_gov_suffix.startswith(expected_marker), (
-        "DOCS-GOV closeout must be appended after the exact Wave11 closeout blob"
-    )
+    assert docs_gov_suffix.startswith(
+        expected_marker
+    ), "DOCS-GOV closeout must be appended after the exact Wave11 closeout blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2619,9 +2627,9 @@ def _assert_wave12_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == WAVE12_HISTORICAL_PREFIX_SHA256
     wave12_suffix = current_bytes[WAVE12_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{WAVE12_SECTION}:\n".encode()
-    assert wave12_suffix.startswith(expected_marker), (
-        "Wave12 closeout must be appended after the exact prior baseline blob"
-    )
+    assert wave12_suffix.startswith(
+        expected_marker
+    ), "Wave12 closeout must be appended after the exact prior baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2636,9 +2644,9 @@ def _assert_wave13_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == WAVE13_HISTORICAL_PREFIX_SHA256
     wave13_suffix = current_bytes[WAVE13_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{WAVE13_SECTION}:\n".encode()
-    assert wave13_suffix.startswith(expected_marker), (
-        "Wave13 closeout must be appended after the exact application-commit baseline blob"
-    )
+    assert wave13_suffix.startswith(
+        expected_marker
+    ), "Wave13 closeout must be appended after the exact application-commit baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2649,15 +2657,15 @@ def _assert_wave14_s0_1_historical_prefix_immutable(
     assert len(base_blob) == WAVE14_S0_1_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == WAVE14_S0_1_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:WAVE14_S0_1_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "Wave14 S0.1 historical prefix differs from the Wave13 closeout blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "Wave14 S0.1 historical prefix differs from the Wave13 closeout blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == WAVE14_S0_1_HISTORICAL_PREFIX_SHA256
     wave14_suffix = current_bytes[WAVE14_S0_1_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{WAVE14_S0_1_SECTION}:\n".encode()
-    assert wave14_suffix.startswith(expected_marker), (
-        "Wave14 S0.1 must be appended after the exact Wave13 closeout blob"
-    )
+    assert wave14_suffix.startswith(
+        expected_marker
+    ), "Wave14 S0.1 must be appended after the exact Wave13 closeout blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2668,15 +2676,15 @@ def _assert_wave14_s2_historical_prefix_immutable(
     assert len(base_blob) == WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == WAVE14_S2_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "Wave14 S2 historical prefix differs from the immutable S0 carrier blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "Wave14 S2 historical prefix differs from the immutable S0 carrier blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == WAVE14_S2_HISTORICAL_PREFIX_SHA256
     wave14_s2_suffix = current_bytes[WAVE14_S2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{WAVE14_S2_SECTION}:\n".encode()
-    assert wave14_s2_suffix.startswith(expected_marker), (
-        "Wave14 S2 must be appended after the exact S0 carrier blob"
-    )
+    assert wave14_s2_suffix.startswith(
+        expected_marker
+    ), "Wave14 S2 must be appended after the exact S0 carrier blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2691,9 +2699,9 @@ def _assert_ops_067_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == OPS_067_HISTORICAL_PREFIX_SHA256
     ops_067_suffix = current_bytes[OPS_067_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_067_SECTION}:\n".encode()
-    assert ops_067_suffix.startswith(expected_marker), (
-        "OPS-067 must be appended after the exact Wave14 S2 baseline blob"
-    )
+    assert ops_067_suffix.startswith(
+        expected_marker
+    ), "OPS-067 must be appended after the exact Wave14 S2 baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2708,9 +2716,9 @@ def _assert_ops_068_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == OPS_068_HISTORICAL_PREFIX_SHA256
     ops_068_suffix = current_bytes[OPS_068_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_068_SECTION}:\n".encode()
-    assert ops_068_suffix.startswith(expected_marker), (
-        "OPS-068 must be appended after the exact OPS-067 baseline blob"
-    )
+    assert ops_068_suffix.startswith(
+        expected_marker
+    ), "OPS-068 must be appended after the exact OPS-067 baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2725,9 +2733,9 @@ def _assert_arch_005s4d_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == (ARCH_005S4D_HISTORICAL_PREFIX_SHA256)
     suffix = current_bytes[ARCH_005S4D_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005S4D_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "ARCH-005S4D must be appended after the exact OPS-068 baseline blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "ARCH-005S4D must be appended after the exact OPS-068 baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2742,9 +2750,9 @@ def _assert_wave15_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == WAVE15_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[WAVE15_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{WAVE15_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "Wave15 must be appended after the exact carrier-D baseline blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "Wave15 must be appended after the exact carrier-D baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2759,9 +2767,9 @@ def _assert_d0b2b_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == D0B2B_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[D0B2B_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{D0B2B_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "D0B2B must be appended after the exact Wave15 baseline blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "D0B2B must be appended after the exact Wave15 baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2776,9 +2784,9 @@ def _assert_ops_069_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == OPS_069_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[OPS_069_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_069_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "OPS-069 must be appended after the exact D0B2B baseline blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "OPS-069 must be appended after the exact D0B2B baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2793,9 +2801,9 @@ def _assert_ops_070_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == OPS_070_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[OPS_070_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_070_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "OPS-070 must be appended after the exact OPS-069 baseline blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "OPS-070 must be appended after the exact OPS-069 baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2810,9 +2818,9 @@ def _assert_arch_005s4e_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == (ARCH_005S4E_HISTORICAL_PREFIX_SHA256)
     suffix = current_bytes[ARCH_005S4E_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005S4E_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "ARCH-005S4E must be appended after the exact OPS-070 baseline blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "ARCH-005S4E must be appended after the exact OPS-070 baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2823,17 +2831,17 @@ def _assert_arch_005s4d_s2_historical_prefix_immutable(
     assert len(base_blob) == ARCH_005S4D_S2_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == (ARCH_005S4D_S2_HISTORICAL_PREFIX_SHA256)
     historical_prefix = current_bytes[:ARCH_005S4D_S2_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "ARCH-005S4D S2 historical prefix differs from ARCH-005S4E"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-005S4D S2 historical prefix differs from ARCH-005S4E"
     assert hashlib.sha256(historical_prefix).hexdigest() == (
         ARCH_005S4D_S2_HISTORICAL_PREFIX_SHA256
     )
     suffix = current_bytes[ARCH_005S4D_S2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005S4D_S2_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "ARCH-005S4D S2 must be appended after the exact ARCH-005S4E baseline blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "ARCH-005S4D S2 must be appended after the exact ARCH-005S4E baseline blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2846,9 +2854,9 @@ def _assert_trading_2458_2460_integration_historical_prefix_immutable(
         TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_SHA256
     )
     historical_prefix = current_bytes[:TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "TRADING clean-main integration historical prefix differs from ARCH-005S4D S2"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "TRADING clean-main integration historical prefix differs from ARCH-005S4D S2"
     assert hashlib.sha256(historical_prefix).hexdigest() == (
         TRADING_2458_2460_INTEGRATION_HISTORICAL_PREFIX_SHA256
     )
@@ -2868,17 +2876,17 @@ def _assert_devx_trading_cleanup_historical_prefix_immutable(
     assert len(base_blob) == DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX TRADING cleanup historical prefix differs from the immutable integration blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX TRADING cleanup historical prefix differs from the immutable integration blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == (
         DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_SHA256
     )
     suffix = current_bytes[DEVX_TRADING_CLEANUP_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_TRADING_CLEANUP_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "DEVX TRADING cleanup must be appended after the exact integration blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "DEVX TRADING cleanup must be appended after the exact integration blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2901,9 +2909,9 @@ def _assert_trading_2459_doc_closeout_historical_prefix_immutable(
     )
     suffix = current_bytes[TRADING_2459_DOC_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2459_DOC_CLOSEOUT_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "TRADING-2459 documentation closeout must be appended after the exact DEVX cleanup blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "TRADING-2459 documentation closeout must be appended after the exact DEVX cleanup blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2921,9 +2929,9 @@ def _assert_data_gov_002_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == (DATA_GOV_002_HISTORICAL_PREFIX_SHA256)
     suffix = current_bytes[DATA_GOV_002_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DATA_GOV_002_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "DATA-GOV-002 must be appended after the exact TRADING-2459 documentation-closeout blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "DATA-GOV-002 must be appended after the exact TRADING-2459 documentation-closeout blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2934,15 +2942,15 @@ def _assert_devx_002_historical_prefix_immutable(
     assert len(base_blob) == DEVX_002_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_002_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_002_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX-002 historical prefix differs from the immutable DATA-GOV-002 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-002 historical prefix differs from the immutable DATA-GOV-002 blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == DEVX_002_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[DEVX_002_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_002_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "DEVX-002 must be appended after the exact DATA-GOV-002 compatibility blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "DEVX-002 must be appended after the exact DATA-GOV-002 compatibility blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2953,17 +2961,17 @@ def _assert_devx_002_push_v2_historical_prefix_immutable(
     assert len(base_blob) == DEVX_002_PUSH_V2_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_002_PUSH_V2_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_002_PUSH_V2_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX-002 push-v2 historical prefix differs from the immutable DEVX-002 v1 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-002 push-v2 historical prefix differs from the immutable DEVX-002 v1 blob"
     assert (
         hashlib.sha256(historical_prefix).hexdigest() == DEVX_002_PUSH_V2_HISTORICAL_PREFIX_SHA256
     )
     suffix = current_bytes[DEVX_002_PUSH_V2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_002_PUSH_V2_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "DEVX-002 push-v2 must be appended after the exact DEVX-002 v1 compatibility blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "DEVX-002 push-v2 must be appended after the exact DEVX-002 v1 compatibility blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -2986,9 +2994,9 @@ def _assert_arch_004g2_observability_historical_prefix_immutable(
     )
     suffix = current_bytes[ARCH_004G2_OBSERVABILITY_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_004G2_OBSERVABILITY_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "ARCH-004G2 observability must be appended after the exact DEVX-002 push-v2 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "ARCH-004G2 observability must be appended after the exact DEVX-002 push-v2 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3012,9 +3020,9 @@ def _assert_arch_004g2_closure_threshold_historical_prefix_immutable(
     )
     suffix = current_bytes[ARCH_004G2_CLOSURE_THRESHOLD_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_004G2_CLOSURE_THRESHOLD_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "ARCH-004G2 closure-threshold authority must be appended after the exact observability blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "ARCH-004G2 closure-threshold authority must be appended after the exact observability blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3059,9 +3067,9 @@ def _assert_trading_2458_retirement_historical_prefix_immutable(
     )
     suffix = current_bytes[TRADING_2458_RETIREMENT_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2458_RETIREMENT_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "TRADING-2458 retirement must be appended after the exact DATA-GOV-002 Phase B1 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "TRADING-2458 retirement must be appended after the exact DATA-GOV-002 Phase B1 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3082,9 +3090,9 @@ def _assert_trading_2458_closeout_historical_prefix_immutable(
     )
     suffix = current_bytes[TRADING_2458_CLOSEOUT_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2458_CLOSEOUT_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "TRADING-2458 closeout must be appended after the exact retirement blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "TRADING-2458 closeout must be appended after the exact retirement blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3119,15 +3127,15 @@ def _assert_devx_003_historical_prefix_immutable(
     assert len(base_blob) == DEVX_003_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_003_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_003_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX-003 historical prefix differs from the immutable DATA-GOV-002 Phase B2 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-003 historical prefix differs from the immutable DATA-GOV-002 Phase B2 blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == DEVX_003_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[DEVX_003_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_003_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "DEVX-003 authority must be appended after the exact DATA-GOV-002 Phase B2 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "DEVX-003 authority must be appended after the exact DATA-GOV-002 Phase B2 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3138,15 +3146,15 @@ def _assert_data_gov_002c1_historical_prefix_immutable(
     assert len(base_blob) == DATA_GOV_002C1_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_002C1_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DATA_GOV_002C1_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DATA-GOV-002C1 historical prefix differs from the immutable DEVX-003 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DATA-GOV-002C1 historical prefix differs from the immutable DEVX-003 blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == DATA_GOV_002C1_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[DATA_GOV_002C1_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DATA_GOV_002C1_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "DATA-GOV-002C1 authority must be appended after the exact DEVX-003 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "DATA-GOV-002C1 authority must be appended after the exact DEVX-003 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3157,15 +3165,15 @@ def _assert_data_gov_002c2_historical_prefix_immutable(
     assert len(base_blob) == DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_002C2_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DATA-GOV-002C2 historical prefix differs from the immutable C1 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DATA-GOV-002C2 historical prefix differs from the immutable C1 blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == DATA_GOV_002C2_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[DATA_GOV_002C2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DATA_GOV_002C2_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "DATA-GOV-002C2 authority must be appended after the exact C1 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "DATA-GOV-002C2 authority must be appended after the exact C1 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3176,15 +3184,15 @@ def _assert_trading_2461_historical_prefix_immutable(
     assert len(base_blob) == TRADING_2461_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == TRADING_2461_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:TRADING_2461_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "TRADING-2461 model-ladder historical prefix differs from the immutable DATA-GOV-002C2 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "TRADING-2461 model-ladder historical prefix differs from the immutable DATA-GOV-002C2 blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == TRADING_2461_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[TRADING_2461_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2461_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "TRADING-2461 model-ladder authority must be appended after the exact DATA-GOV-002C2 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "TRADING-2461 model-ladder authority must be appended after the exact DATA-GOV-002C2 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3195,18 +3203,18 @@ def _assert_arch_004g2_paper_weekly_historical_prefix_immutable(
     assert len(base_blob) == ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "ARCH-004G2 paper-weekly historical prefix differs from the immutable TRADING-2461 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-004G2 paper-weekly historical prefix differs from the immutable TRADING-2461 blob"
     assert (
         hashlib.sha256(historical_prefix).hexdigest()
         == ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_SHA256
     )
     suffix = current_bytes[ARCH_004G2_PAPER_WEEKLY_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_004G2_PAPER_WEEKLY_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "paper-weekly authority must be appended after the exact TRADING-2461 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "paper-weekly authority must be appended after the exact TRADING-2461 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3219,18 +3227,18 @@ def _assert_ops_069_terminal_archive_historical_prefix_immutable(
         hashlib.sha256(base_blob).hexdigest() == OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_SHA256
     )
     historical_prefix = current_bytes[:OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "OPS-069 terminal-archive historical prefix differs from the immutable paper-weekly blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "OPS-069 terminal-archive historical prefix differs from the immutable paper-weekly blob"
     assert (
         hashlib.sha256(historical_prefix).hexdigest()
         == OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_SHA256
     )
     suffix = current_bytes[OPS_069_TERMINAL_ARCHIVE_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_069_TERMINAL_ARCHIVE_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "OPS-069 terminal-archive authority must be appended after the exact paper-weekly blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "OPS-069 terminal-archive authority must be appended after the exact paper-weekly blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3241,9 +3249,9 @@ def _assert_devx_004_historical_prefix_immutable(
     assert len(base_blob) == DEVX_004_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_004_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_004_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX-004 historical prefix differs from the immutable OPS-069 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-004 historical prefix differs from the immutable OPS-069 blob"
     assert hashlib.sha256(historical_prefix).hexdigest() == DEVX_004_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[DEVX_004_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_004_SECTION}:\n".encode()
@@ -3258,9 +3266,9 @@ def _assert_devx_001_reconciliation_historical_prefix_immutable(
     assert len(base_blob) == DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX-001 reconciliation historical prefix differs from immutable DEVX-004 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-001 reconciliation historical prefix differs from immutable DEVX-004 blob"
     suffix = current_bytes[DEVX_001_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_001_RECONCILIATION_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3274,9 +3282,9 @@ def _assert_devx_005_historical_prefix_immutable(
     assert len(base_blob) == DEVX_005_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_005_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_005_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX-005 historical prefix differs from immutable DEVX-001 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-005 historical prefix differs from immutable DEVX-001 blob"
     suffix = current_bytes[DEVX_005_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_005_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3297,9 +3305,9 @@ def _assert_trading_2462_historical_prefix_immutable(
     assert hashlib.sha256(historical_prefix).hexdigest() == TRADING_2462_HISTORICAL_PREFIX_SHA256
     suffix = current_bytes[TRADING_2462_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2462_SECTION}:\n".encode()
-    assert suffix.startswith(expected_marker), (
-        "TRADING-2462 authority must be appended after the exact DEVX-005 blob"
-    )
+    assert suffix.startswith(
+        expected_marker
+    ), "TRADING-2462 authority must be appended after the exact DEVX-005 blob"
     assert current_bytes.count(expected_marker) == 1
 
 
@@ -3310,9 +3318,9 @@ def _assert_devx_006_historical_prefix_immutable(
     assert len(base_blob) == DEVX_006_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_006_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DEVX_006_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DEVX-006 historical prefix differs from immutable TRADING-2462 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-006 historical prefix differs from immutable TRADING-2462 blob"
     suffix = current_bytes[DEVX_006_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DEVX_006_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3326,9 +3334,9 @@ def _assert_arch_005m2_historical_prefix_immutable(
     assert len(base_blob) == ARCH_005M2_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == ARCH_005M2_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:ARCH_005M2_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "ARCH-005M2 historical prefix differs from immutable DEVX-006 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-005M2 historical prefix differs from immutable DEVX-006 blob"
     suffix = current_bytes[ARCH_005M2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005M2_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3342,9 +3350,9 @@ def _assert_arch_005m3_historical_prefix_immutable(
     assert len(base_blob) == ARCH_005M3_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == ARCH_005M3_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:ARCH_005M3_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "ARCH-005M3 historical prefix differs from immutable ARCH-005M2 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-005M3 historical prefix differs from immutable ARCH-005M2 blob"
     suffix = current_bytes[ARCH_005M3_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005M3_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3358,9 +3366,9 @@ def _assert_arch_005m1_batch2_historical_prefix_immutable(
     assert len(base_blob) == ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == ARCH_005M1_BATCH2_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "ARCH-005M1 Batch 2 historical prefix differs from immutable ARCH-005M3 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-005M1 Batch 2 historical prefix differs from immutable ARCH-005M3 blob"
     suffix = current_bytes[ARCH_005M1_BATCH2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005M1_BATCH2_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3374,9 +3382,9 @@ def _assert_arch_005m1_batch3_historical_prefix_immutable(
     assert len(base_blob) == ARCH_005M1_BATCH3_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == ARCH_005M1_BATCH3_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:ARCH_005M1_BATCH3_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "ARCH-005M1 Batch 3 historical prefix differs from immutable Batch 2 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-005M1 Batch 3 historical prefix differs from immutable Batch 2 blob"
     suffix = current_bytes[ARCH_005M1_BATCH3_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005M1_BATCH3_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3390,9 +3398,9 @@ def _assert_arch_005m1_batch4_historical_prefix_immutable(
     assert len(base_blob) == ARCH_005M1_BATCH4_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == ARCH_005M1_BATCH4_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:ARCH_005M1_BATCH4_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "ARCH-005M1 Batch 4 historical prefix differs from immutable Batch 3 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "ARCH-005M1 Batch 4 historical prefix differs from immutable Batch 3 blob"
     suffix = current_bytes[ARCH_005M1_BATCH4_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{ARCH_005M1_BATCH4_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3406,9 +3414,9 @@ def _assert_ops_070_stable_release_historical_prefix_immutable(
     assert len(base_blob) == OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "OPS-070 stable release historical prefix differs from immutable ARCH-005M1 Batch 4 blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "OPS-070 stable release historical prefix differs from immutable ARCH-005M1 Batch 4 blob"
     suffix = current_bytes[OPS_070_STABLE_RELEASE_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_070_STABLE_RELEASE_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3515,9 +3523,9 @@ def _assert_trading_2463_historical_prefix_immutable(
     assert len(base_blob) == TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "TRADING-2463 historical prefix differs from immutable DATA-GOV-002C2P authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "TRADING-2463 historical prefix differs from immutable DATA-GOV-002C2P authority blob"
     suffix = current_bytes[TRADING_2463_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3531,9 +3539,9 @@ def _assert_trading_2463_s1_s2_historical_prefix_immutable(
     assert len(base_blob) == TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_S1_S2_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "TRADING-2463 S1/S2 historical prefix differs from immutable TRADING-2463 S0 authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "TRADING-2463 S1/S2 historical prefix differs from immutable TRADING-2463 S0 authority blob"
     suffix = current_bytes[TRADING_2463_S1_S2_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_S1_S2_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3547,9 +3555,9 @@ def _assert_trading_2463_s3_historical_prefix_immutable(
     assert len(base_blob) == TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_S3_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "TRADING-2463 S3 historical prefix differs from immutable TRADING-2463 S1/S2 authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "TRADING-2463 S3 historical prefix differs from immutable TRADING-2463 S1/S2 authority blob"
     suffix = current_bytes[TRADING_2463_S3_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_S3_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3563,9 +3571,9 @@ def _assert_trading_2463_s4_historical_prefix_immutable(
     assert len(base_blob) == TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == TRADING_2463_S4_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "TRADING-2463 S4 historical prefix differs from immutable TRADING-2463 S3 authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "TRADING-2463 S4 historical prefix differs from immutable TRADING-2463 S3 authority blob"
     suffix = current_bytes[TRADING_2463_S4_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{TRADING_2463_S4_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3579,9 +3587,9 @@ def _assert_data_gov_002c3p_historical_prefix_immutable(
     assert len(base_blob) == DATA_GOV_002C3P_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_002C3P_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DATA_GOV_002C3P_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DATA-GOV-002C3P historical prefix differs from immutable TRADING-2463 S4 authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DATA-GOV-002C3P historical prefix differs from immutable TRADING-2463 S4 authority blob"
     suffix = current_bytes[DATA_GOV_002C3P_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DATA_GOV_002C3P_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3614,9 +3622,9 @@ def _assert_ops_071_historical_prefix_immutable(
     assert len(base_blob) == OPS_071_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == OPS_071_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:OPS_071_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "OPS-071 historical prefix differs from immutable TRADING-2463 S4 approval authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "OPS-071 historical prefix differs from immutable TRADING-2463 S4 approval authority blob"
     suffix = current_bytes[OPS_071_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{OPS_071_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3630,9 +3638,9 @@ def _assert_data_gov_002c3_rate_historical_prefix_immutable(
     assert len(base_blob) == DATA_GOV_002C3_RATE_HISTORICAL_PREFIX_BYTE_COUNT
     assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_002C3_RATE_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:DATA_GOV_002C3_RATE_HISTORICAL_PREFIX_BYTE_COUNT]
-    assert historical_prefix == base_blob, (
-        "DATA-GOV-002C3 rate historical prefix differs from immutable OPS-071 authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DATA-GOV-002C3 rate historical prefix differs from immutable OPS-071 authority blob"
     suffix = current_bytes[DATA_GOV_002C3_RATE_HISTORICAL_PREFIX_BYTE_COUNT:]
     expected_marker = f"\n{DATA_GOV_002C3_RATE_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3724,9 +3732,9 @@ def _assert_data_gov_001_d0d_historical_prefix_immutable(
     assert len(base_blob) == expected_count
     assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_001_D0D_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:expected_count]
-    assert historical_prefix == base_blob, (
-        "D0D historical prefix differs from immutable D0C authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "D0D historical prefix differs from immutable D0C authority blob"
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{DATA_GOV_001_D0D_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3741,9 +3749,9 @@ def _assert_data_gov_001_d0e_historical_prefix_immutable(
     assert len(base_blob) == expected_count
     assert hashlib.sha256(base_blob).hexdigest() == DATA_GOV_001_D0E_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:expected_count]
-    assert historical_prefix == base_blob, (
-        "D0E historical prefix differs from immutable D0D authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "D0E historical prefix differs from immutable D0D authority blob"
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{DATA_GOV_001_D0E_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3758,9 +3766,9 @@ def _assert_devx_007_historical_prefix_immutable(
     assert len(base_blob) == expected_count
     assert hashlib.sha256(base_blob).hexdigest() == DEVX_007_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:expected_count]
-    assert historical_prefix == base_blob, (
-        "DEVX-007 historical prefix differs from immutable D0E authority blob"
-    )
+    assert (
+        historical_prefix == base_blob
+    ), "DEVX-007 historical prefix differs from immutable D0E authority blob"
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{DEVX_007_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
@@ -3773,10 +3781,7 @@ def _assert_trading_2464_decision_historical_prefix_immutable(
 ) -> None:
     expected_count = TRADING_2464_DECISION_HISTORICAL_PREFIX_BYTE_COUNT
     assert len(base_blob) == expected_count
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2464_DECISION_HISTORICAL_PREFIX_SHA256
-    )
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2464_DECISION_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:expected_count]
     assert historical_prefix == base_blob, (
         "TRADING-2464 decision-pack historical prefix differs from immutable "
@@ -3795,8 +3800,7 @@ def _assert_trading_2464_dq_recovery_historical_prefix_immutable(
     expected_count = TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_BYTE_COUNT
     assert len(base_blob) == expected_count
     assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_SHA256
+        hashlib.sha256(base_blob).hexdigest() == TRADING_2464_DQ_RECOVERY_HISTORICAL_PREFIX_SHA256
     )
     historical_prefix = current_bytes[:expected_count]
     assert historical_prefix == base_blob, (
@@ -3816,8 +3820,7 @@ def _assert_trading_2464_owner_token_historical_prefix_immutable(
     expected_count = TRADING_2464_OWNER_TOKEN_HISTORICAL_PREFIX_BYTE_COUNT
     assert len(base_blob) == expected_count
     assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2464_OWNER_TOKEN_HISTORICAL_PREFIX_SHA256
+        hashlib.sha256(base_blob).hexdigest() == TRADING_2464_OWNER_TOKEN_HISTORICAL_PREFIX_SHA256
     )
     historical_prefix = current_bytes[:expected_count]
     assert historical_prefix == base_blob, (
@@ -3836,10 +3839,7 @@ def _assert_trading_2464_contract_historical_prefix_immutable(
 ) -> None:
     expected_count = TRADING_2464_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT
     assert len(base_blob) == expected_count
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2464_CONTRACT_HISTORICAL_PREFIX_SHA256
-    )
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2464_CONTRACT_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:expected_count]
     assert historical_prefix == base_blob, (
         "TRADING-2464 Owner-A contract historical prefix differs from immutable "
@@ -3857,10 +3857,7 @@ def _assert_trading_2464_synthetic_historical_prefix_immutable(
 ) -> None:
     expected_count = TRADING_2464_SYNTHETIC_HISTORICAL_PREFIX_BYTE_COUNT
     assert len(base_blob) == expected_count
-    assert (
-        hashlib.sha256(base_blob).hexdigest()
-        == TRADING_2464_SYNTHETIC_HISTORICAL_PREFIX_SHA256
-    )
+    assert hashlib.sha256(base_blob).hexdigest() == TRADING_2464_SYNTHETIC_HISTORICAL_PREFIX_SHA256
     historical_prefix = current_bytes[:expected_count]
     assert historical_prefix == base_blob, (
         "TRADING-2464 synthetic builder historical prefix differs from immutable "
@@ -3872,23 +3869,43 @@ def _assert_trading_2464_synthetic_historical_prefix_immutable(
     assert current_bytes.count(expected_marker) == 1
 
 
+def _assert_trading_2464_isolated_dq_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2464_ISOLATED_DQ_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert (
+        hashlib.sha256(base_blob).hexdigest() == TRADING_2464_ISOLATED_DQ_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2464 isolated DQ historical prefix differs from immutable "
+        "synthetic-builder authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2464_ISOLATED_DQ_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
 def _wave11_portable_artifact_identity(attempt: dict[str, Any]) -> tuple[str, str]:
     artifact = attempt.get("artifact")
     assert isinstance(artifact, dict), "executed attempt requires portable artifact evidence"
     artifact_path = artifact.get("path")
     artifact_sha256 = artifact.get("sha256")
     artifact_size = artifact.get("size_bytes")
-    assert isinstance(artifact_path, str) and artifact_path.strip(), (
-        "executed attempt artifact path must be non-empty"
-    )
+    assert (
+        isinstance(artifact_path, str) and artifact_path.strip()
+    ), "executed attempt artifact path must be non-empty"
     assert (
         isinstance(artifact_sha256, str)
         and len(artifact_sha256) == 64
         and all(character in "0123456789abcdef" for character in artifact_sha256)
     ), "executed attempt artifact SHA256 must be lowercase 64-hex"
-    assert type(artifact_size) is int and artifact_size > 0, (
-        "executed attempt artifact size_bytes must be a positive integer"
-    )
+    assert (
+        type(artifact_size) is int and artifact_size > 0
+    ), "executed attempt artifact size_bytes must be a positive integer"
     return artifact_path, artifact_sha256
 
 
@@ -3897,12 +3914,12 @@ def _assert_wave11_full_attempt_chain(attempts: list[dict[str, Any]]) -> None:
     attempt_ids = [attempt.get("attempt_id") for attempt in attempts]
     assert all(isinstance(attempt_id, str) and attempt_id for attempt_id in attempt_ids)
     assert len(attempt_ids) == len(set(attempt_ids)), "Full attempt ids must be unique"
-    assert attempts[0]["role"] == "INITIAL_FORMAL_GATE", (
-        "first Full attempt must remain the initial formal gate"
-    )
-    assert "replaces_attempt_id" not in attempts[0], (
-        "initial Full attempt cannot replace another attempt"
-    )
+    assert (
+        attempts[0]["role"] == "INITIAL_FORMAL_GATE"
+    ), "first Full attempt must remain the initial formal gate"
+    assert (
+        "replaces_attempt_id" not in attempts[0]
+    ), "initial Full attempt cannot replace another attempt"
 
     artifact_paths: set[str] = set()
     artifact_hashes: set[str] = set()
@@ -3911,12 +3928,12 @@ def _assert_wave11_full_attempt_chain(attempts: list[dict[str, Any]]) -> None:
         if index > 0:
             previous = attempts[index - 1]
             assert attempt["role"] == "FAILURE_FIX_REPLACEMENT"
-            assert previous["status"] == "FAIL", (
-                "replacement must immediately follow a failed attempt"
-            )
-            assert attempt.get("replaces_attempt_id") == previous["attempt_id"], (
-                "replacement must identify the immediately preceding failed attempt"
-            )
+            assert (
+                previous["status"] == "FAIL"
+            ), "replacement must immediately follow a failed attempt"
+            assert (
+                attempt.get("replaces_attempt_id") == previous["attempt_id"]
+            ), "replacement must identify the immediately preceding failed attempt"
 
         status = attempt["status"]
         if is_latest:
@@ -3935,12 +3952,12 @@ def _assert_wave11_full_attempt_chain(attempts: list[dict[str, Any]]) -> None:
         else:
             assert attempt["failed"] == 0
         artifact_path, artifact_sha256 = _wave11_portable_artifact_identity(attempt)
-        assert artifact_path not in artifact_paths, (
-            "executed Full attempt artifact paths must be unique"
-        )
-        assert artifact_sha256 not in artifact_hashes, (
-            "executed Full attempt artifact SHA256 values must be unique"
-        )
+        assert (
+            artifact_path not in artifact_paths
+        ), "executed Full attempt artifact paths must be unique"
+        assert (
+            artifact_sha256 not in artifact_hashes
+        ), "executed Full attempt artifact SHA256 values must be unique"
         artifact_paths.add(artifact_path)
         artifact_hashes.add(artifact_sha256)
 
@@ -3953,9 +3970,9 @@ def _assert_portable_repository_relative_path(path: object) -> str:
     assert not re.match(r"^[A-Za-z]:", path), "path must not be drive-qualified"
     assert not any(token in path for token in ("*", "?", "[")), "path must be exact, not a glob"
     parts = path.split("/")
-    assert all(part not in {"", ".", ".."} for part in parts), (
-        "path must be normalized and cannot escape the repository"
-    )
+    assert all(
+        part not in {"", ".", ".."} for part in parts
+    ), "path must be normalized and cannot escape the repository"
     return path
 
 
@@ -4015,9 +4032,9 @@ def _assert_wave14_s2_full_attempt_chain(
         else:
             previous = attempts[index - 1]
             assert attempt["role"] == "FAILURE_FIX_REPLACEMENT"
-            assert previous["status"] == "FAIL", (
-                "a replacement attempt may only follow the immediately preceding failure"
-            )
+            assert (
+                previous["status"] == "FAIL"
+            ), "a replacement attempt may only follow the immediately preceding failure"
             assert attempt.get("replaces_attempt_id") == previous["attempt_id"]
 
         status = attempt["status"]
@@ -5266,9 +5283,7 @@ def _data_gov_001_d0e_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_001_d0e_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[DATA_GOV_001_D0E_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[DATA_GOV_001_D0E_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -5309,9 +5324,7 @@ def _trading_2464_decision_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_decision_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[TRADING_2464_DECISION_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[TRADING_2464_DECISION_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -5393,9 +5406,7 @@ def _trading_2464_contract_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_contract_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[TRADING_2464_CONTRACT_SECTION][
-        "superseded_live_source_paths"
-    ]
+    paths = _compatibility_baseline()[TRADING_2464_CONTRACT_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
@@ -5440,6 +5451,34 @@ def _trading_2464_synthetic_all_current_authority_paths() -> frozenset[str]:
     return (
         _trading_2464_synthetic_superseded_live_source_paths()
         | _trading_2464_synthetic_source_paths()
+    )
+
+
+@cache
+def _trading_2464_isolated_dq_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2464_isolated_dq_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_isolated_dq_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2464_ISOLATED_DQ_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2464_isolated_dq_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2464_ISOLATED_DQ_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2464_isolated_dq_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2464_isolated_dq_superseded_live_source_paths()
+        | _trading_2464_isolated_dq_source_paths()
     )
 
 
@@ -5563,6 +5602,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _trading_2464_contract_source_paths()
     if TRADING_2464_SYNTHETIC_SECTION in baseline:
         paths |= _trading_2464_synthetic_source_paths()
+    if TRADING_2464_ISOLATED_DQ_SECTION in baseline:
+        paths |= _trading_2464_isolated_dq_source_paths()
     return paths
 
 
@@ -5710,9 +5751,9 @@ def _assert_wave14_s2_all_sources_tracked(
             capture_output=True,
         )
         if path in allowed_removed_paths:
-            assert not Path(portable_path).exists(), (
-                f"later removal authority requires source to be absent: {path}"
-            )
+            assert not Path(
+                portable_path
+            ).exists(), f"later removal authority requires source to be absent: {path}"
             continue
         assert result.returncode == 0, f"Wave14 S2 source must be Git-tracked: {path}"
         assert result.stdout == portable_path.encode() + b"\0"
@@ -5853,15 +5894,14 @@ def _assert_wave14_s2_final_full_evidence(
     )
     assert candidate_attempts[-1]["status"] == "PENDING"
     assert len(candidate_attempts) == len(final_attempts)
-    assert candidate_attempts[:-1] == final_attempts[:-1], (
-        "executed Full history before the tested attempt must remain byte-equivalent"
-    )
+    assert (
+        candidate_attempts[:-1] == final_attempts[:-1]
+    ), "executed Full history before the tested attempt must remain byte-equivalent"
     for identity_key in ("attempt_id", "role", "required", "replaces_attempt_id"):
         if identity_key in candidate_attempts[-1] or identity_key in final_attempt:
             assert candidate_attempts[-1].get(identity_key) == final_attempt.get(identity_key)
-    assert (
-        candidate_validation["full_validation"]["run_count"] + 1
-        == (validation["full_validation"]["run_count"])
+    assert candidate_validation["full_validation"]["run_count"] + 1 == (
+        validation["full_validation"]["run_count"]
     )
 
     for tier in validation["pre_full_formal_tiers"].values():
@@ -5888,9 +5928,9 @@ def _assert_wave14_s2_final_full_evidence(
     for path in sensitive_paths:
         final_source = final_source_by_path[path]
         candidate_source = candidate_source_by_path[path]
-        assert candidate_source == final_source, (
-            f"Full-sensitive source record changed after Full: {path}"
-        )
+        assert (
+            candidate_source == final_source
+        ), f"Full-sensitive source record changed after Full: {path}"
         assert tested_source_sha256s[path] == final_source["sha256"], path
     assert final_attempt["full_sensitive_source_manifest_sha256"] == (
         _wave14_s2_source_manifest_sha256(sensitive_source_records)
@@ -6376,19 +6416,46 @@ def _trading_2464_synthetic_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(TRADING_2464_SYNTHETIC_SECTION)
 
 
+@cache
+def _trading_2464_isolated_dq_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2464_ISOLATED_DQ_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2464_SYNTHETIC_SECTION in baseline:
-        current_superseded_paths = (
-            _trading_2464_synthetic_superseded_live_source_paths()
-        )
+    if TRADING_2464_ISOLATED_DQ_SECTION in baseline:
+        current_superseded_paths = _trading_2464_isolated_dq_superseded_live_source_paths()
         assert (
-            _trading_2464_synthetic_prior_active_source_mismatches()
-            == current_superseded_paths
+            _trading_2464_isolated_dq_prior_active_source_mismatches() == current_superseded_paths
         )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_all_superseded_live_source_paths()
+            | _data_gov_001_d0d_superseded_live_source_paths()
+            | _data_gov_001_d0d_source_paths()
+            | _data_gov_001_d0e_superseded_live_source_paths()
+            | _data_gov_001_d0e_source_paths()
+            | _devx_007_all_current_authority_paths()
+            | _trading_2464_decision_all_current_authority_paths()
+            | _trading_2464_dq_recovery_all_current_authority_paths()
+            | _trading_2464_owner_token_all_current_authority_paths()
+            | _trading_2464_contract_all_current_authority_paths()
+            | _trading_2464_synthetic_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2464_ISOLATED_DQ_SECTION
+    elif TRADING_2464_SYNTHETIC_SECTION in baseline:
+        current_superseded_paths = _trading_2464_synthetic_superseded_live_source_paths()
+        assert _trading_2464_synthetic_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -6411,13 +6478,8 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = TRADING_2464_SYNTHETIC_SECTION
     elif TRADING_2464_CONTRACT_SECTION in baseline:
-        current_superseded_paths = (
-            _trading_2464_contract_superseded_live_source_paths()
-        )
-        assert (
-            _trading_2464_contract_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        current_superseded_paths = _trading_2464_contract_superseded_live_source_paths()
+        assert _trading_2464_contract_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -6439,12 +6501,9 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = TRADING_2464_CONTRACT_SECTION
     elif TRADING_2464_OWNER_TOKEN_SECTION in baseline:
-        current_superseded_paths = (
-            _trading_2464_owner_token_superseded_live_source_paths()
-        )
+        current_superseded_paths = _trading_2464_owner_token_superseded_live_source_paths()
         assert (
-            _trading_2464_owner_token_prior_active_source_mismatches()
-            == current_superseded_paths
+            _trading_2464_owner_token_prior_active_source_mismatches() == current_superseded_paths
         )
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
@@ -6466,12 +6525,9 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = TRADING_2464_OWNER_TOKEN_SECTION
     elif TRADING_2464_DQ_RECOVERY_SECTION in baseline:
-        current_superseded_paths = (
-            _trading_2464_dq_recovery_superseded_live_source_paths()
-        )
+        current_superseded_paths = _trading_2464_dq_recovery_superseded_live_source_paths()
         assert (
-            _trading_2464_dq_recovery_prior_active_source_mismatches()
-            == current_superseded_paths
+            _trading_2464_dq_recovery_prior_active_source_mismatches() == current_superseded_paths
         )
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
@@ -6492,13 +6548,8 @@ def _source_sha256(source: dict[str, object]) -> str:
         )
         authority_section = TRADING_2464_DQ_RECOVERY_SECTION
     elif TRADING_2464_DECISION_SECTION in baseline:
-        current_superseded_paths = (
-            _trading_2464_decision_superseded_live_source_paths()
-        )
-        assert (
-            _trading_2464_decision_prior_active_source_mismatches()
-            == current_superseded_paths
-        )
+        current_superseded_paths = _trading_2464_decision_superseded_live_source_paths()
+        assert _trading_2464_decision_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
             _arch_005s4d_s2_all_superseded_live_source_paths()
             | _ops_070_stable_release_superseded_live_source_paths()
@@ -9179,9 +9230,9 @@ def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> No
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert "docs/research/growth_tilt_owner_diagnosis_pack.md" not in source_paths
     for source in sources:
-        assert _source_sha256_at_commit(source, WAVE14_S0_1_BASE_COMMIT) == source["sha256"], (
-            source["path"]
-        )
+        assert (
+            _source_sha256_at_commit(source, WAVE14_S0_1_BASE_COMMIT) == source["sha256"]
+        ), source["path"]
     assert wave13["source_hash_status"] == "FINAL_TRACKED_STATE_FRESH"
 
     assert wave13["worktree_attribution"] == {
@@ -9964,9 +10015,9 @@ def test_ops_068_is_append_only_current_hash_authority() -> None:
     assert set(ops_068["inherited_removed_live_source_paths"]).isdisjoint(source_paths)
     assert superseded <= set(source_paths) | set(ops_068["inherited_removed_live_source_paths"])
     for source in sources:
-        assert _source_sha256_at_commit(source, ARCH_005S4D_BASE_COMMIT) == source["sha256"], (
-            source["path"]
-        )
+        assert (
+            _source_sha256_at_commit(source, ARCH_005S4D_BASE_COMMIT) == source["sha256"]
+        ), source["path"]
 
     assert ops_068["validation"] == {
         "bundle_validation": {"status": "PASS", "checks": 11, "failed": 0},
@@ -13846,9 +13897,9 @@ def test_data_gov_002c2p_is_immutable_historical_authority() -> None:
     assert [str(row["path"]) for row in sources] == expected_source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _source_sha256_at_commit(source, TRADING_2463_BASE_COMMIT) == source["sha256"], (
-            source["path"]
-        )
+        assert (
+            _source_sha256_at_commit(source, TRADING_2463_BASE_COMMIT) == source["sha256"]
+        ), source["path"]
     assert phase["implementation"] == {
         "exact_site_count": 1,
         "scope_taxonomy": "DISTINCT_NON_SESSION_DATE_ROW_SET",
@@ -14029,9 +14080,9 @@ def test_trading_2463_s1_s2_is_immutable_historical_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _source_sha256_at_commit(source, TRADING_2463_S3_BASE_COMMIT) == source["sha256"], (
-            source["path"]
-        )
+        assert (
+            _source_sha256_at_commit(source, TRADING_2463_S3_BASE_COMMIT) == source["sha256"]
+        ), source["path"]
     assert phase["implementation"] == {
         "s1_decision_problem_complete": True,
         "s1_target_option_count": 4,
@@ -14116,9 +14167,9 @@ def test_trading_2463_s3_is_immutable_historical_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _source_sha256_at_commit(source, TRADING_2463_S4_BASE_COMMIT) == source["sha256"], (
-            source["path"]
-        )
+        assert (
+            _source_sha256_at_commit(source, TRADING_2463_S4_BASE_COMMIT) == source["sha256"]
+        ), source["path"]
     assert phase["implementation"] == {
         "s3_pack_complete": True,
         "s3_option_count": 4,
@@ -15049,13 +15100,9 @@ def test_data_gov_001_d0d_is_append_only_current_hash_authority() -> None:
         "scope": "ISOLATED_REHEARSAL_ONLY",
         "platform_profile": "WINDOWS_NTFS_RESTRICTED_TOKEN.v1",
         "bundle_id": "data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea",
-        "bundle_sha256": (
-            "0e34f6f5e3cbcd273721651f49c74ac196548cf24df186396d68c328410c04cc"
-        ),
+        "bundle_sha256": ("0e34f6f5e3cbcd273721651f49c74ac196548cf24df186396d68c328410c04cc"),
         "attestation_id": "store_acl_attestation_ca3499e0650954d9cde4962fb78a6fa1",
-        "attestation_sha256": (
-            "5d11335a790b5dc3df8718ff2d329680615c6c10b083d28038e7815b47e7eda7"
-        ),
+        "attestation_sha256": ("5d11335a790b5dc3df8718ff2d329680615c6c10b083d28038e7815b47e7eda7"),
         "validator_module_sha256": (
             "02f89af3eaa9eef5c801ecaa4e748e031e7258643fc56faf28df09add07a5d8c"
         ),
@@ -15102,18 +15149,14 @@ def test_data_gov_001_d0e_is_append_only_current_hash_authority() -> None:
         _data_gov_001_d0e_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(DATA_GOV_001_D0E_SECTION) < list(baseline).index(
-        DEVX_007_SECTION
-    )
+    assert list(baseline).index(DATA_GOV_001_D0E_SECTION) < list(baseline).index(DEVX_007_SECTION)
     phase = baseline[DATA_GOV_001_D0E_SECTION]
     assert phase["schema_version"] == (
         "data_gov_001_d0e_daily_score_consumer_migration_compatibility.v1"
     )
     assert phase["status"] in {"VALIDATING", "COMPLETE"}
     assert phase["boundary_id"] == "DATA-GOV-001-D0E-DAILY-SCORE-CONSUMER-MIGRATION"
-    assert phase["task_ids"] == [
-        "DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION"
-    ]
+    assert phase["task_ids"] == ["DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION"]
     assert phase["owner_authorization"] == (
         "owner_direction:2026-07-29:continue_d0c_acl_consumer_sequence"
     )
@@ -15162,22 +15205,14 @@ def test_data_gov_001_d0e_is_append_only_current_hash_authority() -> None:
         "consumer_version": "1.0.0",
         "execution_profile_id": "daily_default.v1",
         "bundle_id": (
-            "data_foundation_consumer_migration_bundle_"
-            "e19d0f959975c54f400025919921d3f6"
+            "data_foundation_consumer_migration_bundle_" "e19d0f959975c54f400025919921d3f6"
         ),
-        "bundle_sha256": (
-            "5d98a99ae2c85c9d68806eb2cbcbb02af8e66ab1d1d6c365a809d4591feca91c"
-        ),
+        "bundle_sha256": ("5d98a99ae2c85c9d68806eb2cbcbb02af8e66ab1d1d6c365a809d4591feca91c"),
         "attestation_id": "consumer_migration_7950b0d7aade644f54c4b56c8776029e",
-        "attestation_sha256": (
-            "3825ae5a4724f27a1384d9a887625abefb54eeefebe1ed1a34f1c3238bd7c5f4"
-        ),
-        "candidate_publication_transaction_id": (
-            "download_txn_009597c98f1ed98fbee9c30751b82dae"
-        ),
+        "attestation_sha256": ("3825ae5a4724f27a1384d9a887625abefb54eeefebe1ed1a34f1c3238bd7c5f4"),
+        "candidate_publication_transaction_id": ("download_txn_009597c98f1ed98fbee9c30751b82dae"),
         "strict_dq_receipt_id": (
-            "dq_execution_"
-            "bd26331c12cd528eb4cad10cc9ec514edbde82c2e425a3e351e7ae042fb81ca2"
+            "dq_execution_" "bd26331c12cd528eb4cad10cc9ec514edbde82c2e425a3e351e7ae042fb81ca2"
         ),
         "consumer_authorization_id": (
             "dq_consumer_authorization_"
@@ -15294,20 +15329,16 @@ def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> N
         _trading_2464_decision_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert list(baseline).index(TRADING_2464_DECISION_SECTION) < list(
-        baseline
-    ).index(TRADING_2464_DQ_RECOVERY_SECTION)
+    assert list(baseline).index(TRADING_2464_DECISION_SECTION) < list(baseline).index(
+        TRADING_2464_DQ_RECOVERY_SECTION
+    )
     phase = baseline[TRADING_2464_DECISION_SECTION]
     assert phase["schema_version"] == (
         "trading_2464_o1_model_feature_owner_decision_pack_compatibility.v1"
     )
     assert phase["status"] == "BLOCKED_OWNER_INPUT"
-    assert phase["boundary_id"] == (
-        "TRADING-2464-O1-MODEL-FEATURE-OWNER-DECISION-PACK"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2464-O1-MODEL-FEATURE-OWNER-DECISION-PACK")
+    assert phase["task_ids"] == ["TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"]
     assert phase["owner_authorization"] == (
         "owner_instruction:TRADING-2464:2026-07-30:continue_progress_v1"
     )
@@ -15327,17 +15358,13 @@ def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> N
     else:
         assert superseded == _trading_2464_decision_prior_active_source_mismatches()
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2464-O1-MODEL-FEATURE-OWNER-DECISION-PACK"
-        ),
+        "superseded_by_phase": ("TRADING-2464-O1-MODEL-FEATURE-OWNER-DECISION-PACK"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": DEVX_007_SECTION,
         "current_hash_authority": f"{TRADING_2464_DECISION_SECTION}.sources",
     }
-    assert set(phase["removed_live_source_paths"]) == (
-        TRADING_2464_DECISION_REMOVED_SOURCE_PATHS
-    )
+    assert set(phase["removed_live_source_paths"]) == (TRADING_2464_DECISION_REMOVED_SOURCE_PATHS)
     assert set(phase["new_source_paths"]) == TRADING_2464_DECISION_NEW_SOURCE_PATHS
     expected = (
         superseded - TRADING_2464_DECISION_REMOVED_SOURCE_PATHS
@@ -15397,14 +15424,10 @@ def test_trading_2464_dq_recovery_is_append_only_current_hash_authority() -> Non
         TRADING_2464_OWNER_TOKEN_SECTION
     )
     phase = baseline[TRADING_2464_DQ_RECOVERY_SECTION]
-    assert phase["schema_version"] == (
-        "trading_2464_dq_recovery_source_audit_compatibility.v1"
-    )
+    assert phase["schema_version"] == ("trading_2464_dq_recovery_source_audit_compatibility.v1")
     assert phase["status"] == "BLOCKED_OWNER_INPUT"
     assert phase["boundary_id"] == "TRADING-2464-DQ-RECOVERY-SOURCE-AUDIT"
-    assert phase["task_ids"] == [
-        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
-    ]
+    assert phase["task_ids"] == ["TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"]
     assert phase["owner_authorization"] == (
         "owner_instruction:TRADING-2464:2026-07-30:continue_progress_v1"
     )
@@ -15486,9 +15509,7 @@ def test_trading_2464_dq_recovery_is_append_only_current_hash_authority() -> Non
     }
 
 
-def test_trading_2464_owner_decision_token_is_append_only_current_hash_authority() -> (
-    None
-):
+def test_trading_2464_owner_decision_token_is_append_only_current_hash_authority() -> None:
     _assert_trading_2464_owner_token_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_owner_token_base_baseline_blob(),
@@ -15503,12 +15524,8 @@ def test_trading_2464_owner_decision_token_is_append_only_current_hash_authority
         "trading_2464_owner_decision_token_normalization_compatibility.v1"
     )
     assert phase["status"] == "BLOCKED_OWNER_INPUT"
-    assert phase["boundary_id"] == (
-        "TRADING-2464-OWNER-DECISION-TOKEN-NORMALIZATION"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2464-OWNER-DECISION-TOKEN-NORMALIZATION")
+    assert phase["task_ids"] == ["TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"]
     assert phase["owner_authorization"] == (
         "owner_instruction:TRADING-2464:2026-07-30:continue_progress_v1"
     )
@@ -15528,9 +15545,7 @@ def test_trading_2464_owner_decision_token_is_append_only_current_hash_authority
     else:
         assert superseded == _trading_2464_owner_token_prior_active_source_mismatches()
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2464-OWNER-DECISION-TOKEN-NORMALIZATION"
-        ),
+        "superseded_by_phase": ("TRADING-2464-OWNER-DECISION-TOKEN-NORMALIZATION"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": TRADING_2464_DQ_RECOVERY_SECTION,
@@ -15586,9 +15601,7 @@ def test_trading_2464_owner_decision_token_is_append_only_current_hash_authority
     }
 
 
-def test_trading_2464_owner_a_contract_is_append_only_current_hash_authority() -> (
-    None
-):
+def test_trading_2464_owner_a_contract_is_append_only_current_hash_authority() -> None:
     _assert_trading_2464_contract_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_contract_base_baseline_blob(),
@@ -15603,12 +15616,8 @@ def test_trading_2464_owner_a_contract_is_append_only_current_hash_authority() -
         "trading_2464_o1_owner_a_serial_contract_freeze_compatibility.v1"
     )
     assert phase["status"] == "BASELINE_DONE"
-    assert phase["boundary_id"] == (
-        "TRADING-2464-O1-OWNER-A-SERIAL-CONTRACT-FREEZE"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2464-O1-OWNER-A-SERIAL-CONTRACT-FREEZE")
+    assert phase["task_ids"] == ["TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"]
     assert phase["owner_authorization"] == (
         "owner_decision:TRADING-2464:2026-07-30:"
         "approve_o1_m1_ridge_cross_asset_state_single_family_v1"
@@ -15629,24 +15638,18 @@ def test_trading_2464_owner_a_contract_is_append_only_current_hash_authority() -
     else:
         assert superseded == _trading_2464_contract_prior_active_source_mismatches()
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2464-O1-OWNER-A-SERIAL-CONTRACT-FREEZE"
-        ),
+        "superseded_by_phase": ("TRADING-2464-O1-OWNER-A-SERIAL-CONTRACT-FREEZE"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": TRADING_2464_OWNER_TOKEN_SECTION,
         "current_hash_authority": f"{TRADING_2464_CONTRACT_SECTION}.sources",
     }
-    assert set(phase["removed_live_source_paths"]) == (
-        TRADING_2464_CONTRACT_REMOVED_SOURCE_PATHS
-    )
+    assert set(phase["removed_live_source_paths"]) == (TRADING_2464_CONTRACT_REMOVED_SOURCE_PATHS)
     assert set(phase["new_source_paths"]) == TRADING_2464_CONTRACT_NEW_SOURCE_PATHS
     expected = (
         superseded | TRADING_2464_CONTRACT_NEW_SOURCE_PATHS
     ) - TRADING_2464_CONTRACT_REMOVED_SOURCE_PATHS
-    assert set(phase["source_delta_paths"]) == (
-        superseded | TRADING_2464_CONTRACT_NEW_SOURCE_PATHS
-    )
+    assert set(phase["source_delta_paths"]) == (superseded | TRADING_2464_CONTRACT_NEW_SOURCE_PATHS)
     sources = phase["sources"]
     source_paths = [str(source["path"]) for source in sources]
     assert source_paths == sorted(source_paths, key=str.casefold)
@@ -15660,15 +15663,9 @@ def test_trading_2464_owner_a_contract_is_append_only_current_hash_authority() -
     assert phase["implementation"] == {
         "owner_decision_received": True,
         "owner_option": "A_ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE",
-        "contract_freeze_source_base_sha": (
-            "428cfa78149a7f037e8cfdeee8d2646833f413a5"
-        ),
-        "active_policy_path": (
-            "config/research/o1_relative_opportunity_capability_audit_v1.yaml"
-        ),
-        "active_policy_status": (
-            "OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING"
-        ),
+        "contract_freeze_source_base_sha": ("428cfa78149a7f037e8cfdeee8d2646833f413a5"),
+        "active_policy_path": ("config/research/o1_relative_opportunity_capability_audit_v1.yaml"),
+        "active_policy_status": ("OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING"),
         "model_id": "M1_RIDGE_LINEAR",
         "feature_family": "CROSS_ASSET_STATE",
         "feature_count": 28,
@@ -15700,26 +15697,22 @@ def test_trading_2464_owner_a_contract_is_append_only_current_hash_authority() -
     }
 
 
-def test_trading_2464_synthetic_builder_is_append_only_current_hash_authority() -> (
-    None
-):
+def test_trading_2464_synthetic_builder_is_append_only_current_hash_authority() -> None:
     _assert_trading_2464_synthetic_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_synthetic_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2464_SYNTHETIC_SECTION
+    assert list(baseline).index(TRADING_2464_SYNTHETIC_SECTION) < list(baseline).index(
+        TRADING_2464_ISOLATED_DQ_SECTION
+    )
     phase = baseline[TRADING_2464_SYNTHETIC_SECTION]
     assert phase["schema_version"] == (
         "trading_2464_o1_synthetic_builder_validator_compatibility.v1"
     )
     assert phase["status"] in {"IN_PROGRESS", "BASELINE_DONE"}
-    assert phase["boundary_id"] == (
-        "TRADING-2464-O1-SYNTHETIC-BUILDER-VALIDATOR"
-    )
-    assert phase["task_ids"] == [
-        "TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"
-    ]
+    assert phase["boundary_id"] == ("TRADING-2464-O1-SYNTHETIC-BUILDER-VALIDATOR")
+    assert phase["task_ids"] == ["TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"]
     assert phase["prior_sections_immutability"] == {
         "source_commit": TRADING_2464_SYNTHETIC_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
@@ -15733,17 +15726,13 @@ def test_trading_2464_synthetic_builder_is_append_only_current_hash_authority() 
     superseded = set(phase["superseded_live_source_paths"])
     assert superseded == _trading_2464_synthetic_prior_active_source_mismatches()
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2464-O1-SYNTHETIC-BUILDER-VALIDATOR"
-        ),
+        "superseded_by_phase": ("TRADING-2464-O1-SYNTHETIC-BUILDER-VALIDATOR"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
         "historical_hashes_rewritten": False,
         "inherited_supersession_authority": TRADING_2464_CONTRACT_SECTION,
         "current_hash_authority": f"{TRADING_2464_SYNTHETIC_SECTION}.sources",
     }
-    assert set(phase["removed_live_source_paths"]) == (
-        TRADING_2464_SYNTHETIC_REMOVED_SOURCE_PATHS
-    )
+    assert set(phase["removed_live_source_paths"]) == (TRADING_2464_SYNTHETIC_REMOVED_SOURCE_PATHS)
     assert set(phase["new_source_paths"]) == TRADING_2464_SYNTHETIC_NEW_SOURCE_PATHS
     expected = (
         superseded | TRADING_2464_SYNTHETIC_NEW_SOURCE_PATHS
@@ -15758,7 +15747,7 @@ def test_trading_2464_synthetic_builder_is_append_only_current_hash_authority() 
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "source_base_sha": TRADING_2464_SYNTHETIC_BASE_COMMIT,
         "data_role": "SYNTHETIC_FIXTURE_ONLY",
@@ -15789,6 +15778,99 @@ def test_trading_2464_synthetic_builder_is_append_only_current_hash_authority() 
         "strategy_research_started": False,
         "cached_data_mutated": False,
         "provider_replayed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2464_isolated_dq_is_append_only_current_hash_authority() -> None:
+    _assert_trading_2464_isolated_dq_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2464_isolated_dq_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2464_ISOLATED_DQ_SECTION
+    phase = baseline[TRADING_2464_ISOLATED_DQ_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2464_o1_isolated_candidate_strict_dq_compatibility.v1"
+    )
+    assert phase["status"] == "IN_PROGRESS"
+    assert phase["boundary_id"] == ("TRADING-2464-O1-ISOLATED-CANDIDATE-STRICT-DQ")
+    assert phase["task_ids"] == ["TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT"]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2464_ISOLATED_DQ_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2464_ISOLATED_DQ_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2464_ISOLATED_DQ_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2464_ISOLATED_DQ_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2464_ISOLATED_DQ_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == _trading_2464_isolated_dq_prior_active_source_mismatches()
+    assert phase["supersession"] == {
+        "superseded_by_phase": ("TRADING-2464-O1-ISOLATED-CANDIDATE-STRICT-DQ"),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2464_SYNTHETIC_SECTION,
+        "current_hash_authority": (f"{TRADING_2464_ISOLATED_DQ_SECTION}.sources"),
+    }
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2464_ISOLATED_DQ_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == TRADING_2464_ISOLATED_DQ_NEW_SOURCE_PATHS
+    expected = (
+        superseded | TRADING_2464_ISOLATED_DQ_NEW_SOURCE_PATHS
+    ) - TRADING_2464_ISOLATED_DQ_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "source_base_sha": TRADING_2464_ISOLATED_DQ_BASE_COMMIT,
+        "gate_schema": "o1_relative_opportunity_dq_gate.v1",
+        "gate_id": "o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2",
+        "gate_sha256": ("ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca"),
+        "candidate_transaction_id": ("download_txn_598b53a12ea3de4d18cc20be70f2439e"),
+        "fresh_receipt_id": (
+            "dq_execution_d80529d1c713fee5f8602830912c14c2" "bdca64a59c64d943fbedd7c044d677cb"
+        ),
+        "strict_dq_status": "PASS",
+        "strict_dq_error_count": 0,
+        "strict_dq_warning_count": 0,
+        "requested_window": "2021-02-22..2026-07-27",
+        "evaluated_window": "2021-02-22..2026-07-24",
+        "immutable_member_count": 3,
+        "same_store_candidate_retained": True,
+        "summary_interruption_recovered_without_rematerialization": True,
+        "daily_consumer_dispatched": False,
+        "coverage_read": False,
+        "model_training_executed": False,
+    }
+    validation = phase["validation"]
+    assert validation["dq_runner_and_recovery"] == "PASS_11_TESTS"
+    assert validation["task_registry"] == "PASS_BYTE_IDENTICAL_927_TASKS"
+    assert validation["generated_architecture"] == "PASS_1041_MODULES_1210_TESTS"
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "isolated_real_data_materialized": True,
+        "source_workspace_mutated": False,
+        "live_data_raw_overwritten": False,
+        "daily_consumer_dispatched": False,
+        "coverage_audit_executed": False,
+        "model_training_executed": False,
+        "new_o1_result_read": False,
         "production_effect": "none",
         "broker_action": "none",
     }
@@ -16568,9 +16650,9 @@ def test_arch_004_wave14_s2_full_attempt_chain_is_append_only_and_strict() -> No
     del missing_failed["attempts"][-1]["artifact"]["failed"]
     invalid_cases.append(missing_failed)
     absolute_artifact = deepcopy(failed_then_passed)
-    absolute_artifact["attempts"][-1]["artifact"]["path"] = (
-        "C:/outputs/validation_runtime/full_bad/test_runtime_summary.json"
-    )
+    absolute_artifact["attempts"][-1]["artifact"][
+        "path"
+    ] = "C:/outputs/validation_runtime/full_bad/test_runtime_summary.json"
     invalid_cases.append(absolute_artifact)
     wrong_parent = deepcopy(failed_then_pending)
     wrong_parent["attempts"][-1]["replaces_attempt_id"] = "unrelated"

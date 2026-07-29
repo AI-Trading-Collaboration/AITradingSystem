@@ -330,7 +330,11 @@ split/coverage/metric/falsification 与四类机械结论。active contract 本�
 `real_coverage_read_allowed_now=false` 和 `model_training_allowed_now=false`；必须先集成
 contract，再完成 synthetic-only builder/independent validator。之后只能从 OPS-070 permanent
 runtime clone 的 exact immutable transaction 物化新的 isolated candidate，逐对象核验并在该
-candidate 上得到 strict DQ `PASS / 0 / 0`。不得复制 receipt 或覆盖 live `data/raw`。
+candidate 上得到 strict DQ `PASS / 0 / 0`。该门禁现已由
+`src/ai_trading_system/data/o1_relative_opportunity_dq_candidate.py` 闭合：它在 canonical
+DQ 后立即停止，既不生成 D0E daily consumer authorization，也不 dispatch consumer；进程若在
+摘要阶段中断，只允许复验同一候选的唯一 copy manifest/publication/receipt 并补写 gate，不得
+重物化或重跑 DQ。不得复制 receipt 或覆盖 live `data/raw`。
 
 synthetic-only 路径由
 `src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_capability_audit.py`
@@ -352,7 +356,7 @@ flowchart LR
     OA["Owner A exact decision"] --> CT["Active serial contract<br/>S4 + DQ transaction + M1/CROSS_ASSET_STATE"]
     CT --> SY["Synthetic-only dataset builder<br/>+ independent formula validator"]
     SY --> IC["Materialize exact immutable transaction<br/>into isolated candidate"]
-    IC --> SDQ["Strict DQ PASS / 0 / 0"]
+    IC --> SDQ["Observed strict DQ PASS / 0 / 0<br/>same-store gate retained"]
     SDQ --> LG["Freeze event + append-only attempt ledgers"]
     LG --> COV["Coverage-only eligibility gate"]
     COV -->|"FAIL / insufficient"| ICQ["INSUFFICIENT_COVERAGE_OR_DQ"]

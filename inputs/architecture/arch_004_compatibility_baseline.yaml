@@ -33671,3 +33671,151 @@ phase_trading_2464_o1_synthetic_builder_validator:
     provider_replayed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2464_o1_isolated_candidate_strict_dq:
+  schema_version: trading_2464_o1_isolated_candidate_strict_dq_compatibility.v1
+  status: IN_PROGRESS
+  boundary_id: TRADING-2464-O1-ISOLATED-CANDIDATE-STRICT-DQ
+  task_ids:
+  - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+  prior_sections_immutability:
+    source_commit: bca4cddddf5bd266f96b828f09423d015605c43b
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: afde750e69d6dc5de3e622f01acf710f55dccb13
+    raw_byte_count: 2114987
+    raw_sha256: e28c2e2de2081c8117eea27dec995d3f10d36c377b53f0fcae3e839866ebb582
+    append_offset: 2114987
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2464-O1-ISOLATED-CANDIDATE-STRICT-DQ
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2464_o1_synthetic_builder_validator
+    current_hash_authority: phase_trading_2464_o1_isolated_candidate_strict_dq.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - scripts/trading2464_o1_dq_candidate.py
+  - src/ai_trading_system/data/o1_relative_opportunity_dq_candidate.py
+  - tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
+  source_delta_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - scripts/trading2464_o1_dq_candidate.py
+  - src/ai_trading_system/data/o1_relative_opportunity_dq_candidate.py
+  - tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  sources:
+  - path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+    sha256: cef54291907cbaeb2a9ff6a24c07a9d532176e5e9ec55cdc10caf9dcd12ac1e9
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+    sha256: ef6ee0fd1c5cfa624051cfa1943ca959ad894bdcb1feaa8c688d06e7f668969b
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 2242dafce60c16263fd25122097542142dd0a6909ed1f3d6748f3b036b053b3e
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 65e542a47fdd17863503225de121ce790fa26ee22fed2b3139e0765b45cb8fe4
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: ee8c68df3ea03dd18dc108656ca4ebfcf71b31099cd60699de33e5acc28cb8ea
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 718196efcec7a026d9aab1dc407d5da7b8db09f34d35d0049dfa9a441b2b6782
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 598194cb1984860ae5f42dcd9728a8578af9243a6904504a8490bead036ae199
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 564ac5ed2ef79a25793c99327d888f95c069adc465fb8160a99f7d841a5f2ce3
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: ede74a9df1e9874843d677d1d9b8047bc44db769815387317f6324be1837bc48
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: ac772685729281ff2e6d60dd17d63005a6ceac5dbe3f3b9b35b37fdf4994c51d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 0be8f6039487e49f7119b27887a5a49a5e670d5fb436ba98cc8cc9c0d2d65d3e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+    sha256: e0346b304031fbe2932a57a564b702b8ae6cf96c432155d3ff0439e90d0a874c
+    hash_normalization: git_eol_lf
+  - path: scripts/trading2464_o1_dq_candidate.py
+    sha256: bb3546b9c12db680b7a064804b9b41a07039e7d5a8bf0dc6dd4551271df19efe
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/data/o1_relative_opportunity_dq_candidate.py
+    sha256: 9009f9a00e7ed261218c136ea4d729d454b73bffb461feb03cd9f2cfdd5c1556
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_dq_candidate.py
+    sha256: af7182ac45542015f5de3c5166e0a22f63516ee3894f7f3a2fe69f7f8a951480
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 245f3e2884d74d972cd43e43defd51ee3d86a73c2b37c31e4636bcb288b8347a
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 86d61a828adf0668e5b5edfb1e3274d179f8dee1c1ca3d9bff58fee520c39cc9
+    hash_normalization: git_eol_lf
+  implementation:
+    source_base_sha: bca4cddddf5bd266f96b828f09423d015605c43b
+    gate_schema: o1_relative_opportunity_dq_gate.v1
+    gate_id: o1_dq_gate_60926d9b01e451af07a77fe8fdf209e2
+    gate_sha256: ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca
+    candidate_transaction_id: download_txn_598b53a12ea3de4d18cc20be70f2439e
+    fresh_receipt_id: dq_execution_d80529d1c713fee5f8602830912c14c2bdca64a59c64d943fbedd7c044d677cb
+    strict_dq_status: PASS
+    strict_dq_error_count: 0
+    strict_dq_warning_count: 0
+    requested_window: 2021-02-22..2026-07-27
+    evaluated_window: 2021-02-22..2026-07-24
+    immutable_member_count: 3
+    same_store_candidate_retained: true
+    summary_interruption_recovered_without_rematerialization: true
+    daily_consumer_dispatched: false
+    coverage_read: false
+    model_training_executed: false
+  validation:
+    dq_runner_and_recovery: PASS_11_TESTS
+    task_registry: PASS_BYTE_IDENTICAL_927_TASKS
+    generated_architecture: PASS_1041_MODULES_1210_TESTS
+    authority_and_deprecation: PASS_150_TESTS
+    architecture: PASS_791_TESTS
+    contract: PASS_276_TESTS
+  safety:
+    isolated_real_data_materialized: true
+    source_workspace_mutated: false
+    live_data_raw_overwritten: false
+    daily_consumer_dispatched: false
+    coverage_audit_executed: false
+    model_training_executed: false
+    new_o1_result_read: false
+    production_effect: none
+    broker_action: none
