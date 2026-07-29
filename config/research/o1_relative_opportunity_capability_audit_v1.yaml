@@ -54,6 +54,16 @@ execution_binding:
     - source_commit_sha
     - cli_argv
 
+synthetic_validation_contract:
+  schema_version: o1_relative_opportunity_synthetic_validation.v1
+  allowed_data_role: SYNTHETIC_FIXTURE_ONLY
+  deterministic_double_build_required: true
+  independent_formula_reconstruction_required: true
+  negative_input_validation_required: true
+  real_data_access_allowed: false
+  coverage_classification_allowed: false
+  model_training_allowed: false
+
 target_contract:
   target_id: RELATIVE_OPPORTUNITY_SPREAD
   form: CONTINUOUS

@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1208
-test_count: 1148
+test_file_count: 1209
+test_count: 1149
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -2161,6 +2161,23 @@ tests:
 - test_id: tests.research_strategies.test_leveraged_exposure_instrument_evaluation
   path: tests/research_strategies/test_leveraged_exposure_instrument_evaluation.py
   sha256: d0fe27e416e445c089bb798cfc5542cecdcd2807eaa5dc7eb809b25b426f54af
+  file_role: test
+  rule_id: research_strategy_tests
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: research_strategy
+  suite: slow-research-regression
+  covered_module_prefixes:
+  - src/ai_trading_system/research_quality/
+  - src/ai_trading_system/research_framework/
+- test_id: tests.research_strategies.test_o1_relative_opportunity_capability_audit_builder
+  path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_builder.py
+  sha256: 66b4cda3736a54a42962981fdf62707668f705a767c5bc8c343010cbccda3e62
   file_role: test
   rule_id: research_strategy_tests
   owner_profile: quality
@@ -7540,7 +7557,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: d6855bbb3938280aef591e9d6f22ad3952a10927d874739b399222aaeb4caf8e
+  sha256: 66af1beebd85a723dc219f544ff9a82f59ff7a8c5166f98e942efe71bfebfabc
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -7936,7 +7953,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 1abb1a0f5197263cf1468d8254ecbd2738c7c259b6c7d8d8c96bdae150bdd200
+  sha256: ef729c05eee2d1e0a16b8521b44fa1ca66fb56d72cd52b2085971a33265d296e
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

@@ -11,9 +11,9 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex coordinator：Owner A、S4、DQ transaction 与 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`
-    active contract 已在 exact base `428cfa78149a7f037e8cfdeee8d2646833f413a5` 完成串行冻结验证；集成后从新的
-    exact `main` 基线实现 synthetic builder/validator，并仅在该门禁通过后 materialize isolated candidate
+  next_owner: Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY`
+    builder/independent validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate
+    生命周期，从 immutable transaction materialize 并逐对象核验，再运行 fresh strict DQ
   requirement_refs:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
@@ -22,9 +22,10 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`SYNTHETIC_BUILDER_VALIDATOR_PENDING_AFTER_SERIAL_CONTRACT_INTEGRATION`。receipt/authorization/pointer/transaction/三个
-    immutable members 全链 exact `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live
-    projection。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
+    double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
+    `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
+    `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate
@@ -37,52 +38,49 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2034
-    row_sha256: 2907824f0e1b6c6b10fdf209c00a6481c9c2a9d3d99e395cb6460f5957f35492
+    row_sha256: 5e6bf4401d43d95d09534a32e031d7091b9b8503b1829caeb1060b2c15e81eb1
     cell_count: 8
     all_cells:
     - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
     - Strategy Style Discovery / O1 relative-opportunity capability evidence
     - P0
     - IN_PROGRESS
-    - Codex coordinator：Owner A、S4、DQ transaction 与 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`
-      active contract 已在 exact base `428cfa78149a7f037e8cfdeee8d2646833f413a5` 完成串行冻结验证；集成后从新的
-      exact `main` 基线实现 synthetic builder/validator，并仅在该门禁通过后 materialize isolated
-      candidate
+    - Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY` builder/independent
+      validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate 生命周期，从 immutable
+      transaction materialize 并逐对象核验，再运行 fresh strict DQ
     - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`SYNTHETIC_BUILDER_VALIDATOR_PENDING_AFTER_SERIAL_CONTRACT_INTEGRATION`。receipt/authorization/pointer/transaction/三个
-      immutable members 全链 exact `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live
-      projection。
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
+      double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
+      `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
+      `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。
     - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从
       exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
       family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
       并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-    - 2026-07-30：Owner 以 `owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1`
-      选择 A。serial contract freeze 已通过 focused `10/10`、authority/deprecation `148/148`、architecture-fitness
-      `789/789`、contract-validation `276/276`；尚未 materialize、重跑 DQ、读取 coverage/result
-      或训练模型。`production_effect=none`、`broker_action=none`。
+    - 2026-07-30：Owner A serial contract 已集成；synthetic builder/validator 及既有 model-ladder
+      回归 focused `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result 或训练模型。`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|Strategy
       Style Discovery / O1 relative-opportunity capability evidence|P0|IN_PROGRESS|Codex
-      coordinator：Owner A、S4、DQ transaction 与 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`
-      active contract 已在 exact base `428cfa78149a7f037e8cfdeee8d2646833f413a5` 完成串行冻结验证；集成后从新的
-      exact `main` 基线实现 synthetic builder/validator，并仅在该门禁通过后 materialize isolated
-      candidate|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
+      coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY` builder/independent
+      validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate 生命周期，从 immutable
+      transaction materialize 并逐对象核验，再运行 fresh strict DQ|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
       与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`SYNTHETIC_BUILDER_VALIDATOR_PENDING_AFTER_SERIAL_CONTRACT_INTEGRATION`。receipt/authorization/pointer/transaction/三个
-      immutable members 全链 exact `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live
-      projection。|Owner exact decision 与 exact-base/input commitment 完整；在 isolated
-      candidate 从 exact transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
-      family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
-      并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-30：Owner
-      以 `owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1`
-      选择 A。serial contract freeze 已通过 focused `10/10`、authority/deprecation `148/148`、architecture-fitness
-      `789/789`、contract-validation `276/276`；尚未 materialize、重跑 DQ、读取 coverage/result
-      或训练模型。`production_effect=none`、`broker_action=none`。|'
+      已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
+      double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
+      `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
+      `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。|Owner exact
+      decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact transaction
+      materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature family 在任何真实
+      count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式
+      run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-30：Owner
+      A serial contract 已集成；synthetic builder/validator 及既有 model-ladder 回归 focused
+      `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result 或训练模型。`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-2907824f0e1b6c6b10fdf209
+  event_id: legacy-import-5e6bf4401d43d95d09534a32
   task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -95,17 +93,15 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: Codex coordinator：Owner A、S4、DQ transaction 与 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`
-      active contract 已在 exact base `428cfa78149a7f037e8cfdeee8d2646833f413a5` 完成串行冻结验证；集成后从新的
-      exact `main` 基线实现 synthetic builder/validator，并仅在该门禁通过后 materialize isolated
-      candidate
-    notes: 2026-07-30：Owner 以 `owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1`
-      选择 A。serial contract freeze 已通过 focused `10/10`、authority/deprecation `148/148`、architecture-fitness
-      `789/789`、contract-validation `276/276`；尚未 materialize、重跑 DQ、读取 coverage/result
+    next_owner: Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY`
+      builder/independent validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate
+      生命周期，从 immutable transaction materialize 并逐对象核验，再运行 fresh strict DQ
+    notes: 2026-07-30：Owner A serial contract 已集成；synthetic builder/validator 及既有
+      model-ladder 回归 focused `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result
       或训练模型。`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:2907824f0e1b6c6b10fdf209c00a6481c9c2a9d3d99e395cb6460f5957f35492
+  - sha256:5e6bf4401d43d95d09534a32e031d7091b9b8503b1829caeb1060b2c15e81eb1
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -113,26 +109,25 @@ projection:
   - Strategy Style Discovery / O1 relative-opportunity capability evidence
   - P0
   - IN_PROGRESS
-  - Codex coordinator：Owner A、S4、DQ transaction 与 `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`
-    active contract 已在 exact base `428cfa78149a7f037e8cfdeee8d2646833f413a5` 完成串行冻结验证；集成后从新的
-    exact `main` 基线实现 synthetic builder/validator，并仅在该门禁通过后 materialize isolated candidate
+  - Codex coordinator：Owner-A serial contract 与 `SYNTHETIC_FIXTURE_ONLY` builder/independent
+    validator 已完成；下一步从集成后的新 exact `main` 基线登记 isolated candidate 生命周期，从 immutable
+    transaction materialize 并逐对象核验，再运行 fresh strict DQ
   - 详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`
     与 `docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md`。Owner
-    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`SYNTHETIC_BUILDER_VALIDATOR_PENDING_AFTER_SERIAL_CONTRACT_INTEGRATION`。receipt/authorization/pointer/transaction/三个
-    immutable members 全链 exact `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live
-    projection。
+    已选择 A：exact 复用 reviewed `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`；当前阶段=`ISOLATED_CANDIDATE_STRICT_DQ_PENDING`。synthetic
+    double-build、5-session label、28-feature、fold membership、event episode 与独立公式重建均
+    `PASS`；receipt/authorization/pointer/transaction/三个 immutable members 全链 exact
+    `PASS`；当前 live `data/raw` 已后移，禁止只复制 receipt 或覆盖 live projection。
   - Owner exact decision 与 exact-base/input commitment 完整；在 isolated candidate 从 exact
     transaction materialize 并逐对象核验，strict DQ revalidation `PASS/0/0`；model/feature
     family 在任何真实 count/result 前已有 authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ`
     并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。
-  - 2026-07-30：Owner 以 `owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1`
-    选择 A。serial contract freeze 已通过 focused `10/10`、authority/deprecation `148/148`、architecture-fitness
-    `789/789`、contract-validation `276/276`；尚未 materialize、重跑 DQ、读取 coverage/result
-    或训练模型。`production_effect=none`、`broker_action=none`。
+  - 2026-07-30：Owner A serial contract 已集成；synthetic builder/validator 及既有 model-ladder
+    回归 focused `9/9 PASS`。仍未 materialize、重跑 DQ、读取真实 coverage/result 或训练模型。`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
   - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
   terminal: false
-  raw_row_sha256: 2907824f0e1b6c6b10fdf209c00a6481c9c2a9d3d99e395cb6460f5957f35492
+  raw_row_sha256: 5e6bf4401d43d95d09534a32e031d7091b9b8503b1829caeb1060b2c15e81eb1
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: d19dc5c00d9aebc27085cc4801798a237d9734314426b43a8211cc01405475ad
+fragment_checksum: 55962c255a41367866c8a6ad981efa620478638287114285054107453ffbc1df

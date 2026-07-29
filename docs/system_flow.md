@@ -332,6 +332,14 @@ contract，再完成 synthetic-only builder/independent validator。之后只能
 runtime clone 的 exact immutable transaction 物化新的 isolated candidate，逐对象核验并在该
 candidate 上得到 strict DQ `PASS / 0 / 0`。不得复制 receipt 或覆盖 live `data/raw`。
 
+synthetic-only 路径由
+`src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_capability_audit.py`
+实现，只接受 `data_role=SYNTHETIC_FIXTURE_ONLY`。它复用 reviewed feature builder，并用独立
+公式路径重建全部 feature 与 5-session label，同时冻结 fold membership commitment 和
+`[-1,+1]` event episode 映射；输出不含 prediction、metric、真实 coverage class 或任何模型
+训练。真实数据角色、policy/source SHA 漂移、重复 key、可见性顺序错误或 payload tamper
+均 fail closed。
+
 真实读取首先只能进入 coverage-only gate；event/attempt ledger、fold/regime/event/effective
 sample 任一不足即机械输出 `INSUFFICIENT_COVERAGE_OR_DQ` 并停止。只有 coverage PASS 才允许
 一个 exact-tree canonical run，随后全部 mandatory falsification 与 independent validation 必须
@@ -342,7 +350,7 @@ Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-s
 ```mermaid
 flowchart LR
     OA["Owner A exact decision"] --> CT["Active serial contract<br/>S4 + DQ transaction + M1/CROSS_ASSET_STATE"]
-    CT --> SY["Synthetic builder + independent validator"]
+    CT --> SY["Synthetic-only dataset builder<br/>+ independent formula validator"]
     SY --> IC["Materialize exact immutable transaction<br/>into isolated candidate"]
     IC --> SDQ["Strict DQ PASS / 0 / 0"]
     SDQ --> LG["Freeze event + append-only attempt ledgers"]

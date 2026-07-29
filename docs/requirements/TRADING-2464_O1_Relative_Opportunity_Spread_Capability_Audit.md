@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS_SYNTHETIC_BUILDER_VALIDATOR_PENDING`
+状态：`IN_PROGRESS_ISOLATED_DQ_PENDING`
 
 production effect：`none`
 
@@ -253,8 +253,9 @@ run identity 和一个 attempt ledger。
 
 ## 8. 当前执行点
 
-- `status=IN_PROGRESS_SYNTHETIC_BUILDER_VALIDATOR_PENDING`
+- `status=IN_PROGRESS_ISOLATED_DQ_PENDING`
 - `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
+- `synthetic_builder_validator=PASS_SYNTHETIC_ONLY_DETERMINISTIC_INDEPENDENT_RECONSTRUCTION`
 - `data_prerequisite=EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED`
 - `owner_authorization_for_capability_audit=true`
 - `owner_option=A_ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE`
@@ -297,3 +298,8 @@ run identity 和一个 attempt ledger。
   authority/deprecation `148/148`、`architecture-fitness 789/789` 与
   `contract-validation 276/276`。下一步只能从该 wave 集成后的 exact `main` 基线实现
   synthetic builder/validator；真实 DQ、coverage 与模型训练仍未获执行许可。
+- 2026-07-30：在 serial contract 集成 commit `b346aaa622de1c9671527fda4b89b84f2c08ac83`
+  上完成 `SYNTHETIC_FIXTURE_ONLY` builder/validator：按独立公式重建 5-session O1 label、
+  reviewed 28-feature cumulative prefix、purged/embargo fold membership 与 event episode
+  window；deterministic double-build、authority/input/tamper 负例和既有 model-ladder 回归
+  focused `9/9 PASS`。该波次没有读取真实数据、coverage 或 result，也没有训练模型。
