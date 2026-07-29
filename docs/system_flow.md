@@ -322,6 +322,39 @@ flowchart LR
     READ -.-> BOUNDARY["No generic cutover / QLD / production / broker"]
 ```
 
+TRADING-2464 的 O1 capability audit 不复用 D0E 的 `daily_score_daily` consumer 授权，但复用
+其已验证的 isolated-candidate materialization 边界。Owner A 已批准 exact
+`M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，active serial contract 固定
+`TRADING_2463_O1_S4_PILOT_V1`、historical receipt、publication transaction、28 个 feature、
+split/coverage/metric/falsification 与四类机械结论。active contract 本身仍保持
+`real_coverage_read_allowed_now=false` 和 `model_training_allowed_now=false`；必须先集成
+contract，再完成 synthetic-only builder/independent validator。之后只能从 OPS-070 permanent
+runtime clone 的 exact immutable transaction 物化新的 isolated candidate，逐对象核验并在该
+candidate 上得到 strict DQ `PASS / 0 / 0`。不得复制 receipt 或覆盖 live `data/raw`。
+
+真实读取首先只能进入 coverage-only gate；event/attempt ledger、fold/regime/event/effective
+sample 任一不足即机械输出 `INSUFFICIENT_COVERAGE_OR_DQ` 并停止。只有 coverage PASS 才允许
+一个 exact-tree canonical run，随后全部 mandatory falsification 与 independent validation 必须
+通过；最终结论只能是四个 reviewed capability class 之一，且任何正面 class 都不授权
+Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production
+或 broker action。
+
+```mermaid
+flowchart LR
+    OA["Owner A exact decision"] --> CT["Active serial contract<br/>S4 + DQ transaction + M1/CROSS_ASSET_STATE"]
+    CT --> SY["Synthetic builder + independent validator"]
+    SY --> IC["Materialize exact immutable transaction<br/>into isolated candidate"]
+    IC --> SDQ["Strict DQ PASS / 0 / 0"]
+    SDQ --> LG["Freeze event + append-only attempt ledgers"]
+    LG --> COV["Coverage-only eligibility gate"]
+    COV -->|"FAIL / insufficient"| ICQ["INSUFFICIENT_COVERAGE_OR_DQ"]
+    COV -->|"PASS"| RUN["One canonical historical-seen-only run"]
+    RUN --> FAL["All mandatory falsification axes"]
+    FAL --> VAL["Independent reconstruction validator"]
+    VAL --> CLS["Mechanical four-class conclusion"]
+    CLS -.-> NOD["No downstream investment / production / broker authorization"]
+```
+
 W12-S2在D0A能力之上建立D0B1 canonical执行证据与G4 native consumer preflight。无显式`--as-of`时，
 direct `aits validate-data`与`aits ops daily-run`共用`America/New_York`最近已完成交易日和收盘后3小时
 provider-ready buffer；`operations_as_of`只用于scheduler/due/calendar，`data_quality_as_of`取daily plan中

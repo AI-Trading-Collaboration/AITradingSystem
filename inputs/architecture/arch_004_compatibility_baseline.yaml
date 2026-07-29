@@ -33411,3 +33411,125 @@ phase_trading_2464_owner_decision_token_normalization:
     provider_replayed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2464_o1_owner_a_serial_contract_freeze:
+  schema_version: trading_2464_o1_owner_a_serial_contract_freeze_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2464-O1-OWNER-A-SERIAL-CONTRACT-FREEZE
+  task_ids:
+  - TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+  owner_authorization: owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1
+  prior_sections_immutability:
+    source_commit: 428cfa78149a7f037e8cfdeee8d2646833f413a5
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 543f42c4a10aa16cfaf56344c3a5f1807260affb
+    raw_byte_count: 2101342
+    raw_sha256: 9c6dcf4b4f5dcd2251a60a8a7dea212d3b6318a6223cc6fae6d44cec023372c0
+    append_offset: 2101342
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/test_arch_004_refactor_policy.py
+  supersession:
+    superseded_by_phase: TRADING-2464-O1-OWNER-A-SERIAL-CONTRACT-FREEZE
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2464_owner_decision_token_normalization
+    current_hash_authority: phase_trading_2464_o1_owner_a_serial_contract_freeze.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  source_delta_paths:
+  - config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  - docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
+  - docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+  - tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  - tests/test_arch_004_refactor_policy.py
+  sources:
+  - path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+    sha256: 38cdbb1c940feffc9f072f50539fb33decb442c586e6d8ef41e7d227ef9d351d
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2464_O1_Model_Feature_Family_Owner_Decision_Pack.md
+    sha256: a3e1660ca3a3f78d29f8d9d3b043b40150246290abc6f7b2e279a6f78354df77
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md
+    sha256: ecf43554fd1e787ed0a7cdc4e3d19614cc309ee1d49b7ace32ad73affeb901c8
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 7a4264ebfa56f2b7e9895a4bc725ae05cbf7dd4bda5b82741905383bb79bf4cb
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: a7de9c625ca78a9fe57d32c17a61e8cfcd69fa44e22058a6548ad2dbabed5ecb
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: ced8f83b04f663f4398c36388f07f2d57ee9be123be82a1aaa01518e3878ce06
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 6f7c59b67218388d892d730771f2b6bb5406b9abb451c742dcb453c2ae57d493
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 45976c8115de134d290dd17c4bad5e4748b214ae953a18b53c2131c0e01c034e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 39c56ea93f655a6ff8275ef883a837ed59beb29367b1612de5bd6124caf9ad02
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
+    sha256: 65338f2e7ab6f7645472ceedb8f40abc10782994610173fc2be110257a1ab451
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+    sha256: 68d78f3f77119c064e3c1ba04d44e50767043a2bac98069754cc7102f48f8a1f
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: d6855bbb3938280aef591e9d6f22ad3952a10927d874739b399222aaeb4caf8e
+    hash_normalization: git_eol_lf
+  implementation:
+    owner_decision_received: true
+    owner_option: A_ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE
+    contract_freeze_source_base_sha: 428cfa78149a7f037e8cfdeee8d2646833f413a5
+    active_policy_path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+    active_policy_status: OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING
+    model_id: M1_RIDGE_LINEAR
+    feature_family: CROSS_ASSET_STATE
+    feature_count: 28
+    maximum_canonical_runs: 1
+    proposal_predecessor_preserved_inactive: true
+    task_status: IN_PROGRESS
+    materialization_executed: false
+    dq_rerun_executed: false
+    coverage_read: false
+    model_training_executed: false
+  validation:
+    active_contract: PASS_10_TESTS
+    task_registry: PASS_BYTE_IDENTICAL_927_TASKS
+    generated_architecture: PASS_1039_MODULES_1208_TESTS
+    authority_and_deprecation: PASS_148_TESTS
+    architecture: PASS_789_TESTS
+    contract: PASS_276_TESTS
+  safety:
+    runtime_behavior_changed: false
+    runtime_data_flow_changed: false
+    data_flow_documentation_changed: true
+    strategy_contract_changed: true
+    strategy_research_started: false
+    cached_data_mutated: false
+    provider_replayed: false
+    production_effect: none
+    broker_action: none

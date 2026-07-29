@@ -1,0 +1,341 @@
+schema_version: o1_relative_opportunity_capability_audit_policy.v1
+policy_id: TRADING_2464_O1_CAPABILITY_AUDIT_V1
+version: 1.0.0
+status: OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING
+owner: project_owner_and_strategy_research_owner
+owner_decision: owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1
+task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+rationale: >-
+  Freeze one exact historical-seen-only O1 capability attempt before any new
+  eligibility count or result is read. Reusing the already reviewed deterministic
+  M1 ridge and cumulative CROSS_ASSET_STATE prefix minimizes researcher degrees of
+  freedom after the known TRADING-2461 negative evidence.
+intended_effect: >-
+  Permit synthetic builder/validator development and, only after exact isolated
+  strict DQ closure, one coverage-only gate followed by at most one canonical
+  capability run. This policy cannot authorize investment action or production.
+review_condition: >-
+  Re-review before changing target, horizon, source or publication identity,
+  split, purge, embargo, coverage floor, regime/event definition, model, feature,
+  preprocessing, seed, metric, falsification rule or classification mapping.
+
+authority:
+  contract_freeze_source_base_sha: 428cfa78149a7f037e8cfdeee8d2646833f413a5
+  proposal_predecessor:
+    path: config/research/o1_relative_opportunity_capability_audit_v1_proposal.yaml
+    sha256: 0ac453d0952b9003844278db6412b60db6c6231500edd05ce746e5861fc0a0d8
+    status: OWNER_REVIEW_REQUIRED_NOT_ACTIVE
+  target_policy:
+    policy_id: TRADING_2463_O1_S4_PILOT_V1
+    path: docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md
+    sha256: 3f44a9e0c404661e9abeed20c8141884794f440cc4822beaa2f0a155bd719766
+  historical_model_policy:
+    policy_id: decision_target_capability_audit_model_ladder_v1
+    path: config/research/decision_target_capability_audit_model_ladder_v1.yaml
+    sha256: 9b84ac832cced4823367c75e2670e22652c7dbeba8dd0aa5bbc30942287b9b19
+
+execution_binding:
+  contract_integration_commit_required_before_real_data_access: true
+  exact_execution_commit_recorded_in_run_manifest: true
+  exact_execution_commit_must_descend_from_contract_freeze_source_base: true
+  exact_policy_path_and_sha_recorded_in_run_manifest: true
+  historical_seen_only: true
+  prospective_accessed: false
+  real_coverage_read_allowed_now: false
+  model_training_allowed_now: false
+  maximum_canonical_runs: 1
+  random_seed: 2464
+  random_seed_rationale: >-
+    Stable task-derived seed selected before result access; changing it creates a
+    new empirical attempt and requires a policy version.
+  software_identity_required:
+    - python_version
+    - package_lock_sha256
+    - source_commit_sha
+    - cli_argv
+
+target_contract:
+  target_id: RELATIVE_OPPORTUNITY_SPREAD
+  form: CONTINUOUS
+  label: QQQ_FORWARD_TOTAL_RETURN - SGOV_FORWARD_TOTAL_RETURN
+  unit: decimal_total_return_spread
+  primary_horizon_common_sessions: 5
+  sensitivity_horizons: []
+  decision_cutoff: common_session_close_publication_complete
+  label_interval_start: next_common_session
+  label_interval_end: fifth_common_session
+  label_available_on: fifth_common_session
+  source_assets: [QQQ, SGOV]
+  reference_only_assets: [SPY]
+  qld_allowed: false
+  tqqq_allowed: false
+
+data_contract:
+  canonical_dq_policy_path: config/data_quality.yaml
+  canonical_dq_strict_status: PASS
+  canonical_dq_error_count: 0
+  canonical_dq_warning_count: 0
+  primary_research_start: '2021-02-22'
+  requested_end: '2026-07-27'
+  evaluated_end: '2026-07-24'
+  historical_receipt:
+    receipt_id: dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4
+    receipt_path: outputs/data_quality/executions/dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4/receipt.json
+    receipt_sha256: 6a4319f15f65a06345f08965c04cada01083d00a478e06febfdfd21f5ef56a58
+    authorization_id: dq_consumer_authorization_fe8360fab72bb976f3b799dba3a7bb933561cc34fa47b3ad7040a9e5fe5fcc02
+    authorization_sha256: 6f87e196aa97ee53e17c79aad46634e615305ccb0d89c915275cab42c9fa9ec3
+  publication:
+    transaction_id: download_txn_80b403268d6023acaf33b0608630b908
+    transaction_sha256: 9ed6e7ec705633bec21e032a25f48ca93fd7ef0ead899bbe857b0f30591d7778
+    discovery_pointer_sha256: 65f652f79ed07c0cc074dc1cc09fe444fa912fa21580df6ebb2eee340926199f
+    immutable_members:
+      prices:
+        sha256: 80a4e32678f85f79601421845a9caf481c21a29b831c8356879b488a7e25ae61
+        size_bytes: 4774797
+      rates:
+        sha256: a647879c1291e75f9285b38c0174c7687056a1a2dbf4cf15d6b6e17e9f81a795
+        size_bytes: 153348
+      secondary_prices:
+        sha256: 1536c952027be0277b49d41908e99b721e884857a94860eed112e58720f89491
+        size_bytes: 3188060
+  recovery:
+    source_workspace_id: OPS_070_PERMANENT_RUNTIME_CLONE
+    source_workspace_path: D:/Work/AITradingSystem_ops_runtime
+    source_workspace_mutation_allowed: false
+    isolated_candidate_required: true
+    overwrite_live_data_raw_allowed: false
+    exact_object_reverification_required: true
+    fresh_candidate_strict_dq_required: true
+
+split_contract:
+  split_id: expanding_purged_walk_forward_o1_504_126_v1
+  initial_train_raw_rows: 504
+  outer_test_raw_rows: 126
+  final_partial_raw_row_floor: 63
+  include_final_partial_fold: true
+  embargo_common_sessions: 5
+  label_maturity_required: true
+  purge_label_test_overlap_required: true
+  purge_label_embargo_overlap_required: true
+  train_transform_fit_scope: train_only
+
+coverage_contract:
+  minimum_completed_outer_folds: 5
+  minimum_train_effective_sample_per_fold: 100
+  minimum_test_effective_sample_per_full_fold: 24
+  minimum_test_effective_sample_final_partial_fold: 12
+  minimum_total_oof_effective_sample: 120
+  non_overlap_equivalent_formula: floor(eligible_rows / 5)
+  autocorrelation_ess:
+    formula: n / max(1, 1 + 2 * sum(max(rho_lag, 0), lag=1..5))
+    lag_count: 5
+    clamp_to: [1, n]
+  effective_sample_formula: min(non_overlap_equivalent, autocorrelation_ess)
+  mandatory_regime_cell_effective_sample: 15
+  mandatory_regime_cell_fold_count: 3
+  mandatory_event_family_episode_count: 3
+  mandatory_event_family_fold_count: 2
+  failure_class: INSUFFICIENT_COVERAGE_OR_DQ
+
+regime_contract:
+  status: OWNER_APPROVED_TEMPORARY_PILOT_BASELINE
+  rationale: >-
+    Train-only tertiles create deterministic fold-local trend, volatility and
+    drawdown cells without full-sample thresholds or result-driven cut points.
+    Regime diagnostics cannot replace the primary capability gate.
+  quantiles: [0.3333333333333333, 0.6666666666666666]
+  fit_scope: fold_train_only
+  axes:
+    trend:
+      feature_id: qqq_return_60
+      bins: [LOW, MIDDLE, HIGH]
+    volatility:
+      feature_id: qqq_volatility_60
+      bins: [LOW, MIDDLE, HIGH]
+    current_drawdown:
+      feature_id: qqq_drawdown_120
+      bins: [LOW, MIDDLE, HIGH]
+
+event_contract:
+  status: FROZEN_PRIMARY_SOURCE_LEDGER_REQUIRED_BEFORE_COVERAGE
+  design_authority_path: config/research/event_calendar_feasibility_policy.yaml
+  design_authority_sha256: ad2f562575f182678b352ea258bcb3d5f210e754e43f949c0681c39f26552d4e
+  mandatory_event_families: [FOMC, CPI, NFP]
+  event_window_common_sessions: [-1, 1]
+  exact_event_ledger_required_before_real_coverage_read: true
+  exact_event_ledger_fields:
+    - event_id
+    - event_family
+    - event_timestamp
+    - source_published_time
+    - known_at
+    - available_at
+    - provider_name
+    - endpoint_or_file
+    - request_parameters
+    - download_timestamp
+    - checksum
+  current_view_or_reconstructed_unknown_known_at_allowed: false
+
+model_feature_contract:
+  option_id: ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE
+  model_id: M1_RIDGE_LINEAR
+  model_kind: ridge
+  ridge_penalty: 1.0
+  fit_intercept_as_train_target_mean: true
+  preprocessing: fold_train_only_zscore
+  standardization_zero_scale_epsilon: 1.0e-12
+  interaction_terms_allowed: false
+  automatic_hyperparameter_search_allowed: false
+  feature_subset_selection_allowed: false
+  family_prefix: CROSS_ASSET_STATE
+  family_prefix_is_cumulative: true
+  feature_ids:
+    - qqq_return_5
+    - qqq_return_20
+    - qqq_return_60
+    - spy_return_5
+    - spy_return_20
+    - spy_return_60
+    - sgov_return_20
+    - sgov_return_60
+    - qqq_spy_relative_5
+    - qqq_spy_relative_20
+    - qqq_spy_relative_60
+    - qqq_sgov_relative_20
+    - qqq_sgov_relative_60
+    - spy_sgov_relative_20
+    - spy_sgov_relative_60
+    - qqq_volatility_20
+    - qqq_volatility_60
+    - spy_volatility_20
+    - spy_volatility_60
+    - qqq_drawdown_60
+    - qqq_drawdown_120
+    - spy_drawdown_60
+    - spy_drawdown_120
+    - qqq_spy_volatility_gap_20
+    - qqq_spy_volatility_gap_60
+    - qqq_spy_drawdown_gap_120
+    - qqq_sgov_return_gap_60
+    - spy_sgov_return_gap_60
+
+metric_contract:
+  simple_baseline: fold_train_only_unconditional_target_mean
+  primary_metric: OOF_MSE_SKILL
+  formula: 1 - OOF_MSE_MODEL / OOF_MSE_TRAIN_MEAN_BASELINE
+  point_estimate_floor: 0.02
+  moving_block_bootstrap_sessions: 5
+  moving_block_bootstrap_replications: 10000
+  bootstrap_seed: 2464
+  one_sided_confidence_level: 0.95
+  lower_bound_strictly_positive: true
+  minimum_positive_completed_folds: 4
+  worst_completed_fold_skill_floor: -0.10
+  spearman_lower_bound_strictly_positive: true
+  supporting_metrics:
+    - spearman_rank_correlation
+    - directional_accuracy
+    - quintile_spread
+    - tail_association
+
+falsification_contract:
+  all_axes_mandatory: true
+  unevaluable_axis_class: INSUFFICIENT_ROBUSTNESS_EVIDENCE
+  axes:
+    exact_reconstruction:
+      pass_rule: zero_mismatch_and_independent_validator_zero_errors
+    feature_timing_lag:
+      lag_common_sessions: 1
+      pass_rule: lagged_oof_mse_skill_point_estimate_nonnegative
+    purge_embargo_stress:
+      embargo_common_sessions: 10
+      pass_rule: stressed_oof_mse_skill_point_estimate_nonnegative
+    fold_jackknife_influence:
+      pass_rule: every_leave_one_fold_out_oof_mse_skill_point_estimate_positive
+    regime_concentration:
+      pass_rule: every_mandatory_cell_coverage_pass_and_no_single_cell_supplies_over_half_positive_loss_reduction
+      maximum_single_cell_positive_loss_reduction_share: 0.50
+    event_concentration:
+      pass_rule: every_family_coverage_pass_and_no_single_episode_supplies_over_half_positive_loss_reduction
+      maximum_single_episode_positive_loss_reduction_share: 0.50
+    autocorrelation_preserving_placebo:
+      method: circular_moving_block_target_permutation
+      block_sessions: 5
+      replications: 1000
+      seed: 2464
+      maximum_one_sided_empirical_p_value: 0.05
+    target_boundary_perturbation:
+      shifts_common_sessions: [-1, 1]
+      pass_rule: both_perturbed_skill_point_estimates_nonnegative
+    simple_baseline_increment:
+      pass_rule: primary_oof_mse_skill_gate_pass
+    multiple_testing:
+      pass_rule: exact_attempt_ledger_complete_and_no_post_result_family_change
+    dq_lineage_closure:
+      pass_rule: exact_candidate_receipt_publication_policy_and_source_hashes_reconstruct
+
+attempt_ledger_contract:
+  schema_version: o1_relative_opportunity_attempt_ledger.v1
+  append_only: true
+  exact_path_recorded_before_real_coverage_read: true
+  current_attempt_family_id: O1_M1_RIDGE_CROSS_ASSET_STATE_V1
+  historical_contamination:
+    task_id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+    family_known: true
+    o1_results_known: true
+    independent_novel_family_claim_allowed: false
+  prohibited_same_attempt_additions:
+    - M2_RIDGE_INTERACTION
+    - feature_subset_selection
+    - tree_or_boosting
+    - neural_network
+    - ensemble
+    - automatic_search
+    - result_driven_transform
+
+classification_contract:
+  allowed_classes:
+    - MEASURABLE_RELATIVE_OPPORTUNITY_SKILL
+    - NO_MEASURABLE_SKILL
+    - INSUFFICIENT_COVERAGE_OR_DQ
+    - INSUFFICIENT_ROBUSTNESS_EVIDENCE
+  invalid_audit_conditions:
+    - leakage
+    - attempt_contamination
+    - lineage_tamper
+    - exact_reconstruction_mismatch
+    - independent_validator_error
+  positive_class_requires:
+    - coverage_pass
+    - primary_gate_pass
+    - every_falsification_axis_pass
+  downstream_authorization_from_positive_class: false
+
+execution_sequence:
+  - SERIAL_CONTRACT_INTEGRATED
+  - SYNTHETIC_BUILDER_VALIDATOR_PASS
+  - ISOLATED_CANDIDATE_MATERIALIZED
+  - STRICT_DQ_PASS_0_0
+  - EVENT_AND_ATTEMPT_LEDGERS_FROZEN
+  - COVERAGE_ONLY_GATE_PASS
+  - ONE_CANONICAL_RUN
+  - MANDATORY_FALSIFICATION
+  - INDEPENDENT_VALIDATION
+  - MECHANICAL_CLASSIFICATION
+
+safety:
+  new_o1_result_read: false
+  coverage_audit_executed: false
+  model_training_executed: false
+  prospective_accessed: false
+  decision_value_audit_started: false
+  risk_overlay_created: false
+  candidate_family_created: false
+  strategy_backtest_executed: false
+  target_weights_generated: false
+  qld_automatic_selection_enabled: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none

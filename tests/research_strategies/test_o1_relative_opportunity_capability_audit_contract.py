@@ -12,6 +12,12 @@ PROPOSAL_PATH = (
     / "research"
     / "o1_relative_opportunity_capability_audit_v1_proposal.yaml"
 )
+ACTIVE_POLICY_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "research"
+    / "o1_relative_opportunity_capability_audit_v1.yaml"
+)
 S4_PATH = (
     PROJECT_ROOT
     / "docs"
@@ -150,10 +156,10 @@ def test_recommended_family_exactly_reuses_reviewed_m1_prefix() -> None:
     assert family["automatic_hyperparameter_search_allowed"] is False
 
 
-def test_decision_pack_and_task_register_preserve_owner_gate() -> None:
+def test_owner_a_activates_only_the_serial_contract_freeze() -> None:
     decision_pack = DECISION_PACK_PATH.read_text(encoding="utf-8")
     task_register = TASK_REGISTER_PATH.read_text(encoding="utf-8")
-    assert "OWNER_REVIEW_REQUIRED_NOT_ACTIVE" in decision_pack
+    assert "OWNER_APPROVED_A_SERIAL_CONTRACT_FROZEN" in decision_pack
     assert "approve_o1_m1_ridge_cross_asset_state_single_family_v1" in decision_pack
     assert "require_new_o1_model_feature_family_pack_v1" in decision_pack
     assert "hold_o1_capability_audit_v1" in decision_pack
@@ -164,13 +170,196 @@ def test_decision_pack_and_task_register_preserve_owner_gate() -> None:
         "|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|"
         in task_register
     )
-    assert "|P0|BLOCKED_OWNER_INPUT|" in next(
+    assert "|P0|IN_PROGRESS|" in next(
         line
         for line in task_register.splitlines()
         if line.startswith(
             "|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|"
         )
     )
+
+
+def test_active_policy_binds_owner_exact_base_s4_and_dq_transaction() -> None:
+    policy = _load_yaml(ACTIVE_POLICY_PATH)
+    authority = policy["authority"]
+    binding = policy["execution_binding"]
+    data = policy["data_contract"]
+    assert isinstance(authority, dict)
+    assert isinstance(binding, dict)
+    assert isinstance(data, dict)
+
+    assert policy["status"] == (
+        "OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING"
+    )
+    assert policy["owner_decision"] == (
+        "owner_decision:TRADING-2464:2026-07-30:"
+        "approve_o1_m1_ridge_cross_asset_state_single_family_v1"
+    )
+    assert authority["contract_freeze_source_base_sha"] == (
+        "428cfa78149a7f037e8cfdeee8d2646833f413a5"
+    )
+    proposal = authority["proposal_predecessor"]
+    target = authority["target_policy"]
+    historical = authority["historical_model_policy"]
+    assert isinstance(proposal, dict)
+    assert isinstance(target, dict)
+    assert isinstance(historical, dict)
+    assert proposal["sha256"] == _sha256(PROPOSAL_PATH)
+    assert target["sha256"] == _sha256(S4_PATH)
+    assert historical["sha256"] == _sha256(HISTORICAL_POLICY_PATH)
+    assert binding["contract_integration_commit_required_before_real_data_access"] is True
+    assert binding["real_coverage_read_allowed_now"] is False
+    assert binding["model_training_allowed_now"] is False
+    assert binding["maximum_canonical_runs"] == 1
+
+    receipt = data["historical_receipt"]
+    publication = data["publication"]
+    recovery = data["recovery"]
+    assert isinstance(receipt, dict)
+    assert isinstance(publication, dict)
+    assert isinstance(recovery, dict)
+    assert receipt["receipt_sha256"] == (
+        "6a4319f15f65a06345f08965c04cada01083d00a478e06febfdfd21f5ef56a58"
+    )
+    assert publication["transaction_id"] == (
+        "download_txn_80b403268d6023acaf33b0608630b908"
+    )
+    assert publication["transaction_sha256"] == (
+        "9ed6e7ec705633bec21e032a25f48ca93fd7ef0ead899bbe857b0f30591d7778"
+    )
+    assert set(publication["immutable_members"]) == {
+        "prices",
+        "rates",
+        "secondary_prices",
+    }
+    assert recovery["source_workspace_mutation_allowed"] is False
+    assert recovery["isolated_candidate_required"] is True
+    assert recovery["overwrite_live_data_raw_allowed"] is False
+
+
+def test_active_policy_exactly_freezes_s4_split_coverage_and_primary_gate() -> None:
+    policy = _load_yaml(ACTIVE_POLICY_PATH)
+    target = policy["target_contract"]
+    split = policy["split_contract"]
+    coverage = policy["coverage_contract"]
+    metric = policy["metric_contract"]
+    assert isinstance(target, dict)
+    assert isinstance(split, dict)
+    assert isinstance(coverage, dict)
+    assert isinstance(metric, dict)
+
+    assert target == {
+        "target_id": "RELATIVE_OPPORTUNITY_SPREAD",
+        "form": "CONTINUOUS",
+        "label": "QQQ_FORWARD_TOTAL_RETURN - SGOV_FORWARD_TOTAL_RETURN",
+        "unit": "decimal_total_return_spread",
+        "primary_horizon_common_sessions": 5,
+        "sensitivity_horizons": [],
+        "decision_cutoff": "common_session_close_publication_complete",
+        "label_interval_start": "next_common_session",
+        "label_interval_end": "fifth_common_session",
+        "label_available_on": "fifth_common_session",
+        "source_assets": ["QQQ", "SGOV"],
+        "reference_only_assets": ["SPY"],
+        "qld_allowed": False,
+        "tqqq_allowed": False,
+    }
+    assert split["initial_train_raw_rows"] == 504
+    assert split["outer_test_raw_rows"] == 126
+    assert split["final_partial_raw_row_floor"] == 63
+    assert split["embargo_common_sessions"] == 5
+    assert coverage["minimum_completed_outer_folds"] == 5
+    assert coverage["minimum_train_effective_sample_per_fold"] == 100
+    assert coverage["minimum_test_effective_sample_per_full_fold"] == 24
+    assert coverage["minimum_test_effective_sample_final_partial_fold"] == 12
+    assert coverage["minimum_total_oof_effective_sample"] == 120
+    assert coverage["mandatory_regime_cell_effective_sample"] == 15
+    assert coverage["mandatory_regime_cell_fold_count"] == 3
+    assert coverage["mandatory_event_family_episode_count"] == 3
+    assert coverage["mandatory_event_family_fold_count"] == 2
+    assert metric["primary_metric"] == "OOF_MSE_SKILL"
+    assert metric["point_estimate_floor"] == 0.02
+    assert metric["moving_block_bootstrap_sessions"] == 5
+    assert metric["one_sided_confidence_level"] == 0.95
+    assert metric["minimum_positive_completed_folds"] == 4
+    assert metric["worst_completed_fold_skill_floor"] == -0.10
+
+
+def test_active_policy_reuses_exact_model_feature_prefix_and_forbids_search() -> None:
+    active = _load_yaml(ACTIVE_POLICY_PATH)
+    historical = _load_yaml(HISTORICAL_POLICY_PATH)
+    contract = active["model_feature_contract"]
+    feature_policy = historical["feature_policy"]
+    model_policy = historical["model_policy"]
+    assert isinstance(contract, dict)
+    assert isinstance(feature_policy, dict)
+    assert isinstance(model_policy, dict)
+
+    order = feature_policy["family_order"]
+    features = feature_policy["features"]
+    assert isinstance(order, list)
+    assert isinstance(features, list)
+    prefix_end = order.index("CROSS_ASSET_STATE")
+    expected_families = set(order[: prefix_end + 1])
+    expected_ids = [
+        feature["feature_id"]
+        for feature in features
+        if isinstance(feature, dict) and feature["family"] in expected_families
+    ]
+    assert contract["model_id"] == "M1_RIDGE_LINEAR"
+    assert contract["ridge_penalty"] == 1.0
+    assert contract["family_prefix"] == "CROSS_ASSET_STATE"
+    assert contract["feature_ids"] == expected_ids
+    assert contract["interaction_terms_allowed"] is False
+    assert contract["automatic_hyperparameter_search_allowed"] is False
+    assert contract["feature_subset_selection_allowed"] is False
+
+
+def test_active_policy_freezes_ledgers_falsification_and_mechanical_classes() -> None:
+    policy = _load_yaml(ACTIVE_POLICY_PATH)
+    event = policy["event_contract"]
+    attempt = policy["attempt_ledger_contract"]
+    falsification = policy["falsification_contract"]
+    classification = policy["classification_contract"]
+    assert isinstance(event, dict)
+    assert isinstance(attempt, dict)
+    assert isinstance(falsification, dict)
+    assert isinstance(classification, dict)
+
+    assert event["mandatory_event_families"] == ["FOMC", "CPI", "NFP"]
+    assert event["exact_event_ledger_required_before_real_coverage_read"] is True
+    assert event["current_view_or_reconstructed_unknown_known_at_allowed"] is False
+    assert attempt["append_only"] is True
+    assert attempt["current_attempt_family_id"] == (
+        "O1_M1_RIDGE_CROSS_ASSET_STATE_V1"
+    )
+    contamination = attempt["historical_contamination"]
+    assert isinstance(contamination, dict)
+    assert contamination["family_known"] is True
+    assert contamination["o1_results_known"] is True
+    assert contamination["independent_novel_family_claim_allowed"] is False
+    axes = falsification["axes"]
+    assert isinstance(axes, dict)
+    assert set(axes) == {
+        "exact_reconstruction",
+        "feature_timing_lag",
+        "purge_embargo_stress",
+        "fold_jackknife_influence",
+        "regime_concentration",
+        "event_concentration",
+        "autocorrelation_preserving_placebo",
+        "target_boundary_perturbation",
+        "simple_baseline_increment",
+        "multiple_testing",
+        "dq_lineage_closure",
+    }
+    assert classification["allowed_classes"] == [
+        "MEASURABLE_RELATIVE_OPPORTUNITY_SKILL",
+        "NO_MEASURABLE_SKILL",
+        "INSUFFICIENT_COVERAGE_OR_DQ",
+        "INSUFFICIENT_ROBUSTNESS_EVIDENCE",
+    ]
+    assert classification["downstream_authorization_from_positive_class"] is False
 
 
 def test_proposal_keeps_every_downstream_action_disabled() -> None:
@@ -195,3 +384,25 @@ def test_proposal_keeps_every_downstream_action_disabled() -> None:
     assert contamination["prior_o1_results_known"] is True
     assert contamination["treat_as_independent_novel_family"] is False
     assert contamination["new_family_after_result_read_allowed"] is False
+
+
+def test_active_contract_keeps_every_runtime_and_downstream_action_disabled() -> None:
+    policy = _load_yaml(ACTIVE_POLICY_PATH)
+    safety = policy["safety"]
+    assert isinstance(safety, dict)
+    assert safety == {
+        "new_o1_result_read": False,
+        "coverage_audit_executed": False,
+        "model_training_executed": False,
+        "prospective_accessed": False,
+        "decision_value_audit_started": False,
+        "risk_overlay_created": False,
+        "candidate_family_created": False,
+        "strategy_backtest_executed": False,
+        "target_weights_generated": False,
+        "qld_automatic_selection_enabled": False,
+        "paper_shadow_changed": False,
+        "promotion_allowed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }

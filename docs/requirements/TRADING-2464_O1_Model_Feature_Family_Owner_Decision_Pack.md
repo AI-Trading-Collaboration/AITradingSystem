@@ -2,7 +2,7 @@
 
 最后更新：2026-07-30
 
-状态：`OWNER_REVIEW_REQUIRED_NOT_ACTIVE`
+状态：`OWNER_APPROVED_A_SERIAL_CONTRACT_FROZEN`
 
 所属任务：
 `TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT`
@@ -97,11 +97,14 @@ coverage/model run。
 推荐：
 `ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE`
 
-建议 Owner 决策：
+Owner 已于 2026-07-30 选择：
 
 ```text
 owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1
 ```
+
+该选择把 A 从 proposal 转为 serial contract freeze 的 model/feature authority；不会自行
+越过 isolated strict DQ、synthetic validation 或 coverage-only gate。
 
 冻结内容：
 
@@ -157,7 +160,7 @@ owner_decision:TRADING-2464:2026-07-30:hold_o1_capability_audit_v1
 
 ## 7. 安全边界
 
-- `activation_allowed=false`
+- `activation_allowed=true_after_serial_contract_freeze`
 - `new_o1_result_read=false`
 - `prospective_accessed=false`
 - `model_training_executed=false`

@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 5ac96cf04525b7c681077348c0d7fcecd5dbe92fa1b57f1426f4189a6d2b2df7
+baseline_checksum: 4b006dd724da48945d361d3dc681c510dc2772a6f37abb600a68bd8abd20b98c
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 927
 fragment_count: 927
@@ -2791,8 +2791,8 @@ fragments:
   fragment_checksum: a70f6765f9f3a9a083b48a65c040fcbad75ca177038c925be8b9f5e3e95c3319
 - task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   path: registry/development_tasks_shadow/active/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
-  file_sha256: e449b604b69f1c594f1cc5deb83e5c61620747ec4d08b7d9cc483afd31b5c32a
-  fragment_checksum: a8c9eec22453a5f605b49361c52163b23fc0e2decc4476807174e6ab4ebd75db
+  file_sha256: 65338f2e7ab6f7645472ceedb8f40abc10782994610173fc2be110257a1ab451
+  fragment_checksum: d19dc5c00d9aebc27085cc4801798a237d9734314426b43a8211cc01405475ad
 - task_id: TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
   path: registry/development_tasks_shadow/active/b4/b4fcc2342f2653920383504d76b0e1c9122a664f5316942b6e7a7de969a87f11.yaml
   file_sha256: 698c35cf0ccac28c4d54ada4c413556ea59dbde6ab8aadc1c5b4580387e05b52
@@ -3733,8 +3733,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 70cfcdaeb2dbb1ed1d7fb1e546716ec20974937160e694dd30319732ba817b92
-  rendered_sha256: 70cfcdaeb2dbb1ed1d7fb1e546716ec20974937160e694dd30319732ba817b92
+  source_sha256: a7de9c625ca78a9fe57d32c17a61e8cfcd69fa44e22058a6548ad2dbabed5ecb
+  rendered_sha256: a7de9c625ca78a9fe57d32c17a61e8cfcd69fa44e22058a6548ad2dbabed5ecb
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3756,4 +3756,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: bef2eca711d4f5b98283f39f89373b886254789b21ff02fd0b80c7b6ecd99a18
+index_checksum: 0fbee728e9d0916138e0e390f8c15507dcf68073a17fc633f981f4cd723b1b81

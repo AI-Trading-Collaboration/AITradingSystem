@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`IN_PROGRESS_SYNTHETIC_BUILDER_VALIDATOR_PENDING`
 
 production effect：`none`
 
@@ -30,6 +30,13 @@ falsification 后仍成立的 relative-opportunity capability。
 记录本计划，不等于授权读取新的真实 coverage/result、训练模型或启动 capability audit。
 启动前仍需新的显式 Owner decision。网页回答是 advisory planning evidence，不是仓库政策、
 模型身份或后端路由 authority。
+
+2026-07-30，Owner 以
+`owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1`
+选择决策包 A。该决定授权 exact 复用 reviewed
+`M1_RIDGE_LINEAR + CROSS_ASSET_STATE`，并按固定顺序进入 serial contract freeze、
+synthetic builder/validator、isolated DQ、coverage-only gate 与至多一次 canonical run；
+它不允许跳过任一前置门禁，也不授权任何下游投资或生产行为。
 
 ## 2. 权威输入与已经解除的 blocker
 
@@ -71,7 +78,9 @@ owner_decision:TRADING-2464:<DATE>:authorize_o1_relative_opportunity_spread_capa
 
 Owner 授权必须绑定 execution exact base、S4 policy bytes、input commitment、model/feature
 family authority、allowed runtime 和 evidence-lineage claims。没有该 decision 时保持
-`BLOCKED_OWNER_INPUT`。
+`BLOCKED_OWNER_INPUT`。上述 Owner A decision 已收到，因此当前只解除 model/feature family
+选择门，进入结果读取前的 serial contract freeze；真实 coverage 与模型运行仍受 active
+contract、isolated strict DQ 和 synthetic validation 门禁约束。
 
 S4 冻结文件禁止未来 audit 新增 model family，但没有在该文件中给出可直接执行的 exact
 model/feature family identity。任何真实 count/result 前必须解析已有 reviewed authority；
@@ -242,13 +251,15 @@ run identity 和一个 attempt ledger。
 9. 结果只取四个允许 class；
 10. 所有下游 enablement 仍为 false。
 
-## 8. 当前停止点
+## 8. 当前执行点
 
-- `status=BLOCKED_OWNER_INPUT`
-- `data_prerequisite=DOCUMENTED_D0B2B_STRICT_PASS_BUT_RECEIPT_BYTES_MISSING`
-- `owner_authorization_for_capability_audit=false`
-- `model_feature_family_authority=UNRESOLVED_BEFORE_RESULT_READ`
-- `model_feature_family_proposal=OWNER_REVIEW_REQUIRED_NOT_ACTIVE`
+- `status=IN_PROGRESS_SYNTHETIC_BUILDER_VALIDATOR_PENDING`
+- `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
+- `data_prerequisite=EXACT_CHAIN_RECOVERABLE_NOT_MATERIALIZED`
+- `owner_authorization_for_capability_audit=true`
+- `owner_option=A_ADOPT_M1_RIDGE_CROSS_ASSET_STATE_EXACT_REUSE`
+- `model_feature_family_authority=OWNER_APPROVED_BEFORE_RESULT_READ`
+- `model_feature_family_proposal=SUPERSEDED_BY_ACTIVE_CONTRACT_FREEZE`
 - `required_dq_receipt_bytes_present=false`
 - `dq_exact_chain_recoverable_from_ops_runtime=true`
 - `dq_isolated_candidate_materialized=false`
@@ -278,3 +289,11 @@ run identity 和一个 attempt ledger。
   和三份 member 全部 SHA 验证通过，现有 historical-acceptance contract validator
   `PASS`。因 live `data/raw` 已后移，禁止只复制 receipt；等待 Owner 选择后才可在 isolated
   candidate materialize/revalidate。
+- 2026-07-30：Owner 选择 A，授权 exact 复用
+  `M1_RIDGE_LINEAR + CROSS_ASSET_STATE`。任务转入 serial contract freeze；当前 wave 只记录
+  decision、exact base、S4、DQ transaction、model/feature 与 no-result-read 边界，尚未
+  materialize、重跑 DQ、读取 coverage/result 或训练模型。
+- 2026-07-30：serial contract freeze 已通过 focused contract `10/10`、
+  authority/deprecation `148/148`、`architecture-fitness 789/789` 与
+  `contract-validation 276/276`。下一步只能从该 wave 集成后的 exact `main` 基线实现
+  synthetic builder/validator；真实 DQ、coverage 与模型训练仍未获执行许可。
