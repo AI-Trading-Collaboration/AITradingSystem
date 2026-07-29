@@ -356,6 +356,12 @@ official domain、HTTP/source status、index→release inventory、attempt famil
 还要求 BLS 正文日期与 archive URL 日期一致；只生成新命名的 replay manifest/gate 与此前
 不存在的 event ledger。superseding replay gate PASS 前仍不得读取 coverage 或训练模型。
 
+当前 superseding replay gate 已 PASS，并由 active policy 逐 SHA 绑定 replay manifest、
+171-row event ledger、原始 append-only attempt ledger 与 replay gate；只有
+`real_coverage_read_allowed_now=true` 的 coverage-only 读取被打开。该状态不允许模型训练、
+canonical run、falsification 结果读取或任何生产行为；coverage runner 必须从此合同集成后的
+exact commit 启动，并在任何 floor 不足时立即输出 `INSUFFICIENT_COVERAGE_OR_DQ`。
+
 synthetic-only 路径由
 `src/ai_trading_system/research_framework/plugins/o1_relative_opportunity_capability_audit.py`
 实现，只接受 `data_role=SYNTHETIC_FIXTURE_ONLY`。它复用 reviewed feature builder，并用独立

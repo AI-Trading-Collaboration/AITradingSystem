@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS_EVENT_RAW_REPLAY_PARSER_CORRECTION`
+状态：`READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`
 
 production effect：`none`
 
@@ -253,7 +253,7 @@ run identity 和一个 attempt ledger。
 
 ## 8. 当前执行点
 
-- `status=IN_PROGRESS_EVENT_RAW_REPLAY_PARSER_CORRECTION`
+- `status=READY_COVERAGE_ONLY_RUNNER_IMPLEMENTATION`
 - `serial_contract_freeze=PASS_AUTHORITY_148_ARCHITECTURE_789_CONTRACT_276`
 - `synthetic_builder_validator=PASS_SYNTHETIC_ONLY_DETERMINISTIC_INDEPENDENT_RECONSTRUCTION`
 - `data_prerequisite=ISOLATED_CANDIDATE_STRICT_DQ_PASS_0_0`
@@ -277,6 +277,13 @@ run identity 和一个 attempt ledger。
 - `retained_raw_primary_source_bytes=160417518`
 - `raw_replay_required=true`
 - `raw_refetch_allowed=false`
+- `event_attempt_freeze_gate_status=PASS_EVENT_AND_ATTEMPT_LEDGERS_FROZEN`
+- `event_attempt_freeze_gate_id=o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632`
+- `event_attempt_freeze_gate_sha256=5855720e4f0d5f97748730d5f90cbba18d852c5c90c67197229832c3d51faba5`
+- `event_ledger_id=o1_event_ledger_9969f27e7c578b658c500c2f3b71a610`
+- `event_ledger_sha256=d714af0779e6edb97f9ed143192c7b8858e70f21196e96be190b837cc0deb476`
+- `event_count=171_fomc_43_cpi_64_nfp_64`
+- `real_coverage_read_allowed_now=true_coverage_only`
 - `coverage_audit_executed=false`
 - `new_results_read=false`
 - `prospective_accessed=false`
@@ -430,3 +437,15 @@ run identity 和一个 attempt ledger。
   （`outputs/validation_runtime/contract-validation_20260729T200622Z/`）。
   下一步只允许发布该 exact code commit，再从该 commit 在同一 root 执行一次 offline
   replay；发布前不得生成 superseding gate。
+- 2026-07-30：parser/replay commit
+  `9dc8f48b465bdf973ffe926c92a3a4257c716028` 已 fast-forward 到 local main 并
+  ordinary push，确认 local main 与 origin/main 相同。随后在同一 registered root
+  执行唯一正式 offline replay；首次三份 failure artifacts SHA 全部不变，新 source
+  manifest/event ledger/gate SHA 分别为
+  `59f72415413afb0fcb12e7f3052f717c0aaec19fc0eaa059c5b5c1248ee59f1f`、
+  `d714af0779e6edb97f9ed143192c7b8858e70f21196e96be190b837cc0deb476`、
+  `5855720e4f0d5f97748730d5f90cbba18d852c5c90c67197229832c3d51faba5`。
+  gate=`PASS_EVENT_AND_ATTEMPT_LEDGERS_FROZEN`，171 个 event 逐行回链 retained raw
+  checksum；只授权 coverage-only，model training/canonical run/production 仍关闭。
+  active policy 已串行绑定 exact evidence；下一步从该合同集成 commit 实现 coverage-only
+  runner，不得在同一 wave 读取 eligibility count。

@@ -381,6 +381,7 @@ def _project_fixture(tmp_path: Path) -> tuple[Path, Path, Path]:
     project_root = tmp_path / "project"
     project_root.mkdir(parents=True)
     policy = yaml.safe_load(POLICY_PATH.read_text(encoding="utf-8"))
+    policy["execution_binding"]["real_coverage_read_allowed_now"] = False
     policy_path = project_root / "config/research/o1_policy.yaml"
     policy_path.parent.mkdir(parents=True)
     (project_root / "pyproject.toml").write_text(

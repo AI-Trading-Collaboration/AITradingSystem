@@ -1,7 +1,7 @@
 schema_version: o1_relative_opportunity_capability_audit_policy.v1
 policy_id: TRADING_2464_O1_CAPABILITY_AUDIT_V1
 version: 1.0.0
-status: OWNER_APPROVED_SERIAL_CONTRACT_FROZEN_DATA_GATES_PENDING
+status: OWNER_APPROVED_EVENT_LEDGER_FROZEN_COVERAGE_ONLY_READY
 owner: project_owner_and_strategy_research_owner
 owner_decision: owner_decision:TRADING-2464:2026-07-30:approve_o1_m1_ridge_cross_asset_state_single_family_v1
 task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
@@ -41,7 +41,7 @@ execution_binding:
   exact_policy_path_and_sha_recorded_in_run_manifest: true
   historical_seen_only: true
   prospective_accessed: false
-  real_coverage_read_allowed_now: false
+  real_coverage_read_allowed_now: true
   model_training_allowed_now: false
   maximum_canonical_runs: 1
   random_seed: 2464
@@ -99,6 +99,70 @@ isolated_dq_evidence:
   claim_boundary:
     source_workspace_mutated: false
     daily_consumer_dispatched: false
+    coverage_audit_executed: false
+    model_training_executed: false
+    new_o1_result_read: false
+    production_effect: none
+    broker_action: none
+
+event_attempt_freeze_evidence:
+  schema_version: o1_relative_opportunity_event_attempt_freeze_evidence.v1
+  status: PASS_EVENT_AND_ATTEMPT_LEDGERS_FROZEN
+  generated_at: '2026-07-29T20:16:38+00:00'
+  output_root: D:/Work/AITradingSystem/outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1
+  initial_source_acquisition_commit: 9105dcb32fa4029ca9770f264f4072045b0c5932
+  replay_execution_commit: 9dc8f48b465bdf973ffe926c92a3a4257c716028
+  pre_replay_policy_sha256: cef54291907cbaeb2a9ff6a24c07a9d532176e5e9ec55cdc10caf9dcd12ac1e9
+  replay_mode: CHECKSUM_VERIFIED_OFFLINE_REPLAY_NO_NETWORK
+  raw_source_refetched: false
+  initial_failure_artifacts_immutable: true
+  initial_failure_artifacts:
+    source_manifest:
+      manifest_id: o1_event_source_f43095d127388efbdba0eae9462ddd70
+      path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1/event_source_manifest.json
+      sha256: 4d7cc17dc8d4347d57b7df7912309ef60a1dfe62c3247b330ce24f7c18571575
+      byte_size: 150559
+    attempt_ledger:
+      ledger_id: o1_attempt_ledger_c7ecea31599de705f420dc0713096663
+      path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1/attempt_ledger.json
+      sha256: 8656a70679c7d8f87a95efa707c1973fec4adbc6fa8d9cab493a01788b934a09
+      byte_size: 2742
+    gate:
+      gate_id: o1_event_attempt_gate_596130e1136f86dc2f3c8918f7b80f4c
+      path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1/event_attempt_freeze_gate.json
+      sha256: fb13674801feebbb234846c2499159da604e85680e0a2dff07a3e3b9f04e6003
+      byte_size: 19312
+      blocker_code: O1_EVENT_BLS_TIMESTAMP_MISSING
+      blocker_count: 64
+  replay_artifacts:
+    source_manifest:
+      manifest_id: o1_event_source_87085ba13778147efa527a6ae27b42c6
+      path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1/event_source_manifest_replay_v1.json
+      sha256: 59f72415413afb0fcb12e7f3052f717c0aaec19fc0eaa059c5b5c1248ee59f1f
+      byte_size: 136292
+      request_count: 179
+      unique_raw_artifact_count: 179
+      unique_raw_artifact_bytes: 160417518
+    event_ledger:
+      ledger_id: o1_event_ledger_9969f27e7c578b658c500c2f3b71a610
+      path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1/event_ledger.json
+      sha256: d714af0779e6edb97f9ed143192c7b8858e70f21196e96be190b837cc0deb476
+      byte_size: 140121
+      event_count: 171
+      family_counts:
+        FOMC: 43
+        CPI: 64
+        NFP: 64
+    gate:
+      gate_id: o1_event_attempt_gate_06fd958a1529c17c31b804ebd0307632
+      path: outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_event_attempt_freeze_v1/event_attempt_freeze_gate_replay_v1.json
+      sha256: 5855720e4f0d5f97748730d5f90cbba18d852c5c90c67197229832c3d51faba5
+      byte_size: 5358
+      coverage_only_gate_allowed: true
+      model_training_allowed: false
+      canonical_run_allowed: false
+      production_allowed: false
+  claim_boundary:
     coverage_audit_executed: false
     model_training_executed: false
     new_o1_result_read: false
