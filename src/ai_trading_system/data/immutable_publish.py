@@ -40,6 +40,14 @@ SOURCE_EVENT_SCHEMA_VERSION = "data_source_event_manifest.v1"
 SNAPSHOT_MANIFEST_SCHEMA_VERSION = "data_snapshot_manifest.v1"
 CURRENT_POINTER_SCHEMA_VERSION = "data_current_pointer.v1"
 DATA_QUALITY_REPORT_SCHEMA_VERSION = "data_snapshot_quality_report.v1"
+PUBLICATION_DURABILITY_PROTOCOL_VERSION = "data_publication_durable_commit.v1"
+STORE_MAINTENANCE_LOCK_NAME = "__store_maintenance__.lock"
+COMMIT_CHECKPOINTS = (
+    "FILE_DURABLE_BEFORE_REPLACE",
+    "REPLACED_BEFORE_NAMESPACE_DURABLE",
+    "NAMESPACE_DURABLE_BEFORE_ATTEST",
+    "ATTESTED_BEFORE_ACK",
+)
 DQ_EXECUTION_PROVENANCE_LIMITATION = "dq_execution_provenance_verified=false"
 CONSUMER_CUTOVER_LIMITATION = "consumer_cutover_allowed=false"
 SAME_PRINCIPAL_POST_ACK_LIMITATION = "same_principal_post_ack_mutation_protection=false"
@@ -271,6 +279,7 @@ class SnapshotPublishResult:
     same_principal_post_ack_mutation_protection: bool = False
     post_commit_cleanup_status: str = "PASS"
     post_commit_cleanup_warnings: tuple[str, ...] = ()
+    post_commit_cleanup_observations: tuple[CleanupObservation, ...] = ()
 
     def __post_init__(self) -> None:
         if (
@@ -290,10 +299,44 @@ class SnapshotPublishResult:
             )
         if self.post_commit_cleanup_status not in {"PASS", "PASS_WITH_WARNINGS"}:
             raise ValueError("invalid post_commit_cleanup_status")
-        if bool(self.post_commit_cleanup_warnings) != (
+        if bool(self.post_commit_cleanup_warnings or self.post_commit_cleanup_observations) != (
             self.post_commit_cleanup_status == "PASS_WITH_WARNINGS"
         ):
             raise ValueError("cleanup status/warnings mismatch")
+
+
+@dataclass(frozen=True)
+class CleanupObservation:
+    code: str
+    phase: str
+    path: str
+    message: str
+    commit_state: str
+
+    def __post_init__(self) -> None:
+        if (
+            not self.code
+            or not self.phase
+            or not self.path
+            or not self.message
+            or self.commit_state not in {"NOT_COMMITTED", "COMMITTED"}
+        ):
+            raise ValueError("invalid cleanup observation")
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "code": self.code,
+            "phase": self.phase,
+            "path": self.path,
+            "message": self.message,
+            "commit_state": self.commit_state,
+        }
+
+
+@dataclass
+class _CleanupObservationSink:
+    committed: bool = False
+    observations: list[CleanupObservation] = dataclass_field(default_factory=list)
 
 
 @dataclass
@@ -328,6 +371,42 @@ _ACTIVE_ROOT_BINDING: ContextVar[_BoundDirectory | None] = ContextVar(
     "immutable_publish_active_root_binding",
     default=None,
 )
+_ACTIVE_CLEANUP_SINK: ContextVar[_CleanupObservationSink | None] = ContextVar(
+    "immutable_publish_cleanup_observation_sink",
+    default=None,
+)
+
+
+@contextmanager
+def _cleanup_observation_scope(
+    sink: _CleanupObservationSink,
+) -> Iterator[None]:
+    token = _ACTIVE_CLEANUP_SINK.set(sink)
+    try:
+        yield
+    finally:
+        _ACTIVE_CLEANUP_SINK.reset(token)
+
+
+def _record_cleanup_observation(
+    *,
+    code: str,
+    phase: str,
+    path: Path,
+    error: OSError,
+) -> None:
+    sink = _ACTIVE_CLEANUP_SINK.get()
+    if sink is None:
+        return
+    sink.observations.append(
+        CleanupObservation(
+            code=code,
+            phase=phase,
+            path=str(path),
+            message=str(error),
+            commit_state="COMMITTED" if sink.committed else "NOT_COMMITTED",
+        )
+    )
 
 
 @dataclass(frozen=True)
@@ -348,6 +427,62 @@ class _Publication:
     manifest_payload: dict[str, object]
     pointer_payload: dict[str, object]
     quality_report_bytes: bytes
+
+
+@dataclass(frozen=True)
+class ContainedArtifactDeletionResult:
+    path: Path
+    sha256: str
+    size_bytes: int
+    device: int
+    inode: int
+
+
+@dataclass
+class StoreMaintenanceSession:
+    root: Path
+    cleanup_observations: list[CleanupObservation]
+    _lease: _LockLease
+    _sink: _CleanupObservationSink
+
+    def mark_committed(self) -> None:
+        self._lease.mark_committed()
+        self._sink.committed = True
+
+
+@contextmanager
+def exclusive_store_maintenance(
+    *,
+    store_root: Path,
+    lock_timeout_seconds: float = DEFAULT_LOCK_TIMEOUT_SECONDS,
+    lock_poll_seconds: float = DEFAULT_LOCK_POLL_SECONDS,
+) -> Iterator[StoreMaintenanceSession]:
+    """Serialize lifecycle mutation against every immutable publisher."""
+
+    root = _directory(store_root, create=False, code="STORE_ROOT_UNAVAILABLE")
+    lock_path = _internal_path(
+        root,
+        f"locks/{STORE_MAINTENANCE_LOCK_NAME}",
+        "store maintenance lock",
+        create_parents=True,
+    )
+    sink = _CleanupObservationSink()
+    with (
+        _cleanup_observation_scope(sink),
+        _root_authority(root),
+        _file_lock(
+            lock_path,
+            root=root,
+            timeout_seconds=lock_timeout_seconds,
+            poll_seconds=lock_poll_seconds,
+        ) as lease,
+    ):
+        yield StoreMaintenanceSession(
+            root=root,
+            cleanup_observations=sink.observations,
+            _lease=lease,
+            _sink=sink,
+        )
 
 
 def write_contained_artifact_bytes(
@@ -424,6 +559,74 @@ def read_contained_artifact_bytes(*, root: Path, relative_path: str) -> bytes:
             return _read_bound_bytes(binding, path, "contained artifact")
 
 
+def delete_contained_artifact_bytes(
+    *,
+    root: Path,
+    relative_path: str,
+    expected_sha256: str,
+    expected_size_bytes: int,
+) -> ContainedArtifactDeletionResult:
+    """Delete one exact contained regular file and durably attest its absence."""
+
+    if not _SHA_RE.fullmatch(expected_sha256):
+        raise ValueError("expected_sha256 must be a lowercase SHA-256 digest")
+    if (
+        isinstance(expected_size_bytes, bool)
+        or not isinstance(expected_size_bytes, int)
+        or expected_size_bytes < 0
+    ):
+        raise ValueError("expected_size_bytes must be a non-negative integer")
+    try:
+        checked_root = root.resolve(strict=True)
+    except OSError as exc:
+        raise DataPublicationIntegrityError("ARTIFACT_ROOT_INVALID", str(exc), path=root) from exc
+    parts = _portable_parts(relative_path, "contained artifact deletion")
+    path = checked_root.joinpath(*parts)
+    with _root_authority(checked_root):
+        with _bound_directory(
+            checked_root,
+            path.parent,
+            "contained artifact deletion",
+            create=False,
+        ) as binding:
+            metadata = _bound_path_metadata(
+                binding,
+                path,
+                "contained artifact deletion",
+            )
+            actual_size, actual_sha = _hash_bound_file(
+                binding,
+                path,
+                "contained artifact deletion",
+            )
+            if (actual_sha, actual_size) != (
+                expected_sha256,
+                expected_size_bytes,
+            ):
+                raise DataPublicationConflictError(
+                    "ARTIFACT_DELETE_PRECONDITION_FAILED",
+                    (
+                        f"expected={expected_sha256}/{expected_size_bytes} "
+                        f"actual={actual_sha}/{actual_size}"
+                    ),
+                    path=path,
+                )
+            identity = _file_identity(metadata)
+            _unlink_bound_checked(
+                binding,
+                path,
+                expected_identity=identity,
+                expected_nlink=1,
+            )
+            return ContainedArtifactDeletionResult(
+                path=path,
+                sha256=actual_sha,
+                size_bytes=actual_size,
+                device=identity.device,
+                inode=identity.inode,
+            )
+
+
 def publish_immutable_snapshot(
     *,
     store_root: Path,
@@ -432,6 +635,7 @@ def publish_immutable_snapshot(
     payload: bytes,
     current_precondition: CurrentPointerPrecondition | None = None,
     pre_commit_validator: Callable[[], None] | None = None,
+    commit_checkpoint_observer: Callable[[str], None] | None = None,
     lock_timeout_seconds: float = DEFAULT_LOCK_TIMEOUT_SECONDS,
     lock_poll_seconds: float = DEFAULT_LOCK_POLL_SECONDS,
 ) -> SnapshotPublishResult:
@@ -442,6 +646,8 @@ def publish_immutable_snapshot(
         raise TypeError("payload must be bytes")
     if pre_commit_validator is not None and not callable(pre_commit_validator):
         raise TypeError("pre_commit_validator must be callable")
+    if commit_checkpoint_observer is not None and not callable(commit_checkpoint_observer):
+        raise TypeError("commit_checkpoint_observer must be callable")
     for value, name in (
         (lock_timeout_seconds, "lock_timeout_seconds"),
         (lock_poll_seconds, "lock_poll_seconds"),
@@ -462,8 +668,22 @@ def publish_immutable_snapshot(
         "dataset lock",
         create_parents=True,
     )
+    maintenance_lock_path = _internal_path(
+        root,
+        f"locks/{STORE_MAINTENANCE_LOCK_NAME}",
+        "store maintenance lock",
+        create_parents=True,
+    )
+    cleanup_sink = _CleanupObservationSink()
     with (
+        _cleanup_observation_scope(cleanup_sink),
         _root_authority(root),
+        _file_lock(
+            maintenance_lock_path,
+            root=root,
+            timeout_seconds=float(lock_timeout_seconds),
+            poll_seconds=float(lock_poll_seconds),
+        ) as maintenance_lease,
         _file_lock(
             lock_path,
             root=root,
@@ -624,9 +844,12 @@ def publish_immutable_snapshot(
                 current_path,
                 pointer_bytes,
                 previous_bytes=old_bytes,
+                checkpoint_observer=commit_checkpoint_observer,
             )
             lease.cleanup_warnings.extend(commit_warnings)
             lease.mark_committed()
+            maintenance_lease.mark_committed()
+            cleanup_sink.committed = True
         except ArtifactWriteError:
             raise
         finally:
@@ -635,12 +858,14 @@ def publish_immutable_snapshot(
                 if cleanup_warning is not None and lease.committed:
                     lease.cleanup_warnings.append(cleanup_warning)
         published_snapshot = validated
-    warnings = tuple(lease.cleanup_warnings)
+    warnings = tuple(dict.fromkeys(maintenance_lease.cleanup_warnings + lease.cleanup_warnings))
+    observations = tuple(cleanup_sink.observations)
     return SnapshotPublishResult(
         published_snapshot,
         current_pointer_changed=True,
-        post_commit_cleanup_status="PASS_WITH_WARNINGS" if warnings else "PASS",
+        post_commit_cleanup_status=("PASS_WITH_WARNINGS" if warnings or observations else "PASS"),
         post_commit_cleanup_warnings=warnings,
+        post_commit_cleanup_observations=observations,
     )
 
 
@@ -1423,9 +1648,10 @@ def _install_raw(staged: Path, target: Path, digest: str, size: int) -> None:
         staged_identity = _file_identity(staged_metadata)
         source_descriptor = _checked_open_regular(
             staged,
-            os.O_RDONLY,
+            os.O_RDWR if os.name == "nt" else os.O_RDONLY,
             "staged immutable object",
             binding=staged_binding,
+            write_through=(os.name == "nt"),
         )
         created = False
         try:
@@ -1460,6 +1686,7 @@ def _install_raw(staged: Path, target: Path, digest: str, size: int) -> None:
                     expected_identity=staged_identity,
                     expected_nlink=1,
                 )
+                _sync_directory_namespace(staged_binding)
                 return
             except OSError as exc:
                 raise DataPublicationError(
@@ -1484,6 +1711,7 @@ def _install_raw(staged: Path, target: Path, digest: str, size: int) -> None:
                 or _file_identity(target_link) != staged_identity
             ):
                 _fail("IMMUTABLE_INSTALL_IDENTITY_MISMATCH", str(target))
+            _sync_replaced_namespace(target_binding, source_descriptor)
             os.close(source_descriptor)
             source_descriptor = -1
             _unlink_bound_checked(
@@ -1492,6 +1720,7 @@ def _install_raw(staged: Path, target: Path, digest: str, size: int) -> None:
                 expected_identity=staged_identity,
                 expected_nlink=2,
             )
+            _sync_directory_namespace(staged_binding)
             _verify_raw_bound(
                 target_binding,
                 target,
@@ -1589,6 +1818,7 @@ def _windows_open_descriptor(
     directory: bool,
     delete_access: bool = False,
     exclusive_share: bool = False,
+    write_through: bool = False,
 ) -> int:
     import ctypes
     import msvcrt
@@ -1615,6 +1845,7 @@ def _windows_open_descriptor(
     open_always = 4
     file_flag_open_reparse_point = 0x00200000
     file_flag_backup_semantics = 0x02000000
+    file_flag_write_through = 0x80000000
     writable = bool(flags & (os.O_WRONLY | os.O_RDWR))
     desired_access = generic_read | (generic_write if writable else 0)
     if delete_access:
@@ -1626,6 +1857,8 @@ def _windows_open_descriptor(
     attributes = file_flag_open_reparse_point
     if directory:
         attributes |= file_flag_backup_semantics
+    if write_through:
+        attributes |= file_flag_write_through
     raw_handle = create_file(
         str(path),
         desired_access,
@@ -1674,18 +1907,21 @@ def _open_bound_directory(
             path=parent,
         ) from exc
     descriptors: list[int] = []
+    descriptor_paths: list[Path] = []
     yielded = False
     try:
         if base is None:
             current_path = root
             current_descriptor = _open_directory_descriptor(root)
             descriptors.append(current_descriptor)
+            descriptor_paths.append(current_path)
         else:
             if base.root != root or base.path != root or base.descriptor is None:
                 _fail("ARTIFACT_ROOT_AUTHORITY_INVALID", str(root))
             current_path = root
             current_descriptor = os.dup(base.descriptor)
             descriptors.append(current_descriptor)
+            descriptor_paths.append(current_path)
         root_metadata = os.fstat(current_descriptor)
         _validate_directory_metadata(root_metadata, current_path, field)
         if os.name == "nt":
@@ -1694,10 +1930,12 @@ def _open_bound_directory(
                 _fail("ARTIFACT_COMPONENT_REPLACED", str(current_path))
         for component in relative.parts:
             candidate = current_path / component
+            created = False
             if os.name == "nt":
                 if create:
                     try:
                         candidate.mkdir()
+                        created = True
                     except FileExistsError:
                         pass
                 child_descriptor = _open_directory_descriptor(candidate)
@@ -1705,8 +1943,11 @@ def _open_bound_directory(
                 if create:
                     try:
                         os.mkdir(component, mode=0o700, dir_fd=current_descriptor)
+                        created = True
                     except FileExistsError:
                         pass
+                if created:
+                    os.fsync(current_descriptor)
                 path_metadata = os.stat(
                     component,
                     dir_fd=current_descriptor,
@@ -1721,6 +1962,7 @@ def _open_bound_directory(
                     dir_fd=current_descriptor,
                 )
             descriptors.append(child_descriptor)
+            descriptor_paths.append(candidate)
             child_metadata = os.fstat(child_descriptor)
             _validate_directory_metadata(child_metadata, candidate, field)
             if os.name == "nt":
@@ -1747,11 +1989,18 @@ def _open_bound_directory(
             path=parent,
         ) from exc
     finally:
-        for descriptor in reversed(descriptors):
+        for descriptor, descriptor_path in reversed(
+            tuple(zip(descriptors, descriptor_paths, strict=True))
+        ):
             try:
                 os.close(descriptor)
-            except OSError:
-                pass
+            except OSError as exc:
+                _record_cleanup_observation(
+                    code="BOUND_DIRECTORY_DESCRIPTOR_CLOSE_FAILED",
+                    phase="bound_directory_close",
+                    path=descriptor_path,
+                    error=exc,
+                )
 
 
 @contextmanager
@@ -1803,6 +2052,57 @@ def _bound_directory(
         base=active,
     ) as binding:
         yield binding
+
+
+def _sync_directory_namespace(binding: _BoundDirectory) -> None:
+    """Persist namespace changes where the platform exposes directory fsync."""
+
+    assert binding.descriptor is not None
+    before = os.fstat(binding.descriptor)
+    _validate_directory_metadata(before, binding.path, "directory durability sync")
+    if os.name != "nt":
+        os.fsync(binding.descriptor)
+    after = os.fstat(binding.descriptor)
+    _validate_directory_metadata(after, binding.path, "directory durability sync")
+    if not os.path.samestat(before, after):
+        _fail("ARTIFACT_COMPONENT_REPLACED", str(binding.path))
+
+
+def _sync_replaced_namespace(
+    binding: _BoundDirectory,
+    source_descriptor: int,
+) -> None:
+    """Make a completed rename/link durable under the reviewed platform protocol."""
+
+    if os.name == "nt":
+        # The source is opened with FILE_FLAG_WRITE_THROUGH. Microsoft documents
+        # that NTFS flushes metadata changes, including rename, for such a handle.
+        # FlushFileBuffers through os.fsync is repeated after the handle-bound
+        # rename so failure cannot be acknowledged as a durable commit.
+        os.fsync(source_descriptor)
+        return
+    _sync_directory_namespace(binding)
+
+
+def _emit_commit_checkpoint(
+    observer: Callable[[str], None] | None,
+    checkpoint: str,
+) -> None:
+    if checkpoint not in COMMIT_CHECKPOINTS:
+        raise AssertionError(f"unknown commit checkpoint: {checkpoint}")
+    if observer is None:
+        return
+    try:
+        observer(checkpoint)
+    except Exception as exc:
+        commit_state = (
+            "NOT_REPLACED" if checkpoint == "FILE_DURABLE_BEFORE_REPLACE" else "INDETERMINATE"
+        )
+        raise DataPublicationIntegrityError(
+            "COMMIT_CHECKPOINT_OBSERVER_FAILED",
+            f"{checkpoint}: {exc}",
+            commit_state=commit_state,
+        ) from exc
 
 
 def _bound_leaf(binding: _BoundDirectory, path: Path, field: str) -> str:
@@ -1930,6 +2230,7 @@ def _checked_open_regular(
     mode: int = 0o600,
     delete_access: bool = False,
     exclusive_share: bool = False,
+    write_through: bool = False,
 ) -> int:
     before = (
         _bound_path_metadata(binding, path, field)
@@ -1946,6 +2247,7 @@ def _checked_open_regular(
                 directory=False,
                 delete_access=delete_access,
                 exclusive_share=exclusive_share,
+                write_through=write_through,
             )
         else:
             assert binding.descriptor is not None
@@ -2076,6 +2378,7 @@ def _unlink_bound_checked(
             )
     except OSError as exc:
         raise DataPublicationError("ARTIFACT_UNLINK_FAILED", str(exc), path=path) from exc
+    _sync_directory_namespace(binding)
     if _bound_path_exists(binding, path, "unlink candidate"):
         _fail("ARTIFACT_UNLINK_FAILED", str(path))
 
@@ -2112,6 +2415,7 @@ def _unlink_bound_created_target(
                 _bound_leaf(binding, target, "installed immutable cleanup"),
                 dir_fd=binding.descriptor,
             )
+        _sync_directory_namespace(binding)
     except (OSError, DataPublicationError):
         pass
 
@@ -2142,6 +2446,7 @@ def _commit_current_atomic(
     content: bytes,
     *,
     previous_bytes: bytes | None,
+    checkpoint_observer: Callable[[str], None] | None = None,
 ) -> tuple[ArtifactWriteResult, tuple[str, ...]]:
     """Replace current as the final commit operation, with no fallible post-check."""
 
@@ -2180,6 +2485,7 @@ def _commit_current_atomic(
             content,
             current_state=current_state,
             committed_warnings=commit_warnings,
+            checkpoint_observer=checkpoint_observer,
         )
         return result, tuple(commit_warnings)
 
@@ -2191,6 +2497,7 @@ def _write_bytes_atomic_bound(
     *,
     current_state: _CurrentCommitState | None = None,
     committed_warnings: list[str] | None = None,
+    checkpoint_observer: Callable[[str], None] | None = None,
 ) -> ArtifactWriteResult:
     assert binding.descriptor is not None
     name = _bound_leaf(binding, path, "bound atomic write")
@@ -2209,6 +2516,7 @@ def _write_bytes_atomic_bound(
             binding=binding,
             delete_access=(os.name == "nt"),
             exclusive_share=(os.name == "nt"),
+            write_through=(os.name == "nt"),
         )
         view = memoryview(content)
         written = 0
@@ -2218,6 +2526,10 @@ def _write_bytes_atomic_bound(
                 raise OSError("short write")
             written += count
         os.fsync(descriptor)
+        _emit_commit_checkpoint(
+            checkpoint_observer,
+            "FILE_DURABLE_BEFORE_REPLACE",
+        )
         pre_replace = os.fstat(descriptor)
         source_identity = _file_identity(pre_replace)
         pre_payload_version = (pre_replace.st_size, pre_replace.st_mtime_ns)
@@ -2249,6 +2561,23 @@ def _write_bytes_atomic_bound(
             current_precondition=current_state,
         )
         replaced = True
+        _emit_commit_checkpoint(
+            checkpoint_observer,
+            "REPLACED_BEFORE_NAMESPACE_DURABLE",
+        )
+        try:
+            _sync_replaced_namespace(binding, descriptor)
+        except Exception as durability_error:
+            raise DataPublicationIntegrityError(
+                "ATOMIC_COMMIT_DURABILITY_INDETERMINATE",
+                str(durability_error),
+                path=path,
+                commit_state="INDETERMINATE",
+            ) from durability_error
+        _emit_commit_checkpoint(
+            checkpoint_observer,
+            "NAMESPACE_DURABLE_BEFORE_ATTEST",
+        )
         try:
             post_replace = _attest_atomic_descriptor(
                 binding,
@@ -2269,6 +2598,10 @@ def _write_bytes_atomic_bound(
                 "ATOMIC_COMMIT_ATTESTATION_FAILED",
             )
             attested = True
+            _emit_commit_checkpoint(
+                checkpoint_observer,
+                "ATTESTED_BEFORE_ACK",
+            )
         except Exception as attestation_error:
             try:
                 _rollback_invalid_atomic_candidate(
@@ -2317,6 +2650,12 @@ def _write_bytes_atomic_bound(
             try:
                 os.close(descriptor)
             except OSError as exc:
+                _record_cleanup_observation(
+                    code="ATOMIC_DESCRIPTOR_CLOSE_FAILED",
+                    phase="atomic_descriptor_close",
+                    path=path,
+                    error=exc,
+                )
                 if attested and current_state is not None:
                     if committed_warnings is None:
                         raise AssertionError("current commit warnings sink is required") from exc
@@ -2390,6 +2729,7 @@ def _rollback_invalid_atomic_candidate(
                 _bound_leaf(binding, path, "invalid atomic candidate rollback"),
                 dir_fd=binding.descriptor,
             )
+            _sync_directory_namespace(binding)
     except Exception as exc:
         rollback_error = exc
     try:
@@ -2643,6 +2983,7 @@ def _mkdir_checked(root: Path, path: Path, field: str) -> _FileIdentity:
                 os.mkdir(name, mode=0o700, dir_fd=parent_binding.descriptor)
         except OSError as exc:
             raise DataPublicationError("ARTIFACT_PATH_CREATE_FAILED", field, path=path) from exc
+        _sync_directory_namespace(parent_binding)
         with _bound_directory(root, path, field) as created:
             return created.identity
 
@@ -2715,6 +3056,7 @@ def _cleanup_stage(
                 stage.rmdir()
             else:
                 os.rmdir(name, dir_fd=parent_binding.descriptor)
+            _sync_directory_namespace(parent_binding)
     except (OSError, DataPublicationError) as exc:
         return f"PUBLICATION_STAGE_CLEANUP_FAILED: {exc}"
     return None
@@ -2921,6 +3263,7 @@ def _file_lock(
             handle.write(b"\0")
             handle.flush()
             os.fsync(handle.fileno())
+            _sync_replaced_namespace(binding, handle.fileno())
             _assert_descriptor_path(handle.fileno(), path, "dataset lock", binding)
         yield lease
     finally:

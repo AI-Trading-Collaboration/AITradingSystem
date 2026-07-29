@@ -1,6 +1,6 @@
 # DATA-GOV-001 统一 Data Foundation 治理与长期数据平台加固
 
-最后更新：2026-07-25
+最后更新：2026-07-29
 
 ## 任务信息
 
@@ -8,7 +8,7 @@
 - related task：`STORAGE-001`
 - priority：`P0`；物理存储迁移子任务为 `P1`
 - status：`IN_PROGRESS`
-- current phase：`D0B2B_OPERATIONAL_ACCEPTANCE_DONE_NEXT_SLICE_OWNER_SELECTION`
+- current phase：`D0C_COMPLETE_ACL_TASK_REGISTRATION_NEXT`
 - owner：project owner / data platform owner / architecture coordinator
 - architecture parent：`ARCH-004`
 - production effect：`none`（D0 仅建设 fail-closed 数据发布与验证能力；在单独迁移和验收前不切换生产消费者）
@@ -36,8 +36,19 @@ strict receipt
 为 `PASS / 0 error / 0 warning`，exact `daily_score_daily@1.0.0` authorization 为 true，
 完整 PIT/score/report/Reader Brief/finalization 链由 terminal PASS recovery child关闭。
 D0B2B 与 OPS-067 均已转 `DONE`。DATA-GOV parent 仍为 `IN_PROGRESS`，下一步须由 Owner
-在 ACL、D0C crash durability 或逐 consumer migration 中选择独立 slice；G4C、其他
-consumer、automatic non-daily、production 与 broker 不因本次关闭自动开放。
+已选择按 `D0C crash durability -> ACL -> per-consumer migration` 的顺序推进。D0C 详见
+`docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`；G4C、其他
+consumer、automatic non-daily、production 与 broker 不因本次启动自动开放。
+
+2026-07-29，D0C 的 durable commit、真实四 checkpoint subprocess crash matrix、
+reference-safe GC、checksum backup/restore rehearsal 和独立
+`data_publication_durability_attestation.v1` 已在隔离 store 形成 PASS bundle
+`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`。D0A历史manifest与result的
+`crash_durability_verified=false`不回写，D0C只在exact publication/profile/protocol/crash/GC/
+restore绑定的独立attestation中给出scoped PASS。D0C final-tree
+Architecture/Contract/Report/Reproducibility/Integration=`782/276/57/24/995 passed`，
+natural-boundary Full=`7651 passed / 3 skipped / 644 warnings`，任务已转`DONE`。下一步按Owner
+顺序另立ACL验收任务；ACL与逐consumer migration尚未启动。
 
 后续将数据能力作为独立的逻辑系统长期治理，但当前不拆 repository、部署单元或服务。Data Foundation 负责生产和证明事实；Knowledge & Insight Core、报告和网页只能消费其机器可读 contract，不能反向覆盖数据、质量状态或 lineage。
 

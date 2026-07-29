@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1036
+module_count: 1037
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -2639,7 +2639,29 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.download_publication
   path: src/ai_trading_system/data/download_publication.py
-  sha256: 34e11fa4a6180866e0c898cabc0941efdf24447ddc508480bb51d189d805344d
+  sha256: e65201bf0ec99b960a3f922c65226f293cad3739fadda639b25ce016aa9dbaf5
+  rule_id: data
+  owner_profile: data
+  owners:
+    code_owner: data_platform
+    policy_owner: data_governance
+    data_owner: data_governance
+    artifact_owner: data_governance
+    runtime_owner: data_operations
+  layer: domain
+  category: data_pipeline
+  public_contract: false
+  deprecation_status: active
+  test_globs:
+  - tests/test_data*.py
+  - tests/trading_engine/test_*data*.py
+  validation_tiers:
+  - fast-unit
+  - reproducibility
+  shared_integration: false
+- module_id: src.ai_trading_system.data.durability
+  path: src/ai_trading_system/data/durability.py
+  sha256: 36ad009fbadc90251ee504b0a94d58473e4c98e74f632c25efcee46305ec3843
   rule_id: data
   owner_profile: data
   owners:
@@ -2661,7 +2683,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.data.immutable_publish
   path: src/ai_trading_system/data/immutable_publish.py
-  sha256: 6fd4f239874f53bdd5121b492106820810923fd4dbf8276bae02176dce6224fc
+  sha256: 7ed5184e0b225ff5535d5c2debcea532c7d57533b87233f625a1ae2c629420da
   rule_id: data
   owner_profile: data
   owners:

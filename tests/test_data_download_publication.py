@@ -16,6 +16,7 @@ from ai_trading_system.data.download_publication import (
     DownloadArtifactCandidate,
     DownloadLegacyProjectionError,
     DownloadPublicationIntegrityError,
+    DownloadReplayInputCandidate,
     DownloadSourceBinding,
     publish_download_transaction,
     resolve_download_publication,
@@ -1238,9 +1239,7 @@ def test_normalization_audit_policy_commitment_is_publication_bound(
         "policy_sha256": "1" * 64,
         "canonical_dataset": "prices_daily.csv",
         "decision_calendar": "XNYS",
-        "session_resolver": (
-            "ai_trading_system.trading_calendar.is_us_equity_trading_day"
-        ),
+        "session_resolver": ("ai_trading_system.trading_calendar.is_us_equity_trading_day"),
         "evaluation_window": {
             "start": START.isoformat(),
             "end": END.isoformat(),
@@ -1366,6 +1365,62 @@ def test_list_of_pairs_request_parameters_boundary_is_typed(tmp_path: Path) -> N
         )
 
     assert exc_info.value.code == "DOWNLOAD_JSON_FIELD_INVALID"
+
+
+def test_replay_input_row_count_is_recomputed_from_logical_csv_records() -> None:
+    item = DownloadReplayInputCandidate(
+        input_role="primary_raw",
+        filename="raw.csv",
+        content=b'id,note\n1,"line one\nline two"\n2,plain\n',
+        row_count=2,
+    )
+
+    payload = publication_module._replay_input_payload(item)
+
+    assert payload["row_count"] == 2
+
+
+def test_replay_input_row_count_metadata_mismatch_fails_closed() -> None:
+    item = DownloadReplayInputCandidate(
+        input_role="primary_raw",
+        filename="raw.csv",
+        content=b"id,value\n1,a\n2,b\n",
+        row_count=1,
+    )
+
+    with pytest.raises(
+        DownloadPublicationIntegrityError,
+        match="DOWNLOAD_REPLAY_INPUT_ROW_COUNT_MISMATCH",
+    ):
+        publication_module._replay_input_payload(item)
+
+
+@pytest.mark.parametrize(
+    ("filename", "content", "code"),
+    [
+        ("raw.json", b"{}", "DOWNLOAD_REPLAY_INPUT_FORMAT_UNSUPPORTED"),
+        ("raw.csv", b"", "DOWNLOAD_REPLAY_INPUT_CSV_INVALID"),
+        (
+            "raw.csv",
+            b'id,note\n1,"unterminated\n',
+            "DOWNLOAD_REPLAY_INPUT_CSV_INVALID",
+        ),
+    ],
+)
+def test_replay_input_format_and_csv_errors_are_typed(
+    filename: str,
+    content: bytes,
+    code: str,
+) -> None:
+    item = DownloadReplayInputCandidate(
+        input_role="primary_raw",
+        filename=filename,
+        content=content,
+        row_count=0,
+    )
+
+    with pytest.raises(DownloadPublicationIntegrityError, match=code):
+        publication_module._replay_input_payload(item)
 
 
 def _publish(

@@ -1,0 +1,30 @@
+schema_version: data_foundation_durability_policy.v1
+policy_id: data_foundation_d0c_durability
+policy_version: 1.0.0
+
+# Operational safety window only. It does not affect investment interpretation.
+orphan_grace_seconds: 86400
+
+managed_store_roots:
+  - manifests
+  - pointer_history
+  - quality_reports
+  - snapshots
+  - source_events
+  - staging
+
+backup_categories:
+  - critical_config
+  - forward_only
+  - manual_input
+
+required_crash_checkpoints:
+  - FILE_DURABLE_BEFORE_REPLACE
+  - REPLACED_BEFORE_NAMESPACE_DURABLE
+  - NAMESPACE_DURABLE_BEFORE_ATTEST
+  - ATTESTED_BEFORE_ACK
+
+claim_boundary:
+  production_effect: none
+  consumer_cutover_allowed: false
+  store_acl_verified: false

@@ -130,9 +130,7 @@ _ATOMICITY_SCOPE = "IMMUTABLE_GENERATION_DISCOVERY_POINTER_ONLY"
 _LEGACY_PROJECTION_ROLE = "COMPATIBILITY_ONLY"
 _LEGACY_PROJECTION_ATOMICITY = "NOT_GUARANTEED"
 _VALIDATION_SCOPE = "STRUCTURAL_PUBLICATION_ONLY"
-_CANONICAL_SESSION_AUDIT_SCHEMA_VERSION = (
-    "canonical_price_session_normalization_audit.v1"
-)
+_CANONICAL_SESSION_AUDIT_SCHEMA_VERSION = "canonical_price_session_normalization_audit.v1"
 
 
 class DownloadPublicationError(RuntimeError):
@@ -1673,6 +1671,12 @@ def _validated_cboe_raw_source_commitment(
 
 
 def _replay_input_payload(item: DownloadReplayInputCandidate) -> dict[str, object]:
+    recomputed_rows = _csv_replay_input_row_count(item.filename, item.content)
+    if item.row_count != recomputed_rows:
+        _fail(
+            "DOWNLOAD_REPLAY_INPUT_ROW_COUNT_MISMATCH",
+            (f"{item.input_role}: metadata={item.row_count} " f"content={recomputed_rows}"),
+        )
     return {
         "input_role": item.input_role,
         "filename": item.filename,
@@ -1695,6 +1699,23 @@ def _replay_input_filename(value: object) -> str:
     if path.name != filename or filename in {".", ".."} or "\\" in filename:
         _fail("DOWNLOAD_REPLAY_INPUT_BINDING_MISMATCH", filename)
     return filename
+
+
+def _csv_replay_input_row_count(filename: str, content: bytes) -> int:
+    if PurePosixPath(filename).suffix.lower() != ".csv":
+        _fail("DOWNLOAD_REPLAY_INPUT_FORMAT_UNSUPPORTED", filename)
+    try:
+        text = content.decode("utf-8-sig")
+        reader = csv.reader(io.StringIO(text, newline=""), strict=True)
+        header = next(reader)
+        if not header or not any(column.strip() for column in header):
+            _fail("DOWNLOAD_REPLAY_INPUT_CSV_INVALID", f"{filename}: missing header")
+        return sum(1 for row in reader if row)
+    except (UnicodeDecodeError, csv.Error, StopIteration) as exc:
+        raise DownloadPublicationIntegrityError(
+            "DOWNLOAD_REPLAY_INPUT_CSV_INVALID",
+            f"{filename}: {exc}",
+        ) from exc
 
 
 def _legacy_manifest_records(
@@ -1994,10 +2015,7 @@ def _validate_relocated_legacy_output_path(
     if (
         not value
         or value != value.strip()
-        or not (
-            PureWindowsPath(value).is_absolute()
-            or PurePosixPath(value).is_absolute()
-        )
+        or not (PureWindowsPath(value).is_absolute() or PurePosixPath(value).is_absolute())
         or PureWindowsPath(value).name != expected_filename
         or PurePosixPath(value.replace("\\", "/")).name != expected_filename
     ):
@@ -2592,6 +2610,12 @@ def _validated_transaction_replay_inputs(
             size=size,
             code="DOWNLOAD_REPLAY_INPUT_BINDING_MISMATCH",
         )
+        recomputed_rows = _csv_replay_input_row_count(filename, content)
+        if rows != recomputed_rows:
+            _fail(
+                "DOWNLOAD_REPLAY_INPUT_ROW_COUNT_MISMATCH",
+                (f"{input_role}: metadata={rows} " f"content={recomputed_rows}"),
+            )
         normalized.append(
             {
                 "input_role": input_role,

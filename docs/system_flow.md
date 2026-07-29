@@ -225,6 +225,41 @@ flowchart LR
     RD -.-> NC["No consumer cutover / production none"]
 ```
 
+D0C在不改写D0A immutable bytes/false flags的前提下，为publication增加独立的durability
+protocol与证据层。所有atomic temp先完成file sync；POSIX replace/link/mkdir/unlink后同步containing
+directory，Windows只在local fixed NTFS profile使用`FILE_FLAG_WRITE_THROUGH` source handle、
+handle-bound rename和post-rename `FlushFileBuffers`。replace已发生但namespace durability不能确定时返回
+typed `INDETERMINATE`，不得伪装rollback或success。global store maintenance lock与dataset lock串行化
+publish/GC；descriptor/lock close失败进入结构化cleanup observation。download replay input的logical
+CSV row count从immutable bytes重算，metadata mismatch、malformed CSV或非CSV输入均fail closed。
+
+`data_foundation_durability_rehearsal.py`在四个commit checkpoint分别强制终止真实writer子进程，再从
+新进程验证current只能是old/new完整generation并重获锁；随后执行plan/apply分离、exact state-bound的
+reference-safe GC，以及三类reviewed category的content-addressed checksum backup和空隔离目录restore。
+current/history/manifest/source/DQ/payload、external lineage reference、retention与grace都是GC保护根，
+stale plan、link/reparse/unknown entry或引用歧义阻断删除。最终
+`data_publication_durability_attestation.v1`只在filesystem profile、protocol、crash receipt、GC receipt、
+restore receipt与exact publication全部PASS时给出scoped durability=true；D0A manifest继续保留
+`crash_durability_verified=false`，`store_acl_verified=false`和`consumer_cutover_allowed=false`。
+隔离验收bundle为
+`outputs/validation_runtime/data_foundation_d0c_20260729T030000Z/rehearsal_bundle.json`；
+它不是live production restore、ACL或consumer cutover授权。
+
+```mermaid
+flowchart LR
+    F["Atomic temp bytes"] --> FS["File durable sync"]
+    FS --> RP["Bound atomic replace/link"]
+    RP --> NS["Platform namespace durability"]
+    NS --> AT["Post-replace identity/hash attestation"]
+    AT --> ACK["Committed acknowledgement"]
+    RP -->|"durability unknown"| IND["Fail closed: INDETERMINATE"]
+    ACK --> CM["Crash matrix: old or new, never torn"]
+    CM --> GC["Reference-safe GC plan/apply + deletion proof"]
+    GC --> BR["Checksum backup + isolated restore"]
+    BR --> DA["Independent durability attestation"]
+    DA -.-> BND["ACL false / cutover false / production none"]
+```
+
 W12-S2在D0A能力之上建立D0B1 canonical执行证据与G4 native consumer preflight。无显式`--as-of`时，
 direct `aits validate-data`与`aits ops daily-run`共用`America/New_York`最近已完成交易日和收盘后3小时
 provider-ready buffer；`operations_as_of`只用于scheduler/due/calendar，`data_quality_as_of`取daily plan中

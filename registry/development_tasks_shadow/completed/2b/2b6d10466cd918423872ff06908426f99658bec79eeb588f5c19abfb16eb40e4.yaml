@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: DATA-GOV-001_D0C_CRASH_DURABILITY_AND_RECOVERY
+  title: null
+  domain: Data Foundation / crash durability, reference-safe GC and backup/restore
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform owner：按Owner既定顺序另立ACL验收任务；ACL完成前不得推进generic consumer migration
+  requirement_refs:
+  - docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`。已实现file+namespace
+    durable commit、真实subprocess crash matrix、reference-safe GC、checksum backup/restore、immutable
+    CSV replay row-count重算、cleanup observability及独立durability attestation；D0A历史false
+    flags保持immutable。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 平台/filesystem profile fail closed；四checkpoint old-or-new/never-torn；被current/history/run/lineage/retention引用对象不可删除；restore仅到空隔离目标并逐SHA/语义验证；focused/formal/natural-boundary
+      Full、base-drift reconciliation及governed closeout PASS；ACL、consumer、QLD automatic
+      selection、production与broker不自动开放。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register_completed.md
+    source_partition: completed
+    line_number: 517
+    row_sha256: 9627159ea1165b52a86ea67c37b4602ca1d98f0c4f5c4fb16c23c46666b460f3
+    cell_count: 8
+    all_cells:
+    - DATA-GOV-001_D0C_CRASH_DURABILITY_AND_RECOVERY
+    - Data Foundation / crash durability, reference-safe GC and backup/restore
+    - P0
+    - DONE
+    - data platform owner：按Owner既定顺序另立ACL验收任务；ACL完成前不得推进generic consumer migration
+    - 详见 `docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`。已实现file+namespace
+      durable commit、真实subprocess crash matrix、reference-safe GC、checksum backup/restore、immutable
+      CSV replay row-count重算、cleanup observability及独立durability attestation；D0A历史false
+      flags保持immutable。
+    - 平台/filesystem profile fail closed；四checkpoint old-or-new/never-torn；被current/history/run/lineage/retention引用对象不可删除；restore仅到空隔离目标并逐SHA/语义验证；focused/formal/natural-boundary
+      Full、base-drift reconciliation及governed closeout PASS；ACL、consumer、QLD automatic
+      selection、production与broker不自动开放。
+    - 2026-07-29：bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、focused=`122
+      passed / 1 skipped`、Architecture/Contract/Report/Reproducibility/Integration=`782/276/57/24/995
+      passed`，Full=`7651 passed / 3 skipped / 644 warnings`；plan=`integration-revalidation-75feb5f0d35d44fdd1ff`、0
+      blocker/contract conflict/undeclared path。任务归档DONE，`store_acl_verified=false`、`consumer_cutover_allowed=false`。
+    raw_line: '|DATA-GOV-001_D0C_CRASH_DURABILITY_AND_RECOVERY|Data Foundation / crash
+      durability, reference-safe GC and backup/restore|P0|DONE|data platform owner：按Owner既定顺序另立ACL验收任务；ACL完成前不得推进generic
+      consumer migration|详见 `docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`。已实现file+namespace
+      durable commit、真实subprocess crash matrix、reference-safe GC、checksum backup/restore、immutable
+      CSV replay row-count重算、cleanup observability及独立durability attestation；D0A历史false
+      flags保持immutable。|平台/filesystem profile fail closed；四checkpoint old-or-new/never-torn；被current/history/run/lineage/retention引用对象不可删除；restore仅到空隔离目标并逐SHA/语义验证；focused/formal/natural-boundary
+      Full、base-drift reconciliation及governed closeout PASS；ACL、consumer、QLD automatic
+      selection、production与broker不自动开放。|2026-07-29：bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、focused=`122
+      passed / 1 skipped`、Architecture/Contract/Report/Reproducibility/Integration=`782/276/57/24/995
+      passed`，Full=`7651 passed / 3 skipped / 644 warnings`；plan=`integration-revalidation-75feb5f0d35d44fdd1ff`、0
+      blocker/contract conflict/undeclared path。任务归档DONE，`store_acl_verified=false`、`consumer_cutover_allowed=false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9627159ea1165b52a86ea67c
+  task_id: DATA-GOV-001_D0C_CRASH_DURABILITY_AND_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: data platform owner：按Owner既定顺序另立ACL验收任务；ACL完成前不得推进generic consumer
+      migration
+    notes: 2026-07-29：bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、focused=`122
+      passed / 1 skipped`、Architecture/Contract/Report/Reproducibility/Integration=`782/276/57/24/995
+      passed`，Full=`7651 passed / 3 skipped / 644 warnings`；plan=`integration-revalidation-75feb5f0d35d44fdd1ff`、0
+      blocker/contract conflict/undeclared path。任务归档DONE，`store_acl_verified=false`、`consumer_cutover_allowed=false`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:9627159ea1165b52a86ea67c37b4602ca1d98f0c4f5c4fb16c23c46666b460f3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-001_D0C_CRASH_DURABILITY_AND_RECOVERY
+  - Data Foundation / crash durability, reference-safe GC and backup/restore
+  - P0
+  - DONE
+  - data platform owner：按Owner既定顺序另立ACL验收任务；ACL完成前不得推进generic consumer migration
+  - 详见 `docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md`。已实现file+namespace
+    durable commit、真实subprocess crash matrix、reference-safe GC、checksum backup/restore、immutable
+    CSV replay row-count重算、cleanup observability及独立durability attestation；D0A历史false
+    flags保持immutable。
+  - 平台/filesystem profile fail closed；四checkpoint old-or-new/never-torn；被current/history/run/lineage/retention引用对象不可删除；restore仅到空隔离目标并逐SHA/语义验证；focused/formal/natural-boundary
+    Full、base-drift reconciliation及governed closeout PASS；ACL、consumer、QLD automatic
+    selection、production与broker不自动开放。
+  - 2026-07-29：bundle=`data_foundation_d0c_bundle_0d36f7073a10d7b1db0f94be750b0b7f`、focused=`122
+    passed / 1 skipped`、Architecture/Contract/Report/Reproducibility/Integration=`782/276/57/24/995
+    passed`，Full=`7651 passed / 3 skipped / 644 warnings`；plan=`integration-revalidation-75feb5f0d35d44fdd1ff`、0
+    blocker/contract conflict/undeclared path。任务归档DONE，`store_acl_verified=false`、`consumer_cutover_allowed=false`。
+  docs_links:
+  - docs/requirements/DATA-GOV-001_D0C_Crash_Durability_and_Recovery.md
+  terminal: true
+  raw_row_sha256: 9627159ea1165b52a86ea67c37b4602ca1d98f0c4f5c4fb16c23c46666b460f3
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 28b6e21da986b609ad6db315e88db2290bd6ac6f2a936cb13d6e63a88ecf00a8
