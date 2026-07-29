@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Pro Git Review"
+  short_description: "让网页 Pro 基于 Git exact commit 进行受治理规划审阅"
+  default_prompt: "Use $run-web-pro-git-review to review a public Git exact commit in ChatGPT Web Pro and return an auditable plan with routing risks."

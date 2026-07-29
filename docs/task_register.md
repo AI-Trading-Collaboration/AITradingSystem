@@ -53,6 +53,14 @@
 
 最新增量：
 
+2026-07-29：Owner 确认网页响应环境返回 `GPT-5.6 Pro` 符合本轮预期，要求参考
+exact-commit 仓库审阅结果规划 O1 后续任务，并把“固定 Git snapshot、网页 Pro 审阅、
+模型/路由风险披露、结果回收”固化为可复用 Codex skill。新增
+`TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT`，但 capability audit
+仍须新的显式 Owner 启动授权，因此初始状态为 `BLOCKED_OWNER_INPUT`；同时新增
+`DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL` 实现本轮已授权的开发工具，网页标签和
+模型自述不得被提升为 authoritative backend route evidence。
+
 2026-07-27：Owner 以
 `owner_decision:TRADING-2462:2026-07-27:close_current_tail_risk_capability_path_v1`
 关闭当前 `QQQ_FUTURE_WORST_1D_RETURN` tail-risk capability path，并以
@@ -2018,6 +2026,18 @@ YYYY-MM-DD: 从 <旧状态> 改为 <新状态>，原因：<触发条件、实现
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
 |TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION|Strategy Style Discovery / decision-target capability audit batch-1 label foundation|P0|BASELINE_DONE|strategy research owner：复核真实label coverage并预注册Batch 2 split/model ladder/metrics；data platform按DATA-GOV-002完成Phase A正式验收|详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。V1历史BLOCKED证据保留；Owner批准DATA-GOV-002后，v2以reviewed `decision_target_label_core` receipt绑定price-only QQQ/SPY/SGOV exact scope。真实`2021-02-22..2026-07-24`run在full DQ=`FAIL`且`^VIX` blocker明确隔离时取得scoped=`PASS`，生成5412行label；未声称global PASS，QLD exception未复用，不训练模型、不做feature/candidate/parameter search、策略回测或权重生成。|Receipt必须绑定exact consumer/policy/source/window/full+scoped reports/materialized inputs；unknown/relevant/global source blocker与scoped warning/error fail closed；label逐decision date输出三类gross excess return、forward total return、future max drawdown/worst-1d、interval/available-at；validator重建receipt projection、rows/summary/Markdown并拒绝tamper；full status、global pass claim和no-reuse/no-daily边界在报告可见；formal validation通过；`production_effect=none`、`broker_action=none`。|2026-07-26：首个真实v2 receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full唯一ERROR=`prices_non_market_session_date`、affected=`^VIX`、scoped QQQ/SPY/SGOV=`PASS`、global claim=false；label status=`LABEL_FOUNDATION_READY`、common sessions=`1362`、rows=`5412`、content-derived validator 0 errors。正式tiers由DATA-GOV-002 Phase A收口。|
+
+## TRADING-2464 O1 Relative Opportunity Spread Capability Audit
+
+|ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
+|---|---|---|---|---|---|---|---|
+|TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT|Strategy Style Discovery / O1 relative-opportunity capability evidence|P0|BLOCKED_OWNER_INPUT|project owner / strategy research owner：审阅并签发独立 capability-audit 启动授权；在任何真实 count/result 前确认 authoritative model/feature family identity|详见 `docs/requirements/TRADING-2464_O1_Relative_Opportunity_Spread_Capability_Audit.md`。复用 `TRADING_2463_O1_S4_PILOT_V1`，不得修改 target、5-session horizon、coverage floor、primary gate、model family 或 mandatory falsification；先做 serial contract wave，再做 deterministic fixture/validator 与 coverage-only early stop，最后才允许一次 canonical historical-seen-only capability run。|Owner 新授权与 exact-base/input commitment 完整；canonical DQ strict `PASS/0/0` exact绑定；model/feature family 在真实 count/result 前已有 reviewed authority；coverage 任一不足即 `INSUFFICIENT_COVERAGE_OR_DQ` 并关闭；正式 run 只允许四类机械结论；成功也不自动授权 Decision Value Audit、risk overlay、candidate/backtest/weights、QLD、paper-shadow、production或broker。|2026-07-29：根据 Owner 要求与网页 Pro exact-commit 审阅建立规划；数据前置 blocker 已由 D0B2B strict PASS 解除，但研究启动授权仍未发生，故保持 `BLOCKED_OWNER_INPUT`。`production_effect=none`、`broker_action=none`。|
+
+## DEVX-007 Web Pro Git Strategy Planning Skill
+
+|ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
+|---|---|---|---|---|---|---|---|
+|DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL|Developer experience / governed Web Pro exact-Git planning handoff|P0|BASELINE_DONE|workflow owner：在下一次用户明确授权的 Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发|详见 `docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md`。Skill 只在用户明确要求网页 Pro 外部审阅时，把公开或用户明确授权的 Git exact commit 与最小必要上下文发送到已登录 ChatGPT；必须分离 UI `Pro`、模型自述与 authoritative backend route evidence，并把 fallback 不可验证记为风险。|使用 `skill-creator` 标准结构；canonical bundle 位于 `tools/codex_skills/run-web-pro-git-review/`，installed bundle 位于 `$CODEX_HOME/skills/run-web-pro-git-review/`；固定 exact commit、不读取 moving main；仓库检索成功/失败逐项披露；路由结论只允许 verified mismatch signal、UI/self-report consistent但route不可验证、或明确不可用；`quick_validate`、canonical/installed parity、技能/历史 authority 聚焦测试、Architecture 785项与Contract 276项 PASS；task shadow live drift 由新的 append-only DEVX-007 compatibility authority 接管且不改写 D0E 历史段；不修改策略、数据、生产或broker状态。|2026-07-29：skill bundle、提示模板、路由风险分类、恢复流程、静态契约测试与 append-only current-hash authority 已完成；首轮 Architecture 的 48 个 drift 失败已直接修复，复跑 `785 passed`，Contract `276 passed`。任务进入 `BASELINE_DONE`；不替代 TRADING-2464 的 Owner 授权或研究证据。|
 
 ## OPS-067 当前修复
 
