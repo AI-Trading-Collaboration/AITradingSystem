@@ -1,13 +1,13 @@
 # TRADING-2470：Atlas Citation-First Query API V1
 
-最后更新：2026-07-30
+最后更新：2026-07-31
 
 稳定任务 ID：
 `TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1`
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
@@ -293,3 +293,15 @@ retention boundary: task closeout 前保留；closeout 后仅在 artifact catalo
   browser surface 绕过。未伪报 visual PASS；继续执行 static HTML/escaping/layout-contract 与
   formal validation。退出条件：可访问本地 artifact 的 reviewed browser surface 对 1280px
   no-horizontal-overflow、折叠引用和阅读层级完成人工复核。
+- 2026-07-31：consumer source commit=`4dd78df3bcd66197cfa0c9272181baf04e0bb011`；
+  focused Atlas/contract=`59 passed`，compatibility/deprecation=`165 passed`，task
+  shadow=`933 tasks byte-identical`，DevEx=`1057 modules / 1228 tests PASS`。正式门
+  Architecture=`812 passed`、Contract=`276 passed`、Integration=`995 passed / 642
+  warnings`、Reproducibility=`24 passed`、Full=`7863 passed / 3 skipped / 644
+  warnings`，对应 runtime run 分别为 `architecture-fitness_20260730T175409Z`、
+  `contract-validation_20260730T175645Z`、`integration_20260730T175845Z`、
+  `reproducibility_20260730T180011Z`、`full_20260730T180054Z`。V1 实现、独立验证、
+  deterministic static page 与正式工程门均已闭合，状态转 `BASELINE_DONE`；浏览器人工
+  visual review 仍为 `NOT_EXECUTED_URL_POLICY`，只作为已显式记录的环境依赖保留，不影响
+  static contract 的完成语义，也不授权部署、自由文本/LLM、投资结论、production 或
+  broker action。

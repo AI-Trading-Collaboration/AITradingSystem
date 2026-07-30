@@ -13,18 +13,18 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: knowledge/reporting/UX owner：canonical preview 已生成；更新 generated authority、执行
-    formal validation 与 closeout；可用 reviewed browser surface 后补人工 visual review
+  next_owner: knowledge/reporting/UX owner：维护 V1 contract 与 retained preview；可用 reviewed
+    local-capable browser 后补人工 visual review，若无页面问题无需继续开发
   requirement_refs:
   - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。amendment
-    authority=`0dfafe641…`。query/validator/renderer focused=`28 passed`；真实 preview
-    5/5 validation PASS、double-build byte-identical。当前 Web Pro browser URL policy
-    禁止本地 `file://` 且禁止绕过，故 visual PASS 未声明；该环境限制不改变 static contract/formal closeout，退出条件为
-    reviewed local-capable browser 完成人工复核。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。consumer
+    source=`4dd78df3b…`；五个问题的 query/independent validator/static renderer 已闭合，真实 preview
+    5/5 validation PASS、double-build byte-identical；focused=`59 passed`，compatibility/deprecation=`165
+    passed`，正式五级门全部 PASS。Web Pro URL policy 禁止本地 `file://` 且禁止绕过，故 browser visual
+    明确保留为 `NOT_EXECUTED_URL_POLICY`，退出条件为 reviewed local-capable browser 完成人工复核。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100%
@@ -34,47 +34,48 @@ task_record:
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 1121908871c0be64b1d35a582d2f7eb8303126f77797d0de38e7e232c54b0dc2
+  row_sha256: 3a4f605edaa2d22512324f1c6a0d5d6679afbfb8139a0701fab8587fbcbe54af
   cell_count: 8
   all_cells:
   - TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
   - Publishing & Experience / Atlas citation-first read query and answer API
   - P1
-  - IN_PROGRESS
-  - knowledge/reporting/UX owner：canonical preview 已生成；更新 generated authority、执行 formal
-    validation 与 closeout；可用 reviewed browser surface 后补人工 visual review
-  - 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。amendment
-    authority=`0dfafe641…`。query/validator/renderer focused=`28 passed`；真实 preview
-    5/5 validation PASS、double-build byte-identical。当前 Web Pro browser URL policy
-    禁止本地 `file://` 且禁止绕过，故 visual PASS 未声明；该环境限制不改变 static contract/formal closeout，退出条件为
-    reviewed local-capable browser 完成人工复核。
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 contract 与 retained preview；可用 reviewed local-capable
+    browser 后补人工 visual review，若无页面问题无需继续开发
+  - 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。consumer
+    source=`4dd78df3b…`；五个问题的 query/independent validator/static renderer 已闭合，真实 preview
+    5/5 validation PASS、double-build byte-identical；focused=`59 passed`，compatibility/deprecation=`165
+    passed`，正式五级门全部 PASS。Web Pro URL policy 禁止本地 `file://` 且禁止绕过，故 browser visual
+    明确保留为 `NOT_EXECUTED_URL_POLICY`，退出条件为 reviewed local-capable browser 完成人工复核。
   - 五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100% claim→canonical
     citation closure；source time 显式 null 不被伪造且强制 LIMITED；snapshot/diff/source identity
     可重算；tamper/unknown/ambiguous fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
     PASS；browser visual review 单独显式记录状态。
-  - 2026-07-31：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；contract
-    authority=`65a8906dc…`；amendment source=`d331b034e…`、amendment authority=`0dfafe641…`；preview
-    SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；browser visual=`NOT_EXECUTED_URL_POLICY`；V1
-    不授权自由文本/LLM、HTTP deployment、empirical research、production 或 broker action。
+  - 2026-07-31：Architecture=`812`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7863
+    passed / 3 skipped / 644 warnings`；preview SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；状态转
+    `BASELINE_DONE`。browser visual 未伪报 PASS；V1 不授权自由文本/LLM、HTTP deployment、empirical
+    research、production 或 broker action。
   raw_line: '|TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1|Publishing & Experience
-    / Atlas citation-first read query and answer API|P1|IN_PROGRESS|knowledge/reporting/UX
-    owner：canonical preview 已生成；更新 generated authority、执行 formal validation 与 closeout；可用
-    reviewed browser surface 后补人工 visual review|详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。amendment
-    authority=`0dfafe641…`。query/validator/renderer focused=`28 passed`；真实 preview
-    5/5 validation PASS、double-build byte-identical。当前 Web Pro browser URL policy
-    禁止本地 `file://` 且禁止绕过，故 visual PASS 未声明；该环境限制不改变 static contract/formal closeout，退出条件为
-    reviewed local-capable browser 完成人工复核。|五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100%
-    claim→canonical citation closure；source time 显式 null 不被伪造且强制 LIMITED；snapshot/diff/source
-    identity 可重算；tamper/unknown/ambiguous fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
-    PASS；browser visual review 单独显式记录状态。|2026-07-31：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；contract
-    authority=`65a8906dc…`；amendment source=`d331b034e…`、amendment authority=`0dfafe641…`；preview
-    SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；browser visual=`NOT_EXECUTED_URL_POLICY`；V1
-    不授权自由文本/LLM、HTTP deployment、empirical research、production 或 broker action。|'
+    / Atlas citation-first read query and answer API|P1|BASELINE_DONE|knowledge/reporting/UX
+    owner：维护 V1 contract 与 retained preview；可用 reviewed local-capable browser 后补人工
+    visual review，若无页面问题无需继续开发|详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。consumer
+    source=`4dd78df3b…`；五个问题的 query/independent validator/static renderer 已闭合，真实 preview
+    5/5 validation PASS、double-build byte-identical；focused=`59 passed`，compatibility/deprecation=`165
+    passed`，正式五级门全部 PASS。Web Pro URL policy 禁止本地 `file://` 且禁止绕过，故 browser visual
+    明确保留为 `NOT_EXECUTED_URL_POLICY`，退出条件为 reviewed local-capable browser 完成人工复核。|五个
+    stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100% claim→canonical
+    citation closure；source time 显式 null 不被伪造且强制 LIMITED；snapshot/diff/source identity
+    可重算；tamper/unknown/ambiguous fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
+    PASS；browser visual review 单独显式记录状态。|2026-07-31：Architecture=`812`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7863
+    passed / 3 skipped / 644 warnings`；preview SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；状态转
+    `BASELINE_DONE`。browser visual 未伪报 PASS；V1 不授权自由文本/LLM、HTTP deployment、empirical
+    research、production 或 broker action。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-1121908871c0be64b1d35a58
+  event_id: legacy-import-3a4f605edaa2d22512324f1c
   task_id: TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -84,44 +85,44 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: knowledge/reporting/UX owner：canonical preview 已生成；更新 generated authority、执行
-      formal validation 与 closeout；可用 reviewed browser surface 后补人工 visual review
-    notes: 2026-07-31：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；contract
-      authority=`65a8906dc…`；amendment source=`d331b034e…`、amendment authority=`0dfafe641…`；preview
-      SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；browser visual=`NOT_EXECUTED_URL_POLICY`；V1
-      不授权自由文本/LLM、HTTP deployment、empirical research、production 或 broker action。
+    next_owner: knowledge/reporting/UX owner：维护 V1 contract 与 retained preview；可用
+      reviewed local-capable browser 后补人工 visual review，若无页面问题无需继续开发
+    notes: 2026-07-31：Architecture=`812`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7863
+      passed / 3 skipped / 644 warnings`；preview SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；状态转
+      `BASELINE_DONE`。browser visual 未伪报 PASS；V1 不授权自由文本/LLM、HTTP deployment、empirical
+      research、production 或 broker action。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:1121908871c0be64b1d35a582d2f7eb8303126f77797d0de38e7e232c54b0dc2
+  - sha256:3a4f605edaa2d22512324f1c6a0d5d6679afbfb8139a0701fab8587fbcbe54af
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
   - Publishing & Experience / Atlas citation-first read query and answer API
   - P1
-  - IN_PROGRESS
-  - knowledge/reporting/UX owner：canonical preview 已生成；更新 generated authority、执行 formal
-    validation 与 closeout；可用 reviewed browser surface 后补人工 visual review
-  - 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。amendment
-    authority=`0dfafe641…`。query/validator/renderer focused=`28 passed`；真实 preview
-    5/5 validation PASS、double-build byte-identical。当前 Web Pro browser URL policy
-    禁止本地 `file://` 且禁止绕过，故 visual PASS 未声明；该环境限制不改变 static contract/formal closeout，退出条件为
-    reviewed local-capable browser 完成人工复核。
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 contract 与 retained preview；可用 reviewed local-capable
+    browser 后补人工 visual review，若无页面问题无需继续开发
+  - 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。consumer
+    source=`4dd78df3b…`；五个问题的 query/independent validator/static renderer 已闭合，真实 preview
+    5/5 validation PASS、double-build byte-identical；focused=`59 passed`，compatibility/deprecation=`165
+    passed`，正式五级门全部 PASS。Web Pro URL policy 禁止本地 `file://` 且禁止绕过，故 browser visual
+    明确保留为 `NOT_EXECUTED_URL_POLICY`，退出条件为 reviewed local-capable browser 完成人工复核。
   - 五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100% claim→canonical
     citation closure；source time 显式 null 不被伪造且强制 LIMITED；snapshot/diff/source identity
     可重算；tamper/unknown/ambiguous fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
     PASS；browser visual review 单独显式记录状态。
-  - 2026-07-31：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；contract
-    authority=`65a8906dc…`；amendment source=`d331b034e…`、amendment authority=`0dfafe641…`；preview
-    SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；browser visual=`NOT_EXECUTED_URL_POLICY`；V1
-    不授权自由文本/LLM、HTTP deployment、empirical research、production 或 broker action。
+  - 2026-07-31：Architecture=`812`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7863
+    passed / 3 skipped / 644 warnings`；preview SHA=`b4c5c6fd…/d3317e3f…/dd17b181…`；状态转
+    `BASELINE_DONE`。browser visual 未伪报 PASS；V1 不授权自由文本/LLM、HTTP deployment、empirical
+    research、production 或 broker action。
   docs_links:
   - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
   terminal: false
-  raw_row_sha256: 1121908871c0be64b1d35a582d2f7eb8303126f77797d0de38e7e232c54b0dc2
+  raw_row_sha256: 3a4f605edaa2d22512324f1c6a0d5d6679afbfb8139a0701fab8587fbcbe54af
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: ff217dbcb309de5ca9b0e60d63402fead5dbd3ae1c5e5038cd87f8b063e20bc5
+fragment_checksum: 19f2a33f2e6eacccbbe618a4f299d72544718d7adf183903c9d2fd9e551942b5

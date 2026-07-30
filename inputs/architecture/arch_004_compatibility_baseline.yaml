@@ -36036,3 +36036,223 @@ phase_trading_2470_atlas_citation_first_query_contract_amendment:
     backtest_executed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2470_atlas_citation_first_query_consumer_wave:
+  schema_version: trading_2470_atlas_citation_first_query_consumer_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2470-ATLAS-CITED-QUERY-CONSUMER-WAVE
+  task_ids:
+  - TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+  owner_decisions:
+  - owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1
+  prior_sections_immutability:
+    source_commit: 4dd78df3bcd66197cfa0c9272181baf04e0bb011
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: d5530e8f3d7d15d388085947cb4763eb67686dc5
+    raw_byte_count: 2248335
+    raw_sha256: 0e349c544b9b331d46baea08d1026279f33d461465f88cc9988813a1a71e8831
+    append_offset: 2248335
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - registry/development_tasks_shadow_v2/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - src/ai_trading_system/atlas/__init__.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2470-ATLAS-CITED-QUERY-CONSUMER-WAVE
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2470_atlas_citation_first_query_contract_amendment
+    current_hash_authority: phase_trading_2470_atlas_citation_first_query_consumer_wave.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - src/ai_trading_system/atlas/cited_query.py
+  - src/ai_trading_system/atlas/cited_query_renderer.py
+  - src/ai_trading_system/atlas/cited_query_validation.py
+  - tests/atlas/test_cited_query.py
+  - tests/atlas/test_cited_query_renderer.py
+  - tests/atlas/test_cited_query_validation.py
+  source_delta_paths:
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - registry/development_tasks_shadow_v2/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - src/ai_trading_system/atlas/__init__.py
+  - src/ai_trading_system/atlas/cited_query.py
+  - src/ai_trading_system/atlas/cited_query_renderer.py
+  - src/ai_trading_system/atlas/cited_query_validation.py
+  - tests/atlas/test_cited_query.py
+  - tests/atlas/test_cited_query_renderer.py
+  - tests/atlas/test_cited_query_validation.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  sources:
+  - path: docs/artifact_catalog.md
+    sha256: 71f5ebced5767ecb72660a3ab23e5ce822a63198eb340986ced046e2f1aeba23
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+    sha256: c6adeb2a3519e4ef94984facc46d9f026d6b512f27e6856abab8875ed42b5514
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 0532609bd4c4dc2d26171f327629724f87d2a17cef77e790d96c704fa57a6188
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: c22779a428e8e695f02a7ae4c4befb31024d0b6854b848f17bbc54e286466941
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 084e0aa814c78754fbd196a5f41be1c62777c839510ea72aaf9d985056956091
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 1fc1795bace68053417e038fbd7b9a98495ea6e32687ca98346cc56f980bbd6b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: f76a2d18ac48b0ecaf3d3b4933de468af5fbf230eee9d919be178a4fb035be7c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 37f8fb6f40f46199572d7d7c52b039bc0304bd6c6c789624227bdbd3b448ba51
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 834f32f6d64ef55a15714b89ad62106e948e77518de65ca41fd43b3ebd6f5d33
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: b5f4e71909cd0f495b39e238f3eb30f337e624dc715a483cc4f95b547708e177
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 2bb2270ee7fa6fcba14413f8194265c9c51ba0c5cbd37ce686754d0d5b1e0d75
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: c231dfe6c1f201f360d00e4c486b025251300e415dea791078b55c224ebcb1a4
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+    sha256: 743c6f82882ab6211e8d81970e34c69974341c1a8ed4ca42fd243a18d72a3037
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+    sha256: f8e9f87bbd341ae14cd37e3677d2c429bdf1c4ffff43e2f05480603c32f6e551
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/__init__.py
+    sha256: ea092582331bd3258f712454ea2f4b277f8e62494bd9a80a678b8dc302fce90b
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/cited_query.py
+    sha256: cbca5c171629d4ae8bdfa6d54841845c0c7995b35b89e1ba722d9e5d837b32a4
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/cited_query_renderer.py
+    sha256: 7a776e5d05abc8c4dd76168a8e113efe4a371270beac07737c928e8e41370d73
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/cited_query_validation.py
+    sha256: 59f9548b8ba8018ba9702275171c222e01f42b9e1544daf81a9f7e8747dba432
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_cited_query.py
+    sha256: 83e23994ef29a2ea1b5dc741ab82c809d5e69b343a385f84c0ce772afaec689f
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_cited_query_renderer.py
+    sha256: b6e7f98f33beff74369cb3540ef456b570785629a88f19ce228d67080ef94041
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_cited_query_validation.py
+    sha256: 680763d7daf2f49afb269f07970bc8c8096964a96554e3a250fe8eddf5cfda32
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: fb72f18d61131a046ee0ace2c343249d3b714bf9c0365c4f7da478190b9283ef
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: ee9e62d764de499ab928cea0290b36cc701854f89df85a150c93a8c5a4cef9ec
+    hash_normalization: git_eol_lf
+  implementation:
+    consumer_source_commit: 4dd78df3bcd66197cfa0c9272181baf04e0bb011
+    question_ids:
+    - RESEARCH_MAINLINE_SUMMARY
+    - RESULT_AND_STATUS
+    - ATTRIBUTION_AND_LIMITATIONS
+    - SNAPSHOT_CHANGE_EXPLANATION
+    - SOURCE_LINEAGE
+    exact_target_ids_only: true
+    implicit_relevance_ranking_allowed: false
+    independent_serialized_validation: true
+    nullable_source_times_preserved: true
+    as_of_backfill_forbidden: true
+    incomplete_source_time_requires_limited: true
+    preview_snapshot_id: 917c0d388ffbc27ab864b33701625422748d037ac98b16b42be6dfe1bd9331b7
+    preview_diff_id: d5aa7e38ae23693682892aa91fc312f41a2246572b432b0483ded4412ea8005f
+    preview_target_ids:
+      RESEARCH_MAINLINE_SUMMARY: program-strategy-research
+      RESULT_AND_STATUS: result-restart-r2
+      ATTRIBUTION_AND_LIMITATIONS: attr-restart-oos-limits-expansion
+      SNAPSHOT_CHANGE_EXPLANATION: 5f2258c0f6eaa792cdba48b3e5dbc3c786df7411228f6e47b8575d7d33fb8dec
+      SOURCE_LINEAGE: restart-r0-r2-requirement
+    preview_response_statuses:
+    - LIMITED
+    - LIMITED
+    - LIMITED
+    - LIMITED
+    - LIMITED
+    browser_visual_review: NOT_EXECUTED_URL_POLICY
+    browser_policy_bypass_attempted: false
+    static_html_contract_passed: true
+    task_shadow_source: LEGACY_MARKDOWN_ONLY
+    task_shadow_v2_cutover_performed: false
+  preview_artifacts:
+  - path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
+    sha256: b4c5c6fd7a816191ec18b79cfdf4b9d3c61b34fc2cde902854f11ef97d2be8a5
+    size_bytes: 19630
+  - path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/responses.json
+    sha256: d3317e3f7a852a59d323181ed647f07eaf51bc63ec0d9f389cba054f85b32f07
+    size_bytes: 15304
+  - path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/validation.json
+    sha256: dd17b1819e48539d7f7d166199c31f80c401453d7c91b2f3176788d2a44f86b4
+    size_bytes: 1875
+  validation:
+    focused_atlas_contract: PASS_59_TESTS
+    ruff: PASS
+    actual_input_double_build: PASS_BYTE_IDENTICAL
+    static_html_contract: PASS_5_CARDS_NO_SCRIPT_FORM_EXTERNAL
+    browser_visual_review: NOT_EXECUTED_URL_POLICY
+    task_registry: PASS_BYTE_IDENTICAL_933_TASKS
+    generated_architecture: PASS_1057_MODULES_1228_TESTS
+    deprecation_inventory: PASS_9_TESTS
+    compatibility_authority: PASS_165_TESTS
+    architecture: PASS_812_TESTS_RUNTIME_architecture-fitness_20260730T175409Z
+    contract: PASS_276_TESTS_RUNTIME_contract-validation_20260730T175645Z
+    integration: PASS_995_TESTS_642_WARNINGS_RUNTIME_integration_20260730T175845Z
+    reproducibility: PASS_24_TESTS_RUNTIME_reproducibility_20260730T180011Z
+    full: PASS_7863_TESTS_3_SKIPPED_644_WARNINGS_RUNTIME_full_20260730T180054Z
+    final_tree_architecture: PASS_812_TESTS
+    final_tree_contract: PASS_276_TESTS
+  safety:
+    snapshot_or_diff_semantics_changed: false
+    rename_or_fuzzy_inference_executed: false
+    implicit_relevance_ranking_executed: false
+    market_or_cache_read: false
+    external_network_used: false
+    llm_called: false
+    source_time_synthesized: false
+    investment_conclusion_generated: false
+    data_acquisition_executed: false
+    dq_execution_executed: false
+    model_training_executed: false
+    backtest_executed: false
+    production_effect: none
+    broker_action: none
