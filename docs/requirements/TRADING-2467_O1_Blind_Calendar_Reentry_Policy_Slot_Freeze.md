@@ -250,6 +250,20 @@ D:/Work/AITradingSystem_t2467_o1_reentry_policy
   tracked/untracked/ignored content、Git history 可恢复；
 - cleanup：exact absolute path audit 后用 `git worktree remove` 删除。
 
+2026-07-30 closeout 审计记录：
+
+- `D:/Work/AITradingSystem_t2467_o1_reentry_policy` 的 tracked audit 为 PASS，lane patch
+  经 `git cherry main` 显示已由 final candidate 等价吸收；删除白名单仅含该 exact
+  absolute path，`git worktree remove` 已释放 4,011,694 content bytes，未发现 unique
+  untracked/ignored evidence；
+- integration worktree 中临时复制的 exact O1 DQ gate 只服务历史测试依赖，并将在
+  `D:/Work/AITradingSystem_t2466_t2467_integration` 的受控清理中删除；canonical gate
+  未被覆盖。首次 FAIL 与 parent-bound failure-fix PASS 分别保留在
+  `outputs/validation_runtime/full_20260730T094756Z/` 和
+  `outputs/validation_runtime/full_20260730T100813Z/`；
+- 实现由 `main` commit `3062442c71e1a3285c887c17e7c8c9f9be1efc89`
+  及其历史恢复，无 active process 依赖该 worktree。
+
 ## 9. Acceptance criteria
 
 1. policy 所有 Owner-selected 字段完整，不含 `NOT_SELECTED`；

@@ -34957,16 +34957,16 @@ phase_trading_2466_atlas_and_trading_2467_o1_policy_slot_integration:
     sha256: 9b901da7de43ecef493d100c1fdc57a64e4cbed28e63d1c37392f6800afd5963
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
-    sha256: 17e630572407a4bdaabb5f6352de43a89495cd102fabff5a50c9726d0791fac7
+    sha256: 784c6aa336effd9639299d6268f47c85bc826ed2211443f26afb506739aba000
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
-    sha256: 21f04e13300009dedff6f91fcc548a136ca9ed8d1b99fa4b87243fc378b777e7
+    sha256: 67e283c6acd182573f6328458212843b1654c90699939a50b94e62b205f22e7d
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
     sha256: ea922fec9e5e105fd7aeafaf1b2e6e372b6f11fb4a24a6e95555b08b6cd2f3bc
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
+    sha256: 904866ca447c575bda8b8af1174614c0d23b2ad1d655a4a6515b6cdfaefd4449
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: 513377d350a9e9b75eb1df2612678cf8a213b3d0387fe841c7e1757e5669f1a6
@@ -34984,13 +34984,13 @@ phase_trading_2466_atlas_and_trading_2467_o1_policy_slot_integration:
     sha256: ff28aecf5bb6c1f56beee7d9a035bf5d01a85377716284af97509ee0c2bbae55
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: a8c68f43b3da0ee79045de6e491d2bdc7cb6da9b2a2b2f0629fa59d535ee17bf
+    sha256: 3f1e80f9a2d5e1d695b2867e1ca19c65527bede9f91d3d2390258942cf490feb
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 4ab89b5fcee24f963d4d0cb8111111ddd993990ff1cbf0cc31e59f4468dd7952
+    sha256: 55af33a1c8f3f577468b80357e8362668aee724062e7d4fb8ffa70beaa9838b1
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
-    sha256: eb2fd35cc20435b851b81c1eb1c3a73493f78b22e3a75a31425d77521c013ebb
+    sha256: 36ac8acaa7dfd4b81a6b1b352b468b83fcb0970f53c5dea83f7e5d9f56094846
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
     sha256: b201894af68a9228710b7e0165879ada20fe05cc30a4790a0278bdfba5d30584

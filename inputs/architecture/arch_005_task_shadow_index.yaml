@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 8a93b1dabbf37bc3d5a663cd617b6a1ac938bb1548ebd4fa379a6af7fbbf9358
+baseline_checksum: 3a3264391aa548a12250f9422a32954ec374374e27046add69f5c4907e25c7c7
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 930
 fragment_count: 930
@@ -2799,12 +2799,12 @@ fragments:
   fragment_checksum: 0447df95323683ca350178d5f8103e940e5324a9728ea25574b01802e09070e3
 - task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
   path: registry/development_tasks_shadow/active/32/32d2e28c907cc5428ccae430de7714911d8ad3d415107e86745a2a956c17750f.yaml
-  file_sha256: e9de0151f8c1380f7147a60dfeebee5b96e64c404411c141125d8974d1c704a7
-  fragment_checksum: 2aa158d8e1de72754a5a4b682b59db42db90cb482451beff9aaa4db81330c2e8
+  file_sha256: d46b95a40b9ea03b76fbf6e093495ebfb424a0f16ab6792aaeb5f339daafd6be
+  fragment_checksum: e52416474dd321a97d5c44ee375812f926b577159fe40452058787aba9b5b91e
 - task_id: TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
   path: registry/development_tasks_shadow/active/32/328a656788b3f4be5997c7ed292538e0de463b66283c145aa45361a82a1fa40a.yaml
-  file_sha256: ba7efa6f2df480e807c0bc422016cb3b37e283939ddc7ee7b91974f6087a0930
-  fragment_checksum: b4611f3bf7b7e36d253da19d7c237653cd2ee8fc0f1842096520730348f50a9a
+  file_sha256: bc163d36216efc85ac82481719e03fa05550d949182d5603c667a984eb5cdfae
+  fragment_checksum: d152486d38a71e4567faf86087a7b1873f24a847ad73b22bd87e256368e62ac9
 - task_id: TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
   path: registry/development_tasks_shadow/active/b4/b4fcc2342f2653920383504d76b0e1c9122a664f5316942b6e7a7de969a87f11.yaml
   file_sha256: 698c35cf0ccac28c4d54ada4c413556ea59dbde6ab8aadc1c5b4580387e05b52
@@ -3745,8 +3745,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
-  rendered_sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
+  source_sha256: 904866ca447c575bda8b8af1174614c0d23b2ad1d655a4a6515b6cdfaefd4449
+  rendered_sha256: 904866ca447c575bda8b8af1174614c0d23b2ad1d655a4a6515b6cdfaefd4449
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3768,4 +3768,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: c24422239d9fc1a9ba966b08866985e3ae75c87287538ec8e20bb66a2d7b66c9
+index_checksum: 762c2eae5cfa018e92568762643a9a6c1c0ba4052851fa3375caf0f3b91581ae

@@ -32,7 +32,7 @@ task_record:
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 7e01f961f1b710d512929024f035ae8da0c52861f26936e7749984c4039752b3
+  row_sha256: 5a192a201381a02035d10524a8c13be1c112dc3afec9deed62cea35c3f9d11fe
   cell_count: 8
   all_cells:
   - TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
@@ -48,8 +48,9 @@ legacy_row_evidence:
     drift fail closed；deterministic serialization；不读取retained runtime evidence；focused/formal
     PASS；first stop在任何真实data/DQ/coverage/result read前。
   - 2026-07-30：Owner token=`owner_decision:TRADING-2467:2026-07-30:authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1`。canonical
-    validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；任务转`BASELINE_DONE`，不授权future
-    coverage，`production_effect=none`、`broker_action=none`。
+    validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；final
+    integration=`3062442c7…`，首次 FAIL 与 parent-bound PASS evidence 已迁移且临时 worktree
+    closeout audit PASS；任务转`BASELINE_DONE`，不授权future coverage，`production_effect=none`、`broker_action=none`。
   raw_line: '|TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE|Strategy Style
     Discovery / Owner-approved inactive O1 calendar re-entry policy freeze|P0|BASELINE_DONE|strategy
     research owner：保持 inactive；如需 2027-02-01 之后真实 coverage，先取得新的独立 Owner token、登记新任务并重新走
@@ -58,13 +59,14 @@ legacy_row_evidence:
     immutable hashes exact绑定；wrong date/vintage/look/PIT/retry/resume/overwrite/post-result
     drift fail closed；deterministic serialization；不读取retained runtime evidence；focused/formal
     PASS；first stop在任何真实data/DQ/coverage/result read前。|2026-07-30：Owner token=`owner_decision:TRADING-2467:2026-07-30:authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1`。canonical
-    validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；任务转`BASELINE_DONE`，不授权future
-    coverage，`production_effect=none`、`broker_action=none`。|'
+    validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；final
+    integration=`3062442c7…`，首次 FAIL 与 parent-bound PASS evidence 已迁移且临时 worktree
+    closeout audit PASS；任务转`BASELINE_DONE`，不授权future coverage，`production_effect=none`、`broker_action=none`。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-7e01f961f1b710d512929024
+  event_id: legacy-import-5a192a201381a02035d10524
   task_id: TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -80,12 +82,13 @@ initial_event:
     next_owner: strategy research owner：保持 inactive；如需 2027-02-01 之后真实 coverage，先取得新的独立
       Owner token、登记新任务并重新走 data/DQ/PIT/one-look gate
     notes: 2026-07-30：Owner token=`owner_decision:TRADING-2467:2026-07-30:authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1`。canonical
-      validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；任务转`BASELINE_DONE`，不授权future
-      coverage，`production_effect=none`、`broker_action=none`。
+      validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；final
+      integration=`3062442c7…`，首次 FAIL 与 parent-bound PASS evidence 已迁移且临时 worktree
+      closeout audit PASS；任务转`BASELINE_DONE`，不授权future coverage，`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:7e01f961f1b710d512929024f035ae8da0c52861f26936e7749984c4039752b3
+  - sha256:5a192a201381a02035d10524a8c13be1c112dc3afec9deed62cea35c3f9d11fe
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -102,11 +105,12 @@ projection:
     drift fail closed；deterministic serialization；不读取retained runtime evidence；focused/formal
     PASS；first stop在任何真实data/DQ/coverage/result read前。
   - 2026-07-30：Owner token=`owner_decision:TRADING-2467:2026-07-30:authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1`。canonical
-    validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；任务转`BASELINE_DONE`，不授权future
-    coverage，`production_effect=none`、`broker_action=none`。
+    validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；final
+    integration=`3062442c7…`，首次 FAIL 与 parent-bound PASS evidence 已迁移且临时 worktree
+    closeout audit PASS；任务转`BASELINE_DONE`，不授权future coverage，`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
   terminal: false
-  raw_row_sha256: 7e01f961f1b710d512929024f035ae8da0c52861f26936e7749984c4039752b3
+  raw_row_sha256: 5a192a201381a02035d10524a8c13be1c112dc3afec9deed62cea35c3f9d11fe
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: 5e3be6e9276100f94a9b080d18b530d87a76c0d1d1ba3da93e9624a66ba2a0e9
+fragment_checksum: 20f1c168cb94dbcc3931fe9eb95d313fcfb195bce3610409c52a6d2a91d9b10f

@@ -235,6 +235,25 @@ D:/Work/AITradingSystem_t2466_t2467_integration
 
 只在两个 lane commit 可集成后创建；退出条件与清理规则同上。
 
+2026-07-30 closeout 审计记录：
+
+- `D:/Work/AITradingSystem_t2466_atlas` 的 tracked audit 为 PASS，lane 的两项 patch
+  经 `git cherry main` 均显示已由 final candidate 等价吸收；删除白名单仅含该 exact
+  absolute path，`git worktree remove` 已释放 4,045,129 content bytes。其 3 份 ignored
+  preview（33,435 bytes）已由下述 canonical final preview 取代，不保留为独立证据；
+- `D:/Work/AITradingSystem_t2466_t2467_integration` 的删除白名单仅含该 exact absolute
+  path，待本 closeout 记录进入 `main` 后执行 `git worktree remove`，预计释放
+  36,435,776 content bytes。清理前 32 份 ignored files（30,765,564 bytes）已逐文件
+  SHA-256 验证存在相同 canonical 副本；9 份 daily-ops failure diagnostics
+  （4,950 bytes）和 3 份 generated preview/report files（1,653,568 bytes）是 formal
+  tests 的可复现临时输出，已由 final PASS artifacts、tracked task shadow/registry 与
+  canonical reports 取代，不作为独立证据保留；
+- canonical retained evidence 为
+  `outputs/atlas/strategy_research_explorer/trading_2466_mvp/` 及
+  `outputs/validation_runtime/{architecture-fitness_20260730T093615Z,architecture-fitness_20260730T094237Z,contract-validation_20260730T094432Z,integration_20260730T094635Z,reproducibility_20260730T094728Z,full_20260730T094756Z,full_20260730T100813Z}/`；
+  实现由 `main` commit `3062442c71e1a3285c887c17e7c8c9f9be1efc89`
+  及其历史恢复，无 active process 依赖上述 worktrees。
+
 ## 9. Acceptance criteria
 
 1. snapshot 与所有 object 均有 `schema_version`；

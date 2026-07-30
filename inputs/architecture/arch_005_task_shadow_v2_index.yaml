@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: 8a93b1dabbf37bc3d5a663cd617b6a1ac938bb1548ebd4fa379a6af7fbbf9358
+baseline_checksum: 3a3264391aa548a12250f9422a32954ec374374e27046add69f5c4907e25c7c7
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
@@ -4172,24 +4172,24 @@ fragments:
     row_sha256: 69b74023a423d48e0ecba74cd8f3894420e637e5b087b3db35cf132eb5ac78a0
 - task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
   path: registry/development_tasks_shadow_v2/32/32d2e28c907cc5428ccae430de7714911d8ad3d415107e86745a2a956c17750f.yaml
-  file_sha256: 93adbc3bdfa3fa9eafbfef0ba104fdd057c44e8018dd6b5885f4a9d1bdbfcbc6
-  fragment_checksum: 0e2cb3fa1335124951a0be33edf0b5754c2c7578c5f920813f33bf6c40f54023
+  file_sha256: b246c51da2763fe7a962a0dba56f433753f14b2ae306e3e0f5a98a2aa10ee17c
+  fragment_checksum: 0fa5c9c3e9c8cebf6c36834bf0e7deba9d630bf4237c98bd0e324a990bd19ac5
   locator:
     source_partition: active
     source_path: docs/task_register.md
     line_number: 2046
     order_in_partition: 415
-    row_sha256: 26fd3dd954250e88fc7e19c583322b7c7e9c9dc9b44ac4a3011283e4b1c3aee3
+    row_sha256: d8d814737c6ac9f5bb340c545a3c3c3ae6f62ec2a3b5f52ab4ce917990491f0e
 - task_id: TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
   path: registry/development_tasks_shadow_v2/32/328a656788b3f4be5997c7ed292538e0de463b66283c145aa45361a82a1fa40a.yaml
-  file_sha256: cd9b48ce1069633dca0ac689fbf59875827258abaf3e0d516853ac7a41dd4f98
-  fragment_checksum: 5e3be6e9276100f94a9b080d18b530d87a76c0d1d1ba3da93e9624a66ba2a0e9
+  file_sha256: 08c297cb70510eafbdbb57bc23e4fc12f08b4bd3a2dbfa26096c11724668a986
+  fragment_checksum: 20f1c168cb94dbcc3931fe9eb95d313fcfb195bce3610409c52a6d2a91d9b10f
   locator:
     source_partition: active
     source_path: docs/task_register.md
     line_number: 2052
     order_in_partition: 416
-    row_sha256: 7e01f961f1b710d512929024f035ae8da0c52861f26936e7749984c4039752b3
+    row_sha256: 5a192a201381a02035d10524a8c13be1c112dc3afec9deed62cea35c3f9d11fe
 - task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
   path: registry/development_tasks_shadow_v2/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
   file_sha256: 1cd1ec3fde075459aa33fc8eaf77a1cb471767ac42a40ec7a8297f2bd35c3166
@@ -9333,8 +9333,8 @@ fragments:
 generated_views:
 - source: active
   source_path: docs/task_register.md
-  source_sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
-  rendered_sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
+  source_sha256: 904866ca447c575bda8b8af1174614c0d23b2ad1d655a4a6515b6cdfaefd4449
+  rendered_sha256: 904866ca447c575bda8b8af1174614c0d23b2ad1d655a4a6515b6cdfaefd4449
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -10330,4 +10330,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 06926b901b3a930cf1c726501535603b0ad64f5438a9907cded87b7d9acfd020
+index_checksum: cb9810195a8665bb86827ce7c7062f57e233e90b0108993eca56cd1c6128dbfc

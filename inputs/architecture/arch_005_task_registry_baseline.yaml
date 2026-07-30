@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1647071
-    sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
+    byte_count: 1647322
+    sha256: 904866ca447c575bda8b8af1174614c0d23b2ad1d655a4a6515b6cdfaefd4449
     row_count: 425
     final_newline: true
     task_id_order_sha256: 5d5ad15be58716d271ffdd8a9d3296d7cea44bd079e06c365fc36f1e46316c9c
-    row_checksum_order_sha256: d9cc88ddc74d83291cd348d24c01a6963b28b7618fe78e11dde4004be2518438
+    row_checksum_order_sha256: 6bb1f2a4cda279bce7b2bce2b1177b813e3f26504f133c14d9990fb400c9a854
     task_row_newline_counts:
       LF: 425
   - source: completed
@@ -3036,14 +3036,14 @@ inventory:
   - task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
     source: active
     line_number: 2046
-    row_sha256: 26fd3dd954250e88fc7e19c583322b7c7e9c9dc9b44ac4a3011283e4b1c3aee3
+    row_sha256: d8d814737c6ac9f5bb340c545a3c3c3ae6f62ec2a3b5f52ab4ce917990491f0e
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
   - task_id: TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
     source: active
     line_number: 2052
-    row_sha256: 7e01f961f1b710d512929024f035ae8da0c52861f26936e7749984c4039752b3
+    row_sha256: 5a192a201381a02035d10524a8c13be1c112dc3afec9deed62cea35c3f9d11fe
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7649,4 +7649,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 8a93b1dabbf37bc3d5a663cd617b6a1ac938bb1548ebd4fa379a6af7fbbf9358
+baseline_checksum: 3a3264391aa548a12250f9422a32954ec374374e27046add69f5c4907e25c7c7
