@@ -35913,3 +35913,126 @@ phase_trading_2470_atlas_citation_first_query_contract_wave:
     backtest_executed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2470_atlas_citation_first_query_contract_amendment:
+  schema_version: trading_2470_atlas_citation_first_query_contract_amendment_compatibility.v1
+  status: CONTRACT_AMENDMENT_DONE
+  boundary_id: TRADING-2470-ATLAS-CITED-QUERY-CONTRACT-AMENDMENT
+  task_ids:
+  - TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+  owner_decisions:
+  - owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1
+  prior_sections_immutability:
+    source_commit: d331b034ebd70eca3642e9734fa914d2b5b4129d
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 7b92085708b4941f7d26e5c11358991e2d6222d2
+    raw_byte_count: 2241862
+    raw_sha256: 1c14a5f473c03ef49bc42e864ffa9f63aa4bc66d14b01a7a5ac626ac1a678764
+    append_offset: 2241862
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - registry/development_tasks_shadow_v2/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/contracts/strategy_research_cited_query.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_strategy_research_cited_query_contract.py
+  supersession:
+    superseded_by_phase: TRADING-2470-ATLAS-CITED-QUERY-CONTRACT-AMENDMENT
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2470_atlas_citation_first_query_contract_wave
+    current_hash_authority: phase_trading_2470_atlas_citation_first_query_contract_amendment.sources
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - registry/development_tasks_shadow_v2/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/contracts/strategy_research_cited_query.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_strategy_research_cited_query_contract.py
+  sources:
+  - path: docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+    sha256: e9546922ea6cd1c440e68b5e77093b120ac46713d61c3d6544b0a5a1706e052d
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 7613c4007c540b70cdbe82a88f31a96d8ce82b747205984bce40802d555b9366
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 9d20e09d41cec5af78e5b608ba240063d5ee739eb1315e51c073eb657da4554b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: e28c7cfa39ab4c7c714552786b86084dfc2dc736a99cf157a8aaecf583dfabc6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 2d3b8d354a1358482b743cdc6bca584f83a12cf450bd5359d02479a95ccbfbea
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 98638b2f18bbad9b612d4d03a62fa95f1cceac8e4dd229d68a99c428a84b76a5
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: 98b45f0e44dd9431effe59435b19b918300b60a69a36ebc48401d871894bc78d
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+    sha256: 01b411b4a06c59ed3539a792d185a2ee62a1a9ce842b2b7392651c7ef6df9b2b
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
+    sha256: 69bfdde06c251dd1087bf11961e5f2038acd0ba2e804eb2b095d6681754d4777
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/__init__.py
+    sha256: 00411b036d3572ec65d61263637803c795cd2ee039bdc3d9d1502624c1b2d5ed
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/strategy_research_cited_query.py
+    sha256: 52714ce1a8441b7e2463528ca97b3568dc9bf26c4dc7700f2bf5bec1c70ab9f9
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: f4f5f88cedf137bc8fcc189a521e8e08a8f73055c0c85bbdad9385b2de97509f
+    hash_normalization: git_eol_lf
+  - path: tests/test_strategy_research_cited_query_contract.py
+    sha256: 5c3f3978bee366fe5c12be7d0ad6a024ca2224ac6d55e375f56f8d17cdb828e3
+    hash_normalization: git_eol_lf
+  implementation:
+    contract_amendment_source_commit: d331b034ebd70eca3642e9734fa914d2b5b4129d
+    nullable_source_times_preserved: true
+    as_of_backfill_forbidden: true
+    incomplete_source_time_requires_limited: true
+    incomplete_source_time_reason_code: SOURCE_TIME_CONTEXT_INCOMPLETE
+    consumer_wave_resumed: false
+    task_shadow_source: LEGACY_MARKDOWN_ONLY
+    task_shadow_v2_cutover_performed: false
+  validation:
+    focused_contract: PASS_14_TESTS
+    contract_and_deprecation: PASS_23_TESTS
+    ruff: PASS
+    task_registry: PASS_BYTE_IDENTICAL_933_TASKS
+    generated_architecture: PASS_1054_MODULES_1225_TESTS
+    compatibility_authority: PASS_164_TESTS
+  safety:
+    market_or_cache_read: false
+    external_network_used: false
+    llm_called: false
+    source_time_synthesized: false
+    investment_conclusion_generated: false
+    data_acquisition_executed: false
+    dq_execution_executed: false
+    model_training_executed: false
+    backtest_executed: false
+    production_effect: none
+    broker_action: none
