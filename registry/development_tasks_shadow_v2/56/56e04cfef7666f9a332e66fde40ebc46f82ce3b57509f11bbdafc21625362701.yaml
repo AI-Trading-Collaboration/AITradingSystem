@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+  task_id_sha256: 56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701
+task_record:
+  task_id: TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+  title: null
+  domain: Publishing & Experience / Atlas citation-first read query and answer API
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 deterministic
+    query engine/read API/static demo
+  requirement_refs:
+  - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。依赖
+    TRADING-2466/2468/2469 已满足，当前无外部 blocker。public request/response/citation contract
+    未冻结前 consumer 不得开始。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100%
+      claim→canonical citation closure；snapshot/diff/source identity 可重算；tamper/unknown/ambiguous
+      fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
+      PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: f0373cc02a38c230c6d7dcd6ebca1aac93a2adf54e0d5d7f5dd5c7e336fb416f
+  cell_count: 8
+  all_cells:
+  - TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+  - Publishing & Experience / Atlas citation-first read query and answer API
+  - P1
+  - IN_PROGRESS
+  - knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 deterministic
+    query engine/read API/static demo
+  - 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。依赖 TRADING-2466/2468/2469
+    已满足，当前无外部 blocker。public request/response/citation contract 未冻结前 consumer 不得开始。
+  - 五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100% claim→canonical
+    citation closure；snapshot/diff/source identity 可重算；tamper/unknown/ambiguous fail
+    closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
+    PASS。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；V1
+    只授权 citation-first application API，不授权自由文本/LLM、HTTP deployment、empirical research、production
+    或 broker action。
+  raw_line: '|TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1|Publishing & Experience
+    / Atlas citation-first read query and answer API|P1|IN_PROGRESS|knowledge/reporting/UX
+    owner：先完成 serial public contract wave，再实现 deterministic query engine/read API/static
+    demo|详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。依赖
+    TRADING-2466/2468/2469 已满足，当前无外部 blocker。public request/response/citation contract
+    未冻结前 consumer 不得开始。|五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100%
+    claim→canonical citation closure；snapshot/diff/source identity 可重算；tamper/unknown/ambiguous
+    fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
+    PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；V1
+    只授权 citation-first application API，不授权自由文本/LLM、HTTP deployment、empirical research、production
+    或 broker action。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f0373cc02a38c230c6d7dcd6
+  task_id: TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 deterministic
+      query engine/read API/static demo
+    notes: 2026-07-30：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；V1
+      只授权 citation-first application API，不授权自由文本/LLM、HTTP deployment、empirical research、production
+      或 broker action。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:f0373cc02a38c230c6d7dcd6ebca1aac93a2adf54e0d5d7f5dd5c7e336fb416f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+  - Publishing & Experience / Atlas citation-first read query and answer API
+  - P1
+  - IN_PROGRESS
+  - knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 deterministic
+    query engine/read API/static demo
+  - 详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。依赖 TRADING-2466/2468/2469
+    已满足，当前无外部 blocker。public request/response/citation contract 未冻结前 consumer 不得开始。
+  - 五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100% claim→canonical
+    citation closure；snapshot/diff/source identity 可重算；tamper/unknown/ambiguous fail
+    closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal
+    PASS。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；V1
+    只授权 citation-first application API，不授权自由文本/LLM、HTTP deployment、empirical research、production
+    或 broker action。
+  docs_links:
+  - docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md
+  terminal: false
+  raw_row_sha256: f0373cc02a38c230c6d7dcd6ebca1aac93a2adf54e0d5d7f5dd5c7e336fb416f
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: a24112d69e521e932ac50b0b3fc28567c7258efedae8469570bb9851f48e1cba

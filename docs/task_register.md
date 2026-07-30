@@ -2063,6 +2063,12 @@ YYYY-MM-DD: 从 <旧状态> 改为 <新状态>，原因：<触发条件、实现
 |---|---|---|---|---|---|---|---|
 |TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1|Publishing & Experience / Atlas deterministic cross-snapshot change explanation|P1|BASELINE_DONE|knowledge/reporting/UX owner：后续另立带引用问答与 interactive API 任务；本任务仅维护 read-only deterministic diff V1|详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。V1 无实现 blocker；后续任务须独立冻结引用、查询与 API contract，不得把本任务扩张为 mutation 或 empirical action。|stable-ID add/remove/change、semantic/lineage-only/structural 分类、entity hashes/changed fields/summary 可重算、双输入 receipt、deterministic HTML/JSON、tamper fail-closed、no-recompute/no-write、focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；preview diff=`d5aa7e38…`，55 changes（50 added/1 removed/4 changed；2 semantic/2 lineage-only/51 structural）；focused=37、Architecture=809、Contract=276、Integration=995、Reproducibility=24、Full=7832 passed（3 skipped/643 warnings）；`production_effect=none`、`broker_action=none`。|
 
+## TRADING-2470 Atlas Citation-First Query API V1
+
+|ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
+|---|---|---|---|---|---|---|---|
+|TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1|Publishing & Experience / Atlas citation-first read query and answer API|P1|IN_PROGRESS|knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 deterministic query engine/read API/static demo|详见 `docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md`。依赖 TRADING-2466/2468/2469 已满足，当前无外部 blocker。public request/response/citation contract 未冻结前 consumer 不得开始。|五个 stable question ids；exact entity dispatch；ANSWERED/LIMITED/BLOCKED；100% claim→canonical citation closure；snapshot/diff/source identity 可重算；tamper/unknown/ambiguous fail closed；deterministic JSON/HTML；no-recompute/no-network/no-write；focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2470:2026-07-30:advance_atlas_citation_first_query_api_v1`；V1 只授权 citation-first application API，不授权自由文本/LLM、HTTP deployment、empirical research、production 或 broker action。|
+
 ## DEVX-007 Web Pro Git Strategy Planning Skill
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
