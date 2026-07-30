@@ -15,6 +15,9 @@ from ai_trading_system.core.production_effect import ProductionEffect
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _GIT_COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 _REASON_CODE_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]*$")
+CITED_QUERY_SOURCE_TIME_CONTEXT_INCOMPLETE_REASON_CODE = (
+    "SOURCE_TIME_CONTEXT_INCOMPLETE"
+)
 
 
 class StrategyResearchCitedQueryContractError(ValueError):
@@ -259,8 +262,8 @@ class CitedQueryCitation:
     exact_commit: str
     source_sha256: str
     as_of: datetime
-    known_at: datetime
-    available_at: datetime
+    known_at: datetime | None
+    available_at: datetime | None
     snapshot_id: str | None
     diff_id: str | None
 
@@ -274,13 +277,20 @@ class CitedQueryCitation:
                 "STRATEGY_CITED_QUERY_EXACT_COMMIT_INVALID"
             )
         _sha256(self.source_sha256, "source_sha256", required=True)
-        for field, value in (
-            ("as_of", self.as_of),
-            ("known_at", self.known_at),
-            ("available_at", self.available_at),
+        _aware_datetime(self.as_of, "as_of")
+        if self.known_at is not None:
+            _aware_datetime(self.known_at, "known_at")
+        if self.available_at is not None:
+            _aware_datetime(self.available_at, "available_at")
+        if (
+            (self.known_at is not None and self.known_at < self.as_of)
+            or (self.available_at is not None and self.known_at is None)
+            or (
+                self.known_at is not None
+                and self.available_at is not None
+                and self.available_at < self.known_at
+            )
         ):
-            _aware_datetime(value, field)
-        if not self.as_of <= self.known_at <= self.available_at:
             raise StrategyResearchCitedQueryContractError(
                 "STRATEGY_CITED_QUERY_CITATION_TIME_ORDER_INVALID"
             )
@@ -329,8 +339,8 @@ class CitedQueryCitation:
         exact_commit: str,
         source_sha256: str,
         as_of: datetime,
-        known_at: datetime,
-        available_at: datetime,
+        known_at: datetime | None = None,
+        available_at: datetime | None = None,
         entity_sha256: str | None = None,
         before_entity_sha256: str | None = None,
         after_entity_sha256: str | None = None,
@@ -371,8 +381,12 @@ class CitedQueryCitation:
             "exact_commit": self.exact_commit,
             "source_sha256": self.source_sha256,
             "as_of": self.as_of.isoformat(),
-            "known_at": self.known_at.isoformat(),
-            "available_at": self.available_at.isoformat(),
+            "known_at": self.known_at.isoformat() if self.known_at is not None else None,
+            "available_at": (
+                self.available_at.isoformat()
+                if self.available_at is not None
+                else None
+            ),
             "snapshot_id": self.snapshot_id,
             "diff_id": self.diff_id,
         }
@@ -397,8 +411,10 @@ class CitedQueryCitation:
             exact_commit=str(payload.get("exact_commit", "")),
             source_sha256=str(payload.get("source_sha256", "")),
             as_of=_parse_datetime(payload.get("as_of"), "as_of"),
-            known_at=_parse_datetime(payload.get("known_at"), "known_at"),
-            available_at=_parse_datetime(payload.get("available_at"), "available_at"),
+            known_at=_parse_optional_datetime(payload.get("known_at"), "known_at"),
+            available_at=_parse_optional_datetime(
+                payload.get("available_at"), "available_at"
+            ),
             snapshot_id=_optional_text(payload.get("snapshot_id")),
             diff_id=_optional_text(payload.get("diff_id")),
         )
@@ -581,6 +597,18 @@ class StrategyResearchCitedQueryResponse:
                 raise StrategyResearchCitedQueryContractError(
                     "STRATEGY_CITED_QUERY_REASON_CODE_INVALID"
                 )
+        source_time_incomplete = any(
+            citation.known_at is None or citation.available_at is None
+            for citation in self.citations
+        )
+        if source_time_incomplete and (
+            self.answer_status is not CitedQueryAnswerStatus.LIMITED
+            or CITED_QUERY_SOURCE_TIME_CONTEXT_INCOMPLETE_REASON_CODE
+            not in self.reason_codes
+        ):
+            raise StrategyResearchCitedQueryContractError(
+                "STRATEGY_CITED_QUERY_SOURCE_TIME_CONTEXT_STATUS_INVALID"
+            )
         if self.answer_status is CitedQueryAnswerStatus.ANSWERED:
             valid = bool(self.claims) and bool(self.citations) and not self.reason_codes
         elif self.answer_status is CitedQueryAnswerStatus.LIMITED:
@@ -730,6 +758,12 @@ def _parse_datetime(value: object, field: str) -> datetime:
         ) from exc
     _aware_datetime(parsed, field)
     return parsed
+
+
+def _parse_optional_datetime(value: object, field: str) -> datetime | None:
+    if value is None:
+        return None
+    return _parse_datetime(value, field)
 
 
 def _repository_path(value: str) -> None:

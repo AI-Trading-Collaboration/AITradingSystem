@@ -7,6 +7,7 @@ import pytest
 
 from ai_trading_system.contracts.strategy_research_cited_query import (
     CITED_QUERY_QUESTION_CATALOG,
+    CITED_QUERY_SOURCE_TIME_CONTEXT_INCOMPLETE_REASON_CODE,
     CitedQueryAnswerStatus,
     CitedQueryCitation,
     CitedQueryClaim,
@@ -281,6 +282,72 @@ def test_citation_path_time_and_input_identity_are_strict() -> None:
         match="STRATEGY_CITED_QUERY_CITATION_TIME_ORDER_INVALID",
     ):
         CitedQueryCitation.from_dict(payload)
+
+    payload = _citation(request).to_dict()
+    payload["known_at"] = None
+    with pytest.raises(
+        StrategyResearchCitedQueryContractError,
+        match="STRATEGY_CITED_QUERY_CITATION_TIME_ORDER_INVALID",
+    ):
+        CitedQueryCitation.from_dict(payload)
+
+
+def test_missing_source_times_are_preserved_and_require_limited_status() -> None:
+    request = _request()
+    citation = CitedQueryCitation.build(
+        target_kind=request.target_kind,
+        target_id=request.target_id,
+        entity_sha256=ENTITY_SHA,
+        source_ref_id="source-1",
+        source_path="docs/requirements/example.md",
+        exact_commit=EXACT_COMMIT,
+        source_sha256=SOURCE_SHA,
+        as_of=AT,
+        snapshot_id=request.snapshot_id,
+    )
+    rebuilt = CitedQueryCitation.from_dict(citation.to_dict())
+    assert rebuilt.known_at is None
+    assert rebuilt.available_at is None
+    assert rebuilt.to_dict()["known_at"] is None
+    assert rebuilt.to_dict()["available_at"] is None
+
+    claim = CitedQueryClaim.build(
+        ordinal=1,
+        text_zh="来源内容可验证，但可知时间上下文不完整。",
+        citation_ids=(citation.citation_id,),
+    )
+    with pytest.raises(
+        StrategyResearchCitedQueryContractError,
+        match="STRATEGY_CITED_QUERY_SOURCE_TIME_CONTEXT_STATUS_INVALID",
+    ):
+        StrategyResearchCitedQueryResponse.build(
+            request=request,
+            answer_status=CitedQueryAnswerStatus.ANSWERED,
+            claims=(claim,),
+            citations=(citation,),
+        )
+    with pytest.raises(
+        StrategyResearchCitedQueryContractError,
+        match="STRATEGY_CITED_QUERY_SOURCE_TIME_CONTEXT_STATUS_INVALID",
+    ):
+        StrategyResearchCitedQueryResponse.build(
+            request=request,
+            answer_status=CitedQueryAnswerStatus.LIMITED,
+            claims=(claim,),
+            citations=(citation,),
+            limitations=("来源可知时间上下文不完整。",),
+            reason_codes=("EVIDENCE_COVERAGE_INCOMPLETE",),
+        )
+
+    limited = StrategyResearchCitedQueryResponse.build(
+        request=request,
+        answer_status=CitedQueryAnswerStatus.LIMITED,
+        claims=(claim,),
+        citations=(citation,),
+        limitations=("来源可知时间上下文不完整。",),
+        reason_codes=(CITED_QUERY_SOURCE_TIME_CONTEXT_INCOMPLETE_REASON_CODE,),
+    )
+    assert StrategyResearchCitedQueryResponse.from_dict(limited.to_dict()) == limited
 
 
 def test_read_only_boundary_fails_closed() -> None:

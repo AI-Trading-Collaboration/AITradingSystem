@@ -143,6 +143,7 @@ from ai_trading_system.contracts.status import (
 )
 from ai_trading_system.contracts.strategy_research_cited_query import (
     CITED_QUERY_QUESTION_CATALOG,
+    CITED_QUERY_SOURCE_TIME_CONTEXT_INCOMPLETE_REASON_CODE,
     CitedQueryAnswerStatus,
     CitedQueryCitation,
     CitedQueryClaim,
@@ -199,6 +200,7 @@ __all__ = [
     "AssertionKind",
     "AttributionDirection",
     "CITED_QUERY_QUESTION_CATALOG",
+    "CITED_QUERY_SOURCE_TIME_CONTEXT_INCOMPLETE_REASON_CODE",
     "CitedQueryAnswerStatus",
     "CitedQueryCitation",
     "CitedQueryClaim",

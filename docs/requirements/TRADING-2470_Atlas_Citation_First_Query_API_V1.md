@@ -99,13 +99,16 @@ response 至少包含：
 - entity before/after hash（适用时）；
 - `source_ref_id` 与 tracked repository path；
 - exact commit 与 source sha256；
-- `as_of`、`known_at`、`available_at`；
+- `as_of`，以及 source 原始记录中的 `known_at`、`available_at`；后二者缺失时必须保留
+  显式 `null`，不得用 `as_of` 或其他时间代填；
 - DQ/PIT/window/limitation context（适用时）；
 - snapshot/diff id。
 
 ### 3.3 LIMITED / BLOCKED
 
 - 证据存在但不足以回答全部问题：`LIMITED`，列出缺口；
+- 任一 citation 的 `known_at` 或 `available_at` 缺失时，response 必须为 `LIMITED`，
+  并包含 reason code=`SOURCE_TIME_CONTEXT_INCOMPLETE`；
 - identity、schema、hash、citation closure 或 safety 不成立：`BLOCKED`；
 - 不允许把空 citation、missing lineage 或 unsupported question 包装为自然语言答案；
 - `BLOCKED` response 仍需给出机器可读 reason codes，但不得泄露未验证内容。
@@ -218,7 +221,8 @@ no external network, market cache, database, model, production or broker resourc
 2. 五个稳定 question ids 与 supported target matrix 冻结；
 3. request/response/citation identity 可重算；
 4. 100% ANSWERED/LIMITED claims 有 closed canonical citation；
-5. source path/commit/hash/as-of/known-at/available-at 与 snapshot/diff identity 可下钻；
+5. source path/commit/hash/as-of/known-at/available-at（含显式 null）与 snapshot/diff
+   identity 可下钻；缺失 source time 时只能 `LIMITED` 且不得合成时间；
 6. unknown、ambiguous、tampered、missing citation、unsupported question fail closed；
 7. 不进行 fuzzy/rename/semantic inference；
 8. 不产生新 investment claim、ranking、recommendation、weight 或 readiness；
@@ -258,3 +262,12 @@ no external network, market cache, database, model, production or broker resourc
   Ruff PASS，task shadow=`933 tasks byte-identical`，DevEx=`1054 modules / 1225 tests PASS`。
   下一步冻结 exact source commit 并追加 contract-wave authority；consumer 在该 authority
   PASS 前不得开始。
+- 2026-07-31：S1 source commit=`52e08f1a5ed532066b69ea48004739beee4038ca`，
+  append-only contract-wave authority commit=`65a8906dcb3cc6ccc59bc4089314af821011af83`；
+  compatibility/deprecation authority=`163 passed`。consumer 从该 exact head 开始，
+  仍不授权自由文本/LLM、HTTP deployment、external retrieval、production 或 broker action。
+- 2026-07-31：consumer preflight 后核验 retained canonical V1.1 snapshot，8 个 source 的
+  `known_at/available_at` 均为显式 `null`；现有 contract 若强制 datetime 会阻断所有实际
+  引用，而以 `as_of` 代填会伪造 lineage。consumer 暂停，先完成最小 serial contract
+  amendment：保留 null，缺失 source time 的回答只允许 `LIMITED`，并固定 reason
+  code=`SOURCE_TIME_CONTEXT_INCOMPLETE`；amendment authority PASS 后再恢复 consumer。

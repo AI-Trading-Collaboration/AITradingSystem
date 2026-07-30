@@ -2175,7 +2175,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.__init__
   path: src/ai_trading_system/contracts/__init__.py
-  sha256: 7052fa6249dc1d1efbdea7730dff36e7663e26f4cb977763c2b9ddd5f593b9f1
+  sha256: 00411b036d3572ec65d61263637803c795cd2ee039bdc3d9d1502624c1b2d5ed
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -2549,7 +2549,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.strategy_research_cited_query
   path: src/ai_trading_system/contracts/strategy_research_cited_query.py
-  sha256: be6c82ea82512a36931829dd42ab5266242ee3e385b28fe57b2827d945226086
+  sha256: 52714ce1a8441b7e2463528ca97b3568dc9bf26c4dc7700f2bf5bec1c70ab9f9
   rule_id: contracts
   owner_profile: architecture
   owners:
