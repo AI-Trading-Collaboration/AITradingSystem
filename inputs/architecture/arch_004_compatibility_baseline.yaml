@@ -34498,3 +34498,181 @@ phase_trading_2464_o1_coverage_gate_evidence_binding:
     canonical_run_executed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2465_post_o1_route_decision_and_blind_reentry_preregistration:
+  schema_version: trading_2465_post_o1_route_decision_and_blind_reentry_preregistration_compatibility.v1
+  status: BLOCKED_OWNER_INPUT
+  boundary_id: TRADING-2465-POST-O1-ROUTE-DECISION-AND-BLIND-REENTRY-PREREGISTRATION
+  task_ids:
+  - TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  prior_sections_immutability:
+    source_commit: fb4687244e04228ae2e5c4dd425f82cb1e35291c
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 80b1447c71be659f436ce1695cb48b2ebdbae70e
+    raw_byte_count: 2158231
+    raw_sha256: 93871b89c12f0d11b0cc5d6d16fed49cf4b3a5afc2e4bc9b071b4d185f3fe5a2
+    append_offset: 2158231
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2465-POST-O1-ROUTE-DECISION-AND-BLIND-REENTRY-PREREGISTRATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2464_o1_coverage_gate_evidence_binding
+    current_hash_authority: phase_trading_2465_post_o1_route_decision_and_blind_reentry_preregistration.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/research/o1_relative_opportunity_reentry_preregistration_v1_proposal.yaml
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  - registry/development_tasks_shadow/active/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
+  - scripts/trading2465_validate_o1_reentry_preregistration.py
+  - tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
+  source_delta_paths:
+  - config/research/o1_relative_opportunity_reentry_preregistration_v1_proposal.yaml
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - scripts/trading2465_validate_o1_reentry_preregistration.py
+  - tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  sources:
+  - path: config/research/o1_relative_opportunity_reentry_preregistration_v1_proposal.yaml
+    sha256: 32532b65c5a575f93a0cec07c3c4c202f687e65d5465c854e8177bcc2f4e1cf7
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+    sha256: f999e06aa5cf2a037fb75d2c6beccf01cdd8ca75afd5918acb71c1e491ce4693
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: e59673ab2d35114e354a06f2c56f83fe560e144d3bbc23998719243533bbd4bf
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 118ffd45cd429743a5f3c00fb3e0189bbe5a8eb1ee6ac739f1a3b047ff2a61bf
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: ff48addcf38365a426186a43a3c2d04431476924951b4b3c84f63f12cbcf2195
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 9f1047a6d7f3606e2e0f38c52422d5d0f804d753e9fc31b87a74e0a51515ee7d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: f706a3f65746f2e3d4009c05adf31b2500f7bf0153abcd692208bd8afe1f6325
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: cc44560ba9b85ac49c9ab5e23b52c6b04ba6d514bd6ac2c462490cb77f363563
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+    sha256: d0097ff6d77168421070e7a96c336bf816e62295837dd194720f588637470524
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+    sha256: 2ca93ee425bf346561de8c28ae39de995a98e96f7a5c6d43580fbcd3eda90ea3
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+    sha256: dc6b8e9d3090f6868372309801c6d34a5f95c8a97499c202c49fd957df7fa5ba
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+    sha256: bc852af90deb0bfe3f998ece006a70b0f527dc374afee7ff7a2af3460ba27b8e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+    sha256: 8f77260e0a18cfee054b0c83cdf6bdd8bebc8daea81394bd905f5e9f44f6b4ea
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
+    sha256: 00d5b71199c19fdf5fdc7fa19ce47a1a8218a664d16a00ad0a6b47c081ee6ef7
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+    sha256: 978230b8ac67f156c74436c2ed62f8e679851f409dbe173eac7c6588afd1630f
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+    sha256: 23d3f0b1321c767db1cdfd07102c811ddccf9987ab3e87d79ee9a2b2d8a51af6
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+    sha256: a8c92bf58325fef3e62ea4e4e6a6211d41a83a69248db0a1c0c4c2ac1c1fadcc
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+    sha256: 7f129634889f227737fb5cbc3836adadfce81c0ca853c67678eff5b5cd1c660d
+    hash_normalization: git_eol_lf
+  - path: scripts/trading2465_validate_o1_reentry_preregistration.py
+    sha256: a64da068f0f51374fb3bf668ff962cdb797032b90602de64db8d4c39af2dff89
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
+    sha256: f7002260ae14b84f390daf0b8fef36a1b94c27676fe19be782ad38a6a5d3e2c7
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: e2b27ffe86a317d37cc3962e222d6ff07f11110394f5265b7b6f170a976c4b6e
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: dcd7e9339745831c0fd68a21542f165835ec301e9d2e2799965364a442da6a9f
+    hash_normalization: git_eol_lf
+  implementation:
+    planning_snapshot_commit: fb4687244e04228ae2e5c4dd425f82cb1e35291c
+    web_pro_advisory:
+      conversation_url: https://chatgpt.com/c/6a6aa100-347c-83ee-9af9-4c1709761389
+      ui_selection: ACCOUNT_PRO_AND_COMPOSER_PRO
+      model_self_report: GPT-5.6_PRO
+      route_classification: UI_PRO_AND_SELF_REPORT_PRO_ROUTE_UNVERIFIED
+      backend_route_attestation: UNAVAILABLE
+      advisory_primary_recommendation: A_PLUS_D
+      adopted_as_policy: false
+    proposal_status: OWNER_REVIEW_REQUIRED_NOT_ACTIVE
+    owner_route_decision: NOT_SELECTED
+    calendar_trigger: NOT_SELECTED
+    data_vintage: NOT_SELECTED
+    look_budget: NOT_SELECTED
+    prior_attempt_id: O1_M1_RIDGE_CROSS_ASSET_STATE_V1
+    prior_attempt_classification: INSUFFICIENT_COVERAGE_OR_DQ
+    prior_attempt_single_run_consumed: true
+    post_result_contract_change_status: INVALID_POST_RESULT_REDESIGN_CONTAMINATION
+  validation:
+    proposal_validator: PASS_0_ERRORS
+    focused: PASS_27_TESTS
+    task_registry: PASS_BYTE_IDENTICAL_928_TASKS
+    generated_architecture: PASS_1043_MODULES_1213_TESTS
+    authority_and_deprecation: PASS_156_TESTS
+    architecture: PASS_797_TESTS_ARTIFACT_20260730T014012Z
+    contract: PASS_276_TESTS_ARTIFACT_20260730T014251Z
+  safety:
+    route_selected: false
+    calendar_or_data_vintage_selected: false
+    new_o1_result_read: false
+    data_acquisition_executed: false
+    dq_execution_executed: false
+    coverage_audit_executed: false
+    model_training_executed: false
+    predictions_generated: false
+    metrics_generated: false
+    canonical_run_executed: false
+    production_effect: none
+    broker_action: none

@@ -1304,7 +1304,39 @@ TRADING_2464_COVERAGE_GATE_BINDING_HISTORICAL_PREFIX_SHA256 = (
 )
 TRADING_2464_COVERAGE_GATE_BINDING_REMOVED_SOURCE_PATHS = frozenset()
 TRADING_2464_COVERAGE_GATE_BINDING_NEW_SOURCE_PATHS = frozenset()
-LATEST_COMPATIBILITY_SECTION = TRADING_2464_COVERAGE_GATE_BINDING_SECTION
+TRADING_2465_REENTRY_PREREGISTRATION_SECTION = (
+    "phase_trading_2465_post_o1_route_decision_and_blind_reentry_preregistration"
+)
+TRADING_2465_REENTRY_PREREGISTRATION_BASE_COMMIT = (
+    "fb4687244e04228ae2e5c4dd425f82cb1e35291c"
+)
+TRADING_2465_REENTRY_PREREGISTRATION_BASELINE_GIT_BLOB = (
+    "80b1447c71be659f436ce1695cb48b2ebdbae70e"
+)
+TRADING_2465_REENTRY_PREREGISTRATION_HISTORICAL_PREFIX_BYTE_COUNT = 2_158_231
+TRADING_2465_REENTRY_PREREGISTRATION_HISTORICAL_PREFIX_SHA256 = (
+    "93871b89c12f0d11b0cc5d6d16fed49cf4b3a5afc2e4bc9b071b4d185f3fe5a2"
+)
+TRADING_2465_REENTRY_PREREGISTRATION_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2465_REENTRY_PREREGISTRATION_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/research/o1_relative_opportunity_reentry_preregistration_v1_proposal.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md"
+        ),
+        "scripts/trading2465_validate_o1_reentry_preregistration.py",
+        (
+            "tests/research_strategies/"
+            "test_o1_relative_opportunity_reentry_preregistration.py"
+        ),
+        (
+            "registry/development_tasks_shadow/active/c8/"
+            "c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml"
+        ),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2465_REENTRY_PREREGISTRATION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2777,6 +2809,26 @@ def _trading_2464_coverage_gate_binding_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2465_reentry_preregistration_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2465_REENTRY_PREREGISTRATION_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2465_REENTRY_PREREGISTRATION_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -4184,6 +4236,28 @@ def _assert_trading_2464_coverage_gate_binding_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2464_COVERAGE_GATE_BINDING_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2465_reentry_preregistration_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2465_REENTRY_PREREGISTRATION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2465_REENTRY_PREREGISTRATION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2465 re-entry preregistration historical prefix differs from "
+        "immutable TRADING-2464 coverage-gate-binding authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"\n{TRADING_2465_REENTRY_PREREGISTRATION_SECTION}:\n".encode()
+    )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -5924,6 +5998,40 @@ def _trading_2464_coverage_gate_binding_all_current_authority_paths() -> frozens
 
 
 @cache
+def _trading_2465_reentry_preregistration_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2465_reentry_preregistration_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2465_reentry_preregistration_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2465_REENTRY_PREREGISTRATION_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2465_reentry_preregistration_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2465_REENTRY_PREREGISTRATION_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2465_reentry_preregistration_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2465_reentry_preregistration_superseded_live_source_paths()
+        | _trading_2465_reentry_preregistration_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     return (
         _trading_2463_superseded_live_source_paths()
@@ -6895,12 +7003,57 @@ def _trading_2464_coverage_gate_binding_prior_active_source_mismatches() -> froz
     )
 
 
+@cache
+def _trading_2465_reentry_preregistration_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        TRADING_2465_REENTRY_PREREGISTRATION_SECTION
+    )
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2464_COVERAGE_GATE_BINDING_SECTION in baseline:
+    if TRADING_2465_REENTRY_PREREGISTRATION_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2465_reentry_preregistration_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2465_reentry_preregistration_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_all_superseded_live_source_paths()
+            | _data_gov_001_d0d_superseded_live_source_paths()
+            | _data_gov_001_d0d_source_paths()
+            | _data_gov_001_d0e_superseded_live_source_paths()
+            | _data_gov_001_d0e_source_paths()
+            | _devx_007_all_current_authority_paths()
+            | _trading_2464_decision_all_current_authority_paths()
+            | _trading_2464_dq_recovery_all_current_authority_paths()
+            | _trading_2464_owner_token_all_current_authority_paths()
+            | _trading_2464_contract_all_current_authority_paths()
+            | _trading_2464_synthetic_all_current_authority_paths()
+            | _trading_2464_isolated_dq_all_current_authority_paths()
+            | _trading_2464_event_attempt_runner_all_current_authority_paths()
+            | _trading_2464_event_raw_replay_all_current_authority_paths()
+            | _trading_2464_event_gate_binding_all_current_authority_paths()
+            | _trading_2464_coverage_runner_all_current_authority_paths()
+            | _trading_2464_coverage_gate_binding_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2465_REENTRY_PREREGISTRATION_SECTION
+    elif TRADING_2464_COVERAGE_GATE_BINDING_SECTION in baseline:
         current_superseded_paths = (
             _trading_2464_coverage_gate_binding_superseded_live_source_paths()
         )
@@ -16369,7 +16522,7 @@ def test_trading_2464_synthetic_builder_is_append_only_current_hash_authority() 
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2464_coverage_runner_superseded_live_source_paths()
-    )
+    ) | set(_trading_2465_reentry_preregistration_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": ("TRADING-2464-O1-SYNTHETIC-BUILDER-VALIDATOR"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -16461,7 +16614,7 @@ def test_trading_2464_isolated_dq_is_append_only_current_hash_authority() -> Non
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2464_coverage_runner_superseded_live_source_paths()
-    )
+    ) | set(_trading_2465_reentry_preregistration_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": ("TRADING-2464-O1-ISOLATED-CANDIDATE-STRICT-DQ"),
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -16564,7 +16717,9 @@ def test_trading_2464_event_attempt_runner_is_append_only_current_hash_authority
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2464_event_gate_binding_superseded_live_source_paths()
-    ) | set(_trading_2464_coverage_runner_superseded_live_source_paths())
+    ) | set(_trading_2464_coverage_runner_superseded_live_source_paths()) | set(
+        _trading_2465_reentry_preregistration_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2464-O1-EVENT-ATTEMPT-FREEZE-RUNNER",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
@@ -16658,7 +16813,9 @@ def test_trading_2464_event_raw_replay_is_append_only_current_hash_authority() -
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2464_event_gate_binding_superseded_live_source_paths()
-    ) | set(_trading_2464_coverage_runner_superseded_live_source_paths())
+    ) | set(_trading_2464_coverage_runner_superseded_live_source_paths()) | set(
+        _trading_2465_reentry_preregistration_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2464-O1-EVENT-RAW-REPLAY-PARSER-CORRECTION",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
@@ -16770,7 +16927,7 @@ def test_trading_2464_event_gate_binding_is_append_only_current_hash_authority()
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2464_coverage_runner_superseded_live_source_paths()
-    )
+    ) | set(_trading_2465_reentry_preregistration_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2464-O1-EVENT-GATE-EVIDENCE-BINDING",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
@@ -16872,7 +17029,7 @@ def test_trading_2464_coverage_runner_is_append_only_current_hash_authority() ->
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2464_coverage_gate_binding_superseded_live_source_paths()
-    )
+    ) | set(_trading_2465_reentry_preregistration_superseded_live_source_paths())
     assert phase["supersession"] == {
         "superseded_by_phase": "TRADING-2464-O1-COVERAGE-ONLY-RUNNER",
         "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
@@ -16930,7 +17087,9 @@ def test_trading_2464_coverage_gate_binding_is_append_only_current_hash_authorit
         _trading_2464_coverage_gate_binding_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2464_COVERAGE_GATE_BINDING_SECTION
+    assert list(baseline).index(TRADING_2464_COVERAGE_GATE_BINDING_SECTION) < list(
+        baseline
+    ).index(TRADING_2465_REENTRY_PREREGISTRATION_SECTION)
     phase = baseline[TRADING_2464_COVERAGE_GATE_BINDING_SECTION]
     assert phase["schema_version"] == (
         "trading_2464_o1_coverage_gate_evidence_binding_compatibility.v1"
@@ -16957,8 +17116,12 @@ def test_trading_2464_coverage_gate_binding_is_append_only_current_hash_authorit
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == (
+    current_prior_drift = set(
         _trading_2464_coverage_gate_binding_prior_active_source_mismatches()
+    )
+    assert superseded <= current_prior_drift
+    assert current_prior_drift - superseded <= set(
+        _trading_2465_reentry_preregistration_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": (
@@ -16990,7 +17153,7 @@ def test_trading_2464_coverage_gate_binding_is_append_only_current_hash_authorit
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "runner_execution_commit": (
             "1bf9fb13245064ec2a505ea864e2e127ad445d41"
@@ -17038,6 +17201,133 @@ def test_trading_2464_coverage_gate_binding_is_append_only_current_hash_authorit
         "coverage_audit_executed": True,
         "new_o1_result_read": True,
         "prospective_accessed": False,
+        "model_training_executed": False,
+        "predictions_generated": False,
+        "metrics_generated": False,
+        "canonical_run_executed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2465_reentry_preregistration_is_current_hash_authority() -> None:
+    _assert_trading_2465_reentry_preregistration_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2465_reentry_preregistration_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2465_REENTRY_PREREGISTRATION_SECTION
+    phase = baseline[TRADING_2465_REENTRY_PREREGISTRATION_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2465_post_o1_route_decision_and_blind_reentry_"
+        "preregistration_compatibility.v1"
+    )
+    assert phase["status"] == "BLOCKED_OWNER_INPUT"
+    assert phase["boundary_id"] == (
+        "TRADING-2465-POST-O1-ROUTE-DECISION-AND-BLIND-REENTRY-PREREGISTRATION"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2465_REENTRY_PREREGISTRATION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2465_REENTRY_PREREGISTRATION_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2465_REENTRY_PREREGISTRATION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (
+            TRADING_2465_REENTRY_PREREGISTRATION_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": (
+            TRADING_2465_REENTRY_PREREGISTRATION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == (
+        _trading_2465_reentry_preregistration_prior_active_source_mismatches()
+    )
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2465-POST-O1-ROUTE-DECISION-AND-BLIND-REENTRY-"
+            "PREREGISTRATION"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2464_COVERAGE_GATE_BINDING_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2465_REENTRY_PREREGISTRATION_SECTION}.sources"
+        ),
+    }
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2465_REENTRY_PREREGISTRATION_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2465_REENTRY_PREREGISTRATION_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2465_REENTRY_PREREGISTRATION_NEW_SOURCE_PATHS
+    ) - TRADING_2465_REENTRY_PREREGISTRATION_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["implementation"] == {
+        "planning_snapshot_commit": (
+            "fb4687244e04228ae2e5c4dd425f82cb1e35291c"
+        ),
+        "web_pro_advisory": {
+            "conversation_url": (
+                "https://chatgpt.com/c/6a6aa100-347c-83ee-9af9-4c1709761389"
+            ),
+            "ui_selection": "ACCOUNT_PRO_AND_COMPOSER_PRO",
+            "model_self_report": "GPT-5.6_PRO",
+            "route_classification": (
+                "UI_PRO_AND_SELF_REPORT_PRO_ROUTE_UNVERIFIED"
+            ),
+            "backend_route_attestation": "UNAVAILABLE",
+            "advisory_primary_recommendation": "A_PLUS_D",
+            "adopted_as_policy": False,
+        },
+        "proposal_status": "OWNER_REVIEW_REQUIRED_NOT_ACTIVE",
+        "owner_route_decision": "NOT_SELECTED",
+        "calendar_trigger": "NOT_SELECTED",
+        "data_vintage": "NOT_SELECTED",
+        "look_budget": "NOT_SELECTED",
+        "prior_attempt_id": "O1_M1_RIDGE_CROSS_ASSET_STATE_V1",
+        "prior_attempt_classification": "INSUFFICIENT_COVERAGE_OR_DQ",
+        "prior_attempt_single_run_consumed": True,
+        "post_result_contract_change_status": (
+            "INVALID_POST_RESULT_REDESIGN_CONTAMINATION"
+        ),
+    }
+    validation = phase["validation"]
+    assert validation["proposal_validator"] == "PASS_0_ERRORS"
+    assert validation["focused"] == "PASS_27_TESTS"
+    assert validation["task_registry"] == "PASS_BYTE_IDENTICAL_928_TASKS"
+    assert validation["generated_architecture"] == "PASS_1043_MODULES_1213_TESTS"
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "route_selected": False,
+        "calendar_or_data_vintage_selected": False,
+        "new_o1_result_read": False,
+        "data_acquisition_executed": False,
+        "dq_execution_executed": False,
+        "coverage_audit_executed": False,
         "model_training_executed": False,
         "predictions_generated": False,
         "metrics_generated": False,

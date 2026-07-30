@@ -1,0 +1,239 @@
+schema_version: o1_relative_opportunity_reentry_preregistration_proposal.v1
+proposal_id: TRADING_2465_O1_BLIND_REENTRY_PREREGISTRATION_V1_PROPOSAL
+version: 1.0.0-proposal
+status: OWNER_REVIEW_REQUIRED_NOT_ACTIVE
+activation_allowed: false
+task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+owner: project_owner_and_strategy_research_owner
+owner_route_decision: NOT_SELECTED
+created_on: '2026-07-30'
+rationale: >-
+  Preserve the consumed TRADING-2464 coverage look and prepare a fail-closed
+  Owner decision surface before any new O1/O2/O3 eligibility, event-base-rate,
+  target, prediction or metric read. The recommended A+D route remains advisory
+  until an exact Owner token freezes its calendar, data-vintage and look-budget
+  policy.
+intended_effect: >-
+  Permit only planning, static validation and future serial-contract design.
+  This inactive proposal cannot authorize data acquisition, DQ execution,
+  coverage, model training, canonical research, investment interpretation or
+  any downstream action.
+review_condition: >-
+  Owner review is required before selecting a route, calendar trigger, data
+  vintage, look budget, stopping rule or future attempt identity. Any change to
+  the frozen O1 target/form/horizon/split/coverage/regime/event/model/metric/
+  falsification contract after the known V1 result is contamination.
+
+authority:
+  repository: https://github.com/AI-Trading-Collaboration/AITradingSystem
+  planning_snapshot_commit: fb4687244e04228ae2e5c4dd425f82cb1e35291c
+  planning_snapshot_ref: local_and_origin_main
+  owner_instruction:
+    text: 根据回答内容来推进后续任务
+    interpretation: PLANNING_AND_PREREGISTRATION_ONLY
+    route_selection_authorized: false
+    numeric_policy_authorized: false
+    empirical_action_authorized: false
+  requirement_path: docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  predecessor_task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
+  predecessor_policy:
+    path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+    policy_id: TRADING_2464_O1_CAPABILITY_AUDIT_V1
+    status: CLOSED_INSUFFICIENT_COVERAGE_OR_DQ
+    git_blob_sha1_at_planning_snapshot: 7d90d304cd4b9d3b2a69e534413837b5daf19e05
+    file_sha256: 1195c84ac0e980e5450eaa7c22f082f2bd1fc2adc053da73ecfbbafa291798ca
+
+web_pro_advisory:
+  conversation_url: https://chatgpt.com/c/6a6aa100-347c-83ee-9af9-4c1709761389
+  reviewed_commit: fb4687244e04228ae2e5c4dd425f82cb1e35291c
+  exact_blob_retrieval:
+    success_count: 5
+    partial_count: 1
+    failed_count: 0
+    task_register_status: PARTIAL_EXACT_TRADING_2464_ROW_RETRIEVED
+  routing_evidence:
+    ui_selection: ACCOUNT_PRO_AND_COMPOSER_PRO
+    model_self_report: GPT-5.6_PRO
+    backend_route_attestation: UNAVAILABLE
+    classification: UI_PRO_AND_SELF_REPORT_PRO_ROUTE_UNVERIFIED
+    secondary_classification: ROUTING_ATTESTATION_UNAVAILABLE
+    cannot_verify_exact_backend_route: true
+  advisory_primary_recommendation: A_PLUS_D
+  advisory_secondary_option: O2_POLICY_FOUNDATION_ONLY
+  advisory_not_policy:
+    - candidate_not_before_date_2027_02_01
+    - maximum_one_eligibility_look_in_next_12_months
+    - advisory_timeline_estimates
+    - unreviewed_typed_status_names
+
+prior_attempt:
+  append_only: true
+  attempt_id: O1_M1_RIDGE_CROSS_ASSET_STATE_V1
+  attempt_role: CONSUMED_COVERAGE_ONLY_LOOK
+  source_commit_sha: 1bf9fb13245064ec2a505ea864e2e127ad445d41
+  coverage_report:
+    report_id: o1_coverage_report_9b5708c6c36ac69cc7355fee8567a953
+    sha256: bbed79b499b57274dd49bede0c37219894233964732fcde5656626933781ada7
+    byte_size: 29645
+  coverage_gate:
+    gate_id: o1_coverage_gate_b240158b3b7d3211ad51852217aa6d93
+    sha256: a97ee44832a41aeb90a6f9a18b0358eb81cefec4d491438deb6fd27b624f31b8
+    byte_size: 1983
+  mechanical_classification: INSUFFICIENT_COVERAGE_OR_DQ
+  actual_cause: MANDATORY_COVERAGE_INSUFFICIENCY
+  capability_status: NOT_EVALUATED
+  single_run_consumed: true
+  result_driven_retry_allowed: false
+  model_training_executed: false
+  prediction_or_metric_generated: false
+  prospective_accessed: false
+  retained_evidence_bytes_read_by_this_task: false
+  retained_evidence_mutation_allowed: false
+  retained_evidence_cleanup_allowed: false
+
+frozen_o1_contract:
+  exact_reuse_required_for_route_a_plus_d: true
+  source_policy_path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  source_policy_file_sha256: 1195c84ac0e980e5450eaa7c22f082f2bd1fc2adc053da73ecfbbafa291798ca
+  immutable_section_sha256:
+    target_contract: a262f043da797a3e57bf495e4b497add38d637b046501d1c9b0d1bb2a5af17b9
+    split_contract: 824375f394944ae3a8e5ae01df593947ac6cc5e62f684b5f75e161cdf76d75b4
+    coverage_contract: ebe72d4e33cb9069d33c62831f6cffb1413ee6f52e55286cb5ba0ec5c110c398
+    regime_contract: cfcc58df098f6b7d932881e4481445f496c4e9ca14d30b1160fe579dbee9520e
+    event_contract: d78ab9760a4dd32367ba74d3433aef2322240f846ee86dd818610acf976fc512
+    model_feature_contract: 177a4f03426f16faa178e81944c7a726bc323f991317e127a05d428d25ccfdd5
+    metric_contract: c7c9fcb1c9e63704ca74d16e1b55e93bbdf1ea71d8c1f4b0da15adac8fba2725
+    falsification_contract: 8a5c96a59d778ce389c3ee57dd494385d00746b61e50f2d38a1f105643f77fd8
+    classification_contract: 9c149a97e4089665471cbec278989effe82a2793121bb60dacc0ad8d3262c63f
+  identity_summary:
+    target_id: RELATIVE_OPPORTUNITY_SPREAD
+    form: CONTINUOUS
+    label: QQQ_FORWARD_TOTAL_RETURN - SGOV_FORWARD_TOTAL_RETURN
+    primary_horizon_common_sessions: 5
+    split_id: expanding_purged_walk_forward_o1_504_126_v1
+    model_id: M1_RIDGE_LINEAR
+    feature_family_prefix: CROSS_ASSET_STATE
+    primary_metric: OOF_MSE_SKILL
+    coverage_failure_class: INSUFFICIENT_COVERAGE_OR_DQ
+    primary_research_start: '2021-02-22'
+
+route_decision:
+  selected_route: NOT_SELECTED
+  owner_decision_token: NOT_SELECTED
+  selection_allowed_without_owner_token: false
+  options:
+    - route_id: A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE
+      status: RECOMMENDED_NOT_APPROVED
+      empirical_action_allowed: false
+    - route_id: O2_PATH_LOSS_BUDGET_EVENT_POLICY_FOUNDATION_ONLY
+      status: AVAILABLE_INDEPENDENT_NOT_APPROVED
+      empirical_action_allowed: false
+    - route_id: O3_UTILITY_ACTION_COST_POLICY_FOUNDATION
+      status: DEFERRED_NOT_APPROVED
+      empirical_action_allowed: false
+    - route_id: CLOSE_POST_O1_DECISION_TARGET_REDESIGN
+      status: AVAILABLE_OWNER_OFFRAMP_NOT_SELECTED
+      empirical_action_allowed: false
+
+route_a_plus_d_policy_slots:
+  calendar_trigger:
+    trigger_type: NOT_SELECTED
+    not_before_date: NOT_SELECTED
+    rationale: NOT_SELECTED
+    count_based_or_dynamic_trigger_allowed: false
+  data_vintage:
+    source_publication_cutoff: NOT_SELECTED
+    exact_vintage_identity: NOT_SELECTED
+    primary_research_start: '2021-02-22'
+    pre_2021_primary_data_allowed: false
+  look_budget:
+    maximum_reentry_coverage_looks: NOT_SELECTED
+    automatic_retry_allowed: false
+    resume_or_overwrite_allowed: false
+  future_attempt:
+    selected_attempt_id: NOT_SELECTED
+    recommended_candidate_id: O1_M1_RIDGE_CROSS_ASSET_STATE_V2_CALENDAR_REENTRY
+    pristine_first_attempt_claim_allowed: false
+    new_task_required: true
+    separate_coverage_run_owner_authorization_required: true
+  stopping_rule:
+    if_owner_route_absent: BLOCKED_OWNER_INPUT
+    if_policy_slot_not_selected: BLOCKED_OWNER_INPUT
+    if_any_mandatory_coverage_floor_fails: INSUFFICIENT_COVERAGE_OR_DQ
+    if_post_result_contract_change_detected: INVALID_POST_RESULT_REDESIGN_CONTAMINATION
+
+route_b_policy_slots:
+  task_and_policy_must_be_independent: true
+  rationale_must_not_be_o1_rescue: true
+  owner_decision_token: NOT_SELECTED
+  loss_budget: NOT_SELECTED
+  target_form: NOT_SELECTED
+  event_base_rate_policy: NOT_SELECTED
+  false_negative_cost_policy: NOT_SELECTED
+  calibration_gate: NOT_SELECTED
+  independent_event_ledger: NOT_SELECTED
+  real_event_count_read_allowed: false
+  capability_audit_allowed: false
+  risk_overlay_allowed: false
+
+route_c_policy_slots:
+  owner_decision_token: NOT_SELECTED
+  action_templates: NOT_SELECTED
+  execution_timing: NOT_SELECTED
+  cost_model: NOT_SELECTED
+  risk_penalty: NOT_SELECTED
+  utility_unit: NOT_SELECTED
+  sensitivity_policy: NOT_SELECTED
+  empirical_label_allowed: false
+  capability_audit_allowed: false
+
+multiple_testing_and_contamination:
+  global_redesign_family_required: true
+  prior_attempt_v1_must_remain: true
+  future_v2_independent_of_v1_claim_allowed: false
+  target_or_model_change_expands_family: true
+  o2_or_o3_activation_expands_family: true
+  post_result_threshold_change_allowed: false
+  post_result_fold_change_allowed: false
+  post_result_horizon_change_allowed: false
+  post_result_regime_change_allowed: false
+  post_result_event_change_allowed: false
+  post_result_model_change_allowed: false
+
+authorization:
+  planning_and_static_validation_allowed: true
+  route_selected: false
+  new_result_read_allowed: false
+  data_acquisition_allowed: false
+  dq_execution_allowed: false
+  coverage_run_allowed: false
+  model_training_allowed: false
+  canonical_run_allowed: false
+  falsification_execution_allowed: false
+  o2_foundation_execution_allowed: false
+  o3_foundation_execution_allowed: false
+
+safety:
+  prospective_accessed: false
+  decision_value_audit_started: false
+  risk_overlay_created: false
+  candidate_family_created: false
+  strategy_backtest_executed: false
+  target_weights_generated: false
+  qld_automatic_selection_enabled: false
+  paper_shadow_changed: false
+  promotion_allowed: false
+  production_effect: none
+  broker_action: none
+
+validation_contract:
+  validator_path: scripts/trading2465_validate_o1_reentry_preregistration.py
+  deterministic_serialization_required: true
+  active_policy_exact_hash_validation_required: true
+  immutable_section_hash_validation_required: true
+  prior_attempt_binding_validation_required: true
+  task_and_requirement_validation_required: true
+  unauthorized_selection_negative_tests_required: true
+  retained_runtime_evidence_access_required: false
+  docs_system_flow_impact: NONE_INACTIVE_PLANNING_ONLY
+  expected_status_before_owner_selection: BLOCKED_OWNER_INPUT
