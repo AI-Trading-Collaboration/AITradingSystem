@@ -7722,7 +7722,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: c609072c544d4d4dc98605d0a35786d754d2ced7b8f32535e7a3607989e63142
+  sha256: c44af20c52914ad5eeed9670092497f9f5363c2f20759d8a49b4bd772df66df1
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
