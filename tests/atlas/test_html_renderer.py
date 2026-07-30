@@ -10,7 +10,7 @@ from ai_trading_system.atlas.html_renderer import (
 from ai_trading_system.atlas.snapshot_builder import build_atlas_bundle
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-EXACT_COMMIT = "adfd3d5817a9797c35f97d01b92ced2e01663373"
+EXACT_COMMIT = "f" * 40
 
 
 def _bundle():

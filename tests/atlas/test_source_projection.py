@@ -16,7 +16,7 @@ from ai_trading_system.contracts import ExplorerSourceKind
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REGISTRY_PATH = PROJECT_ROOT / "config" / "atlas" / "source_registry.yaml"
-EXACT_COMMIT = "adfd3d5817a9797c35f97d01b92ced2e01663373"
+EXACT_COMMIT = "f" * 40
 
 
 def _registry_payload() -> dict[str, object]:
@@ -41,7 +41,7 @@ def test_projected_sources_bind_exact_commit_and_content_sha() -> None:
         registry=registry,
         exact_commit=EXACT_COMMIT,
     )
-    assert len(sources) == 6
+    assert len(sources) == 3
     assert len({item.source_ref_id for item in sources}) == len(sources)
     assert all(item.exact_commit == EXACT_COMMIT for item in sources)
     assert all(item.source_kind is ExplorerSourceKind.GIT_AUTHORITY for item in sources)

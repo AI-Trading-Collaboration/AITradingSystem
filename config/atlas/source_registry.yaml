@@ -6,14 +6,14 @@ primary_research_start: "2021-02-22"
 reader_notice: 本页是研究导航与证据索引，不是投资建议，也不会计算仓位或发起交易。
 
 sources:
-  - source_ref_id: task-register
+  - source_ref_id: atlas-registry
     source_kind: GIT_AUTHORITY
-    source_path: docs/task_register.md
-    artifact_identity: task_register:active
+    source_path: config/atlas/source_registry.yaml
+    artifact_identity: registry:TRADING_2466_ATLAS_MVP_SOURCE_REGISTRY_V1
     research_context_complete: false
     data_quality_ready: false
     legacy_history_partial: false
-    limitation: 任务登记只说明治理状态，不是研究结果。
+    limitation: Registry 只定义展示投影和通俗解释，不是研究结果。
   - source_ref_id: o1-v1-policy
     source_kind: GIT_AUTHORITY
     source_path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
@@ -26,14 +26,6 @@ sources:
     data_quality_ready: true
     legacy_history_partial: false
     limitation: O1 V1 在模型训练前因 mandatory coverage floor 不足而关闭，不能推出模型能力结论。
-  - source_ref_id: o1-v1-route-decision
-    source_kind: GIT_AUTHORITY
-    source_path: docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
-    artifact_identity: requirement:TRADING-2465
-    research_context_complete: false
-    data_quality_ready: false
-    legacy_history_partial: false
-    limitation: 本文件记录路线决策与历史 proposal，不授权新的实证运行。
   - source_ref_id: o1-v2-policy
     source_kind: GIT_AUTHORITY
     source_path: config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml
@@ -46,30 +38,13 @@ sources:
     data_quality_ready: false
     legacy_history_partial: false
     limitation: 这是 Owner-approved inactive policy slot；真实 coverage 仍需未来独立授权。
-  - source_ref_id: atlas-requirement
-    source_kind: GIT_AUTHORITY
-    source_path: docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
-    artifact_identity: requirement:TRADING-2466
-    research_context_complete: false
-    data_quality_ready: false
-    legacy_history_partial: false
-    limitation: Atlas 只投影既有证据，不生成新的策略结论。
-  - source_ref_id: o1-v2-requirement
-    source_kind: GIT_AUTHORITY
-    source_path: docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
-    artifact_identity: requirement:TRADING-2467
-    research_context_complete: false
-    data_quality_ready: false
-    legacy_history_partial: false
-    limitation: validator PASS 只说明 policy 合同有效，不等于 coverage 或策略 PASS。
-
 nodes:
   - node_id: program-strategy-research
     node_kind: PROGRAM
     title: 策略研究主线
     summary: 从研究问题、证据门禁到 Owner 决策，所有步骤都保留来源与停止边界。
     assertion_kind: RESEARCHER_INTERPRETATION
-    source_ref_ids: [atlas-requirement]
+    source_ref_ids: [atlas-registry]
     raw_status: RUNNING
   - node_id: hypothesis-o1-relative-opportunity
     node_kind: HYPOTHESIS
@@ -97,21 +72,21 @@ nodes:
     title: Owner 选择 A+D 路线
     summary: 采用 blind calendar re-entry，并建设通用 evidence infrastructure。
     assertion_kind: OWNER_DECISION
-    source_ref_ids: [o1-v1-route-decision, o1-v2-policy]
+    source_ref_ids: [o1-v2-policy]
     raw_status: PASS
   - node_id: experiment-o1-v2
     node_kind: EXPERIMENT
     title: V2 calendar re-entry（尚未到期且未获运行授权）
     summary: 最早 2027-02-01 才能重新向 Owner 申请一次 coverage look；日期不会自动触发运行。
     assertion_kind: RULE_JUDGMENT
-    source_ref_ids: [o1-v2-policy, o1-v2-requirement]
+    source_ref_ids: [o1-v2-policy]
     raw_status: NOT_DUE
   - node_id: product-atlas
     node_kind: ARTIFACT
     title: Atlas 只读研究导航
     summary: 用同一证据合同展示研究路径、结果、归因、局限和下一合法动作。
     assertion_kind: RULE_JUDGMENT
-    source_ref_ids: [atlas-requirement]
+    source_ref_ids: [atlas-registry]
     raw_status: PASS
 
 edges:
@@ -166,7 +141,7 @@ results:
     display_status: NOT_DUE
     reader_summary: 2027-02-01 只开放再次申请 Owner review 的资格，不会自动读取 coverage。
     assertion_kind: OWNER_DECISION
-    source_ref_ids: [o1-v2-policy, o1-v2-requirement]
+    source_ref_ids: [o1-v2-policy]
     investment_facing: false
     limitations:
       - future data vintage 尚未 materialize。
@@ -178,7 +153,7 @@ results:
     display_status: PASS
     reader_summary: 这里的 PASS 仅表示展示合同与 lineage 校验通过，不是策略 PASS。
     assertion_kind: RULE_JUDGMENT
-    source_ref_ids: [atlas-requirement]
+    source_ref_ids: [atlas-registry]
     investment_facing: false
     limitations:
       - Atlas 不重算 score、model、backtest、weight 或 promotion。
@@ -197,14 +172,14 @@ attributions:
     direction: SUPPORTS
     explanation: Owner 决策支持冻结 V2 policy slot，但没有授权未来 empirical run。
     assertion_kind: OWNER_DECISION
-    source_ref_ids: [o1-v1-route-decision, o1-v2-policy]
+    source_ref_ids: [o1-v2-policy]
   - attribution_id: attr-atlas-neutral-to-strategy
     result_id: result-atlas-contract
     source_node_id: program-strategy-research
     direction: NEUTRAL
     explanation: Atlas 改善可读性与追溯性，不改变任何策略结果或投资结论。
     assertion_kind: RESEARCHER_INTERPRETATION
-    source_ref_ids: [atlas-requirement]
+    source_ref_ids: [atlas-registry]
 
 glossary:
   - term: DQ
