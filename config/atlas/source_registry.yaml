@@ -1,9 +1,9 @@
 schema_version: atlas_source_registry.v1
-registry_id: TRADING_2466_ATLAS_MVP_SOURCE_REGISTRY_V1
-title: Atlas 策略研究路径与结果归因
+registry_id: TRADING_2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
+title: Atlas 策略研究主线与结果归因 · Canonical Coverage V1.1
 as_of: "2026-07-30T00:00:00+09:00"
 primary_research_start: "2021-02-22"
-reader_notice: 本页是研究导航与证据索引，不是投资建议，也不会计算仓位或发起交易。
+reader_notice: 本页只读投影已发布的 Git 权威，覆盖四条代表性研究主线；它不是投资建议，不会重算研究结果、计算仓位或发起交易，也不声称已覆盖全部历史研究。
 
 sources:
   - source_ref_id: atlas-registry
@@ -14,6 +14,66 @@ sources:
     data_quality_ready: false
     legacy_history_partial: false
     limitation: Registry 只定义展示投影和通俗解释，不是研究结果。
+  - source_ref_id: restart-r0-r2-requirement
+    source_kind: GIT_AUTHORITY
+    source_path: docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md
+    artifact_identity: requirement:TRADING_2446_TO_2448_RESEARCH_RESTART_R0_R2
+    requested_start: "2021-02-22"
+    requested_end: "2026-07-20"
+    evaluated_start: "2021-02-22"
+    evaluated_end: "2026-07-20"
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: true
+    limitation: 该历史 requirement 同时保留 2022-12-01 legacy comparison；它不能为新研究提供 active default 或 unbiased OOS 结论。
+  - source_ref_id: restart-r0-r2-closeout
+    source_kind: PUBLISHED_ARTIFACT
+    source_path: docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md
+    artifact_identity: report:STRATEGY_RESEARCH_RESTART_R0_R2_CLOSEOUT_20260720
+    requested_start: "2021-02-22"
+    requested_end: "2026-07-20"
+    evaluated_start: "2021-02-22"
+    evaluated_end: "2026-07-20"
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: true
+    limitation: 真实结果只支持 CONTINUE_EVIDENCE_CLOSURE；source selection 与 holdout 重叠且 event/forward evidence 未闭合。
+  - source_ref_id: qld-universe-evaluation
+    source_kind: GIT_AUTHORITY
+    source_path: docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+    artifact_identity: requirement:TRADING_2459_SPY_QLD_UNIVERSE_EVALUATION
+    requested_start: "2021-02-22"
+    requested_end: "2026-07-21"
+    evaluated_start: "2021-02-22"
+    evaluated_end: "2026-07-21"
+    research_context_complete: true
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: Scoped five-asset DQ 为 PASS_WITH_WARNINGS，但 canonical full-cache DQ 仍为 FAIL；QLD 仅获 role-limited implementation 身份。
+  - source_ref_id: label-foundation
+    source_kind: GIT_AUTHORITY
+    source_path: docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+    artifact_identity: requirement:TRADING_2460_LABEL_FOUNDATION
+    requested_start: "2021-02-22"
+    requested_end: "2026-07-24"
+    evaluated_start: "2021-02-22"
+    evaluated_end: "2026-07-24"
+    research_context_complete: true
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: Scoped QQQ/SPY/SGOV receipt 支持 label foundation，但 canonical full-cache DQ 为 FAIL；未训练模型。
+  - source_ref_id: target-redesign
+    source_kind: GIT_AUTHORITY
+    source_path: docs/requirements/TRADING-2463_Decision_Target_Redesign_Preregistration.md
+    artifact_identity: requirement:TRADING_2463_DECISION_TARGET_REDESIGN
+    requested_start: "2021-02-22"
+    requested_end: "2026-07-28"
+    evaluated_start: "2021-02-22"
+    evaluated_end: "2026-07-28"
+    research_context_complete: true
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: Owner 已冻结 O1 单 target preregistration；capability audit、模型、回测和权重仍是独立未启动任务。
   - source_ref_id: o1-v1-policy
     source_kind: GIT_AUTHORITY
     source_path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
@@ -42,10 +102,108 @@ nodes:
   - node_id: program-strategy-research
     node_kind: PROGRAM
     title: 策略研究主线
-    summary: 从研究问题、证据门禁到 Owner 决策，所有步骤都保留来源与停止边界。
+    summary: 从历史证据闭合、工具角色、decision target 到 O1 re-entry，所有步骤都保留来源、状态与停止边界。
     assertion_kind: RESEARCHER_INTERPRETATION
     source_ref_ids: [atlas-registry]
     raw_status: RUNNING
+  - node_id: campaign-restart-evidence-closure
+    node_kind: CAMPAIGN
+    title: 主线 A：历史研究重启与证据闭合
+    summary: R0～R2 工程链完成，但 OOS、event-risk 与 forward maturity 证据不足，新候选扩展继续暂停。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+    raw_status: LIMITED
+  - node_id: stage-restart-r0
+    node_kind: STAGE
+    title: R0 研究重启合同
+    summary: 13/13 hard checks 通过，并冻结窗口角色、DQ/PIT、成本、holdout 与安全边界。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+    raw_status: PASS
+  - node_id: evidence-restart-r1
+    node_kind: EVIDENCE
+    title: R1 OOS、robustness 与 forward evidence
+    summary: 40 个 test folds 为 20 reject + 20 review-required；event_risk_high=15<20，20d/60d outcome 尚未成熟。
+    assertion_kind: MODEL_RESULT
+    source_ref_ids: [restart-r0-r2-closeout]
+    raw_status: LIMITED
+  - node_id: result-restart-r2
+    node_kind: RESULT
+    title: R2：继续闭合证据
+    summary: 技术验证 PASS，但业务状态为 CONTINUE_EVIDENCE_CLOSURE，不允许扩展候选或启动参数搜索。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+    raw_status: LIMITED
+  - node_id: stop-restart-expansion
+    node_kind: STOP
+    title: 历史候选扩展暂停
+    summary: 旧窗口仅作 legacy comparison；未来比较必须使用无污染 selection protocol 与成熟证据。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [restart-r0-r2-closeout]
+    raw_status: BLOCKED
+  - node_id: campaign-qld-implementation
+    node_kind: CAMPAIGN
+    title: 主线 B：QLD 工具角色评估
+    summary: QLD 具有可复核的 2x 实现价值，但只获得 role-limited implementation 身份，不是独立策略。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [qld-universe-evaluation]
+    raw_status: LIMITED
+  - node_id: hypothesis-qld-implementation
+    node_kind: HYPOTHESIS
+    title: QLD 是否改善 2x 暴露实现
+    summary: 在相同 QQQ-equivalent exposure 下比较 turnover、成本、tracking、drawdown 与 worst-window。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [qld-universe-evaluation]
+    raw_status: PASS
+  - node_id: evidence-qld-evaluation
+    node_kind: EVIDENCE
+    title: QLD historical-seen instrument evaluation
+    summary: QLD 的低外部 turnover 与直接 2x tracking 提供增量实现价值，但 max drawdown 高且不同切片结果混合。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [qld-universe-evaluation]
+    raw_status: LIMITED
+  - node_id: decision-qld-role
+    node_kind: DECISION
+    title: Owner 批准 role-limited implementation
+    summary: QLD 只在上游趋势、目标暴露与风险门通过后进入执行层比较，不进入 signal/style/free-candidate universe。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [qld-universe-evaluation]
+    raw_status: PASS
+  - node_id: blocker-qld-canonical-dq
+    node_kind: BLOCKER
+    title: QLD automatic selection 等待 canonical DQ strict PASS
+    summary: Scoped DQ 例外不能扩展给其他 consumer；automatic selection、权重、shadow、production 与 broker 保持关闭。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [qld-universe-evaluation]
+    raw_status: BLOCKED
+  - node_id: campaign-decision-target
+    node_kind: CAMPAIGN
+    title: 主线 C：Decision target 到 O1 capability
+    summary: 先建立 label foundation，再由 Owner 冻结 target 与政策，最后才允许独立 capability audit。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [label-foundation, target-redesign, o1-v1-policy, o1-v2-policy]
+    raw_status: RUNNING
+  - node_id: stage-label-foundation
+    node_kind: STAGE
+    title: Label foundation：目标合同可重建
+    summary: QQQ/SPY/SGOV scoped receipt 支持四个 horizon labels，但 global DQ 仍 FAIL，且没有训练模型。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [label-foundation]
+    raw_status: LIMITED
+  - node_id: stage-target-redesign
+    node_kind: STAGE
+    title: Owner 选择 O1 relative-opportunity single target
+    summary: 5-common-session target、split、coverage 与 falsification policy 在结果读取前冻结；capability audit 仍是独立任务。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [target-redesign]
+    raw_status: PASS
+  - node_id: campaign-o1-current-future
+    node_kind: CAMPAIGN
+    title: 主线 D：O1 当前结论与未来 re-entry
+    summary: V1 因 coverage 不足在模型训练前关闭；V2 只冻结 2027-02-01 之后可重新申请的一次 blind look。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [o1-v1-policy, o1-v2-policy]
+    raw_status: NOT_DUE
   - node_id: hypothesis-o1-relative-opportunity
     node_kind: HYPOTHESIS
     title: O1：相对机会差是否具备可研究信号
@@ -90,11 +248,96 @@ nodes:
     raw_status: PASS
 
 edges:
-  - edge_id: edge-program-tests-o1
-    edge_kind: TESTS
+  - edge_id: edge-program-contains-restart
+    edge_kind: CONTAINS
     from_node_id: program-strategy-research
+    to_node_id: campaign-restart-evidence-closure
+    label: 历史证据闭合
+  - edge_id: edge-program-contains-qld
+    edge_kind: CONTAINS
+    from_node_id: program-strategy-research
+    to_node_id: campaign-qld-implementation
+    label: 工具角色评估
+  - edge_id: edge-program-contains-target
+    edge_kind: CONTAINS
+    from_node_id: program-strategy-research
+    to_node_id: campaign-decision-target
+    label: Decision target foundation
+  - edge_id: edge-program-contains-o1
+    edge_kind: CONTAINS
+    from_node_id: program-strategy-research
+    to_node_id: campaign-o1-current-future
+    label: O1 当前与未来
+  - edge_id: edge-program-contains-atlas
+    edge_kind: CONTAINS
+    from_node_id: program-strategy-research
+    to_node_id: product-atlas
+    label: 研究导航界面
+  - edge_id: edge-restart-contains-r0
+    edge_kind: CONTAINS
+    from_node_id: campaign-restart-evidence-closure
+    to_node_id: stage-restart-r0
+    label: 先冻结研究合同
+  - edge_id: edge-r0-next-r1
+    edge_kind: NEXT_STEP
+    from_node_id: stage-restart-r0
+    to_node_id: evidence-restart-r1
+    label: 进入 OOS / robustness / forward evidence
+  - edge_id: edge-r1-produced-r2
+    edge_kind: PRODUCED
+    from_node_id: evidence-restart-r1
+    to_node_id: result-restart-r2
+    label: 证据驱动 R2 决策
+  - edge_id: edge-r1-blocks-expansion
+    edge_kind: BLOCKS
+    from_node_id: evidence-restart-r1
+    to_node_id: stop-restart-expansion
+    label: event / forward evidence 未闭合
+  - edge_id: edge-r2-blocks-expansion
+    edge_kind: BLOCKS
+    from_node_id: result-restart-r2
+    to_node_id: stop-restart-expansion
+    label: CONTINUE_EVIDENCE_CLOSURE
+  - edge_id: edge-qld-tests-implementation
+    edge_kind: TESTS
+    from_node_id: campaign-qld-implementation
+    to_node_id: hypothesis-qld-implementation
+    label: 比较相同 2x exposure 的实现质量
+  - edge_id: edge-qld-produced-evidence
+    edge_kind: PRODUCED
+    from_node_id: hypothesis-qld-implementation
+    to_node_id: evidence-qld-evaluation
+    label: historical-seen instrument evidence
+  - edge_id: edge-qld-evidence-supports-role
+    edge_kind: SUPPORTS
+    from_node_id: evidence-qld-evaluation
+    to_node_id: decision-qld-role
+    label: 支持 role-limited implementation review
+  - edge_id: edge-qld-role-next-dq
+    edge_kind: NEXT_STEP
+    from_node_id: decision-qld-role
+    to_node_id: blocker-qld-canonical-dq
+    label: automatic selection 前仍需 canonical DQ strict PASS
+  - edge_id: edge-target-contains-label
+    edge_kind: CONTAINS
+    from_node_id: campaign-decision-target
+    to_node_id: stage-label-foundation
+    label: 先建立 target labels
+  - edge_id: edge-label-next-redesign
+    edge_kind: NEXT_STEP
+    from_node_id: stage-label-foundation
+    to_node_id: stage-target-redesign
+    label: Owner 选择经济语义明确的 target
+  - edge_id: edge-redesign-next-o1
+    edge_kind: NEXT_STEP
+    from_node_id: stage-target-redesign
+    to_node_id: campaign-o1-current-future
+    label: 独立 O1 capability audit
+  - edge_id: edge-o1-tests-hypothesis
+    edge_kind: TESTS
+    from_node_id: campaign-o1-current-future
     to_node_id: hypothesis-o1-relative-opportunity
-    label: 当前研究问题
+    label: 先检查 DQ 与 coverage
   - edge_id: edge-o1-produced-coverage
     edge_kind: PRODUCED
     from_node_id: hypothesis-o1-relative-opportunity
@@ -115,13 +358,70 @@ edges:
     from_node_id: decision-o1-route
     to_node_id: experiment-o1-v2
     label: inactive calendar re-entry
-  - edge_id: edge-program-contains-atlas
-    edge_kind: CONTAINS
-    from_node_id: program-strategy-research
-    to_node_id: product-atlas
-    label: 研究导航界面
 
 results:
+  - result_id: result-restart-r2
+    node_id: result-restart-r2
+    title: 历史研究重启：验证通过，但证据仍未闭合
+    raw_status: LIMITED
+    display_status: LIMITED
+    reader_summary: R0～R2 工程和 validator 均完成；真实 OOS、event-risk 与 forward maturity 只支持继续闭合证据，并暂停候选扩展。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+    investment_facing: false
+    limitations:
+      - 2022-12-01 只承担 legacy comparison，不是当前 primary default。
+      - Source top-N 与 locked holdout 重叠，不能声称 unbiased OOS。
+      - Validation PASS 只证明证据链可重建，不表示策略 PASS。
+  - result_id: result-qld-evaluation
+    node_id: evidence-qld-evaluation
+    title: QLD：存在增量实现价值，但证据和角色均受限
+    raw_status: LIMITED
+    display_status: LIMITED
+    reader_summary: QLD 提供更直接的 2x tracking 和较低外部 turnover，但高 drawdown、mixed slices 与 global DQ FAIL 阻止把它解释成独立策略或自动选择结论。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [qld-universe-evaluation]
+    investment_facing: false
+    limitations:
+      - Scoped DQ 为 PASS_WITH_WARNINGS，不等于 canonical full-cache PASS。
+      - 历史收益排名不得成为未来自动工具选择规则。
+      - QLD 不是 alpha、signal、style 或自由 candidate。
+  - result_id: result-qld-owner-role
+    node_id: decision-qld-role
+    title: QLD Owner disposition：role-limited implementation
+    raw_status: PASS
+    display_status: LIMITED
+    reader_summary: Owner 已批准 QLD 作为受限 2x implementation instrument；automatic selection 和所有生产动作仍关闭。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [qld-universe-evaluation]
+    investment_facing: false
+    limitations:
+      - 上游趋势、target exposure 和风险门尚未形成自动执行合同。
+      - canonical DQ strict PASS 前不启动 forward-shadow 或 production governance。
+  - result_id: result-label-foundation
+    node_id: stage-label-foundation
+    title: Label foundation：scoped labels ready，模型尚未启动
+    raw_status: LIMITED
+    display_status: LIMITED
+    reader_summary: 四个 horizon 的 label package 可重建，但 global canonical DQ 仍 FAIL；该结果只证明 label foundation，不证明模型或策略能力。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [label-foundation]
+    investment_facing: false
+    limitations:
+      - Scoped receipt 不能复用为其他 consumer 的 global DQ PASS。
+      - 未训练模型、未搜索 feature/candidate/parameter、未生成权重。
+  - result_id: result-target-redesign
+    node_id: stage-target-redesign
+    title: Target redesign：O1 preregistration 已冻结
+    raw_status: PASS
+    display_status: PASS
+    reader_summary: Owner 在读取新 empirical result 前选择 O1 single target 并冻结 policy；这里的 PASS 是 preregistration 完成，不是 capability PASS。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [target-redesign]
+    investment_facing: false
+    limitations:
+      - Capability audit 是独立任务，不能由本政策自动启动。
+      - Decision Value Audit、risk overlay、candidate/backtest/weights 均未授权。
   - result_id: result-o1-v1-coverage
     node_id: evidence-o1-v1-coverage
     title: V1 结论：覆盖率不足，未评估模型能力
@@ -159,6 +459,69 @@ results:
       - Atlas 不重算 score、model、backtest、weight 或 promotion。
 
 attributions:
+  - attribution_id: attr-restart-oos-limits-expansion
+    result_id: result-restart-r2
+    source_node_id: evidence-restart-r1
+    direction: CONTRADICTS
+    explanation: 20 reject + 20 review-required test folds 与 legacy-only selection boundary 反对把该结果升级为可扩展策略证据。
+    assertion_kind: MODEL_RESULT
+    source_ref_ids: [restart-r0-r2-closeout]
+  - attribution_id: attr-restart-incomplete-evidence
+    result_id: result-restart-r2
+    source_node_id: stop-restart-expansion
+    direction: CONTRADICTS
+    explanation: event_risk_high=15<20、20d/60d maturity=0 和 5 个 archive gaps 共同限制继续研究的合法范围。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [restart-r0-r2-closeout]
+  - attribution_id: attr-qld-implementation-benefit
+    result_id: result-qld-evaluation
+    source_node_id: evidence-qld-evaluation
+    direction: SUPPORTS
+    explanation: 更低的外部 turnover、cost drag 与接近 2x 的 realized beta 支持把 QLD 作为实现工具继续审阅。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [qld-universe-evaluation]
+  - attribution_id: attr-qld-risk-and-dq-limit
+    result_id: result-qld-evaluation
+    source_node_id: blocker-qld-canonical-dq
+    direction: MIXED
+    explanation: 高 drawdown、跨 cadence/slice mixed evidence 与 canonical DQ FAIL 限制该结果，不能推出自动选择或风险更低。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [qld-universe-evaluation]
+  - attribution_id: attr-qld-owner-approves-role
+    result_id: result-qld-owner-role
+    source_node_id: decision-qld-role
+    direction: SUPPORTS
+    explanation: Owner 决策只支持 role-limited implementation 身份，不改变 primary action universe。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [qld-universe-evaluation]
+  - attribution_id: attr-qld-dq-blocks-automation
+    result_id: result-qld-owner-role
+    source_node_id: blocker-qld-canonical-dq
+    direction: CONTRADICTS
+    explanation: canonical DQ strict PASS 尚未取得，因此 automatic selection、shadow、production 与 broker 均继续关闭。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [qld-universe-evaluation]
+  - attribution_id: attr-label-scoped-receipt-supports
+    result_id: result-label-foundation
+    source_node_id: stage-label-foundation
+    direction: SUPPORTS
+    explanation: Scoped QQQ/SPY/SGOV capability receipt 与 content-derived validator 支持 label package 可重建。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [label-foundation]
+  - attribution_id: attr-label-global-dq-limits
+    result_id: result-label-foundation
+    source_node_id: stage-label-foundation
+    direction: CONTRADICTS
+    explanation: Global canonical DQ FAIL 阻止把 scoped label readiness 扩大为全局数据、模型或策略 readiness。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [label-foundation]
+  - attribution_id: attr-owner-selects-o1-target
+    result_id: result-target-redesign
+    source_node_id: stage-target-redesign
+    direction: SUPPORTS
+    explanation: Owner 在新 result read 前选择 O1 single target 并冻结 numeric policy，使后续 audit 可被证伪但不会自动启动。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [target-redesign]
   - attribution_id: attr-coverage-blocked-v1
     result_id: result-o1-v1-coverage
     source_node_id: evidence-o1-v1-coverage
@@ -196,3 +559,13 @@ glossary:
     plain_language: 在训练与测试之间留出隔离区，降低未来信息泄漏风险。
   - term: known_at / available_at
     plain_language: 信息被知道的时间与系统真正可取得它的时间，两者都必须满足 cutoff。
+  - term: global DQ / scoped DQ
+    plain_language: Global DQ 检查整套 canonical 数据；scoped DQ 只证明某个预先冻结 consumer 的必要子集可用，不能向外复用。
+  - term: legacy comparison
+    plain_language: 为理解历史而保留的对照窗口；它不能替代当前 2021-02-22 primary research window。
+  - term: OOS
+    plain_language: Out-of-Sample；在未参与选择或拟合的数据上评估。若 selection 与 holdout 重叠，就不能声称无偏 OOS。
+  - term: role-limited implementation
+    plain_language: 只允许在上游决策已经形成后比较执行工具，不赋予该工具独立 signal、strategy 或自动配置权。
+  - term: NOT_EVALUATED
+    plain_language: 研究在进入能力测试前已停止，因此既不能说模型有效，也不能说模型无效。

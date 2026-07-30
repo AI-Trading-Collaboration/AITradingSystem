@@ -24,6 +24,7 @@ def test_renderer_exposes_plain_language_research_sections() -> None:
     html = render_atlas_html(_bundle())
     for expected in (
         "研究主线",
+        "研究全景",
         "实际结果与归因",
         "证据来源与限制",
         "金融研究术语表",
@@ -31,6 +32,11 @@ def test_renderer_exposes_plain_language_research_sections() -> None:
         "规则判断",
         "Owner 决策",
         "不是策略 PASS",
+        "主线 A：历史研究重启与证据闭合",
+        "主线 B：QLD 工具角色评估",
+        "主线 C：Decision target 到 O1 capability",
+        "主线 D：O1 当前结论与未来 re-entry",
+        "V1.1 不声称覆盖全部历史研究",
     ):
         assert expected in html
     assert "<script" not in html

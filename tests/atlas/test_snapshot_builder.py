@@ -23,10 +23,11 @@ def test_canonical_registry_builds_closed_deterministic_snapshot() -> None:
     )
     assert first.snapshot.canonical_json_bytes() == (second.snapshot.canonical_json_bytes())
     assert first.snapshot.snapshot_id == second.snapshot.snapshot_id
-    assert len(first.snapshot.nodes) == 7
-    assert len(first.snapshot.edges) == 6
-    assert len(first.snapshot.results) == 3
-    assert len(first.snapshot.attributions) == 3
+    assert len(first.snapshot.sources) == 8
+    assert len(first.snapshot.nodes) == 21
+    assert len(first.snapshot.edges) == 22
+    assert len(first.snapshot.results) == 8
+    assert len(first.snapshot.attributions) == 12
 
 
 def test_snapshot_keeps_research_status_separate_from_validation_pass() -> None:
@@ -37,6 +38,9 @@ def test_snapshot_keeps_research_status_separate_from_validation_pass() -> None:
     results = {item.result_id: item for item in bundle.snapshot.results}
     assert results["result-o1-v1-coverage"].raw_status is CanonicalStatus.BLOCKED
     assert results["result-o1-v2-policy"].raw_status is CanonicalStatus.NOT_DUE
+    assert results["result-restart-r2"].display_status is CanonicalStatus.LIMITED
+    assert results["result-qld-evaluation"].display_status is CanonicalStatus.LIMITED
+    assert results["result-label-foundation"].display_status is CanonicalStatus.LIMITED
     assert results["result-atlas-contract"].raw_status is CanonicalStatus.PASS
     assert "不是策略 PASS" in results["result-atlas-contract"].reader_summary
     assert not any(item.investment_facing for item in results.values())
@@ -70,3 +74,6 @@ def test_snapshot_exposes_exact_primary_and_requested_windows() -> None:
     assert source_map["o1-v1-policy"].evaluated_end.isoformat() == "2026-07-24"
     assert source_map["o1-v2-policy"].requested_end.isoformat() == "2027-01-29"
     assert source_map["o1-v2-policy"].evaluated_end.isoformat() == "2027-01-22"
+    assert source_map["restart-r0-r2-closeout"].legacy_history_partial
+    assert not source_map["qld-universe-evaluation"].data_quality_ready
+    assert not source_map["label-foundation"].data_quality_ready

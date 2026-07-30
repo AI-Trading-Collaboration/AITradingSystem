@@ -1,0 +1,107 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
+  task_id_sha256: 26f0dd3ed99948702f1063d42115a166aa00a991edb5fa020e0f6c648d3c49fd
+task_record:
+  task_id: TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
+  title: null
+  domain: Publishing & Experience / Atlas canonical research source coverage expansion
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: knowledge/reporting/UX owner：按 requirement 冻结 source inventory，扩展 Atlas
+    registry 与多 campaign regression；后续 diff/问答仍另立任务
+  requirement_refs:
+  - docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md`。当前无实现
+    blocker；只读取8份 tracked Git authority，禁止 runtime/cache/external data 与任何 empirical
+    action。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 覆盖历史研究重启、QLD role、label foundation、target redesign、O1 current/future四条主线；legacy
+      window、scoped/global DQ、NOT_EVALUATED与inactive边界显式；exact commit/SHA lineage、deterministic
+      static HTML、no-recompute/no-write、focused/formal PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 198bb800014d602ebab0eaf3b98ae0d9a3212a2186facb92bd916bf1d50a4ac7
+  cell_count: 8
+  all_cells:
+  - TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
+  - Publishing & Experience / Atlas canonical research source coverage expansion
+  - P1
+  - IN_PROGRESS
+  - knowledge/reporting/UX owner：按 requirement 冻结 source inventory，扩展 Atlas registry
+    与多 campaign regression；后续 diff/问答仍另立任务
+  - 详见 `docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md`。当前无实现
+    blocker；只读取8份 tracked Git authority，禁止 runtime/cache/external data 与任何 empirical
+    action。
+  - 覆盖历史研究重启、QLD role、label foundation、target redesign、O1 current/future四条主线；legacy
+    window、scoped/global DQ、NOT_EVALUATED与inactive边界显式；exact commit/SHA lineage、deterministic
+    static HTML、no-recompute/no-write、focused/formal PASS。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2468:2026-07-30:advance_atlas_canonical_source_coverage_v1_1`；先扩
+    canonical coverage，再做 cross-snapshot diff/带引用问答；`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1|Publishing & Experience
+    / Atlas canonical research source coverage expansion|P1|IN_PROGRESS|knowledge/reporting/UX
+    owner：按 requirement 冻结 source inventory，扩展 Atlas registry 与多 campaign regression；后续
+    diff/问答仍另立任务|详见 `docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md`。当前无实现
+    blocker；只读取8份 tracked Git authority，禁止 runtime/cache/external data 与任何 empirical
+    action。|覆盖历史研究重启、QLD role、label foundation、target redesign、O1 current/future四条主线；legacy
+    window、scoped/global DQ、NOT_EVALUATED与inactive边界显式；exact commit/SHA lineage、deterministic
+    static HTML、no-recompute/no-write、focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2468:2026-07-30:advance_atlas_canonical_source_coverage_v1_1`；先扩
+    canonical coverage，再做 cross-snapshot diff/带引用问答；`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-198bb800014d602ebab0eaf3
+  task_id: TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: knowledge/reporting/UX owner：按 requirement 冻结 source inventory，扩展
+      Atlas registry 与多 campaign regression；后续 diff/问答仍另立任务
+    notes: 2026-07-30：Owner token=`owner_decision:TRADING-2468:2026-07-30:advance_atlas_canonical_source_coverage_v1_1`；先扩
+      canonical coverage，再做 cross-snapshot diff/带引用问答；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:198bb800014d602ebab0eaf3b98ae0d9a3212a2186facb92bd916bf1d50a4ac7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
+  - Publishing & Experience / Atlas canonical research source coverage expansion
+  - P1
+  - IN_PROGRESS
+  - knowledge/reporting/UX owner：按 requirement 冻结 source inventory，扩展 Atlas registry
+    与多 campaign regression；后续 diff/问答仍另立任务
+  - 详见 `docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md`。当前无实现
+    blocker；只读取8份 tracked Git authority，禁止 runtime/cache/external data 与任何 empirical
+    action。
+  - 覆盖历史研究重启、QLD role、label foundation、target redesign、O1 current/future四条主线；legacy
+    window、scoped/global DQ、NOT_EVALUATED与inactive边界显式；exact commit/SHA lineage、deterministic
+    static HTML、no-recompute/no-write、focused/formal PASS。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2468:2026-07-30:advance_atlas_canonical_source_coverage_v1_1`；先扩
+    canonical coverage，再做 cross-snapshot diff/带引用问答；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md
+  terminal: false
+  raw_row_sha256: 198bb800014d602ebab0eaf3b98ae0d9a3212a2186facb92bd916bf1d50a4ac7
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 340ed6c6d2c9d684eee1233ded2b5048e9438c1cc275c6d66a4dfbc0a150b1a7

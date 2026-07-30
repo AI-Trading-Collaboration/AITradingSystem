@@ -2051,6 +2051,12 @@ YYYY-MM-DD: 从 <旧状态> 改为 <新状态>，原因：<触发条件、实现
 |---|---|---|---|---|---|---|---|
 |TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE|Strategy Style Discovery / Owner-approved inactive O1 calendar re-entry policy freeze|P0|BASELINE_DONE|strategy research owner：保持 inactive；如需 2027-02-01 之后真实 coverage，先取得新的独立 Owner token、登记新任务并重新走 data/DQ/PIT/one-look gate|详见 `docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md`。冻结A+D、`2027-02-01`、requested/evaluated=`2027-01-29/2027-01-22`、fixed non-rolling 12-month single look和exact vintage identity rule；所有empirical flags保持false。|policy无`NOT_SELECTED`且activation=false；V1 immutable hashes exact绑定；wrong date/vintage/look/PIT/retry/resume/overwrite/post-result drift fail closed；deterministic serialization；不读取retained runtime evidence；focused/formal PASS；first stop在任何真实data/DQ/coverage/result read前。|2026-07-30：Owner token=`owner_decision:TRADING-2467:2026-07-30:authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1`。canonical validator=`PASS/error_count=0`，lane focused=`40 passed`、combined=`63 passed`；final integration=`3062442c7…`，首次 FAIL 与 parent-bound PASS evidence 已迁移且临时 worktree closeout audit PASS；任务转`BASELINE_DONE`，不授权future coverage，`production_effect=none`、`broker_action=none`。|
 
+## TRADING-2468 Atlas Canonical Source Coverage V1.1
+
+|ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
+|---|---|---|---|---|---|---|---|
+|TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1|Publishing & Experience / Atlas canonical research source coverage expansion|P1|IN_PROGRESS|knowledge/reporting/UX owner：按 requirement 冻结 source inventory，扩展 Atlas registry 与多 campaign regression；后续 diff/问答仍另立任务|详见 `docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md`。当前无实现 blocker；只读取8份 tracked Git authority，禁止 runtime/cache/external data 与任何 empirical action。|覆盖历史研究重启、QLD role、label foundation、target redesign、O1 current/future四条主线；legacy window、scoped/global DQ、NOT_EVALUATED与inactive边界显式；exact commit/SHA lineage、deterministic static HTML、no-recompute/no-write、focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2468:2026-07-30:advance_atlas_canonical_source_coverage_v1_1`；先扩 canonical coverage，再做 cross-snapshot diff/带引用问答；`production_effect=none`、`broker_action=none`。|
+
 ## DEVX-007 Web Pro Git Strategy Planning Skill
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|

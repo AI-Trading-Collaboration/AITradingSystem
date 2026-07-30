@@ -11,6 +11,7 @@ from ai_trading_system.contracts.strategy_research_explorer import (
     AssertionKind,
     AttributionDirection,
     ResearchAttribution,
+    ResearchNodeKind,
     ResearchPathNode,
     ResearchResultCard,
 )
@@ -61,11 +62,20 @@ def render_atlas_html(bundle: AtlasExplorerBundle) -> str:
     for item in snapshot.attributions:
         attribution_map.setdefault(item.result_id, []).append(item)
     source_map = {item.source_ref_id: item for item in snapshot.sources}
-    blocked_count = sum(item.display_status is CanonicalStatus.BLOCKED for item in snapshot.results)
-    pending_count = sum(
-        item.display_status in (CanonicalStatus.NOT_DUE, CanonicalStatus.DUE)
+    campaigns = tuple(
+        item for item in snapshot.nodes if item.node_kind is ResearchNodeKind.CAMPAIGN
+    )
+    attention_count = sum(
+        item.display_status
+        in (
+            CanonicalStatus.LIMITED,
+            CanonicalStatus.BLOCKED,
+            CanonicalStatus.NOT_DUE,
+            CanonicalStatus.DUE,
+        )
         for item in snapshot.results
     )
+    campaign_cards = "\n".join(_render_campaign(item) for item in campaigns)
     node_cards = "\n".join(
         _render_node(index, node) for index, node in enumerate(snapshot.nodes, start=1)
     )
@@ -205,6 +215,18 @@ def render_atlas_html(bundle: AtlasExplorerBundle) -> str:
     .path {{
       position: relative; display: grid; gap: .85rem; margin-top: 1.2rem;
     }}
+    .campaign-grid {{
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem; margin-top: 1.2rem;
+    }}
+    .campaign-card {{
+      border: 1px solid var(--line); border-top: 4px solid var(--blue);
+      border-radius: .85rem; background: var(--surface); box-shadow: var(--shadow);
+      padding: 1rem 1.1rem;
+    }}
+    .campaign-card h3 {{ margin: 0 0 .35rem; font-size: 1.06rem; }}
+    .campaign-card p {{ margin: .35rem 0 .8rem; color: #475673; }}
+    .campaign-meta {{ display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }}
     .path::before {{
       content: ""; position: absolute; left: 1.27rem; top: 1.5rem; bottom: 1.5rem;
       width: 2px; background: #b9c8dc;
@@ -257,6 +279,7 @@ def render_atlas_html(bundle: AtlasExplorerBundle) -> str:
       .layout {{ grid-template-columns: 1fr; }}
       nav {{ position: static; }}
       nav a {{ display: inline-block; }}
+      .campaign-grid {{ grid-template-columns: 1fr; }}
       .glossary {{ grid-template-columns: 1fr; }}
     }}
     @media print {{
@@ -275,16 +298,17 @@ def render_atlas_html(bundle: AtlasExplorerBundle) -> str:
     <p class="hero-copy">把复杂的策略研究拆成一条可追溯主线：研究了什么、看到了什么、为什么停止，以及下一步何时才合法。</p>
     <p class="notice"><strong>阅读边界：</strong>{escape(bundle.reader_notice)}</p>
     <div class="metrics" aria-label="页面摘要">
+      <div class="metric"><strong>{len(campaigns)}</strong><span>代表性研究主线</span></div>
       <div class="metric"><strong>{len(snapshot.nodes)}</strong><span>研究路径节点</span></div>
       <div class="metric"><strong>{len(snapshot.results)}</strong><span>实际结果卡</span></div>
-      <div class="metric"><strong>{blocked_count}</strong><span>已阻断结果</span></div>
-      <div class="metric"><strong>{pending_count}</strong><span>尚未到期 / 待处理</span></div>
+      <div class="metric"><strong>{attention_count}</strong><span>受限 / 阻断 / 待处理</span></div>
     </div>
   </header>
   <div class="layout">
     <nav aria-label="页内导航">
       <strong>快速定位</strong>
       <a href="#how-to-read">如何阅读</a>
+      <a href="#overview">研究全景</a>
       <a href="#mainline">研究主线</a>
       <a href="#results">结果与归因</a>
       <a href="#relations">关系表</a>
@@ -296,6 +320,11 @@ def render_atlas_html(bundle: AtlasExplorerBundle) -> str:
         <h2>先分清“谁在说话”</h2>
         <p class="section-intro">相同一句话如果来源不同，可信边界也不同。Atlas 不把解释写成事实，也不把验证 PASS 写成策略 PASS。</p>
         <ul class="legend">{assertion_legend}</ul>
+      </section>
+      <section id="overview">
+        <h2>研究全景</h2>
+        <p class="section-intro">先看四条代表性主线的当前状态，再进入下方逐节点证据链。V1.1 不声称覆盖全部历史研究。</p>
+        <div class="campaign-grid">{campaign_cards}</div>
       </section>
       <section id="mainline">
         <h2>研究主线</h2>
@@ -382,6 +411,18 @@ def _render_node(index: int, node: ResearchPathNode) -> str:
         f"{_assertion_badge(node.assertion_kind)}"
         f'<span class="muted">node <code>{escape(node.node_id)}</code></span>'
         "</div></div></article>"
+    )
+
+
+def _render_campaign(node: ResearchPathNode) -> str:
+    return (
+        '<article class="campaign-card">'
+        f"<h3>{escape(node.title)}</h3>"
+        f"<p>{escape(node.summary)}</p>"
+        '<div class="campaign-meta">'
+        f"{_status_badge(node.raw_status)}"
+        f"{_assertion_badge(node.assertion_kind)}"
+        "</div></article>"
     )
 
 

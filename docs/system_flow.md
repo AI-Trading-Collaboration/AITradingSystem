@@ -2,10 +2,14 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
-TRADING-2466 Atlas 在现有研究结果之上增加只读解释层，不进入数据、模型、评分、回测或交易
-计算路径。`config/atlas/source_registry.yaml` 只允许 Git-authoritative、checksum-bound source；
+TRADING-2466 / TRADING-2468 Atlas 在现有研究结果之上增加只读解释层，不进入数据、模型、评分、
+回测或交易计算路径。V1.1 只覆盖四条代表性路径：历史 R0-R2 evidence closure、QLD role-limited
+implementation、decision-target / label foundation，以及 O1 current/future；它不是全部历史研究的
+完成性声明。`config/atlas/source_registry.yaml` 只允许 Git-authoritative、checksum-bound source；
 `AtlasSourceProjector` 绑定 exact commit、path、content SHA、window、DQ/context readiness 与 limitation，
-再由 `strategy_research_explorer_snapshot.v1` 形成 closed graph/result/attribution references。
+再由 `strategy_research_explorer_snapshot.v1` 形成 closed graph/result/attribution references。历史
+R0-R2 仅作 legacy comparison；QLD 与 label foundation 都显式保留 scoped readiness 和 global DQ FAIL，
+不得把局部可用性升级为全局数据、模型或生产就绪。
 独立 validator 重建 snapshot identity 与 canonical JSON，拒绝 unverified context、investment-facing
 result、source traversal、source drift 和 read-only boundary drift；static renderer 只输出本地
 `index.html`、`snapshot.json`、`validation.json`，不执行 source command、不重算 score/gate/model/
@@ -18,7 +22,10 @@ V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再�
 
 ```mermaid
 flowchart LR
-    V1["O1 V1 closed policy<br/>coverage blocked / model NOT_EVALUATED"] --> SRC["Atlas source registry<br/>Git authority allowlist"]
+    HIST["R0-R2 evidence closure<br/>legacy comparison / evidence incomplete"] --> SRC["Atlas V1.1 source registry<br/>8 exact Git sources / 4 campaigns"]
+    QLD["QLD role evaluation<br/>scoped warning / global DQ FAIL"] --> SRC
+    LABEL["Label foundation + target redesign<br/>scoped ready / no model"] --> SRC
+    V1["O1 V1 closed policy<br/>coverage blocked / model NOT_EVALUATED"] --> SRC
     V2["O1 V2 inactive calendar policy<br/>no run authorization"] --> SRC
     SRC --> PROJ["Source projection<br/>commit + SHA + window + DQ/context"]
     PROJ --> SNAP["Deterministic explorer snapshot<br/>path + result + attribution"]

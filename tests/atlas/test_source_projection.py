@@ -41,10 +41,13 @@ def test_projected_sources_bind_exact_commit_and_content_sha() -> None:
         registry=registry,
         exact_commit=EXACT_COMMIT,
     )
-    assert len(sources) == 3
+    assert len(sources) == 8
     assert len({item.source_ref_id for item in sources}) == len(sources)
     assert all(item.exact_commit == EXACT_COMMIT for item in sources)
-    assert all(item.source_kind is ExplorerSourceKind.GIT_AUTHORITY for item in sources)
+    assert {item.source_kind for item in sources} == {
+        ExplorerSourceKind.GIT_AUTHORITY,
+        ExplorerSourceKind.PUBLISHED_ARTIFACT,
+    }
     for item in sources:
         assert (
             item.content_sha256
