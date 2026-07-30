@@ -283,3 +283,18 @@ no production or broker resource
   `contracts/__init__.py`、task 932 与新 inventory identity；这不是可绕过的测试失败。
   先冻结本 source commit，再以其 exact Git blob 追加 TRADING-2469 contract-wave authority，
   旧 compatibility bytes 保持不变；authority PASS 后 consumer 才可开始。
+- 2026-07-30：S1 source commit=`2398b144ad886db51a29ef4fbc6e5e2d555b0a66`，
+  append-only contract-wave authority commit=`2310627e3`；compatibility/deprecation
+  authority=`161 passed`，contract=`16 passed`。consumer 从该 exact head 开始。
+- 2026-07-30：S2/S3 consumer 与实际 V1→V1.1 preview 已完成。diff
+  `d5aa7e38ae23693682892aa91fc312f41a2246572b432b0483ded4412ea8005f`，
+  共 55 条变化：50 added、1 removed、4 changed；2 semantic、2 lineage-only、
+  51 structural。五类 before→after 为 SOURCE 3→8、NODE 7→21、EDGE 6→22、
+  RESULT 3→8、ATTRIBUTION 3→12。focused consumer/contract=`19 passed`；
+  in-app browser 首屏、完整 DOM、1280px no-horizontal-overflow、no script/form/external
+  与 `<details open>` lineage section 检查 PASS；临时 preview server 已停止。
+  实际 retained inputs 连续原地 double-build 与既存 canonical bytes 三方一致；
+  `index.html/diff.json/validation.json/input_receipt.json` 均 byte-identical。
+  Retained output：
+  `outputs/atlas/strategy_research_diff/trading_2469_v1/`，receipt id
+  `8043261428a57e5231fb0d9f4e010adefa675c9894338fd5086855504f819228`。
