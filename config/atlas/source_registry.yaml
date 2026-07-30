@@ -1,0 +1,223 @@
+schema_version: atlas_source_registry.v1
+registry_id: TRADING_2466_ATLAS_MVP_SOURCE_REGISTRY_V1
+title: Atlas 策略研究路径与结果归因
+as_of: "2026-07-30T00:00:00+09:00"
+primary_research_start: "2021-02-22"
+reader_notice: 本页是研究导航与证据索引，不是投资建议，也不会计算仓位或发起交易。
+
+sources:
+  - source_ref_id: task-register
+    source_kind: GIT_AUTHORITY
+    source_path: docs/task_register.md
+    artifact_identity: task_register:active
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: 任务登记只说明治理状态，不是研究结果。
+  - source_ref_id: o1-v1-policy
+    source_kind: GIT_AUTHORITY
+    source_path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+    artifact_identity: policy:TRADING_2464_O1_CAPABILITY_AUDIT_V1
+    requested_start: "2021-02-22"
+    requested_end: "2026-07-27"
+    evaluated_start: "2021-02-22"
+    evaluated_end: "2026-07-24"
+    research_context_complete: true
+    data_quality_ready: true
+    legacy_history_partial: false
+    limitation: O1 V1 在模型训练前因 mandatory coverage floor 不足而关闭，不能推出模型能力结论。
+  - source_ref_id: o1-v1-route-decision
+    source_kind: GIT_AUTHORITY
+    source_path: docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+    artifact_identity: requirement:TRADING-2465
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: 本文件记录路线决策与历史 proposal，不授权新的实证运行。
+  - source_ref_id: o1-v2-policy
+    source_kind: GIT_AUTHORITY
+    source_path: config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml
+    artifact_identity: policy:TRADING_2467_O1_BLIND_CALENDAR_REENTRY_POLICY_V1
+    requested_start: "2021-02-22"
+    requested_end: "2027-01-29"
+    evaluated_start: "2021-02-22"
+    evaluated_end: "2027-01-22"
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: 这是 Owner-approved inactive policy slot；真实 coverage 仍需未来独立授权。
+  - source_ref_id: atlas-requirement
+    source_kind: GIT_AUTHORITY
+    source_path: docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
+    artifact_identity: requirement:TRADING-2466
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: Atlas 只投影既有证据，不生成新的策略结论。
+  - source_ref_id: o1-v2-requirement
+    source_kind: GIT_AUTHORITY
+    source_path: docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
+    artifact_identity: requirement:TRADING-2467
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: false
+    limitation: validator PASS 只说明 policy 合同有效，不等于 coverage 或策略 PASS。
+
+nodes:
+  - node_id: program-strategy-research
+    node_kind: PROGRAM
+    title: 策略研究主线
+    summary: 从研究问题、证据门禁到 Owner 决策，所有步骤都保留来源与停止边界。
+    assertion_kind: RESEARCHER_INTERPRETATION
+    source_ref_ids: [atlas-requirement]
+    raw_status: RUNNING
+  - node_id: hypothesis-o1-relative-opportunity
+    node_kind: HYPOTHESIS
+    title: O1：相对机会差是否具备可研究信号
+    summary: 先验证数据质量与覆盖率，再决定是否允许训练模型。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [o1-v1-policy]
+    raw_status: BLOCKED
+  - node_id: evidence-o1-v1-coverage
+    node_kind: EVIDENCE
+    title: V1 coverage-only 审计
+    summary: DQ 通过，但四个 mandatory coverage floors 未全部满足。
+    assertion_kind: DATA_FACT
+    source_ref_ids: [o1-v1-policy]
+    raw_status: BLOCKED
+  - node_id: stop-o1-v1
+    node_kind: STOP
+    title: V1 在模型训练前停止
+    summary: 没有训练模型、没有预测、没有生成投资指标，能力状态保持 NOT_EVALUATED。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [o1-v1-policy]
+    raw_status: BLOCKED
+  - node_id: decision-o1-route
+    node_kind: DECISION
+    title: Owner 选择 A+D 路线
+    summary: 采用 blind calendar re-entry，并建设通用 evidence infrastructure。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [o1-v1-route-decision, o1-v2-policy]
+    raw_status: PASS
+  - node_id: experiment-o1-v2
+    node_kind: EXPERIMENT
+    title: V2 calendar re-entry（尚未到期且未获运行授权）
+    summary: 最早 2027-02-01 才能重新向 Owner 申请一次 coverage look；日期不会自动触发运行。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [o1-v2-policy, o1-v2-requirement]
+    raw_status: NOT_DUE
+  - node_id: product-atlas
+    node_kind: ARTIFACT
+    title: Atlas 只读研究导航
+    summary: 用同一证据合同展示研究路径、结果、归因、局限和下一合法动作。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [atlas-requirement]
+    raw_status: PASS
+
+edges:
+  - edge_id: edge-program-tests-o1
+    edge_kind: TESTS
+    from_node_id: program-strategy-research
+    to_node_id: hypothesis-o1-relative-opportunity
+    label: 当前研究问题
+  - edge_id: edge-o1-produced-coverage
+    edge_kind: PRODUCED
+    from_node_id: hypothesis-o1-relative-opportunity
+    to_node_id: evidence-o1-v1-coverage
+    label: 先做 coverage-only
+  - edge_id: edge-coverage-blocks-v1
+    edge_kind: BLOCKS
+    from_node_id: evidence-o1-v1-coverage
+    to_node_id: stop-o1-v1
+    label: mandatory floor 不足
+  - edge_id: edge-stop-decided-route
+    edge_kind: DECIDED_BY
+    from_node_id: stop-o1-v1
+    to_node_id: decision-o1-route
+    label: Owner 选择后续路线
+  - edge_id: edge-route-next-v2
+    edge_kind: NEXT_STEP
+    from_node_id: decision-o1-route
+    to_node_id: experiment-o1-v2
+    label: inactive calendar re-entry
+  - edge_id: edge-program-contains-atlas
+    edge_kind: CONTAINS
+    from_node_id: program-strategy-research
+    to_node_id: product-atlas
+    label: 研究导航界面
+
+results:
+  - result_id: result-o1-v1-coverage
+    node_id: evidence-o1-v1-coverage
+    title: V1 结论：覆盖率不足，未评估模型能力
+    raw_status: BLOCKED
+    display_status: BLOCKED
+    reader_summary: 四项 mandatory coverage floor 未全部通过，因此研究在训练模型前机械停止。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [o1-v1-policy]
+    investment_facing: false
+    limitations:
+      - 不能据此断言策略有效或无效。
+      - 不能把 DQ PASS 解释成 coverage PASS。
+  - result_id: result-o1-v2-policy
+    node_id: experiment-o1-v2
+    title: V2 状态：政策已冻结，运行未授权
+    raw_status: NOT_DUE
+    display_status: NOT_DUE
+    reader_summary: 2027-02-01 只开放再次申请 Owner review 的资格，不会自动读取 coverage。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [o1-v2-policy, o1-v2-requirement]
+    investment_facing: false
+    limitations:
+      - future data vintage 尚未 materialize。
+      - 唯一 coverage look 尚未获独立 Owner token。
+  - result_id: result-atlas-contract
+    node_id: product-atlas
+    title: Atlas 合同状态：只读投影已定义
+    raw_status: PASS
+    display_status: PASS
+    reader_summary: 这里的 PASS 仅表示展示合同与 lineage 校验通过，不是策略 PASS。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [atlas-requirement]
+    investment_facing: false
+    limitations:
+      - Atlas 不重算 score、model、backtest、weight 或 promotion。
+
+attributions:
+  - attribution_id: attr-coverage-blocked-v1
+    result_id: result-o1-v1-coverage
+    source_node_id: evidence-o1-v1-coverage
+    direction: CONTRADICTS
+    explanation: mandatory coverage floors 的失败阻止进入模型训练，但不构成模型无能力的证据。
+    assertion_kind: RULE_JUDGMENT
+    source_ref_ids: [o1-v1-policy]
+  - attribution_id: attr-owner-supports-v2-policy
+    result_id: result-o1-v2-policy
+    source_node_id: decision-o1-route
+    direction: SUPPORTS
+    explanation: Owner 决策支持冻结 V2 policy slot，但没有授权未来 empirical run。
+    assertion_kind: OWNER_DECISION
+    source_ref_ids: [o1-v1-route-decision, o1-v2-policy]
+  - attribution_id: attr-atlas-neutral-to-strategy
+    result_id: result-atlas-contract
+    source_node_id: program-strategy-research
+    direction: NEUTRAL
+    explanation: Atlas 改善可读性与追溯性，不改变任何策略结果或投资结论。
+    assertion_kind: RESEARCHER_INTERPRETATION
+    source_ref_ids: [atlas-requirement]
+
+glossary:
+  - term: DQ
+    plain_language: Data Quality；输入数据是否完整、新鲜、无异常的质量门禁。
+  - term: PIT
+    plain_language: Point-in-Time；只使用当时已经知道、已经可获得的信息。
+  - term: coverage
+    plain_language: 数据是否足够覆盖必要样本、市场状态与事件，决定能否合法进入模型训练。
+  - term: ESS
+    plain_language: Effective Sample Size；考虑样本相关性后，真正提供独立信息的等效样本量。
+  - term: fold
+    plain_language: 按时间切分的一组训练与测试区间，用来避免只在单一时期得出结论。
+  - term: purge / embargo
+    plain_language: 在训练与测试之间留出隔离区，降低未来信息泄漏风险。
+  - term: known_at / available_at
+    plain_language: 信息被知道的时间与系统真正可取得它的时间，两者都必须满足 cutoff。
