@@ -13,16 +13,15 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 builder/validator/static
-    renderer
+  next_owner: knowledge/reporting/UX owner：后续另立带引用问答与 interactive API 任务；本任务仅维护 read-only
+    deterministic diff V1
   requirement_refs:
   - docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。依赖
-    TRADING-2466 MVP 与 TRADING-2468 V1.1 retained snapshots；当前无外部 blocker。公共 contract
-    未冻结前 consumer wave 不得开始。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。V1
+    无实现 blocker；后续任务须独立冻结引用、查询与 API contract，不得把本任务扩张为 mutation 或 empirical action。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: stable-ID add/remove/change、semantic/lineage-only/structural 分类、entity hashes/changed
@@ -31,39 +30,39 @@ task_record:
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 138273774c823b0185d5529af39d466d17568f206da1b987d93bff796f66b2d9
+  row_sha256: 015650882dc6f7a8fcd36d2d6fcfeda256bcb3ba284f8dedaf12066d77d789d5
   cell_count: 8
   all_cells:
   - TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1
   - Publishing & Experience / Atlas deterministic cross-snapshot change explanation
   - P1
-  - IN_PROGRESS
-  - knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 builder/validator/static
-    renderer
-  - 详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。依赖 TRADING-2466
-    MVP 与 TRADING-2468 V1.1 retained snapshots；当前无外部 blocker。公共 contract 未冻结前 consumer
-    wave 不得开始。
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：后续另立带引用问答与 interactive API 任务；本任务仅维护 read-only deterministic
+    diff V1
+  - 详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。V1 无实现 blocker；后续任务须独立冻结引用、查询与
+    API contract，不得把本任务扩张为 mutation 或 empirical action。
   - stable-ID add/remove/change、semantic/lineage-only/structural 分类、entity hashes/changed
     fields/summary 可重算、双输入 receipt、deterministic HTML/JSON、tamper fail-closed、no-recompute/no-write、focused/formal
     PASS。
-  - 2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；frozen
-    base=`dd7d8ec0082327d8da7efb4e207870e627d4b5d3`；preview inputs 为 V1 snapshot `ef098be7…`
-    / SHA `1be1f134…` 与 V1.1 snapshot `917c0d38…` / SHA `ca4ea41a…`；`production_effect=none`、`broker_action=none`。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；preview
+    diff=`d5aa7e38…`，55 changes（50 added/1 removed/4 changed；2 semantic/2 lineage-only/51
+    structural）；focused=37、Architecture=809、Contract=276、Integration=995、Reproducibility=24、Full=7832
+    passed（3 skipped/643 warnings）；`production_effect=none`、`broker_action=none`。
   raw_line: '|TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1|Publishing & Experience /
-    Atlas deterministic cross-snapshot change explanation|P1|IN_PROGRESS|knowledge/reporting/UX
-    owner：先完成 serial public contract wave，再实现 builder/validator/static renderer|详见
-    `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。依赖 TRADING-2466
-    MVP 与 TRADING-2468 V1.1 retained snapshots；当前无外部 blocker。公共 contract 未冻结前 consumer
-    wave 不得开始。|stable-ID add/remove/change、semantic/lineage-only/structural 分类、entity
-    hashes/changed fields/summary 可重算、双输入 receipt、deterministic HTML/JSON、tamper fail-closed、no-recompute/no-write、focused/formal
-    PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；frozen
-    base=`dd7d8ec0082327d8da7efb4e207870e627d4b5d3`；preview inputs 为 V1 snapshot `ef098be7…`
-    / SHA `1be1f134…` 与 V1.1 snapshot `917c0d38…` / SHA `ca4ea41a…`；`production_effect=none`、`broker_action=none`。|'
+    Atlas deterministic cross-snapshot change explanation|P1|BASELINE_DONE|knowledge/reporting/UX
+    owner：后续另立带引用问答与 interactive API 任务；本任务仅维护 read-only deterministic diff V1|详见
+    `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。V1 无实现 blocker；后续任务须独立冻结引用、查询与
+    API contract，不得把本任务扩张为 mutation 或 empirical action。|stable-ID add/remove/change、semantic/lineage-only/structural
+    分类、entity hashes/changed fields/summary 可重算、双输入 receipt、deterministic HTML/JSON、tamper
+    fail-closed、no-recompute/no-write、focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；preview
+    diff=`d5aa7e38…`，55 changes（50 added/1 removed/4 changed；2 semantic/2 lineage-only/51
+    structural）；focused=37、Architecture=809、Contract=276、Integration=995、Reproducibility=24、Full=7832
+    passed（3 skipped/643 warnings）；`production_effect=none`、`broker_action=none`。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-138273774c823b0185d5529a
+  event_id: legacy-import-015650882dc6f7a8fcd36d2d
   task_id: TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -73,39 +72,40 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 builder/validator/static
-      renderer
-    notes: 2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；frozen
-      base=`dd7d8ec0082327d8da7efb4e207870e627d4b5d3`；preview inputs 为 V1 snapshot
-      `ef098be7…` / SHA `1be1f134…` 与 V1.1 snapshot `917c0d38…` / SHA `ca4ea41a…`；`production_effect=none`、`broker_action=none`。
+    next_owner: knowledge/reporting/UX owner：后续另立带引用问答与 interactive API 任务；本任务仅维护
+      read-only deterministic diff V1
+    notes: 2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；preview
+      diff=`d5aa7e38…`，55 changes（50 added/1 removed/4 changed；2 semantic/2 lineage-only/51
+      structural）；focused=37、Architecture=809、Contract=276、Integration=995、Reproducibility=24、Full=7832
+      passed（3 skipped/643 warnings）；`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:138273774c823b0185d5529af39d466d17568f206da1b987d93bff796f66b2d9
+  - sha256:015650882dc6f7a8fcd36d2d6fcfeda256bcb3ba284f8dedaf12066d77d789d5
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1
   - Publishing & Experience / Atlas deterministic cross-snapshot change explanation
   - P1
-  - IN_PROGRESS
-  - knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 builder/validator/static
-    renderer
-  - 详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。依赖 TRADING-2466
-    MVP 与 TRADING-2468 V1.1 retained snapshots；当前无外部 blocker。公共 contract 未冻结前 consumer
-    wave 不得开始。
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：后续另立带引用问答与 interactive API 任务；本任务仅维护 read-only deterministic
+    diff V1
+  - 详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。V1 无实现 blocker；后续任务须独立冻结引用、查询与
+    API contract，不得把本任务扩张为 mutation 或 empirical action。
   - stable-ID add/remove/change、semantic/lineage-only/structural 分类、entity hashes/changed
     fields/summary 可重算、双输入 receipt、deterministic HTML/JSON、tamper fail-closed、no-recompute/no-write、focused/formal
     PASS。
-  - 2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；frozen
-    base=`dd7d8ec0082327d8da7efb4e207870e627d4b5d3`；preview inputs 为 V1 snapshot `ef098be7…`
-    / SHA `1be1f134…` 与 V1.1 snapshot `917c0d38…` / SHA `ca4ea41a…`；`production_effect=none`、`broker_action=none`。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；preview
+    diff=`d5aa7e38…`，55 changes（50 added/1 removed/4 changed；2 semantic/2 lineage-only/51
+    structural）；focused=37、Architecture=809、Contract=276、Integration=995、Reproducibility=24、Full=7832
+    passed（3 skipped/643 warnings）；`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md
   terminal: false
-  raw_row_sha256: 138273774c823b0185d5529af39d466d17568f206da1b987d93bff796f66b2d9
+  raw_row_sha256: 015650882dc6f7a8fcd36d2d6fcfeda256bcb3ba284f8dedaf12066d77d789d5
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: bf993c7ef43f7299e2892be7885bb4af82514478d4c677a10f812164b832532b
+fragment_checksum: 91fe8684416cc23323966cc025fd60a296e7b184e6de5b8e7f7ca342f2e6e5bf

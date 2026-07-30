@@ -35522,3 +35522,206 @@ phase_trading_2469_atlas_cross_snapshot_diff_contract_wave:
     backtest_executed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2469_atlas_cross_snapshot_diff_consumer_wave:
+  schema_version: trading_2469_atlas_cross_snapshot_diff_consumer_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2469-ATLAS-DIFF-CONSUMER-WAVE
+  task_ids:
+  - TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1
+  owner_decisions:
+  - owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1
+  prior_sections_immutability:
+    source_commit: 1adb5cff1667b29733361cfc9d1f2694af146287
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 402c2c009d0547e77bafb27ab25f4df6357f71e4
+    raw_byte_count: 2219877
+    raw_sha256: 8de875c30f9344600cf5efccb1c7505f30de948d4419f9f5d9458c4065360c8c
+    append_offset: 2219877
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/0d/0d9ce11b3a8853cc85db745c94e39d9d29453ccc304cae1ff42316e964dd3404.yaml
+  - registry/development_tasks_shadow_v2/0d/0d9ce11b3a8853cc85db745c94e39d9d29453ccc304cae1ff42316e964dd3404.yaml
+  - src/ai_trading_system/atlas/__init__.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2469-ATLAS-DIFF-CONSUMER-WAVE
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2469_atlas_cross_snapshot_diff_contract_wave
+    current_hash_authority: phase_trading_2469_atlas_cross_snapshot_diff_consumer_wave.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - src/ai_trading_system/atlas/diff_renderer.py
+  - src/ai_trading_system/atlas/diff_validation.py
+  - src/ai_trading_system/atlas/snapshot_diff.py
+  - tests/atlas/test_diff_renderer.py
+  - tests/atlas/test_diff_validation.py
+  - tests/atlas/test_snapshot_diff.py
+  source_delta_paths:
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/0d/0d9ce11b3a8853cc85db745c94e39d9d29453ccc304cae1ff42316e964dd3404.yaml
+  - registry/development_tasks_shadow_v2/0d/0d9ce11b3a8853cc85db745c94e39d9d29453ccc304cae1ff42316e964dd3404.yaml
+  - src/ai_trading_system/atlas/__init__.py
+  - src/ai_trading_system/atlas/diff_renderer.py
+  - src/ai_trading_system/atlas/diff_validation.py
+  - src/ai_trading_system/atlas/snapshot_diff.py
+  - tests/atlas/test_diff_renderer.py
+  - tests/atlas/test_diff_validation.py
+  - tests/atlas/test_snapshot_diff.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  sources:
+  - path: docs/artifact_catalog.md
+    sha256: a02e6a7a83d40eb7e9f209e0a0ca67a5481e65428d842e119dc987ab840a5a8a
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md
+    sha256: b803f273a99a17e33d61a00d1b2ee1a0a8451941bf68e1cfadf2f99534fbae19
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 7665d693537124c6adaf3539d4ee06a3c362887b54d067f400239197b3725c58
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 12304b93d47996180db4566b283ddf7ffe1166e85ff2f28ef490145881b71611
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: ff3c57a809d8f389dc051702f61727d6b8cea2f271dc4c59a57047ae728fb0a8
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 99ea57c974125d79e522a2c1d1f4e41dd75c3badb12530de9b37a0916e40c357
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 7c710b59a9ae0beef4b4baa0473853b4bf446858885673d6d859cf0fe4228f58
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: aa029ab5811e067ed853ec3342d7176d820816bbef63e368d1c8946691afce01
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 6f373ad8229f9651b5f29c08ce059e8b9bb59d7a0d7445d786c6866024884285
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 1812684b6775001fb52c4e6c86909c4563dd33c0cdaa89544270e88d6f2b7aa9
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 2e613413205d0505648b48af4b2b07d7309f0d12448ed2afe5083a23cfcd6ef9
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: 6f7a1403c3bc0370d642d217354d52da4d5358d3efdbd81efc9dacca4ae95009
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/0d/0d9ce11b3a8853cc85db745c94e39d9d29453ccc304cae1ff42316e964dd3404.yaml
+    sha256: 746f92cce7ec0ff5e456ec2241562d8d5cd3c4d5b06f6b938d72ee40c6afe39a
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/0d/0d9ce11b3a8853cc85db745c94e39d9d29453ccc304cae1ff42316e964dd3404.yaml
+    sha256: 86bc415979bb0303bb5772ea28cf0d0df30cd42606a312a70cb6ec91abc0e648
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/__init__.py
+    sha256: 767293506f8fdfc4b5d7637dc895f3e06d53c506d367612358dc986948458994
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/diff_renderer.py
+    sha256: e632e5aad1048a6fe653e1469552b1214672bf3b33f3636aa33f9d98e4e915a3
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/diff_validation.py
+    sha256: e735b61d88dcd45298e6d21a7a2f04716dbd781d3c2eedfa37a5f8328b643b3e
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/snapshot_diff.py
+    sha256: 724b7beee761730f8d0f1cef62a9e2e674aad4f21d157d4b9db2e5f9f3b4d9a3
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_diff_renderer.py
+    sha256: 2dc69349b21e3e8adebc6d715a0ffa966f373c7e9c25c2161bf33ceadbc493eb
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_diff_validation.py
+    sha256: cf924ed874988ebec1ce647e2dc5515c1ca8bf2951686401458b151bfbc7471f
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_snapshot_diff.py
+    sha256: 93a4f7176e1ec1aec6fe0800df114a8bf1699b8a502492c6a51ca940c1ed0d02
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 9c2391b124d3c9e3e907c03e6e22a9e5717c3883a0c7d7bfa33426e90d0efd9b
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 41cd4a8d76acc1f2989c673a489de5ade6e7a20285a5f1ec7007a2e60f6d7442
+    hash_normalization: git_eol_lf
+  implementation:
+    consumer_source_commit: 1adb5cff1667b29733361cfc9d1f2694af146287
+    stable_id_matching_only: true
+    rename_or_fuzzy_inference_allowed: false
+    independent_serialized_validation: true
+    static_html_script_or_form: false
+    snapshot_v1_semantics_changed: false
+    preview_diff_id: d5aa7e38ae23693682892aa91fc312f41a2246572b432b0483ded4412ea8005f
+    preview_receipt_id: 8043261428a57e5231fb0d9f4e010adefa675c9894338fd5086855504f819228
+    preview_change_counts:
+      total: 55
+      added: 50
+      removed: 1
+      changed: 4
+      semantic: 2
+      lineage_only: 2
+      structural: 51
+    task_shadow_source: LEGACY_MARKDOWN_ONLY
+    task_shadow_v2_cutover_performed: false
+  preview_artifacts:
+  - path: outputs/atlas/strategy_research_diff/trading_2469_v1/index.html
+    sha256: c116096e3279eb1443338777967a59805815c10ddaa6686c8b0c08aedc19cea9
+    size_bytes: 45624
+  - path: outputs/atlas/strategy_research_diff/trading_2469_v1/diff.json
+    sha256: 58016ea9dabe8f76ba09aaa234143c5e0c4b489bd28dcada83cb97d5668037fb
+    size_bytes: 25138
+  - path: outputs/atlas/strategy_research_diff/trading_2469_v1/validation.json
+    sha256: 2e8bc67e2684a8ea5c8febd76a507e1ede0b40b736fa2cafb32e884f6be21d70
+    size_bytes: 419
+  - path: outputs/atlas/strategy_research_diff/trading_2469_v1/input_receipt.json
+    sha256: f8fdb30e1bfef2ca6c009526694b1166e1ba3605e39c5cfea9fc1e516817304c
+    size_bytes: 946
+  validation:
+    focused_consumer_contract_deprecation: PASS_37_TESTS
+    ruff: PASS
+    task_registry: PASS_BYTE_IDENTICAL_932_TASKS
+    generated_architecture: PASS_1053_MODULES_1224_TESTS
+    actual_input_double_build: PASS_BYTE_IDENTICAL
+    browser_visual_review: PASS_IAB_1280_NO_HORIZONTAL_OVERFLOW_STATIC
+    compatibility_authority: PASS_162_TESTS
+    architecture: PASS_809_TESTS_ARTIFACT_20260730T161113Z
+    contract: PASS_276_TESTS_ARTIFACT_20260730T161337Z
+    integration: PASS_995_TESTS_643_WARNINGS_ARTIFACT_20260730T161552Z
+    reproducibility: PASS_24_TESTS_ARTIFACT_20260730T161747Z
+    full: PASS_7832_TESTS_3_SKIPPED_643_WARNINGS_ARTIFACT_20260730T161817Z
+    final_tree_architecture: PASS_809_TESTS_ARTIFACT_20260730T164428Z
+    final_tree_contract: PASS_276_TESTS_ARTIFACT_20260730T164428Z
+  safety:
+    snapshot_v1_semantics_changed: false
+    rename_inference_executed: false
+    market_or_cache_read: false
+    investment_conclusion_generated: false
+    data_acquisition_executed: false
+    dq_execution_executed: false
+    model_training_executed: false
+    backtest_executed: false
+    production_effect: none
+    broker_action: none

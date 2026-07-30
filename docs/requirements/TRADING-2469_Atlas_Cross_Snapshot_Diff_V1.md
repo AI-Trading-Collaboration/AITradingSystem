@@ -7,7 +7,7 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
@@ -298,3 +298,11 @@ no production or broker resource
   Retained output：
   `outputs/atlas/strategy_research_diff/trading_2469_v1/`，receipt id
   `8043261428a57e5231fb0d9f4e010adefa675c9894338fd5086855504f819228`。
+- 2026-07-30：consumer source commit=`1adb5cff1667b29733361cfc9d1f2694af146287`；
+  focused consumer/contract/deprecation=`37 passed`，Ruff PASS，
+  task shadow=`932 tasks byte-identical`，DevEx=`1053 modules / 1224 tests PASS`。
+  正式门禁全部通过：Architecture=`809 passed`，Contract=`276 passed`，
+  Integration=`995 passed / 643 warnings`，Reproducibility=`24 passed`，
+  Full=`7832 passed / 3 skipped / 643 warnings`。任务转为 `BASELINE_DONE`；
+  后续带引用问答与 interactive API 必须另立任务，不得借本任务扩张为 mutation、
+  empirical research、production 或 broker action。
