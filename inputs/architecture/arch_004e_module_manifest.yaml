@@ -169,7 +169,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.html_renderer
   path: src/ai_trading_system/atlas/html_renderer.py
-  sha256: 44fc86cab24747505ef24a1ea24eb55426d34fac89283fcecbbda6fef1d3223a
+  sha256: 3f0d9e93d1be0364ee8e4ac3d3ad10d91b0c5945c14456b7cedf1dfe7c93f67f
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

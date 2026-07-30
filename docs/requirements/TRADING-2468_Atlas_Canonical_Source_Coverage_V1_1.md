@@ -7,7 +7,7 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
@@ -227,6 +227,7 @@ docs/artifact_catalog.md
 inputs/architecture/**
 registry/development_tasks_shadow/**
 tests/test_arch_004_refactor_policy.py
+tests/test_arch_004g_deprecation.py
 ```
 
 module claim：
@@ -297,3 +298,20 @@ no production or broker resource
   21个 node、22条 edge、8个 result、12条 attribution 的 registry 与页面实现。focused
   Atlas / contract tests=`28 passed`，Ruff PASS；task-shadow S0/S1/V2 generate + validate PASS，
   task count=`931`、active=`426`、completed=`505`、byte-identical=true。
+- 2026-07-30：Atlas preview 绑定 source commit
+  `f939ac30c2caf36459f27a58c7cc80104c7c6494`，snapshot id=
+  `917c0d388ffbc27ab864b33701625422748d037ac98b16b42be6dfe1bd9331b7`；
+  `index.html` / `snapshot.json` / `validation.json` SHA-256 分别为
+  `1102418bb1c3e99753f465d2a6aaaaf27ed839b2b6636ac18861de6929907c3b`、
+  `ca4ea41acb699405a685d8b0f5722b727ea535b52841e9c55707385f00fc8eac`、
+  `0faf11176cf638e22c2897f829b232c7db2308a2cf29623850d31649d74778f5`。
+- 2026-07-30：append-only compatibility authority=`151 passed`。Architecture 首次外层
+  120 秒预算终止，延长预算后的第一次正式 run 真实发现 deprecation inventory 仍冻结
+  `python_test_file_count=1219`；直接刷新为1220与新 inventory id 后重跑 PASS：
+  Architecture=`807 passed`（`architecture-fitness_20260730T144851Z`）、
+  Contract=`276 passed`（`contract-validation_20260730T145131Z`）、
+  Integration=`995 passed, 642 warnings`（`integration_20260730T145342Z`）、
+  Reproducibility=`24 passed`（`reproducibility_20260730T145446Z`）、
+  Full=`7811 passed, 3 skipped, 644 warnings`（`full_20260730T145524Z`）。
+  V1.1 转 `BASELINE_DONE`；剩余 campaign adapters、cross-snapshot diff、interactive API 与
+  带引用问答继续另立任务，不把本状态解释为全历史覆盖、strategy PASS 或 production ready。
