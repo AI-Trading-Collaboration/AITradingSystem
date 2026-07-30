@@ -1,0 +1,96 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  task_id_sha256: b6378ad05312e36eb0833a1c72c22409e1ed532e905653453c12c74b98a8b49f
+task_record:
+  task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  title: null
+  domain: Architecture / Wave15 D0B3+G4B first consumer and bounded G3 close readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：选择下一工程slice；本任务不自动解锁G4C/其他consumer/G5
+  requirement_refs:
+  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+    consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C/D exact carrier、两个domain与shared
+    single-writer均已闭合。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final
+      Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 503b73a84edc6a36c0d727d2fc8a865879c248ec1fae83ecfce52ddf1ab1acbb
+  cell_count: 8
+  all_cells:
+  - ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  - Architecture / Wave15 D0B3+G4B first consumer and bounded G3 close readiness
+  - P0
+  - BASELINE_DONE
+  - project owner：选择下一工程slice；本任务不自动解锁G4C/其他consumer/G5
+  - 详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+    consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C/D exact carrier、两个domain与shared
+    single-writer均已闭合。
+  - 首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。
+  - 2026-07-25：pre-Full=`233/615/275/993/57/23`全PASS；首次Full=`7179/1/3 skipped`，failure-fix
+    Full=`7180 passed / 3 skipped / 643 warnings`；post-Full=`243/615/275/993/23`全PASS。任务转`BASELINE_DONE`，无真实daily/provider/cache执行。
+  raw_line: '|ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS|Architecture / Wave15
+    D0B3+G4B first consumer and bounded G3 close readiness|P0|BASELINE_DONE|project
+    owner：选择下一工程slice；本任务不自动解锁G4C/其他consumer/G5|详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+    consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C/D exact carrier、两个domain与shared
+    single-writer均已闭合。|首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final
+    Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。|2026-07-25：pre-Full=`233/615/275/993/57/23`全PASS；首次Full=`7179/1/3
+    skipped`，failure-fix Full=`7180 passed / 3 skipped / 643 warnings`；post-Full=`243/615/275/993/23`全PASS。任务转`BASELINE_DONE`，无真实daily/provider/cache执行。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-503b73a84edc6a36c0d727d2
+  task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：选择下一工程slice；本任务不自动解锁G4C/其他consumer/G5
+    notes: 2026-07-25：pre-Full=`233/615/275/993/57/23`全PASS；首次Full=`7179/1/3 skipped`，failure-fix
+      Full=`7180 passed / 3 skipped / 643 warnings`；post-Full=`243/615/275/993/23`全PASS。任务转`BASELINE_DONE`，无真实daily/provider/cache执行。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:503b73a84edc6a36c0d727d2fc8a865879c248ec1fae83ecfce52ddf1ab1acbb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
+  - Architecture / Wave15 D0B3+G4B first consumer and bounded G3 close readiness
+  - P0
+  - BASELINE_DONE
+  - project owner：选择下一工程slice；本任务不自动解锁G4C/其他consumer/G5
+  - 详见 `docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md`。Owner授权只覆盖`daily_score_daily`
+    consumer-scoped D0B3/G4B与Wave14 bounded G3 slice close/readiness；C/D exact carrier、两个domain与shared
+    single-writer均已闭合。
+  - 首consumer fail-closed parity、G3 ratchet/readiness、combined/formal/final Full PASS；其余consumer、真实periodic/provider、G5/S5/production/broker均false/none。
+  - 2026-07-25：pre-Full=`233/615/275/993/57/23`全PASS；首次Full=`7179/1/3 skipped`，failure-fix
+    Full=`7180 passed / 3 skipped / 643 warnings`；post-Full=`243/615/275/993/23`全PASS。任务转`BASELINE_DONE`，无真实daily/provider/cache执行。
+  docs_links:
+  - docs/requirements/ARCH-004_Wave15_D0B3_G4B_G3_Close_Parallel_Readiness.md
+  terminal: false
+  raw_row_sha256: 503b73a84edc6a36c0d727d2fc8a865879c248ec1fae83ecfce52ddf1ab1acbb
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: e8047547d137ed5507c6b6309634b22a78dcfad6f11fde269e1eef4327951584

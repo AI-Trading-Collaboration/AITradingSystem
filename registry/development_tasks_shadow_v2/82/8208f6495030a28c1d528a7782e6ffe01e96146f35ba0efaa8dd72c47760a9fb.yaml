@@ -1,0 +1,121 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+  task_id_sha256: 8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb
+task_record:
+  task_id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+  title: null
+  domain: Developer experience / frozen-lane base-drift classification and single
+    integration candidate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: integration coordinator：后续base drift按已发布planner与governed skill执行；出现新分类缺口时另建任务
+  requirement_refs:
+  - docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md`。planner/validator、strict
+    policy、read-only CLI、preflight frozen-lane continuation、exact reviewed reconciliation
+    plan id与skill接线、两次真实pilot及final-tree复验均完成。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 从frozen base/lane head/latest main真实Git delta生成`integration_revalidation_plan.v1`；unrelated
+      drift允许单一latest-main candidate，domain overlap要求exact reviewed plan id，contract冲突要求serial
+      wave，undeclared/identity/ancestry/tamper fail closed；不自动Git mutation；无production/broker
+      effect。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: c49b2ce797c054169df5679db6aca0ccee5eb09bd202167345c57f27e8ce55f0
+  cell_count: 8
+  all_cells:
+  - DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+  - Developer experience / frozen-lane base-drift classification and single integration
+    candidate
+  - P0
+  - DONE
+  - integration coordinator：后续base drift按已发布planner与governed skill执行；出现新分类缺口时另建任务
+  - 详见 `docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md`。planner/validator、strict
+    policy、read-only CLI、preflight frozen-lane continuation、exact reviewed reconciliation
+    plan id与skill接线、两次真实pilot及final-tree复验均完成。
+  - 从frozen base/lane head/latest main真实Git delta生成`integration_revalidation_plan.v1`；unrelated
+    drift允许单一latest-main candidate，domain overlap要求exact reviewed plan id，contract冲突要求serial
+    wave，undeclared/identity/ancestry/tamper fail closed；不自动Git mutation；无production/broker
+    effect。
+  - 2026-07-27：首plan=`integration-revalidation-927fbb12af85ec52da7a`按reviewed reconciliation接入v5；remote前进首Architecture保留`708/2
+    CARRIER_PUSH_DRIFT`。第二plan=`integration-revalidation-e8b52f6d7da28c3cdd37`为READY；final
+    focused/Architecture/Contract/Integration/Reproducibility=`278/710/275/995/23
+    passed`，唯一Full=`7454 passed/5 skipped`，post-Full Architecture/Contract=`710/275
+    passed`。
+  raw_line: '|DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION|Developer experience
+    / frozen-lane base-drift classification and single integration candidate|P0|DONE|integration
+    coordinator：后续base drift按已发布planner与governed skill执行；出现新分类缺口时另建任务|详见 `docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md`。planner/validator、strict
+    policy、read-only CLI、preflight frozen-lane continuation、exact reviewed reconciliation
+    plan id与skill接线、两次真实pilot及final-tree复验均完成。|从frozen base/lane head/latest main真实Git
+    delta生成`integration_revalidation_plan.v1`；unrelated drift允许单一latest-main candidate，domain
+    overlap要求exact reviewed plan id，contract冲突要求serial wave，undeclared/identity/ancestry/tamper
+    fail closed；不自动Git mutation；无production/broker effect。|2026-07-27：首plan=`integration-revalidation-927fbb12af85ec52da7a`按reviewed
+    reconciliation接入v5；remote前进首Architecture保留`708/2 CARRIER_PUSH_DRIFT`。第二plan=`integration-revalidation-e8b52f6d7da28c3cdd37`为READY；final
+    focused/Architecture/Contract/Integration/Reproducibility=`278/710/275/995/23
+    passed`，唯一Full=`7454 passed/5 skipped`，post-Full Architecture/Contract=`710/275
+    passed`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c49b2ce797c054169df5679d
+  task_id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: integration coordinator：后续base drift按已发布planner与governed skill执行；出现新分类缺口时另建任务
+    notes: 2026-07-27：首plan=`integration-revalidation-927fbb12af85ec52da7a`按reviewed
+      reconciliation接入v5；remote前进首Architecture保留`708/2 CARRIER_PUSH_DRIFT`。第二plan=`integration-revalidation-e8b52f6d7da28c3cdd37`为READY；final
+      focused/Architecture/Contract/Integration/Reproducibility=`278/710/275/995/23
+      passed`，唯一Full=`7454 passed/5 skipped`，post-Full Architecture/Contract=`710/275
+      passed`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:c49b2ce797c054169df5679db6aca0ccee5eb09bd202167345c57f27e8ce55f0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
+  - Developer experience / frozen-lane base-drift classification and single integration
+    candidate
+  - P0
+  - DONE
+  - integration coordinator：后续base drift按已发布planner与governed skill执行；出现新分类缺口时另建任务
+  - 详见 `docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md`。planner/validator、strict
+    policy、read-only CLI、preflight frozen-lane continuation、exact reviewed reconciliation
+    plan id与skill接线、两次真实pilot及final-tree复验均完成。
+  - 从frozen base/lane head/latest main真实Git delta生成`integration_revalidation_plan.v1`；unrelated
+    drift允许单一latest-main candidate，domain overlap要求exact reviewed plan id，contract冲突要求serial
+    wave，undeclared/identity/ancestry/tamper fail closed；不自动Git mutation；无production/broker
+    effect。
+  - 2026-07-27：首plan=`integration-revalidation-927fbb12af85ec52da7a`按reviewed reconciliation接入v5；remote前进首Architecture保留`708/2
+    CARRIER_PUSH_DRIFT`。第二plan=`integration-revalidation-e8b52f6d7da28c3cdd37`为READY；final
+    focused/Architecture/Contract/Integration/Reproducibility=`278/710/275/995/23
+    passed`，唯一Full=`7454 passed/5 skipped`，post-Full Architecture/Contract=`710/275
+    passed`。
+  docs_links:
+  - docs/requirements/DEVX-006_Base_Drift_Aware_Integration_and_Revalidation.md
+  terminal: true
+  raw_row_sha256: c49b2ce797c054169df5679db6aca0ccee5eb09bd202167345c57f27e8ce55f0
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 9f1aadc901aa5fb5df8b3448833030b29315a5173cdf0df814b7f37c8e983bd1

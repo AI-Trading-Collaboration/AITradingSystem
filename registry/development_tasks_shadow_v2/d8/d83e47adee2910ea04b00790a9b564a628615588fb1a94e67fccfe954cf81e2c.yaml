@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: SHADOW-002
+  task_id_sha256: d83e47adee2910ea04b00790a9b564a628615588fb1a94e67fccfe954cf81e2c
+task_record:
+  task_id: SHADOW-002
+  title: null
+  domain: 模型评估/challenger shadow runner
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已新增 `aits feedback run-shadow`：读取 rule
+    experiment ledger、production decision snapshot 和 trace，追加 challenger prediction
+    到 append-only ledger，强制 `production_effect=none`；剩余缺口是真实候选规则每日运行调度和长期样本积累；详细顺序见
+    `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`score-daily` 或独立 shadow 命令可同时记录 production 与多个 challenger；challenger 不写正式日报动作、不改变
+      `scores_daily.csv` production 行、不改变 position gate 或 belief_state；prediction
+      ledger 能按 candidate_id/model_version 区分并追溯输入；测试覆盖 production 隔离、重复 prediction_id
+      停止和 candidate trace 引用'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 6bfe78e31c5665a4a8f60929aa6184ca156b5b18e9047e75a8fe201b3d2735de
+  cell_count: 8
+  all_cells:
+  - SHADOW-002
+  - 模型评估/challenger shadow runner
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已新增 `aits feedback run-shadow`：读取 rule experiment ledger、production decision snapshot
+    和 trace，追加 challenger prediction 到 append-only ledger，强制 `production_effect=none`；剩余缺口是真实候选规则每日运行调度和长期样本积累；详细顺序见
+    `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  - '`score-daily` 或独立 shadow 命令可同时记录 production 与多个 challenger；challenger 不写正式日报动作、不改变
+    `scores_daily.csv` production 行、不改变 position gate 或 belief_state；prediction ledger
+    能按 candidate_id/model_version 区分并追溯输入；测试覆盖 production 隔离、重复 prediction_id 停止和
+    candidate trace 引用'
+  - '2026-05-05: 新增任务，原因：`SHADOW-001` 已有 ledger 和 outcome 校准，但还缺真正每天运行 challenger
+    的入口，这是进入前向 shadow 的下一步。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现独立 shadow runner
+    和 append-only prediction ledger 写入。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：shadow
+    runner、报告和 CLI 测试已完成；完整 DONE 仍需真实每日调度和 outcome 样本。'
+  raw_line: '|SHADOW-002|模型评估/challenger shadow runner|P1|BASELINE_DONE|系统实现|已新增 `aits
+    feedback run-shadow`：读取 rule experiment ledger、production decision snapshot 和
+    trace，追加 challenger prediction 到 append-only ledger，强制 `production_effect=none`；剩余缺口是真实候选规则每日运行调度和长期样本积累；详细顺序见
+    `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`|`score-daily`
+    或独立 shadow 命令可同时记录 production 与多个 challenger；challenger 不写正式日报动作、不改变 `scores_daily.csv`
+    production 行、不改变 position gate 或 belief_state；prediction ledger 能按 candidate_id/model_version
+    区分并追溯输入；测试覆盖 production 隔离、重复 prediction_id 停止和 candidate trace 引用|2026-05-05:
+    新增任务，原因：`SHADOW-001` 已有 ledger 和 outcome 校准，但还缺真正每天运行 challenger 的入口，这是进入前向 shadow
+    的下一步。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现独立 shadow runner 和 append-only
+    prediction ledger 写入。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：shadow runner、报告和
+    CLI 测试已完成；完整 DONE 仍需真实每日调度和 outcome 样本。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6bfe78e31c5665a4a8f60929
+  task_id: SHADOW-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：`SHADOW-001` 已有 ledger 和 outcome 校准，但还缺真正每天运行 challenger
+      的入口，这是进入前向 shadow 的下一步。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现独立 shadow runner
+      和 append-only prediction ledger 写入。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：shadow
+      runner、报告和 CLI 测试已完成；完整 DONE 仍需真实每日调度和 outcome 样本。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:6bfe78e31c5665a4a8f60929aa6184ca156b5b18e9047e75a8fe201b3d2735de
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - SHADOW-002
+  - 模型评估/challenger shadow runner
+  - P1
+  - BASELINE_DONE
+  - 系统实现
+  - 已新增 `aits feedback run-shadow`：读取 rule experiment ledger、production decision snapshot
+    和 trace，追加 challenger prediction 到 append-only ledger，强制 `production_effect=none`；剩余缺口是真实候选规则每日运行调度和长期样本积累；详细顺序见
+    `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  - '`score-daily` 或独立 shadow 命令可同时记录 production 与多个 challenger；challenger 不写正式日报动作、不改变
+    `scores_daily.csv` production 行、不改变 position gate 或 belief_state；prediction ledger
+    能按 candidate_id/model_version 区分并追溯输入；测试覆盖 production 隔离、重复 prediction_id 停止和
+    candidate trace 引用'
+  - '2026-05-05: 新增任务，原因：`SHADOW-001` 已有 ledger 和 outcome 校准，但还缺真正每天运行 challenger
+    的入口，这是进入前向 shadow 的下一步。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始实现独立 shadow runner
+    和 append-only prediction ledger 写入。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：shadow
+    runner、报告和 CLI 测试已完成；完整 DONE 仍需真实每日调度和 outcome 样本。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  terminal: false
+  raw_row_sha256: 6bfe78e31c5665a4a8f60929aa6184ca156b5b18e9047e75a8fe201b3d2735de
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 6333772171b76d42f0c9da1376e2febfe05fa677dceb0a24ab738fc0bbb06a28

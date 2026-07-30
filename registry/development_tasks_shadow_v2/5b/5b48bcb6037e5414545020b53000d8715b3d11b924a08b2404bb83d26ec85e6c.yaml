@@ -1,0 +1,112 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  task_id_sha256: 5b48bcb6037e5414545020b53000d8715b3d11b924a08b2404bb83d26ec85e6c
+task_record:
+  task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  title: null
+  domain: Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle
+    and lineage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+    consumer；不得批量翻转generic cutover
+  requirement_refs:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+    supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+    Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+      PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+      automatic selection、production与broker均须独立授权。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 53034d131dec7bf964cfcec63eecac29827d2d2fb4850832005cec6fbcdcf89e
+  cell_count: 8
+  all_cells:
+  - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
+  - P0
+  - IN_PROGRESS
+  - data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+    consumer；不得批量翻转generic cutover
+  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+    supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+    Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。
+  - 每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+    PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+    automatic selection、production与broker均须独立授权。
+  - 2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+    passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+    migration，`production_effect=none`。
+  raw_line: '|DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE|Data Foundation / immutable
+    snapshots, canonical DQ evidence, lifecycle and lineage|P0|IN_PROGRESS|data platform
+    owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact consumer；不得批量翻转generic
+    cutover|详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+    supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+    Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。|每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+    PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+    automatic selection、production与broker均须独立授权。|2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+    passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+    migration，`production_effect=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-53034d131dec7bf964cfcec6
+  task_id: DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+      consumer；不得批量翻转generic cutover
+    notes: 2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+      passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+      migration，`production_effect=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:53034d131dec7bf964cfcec63eecac29827d2d2fb4850832005cec6fbcdcf89e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-001_UNIFIED_DATA_FOUNDATION_GOVERNANCE
+  - Data Foundation / immutable snapshots, canonical DQ evidence, lifecycle and lineage
+  - P0
+  - IN_PROGRESS
+  - data platform owner + project owner：按Owner顺序另立逐consumer migration任务并选择首个exact
+    consumer；不得批量翻转generic cutover
+  - 详见 `docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md`、D0C/D0D
+    supporting requirement、G4/D0B supporting requirement与D0B2B requirement。D0A/D0B/D0C/D0D均闭合；D0D只提供exact-store
+    Windows ACL scoped capability，其他consumer仍须逐项迁移和授权。
+  - 每个consumer绑定exact receipt/publication/source/window/policy/validator/durability/ACL/authorization；strict
+    PASS only；missing/warning/FAIL/drift/tamper阻断；generic cutover、automatic non-daily、QLD
+    automatic selection、production与broker均须独立授权。
+  - 2026-07-29：D0D bundle=`data_foundation_acl_bundle_3f68c2174cf4ffe1753ef8b9f32de5ea`，Architecture/Contract/Report/Reproducibility/Integration=`783/276/57/24/995
+    passed`，Full=`7668 passed / 3 skipped / 644 warnings`并转`DONE`；下一步仅登记首个per-consumer
+    migration，`production_effect=none`。
+  docs_links:
+  - docs/requirements/DATA-GOV-001_Unified_Data_Foundation_Governance.md
+  terminal: false
+  raw_row_sha256: 53034d131dec7bf964cfcec63eecac29827d2d2fb4850832005cec6fbcdcf89e
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 911970ac76a42b931a73237a9ba749ed1c01e9299c6dfcc18113ee5abc048b09

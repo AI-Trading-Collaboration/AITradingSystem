@@ -1,0 +1,111 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
+  task_id_sha256: 6828564e9dd22478f842aae1ebb424441bd06e841ed61e672ba10b3303e77e81
+task_record:
+  task_id: TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
+  title: null
+  domain: Controlled strategy research / independent trigger v2 candidate builder
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-829、830、841；trigger v2 不得用旧 label/case 或 future outcome
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 CLI `aits research strategies tail-risk-independent-trigger-v2-builder`；只用
+      decision_time 前可见 price trend/drawdown/realized vol/MA distance/proxy inputs，输出
+      candidate list、dependencies、time-window contract 和 CANDIDATE_* 状态
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: b5a0cfb40c4c78c8f11f04c73f3f803cb7dbefe28060894f199a3f0a8ffc4564
+  cell_count: 8
+  all_cells:
+  - TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
+  - Controlled strategy research / independent trigger v2 candidate builder
+  - P2
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-829、830、841；trigger v2 不得用旧 label/case 或 future outcome
+  - 新增 CLI `aits research strategies tail-risk-independent-trigger-v2-builder`；只用
+    decision_time 前可见 price trend/drawdown/realized vol/MA distance/proxy inputs，输出
+    candidate list、dependencies、time-window contract 和 CANDIDATE_* 状态
+  - '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+    registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+    pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190
+    passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+    和 git diff --check。'
+  raw_line: '|TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER|Controlled strategy
+    research / independent trigger v2 candidate builder|P2|VALIDATING|系统实现 + 项目 owner
+    后续复核|详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-829、830、841；trigger v2 不得用旧 label/case 或 future outcome|新增 CLI `aits research
+    strategies tail-risk-independent-trigger-v2-builder`；只用 decision_time 前可见 price
+    trend/drawdown/realized vol/MA distance/proxy inputs，输出 candidate list、dependencies、time-window
+    contract 和 CANDIDATE_* 状态|2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增
+    CLI、JSON/MD artifacts、report registry、system flow、artifact catalog、focused pytest
+    和 CLI/registry coverage；验证通过：focused pytest 15 passed、CLI smoke 1 passed、fast-unit
+    191 passed、contract-validation 190 passed、report-validation 55 passed、ruff check
+    .、changed-file Black check、compileall 和 git diff --check。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b5a0cfb40c4c78c8f11f04c7
+  task_id: TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD
+      artifacts、report registry、system flow、artifact catalog、focused pytest 和 CLI/registry
+      coverage；验证通过：focused pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation
+      190 passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+      和 git diff --check。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:b5a0cfb40c4c78c8f11f04c73f3f803cb7dbefe28060894f199a3f0a8ffc4564
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
+  - Controlled strategy research / independent trigger v2 candidate builder
+  - P2
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md`；依赖
+    TRADING-829、830、841；trigger v2 不得用旧 label/case 或 future outcome
+  - 新增 CLI `aits research strategies tail-risk-independent-trigger-v2-builder`；只用
+    decision_time 前可见 price trend/drawdown/realized vol/MA distance/proxy inputs，输出
+    candidate list、dependencies、time-window contract 和 CANDIDATE_* 状态
+  - '2026-06-22: 按附件任务包登记为第三批 P2。2026-06-22: 实现完成并转入 VALIDATING；新增 CLI、JSON/MD artifacts、report
+    registry、system flow、artifact catalog、focused pytest 和 CLI/registry coverage；验证通过：focused
+    pytest 15 passed、CLI smoke 1 passed、fast-unit 191 passed、contract-validation 190
+    passed、report-validation 55 passed、ruff check .、changed-file Black check、compileall
+    和 git diff --check。'
+  docs_links:
+  - docs/requirements/TRADING-828_to_842_Tail_Risk_Fallback_Independent_Validation_Governance.md
+  terminal: false
+  raw_row_sha256: b5a0cfb40c4c78c8f11f04c73f3f803cb7dbefe28060894f199a3f0a8ffc4564
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: d6845382ed653c8a26348da7b85cef5fa71c41e31e85568ee88cc6df6ccc167e

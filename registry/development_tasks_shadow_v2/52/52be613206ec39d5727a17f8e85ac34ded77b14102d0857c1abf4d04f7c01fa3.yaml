@@ -1,0 +1,108 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-895_DOCS_FRESHNESS_METADATA_CI_RESTORATION
+  task_id_sha256: 52be613206ec39d5727a17f8e85ac34ded77b14102d0857c1abf4d04f7c01fa3
+task_record:
+  task_id: TRADING-895_DOCS_FRESHNESS_METADATA_CI_RESTORATION
+  title: null
+  domain: Documentation governance / docs freshness CI restoration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/TRADING-895_Docs_Freshness_Metadata_CI_Restoration.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-895_Docs_Freshness_Metadata_CI_Restoration.md`；GitHub
+    CI `Docs freshness` 在 `main` 上失败，原因是 39 个 requirements 文档缺少 `最后更新：YYYY-MM-DD`
+    元数据；本次只补齐文档元数据，不改变系统行为、数据流、报告契约、评分、回测或投资解释
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`python -m ai_trading_system.cli docs validate-freshness` 恢复 PASS；focused
+      docs/task/register pytest、scoped Ruff 和 `git diff --check` 通过；不更新 `docs/system_flow.md`，因为无
+      CLI、配置、cache schema、report output、数据质量门、评分、回测、market-regime interpretation 或主要模块影响'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: dbd58021f94764d323f8c2d7598b37763ec7cc4a18c26b9fe0f0a329ef3ba3ef
+  cell_count: 8
+  all_cells:
+  - TRADING-895_DOCS_FRESHNESS_METADATA_CI_RESTORATION
+  - Documentation governance / docs freshness CI restoration
+  - P2
+  - DONE
+  - 系统验证
+  - 详见 `docs/requirements/TRADING-895_Docs_Freshness_Metadata_CI_Restoration.md`；GitHub
+    CI `Docs freshness` 在 `main` 上失败，原因是 39 个 requirements 文档缺少 `最后更新：YYYY-MM-DD`
+    元数据；本次只补齐文档元数据，不改变系统行为、数据流、报告契约、评分、回测或投资解释
+  - '`python -m ai_trading_system.cli docs validate-freshness` 恢复 PASS；focused docs/task/register
+    pytest、scoped Ruff 和 `git diff --check` 通过；不更新 `docs/system_flow.md`，因为无 CLI、配置、cache
+    schema、report output、数据质量门、评分、回测、market-regime interpretation 或主要模块影响'
+  - '2026-06-23: 新增并完成；补齐 39 个 requirement docs 的 `最后更新：2026-06-23`，未降低 docs freshness
+    规则，未创建 waiver，production_effect=none，未写 production weights/active shadow weights，未触发
+    broker/order/trading action。'
+  raw_line: '|TRADING-895_DOCS_FRESHNESS_METADATA_CI_RESTORATION|Documentation governance
+    / docs freshness CI restoration|P2|DONE|系统验证|详见 `docs/requirements/TRADING-895_Docs_Freshness_Metadata_CI_Restoration.md`；GitHub
+    CI `Docs freshness` 在 `main` 上失败，原因是 39 个 requirements 文档缺少 `最后更新：YYYY-MM-DD`
+    元数据；本次只补齐文档元数据，不改变系统行为、数据流、报告契约、评分、回测或投资解释|`python -m ai_trading_system.cli docs
+    validate-freshness` 恢复 PASS；focused docs/task/register pytest、scoped Ruff 和 `git
+    diff --check` 通过；不更新 `docs/system_flow.md`，因为无 CLI、配置、cache schema、report output、数据质量门、评分、回测、market-regime
+    interpretation 或主要模块影响|2026-06-23: 新增并完成；补齐 39 个 requirement docs 的 `最后更新：2026-06-23`，未降低
+    docs freshness 规则，未创建 waiver，production_effect=none，未写 production weights/active
+    shadow weights，未触发 broker/order/trading action。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dbd58021f94764d323f8c2d7
+  task_id: TRADING-895_DOCS_FRESHNESS_METADATA_CI_RESTORATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-06-23: 新增并完成；补齐 39 个 requirement docs 的 `最后更新：2026-06-23`，未降低 docs
+      freshness 规则，未创建 waiver，production_effect=none，未写 production weights/active
+      shadow weights，未触发 broker/order/trading action。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:dbd58021f94764d323f8c2d7598b37763ec7cc4a18c26b9fe0f0a329ef3ba3ef
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-895_DOCS_FRESHNESS_METADATA_CI_RESTORATION
+  - Documentation governance / docs freshness CI restoration
+  - P2
+  - DONE
+  - 系统验证
+  - 详见 `docs/requirements/TRADING-895_Docs_Freshness_Metadata_CI_Restoration.md`；GitHub
+    CI `Docs freshness` 在 `main` 上失败，原因是 39 个 requirements 文档缺少 `最后更新：YYYY-MM-DD`
+    元数据；本次只补齐文档元数据，不改变系统行为、数据流、报告契约、评分、回测或投资解释
+  - '`python -m ai_trading_system.cli docs validate-freshness` 恢复 PASS；focused docs/task/register
+    pytest、scoped Ruff 和 `git diff --check` 通过；不更新 `docs/system_flow.md`，因为无 CLI、配置、cache
+    schema、report output、数据质量门、评分、回测、market-regime interpretation 或主要模块影响'
+  - '2026-06-23: 新增并完成；补齐 39 个 requirement docs 的 `最后更新：2026-06-23`，未降低 docs freshness
+    规则，未创建 waiver，production_effect=none，未写 production weights/active shadow weights，未触发
+    broker/order/trading action。'
+  docs_links:
+  - docs/requirements/TRADING-895_Docs_Freshness_Metadata_CI_Restoration.md
+  - docs/system_flow.md
+  terminal: true
+  raw_row_sha256: dbd58021f94764d323f8c2d7598b37763ec7cc4a18c26b9fe0f0a329ef3ba3ef
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 8a7762981f25a4a7cc5ad2752293fa1541bca9856a8dc57958f7d6f4a30def47

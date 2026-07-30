@@ -1,0 +1,106 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2457_UNCONTAMINATED_SELECTION_PROTOCOL_FOUNDATION
+  task_id_sha256: 69b79cc2215c03093ad471069acf836e54e1048d20892be62a71c20cde78e540
+task_record:
+  task_id: TRADING-2457_UNCONTAMINATED_SELECTION_PROTOCOL_FOUNDATION
+  title: null
+  domain: Strategy governance / uncontaminated selection admission and preregistration
+    foundation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Future strategy owner：另建具体protocol authoring任务；当前无自动续跑
+  requirement_refs:
+  - docs/requirements/TRADING-2457_Uncontaminated_Selection_Protocol_Foundation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2457_Uncontaminated_Selection_Protocol_Foundation.md`。reviewed
+    policy、typed四角色contract与pure validator已完成；复用canonical context/preregistration，只产生admission，不启动B/C或任何策略run。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 2021 active primary；full-period top-N、freeze/visibility倒序、六组role overlap、prospective
+      access、policy-role mismatch、缺治理字段与tamper全部fail closed；valid仅`READY_FOR_OWNER_PROTOCOL_AUTHORING`且execution=false；focused
+      19 PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 73b090536414c3dc7e265fb2e3733d49359e7887330597a2c53b796100fe1020
+  cell_count: 8
+  all_cells:
+  - TRADING-2457_UNCONTAMINATED_SELECTION_PROTOCOL_FOUNDATION
+  - Strategy governance / uncontaminated selection admission and preregistration foundation
+  - P0
+  - DONE
+  - Future strategy owner：另建具体protocol authoring任务；当前无自动续跑
+  - 详见 `docs/requirements/TRADING-2457_Uncontaminated_Selection_Protocol_Foundation.md`。reviewed
+    policy、typed四角色contract与pure validator已完成；复用canonical context/preregistration，只产生admission，不启动B/C或任何策略run。
+  - 2021 active primary；full-period top-N、freeze/visibility倒序、六组role overlap、prospective
+    access、policy-role mismatch、缺治理字段与tamper全部fail closed；valid仅`READY_FOR_OWNER_PROTOCOL_AUTHORING`且execution=false；focused
+    19 PASS。
+  - 2026-07-22：foundation=`DONE`，policy semantic SHA=`99a84c...168e89`；formal focused/architecture/contract/reproducibility/Full=`28/447/265/23/6604
+    passed`，Full 2 skipped、1179.75s。具体hypothesis/candidate generator、B hard-gate policy、run与prospective
+    single-access仍需独立owner授权。
+  raw_line: '|TRADING-2457_UNCONTAMINATED_SELECTION_PROTOCOL_FOUNDATION|Strategy governance
+    / uncontaminated selection admission and preregistration foundation|P0|DONE|Future
+    strategy owner：另建具体protocol authoring任务；当前无自动续跑|详见 `docs/requirements/TRADING-2457_Uncontaminated_Selection_Protocol_Foundation.md`。reviewed
+    policy、typed四角色contract与pure validator已完成；复用canonical context/preregistration，只产生admission，不启动B/C或任何策略run。|2021
+    active primary；full-period top-N、freeze/visibility倒序、六组role overlap、prospective
+    access、policy-role mismatch、缺治理字段与tamper全部fail closed；valid仅`READY_FOR_OWNER_PROTOCOL_AUTHORING`且execution=false；focused
+    19 PASS。|2026-07-22：foundation=`DONE`，policy semantic SHA=`99a84c...168e89`；formal
+    focused/architecture/contract/reproducibility/Full=`28/447/265/23/6604 passed`，Full
+    2 skipped、1179.75s。具体hypothesis/candidate generator、B hard-gate policy、run与prospective
+    single-access仍需独立owner授权。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-73b090536414c3dc7e265fb2
+  task_id: TRADING-2457_UNCONTAMINATED_SELECTION_PROTOCOL_FOUNDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: Future strategy owner：另建具体protocol authoring任务；当前无自动续跑
+    notes: 2026-07-22：foundation=`DONE`，policy semantic SHA=`99a84c...168e89`；formal
+      focused/architecture/contract/reproducibility/Full=`28/447/265/23/6604 passed`，Full
+      2 skipped、1179.75s。具体hypothesis/candidate generator、B hard-gate policy、run与prospective
+      single-access仍需独立owner授权。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:73b090536414c3dc7e265fb2e3733d49359e7887330597a2c53b796100fe1020
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2457_UNCONTAMINATED_SELECTION_PROTOCOL_FOUNDATION
+  - Strategy governance / uncontaminated selection admission and preregistration foundation
+  - P0
+  - DONE
+  - Future strategy owner：另建具体protocol authoring任务；当前无自动续跑
+  - 详见 `docs/requirements/TRADING-2457_Uncontaminated_Selection_Protocol_Foundation.md`。reviewed
+    policy、typed四角色contract与pure validator已完成；复用canonical context/preregistration，只产生admission，不启动B/C或任何策略run。
+  - 2021 active primary；full-period top-N、freeze/visibility倒序、六组role overlap、prospective
+    access、policy-role mismatch、缺治理字段与tamper全部fail closed；valid仅`READY_FOR_OWNER_PROTOCOL_AUTHORING`且execution=false；focused
+    19 PASS。
+  - 2026-07-22：foundation=`DONE`，policy semantic SHA=`99a84c...168e89`；formal focused/architecture/contract/reproducibility/Full=`28/447/265/23/6604
+    passed`，Full 2 skipped、1179.75s。具体hypothesis/candidate generator、B hard-gate policy、run与prospective
+    single-access仍需独立owner授权。
+  docs_links:
+  - docs/requirements/TRADING-2457_Uncontaminated_Selection_Protocol_Foundation.md
+  terminal: true
+  raw_row_sha256: 73b090536414c3dc7e265fb2e3733d49359e7887330597a2c53b796100fe1020
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 628e39eb666db4407ba55b718a51e97f9cb14ed5c9377baeea7ea3eac596eb52

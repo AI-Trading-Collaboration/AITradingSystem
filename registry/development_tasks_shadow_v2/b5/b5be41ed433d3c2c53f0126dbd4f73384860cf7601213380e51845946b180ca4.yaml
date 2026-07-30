@@ -1,0 +1,137 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2284_TREND_RISK_VOLATILITY_EXECUTABLE_CANDIDATE_GENERATORS
+  task_id_sha256: b5be41ed433d3c2c53f0126dbd4f73384860cf7601213380e51845946b180ca4
+task_record:
+  task_id: TRADING-2284_TREND_RISK_VOLATILITY_EXECUTABLE_CANDIDATE_GENERATORS
+  title: null
+  domain: Research trends / regenerated first-layer executable candidates
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 regenerated candidate artifacts；TRADING-2285 执行 actual-path
+    validation
+  requirement_refs:
+  - docs/requirements/TRADING-2284_Trend_Risk_Volatility_Executable_Candidate_Generators.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2284_Trend_Risk_Volatility_Executable_Candidate_Generators.md`；已在
+    TRADING-2283 generator framework 上新增真实 first-layer executable candidate generators。本批只生成
+    regenerated candidate artifacts，不做 actual-path validation、owner review、promotion、paper-shadow、production
+    或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 实现并注册 `baseline_plus_trend_structure`、`risk_appetite`、`volatility_regime`；新增
+      `aits research trends first-layer-candidate-generators-regenerate`；每个 candidate
+      写出 signal spec、candidate-bound signal series、prediction artifact、generation
+      summary 和 validation summary，顶层写出 registry/run/validation summary；真实 run 生成
+      3 个 candidate-bound artifact bundle 且 validation status=`PASS`；所有 artifacts
+      validator PASS，`artifact_role=regenerated_executable_candidate_artifact`、`historical_executable_artifact=true`、`actual_path_validation_ready=false`、promotion/paper-shadow/production/broker
+      fixed false/none；focused tests、full pytest、docs freshness、documentation contract、contract-validation、Ruff、compileall
+      和 diff check 通过。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: eaa1aac1f3ed28d05dc9461b85f550e240348b12f001ab38b9bfc437cd7953c1
+  cell_count: 8
+  all_cells:
+  - TRADING-2284_TREND_RISK_VOLATILITY_EXECUTABLE_CANDIDATE_GENERATORS
+  - Research trends / regenerated first-layer executable candidates
+  - P0
+  - DONE
+  - 项目 owner 后续复核 regenerated candidate artifacts；TRADING-2285 执行 actual-path validation
+  - 详见 `docs/requirements/TRADING-2284_Trend_Risk_Volatility_Executable_Candidate_Generators.md`；已在
+    TRADING-2283 generator framework 上新增真实 first-layer executable candidate generators。本批只生成
+    regenerated candidate artifacts，不做 actual-path validation、owner review、promotion、paper-shadow、production
+    或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。
+  - 实现并注册 `baseline_plus_trend_structure`、`risk_appetite`、`volatility_regime`；新增 `aits
+    research trends first-layer-candidate-generators-regenerate`；每个 candidate 写出 signal
+    spec、candidate-bound signal series、prediction artifact、generation summary 和 validation
+    summary，顶层写出 registry/run/validation summary；真实 run 生成 3 个 candidate-bound artifact
+    bundle 且 validation status=`PASS`；所有 artifacts validator PASS，`artifact_role=regenerated_executable_candidate_artifact`、`historical_executable_artifact=true`、`actual_path_validation_ready=false`、promotion/paper-shadow/production/broker
+    fixed false/none；focused tests、full pytest、docs freshness、documentation contract、contract-validation、Ruff、compileall
+    和 diff check 通过。
+  - '2026-06-29: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate artifacts，TRADING-2285
+    才执行 candidate-level actual-path validation。2026-06-29: 实现完成并归档为 DONE；真实 regenerate
+    run data_quality_status=`PASS_WITH_WARNINGS` / error_count=0，顶层 validation status=`PASS`；验证通过
+    focused parallel pytest 10 passed、full parallel pytest 3514 passed / 643 warnings、contract-validation
+    193 passed。'
+  raw_line: '|TRADING-2284_TREND_RISK_VOLATILITY_EXECUTABLE_CANDIDATE_GENERATORS|Research
+    trends / regenerated first-layer executable candidates|P0|DONE|项目 owner 后续复核 regenerated
+    candidate artifacts；TRADING-2285 执行 actual-path validation|详见 `docs/requirements/TRADING-2284_Trend_Risk_Volatility_Executable_Candidate_Generators.md`；已在
+    TRADING-2283 generator framework 上新增真实 first-layer executable candidate generators。本批只生成
+    regenerated candidate artifacts，不做 actual-path validation、owner review、promotion、paper-shadow、production
+    或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。|实现并注册 `baseline_plus_trend_structure`、`risk_appetite`、`volatility_regime`；新增
+    `aits research trends first-layer-candidate-generators-regenerate`；每个 candidate
+    写出 signal spec、candidate-bound signal series、prediction artifact、generation summary
+    和 validation summary，顶层写出 registry/run/validation summary；真实 run 生成 3 个 candidate-bound
+    artifact bundle 且 validation status=`PASS`；所有 artifacts validator PASS，`artifact_role=regenerated_executable_candidate_artifact`、`historical_executable_artifact=true`、`actual_path_validation_ready=false`、promotion/paper-shadow/production/broker
+    fixed false/none；focused tests、full pytest、docs freshness、documentation contract、contract-validation、Ruff、compileall
+    和 diff check 通过。|2026-06-29: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate artifacts，TRADING-2285
+    才执行 candidate-level actual-path validation。2026-06-29: 实现完成并归档为 DONE；真实 regenerate
+    run data_quality_status=`PASS_WITH_WARNINGS` / error_count=0，顶层 validation status=`PASS`；验证通过
+    focused parallel pytest 10 passed、full parallel pytest 3514 passed / 643 warnings、contract-validation
+    193 passed。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-eaa1aac1f3ed28d05dc9461b
+  task_id: TRADING-2284_TREND_RISK_VOLATILITY_EXECUTABLE_CANDIDATE_GENERATORS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 regenerated candidate artifacts；TRADING-2285 执行 actual-path
+      validation
+    notes: '2026-06-29: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate artifacts，TRADING-2285
+      才执行 candidate-level actual-path validation。2026-06-29: 实现完成并归档为 DONE；真实 regenerate
+      run data_quality_status=`PASS_WITH_WARNINGS` / error_count=0，顶层 validation status=`PASS`；验证通过
+      focused parallel pytest 10 passed、full parallel pytest 3514 passed / 643 warnings、contract-validation
+      193 passed。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:eaa1aac1f3ed28d05dc9461b85f550e240348b12f001ab38b9bfc437cd7953c1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2284_TREND_RISK_VOLATILITY_EXECUTABLE_CANDIDATE_GENERATORS
+  - Research trends / regenerated first-layer executable candidates
+  - P0
+  - DONE
+  - 项目 owner 后续复核 regenerated candidate artifacts；TRADING-2285 执行 actual-path validation
+  - 详见 `docs/requirements/TRADING-2284_Trend_Risk_Volatility_Executable_Candidate_Generators.md`；已在
+    TRADING-2283 generator framework 上新增真实 first-layer executable candidate generators。本批只生成
+    regenerated candidate artifacts，不做 actual-path validation、owner review、promotion、paper-shadow、production
+    或 broker action，不改变 TRADING-2281 permanently inconclusive 结论。
+  - 实现并注册 `baseline_plus_trend_structure`、`risk_appetite`、`volatility_regime`；新增 `aits
+    research trends first-layer-candidate-generators-regenerate`；每个 candidate 写出 signal
+    spec、candidate-bound signal series、prediction artifact、generation summary 和 validation
+    summary，顶层写出 registry/run/validation summary；真实 run 生成 3 个 candidate-bound artifact
+    bundle 且 validation status=`PASS`；所有 artifacts validator PASS，`artifact_role=regenerated_executable_candidate_artifact`、`historical_executable_artifact=true`、`actual_path_validation_ready=false`、promotion/paper-shadow/production/broker
+    fixed false/none；focused tests、full pytest、docs freshness、documentation contract、contract-validation、Ruff、compileall
+    和 diff check 通过。
+  - '2026-06-29: 新增并进入 IN_PROGRESS；范围限定为 regenerated candidate artifacts，TRADING-2285
+    才执行 candidate-level actual-path validation。2026-06-29: 实现完成并归档为 DONE；真实 regenerate
+    run data_quality_status=`PASS_WITH_WARNINGS` / error_count=0，顶层 validation status=`PASS`；验证通过
+    focused parallel pytest 10 passed、full parallel pytest 3514 passed / 643 warnings、contract-validation
+    193 passed。'
+  docs_links:
+  - docs/requirements/TRADING-2284_Trend_Risk_Volatility_Executable_Candidate_Generators.md
+  terminal: true
+  raw_row_sha256: eaa1aac1f3ed28d05dc9461b85f550e240348b12f001ab38b9bfc437cd7953c1
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 0cc33a06a0bb06a3d6514365c9af51e35c93fb3e865f2132806637c3365703e0

@@ -1,0 +1,120 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  task_id_sha256: 989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af
+task_record:
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  title: null
+  domain: Developer experience / reduce generated-view dirty-path amplification
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: architecture coordinator：维护Task Shadow v2 side-by-side与动态consumer inventory；project
+    owner：另审source cutover及C/D波
+  requirement_refs:
+  - docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。B波已完成；source
+    cutover、compatibility fragmentation及report/catalog/flow迁移仍受后续owner review阻塞。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 当前波保持legacy Markdown与v1为唯一authority；v2使用stable task-id path，per-fragment不含current
+      partition/line number，保留raw row/cells/hash并由index保存定位；动态盘点全部literal consumers及rollback；证明中间新增一行不级联改写既有v2
+      fragments、active→completed路径稳定；focused/Architecture/Contract/Integration/Reproducibility/Full
+      PASS；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: dfe2e992ac1d62a79f6a18cdf8d34af038f474966b6fec24a52746f5cc5ea839
+  cell_count: 8
+  all_cells:
+  - DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  - Developer experience / reduce generated-view dirty-path amplification
+  - P1
+  - BASELINE_DONE
+  - architecture coordinator：维护Task Shadow v2 side-by-side与动态consumer inventory；project
+    owner：另审source cutover及C/D波
+  - 详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。B波已完成；source
+    cutover、compatibility fragmentation及report/catalog/flow迁移仍受后续owner review阻塞。
+  - 当前波保持legacy Markdown与v1为唯一authority；v2使用stable task-id path，per-fragment不含current
+    partition/line number，保留raw row/cells/hash并由index保存定位；动态盘点全部literal consumers及rollback；证明中间新增一行不级联改写既有v2
+    fragments、active→completed路径稳定；focused/Architecture/Contract/Integration/Reproducibility/Full
+    PASS；`production_effect=none`。
+  - 2026-07-30：Owner要求先解除并行开发阻塞，执行顺序升至首位但长期风险优先级保持P1。B波实现与final-candidate验证完成并转BASELINE_DONE：installed/canonical
+    governed skill 5/5 byte parity；v1/v2对928 tasks byte-identical replay；consumer
+    inventory=134（9 runtime/122 test/3 script）；focused=162、Architecture=805、Contract=276、Integration=995、Reproducibility=24、Full=7749
+    passed/3 skipped。parallel gate release仍绑定task commit、local-main fast-forward、ordinary
+    push与clean audit；未授权ARCH-005 S5、source-of-truth cutover或C/D波。
+  raw_line: '|DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2|Developer
+    experience / reduce generated-view dirty-path amplification|P1|BASELINE_DONE|architecture
+    coordinator：维护Task Shadow v2 side-by-side与动态consumer inventory；project owner：另审source
+    cutover及C/D波|详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。B波已完成；source
+    cutover、compatibility fragmentation及report/catalog/flow迁移仍受后续owner review阻塞。|当前波保持legacy
+    Markdown与v1为唯一authority；v2使用stable task-id path，per-fragment不含current partition/line
+    number，保留raw row/cells/hash并由index保存定位；动态盘点全部literal consumers及rollback；证明中间新增一行不级联改写既有v2
+    fragments、active→completed路径稳定；focused/Architecture/Contract/Integration/Reproducibility/Full
+    PASS；`production_effect=none`。|2026-07-30：Owner要求先解除并行开发阻塞，执行顺序升至首位但长期风险优先级保持P1。B波实现与final-candidate验证完成并转BASELINE_DONE：installed/canonical
+    governed skill 5/5 byte parity；v1/v2对928 tasks byte-identical replay；consumer
+    inventory=134（9 runtime/122 test/3 script）；focused=162、Architecture=805、Contract=276、Integration=995、Reproducibility=24、Full=7749
+    passed/3 skipped。parallel gate release仍绑定task commit、local-main fast-forward、ordinary
+    push与clean audit；未授权ARCH-005 S5、source-of-truth cutover或C/D波。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dfe2e992ac1d62a79f6a18cd
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: architecture coordinator：维护Task Shadow v2 side-by-side与动态consumer
+      inventory；project owner：另审source cutover及C/D波
+    notes: 2026-07-30：Owner要求先解除并行开发阻塞，执行顺序升至首位但长期风险优先级保持P1。B波实现与final-candidate验证完成并转BASELINE_DONE：installed/canonical
+      governed skill 5/5 byte parity；v1/v2对928 tasks byte-identical replay；consumer
+      inventory=134（9 runtime/122 test/3 script）；focused=162、Architecture=805、Contract=276、Integration=995、Reproducibility=24、Full=7749
+      passed/3 skipped。parallel gate release仍绑定task commit、local-main fast-forward、ordinary
+      push与clean audit；未授权ARCH-005 S5、source-of-truth cutover或C/D波。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:dfe2e992ac1d62a79f6a18cdf8d34af038f474966b6fec24a52746f5cc5ea839
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  - Developer experience / reduce generated-view dirty-path amplification
+  - P1
+  - BASELINE_DONE
+  - architecture coordinator：维护Task Shadow v2 side-by-side与动态consumer inventory；project
+    owner：另审source cutover及C/D波
+  - 详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。B波已完成；source
+    cutover、compatibility fragmentation及report/catalog/flow迁移仍受后续owner review阻塞。
+  - 当前波保持legacy Markdown与v1为唯一authority；v2使用stable task-id path，per-fragment不含current
+    partition/line number，保留raw row/cells/hash并由index保存定位；动态盘点全部literal consumers及rollback；证明中间新增一行不级联改写既有v2
+    fragments、active→completed路径稳定；focused/Architecture/Contract/Integration/Reproducibility/Full
+    PASS；`production_effect=none`。
+  - 2026-07-30：Owner要求先解除并行开发阻塞，执行顺序升至首位但长期风险优先级保持P1。B波实现与final-candidate验证完成并转BASELINE_DONE：installed/canonical
+    governed skill 5/5 byte parity；v1/v2对928 tasks byte-identical replay；consumer
+    inventory=134（9 runtime/122 test/3 script）；focused=162、Architecture=805、Contract=276、Integration=995、Reproducibility=24、Full=7749
+    passed/3 skipped。parallel gate release仍绑定task commit、local-main fast-forward、ordinary
+    push与clean audit；未授权ARCH-005 S5、source-of-truth cutover或C/D波。
+  docs_links:
+  - docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md
+  terminal: false
+  raw_row_sha256: dfe2e992ac1d62a79f6a18cdf8d34af038f474966b6fec24a52746f5cc5ea839
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: d6a9c583b7eadef996f57d471b00209dfe6fc3d4cff394c79f2a8cf9cdebc9b0

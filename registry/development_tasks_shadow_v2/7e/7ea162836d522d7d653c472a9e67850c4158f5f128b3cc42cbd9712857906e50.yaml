@@ -1,0 +1,103 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-097
+  task_id_sha256: 7ea162836d522d7d653c472a9e67850c4158f5f128b3cc42cbd9712857906e50
+task_record:
+  task_id: TRADING-097
+  title: null
+  domain: ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit
+    Diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 研究验证 owner + forward observation
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 9/9 real/derived neighbors 与 dedicated
+    high-drawdown/fast-recovery、per-regime comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed
+    floor 20，证据保持不完整。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
+      bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 7c74bbeaef30d7e0dfc4d8d343ee16a3ba3c74feb8079a411a874ff2fb18d2d9
+  cell_count: 8
+  all_cells:
+  - TRADING-097
+  - ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit Diagnostics
+  - P0
+  - BASELINE_DONE
+  - 研究验证 owner + forward observation
+  - 9/9 real/derived neighbors 与 dedicated high-drawdown/fast-recovery、per-regime
+    comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed floor
+    20，证据保持不完整。
+  - 所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
+    bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。
+  - '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
+    PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator
+    PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。'
+  raw_line: '|TRADING-097|ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity
+    Overfit Diagnostics|P0|BASELINE_DONE|研究验证 owner + forward observation|9/9 real/derived
+    neighbors 与 dedicated high-drawdown/fast-recovery、per-regime comparators均已实现并通过
+    content validator；`event_risk_high`真实样本15行低于reviewed floor 20，证据保持不完整。|所有neighbor
+    path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
+    bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。|2026-07-12:
+    artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
+    PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator
+    PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7c74bbeaef30d7e0dfc4d8d3
+  task_id: TRADING-097
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 研究验证 owner + forward observation
+    notes: '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
+      PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2
+      stress完整，validator PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness
+      PASS。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:7c74bbeaef30d7e0dfc4d8d343ee16a3ba3c74feb8079a411a874ff2fb18d2d9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-097
+  - ETF portfolio research/Dynamic v3 Rescue Robustness Sensitivity Overfit Diagnostics
+  - P0
+  - BASELINE_DONE
+  - 研究验证 owner + forward observation
+  - 9/9 real/derived neighbors 与 dedicated high-drawdown/fast-recovery、per-regime
+    comparators均已实现并通过 content validator；`event_risk_high`真实样本15行低于reviewed floor
+    20，证据保持不完整。
+  - 所有neighbor path/report/checksum归属可证；stress/regime方法与completeness显式；validator从source重算；dedicated
+    bucket与per-regime reviewed policy完成后才可校准PASS boundary。退出条件为独立样本自然达到floor后按同policy重跑，禁止降低门槛。
+  - '2026-07-12: artifact `87b0fc81d6681368`有8 real neighbors/1 missing，stress=`AGGREGATE_OR_MISSING_STRESS_EVIDENCE`、regime=`PATH_DERIVED_REGIME_OBSERVATION_ONLY`、validation
+    PASS；旧`6df822e705e15a42` validation FAIL。2026-07-20: R1真实重跑9/9 neighbors、2/2 stress完整，validator
+    PASS；`event_risk_high=15<20`，故转`BASELINE_DONE`而非伪造robustness PASS。'
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 7c74bbeaef30d7e0dfc4d8d343ee16a3ba3c74feb8079a411a874ff2fb18d2d9
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 7f120fdb92b41c8b6a8f857a8ea8e76bf20f28491546f1f9bd9f8820fc6f60a3

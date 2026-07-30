@@ -1,0 +1,101 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: ARCH-004
+  task_id_sha256: 5e3a6d52c667e346f371e37ec45628400d8be79fad5a5c3a6099df3770891cef
+task_record:
+  task_id: ARCH-004
+  title: null
+  domain: Architecture / post-freeze architecture v2 after TRADING-2438N
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+  requirement_refs:
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+    与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+    PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+      readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
+  cell_count: 8
+  all_cells:
+  - ARCH-004
+  - Architecture / post-freeze architecture v2 after TRADING-2438N
+  - P0
+  - IN_PROGRESS
+  - project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+  - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+    与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+    PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
+  - 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+    readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+  - 2026-07-25：Wave15 failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current
+    phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004 parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。
+  raw_line: '|ARCH-004|Architecture / post-freeze architecture v2 after TRADING-2438N|P0|IN_PROGRESS|project
+    owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁|详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+    与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+    PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。|每波exact
+    carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+    readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。|2026-07-25：Wave15
+    failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004
+    parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-9c2df21ccb7ae2187e4c1f9c
+  task_id: ARCH-004
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+    notes: 2026-07-25：Wave15 failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current
+      phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004 parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004
+  - Architecture / post-freeze architecture v2 after TRADING-2438N
+  - P0
+  - IN_PROGRESS
+  - project owner + architecture coordinator：选择下一独立slice；G4C/其他consumer、G5均未自动解锁
+  - 详见 `docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md`、`docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md`
+    与 Wave15 supporting requirement。G2.4、bootstrap handoff、ARCH-005 S0～S4D、G2.5、Wave12～15均已formal
+    PASS；Wave15只含D0B3+G4B `daily_score_daily`与bounded G3 close/readiness。
+  - 每波exact carrier、consumer fail-closed、bounded migration与formal/final Full均通过；下一slice仍须独立owner授权、任务登记与C/D
+    readiness，不得静默改变DQ/PIT、阈值、回测、权重、promotion、production或broker。
+  - 2026-07-25：Wave15 failure-fix Full=`7180 passed / 3 skipped / 643 warnings`，current
+    phase=`WAVE15_S3_FORMAL_EXIT_COMPLETE`。ARCH-004 parent继续`IN_PROGRESS`，等待owner在G4C/下一consumer、G5或其他已登记slice间选择；真实periodic/provider、其他consumer、S5、production和broker仍未开放。
+  docs_links:
+  - docs/requirements/ARCH-004G_Domain_Migration_and_Subtraction.md
+  - docs/requirements/ARCH-004_Post_2438N_System_Architecture_Refactor_Program.md
+  terminal: false
+  raw_row_sha256: 9c2df21ccb7ae2187e4c1f9cb4d7b4dc217a45b4735c3114003c03c143582764
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 6e79d44838b7e5464693d6940b0b00cbe4d221247c1f8cd4e937c4a9f254e00a

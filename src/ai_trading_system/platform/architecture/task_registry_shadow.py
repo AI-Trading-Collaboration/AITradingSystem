@@ -23,12 +23,16 @@ GENERATED_VIEW_SCHEMA_VERSION = "task_register_generated_view.v1"
 S0_BASELINE_SCHEMA_VERSION = "arch_005_task_registry_baseline.v1"
 SHADOW_FRAGMENT_SCHEMA_VERSION = "arch_005_task_shadow_fragment.v1"
 SHADOW_INDEX_SCHEMA_VERSION = "arch_005_task_shadow_index.v1"
+SHADOW_V2_FRAGMENT_SCHEMA_VERSION = "arch_005_task_shadow_fragment.v2"
+SHADOW_V2_INDEX_SCHEMA_VERSION = "arch_005_task_shadow_index.v2"
 LEGACY_PARSER_VERSION = "task_register_markdown_parser.v1_characterized"
 SHADOW_COMPILER_VERSION = "arch_005_shadow_registry_compiler.v1"
+SHADOW_V2_COMPILER_VERSION = "arch_005_shadow_registry_compiler.v2"
 
 ACTIVE_REGISTER_PATH = "docs/task_register.md"
 COMPLETED_REGISTER_PATH = "docs/task_register_completed.md"
 SHADOW_REGISTRY_ROOT = "registry/development_tasks_shadow"
+SHADOW_V2_REGISTRY_ROOT = "registry/development_tasks_shadow_v2"
 
 TERMINAL_STATUSES = frozenset({"DONE", "DROPPED"})
 VALID_LEGACY_STATUSES = frozenset(
@@ -292,9 +296,7 @@ def build_shadow_fragment(row: LegacyTaskRow, *, source_commit: str) -> dict[str
             "contract_versions": [],
             "dependencies": [],
             "unstructured_legacy_blocker_or_next_step": fields[5],
-            "acceptance_criteria": [
-                {"criterion_id": "legacy_markdown", "text": fields[6]}
-            ],
+            "acceptance_criteria": [{"criterion_id": "legacy_markdown", "text": fields[6]}],
             "production_effect": "UNKNOWN_LEGACY",
             "broker_action": "UNKNOWN_LEGACY",
             "legacy_source": {
@@ -375,6 +377,144 @@ def validate_shadow_fragment(payload: Mapping[str, Any]) -> None:
         raise TaskRegistryShadowError("SHADOW_FRAGMENT_CHECKSUM", str(task.get("task_id")))
 
 
+def build_shadow_v2_fragment(
+    row: LegacyTaskRow,
+    *,
+    source_commit: str,
+) -> dict[str, Any]:
+    if not _GIT_SHA_RE.fullmatch(source_commit):
+        raise TaskRegistryShadowError("SHADOW_V2_SOURCE_COMMIT", source_commit)
+    fields = row.projected_cells
+    event_id = f"legacy-import-{row.row_sha256[:24]}"
+    task_id_sha256 = _sha256_bytes(row.task_id.encode("utf-8"))
+    payload: dict[str, Any] = {
+        "schema_version": SHADOW_V2_FRAGMENT_SCHEMA_VERSION,
+        "shadow_only": True,
+        "source_of_truth": "LEGACY_MARKDOWN",
+        "stable_task_identity": {
+            "task_id": row.task_id,
+            "task_id_sha256": task_id_sha256,
+        },
+        "task_record": {
+            "task_id": row.task_id,
+            "title": None,
+            "domain": fields[1],
+            "parent_task_id": None,
+            "created_at": None,
+            "created_by": None,
+            "priority": fields[2],
+            "accountable_owner": None,
+            "next_owner": fields[4],
+            "requirement_refs": list(row.docs_links),
+            "module_ids": [],
+            "contract_versions": [],
+            "dependencies": [],
+            "unstructured_legacy_blocker_or_next_step": fields[5],
+            "acceptance_criteria": [{"criterion_id": "legacy_markdown", "text": fields[6]}],
+            "production_effect": "UNKNOWN_LEGACY",
+            "broker_action": "UNKNOWN_LEGACY",
+        },
+        "legacy_row_evidence": {
+            "row_sha256": row.row_sha256,
+            "cell_count": len(row.cells),
+            "all_cells": list(row.cells),
+            "raw_line": row.raw_line,
+            "history_completeness": "LEGACY_HISTORY_PARTIAL",
+            "ambiguous_unescaped_pipe_boundaries": len(row.cells) > 8,
+        },
+        "initial_event": {
+            "schema_version": TASK_EVENT_SCHEMA_VERSION,
+            "event_id": event_id,
+            "task_id": row.task_id,
+            "event_type": "LEGACY_IMPORT",
+            "occurred_at": None,
+            "actor": "devx_006_shadow_v2_importer",
+            "change_id": "DEVX-006-TASK-SHADOW-V2",
+            "lane_id": None,
+            "base_commit": source_commit,
+            "previous_state_event_id": None,
+            "from_status": None,
+            "to_status": fields[3],
+            "payload": {
+                "priority": fields[2],
+                "next_owner": fields[4],
+                "notes": fields[7],
+            },
+            "rationale": (
+                "Lossless legacy row import with mutable source location held "
+                "only in the v2 index."
+            ),
+            "evidence_refs": [f"sha256:{row.row_sha256}"],
+            "history_completeness": "LEGACY_HISTORY_PARTIAL",
+        },
+        "projection": {
+            "legacy_first_eight_cells": list(fields),
+            "docs_links": list(row.docs_links),
+            "terminal": fields[3] in TERMINAL_STATUSES,
+            "raw_row_sha256": row.row_sha256,
+        },
+        "producer_version": SHADOW_V2_COMPILER_VERSION,
+    }
+    payload["fragment_checksum"] = _payload_checksum(payload, "fragment_checksum")
+    validate_shadow_v2_fragment(payload)
+    return payload
+
+
+def validate_shadow_v2_fragment(payload: Mapping[str, Any]) -> None:
+    if payload.get("schema_version") != SHADOW_V2_FRAGMENT_SCHEMA_VERSION:
+        raise TaskRegistryShadowError("SHADOW_V2_FRAGMENT_SCHEMA", "unsupported schema")
+    if (
+        payload.get("shadow_only") is not True
+        or payload.get("source_of_truth") != "LEGACY_MARKDOWN"
+    ):
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_FRAGMENT_AUTHORITY",
+            "must remain shadow-only",
+        )
+    identity = _mapping(payload.get("stable_task_identity"), "stable_task_identity")
+    task = _mapping(payload.get("task_record"), "task_record")
+    evidence = _mapping(payload.get("legacy_row_evidence"), "legacy_row_evidence")
+    event = _mapping(payload.get("initial_event"), "initial_event")
+    projection = _mapping(payload.get("projection"), "projection")
+    task_id = str(identity.get("task_id") or "")
+    if not task_id or task.get("task_id") != task_id or event.get("task_id") != task_id:
+        raise TaskRegistryShadowError("SHADOW_V2_TASK_IDENTITY", task_id)
+    if identity.get("task_id_sha256") != _sha256_bytes(task_id.encode("utf-8")):
+        raise TaskRegistryShadowError("SHADOW_V2_TASK_ID_HASH", task_id)
+    if event.get("schema_version") != TASK_EVENT_SCHEMA_VERSION:
+        raise TaskRegistryShadowError("SHADOW_V2_EVENT_SCHEMA", task_id)
+    forbidden_locator_fields = {
+        "source",
+        "source_partition",
+        "source_path",
+        "path",
+        "line_number",
+        "row_number",
+    }
+    leaked = sorted(forbidden_locator_fields.intersection(evidence))
+    if leaked:
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_LOCATION_LEAK",
+            f"{task_id}:{leaked}",
+        )
+    cells = projection.get("legacy_first_eight_cells")
+    if not isinstance(cells, list) or len(cells) != 8 or cells[0] != task_id:
+        raise TaskRegistryShadowError("SHADOW_V2_PROJECTION_FIELDS", task_id)
+    all_cells = evidence.get("all_cells")
+    if not isinstance(all_cells, list) or all_cells[:8] != cells:
+        raise TaskRegistryShadowError("SHADOW_V2_ALL_CELLS", task_id)
+    raw_line = str(evidence.get("raw_line") or "")
+    row_sha256 = _sha256_bytes(raw_line.encode("utf-8"))
+    if evidence.get("row_sha256") != row_sha256 or projection.get("raw_row_sha256") != row_sha256:
+        raise TaskRegistryShadowError("SHADOW_V2_RAW_ROW_HASH", task_id)
+    checksum = str(payload.get("fragment_checksum") or "")
+    if not _SHA256_RE.fullmatch(checksum) or checksum != _payload_checksum(
+        payload,
+        "fragment_checksum",
+    ):
+        raise TaskRegistryShadowError("SHADOW_V2_FRAGMENT_CHECKSUM", task_id)
+
+
 def shadow_fragment_path(fragment: Mapping[str, Any]) -> str:
     task = _mapping(fragment.get("task_record"), "task_record")
     legacy = _mapping(task.get("legacy_source"), "legacy_source")
@@ -382,6 +522,13 @@ def shadow_fragment_path(fragment: Mapping[str, Any]) -> str:
     digest = hashlib.sha256(task_id.encode("utf-8")).hexdigest()
     source = str(legacy["source_partition"])
     return f"{SHADOW_REGISTRY_ROOT}/{source}/{digest[:2]}/{digest}.yaml"
+
+
+def shadow_v2_fragment_path(fragment: Mapping[str, Any]) -> str:
+    identity = _mapping(fragment.get("stable_task_identity"), "stable_task_identity")
+    task_id = str(identity["task_id"])
+    digest = hashlib.sha256(task_id.encode("utf-8")).hexdigest()
+    return f"{SHADOW_V2_REGISTRY_ROOT}/{digest[:2]}/{digest}.yaml"
 
 
 def write_shadow_fragments(
@@ -423,6 +570,56 @@ def write_shadow_fragments(
     return tuple(records)
 
 
+def write_shadow_v2_fragments(
+    *,
+    project_root: Path,
+    fragments: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, Any], ...]:
+    root = project_root.resolve()
+    target_root = (root / SHADOW_V2_REGISTRY_ROOT).resolve()
+    try:
+        target_root.relative_to(root)
+    except ValueError as exc:
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_ROOT_OUTSIDE_PROJECT",
+            str(target_root),
+        ) from exc
+    expected: set[Path] = set()
+    records: list[dict[str, Any]] = []
+    for fragment in sorted(
+        fragments,
+        key=lambda item: str(
+            _mapping(
+                item.get("stable_task_identity"),
+                "stable_task_identity",
+            )["task_id"]
+        ),
+    ):
+        validate_shadow_v2_fragment(fragment)
+        relative = shadow_v2_fragment_path(fragment)
+        path = (root / relative).resolve()
+        path.relative_to(target_root)
+        write_generated_architecture_artifact(path, fragment)
+        expected.add(path)
+        identity = _mapping(
+            fragment["stable_task_identity"],
+            "stable_task_identity",
+        )
+        records.append(
+            {
+                "task_id": identity["task_id"],
+                "path": relative,
+                "file_sha256": _sha256_bytes(path.read_bytes()),
+                "fragment_checksum": fragment["fragment_checksum"],
+            }
+        )
+    if target_root.exists():
+        for stale in sorted(target_root.rglob("*.yaml")):
+            if stale.resolve() not in expected:
+                stale.unlink()
+    return tuple(records)
+
+
 def load_shadow_fragments(
     *, project_root: Path, records: Sequence[Mapping[str, Any]]
 ) -> tuple[dict[str, Any], ...]:
@@ -444,6 +641,36 @@ def load_shadow_fragments(
             raise TaskRegistryShadowError("SHADOW_INDEX_PATH_BINDING", relative)
         if value.get("fragment_checksum") != record.get("fragment_checksum"):
             raise TaskRegistryShadowError("SHADOW_INDEX_BINDING", relative)
+        fragments.append(value)
+    return tuple(fragments)
+
+
+def load_shadow_v2_fragments(
+    *,
+    project_root: Path,
+    records: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, Any], ...]:
+    root = project_root.resolve()
+    fragments: list[dict[str, Any]] = []
+    for record in records:
+        relative = _portable_path(record.get("path"), "fragment.path")
+        path = (root / relative).resolve()
+        if _sha256_bytes(path.read_bytes()) != record.get("file_sha256"):
+            raise TaskRegistryShadowError("SHADOW_V2_FILE_HASH", relative)
+        value = safe_load_yaml_path(path)
+        if not isinstance(value, dict):
+            raise TaskRegistryShadowError("SHADOW_V2_FILE_MAPPING", relative)
+        validate_shadow_v2_fragment(value)
+        identity = _mapping(
+            value.get("stable_task_identity"),
+            "stable_task_identity",
+        )
+        if identity.get("task_id") != record.get("task_id"):
+            raise TaskRegistryShadowError("SHADOW_V2_INDEX_TASK_BINDING", relative)
+        if shadow_v2_fragment_path(value) != relative:
+            raise TaskRegistryShadowError("SHADOW_V2_INDEX_PATH_BINDING", relative)
+        if value.get("fragment_checksum") != record.get("fragment_checksum"):
+            raise TaskRegistryShadowError("SHADOW_V2_INDEX_BINDING", relative)
         fragments.append(value)
     return tuple(fragments)
 
@@ -556,8 +783,7 @@ def validate_shadow_index(
         raise TaskRegistryShadowError("SHADOW_INDEX_COUNT", str(expected_count))
     views = payload.get("generated_views")
     if not isinstance(views, list) or not all(
-        isinstance(record, Mapping) and record.get("byte_identical") is True
-        for record in views
+        isinstance(record, Mapping) and record.get("byte_identical") is True for record in views
     ):
         raise TaskRegistryShadowError("SHADOW_VIEW_PARITY", "views must be byte-identical")
     checksum = str(payload.get("index_checksum") or "")
@@ -565,6 +791,244 @@ def validate_shadow_index(
         payload, "index_checksum"
     ):
         raise TaskRegistryShadowError("SHADOW_INDEX_CHECKSUM", "checksum mismatch")
+
+
+def build_shadow_v2_index(
+    *,
+    baseline: Mapping[str, Any],
+    documents: Sequence[LegacyRegisterDocument],
+    fragments: Sequence[Mapping[str, Any]],
+    fragment_files: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    by_id: dict[str, Mapping[str, Any]] = {}
+    for fragment in fragments:
+        validate_shadow_v2_fragment(fragment)
+        identity = _mapping(
+            fragment["stable_task_identity"],
+            "stable_task_identity",
+        )
+        event = _mapping(fragment["initial_event"], "initial_event")
+        task_id = str(identity["task_id"])
+        if task_id in by_id:
+            raise TaskRegistryShadowError("SHADOW_V2_DUPLICATE_TASK", task_id)
+        entry_gate = _mapping(baseline.get("entry_gate"), "entry_gate")
+        if event.get("base_commit") != entry_gate.get("source_commit"):
+            raise TaskRegistryShadowError("SHADOW_V2_SOURCE_COMMIT", task_id)
+        by_id[task_id] = fragment
+    source_rows = [row for document in documents for row in document.rows]
+    if set(by_id) != {row.task_id for row in source_rows}:
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_TASK_SET_DRIFT",
+            "fragment/source mismatch",
+        )
+    for row in source_rows:
+        _assert_v2_fragment_matches_row(row, by_id[row.task_id])
+
+    file_records: dict[str, Mapping[str, Any]] = {}
+    for record in fragment_files:
+        task_id = str(record.get("task_id") or "")
+        if not task_id or task_id in file_records:
+            raise TaskRegistryShadowError("SHADOW_V2_FILE_RECORD_DUPLICATE", task_id)
+        file_records[task_id] = record
+    if set(file_records) != set(by_id):
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_FILE_RECORD_SET_DRIFT",
+            "file/source mismatch",
+        )
+
+    indexed_fragments: list[dict[str, Any]] = []
+    for document in documents:
+        for order_in_partition, row in enumerate(document.rows, start=1):
+            record = file_records[row.task_id]
+            indexed_fragments.append(
+                {
+                    "task_id": row.task_id,
+                    "path": record["path"],
+                    "file_sha256": record["file_sha256"],
+                    "fragment_checksum": record["fragment_checksum"],
+                    "locator": {
+                        "source_partition": row.source,
+                        "source_path": row.source_path,
+                        "line_number": row.line_number,
+                        "order_in_partition": order_in_partition,
+                        "row_sha256": row.row_sha256,
+                    },
+                }
+            )
+
+    views: list[dict[str, Any]] = []
+    for document in documents:
+        rendered = render_compatibility_view_v2(document, by_id)
+        views.append(
+            {
+                "source": document.source,
+                "source_path": document.source_path,
+                "source_sha256": document.sha256,
+                "rendered_sha256": _sha256_bytes(rendered),
+                "byte_identical": rendered == document.raw_bytes,
+                "persisted_in_git": False,
+            }
+        )
+    if not all(record["byte_identical"] for record in views):
+        raise TaskRegistryShadowError("SHADOW_V2_VIEW_PARITY", "rendered bytes differ")
+
+    consumers = _mapping(
+        baseline.get("consumer_characterization"),
+        "consumer_characterization",
+    )
+    payload: dict[str, Any] = {
+        "schema_version": SHADOW_V2_INDEX_SCHEMA_VERSION,
+        "status": "PASS",
+        "stage": "DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE",
+        "baseline_checksum": baseline.get("baseline_checksum"),
+        "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+        "cutover_performed": False,
+        "v1_coexists": True,
+        "task_count": len(by_id),
+        "fragment_count": len(indexed_fragments),
+        "missing_task_count": 0,
+        "duplicate_task_count": 0,
+        "semantic_parity": {
+            "task_id": "PASS",
+            "all_raw_cells": "PASS",
+            "legacy_first_eight_field_projection": "PASS",
+            "status": "PASS",
+            "priority": "PASS",
+            "owner": "PASS",
+            "blocker_or_next_step": "PASS",
+            "acceptance_criteria": "PASS",
+            "notes": "PASS",
+            "terminal_classification": "PASS",
+            "docs_links": "PASS",
+            "ambiguous_rows_preserved_without_guessing": "PASS",
+            "byte_identical_legacy_render": "PASS",
+        },
+        "location_contract": {
+            "fragment_contains_current_partition": False,
+            "fragment_contains_source_path": False,
+            "fragment_contains_line_number": False,
+            "locator_authority": "INDEX_ONLY",
+            "stable_path_key": "sha256(task_id)",
+        },
+        "fragments": indexed_fragments,
+        "generated_views": views,
+        "consumer_inventory": consumers,
+        "replay": {
+            "deterministic": True,
+            "byte_identical": True,
+            "compiler_version": SHADOW_V2_COMPILER_VERSION,
+            "existing_fragment_bytes_independent_of_other_row_line_numbers": True,
+            "active_to_completed_path_stable": True,
+        },
+        "safety": {
+            "dual_write_allowed": False,
+            "dispatch_allowed": False,
+            "lease_acquisition_allowed": False,
+            "task_status_mutation_allowed": False,
+            "source_cutover_allowed": False,
+            "production_effect": "none",
+            "broker_action": "none",
+        },
+    }
+    payload["index_checksum"] = _payload_checksum(payload, "index_checksum")
+    validate_shadow_v2_index(
+        payload,
+        baseline=baseline,
+        documents=documents,
+    )
+    return payload
+
+
+def validate_shadow_v2_index(
+    payload: Mapping[str, Any],
+    *,
+    baseline: Mapping[str, Any],
+    documents: Sequence[LegacyRegisterDocument],
+) -> None:
+    if payload.get("schema_version") != SHADOW_V2_INDEX_SCHEMA_VERSION:
+        raise TaskRegistryShadowError("SHADOW_V2_INDEX_SCHEMA", "unsupported schema")
+    if (
+        payload.get("status") != "PASS"
+        or payload.get("source_of_truth") != "LEGACY_MARKDOWN_ONLY"
+        or payload.get("cutover_performed") is not False
+        or payload.get("v1_coexists") is not True
+    ):
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_INDEX_AUTHORITY",
+            "v2 must remain side-by-side",
+        )
+    if payload.get("baseline_checksum") != baseline.get("baseline_checksum"):
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_BASELINE_BINDING",
+            "baseline checksum mismatch",
+        )
+    expected_count = sum(len(document.rows) for document in documents)
+    if (
+        payload.get("task_count") != expected_count
+        or payload.get("fragment_count") != expected_count
+    ):
+        raise TaskRegistryShadowError("SHADOW_V2_INDEX_COUNT", str(expected_count))
+    records = payload.get("fragments")
+    if not isinstance(records, list):
+        raise TaskRegistryShadowError("SHADOW_V2_INDEX_FRAGMENTS", "list required")
+    expected_locators = {
+        row.task_id: {
+            "source_partition": row.source,
+            "source_path": row.source_path,
+            "line_number": row.line_number,
+            "order_in_partition": order_in_partition,
+            "row_sha256": row.row_sha256,
+        }
+        for document in documents
+        for order_in_partition, row in enumerate(document.rows, start=1)
+    }
+    actual_ids: list[str] = []
+    for record in records:
+        if not isinstance(record, Mapping):
+            raise TaskRegistryShadowError(
+                "SHADOW_V2_INDEX_FRAGMENT_RECORD",
+                "mapping required",
+            )
+        task_id = str(record.get("task_id") or "")
+        actual_ids.append(task_id)
+        if record.get("locator") != expected_locators.get(task_id):
+            raise TaskRegistryShadowError("SHADOW_V2_LOCATOR_DRIFT", task_id)
+        relative = _portable_path(record.get("path"), "fragment.path")
+        if not relative.startswith(f"{SHADOW_V2_REGISTRY_ROOT}/"):
+            raise TaskRegistryShadowError("SHADOW_V2_PATH_ROOT", relative)
+        if "/active/" in relative or "/completed/" in relative:
+            raise TaskRegistryShadowError("SHADOW_V2_PATH_PARTITION", relative)
+    if len(actual_ids) != len(set(actual_ids)) or set(actual_ids) != set(expected_locators):
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_INDEX_TASK_SET",
+            "duplicate or missing task",
+        )
+    views = payload.get("generated_views")
+    if not isinstance(views, list) or not all(
+        isinstance(record, Mapping) and record.get("byte_identical") is True for record in views
+    ):
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_VIEW_PARITY",
+            "views must be byte-identical",
+        )
+    consumers = _mapping(payload.get("consumer_inventory"), "consumer_inventory")
+    if consumers != baseline.get("consumer_characterization"):
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_CONSUMER_INVENTORY_DRIFT",
+            "inventory must bind to baseline",
+        )
+    safety = _mapping(payload.get("safety"), "safety")
+    if safety.get("source_cutover_allowed") is not False:
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_SOURCE_CUTOVER",
+            "source cutover is not authorized",
+        )
+    checksum = str(payload.get("index_checksum") or "")
+    if not _SHA256_RE.fullmatch(checksum) or checksum != _payload_checksum(
+        payload,
+        "index_checksum",
+    ):
+        raise TaskRegistryShadowError("SHADOW_V2_INDEX_CHECKSUM", "checksum mismatch")
 
 
 def render_compatibility_view(
@@ -592,6 +1056,34 @@ def render_compatibility_view(
     return "".join(rendered).encode("utf-8")
 
 
+def render_compatibility_view_v2(
+    document: LegacyRegisterDocument,
+    fragments_by_task_id: Mapping[str, Mapping[str, Any]],
+) -> bytes:
+    text = document.raw_bytes.decode("utf-8")
+    rendered: list[str] = []
+    for physical_line in text.splitlines(keepends=True):
+        raw_line, ending = _split_line_ending(physical_line)
+        cells = _legacy_cells(raw_line)
+        if cells is None:
+            rendered.append(physical_line)
+            continue
+        task_id = cells[0]
+        try:
+            fragment = fragments_by_task_id[task_id]
+        except KeyError as exc:
+            raise TaskRegistryShadowError(
+                "SHADOW_V2_VIEW_TASK_MISSING",
+                task_id,
+            ) from exc
+        evidence = _mapping(
+            fragment.get("legacy_row_evidence"),
+            "legacy_row_evidence",
+        )
+        rendered.append(f"{evidence['raw_line']}{ending}")
+    return "".join(rendered).encode("utf-8")
+
+
 def characterize_task_register_consumers(project_root: Path) -> dict[str, Any]:
     root = project_root.resolve()
     records: list[dict[str, Any]] = []
@@ -604,8 +1096,7 @@ def characterize_task_register_consumers(project_root: Path) -> dict[str, Any]:
             targets = [
                 target
                 for target in (ACTIVE_REGISTER_PATH, COMPLETED_REGISTER_PATH)
-                if target in text
-                or Path(target).name in text
+                if target in text or Path(target).name in text
             ]
             if not targets:
                 continue
@@ -617,6 +1108,7 @@ def characterize_task_register_consumers(project_root: Path) -> dict[str, Any]:
                     "targets": targets,
                     "reference_count": sum(text.count(Path(target).name) for target in targets),
                     "migration_status": "LEGACY_DIRECT_OR_LITERAL_CONSUMER",
+                    "rollback": "READ_LEGACY_MARKDOWN_DIRECT",
                 }
             )
     return {
@@ -626,6 +1118,7 @@ def characterize_task_register_consumers(project_root: Path) -> dict[str, Any]:
         "test_consumer_count": sum(record["role"] == "test" for record in records),
         "script_consumer_count": sum(record["role"] == "script" for record in records),
         "consumer_set_sha256": _canonical_sha256(records),
+        "source_cutover_allowed": False,
         "consumers": records,
     }
 
@@ -640,9 +1133,7 @@ def _document_record(document: LegacyRegisterDocument) -> dict[str, Any]:
         "row_count": len(document.rows),
         "final_newline": document.raw_bytes.endswith((b"\n", b"\r")),
         "task_id_order_sha256": _canonical_sha256([row.task_id for row in document.rows]),
-        "row_checksum_order_sha256": _canonical_sha256(
-            [row.row_sha256 for row in document.rows]
-        ),
+        "row_checksum_order_sha256": _canonical_sha256([row.row_sha256 for row in document.rows]),
         "task_row_newline_counts": dict(sorted(newline_counts.items())),
     }
 
@@ -668,16 +1159,50 @@ def _assert_fragment_matches_row(
         "blocker": task.get("unstructured_legacy_blocker_or_next_step") == fields[5],
         "acceptance": task.get("acceptance_criteria")
         == [{"criterion_id": "legacy_markdown", "text": fields[6]}],
-        "notes": _mapping(event.get("payload"), "event.payload").get("notes")
-        == fields[7],
+        "notes": _mapping(event.get("payload"), "event.payload").get("notes") == fields[7],
         "docs_links": projection.get("docs_links") == list(row.docs_links),
-        "terminal": projection.get("terminal")
-        == (fields[3] in TERMINAL_STATUSES),
+        "terminal": projection.get("terminal") == (fields[3] in TERMINAL_STATUSES),
     }
     failed = sorted(name for name, passed in expected.items() if not passed)
     if failed:
         raise TaskRegistryShadowError(
             "SHADOW_SEMANTIC_DRIFT",
+            f"{row.task_id}:{failed}",
+        )
+
+
+def _assert_v2_fragment_matches_row(
+    row: LegacyTaskRow,
+    fragment: Mapping[str, Any],
+) -> None:
+    identity = _mapping(fragment.get("stable_task_identity"), "stable_task_identity")
+    task = _mapping(fragment.get("task_record"), "task_record")
+    evidence = _mapping(fragment.get("legacy_row_evidence"), "legacy_row_evidence")
+    event = _mapping(fragment.get("initial_event"), "initial_event")
+    projection = _mapping(fragment.get("projection"), "projection")
+    fields = row.projected_cells
+    expected = {
+        "task_id": identity.get("task_id") == row.task_id,
+        "task_record_id": task.get("task_id") == row.task_id,
+        "all_cells": evidence.get("all_cells") == list(row.cells),
+        "raw_line": evidence.get("raw_line") == row.raw_line,
+        "row_sha256": evidence.get("row_sha256") == row.row_sha256,
+        "projected_cells": projection.get("legacy_first_eight_cells") == list(fields),
+        "domain": task.get("domain") == fields[1],
+        "priority": task.get("priority") == fields[2],
+        "status": event.get("to_status") == fields[3],
+        "next_owner": task.get("next_owner") == fields[4],
+        "blocker": task.get("unstructured_legacy_blocker_or_next_step") == fields[5],
+        "acceptance": task.get("acceptance_criteria")
+        == [{"criterion_id": "legacy_markdown", "text": fields[6]}],
+        "notes": _mapping(event.get("payload"), "event.payload").get("notes") == fields[7],
+        "docs_links": projection.get("docs_links") == list(row.docs_links),
+        "terminal": projection.get("terminal") == (fields[3] in TERMINAL_STATUSES),
+    }
+    failed = sorted(name for name, passed in expected.items() if not passed)
+    if failed:
+        raise TaskRegistryShadowError(
+            "SHADOW_V2_SEMANTIC_DRIFT",
             f"{row.task_id}:{failed}",
         )
 
@@ -710,18 +1235,42 @@ def _contract_schema_freeze() -> dict[str, Any]:
         "task_record": {
             "schema_version": TASK_RECORD_SCHEMA_VERSION,
             "required_fields": [
-                "task_id", "title", "domain", "parent_task_id", "created_at",
-                "created_by", "priority", "accountable_owner", "next_owner",
-                "requirement_refs", "module_ids", "contract_versions", "dependencies",
-                "acceptance_criteria", "production_effect", "broker_action", "legacy_source",
+                "task_id",
+                "title",
+                "domain",
+                "parent_task_id",
+                "created_at",
+                "created_by",
+                "priority",
+                "accountable_owner",
+                "next_owner",
+                "requirement_refs",
+                "module_ids",
+                "contract_versions",
+                "dependencies",
+                "acceptance_criteria",
+                "production_effect",
+                "broker_action",
+                "legacy_source",
             ],
         },
         "task_event": {
             "schema_version": TASK_EVENT_SCHEMA_VERSION,
             "required_fields": [
-                "event_id", "task_id", "event_type", "occurred_at", "actor",
-                "change_id", "lane_id", "base_commit", "previous_state_event_id",
-                "from_status", "to_status", "payload", "rationale", "evidence_refs",
+                "event_id",
+                "task_id",
+                "event_type",
+                "occurred_at",
+                "actor",
+                "change_id",
+                "lane_id",
+                "base_commit",
+                "previous_state_event_id",
+                "from_status",
+                "to_status",
+                "payload",
+                "rationale",
+                "evidence_refs",
             ],
             "mutually_exclusive_changes_require_causal_chain": True,
         },
@@ -793,9 +1342,7 @@ def _portable_path(value: object, field: str) -> str:
 
 def _canonical_sha256(value: object) -> str:
     return _sha256_bytes(
-        json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode(
-            "utf-8"
-        )
+        json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
     )
 
 
@@ -819,6 +1366,10 @@ __all__ = [
     "SHADOW_FRAGMENT_SCHEMA_VERSION",
     "SHADOW_INDEX_SCHEMA_VERSION",
     "SHADOW_REGISTRY_ROOT",
+    "SHADOW_V2_COMPILER_VERSION",
+    "SHADOW_V2_FRAGMENT_SCHEMA_VERSION",
+    "SHADOW_V2_INDEX_SCHEMA_VERSION",
+    "SHADOW_V2_REGISTRY_ROOT",
     "TASK_DEPENDENCY_SCHEMA_VERSION",
     "TASK_EVENT_SCHEMA_VERSION",
     "TASK_RECORD_SCHEMA_VERSION",
@@ -828,14 +1379,22 @@ __all__ = [
     "build_s0_baseline",
     "build_shadow_fragment",
     "build_shadow_index",
+    "build_shadow_v2_fragment",
+    "build_shadow_v2_index",
     "characterize_task_register_consumers",
     "load_legacy_documents",
     "load_shadow_fragments",
+    "load_shadow_v2_fragments",
     "parse_legacy_register",
     "render_compatibility_view",
+    "render_compatibility_view_v2",
     "shadow_fragment_path",
+    "shadow_v2_fragment_path",
     "validate_s0_baseline",
     "validate_shadow_fragment",
     "validate_shadow_index",
+    "validate_shadow_v2_fragment",
+    "validate_shadow_v2_index",
     "write_shadow_fragments",
+    "write_shadow_v2_fragments",
 ]

@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  task_id_sha256: c807ca19a6bbad3ffe4aa9be745d29c3fdbc5ff2c07ba4cc77a6fcf1a3723d82
+task_record:
+  task_id: TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  title: null
+  domain: Strategy evidence platform / historical portable source archive after active-window
+    migration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: project owner/data archive owner 提供 exact prices/rates historical bytes；strategy
+    platform 随后完成 S2
+  requirement_refs:
+  - docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。Versioned
+    archive policy/manifest、两个 exact Git config blobs、显式 opt-in resolver/adapters与fail-closed
+    tests已完成；canonical sidecar、四份 legacy artifacts与active configs未改。全量扫描把原2-source假设修正为101
+    exact + 7 drift。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 默认不传archive仍`HISTORICAL_PORTABLE_CONFLICT`；显式archive可精确解析两个config，但四级validator继续在download
+      manifest/prices source fail closed。只有补齐其余5份exact source，尤其当前无法恢复的`prices_daily.csv@b9c96337...`与`rates_daily.csv@d530a35e...`，并使R0/WF/robustness/R2全部PASS后才可DONE；不得近似重建、放宽hash或回滚窗口。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 97892c39db46d6061da44e0caf49ec28b913eb0de8925514f294bb47efa01156
+  cell_count: 8
+  all_cells:
+  - TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  - Strategy evidence platform / historical portable source archive after active-window
+    migration
+  - P1
+  - BASELINE_DONE
+  - project owner/data archive owner 提供 exact prices/rates historical bytes；strategy
+    platform 随后完成 S2
+  - 详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。Versioned
+    archive policy/manifest、两个 exact Git config blobs、显式 opt-in resolver/adapters与fail-closed
+    tests已完成；canonical sidecar、四份 legacy artifacts与active configs未改。全量扫描把原2-source假设修正为101
+    exact + 7 drift。
+  - 默认不传archive仍`HISTORICAL_PORTABLE_CONFLICT`；显式archive可精确解析两个config，但四级validator继续在download
+    manifest/prices source fail closed。只有补齐其余5份exact source，尤其当前无法恢复的`prices_daily.csv@b9c96337...`与`rates_daily.csv@d530a35e...`，并使R0/WF/robustness/R2全部PASS后才可DONE；不得近似重建、放宽hash或回滚窗口。
+  - 2026-07-22：首轮focused=`31 passed/1 failed`真实暴露额外5个drift；Git、legacy worktree、replay/temp均未找到prices/rates
+    exact bytes。修正后focused=`32 passed`；download manifest/marketstack/ledger可由当前append-prefix或2026-07-17
+    cutoff精确复算但暂不单独扩档。任务按baseline+data-source blocker收口，`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION|Strategy
+    evidence platform / historical portable source archive after active-window migration|P1|BASELINE_DONE|project
+    owner/data archive owner 提供 exact prices/rates historical bytes；strategy platform
+    随后完成 S2|详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。Versioned
+    archive policy/manifest、两个 exact Git config blobs、显式 opt-in resolver/adapters与fail-closed
+    tests已完成；canonical sidecar、四份 legacy artifacts与active configs未改。全量扫描把原2-source假设修正为101
+    exact + 7 drift。|默认不传archive仍`HISTORICAL_PORTABLE_CONFLICT`；显式archive可精确解析两个config，但四级validator继续在download
+    manifest/prices source fail closed。只有补齐其余5份exact source，尤其当前无法恢复的`prices_daily.csv@b9c96337...`与`rates_daily.csv@d530a35e...`，并使R0/WF/robustness/R2全部PASS后才可DONE；不得近似重建、放宽hash或回滚窗口。|2026-07-22：首轮focused=`31
+    passed/1 failed`真实暴露额外5个drift；Git、legacy worktree、replay/temp均未找到prices/rates
+    exact bytes。修正后focused=`32 passed`；download manifest/marketstack/ledger可由当前append-prefix或2026-07-17
+    cutoff精确复算但暂不单独扩档。任务按baseline+data-source blocker收口，`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-97892c39db46d6061da44e0c
+  task_id: TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: project owner/data archive owner 提供 exact prices/rates historical
+      bytes；strategy platform 随后完成 S2
+    notes: 2026-07-22：首轮focused=`31 passed/1 failed`真实暴露额外5个drift；Git、legacy worktree、replay/temp均未找到prices/rates
+      exact bytes。修正后focused=`32 passed`；download manifest/marketstack/ledger可由当前append-prefix或2026-07-17
+      cutoff精确复算但暂不单独扩档。任务按baseline+data-source blocker收口，`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:97892c39db46d6061da44e0caf49ec28b913eb0de8925514f294bb47efa01156
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2454_HISTORICAL_PORTABLE_SOURCE_ARCHIVE_AFTER_WINDOW_MIGRATION
+  - Strategy evidence platform / historical portable source archive after active-window
+    migration
+  - P1
+  - BASELINE_DONE
+  - project owner/data archive owner 提供 exact prices/rates historical bytes；strategy
+    platform 随后完成 S2
+  - 详见 `docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md`。Versioned
+    archive policy/manifest、两个 exact Git config blobs、显式 opt-in resolver/adapters与fail-closed
+    tests已完成；canonical sidecar、四份 legacy artifacts与active configs未改。全量扫描把原2-source假设修正为101
+    exact + 7 drift。
+  - 默认不传archive仍`HISTORICAL_PORTABLE_CONFLICT`；显式archive可精确解析两个config，但四级validator继续在download
+    manifest/prices source fail closed。只有补齐其余5份exact source，尤其当前无法恢复的`prices_daily.csv@b9c96337...`与`rates_daily.csv@d530a35e...`，并使R0/WF/robustness/R2全部PASS后才可DONE；不得近似重建、放宽hash或回滚窗口。
+  - 2026-07-22：首轮focused=`31 passed/1 failed`真实暴露额外5个drift；Git、legacy worktree、replay/temp均未找到prices/rates
+    exact bytes。修正后focused=`32 passed`；download manifest/marketstack/ledger可由当前append-prefix或2026-07-17
+    cutoff精确复算但暂不单独扩档。任务按baseline+data-source blocker收口，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2454_Historical_Portable_Source_Archive_After_Window_Migration.md
+  terminal: false
+  raw_row_sha256: 97892c39db46d6061da44e0caf49ec28b913eb0de8925514f294bb47efa01156
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 5a4c10a38180c2a9d8188c472dcdadda5ddace6a611159578382d35978478d54

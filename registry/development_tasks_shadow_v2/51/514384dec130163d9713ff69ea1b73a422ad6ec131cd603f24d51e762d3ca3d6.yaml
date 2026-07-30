@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  task_id_sha256: 514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6
+task_record:
+  task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  title: null
+  domain: Architecture / Operations and periodic consumer native migration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations platform owner + project owner；先等待D0B2B strict canonical
+    acceptance，G4C与下一consumer仍需独立授权
+  requirement_refs:
+  - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
+    与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。G4A已闭合；G4B只批准`daily_score_daily@1.0.0`的受控路径。真实run已证明token/verifier
+    fail closed，但upstream DQ未产生strict PASS receipt。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3 attestation下受控native
+      dispatch；D0B2B PASS前runner保持零、其余四项与automatic non-daily false；G4C真实ledger不补造。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 819f1eaa5b30e0bd73d2e6cc27c82a2a54f9a2c3cf5155a90793ea9ab0be8287
+  cell_count: 8
+  all_cells:
+  - ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  - Architecture / Operations and periodic consumer native migration
+  - P0
+  - BASELINE_DONE
+  - operations platform owner + project owner；先等待D0B2B strict canonical acceptance，G4C与下一consumer仍需独立授权
+  - 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
+    与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。G4A已闭合；G4B只批准`daily_score_daily@1.0.0`的受控路径。真实run已证明token/verifier
+    fail closed，但upstream DQ未产生strict PASS receipt。
+  - 五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3 attestation下受控native
+    dispatch；D0B2B PASS前runner保持零、其余四项与automatic non-daily false；G4C真实ledger不补造。
+  - 2026-07-25：Wave15 failure-fix Full=`7180/0`保留，first-consumer工程baseline仍`BASELINE_DONE`；`as_of=2026-07-24`真实run在DQ阻断，G4C、下一consumer、production/broker和G5均未开放。
+  raw_line: '|ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION|Architecture / Operations
+    and periodic consumer native migration|P0|BASELINE_DONE|operations platform owner
+    + project owner；先等待D0B2B strict canonical acceptance，G4C与下一consumer仍需独立授权|详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
+    与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。G4A已闭合；G4B只批准`daily_score_daily@1.0.0`的受控路径。真实run已证明token/verifier
+    fail closed，但upstream DQ未产生strict PASS receipt。|五个代表consumer保持parity；只有`daily_score_daily`可在reviewed
+    D0B3 attestation下受控native dispatch；D0B2B PASS前runner保持零、其余四项与automatic non-daily
+    false；G4C真实ledger不补造。|2026-07-25：Wave15 failure-fix Full=`7180/0`保留，first-consumer工程baseline仍`BASELINE_DONE`；`as_of=2026-07-24`真实run在DQ阻断，G4C、下一consumer、production/broker和G5均未开放。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-819f1eaa5b30e0bd73d2e6cc
+  task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: operations platform owner + project owner；先等待D0B2B strict canonical
+      acceptance，G4C与下一consumer仍需独立授权
+    notes: 2026-07-25：Wave15 failure-fix Full=`7180/0`保留，first-consumer工程baseline仍`BASELINE_DONE`；`as_of=2026-07-24`真实run在DQ阻断，G4C、下一consumer、production/broker和G5均未开放。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:819f1eaa5b30e0bd73d2e6cc27c82a2a54f9a2c3cf5155a90793ea9ab0be8287
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
+  - Architecture / Operations and periodic consumer native migration
+  - P0
+  - BASELINE_DONE
+  - operations platform owner + project owner；先等待D0B2B strict canonical acceptance，G4C与下一consumer仍需独立授权
+  - 详见 `docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md`
+    与 `docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md`。G4A已闭合；G4B只批准`daily_score_daily@1.0.0`的受控路径。真实run已证明token/verifier
+    fail closed，但upstream DQ未产生strict PASS receipt。
+  - 五个代表consumer保持parity；只有`daily_score_daily`可在reviewed D0B3 attestation下受控native
+    dispatch；D0B2B PASS前runner保持零、其余四项与automatic non-daily false；G4C真实ledger不补造。
+  - 2026-07-25：Wave15 failure-fix Full=`7180/0`保留，first-consumer工程baseline仍`BASELINE_DONE`；`as_of=2026-07-24`真实run在DQ阻断，G4C、下一consumer、production/broker和G5均未开放。
+  docs_links:
+  - docs/requirements/ARCH-004G4_D0B_Shared_DQ_Preflight_and_Periodic_Consumer_Migration.md
+  - docs/requirements/DATA-GOV-001_D0B2B_Canonical_Daily_Acceptance_Remediation.md
+  terminal: false
+  raw_row_sha256: 819f1eaa5b30e0bd73d2e6cc27c82a2a54f9a2c3cf5155a90793ea9ab0be8287
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 157ed3e57ccb99c9fd7737b433187ea17b33bda3e7f84195eea92d95f2f14eff

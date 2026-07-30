@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: REPORT-005
+  task_id_sha256: 48c3dc00c2e9d153c5ed4ed7403b5b8947c6a277ab33cf8ef3127bb607cec307
+task_record:
+  task_id: REPORT-005
+  title: null
+  domain: 报告/production vs challenger 复盘
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已把 `prediction_outcomes.csv` 和 shadow
+    maturity 摘要接入 `aits reports investment-review` 与 `aits feedback loop-review`；报告区分
+    production/challenger、样本成熟度和样本不足边界；剩余缺口是真实 shadow outcome 积累后再校准展示阈值；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 周报/月报显示 production vs challenger 的样本数、收益、回撤、胜率、benchmark excess、pending
+      outcome、promotion gate 状态和 owner action；样本不足时只给观察建议，不给 production 结论；测试覆盖报告文本、样本不足边界和
+      `production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: d9d60be13ea656371faf947072a4ca886b2c27bf508305bdd09afd561a5eb2c2
+  cell_count: 8
+  all_cells:
+  - REPORT-005
+  - 报告/production vs challenger 复盘
+  - P2
+  - BASELINE_DONE
+  - 系统实现
+  - 已把 `prediction_outcomes.csv` 和 shadow maturity 摘要接入 `aits reports investment-review`
+    与 `aits feedback loop-review`；报告区分 production/challenger、样本成熟度和样本不足边界；剩余缺口是真实
+    shadow outcome 积累后再校准展示阈值；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  - 周报/月报显示 production vs challenger 的样本数、收益、回撤、胜率、benchmark excess、pending outcome、promotion
+    gate 状态和 owner action；样本不足时只给观察建议，不给 production 结论；测试覆盖报告文本、样本不足边界和 `production_effect=none`
+  - '2026-05-05: 新增任务，原因：`REPORT-004` 已有投资复盘入口，但还没有读取 prediction/shadow outcome 和
+    promotion gate，无法完整回答候选规则是否值得晋级。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始把 prediction
+    outcomes 和 shadow maturity 接入周/月复盘与 feedback loop review。2026-05-05: 从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：周/月复盘和 feedback loop review 已读取 prediction outcomes 并展示 production
+    vs challenger；完整 DONE 仍需真实样本验证报告解释质量。'
+  raw_line: '|REPORT-005|报告/production vs challenger 复盘|P2|BASELINE_DONE|系统实现|已把 `prediction_outcomes.csv`
+    和 shadow maturity 摘要接入 `aits reports investment-review` 与 `aits feedback loop-review`；报告区分
+    production/challenger、样本成熟度和样本不足边界；剩余缺口是真实 shadow outcome 积累后再校准展示阈值；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`|周报/月报显示
+    production vs challenger 的样本数、收益、回撤、胜率、benchmark excess、pending outcome、promotion
+    gate 状态和 owner action；样本不足时只给观察建议，不给 production 结论；测试覆盖报告文本、样本不足边界和 `production_effect=none`|2026-05-05:
+    新增任务，原因：`REPORT-004` 已有投资复盘入口，但还没有读取 prediction/shadow outcome 和 promotion gate，无法完整回答候选规则是否值得晋级。2026-05-05:
+    从 READY 改为 IN_PROGRESS，原因：开始把 prediction outcomes 和 shadow maturity 接入周/月复盘与 feedback
+    loop review。2026-05-05: 从 IN_PROGRESS 改为 BASELINE_DONE，原因：周/月复盘和 feedback loop
+    review 已读取 prediction outcomes 并展示 production vs challenger；完整 DONE 仍需真实样本验证报告解释质量。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d9d60be13ea656371faf9470
+  task_id: REPORT-005
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现
+    notes: '2026-05-05: 新增任务，原因：`REPORT-004` 已有投资复盘入口，但还没有读取 prediction/shadow outcome
+      和 promotion gate，无法完整回答候选规则是否值得晋级。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始把
+      prediction outcomes 和 shadow maturity 接入周/月复盘与 feedback loop review。2026-05-05:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：周/月复盘和 feedback loop review 已读取 prediction
+      outcomes 并展示 production vs challenger；完整 DONE 仍需真实样本验证报告解释质量。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:d9d60be13ea656371faf947072a4ca886b2c27bf508305bdd09afd561a5eb2c2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-005
+  - 报告/production vs challenger 复盘
+  - P2
+  - BASELINE_DONE
+  - 系统实现
+  - 已把 `prediction_outcomes.csv` 和 shadow maturity 摘要接入 `aits reports investment-review`
+    与 `aits feedback loop-review`；报告区分 production/challenger、样本成熟度和样本不足边界；剩余缺口是真实
+    shadow outcome 积累后再校准展示阈值；详细顺序见 `docs/requirements/pit_backtest_shadow_plan_2026-05-05.md#下一批开发顺序`
+  - 周报/月报显示 production vs challenger 的样本数、收益、回撤、胜率、benchmark excess、pending outcome、promotion
+    gate 状态和 owner action；样本不足时只给观察建议，不给 production 结论；测试覆盖报告文本、样本不足边界和 `production_effect=none`
+  - '2026-05-05: 新增任务，原因：`REPORT-004` 已有投资复盘入口，但还没有读取 prediction/shadow outcome 和
+    promotion gate，无法完整回答候选规则是否值得晋级。2026-05-05: 从 READY 改为 IN_PROGRESS，原因：开始把 prediction
+    outcomes 和 shadow maturity 接入周/月复盘与 feedback loop review。2026-05-05: 从 IN_PROGRESS
+    改为 BASELINE_DONE，原因：周/月复盘和 feedback loop review 已读取 prediction outcomes 并展示 production
+    vs challenger；完整 DONE 仍需真实样本验证报告解释质量。'
+  docs_links:
+  - docs/requirements/pit_backtest_shadow_plan_2026-05-05.md
+  terminal: false
+  raw_row_sha256: d9d60be13ea656371faf947072a4ca886b2c27bf508305bdd09afd561a5eb2c2
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 50687f2207e1d0ca7b0fe1e933c8eb035df1904c2f372cf82769a1388c7f7519

@@ -14337,7 +14337,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.__init__
   path: src/ai_trading_system/platform/architecture/__init__.py
-  sha256: e703d1ddad9e68164f79d376afe105db432bfe5b9ee9a06e30e186e30f9dd56b
+  sha256: 71649c1fb74a85d208745d71ab74ad7073ea1c201b8ecd32e84c6383ee85f1d8
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -14797,7 +14797,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.task_registry_shadow
   path: src/ai_trading_system/platform/architecture/task_registry_shadow.py
-  sha256: 51bf9e29da99d108982e4abb14bc3d3ffe35b7d6545146cf9577efbceaf144f6
+  sha256: 8149fbf7b19902c8a50d6ff95a09561521eb6480624a4e8b5cfba72bac6687e8
   rule_id: platform_architecture
   owner_profile: platform
   owners:

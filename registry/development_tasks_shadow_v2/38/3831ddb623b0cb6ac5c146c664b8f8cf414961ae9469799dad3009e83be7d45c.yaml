@@ -1,0 +1,117 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DEV-001
+  task_id_sha256: 3831ddb623b0cb6ac5c146c664b8f8cf414961ae9469799dad3009e83be7d45c
+task_record:
+  task_id: DEV-001
+  title: null
+  domain: 开发治理/Repo-wide Black Formatter Baseline
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/repo_wide_black_formatter_baseline_2026-06-09.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/repo_wide_black_formatter_baseline_2026-06-09.md`；repo-wide
+    Black formatter baseline 已完成并归档；本轮不改变业务逻辑、数据流、评分、回测、报告语义或 generated artifacts
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 固定项目认可的 Black `26.5.0` / CPython `3.14.4` 版本；`python -m black --check src
+      tests scripts` 通过，649 个文件 unchanged；128 个原 would-reformat 文件已由独立 formatter baseline
+      收口；Ruff、compileall、docs freshness、documentation contract、`git diff --check`
+      和触达 ETF/trading-engine regression pytest 通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: e3f75153dccbef2ced72aea4fd003d987bc96aa1991227bc5f8841216ab20dd1
+  cell_count: 8
+  all_cells:
+  - DEV-001
+  - 开发治理/Repo-wide Black Formatter Baseline
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/repo_wide_black_formatter_baseline_2026-06-09.md`；repo-wide
+    Black formatter baseline 已完成并归档；本轮不改变业务逻辑、数据流、评分、回测、报告语义或 generated artifacts
+  - 固定项目认可的 Black `26.5.0` / CPython `3.14.4` 版本；`python -m black --check src tests
+    scripts` 通过，649 个文件 unchanged；128 个原 would-reformat 文件已由独立 formatter baseline
+    收口；Ruff、compileall、docs freshness、documentation contract、`git diff --check` 和触达
+    ETF/trading-engine regression pytest 通过
+  - '2026-06-09: 新增并进入 READY，原因：paper signal quality 触达文件 Black 已通过，但全仓 formatter
+    baseline 是跨任务遗留问题，应单独治理。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：本机 Black `26.5.0`
+    / CPython `3.14.4` 复现全仓 formatter baseline，`src tests scripts` 中 128 个文件 would
+    reformat、521 个文件已符合；本轮限定为纯格式化提交。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：已执行 repo-wide
+    Black baseline，128 个 Python 文件仅格式化；验证通过 Black check、Ruff、compileall、docs freshness、documentation
+    contract、`git diff --check` 和触达 ETF/trading-engine regression pytest（1548 passed）。'
+  raw_line: '|DEV-001|开发治理/Repo-wide Black Formatter Baseline|P2|DONE|系统验证|详细拆解见 `docs/requirements/repo_wide_black_formatter_baseline_2026-06-09.md`；repo-wide
+    Black formatter baseline 已完成并归档；本轮不改变业务逻辑、数据流、评分、回测、报告语义或 generated artifacts|固定项目认可的
+    Black `26.5.0` / CPython `3.14.4` 版本；`python -m black --check src tests scripts`
+    通过，649 个文件 unchanged；128 个原 would-reformat 文件已由独立 formatter baseline 收口；Ruff、compileall、docs
+    freshness、documentation contract、`git diff --check` 和触达 ETF/trading-engine regression
+    pytest 通过|2026-06-09: 新增并进入 READY，原因：paper signal quality 触达文件 Black 已通过，但全仓 formatter
+    baseline 是跨任务遗留问题，应单独治理。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：本机 Black `26.5.0`
+    / CPython `3.14.4` 复现全仓 formatter baseline，`src tests scripts` 中 128 个文件 would
+    reformat、521 个文件已符合；本轮限定为纯格式化提交。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：已执行 repo-wide
+    Black baseline，128 个 Python 文件仅格式化；验证通过 Black check、Ruff、compileall、docs freshness、documentation
+    contract、`git diff --check` 和触达 ETF/trading-engine regression pytest（1548 passed）。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e3f75153dccbef2ced72aea4
+  task_id: DEV-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 系统验证
+    notes: '2026-06-09: 新增并进入 READY，原因：paper signal quality 触达文件 Black 已通过，但全仓 formatter
+      baseline 是跨任务遗留问题，应单独治理。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：本机 Black `26.5.0`
+      / CPython `3.14.4` 复现全仓 formatter baseline，`src tests scripts` 中 128 个文件 would
+      reformat、521 个文件已符合；本轮限定为纯格式化提交。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：已执行 repo-wide
+      Black baseline，128 个 Python 文件仅格式化；验证通过 Black check、Ruff、compileall、docs freshness、documentation
+      contract、`git diff --check` 和触达 ETF/trading-engine regression pytest（1548 passed）。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:e3f75153dccbef2ced72aea4fd003d987bc96aa1991227bc5f8841216ab20dd1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEV-001
+  - 开发治理/Repo-wide Black Formatter Baseline
+  - P2
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/repo_wide_black_formatter_baseline_2026-06-09.md`；repo-wide
+    Black formatter baseline 已完成并归档；本轮不改变业务逻辑、数据流、评分、回测、报告语义或 generated artifacts
+  - 固定项目认可的 Black `26.5.0` / CPython `3.14.4` 版本；`python -m black --check src tests
+    scripts` 通过，649 个文件 unchanged；128 个原 would-reformat 文件已由独立 formatter baseline
+    收口；Ruff、compileall、docs freshness、documentation contract、`git diff --check` 和触达
+    ETF/trading-engine regression pytest 通过
+  - '2026-06-09: 新增并进入 READY，原因：paper signal quality 触达文件 Black 已通过，但全仓 formatter
+    baseline 是跨任务遗留问题，应单独治理。2026-06-09: 从 READY 进入 IN_PROGRESS，原因：本机 Black `26.5.0`
+    / CPython `3.14.4` 复现全仓 formatter baseline，`src tests scripts` 中 128 个文件 would
+    reformat、521 个文件已符合；本轮限定为纯格式化提交。2026-06-09: 从 IN_PROGRESS 改为 DONE，原因：已执行 repo-wide
+    Black baseline，128 个 Python 文件仅格式化；验证通过 Black check、Ruff、compileall、docs freshness、documentation
+    contract、`git diff --check` 和触达 ETF/trading-engine regression pytest（1548 passed）。'
+  docs_links:
+  - docs/requirements/repo_wide_black_formatter_baseline_2026-06-09.md
+  terminal: true
+  raw_row_sha256: e3f75153dccbef2ced72aea4fd003d987bc96aa1991227bc5f8841216ab20dd1
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 59472f24b34be45534827ec946b40751a0afbd35fc6f06257c4c47390a60451d

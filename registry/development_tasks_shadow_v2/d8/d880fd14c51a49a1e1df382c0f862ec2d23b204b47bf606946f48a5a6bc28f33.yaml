@@ -1,0 +1,109 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  task_id_sha256: d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33
+task_record:
+  task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  title: null
+  domain: Data Foundation / Phase C first rate row issue source-owner review pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed
+    contract wave；policy adoption/consumer migration另审
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+    pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+    invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: C3 final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound
+      typed rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+      capability policy、迁consumer或开放daily/periodic/production/broker。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
+  cell_count: 8
+  all_cells:
+  - DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  - Data Foundation / Phase C first rate row issue source-owner review pack
+  - P0
+  - BASELINE_DONE
+  - DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed contract
+    wave；policy adoption/consumer migration另审
+  - 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+    pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+    invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。
+  - C3 final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound typed
+    rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+    capability policy、迁consumer或开放daily/periodic/production/broker。
+  - 2026-07-28：C3保留canonical constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+    inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。
+  raw_line: '|DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK|Data
+    Foundation / Phase C first rate row issue source-owner review pack|P0|BASELINE_DONE|DATA-GOV-002C3
+    engineering coordinator：只按exact approved bundle执行最小typed contract wave；policy
+    adoption/consumer migration另审|详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+    pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+    invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。|C3
+    final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound typed
+    rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+    capability policy、迁consumer或开放daily/periodic/production/broker。|2026-07-28：C3保留canonical
+    constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+    inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8f376507448e44d888fec05f
+  task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed
+      contract wave；policy adoption/consumer migration另审
+    notes: 2026-07-28：C3保留canonical constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+      inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  - Data Foundation / Phase C first rate row issue source-owner review pack
+  - P0
+  - BASELINE_DONE
+  - DATA-GOV-002C3 engineering coordinator：只按exact approved bundle执行最小typed contract
+    wave；policy adoption/consumer migration另审
+  - 详见 `docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md`。Owner审阅并批准的pre-contract
+    pack=`dq_rate_issue_attribution_review_b44f93b62baac6d1022bc698`、SHA=`f2294ea5651259857c500c2161a8dbb3e78879c0132fe58e36bd4b24cea5b318`；六项均`APPROVE_FOR_CONTRACT_WAVE`并附加series-only
+    invalid-date、date degradation、threshold/predecessor evidence、warning不扩权和incomplete-global条件。
+  - C3 final decision须绑定fresh pack且机械证明六个site/code/taxonomy未漂移；实现checksum-bound typed
+    rate source/series/date/field/row/threshold/predecessor attribution和保守false-isolation；不得修改active
+    capability policy、迁consumer或开放daily/periodic/production/broker。
+  - 2026-07-28：C3保留canonical constructors后，final fresh pack=`dq_rate_issue_attribution_review_216045a1ebe282194028e1f8`、SHA=`1c50337d9443fdea422373c2a275cfa87265d753140be0d66d5db44488752abf`，69-site
+    inventory与六项identity均保持；decision exact绑定已更新，未扩大Owner授权。
+  docs_links:
+  - docs/requirements/DATA-GOV-002C2_Rate_Row_Issue_Attribution_Source_Owner_Review_Pack.md
+  terminal: false
+  raw_row_sha256: 8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 9a057823a300695a05c29f8f8448340ba517b56ef5c5223ce8e7002faaa10b3d

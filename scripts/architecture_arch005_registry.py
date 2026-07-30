@@ -10,14 +10,19 @@ from ai_trading_system.platform.architecture import (
     build_s0_baseline,
     build_shadow_fragment,
     build_shadow_index,
+    build_shadow_v2_fragment,
+    build_shadow_v2_index,
     load_legacy_documents,
     load_shadow_fragments,
+    load_shadow_v2_fragments,
     render_compatibility_view,
     validate_bootstrap_handoff,
     validate_s0_baseline,
     validate_shadow_index,
+    validate_shadow_v2_index,
     write_generated_architecture_artifact,
     write_shadow_fragments,
+    write_shadow_v2_fragments,
 )
 from ai_trading_system.platform.artifacts.writer import write_bytes_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -26,6 +31,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 HANDOFF_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_bootstrap_handoff.yaml"
 BASELINE_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_task_registry_baseline.yaml"
 INDEX_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_task_shadow_index.yaml"
+V2_INDEX_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_task_shadow_v2_index.yaml"
 VIEW_ROOT = PROJECT_ROOT / "outputs/architecture/arch_005_shadow_views"
 
 
@@ -65,16 +71,29 @@ def _generate() -> int:
         fragment_files=fragment_files,
     )
     write_generated_architecture_artifact(INDEX_PATH, index)
-    by_id = {
-        str(_mapping(fragment["task_record"])["task_id"]): fragment
-        for fragment in fragments
-    }
+    v2_fragments = tuple(
+        build_shadow_v2_fragment(row, source_commit=source_commit)
+        for document in documents
+        for row in document.rows
+    )
+    v2_fragment_files = write_shadow_v2_fragments(
+        project_root=PROJECT_ROOT,
+        fragments=v2_fragments,
+    )
+    v2_index = build_shadow_v2_index(
+        baseline=baseline,
+        documents=documents,
+        fragments=v2_fragments,
+        fragment_files=v2_fragment_files,
+    )
+    write_generated_architecture_artifact(V2_INDEX_PATH, v2_index)
+    by_id = {str(_mapping(fragment["task_record"])["task_id"]): fragment for fragment in fragments}
     for document in documents:
         write_bytes_atomic(
             VIEW_ROOT / Path(document.source_path).name,
             render_compatibility_view(document, by_id),
         )
-    _print_summary(baseline, index)
+    _print_summary(baseline, index, v2_index)
     return 0
 
 
@@ -105,7 +124,28 @@ def _validate() -> int:
     validate_shadow_index(index, baseline=baseline, documents=documents)
     if index != expected_index:
         raise SystemExit("S1 shadow index is stale or non-deterministic")
-    _print_summary(baseline, index)
+    v2_index = _load_mapping(V2_INDEX_PATH)
+    v2_records = v2_index.get("fragments")
+    if not isinstance(v2_records, list):
+        raise SystemExit("shadow v2 index fragments must be a list")
+    v2_fragments = load_shadow_v2_fragments(
+        project_root=PROJECT_ROOT,
+        records=v2_records,
+    )
+    expected_v2_index = build_shadow_v2_index(
+        baseline=baseline,
+        documents=documents,
+        fragments=v2_fragments,
+        fragment_files=v2_records,
+    )
+    validate_shadow_v2_index(
+        v2_index,
+        baseline=baseline,
+        documents=documents,
+    )
+    if v2_index != expected_v2_index:
+        raise SystemExit("task shadow v2 index is stale or non-deterministic")
+    _print_summary(baseline, index, v2_index)
     return 0
 
 
@@ -152,7 +192,11 @@ def _mapping(value: object) -> dict[str, Any]:
     return value
 
 
-def _print_summary(baseline: dict[str, Any], index: dict[str, Any]) -> None:
+def _print_summary(
+    baseline: dict[str, Any],
+    index: dict[str, Any],
+    v2_index: dict[str, Any],
+) -> None:
     inventory = _mapping(baseline["inventory"])
     consumers = _mapping(baseline["consumer_characterization"])
     print(
@@ -161,14 +205,16 @@ def _print_summary(baseline: dict[str, Any], index: dict[str, Any]) -> None:
                 "status": "PASS",
                 "s0_baseline": str(BASELINE_PATH),
                 "s1_index": str(INDEX_PATH),
+                "v2_index": str(V2_INDEX_PATH),
                 "task_count": index["task_count"],
+                "v2_task_count": v2_index["task_count"],
                 "active_task_count": inventory["active_task_count"],
                 "completed_task_count": inventory["completed_task_count"],
-                "ambiguous_extra_cell_row_count": inventory[
-                    "ambiguous_extra_cell_row_count"
-                ],
+                "ambiguous_extra_cell_row_count": inventory["ambiguous_extra_cell_row_count"],
                 "consumer_count": consumers["consumer_count"],
                 "byte_identical": _mapping(index["replay"])["byte_identical"],
+                "v2_byte_identical": _mapping(v2_index["replay"])["byte_identical"],
+                "v2_cutover_performed": v2_index["cutover_performed"],
                 "source_of_truth": index["source_of_truth"],
                 "production_effect": _mapping(index["safety"])["production_effect"],
             },

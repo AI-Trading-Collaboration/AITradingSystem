@@ -1,0 +1,105 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
+  task_id_sha256: 76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c
+task_record:
+  task_id: DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
+  title: null
+  domain: Developer experience / completed-task closeout registration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 后续研发任务 owner：观察新的 completed-task closeout；出现其他 register lifecycle 缺口时另建
+    follow-up
+  requirement_refs:
+  - docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md`。OPS-069
+    暴露任务在最终提交归档后被 closeout preflight 误报 `TASK_NOT_REGISTERED`；canonical/installed
+    skill 已恢复 byte parity。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 仅 `CLOSEOUT` 接受 completed register；START/LANE/INTEGRATION 仍只接受 active register；输出
+      typed registration source；focused=`30 passed`、parity=`PASS/5 files`、Architecture=`684
+      passed`、Contract=`275 passed`；无production、broker、数据或策略影响。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 5b74b38e0167d8d6be300289d55eb3c0ff3822125a4d8314c5ef6bacfe9502cf
+  cell_count: 8
+  all_cells:
+  - DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
+  - Developer experience / completed-task closeout registration
+  - P0
+  - BASELINE_DONE
+  - 后续研发任务 owner：观察新的 completed-task closeout；出现其他 register lifecycle 缺口时另建 follow-up
+  - 详见 `docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md`。OPS-069
+    暴露任务在最终提交归档后被 closeout preflight 误报 `TASK_NOT_REGISTERED`；canonical/installed
+    skill 已恢复 byte parity。
+  - 仅 `CLOSEOUT` 接受 completed register；START/LANE/INTEGRATION 仍只接受 active register；输出
+    typed registration source；focused=`30 passed`、parity=`PASS/5 files`、Architecture=`684
+    passed`、Contract=`275 passed`；无production、broker、数据或策略影响。
+  - 2026-07-27：实现完成并转 `BASELINE_DONE`；OPS-069 真实 closeout 已以 `COMPLETED_CLOSEOUT_ONLY`
+    通过并普通推送，installed-only 诊断修正已由 Git canonical bundle 正式取代。
+  raw_line: '|DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION|Developer experience /
+    completed-task closeout registration|P0|BASELINE_DONE|后续研发任务 owner：观察新的 completed-task
+    closeout；出现其他 register lifecycle 缺口时另建 follow-up|详见 `docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md`。OPS-069
+    暴露任务在最终提交归档后被 closeout preflight 误报 `TASK_NOT_REGISTERED`；canonical/installed
+    skill 已恢复 byte parity。|仅 `CLOSEOUT` 接受 completed register；START/LANE/INTEGRATION
+    仍只接受 active register；输出 typed registration source；focused=`30 passed`、parity=`PASS/5
+    files`、Architecture=`684 passed`、Contract=`275 passed`；无production、broker、数据或策略影响。|2026-07-27：实现完成并转
+    `BASELINE_DONE`；OPS-069 真实 closeout 已以 `COMPLETED_CLOSEOUT_ONLY` 通过并普通推送，installed-only
+    诊断修正已由 Git canonical bundle 正式取代。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5b74b38e0167d8d6be300289
+  task_id: DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 后续研发任务 owner：观察新的 completed-task closeout；出现其他 register lifecycle
+      缺口时另建 follow-up
+    notes: 2026-07-27：实现完成并转 `BASELINE_DONE`；OPS-069 真实 closeout 已以 `COMPLETED_CLOSEOUT_ONLY`
+      通过并普通推送，installed-only 诊断修正已由 Git canonical bundle 正式取代。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:5b74b38e0167d8d6be300289d55eb3c0ff3822125a4d8314c5ef6bacfe9502cf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
+  - Developer experience / completed-task closeout registration
+  - P0
+  - BASELINE_DONE
+  - 后续研发任务 owner：观察新的 completed-task closeout；出现其他 register lifecycle 缺口时另建 follow-up
+  - 详见 `docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md`。OPS-069
+    暴露任务在最终提交归档后被 closeout preflight 误报 `TASK_NOT_REGISTERED`；canonical/installed
+    skill 已恢复 byte parity。
+  - 仅 `CLOSEOUT` 接受 completed register；START/LANE/INTEGRATION 仍只接受 active register；输出
+    typed registration source；focused=`30 passed`、parity=`PASS/5 files`、Architecture=`684
+    passed`、Contract=`275 passed`；无production、broker、数据或策略影响。
+  - 2026-07-27：实现完成并转 `BASELINE_DONE`；OPS-069 真实 closeout 已以 `COMPLETED_CLOSEOUT_ONLY`
+    通过并普通推送，installed-only 诊断修正已由 Git canonical bundle 正式取代。
+  docs_links:
+  - docs/requirements/DEVX-004_Completed_Task_Closeout_Registration.md
+  terminal: false
+  raw_row_sha256: 5b74b38e0167d8d6be300289d55eb3c0ff3822125a4d8314c5ef6bacfe9502cf
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 2f6bdfb983656a66a8d05b3d97e15ea78a419602432be0eba84921ecf916bbd8

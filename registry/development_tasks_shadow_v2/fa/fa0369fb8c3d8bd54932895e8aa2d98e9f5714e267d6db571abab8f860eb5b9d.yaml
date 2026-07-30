@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  task_id_sha256: fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d
+task_record:
+  task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  title: null
+  domain: Strategy Style Discovery / decision-target capability audit batch-1 label
+    foundation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy research owner：复核真实label coverage并预注册Batch 2 split/model ladder/metrics；data
+    platform按DATA-GOV-002完成Phase A正式验收
+  requirement_refs:
+  - docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。V1历史BLOCKED证据保留；Owner批准DATA-GOV-002后，v2以reviewed
+    `decision_target_label_core` receipt绑定price-only QQQ/SPY/SGOV exact scope。真实`2021-02-22..2026-07-24`run在full
+    DQ=`FAIL`且`^VIX` blocker明确隔离时取得scoped=`PASS`，生成5412行label；未声称global PASS，QLD exception未复用，不训练模型、不做feature/candidate/parameter
+    search、策略回测或权重生成。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Receipt必须绑定exact consumer/policy/source/window/full+scoped reports/materialized
+      inputs；unknown/relevant/global source blocker与scoped warning/error fail closed；label逐decision
+      date输出三类gross excess return、forward total return、future max drawdown/worst-1d、interval/available-at；validator重建receipt
+      projection、rows/summary/Markdown并拒绝tamper；full status、global pass claim和no-reuse/no-daily边界在报告可见；formal
+      validation通过；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 8592db2da2f52b8b65a23e75740021b56166ab3d9950fb8cf04044088c3c045a
+  cell_count: 8
+  all_cells:
+  - TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  - Strategy Style Discovery / decision-target capability audit batch-1 label foundation
+  - P0
+  - BASELINE_DONE
+  - strategy research owner：复核真实label coverage并预注册Batch 2 split/model ladder/metrics；data
+    platform按DATA-GOV-002完成Phase A正式验收
+  - 详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。V1历史BLOCKED证据保留；Owner批准DATA-GOV-002后，v2以reviewed
+    `decision_target_label_core` receipt绑定price-only QQQ/SPY/SGOV exact scope。真实`2021-02-22..2026-07-24`run在full
+    DQ=`FAIL`且`^VIX` blocker明确隔离时取得scoped=`PASS`，生成5412行label；未声称global PASS，QLD exception未复用，不训练模型、不做feature/candidate/parameter
+    search、策略回测或权重生成。
+  - Receipt必须绑定exact consumer/policy/source/window/full+scoped reports/materialized
+    inputs；unknown/relevant/global source blocker与scoped warning/error fail closed；label逐decision
+    date输出三类gross excess return、forward total return、future max drawdown/worst-1d、interval/available-at；validator重建receipt
+    projection、rows/summary/Markdown并拒绝tamper；full status、global pass claim和no-reuse/no-daily边界在报告可见；formal
+    validation通过；`production_effect=none`、`broker_action=none`。
+  - 2026-07-26：首个真实v2 receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full唯一ERROR=`prices_non_market_session_date`、affected=`^VIX`、scoped
+    QQQ/SPY/SGOV=`PASS`、global claim=false；label status=`LABEL_FOUNDATION_READY`、common
+    sessions=`1362`、rows=`5412`、content-derived validator 0 errors。正式tiers由DATA-GOV-002
+    Phase A收口。
+  raw_line: '|TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION|Strategy
+    Style Discovery / decision-target capability audit batch-1 label foundation|P0|BASELINE_DONE|strategy
+    research owner：复核真实label coverage并预注册Batch 2 split/model ladder/metrics；data platform按DATA-GOV-002完成Phase
+    A正式验收|详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。V1历史BLOCKED证据保留；Owner批准DATA-GOV-002后，v2以reviewed
+    `decision_target_label_core` receipt绑定price-only QQQ/SPY/SGOV exact scope。真实`2021-02-22..2026-07-24`run在full
+    DQ=`FAIL`且`^VIX` blocker明确隔离时取得scoped=`PASS`，生成5412行label；未声称global PASS，QLD exception未复用，不训练模型、不做feature/candidate/parameter
+    search、策略回测或权重生成。|Receipt必须绑定exact consumer/policy/source/window/full+scoped reports/materialized
+    inputs；unknown/relevant/global source blocker与scoped warning/error fail closed；label逐decision
+    date输出三类gross excess return、forward total return、future max drawdown/worst-1d、interval/available-at；validator重建receipt
+    projection、rows/summary/Markdown并拒绝tamper；full status、global pass claim和no-reuse/no-daily边界在报告可见；formal
+    validation通过；`production_effect=none`、`broker_action=none`。|2026-07-26：首个真实v2
+    receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full唯一ERROR=`prices_non_market_session_date`、affected=`^VIX`、scoped
+    QQQ/SPY/SGOV=`PASS`、global claim=false；label status=`LABEL_FOUNDATION_READY`、common
+    sessions=`1362`、rows=`5412`、content-derived validator 0 errors。正式tiers由DATA-GOV-002
+    Phase A收口。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-8592db2da2f52b8b65a23e75
+  task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: strategy research owner：复核真实label coverage并预注册Batch 2 split/model
+      ladder/metrics；data platform按DATA-GOV-002完成Phase A正式验收
+    notes: 2026-07-26：首个真实v2 receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full唯一ERROR=`prices_non_market_session_date`、affected=`^VIX`、scoped
+      QQQ/SPY/SGOV=`PASS`、global claim=false；label status=`LABEL_FOUNDATION_READY`、common
+      sessions=`1362`、rows=`5412`、content-derived validator 0 errors。正式tiers由DATA-GOV-002
+      Phase A收口。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:8592db2da2f52b8b65a23e75740021b56166ab3d9950fb8cf04044088c3c045a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
+  - Strategy Style Discovery / decision-target capability audit batch-1 label foundation
+  - P0
+  - BASELINE_DONE
+  - strategy research owner：复核真实label coverage并预注册Batch 2 split/model ladder/metrics；data
+    platform按DATA-GOV-002完成Phase A正式验收
+  - 详见 `docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md`。V1历史BLOCKED证据保留；Owner批准DATA-GOV-002后，v2以reviewed
+    `decision_target_label_core` receipt绑定price-only QQQ/SPY/SGOV exact scope。真实`2021-02-22..2026-07-24`run在full
+    DQ=`FAIL`且`^VIX` blocker明确隔离时取得scoped=`PASS`，生成5412行label；未声称global PASS，QLD exception未复用，不训练模型、不做feature/candidate/parameter
+    search、策略回测或权重生成。
+  - Receipt必须绑定exact consumer/policy/source/window/full+scoped reports/materialized
+    inputs；unknown/relevant/global source blocker与scoped warning/error fail closed；label逐decision
+    date输出三类gross excess return、forward total return、future max drawdown/worst-1d、interval/available-at；validator重建receipt
+    projection、rows/summary/Markdown并拒绝tamper；full status、global pass claim和no-reuse/no-daily边界在报告可见；formal
+    validation通过；`production_effect=none`、`broker_action=none`。
+  - 2026-07-26：首个真实v2 receipt=`dq_capability_e7f233ca6e0c41ce9506df46f067e56348004a19f953cf74626d5c9936ccb059`，full唯一ERROR=`prices_non_market_session_date`、affected=`^VIX`、scoped
+    QQQ/SPY/SGOV=`PASS`、global claim=false；label status=`LABEL_FOUNDATION_READY`、common
+    sessions=`1362`、rows=`5412`、content-derived validator 0 errors。正式tiers由DATA-GOV-002
+    Phase A收口。
+  docs_links:
+  - docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md
+  terminal: false
+  raw_row_sha256: 8592db2da2f52b8b65a23e75740021b56166ab3d9950fb8cf04044088c3c045a
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 0972e83dcd3ae35472bd4418447b6ecac4e303d264b19d831d860c95dbbf58f3

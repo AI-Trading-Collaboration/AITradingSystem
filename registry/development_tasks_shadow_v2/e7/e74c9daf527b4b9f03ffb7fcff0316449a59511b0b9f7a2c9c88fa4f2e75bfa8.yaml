@@ -1,0 +1,86 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: VALUATION-001
+  task_id_sha256: e74c9daf527b4b9f03ffb7fcff0316449a59511b0b9f7a2c9c88fa4f2e75bfa8
+task_record:
+  task_id: VALUATION-001
+  title: null
+  domain: 估值/仓位
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 把估值拥挤从单纯评分升级为新增仓位限制或禁止加仓 gate
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 估值过热时日报输出“趋势仍强但新增仓位受限”等结论；回测使用同一规则；不把估值拥挤误写成基本面证伪
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 90ea149c502944f75defd7caa9f0e69070915222f4e2e9c3042706f8ec76b2c5
+  cell_count: 8
+  all_cells:
+  - VALUATION-001
+  - 估值/仓位
+  - P1
+  - DONE
+  - 系统实现
+  - 把估值拥挤从单纯评分升级为新增仓位限制或禁止加仓 gate
+  - 估值过热时日报输出“趋势仍强但新增仓位受限”等结论；回测使用同一规则；不把估值拥挤误写成基本面证伪
+  - '2026-05-04: 已完成，valuation `position_gate` 在共享 gate 层按 `EXPENSIVE_OR_CROWDED`
+    / `EXTREME_OVERHEATED` 限制最终 AI 仓位，日报和回测共用同一最终仓位约束；补充测试验证估值拥挤 gate 压低仓位且不被误写成 thesis
+    证伪。'
+  raw_line: '|VALUATION-001|估值/仓位|P1|DONE|系统实现|把估值拥挤从单纯评分升级为新增仓位限制或禁止加仓 gate|估值过热时日报输出“趋势仍强但新增仓位受限”等结论；回测使用同一规则；不把估值拥挤误写成基本面证伪|2026-05-04:
+    已完成，valuation `position_gate` 在共享 gate 层按 `EXPENSIVE_OR_CROWDED` / `EXTREME_OVERHEATED`
+    限制最终 AI 仓位，日报和回测共用同一最终仓位约束；补充测试验证估值拥挤 gate 压低仓位且不被误写成 thesis 证伪。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-90ea149c502944f75defd7ca
+  task_id: VALUATION-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 已完成，valuation `position_gate` 在共享 gate 层按 `EXPENSIVE_OR_CROWDED`
+      / `EXTREME_OVERHEATED` 限制最终 AI 仓位，日报和回测共用同一最终仓位约束；补充测试验证估值拥挤 gate 压低仓位且不被误写成
+      thesis 证伪。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:90ea149c502944f75defd7caa9f0e69070915222f4e2e9c3042706f8ec76b2c5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - VALUATION-001
+  - 估值/仓位
+  - P1
+  - DONE
+  - 系统实现
+  - 把估值拥挤从单纯评分升级为新增仓位限制或禁止加仓 gate
+  - 估值过热时日报输出“趋势仍强但新增仓位受限”等结论；回测使用同一规则；不把估值拥挤误写成基本面证伪
+  - '2026-05-04: 已完成，valuation `position_gate` 在共享 gate 层按 `EXPENSIVE_OR_CROWDED`
+    / `EXTREME_OVERHEATED` 限制最终 AI 仓位，日报和回测共用同一最终仓位约束；补充测试验证估值拥挤 gate 压低仓位且不被误写成 thesis
+    证伪。'
+  docs_links: []
+  terminal: true
+  raw_row_sha256: 90ea149c502944f75defd7caa9f0e69070915222f4e2e9c3042706f8ec76b2c5
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 75571a3a3b9b94cda321785a0dcefcb1b3e17eefe6ea03e291bc00788b4d84ba

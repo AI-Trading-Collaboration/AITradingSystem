@@ -1,0 +1,128 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  task_id_sha256: c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82
+task_record:
+  task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  title: null
+  domain: Strategy Style Discovery / post-O1 route governance and blind re-entry preregistration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy research owner：选择 exact route；若选择推荐 A+D，还需冻结或授权另行形成 exact calendar
+    trigger、data-vintage rule 与 maximum look budget。未有完整 Owner token 前保持所有 empirical/downstream
+    gate关闭。
+  requirement_refs:
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`。默认推荐
+    `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`，但网页建议、自然语言“继续推进”与实现者推荐都不构成
+    Owner route approval。未有 exact Owner token 前不得读取任何新的 O1/O2/O3 eligibility、coverage、event
+    base rate、target、prediction 或 metric。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 任务行、supporting requirement、inactive proposal 与独立 validator/tests存在；永久绑定
+      TRADING-2464 V1 consumed coverage look 和 report/gate SHA；O1 target/form/5-session
+      horizon/split/floors/regime/event/model/metric/falsification全部不变；具体日期和最大 look
+      次数保持未选择直到 Owner 决定；所有 canonical/model/downstream/production/broker flags=false；formal
+      validation与generated governance state通过。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 6410521bff2440ff63646ce5758754e7efe9fc97e24561342d3f22b0af8023fb
+  cell_count: 8
+  all_cells:
+  - TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  - Strategy Style Discovery / post-O1 route governance and blind re-entry preregistration
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - strategy research owner：选择 exact route；若选择推荐 A+D，还需冻结或授权另行形成 exact calendar trigger、data-vintage
+    rule 与 maximum look budget。未有完整 Owner token 前保持所有 empirical/downstream gate关闭。
+  - 详见 `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`。默认推荐
+    `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`，但网页建议、自然语言“继续推进”与实现者推荐都不构成
+    Owner route approval。未有 exact Owner token 前不得读取任何新的 O1/O2/O3 eligibility、coverage、event
+    base rate、target、prediction 或 metric。
+  - 任务行、supporting requirement、inactive proposal 与独立 validator/tests存在；永久绑定 TRADING-2464
+    V1 consumed coverage look 和 report/gate SHA；O1 target/form/5-session horizon/split/floors/regime/event/model/metric/falsification全部不变；具体日期和最大
+    look 次数保持未选择直到 Owner 决定；所有 canonical/model/downstream/production/broker flags=false；formal
+    validation与generated governance state通过。
+  - 2026-07-30：Owner仅授权规划与预注册基础设施，不被扩大为选择`2027-02-01`、12个月一次look或启动empirical run。Web
+    Pro审阅为advisory，backend route不可证明；validator=`PASS_0_ERRORS`，focused=`27 passed`，authority/deprecation=`156
+    passed`，Architecture=`797 passed`（`architecture-fitness_20260730T014012Z`），Contract=`276
+    passed`（`contract-validation_20260730T014251Z`）。状态保持`BLOCKED_OWNER_INPUT`；本任务不修改实际数据流，`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION|Strategy
+    Style Discovery / post-O1 route governance and blind re-entry preregistration|P0|BLOCKED_OWNER_INPUT|strategy
+    research owner：选择 exact route；若选择推荐 A+D，还需冻结或授权另行形成 exact calendar trigger、data-vintage
+    rule 与 maximum look budget。未有完整 Owner token 前保持所有 empirical/downstream gate关闭。|详见
+    `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`。默认推荐
+    `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`，但网页建议、自然语言“继续推进”与实现者推荐都不构成
+    Owner route approval。未有 exact Owner token 前不得读取任何新的 O1/O2/O3 eligibility、coverage、event
+    base rate、target、prediction 或 metric。|任务行、supporting requirement、inactive proposal
+    与独立 validator/tests存在；永久绑定 TRADING-2464 V1 consumed coverage look 和 report/gate
+    SHA；O1 target/form/5-session horizon/split/floors/regime/event/model/metric/falsification全部不变；具体日期和最大
+    look 次数保持未选择直到 Owner 决定；所有 canonical/model/downstream/production/broker flags=false；formal
+    validation与generated governance state通过。|2026-07-30：Owner仅授权规划与预注册基础设施，不被扩大为选择`2027-02-01`、12个月一次look或启动empirical
+    run。Web Pro审阅为advisory，backend route不可证明；validator=`PASS_0_ERRORS`，focused=`27
+    passed`，authority/deprecation=`156 passed`，Architecture=`797 passed`（`architecture-fitness_20260730T014012Z`），Contract=`276
+    passed`（`contract-validation_20260730T014251Z`）。状态保持`BLOCKED_OWNER_INPUT`；本任务不修改实际数据流，`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-6410521bff2440ff63646ce5
+  task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: strategy research owner：选择 exact route；若选择推荐 A+D，还需冻结或授权另行形成 exact
+      calendar trigger、data-vintage rule 与 maximum look budget。未有完整 Owner token 前保持所有
+      empirical/downstream gate关闭。
+    notes: 2026-07-30：Owner仅授权规划与预注册基础设施，不被扩大为选择`2027-02-01`、12个月一次look或启动empirical
+      run。Web Pro审阅为advisory，backend route不可证明；validator=`PASS_0_ERRORS`，focused=`27
+      passed`，authority/deprecation=`156 passed`，Architecture=`797 passed`（`architecture-fitness_20260730T014012Z`），Contract=`276
+      passed`（`contract-validation_20260730T014251Z`）。状态保持`BLOCKED_OWNER_INPUT`；本任务不修改实际数据流，`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:6410521bff2440ff63646ce5758754e7efe9fc97e24561342d3f22b0af8023fb
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  - Strategy Style Discovery / post-O1 route governance and blind re-entry preregistration
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - strategy research owner：选择 exact route；若选择推荐 A+D，还需冻结或授权另行形成 exact calendar trigger、data-vintage
+    rule 与 maximum look budget。未有完整 Owner token 前保持所有 empirical/downstream gate关闭。
+  - 详见 `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`。默认推荐
+    `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`，但网页建议、自然语言“继续推进”与实现者推荐都不构成
+    Owner route approval。未有 exact Owner token 前不得读取任何新的 O1/O2/O3 eligibility、coverage、event
+    base rate、target、prediction 或 metric。
+  - 任务行、supporting requirement、inactive proposal 与独立 validator/tests存在；永久绑定 TRADING-2464
+    V1 consumed coverage look 和 report/gate SHA；O1 target/form/5-session horizon/split/floors/regime/event/model/metric/falsification全部不变；具体日期和最大
+    look 次数保持未选择直到 Owner 决定；所有 canonical/model/downstream/production/broker flags=false；formal
+    validation与generated governance state通过。
+  - 2026-07-30：Owner仅授权规划与预注册基础设施，不被扩大为选择`2027-02-01`、12个月一次look或启动empirical run。Web
+    Pro审阅为advisory，backend route不可证明；validator=`PASS_0_ERRORS`，focused=`27 passed`，authority/deprecation=`156
+    passed`，Architecture=`797 passed`（`architecture-fitness_20260730T014012Z`），Contract=`276
+    passed`（`contract-validation_20260730T014251Z`）。状态保持`BLOCKED_OWNER_INPUT`；本任务不修改实际数据流，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  terminal: false
+  raw_row_sha256: 6410521bff2440ff63646ce5758754e7efe9fc97e24561342d3f22b0af8023fb
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: b18f8874a7b7aa9fc2179527c068b48f1b21d1c51dfc518b9e303409530fe940

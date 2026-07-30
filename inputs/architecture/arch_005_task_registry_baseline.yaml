@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1644436
-    sha256: e59673ab2d35114e354a06f2c56f83fe560e144d3bbc23998719243533bbd4bf
+    byte_count: 1644703
+    sha256: 0f070d290089b59019c5048948b5728705a4472daa69e538ac0ca7936b43ce44
     row_count: 423
     final_newline: true
     task_id_order_sha256: 309a8b5a67d0fc729f947201968bc1b827911ca0ed92c9a6cd1943920e418b35
-    row_checksum_order_sha256: fbf988a621671613e8821940ad8ca1d1623c6219de92c196496ccc8ac82d7b3b
+    row_checksum_order_sha256: 2e14c49261ac761ae40edfe18ec3d38b9fb4eba7ee5b01dc9e6a95f8d26b1a73
     task_row_newline_counts:
       LF: 423
   - source: completed
@@ -120,19 +120,19 @@ inventory:
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
-    BASELINE_DONE: 119
+    BASELINE_DONE: 120
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 9
     DEFERRED: 1
     DONE: 493
     DROPPED: 12
     IN_PROGRESS: 6
-    PROPOSED: 10
+    PROPOSED: 9
     READY: 1
     VALIDATING: 266
   task_id_set_sha256: f571cd87e1c0ba3b0808672f2b646c4c2eeb3256bad6cd4f5e8968bf4eaa9315
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 8e1d3d8ed62c622fd9f5583dcde09eab6478b998ec9004224dba81a8fc4683a2
+  owner_set_sha256: 80a97616118fd3c06d9d7358a6bc118ab4d71e507b1570650a155007f019f0b7
   docs_link_set_sha256: a591b3ecc7bca155f871854ee5ea874eff3b278dc512c2395d273ed5155830a6
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3092,7 +3092,7 @@ inventory:
   - task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
     source: active
     line_number: 2064
-    row_sha256: 46bd7ea496c5e1938ab059643bde4ab6108ef16138857b4a028dfcc0833436dc
+    row_sha256: dfe2e992ac1d62a79f6a18cdf8d34af038f474966b6fec24a52746f5cc5ea839
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -6637,7 +6637,8 @@ consumer_characterization:
   runtime_consumer_count: 9
   test_consumer_count: 122
   script_consumer_count: 3
-  consumer_set_sha256: aec7d76f4860b20362ab6a021142b4e891408308e7b09e35d62be879c3b0b8c3
+  consumer_set_sha256: 7b176bd10a83a893a05e0153597ab50041dc4661902cb664949fe513817d1564
+  source_cutover_allowed: false
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
     role: runtime
@@ -6645,6 +6646,7 @@ consumer_characterization:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/cli_commands/reports.py
     role: runtime
     targets:
@@ -6652,6 +6654,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 6
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/docs_freshness.py
     role: runtime
     targets:
@@ -6659,6 +6662,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/platform/architecture/task_registry_shadow.py
     role: runtime
     targets:
@@ -6666,18 +6670,21 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/reports/canonical_system_status.py
     role: runtime
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/reports/engineering_closeout.py
     role: runtime
     targets:
     - docs/task_register.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/reports/research_roadmap_dashboard.py
     role: runtime
     targets:
@@ -6685,6 +6692,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/reports/research_safety_boundary.py
     role: runtime
     targets:
@@ -6692,6 +6700,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/reports/task_register_consistency.py
     role: runtime
     targets:
@@ -6699,36 +6708,42 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 3
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_blocking_gap_remediation_implementation_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_calibrated_gate_candidate_owner_review_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_calibrated_gate_candidate_reclassification.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_calibrated_gate_owner_review_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_candidate_optimization_divergence_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_candidate_pool_expansion_plan.py
     role: test
     targets:
@@ -6736,60 +6751,70 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_component_ablation_owner_review_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_component_attribution_gate_evidence_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_component_attribution_targeted_ablation_retest.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_component_recombination_candidate_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_component_recombination_candidate_retest.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_cost_turnover_cooldown_sensitivity.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_data_pit_signal_quality_gap_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_event_driven_retest.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_guarded_variant_owner_review_decision.py
     role: test
     targets:
@@ -6797,12 +6822,14 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_observation_gate_threshold_calibration_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_optimization_plateau_next_candidate_decision.py
     role: test
     targets:
@@ -6810,12 +6837,14 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_optimized_candidate_targeted_retest.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_optimized_variant_owner_review_decision.py
     role: test
     targets:
@@ -6823,24 +6852,28 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_pit_coverage_matrix_implementation_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_pit_coverage_matrix_reusable_implementation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_pit_coverage_signal_construction_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_ranking_top_guarded_turnover_retest_plan.py
     role: test
     targets:
@@ -6848,6 +6881,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_ranking_top_guarded_variant_retest.py
     role: test
     targets:
@@ -6855,84 +6889,98 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_recombination_candidate_gate_evidence_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_recombination_candidate_owner_review_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_recombination_line_plateau_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_filter_threshold_methodology_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_only_observation_log_schema_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_only_observation_owner_reassessment.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_only_observation_report_dry_run.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_dry_run.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_owner_review_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_protocol.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_replay_validation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_signal_as_of_validity_contract_schema.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_slice_robustness_optimized_variant_retest.py
     role: test
     targets:
@@ -6940,6 +6988,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_slice_robustness_return_gap_optimization_plan.py
     role: test
     targets:
@@ -6947,12 +6996,14 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_targeted_gate_evidence_owner_review_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_targeted_retest_owner_review_decision.py
     role: test
     targets:
@@ -6960,30 +7011,35 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_top_candidate_owner_review_gate.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_dynamic_strategy_valid_until_window_stale_signal_remediation_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_baseline_contract_decision_pack.py
     role: test
     targets:
     - docs/task_register_completed.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_candidate_gauntlet_harness.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_candidate_runtime_spec_threshold_policy_approval.py
     role: test
     targets:
@@ -6991,96 +7047,112 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_defensive_limited_adjustment_component_validation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_as_of_semantics_remediation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_candidate_promotion_evidence_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_contract_gap_remediation_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_contract_readiness_snapshot.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_forward_outcome_binding_boundary.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_manual_review_packet_dry_run.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_observe_only_signal_artifact_boundary.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_dry_run_wiring.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_enablement_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_preflight.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_schedule_dry_run.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_recheck.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_snapshot.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_pit_gate_remaining_blocker_closure_plan.py
     role: test
     targets:
@@ -7088,30 +7160,35 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_signal_artifact_source_traceability_remediation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_signal_validity_dependency_strategy.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_source_feature_contract_mapping.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_source_traceability_strategy_remediation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_source_traceability_upstream_artifact_closure.py
     role: test
     targets:
@@ -7119,6 +7196,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_engine_valid_until_dependency_evidence_closure.py
     role: test
     targets:
@@ -7126,240 +7204,280 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_existing_candidate_evidence_matrix.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_false_risk_off_missed_upside_batch_screen.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_forward_aging_candidate_pack.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_owner_decision_resolution.py
     role: test
     targets:
     - docs/task_register_completed.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_owner_mapping_inventory.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_paper_shadow_candidate_promotion_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_pit_replay_engine_blocker_closure.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_regime_slice_attribution_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_engine_remediation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_turnover_cooldown_parameter_plateau_study.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_growth_tilt_valid_until_outcome_hit_rate_study.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_dynamic_strategy_execution_cadence_bias_audit.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_event_append_contract_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_outcome_binding_contract_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_owner_decision_pause_checkpoint.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_paper_shadow_scope_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_production_broker_hard_blocker_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_promotion_blocker_matrix.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_audit_package.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_gap_closure_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_hardening_backlog.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_idempotency_replay_contract_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_kill_switch_plan.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_manual_review_gate.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_manual_run_dry_run.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_manual_run_replay_validation.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_owner_review_decision.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/research_trends/test_high_intensity_scheduler_smoke_dry_run.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_004_refactor_policy.py
     role: test
     targets:
@@ -7367,6 +7485,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 13
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
     role: test
     targets:
@@ -7374,49 +7493,57 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_004_wave14_scope_amendment.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_005_bootstrap_handoff.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_005_prebootstrap.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 4
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_005_task_registry_shadow.py
     role: test
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 4
+    reference_count: 7
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_architecture_wave_readiness.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_engineering_closeout.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_feedback_loop_review.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_gov_006_task_portfolio_normalization.py
     role: test
     targets:
@@ -7424,12 +7551,14 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 9
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_governed_development_skill.py
     role: test
     targets:
     - docs/task_register.md
     reference_count: 4
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_research_roadmap_dashboard.py
     role: test
     targets:
@@ -7437,6 +7566,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_research_safety_boundary.py
     role: test
     targets:
@@ -7444,6 +7574,7 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_task_register_consistency.py
     role: test
     targets:
@@ -7451,24 +7582,28 @@ consumer_characterization:
     - docs/task_register_completed.md
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: scripts/generate_qqq_plus_growth_closeout_artifacts.py
     role: script
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: scripts/run_clean_clone_release_acceptance.py
     role: script
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: scripts/trading2465_validate_o1_reentry_preregistration.py
     role: script
     targets:
     - docs/task_register.md
     reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
 compatibility_projection:
   active_statuses:
   - BASELINE_DONE
@@ -7500,4 +7635,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: bce2f2ae1a67214e8e99a06fd786fcb994316d0697cca1ef22d8bf03bb5abf62
+baseline_checksum: 0117bb78064eb94863063854962f1888e8b740e1affddfccad73aadb911d1624

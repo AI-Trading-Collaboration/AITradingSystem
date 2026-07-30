@@ -1,0 +1,110 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  task_id_sha256: ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c
+task_record:
+  task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  title: null
+  domain: Developer experience / temporary clone, worktree and cache lifecycle
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+    target-bound audit重新评估
+  requirement_refs:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
+    v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute
+    main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed
+      main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
+      evidence与恢复边界。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
+  cell_count: 8
+  all_cells:
+  - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  - Developer experience / temporary clone, worktree and cache lifecycle
+  - P1
+  - IN_PROGRESS
+  - OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+    target-bound audit重新评估
+  - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
+    v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute
+    main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。
+  - TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed
+    main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
+    evidence与恢复边界。
+  - 2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462 v3 target上PASS，formal
+    Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
+    effect。
+  raw_line: '|DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP|Developer experience
+    / temporary clone, worktree and cache lifecycle|P1|IN_PROGRESS|OPS-070 owner负责runtime退出；strategy
+    research owner负责TRADING-2462；后续每个删除候选必须使用v2 target-bound audit重新评估|详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
+    v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute
+    main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。|TRADING-2458
+    v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target
+    tracked/unstaged/staged、untracked、ignored、进程、canonical evidence与恢复边界。|2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462
+    v3 target上PASS，formal Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
+    effect。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-f979f29da38a5b5348e8680b
+  task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+      target-bound audit重新评估
+    notes: 2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462 v3 target上PASS，formal
+      Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
+      effect。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
+  - Developer experience / temporary clone, worktree and cache lifecycle
+  - P1
+  - IN_PROGRESS
+  - OPS-070 owner负责runtime退出；strategy research owner负责TRADING-2462；后续每个删除候选必须使用v2
+    target-bound audit重新评估
+  - 详见 `docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md`。2026-07-27迁移TRADING-2458
+    v4 final evidence并清理8个TRADING-2458/2461历史carrier；两个TRADING-2462含独有实现且v2在审计期间推进checkpoint，必须保留。清理后发现absolute
+    main-script audit实际绑定主checkout，目标tracked diff未被正确审计，事故与不可恢复边界已保留。
+  - TRADING-2458 v4的19个final validation files已逐SHA迁移；8个worktree已删除并prune；DEVX-005进入reviewed
+    main后解除工具前置阻塞，但不自动授权删除；后续清理必须同时证明target tracked/unstaged/staged、untracked、ignored、进程、canonical
+    evidence与恢复边界。
+  - 2026-07-27：DEVX-005已实现`checkout_worktree_audit.v2`并在真实TRADING-2462 v3 target上PASS，formal
+    Architecture/Contract=`692/275 passed`；本轮没有执行新删除。DEVX仍为`IN_PROGRESS`，等待OPS-070/TRADING-2462独立退出条件，无production或broker
+    effect。
+  docs_links:
+  - docs/requirements/DEVX-001_Temporary_Workspace_Lifecycle_and_Cleanup.md
+  terminal: false
+  raw_row_sha256: f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 4203bead8972c3164f00278fa9f7451c56b696a64f11a8970703f71932e35f5f

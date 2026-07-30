@@ -1,0 +1,115 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  task_id_sha256: 8f94232414037d95253e1089454c402ee929cfea494b338d55145a38cdb7a374
+task_record:
+  task_id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  title: null
+  domain: Strategy Style Discovery / decision-target capability audit batch-2 purged
+    walk-forward and model ladder
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: strategy owner：如继续，另立预注册的tail-risk稳健性/证伪审计；在该审计通过前不建立risk overlay
+  requirement_refs:
+  - docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md`。Reviewed
+    policy exact绑定TRADING-2460真实label/package/panel/receipt，冻结7-fold purged walk-forward、train-only
+    transform、M0/M1/M2 ladder及classification model；真实style=`TAIL_RISK_ONLY_SKILL`。四次共享main推进均fail
+    closed，旧候选仅作已验证carrier。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Exact input/double-build/content-derived validator通过；selected/evaluated=`2021-02-22..2026-07-24`/`2021-08-11..2026-06-25`、7
+      folds、118300 predictions。三类return target均0 horizon通过；QQQ worst-1d在1/5/10d通过，max
+      drawdown仅5d且target不通过。最终组合树formal/Full/post-Full门禁通过；不得形成candidate/backtest/weights/QLD
+      signal/promotion；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: b79d5f09d0e77a76e270142257f21618f433a5e0cfbf6481bc823a48ea0e4740
+  cell_count: 8
+  all_cells:
+  - TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  - Strategy Style Discovery / decision-target capability audit batch-2 purged walk-forward
+    and model ladder
+  - P0
+  - DONE
+  - strategy owner：如继续，另立预注册的tail-risk稳健性/证伪审计；在该审计通过前不建立risk overlay
+  - 详见 `docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md`。Reviewed
+    policy exact绑定TRADING-2460真实label/package/panel/receipt，冻结7-fold purged walk-forward、train-only
+    transform、M0/M1/M2 ladder及classification model；真实style=`TAIL_RISK_ONLY_SKILL`。四次共享main推进均fail
+    closed，旧候选仅作已验证carrier。
+  - Exact input/double-build/content-derived validator通过；selected/evaluated=`2021-02-22..2026-07-24`/`2021-08-11..2026-06-25`、7
+    folds、118300 predictions。三类return target均0 horizon通过；QQQ worst-1d在1/5/10d通过，max
+    drawdown仅5d且target不通过。最终组合树formal/Full/post-Full门禁通过；不得形成candidate/backtest/weights/QLD
+    signal/promotion；`production_effect=none`、`broker_action=none`。
+  - 2026-07-26：exact `7b883b840`组合树Full=`7394 passed / 4 skipped / 643 warnings /
+    1183.11s`。期间四次shared-main推进均按serial contract wave重建；最终C1/C2 authority、任务实现与9/9真实审计输出共同收口。
+  raw_line: '|TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER|Strategy
+    Style Discovery / decision-target capability audit batch-2 purged walk-forward
+    and model ladder|P0|DONE|strategy owner：如继续，另立预注册的tail-risk稳健性/证伪审计；在该审计通过前不建立risk
+    overlay|详见 `docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md`。Reviewed
+    policy exact绑定TRADING-2460真实label/package/panel/receipt，冻结7-fold purged walk-forward、train-only
+    transform、M0/M1/M2 ladder及classification model；真实style=`TAIL_RISK_ONLY_SKILL`。四次共享main推进均fail
+    closed，旧候选仅作已验证carrier。|Exact input/double-build/content-derived validator通过；selected/evaluated=`2021-02-22..2026-07-24`/`2021-08-11..2026-06-25`、7
+    folds、118300 predictions。三类return target均0 horizon通过；QQQ worst-1d在1/5/10d通过，max
+    drawdown仅5d且target不通过。最终组合树formal/Full/post-Full门禁通过；不得形成candidate/backtest/weights/QLD
+    signal/promotion；`production_effect=none`、`broker_action=none`。|2026-07-26：exact
+    `7b883b840`组合树Full=`7394 passed / 4 skipped / 643 warnings / 1183.11s`。期间四次shared-main推进均按serial
+    contract wave重建；最终C1/C2 authority、任务实现与9/9真实审计输出共同收口。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b79d5f09d0e77a76e2701422
+  task_id: TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: strategy owner：如继续，另立预注册的tail-risk稳健性/证伪审计；在该审计通过前不建立risk overlay
+    notes: 2026-07-26：exact `7b883b840`组合树Full=`7394 passed / 4 skipped / 643 warnings
+      / 1183.11s`。期间四次shared-main推进均按serial contract wave重建；最终C1/C2 authority、任务实现与9/9真实审计输出共同收口。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:b79d5f09d0e77a76e270142257f21618f433a5e0cfbf6481bc823a48ea0e4740
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2461_DECISION_TARGET_CAPABILITY_AUDIT_MODEL_LADDER
+  - Strategy Style Discovery / decision-target capability audit batch-2 purged walk-forward
+    and model ladder
+  - P0
+  - DONE
+  - strategy owner：如继续，另立预注册的tail-risk稳健性/证伪审计；在该审计通过前不建立risk overlay
+  - 详见 `docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md`。Reviewed
+    policy exact绑定TRADING-2460真实label/package/panel/receipt，冻结7-fold purged walk-forward、train-only
+    transform、M0/M1/M2 ladder及classification model；真实style=`TAIL_RISK_ONLY_SKILL`。四次共享main推进均fail
+    closed，旧候选仅作已验证carrier。
+  - Exact input/double-build/content-derived validator通过；selected/evaluated=`2021-02-22..2026-07-24`/`2021-08-11..2026-06-25`、7
+    folds、118300 predictions。三类return target均0 horizon通过；QQQ worst-1d在1/5/10d通过，max
+    drawdown仅5d且target不通过。最终组合树formal/Full/post-Full门禁通过；不得形成candidate/backtest/weights/QLD
+    signal/promotion；`production_effect=none`、`broker_action=none`。
+  - 2026-07-26：exact `7b883b840`组合树Full=`7394 passed / 4 skipped / 643 warnings /
+    1183.11s`。期间四次shared-main推进均按serial contract wave重建；最终C1/C2 authority、任务实现与9/9真实审计输出共同收口。
+  docs_links:
+  - docs/requirements/TRADING-2461_Decision_Target_Capability_Audit_Model_Ladder.md
+  terminal: true
+  raw_row_sha256: b79d5f09d0e77a76e270142257f21618f433a5e0cfbf6481bc823a48ea0e4740
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 292935ed08bdc222bb96fa332ecd6af3a9d6983cfde54ebde200a340eff17d2b

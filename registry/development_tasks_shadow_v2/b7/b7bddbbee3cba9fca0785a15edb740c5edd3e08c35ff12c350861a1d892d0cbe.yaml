@@ -1,0 +1,99 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
+  task_id_sha256: b7bddbbee3cba9fca0785a15edb740c5edd3e08c35ff12c350861a1d892d0cbe
+task_record:
+  task_id: TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
+  title: null
+  domain: 数据源 / first-layer reopen readiness
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 见 `docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md`；实现已完成，等待
+    owner 复核剩余免费源缺口和 macro calendar rows
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 免费 source registry、ingestion/validation CLI、free feature parquet/review、PIT
+      audit、coverage/readiness/owner brief、report registry、artifact catalog、system
+      flow 和 guardrail tests 完成并验证通过
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 3a549422f73f65375b8341c45cd9ade735e142eeb9d92c630d422a6b527fbc82
+  cell_count: 8
+  all_cells:
+  - TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
+  - 数据源 / first-layer reopen readiness
+  - P1
+  - VALIDATING
+  - 系统实现
+  - 见 `docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md`；实现已完成，等待
+    owner 复核剩余免费源缺口和 macro calendar rows
+  - 免费 source registry、ingestion/validation CLI、free feature parquet/review、PIT audit、coverage/readiness/owner
+    brief、report registry、artifact catalog、system flow 和 guardrail tests 完成并验证通过
+  - '2026-06-28: 真实 run data_quality_status=`PASS_WITH_WARNINGS`；rates/VIX ready，macro
+    calendar blocked，participation proxy diagnostic-only；promotion/paper-shadow/production/broker
+    继续 disabled'
+  raw_line: '|TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION|数据源 / first-layer
+    reopen readiness|P1|VALIDATING|系统实现|见 `docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md`；实现已完成，等待
+    owner 复核剩余免费源缺口和 macro calendar rows|免费 source registry、ingestion/validation CLI、free
+    feature parquet/review、PIT audit、coverage/readiness/owner brief、report registry、artifact
+    catalog、system flow 和 guardrail tests 完成并验证通过|2026-06-28: 真实 run data_quality_status=`PASS_WITH_WARNINGS`；rates/VIX
+    ready，macro calendar blocked，participation proxy diagnostic-only；promotion/paper-shadow/production/broker
+    继续 disabled|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3a549422f73f65375b8341c4
+  task_id: TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-06-28: 真实 run data_quality_status=`PASS_WITH_WARNINGS`；rates/VIX
+      ready，macro calendar blocked，participation proxy diagnostic-only；promotion/paper-shadow/production/broker
+      继续 disabled'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:3a549422f73f65375b8341c45cd9ade735e142eeb9d92c630d422a6b527fbc82
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
+  - 数据源 / first-layer reopen readiness
+  - P1
+  - VALIDATING
+  - 系统实现
+  - 见 `docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md`；实现已完成，等待
+    owner 复核剩余免费源缺口和 macro calendar rows
+  - 免费 source registry、ingestion/validation CLI、free feature parquet/review、PIT audit、coverage/readiness/owner
+    brief、report registry、artifact catalog、system flow 和 guardrail tests 完成并验证通过
+  - '2026-06-28: 真实 run data_quality_status=`PASS_WITH_WARNINGS`；rates/VIX ready，macro
+    calendar blocked，participation proxy diagnostic-only；promotion/paper-shadow/production/broker
+    继续 disabled'
+  docs_links:
+  - docs/requirements/TRADING-2046_to_2085_Free_PIT_Data_Source_Ingestion.md
+  terminal: false
+  raw_row_sha256: 3a549422f73f65375b8341c45cd9ade735e142eeb9d92c630d422a6b527fbc82
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 5c5b92d5e70cf0a8822e36e61073f48e4834cd4b19ae4d864916e47f314590a1

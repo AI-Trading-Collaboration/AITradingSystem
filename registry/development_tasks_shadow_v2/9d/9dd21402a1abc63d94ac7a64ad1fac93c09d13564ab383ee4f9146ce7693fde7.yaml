@@ -1,0 +1,114 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: OPS-068_2026_07_21_DAILY_GAP_RECOVERY
+  task_id_sha256: 9dd21402a1abc63d94ac7a64ad1fac93c09d13564ab383ee4f9146ce7693fde7
+task_record:
+  task_id: OPS-068_2026_07_21_DAILY_GAP_RECOVERY
+  title: null
+  domain: Operations / 2026-07-21 missing canonical daily evidence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: system operations：未来只有发现五个 exact cutoff-compatible archives 时才以新任务执行
+    strict recovery
+  requirement_refs:
+  - docs/requirements/OPS-068_2026_07_21_Daily_Gap_Recovery.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-068_2026_07_21_Daily_Gap_Recovery.md`。Owner
+    决策 `owner_decision:OPS-068:2026-07-24:approve_limited_non_pit_reconstruction_v1`
+    选择方案二；v2 reviewed schema、producer、content-derived validator、CLI、tamper tests、catalog/runbook/system
+    flow 和真实隔离 bundle 已完成。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Bundle 绑定明确 inventory/source path/size/SHA、owner decision、isolated market/macro
+      DQ 与 8 个 canonical guard；PIT/SEC/OpenAI 和 11 个 conclusion outputs 全部 null；validator
+      11 checks PASS，focused parallel 4 passed；无 2026-07-21 canonical state/score/Reader
+      Brief；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: a03e5072a679e741639086dcbdf4b4c583a112b438b4371dbf946dabaaf154d1
+  cell_count: 8
+  all_cells:
+  - OPS-068_2026_07_21_DAILY_GAP_RECOVERY
+  - Operations / 2026-07-21 missing canonical daily evidence
+  - P0
+  - DONE
+  - system operations：未来只有发现五个 exact cutoff-compatible archives 时才以新任务执行 strict recovery
+  - 详见 `docs/requirements/OPS-068_2026_07_21_Daily_Gap_Recovery.md`。Owner 决策 `owner_decision:OPS-068:2026-07-24:approve_limited_non_pit_reconstruction_v1`
+    选择方案二；v2 reviewed schema、producer、content-derived validator、CLI、tamper tests、catalog/runbook/system
+    flow 和真实隔离 bundle 已完成。
+  - Bundle 绑定明确 inventory/source path/size/SHA、owner decision、isolated market/macro
+    DQ 与 8 个 canonical guard；PIT/SEC/OpenAI 和 11 个 conclusion outputs 全部 null；validator
+    11 checks PASS，focused parallel 4 passed；无 2026-07-21 canonical state/score/Reader
+    Brief；`production_effect=none`。
+  - 2026-07-24：bundle 位于 `outputs/replays/limited_non_pit_reconstruction/2026-07-21/limited_non_pit_reconstruction_2026-07-21_20260724_ops068/`；DQ=`PASS_WITH_WARNINGS`（0
+    errors / 1 warning / 13 info），26 market facts、3 macro facts、9 source artifacts；canonical
+    daily evidence=`MISSING`、conclusion=`INSUFFICIENT_DATA`。
+  raw_line: '|OPS-068_2026_07_21_DAILY_GAP_RECOVERY|Operations / 2026-07-21 missing
+    canonical daily evidence|P0|DONE|system operations：未来只有发现五个 exact cutoff-compatible
+    archives 时才以新任务执行 strict recovery|详见 `docs/requirements/OPS-068_2026_07_21_Daily_Gap_Recovery.md`。Owner
+    决策 `owner_decision:OPS-068:2026-07-24:approve_limited_non_pit_reconstruction_v1`
+    选择方案二；v2 reviewed schema、producer、content-derived validator、CLI、tamper tests、catalog/runbook/system
+    flow 和真实隔离 bundle 已完成。|Bundle 绑定明确 inventory/source path/size/SHA、owner decision、isolated
+    market/macro DQ 与 8 个 canonical guard；PIT/SEC/OpenAI 和 11 个 conclusion outputs
+    全部 null；validator 11 checks PASS，focused parallel 4 passed；无 2026-07-21 canonical
+    state/score/Reader Brief；`production_effect=none`。|2026-07-24：bundle 位于 `outputs/replays/limited_non_pit_reconstruction/2026-07-21/limited_non_pit_reconstruction_2026-07-21_20260724_ops068/`；DQ=`PASS_WITH_WARNINGS`（0
+    errors / 1 warning / 13 info），26 market facts、3 macro facts、9 source artifacts；canonical
+    daily evidence=`MISSING`、conclusion=`INSUFFICIENT_DATA`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a03e5072a679e741639086dc
+  task_id: OPS-068_2026_07_21_DAILY_GAP_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: system operations：未来只有发现五个 exact cutoff-compatible archives 时才以新任务执行
+      strict recovery
+    notes: 2026-07-24：bundle 位于 `outputs/replays/limited_non_pit_reconstruction/2026-07-21/limited_non_pit_reconstruction_2026-07-21_20260724_ops068/`；DQ=`PASS_WITH_WARNINGS`（0
+      errors / 1 warning / 13 info），26 market facts、3 macro facts、9 source artifacts；canonical
+      daily evidence=`MISSING`、conclusion=`INSUFFICIENT_DATA`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:a03e5072a679e741639086dcbdf4b4c583a112b438b4371dbf946dabaaf154d1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-068_2026_07_21_DAILY_GAP_RECOVERY
+  - Operations / 2026-07-21 missing canonical daily evidence
+  - P0
+  - DONE
+  - system operations：未来只有发现五个 exact cutoff-compatible archives 时才以新任务执行 strict recovery
+  - 详见 `docs/requirements/OPS-068_2026_07_21_Daily_Gap_Recovery.md`。Owner 决策 `owner_decision:OPS-068:2026-07-24:approve_limited_non_pit_reconstruction_v1`
+    选择方案二；v2 reviewed schema、producer、content-derived validator、CLI、tamper tests、catalog/runbook/system
+    flow 和真实隔离 bundle 已完成。
+  - Bundle 绑定明确 inventory/source path/size/SHA、owner decision、isolated market/macro
+    DQ 与 8 个 canonical guard；PIT/SEC/OpenAI 和 11 个 conclusion outputs 全部 null；validator
+    11 checks PASS，focused parallel 4 passed；无 2026-07-21 canonical state/score/Reader
+    Brief；`production_effect=none`。
+  - 2026-07-24：bundle 位于 `outputs/replays/limited_non_pit_reconstruction/2026-07-21/limited_non_pit_reconstruction_2026-07-21_20260724_ops068/`；DQ=`PASS_WITH_WARNINGS`（0
+    errors / 1 warning / 13 info），26 market facts、3 macro facts、9 source artifacts；canonical
+    daily evidence=`MISSING`、conclusion=`INSUFFICIENT_DATA`。
+  docs_links:
+  - docs/requirements/OPS-068_2026_07_21_Daily_Gap_Recovery.md
+  terminal: true
+  raw_row_sha256: a03e5072a679e741639086dcbdf4b4c583a112b438b4371dbf946dabaaf154d1
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 6b7512f4617f33b8694a6a4f29555c76b38c5a1a13ce513b9fa365a2c2a473cf

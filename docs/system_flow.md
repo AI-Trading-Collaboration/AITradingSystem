@@ -1039,8 +1039,8 @@ flowchart LR
 ```
 
 ARCH-005 S0/S1保持`docs/task_register.md`与`docs/task_register_completed.md`为唯一可写事实源。
-S0以`task_register_markdown_parser.v1_characterized`冻结两份文件bytes/SHA、869个唯一task、逐行
-checksum、status/owner/docs-link集合、terminal投影、排序/renderer规则及125个直接consumer；55条
+S0以`task_register_markdown_parser.v1_characterized`冻结两份文件bytes/SHA、928个唯一task、逐行
+checksum、status/owner/docs-link集合、terminal投影、排序/renderer规则及134个直接consumer；55条
 超过8 cells的旧行不做不可证实的字段重分割，而是保留raw row、全部cells、既有first-eight-cell投影并
 标记`LEGACY_HISTORY_PARTIAL`。S1把每个任务机械投影为独立shadow fragment，包含`task_record.v1`与
 初始`task_event.v1`，再由shadow index/replay compiler重建active/completed compatibility views。
@@ -1049,17 +1049,32 @@ task status，也不dispatch、不申请lease。S0/S1现已`BASELINE_DONE`，正
 contract/reproducibility/full=`300/419/265/23/6394 passed`；它只是迁移与并行基础，不改变任何研究或
 投资结论。S2和ARCH-004 G2.5均未自动解锁。
 
+DEVX-006 B波在不切换authority的前提下增加inactive Task Shadow v2 side-by-side：v2 fragment
+path只由`sha256(task_id)`决定，fragment保留raw row、全部cells、row hash、first-eight projection、
+docs links与legacy import event，但不保存current partition、source path或Markdown line number；
+这些可变locator仅写入`arch_005_task_shadow_index.v2`。因此register中间插行不会级联改写后续既有
+v2 fragments，active→completed也保持同一路径，仅更新row/event证据和index locator。v2 index同时
+冻结当前134个literal consumers（9 runtime、122 test、3 script）的migration status与legacy-read
+rollback。v1/v2均须重建byte-identical legacy views、验证duplicate/tamper/freshness并保持
+`source_of_truth=LEGACY_MARKDOWN_ONLY`、`cutover_performed=false`；任何source cutover仍需Owner另审。
+
 ```mermaid
 flowchart LR
     LEGACY["Legacy Markdown only writable source"] --> S0["S0 inventory + contract freeze"]
-    S0 --> ROWS["869 lossless task rows"]
-    ROWS --> FRAG["Per-task shadow fragments"]
-    FRAG --> INDEX["S1 deterministic shadow index"]
+    S0 --> ROWS["928 lossless task rows"]
+    ROWS --> V1["v1 fragments<br/>partition + line in fragment"]
+    V1 --> INDEX["v1 deterministic shadow index"]
+    ROWS --> V2["inactive v2 fragments<br/>stable task-id path"]
+    V2 --> V2INDEX["v2 index-only locator<br/>134 consumer inventory"]
     INDEX --> ACTIVE["Active compatibility projection"]
     INDEX --> DONE["Completed compatibility projection"]
+    V2INDEX --> ACTIVE2["v2 active replay"]
+    V2INDEX --> DONE2["v2 completed replay"]
     ACTIVE --> PARITY["Byte-identical parity gate"]
     DONE --> PARITY
-    PARITY -.-> SAFE["No dual write / dispatch / lease / production"]
+    ACTIVE2 --> PARITY
+    DONE2 --> PARITY
+    PARITY -.-> SAFE["No cutover / dual write / dispatch / lease / production"]
 ```
 
 ARCH-005-PB1 在 G2.4 尚未完成 phase-level handoff 时先提供 non-cutover 并行控制原语。调用方把每个候选变更声明为

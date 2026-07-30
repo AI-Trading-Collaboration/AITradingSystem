@@ -1,0 +1,139 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
+  task_id_sha256: c28d15d30cadc13ad02ac473bfd6cce6ed23497945afb82cae06b2bfbc5e581f
+task_record:
+  task_id: TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
+  title: null
+  domain: Research trends / refined candidate local edge and scope narrowing review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md`；依赖
+    TRADING-2289 refined actual-path validation outputs、TRADING-2288 refined generation
+    artifacts 和 TRADING-2287 guardrails / refinement plan。本批只做 local edge / scope
+    narrowing review 和 risk_appetite current-form reject record，不生成 owner review package、不重跑
+    actual-path validation、不修改 generator。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research trends refined-candidate-local-edge-scope-review`；生成 candidate
+      local edge、asset/horizon/direction/high-conviction/regime/false-cost scope matrices、scope
+      narrowing recommendation、risk_appetite reject record、next-task recommendation、decision
+      summary 和 research docs；input/output safety gates fail closed；所有 outputs 固定
+      promotion/paper-shadow/production/broker false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 4c81093a867a06b4d25f9131d8fff29a096976f6932a15129ff2adaa2f490631
+  cell_count: 8
+  all_cells:
+  - TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
+  - Research trends / refined candidate local edge and scope narrowing review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md`；依赖
+    TRADING-2289 refined actual-path validation outputs、TRADING-2288 refined generation
+    artifacts 和 TRADING-2287 guardrails / refinement plan。本批只做 local edge / scope
+    narrowing review 和 risk_appetite current-form reject record，不生成 owner review package、不重跑
+    actual-path validation、不修改 generator。
+  - 新增 `aits research trends refined-candidate-local-edge-scope-review`；生成 candidate
+    local edge、asset/horizon/direction/high-conviction/regime/false-cost scope matrices、scope
+    narrowing recommendation、risk_appetite reject record、next-task recommendation、decision
+    summary 和 research docs；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+    false/none。
+  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run
+    actual-path records=95,220、validation eligible=73,188、data quality=`PASS_WITH_WARNINGS`；baseline_plus_trend_structure=`LOCAL_EDGE_PRESENT`
+    / `SCOPE_NARROW_AND_REGENERATE` / `confirmation_only`，volatility_regime=`LOCAL_EDGE_WEAK`
+    / `SCOPE_NARROW_AND_REGENERATE` / `risk_cap_only`，risk_appetite=`LOCAL_EDGE_NOT_FOUND`
+    / `REJECT_CURRENT_FORM` / archive current form；验证通过 Ruff、compileall、focused parallel
+    pytest 34 passed、full parallel pytest 3664 passed、docs freshness、documentation
+    contract、contract-validation 193 passed 和 `git diff --check`。'
+  raw_line: '|TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW|Research
+    trends / refined candidate local edge and scope narrowing review|P0|VALIDATING|系统实现
+    + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md`；依赖
+    TRADING-2289 refined actual-path validation outputs、TRADING-2288 refined generation
+    artifacts 和 TRADING-2287 guardrails / refinement plan。本批只做 local edge / scope
+    narrowing review 和 risk_appetite current-form reject record，不生成 owner review package、不重跑
+    actual-path validation、不修改 generator。|新增 `aits research trends refined-candidate-local-edge-scope-review`；生成
+    candidate local edge、asset/horizon/direction/high-conviction/regime/false-cost
+    scope matrices、scope narrowing recommendation、risk_appetite reject record、next-task
+    recommendation、decision summary 和 research docs；input/output safety gates fail
+    closed；所有 outputs 固定 promotion/paper-shadow/production/broker false/none。|2026-06-30:
+    根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run actual-path
+    records=95,220、validation eligible=73,188、data quality=`PASS_WITH_WARNINGS`；baseline_plus_trend_structure=`LOCAL_EDGE_PRESENT`
+    / `SCOPE_NARROW_AND_REGENERATE` / `confirmation_only`，volatility_regime=`LOCAL_EDGE_WEAK`
+    / `SCOPE_NARROW_AND_REGENERATE` / `risk_cap_only`，risk_appetite=`LOCAL_EDGE_NOT_FOUND`
+    / `REJECT_CURRENT_FORM` / archive current form；验证通过 Ruff、compileall、focused parallel
+    pytest 34 passed、full parallel pytest 3664 passed、docs freshness、documentation
+    contract、contract-validation 193 passed 和 `git diff --check`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4c81093a867a06b4d25f9131
+  task_id: TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实
+      run actual-path records=95,220、validation eligible=73,188、data quality=`PASS_WITH_WARNINGS`；baseline_plus_trend_structure=`LOCAL_EDGE_PRESENT`
+      / `SCOPE_NARROW_AND_REGENERATE` / `confirmation_only`，volatility_regime=`LOCAL_EDGE_WEAK`
+      / `SCOPE_NARROW_AND_REGENERATE` / `risk_cap_only`，risk_appetite=`LOCAL_EDGE_NOT_FOUND`
+      / `REJECT_CURRENT_FORM` / archive current form；验证通过 Ruff、compileall、focused
+      parallel pytest 34 passed、full parallel pytest 3664 passed、docs freshness、documentation
+      contract、contract-validation 193 passed 和 `git diff --check`。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:4c81093a867a06b4d25f9131d8fff29a096976f6932a15129ff2adaa2f490631
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
+  - Research trends / refined candidate local edge and scope narrowing review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md`；依赖
+    TRADING-2289 refined actual-path validation outputs、TRADING-2288 refined generation
+    artifacts 和 TRADING-2287 guardrails / refinement plan。本批只做 local edge / scope
+    narrowing review 和 risk_appetite current-form reject record，不生成 owner review package、不重跑
+    actual-path validation、不修改 generator。
+  - 新增 `aits research trends refined-candidate-local-edge-scope-review`；生成 candidate
+    local edge、asset/horizon/direction/high-conviction/regime/false-cost scope matrices、scope
+    narrowing recommendation、risk_appetite reject record、next-task recommendation、decision
+    summary 和 research docs；input/output safety gates fail closed；所有 outputs 固定 promotion/paper-shadow/production/broker
+    false/none。
+  - '2026-06-30: 根据 owner 附件新增并进入 IN_PROGRESS；2026-06-30: 实现完成并转入 VALIDATING，真实 run
+    actual-path records=95,220、validation eligible=73,188、data quality=`PASS_WITH_WARNINGS`；baseline_plus_trend_structure=`LOCAL_EDGE_PRESENT`
+    / `SCOPE_NARROW_AND_REGENERATE` / `confirmation_only`，volatility_regime=`LOCAL_EDGE_WEAK`
+    / `SCOPE_NARROW_AND_REGENERATE` / `risk_cap_only`，risk_appetite=`LOCAL_EDGE_NOT_FOUND`
+    / `REJECT_CURRENT_FORM` / archive current form；验证通过 Ruff、compileall、focused parallel
+    pytest 34 passed、full parallel pytest 3664 passed、docs freshness、documentation
+    contract、contract-validation 193 passed 和 `git diff --check`。'
+  docs_links:
+  - docs/requirements/TRADING-2290_Refined_Candidate_Local_Edge_and_Scope_Narrowing_Review.md
+  terminal: false
+  raw_row_sha256: 4c81093a867a06b4d25f9131d8fff29a096976f6932a15129ff2adaa2f490631
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 2acec5c3116819fdb090fa967ef4f74c742234a4c1343dffbdc3506f97efd8e6
