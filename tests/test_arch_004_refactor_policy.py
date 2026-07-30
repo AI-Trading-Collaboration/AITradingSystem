@@ -1394,7 +1394,36 @@ TRADING_2469_DIFF_CONSUMER_NEW_SOURCE_PATHS = frozenset(
         "tests/atlas/test_snapshot_diff.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2469_DIFF_CONSUMER_SECTION
+TRADING_2470_CITED_QUERY_CONTRACT_SECTION = (
+    "phase_trading_2470_atlas_citation_first_query_contract_wave"
+)
+TRADING_2470_CITED_QUERY_CONTRACT_BASE_COMMIT = (
+    "52e08f1a5ed532066b69ea48004739beee4038ca"
+)
+TRADING_2470_CITED_QUERY_CONTRACT_BASELINE_GIT_BLOB = (
+    "3fa252805a461f835ca12679b9dcd6c374b8e35d"
+)
+TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT = 2_230_232
+TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_SHA256 = (
+    "57913d756934f1f540f89298f990ca125a5a5e3199bf0b1c973ee4ea50c96ebd"
+)
+TRADING_2470_CITED_QUERY_CONTRACT_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2470_CITED_QUERY_CONTRACT_NEW_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/TRADING-2470_Atlas_Citation_First_Query_API_V1.md",
+        (
+            "registry/development_tasks_shadow/active/56/"
+            "56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/56/"
+            "56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml"
+        ),
+        "src/ai_trading_system/contracts/strategy_research_cited_query.py",
+        "tests/test_strategy_research_cited_query_contract.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2470_CITED_QUERY_CONTRACT_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2960,6 +2989,26 @@ def _trading_2469_diff_consumer_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2470_cited_query_contract_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2470_CITED_QUERY_CONTRACT_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2470_CITED_QUERY_CONTRACT_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -4487,6 +4536,26 @@ def _assert_trading_2469_diff_consumer_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2469_DIFF_CONSUMER_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2470_cited_query_contract_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2470 cited-query contract historical prefix differs from immutable "
+        "TRADING-2469 consumer authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2470_CITED_QUERY_CONTRACT_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -6413,6 +6482,40 @@ def _trading_2469_diff_consumer_all_current_authority_paths() -> frozenset[str]:
 
 
 @cache
+def _trading_2470_cited_query_contract_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2470_cited_query_contract_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2470_cited_query_contract_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2470_CITED_QUERY_CONTRACT_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2470_cited_query_contract_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2470_CITED_QUERY_CONTRACT_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2470_cited_query_contract_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2470_cited_query_contract_superseded_live_source_paths()
+        | _trading_2470_cited_query_contract_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _trading_2463_superseded_live_source_paths()
@@ -7424,12 +7527,61 @@ def _trading_2469_diff_consumer_prior_active_source_mismatches() -> frozenset[st
     return _latest_active_source_mismatches(TRADING_2469_DIFF_CONSUMER_SECTION)
 
 
+@cache
+def _trading_2470_cited_query_contract_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(TRADING_2470_CITED_QUERY_CONTRACT_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2469_DIFF_CONSUMER_SECTION in baseline:
+    if TRADING_2470_CITED_QUERY_CONTRACT_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2470_cited_query_contract_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2470_cited_query_contract_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_all_superseded_live_source_paths()
+            | _data_gov_001_d0d_superseded_live_source_paths()
+            | _data_gov_001_d0d_source_paths()
+            | _data_gov_001_d0e_superseded_live_source_paths()
+            | _data_gov_001_d0e_source_paths()
+            | _devx_007_all_current_authority_paths()
+            | _trading_2464_decision_all_current_authority_paths()
+            | _trading_2464_dq_recovery_all_current_authority_paths()
+            | _trading_2464_owner_token_all_current_authority_paths()
+            | _trading_2464_contract_all_current_authority_paths()
+            | _trading_2464_synthetic_all_current_authority_paths()
+            | _trading_2464_isolated_dq_all_current_authority_paths()
+            | _trading_2464_event_attempt_runner_all_current_authority_paths()
+            | _trading_2464_event_raw_replay_all_current_authority_paths()
+            | _trading_2464_event_gate_binding_all_current_authority_paths()
+            | _trading_2464_coverage_runner_all_current_authority_paths()
+            | _trading_2464_coverage_gate_binding_all_current_authority_paths()
+            | _trading_2465_reentry_preregistration_all_current_authority_paths()
+            | _devx_006_task_shadow_v2_all_current_authority_paths()
+            | _trading_2466_2467_integration_all_current_authority_paths()
+            | _trading_2468_atlas_coverage_all_current_authority_paths()
+            | _trading_2469_diff_contract_all_current_authority_paths()
+            | _trading_2469_diff_consumer_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2470_CITED_QUERY_CONTRACT_SECTION
+    elif TRADING_2469_DIFF_CONSUMER_SECTION in baseline:
         current_superseded_paths = _trading_2469_diff_consumer_superseded_live_source_paths()
         assert (
             _trading_2469_diff_consumer_prior_active_source_mismatches() == current_superseded_paths
@@ -17924,7 +18076,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 932
+    assert v2_index["fragment_count"] == 933
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -18211,6 +18363,7 @@ def test_trading_2469_diff_contract_is_current_hash_authority() -> None:
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2469_diff_consumer_superseded_live_source_paths()
+        | _trading_2470_cited_query_contract_superseded_live_source_paths()
     )
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2469_DIFF_CONTRACT_REMOVED_SOURCE_PATHS
@@ -18234,7 +18387,10 @@ def test_trading_2469_diff_contract_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
-    current_superseded = _trading_2469_diff_consumer_superseded_live_source_paths()
+    current_superseded = (
+        _trading_2469_diff_consumer_superseded_live_source_paths()
+        | _trading_2470_cited_query_contract_superseded_live_source_paths()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
@@ -18286,7 +18442,9 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2469_DIFF_CONSUMER_SECTION
+    assert list(baseline).index(TRADING_2469_DIFF_CONSUMER_SECTION) < list(
+        baseline
+    ).index(TRADING_2470_CITED_QUERY_CONTRACT_SECTION)
     phase = baseline[TRADING_2469_DIFF_CONSUMER_SECTION]
     assert phase["schema_version"] == (
         "trading_2469_atlas_cross_snapshot_diff_consumer_compatibility.v1"
@@ -18308,7 +18466,13 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == set(_trading_2469_diff_consumer_prior_active_source_mismatches())
+    current_prior_drift = set(
+        _trading_2469_diff_consumer_prior_active_source_mismatches()
+    )
+    assert superseded <= current_prior_drift
+    assert current_prior_drift - superseded <= set(
+        _trading_2470_cited_query_contract_superseded_live_source_paths()
+    )
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2469_DIFF_CONSUMER_REMOVED_SOURCE_PATHS
     )
@@ -18331,8 +18495,13 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    current_superseded = (
+        _trading_2470_cited_query_contract_superseded_live_source_paths()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in current_superseded:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
@@ -18377,6 +18546,119 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
     tampered[TRADING_2469_DIFF_CONSUMER_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2469_diff_consumer_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2470_cited_query_contract_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2470_cited_query_contract_base_baseline_blob()
+    _assert_trading_2470_cited_query_contract_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2470_CITED_QUERY_CONTRACT_SECTION
+    phase = baseline[TRADING_2470_CITED_QUERY_CONTRACT_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2470_atlas_citation_first_query_contract_compatibility.v1"
+    )
+    assert phase["status"] == "CONTRACT_WAVE_DONE"
+    assert phase["boundary_id"] == "TRADING-2470-ATLAS-CITED-QUERY-CONTRACT-WAVE"
+    assert phase["task_ids"] == ["TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1"]
+    assert phase["owner_decisions"] == [
+        (
+            "owner_decision:TRADING-2470:2026-07-30:"
+            "advance_atlas_citation_first_query_api_v1"
+        )
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2470_CITED_QUERY_CONTRACT_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2470_CITED_QUERY_CONTRACT_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2470_cited_query_contract_prior_active_source_mismatches()
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2470_CITED_QUERY_CONTRACT_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2470_CITED_QUERY_CONTRACT_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2470_CITED_QUERY_CONTRACT_NEW_SOURCE_PATHS
+    ) - TRADING_2470_CITED_QUERY_CONTRACT_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2470-ATLAS-CITED-QUERY-CONTRACT-WAVE",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2469_DIFF_CONSUMER_SECTION,
+        "current_hash_authority": (
+            f"{TRADING_2470_CITED_QUERY_CONTRACT_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["implementation"] == {
+        "contract_source_commit": TRADING_2470_CITED_QUERY_CONTRACT_BASE_COMMIT,
+        "question_ids": [
+            "RESEARCH_MAINLINE_SUMMARY",
+            "RESULT_AND_STATUS",
+            "ATTRIBUTION_AND_LIMITATIONS",
+            "SNAPSHOT_CHANGE_EXPLANATION",
+            "SOURCE_LINEAGE",
+        ],
+        "exact_question_and_target_dispatch": True,
+        "fuzzy_or_rename_inference_allowed": False,
+        "claim_citation_closure_required": True,
+        "free_text_or_llm_authority_allowed": False,
+        "http_or_long_lived_service_started": False,
+        "task_shadow_source": "LEGACY_MARKDOWN_ONLY",
+        "task_shadow_v2_cutover_performed": False,
+    }
+    assert phase["validation"] == {
+        "focused_contract": "PASS_13_TESTS",
+        "contract_and_deprecation": "PASS_22_TESTS",
+        "ruff": "PASS",
+        "task_registry": "PASS_BYTE_IDENTICAL_933_TASKS",
+        "generated_architecture": "PASS_1054_MODULES_1225_TESTS",
+        "compatibility_authority": "PASS_163_TESTS",
+    }
+    assert phase["safety"] == {
+        "market_or_cache_read": False,
+        "external_network_used": False,
+        "llm_called": False,
+        "investment_conclusion_generated": False,
+        "data_acquisition_executed": False,
+        "dq_execution_executed": False,
+        "model_training_executed": False,
+        "backtest_executed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2470_CITED_QUERY_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2470_cited_query_contract_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )
