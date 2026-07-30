@@ -13,21 +13,21 @@ import yaml
 TASK_ID = "TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION"
 SCHEMA_VERSION = "o1_relative_opportunity_reentry_preregistration_proposal.v1"
 PROPOSAL_STATUS = "OWNER_REVIEW_REQUIRED_NOT_ACTIVE"
-OWNER_GATE_STATUS = "BLOCKED_OWNER_INPUT"
+HISTORICAL_OWNER_GATE_STATUS = "BLOCKED_OWNER_INPUT"
+CURRENT_TASK_STATUS = "BASELINE_DONE"
+OWNER_DECISION_TOKEN = (
+    "owner_decision:TRADING-2465:2026-07-30:"
+    "select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1"
+)
+SUCCESSOR_TASK_ID = "TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE"
 PLANNING_SNAPSHOT = "fb4687244e04228ae2e5c4dd425f82cb1e35291c"
 SOURCE_POLICY_ID = "TRADING_2464_O1_CAPABILITY_AUDIT_V1"
 SOURCE_POLICY_STATUS = "CLOSED_INSUFFICIENT_COVERAGE_OR_DQ"
-SOURCE_POLICY_PATH = (
-    "config/research/o1_relative_opportunity_capability_audit_v1.yaml"
-)
+SOURCE_POLICY_PATH = "config/research/o1_relative_opportunity_capability_audit_v1.yaml"
 REQUIREMENT_PATH = (
-    "docs/requirements/"
-    "TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md"
+    "docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md"
 )
-PROPOSAL_PATH = (
-    "config/research/"
-    "o1_relative_opportunity_reentry_preregistration_v1_proposal.yaml"
-)
+PROPOSAL_PATH = "config/research/o1_relative_opportunity_reentry_preregistration_v1_proposal.yaml"
 TASK_REGISTER_PATH = "docs/task_register.md"
 
 IMMUTABLE_SECTIONS = (
@@ -142,11 +142,7 @@ def validate_reentry_preregistration(
     proposal_path: Path | None = None,
 ) -> ValidationResult:
     root = project_root.resolve()
-    proposal_file = (
-        proposal_path.resolve()
-        if proposal_path is not None
-        else root / PROPOSAL_PATH
-    )
+    proposal_file = proposal_path.resolve() if proposal_path is not None else root / PROPOSAL_PATH
     proposal = _load_yaml(proposal_file)
     source_file = root / SOURCE_POLICY_PATH
     source_bytes = source_file.read_bytes()
@@ -162,8 +158,7 @@ def validate_reentry_preregistration(
     )
     _expect(
         errors,
-        proposal.get("proposal_id")
-        == "TRADING_2465_O1_BLIND_REENTRY_PREREGISTRATION_V1_PROPOSAL",
+        proposal.get("proposal_id") == "TRADING_2465_O1_BLIND_REENTRY_PREREGISTRATION_V1_PROPOSAL",
         "PROPOSAL_ID_MISMATCH",
     )
     _expect(errors, proposal.get("task_id") == TASK_ID, "TASK_ID_MISMATCH")
@@ -193,8 +188,7 @@ def validate_reentry_preregistration(
     )
     _expect(
         errors,
-        owner_instruction.get("interpretation")
-        == "PLANNING_AND_PREREGISTRATION_ONLY",
+        owner_instruction.get("interpretation") == "PLANNING_AND_PREREGISTRATION_ONLY",
         "OWNER_INSTRUCTION_SCOPE_MISMATCH",
     )
     for key in (
@@ -230,8 +224,7 @@ def validate_reentry_preregistration(
     )
     _expect(
         errors,
-        predecessor.get("git_blob_sha1_at_planning_snapshot")
-        == _git_blob_sha1(source_bytes),
+        predecessor.get("git_blob_sha1_at_planning_snapshot") == _git_blob_sha1(source_bytes),
         "SOURCE_POLICY_GIT_BLOB_SHA1_MISMATCH",
     )
     _expect(
@@ -265,8 +258,7 @@ def validate_reentry_preregistration(
     for section_name in IMMUTABLE_SECTIONS:
         _expect(
             errors,
-            section_hashes.get(section_name)
-            == _section_sha256(source_policy.get(section_name)),
+            section_hashes.get(section_name) == _section_sha256(source_policy.get(section_name)),
             f"FROZEN_SECTION_HASH_MISMATCH:{section_name}",
         )
 
@@ -281,9 +273,7 @@ def validate_reentry_preregistration(
         "target_id": target.get("target_id"),
         "form": target.get("form"),
         "label": target.get("label"),
-        "primary_horizon_common_sessions": target.get(
-            "primary_horizon_common_sessions"
-        ),
+        "primary_horizon_common_sessions": target.get("primary_horizon_common_sessions"),
         "split_id": split.get("split_id"),
         "model_id": model.get("model_id"),
         "feature_family_prefix": model.get("family_prefix"),
@@ -331,8 +321,7 @@ def validate_reentry_preregistration(
     )
     _expect(
         errors,
-        _mapping(prior, "coverage_gate", errors).get("gate_id")
-        == active_gate.get("gate_id"),
+        _mapping(prior, "coverage_gate", errors).get("gate_id") == active_gate.get("gate_id"),
         "PRIOR_COVERAGE_GATE_ID_MISMATCH",
     )
     for key, expected in (
@@ -492,23 +481,17 @@ def validate_reentry_preregistration(
     )
     _expect(
         errors,
-        validation.get("docs_system_flow_impact")
-        == "NONE_INACTIVE_PLANNING_ONLY",
+        validation.get("docs_system_flow_impact") == "NONE_INACTIVE_PLANNING_ONLY",
         "SYSTEM_FLOW_IMPACT_MISMATCH",
     )
     _expect(
         errors,
-        validation.get("expected_status_before_owner_selection")
-        == OWNER_GATE_STATUS,
+        validation.get("expected_status_before_owner_selection") == HISTORICAL_OWNER_GATE_STATUS,
         "EXPECTED_OWNER_GATE_STATUS_MISMATCH",
     )
 
     task_line = next(
-        (
-            line
-            for line in task_register.splitlines()
-            if line.startswith(f"|{TASK_ID}|")
-        ),
+        (line for line in task_register.splitlines() if line.startswith(f"|{TASK_ID}|")),
         None,
     )
     _expect(errors, task_line is not None, "TASK_REGISTER_ROW_MISSING")
@@ -516,8 +499,8 @@ def validate_reentry_preregistration(
         cells = task_line.split("|")
         _expect(
             errors,
-            len(cells) > 4 and cells[4] == OWNER_GATE_STATUS,
-            "TASK_REGISTER_STATUS_NOT_BLOCKED_OWNER_INPUT",
+            len(cells) > 4 and cells[4] == CURRENT_TASK_STATUS,
+            "TASK_REGISTER_STATUS_NOT_BASELINE_DONE",
         )
         _expect(
             errors,
@@ -526,12 +509,14 @@ def validate_reentry_preregistration(
         )
     for required_text, code in (
         (TASK_ID, "REQUIREMENT_TASK_ID_MISSING"),
-        ("状态：`BLOCKED_OWNER_INPUT`", "REQUIREMENT_STATUS_MISMATCH"),
+        ("状态：`BASELINE_DONE`", "REQUIREMENT_STATUS_MISMATCH"),
         (
-            "owner_decision:TRADING-2465:YYYY-MM-DD:"
-            "select_o1_blind_calendar_reentry_with_generic_evidence_"
-            "infrastructure_v1",
-            "REQUIREMENT_ROUTE_A_TOKEN_MISSING",
+            OWNER_DECISION_TOKEN,
+            "REQUIREMENT_EXACT_OWNER_DECISION_MISSING",
+        ),
+        (
+            SUCCESSOR_TASK_ID,
+            "REQUIREMENT_SUCCESSOR_TASK_MISSING",
         ),
         (
             "CANNOT_VERIFY_EXACT_BACKEND_ROUTE=true",
@@ -557,8 +542,8 @@ def validate_reentry_preregistration(
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "验证 TRADING-2465 inactive O1 blind-reentry preregistration；"
-            "不读取 runtime evidence，不运行 empirical action。"
+            "验证 TRADING-2465 历史 inactive O1 blind-reentry preregistration"
+            "及其 Owner 决策交接；不读取 runtime evidence，不运行 empirical action。"
         )
     )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())

@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`BASELINE_DONE`
 
 production effect：`none`
 
@@ -349,3 +349,12 @@ authority 的 ID/SHA。
   `797 passed`，artifact=`outputs/validation_runtime/architecture-fitness_20260730T014012Z/test_runtime_summary.json`。
   Contract 最终 `276 passed`，artifact=`outputs/validation_runtime/contract-validation_20260730T014251Z/test_runtime_summary.json`。
   route、calendar、data vintage、look budget与所有 empirical/downstream action仍未授权。
+- 2026-07-30：Owner 采纳第二次 Web Pro exact-commit 决策记录：
+  `owner_decision:TRADING-2465:2026-07-30:select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1`。
+  exact payload 选择 A+D、`2027-02-01` blind not-before trigger、
+  requested/evaluated=`2027-01-29/2027-01-22`、固定非滚动
+  `[2027-02-01, 2028-02-01)` 内一次 coverage look 与 deterministic vintage identity rule。
+  本任务完成 Owner decision handoff 并转 `BASELINE_DONE`；历史 inactive proposal不被改写成
+  executable policy，后续由
+  `TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE` 冻结 Owner-approved inactive
+  policy。任何真实 data/DQ/coverage/model/canonical/downstream action仍未授权。

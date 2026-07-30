@@ -1,0 +1,239 @@
+schema_version: o1_relative_opportunity_blind_calendar_reentry_policy.v1
+policy_id: TRADING_2467_O1_BLIND_CALENDAR_REENTRY_POLICY_V1
+version: 1.0.0
+task_id: TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
+status: OWNER_APPROVED_INACTIVE_POLICY_SLOT_FROZEN
+effective_status: INACTIVE
+activation_allowed: false
+automatic_execution_allowed: false
+production_effect: none
+broker_action: none
+
+authority:
+  exact_source_commit: 26e76d25b425957926a37ce8be5e55c58d356f37
+  owner_instruction:
+    text: 采纳建议，请继续推进后续任务
+    recorded_at: "2026-07-30"
+    interpretation: INACTIVE_POLICY_SLOT_FREEZE_ONLY
+  owner_decisions:
+    route_and_infrastructure:
+      decision_id: owner_decision:TRADING-2465:2026-07-30:select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1
+      accepted: true
+    inactive_policy_freeze:
+      decision_id: owner_decision:TRADING-2467:2026-07-30:authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1
+      accepted: true
+  source_bindings:
+    predecessor_requirement:
+      path: docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+      git_blob_sha1_at_exact_source_commit: 563e1e778c8277b981784b1b0332d97888f3425e
+      content_sha256_at_exact_source_commit: f999e06aa5cf2a037fb75d2c6beccf01cdd8ca75afd5918acb71c1e491ce4693
+    predecessor_proposal:
+      path: config/research/o1_relative_opportunity_reentry_preregistration_v1_proposal.yaml
+      git_blob_sha1_at_exact_source_commit: 43960eeab15344a7b8ec697bcbf517c555bd0401
+      content_sha256_at_exact_source_commit: 32532b65c5a575f93a0cec07c3c4c202f687e65d5465c854e8177bcc2f4e1cf7
+      historical_status: OWNER_REVIEW_REQUIRED_NOT_ACTIVE
+      retained_as_immutable_pre_owner_history: true
+    o1_v1_policy:
+      path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+      policy_id: TRADING_2464_O1_CAPABILITY_AUDIT_V1
+      git_blob_sha1_at_exact_source_commit: 7d90d304cd4b9d3b2a69e534413837b5daf19e05
+      content_sha256_at_exact_source_commit: 1195c84ac0e980e5450eaa7c22f082f2bd1fc2adc053da73ecfbbafa291798ca
+      status: CLOSED_INSUFFICIENT_COVERAGE_OR_DQ
+  web_pro_planning_evidence:
+    conversation_url: https://chatgpt.com/c/6a6ac917-8d38-83ee-9161-6e6fab018828
+    reviewed_commit: 26e76d25b425957926a37ce8be5e55c58d356f37
+    specified_blob_sha_match: 7/7
+    classification: UI_PRO_AND_SELF_REPORT_PRO_ROUTE_UNVERIFIED
+    cannot_verify_exact_backend_route: true
+    repository_authority: false
+
+route_contract:
+  route_id: A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE
+  o1_blind_calendar_reentry_selected: true
+  generic_evidence_infrastructure_selected: true
+  o2_loss_budget_foundation_selected: false
+  o3_utility_action_foundation_selected: false
+  threshold_or_model_redesign_selected: false
+  route_selection_is_capability_conclusion: false
+
+calendar_trigger:
+  trigger_type: BLIND_CALENDAR_NOT_BEFORE
+  not_before_date: "2027-02-01"
+  not_before_at: "2027-02-01T00:00:00-05:00"
+  timezone: America/New_York
+  rationale_basis: SIX_COMPLETE_CALENDAR_MONTH_PUBLICATION_CYCLES
+  count_based_trigger_allowed: false
+  dynamic_trigger_allowed: false
+  result_based_trigger_allowed: false
+  automatic_execution_on_trigger: false
+  date_effect: OWNER_REVIEW_ELIGIBLE_NOT_RUN_AUTHORIZED
+
+data_vintage_contract:
+  source_publication_cutoff_inclusive: "2027-01-31T23:59:59-05:00"
+  primary_research_start: "2021-02-22"
+  pre_2021_02_22_primary_rows_allowed: false
+  requested_start: "2021-02-22"
+  requested_end: "2027-01-29"
+  evaluated_start: "2021-02-22"
+  evaluated_end: "2027-01-22"
+  future_sessions_after_evaluated_end:
+    count: 5
+    sessions:
+      - "2027-01-25"
+      - "2027-01-26"
+      - "2027-01-27"
+      - "2027-01-28"
+      - "2027-01-29"
+  pit_requirements:
+    source_published_at_not_after_cutoff: true
+    known_at_not_after_cutoff: true
+    available_at_not_after_cutoff: true
+    unknown_historical_timestamp_allowed: false
+    current_view_substitution_allowed: false
+    silent_imputation_allowed: false
+    post_cutoff_revision_allowed: false
+  strict_data_quality_gate:
+    required_status: PASS
+    required_error_count: 0
+    required_warning_count: 0
+  future_materialization:
+    source_member_receipts: PENDING_SEPARATE_RUN_AUTHORIZATION_AND_MATERIALIZATION
+    download_receipts: PENDING_SEPARATE_RUN_AUTHORIZATION_AND_MATERIALIZATION
+    dq_receipt: PENDING_SEPARATE_RUN_AUTHORIZATION_AND_MATERIALIZATION
+    calendar_event_ledger: PENDING_SEPARATE_RUN_AUTHORIZATION_AND_MATERIALIZATION
+    runtime_package_lock: PENDING_SEPARATE_RUN_AUTHORIZATION_AND_MATERIALIZATION
+  canonical_manifest:
+    required_before_first_real_coverage_read: true
+    deterministic_utf8_serialization: true
+    stable_key_and_member_sorting: true
+    exact_vintage_identity_formula: O1_V2_VINTAGE_SHA256_ + SHA256(canonical_manifest_bytes)
+    required_bindings:
+      - execution_commit
+      - policy_path
+      - policy_git_blob_sha1
+      - policy_content_sha256
+      - owner_decision_ids
+      - provider_endpoint_parameters
+      - publication_and_download_timestamps
+      - immutable_member_sha256_size_rows_and_range
+      - dq_receipt
+      - calendar_event_ledger
+      - requested_and_evaluated_range
+      - pit_contract
+      - runtime_package_lock
+    exact_vintage_identity: PENDING_SEPARATE_RUN_AUTHORIZATION_AND_MATERIALIZATION
+
+future_attempt_contract:
+  attempt_id: O1_M1_RIDGE_CROSS_ASSET_STATE_V2_CALENDAR_REENTRY
+  predecessor_attempt_id: O1_M1_RIDGE_CROSS_ASSET_STATE_V1
+  predecessor_single_run_consumed: true
+  pristine_independent_first_attempt_claim_allowed: false
+  append_only_attempt_ledger_required: true
+  separate_real_run_owner_token_required: true
+  separate_real_run_owner_token_status: NOT_GRANTED
+  look_consumption_event: FIRST_O1_V2_NON_SYNTHETIC_ELIGIBILITY_COVERAGE_OR_DERIVED_RESULT_READ_ATTEMPT
+  look_must_be_atomically_appended_before_event: true
+  crash_exception_or_partial_output_consumes_look: true
+  materialized_real_output_consumes_look: true
+  generic_acquisition_or_dq_authorized_by_this_policy: false
+
+look_budget_contract:
+  maximum_reentry_coverage_looks: 1
+  budget_window_start_inclusive: "2027-02-01T00:00:00-05:00"
+  budget_window_end_exclusive: "2028-02-01T00:00:00-05:00"
+  rolling_window: false
+  automatic_rollover: false
+  unused_budget_after_expiry: EXPIRES
+  automatic_retry_allowed: false
+  resume_allowed: false
+  overwrite_allowed: false
+  second_candidate_allowed: false
+  result_driven_rerun_allowed: false
+
+v1_immutable_contract:
+  source_policy_path: config/research/o1_relative_opportunity_capability_audit_v1.yaml
+  source_policy_id: TRADING_2464_O1_CAPABILITY_AUDIT_V1
+  exact_reuse_required: true
+  post_result_threshold_fold_horizon_regime_event_or_model_change_allowed: false
+  immutable_section_sha256:
+    target_contract: a262f043da797a3e57bf495e4b497add38d637b046501d1c9b0d1bb2a5af17b9
+    split_contract: 824375f394944ae3a8e5ae01df593947ac6cc5e62f684b5f75e161cdf76d75b4
+    coverage_contract: ebe72d4e33cb9069d33c62831f6cffb1413ee6f52e55286cb5ba0ec5c110c398
+    regime_contract: cfcc58df098f6b7d932881e4481445f496c4e9ca14d30b1160fe579dbee9520e
+    event_contract: d78ab9760a4dd32367ba74d3433aef2322240f846ee86dd818610acf976fc512
+    model_feature_contract: 177a4f03426f16faa178e81944c7a726bc323f991317e127a05d428d25ccfdd5
+    metric_contract: c7c9fcb1c9e63704ca74d16e1b55e93bbdf1ea71d8c1f4b0da15adac8fba2725
+    falsification_contract: 8a5c96a59d778ce389c3ee57dd494385d00746b61e50f2d38a1f105643f77fd8
+    classification_contract: 9c149a97e4089665471cbec278989effe82a2793121bb60dacc0ad8d3262c63f
+  capability_status:
+    value: NOT_EVALUATED
+    no_measurable_skill_allowed: false
+    reason: V1_CLOSED_BEFORE_MODEL_TRAINING_DUE_TO_INSUFFICIENT_COVERAGE_OR_DQ
+
+outcome_contract:
+  PASS:
+    output_class: COVERAGE_ELIGIBLE_PASS_ONLY
+    requirements:
+      - STRICT_DQ_PASS_0_ERRORS_0_WARNINGS
+      - EXACT_VINTAGE_AND_LINEAGE_VALID
+      - ALL_FROZEN_MANDATORY_COVERAGE_FLOORS_PASS
+    model_training_allowed: false
+    next_action: STOP_AND_REQUIRE_NEW_OWNER_CANONICAL_RUN_DECISION
+  FAIL:
+    capability_class_allowed: false
+    conditions:
+      - OWNER_REJECTS_ROUTE
+      - STATIC_POLICY_OR_VALIDATOR_FAILS
+      - EXACT_POLICY_CANNOT_BE_CONSTRUCTED
+    next_action: STOP
+  INSUFFICIENT:
+    output_class: INSUFFICIENT_COVERAGE_OR_DQ
+    capability_class_allowed: false
+    retry_allowed: false
+    next_action: CLOSE_V2_AND_STOP
+  INVALID:
+    capability_class_allowed: false
+    quarantine_required: true
+    conditions:
+      - PIT_BREACH
+      - WRONG_VINTAGE
+      - LINEAGE_TAMPER
+      - EXACT_RECONSTRUCTION_MISMATCH
+      - UNAUTHORIZED_RESULT_READ
+      - POST_RESULT_CONTRACT_CHANGE
+      - RESUME_OR_OVERWRITE
+      - ATTEMPT_LEDGER_VIOLATION
+      - INDEPENDENT_VALIDATOR_ERROR
+    next_action: QUARANTINE_AND_STOP
+
+authorization:
+  inactive_policy_serialization_allowed: true
+  independent_static_validation_allowed: true
+  controlled_fixture_tests_allowed: true
+  data_acquisition_allowed: false
+  dq_execution_allowed: false
+  eligibility_read_allowed: false
+  coverage_read_allowed: false
+  result_read_allowed: false
+  model_training_allowed: false
+  prediction_allowed: false
+  metric_generation_allowed: false
+  canonical_run_allowed: false
+  falsification_execution_allowed: false
+  decision_value_audit_allowed: false
+  risk_overlay_allowed: false
+  candidate_or_backtest_allowed: false
+  target_weights_allowed: false
+  paper_shadow_change_allowed: false
+  promotion_allowed: false
+
+safety:
+  retained_runtime_evidence_access_required: false
+  retained_runtime_evidence_bytes_read_by_this_task: false
+  retained_runtime_evidence_mutation_allowed: false
+  retained_runtime_evidence_cleanup_allowed: false
+  network_required: false
+  cached_market_or_macro_data_required: false
+  runtime_output_root_required: false
+  docs_system_flow_impact: NONE_INACTIVE_POLICY_ONLY
+  first_stop_boundary: STATIC_POLICY_VALIDATOR_AND_TESTS_PASS_BEFORE_ANY_REAL_DATA_DQ_COVERAGE_OR_RESULT_READ

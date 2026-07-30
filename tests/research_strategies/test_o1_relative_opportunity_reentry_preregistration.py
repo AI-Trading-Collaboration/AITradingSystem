@@ -74,9 +74,7 @@ def test_route_and_numeric_policy_slots_remain_unselected() -> None:
         "rationale": "NOT_SELECTED",
         "count_based_or_dynamic_trigger_allowed": False,
     }
-    assert route_a["look_budget"]["maximum_reentry_coverage_looks"] == (
-        "NOT_SELECTED"
-    )
+    assert route_a["look_budget"]["maximum_reentry_coverage_looks"] == ("NOT_SELECTED")
     assert route_a["future_attempt"]["selected_attempt_id"] == "NOT_SELECTED"
     assert route_b["owner_decision_token"] == "NOT_SELECTED"
     assert route_c["owner_decision_token"] == "NOT_SELECTED"
@@ -131,9 +129,7 @@ def test_validator_rejects_unauthorized_route_and_calendar_selection(
     proposal["route_decision"]["selected_route"] = (
         "A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE"
     )
-    proposal["route_a_plus_d_policy_slots"]["calendar_trigger"][
-        "not_before_date"
-    ] = "2027-02-01"
+    proposal["route_a_plus_d_policy_slots"]["calendar_trigger"]["not_before_date"] = "2027-02-01"
     result = _validate_tmp(tmp_path, proposal)
     assert result.status == "FAIL"
     assert "OWNER_ROUTE_ALREADY_SELECTED" in result.errors
@@ -143,9 +139,7 @@ def test_validator_rejects_unauthorized_route_and_calendar_selection(
 
 def test_validator_rejects_frozen_contract_tamper(tmp_path: Path) -> None:
     proposal = copy.deepcopy(_load_proposal())
-    proposal["frozen_o1_contract"]["immutable_section_sha256"][
-        "coverage_contract"
-    ] = "f" * 64
+    proposal["frozen_o1_contract"]["immutable_section_sha256"]["coverage_contract"] = "f" * 64
     result = _validate_tmp(tmp_path, proposal)
     assert result.status == "FAIL"
     assert "FROZEN_SECTION_HASH_MISMATCH:coverage_contract" in result.errors
@@ -165,21 +159,19 @@ def test_validator_rejects_empirical_or_downstream_authorization(
     assert "DOWNSTREAM_FLAG_ENABLED:decision_value_audit_started" in result.errors
 
 
-def test_task_and_requirement_expose_owner_gate_and_route_tokens() -> None:
+def test_task_and_requirement_expose_owner_decision_handoff() -> None:
     task_register = TASK_REGISTER_FILE.read_text(encoding="utf-8")
     requirement = REQUIREMENT_FILE.read_text(encoding="utf-8")
-    task_line = next(
-        line
-        for line in task_register.splitlines()
-        if line.startswith(f"|{TASK_ID}|")
-    )
-    assert "|P0|BLOCKED_OWNER_INPUT|" in task_line
-    assert "inactive proposal" in task_line
+    task_line = next(line for line in task_register.splitlines() if line.startswith(f"|{TASK_ID}|"))
+    assert "|P0|BASELINE_DONE|" in task_line
+    assert "TRADING-2467" in task_line
     assert "2027-02-01" in requirement
-    assert "不直接采纳为 active policy" in requirement
+    assert "状态：`BASELINE_DONE`" in requirement
     assert "CANNOT_VERIFY_EXACT_BACKEND_ROUTE=true" in requirement
     assert (
+        "owner_decision:TRADING-2465:2026-07-30:"
         "select_o1_blind_calendar_reentry_with_generic_evidence_"
         "infrastructure_v1"
     ) in requirement
+    assert "TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE" in requirement
     assert "INVALID_POST_RESULT_REDESIGN_CONTAMINATION" in requirement
