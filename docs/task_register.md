@@ -2057,6 +2057,12 @@ YYYY-MM-DD: 从 <旧状态> 改为 <新状态>，原因：<触发条件、实现
 |---|---|---|---|---|---|---|---|
 |TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1|Publishing & Experience / Atlas canonical research source coverage expansion|P1|BASELINE_DONE|knowledge/reporting/UX owner：V1.1 已完成；后续另立剩余 campaign adapters、cross-snapshot diff、interactive API 与带引用问答任务|详见 `docs/requirements/TRADING-2468_Atlas_Canonical_Source_Coverage_V1_1.md`。V1.1 无实现 blocker；剩余 blocker 是尚未登记的全历史 adapter inventory 与问答/差异比较产品合同。仍只允许 tracked Git authority，禁止 runtime/cache/external data 与任何 empirical action。|覆盖历史研究重启、QLD role、label foundation、target redesign、O1 current/future四条主线；legacy window、scoped/global DQ、NOT_EVALUATED与inactive边界显式；exact commit/SHA lineage、deterministic static HTML、no-recompute/no-write、focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2468:2026-07-30:advance_atlas_canonical_source_coverage_v1_1`；V1.1 已形成8 sources/4 campaigns/21 nodes/22 edges/8 results/12 attributions，preview source=`f939ac30c2caf36459f27a58c7cc80104c7c6494`、snapshot=`917c0d388ffbc27ab864b33701625422748d037ac98b16b42be6dfe1bd9331b7`；focused=28、authority=151、Architecture=807、Contract=276、Integration=995、Reproducibility=24、Full=7811 passed（3 skipped/644 warnings）；`production_effect=none`、`broker_action=none`。|
 
+## TRADING-2469 Atlas Cross-Snapshot Diff V1
+
+|ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
+|---|---|---|---|---|---|---|---|
+|TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1|Publishing & Experience / Atlas deterministic cross-snapshot change explanation|P1|IN_PROGRESS|knowledge/reporting/UX owner：先完成 serial public contract wave，再实现 builder/validator/static renderer|详见 `docs/requirements/TRADING-2469_Atlas_Cross_Snapshot_Diff_V1.md`。依赖 TRADING-2466 MVP 与 TRADING-2468 V1.1 retained snapshots；当前无外部 blocker。公共 contract 未冻结前 consumer wave 不得开始。|stable-ID add/remove/change、semantic/lineage-only/structural 分类、entity hashes/changed fields/summary 可重算、双输入 receipt、deterministic HTML/JSON、tamper fail-closed、no-recompute/no-write、focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2469:2026-07-30:advance_atlas_cross_snapshot_diff_v1`；frozen base=`dd7d8ec0082327d8da7efb4e207870e627d4b5d3`；preview inputs 为 V1 snapshot `ef098be7…` / SHA `1be1f134…` 与 V1.1 snapshot `917c0d38…` / SHA `ca4ea41a…`；`production_effect=none`、`broker_action=none`。|
+
 ## DEVX-007 Web Pro Git Strategy Planning Skill
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|

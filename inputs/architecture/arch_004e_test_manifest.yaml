@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1220
-test_count: 1160
+test_file_count: 1221
+test_count: 1161
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -8118,7 +8118,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: da9b7bd0caa385e364adf7ba70c98c7729d8f0432b82a4fbc127235c2dbd0be2
+  sha256: 1f6130645dd8df9a2fad04c0b9c5cdfd2b81f79b5e8b4e9f99b168438908b322
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -16209,6 +16209,22 @@ tests:
 - test_id: tests.test_strategy_research_explorer_contract
   path: tests/test_strategy_research_explorer_contract.py
   sha256: fe6d68daa85a5988de5a08792b8543396c70b0978eec2258f41978dc1645536f
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_strategy_research_explorer_diff_contract
+  path: tests/test_strategy_research_explorer_diff_contract.py
+  sha256: af0e0902b5f21ecbf2cc6a1d2a3060197d913b5e1961e502f66ec3dc44c22b88
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

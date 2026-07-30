@@ -155,6 +155,16 @@ from ai_trading_system.contracts.strategy_research_explorer import (
     StrategyResearchExplorerContractError,
     StrategyResearchExplorerSnapshot,
 )
+from ai_trading_system.contracts.strategy_research_explorer_diff import (
+    ExplorerDiffChangeKind,
+    ExplorerDiffEntityKind,
+    ExplorerDiffEntitySummary,
+    ExplorerDiffFieldChange,
+    ExplorerDiffSignificance,
+    ExplorerEntityChange,
+    StrategyResearchExplorerDiff,
+    StrategyResearchExplorerDiffContractError,
+)
 from ai_trading_system.contracts.workflow import (
     EntrypointRef,
     FailurePropagation,
@@ -279,7 +289,15 @@ __all__ = [
     "VerifiedConsumerDataCapabilityPreflight",
     "SurfaceLifecycle",
     "StrategyResearchExplorerContractError",
+    "StrategyResearchExplorerDiff",
+    "StrategyResearchExplorerDiffContractError",
     "StrategyResearchExplorerSnapshot",
+    "ExplorerDiffChangeKind",
+    "ExplorerDiffEntityKind",
+    "ExplorerDiffEntitySummary",
+    "ExplorerDiffFieldChange",
+    "ExplorerDiffSignificance",
+    "ExplorerEntityChange",
     "WorkflowCadence",
     "WorkflowContractError",
     "WorkflowSpec",
