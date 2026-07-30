@@ -2,7 +2,6 @@ from __future__ import annotations
 
 # HTML/CSS source lines remain readable as one semantic declaration.
 # ruff: noqa: E501
-import hashlib
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
@@ -15,6 +14,7 @@ from ai_trading_system.contracts.strategy_research_explorer import (
     ResearchPathNode,
     ResearchResultCard,
 )
+from ai_trading_system.platform.artifacts import write_bytes_atomic
 
 from .snapshot_builder import AtlasExplorerBundle
 from .validation import validate_atlas_bundle, validation_json_bytes
@@ -359,12 +359,12 @@ def write_atlas_artifacts(
     artifacts: list[AtlasRenderedArtifact] = []
     for name, payload in payloads.items():
         target = output_directory / name
-        target.write_bytes(payload)
+        write_result = write_bytes_atomic(target, payload)
         artifacts.append(
             AtlasRenderedArtifact(
-                path=target.as_posix(),
-                sha256=hashlib.sha256(payload).hexdigest(),
-                size_bytes=len(payload),
+                path=write_result.path.as_posix(),
+                sha256=write_result.sha256,
+                size_bytes=write_result.size_bytes,
             )
         )
     return tuple(artifacts)

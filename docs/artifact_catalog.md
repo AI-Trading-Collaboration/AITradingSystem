@@ -4,6 +4,18 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## TRADING-2466 Atlas Strategy Research Path & Attribution Explorer
+
+|Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
+|---|---|---|---|---|---|---|
+|`config/atlas/source_registry.yaml`<br/>`outputs/atlas/strategy_research_explorer/*/index.html`<br/>`outputs/atlas/strategy_research_explorer/*/snapshot.json`<br/>`outputs/atlas/strategy_research_explorer/*/validation.json`|Registry command `python_api_ai_trading_system_atlas_write_atlas_artifacts`；Python API `build_atlas_bundle` / `write_atlas_artifacts`；`validate_atlas_bundle`|Git-authoritative Atlas registry、O1 V1 closed policy、O1 V2 inactive policy；caller-supplied exact source commit|`atlas_source_registry.v1`、`strategy_research_explorer_snapshot.v1`、`atlas_explorer_validation.v1`；source path confinement、content SHA-256、closed graph/result/attribution refs、raw/display status separation、DQ/context readiness、deterministic JSON/snapshot id、HTML escaping、no script/form/write API|面向金融知识较少读者的本地只读研究主线、实际结果、归因、停止原因、来源与术语导航|否；`production_effect=none`、`broker_action=none`|Atlas PASS 只表示 snapshot/render/lineage contract valid，不是 strategy PASS、coverage PASS 或 production ready；不读取 cache/retained runtime evidence，不重算 score、gate、model、backtest、weight 或 promotion。|
+
+## TRADING-2467 O1 Blind Calendar Re-entry Policy
+
+|Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
+|---|---|---|---|---|---|---|
+|`config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml`<br/>`scripts/trading2467_validate_o1_blind_calendar_reentry_policy.py`|Owner-approved serial policy freeze；independent static validator|TRADING-2465 exact Owner decision handoff、TRADING-2464 V1 Git/content/九段 immutable identity、Web Pro planning evidence（非 authority）|`o1_relative_opportunity_blind_calendar_reentry_policy.v1`；A+D、`2027-02-01` blind not-before、exact PIT vintage、fixed non-rolling 12-month one-look、atomic consumption、PASS/FAIL/INSUFFICIENT/INVALID stop matrix；activation/empirical/retry/resume/overwrite/second candidate false|未来独立 Owner review 和 coverage-run task 的 prerequisite policy；Atlas 只读展示|否；`production_effect=none`、`broker_action=none`|policy/validator PASS 后即停止，不 materialize future vintage、不执行 data/DQ/coverage/model/canonical/downstream；真实 look 仍需新的独立 Owner token 与任务。|
+
 ## TRADING-2452 Active Window Policy Supersession
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

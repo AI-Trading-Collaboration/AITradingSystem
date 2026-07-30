@@ -32681,3 +32681,25 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: atlas_strategy_research_explorer
+    title: Atlas Strategy Research Path And Attribution Explorer
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: research_governance
+    command: python_api_ai_trading_system_atlas_write_atlas_artifacts
+    artifact_globs:
+      - outputs/atlas/strategy_research_explorer/*/index.html
+      - outputs/atlas/strategy_research_explorer/*/snapshot.json
+      - outputs/atlas/strategy_research_explorer/*/validation.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Rebuild after the source registry, any bound source bytes, research status,
+      DQ/context readiness, or reader-facing explanation changes.
+    owner_action: review_source_lineage_and_limitations_before_relying_on_summary
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

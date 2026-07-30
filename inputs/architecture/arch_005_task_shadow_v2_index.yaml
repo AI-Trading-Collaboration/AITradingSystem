@@ -1,12 +1,12 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: 0117bb78064eb94863063854962f1888e8b740e1affddfccad73aadb911d1624
+baseline_checksum: 8a93b1dabbf37bc3d5a663cd617b6a1ac938bb1548ebd4fa379a6af7fbbf9358
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
-task_count: 928
-fragment_count: 928
+task_count: 930
+fragment_count: 930
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -4162,14 +4162,34 @@ fragments:
     row_sha256: 8e7f5d29cc7f850e274b1b2fcb1d92dd65908329e99c32f47efe0e57dec44b9d
 - task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
   path: registry/development_tasks_shadow_v2/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
-  file_sha256: 34b913b0b32bbd6d0ef13a436335220bc1167dc373da4d3d7c3831e3b008e0f4
-  fragment_checksum: b18f8874a7b7aa9fc2179527c068b48f1b21d1c51dfc518b9e303409530fe940
+  file_sha256: 3234d55292d57f7eedfc69043c22980a916ad0342a476bb30f071c6a2972bada
+  fragment_checksum: f29c75234c815863b79e9155f014f3ca13ef7383020d1d1b6a17c9d9e70e125f
   locator:
     source_partition: active
     source_path: docs/task_register.md
     line_number: 2040
     order_in_partition: 414
-    row_sha256: 6410521bff2440ff63646ce5758754e7efe9fc97e24561342d3f22b0af8023fb
+    row_sha256: 69b74023a423d48e0ecba74cd8f3894420e637e5b087b3db35cf132eb5ac78a0
+- task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
+  path: registry/development_tasks_shadow_v2/32/32d2e28c907cc5428ccae430de7714911d8ad3d415107e86745a2a956c17750f.yaml
+  file_sha256: 93adbc3bdfa3fa9eafbfef0ba104fdd057c44e8018dd6b5885f4a9d1bdbfcbc6
+  fragment_checksum: 0e2cb3fa1335124951a0be33edf0b5754c2c7578c5f920813f33bf6c40f54023
+  locator:
+    source_partition: active
+    source_path: docs/task_register.md
+    line_number: 2046
+    order_in_partition: 415
+    row_sha256: 26fd3dd954250e88fc7e19c583322b7c7e9c9dc9b44ac4a3011283e4b1c3aee3
+- task_id: TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
+  path: registry/development_tasks_shadow_v2/32/328a656788b3f4be5997c7ed292538e0de463b66283c145aa45361a82a1fa40a.yaml
+  file_sha256: cd9b48ce1069633dca0ac689fbf59875827258abaf3e0d516853ac7a41dd4f98
+  fragment_checksum: 5e3be6e9276100f94a9b080d18b530d87a76c0d1d1ba3da93e9624a66ba2a0e9
+  locator:
+    source_partition: active
+    source_path: docs/task_register.md
+    line_number: 2052
+    order_in_partition: 416
+    row_sha256: 7e01f961f1b710d512929024f035ae8da0c52861f26936e7749984c4039752b3
 - task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
   path: registry/development_tasks_shadow_v2/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
   file_sha256: 1cd1ec3fde075459aa33fc8eaf77a1cb471767ac42a40ec7a8297f2bd35c3166
@@ -4177,8 +4197,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2046
-    order_in_partition: 415
+    line_number: 2058
+    order_in_partition: 417
     row_sha256: e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
 - task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
   path: registry/development_tasks_shadow_v2/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
@@ -4187,8 +4207,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2057
-    order_in_partition: 416
+    line_number: 2069
+    order_in_partition: 418
     row_sha256: 00c78d701acb49a84fc05e7feb7f982e633659e6773283b6c36bf37408fa416c
 - task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
   path: registry/development_tasks_shadow_v2/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
@@ -4197,8 +4217,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2058
-    order_in_partition: 417
+    line_number: 2070
+    order_in_partition: 419
     row_sha256: 8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
 - task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
   path: registry/development_tasks_shadow_v2/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
@@ -4207,8 +4227,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2059
-    order_in_partition: 418
+    line_number: 2071
+    order_in_partition: 420
     row_sha256: 3d45faa1a11b516e93abcebf834b22fe93fd5d01a02257c055e350a40135b5a6
 - task_id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
   path: registry/development_tasks_shadow_v2/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
@@ -4217,8 +4237,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2060
-    order_in_partition: 419
+    line_number: 2072
+    order_in_partition: 421
     row_sha256: b459d595b72d3e7b5950cb3032b0cd322a8ed42ec807611ed5cd325b55ef922a
 - task_id: DATA-GOV-002C3_RATE_ROW_ISSUE_TYPED_ATTRIBUTION_CONTRACT_WAVE
   path: registry/development_tasks_shadow_v2/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
@@ -4227,8 +4247,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2061
-    order_in_partition: 420
+    line_number: 2073
+    order_in_partition: 422
     row_sha256: 64bbdef0ee29f8f9d3b821c215a4668df2c140c68c10d7ebd8697f112fa4da7f
 - task_id: DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
   path: registry/development_tasks_shadow_v2/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
@@ -4237,8 +4257,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2062
-    order_in_partition: 421
+    line_number: 2074
+    order_in_partition: 423
     row_sha256: 5b74b38e0167d8d6be300289d55eb3c0ff3822125a4d8314c5ef6bacfe9502cf
 - task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
   path: registry/development_tasks_shadow_v2/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
@@ -4247,8 +4267,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2063
-    order_in_partition: 422
+    line_number: 2075
+    order_in_partition: 424
     row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
 - task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
   path: registry/development_tasks_shadow_v2/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
@@ -4257,8 +4277,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2064
-    order_in_partition: 423
+    line_number: 2076
+    order_in_partition: 425
     row_sha256: dfe2e992ac1d62a79f6a18cdf8d34af038f474966b6fec24a52746f5cc5ea839
 - task_id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
   path: registry/development_tasks_shadow_v2/2f/2f0204077a83040b98eb365dbea62ff7ac8c8e6f6b0816335084b43d02013b35.yaml
@@ -9313,8 +9333,8 @@ fragments:
 generated_views:
 - source: active
   source_path: docs/task_register.md
-  source_sha256: 0f070d290089b59019c5048948b5728705a4472daa69e538ac0ca7936b43ce44
-  rendered_sha256: 0f070d290089b59019c5048948b5728705a4472daa69e538ac0ca7936b43ce44
+  source_sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
+  rendered_sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -10310,4 +10330,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 34f3717e1bf8b2a9dd3cc13c412cef0e841672196251579dcb9deb132c3537db
+index_checksum: 06926b901b3a930cf1c726501535603b0ad64f5438a9907cded87b7d9acfd020

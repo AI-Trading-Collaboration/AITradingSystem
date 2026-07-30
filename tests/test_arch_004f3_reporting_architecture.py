@@ -141,8 +141,8 @@ def test_reporting_inventory_preserves_f3_baseline_and_applies_wave14_ratchet() 
     inventory = scan_reporting_architecture()
     _assert_wave14_current_reader_brief_ratchet(inventory, ratchet)
 
-    assert inventory.report_registry_entry_count == 1367
-    assert inventory.explicit_production_effect_count == 678
+    assert inventory.report_registry_entry_count == 1368
+    assert inventory.explicit_production_effect_count == 679
     assert inventory.missing_explicit_production_effect_count == 689
     assert inventory.explicit_reader_tier_count == 0
     assert inventory.explicit_actionable_count == 0
@@ -151,7 +151,7 @@ def test_reporting_inventory_preserves_f3_baseline_and_applies_wave14_ratchet() 
     assert inventory.explicit_renderer_count == 0
     assert inventory.explicit_canonical_source_count == 0
     assert dict(inventory.cadence_counts) == {
-        "ad_hoc": 958,
+        "ad_hoc": 959,
         "daily": 83,
         "event_driven": 1,
         "manual": 236,
@@ -164,7 +164,7 @@ def test_reporting_inventory_preserves_f3_baseline_and_applies_wave14_ratchet() 
         "investor": 8,
         "operator": 127,
         "owner": 77,
-        "project_owner": 782,
+        "project_owner": 783,
         "reviewer": 371,
         "system": 1,
     }
@@ -178,7 +178,7 @@ def test_reporting_inventory_preserves_f3_baseline_and_applies_wave14_ratchet() 
     assert (
         inventory.active_report_fragment_count == report_fragments["active_source_of_truth_count"]
     )
-    assert inventory.legacy_unclassified_entry_count == 1367
+    assert inventory.legacy_unclassified_entry_count == 1368
 
 
 def _ratchet_with_reader_brief_expected(
@@ -363,14 +363,14 @@ def test_actual_report_registry_is_fully_covered_as_limited_unclassified() -> No
     )
 
     assert assessment.status is CanonicalStatus.LIMITED
-    assert len(assessment.entries) == 1367
+    assert len(assessment.entries) == 1368
     assert all(item.report_spec is None for item in assessment.entries)
     assert all(item.status is CanonicalStatus.LIMITED for item in assessment.entries)
     assert {item.disposition for item in assessment.entries} == {
         ReportCatalogDisposition.AUDIT_INDEX_LIMITED_UNCLASSIFIED
     }
     assert assessment.to_dict()["typed_count"] == 0
-    assert assessment.to_dict()["limited_count"] == 1367
+    assert assessment.to_dict()["limited_count"] == 1368
     assert assessment.to_dict()["blocked_count"] == 0
 
 
@@ -595,11 +595,11 @@ def test_report_audit_index_preserves_every_legacy_registry_entry(tmp_path: Path
     json_path, markdown_path = write_report_audit_index(view, output_dir=tmp_path)
     payload = json.loads(json_path.read_text(encoding="utf-8"))
 
-    assert payload["entry_count"] == 1367
+    assert payload["entry_count"] == 1368
     assert payload["typed_count"] == 0
-    assert payload["limited_count"] == 1367
-    assert len(payload["entries"]) == 1367
-    assert len({item["report_id"] for item in payload["entries"]}) == 1367
+    assert payload["limited_count"] == 1368
+    assert len(payload["entries"]) == 1368
+    assert len({item["report_id"] for item in payload["entries"]}) == 1368
     assert payload["include_all_registry_entries"] is True
     assert payload["include_legacy_unclassified"] is True
     assert payload["production_effect"] == "none"

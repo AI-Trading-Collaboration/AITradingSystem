@@ -34816,3 +34816,302 @@ phase_devx_006_fragmented_generated_authority_and_stable_task_shadow_v2_b:
     task_status_mutation_allowed: false
     production_effect: none
     broker_action: none
+
+phase_trading_2466_atlas_and_trading_2467_o1_policy_slot_integration:
+  schema_version: trading_2466_2467_atlas_and_o1_policy_slot_integration_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2466-TRADING-2467-INTEGRATION
+  task_ids:
+  - TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
+  - TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
+  owner_decisions:
+  - owner_decision:TRADING-2465:2026-07-30:select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1
+  - owner_decision:TRADING-2467:2026-07-30:authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1
+  - owner_decision:TRADING-2466:2026-07-30:register_atlas_strategy_research_path_and_attribution_explorer_v1
+  prior_sections_immutability:
+    source_commit: 5fd71702221f26c30d7f2a747e813f2f7b60da8a
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 777691bcf1f0f3fcd9583155a9ad085f36a61c99
+    raw_byte_count: 2176755
+    raw_sha256: 66e9391b409c3b0649655a95ca6dc322693d78582e19e8703df444fd6dba9d4c
+    append_offset: 2176755
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - config/report_registry.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - scripts/trading2465_validate_o1_reentry_preregistration.py
+  - src/ai_trading_system/contracts/__init__.py
+  - tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  supersession:
+    superseded_by_phase: TRADING-2466-TRADING-2467-INTEGRATION
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_devx_006_fragmented_generated_authority_and_stable_task_shadow_v2_b
+    current_hash_authority: phase_trading_2466_atlas_and_trading_2467_o1_policy_slot_integration.sources
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/atlas/source_registry.yaml
+  - config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml
+  - docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
+  - docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
+  - scripts/trading2467_validate_o1_blind_calendar_reentry_policy.py
+  - src/ai_trading_system/atlas/__init__.py
+  - src/ai_trading_system/atlas/html_renderer.py
+  - src/ai_trading_system/atlas/snapshot_builder.py
+  - src/ai_trading_system/atlas/source_projection.py
+  - src/ai_trading_system/atlas/validation.py
+  - src/ai_trading_system/contracts/strategy_research_explorer.py
+  - tests/atlas/test_html_renderer.py
+  - tests/atlas/test_snapshot_builder.py
+  - tests/atlas/test_source_projection.py
+  - tests/atlas/test_validation.py
+  - tests/research_strategies/test_o1_relative_opportunity_blind_calendar_reentry_policy.py
+  - tests/test_strategy_research_explorer_contract.py
+  source_delta_paths:
+  - config/atlas/source_registry.yaml
+  - config/report_registry.yaml
+  - config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml
+  - docs/artifact_catalog.md
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  - docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
+  - docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - scripts/trading2465_validate_o1_reentry_preregistration.py
+  - scripts/trading2467_validate_o1_blind_calendar_reentry_policy.py
+  - src/ai_trading_system/atlas/__init__.py
+  - src/ai_trading_system/atlas/html_renderer.py
+  - src/ai_trading_system/atlas/snapshot_builder.py
+  - src/ai_trading_system/atlas/source_projection.py
+  - src/ai_trading_system/atlas/validation.py
+  - src/ai_trading_system/contracts/__init__.py
+  - src/ai_trading_system/contracts/strategy_research_explorer.py
+  - tests/atlas/test_html_renderer.py
+  - tests/atlas/test_snapshot_builder.py
+  - tests/atlas/test_source_projection.py
+  - tests/atlas/test_validation.py
+  - tests/research_strategies/test_o1_relative_opportunity_blind_calendar_reentry_policy.py
+  - tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_strategy_research_explorer_contract.py
+  sources:
+  - path: config/atlas/source_registry.yaml
+    sha256: ac70ab32055715ead902479406228343029f57a3cd8f2edace92fed3174aa68b
+    hash_normalization: git_eol_lf
+  - path: config/report_registry.yaml
+    sha256: c776a29d0934bd1eea8bcf6b3f27c8896792eb77a8d8f4edfd3c3a04a42fe3cb
+    hash_normalization: git_eol_lf
+  - path: config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml
+    sha256: 273ff797e993653b520acb349759662f0d05e5bdde96372e1e17ee6f95b37757
+    hash_normalization: git_eol_lf
+  - path: docs/artifact_catalog.md
+    sha256: 845b5f8d8e6e2c20d905cd9d8cc765d438fbece7e9a9cd99c592cd9e4b7c0764
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+    sha256: 9b901da7de43ecef493d100c1fdc57a64e4cbed28e63d1c37392f6800afd5963
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
+    sha256: 17e630572407a4bdaabb5f6352de43a89495cd102fabff5a50c9726d0791fac7
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
+    sha256: 21f04e13300009dedff6f91fcc548a136ca9ed8d1b99fa4b87243fc378b777e7
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: ea922fec9e5e105fd7aeafaf1b2e6e372b6f11fb4a24a6e95555b08b6cd2f3bc
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 127dc2190710330d2be5ded0be1accb6e3f380f9daf6d5c50d5aff8359b14654
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 513377d350a9e9b75eb1df2612678cf8a213b3d0387fe841c7e1757e5669f1a6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 0fc8f7975698365378a81745aeafbe01e9117b18328073c9a5671f4e8a9bac06
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 6efaf8cdb3af85697f53eb9a1375a094b18371cc8d114817bb8fab03cc14cebe
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: b76d05b9d5678096dcef5c07ab8d097046b08a96847140f5980d7452d4bec11c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: ff28aecf5bb6c1f56beee7d9a035bf5d01a85377716284af97509ee0c2bbae55
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: a8c68f43b3da0ee79045de6e491d2bdc7cb6da9b2a2b2f0629fa59d535ee17bf
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 4ab89b5fcee24f963d4d0cb8111111ddd993990ff1cbf0cc31e59f4468dd7952
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: eb2fd35cc20435b851b81c1eb1c3a73493f78b22e3a75a31425d77521c013ebb
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+    sha256: b201894af68a9228710b7e0165879ada20fe05cc30a4790a0278bdfba5d30584
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+    sha256: a1ae51b7888bd26edb53e6cb6155b0cf5a82220948822340f2c0f63899fd4311
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+    sha256: 72b041342b860d3448d9b03a7975c5bc5f57ebed5153858f05dca62d0922f29d
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+    sha256: ff9c5ea8519742a65ff262fa992530ac7c260375a344796104d15fe437109e39
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+    sha256: 6471784b6bc16b16f919999bde8ec94c90b5355edc8c9d485308921b183a6a52
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
+    sha256: d76ed2e24c6c59141e7fa7668c8c908eb388f30e2f18c578efe22b6cd184f85e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+    sha256: ecee0c8b49ddcaff293285757af6f48d4352b5530a51b21a6af31efb545c2786
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+    sha256: fc8051f3ff212e9471f940e9f4adc1bbe3512fc155e6f2e46be2811a248e6bc8
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+    sha256: c8c695c1780ea65de4685242c9cc6796ee4772c85d4da6e167e8ef5818f0c1cd
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+    sha256: 44535e333b4c39505959615d1ab97a03679eac23bcc863b48f7a3d19f62f73f3
+    hash_normalization: git_eol_lf
+  - path: scripts/trading2465_validate_o1_reentry_preregistration.py
+    sha256: 0c4d45569af7908db99eac2107a7c1cb9157ee1d23d0ff3255b08d93ef2a9348
+    hash_normalization: git_eol_lf
+  - path: scripts/trading2467_validate_o1_blind_calendar_reentry_policy.py
+    sha256: 666db8edbacffc4df5398ed3b267cf5a0b2c48e9c7aae1b85b0af45e58ce601b
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/__init__.py
+    sha256: 8814eac060d275e030fdbd445942a4be4880bf7419c55a69f00acf743a371af5
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/html_renderer.py
+    sha256: 44fc86cab24747505ef24a1ea24eb55426d34fac89283fcecbbda6fef1d3223a
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/snapshot_builder.py
+    sha256: 32b888d8462ed8a00384496b6becf282d40d51c28823e9fe36d86c42442a96f0
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/source_projection.py
+    sha256: 887ea48977f07a914bc6112a0c57581a19f249dea4dcc0432aaae220abb467b7
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/atlas/validation.py
+    sha256: d3f5cb3637570827666b65e5347ef97e4c0750e4acb57650e8e7d3dbddb14e2a
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/__init__.py
+    sha256: 40f410845f9669216d46a93053d179d91a509249ffd687aea826e5487a4a0bec
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/strategy_research_explorer.py
+    sha256: 9ecd5a47f1e5ab0d4d821bb384d6a3b4bd8942a6bff2d83c9a6b5abfcad8b9b5
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_html_renderer.py
+    sha256: ca1095b86cb016c741a0fbdb67fd0ba737d9fcdfc68a3d048170a14014a5f80d
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_snapshot_builder.py
+    sha256: 511574c1dfb887ab5a5bb039a694d4743c7548139ef36c36f5fee58490de3586
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_source_projection.py
+    sha256: 4a0052a22ce5b413817bf7b04de4a746dbacff79643990c29e8d1b44b81af75f
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_validation.py
+    sha256: 2129eaedb02acd9725beaada4769a93714d6018885d8406de66c9adc1ab412de
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_blind_calendar_reentry_policy.py
+    sha256: 523e6b23f0798ffa0a4b8d595c739289903ff7436065c002e2a76c8e48c23f9e
+    hash_normalization: git_eol_lf
+  - path: tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
+    sha256: a11a5c473007c2582a1f70b8090c2d821c06bec6a27d1c4ca59252482a65b9fe
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 8db38e5a9623dc629a6caca1824284683cdb0f4be420113c55d61a8ce02e0fd4
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004f3_reporting_architecture.py
+    sha256: 729d1d7e1340d6984a670b7bb5db7190ddb6e15e2b7adaaacda47a4f865d6e56
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: fbe61de4a5a3a17cb09d91f60c9bca3045bf93af674825898a188a76a378f267
+    hash_normalization: git_eol_lf
+  - path: tests/test_strategy_research_explorer_contract.py
+    sha256: fe6d68daa85a5988de5a08792b8543396c70b0978eec2258f41978dc1645536f
+    hash_normalization: git_eol_lf
+  implementation:
+    integration_order:
+    - TRADING-2467
+    - TRADING-2466
+    atlas_surface: STATIC_HTML_JSON_READ_ONLY
+    atlas_source_registry_count: 3
+    o1_policy_lifecycle: INACTIVE_PREREGISTERED
+    o1_validator_status: PASS_0_ERRORS
+    task_shadow_source: LEGACY_MARKDOWN_ONLY
+    task_shadow_v2_cutover_performed: false
+  validation:
+    combined_focused: PASS_63_TESTS
+    deprecation_inventory: PASS_9_TESTS
+    task_registry: PASS_BYTE_IDENTICAL_930_TASKS
+    generated_architecture: PASS_1049_MODULES_1219_TESTS
+    compatibility_authority: PASS_150_TESTS
+    architecture: PASS_806_TESTS_ARTIFACT_20260730T094237Z
+    contract: PASS_276_TESTS_ARTIFACT_20260730T094432Z
+    integration: PASS_995_TESTS_ARTIFACT_20260730T094635Z
+    reproducibility: PASS_24_TESTS_ARTIFACT_20260730T094728Z
+    full_initial: FAIL_9_MISSING_POLICY_BOUND_IGNORED_GATE_ARTIFACT_20260730T094756Z
+    full: PASS_7803_TESTS_5_SKIPPED_PARENT_BOUND_ARTIFACT_20260730T100813Z
+    browser_visual_review: FAIL_BROWSER_URL_POLICY_BLOCKED
+  safety:
+    web_pro_route_classification: UI_PRO_AND_SELF_REPORT_PRO_ROUTE_UNVERIFIED
+    backend_route_attestation: UNAVAILABLE
+    policy_activation_allowed: false
+    data_acquisition_executed: false
+    dq_execution_executed: false
+    coverage_audit_executed: false
+    model_training_executed: false
+    predictions_generated: false
+    metrics_generated: false
+    canonical_run_executed: false
+    production_effect: none
+    broker_action: none

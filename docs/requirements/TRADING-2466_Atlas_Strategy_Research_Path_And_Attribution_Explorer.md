@@ -7,7 +7,7 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
@@ -268,3 +268,25 @@ coordinator-only overlap 出现时，两条 lane 暂停并回到最小 serial co
   `LEGACY_HISTORY_PARTIAL` 降级、closed references、deterministic snapshot identity 与
   read-only fail-closed 边界。focused validation 为 `17 passed`（与 TRADING-2465 历史交接
   validator/tests 合并运行）；等待串行候选进入 exact `main` 后启动 Atlas isolated lane。
+- 2026-07-30：serial candidate 已以
+  `adfd3d5817a9797c35f97d01b92ced2e01663373` 进入并发布到 `main`；Atlas lane 从该
+  frozen base 实现 `source_registry -> source projection -> snapshot -> validation ->
+  static HTML/JSON`，lane focused=`23 passed`、Ruff PASS、governed audit clean。
+- 2026-07-30：与 TRADING-2467 的 coordinator candidate 按“strategy-evidence -> Atlas”
+  顺序集成，combined focused=`63 passed`。MVP 状态转 `BASELINE_DONE`；页面不含脚本、表单、
+  write API、外部资源或 investment-facing result，validation PASS 明示不等于 strategy PASS。
+  interactive API、跨 snapshot diff、带引用问答和更多 canonical source adapters 仍需独立任务
+  与 Owner review。
+- 2026-07-30：最终静态预览绑定 source commit
+  `5fd71702221f26c30d7f2a747e813f2f7b60da8a`，写入 ignored canonical path
+  `outputs/atlas/strategy_research_explorer/trading_2466_mvp/`：`index.html`
+  SHA-256=`554b1803d9278fe1fa38b0b6711fecb2cdb837dc04ce43b28552e83e48971062`，
+  `snapshot.json` SHA-256=`1be1f13426fcc3d7f58fd8b7fb19b43fca4f355c20976139100727727e60b6cd`，
+  `validation.json` SHA-256=`0c2c1499eb4b4376291f8dcc72fc110ff821dc904daacbf1e8d92065f0903050`。
+  Browser 对 `file://`、localhost service 启动及 `data:` preview 均按 URL safety policy
+  fail closed，且明确禁止替代浏览器或间接绕过；因此像素级浏览器验收未声称完成。HTML
+  structure、escaping、no-script/no-form、ARIA 与 deterministic output 由自动化测试覆盖。
+- 2026-07-30：isolated candidate 为 task-shadow generate/validate 临时复制 portable bundle
+  已声明的 4 份历史 validation summaries，并逐份校验 tracked bundle SHA；这些 ignored
+  inputs 只服务 clean-worktree validation，未作为新事实或投资证据，将随 integration
+  worktree 清理。

@@ -2,6 +2,33 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+TRADING-2466 Atlas 在现有研究结果之上增加只读解释层，不进入数据、模型、评分、回测或交易
+计算路径。`config/atlas/source_registry.yaml` 只允许 Git-authoritative、checksum-bound source；
+`AtlasSourceProjector` 绑定 exact commit、path、content SHA、window、DQ/context readiness 与 limitation，
+再由 `strategy_research_explorer_snapshot.v1` 形成 closed graph/result/attribution references。
+独立 validator 重建 snapshot identity 与 canonical JSON，拒绝 unverified context、investment-facing
+result、source traversal、source drift 和 read-only boundary drift；static renderer 只输出本地
+`index.html`、`snapshot.json`、`validation.json`，不执行 source command、不重算 score/gate/model/
+backtest/weight/promotion，也没有 write API、scheduler、production 或 broker action。
+
+TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
+route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
+V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
+不会触发 data acquisition、DQ、coverage、model 或 canonical run。
+
+```mermaid
+flowchart LR
+    V1["O1 V1 closed policy<br/>coverage blocked / model NOT_EVALUATED"] --> SRC["Atlas source registry<br/>Git authority allowlist"]
+    V2["O1 V2 inactive calendar policy<br/>no run authorization"] --> SRC
+    SRC --> PROJ["Source projection<br/>commit + SHA + window + DQ/context"]
+    PROJ --> SNAP["Deterministic explorer snapshot<br/>path + result + attribution"]
+    SNAP --> VAL["Independent validation<br/>closed refs / no-recompute / read-only"]
+    VAL --> WEB["Local static HTML + JSON<br/>manual reader only"]
+    V2 --> STATIC["TRADING-2467 static validator"]
+    STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
+    WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
+```
+
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。
 `config/architecture/arch_005_parallel_control_policy.yaml` 与
 `inputs/architecture/arch_005_s2_s4_pilot.yaml` 先冻结 capacity、TTL、retry、priority、allowlist、

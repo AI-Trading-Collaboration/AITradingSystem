@@ -1,0 +1,108 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
+  task_id_sha256: 32d2e28c907cc5428ccae430de7714911d8ad3d415107e86745a2a956c17750f
+task_record:
+  task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
+  title: null
+  domain: Publishing & Experience / read-only strategy research path and attribution
+    explorer
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: knowledge/reporting/UX owner：MVP 已完成；interactive API、cross-snapshot
+    diff、带引用问答或新增 canonical adapters 必须另立任务并重新评审 authority/no-recompute 边界
+  requirement_refs:
+  - docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md`。当前无实现
+    blocker；MVP 只读消费三份稳定 Git authority（Atlas registry、O1 V1/V2 policy），不读取 cache、runtime
+    evidence 或外部数据。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: versioned deterministic snapshot与local static HTML覆盖research path/evidence/status/attribution/stop/glossary/lineage/DQ-context；五类information
+      source分离；closed references、tamper/path-traversal/read-only/no-script/no-write
+      gate；focused/formal PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 26fd3dd954250e88fc7e19c583322b7c7e9c9dc9b44ac4a3011283e4b1c3aee3
+  cell_count: 8
+  all_cells:
+  - TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
+  - Publishing & Experience / read-only strategy research path and attribution explorer
+  - P1
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：MVP 已完成；interactive API、cross-snapshot diff、带引用问答或新增
+    canonical adapters 必须另立任务并重新评审 authority/no-recompute 边界
+  - 详见 `docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md`。当前无实现
+    blocker；MVP 只读消费三份稳定 Git authority（Atlas registry、O1 V1/V2 policy），不读取 cache、runtime
+    evidence 或外部数据。
+  - versioned deterministic snapshot与local static HTML覆盖research path/evidence/status/attribution/stop/glossary/lineage/DQ-context；五类information
+    source分离；closed references、tamper/path-traversal/read-only/no-script/no-write
+    gate；focused/formal PASS。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2466:2026-07-30:register_atlas_strategy_research_path_and_attribution_explorer_v1`；serial
+    main=`adfd3d581…`，Atlas lane focused=`23 passed`，combined=`63 passed`；MVP 转`BASELINE_DONE`，`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER|Publishing
+    & Experience / read-only strategy research path and attribution explorer|P1|BASELINE_DONE|knowledge/reporting/UX
+    owner：MVP 已完成；interactive API、cross-snapshot diff、带引用问答或新增 canonical adapters
+    必须另立任务并重新评审 authority/no-recompute 边界|详见 `docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md`。当前无实现
+    blocker；MVP 只读消费三份稳定 Git authority（Atlas registry、O1 V1/V2 policy），不读取 cache、runtime
+    evidence 或外部数据。|versioned deterministic snapshot与local static HTML覆盖research path/evidence/status/attribution/stop/glossary/lineage/DQ-context；五类information
+    source分离；closed references、tamper/path-traversal/read-only/no-script/no-write
+    gate；focused/formal PASS。|2026-07-30：Owner token=`owner_decision:TRADING-2466:2026-07-30:register_atlas_strategy_research_path_and_attribution_explorer_v1`；serial
+    main=`adfd3d581…`，Atlas lane focused=`23 passed`，combined=`63 passed`；MVP 转`BASELINE_DONE`，`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-26fd3dd954250e88fc7e19c5
+  task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: knowledge/reporting/UX owner：MVP 已完成；interactive API、cross-snapshot
+      diff、带引用问答或新增 canonical adapters 必须另立任务并重新评审 authority/no-recompute 边界
+    notes: 2026-07-30：Owner token=`owner_decision:TRADING-2466:2026-07-30:register_atlas_strategy_research_path_and_attribution_explorer_v1`；serial
+      main=`adfd3d581…`，Atlas lane focused=`23 passed`，combined=`63 passed`；MVP 转`BASELINE_DONE`，`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:26fd3dd954250e88fc7e19c583322b7c7e9c9dc9b44ac4a3011283e4b1c3aee3
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
+  - Publishing & Experience / read-only strategy research path and attribution explorer
+  - P1
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：MVP 已完成；interactive API、cross-snapshot diff、带引用问答或新增
+    canonical adapters 必须另立任务并重新评审 authority/no-recompute 边界
+  - 详见 `docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md`。当前无实现
+    blocker；MVP 只读消费三份稳定 Git authority（Atlas registry、O1 V1/V2 policy），不读取 cache、runtime
+    evidence 或外部数据。
+  - versioned deterministic snapshot与local static HTML覆盖research path/evidence/status/attribution/stop/glossary/lineage/DQ-context；五类information
+    source分离；closed references、tamper/path-traversal/read-only/no-script/no-write
+    gate；focused/formal PASS。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2466:2026-07-30:register_atlas_strategy_research_path_and_attribution_explorer_v1`；serial
+    main=`adfd3d581…`，Atlas lane focused=`23 passed`，combined=`63 passed`；MVP 转`BASELINE_DONE`，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md
+  terminal: false
+  raw_row_sha256: 26fd3dd954250e88fc7e19c583322b7c7e9c9dc9b44ac4a3011283e4b1c3aee3
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 0e2cb3fa1335124951a0be33edf0b5754c2c7578c5f920813f33bf6c40f54023

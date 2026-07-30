@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
@@ -276,3 +276,19 @@ D:/Work/AITradingSystem_t2467_o1_reentry_policy
   proposal 保持 immutable inactive，旧 validator 已改为同时验证历史 proposal 和
   `BASELINE_DONE -> TRADING-2467` exact Owner handoff。策略 lane 只剩独立 validator/tests，
   等待串行候选进入 exact `main`。
+- 2026-07-30：strategy-evidence lane 从 serial exact base
+  `adfd3d5817a9797c35f97d01b92ced2e01663373` 实现 independent validator 与 controlled
+  tamper tests；canonical validator=`PASS/error_count=0`，lane focused=`40 passed`，
+  combined Atlas/O1 focused=`63 passed`，Ruff 与 governed audit PASS。任务转
+  `BASELINE_DONE` 并在 static policy/validator/tests 边界停止；未读取 retained runtime
+  evidence、cache 或 market/macro data，未执行 DQ、coverage、model、canonical 或 downstream
+  action。未来真实 coverage 仍需新的 Owner token 与独立任务。
+- 2026-07-30：首次 final Full 为 `7794 passed / 5 skipped / 9 failed`；9 项全部是历史
+  `test_o1_relative_opportunity_event_attempt_ledger.py` 在 isolated worktree 找不到 tracked
+  policy 已绑定的 ignored `o1_dq_gate.json`，均为同一 `FileNotFoundError`，不是业务断言失败。
+  从 canonical root 临时复制 exact gate bytes 到相同 repository-relative path，SHA-256
+  校验为 policy-declared
+  `ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca`；未运行 DQ、未读取
+  新 O1 result。原失败文件随后以 `-n 16 --dist loadfile` 并行复跑 `11 passed`，再以首次
+  FAIL summary 为 `parent_run` 执行 failure-fix Full，结果 `7803 passed / 5 skipped`。
+  临时 gate 只用于验证，将随 integration worktree 清理；首次 FAIL runtime evidence 保留。

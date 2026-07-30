@@ -1300,7 +1300,49 @@ DEVX_006_TASK_SHADOW_V2_REMOVED_SOURCE_PATHS = frozenset()
 DEVX_006_TASK_SHADOW_V2_NEW_SOURCE_PATHS = frozenset(
     {"inputs/architecture/arch_005_task_shadow_v2_index.yaml"}
 )
-LATEST_COMPATIBILITY_SECTION = DEVX_006_TASK_SHADOW_V2_SECTION
+TRADING_2466_2467_INTEGRATION_SECTION = (
+    "phase_trading_2466_atlas_and_trading_2467_o1_policy_slot_integration"
+)
+TRADING_2466_2467_INTEGRATION_BASE_COMMIT = "5fd71702221f26c30d7f2a747e813f2f7b60da8a"
+TRADING_2466_2467_INTEGRATION_BASELINE_GIT_BLOB = (
+    "777691bcf1f0f3fcd9583155a9ad085f36a61c99"
+)
+TRADING_2466_2467_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT = 2_176_755
+TRADING_2466_2467_INTEGRATION_HISTORICAL_PREFIX_SHA256 = (
+    "66e9391b409c3b0649655a95ca6dc322693d78582e19e8703df444fd6dba9d4c"
+)
+TRADING_2466_2467_INTEGRATION_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2466_2467_INTEGRATION_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/atlas/source_registry.yaml",
+        "config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2466_Atlas_Strategy_Research_Path_And_Attribution_Explorer.md"
+        ),
+        (
+            "docs/requirements/"
+            "TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md"
+        ),
+        "scripts/trading2467_validate_o1_blind_calendar_reentry_policy.py",
+        "src/ai_trading_system/atlas/__init__.py",
+        "src/ai_trading_system/atlas/html_renderer.py",
+        "src/ai_trading_system/atlas/snapshot_builder.py",
+        "src/ai_trading_system/atlas/source_projection.py",
+        "src/ai_trading_system/atlas/validation.py",
+        "src/ai_trading_system/contracts/strategy_research_explorer.py",
+        "tests/atlas/test_html_renderer.py",
+        "tests/atlas/test_snapshot_builder.py",
+        "tests/atlas/test_source_projection.py",
+        "tests/atlas/test_validation.py",
+        (
+            "tests/research_strategies/"
+            "test_o1_relative_opportunity_blind_calendar_reentry_policy.py"
+        ),
+        "tests/test_strategy_research_explorer_contract.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2466_2467_INTEGRATION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -2804,6 +2846,26 @@ def _devx_006_task_shadow_v2_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2466_2467_integration_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2466_2467_INTEGRATION_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2466_2467_INTEGRATION_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -4251,6 +4313,26 @@ def _assert_devx_006_task_shadow_v2_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{DEVX_006_TASK_SHADOW_V2_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2466_2467_integration_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2466_2467_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2466_2467_INTEGRATION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2466/2467 integration historical prefix differs from "
+        "immutable DEVX-006 Task Shadow v2 authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2466_2467_INTEGRATION_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -6031,11 +6113,13 @@ def _devx_006_task_shadow_v2_superseded_live_source_paths() -> frozenset[str]:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_006_task_shadow_v2_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[DEVX_006_TASK_SHADOW_V2_SECTION][
-        "superseded_live_source_paths"
-    ]
+    baseline = _compatibility_baseline()
+    paths = baseline[DEVX_006_TASK_SHADOW_V2_SECTION]["superseded_live_source_paths"]
     assert isinstance(paths, list)
-    return frozenset(str(path) for path in paths)
+    current = frozenset(str(path) for path in paths)
+    if TRADING_2466_2467_INTEGRATION_SECTION in baseline:
+        current |= _trading_2466_2467_integration_superseded_live_source_paths()
+    return current
 
 
 @cache
@@ -6050,6 +6134,34 @@ def _devx_006_task_shadow_v2_all_current_authority_paths() -> frozenset[str]:
     return (
         _devx_006_task_shadow_v2_superseded_live_source_paths()
         | _devx_006_task_shadow_v2_source_paths()
+    )
+
+
+@cache
+def _trading_2466_2467_integration_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2466_2467_integration_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2466_2467_integration_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2466_2467_INTEGRATION_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2466_2467_integration_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2466_2467_INTEGRATION_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2466_2467_integration_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2466_2467_integration_superseded_live_source_paths()
+        | _trading_2466_2467_integration_source_paths()
     )
 
 
@@ -7044,12 +7156,55 @@ def _devx_006_task_shadow_v2_prior_active_source_mismatches() -> frozenset[str]:
     return _latest_active_source_mismatches(DEVX_006_TASK_SHADOW_V2_SECTION)
 
 
+@cache
+def _trading_2466_2467_integration_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2466_2467_INTEGRATION_SECTION)
+
+
 def _source_sha256(source: dict[str, object]) -> str:
     # Historical source records retain their captured hashes. Live drift must be
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if DEVX_006_TASK_SHADOW_V2_SECTION in baseline:
+    if TRADING_2466_2467_INTEGRATION_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2466_2467_integration_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2466_2467_integration_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = (
+            _arch_005s4d_s2_all_superseded_live_source_paths()
+            | _ops_070_stable_release_superseded_live_source_paths()
+            | _ops_070_runtime_exclude_superseded_live_source_paths()
+            | _ops_070_cross_release_policy_superseded_live_source_paths()
+            | _ops_070_failure_audit_superseded_live_source_paths()
+            | _ops_070_runtime_self_containment_superseded_live_source_paths()
+            | _data_gov_002c2p_superseded_live_source_paths()
+            | _trading_2463_all_superseded_live_source_paths()
+            | _data_gov_001_d0d_superseded_live_source_paths()
+            | _data_gov_001_d0d_source_paths()
+            | _data_gov_001_d0e_superseded_live_source_paths()
+            | _data_gov_001_d0e_source_paths()
+            | _devx_007_all_current_authority_paths()
+            | _trading_2464_decision_all_current_authority_paths()
+            | _trading_2464_dq_recovery_all_current_authority_paths()
+            | _trading_2464_owner_token_all_current_authority_paths()
+            | _trading_2464_contract_all_current_authority_paths()
+            | _trading_2464_synthetic_all_current_authority_paths()
+            | _trading_2464_isolated_dq_all_current_authority_paths()
+            | _trading_2464_event_attempt_runner_all_current_authority_paths()
+            | _trading_2464_event_raw_replay_all_current_authority_paths()
+            | _trading_2464_event_gate_binding_all_current_authority_paths()
+            | _trading_2464_coverage_runner_all_current_authority_paths()
+            | _trading_2464_coverage_gate_binding_all_current_authority_paths()
+            | _trading_2465_reentry_preregistration_all_current_authority_paths()
+            | _devx_006_task_shadow_v2_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2466_2467_INTEGRATION_SECTION
+    elif DEVX_006_TASK_SHADOW_V2_SECTION in baseline:
         current_superseded_paths = _devx_006_task_shadow_v2_superseded_live_source_paths()
         assert _devx_006_task_shadow_v2_prior_active_source_mismatches() == current_superseded_paths
         superseded_paths = (
@@ -17330,7 +17485,9 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         _devx_006_task_shadow_v2_base_baseline_blob(),
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == DEVX_006_TASK_SHADOW_V2_SECTION
+    assert list(baseline).index(DEVX_006_TASK_SHADOW_V2_SECTION) < list(baseline).index(
+        TRADING_2466_2467_INTEGRATION_SECTION
+    )
     phase = baseline[DEVX_006_TASK_SHADOW_V2_SECTION]
     assert phase["schema_version"] == ("devx_006_task_shadow_v2_side_by_side_compatibility.v1")
     assert phase["status"] in {"VALIDATING", "BASELINE_DONE"}
@@ -17351,7 +17508,11 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == _devx_006_task_shadow_v2_prior_active_source_mismatches()
+    current_prior_drift = set(_devx_006_task_shadow_v2_prior_active_source_mismatches())
+    assert superseded <= current_prior_drift
+    assert current_prior_drift - superseded <= set(
+        _trading_2466_2467_integration_superseded_live_source_paths()
+    )
     assert phase["supersession"] == {
         "superseded_by_phase": (
             "DEVX-006-FRAGMENTED-GENERATED-AUTHORITY-AND-STABLE-TASK-SHADOW-V2-B"
@@ -17374,8 +17535,11 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    current_superseded = _trading_2466_2467_integration_superseded_live_source_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in current_superseded:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     fragment_authority = phase["generated_fragment_authority"]
@@ -17389,7 +17553,8 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == fragment_authority["fragment_count"]
+    assert v2_index["fragment_count"] == 930
+    assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
         and len(str(record["file_sha256"])) == 64
@@ -17415,6 +17580,110 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "dispatch_allowed": False,
         "lease_acquisition_allowed": False,
         "task_status_mutation_allowed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def test_trading_2466_2467_integration_is_current_hash_authority() -> None:
+    _assert_trading_2466_2467_integration_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2466_2467_integration_base_baseline_blob(),
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2466_2467_INTEGRATION_SECTION
+    phase = baseline[TRADING_2466_2467_INTEGRATION_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2466_2467_atlas_and_o1_policy_slot_integration_compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING", "BASELINE_DONE"}
+    assert phase["boundary_id"] == "TRADING-2466-TRADING-2467-INTEGRATION"
+    assert phase["task_ids"] == [
+        "TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER",
+        "TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE",
+    ]
+    assert phase["owner_decisions"] == [
+        (
+            "owner_decision:TRADING-2465:2026-07-30:"
+            "select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1"
+        ),
+        (
+            "owner_decision:TRADING-2467:2026-07-30:"
+            "authorize_inactive_o1_blind_calendar_reentry_policy_slot_freeze_v1"
+        ),
+        (
+            "owner_decision:TRADING-2466:2026-07-30:"
+            "register_atlas_strategy_research_path_and_attribution_explorer_v1"
+        ),
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2466_2467_INTEGRATION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2466_2467_INTEGRATION_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2466_2467_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2466_2467_INTEGRATION_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2466_2467_INTEGRATION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2466_2467_integration_prior_active_source_mismatches()
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2466_2467_INTEGRATION_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2466_2467_INTEGRATION_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2466_2467_INTEGRATION_NEW_SOURCE_PATHS
+    ) - TRADING_2466_2467_INTEGRATION_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2466-TRADING-2467-INTEGRATION",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": DEVX_006_TASK_SHADOW_V2_SECTION,
+        "current_hash_authority": (
+            f"{TRADING_2466_2467_INTEGRATION_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["implementation"] == {
+        "integration_order": ["TRADING-2467", "TRADING-2466"],
+        "atlas_surface": "STATIC_HTML_JSON_READ_ONLY",
+        "atlas_source_registry_count": 3,
+        "o1_policy_lifecycle": "INACTIVE_PREREGISTERED",
+        "o1_validator_status": "PASS_0_ERRORS",
+        "task_shadow_source": "LEGACY_MARKDOWN_ONLY",
+        "task_shadow_v2_cutover_performed": False,
+    }
+    assert all(
+        value == "PENDING" or str(value).startswith("PASS") or str(value).startswith("FAIL_")
+        for value in phase["validation"].values()
+    )
+    assert phase["safety"] == {
+        "web_pro_route_classification": "UI_PRO_AND_SELF_REPORT_PRO_ROUTE_UNVERIFIED",
+        "backend_route_attestation": "UNAVAILABLE",
+        "policy_activation_allowed": False,
+        "data_acquisition_executed": False,
+        "dq_execution_executed": False,
+        "coverage_audit_executed": False,
+        "model_training_executed": False,
+        "predictions_generated": False,
+        "metrics_generated": False,
+        "canonical_run_executed": False,
         "production_effect": "none",
         "broker_action": "none",
     }
