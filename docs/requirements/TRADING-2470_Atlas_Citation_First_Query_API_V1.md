@@ -215,6 +215,16 @@ retained Atlas preview only for local acceptance
 no external network, market cache, database, model, production or broker resource
 ```
 
+retained preview lifecycle：
+
+```text
+owner task: TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
+purpose: 用 TRADING-2468 V1.1 snapshot 与 TRADING-2469 diff 验收五类 citation-first query
+absolute path: D:\Work\AITradingSystem\outputs\atlas\strategy_research_cited_query\trading_2470_v1
+exit condition: validation 失败、输入 identity 被 supersede，或 artifact catalog 指向新的 reviewed canonical preview 时删除或重建
+retention boundary: task closeout 前保留；closeout 后仅在 artifact catalog 与 compatibility authority 记录 hash/size 时作为 canonical governed evidence 保留
+```
+
 ## 7. 验收标准
 
 1. serial public contract wave 独立完成；
@@ -271,3 +281,15 @@ no external network, market cache, database, model, production or broker resourc
   引用，而以 `as_of` 代填会伪造 lineage。consumer 暂停，先完成最小 serial contract
   amendment：保留 null，缺失 source time 的回答只允许 `LIMITED`，并固定 reason
   code=`SOURCE_TIME_CONTEXT_INCOMPLETE`；amendment authority PASS 后再恢复 consumer。
+- 2026-07-31：最小 amendment source commit=`d331b034ebd70eca3642e9734fa914d2b5b4129d`，
+  append-only amendment authority commit=`0dfafe641f3025a5e53d53fb8584cce6eb04bd41`，
+  compatibility/deprecation=`164 passed`；consumer 从该 exact authority head 重新
+  preflight PASS。deterministic query engine、independent serialized validator 与 static
+  renderer 首轮 focused=`28 passed`，下一步生成上述 retained preview 并做真实浏览器验收。
+- 2026-07-31：canonical preview 已使用显式 target IDs 生成，5/5 response independent
+  validation PASS、double-build byte-identical；`index.html/responses.json/validation.json`
+  SHA-256=`b4c5c6fd…/d3317e3f…/dd17b181…`。真实浏览器打开本地 `file://` artifact 时被当前
+  Web Pro 决策审阅 URL policy 拒绝，且 policy 明确禁止切换浏览器、local server 或其他
+  browser surface 绕过。未伪报 visual PASS；继续执行 static HTML/escaping/layout-contract 与
+  formal validation。退出条件：可访问本地 artifact 的 reviewed browser surface 对 1280px
+  no-horizontal-overflow、折叠引用和阅读层级完成人工复核。

@@ -1,3 +1,21 @@
+from ai_trading_system.atlas.cited_query import answer_cited_query
+from ai_trading_system.atlas.cited_query_renderer import (
+    AtlasCitedQueryRenderedArtifact,
+    AtlasCitedQueryShowcase,
+    build_cited_query_showcase,
+    cited_query_responses_json_bytes,
+    cited_query_validations_json_bytes,
+    render_cited_query_html,
+    write_cited_query_artifacts,
+)
+from ai_trading_system.atlas.cited_query_validation import (
+    AtlasCitedQueryInputError,
+    CitedQueryValidationResult,
+    cited_query_validation_json_bytes,
+    load_validated_diff_payloads,
+    load_validated_snapshot_payload,
+    validate_serialized_cited_query_response,
+)
 from ai_trading_system.atlas.diff_renderer import (
     AtlasDiffRenderedArtifact,
     render_snapshot_diff_html,
@@ -42,6 +60,9 @@ from ai_trading_system.atlas.validation import (
 
 __all__ = [
     "ATLAS_SOURCE_REGISTRY_SCHEMA_VERSION",
+    "AtlasCitedQueryInputError",
+    "AtlasCitedQueryRenderedArtifact",
+    "AtlasCitedQueryShowcase",
     "AtlasDiffInput",
     "AtlasDiffInputReceipt",
     "AtlasDiffRenderedArtifact",
@@ -54,18 +75,29 @@ __all__ = [
     "AtlasSourceProjectionError",
     "AtlasSourceRegistry",
     "AtlasValidationResult",
+    "CitedQueryValidationResult",
+    "answer_cited_query",
     "build_snapshot_diff",
     "build_atlas_bundle",
+    "build_cited_query_showcase",
+    "cited_query_validation_json_bytes",
+    "cited_query_responses_json_bytes",
+    "cited_query_validations_json_bytes",
     "diff_validation_json_bytes",
     "load_snapshot_diff_bundle",
     "load_source_registry",
+    "load_validated_diff_payloads",
+    "load_validated_snapshot_payload",
     "project_source_refs",
     "render_atlas_html",
+    "render_cited_query_html",
     "render_snapshot_diff_html",
     "validate_atlas_bundle",
     "validate_serialized_snapshot_diff",
+    "validate_serialized_cited_query_response",
     "validate_snapshot_diff_bundle",
     "validation_json_bytes",
     "write_atlas_artifacts",
+    "write_cited_query_artifacts",
     "write_snapshot_diff_artifacts",
 ]

@@ -27,6 +27,20 @@ static renderer 输出 `index.html`、`diff.json`、`validation.json`、`input_r
 receipt identity。该分支不修改 snapshot v1、不访问 market/cache、不运行 DQ/model/backtest，
 `production_effect=none`、`broker_action=none`。
 
+TRADING-2470 在已验证 snapshot/diff 之上增加 citation-first query application layer。request
+只能从五个 stable `question_id` 与其固定 target kind matrix 中选择，target 必须使用 exact stable
+ID；不做 fuzzy matching、rename inference、“最相关”排序或自由文本语义扩权。query engine
+先调用 serialized input validator，再从既有 node/result/attribution/source/change 字段生成低金融
+知识读者可读中文 claim；每个 claim 必须闭包到 repository path、exact commit、source SHA-256、
+entity before/after hash（适用时）与 snapshot/diff identity。`known_at/available_at` 缺失时保留
+显式 null，禁止用 `as_of` 代填，并强制 response=`LIMITED` +
+`SOURCE_TIME_CONTEXT_INCOMPLETE`。独立 response validator 不调用 query engine，而是重新定位
+target、重算 entity hash、验证 source coverage、citation closure、状态与 limitation reason。
+static renderer 只输出 `index.html`、`responses.json`、`validation.json`；当前 canonical preview
+使用显式指定的 mainline/result/attribution/diff/source IDs，不进行隐式选择。该层不重算研究结论，
+不访问 network/market/cache，不调用 LLM，不写 task/policy/production/broker state，
+`production_effect=none`、`broker_action=none`。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -47,10 +61,15 @@ flowchart LR
     PRIOR["Prior retained Atlas snapshot"] --> DIFF
     DIFF --> DVAL["Independent diff validation<br/>identity + hashes + summaries"]
     DVAL --> DWEB["Static diff HTML + JSON + receipt<br/>all changes / no script or form"]
+    SNAP --> QRY["TRADING-2470 citation-first query<br/>5 fixed questions + exact target IDs"]
+    DIFF --> QRY
+    QRY --> QVAL["Independent response validation<br/>entity hash + source coverage + closure"]
+    QVAL --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
     DWEB -.-> NONE
+    QWEB -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。
