@@ -22,6 +22,15 @@
 |---|---|---|---|---|---|---|
 |`outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html`<br/>`outputs/atlas/strategy_research_cited_query/trading_2470_v1/responses.json`<br/>`outputs/atlas/strategy_research_cited_query/trading_2470_v1/validation.json`|Python API `answer_cited_query` / `build_cited_query_showcase` / `write_cited_query_artifacts`；independent `validate_serialized_cited_query_response`|Validated TRADING-2468 V1.1 snapshot `917c0d38…`、TRADING-2466 prior snapshot、TRADING-2469 diff `d5aa7e38…`；canonical preview 显式指定 `program-strategy-research`、`result-restart-r2`、`attr-restart-oos-limits-expansion`、semantic change `5f2258c0…` 与 `restart-r0-r2-requirement`|`strategy_research_cited_query_request.v1`、`strategy_research_cited_query_response.v1`、`strategy_research_cited_query_claim.v1`、`strategy_research_cited_query_citation.v1`、`atlas_cited_query_validation.v1`；五个固定 question IDs、exact target matrix、100% source coverage、entity hash/lineage/citation closure、ANSWERED/LIMITED/BLOCKED、canonical bytes、no script/form/external/write|低金融知识读者按“固定问题 → 一句话回答 → 限制 → 完整引用”查看研究主线、实际结果、归因、快照变化与来源时点；未来 adapter 只能映射到既有问题/target，不得成为事实 authority|否；`production_effect=none`、`broker_action=none`|canonical preview 三文件 SHA-256 分别为 `b4c5c6fd…`、`d3317e3f…`、`dd17b181…`，double-build byte-identical，5/5 independent validation PASS；真实 source 的 `known_at/available_at` 为 null，因此五个示例均诚实显示 `LIMITED`，不得以 `as_of` 代填。当前静态 contract/escaping/no-horizontal-overflow design checks PASS；本地 `file://` 真实浏览器验收被 Web Pro URL policy 阻止，未伪报 visual PASS，退出条件是可访问本地 artifact 的 reviewed browser surface 完成人工复核。不是自由文本 RAG、LLM authority、HTTP 服务、投资建议或策略 approval。|
 
+TRADING-2471 在同一 `index.html` 增加八阶段全系统 flow focus map：第 3–6 阶段标识
+canonical research focus，第 7 阶段唯一标记“你在这里”，第 8 阶段保留为 Owner 决策边界。
+五个 focus rows 直接显示既有 request target IDs，不做隐式相关性推断。更新后的
+`index.html` 为 `30698 bytes`、SHA-256
+`9eb9ad17992a31fdf0b7ccd3c0260c754d8c6c0fbc87d98e8d90d52f51ef498e`；
+`responses.json` 与 `validation.json` 字节和 SHA 不变。static DOM audit PASS；
+Browser URL policy 阻止自动刷新本地 `file://` 且禁止 workaround，人工 visual review
+状态仍为 `NOT_EXECUTED_URL_POLICY`。
+
 ## TRADING-2467 O1 Blind Calendar Re-entry Policy
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

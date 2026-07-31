@@ -233,6 +233,161 @@ def _render_response(response: StrategyResearchCitedQueryResponse) -> str:
     """
 
 
+def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
+    by_question = {
+        item.request.question_id: item for item in showcase.responses
+    }
+    if set(by_question) != set(CitedQueryQuestionId):
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_FOCUS_QUESTION_SET_INVALID")
+
+    focus_rows = (
+        (
+            "研究主线",
+            "第 3 阶段",
+            by_question[CitedQueryQuestionId.RESEARCH_MAINLINE_SUMMARY],
+        ),
+        (
+            "实际结果",
+            "第 4 阶段",
+            by_question[CitedQueryQuestionId.RESULT_AND_STATUS],
+        ),
+        (
+            "结果归因",
+            "第 5 阶段",
+            by_question[CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS],
+        ),
+        (
+            "快照变化",
+            "第 6 阶段",
+            by_question[CitedQueryQuestionId.SNAPSHOT_CHANGE_EXPLANATION],
+        ),
+        (
+            "证据来源",
+            "第 6 阶段",
+            by_question[CitedQueryQuestionId.SOURCE_LINEAGE],
+        ),
+    )
+    focus_ledger = "".join(
+        (
+            '<li class="focus-item">'
+            f'<span><strong>{escape(label)}</strong>'
+            f'<small>{escape(stage)}</small></span>'
+            f'<code>{escape(response.request.target_id)}</code>'
+            f'<span class="focus-status">'
+            f'{escape(_STATUS_LABELS[response.answer_status])}</span>'
+            "</li>"
+        )
+        for label, stage, response in focus_rows
+    )
+    stages = (
+        (
+            "DATA_INPUTS",
+            "数据与治理输入",
+            "市场、宏观、基本面与人工治理信息。",
+            "flow-context",
+            "上游上下文",
+        ),
+        (
+            "DATA_QUALITY_GATE",
+            "数据质量门",
+            "Schema、完整性、新鲜度、PIT 与 validate-data。",
+            "flow-context",
+            "上游上下文",
+        ),
+        (
+            "RESEARCH_MAINLINE",
+            "研究主线",
+            "研究问题、策略路径与候选方法。",
+            "flow-focus",
+            "当前研究关注",
+        ),
+        (
+            "BACKTEST_AND_EVALUATION",
+            "回测与评估",
+            "Primary window、OOS、stress 与结果状态。",
+            "flow-focus",
+            "当前研究关注",
+        ),
+        (
+            "RESULT_ATTRIBUTION",
+            "结果归因",
+            "实际结果、驱动因素、限制与失败原因。",
+            "flow-focus",
+            "当前研究关注",
+        ),
+        (
+            "ATLAS_SNAPSHOT_DIFF",
+            "Atlas 快照与变化",
+            "Validated snapshot、diff、source lineage。",
+            "flow-focus",
+            "当前研究关注",
+        ),
+        (
+            "CITATION_FIRST_QUERY",
+            "引用式问答页面",
+            "五个固定问题、claim 与 citation closure。",
+            "flow-current",
+            "你在这里",
+        ),
+        (
+            "OWNER_DECISION_BOUNDARY",
+            "Owner 决策边界",
+            "人工复核、后续任务或明确停止，不自动 promotion。",
+            "flow-boundary",
+            "本页以外",
+        ),
+    )
+    stage_cards = "".join(
+        (
+            f'<li class="flow-stage {escape(tone)}" '
+            f'data-stage="{escape(stage_id)}"'
+            + (' aria-current="step"' if tone == "flow-current" else "")
+            + ">"
+            f'<span class="stage-number">{index:02d}</span>'
+            f'<span class="stage-badge">{escape(badge)}</span>'
+            f"<h3>{escape(title)}</h3>"
+            f"<p>{escape(description)}</p>"
+            f'<code>{escape(stage_id)}</code>'
+            "</li>"
+        )
+        for index, (stage_id, title, description, tone, badge) in enumerate(
+            stages, start=1
+        )
+    )
+    return f"""
+    <section class="flow-map" aria-labelledby="system-flow-title">
+      <div class="section-kicker">WHOLE-SYSTEM MAP · READ-ONLY VIEW</div>
+      <div class="flow-heading">
+        <div>
+          <h2 id="system-flow-title">策略系统全流程，以及你现在在哪里</h2>
+          <p>先看全局，再进入五个研究问题。本图说明信息怎样走到当前页面，不表示本页重新执行了数据质量、回测或投资决策。</p>
+        </div>
+        <div class="you-are-here" aria-label="当前页面位置">
+          <span>你在这里</span>
+          <strong>第 7 / 8 阶段</strong>
+          <small>Citation-first 查询与证据展示</small>
+        </div>
+      </div>
+      <div class="flow-legend" aria-label="流程图图例">
+        <span><i class="legend-context"></i>上游上下文</span>
+        <span><i class="legend-focus"></i>当前研究关注路径</span>
+        <span><i class="legend-current"></i>当前页面位置</span>
+        <span><i class="legend-boundary"></i>本页以外的决策边界</span>
+      </div>
+      <ol class="system-flow">{stage_cards}</ol>
+      <div class="focus-panel">
+        <div class="focus-copy">
+          <p class="section-kicker">CURRENT FOCUS · EXACT IDS</p>
+          <h3>当前实际关注路径</h3>
+          <p>这些节点直接来自本页五个 canonical requests。没有“最相关”排序、模糊匹配或名称推断。</p>
+        </div>
+        <ul class="focus-ledger">{focus_ledger}</ul>
+      </div>
+      <p class="flow-safety"><strong>边界：</strong>本页只读取已验证的 Atlas snapshot/diff 并展示引用；不会运行 <code>aits validate-data</code>、回测、promotion、production 或 broker action。</p>
+    </section>
+    """
+
+
 def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     if len(showcase.responses) != len(CITED_QUERY_QUESTION_CATALOG):
         raise ValueError("ATLAS_CITED_QUERY_SHOWCASE_QUESTION_COUNT_INVALID")
@@ -256,6 +411,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
         for item in showcase.responses
     )
     cards = "".join(_render_response(item) for item in showcase.responses)
+    system_flow = _render_system_flow_map(showcase)
     snapshot_id = str(showcase.snapshot_payload["snapshot_id"])
     diff_id = str(showcase.diff_payload["diff_id"])
     return f"""<!doctype html>
@@ -265,7 +421,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Atlas 研究问答与证据</title>
   <style>
-    :root {{ --ink:#172033; --muted:#697489; --line:#dfe4ec; --paper:#f4f6f9; --panel:#fff; --navy:#132743; --blue:#315fba; --green:#18705b; --amber:#9b6b12; --red:#aa3d51; }}
+    :root {{ --ink:#172033; --muted:#697489; --line:#dfe4ec; --paper:#f4f6f9; --panel:#fff; --navy:#132743; --blue:#315fba; --green:#18705b; --teal:#0d7f77; --teal-soft:#e8f6f3; --blue-soft:#eaf1ff; --amber:#9b6b12; --red:#aa3d51; }}
     * {{ box-sizing:border-box; }}
     html {{ scroll-behavior:smooth; }}
     body {{ margin:0; color:var(--ink); background:var(--paper); font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif; }}
@@ -279,6 +435,51 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .metric span {{ color:#d9e8ff; font-size:.82rem; }}
     main {{ width:min(1120px,calc(100% - 2rem)); margin:0 auto; padding:1.6rem 0 4rem; }}
     .notice {{ margin:0 0 1.4rem; padding:1rem 1.15rem; border-left:5px solid var(--blue); border-radius:.55rem; background:#eaf1ff; }}
+    .flow-map {{ margin:0 0 1.5rem; padding:1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:hidden; }}
+    .section-kicker {{ color:var(--teal); font-size:.72rem; font-weight:850; letter-spacing:.14em; }}
+    .flow-heading {{ display:flex; align-items:flex-start; justify-content:space-between; gap:1.4rem; margin:.35rem 0 1rem; }}
+    .flow-heading h2 {{ margin:0 0 .35rem; font-size:clamp(1.35rem,2.6vw,2rem); line-height:1.18; }}
+    .flow-heading p {{ max-width:720px; margin:0; color:var(--muted); }}
+    .you-are-here {{ flex:0 0 230px; padding:.8rem 1rem; color:#fff; border-radius:.8rem; background:linear-gradient(135deg,var(--blue),#25477e); }}
+    .you-are-here span,.you-are-here small {{ display:block; }}
+    .you-are-here span {{ font-size:.72rem; font-weight:850; letter-spacing:.1em; }}
+    .you-are-here strong {{ display:block; margin:.08rem 0; font-size:1.25rem; }}
+    .you-are-here small {{ color:#dce8ff; }}
+    .flow-legend {{ display:flex; flex-wrap:wrap; gap:.45rem 1rem; margin:0 0 1rem; color:var(--muted); font-size:.76rem; }}
+    .flow-legend span {{ display:inline-flex; align-items:center; gap:.35rem; }}
+    .flow-legend i {{ width:.72rem; height:.72rem; border:2px solid var(--line); border-radius:.18rem; }}
+    .flow-legend .legend-focus {{ border-color:var(--teal); background:var(--teal-soft); }}
+    .flow-legend .legend-current {{ border-color:var(--blue); background:var(--blue); }}
+    .flow-legend .legend-boundary {{ border-style:dashed; border-color:#8b95a6; background:#f8fafc; }}
+    .system-flow {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-areas:"s1 s2 s3 s4" "s8 s7 s6 s5"; gap:1.25rem .9rem; margin:0; padding:0; list-style:none; counter-reset:flow; }}
+    .flow-stage {{ position:relative; min-width:0; min-height:154px; padding:.82rem; border:1px solid var(--line); border-radius:.82rem; background:#f8fafc; }}
+    .flow-stage:nth-child(1) {{ grid-area:s1; }} .flow-stage:nth-child(2) {{ grid-area:s2; }} .flow-stage:nth-child(3) {{ grid-area:s3; }} .flow-stage:nth-child(4) {{ grid-area:s4; }}
+    .flow-stage:nth-child(5) {{ grid-area:s5; }} .flow-stage:nth-child(6) {{ grid-area:s6; }} .flow-stage:nth-child(7) {{ grid-area:s7; }} .flow-stage:nth-child(8) {{ grid-area:s8; }}
+    .flow-stage::after {{ position:absolute; z-index:2; content:"→"; right:-.78rem; top:50%; width:.65rem; color:#95a0b2; font-size:1.1rem; font-weight:900; text-align:center; transform:translateY(-50%); }}
+    .flow-stage:nth-child(4)::after {{ content:"↓"; right:50%; top:auto; bottom:-1.18rem; transform:translateX(50%); }}
+    .flow-stage:nth-child(n+5):nth-child(-n+7)::after {{ content:"←"; right:auto; left:-.78rem; }}
+    .flow-stage:nth-child(8)::after {{ display:none; }}
+    .flow-stage h3 {{ margin:.55rem 0 .28rem; font-size:.96rem; line-height:1.25; }}
+    .flow-stage p {{ margin:0 0 .55rem; color:var(--muted); font-size:.76rem; line-height:1.42; }}
+    .flow-stage code {{ display:block; color:#7b8596; font-size:.64rem; }}
+    .stage-number {{ color:var(--muted); font:850 .7rem/1 system-ui,sans-serif; letter-spacing:.08em; }}
+    .stage-badge {{ float:right; padding:.15rem .4rem; border-radius:999px; color:#667287; background:#e9edf3; font-size:.62rem; font-weight:850; }}
+    .flow-focus {{ border-color:#8bcfc4; background:var(--teal-soft); }}
+    .flow-focus .stage-badge {{ color:#08665f; background:#ccebe5; }}
+    .flow-current {{ color:#fff; border-color:var(--blue); background:linear-gradient(145deg,var(--blue),#234977); box-shadow:0 8px 20px #315fba2b; }}
+    .flow-current p,.flow-current code,.flow-current .stage-number {{ color:#dce8ff; }}
+    .flow-current .stage-badge {{ color:#173b70; background:#fff; }}
+    .flow-boundary {{ border-style:dashed; border-color:#8994a7; background:#f8fafc; }}
+    .focus-panel {{ display:grid; grid-template-columns:minmax(220px,.8fr) minmax(0,2.2fr); gap:1rem; margin-top:1.2rem; padding:1rem; border-radius:.82rem; background:#f3f8f7; }}
+    .focus-copy h3 {{ margin:.2rem 0 .3rem; font-size:1.1rem; }}
+    .focus-copy p {{ margin:.2rem 0; color:var(--muted); font-size:.8rem; }}
+    .focus-ledger {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; margin:0; padding:0; list-style:none; }}
+    .focus-item {{ min-width:0; padding:.62rem .7rem; border:1px solid #cfe3df; border-radius:.65rem; background:#fff; }}
+    .focus-item span:first-child {{ display:flex; justify-content:space-between; gap:.5rem; }}
+    .focus-item small {{ color:var(--muted); }}
+    .focus-item code {{ display:block; margin:.28rem 0; font-size:.68rem; overflow-wrap:anywhere; }}
+    .focus-status {{ color:var(--amber); font-size:.68rem; font-weight:800; }}
+    .flow-safety {{ margin:1rem 0 0; padding:.75rem .9rem; border-left:4px solid var(--amber); border-radius:.45rem; color:#6e531b; background:#fff8e9; font-size:.78rem; }}
     nav {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.55rem; margin-bottom:1.5rem; }}
     nav a {{ color:var(--navy); padding:.75rem; border:1px solid var(--line); border-radius:.7rem; background:#fff; text-decoration:none; font-size:.82rem; font-weight:750; }}
     nav a:hover {{ border-color:var(--blue); }}
@@ -307,8 +508,8 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ nav {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav {{ grid-template-columns:1fr; }} .answer-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} }}
+    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage::after,.flow-stage:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:50%; bottom:auto; transform:translateY(-50%); }} .flow-stage:nth-child(2)::after,.flow-stage:nth-child(4)::after,.flow-stage:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage:nth-child(3)::after,.flow-stage:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:50%; bottom:auto; transform:translateY(-50%); }} .flow-stage:nth-child(8)::after {{ display:none; }} .focus-panel {{ grid-template-columns:1fr; }} nav {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.focus-ledger {{ grid-template-columns:1fr; }} .flow-map {{ padding:1rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage {{ min-height:0; }} .flow-stage::after,.flow-stage:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage:nth-child(8)::after {{ display:none; }} .answer-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
 </head>
@@ -325,6 +526,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
   </header>
   <main>
     <p class="notice"><strong>怎样阅读：</strong>先看“一句话回答”，再看“限制”；需要审计时展开引用。LIMITED 不等于研究失败，只表示时间、DQ 或研究上下文尚不完整。本页不是投资建议，也不会触发交易。</p>
+    {system_flow}
     <nav aria-label="五个固定问题">{navigation}</nav>
     <div class="answer-grid">{cards}</div>
     <footer>

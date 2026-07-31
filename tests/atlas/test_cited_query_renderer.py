@@ -4,6 +4,8 @@ from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 
+import pytest
+
 from ai_trading_system.atlas.cited_query_renderer import (
     build_cited_query_showcase,
     render_cited_query_html,
@@ -98,9 +100,30 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "先看限制",
         "完整引用与 lineage",
         "LIMITED 不等于研究失败",
+        "策略系统全流程，以及你现在在哪里",
+        "第 7 / 8 阶段",
+        "当前实际关注路径",
+        "当前研究关注路径",
+        "Owner 决策边界",
+        "不会运行",
         "production_effect",
     ):
         assert expected in html
+    for stage_id in (
+        "DATA_INPUTS",
+        "DATA_QUALITY_GATE",
+        "RESEARCH_MAINLINE",
+        "BACKTEST_AND_EVALUATION",
+        "RESULT_ATTRIBUTION",
+        "ATLAS_SNAPSHOT_DIFF",
+        "CITATION_FIRST_QUERY",
+        "OWNER_DECISION_BOUNDARY",
+    ):
+        assert f'data-stage="{stage_id}"' in html
+    for response in showcase.responses:
+        assert response.request.target_id in html
+    assert html.count('class="flow-stage ') == 8
+    assert html.count('aria-current="step"') == 1
     assert "<script" not in html
     assert "<form" not in html
     assert "http://" not in html
@@ -108,6 +131,19 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'lang="zh-CN"' in html
     assert len(showcase.responses) == 5
     assert all(item.status == "PASS" for item in showcase.validations)
+
+
+def test_flow_focus_fails_closed_on_duplicate_question_response() -> None:
+    showcase = _showcase()
+    invalid = replace(
+        showcase,
+        responses=(*showcase.responses[:-1], showcase.responses[0]),
+    )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_FLOW_FOCUS_QUESTION_SET_INVALID",
+    ):
+        render_cited_query_html(invalid)
 
 
 def test_renderer_escapes_claim_content() -> None:

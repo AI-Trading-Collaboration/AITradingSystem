@@ -41,6 +41,15 @@ static renderer 只输出 `index.html`、`responses.json`、`validation.json`；
 不访问 network/market/cache，不调用 LLM，不写 task/policy/production/broker state，
 `production_effect=none`、`broker_action=none`。
 
+TRADING-2471 在 citation-first static renderer 内增加八阶段系统流程投影：
+`DATA_INPUTS -> DATA_QUALITY_GATE -> RESEARCH_MAINLINE -> BACKTEST_AND_EVALUATION ->
+RESULT_ATTRIBUTION -> ATLAS_SNAPSHOT_DIFF -> CITATION_FIRST_QUERY ->
+OWNER_DECISION_BOUNDARY`。该投影不是新的运行链；前六阶段仅说明 canonical evidence 的上游
+位置，第七阶段唯一标记“你在这里”，第八阶段明确留在人工 Owner 决策边界之外。当前研究
+关注路径只读取五个已验证 response request 的 exact target IDs，禁止 relevance ranking、
+fuzzy matching、rename inference 或从文案猜测节点。flow map 不执行 `aits validate-data`、
+backtest、promotion、production 或 broker action。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -64,7 +73,8 @@ flowchart LR
     SNAP --> QRY["TRADING-2470 citation-first query<br/>5 fixed questions + exact target IDs"]
     DIFF --> QRY
     QRY --> QVAL["Independent response validation<br/>entity hash + source coverage + closure"]
-    QVAL --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
+    QVAL --> QMAP["TRADING-2471 system flow focus map<br/>8 stages + exact-ID current focus"]
+    QMAP --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
