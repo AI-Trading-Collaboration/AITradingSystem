@@ -1,0 +1,108 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1
+  title: null
+  domain: Publishing & Experience / Atlas node progress derivation and provenance
+    ledger
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行
+    formal closeout
+  requirement_refs:
+  - docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖
+    TRADING-2471 exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有
+    snapshot/response/validation 不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 八节点状态由明确的 page boundary、canonical snapshot fields、exact response 或 independent
+      validation 确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致 typed fail closed；角色样式与状态颜色独立；明确
+      validation≠strategy PASS/投资评级；deterministic、no script/form/external/write、focused/formal/browser
+      visual PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2072
+    row_sha256: e802057534e813ec1b66795ddae4325d55cdbcb377a8b286f2e7020d951b07cc
+    cell_count: 8
+    all_cells:
+    - TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1
+    - Publishing & Experience / Atlas node progress derivation and provenance ledger
+    - P1
+    - IN_PROGRESS
+    - knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行 formal
+      closeout
+    - 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖 TRADING-2471
+      exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有 snapshot/response/validation
+      不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。
+    - 八节点状态由明确的 page boundary、canonical snapshot fields、exact response 或 independent
+      validation 确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致 typed fail closed；角色样式与状态颜色独立；明确
+      validation≠strategy PASS/投资评级；deterministic、no script/form/external/write、focused/formal/browser
+      visual PASS；`production_effect=none`、`broker_action=none`。
+    - 2026-07-31：Owner 采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。
+    raw_line: '|TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1|Publishing & Experience
+      / Atlas node progress derivation and provenance ledger|P1|IN_PROGRESS|knowledge/reporting/UX
+      owner：实现并复核 V1；Owner 验收 canonical preview 后再执行 formal closeout|详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖
+      TRADING-2471 exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有
+      snapshot/response/validation 不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。|八节点状态由明确的
+      page boundary、canonical snapshot fields、exact response 或 independent validation
+      确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致 typed fail closed；角色样式与状态颜色独立；明确
+      validation≠strategy PASS/投资评级；deterministic、no script/form/external/write、focused/formal/browser
+      visual PASS；`production_effect=none`、`broker_action=none`。|2026-07-31：Owner
+      采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-e802057534e813ec1b66795d
+  task_id: TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行
+      formal closeout
+    notes: 2026-07-31：Owner 采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:e802057534e813ec1b66795ddae4325d55cdbcb377a8b286f2e7020d951b07cc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1
+  - Publishing & Experience / Atlas node progress derivation and provenance ledger
+  - P1
+  - IN_PROGRESS
+  - knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行 formal closeout
+  - 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖 TRADING-2471
+    exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有 snapshot/response/validation
+    不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。
+  - 八节点状态由明确的 page boundary、canonical snapshot fields、exact response 或 independent
+    validation 确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致 typed fail closed；角色样式与状态颜色独立；明确
+    validation≠strategy PASS/投资评级；deterministic、no script/form/external/write、focused/formal/browser
+    visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-07-31：Owner 采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。
+  docs_links:
+  - docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md
+  terminal: false
+  raw_row_sha256: e802057534e813ec1b66795ddae4325d55cdbcb377a8b286f2e7020d951b07cc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 74c29113e0f5363369efef3d86f8edb6657cfba958f77e09a827730ebcfb5764
