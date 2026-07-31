@@ -7,7 +7,7 @@
 
 优先级：`P1`
 
-状态：`VALIDATING`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
@@ -178,5 +178,6 @@ Coordinator-owned：
   no script/form/iframe/external。等待 Owner 手动刷新进行视觉验收。
 - 2026-07-31：Owner 在 canonical `file://` preview 手动刷新并明确回复“这个版本先验收
   通过”。browser automation 仍保持 `NOT_EXECUTED_URL_POLICY`，人工视觉验收单独记录为
-  `OWNER_MANUAL_VISUAL_PASS`；任务转入 `VALIDATING`，开始执行 generated authority、
-  formal tiers 与 governed closeout。
+  `OWNER_MANUAL_VISUAL_PASS`。最终候选状态设为 `BASELINE_DONE`；必须以
+  `trading-2471-owner-visual-closeout-v1` 边界的 generated authority、formal tiers 与
+  governed closeout 全部 PASS 后才允许提交、集成本地 `main` 与普通推送。

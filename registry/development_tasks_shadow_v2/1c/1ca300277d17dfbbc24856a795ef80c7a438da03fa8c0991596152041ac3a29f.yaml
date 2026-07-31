@@ -13,8 +13,7 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal
-    tiers、local-main integration 与默认 ordinary push
+  next_owner: knowledge/reporting/UX owner：维护 V1 展示合同；后续功能作为独立任务推进，不把节点状态解释为投资评级
   requirement_refs:
   - docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md
   module_ids: []
@@ -32,15 +31,14 @@ task_record:
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 6eb59c0ceb077bac891d1e713ae669fab7d6ba87a1d6fdb5d3adf3f7e266eb78
+  row_sha256: 1104e940262948aa029cff9111b3f1fd448e0cd2e0b16f8f0d7c55bc963a6817
   cell_count: 8
   all_cells:
   - TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
   - Publishing & Experience / Atlas whole-system flow and current-focus map
   - P1
-  - VALIDATING
-  - governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal tiers、local-main
-    integration 与默认 ordinary push
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 展示合同；后续功能作为独立任务推进，不把节点状态解释为投资评级
   - 详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
     snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略
     PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在
@@ -50,11 +48,10 @@ legacy_row_evidence:
     authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
   - 2026-07-31：Owner 已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation
     SHA 不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 /
-    no external`；开始正式验证与 governed closeout。
+    no external`。最终候选须通过边界 `trading-2471-owner-visual-closeout-v1` 的正式验证后才允许集成与推送。
   raw_line: '|TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1|Publishing & Experience
-    / Atlas whole-system flow and current-focus map|P1|VALIDATING|governed closeout
-    coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal tiers、local-main integration
-    与默认 ordinary push|详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
+    / Atlas whole-system flow and current-focus map|P1|BASELINE_DONE|knowledge/reporting/UX
+    owner：维护 V1 展示合同；后续功能作为独立任务推进，不把节点状态解释为投资评级|详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
     snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略
     PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在
     canonical 本地页面手工验收，单独记录 `OWNER_MANUAL_VISUAL_PASS`。|八阶段顺序稳定；`CITATION_FIRST_QUERY`
@@ -62,13 +59,13 @@ legacy_row_evidence:
     typed fail closed；1280px/窄屏无页面级横向溢出；no script/form/external/write；double-build、focused、generated
     authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。|2026-07-31：Owner
     已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation SHA 不变；static
-    DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 / no external`；开始正式验证与
-    governed closeout。|'
+    DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 / no external`。最终候选须通过边界
+    `trading-2471-owner-visual-closeout-v1` 的正式验证后才允许集成与推送。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-6eb59c0ceb077bac891d1e71
+  event_id: legacy-import-1104e940262948aa029cff91
   task_id: TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -78,27 +75,25 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: VALIDATING
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal
-      tiers、local-main integration 与默认 ordinary push
+    next_owner: knowledge/reporting/UX owner：维护 V1 展示合同；后续功能作为独立任务推进，不把节点状态解释为投资评级
     notes: 2026-07-31：Owner 已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation
       SHA 不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1
-      / no external`；开始正式验证与 governed closeout。
+      / no external`。最终候选须通过边界 `trading-2471-owner-visual-closeout-v1` 的正式验证后才允许集成与推送。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:6eb59c0ceb077bac891d1e713ae669fab7d6ba87a1d6fdb5d3adf3f7e266eb78
+  - sha256:1104e940262948aa029cff9111b3f1fd448e0cd2e0b16f8f0d7c55bc963a6817
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
   - Publishing & Experience / Atlas whole-system flow and current-focus map
   - P1
-  - VALIDATING
-  - governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal tiers、local-main
-    integration 与默认 ordinary push
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 展示合同；后续功能作为独立任务推进，不把节点状态解释为投资评级
   - 详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
     snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略
     PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在
@@ -108,10 +103,10 @@ projection:
     authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
   - 2026-07-31：Owner 已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation
     SHA 不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 /
-    no external`；开始正式验证与 governed closeout。
+    no external`。最终候选须通过边界 `trading-2471-owner-visual-closeout-v1` 的正式验证后才允许集成与推送。
   docs_links:
   - docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md
   terminal: false
-  raw_row_sha256: 6eb59c0ceb077bac891d1e713ae669fab7d6ba87a1d6fdb5d3adf3f7e266eb78
+  raw_row_sha256: 1104e940262948aa029cff9111b3f1fd448e0cd2e0b16f8f0d7c55bc963a6817
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: 8267063f966849d7a3b2d47681db1a29fc343f49e18d737016556e893ada58ad
+fragment_checksum: 12c666726d875886ed1246e821c70fa08f393ebc48a193cd26095a37a84c8c82
