@@ -43,7 +43,8 @@ result `display_status=LIMITED`，归因必须精确指向该 result；Atlas dif
 `b0b4cea837a06bec55bb2ff55f7a6d3cb4b98ea219360b7242874238631ebba5`；
 `responses.json` 与 `validation.json` 字节和 SHA 仍不变。double-build 与 static DOM audit PASS；
 browser automation 仍被本地 `file://` URL policy 阻止且未绕过，Owner visual acceptance
-单独保留为当前退出条件。
+已于 2026-08-01 单独记录为 `OWNER_MANUAL_VISUAL_PASS`。该验收只确认展示可读性，
+不改变 strategy、DQ、promotion、production 或 broker 状态。
 
 ## TRADING-2467 O1 Blind Calendar Re-entry Policy
 

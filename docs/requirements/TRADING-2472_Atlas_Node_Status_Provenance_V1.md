@@ -7,12 +7,13 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
 ```text
 owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1
+owner_decision:TRADING-2472:2026-08-01:accept_atlas_node_status_provenance_visual_v1
 ```
 
 production effect：`none`
@@ -140,3 +141,21 @@ Coordinator-owned：
   确认 `8 stages / 8 provenance rows / 1 current / no external` 与 900/620px breakpoints。
   Browser automation 刷新本地 `file://` 时仍被 URL policy 拒绝并禁止 workaround，明确记录
   `NOT_EXECUTED_URL_POLICY`；等待 Owner 手动刷新 canonical preview 完成 visual acceptance。
+- 2026-08-01：Owner 在 canonical 本地页面完成手工复核并回复“ok 后续继续推进”，
+  本任务单独记录 `OWNER_MANUAL_VISUAL_PASS`。实现状态转 `BASELINE_DONE`；正式
+  validation、local-main fast-forward、ordinary push 和清理仍必须通过 governed
+  closeout 后才允许完成，不把人工验收解释为投资或 production approval。
+- 2026-08-01：natural integration boundary 正式验证通过：Architecture=`814 passed`
+  （`architecture-fitness_20260731T165547Z`）、Contract=`276 passed`
+  （`contract-validation_20260731T165841Z`）、Integration=`995 passed / 642 warnings`
+  （`integration_20260731T170048Z`）、Reproducibility=`24 passed`
+  （`reproducibility_20260731T170143Z`）、Full=`7869 passed / 3 skipped / 644 warnings`
+  （`full_20260731T170205Z`）。warnings 未升级为失败；下一步只剩最终树
+  Architecture/Contract 复验、governed integration、普通非 force push 与清理。
+- 2026-08-01：首次最终树 Architecture 在兼容性 source-hash 写回补丁误命中历史段后
+  fail closed（`architecture-fitness_20260731T172357Z`，`83 failed / 731 passed`）。未绕过：
+  恢复 immutable prefix 为 exact `2272372 bytes / SHA-256 368c756b5f77…`，确认 Git diff
+  仅剩 EOF TRADING-2472 append，compatibility/deprecation=`167 passed`；随后最终树
+  Architecture=`814 passed`（`architecture-fitness_20260731T172920Z`）、Contract=
+  `276 passed`（`contract-validation_20260731T173120Z`）。修复只影响审计记录落点，未改变
+  renderer、canonical preview、strategy/DQ/production/broker 语义。

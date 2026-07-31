@@ -21,7 +21,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: 0faf45481db801e402805cc05d4c1f44521fc575906c4e8e44f6137bcb582c8f
+  current_sha256: 3a553c7d509767506eb9f87f704082cc1d0beacb2eb82dfa0e47cbadb5ebb1b8
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 6
   fragment_paths:
