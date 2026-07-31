@@ -105,6 +105,14 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "当前实际关注路径",
         "当前研究关注路径",
         "Owner 决策边界",
+        "进展状态",
+        "颜色表示节点在当前 evidence view 中的进展",
+        "不代表策略 PASS 或投资评级",
+        "本页未执行",
+        "研究进行中",
+        "证据有限",
+        "已验证",
+        "待人工复核",
         "不会运行",
         "production_effect",
     ):
@@ -124,6 +132,19 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         assert response.request.target_id in html
     assert html.count('class="flow-stage ') == 8
     assert html.count('aria-current="step"') == 1
+    assert html.count('data-progress-status="NOT_EXECUTED_BY_PAGE"') == 2
+    assert html.count('data-progress-status="IN_PROGRESS"') == 1
+    assert html.count('data-progress-status="LIMITED"') == 2
+    assert html.count('data-progress-status="VALIDATED"') == 2
+    assert html.count('data-progress-status="PENDING_OWNER_REVIEW"') == 1
+    for progress_tone in (
+        "progress-neutral",
+        "progress-active",
+        "progress-limited",
+        "progress-validated",
+        "progress-review",
+    ):
+        assert progress_tone in html
     assert "<script" not in html
     assert "<form" not in html
     assert "http://" not in html

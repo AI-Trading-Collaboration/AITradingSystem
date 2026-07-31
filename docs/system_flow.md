@@ -48,7 +48,11 @@ OWNER_DECISION_BOUNDARY`。该投影不是新的运行链；前六阶段仅说�
 位置，第七阶段唯一标记“你在这里”，第八阶段明确留在人工 Owner 决策边界之外。当前研究
 关注路径只读取五个已验证 response request 的 exact target IDs，禁止 relevance ranking、
 fuzzy matching、rename inference 或从文案猜测节点。flow map 不执行 `aits validate-data`、
-backtest、promotion、production 或 broker action。
+backtest、promotion、production 或 broker action。每个节点另有 display-only 进展状态：
+数据输入/DQ=`NOT_EXECUTED_BY_PAGE`，研究主线=`IN_PROGRESS`，回测/归因=`LIMITED`，
+Atlas diff/citation-first query=`VALIDATED`，Owner boundary=`PENDING_OWNER_REVIEW`。
+节点边框/底色表达流程角色，状态胶囊颜色表达当前 evidence view 的进展；二者都配套文字，
+状态不代表 strategy PASS、投资评级、promotion 或 production readiness。
 
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段

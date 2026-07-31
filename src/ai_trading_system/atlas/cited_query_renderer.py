@@ -286,6 +286,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "市场、宏观、基本面与人工治理信息。",
             "flow-context",
             "上游上下文",
+            "NOT_EXECUTED_BY_PAGE",
+            "本页未执行",
+            "progress-neutral",
         ),
         (
             "DATA_QUALITY_GATE",
@@ -293,6 +296,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Schema、完整性、新鲜度、PIT 与 validate-data。",
             "flow-context",
             "上游上下文",
+            "NOT_EXECUTED_BY_PAGE",
+            "本页未执行",
+            "progress-neutral",
         ),
         (
             "RESEARCH_MAINLINE",
@@ -300,6 +306,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "研究问题、策略路径与候选方法。",
             "flow-focus",
             "当前研究关注",
+            "IN_PROGRESS",
+            "研究进行中",
+            "progress-active",
         ),
         (
             "BACKTEST_AND_EVALUATION",
@@ -307,6 +316,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Primary window、OOS、stress 与结果状态。",
             "flow-focus",
             "当前研究关注",
+            "LIMITED",
+            "证据有限",
+            "progress-limited",
         ),
         (
             "RESULT_ATTRIBUTION",
@@ -314,6 +326,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "实际结果、驱动因素、限制与失败原因。",
             "flow-focus",
             "当前研究关注",
+            "LIMITED",
+            "证据有限",
+            "progress-limited",
         ),
         (
             "ATLAS_SNAPSHOT_DIFF",
@@ -321,6 +336,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Validated snapshot、diff、source lineage。",
             "flow-focus",
             "当前研究关注",
+            "VALIDATED",
+            "已验证",
+            "progress-validated",
         ),
         (
             "CITATION_FIRST_QUERY",
@@ -328,6 +346,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "五个固定问题、claim 与 citation closure。",
             "flow-current",
             "你在这里",
+            "VALIDATED",
+            "已验证",
+            "progress-validated",
         ),
         (
             "OWNER_DECISION_BOUNDARY",
@@ -335,24 +356,42 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "人工复核、后续任务或明确停止，不自动 promotion。",
             "flow-boundary",
             "本页以外",
+            "PENDING_OWNER_REVIEW",
+            "待人工复核",
+            "progress-review",
         ),
     )
     stage_cards = "".join(
         (
-            f'<li class="flow-stage {escape(tone)}" '
-            f'data-stage="{escape(stage_id)}"'
-            + (' aria-current="step"' if tone == "flow-current" else "")
+            f'<li class="flow-stage {escape(role_tone)}" '
+            f'data-stage="{escape(stage_id)}" '
+            f'data-progress-status="{escape(progress_code)}"'
+            + (' aria-current="step"' if role_tone == "flow-current" else "")
             + ">"
+            '<div class="stage-top">'
             f'<span class="stage-number">{index:02d}</span>'
-            f'<span class="stage-badge">{escape(badge)}</span>'
+            f'<span class="stage-badge">{escape(role_badge)}</span>'
+            "</div>"
             f"<h3>{escape(title)}</h3>"
             f"<p>{escape(description)}</p>"
-            f'<code>{escape(stage_id)}</code>'
+            f'<code class="stage-id">{escape(stage_id)}</code>'
+            f'<div class="stage-progress {escape(progress_tone)}">'
+            '<span class="progress-dot" aria-hidden="true"></span>'
+            f"<strong>{escape(progress_label)}</strong>"
+            f"<code>{escape(progress_code)}</code>"
+            "</div>"
             "</li>"
         )
-        for index, (stage_id, title, description, tone, badge) in enumerate(
-            stages, start=1
-        )
+        for index, (
+            stage_id,
+            title,
+            description,
+            role_tone,
+            role_badge,
+            progress_code,
+            progress_label,
+            progress_tone,
+        ) in enumerate(stages, start=1)
     )
     return f"""
     <section class="flow-map" aria-labelledby="system-flow-title">
@@ -373,6 +412,15 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         <span><i class="legend-focus"></i>当前研究关注路径</span>
         <span><i class="legend-current"></i>当前页面位置</span>
         <span><i class="legend-boundary"></i>本页以外的决策边界</span>
+      </div>
+      <div class="progress-key" aria-label="节点进展状态图例">
+        <strong>进展状态</strong>
+        <span class="progress-neutral"><i aria-hidden="true"></i>本页未执行</span>
+        <span class="progress-active"><i aria-hidden="true"></i>研究进行中</span>
+        <span class="progress-limited"><i aria-hidden="true"></i>证据有限</span>
+        <span class="progress-validated"><i aria-hidden="true"></i>已验证</span>
+        <span class="progress-review"><i aria-hidden="true"></i>待人工复核</span>
+        <small>颜色表示节点在当前 evidence view 中的进展，不代表策略 PASS 或投资评级。</small>
       </div>
       <ol class="system-flow">{stage_cards}</ol>
       <div class="focus-panel">
@@ -451,8 +499,18 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .flow-legend .legend-focus {{ border-color:var(--teal); background:var(--teal-soft); }}
     .flow-legend .legend-current {{ border-color:var(--blue); background:var(--blue); }}
     .flow-legend .legend-boundary {{ border-style:dashed; border-color:#8b95a6; background:#f8fafc; }}
+    .progress-key {{ display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .75rem; margin:-.15rem 0 1rem; padding:.65rem .75rem; border:1px solid #dde3ec; border-radius:.68rem; color:var(--muted); background:#f8fafc; font-size:.72rem; }}
+    .progress-key > strong {{ color:var(--ink); font-size:.75rem; }}
+    .progress-key span {{ display:inline-flex; align-items:center; gap:.3rem; white-space:nowrap; }}
+    .progress-key i,.progress-dot {{ width:.58rem; height:.58rem; flex:0 0 .58rem; border-radius:50%; background:currentColor; }}
+    .progress-key small {{ flex-basis:100%; color:#697589; }}
+    .progress-neutral {{ color:#697589; }}
+    .progress-active {{ color:#1769aa; }}
+    .progress-limited {{ color:#9a6500; }}
+    .progress-validated {{ color:#087a55; }}
+    .progress-review {{ color:#7650a8; }}
     .system-flow {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-areas:"s1 s2 s3 s4" "s8 s7 s6 s5"; gap:1.25rem .9rem; margin:0; padding:0; list-style:none; counter-reset:flow; }}
-    .flow-stage {{ position:relative; min-width:0; min-height:154px; padding:.82rem; border:1px solid var(--line); border-radius:.82rem; background:#f8fafc; }}
+    .flow-stage {{ position:relative; display:flex; min-width:0; min-height:196px; padding:.82rem; border:1px solid var(--line); border-radius:.82rem; background:#f8fafc; flex-direction:column; }}
     .flow-stage:nth-child(1) {{ grid-area:s1; }} .flow-stage:nth-child(2) {{ grid-area:s2; }} .flow-stage:nth-child(3) {{ grid-area:s3; }} .flow-stage:nth-child(4) {{ grid-area:s4; }}
     .flow-stage:nth-child(5) {{ grid-area:s5; }} .flow-stage:nth-child(6) {{ grid-area:s6; }} .flow-stage:nth-child(7) {{ grid-area:s7; }} .flow-stage:nth-child(8) {{ grid-area:s8; }}
     .flow-stage::after {{ position:absolute; z-index:2; content:"→"; right:-.78rem; top:50%; width:.65rem; color:#95a0b2; font-size:1.1rem; font-weight:900; text-align:center; transform:translateY(-50%); }}
@@ -462,13 +520,19 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .flow-stage h3 {{ margin:.55rem 0 .28rem; font-size:.96rem; line-height:1.25; }}
     .flow-stage p {{ margin:0 0 .55rem; color:var(--muted); font-size:.76rem; line-height:1.42; }}
     .flow-stage code {{ display:block; color:#7b8596; font-size:.64rem; }}
+    .flow-stage .stage-id {{ margin-bottom:.65rem; }}
+    .stage-top {{ display:flex; align-items:center; justify-content:space-between; gap:.4rem; }}
     .stage-number {{ color:var(--muted); font:850 .7rem/1 system-ui,sans-serif; letter-spacing:.08em; }}
-    .stage-badge {{ float:right; padding:.15rem .4rem; border-radius:999px; color:#667287; background:#e9edf3; font-size:.62rem; font-weight:850; }}
+    .stage-badge {{ padding:.15rem .4rem; border-radius:999px; color:#667287; background:#e9edf3; font-size:.62rem; font-weight:850; }}
+    .stage-progress {{ display:grid; grid-template-columns:auto 1fr; align-items:center; gap:.08rem .35rem; margin-top:auto; padding:.43rem .5rem; border:1px solid currentColor; border-radius:.55rem; background:#fff; }}
+    .stage-progress strong {{ font-size:.7rem; line-height:1.2; }}
+    .stage-progress code {{ grid-column:2; color:currentColor; font-size:.56rem; line-height:1.2; overflow-wrap:anywhere; }}
     .flow-focus {{ border-color:#8bcfc4; background:var(--teal-soft); }}
     .flow-focus .stage-badge {{ color:#08665f; background:#ccebe5; }}
     .flow-current {{ color:#fff; border-color:var(--blue); background:linear-gradient(145deg,var(--blue),#234977); box-shadow:0 8px 20px #315fba2b; }}
-    .flow-current p,.flow-current code,.flow-current .stage-number {{ color:#dce8ff; }}
+    .flow-current p,.flow-current .stage-id,.flow-current .stage-number {{ color:#dce8ff; }}
     .flow-current .stage-badge {{ color:#173b70; background:#fff; }}
+    .flow-current .stage-progress {{ background:#fff; }}
     .flow-boundary {{ border-style:dashed; border-color:#8994a7; background:#f8fafc; }}
     .focus-panel {{ display:grid; grid-template-columns:minmax(220px,.8fr) minmax(0,2.2fr); gap:1rem; margin-top:1.2rem; padding:1rem; border-radius:.82rem; background:#f3f8f7; }}
     .focus-copy h3 {{ margin:.2rem 0 .3rem; font-size:1.1rem; }}

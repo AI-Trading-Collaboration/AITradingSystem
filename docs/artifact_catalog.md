@@ -24,9 +24,11 @@
 
 TRADING-2471 在同一 `index.html` 增加八阶段全系统 flow focus map：第 3–6 阶段标识
 canonical research focus，第 7 阶段唯一标记“你在这里”，第 8 阶段保留为 Owner 决策边界。
-五个 focus rows 直接显示既有 request target IDs，不做隐式相关性推断。更新后的
-`index.html` 为 `30698 bytes`、SHA-256
-`9eb9ad17992a31fdf0b7ccd3c0260c754d8c6c0fbc87d98e8d90d52f51ef498e`；
+五个 focus rows 直接显示既有 request target IDs，不做隐式相关性推断。八个节点另显示
+display-only 进展状态胶囊：本页未执行/研究进行中/证据有限/已验证/待人工复核；颜色、中文
+标签和稳定状态码同时出现，且明确不代表策略 PASS 或投资评级。更新后的
+`index.html` 为 `34751 bytes`、SHA-256
+`c0f3eb5507063dbe4ded202a942dc6c0b9af250b99d91ddd720626941851680e`；
 `responses.json` 与 `validation.json` 字节和 SHA 不变。static DOM audit PASS；
 Browser URL policy 阻止自动刷新本地 `file://` 且禁止 workaround，人工 visual review
 状态仍为 `NOT_EXECUTED_URL_POLICY`。
