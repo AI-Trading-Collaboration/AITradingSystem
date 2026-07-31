@@ -26,21 +26,20 @@ def _payloads(*, injected_summary: str = ""):
         repository_root=PROJECT_ROOT,
         exact_commit="f" * 40,
     ).snapshot
-    selected_node_id = min(item.node_id for item in before.nodes)
+    selected_node_id = "program-strategy-research"
     after = StrategyResearchExplorerSnapshot.build(
         title=before.title + " next",
         generated_at=before.generated_at + timedelta(days=1),
         sources=before.sources,
         nodes=tuple(
-            replace(
-                item,
-                summary=(
-                    injected_summary
-                    or item.summary + " 已增加引用式问答入口。"
-                ),
+            (
+                replace(
+                    item,
+                    summary=(injected_summary or item.summary + " 已增加引用式问答入口。"),
+                )
+                if item.node_id == selected_node_id
+                else item
             )
-            if item.node_id == selected_node_id
-            else item
             for item in before.nodes
         ),
         edges=before.edges,
@@ -59,24 +58,12 @@ def _showcase(*, injected_summary: str = ""):
     before, after, diff = _payloads(injected_summary=injected_summary)
     return build_cited_query_showcase(
         target_ids={
-            CitedQueryQuestionId.RESEARCH_MAINLINE_SUMMARY: min(
-                item["node_id"]
-                for item in after["nodes"]
-            ),
-            CitedQueryQuestionId.RESULT_AND_STATUS: min(
-                item["result_id"]
-                for item in after["results"]
-            ),
-            CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS: min(
-                item["attribution_id"]
-                for item in after["attributions"]
-            ),
-            CitedQueryQuestionId.SNAPSHOT_CHANGE_EXPLANATION: diff["changes"][0][
-                "change_id"
-            ],
+            CitedQueryQuestionId.RESEARCH_MAINLINE_SUMMARY: ("program-strategy-research"),
+            CitedQueryQuestionId.RESULT_AND_STATUS: "result-restart-r2",
+            CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS: ("attr-restart-oos-limits-expansion"),
+            CitedQueryQuestionId.SNAPSHOT_CHANGE_EXPLANATION: diff["changes"][0]["change_id"],
             CitedQueryQuestionId.SOURCE_LINEAGE: min(
-                item["source_ref_id"]
-                for item in after["sources"]
+                item["source_ref_id"] for item in after["sources"]
             ),
         },
         snapshot_payload=after,
@@ -113,6 +100,15 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "证据有限",
         "已验证",
         "待人工复核",
+        "状态依据台账",
+        "为什么是这个状态",
+        "CANONICAL_SNAPSHOT_FIELD",
+        "CANONICAL_SNAPSHOT_RELATION",
+        "INDEPENDENT_VALIDATION",
+        "INDEPENDENT_VALIDATION_SET",
+        "PAGE_EXECUTION_BOUNDARY",
+        "OWNER_REVIEW_POLICY",
+        "不是 DQ FAIL",
         "不会运行",
         "production_effect",
     ):
@@ -137,6 +133,17 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert html.count('data-progress-status="LIMITED"') == 2
     assert html.count('data-progress-status="VALIDATED"') == 2
     assert html.count('data-progress-status="PENDING_OWNER_REVIEW"') == 1
+    assert html.count('class="provenance-item"') == 8
+    assert html.count('data-provenance-stage="') == 8
+    assert (
+        'data-provenance-stage="RESEARCH_MAINLINE" '
+        'data-provenance-source="CANONICAL_SNAPSHOT_FIELD"'
+    ) in html
+    assert "raw_status=RUNNING" in html
+    assert "display_status=LIMITED" in html
+    assert "attr-restart-oos-limits-expansion" in html
+    for response in showcase.responses:
+        assert f"response_id={response.response_id}" in html
     for progress_tone in (
         "progress-neutral",
         "progress-active",
@@ -167,10 +174,70 @@ def test_flow_focus_fails_closed_on_duplicate_question_response() -> None:
         render_cited_query_html(invalid)
 
 
-def test_renderer_escapes_claim_content() -> None:
-    html = render_cited_query_html(
-        _showcase(injected_summary="<script>alert('x')</script>")
+def test_flow_status_fails_closed_on_duplicate_validation_binding() -> None:
+    showcase = _showcase()
+    invalid = replace(
+        showcase,
+        validations=(*showcase.validations[:-1], showcase.validations[0]),
     )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_FLOW_STATUS_VALIDATION_SET_INVALID",
+    ):
+        render_cited_query_html(invalid)
+
+
+def test_flow_status_fails_closed_on_unreviewed_research_state() -> None:
+    showcase = _showcase()
+    nodes = [
+        {
+            **item,
+            "raw_status": (
+                "PASS" if item["node_id"] == "program-strategy-research" else item["raw_status"]
+            ),
+        }
+        for item in showcase.snapshot_payload["nodes"]
+    ]
+    invalid = replace(
+        showcase,
+        snapshot_payload={**showcase.snapshot_payload, "nodes": nodes},
+    )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_FLOW_STATUS_RESEARCH_STATE_INVALID:PASS",
+    ):
+        render_cited_query_html(invalid)
+
+
+def test_flow_status_fails_closed_on_attribution_result_mismatch() -> None:
+    showcase = _showcase()
+    attributions = [
+        {
+            **item,
+            "result_id": (
+                "different-result"
+                if item["attribution_id"] == "attr-restart-oos-limits-expansion"
+                else item["result_id"]
+            ),
+        }
+        for item in showcase.snapshot_payload["attributions"]
+    ]
+    invalid = replace(
+        showcase,
+        snapshot_payload={
+            **showcase.snapshot_payload,
+            "attributions": attributions,
+        },
+    )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_FLOW_STATUS_ATTRIBUTION_RESULT_MISMATCH",
+    ):
+        render_cited_query_html(invalid)
+
+
+def test_renderer_escapes_claim_content() -> None:
+    html = render_cited_query_html(_showcase(injected_summary="<script>alert('x')</script>"))
     assert "<script>alert" not in html
     assert "&lt;script&gt;alert" in html
 
@@ -182,6 +249,4 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     assert [item.sha256 for item in first] == [item.sha256 for item in second]
     assert [item.size_bytes for item in first] == [item.size_bytes for item in second]
     for name in ("index.html", "responses.json", "validation.json"):
-        assert (tmp_path / "first" / name).read_bytes() == (
-            tmp_path / "second" / name
-        ).read_bytes()
+        assert (tmp_path / "first" / name).read_bytes() == (tmp_path / "second" / name).read_bytes()

@@ -33,6 +33,18 @@ display-only 进展状态胶囊：本页未执行/研究进行中/证据有限/�
 Browser URL policy 阻止自动刷新本地 `file://` 且禁止 workaround，人工 visual review
 状态仍为 `NOT_EXECUTED_URL_POLICY`。
 
+TRADING-2472 在同一 `index.html` 把八节点固定状态映射替换为 structured-field derivation，
+并增加八条“状态依据台账”。研究节点绑定 canonical `raw_status=RUNNING`，回测/评估绑定
+result `display_status=LIMITED`，归因必须精确指向该 result；Atlas diff 与 citation-first query
+分别绑定 exact independent validation 和 5/5 response↔validation PASS 集合。输入/DQ 与 Owner
+节点分别显示 page execution boundary 和 reviewed Owner policy，不从中文文案猜测状态。
+缺失、重复或 relation/binding 不一致会 typed fail closed。更新后的 `index.html` 为
+`44641 bytes`、SHA-256
+`b0b4cea837a06bec55bb2ff55f7a6d3cb4b98ea219360b7242874238631ebba5`；
+`responses.json` 与 `validation.json` 字节和 SHA 仍不变。double-build 与 static DOM audit PASS；
+browser automation 仍被本地 `file://` URL policy 阻止且未绕过，Owner visual acceptance
+单独保留为当前退出条件。
+
 ## TRADING-2467 O1 Blind Calendar Re-entry Policy
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

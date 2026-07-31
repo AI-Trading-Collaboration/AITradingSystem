@@ -12,16 +12,17 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行
-    formal closeout
+  next_owner: knowledge/reporting/UX owner：Owner 手动刷新 canonical preview 完成 visual
+    acceptance；通过后由 coordinator 执行 formal closeout
   requirement_refs:
   - docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖
-    TRADING-2471 exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有
-    snapshot/response/validation 不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。实现与
+    focused/static gates 已通过；browser automation 被本地 `file://` URL policy 拒绝且禁止 workaround，明确记录
+    `NOT_EXECUTED_URL_POLICY`。若现有 snapshot/response/validation 不能提供冻结字段，必须 typed fail
+    closed，不得从中文文案猜测状态。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 八节点状态由明确的 page boundary、canonical snapshot fields、exact response 或 independent
@@ -34,38 +35,46 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2072
-    row_sha256: e802057534e813ec1b66795ddae4325d55cdbcb377a8b286f2e7020d951b07cc
+    row_sha256: b7e10f46b00f9817a02fe19f611f069218510ac0e413d4fc28b1db4b43335c6d
     cell_count: 8
     all_cells:
     - TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1
     - Publishing & Experience / Atlas node progress derivation and provenance ledger
     - P1
     - IN_PROGRESS
-    - knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行 formal
-      closeout
-    - 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖 TRADING-2471
-      exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有 snapshot/response/validation
-      不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。
+    - knowledge/reporting/UX owner：Owner 手动刷新 canonical preview 完成 visual acceptance；通过后由
+      coordinator 执行 formal closeout
+    - 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。实现与 focused/static
+      gates 已通过；browser automation 被本地 `file://` URL policy 拒绝且禁止 workaround，明确记录
+      `NOT_EXECUTED_URL_POLICY`。若现有 snapshot/response/validation 不能提供冻结字段，必须 typed
+      fail closed，不得从中文文案猜测状态。
     - 八节点状态由明确的 page boundary、canonical snapshot fields、exact response 或 independent
       validation 确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致 typed fail closed；角色样式与状态颜色独立；明确
       validation≠strategy PASS/投资评级；deterministic、no script/form/external/write、focused/formal/browser
       visual PASS；`production_effect=none`、`broker_action=none`。
-    - 2026-07-31：Owner 采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。
+    - 2026-07-31：Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。实现后
+      HTML=`44641 bytes / SHA-256 b0b4cea837…`，responses/validation SHA 不变；renderer=`7
+      passed`、Atlas/citation=`63 passed`、double-build/static DOM PASS。等待 Owner visual
+      acceptance，状态保持 `IN_PROGRESS`。
     raw_line: '|TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1|Publishing & Experience
       / Atlas node progress derivation and provenance ledger|P1|IN_PROGRESS|knowledge/reporting/UX
-      owner：实现并复核 V1；Owner 验收 canonical preview 后再执行 formal closeout|详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖
-      TRADING-2471 exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有
-      snapshot/response/validation 不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。|八节点状态由明确的
-      page boundary、canonical snapshot fields、exact response 或 independent validation
-      确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致 typed fail closed；角色样式与状态颜色独立；明确
-      validation≠strategy PASS/投资评级；deterministic、no script/form/external/write、focused/formal/browser
-      visual PASS；`production_effect=none`、`broker_action=none`。|2026-07-31：Owner
-      采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。|'
+      owner：Owner 手动刷新 canonical preview 完成 visual acceptance；通过后由 coordinator 执行
+      formal closeout|详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。实现与
+      focused/static gates 已通过；browser automation 被本地 `file://` URL policy 拒绝且禁止 workaround，明确记录
+      `NOT_EXECUTED_URL_POLICY`。若现有 snapshot/response/validation 不能提供冻结字段，必须 typed
+      fail closed，不得从中文文案猜测状态。|八节点状态由明确的 page boundary、canonical snapshot fields、exact
+      response 或 independent validation 确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致
+      typed fail closed；角色样式与状态颜色独立；明确 validation≠strategy PASS/投资评级；deterministic、no
+      script/form/external/write、focused/formal/browser visual PASS；`production_effect=none`、`broker_action=none`。|2026-07-31：Owner
+      token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。实现后
+      HTML=`44641 bytes / SHA-256 b0b4cea837…`，responses/validation SHA 不变；renderer=`7
+      passed`、Atlas/citation=`63 passed`、double-build/static DOM PASS。等待 Owner visual
+      acceptance，状态保持 `IN_PROGRESS`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-e802057534e813ec1b66795d
+  event_id: legacy-import-b7e10f46b00f9817a02fe19f
   task_id: TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -78,12 +87,15 @@ initial_event:
   to_status: IN_PROGRESS
   payload:
     priority: P1
-    next_owner: knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行
-      formal closeout
-    notes: 2026-07-31：Owner 采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。
+    next_owner: knowledge/reporting/UX owner：Owner 手动刷新 canonical preview 完成 visual
+      acceptance；通过后由 coordinator 执行 formal closeout
+    notes: 2026-07-31：Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。实现后
+      HTML=`44641 bytes / SHA-256 b0b4cea837…`，responses/validation SHA 不变；renderer=`7
+      passed`、Atlas/citation=`63 passed`、double-build/static DOM PASS。等待 Owner visual
+      acceptance，状态保持 `IN_PROGRESS`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:e802057534e813ec1b66795ddae4325d55cdbcb377a8b286f2e7020d951b07cc
+  - sha256:b7e10f46b00f9817a02fe19f611f069218510ac0e413d4fc28b1db4b43335c6d
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -91,18 +103,22 @@ projection:
   - Publishing & Experience / Atlas node progress derivation and provenance ledger
   - P1
   - IN_PROGRESS
-  - knowledge/reporting/UX owner：实现并复核 V1；Owner 验收 canonical preview 后再执行 formal closeout
-  - 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。依赖 TRADING-2471
-    exact main `77ef1e17817e7638d10f665963ed0a319c9ce448`；无实现 blocker。若现有 snapshot/response/validation
-    不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。
+  - knowledge/reporting/UX owner：Owner 手动刷新 canonical preview 完成 visual acceptance；通过后由
+    coordinator 执行 formal closeout
+  - 详见 `docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md`。实现与 focused/static
+    gates 已通过；browser automation 被本地 `file://` URL policy 拒绝且禁止 workaround，明确记录 `NOT_EXECUTED_URL_POLICY`。若现有
+    snapshot/response/validation 不能提供冻结字段，必须 typed fail closed，不得从中文文案猜测状态。
   - 八节点状态由明确的 page boundary、canonical snapshot fields、exact response 或 independent
     validation 确定；每节点显示“为什么”、source kind 与 exact ref；缺失/重复/不一致 typed fail closed；角色样式与状态颜色独立；明确
     validation≠strategy PASS/投资评级；deterministic、no script/form/external/write、focused/formal/browser
     visual PASS；`production_effect=none`、`broker_action=none`。
-  - 2026-07-31：Owner 采纳后续顺序并要求继续推进；任务登记进入 `IN_PROGRESS`。Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。
+  - 2026-07-31：Owner token=`owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1`。实现后
+    HTML=`44641 bytes / SHA-256 b0b4cea837…`，responses/validation SHA 不变；renderer=`7
+    passed`、Atlas/citation=`63 passed`、double-build/static DOM PASS。等待 Owner visual
+    acceptance，状态保持 `IN_PROGRESS`。
   docs_links:
   - docs/requirements/TRADING-2472_Atlas_Node_Status_Provenance_V1.md
   terminal: false
-  raw_row_sha256: e802057534e813ec1b66795ddae4325d55cdbcb377a8b286f2e7020d951b07cc
+  raw_row_sha256: b7e10f46b00f9817a02fe19f611f069218510ac0e413d4fc28b1db4b43335c6d
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 74c29113e0f5363369efef3d86f8edb6657cfba958f77e09a827730ebcfb5764
+fragment_checksum: 62a1d2b1a1cbe79158744752cc820e863234d948d7e896fc546d2af05d70ff08

@@ -51,6 +51,17 @@ class AtlasCitedQueryShowcase:
     diff_payload: Mapping[str, object]
 
 
+@dataclass(frozen=True)
+class _FlowStageStatusProvenance:
+    stage_id: str
+    status_code: str
+    status_label: str
+    status_tone: str
+    source_kind: str
+    reason_zh: str
+    exact_refs: tuple[str, ...]
+
+
 def _build_snapshot_response(
     *,
     question_id: CitedQueryQuestionId,
@@ -99,9 +110,7 @@ def build_cited_query_showcase(
         ),
         _build_snapshot_response(
             question_id=CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS,
-            target_id=target_ids[
-                CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS
-            ],
+            target_id=target_ids[CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS],
             snapshot_payload=snapshot_payload,
         ),
     ]
@@ -144,8 +153,7 @@ def build_cited_query_showcase(
             )
         if validation.status != "PASS":
             raise ValueError(
-                "ATLAS_CITED_QUERY_SHOWCASE_VALIDATION_FAILED:"
-                + ",".join(validation.errors)
+                "ATLAS_CITED_QUERY_SHOWCASE_VALIDATION_FAILED:" + ",".join(validation.errors)
             )
         validations.append(validation)
     return AtlasCitedQueryShowcase(
@@ -159,16 +167,8 @@ def build_cited_query_showcase(
 
 
 def _render_citation(citation: object) -> str:
-    known_at = (
-        "未记录"
-        if citation.known_at is None
-        else citation.known_at.isoformat()
-    )
-    available_at = (
-        "未记录"
-        if citation.available_at is None
-        else citation.available_at.isoformat()
-    )
+    known_at = "未记录" if citation.known_at is None else citation.known_at.isoformat()
+    available_at = "未记录" if citation.available_at is None else citation.available_at.isoformat()
     entity_hashes = (
         f"entity <code>{escape(citation.entity_sha256)}</code>"
         if citation.entity_sha256 is not None
@@ -179,27 +179,26 @@ def _render_citation(citation: object) -> str:
     )
     return (
         '<li class="citation">'
-        f'<p><strong>{escape(citation.source_path)}</strong></p>'
-        f'<p>source_ref <code>{escape(citation.source_ref_id)}</code><br>'
-        f'commit <code>{escape(citation.exact_commit)}</code><br>'
-        f'SHA-256 <code>{escape(citation.source_sha256)}</code></p>'
-        f'<p>as_of <code>{escape(citation.as_of.isoformat())}</code><br>'
-        f'known_at <code>{escape(known_at)}</code><br>'
-        f'available_at <code>{escape(available_at)}</code></p>'
-        f'<p>{entity_hashes}</p>'
+        f"<p><strong>{escape(citation.source_path)}</strong></p>"
+        f"<p>source_ref <code>{escape(citation.source_ref_id)}</code><br>"
+        f"commit <code>{escape(citation.exact_commit)}</code><br>"
+        f"SHA-256 <code>{escape(citation.source_sha256)}</code></p>"
+        f"<p>as_of <code>{escape(citation.as_of.isoformat())}</code><br>"
+        f"known_at <code>{escape(known_at)}</code><br>"
+        f"available_at <code>{escape(available_at)}</code></p>"
+        f"<p>{entity_hashes}</p>"
         "</li>"
     )
 
 
 def _render_response(response: StrategyResearchCitedQueryResponse) -> str:
     prompt = _QUESTION_PROMPTS[response.request.question_id]
-    claims = "".join(
-        f'<p class="claim">{escape(claim.text_zh)}</p>' for claim in response.claims
-    ) or '<p class="claim muted">没有生成未经引用的 claim。</p>'
+    claims = (
+        "".join(f'<p class="claim">{escape(claim.text_zh)}</p>' for claim in response.claims)
+        or '<p class="claim muted">没有生成未经引用的 claim。</p>'
+    )
     limitations = (
-        "<ul>"
-        + "".join(f"<li>{escape(item)}</li>" for item in response.limitations)
-        + "</ul>"
+        "<ul>" + "".join(f"<li>{escape(item)}</li>" for item in response.limitations) + "</ul>"
         if response.limitations
         else '<p class="good">没有额外证据限制。</p>'
     )
@@ -233,10 +232,210 @@ def _render_response(response: StrategyResearchCitedQueryResponse) -> str:
     """
 
 
+def _require_exact_flow_entity(
+    payload: Mapping[str, object],
+    *,
+    collection_name: str,
+    identity_field: str,
+    target_id: str,
+) -> Mapping[str, object]:
+    collection = payload.get(collection_name)
+    if not isinstance(collection, list):
+        raise ValueError(
+            "ATLAS_CITED_QUERY_FLOW_STATUS_ENTITY_COLLECTION_INVALID:" + collection_name
+        )
+    matches = [
+        item
+        for item in collection
+        if isinstance(item, Mapping) and item.get(identity_field) == target_id
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "ATLAS_CITED_QUERY_FLOW_STATUS_ENTITY_SET_INVALID:" + collection_name + ":" + target_id
+        )
+    return matches[0]
+
+
+def _build_flow_status_provenance(
+    showcase: AtlasCitedQueryShowcase,
+) -> tuple[_FlowStageStatusProvenance, ...]:
+    by_question = {item.request.question_id: item for item in showcase.responses}
+    if len(by_question) != len(showcase.responses) or set(by_question) != set(CitedQueryQuestionId):
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_FOCUS_QUESTION_SET_INVALID")
+
+    response_ids = tuple(item.response_id for item in showcase.responses)
+    if any(not item for item in response_ids) or len(set(response_ids)) != len(response_ids):
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_RESPONSE_ID_SET_INVALID")
+    validation_by_response: dict[str, CitedQueryValidationResult] = {}
+    for validation in showcase.validations:
+        if not validation.response_id or validation.response_id in validation_by_response:
+            raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_VALIDATION_SET_INVALID")
+        validation_by_response[validation.response_id] = validation
+    if set(validation_by_response) != set(response_ids):
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_VALIDATION_SET_INVALID")
+    for response in showcase.responses:
+        validation = validation_by_response[response.response_id]
+        if validation.request_id != response.request.request_id or validation.status != "PASS":
+            raise ValueError(
+                "ATLAS_CITED_QUERY_FLOW_STATUS_VALIDATION_BINDING_INVALID:" + response.response_id
+            )
+
+    snapshot_id = str(showcase.snapshot_payload.get("snapshot_id", ""))
+    diff_id = str(showcase.diff_payload.get("diff_id", ""))
+    if not snapshot_id or not diff_id:
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_ARTIFACT_ID_MISSING")
+
+    research_response = by_question[CitedQueryQuestionId.RESEARCH_MAINLINE_SUMMARY]
+    research_node = _require_exact_flow_entity(
+        showcase.snapshot_payload,
+        collection_name="nodes",
+        identity_field="node_id",
+        target_id=research_response.request.target_id,
+    )
+    research_raw_status = research_node.get("raw_status")
+    if research_raw_status != "RUNNING":
+        raise ValueError(
+            "ATLAS_CITED_QUERY_FLOW_STATUS_RESEARCH_STATE_INVALID:" + str(research_raw_status)
+        )
+
+    result_response = by_question[CitedQueryQuestionId.RESULT_AND_STATUS]
+    result = _require_exact_flow_entity(
+        showcase.snapshot_payload,
+        collection_name="results",
+        identity_field="result_id",
+        target_id=result_response.request.target_id,
+    )
+    result_display_status = result.get("display_status")
+    if result_display_status != "LIMITED":
+        raise ValueError(
+            "ATLAS_CITED_QUERY_FLOW_STATUS_RESULT_STATE_INVALID:" + str(result_display_status)
+        )
+
+    attribution_response = by_question[CitedQueryQuestionId.ATTRIBUTION_AND_LIMITATIONS]
+    attribution = _require_exact_flow_entity(
+        showcase.snapshot_payload,
+        collection_name="attributions",
+        identity_field="attribution_id",
+        target_id=attribution_response.request.target_id,
+    )
+    attribution_result_id = attribution.get("result_id")
+    if attribution_result_id != result_response.request.target_id:
+        raise ValueError(
+            "ATLAS_CITED_QUERY_FLOW_STATUS_ATTRIBUTION_RESULT_MISMATCH:"
+            + str(attribution_result_id)
+        )
+
+    diff_response = by_question[CitedQueryQuestionId.SNAPSHOT_CHANGE_EXPLANATION]
+    diff_validation = validation_by_response[diff_response.response_id]
+    validation_refs = tuple(
+        "response_id="
+        + response.response_id
+        + " · request_id="
+        + response.request.request_id
+        + " · validation=PASS"
+        for response in showcase.responses
+    )
+    statuses = (
+        _FlowStageStatusProvenance(
+            stage_id="DATA_INPUTS",
+            status_code="NOT_EXECUTED_BY_PAGE",
+            status_label="本页未执行",
+            status_tone="progress-neutral",
+            source_kind="PAGE_EXECUTION_BOUNDARY",
+            reason_zh="本页只读取 Atlas artifacts，不读取或执行市场、宏观、基本面及人工治理输入。",
+            exact_refs=("renderer_scope:market_inputs=not_executed",),
+        ),
+        _FlowStageStatusProvenance(
+            stage_id="DATA_QUALITY_GATE",
+            status_code="NOT_EXECUTED_BY_PAGE",
+            status_label="本页未执行",
+            status_tone="progress-neutral",
+            source_kind="PAGE_EXECUTION_BOUNDARY",
+            reason_zh="本页没有运行 aits validate-data 或等价 DQ gate；这不是数据质量 FAIL。",
+            exact_refs=("renderer_scope:aits_validate_data=not_executed",),
+        ),
+        _FlowStageStatusProvenance(
+            stage_id="RESEARCH_MAINLINE",
+            status_code="IN_PROGRESS",
+            status_label="研究进行中",
+            status_tone="progress-active",
+            source_kind="CANONICAL_SNAPSHOT_FIELD",
+            reason_zh="canonical snapshot 中当前研究主线节点的 raw_status 为 RUNNING。",
+            exact_refs=(
+                f"snapshot_id={snapshot_id} · node_id={research_response.request.target_id} · raw_status=RUNNING",
+                f"response_id={research_response.response_id}",
+            ),
+        ),
+        _FlowStageStatusProvenance(
+            stage_id="BACKTEST_AND_EVALUATION",
+            status_code="LIMITED",
+            status_label="证据有限",
+            status_tone="progress-limited",
+            source_kind="CANONICAL_SNAPSHOT_FIELD",
+            reason_zh="canonical result card 的 display_status 为 LIMITED，证据限制保持原样。",
+            exact_refs=(
+                f"snapshot_id={snapshot_id} · result_id={result_response.request.target_id} · display_status=LIMITED",
+                f"response_id={result_response.response_id}",
+            ),
+        ),
+        _FlowStageStatusProvenance(
+            stage_id="RESULT_ATTRIBUTION",
+            status_code="LIMITED",
+            status_label="证据有限",
+            status_tone="progress-limited",
+            source_kind="CANONICAL_SNAPSHOT_RELATION",
+            reason_zh="exact attribution 指向上述 LIMITED result；归因不能把结果升级为策略通过。",
+            exact_refs=(
+                f"snapshot_id={snapshot_id} · attribution_id={attribution_response.request.target_id} · result_id={attribution_result_id}",
+                f"response_id={attribution_response.response_id}",
+            ),
+        ),
+        _FlowStageStatusProvenance(
+            stage_id="ATLAS_SNAPSHOT_DIFF",
+            status_code="VALIDATED",
+            status_label="已验证",
+            status_tone="progress-validated",
+            source_kind="INDEPENDENT_VALIDATION",
+            reason_zh="exact snapshot change response 的独立 validator 为 PASS；这里只验证证据结构与引用闭包。",
+            exact_refs=(
+                f"diff_id={diff_id} · change_id={diff_response.request.target_id}",
+                f"response_id={diff_response.response_id} · request_id={diff_validation.request_id} · validation=PASS",
+            ),
+        ),
+        _FlowStageStatusProvenance(
+            stage_id="CITATION_FIRST_QUERY",
+            status_code="VALIDATED",
+            status_label="已验证",
+            status_tone="progress-validated",
+            source_kind="INDEPENDENT_VALIDATION_SET",
+            reason_zh="五个 exact responses 均与各自 independent validation 一一绑定且为 PASS。",
+            exact_refs=validation_refs,
+        ),
+        _FlowStageStatusProvenance(
+            stage_id="OWNER_DECISION_BOUNDARY",
+            status_code="PENDING_OWNER_REVIEW",
+            status_label="待人工复核",
+            status_tone="progress-review",
+            source_kind="OWNER_REVIEW_POLICY",
+            reason_zh="页面无自动 promotion；后续推进、停止或新增任务必须由 Owner 人工决定。",
+            exact_refs=(
+                "owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1",
+            ),
+        ),
+    )
+    if len({item.stage_id for item in statuses}) != len(statuses) or any(
+        not item.source_kind
+        or not item.reason_zh
+        or not item.exact_refs
+        or any(not ref for ref in item.exact_refs)
+        for item in statuses
+    ):
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_PROVENANCE_INVALID")
+    return statuses
+
+
 def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
-    by_question = {
-        item.request.question_id: item for item in showcase.responses
-    }
+    by_question = {item.request.question_id: item for item in showcase.responses}
     if set(by_question) != set(CitedQueryQuestionId):
         raise ValueError("ATLAS_CITED_QUERY_FLOW_FOCUS_QUESTION_SET_INVALID")
 
@@ -270,25 +469,22 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
     focus_ledger = "".join(
         (
             '<li class="focus-item">'
-            f'<span><strong>{escape(label)}</strong>'
-            f'<small>{escape(stage)}</small></span>'
-            f'<code>{escape(response.request.target_id)}</code>'
+            f"<span><strong>{escape(label)}</strong>"
+            f"<small>{escape(stage)}</small></span>"
+            f"<code>{escape(response.request.target_id)}</code>"
             f'<span class="focus-status">'
-            f'{escape(_STATUS_LABELS[response.answer_status])}</span>'
+            f"{escape(_STATUS_LABELS[response.answer_status])}</span>"
             "</li>"
         )
         for label, stage, response in focus_rows
     )
-    stages = (
+    stage_definitions = (
         (
             "DATA_INPUTS",
             "数据与治理输入",
             "市场、宏观、基本面与人工治理信息。",
             "flow-context",
             "上游上下文",
-            "NOT_EXECUTED_BY_PAGE",
-            "本页未执行",
-            "progress-neutral",
         ),
         (
             "DATA_QUALITY_GATE",
@@ -296,9 +492,6 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Schema、完整性、新鲜度、PIT 与 validate-data。",
             "flow-context",
             "上游上下文",
-            "NOT_EXECUTED_BY_PAGE",
-            "本页未执行",
-            "progress-neutral",
         ),
         (
             "RESEARCH_MAINLINE",
@@ -306,9 +499,6 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "研究问题、策略路径与候选方法。",
             "flow-focus",
             "当前研究关注",
-            "IN_PROGRESS",
-            "研究进行中",
-            "progress-active",
         ),
         (
             "BACKTEST_AND_EVALUATION",
@@ -316,9 +506,6 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Primary window、OOS、stress 与结果状态。",
             "flow-focus",
             "当前研究关注",
-            "LIMITED",
-            "证据有限",
-            "progress-limited",
         ),
         (
             "RESULT_ATTRIBUTION",
@@ -326,9 +513,6 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "实际结果、驱动因素、限制与失败原因。",
             "flow-focus",
             "当前研究关注",
-            "LIMITED",
-            "证据有限",
-            "progress-limited",
         ),
         (
             "ATLAS_SNAPSHOT_DIFF",
@@ -336,9 +520,6 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Validated snapshot、diff、source lineage。",
             "flow-focus",
             "当前研究关注",
-            "VALIDATED",
-            "已验证",
-            "progress-validated",
         ),
         (
             "CITATION_FIRST_QUERY",
@@ -346,9 +527,6 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "五个固定问题、claim 与 citation closure。",
             "flow-current",
             "你在这里",
-            "VALIDATED",
-            "已验证",
-            "progress-validated",
         ),
         (
             "OWNER_DECISION_BOUNDARY",
@@ -356,16 +534,17 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "人工复核、后续任务或明确停止，不自动 promotion。",
             "flow-boundary",
             "本页以外",
-            "PENDING_OWNER_REVIEW",
-            "待人工复核",
-            "progress-review",
         ),
     )
+    status_provenance = _build_flow_status_provenance(showcase)
+    status_by_stage = {item.stage_id: item for item in status_provenance}
+    if set(status_by_stage) != {item[0] for item in stage_definitions}:
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_STAGE_SET_INVALID")
     stage_cards = "".join(
         (
             f'<li class="flow-stage {escape(role_tone)}" '
             f'data-stage="{escape(stage_id)}" '
-            f'data-progress-status="{escape(progress_code)}"'
+            f'data-progress-status="{escape(status_by_stage[stage_id].status_code)}"'
             + (' aria-current="step"' if role_tone == "flow-current" else "")
             + ">"
             '<div class="stage-top">'
@@ -375,10 +554,10 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             f"<h3>{escape(title)}</h3>"
             f"<p>{escape(description)}</p>"
             f'<code class="stage-id">{escape(stage_id)}</code>'
-            f'<div class="stage-progress {escape(progress_tone)}">'
+            f'<div class="stage-progress {escape(status_by_stage[stage_id].status_tone)}">'
             '<span class="progress-dot" aria-hidden="true"></span>'
-            f"<strong>{escape(progress_label)}</strong>"
-            f"<code>{escape(progress_code)}</code>"
+            f"<strong>{escape(status_by_stage[stage_id].status_label)}</strong>"
+            f"<code>{escape(status_by_stage[stage_id].status_code)}</code>"
             "</div>"
             "</li>"
         )
@@ -388,10 +567,29 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             description,
             role_tone,
             role_badge,
-            progress_code,
-            progress_label,
-            progress_tone,
-        ) in enumerate(stages, start=1)
+        ) in enumerate(stage_definitions, start=1)
+    )
+    provenance_ledger = "".join(
+        (
+            f'<li class="provenance-item" data-provenance-stage="{escape(item.stage_id)}" '
+            f'data-provenance-source="{escape(item.source_kind)}">'
+            '<div class="provenance-head">'
+            f'<code class="provenance-stage">{escape(item.stage_id)}</code>'
+            f'<span class="provenance-status {escape(item.status_tone)}">'
+            '<i aria-hidden="true"></i>'
+            f"{escape(item.status_label)}</span>"
+            "</div>"
+            f'<p class="provenance-reason">{escape(item.reason_zh)}</p>'
+            "<details>"
+            "<summary>查看 exact 状态依据</summary>"
+            f'<p class="provenance-source">source kind <code>{escape(item.source_kind)}</code></p>'
+            '<ul class="provenance-refs">'
+            + "".join(f"<li><code>{escape(ref)}</code></li>" for ref in item.exact_refs)
+            + "</ul>"
+            "</details>"
+            "</li>"
+        )
+        for item in status_provenance
     )
     return f"""
     <section class="flow-map" aria-labelledby="system-flow-title">
@@ -431,6 +629,15 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         </div>
         <ul class="focus-ledger">{focus_ledger}</ul>
       </div>
+      <section class="provenance-panel" aria-labelledby="status-provenance-title">
+        <div class="provenance-copy">
+          <p class="section-kicker">STATUS PROVENANCE · STRUCTURED FIELDS ONLY</p>
+          <h3 id="status-provenance-title">状态依据台账</h3>
+          <p>为什么是这个状态？每条都绑定页面边界、canonical structured field、exact relation 或 independent validation；不从中文文案猜测。</p>
+        </div>
+        <ol class="provenance-ledger">{provenance_ledger}</ol>
+        <p class="provenance-boundary"><strong>怎样理解：</strong><code>VALIDATED</code> 只表示 evidence response/diff 的 validator PASS，不等于 strategy PASS 或投资评级；<code>LIMITED</code> 保留证据限制；<code>NOT_EXECUTED_BY_PAGE</code> 不是 DQ FAIL。</p>
+      </section>
       <p class="flow-safety"><strong>边界：</strong>本页只读取已验证的 Atlas snapshot/diff 并展示引用；不会运行 <code>aits validate-data</code>、回测、promotion、production 或 broker action。</p>
     </section>
     """
@@ -442,16 +649,13 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     if any(item.status != "PASS" for item in showcase.validations):
         raise ValueError("ATLAS_CITED_QUERY_SHOWCASE_VALIDATION_NOT_PASS")
     answered = sum(
-        item.answer_status is CitedQueryAnswerStatus.ANSWERED
-        for item in showcase.responses
+        item.answer_status is CitedQueryAnswerStatus.ANSWERED for item in showcase.responses
     )
     limited = sum(
-        item.answer_status is CitedQueryAnswerStatus.LIMITED
-        for item in showcase.responses
+        item.answer_status is CitedQueryAnswerStatus.LIMITED for item in showcase.responses
     )
     blocked = sum(
-        item.answer_status is CitedQueryAnswerStatus.BLOCKED
-        for item in showcase.responses
+        item.answer_status is CitedQueryAnswerStatus.BLOCKED for item in showcase.responses
     )
     navigation = "".join(
         f'<a href="#{escape(item.request.question_id.value.lower())}">'
@@ -543,6 +747,23 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .focus-item small {{ color:var(--muted); }}
     .focus-item code {{ display:block; margin:.28rem 0; font-size:.68rem; overflow-wrap:anywhere; }}
     .focus-status {{ color:var(--amber); font-size:.68rem; font-weight:800; }}
+    .provenance-panel {{ margin-top:1rem; padding:1rem; border:1px solid #dfe5ee; border-radius:.82rem; background:#fafbfc; }}
+    .provenance-copy {{ display:flex; align-items:end; justify-content:space-between; gap:1rem; margin-bottom:.75rem; }}
+    .provenance-copy h3 {{ margin:.2rem 0 0; font-size:1.1rem; }}
+    .provenance-copy > p:last-child {{ max-width:650px; margin:0; color:var(--muted); font-size:.78rem; }}
+    .provenance-ledger {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; margin:0; padding:0; list-style:none; }}
+    .provenance-item {{ min-width:0; padding:.7rem .75rem; border:1px solid #dfe5ee; border-radius:.68rem; background:#fff; }}
+    .provenance-head {{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; }}
+    .provenance-stage {{ color:#526176; font-size:.66rem; font-weight:800; }}
+    .provenance-status {{ display:inline-flex; align-items:center; gap:.3rem; white-space:nowrap; font-size:.68rem; font-weight:850; }}
+    .provenance-status i {{ width:.52rem; height:.52rem; flex:0 0 .52rem; border-radius:50%; background:currentColor; }}
+    .provenance-reason {{ margin:.45rem 0; color:#465368; font-size:.76rem; line-height:1.45; }}
+    .provenance-item details {{ border:0; background:transparent; }}
+    .provenance-item summary {{ padding:.2rem 0; color:var(--blue); font-size:.7rem; }}
+    .provenance-source {{ margin:.35rem 0; color:var(--muted); font-size:.68rem; }}
+    .provenance-refs {{ margin:.25rem 0 0; padding-left:1.1rem; }}
+    .provenance-refs li {{ margin:.2rem 0; color:var(--muted); font-size:.64rem; overflow-wrap:anywhere; }}
+    .provenance-boundary {{ margin:.75rem 0 0; color:var(--muted); font-size:.72rem; }}
     .flow-safety {{ margin:1rem 0 0; padding:.75rem .9rem; border-left:4px solid var(--amber); border-radius:.45rem; color:#6e531b; background:#fff8e9; font-size:.78rem; }}
     nav {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.55rem; margin-bottom:1.5rem; }}
     nav a {{ color:var(--navy); padding:.75rem; border:1px solid var(--line); border-radius:.7rem; background:#fff; text-decoration:none; font-size:.82rem; font-weight:750; }}
@@ -573,7 +794,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
     @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage::after,.flow-stage:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:50%; bottom:auto; transform:translateY(-50%); }} .flow-stage:nth-child(2)::after,.flow-stage:nth-child(4)::after,.flow-stage:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage:nth-child(3)::after,.flow-stage:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:50%; bottom:auto; transform:translateY(-50%); }} .flow-stage:nth-child(8)::after {{ display:none; }} .focus-panel {{ grid-template-columns:1fr; }} nav {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav,.focus-ledger {{ grid-template-columns:1fr; }} .flow-map {{ padding:1rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage {{ min-height:0; }} .flow-stage::after,.flow-stage:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage:nth-child(8)::after {{ display:none; }} .answer-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger {{ grid-template-columns:1fr; }} .flow-map {{ padding:1rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage {{ min-height:0; }} .flow-stage::after,.flow-stage:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage:nth-child(8)::after {{ display:none; }} .answer-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
 </head>
@@ -631,9 +852,7 @@ def cited_query_validations_json_bytes(
 ) -> bytes:
     payload = {
         "schema_version": "atlas_cited_query_validation_set.v1",
-        "status": (
-            "PASS" if all(item.status == "PASS" for item in validations) else "FAIL"
-        ),
+        "status": ("PASS" if all(item.status == "PASS" for item in validations) else "FAIL"),
         "validation_count": len(validations),
         "validations": [item.to_dict() for item in validations],
         "production_effect": "none",
@@ -660,9 +879,7 @@ def write_cited_query_artifacts(
     payloads = {
         "index.html": render_cited_query_html(showcase).encode("utf-8"),
         "responses.json": cited_query_responses_json_bytes(showcase.responses),
-        "validation.json": cited_query_validations_json_bytes(
-            showcase.validations
-        ),
+        "validation.json": cited_query_validations_json_bytes(showcase.validations),
     }
     artifacts: list[AtlasCitedQueryRenderedArtifact] = []
     for name, payload in payloads.items():

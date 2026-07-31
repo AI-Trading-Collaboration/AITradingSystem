@@ -54,6 +54,18 @@ Atlas diff/citation-first query=`VALIDATED`，Owner boundary=`PENDING_OWNER_REVI
 节点边框/底色表达流程角色，状态胶囊颜色表达当前 evidence view 的进展；二者都配套文字，
 状态不代表 strategy PASS、投资评级、promotion 或 production readiness。
 
+TRADING-2472 把上述 display-only 固定状态升级为 deterministic status provenance。
+`RESEARCH_MAINLINE` 只读取 exact snapshot node 的 `raw_status=RUNNING`；
+`BACKTEST_AND_EVALUATION` 只读取 exact result 的 `display_status=LIMITED`；
+`RESULT_ATTRIBUTION` 必须通过 attribution `result_id` 精确指向该 result；Atlas diff 与
+citation-first query 的 `VALIDATED` 必须分别绑定 exact response validation 和五个
+response↔validation 一一对应的 PASS 集合。数据输入/DQ 继续来自
+`PAGE_EXECUTION_BOUNDARY`，Owner 节点继续来自 `OWNER_REVIEW_POLICY`。任何 question、
+entity、relation、response/validation 缺失、重复或不一致都会停止生成 HTML，不从中文 claim、
+标题或摘要猜测状态。页面增加八条“状态依据台账”，展示通俗理由、source kind 与 exact refs；
+validator PASS 仍只表示 evidence structure/citation closure valid，不是 strategy PASS、DQ PASS、
+投资评级或自动 promotion。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -78,7 +90,8 @@ flowchart LR
     DIFF --> QRY
     QRY --> QVAL["Independent response validation<br/>entity hash + source coverage + closure"]
     QVAL --> QMAP["TRADING-2471 system flow focus map<br/>8 stages + exact-ID current focus"]
-    QMAP --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
+    QMAP --> QPROV["TRADING-2472 status provenance<br/>structured fields + exact validation refs"]
+    QPROV --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]

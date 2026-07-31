@@ -132,3 +132,11 @@ Coordinator-owned：
 - 2026-07-31：Owner 验收 TRADING-2471 visual 后确认继续推进后续任务；按已采纳顺序登记
   TRADING-2472，目标是让节点状态从“颜色与标签”升级为“可解释、可定位、可复核”的
   provenance view。当前无公共 schema、DQ、策略、production 或 broker 变更授权。
+- 2026-07-31：八节点 structured-field/status-boundary derivation、八条 provenance ledger 与
+  typed fail-closed tests 已实现。renderer focused=`7 passed`、完整 Atlas/citation focused=
+  `63 passed`、Ruff/Black PASS；canonical double-build byte-identical，新 `index.html`=
+  `44641 bytes / SHA-256 b0b4cea837a06bec55bb2ff55f7a6d3cb4b98ea219360b7242874238631ebba5`，
+  `responses.json`/`validation.json` SHA 保持 `d3317e3f…`/`dd17b181…`。static DOM audit
+  确认 `8 stages / 8 provenance rows / 1 current / no external` 与 900/620px breakpoints。
+  Browser automation 刷新本地 `file://` 时仍被 URL policy 拒绝并禁止 workaround，明确记录
+  `NOT_EXECUTED_URL_POLICY`；等待 Owner 手动刷新 canonical preview 完成 visual acceptance。
