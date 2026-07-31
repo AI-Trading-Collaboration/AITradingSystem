@@ -13,8 +13,8 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: knowledge/reporting/UX owner：节点进展状态、static audit 与 focused 验证已完成；Owner
-    在已打开页面刷新后做人工 visual review；随后执行 generated authority、formal 与 governed closeout
+  next_owner: governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal
+    tiers、local-main integration 与默认 ordinary push
   requirement_refs:
   - docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md
   module_ids: []
@@ -22,56 +22,53 @@ task_record:
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
     snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略
-    PASS/投资评级。renderer focused=`4 passed`，double-build byte-identical。当前 Browser URL
-    policy 阻止自动刷新本地 `file://` 且禁止 workaround，故 browser visual=`NOT_EXECUTED_URL_POLICY`；不影响
-    static checks，但完成状态等待 Owner 人工复核。
+    PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在
+    canonical 本地页面手工验收，单独记录 `OWNER_MANUAL_VISUAL_PASS`。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 八阶段顺序稳定；`CITATION_FIRST_QUERY` 唯一当前位置；五个 canonical target IDs 可审计；八节点状态码/中文标签/五色图例精确匹配；缺失/重复
       question 或 target typed fail closed；1280px/窄屏无页面级横向溢出；no script/form/external/write；double-build、focused、generated
-      authority、formal 与 browser visual PASS；`production_effect=none`、`broker_action=none`。
+      authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 290a7d81f13d3b5d660d5f0eeee256140e2c354e484a4f154a346ec2ce46bae4
+  row_sha256: 6eb59c0ceb077bac891d1e713ae669fab7d6ba87a1d6fdb5d3adf3f7e266eb78
   cell_count: 8
   all_cells:
   - TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
   - Publishing & Experience / Atlas whole-system flow and current-focus map
   - P1
-  - IN_PROGRESS
-  - knowledge/reporting/UX owner：节点进展状态、static audit 与 focused 验证已完成；Owner 在已打开页面刷新后做人工
-    visual review；随后执行 generated authority、formal 与 governed closeout
+  - VALIDATING
+  - governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal tiers、local-main
+    integration 与默认 ordinary push
   - 详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
     snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略
-    PASS/投资评级。renderer focused=`4 passed`，double-build byte-identical。当前 Browser URL
-    policy 阻止自动刷新本地 `file://` 且禁止 workaround，故 browser visual=`NOT_EXECUTED_URL_POLICY`；不影响
-    static checks，但完成状态等待 Owner 人工复核。
+    PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在
+    canonical 本地页面手工验收，单独记录 `OWNER_MANUAL_VISUAL_PASS`。
   - 八阶段顺序稳定；`CITATION_FIRST_QUERY` 唯一当前位置；五个 canonical target IDs 可审计；八节点状态码/中文标签/五色图例精确匹配；缺失/重复
     question 或 target typed fail closed；1280px/窄屏无页面级横向溢出；no script/form/external/write；double-build、focused、generated
-    authority、formal 与 browser visual PASS；`production_effect=none`、`broker_action=none`。
-  - 2026-07-31：新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation SHA
-    不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 / no
-    external`；未授权公共 query contract、策略语义、数据、production 或 broker 变化。
+    authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-07-31：Owner 已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation
+    SHA 不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 /
+    no external`；开始正式验证与 governed closeout。
   raw_line: '|TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1|Publishing & Experience
-    / Atlas whole-system flow and current-focus map|P1|IN_PROGRESS|knowledge/reporting/UX
-    owner：节点进展状态、static audit 与 focused 验证已完成；Owner 在已打开页面刷新后做人工 visual review；随后执行
-    generated authority、formal 与 governed closeout|详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
+    / Atlas whole-system flow and current-focus map|P1|VALIDATING|governed closeout
+    coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal tiers、local-main integration
+    与默认 ordinary push|详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
     snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略
-    PASS/投资评级。renderer focused=`4 passed`，double-build byte-identical。当前 Browser URL
-    policy 阻止自动刷新本地 `file://` 且禁止 workaround，故 browser visual=`NOT_EXECUTED_URL_POLICY`；不影响
-    static checks，但完成状态等待 Owner 人工复核。|八阶段顺序稳定；`CITATION_FIRST_QUERY` 唯一当前位置；五个 canonical
-    target IDs 可审计；八节点状态码/中文标签/五色图例精确匹配；缺失/重复 question 或 target typed fail closed；1280px/窄屏无页面级横向溢出；no
-    script/form/external/write；double-build、focused、generated authority、formal 与 browser
-    visual PASS；`production_effect=none`、`broker_action=none`。|2026-07-31：新 HTML=`34751
-    bytes / SHA-256 c0f3eb5507…`，responses/validation SHA 不变；static DOM audit=`8 stages
-    / 1 current / 5 focus / progress 2-1-2-2-1 / no external`；未授权公共 query contract、策略语义、数据、production
-    或 broker 变化。|'
+    PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在
+    canonical 本地页面手工验收，单独记录 `OWNER_MANUAL_VISUAL_PASS`。|八阶段顺序稳定；`CITATION_FIRST_QUERY`
+    唯一当前位置；五个 canonical target IDs 可审计；八节点状态码/中文标签/五色图例精确匹配；缺失/重复 question 或 target
+    typed fail closed；1280px/窄屏无页面级横向溢出；no script/form/external/write；double-build、focused、generated
+    authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。|2026-07-31：Owner
+    已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation SHA 不变；static
+    DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 / no external`；开始正式验证与
+    governed closeout。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-290a7d81f13d3b5d660d5f0e
+  event_id: legacy-import-6eb59c0ceb077bac891d1e71
   task_id: TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -81,41 +78,40 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: VALIDATING
   payload:
     priority: P1
-    next_owner: knowledge/reporting/UX owner：节点进展状态、static audit 与 focused 验证已完成；Owner
-      在已打开页面刷新后做人工 visual review；随后执行 generated authority、formal 与 governed closeout
-    notes: 2026-07-31：新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation
+    next_owner: governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal
+      tiers、local-main integration 与默认 ordinary push
+    notes: 2026-07-31：Owner 已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation
       SHA 不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1
-      / no external`；未授权公共 query contract、策略语义、数据、production 或 broker 变化。
+      / no external`；开始正式验证与 governed closeout。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:290a7d81f13d3b5d660d5f0eeee256140e2c354e484a4f154a346ec2ce46bae4
+  - sha256:6eb59c0ceb077bac891d1e713ae669fab7d6ba87a1d6fdb5d3adf3f7e266eb78
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
   - Publishing & Experience / Atlas whole-system flow and current-focus map
   - P1
-  - IN_PROGRESS
-  - knowledge/reporting/UX owner：节点进展状态、static audit 与 focused 验证已完成；Owner 在已打开页面刷新后做人工
-    visual review；随后执行 generated authority、formal 与 governed closeout
+  - VALIDATING
+  - governed closeout coordinator：Owner 手工视觉验收已通过；执行 generated authority、formal tiers、local-main
+    integration 与默认 ordinary push
   - 详见 `docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md`。八阶段
     snake flow、“你在这里”第7阶段、五个 exact-ID focus rows 与节点进展状态胶囊已实现；角色样式和进展颜色保持独立，进展状态不代表策略
-    PASS/投资评级。renderer focused=`4 passed`，double-build byte-identical。当前 Browser URL
-    policy 阻止自动刷新本地 `file://` 且禁止 workaround，故 browser visual=`NOT_EXECUTED_URL_POLICY`；不影响
-    static checks，但完成状态等待 Owner 人工复核。
+    PASS/投资评级。Browser automation 因 URL policy 保持 `NOT_EXECUTED_URL_POLICY`；Owner 已在
+    canonical 本地页面手工验收，单独记录 `OWNER_MANUAL_VISUAL_PASS`。
   - 八阶段顺序稳定；`CITATION_FIRST_QUERY` 唯一当前位置；五个 canonical target IDs 可审计；八节点状态码/中文标签/五色图例精确匹配；缺失/重复
     question 或 target typed fail closed；1280px/窄屏无页面级横向溢出；no script/form/external/write；double-build、focused、generated
-    authority、formal 与 browser visual PASS；`production_effect=none`、`broker_action=none`。
-  - 2026-07-31：新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation SHA
-    不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 / no
-    external`；未授权公共 query contract、策略语义、数据、production 或 broker 变化。
+    authority、formal 与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-07-31：Owner 已验收页面视觉；新 HTML=`34751 bytes / SHA-256 c0f3eb5507…`，responses/validation
+    SHA 不变；static DOM audit=`8 stages / 1 current / 5 focus / progress 2-1-2-2-1 /
+    no external`；开始正式验证与 governed closeout。
   docs_links:
   - docs/requirements/TRADING-2471_Atlas_Strategy_System_Flow_Focus_Map_V1.md
   terminal: false
-  raw_row_sha256: 290a7d81f13d3b5d660d5f0eeee256140e2c354e484a4f154a346ec2ce46bae4
+  raw_row_sha256: 6eb59c0ceb077bac891d1e713ae669fab7d6ba87a1d6fdb5d3adf3f7e266eb78
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: 5c96c74766d5f300b23a8f093fde31a685ea62d6426b6f17b7fb3e3fd92a2865
+fragment_checksum: 8267063f966849d7a3b2d47681db1a29fc343f49e18d737016556e893ada58ad

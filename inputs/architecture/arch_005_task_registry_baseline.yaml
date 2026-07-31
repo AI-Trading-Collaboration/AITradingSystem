@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1653600
-    sha256: 0fe2ef2e58b9f85457700404576a8276eb28b347376c6f2f6c034c214fdf642d
+    byte_count: 1653430
+    sha256: 5411a6e8688445de9245bcfc344f223b6e226f6bd57ef4553ca66d7ad5dcc6d4
     row_count: 429
     final_newline: true
     task_id_order_sha256: 4f8d22c9b472abdd514f8bbf51bc672d67bfc8b0cbc16b3dd4712d011fe1bc11
-    row_checksum_order_sha256: 7925e2b6d57aeb07e6248259843302d6b693056e1e1caae2227566e658202ab6
+    row_checksum_order_sha256: fa55736ad405a2cf695d2376fb9a1479250ed3486ebe03945405e0bc2eb4177a
     task_row_newline_counts:
       LF: 429
   - source: completed
@@ -126,13 +126,13 @@ inventory:
     DEFERRED: 1
     DONE: 493
     DROPPED: 12
-    IN_PROGRESS: 7
+    IN_PROGRESS: 6
     PROPOSED: 9
     READY: 1
-    VALIDATING: 266
+    VALIDATING: 267
   task_id_set_sha256: fc7c2b7cf00b93e5a5c1608da575d776f78468806641ccf0a9fc9d01b76a86d2
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 22ff9b522b4f785e225443202e210c6cdd94a966afb09a9363a31d99b4d67016
+  owner_set_sha256: 1579f8f3375933626f7fec99b27b74d7e16ffa3ef3e4c317d69f3ca2c4465db7
   docs_link_set_sha256: 2eb7c8af46db6a0ba12026e31f0970c91bdb7b4ee1d1cc13b274fcb73819b5ae
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3071,7 +3071,7 @@ inventory:
   - task_id: TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
     source: active
     line_number: 2071
-    row_sha256: 290a7d81f13d3b5d660d5f0eeee256140e2c354e484a4f154a346ec2ce46bae4
+    row_sha256: 6eb59c0ceb077bac891d1e713ae669fab7d6ba87a1d6fdb5d3adf3f7e266eb78
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7677,4 +7677,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: f1839cd6a8c8efcf1dd9315c0de6569e99aa382bd66c0749a465218e0f3d2c62
+baseline_checksum: 7addcde527ec07bf653b7a525894a1ba9aa261abaf9568c0fa937dbe4747ef44
