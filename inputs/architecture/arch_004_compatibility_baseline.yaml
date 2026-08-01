@@ -37327,8 +37327,8 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     integration: PASS_995_TESTS_643_WARNINGS_RUNTIME_integration_20260801T062017Z
     reproducibility: PASS_24_TESTS_RUNTIME_reproducibility_20260801T062143Z
     full: PASS_7878_TESTS_3_SKIPPED_643_WARNINGS_RUNTIME_full_20260801T062232Z
-    final_tree_architecture: PENDING
-    final_tree_contract: PENDING
+    final_tree_architecture: PASS_817_TESTS_RUNTIME_architecture-fitness_20260801T065641Z
+    final_tree_contract: PASS_276_TESTS_RUNTIME_contract-validation_20260801T065933Z
   safety:
     snapshot_or_diff_semantics_changed: false
     query_public_contract_changed: false
