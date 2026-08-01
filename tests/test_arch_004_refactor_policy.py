@@ -1515,7 +1515,28 @@ TRADING_2473_EVIDENCE_DRILLDOWN_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2473_EVIDENCE_DRILLDOWN_SECTION
+TRADING_2474_RESULT_LEDGER_SECTION = "phase_trading_2474_atlas_result_ledger_closeout"
+TRADING_2474_RESULT_LEDGER_BASE_COMMIT = "d84ed6915e1f879f64c69683b320663ccce0e1e9"
+TRADING_2474_RESULT_LEDGER_BASELINE_GIT_BLOB = "b4ad9963abdcbf7fd4fc0f62b0deee7196e5743e"
+TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_BYTE_COUNT = 2_297_927
+TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_SHA256 = (
+    "3a471f4d2f1e0cd03bb820bf5d6e780f1e26d5f84dc39cc57cb24acf14c956a7"
+)
+TRADING_2474_RESULT_LEDGER_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2474_RESULT_LEDGER_NEW_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md",
+        (
+            "registry/development_tasks_shadow/active/57/"
+            "579d8c62ba12adf159c282580d7a9120107e03052091effccba1b7447701caf8.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/57/"
+            "579d8c62ba12adf159c282580d7a9120107e03052091effccba1b7447701caf8.yaml"
+        ),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2474_RESULT_LEDGER_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3193,6 +3214,23 @@ def _trading_2473_evidence_drilldown_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2474_result_ledger_base_baseline_blob() -> bytes:
+    object_name = f"{TRADING_2474_RESULT_LEDGER_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2474_RESULT_LEDGER_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -4840,6 +4878,26 @@ def _assert_trading_2473_evidence_drilldown_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2473_EVIDENCE_DRILLDOWN_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2474_result_ledger_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2474 result-ledger historical prefix differs from immutable "
+        "TRADING-2473 evidence-drilldown authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2474_RESULT_LEDGER_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -6934,6 +6992,34 @@ def _trading_2473_evidence_drilldown_all_current_authority_paths() -> frozenset[
 
 
 @cache
+def _trading_2474_result_ledger_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2474_result_ledger_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2474_result_ledger_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2474_RESULT_LEDGER_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2474_result_ledger_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2474_RESULT_LEDGER_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2474_result_ledger_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2474_result_ledger_superseded_live_source_paths()
+        | _trading_2474_result_ledger_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _trading_2463_superseded_live_source_paths()
@@ -8004,6 +8090,11 @@ def _trading_2473_evidence_drilldown_prior_active_source_mismatches() -> frozens
     return _latest_active_source_mismatches(TRADING_2473_EVIDENCE_DRILLDOWN_SECTION)
 
 
+@cache
+def _trading_2474_result_ledger_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2474_RESULT_LEDGER_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -8047,7 +8138,17 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2473_EVIDENCE_DRILLDOWN_SECTION in baseline:
+    if TRADING_2474_RESULT_LEDGER_SECTION in baseline:
+        current_superseded_paths = _trading_2474_result_ledger_superseded_live_source_paths()
+        assert _trading_2474_result_ledger_prior_active_source_mismatches() == (
+            current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2474_RESULT_LEDGER_SECTION
+    elif TRADING_2473_EVIDENCE_DRILLDOWN_SECTION in baseline:
         current_superseded_paths = _trading_2473_evidence_drilldown_superseded_live_source_paths()
         assert (
             _trading_2473_evidence_drilldown_prior_active_source_mismatches()
@@ -18602,7 +18703,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 936
+    assert v2_index["fragment_count"] == 937
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -19784,7 +19885,9 @@ def test_trading_2473_evidence_drilldown_is_current_hash_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2473_EVIDENCE_DRILLDOWN_SECTION
+    assert list(baseline).index(TRADING_2473_EVIDENCE_DRILLDOWN_SECTION) < list(baseline).index(
+        TRADING_2474_RESULT_LEDGER_SECTION
+    )
     phase = baseline[TRADING_2473_EVIDENCE_DRILLDOWN_SECTION]
     assert phase["schema_version"] == (
         "trading_2473_atlas_node_evidence_drilldown_compatibility.v1"
@@ -19833,8 +19936,11 @@ def test_trading_2473_evidence_drilldown_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    current_superseded = _trading_2474_result_ledger_superseded_live_source_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in current_superseded:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
@@ -19923,6 +20029,154 @@ def test_trading_2473_evidence_drilldown_is_current_hash_authority() -> None:
     tampered[TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2473_evidence_drilldown_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2474_result_ledger_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2474_result_ledger_base_baseline_blob()
+    _assert_trading_2474_result_ledger_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2474_RESULT_LEDGER_SECTION
+    phase = baseline[TRADING_2474_RESULT_LEDGER_SECTION]
+    assert phase["schema_version"] == "trading_2474_atlas_result_ledger_compatibility.v1"
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == "TRADING-2474-ATLAS-RESULT-LEDGER"
+    assert phase["task_ids"] == ["TRADING-2474_ATLAS_RESULT_LEDGER_V1"]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1",
+        "owner_decision:TRADING-2474:2026-08-01:accept_atlas_result_ledger_visual_v1",
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2474_RESULT_LEDGER_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2474_RESULT_LEDGER_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(_trading_2474_result_ledger_prior_active_source_mismatches())
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2474_RESULT_LEDGER_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == TRADING_2474_RESULT_LEDGER_NEW_SOURCE_PATHS
+    expected = (
+        superseded | TRADING_2474_RESULT_LEDGER_NEW_SOURCE_PATHS
+    ) - TRADING_2474_RESULT_LEDGER_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2474-ATLAS-RESULT-LEDGER",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2473_EVIDENCE_DRILLDOWN_SECTION,
+        "current_hash_authority": f"{TRADING_2474_RESULT_LEDGER_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["implementation"] == {
+        "visual_source_commit": TRADING_2474_RESULT_LEDGER_BASE_COMMIT,
+        "result_count": 8,
+        "attribution_count": 12,
+        "coverage_scope": "ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS",
+        "historical_repository_coverage_complete": False,
+        "typed_snapshot_revalidated": True,
+        "exact_result_relation_required": True,
+        "raw_display_status_both_visible": True,
+        "native_result_disclosure_count": 8,
+        "javascript_or_network_required": False,
+        "progress_status_is_investment_rating": False,
+        "browser_automation_review": "NOT_EXECUTED_URL_POLICY",
+        "owner_manual_visual_review": "OWNER_MANUAL_VISUAL_PASS",
+        "task_shadow_source": "LEGACY_MARKDOWN_ONLY",
+        "task_shadow_v2_cutover_performed": False,
+    }
+    assert phase["preview_artifacts"] == [
+        {
+            "path": "outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html",
+            "sha256": "b7540d87caf212faca015b71e80a5fe5080342a55d94580f68b61a045492e78a",
+            "size_bytes": 92180,
+        },
+        {
+            "path": (
+                "outputs/atlas/strategy_research_cited_query/" "trading_2470_v1/responses.json"
+            ),
+            "sha256": "d3317e3f7a852a59d323181ed647f07eaf51bc63ec0d9f389cba054f85b32f07",
+            "size_bytes": 15304,
+        },
+        {
+            "path": (
+                "outputs/atlas/strategy_research_cited_query/" "trading_2470_v1/validation.json"
+            ),
+            "sha256": "dd17b1819e48539d7f7d166199c31f80c401453d7c91b2f3176788d2a44f86b4",
+            "size_bytes": 1875,
+        },
+    ]
+    validation = phase["validation"]
+    assert set(validation) == {
+        "renderer_focused",
+        "focused_atlas_contract",
+        "ruff",
+        "black",
+        "mypy",
+        "actual_input_double_build",
+        "static_html_contract",
+        "owner_manual_visual_review",
+        "task_registry",
+        "generated_architecture",
+        "deprecation_inventory",
+        "compatibility_authority",
+        "architecture",
+        "contract",
+        "integration",
+        "reproducibility",
+        "full",
+        "final_tree_architecture",
+        "final_tree_contract",
+    }
+    assert validation["renderer_focused"] == "PASS_8_TESTS"
+    assert validation["focused_atlas_contract"] == "PASS_80_TESTS"
+    assert validation["owner_manual_visual_review"] == "OWNER_MANUAL_VISUAL_PASS"
+    assert all(
+        value == "PENDING" or value == "OWNER_MANUAL_VISUAL_PASS" or str(value).startswith("PASS")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "snapshot_or_diff_semantics_changed": False,
+        "query_public_contract_changed": False,
+        "result_or_attribution_semantics_changed": False,
+        "market_or_cache_read": False,
+        "external_network_used": False,
+        "llm_called": False,
+        "investment_conclusion_generated": False,
+        "data_acquisition_executed": False,
+        "dq_execution_executed": False,
+        "model_training_executed": False,
+        "backtest_executed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2474_RESULT_LEDGER_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2474_result_ledger_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

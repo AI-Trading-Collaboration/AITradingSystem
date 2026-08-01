@@ -7,12 +7,18 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
 ```text
 owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1
+```
+
+后续 Owner 决定：
+
+```text
+owner_decision:TRADING-2474:2026-08-01:accept_atlas_result_ledger_visual_v1
 ```
 
 production effect：`none`
@@ -150,8 +156,8 @@ no network/server/LLM/write/production/broker resource
 
 ## 5. 验收标准
 
-1. 页面恢好展示 snapshot 内全部 8 个 result，无遗漏、重复或额外合成结果；
-2. 全部 12 条 attribution 按 exact `result_id` 绑定且恢好展示；
+1. 页面完整展示 snapshot 内全部 8 个 result，无遗漏、重复或额外合成结果；
+2. 全部 12 条 attribution 按 exact `result_id` 绑定且完整展示；
 3. raw/display status 同时可见，并明确两者不是投资评级；
 4. 每个 result 的 title、summary、limitations、source refs 与 assertion kind 全部可见；
 5. 每条 attribution 的 direction、explanation、source node 与 source refs 全部可见；
@@ -204,3 +210,10 @@ no network/server/LLM/write/production/broker resource
   29 details / 1 open / 0 script/form/iframe/external`。Browser 刷新本地 `file://` 仍被 URL
   policy 拒绝，已按规则停止且未绕过；当前等待 Owner 手工 visual acceptance，尚未运行
   closeout formal gates。
+- 2026-08-01：Owner 手工复核 canonical local page 后回复“验证通过 继续推进”，
+  单独记录 `OWNER_MANUAL_VISUAL_PASS` 和 token=
+  `owner_decision:TRADING-2474:2026-08-01:accept_atlas_result_ledger_visual_v1`。本验收
+  只确认信息密度、状态扫读、disclosure 层级与可读性，不是 strategy PASS、
+  投资评级、production 或 broker approval。实现与视觉基线转 `BASELINE_DONE`，由
+  coordinator 继续执行 append-only authority、formal gates 与 governed closeout；formal
+  结果写回前不得视为完成 local-main/remote closeout。

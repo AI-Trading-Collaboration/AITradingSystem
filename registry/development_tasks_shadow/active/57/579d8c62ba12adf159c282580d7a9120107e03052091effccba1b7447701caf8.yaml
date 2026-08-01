@@ -11,16 +11,16 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: project owner：在 canonical local page 手工验收 8 个 result 的信息密度、状态扫读和 disclosure
-    层级；通过后由 coordinator 运行 formal closeout
+  next_owner: integration coordinator：完成 append-only authority、正式五级验证及 local-main/remote
+    closeout
   requirement_refs:
   - docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示
-    validated snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；当前无实现
-    blocker，Browser 自动刷新仍受 `file://` URL policy 限制。
+    validated snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+    已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: 同页逐项展示全部 in-scope results 的 raw/display status、通俗摘要、limitations、source refs
@@ -32,44 +32,44 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2074
-    row_sha256: e25161aa9ba2f093287c07e3ca3e198420e616c2988c8ee863994a6c12f3e0df
+    row_sha256: c203d361a2ea26e2254ffb7d11e269ca6761a05bc8f4ca247d7994d7a9c76502
     cell_count: 8
     all_cells:
     - TRADING-2474_ATLAS_RESULT_LEDGER_V1
     - Publishing & Experience / Atlas all-in-scope result and attribution ledger
     - P1
-    - IN_PROGRESS
-    - project owner：在 canonical local page 手工验收 8 个 result 的信息密度、状态扫读和 disclosure
-      层级；通过后由 coordinator 运行 formal closeout
+    - BASELINE_DONE
+    - integration coordinator：完成 append-only authority、正式五级验证及 local-main/remote closeout
     - 详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示 validated
-      snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；当前无实现
-      blocker，Browser 自动刷新仍受 `file://` URL policy 限制。
+      snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+      已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。
     - 同页逐项展示全部 in-scope results 的 raw/display status、通俗摘要、limitations、source refs
       和全部归因；显式标注当前覆盖边界；缺失/重复/孤立 relation typed fail closed；deterministic/no-script/no-write/focused/formal/Owner
       visual PASS；`production_effect=none`、`broker_action=none`。
-    - 2026-08-01：Owner 推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`。renderer/Atlas
-      focused=`8/80 passed`；actual-input double-build 与离线 DOM audit PASS；HTML=`92180
-      bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。当前等待 Owner visual
-      acceptance，尚未运行 formal closeout；不授权 HTTP/LLM/free-text、新 empirical research、production
-      或 broker action。
+    - 2026-08-01：Owner 推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`；验收
+      token=`owner_decision:TRADING-2474:2026-08-01:accept_atlas_result_ledger_visual_v1`。renderer/Atlas
+      focused=`8/80 passed`；actual-input double-build、离线 DOM 与 Owner visual PASS；HTML=`92180
+      bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。实现与视觉基线已转 `BASELINE_DONE`，formal
+      closeout 正在执行；不授权 HTTP/LLM/free-text、新 empirical research、production 或 broker
+      action。
     raw_line: '|TRADING-2474_ATLAS_RESULT_LEDGER_V1|Publishing & Experience / Atlas
-      all-in-scope result and attribution ledger|P1|IN_PROGRESS|project owner：在 canonical
-      local page 手工验收 8 个 result 的信息密度、状态扫读和 disclosure 层级；通过后由 coordinator 运行 formal
-      closeout|详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示
-      validated snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；当前无实现
-      blocker，Browser 自动刷新仍受 `file://` URL policy 限制。|同页逐项展示全部 in-scope results 的
-      raw/display status、通俗摘要、limitations、source refs 和全部归因；显式标注当前覆盖边界；缺失/重复/孤立 relation
-      typed fail closed；deterministic/no-script/no-write/focused/formal/Owner visual
-      PASS；`production_effect=none`、`broker_action=none`。|2026-08-01：Owner 推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`。renderer/Atlas
-      focused=`8/80 passed`；actual-input double-build 与离线 DOM audit PASS；HTML=`92180
-      bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。当前等待 Owner visual
-      acceptance，尚未运行 formal closeout；不授权 HTTP/LLM/free-text、新 empirical research、production
-      或 broker action。|'
+      all-in-scope result and attribution ledger|P1|BASELINE_DONE|integration coordinator：完成
+      append-only authority、正式五级验证及 local-main/remote closeout|详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示
+      validated snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+      已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。|同页逐项展示全部 in-scope results 的 raw/display
+      status、通俗摘要、limitations、source refs 和全部归因；显式标注当前覆盖边界；缺失/重复/孤立 relation typed
+      fail closed；deterministic/no-script/no-write/focused/formal/Owner visual PASS；`production_effect=none`、`broker_action=none`。|2026-08-01：Owner
+      推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`；验收
+      token=`owner_decision:TRADING-2474:2026-08-01:accept_atlas_result_ledger_visual_v1`。renderer/Atlas
+      focused=`8/80 passed`；actual-input double-build、离线 DOM 与 Owner visual PASS；HTML=`92180
+      bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。实现与视觉基线已转 `BASELINE_DONE`，formal
+      closeout 正在执行；不授权 HTTP/LLM/free-text、新 empirical research、production 或 broker
+      action。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-e25161aa9ba2f093287c07e3
+  event_id: legacy-import-c203d361a2ea26e2254ffb7d
   task_id: TRADING-2474_ATLAS_RESULT_LEDGER_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -79,42 +79,43 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: project owner：在 canonical local page 手工验收 8 个 result 的信息密度、状态扫读和 disclosure
-      层级；通过后由 coordinator 运行 formal closeout
-    notes: 2026-08-01：Owner 推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`。renderer/Atlas
-      focused=`8/80 passed`；actual-input double-build 与离线 DOM audit PASS；HTML=`92180
-      bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。当前等待 Owner visual
-      acceptance，尚未运行 formal closeout；不授权 HTTP/LLM/free-text、新 empirical research、production
-      或 broker action。
+    next_owner: integration coordinator：完成 append-only authority、正式五级验证及 local-main/remote
+      closeout
+    notes: 2026-08-01：Owner 推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`；验收
+      token=`owner_decision:TRADING-2474:2026-08-01:accept_atlas_result_ledger_visual_v1`。renderer/Atlas
+      focused=`8/80 passed`；actual-input double-build、离线 DOM 与 Owner visual PASS；HTML=`92180
+      bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。实现与视觉基线已转 `BASELINE_DONE`，formal
+      closeout 正在执行；不授权 HTTP/LLM/free-text、新 empirical research、production 或 broker
+      action。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:e25161aa9ba2f093287c07e3ca3e198420e616c2988c8ee863994a6c12f3e0df
+  - sha256:c203d361a2ea26e2254ffb7d11e269ca6761a05bc8f4ca247d7994d7a9c76502
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2474_ATLAS_RESULT_LEDGER_V1
   - Publishing & Experience / Atlas all-in-scope result and attribution ledger
   - P1
-  - IN_PROGRESS
-  - project owner：在 canonical local page 手工验收 8 个 result 的信息密度、状态扫读和 disclosure 层级；通过后由
-    coordinator 运行 formal closeout
+  - BASELINE_DONE
+  - integration coordinator：完成 append-only authority、正式五级验证及 local-main/remote closeout
   - 详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示 validated
-    snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；当前无实现
-    blocker，Browser 自动刷新仍受 `file://` URL policy 限制。
+    snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+    已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。
   - 同页逐项展示全部 in-scope results 的 raw/display status、通俗摘要、limitations、source refs 和全部归因；显式标注当前覆盖边界；缺失/重复/孤立
     relation typed fail closed；deterministic/no-script/no-write/focused/formal/Owner
     visual PASS；`production_effect=none`、`broker_action=none`。
-  - 2026-08-01：Owner 推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`。renderer/Atlas
-    focused=`8/80 passed`；actual-input double-build 与离线 DOM audit PASS；HTML=`92180
-    bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。当前等待 Owner visual acceptance，尚未运行
-    formal closeout；不授权 HTTP/LLM/free-text、新 empirical research、production 或 broker
+  - 2026-08-01：Owner 推进 token=`owner_decision:TRADING-2474:2026-08-01:advance_atlas_result_ledger_v1`；验收
+    token=`owner_decision:TRADING-2474:2026-08-01:accept_atlas_result_ledger_visual_v1`。renderer/Atlas
+    focused=`8/80 passed`；actual-input double-build、离线 DOM 与 Owner visual PASS；HTML=`92180
+    bytes / SHA-256 b7540d87caf2…`，responses/validation SHA 不变。实现与视觉基线已转 `BASELINE_DONE`，formal
+    closeout 正在执行；不授权 HTTP/LLM/free-text、新 empirical research、production 或 broker
     action。
   docs_links:
   - docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md
   terminal: false
-  raw_row_sha256: e25161aa9ba2f093287c07e3ca3e198420e616c2988c8ee863994a6c12f3e0df
+  raw_row_sha256: c203d361a2ea26e2254ffb7d11e269ca6761a05bc8f4ca247d7994d7a9c76502
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 56972eb17c74c0db0cf0d0af453993989a8468cd181fc83150ea27f949d00f78
+fragment_checksum: 49fb5b2a26ccdcac9e25d81ac2e4d573108ec0b2c0c32109e94b5a76f0ffe5af
