@@ -248,4 +248,5 @@ inputs/architecture/**
 - 2026-08-02：READ_ONLY preflight PASS；main worktree audit PASS，`local main=origin/main`，无 active
   lease。原冻结任务 checkout 保持 clean 历史分支，不参与本任务写入。
 - 2026-08-02：task registry generate/validate PASS，V1/V2 均为 958 tasks、byte-identical；focused
-  task-shadow tests=`13 passed`，registration checkpoint=`b26a71c8943f2f9a9160623fc1d23c3f544cf29c`。
+  task-shadow tests=`13 passed`，registration checkpoint=`b26a71c8973420674a2edf7656ea57c957968c5f`；
+  lifecycle detail checkpoint=`276e896bffb2b775cd023d48afc366b5e9a362c5`。
