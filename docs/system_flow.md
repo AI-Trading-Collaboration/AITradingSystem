@@ -84,6 +84,17 @@ attributions。当前 canonical preview 展示 8 results / 12 attributions，但
 覆盖范围，不代表全仓历史 campaign 已接入。ledger 不重算 result/attribution，
 不改变 responses/validation JSON，不新增 HTTP、LLM、自由文本、production 或 broker 路径。
 
+TRADING-2475 在页面之外新增全仓历史研究的 path/report-level inventory。builder 只从同一个
+exact commit 读取 `config/report_registry.yaml`、`config/atlas/source_registry.yaml`、冻结 policy
+三个 authority blobs，以及 `docs/research` / `inputs/research_reviews` 的 Git tracked path metadata；
+known-unrelated exact path 在 declaration 与 tracked-path 两侧都先排除，不读取任何研究 artifact
+内容。分类只依据 report group、exact path equality、wildcard 声明、tracked membership 与 Atlas
+source path，不从文件名或文本推断 result/status/conclusion。独立 validator 从 exact commit 重建
+inventory identity、input receipts、path-manifest hash、records 与 totals；canonical 输出为
+`inventory.json`、`inventory.md`、`validation.json`。该 inventory 是后续选择 historical adapters 的
+审计输入，尚未接入当前页面，不改变 Atlas snapshot 的 8 results / 12 attributions，也不执行 DQ、
+model、backtest、HTTP/LLM、production 或 broker action。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -112,11 +123,17 @@ flowchart LR
     QPROV --> QDRILL["TRADING-2473 node evidence drilldown<br/>8 native details / current open"]
     QDRILL --> QLEDGER["TRADING-2474 result ledger<br/>all in-scope results + attributions"]
     QLEDGER --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
+    RREG["Report registry<br/>research entries + exact/wildcard declarations"] --> HINV["TRADING-2475 historical coverage inventory<br/>path/report classification only"]
+    GTREE["Exact-commit Git tree metadata<br/>declared research roots + exact exclusion"] --> HINV
+    SRC --> HINV
+    HINV --> HVAL["Independent inventory validation<br/>receipts + manifest + records + totals"]
+    HVAL --> HOUT["Canonical inventory JSON + Markdown<br/>historical adapter selection input"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
     DWEB -.-> NONE
     QWEB -.-> NONE
+    HOUT -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。

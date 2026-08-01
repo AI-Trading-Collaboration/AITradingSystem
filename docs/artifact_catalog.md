@@ -70,9 +70,15 @@ reader summary、assertion kind、`investment_facing=false`、limitations 与 so
 `b7540d87caf212faca015b71e80a5fe5080342a55d94580f68b61a045492e78a`；`responses.json`
 与 `validation.json` 字节及 SHA 保持不变。actual-input double-build 与离线 DOM audit PASS，
 DOM 为 `8 unique results / 12 unique attributions / 8 result disclosures / 0 script/form/iframe/external`。
-Browser 自动刷新仍被本地 `file://` URL policy 阻止且未绕过，当前等待 Owner 手工
+Browser 自动刷新仍被本地 `file://` URL policy 阻止且未绕过；Owner 已于 2026-08-01 完成手工
 visual acceptance。该 ledger 不重算研究/归因，不是自由文本 RAG、LLM authority、
 HTTP 服务、投资建议或 strategy approval。
+
+## TRADING-2475 Atlas Historical Research Coverage Inventory V1
+
+|Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
+|---|---|---|---|---|---|---|
+|`config/atlas/historical_coverage_inventory.yaml`<br/>`outputs/atlas/historical_research_coverage_inventory/trading_2475_v1/inventory.json`<br/>`outputs/atlas/historical_research_coverage_inventory/trading_2475_v1/inventory.md`<br/>`outputs/atlas/historical_research_coverage_inventory/trading_2475_v1/validation.json`|Python API `build_historical_coverage_inventory` / `write_historical_coverage_inventory_artifacts`；independent `validate_historical_coverage_inventory`|Exact commit `3367d000367dc4a3517af844aec66a5dbd1fbe04` 上的 inventory policy、report registry、Atlas source registry 与两个 declared research roots 的 Git tracked path metadata；known-unrelated exact path 先排除|`atlas_historical_coverage_policy.v1`、`atlas_historical_coverage_inventory.v1`、`atlas_historical_coverage_validation.v1`；exact-commit input receipts、tracked-path manifest SHA、report/path uniqueness、exact/wildcard distinction、mechanical classification、Atlas exact-path crosswalk、known-exclusion leak check、canonical rebuild byte identity|后续 historical adapter 选择与覆盖缺口复核；本阶段不接入 cited-query 页面、不投影历史 result/status/conclusion|否；`production_effect=none`、`broker_action=none`|Inventory=`atlas_historical_coverage_inventory_3a09ccafea85f96382db`。观察 `962 research reports / 4470 declarations / 1434 tracked research paths / 1143 tracked exact-registered / 291 tracked-unregistered / 8 Atlas source paths`；Atlas 中 `4` 个 source paths 被 research registry exact 登记，`1` 个同时位于 declared tracked roots。三份输出为 `2660817 / 18092 / 1528 bytes`，SHA-256=`02497cee… / 84d6b139… / 766cc099…`，actual-input double-build byte-identical。数字只说明路径登记状态，不是策略、数据质量、研究结论或历史完成性 PASS。|
 
 ## TRADING-2467 O1 Blind Calendar Re-entry Policy
 

@@ -224,3 +224,26 @@ data acquisition、DQ、model、backtest、production 或 broker resource。
   deterministic renderer/validator 与 `5` 个 focused tests 已实现；Black/Ruff/Mypy PASS，parallel
   focused pytest=`5 passed`。下一步在 implementation checkpoint commit 上生成 actual-input
   canonical inventory；当前 Atlas HTML、8 results 与 12 attributions 未改动。
+- 2026-08-01：implementation checkpoint=`3367d000367dc4a3517af844aec66a5dbd1fbe04`。
+  actual-input double-build byte-identical，inventory_id=
+  `atlas_historical_coverage_inventory_3a09ccafea85f96382db`，independent validation=`PASS / 15 checks`。
+  最终机械计数为 `1369 registry reports / 962 research reports / 4470 declarations / 1434 tracked
+  research paths / 1143 tracked exact-registered / 291 tracked-unregistered / 8 Atlas source paths`；
+  Atlas source 中 `4` 个被 research registry exact 登记，`1` 个位于 declared tracked roots。
+  current snapshot 复核仍为 `8 sources / 8 results / 12 attributions`。
+
+## 10. Canonical evidence
+
+|Identity|Value|
+|---|---|
+|Policy SHA-256|`002a0b767a57b9bb5f955a3864dc13abf8fd88cfca998f711a00665c945fdec1`|
+|Report registry SHA-256|`6816a90b1ab726a86f708d1187a882a709d6fe2bdc8cc32f1b185c5f7e67fd6c`|
+|Atlas source registry SHA-256|`b3845a19b6744c2e922bb5cdfd98f7777df58afc18c9f48e7977597ccff3ef0d`|
+|Tracked path manifest SHA-256|`57d5f39ab0f46e8e2a387b146ce1e3716c5f2aae23abd2df0e359730a99c00c9`|
+|`inventory.json`|`2660817 bytes / 02497cee0e708cc8f8f9ce345c7bf3fb382194b2eff59bbc85278538645c3e0d`|
+|`inventory.md`|`18092 bytes / 84d6b13954edde7522e744564b88b3bb059d2eceac9ee0234bf623beeb3fb05f`|
+|`validation.json`|`1528 bytes / 766cc09920feb5ca0084e368828c65f328ec80d82e743515162c977182bf2980`|
+
+以上三份 canonical outputs 位于
+`outputs/atlas/historical_research_coverage_inventory/trading_2475_v1/`；输出目录是可重建运行产物，
+由 report registry 精确登记，不进入当前 cited-query page identity。
