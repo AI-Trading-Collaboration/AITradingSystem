@@ -136,3 +136,10 @@ score 恢复，则必须明确记录该 parent 不可恢复，并由下一 provi
   `READY_FOR_RECOVERY`，也不得为其扩大 allowlist 或重复 provider/capture。新 release 完成
   promotion / deployment acceptance 后，下一可用 session 应执行 ordinary daily acceptance；
   parent 继续 immutable `FAILED`，reason code=`RECOVERY_BOUNDARY_NOT_ALLOWLISTED_SCORE_NOT_PASS`。
+- 2026-08-01：首轮 exact-commit Fast Unit 为 `346 passed / 1 failed`，唯一失败是新增 task
+  register 行使 ARCH-005 S0/S1 shadow authority stale。按 canonical generator 刷新 937 个 task
+  的 baseline/index/fragments；隔离 worktree 缺失的四份 handoff validation evidence 均从主
+  checkout 以 handoff exact path/SHA 复制到 ignored `outputs/validation_runtime` 并逐文件验哈希，
+  直接脚本显式使用本 worktree `src`。Generator 与 validator 均 PASS、compatibility views
+  byte-identical、cutover=false。初始 claim 漏列 `registry/development_tasks_shadow_v2`，在发现
+  唯一新 v2 fragment 后立即披露并扩展 coordinator claim；该 fragment 不被删除或绕过。
