@@ -250,3 +250,35 @@ inputs/architecture/**
 - 2026-08-02：task registry generate/validate PASS，V1/V2 均为 958 tasks、byte-identical；focused
   task-shadow tests=`13 passed`，registration checkpoint=`b26a71c8973420674a2edf7656ea57c957968c5f`；
   lifecycle detail checkpoint=`276e896bffb2b775cd023d48afc366b5e9a362c5`。
+- 2026-08-02：SINGLE_LANE START/LANE preflight 均 PASS；task branch 从 exact local main
+  `e84b7adc39e7a3954857e76fe3b843e38271dd7b` 创建于
+  `D:/Work/AITradingSystem_trading2479_review`，无 active lease 或 path/contract conflict。
+- 2026-08-02：S1/S2 实现完成。Review builder 从 exact typed adapters 与 current snapshot 重建
+  `13/21/22/8/12`，候选为 `13/27/28/13/17`；五个 display 全部 `LIMITED`，四个候选 raw
+  `PASS`、program snapshot raw `LIMITED`，六条 edge 全部 `CONTAINS`，五条 attribution 全部
+  `NEUTRAL`。Canonical page 构建前后仍为 `92180 bytes / SHA-256 b7540d87…`。
+- 2026-08-02：preview pack=`atlas_historical_projection_review_3b154ecd81325353d9b7`；实际输入
+  double-build byte-identical。产物 `index/review_pack/markdown/validation` 分别为
+  `29165/20109/1935/1226 bytes`，SHA-256=`c4b148dffd… / 7a9bc23756… / 238146a158… /
+  01e619417e…`；validation=`PASS / 16 checks`。
+- 2026-08-02：新模块 focused=`14 passed`、完整 Atlas focused=`88 passed`、Ruff 与 scoped strict
+  mypy PASS；static DOM=`5 unique cards / 5 unique historical nodes / 1 current marker /
+  0 script/form/external/css-url`。Browser automation 继续受本地 `file://` URL policy 阻止，状态
+  为 `NOT_EXECUTED_URL_POLICY`；当前等待 Owner 手工视觉与语义验收，不采用临时 HTTP workaround。
+- 2026-08-02：实现后的首次 task-registry generate 在 bootstrap handoff preflight 以
+  `HANDOFF_FILE_MISSING: outputs/validation_runtime/fast-unit_20260719T184434Z/
+  test_runtime_summary.json` fail closed，未修改 generated registry；紧随其后的 freshness test 因此为
+  `12 passed / 1 S0_DOCUMENT_DRIFT failed`，证据保留。根因是新 isolated worktree 未水合 tracked
+  handoff 引用的 ignored historical validation fixtures，不是 Atlas/registry 语义回归。采用既有耐久
+  方案：只从 clean main canonical `outputs/validation_runtime` exact-byte handoff 需要的最小 path set，
+  按 handoff 记录逐文件核对 SHA-256/size 后再运行生成器；不得伪造 portable import。
+- validation hydration workspace：
+  `D:/Work/AITradingSystem_trading2479_review/outputs/validation_runtime`；owner=TRADING-2479
+  coordinator，purpose=bootstrap handoff/registry/formal validation prerequisite，source=
+  `D:/Work/AITradingSystem_ops073_integration/outputs/validation_runtime`；exit condition=所有 required
+  artifacts 已进入 main canonical evidence、无 active process 依赖且 TRADING-2479 worktree closeout
+  审计完成后随 worktree 一并移除。
+- 2026-08-02：从 clean main canonical evidence 水合四个 bootstrap summaries，逐文件
+  SHA-256/size 与 handoff 完全一致（`5afc81ae… / a7c070c9… / 6994b8ed… / 1785c2c6…`）；
+  未修改或伪造 artifact 内容。随后 task registry generate/validate=`958/958 PASS`、V1/V2
+  byte-identical，focused task-shadow=`13 passed`。此前 fail-closed run 继续保留为修复 parent 说明。

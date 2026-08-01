@@ -1,0 +1,117 @@
+schema_version: atlas_historical_projection_review_policy.v1
+policy_id: atlas-historical-projection-review-v1
+owner_decision: owner_decision:TRADING-2479:2026-08-02:advance_atlas_historical_projection_review_pack_v1
+primary_research_start: '2021-02-22'
+source_registry_path: config/atlas/source_registry.yaml
+adapter_registry_path: config/atlas/historical_source_adapters.yaml
+canonical_page:
+  repository_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
+  expected_size_bytes: 92180
+  expected_sha256: b7540d87caf212faca015b71e80a5fe5080342a55d94580f68b61a045492e78a
+expected_current_counts:
+  sources: 13
+  nodes: 21
+  edges: 22
+  results: 8
+  attributions: 12
+expected_candidate_counts:
+  sources: 13
+  nodes: 27
+  edges: 28
+  results: 13
+  attributions: 17
+group_node:
+  node_id: campaign-historical-weight-research
+  node_kind: CAMPAIGN
+  assertion_kind: RESEARCHER_INTERPRETATION
+  raw_status: LIMITED
+  title: 历史权重研究支线
+  summary: 把五份历史研究材料隔离在审阅支线中；它们不是当前策略有效性或投资评级。
+root_edge:
+  edge_id: edge-program-contains-historical-weight-research
+  from_node_id: program-strategy-research
+  to_node_id: campaign-historical-weight-research
+  edge_kind: CONTAINS
+records:
+  - source_ref_id: historical-b0-baseline
+    role_code: BASELINE
+    expected_original_status: B0_MINI_BACKFILL_COMPLETE_CONTROL_ONLY
+    node_id: evidence-historical-b0-baseline
+    node_kind: EVIDENCE
+    assertion_kind: MODEL_RESULT
+    edge_id: edge-historical-weight-research-contains-b0
+    result_id: result-historical-b0-baseline
+    attribution_id: attr-historical-b0-baseline
+    proposed_raw_status: PASS
+    proposed_display_status: LIMITED
+    title: B0 静态基线（历史 control）
+    reader_summary: 单一 normal-market mini-window 的 control baseline，只用于对照，不代表候选晋级。
+    mapping_rationale: 原始 artifact 已完成 control-only mini-backfill，因此候选 raw 为 PASS；但窗口单一、holdout 未使用且不具备当前结论身份，display 保持 LIMITED。
+  - source_ref_id: historical-b1-b4-attribution
+    role_code: COMPONENT_ATTRIBUTION
+    expected_original_status: B1_B4_COMPONENT_ATTRIBUTION_READY
+    node_id: evidence-historical-b1-b4-attribution
+    node_kind: EVIDENCE
+    assertion_kind: RESEARCHER_INTERPRETATION
+    edge_id: edge-historical-weight-research-contains-b1-b4
+    result_id: result-historical-b1-b4-attribution
+    attribution_id: attr-historical-b1-b4-attribution
+    proposed_raw_status: PASS
+    proposed_display_status: LIMITED
+    title: B1–B4 组件归因（历史诊断）
+    reader_summary: B1 mixed、B2 未证实、B3 无独立价值、B4 inconclusive；只呈现历史诊断边界。
+    mapping_rationale: 原始 attribution artifact 已 ready，因此候选 raw 为 PASS；归因结果 mixed/inconclusive 且只覆盖 mini-window，display 保持 LIMITED。
+  - source_ref_id: historical-weight-program-snapshot
+    role_code: PROGRAM_SNAPSHOT
+    expected_original_status: WEIGHT_RESEARCH_PROGRAM_NEEDS_MORE_EVIDENCE
+    node_id: artifact-historical-weight-program-snapshot
+    node_kind: ARTIFACT
+    assertion_kind: RESEARCHER_INTERPRETATION
+    edge_id: edge-historical-weight-research-contains-program-snapshot
+    result_id: result-historical-weight-program-snapshot
+    attribution_id: attr-historical-weight-program-snapshot
+    proposed_raw_status: LIMITED
+    proposed_display_status: LIMITED
+    title: 权重研究计划快照
+    reader_summary: B5/B6/v3 仍被证据不足和 inconclusive interaction 阻断，且没有原始 DQ receipt。
+    mapping_rationale: 原始状态明确需要更多证据，且 DQ receipt 缺失，因此候选 raw/display 均为 LIMITED，不能补造 PASS。
+  - source_ref_id: historical-monthly-program-review
+    role_code: MONTHLY_REVIEW
+    expected_original_status: MONTHLY_RESEARCH_PROGRAM_REVIEW_READY
+    node_id: artifact-historical-monthly-program-review
+    node_kind: ARTIFACT
+    assertion_kind: RESEARCHER_INTERPRETATION
+    edge_id: edge-historical-weight-research-contains-monthly-review
+    result_id: result-historical-monthly-program-review
+    attribution_id: attr-historical-monthly-program-review
+    proposed_raw_status: PASS
+    proposed_display_status: LIMITED
+    title: 月度研究复盘（历史）
+    reader_summary: B2-only 仍需更多证据，B3 返回 redesign，B4 冗余，后续层继续 blocked。
+    mapping_rationale: 原始月度复盘 artifact 已 ready，因此候选 raw 为 PASS；它记录的是治理复盘而非策略有效性，display 保持 LIMITED。
+  - source_ref_id: historical-final-branch-decision
+    role_code: BRANCH_DECISION
+    expected_original_status: CONTINUE_B2_ONLY_PATH
+    node_id: decision-historical-final-branch
+    node_kind: DECISION
+    assertion_kind: RULE_JUDGMENT
+    edge_id: edge-historical-weight-research-contains-final-decision
+    result_id: result-historical-final-branch-decision
+    attribution_id: attr-historical-final-branch-decision
+    proposed_raw_status: PASS
+    proposed_display_status: LIMITED
+    title: 最终分支决定（历史）
+    reader_summary: 历史判断选择继续 B2-only，并保持 B5/B6/v3/paper-shadow 不允许。
+    mapping_rationale: 原始 branch decision 已形成明确路径判断，因此候选 raw 为 PASS；它不是当前 Owner 决策或投资结论，display 保持 LIMITED。
+forbidden_candidate_family_ids:
+  - atlas_historical_candidate_next_roadmap_v1
+safety:
+  review_only: true
+  source_registration_performed: false
+  node_projection_performed: false
+  result_projection_performed: false
+  page_projection_performed: false
+  current_snapshot_mutated: false
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none

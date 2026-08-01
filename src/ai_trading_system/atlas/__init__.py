@@ -51,6 +51,19 @@ from ai_trading_system.atlas.historical_coverage_inventory import (
     validate_historical_coverage_inventory,
     write_historical_coverage_inventory_artifacts,
 )
+from ai_trading_system.atlas.historical_projection_review import (
+    HistoricalProjectionRenderedArtifact,
+    HistoricalProjectionReviewError,
+    HistoricalProjectionReviewPack,
+    HistoricalProjectionReviewValidation,
+    build_historical_projection_review,
+    render_historical_projection_review_markdown,
+    validate_historical_projection_review,
+    write_historical_projection_review_artifacts,
+)
+from ai_trading_system.atlas.historical_projection_review_renderer import (
+    render_historical_projection_review_html,
+)
 from ai_trading_system.atlas.historical_source_adapters import (
     BaselinePayload,
     BranchDecisionPayload,
@@ -126,6 +139,10 @@ __all__ = [
     "HistoricalAdapterReviewValidationResult",
     "HistoricalDataQualityReceipt",
     "HistoricalReaderBrief",
+    "HistoricalProjectionRenderedArtifact",
+    "HistoricalProjectionReviewError",
+    "HistoricalProjectionReviewPack",
+    "HistoricalProjectionReviewValidation",
     "HistoricalSourceAdapterBundle",
     "HistoricalSourceAdapterError",
     "HistoricalSourceAdapterRecord",
@@ -146,6 +163,7 @@ __all__ = [
     "build_historical_adapter_review_from_payloads",
     "build_historical_source_adapter_bundle",
     "build_historical_source_adapter_bundle_from_payloads",
+    "build_historical_projection_review",
     "build_historical_coverage_inventory",
     "build_historical_coverage_inventory_from_payloads",
     "cited_query_validation_json_bytes",
@@ -161,10 +179,13 @@ __all__ = [
     "render_cited_query_html",
     "render_historical_adapter_review_markdown",
     "render_historical_coverage_markdown",
+    "render_historical_projection_review_html",
+    "render_historical_projection_review_markdown",
     "render_snapshot_diff_html",
     "validate_atlas_bundle",
     "validate_historical_adapter_review",
     "validate_historical_coverage_inventory",
+    "validate_historical_projection_review",
     "validate_serialized_snapshot_diff",
     "validate_serialized_cited_query_response",
     "validate_snapshot_diff_bundle",
@@ -173,5 +194,6 @@ __all__ = [
     "write_cited_query_artifacts",
     "write_historical_adapter_review_artifacts",
     "write_historical_coverage_inventory_artifacts",
+    "write_historical_projection_review_artifacts",
     "write_snapshot_diff_artifacts",
 ]

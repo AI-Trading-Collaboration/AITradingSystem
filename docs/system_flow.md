@@ -119,6 +119,21 @@ node/result/attribution 引用；snapshot 结构只从 8 增至 13 sources，仍
 8 results / 12 attributions。`next_research_program_roadmap.json` 继续因 lineage 缺口排除；当前 cited-query
 HTML 不重建，page/result projection、研究采纳、DQ/model/backtest 与 production/broker action 全部关闭。
 
+TRADING-2479 在 source registration 与真正 canonical projection 之间增加独立 owner-review 层。
+`historical_projection_review.yaml` 冻结五个 source refs、六个候选 node IDs、六条 `CONTAINS`
+edges、五个 result IDs、五条 `NEUTRAL` provenance attributions、original→proposed raw→display
+status 映射和 current/candidate 数量。builder 从同一 exact commit 重建 TRADING-2477 typed records
+与 current Atlas snapshot，并要求 current=`13 sources / 21 nodes / 22 edges / 8 results /
+12 attributions`、candidate=`13 / 27 / 28 / 13 / 17`；所有 candidate result 的
+`display_status=LIMITED`、`investment_facing=false`。四份 completed/ready/decision artifact 的候选
+raw 为 `PASS`，`PROGRAM_SNAPSHOT` 因 `NEEDS_MORE_EVIDENCE` 与缺失原始 DQ receipt 保持
+`LIMITED`。这只是状态映射提案，PASS 不代表当前策略或投资结论 PASS。独立 validator 双重重建
+pack、检查 stable-ID collision、DQ/window distinction、roadmap exclusion、canonical cited-query HTML
+的 `92180 bytes / b7540d87…` identity 和 no-projection safety。输出为独立
+`index.html / review_pack.json / review_pack.md / validation.json`；不会调用 current snapshot/page
+writer。即使 Owner 手工验收本 review page，真正 node/result/attribution/page projection 仍需后续
+独立任务和新 Owner token。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -160,7 +175,12 @@ flowchart LR
     HJSON["Five approved exact Git JSON blobs<br/>roadmap excluded"] --> HREG
     HREG --> SRC
     HREG --> HADAPT["Five typed historical adapters<br/>hash + schema + lineage fail closed"]
-    HADAPT -.-> HSTOP["No node/result/page projection<br/>production_effect=none"]
+    HADAPT --> HPREV["TRADING-2479 projection review builder<br/>5 typed records + candidate stable IDs"]
+    SNAP --> HPREV
+    QWEB --> HPREV
+    HPREV --> HPVAL["Independent review validation<br/>counts + collisions + DQ/window + page identity"]
+    HPVAL --> HPWEB["Review-only static HTML + JSON + Markdown<br/>current 13/21/22/8/12 → candidate 13/27/28/13/17"]
+    HPWEB -.-> HSTOP["No node/result/page projection<br/>production_effect=none"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
@@ -169,6 +189,7 @@ flowchart LR
     HOUT -.-> NONE
     AOUT -.-> NONE
     HADAPT -.-> NONE
+    HPWEB -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。
