@@ -1,0 +1,30 @@
+schema_version: atlas_historical_coverage_policy.v1
+policy_id: TRADING_2475_ATLAS_HISTORICAL_RESEARCH_COVERAGE_INVENTORY_V1
+status: REVIEWED_PILOT_V1
+owner: research_governance
+rationale: >
+  Build a deterministic path/report-level inventory before selecting historical
+  research adapters. The inventory must not infer research conclusions from file
+  names or open research artifact contents.
+authority_inputs:
+  report_registry_path: config/report_registry.yaml
+  atlas_source_registry_path: config/atlas/source_registry.yaml
+tracked_research_roots:
+  - docs/research
+  - inputs/research_reviews
+excluded_paths:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+research_report_group: research
+classification_codes:
+  - ATLAS_SOURCE_BOUND
+  - REGISTERED_RESEARCH_ARTIFACT
+  - TRACKED_UNREGISTERED_REVIEW_REQUIRED
+  - WILDCARD_DECLARATION_REVIEW_REQUIRED
+  - DECLARED_NON_TRACKED_OR_RUNTIME_ARTIFACT
+safety:
+  historical_repository_coverage_complete: false
+  research_artifact_content_read: false
+  result_projection_allowed: false
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none

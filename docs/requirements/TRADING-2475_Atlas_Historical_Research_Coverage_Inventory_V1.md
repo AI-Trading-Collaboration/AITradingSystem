@@ -59,7 +59,7 @@ V1 只允许读取：
 config/report_registry.yaml
 config/atlas/source_registry.yaml
 config/atlas/historical_coverage_inventory.yaml
-git ls-files @ exact commit（仅两个 declared roots，并显式排除 known-unrelated path）
+git ls-tree @ exact commit（仅两个 declared roots；输出进入 manifest/hash 前按 exact literal path 排除）
 ```
 
 research roots 固定为：
@@ -75,8 +75,9 @@ known-unrelated exclusion 固定为：
 docs/research/growth_tilt_owner_diagnosis_pack.md
 ```
 
-实现不得打开、hash、复制、stage、修改或删除该文件；Git tracked manifest 构建时必须使用 exact
-literal exclude pathspec，使其不进入 inventory records 或 input hash。
+实现不得打开、hash、复制、stage、修改或删除该文件。`git ls-tree` 不支持 exclude pathspec，
+因此 V1 读取的只有 tree path metadata，并在任何 manifest/hash/record 构造前按 exact literal path
+过滤；不得对该路径执行 `git cat-file` 或任何 blob/content 读取。
 
 ### 3.2 Mechanical classifications
 
@@ -204,7 +205,8 @@ data acquisition、DQ、model、backtest、production 或 broker resource。
 ## 8. 工作区生命周期
 
 - governed mode：`SINGLE_LANE`；
-- frozen base：`0c3780c6c33a7619fe74978baf5df678954767f8`；
+- registration base：`0c3780c6c33a7619fe74978baf5df678954767f8`；
+- registration commit / lane frozen base：`82a234ecc74e3a3275cbdcdee20d1165c6b2bb1c`；
 - branch：`codex/trading-2475-atlas-history-inventory`；
 - workspace：`D:/Work/AITradingSystem`，不创建临时 worktree/clone/cache；
 - canonical outputs 保留到后续 adapter 选择完成，可由 exact commit 与 authority inputs 重建；
@@ -218,3 +220,7 @@ data acquisition、DQ、model、backtest、production 或 broker resource。
 - 2026-08-01：登记前 census 仅读取 report/source registry 与 Git path metadata，不读取研究 artifact
   内容；观察到 `961` 个 research reports、`1434` 个非排除 tracked research paths、`291` 个
   tracked-unregistered review candidates。以上数字等待 typed implementation 独立重算。
+- 2026-08-01：S1 typed core、冻结 policy、exact-commit Git adapter、known-exclusion 双侧过滤、
+  deterministic renderer/validator 与 `5` 个 focused tests 已实现；Black/Ruff/Mypy PASS，parallel
+  focused pytest=`5 passed`。下一步在 implementation checkpoint commit 上生成 actual-input
+  canonical inventory；当前 Atlas HTML、8 results 与 12 attributions 未改动。
