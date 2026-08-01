@@ -1,0 +1,91 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
+  task_id_sha256: 065aa4e4a4d192cef68318b8a93d6de16c7043698777aeae5f9b2e32183fdefc
+task_record:
+  task_id: TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
+  title: null
+  domain: Independent validation / external option event and accounting reconciliation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: validation engineering：等待 TRADING-2483/2487/2488/2489
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics
+    和 difference taxonomy；不重建受限 raw chain/quotes。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION 七类差异闭合；external
+      PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system
+      flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: c4d0631865a0738ea2b44dee7f116d3648440f10511cb4f55d15ad3745342282
+  cell_count: 8
+  all_cells:
+  - TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
+  - Independent validation / external option event and accounting reconciliation
+  - P1
+  - PROPOSED
+  - validation engineering：等待 TRADING-2483/2487/2488/2489
+  - 读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics 和 difference taxonomy；不重建受限
+    raw chain/quotes。
+  - LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION 七类差异闭合；external
+    PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
+  - 容差/rounding 必须进入 reviewed policy，identity/symbol/qty/state 默认 exact。
+  raw_line: '|TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1|Independent
+    validation / external option event and accounting reconciliation|P1|PROPOSED|validation
+    engineering：等待 TRADING-2483/2487/2488/2489|读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics
+    和 difference taxonomy；不重建受限 raw chain/quotes。|LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION
+    七类差异闭合；external PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests
+    PASS；更新 system flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。|容差/rounding 必须进入 reviewed
+    policy，identity/symbol/qty/state 默认 exact。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c4d0631865a0738ea2b44dee
+  task_id: TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: validation engineering：等待 TRADING-2483/2487/2488/2489
+    notes: 容差/rounding 必须进入 reviewed policy，identity/symbol/qty/state 默认 exact。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:c4d0631865a0738ea2b44dee7f116d3648440f10511cb4f55d15ad3745342282
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
+  - Independent validation / external option event and accounting reconciliation
+  - P1
+  - PROPOSED
+  - validation engineering：等待 TRADING-2483/2487/2488/2489
+  - 读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics 和 difference taxonomy；不重建受限
+    raw chain/quotes。
+  - LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION 七类差异闭合；external
+    PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
+  - 容差/rounding 必须进入 reviewed policy，identity/symbol/qty/state 默认 exact。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: c4d0631865a0738ea2b44dee7f116d3648440f10511cb4f55d15ad3745342282
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: c5eabe5f596c02842e17caa4e332b7320fe548d8a1989a454abcda99caadc695

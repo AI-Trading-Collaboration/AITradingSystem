@@ -1,0 +1,90 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  task_id_sha256: a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b
+task_record:
+  task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  title: null
+  domain: Research governance / capability, license, DQ/PIT and range-expansion decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: research owner + independent reviewer：等待 TRADING-2492 完整证据
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 审阅 capability、技术正确性、license、DQ/PIT、resource
+    和 reconciliation，决定扩窗、付费升级、停止或保持 blocked；不批准 production/paper/live/short/Wheel。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 逐项 GO/CONDITIONAL_GO/NO_GO；所有 UNKNOWN 有 owner/exit condition；decision、task/status、registry/system-flow
+      consistency PASS；退出=Owner 签署的不可歧义 stage-gate record。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 99832a6d2a28d536e1620b45ef96c00c9ddd3dfc85a682ae05f5326a60366f0a
+  cell_count: 8
+  all_cells:
+  - TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  - Research governance / capability, license, DQ/PIT and range-expansion decision
+  - P0
+  - PROPOSED
+  - research owner + independent reviewer：等待 TRADING-2492 完整证据
+  - 审阅 capability、技术正确性、license、DQ/PIT、resource 和 reconciliation，决定扩窗、付费升级、停止或保持 blocked；不批准
+    production/paper/live/short/Wheel。
+  - 逐项 GO/CONDITIONAL_GO/NO_GO；所有 UNKNOWN 有 owner/exit condition；decision、task/status、registry/system-flow
+    consistency PASS；退出=Owner 签署的不可歧义 stage-gate record。
+  - 任何后续 roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
+  raw_line: '|TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1|Research governance
+    / capability, license, DQ/PIT and range-expansion decision|P0|PROPOSED|research
+    owner + independent reviewer：等待 TRADING-2492 完整证据|审阅 capability、技术正确性、license、DQ/PIT、resource
+    和 reconciliation，决定扩窗、付费升级、停止或保持 blocked；不批准 production/paper/live/short/Wheel。|逐项
+    GO/CONDITIONAL_GO/NO_GO；所有 UNKNOWN 有 owner/exit condition；decision、task/status、registry/system-flow
+    consistency PASS；退出=Owner 签署的不可歧义 stage-gate record。|任何后续 roll/short/multi-leg/LEAPS/Wheel
+    必须另立任务和独立授权。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-99832a6d2a28d536e1620b45
+  task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: research owner + independent reviewer：等待 TRADING-2492 完整证据
+    notes: 任何后续 roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:99832a6d2a28d536e1620b45ef96c00c9ddd3dfc85a682ae05f5326a60366f0a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  - Research governance / capability, license, DQ/PIT and range-expansion decision
+  - P0
+  - PROPOSED
+  - research owner + independent reviewer：等待 TRADING-2492 完整证据
+  - 审阅 capability、技术正确性、license、DQ/PIT、resource 和 reconciliation，决定扩窗、付费升级、停止或保持 blocked；不批准
+    production/paper/live/short/Wheel。
+  - 逐项 GO/CONDITIONAL_GO/NO_GO；所有 UNKNOWN 有 owner/exit condition；decision、task/status、registry/system-flow
+    consistency PASS；退出=Owner 签署的不可歧义 stage-gate record。
+  - 任何后续 roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 99832a6d2a28d536e1620b45ef96c00c9ddd3dfc85a682ae05f5326a60366f0a
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 50a3114bd3ea6e6a052755ee5cd6428b6d48b5bc3c800491ac46c819d80f540f

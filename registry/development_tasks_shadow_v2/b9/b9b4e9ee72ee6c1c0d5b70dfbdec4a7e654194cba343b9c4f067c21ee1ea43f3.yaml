@@ -1,0 +1,90 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  task_id_sha256: b9b4e9ee72ee6c1c0d5b70dfbdec4a7e654194cba343b9c4f067c21ee1ea43f3
+task_record:
+  task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  title: null
+  domain: Evidence engineering / Free Cloud manual result bundle
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: evidence engineering + data governance：等待 TRADING-2480..2482
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum
+    bundle、engine/tier/license status 与收集 runbook；禁止用 logs 导出 chain。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
+      fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 991ee9f21b30d3a3cf442a20698f060f96ef1b1765f69e34aa6c3862eca0cd0b
+  cell_count: 8
+  all_cells:
+  - TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  - Evidence engineering / Free Cloud manual result bundle
+  - P1
+  - PROPOSED
+  - evidence engineering + data governance：等待 TRADING-2480..2482
+  - 定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum bundle、engine/tier/license
+    status 与收集 runbook；禁止用 logs 导出 chain。
+  - mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
+    fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
+  - 只定义合同和 runbook；实际收集依赖 TRADING-2492 授权。
+  raw_line: '|TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1|Evidence
+    engineering / Free Cloud manual result bundle|P1|PROPOSED|evidence engineering
+    + data governance：等待 TRADING-2480..2482|定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum
+    bundle、engine/tier/license status 与收集 runbook；禁止用 logs 导出 chain。|mandatory file
+    缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
+    fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。|只定义合同和 runbook；实际收集依赖
+    TRADING-2492 授权。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-991ee9f21b30d3a3cf442a20
+  task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: evidence engineering + data governance：等待 TRADING-2480..2482
+    notes: 只定义合同和 runbook；实际收集依赖 TRADING-2492 授权。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:991ee9f21b30d3a3cf442a20698f060f96ef1b1765f69e34aa6c3862eca0cd0b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  - Evidence engineering / Free Cloud manual result bundle
+  - P1
+  - PROPOSED
+  - evidence engineering + data governance：等待 TRADING-2480..2482
+  - 定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum bundle、engine/tier/license
+    status 与收集 runbook；禁止用 logs 导出 chain。
+  - mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
+    fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
+  - 只定义合同和 runbook；实际收集依赖 TRADING-2492 授权。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 991ee9f21b30d3a3cf442a20698f060f96ef1b1765f69e34aa6c3862eca0cd0b
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 348f2b14449fc82f17ef821df29d91d59df026e0a5355d741da26a26183bd522

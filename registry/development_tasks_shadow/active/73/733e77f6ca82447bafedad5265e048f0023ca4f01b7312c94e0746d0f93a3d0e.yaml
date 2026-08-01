@@ -1,0 +1,91 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  title: null
+  domain: Research integration / immutable daily signal and run package export
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: research strategy + data engineering：等待 TRADING-2481/2482
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 从现有 daily signal/target path 生成 immutable
+    `daily_signal`、`run_manifest`、policy/code/source checksums 和 requested/evaluated
+    range；不选约、不计算期权收益。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: lag=1/no-lookahead、effective session、duplicate/missing signal、canonical
+      hash 与 replay tests PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2090
+    row_sha256: 5c747c89acfbc44530ed3ce22d05d93139aa865ca581e2a894bc4961a369bd07
+    cell_count: 8
+    all_cells:
+    - TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+    - Research integration / immutable daily signal and run package export
+    - P1
+    - PROPOSED
+    - research strategy + data engineering：等待 TRADING-2481/2482
+    - 从现有 daily signal/target path 生成 immutable `daily_signal`、`run_manifest`、policy/code/source
+      checksums 和 requested/evaluated range；不选约、不计算期权收益。
+    - lag=1/no-lookahead、effective session、duplicate/missing signal、canonical hash
+      与 replay tests PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。
+    - 任何 LONG_CALL/LONG_PUT/FLAT 映射须先有 reviewed policy。
+    raw_line: '|TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1|Research integration
+      / immutable daily signal and run package export|P1|PROPOSED|research strategy
+      + data engineering：等待 TRADING-2481/2482|从现有 daily signal/target path 生成 immutable
+      `daily_signal`、`run_manifest`、policy/code/source checksums 和 requested/evaluated
+      range；不选约、不计算期权收益。|lag=1/no-lookahead、effective session、duplicate/missing signal、canonical
+      hash 与 replay tests PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。|任何
+      LONG_CALL/LONG_PUT/FLAT 映射须先有 reviewed policy。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5c747c89acfbc44530ed3ce2
+  task_id: TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: research strategy + data engineering：等待 TRADING-2481/2482
+    notes: 任何 LONG_CALL/LONG_PUT/FLAT 映射须先有 reviewed policy。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5c747c89acfbc44530ed3ce22d05d93139aa865ca581e2a894bc4961a369bd07
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  - Research integration / immutable daily signal and run package export
+  - P1
+  - PROPOSED
+  - research strategy + data engineering：等待 TRADING-2481/2482
+  - 从现有 daily signal/target path 生成 immutable `daily_signal`、`run_manifest`、policy/code/source
+    checksums 和 requested/evaluated range；不选约、不计算期权收益。
+  - lag=1/no-lookahead、effective session、duplicate/missing signal、canonical hash 与
+    replay tests PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。
+  - 任何 LONG_CALL/LONG_PUT/FLAT 映射须先有 reviewed policy。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 5c747c89acfbc44530ed3ce22d05d93139aa865ca581e2a894bc4961a369bd07
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 7b7753901ae976ea4b00444a96a1adc4f9f2a3b20118c4972929fdb76f8d91bd

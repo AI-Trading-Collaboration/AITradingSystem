@@ -1,0 +1,89 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
+  title: null
+  domain: QA / synthetic fixtures, golden outputs and cloud smoke checklist
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: QA + lane owners：合同冻结后并行维护
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 统一 valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient
+    cash、ITM expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: unit/contract/golden/property/synthetic integration 全覆盖；schema 变化明确使 golden
+      失效；按影响更新 system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2098
+    row_sha256: fa642e9f4eda73198af60ef62b0816f7681f9bde7c2feb0bce578bac073aeb5c
+    cell_count: 8
+    all_cells:
+    - TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
+    - QA / synthetic fixtures, golden outputs and cloud smoke checklist
+    - P1
+    - PROPOSED
+    - QA + lane owners：合同冻结后并行维护
+    - 统一 valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient
+      cash、ITM expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。
+    - unit/contract/golden/property/synthetic integration 全覆盖；schema 变化明确使 golden
+      失效；按影响更新 system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
+    - shared QA owner 不得私自修改 schema/policy/DQ identity。
+    raw_line: '|TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1|QA / synthetic
+      fixtures, golden outputs and cloud smoke checklist|P1|PROPOSED|QA + lane owners：合同冻结后并行维护|统一
+      valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient cash、ITM
+      expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。|unit/contract/golden/property/synthetic
+      integration 全覆盖；schema 变化明确使 golden 失效；按影响更新 system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。|shared
+      QA owner 不得私自修改 schema/policy/DQ identity。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fa642e9f4eda73198af60ef6
+  task_id: TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: QA + lane owners：合同冻结后并行维护
+    notes: shared QA owner 不得私自修改 schema/policy/DQ identity。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:fa642e9f4eda73198af60ef62b0816f7681f9bde7c2feb0bce578bac073aeb5c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
+  - QA / synthetic fixtures, golden outputs and cloud smoke checklist
+  - P1
+  - PROPOSED
+  - QA + lane owners：合同冻结后并行维护
+  - 统一 valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient cash、ITM
+    expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。
+  - unit/contract/golden/property/synthetic integration 全覆盖；schema 变化明确使 golden 失效；按影响更新
+    system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
+  - shared QA owner 不得私自修改 schema/policy/DQ identity。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: fa642e9f4eda73198af60ef62b0816f7681f9bde7c2feb0bce578bac073aeb5c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: c59cf9ee7ca8f8565b76d08909320752a3a9133fb6ef1aa8d4f3d9e96d05e3d6

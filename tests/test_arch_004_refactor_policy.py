@@ -1962,7 +1962,55 @@ OPS_073_TERMINAL_DISPOSITION_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
-LATEST_COMPATIBILITY_SECTION = OPS_073_TERMINAL_DISPOSITION_SECTION
+TRADING_2478_QUANTCONNECT_PLANNING_SECTION = (
+    "phase_trading_2478_quantconnect_qqq_options_backtest_capability_technical_plan"
+)
+TRADING_2478_QUANTCONNECT_PLANNING_BASE_COMMIT = "4a0d168fbeb773be3ced8065cfe1b3194902543f"
+TRADING_2478_QUANTCONNECT_PLANNING_BASELINE_GIT_BLOB = (
+    "0e1ee47721d11daa3c297cbdd149ed96cb33f31d"
+)
+TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_BYTE_COUNT = 2_691_072
+TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_SHA256 = (
+    "ff6654eec50a556ef76c5ea443ac5a46e5f16bc46dd5a0dd89e0b546190833eb"
+)
+TRADING_2478_QUANTCONNECT_PLANNING_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2478_QUANTCONNECT_PLANNING_TASK_IDS = (
+    "TRADING-2478_QUANTCONNECT_QQQ_DAILY_OPTIONS_BACKTEST_CAPABILITY_TECHNICAL_PLAN_V1",
+    "TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1",
+    "TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1",
+    "TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1",
+    "TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1",
+    "TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1",
+    "TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1",
+    "TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1",
+    "TRADING-2487_QQQ_OPTIONS_CASH_PREMIUM_SETTLEMENT_ACCOUNTING_V1",
+    "TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1",
+    "TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1",
+    "TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1",
+    "TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1",
+    "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1",
+    "TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1",
+)
+TRADING_2478_QUANTCONNECT_PLANNING_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "docs/requirements/TRADING-2478_QuantConnect_QQQ_Daily_Options_"
+            "Backtest_Capability_Technical_Plan_V1.md"
+        ),
+        "docs/research/quantconnect_qqq_daily_options_backtest_web_pro_advisory.md",
+    }
+    | {
+        f"registry/development_tasks_shadow/active/{digest[:2]}/{digest}.yaml"
+        for task_id in TRADING_2478_QUANTCONNECT_PLANNING_TASK_IDS
+        for digest in (hashlib.sha256(task_id.encode()).hexdigest(),)
+    }
+    | {
+        f"registry/development_tasks_shadow_v2/{digest[:2]}/{digest}.yaml"
+        for task_id in TRADING_2478_QUANTCONNECT_PLANNING_TASK_IDS
+        for digest in (hashlib.sha256(task_id.encode()).hexdigest(),)
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2478_QUANTCONNECT_PLANNING_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3742,6 +3790,26 @@ def _ops_073_terminal_disposition_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2478_quantconnect_planning_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2478_QUANTCONNECT_PLANNING_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2478_QUANTCONNECT_PLANNING_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -5508,6 +5576,26 @@ def _assert_ops_073_terminal_disposition_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{OPS_073_TERMINAL_DISPOSITION_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2478_quantconnect_planning_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2478 QuantConnect planning historical prefix differs from "
+        "immutable OPS-073 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2478_QUANTCONNECT_PLANNING_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -7733,9 +7821,40 @@ def _ops_073_terminal_disposition_source_paths() -> frozenset[str]:
 
 @cache
 def _ops_073_terminal_disposition_all_current_authority_paths() -> frozenset[str]:
-    return (
+    paths = (
         _ops_073_terminal_disposition_superseded_live_source_paths()
         | _ops_073_terminal_disposition_source_paths()
+    )
+    if TRADING_2478_QUANTCONNECT_PLANNING_SECTION in _compatibility_baseline():
+        paths |= _trading_2478_quantconnect_planning_all_current_authority_paths()
+    return paths
+
+
+@cache
+def _trading_2478_quantconnect_planning_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2478_quantconnect_planning_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2478_quantconnect_planning_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2478_QUANTCONNECT_PLANNING_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2478_quantconnect_planning_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2478_QUANTCONNECT_PLANNING_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2478_quantconnect_planning_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2478_quantconnect_planning_superseded_live_source_paths()
+        | _trading_2478_quantconnect_planning_source_paths()
     )
 
 
@@ -8977,6 +9096,11 @@ def _ops_073_terminal_disposition_prior_active_source_mismatches() -> frozenset[
     return _latest_active_source_mismatches(OPS_073_TERMINAL_DISPOSITION_SECTION)
 
 
+@cache
+def _trading_2478_quantconnect_planning_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2478_QUANTCONNECT_PLANNING_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -9020,7 +9144,31 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if OPS_073_TERMINAL_DISPOSITION_SECTION in baseline:
+    if TRADING_2478_QUANTCONNECT_PLANNING_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2478_quantconnect_planning_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2478_quantconnect_planning_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2470_cited_query_contract_all_current_authority_paths()
+            | _trading_2470_cited_query_amendment_all_current_authority_paths()
+            | _trading_2470_cited_query_consumer_all_current_authority_paths()
+            | _trading_2471_flow_focus_all_current_authority_paths()
+            | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+            | _ops_072_transport_all_current_authority_paths()
+            | _trading_2477_historical_adapter_all_current_authority_paths()
+            | _ops_073_terminal_disposition_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2478_QUANTCONNECT_PLANNING_SECTION
+    elif OPS_073_TERMINAL_DISPOSITION_SECTION in baseline:
         current_superseded_paths = _ops_073_terminal_disposition_superseded_live_source_paths()
         assert (
             _ops_073_terminal_disposition_prior_active_source_mismatches()
@@ -19657,7 +19805,10 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 942
+    latest_fragment_authority = _compatibility_baseline()[LATEST_COMPATIBILITY_SECTION][
+        "generated_fragment_authority"
+    ]
+    assert v2_index["fragment_count"] == latest_fragment_authority["fragment_count"]
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -21666,12 +21817,14 @@ def test_trading_2477_historical_adapter_is_predecessor_hash_authority() -> None
         _assert_trading_2477_historical_adapter_prefix_immutable(bytes(tampered), base_blob)
 
 
-def test_ops_073_terminal_disposition_is_current_hash_authority() -> None:
+def test_ops_073_terminal_disposition_is_predecessor_hash_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     base_blob = _ops_073_terminal_disposition_base_baseline_blob()
     _assert_ops_073_terminal_disposition_historical_prefix_immutable(current_bytes, base_blob)
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == OPS_073_TERMINAL_DISPOSITION_SECTION
+    assert list(baseline).index(OPS_073_TERMINAL_DISPOSITION_SECTION) + 1 == list(
+        baseline
+    ).index(TRADING_2478_QUANTCONNECT_PLANNING_SECTION)
     phase = baseline[OPS_073_TERMINAL_DISPOSITION_SECTION]
     assert phase["schema_version"] == (
         "ops_073_nonrecoverable_terminal_disposition_compatibility.v1"
@@ -21723,8 +21876,11 @@ def test_ops_073_terminal_disposition_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    current_superseded = _trading_2478_quantconnect_planning_superseded_live_source_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in current_superseded:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["research_window"] == {
@@ -21771,6 +21927,115 @@ def test_ops_073_terminal_disposition_is_current_hash_authority() -> None:
     tampered[OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_ops_073_terminal_disposition_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2478_quantconnect_planning_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2478_quantconnect_planning_base_baseline_blob()
+    _assert_trading_2478_quantconnect_planning_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2478_QUANTCONNECT_PLANNING_SECTION
+    phase = baseline[TRADING_2478_QUANTCONNECT_PLANNING_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2478_quantconnect_qqq_options_backtest_capability_planning_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2478-QUANTCONNECT-QQQ-OPTIONS-BACKTEST-CAPABILITY-TECHNICAL-PLAN"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2478_QUANTCONNECT_QQQ_DAILY_OPTIONS_BACKTEST_CAPABILITY_TECHNICAL_PLAN_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2478:2026-08-02:"
+        "request_web_pro_technical_plan_and_follow_up_module_tasks_v1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2478_QUANTCONNECT_PLANNING_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2478_QUANTCONNECT_PLANNING_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(_trading_2478_quantconnect_planning_prior_active_source_mismatches())
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2478_QUANTCONNECT_PLANNING_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2478_QUANTCONNECT_PLANNING_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2478_QUANTCONNECT_PLANNING_NEW_SOURCE_PATHS
+    ) - TRADING_2478_QUANTCONNECT_PLANNING_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2478-QUANTCONNECT-QQQ-OPTIONS-BACKTEST-CAPABILITY-TECHNICAL-PLAN"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": OPS_073_TERMINAL_DISPOSITION_SECTION,
+        "current_hash_authority": f"{TRADING_2478_QUANTCONNECT_PLANNING_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 957,
+        "active_task_count": 452,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["planning"] == {
+        "web_pro_advisory": "COMPLETE_RECONCILED",
+        "exact_git_blob_retrieval": "PASS_8_OF_8",
+        "backtest_adapter_implemented": False,
+        "quantconnect_accessed": False,
+        "market_data_downloaded": False,
+        "runtime_flow_changed": False,
+        "follow_up_task_range": "TRADING-2480..2493",
+        "atlas_reserved_task_id": "TRADING-2479",
+    }
+    assert phase["validation"] == {
+        "first_final_architecture": "FAIL_819_PASSED_2_CURRENT_AUTHORITY_DRIFT",
+        "second_final_architecture": "FAIL_821_PASSED_1_STALE_TEST_MANIFEST",
+        "subsequent_gates_started_after_failure": False,
+        "final_five_gate_rerun": "PENDING_FROM_ARCHITECTURE",
+    }
+    assert phase["safety"] == {
+        "quantconnect_cloud_run": False,
+        "vendor_data_export": False,
+        "strategy_promotion": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2478_QUANTCONNECT_PLANNING_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2478_quantconnect_planning_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

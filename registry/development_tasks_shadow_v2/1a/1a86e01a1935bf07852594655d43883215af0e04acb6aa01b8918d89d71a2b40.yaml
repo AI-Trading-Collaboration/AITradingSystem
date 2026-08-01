@@ -1,0 +1,91 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
+  task_id_sha256: 1a86e01a1935bf07852594655d43883215af0e04acb6aa01b8918d89d71a2b40
+task_record:
+  task_id: TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
+  title: null
+  domain: Risk controls / option position lifecycle and scope violations
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: risk controls：等待 TRADING-2485..2487
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 实现 open/partial/exit/blocked/closed/invalid
+    state machine、pre-expiry guard、exercise/assignment/corporate-action reason codes；不启用
+    short-premium assignment 研究。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying
+      split 均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+  cell_count: 8
+  all_cells:
+  - TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
+  - Risk controls / option position lifecycle and scope violations
+  - P1
+  - PROPOSED
+  - risk controls：等待 TRADING-2485..2487
+  - 实现 open/partial/exit/blocked/closed/invalid state machine、pre-expiry guard、exercise/assignment/corporate-action
+    reason codes；不启用 short-premium assignment 研究。
+  - ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying split
+    均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。
+  - 产生 QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。
+  raw_line: '|TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1|Risk
+    controls / option position lifecycle and scope violations|P1|PROPOSED|risk controls：等待
+    TRADING-2485..2487|实现 open/partial/exit/blocked/closed/invalid state machine、pre-expiry
+    guard、exercise/assignment/corporate-action reason codes；不启用 short-premium assignment
+    研究。|ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying
+    split 均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。|产生
+    QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-d762252396dabbcc58179c6e
+  task_id: TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: risk controls：等待 TRADING-2485..2487
+    notes: 产生 QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
+  - Risk controls / option position lifecycle and scope violations
+  - P1
+  - PROPOSED
+  - risk controls：等待 TRADING-2485..2487
+  - 实现 open/partial/exit/blocked/closed/invalid state machine、pre-expiry guard、exercise/assignment/corporate-action
+    reason codes；不启用 short-premium assignment 研究。
+  - ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying split
+    均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。
+  - 产生 QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 0ce70a84e5f84dc21ae8eee4e262590d3f813f209f978a23d0a2afd4a02ec59a

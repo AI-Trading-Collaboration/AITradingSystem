@@ -1,0 +1,91 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
+  task_id_sha256: 39a1bf396a138a63f79d0187db317bfc92aa70672ffc086e502bf2638901993d
+task_record:
+  task_id: TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
+  title: null
+  domain: Options research engineering / QQQ long-premium deterministic contract selection
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: options research engineering：等待 TRADING-2481/2482/2484
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 实现 policy-driven long call/put single-contract
+    selection、stable SID/tie-break、daily Greeks/OI freshness 与 no-contract cash behavior；不
+    roll、不 multi-leg、不 short。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 相同输入得到相同 SID；invalid/stale/crossed quote 和无合约不放宽 policy；unit/property/golden
+      PASS；更新 system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: fc92437e86470a9f87348ba8fdc087cc2afcd652b07c16956dbf25ab5eaed6f2
+  cell_count: 8
+  all_cells:
+  - TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
+  - Options research engineering / QQQ long-premium deterministic contract selection
+  - P1
+  - PROPOSED
+  - options research engineering：等待 TRADING-2481/2482/2484
+  - 实现 policy-driven long call/put single-contract selection、stable SID/tie-break、daily
+    Greeks/OI freshness 与 no-contract cash behavior；不 roll、不 multi-leg、不 short。
+  - 相同输入得到相同 SID；invalid/stale/crossed quote 和无合约不放宽 policy；unit/property/golden PASS；更新
+    system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。
+  - DTE/moneyness/delta/spread/OI/volume 均需 Owner-reviewed policy，不得硬编码。
+  raw_line: '|TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1|Options
+    research engineering / QQQ long-premium deterministic contract selection|P1|PROPOSED|options
+    research engineering：等待 TRADING-2481/2482/2484|实现 policy-driven long call/put
+    single-contract selection、stable SID/tie-break、daily Greeks/OI freshness 与 no-contract
+    cash behavior；不 roll、不 multi-leg、不 short。|相同输入得到相同 SID；invalid/stale/crossed quote
+    和无合约不放宽 policy；unit/property/golden PASS；更新 system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。|DTE/moneyness/delta/spread/OI/volume
+    均需 Owner-reviewed policy，不得硬编码。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-fc92437e86470a9f87348ba8
+  task_id: TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: options research engineering：等待 TRADING-2481/2482/2484
+    notes: DTE/moneyness/delta/spread/OI/volume 均需 Owner-reviewed policy，不得硬编码。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:fc92437e86470a9f87348ba8fdc087cc2afcd652b07c16956dbf25ab5eaed6f2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
+  - Options research engineering / QQQ long-premium deterministic contract selection
+  - P1
+  - PROPOSED
+  - options research engineering：等待 TRADING-2481/2482/2484
+  - 实现 policy-driven long call/put single-contract selection、stable SID/tie-break、daily
+    Greeks/OI freshness 与 no-contract cash behavior；不 roll、不 multi-leg、不 short。
+  - 相同输入得到相同 SID；invalid/stale/crossed quote 和无合约不放宽 policy；unit/property/golden PASS；更新
+    system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。
+  - DTE/moneyness/delta/spread/OI/volume 均需 Owner-reviewed policy，不得硬编码。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: fc92437e86470a9f87348ba8fdc087cc2afcd652b07c16956dbf25ab5eaed6f2
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 615a3cf540a34a8b0faa8d3301add31b817ec5d3aa4d819cde0a7634f832b888

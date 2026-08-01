@@ -1,0 +1,92 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
+  title: null
+  domain: Data governance / option chain, quote, OI, Greeks, chronology and evidence
+    identity
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data governance + architecture：等待 TRADING-2480/2481
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 冻结 chain/quote/OI/Greeks/calendar/mapping/signal
+    chronology、engine、cache key、manual evidence completeness 与 fail-closed reason
+    codes；不得放宽现有 DQ/PIT。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
+      collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2089
+    row_sha256: 4c887a0cfb306718e03ae951fe44b19794bab1985af2655581ad51194e7d4651
+    cell_count: 8
+    all_cells:
+    - TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
+    - Data governance / option chain, quote, OI, Greeks, chronology and evidence identity
+    - P0
+    - PROPOSED
+    - data governance + architecture：等待 TRADING-2480/2481
+    - 冻结 chain/quote/OI/Greeks/calendar/mapping/signal chronology、engine、cache key、manual
+      evidence completeness 与 fail-closed reason codes；不得放宽现有 DQ/PIT。
+    - stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
+      collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
+    - provider raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。
+    raw_line: '|TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1|Data governance
+      / option chain, quote, OI, Greeks, chronology and evidence identity|P0|PROPOSED|data
+      governance + architecture：等待 TRADING-2480/2481|冻结 chain/quote/OI/Greeks/calendar/mapping/signal
+      chronology、engine、cache key、manual evidence completeness 与 fail-closed reason
+      codes；不得放宽现有 DQ/PIT。|stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
+      collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。|provider
+      raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4c887a0cfb306718e03ae951
+  task_id: TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: data governance + architecture：等待 TRADING-2480/2481
+    notes: provider raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4c887a0cfb306718e03ae951fe44b19794bab1985af2655581ad51194e7d4651
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
+  - Data governance / option chain, quote, OI, Greeks, chronology and evidence identity
+  - P0
+  - PROPOSED
+  - data governance + architecture：等待 TRADING-2480/2481
+  - 冻结 chain/quote/OI/Greeks/calendar/mapping/signal chronology、engine、cache key、manual
+    evidence completeness 与 fail-closed reason codes；不得放宽现有 DQ/PIT。
+  - stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
+    collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
+  - provider raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 4c887a0cfb306718e03ae951fe44b19794bab1985af2655581ad51194e7d4651
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 26aac94a6e31ac9ce67139ff7efdc1af8b8c2ac652445f07f021eb9f3222955c

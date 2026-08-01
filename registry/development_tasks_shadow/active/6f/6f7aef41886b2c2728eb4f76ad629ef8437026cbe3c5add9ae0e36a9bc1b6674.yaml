@@ -1,0 +1,93 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  title: null
+  domain: Architecture / QQQ options shared schemas and governed policy envelope
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: architecture + data engineering：等待 TRADING-2480
+  requirement_refs:
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+    contracts；不实现 QC runner，不替 Owner 决定投资阈值。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: canonical serialization、PK/enums/units/timezones/checksums/lineage/export
+      classification、owner/version/rationale/review/expiry 与 breaking-change tests
+      完整；更新 `docs/system_flow.md`；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2088
+    row_sha256: 4cb3e93b33816b6b6218db1cd0eb2011016b72625bb6532aabdde23d9bedf193
+    cell_count: 8
+    all_cells:
+    - TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+    - Architecture / QQQ options shared schemas and governed policy envelope
+    - P0
+    - PROPOSED
+    - architecture + data engineering：等待 TRADING-2480
+    - 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+      contracts；不实现 QC runner，不替 Owner 决定投资阈值。
+    - canonical serialization、PK/enums/units/timezones/checksums/lineage/export classification、owner/version/rationale/review/expiry
+      与 breaking-change tests 完整；更新 `docs/system_flow.md`；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。
+    - 任何 shared/public schema 变化必须 serial；未闭合 license 字段保持 `UNKNOWN_REQUIRES_LICENSE_REVIEW`。
+    raw_line: '|TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1|Architecture
+      / QQQ options shared schemas and governed policy envelope|P0|PROPOSED|architecture
+      + data engineering：等待 TRADING-2480|冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+      contracts；不实现 QC runner，不替 Owner 决定投资阈值。|canonical serialization、PK/enums/units/timezones/checksums/lineage/export
+      classification、owner/version/rationale/review/expiry 与 breaking-change tests
+      完整；更新 `docs/system_flow.md`；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。|任何
+      shared/public schema 变化必须 serial；未闭合 license 字段保持 `UNKNOWN_REQUIRES_LICENSE_REVIEW`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-4cb3e93b33816b6b6218db1c
+  task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: architecture + data engineering：等待 TRADING-2480
+    notes: 任何 shared/public schema 变化必须 serial；未闭合 license 字段保持 `UNKNOWN_REQUIRES_LICENSE_REVIEW`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:4cb3e93b33816b6b6218db1cd0eb2011016b72625bb6532aabdde23d9bedf193
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  - Architecture / QQQ options shared schemas and governed policy envelope
+  - P0
+  - PROPOSED
+  - architecture + data engineering：等待 TRADING-2480
+  - 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+    contracts；不实现 QC runner，不替 Owner 决定投资阈值。
+  - canonical serialization、PK/enums/units/timezones/checksums/lineage/export classification、owner/version/rationale/review/expiry
+    与 breaking-change tests 完整；更新 `docs/system_flow.md`；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。
+  - 任何 shared/public schema 变化必须 serial；未闭合 license 字段保持 `UNKNOWN_REQUIRES_LICENSE_REVIEW`。
+  docs_links:
+  - docs/system_flow.md
+  terminal: false
+  raw_row_sha256: 4cb3e93b33816b6b6218db1cd0eb2011016b72625bb6532aabdde23d9bedf193
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 5280db1f5b126ba31d62327c440fe24af28ef372b6c3d0263421d719921b4bee

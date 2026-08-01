@@ -1,0 +1,98 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  task_id_sha256: 10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef
+task_record:
+  task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  title: null
+  domain: External validation / preregistered bounded QuantConnect Free Cloud pilot
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner + pilot coordinator + independent reviewer：等待 TRADING-2480..2491
+    并另行授权平台操作
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 极短窗口、低订单、最多一张合约的 cloud smoke，验证真实 QQQ
+    minute data、chronology、selection、fill、cash、evidence download 与 local reconciliation；不证明策略有效、不跑全窗、不优化。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: requested/evaluated range、resource telemetry、no same-bar/daily-close/short/assignment、complete
+      manual bundle 与 explained reconciliation；更新 system flow；退出=`BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION
+      / PILOT_REQUIRES_PAID_TIER / PILOT_NO_GO_LICENSE_OR_EVIDENCE`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 767bc0f930a44583aaa9ac272ed6eb7bc41ffe27e4fdc4a3c9182738818937f9
+  cell_count: 8
+  all_cells:
+  - TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  - External validation / preregistered bounded QuantConnect Free Cloud pilot
+  - P0
+  - PROPOSED
+  - project owner + pilot coordinator + independent reviewer：等待 TRADING-2480..2491
+    并另行授权平台操作
+  - 极短窗口、低订单、最多一张合约的 cloud smoke，验证真实 QQQ minute data、chronology、selection、fill、cash、evidence
+    download 与 local reconciliation；不证明策略有效、不跑全窗、不优化。
+  - requested/evaluated range、resource telemetry、no same-bar/daily-close/short/assignment、complete
+    manual bundle 与 explained reconciliation；更新 system flow；退出=`BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION
+    / PILOT_REQUIRES_PAID_TIER / PILOT_NO_GO_LICENSE_OR_EVIDENCE`。
+  - 当前没有平台访问或运行授权，状态保持 PROPOSED。
+  raw_line: '|TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1|External validation
+    / preregistered bounded QuantConnect Free Cloud pilot|P0|PROPOSED|project owner
+    + pilot coordinator + independent reviewer：等待 TRADING-2480..2491 并另行授权平台操作|极短窗口、低订单、最多一张合约的
+    cloud smoke，验证真实 QQQ minute data、chronology、selection、fill、cash、evidence download
+    与 local reconciliation；不证明策略有效、不跑全窗、不优化。|requested/evaluated range、resource telemetry、no
+    same-bar/daily-close/short/assignment、complete manual bundle 与 explained reconciliation；更新
+    system flow；退出=`BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION / PILOT_REQUIRES_PAID_TIER
+    / PILOT_NO_GO_LICENSE_OR_EVIDENCE`。|当前没有平台访问或运行授权，状态保持 PROPOSED。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-767bc0f930a44583aaa9ac27
+  task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P0
+    next_owner: project owner + pilot coordinator + independent reviewer：等待 TRADING-2480..2491
+      并另行授权平台操作
+    notes: 当前没有平台访问或运行授权，状态保持 PROPOSED。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:767bc0f930a44583aaa9ac272ed6eb7bc41ffe27e4fdc4a3c9182738818937f9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  - External validation / preregistered bounded QuantConnect Free Cloud pilot
+  - P0
+  - PROPOSED
+  - project owner + pilot coordinator + independent reviewer：等待 TRADING-2480..2491
+    并另行授权平台操作
+  - 极短窗口、低订单、最多一张合约的 cloud smoke，验证真实 QQQ minute data、chronology、selection、fill、cash、evidence
+    download 与 local reconciliation；不证明策略有效、不跑全窗、不优化。
+  - requested/evaluated range、resource telemetry、no same-bar/daily-close/short/assignment、complete
+    manual bundle 与 explained reconciliation；更新 system flow；退出=`BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION
+    / PILOT_REQUIRES_PAID_TIER / PILOT_NO_GO_LICENSE_OR_EVIDENCE`。
+  - 当前没有平台访问或运行授权，状态保持 PROPOSED。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 767bc0f930a44583aaa9ac272ed6eb7bc41ffe27e4fdc4a3c9182738818937f9
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 1d175b2a4bb2d6e9df92f34b718afb566cb17f4d11c021fe56a7b00ce0f041e5

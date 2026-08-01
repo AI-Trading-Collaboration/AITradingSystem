@@ -1,0 +1,92 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
+  title: null
+  domain: External platform engineering / safe QuantConnect project adapter boundary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: external platform engineering：等待 TRADING-2480..2483
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 定义 manifest loader、QQQ subscriptions、RAW
+    normalization、engine metadata、Free project-file limits 和 result mapping；不创建 production/live/broker
+    project。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 无 secret/live node/Object Store/API/CLI 免费层假设；manifest mismatch、wrong range/code/policy/engine
+      fail closed；synthetic adapter/security/contract tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2091
+    row_sha256: 5e66a2c3f7b7b8b195af080b8600bccb07c58f40cd88be602cebdef551da3f34
+    cell_count: 8
+    all_cells:
+    - TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
+    - External platform engineering / safe QuantConnect project adapter boundary
+    - P1
+    - PROPOSED
+    - external platform engineering：等待 TRADING-2480..2483
+    - 定义 manifest loader、QQQ subscriptions、RAW normalization、engine metadata、Free
+      project-file limits 和 result mapping；不创建 production/live/broker project。
+    - 无 secret/live node/Object Store/API/CLI 免费层假设；manifest mismatch、wrong range/code/policy/engine
+      fail closed；synthetic adapter/security/contract tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
+    - 真实 cloud project/run 只能由 TRADING-2492 的独立 Owner token 授权。
+    raw_line: '|TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1|External platform
+      engineering / safe QuantConnect project adapter boundary|P1|PROPOSED|external
+      platform engineering：等待 TRADING-2480..2483|定义 manifest loader、QQQ subscriptions、RAW
+      normalization、engine metadata、Free project-file limits 和 result mapping；不创建
+      production/live/broker project。|无 secret/live node/Object Store/API/CLI 免费层假设；manifest
+      mismatch、wrong range/code/policy/engine fail closed；synthetic adapter/security/contract
+      tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。|真实 cloud
+      project/run 只能由 TRADING-2492 的独立 Owner token 授权。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-5e66a2c3f7b7b8b195af080b
+  task_id: TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    priority: P1
+    next_owner: external platform engineering：等待 TRADING-2480..2483
+    notes: 真实 cloud project/run 只能由 TRADING-2492 的独立 Owner token 授权。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:5e66a2c3f7b7b8b195af080b8600bccb07c58f40cd88be602cebdef551da3f34
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
+  - External platform engineering / safe QuantConnect project adapter boundary
+  - P1
+  - PROPOSED
+  - external platform engineering：等待 TRADING-2480..2483
+  - 定义 manifest loader、QQQ subscriptions、RAW normalization、engine metadata、Free project-file
+    limits 和 result mapping；不创建 production/live/broker project。
+  - 无 secret/live node/Object Store/API/CLI 免费层假设；manifest mismatch、wrong range/code/policy/engine
+    fail closed；synthetic adapter/security/contract tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
+  - 真实 cloud project/run 只能由 TRADING-2492 的独立 Owner token 授权。
+  docs_links: []
+  terminal: false
+  raw_row_sha256: 5e66a2c3f7b7b8b195af080b8600bccb07c58f40cd88be602cebdef551da3f34
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: a0e247b84465e7e01366ca004e77b229c99867cc03475c8fccc3fab9da72fd01
