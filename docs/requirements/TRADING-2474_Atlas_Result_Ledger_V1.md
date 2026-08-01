@@ -196,3 +196,11 @@ no network/server/LLM/write/production/broker resource
 - 2026-08-01：TRADING-2473 完成 local-main/remote closeout 后，Owner 要求继续。依原始
   “所有实际研究结果及归因”产品目标，选择先闭合 validated snapshot 内已有
   8 results / 12 attributions 的展示缺口；登记任务并进入 `IN_PROGRESS`。
+- 2026-08-01：Result Ledger V1 已实现；两列 desktop / 单列窄屏卡片显示全部
+  8 results，原生 disclosure 闭合全部 12 attributions。renderer focused=`8 passed`，
+  Atlas/citation focused=`80 passed`，Ruff/Black PASS；actual-input double-build byte-identical，
+  canonical `index.html`=`92180 bytes / SHA-256 b7540d87caf2…`，responses/validation SHA
+  保持 `d3317e3f…/dd17b181…`。离线 DOM audit=`8 unique results / 12 unique attributions /
+  29 details / 1 open / 0 script/form/iframe/external`。Browser 刷新本地 `file://` 仍被 URL
+  policy 拒绝，已按规则停止且未绕过；当前等待 Owner 手工 visual acceptance，尚未运行
+  closeout formal gates。

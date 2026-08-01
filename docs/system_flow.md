@@ -74,6 +74,16 @@ structured provenance，不建立第二套展示真相；职责、解释边界�
 不得反向改变 snapshot、diff、response 或 validation。该 disclosure 仍是无 script、无网络、只读的
 静态投影，不新增执行路径、public contract、HTTP/LLM consumer、production 或 broker action。
 
+TRADING-2474 在同一 cited-query `index.html` 增加 result ledger。renderer 重新通过
+`load_validated_snapshot_payload` 获得 typed snapshot，按 canonical order 展示其全部 result；
+每个 result 同时显示 raw/display status、reader summary、assertion kind、
+`investment_facing=false`、limitations、source refs 与按 exact `result_id` 绑定的全部
+attributions。当前 canonical preview 展示 8 results / 12 attributions，但同时冻结
+`coverage_scope=ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS` 与
+`historical_repository_coverage_complete=false`；“全部”只指当前 validated snapshot
+覆盖范围，不代表全仓历史 campaign 已接入。ledger 不重算 result/attribution，
+不改变 responses/validation JSON，不新增 HTTP、LLM、自由文本、production 或 broker 路径。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -100,7 +110,8 @@ flowchart LR
     QVAL --> QMAP["TRADING-2471 system flow focus map<br/>8 stages + exact-ID current focus"]
     QMAP --> QPROV["TRADING-2472 status provenance<br/>structured fields + exact validation refs"]
     QPROV --> QDRILL["TRADING-2473 node evidence drilldown<br/>8 native details / current open"]
-    QDRILL --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
+    QDRILL --> QLEDGER["TRADING-2474 result ledger<br/>all in-scope results + attributions"]
+    QLEDGER --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]

@@ -60,6 +60,20 @@ renderer focused=`7 passed`、Atlas/citation focused=`63 passed`。Browser URL p
 Architecture/Contract/Integration/Reproducibility/Full=`815/276/995/24/7870 passed`，Full 另有
 `3 skipped / 644 warnings`；治理结果写回后的最终树 Architecture/Contract=`815/276 passed`。
 
+TRADING-2474 在同一 `index.html` 增加“当前覆盖范围内的全部研究结果”。
+renderer 只消费 validated typed snapshot，按 canonical order 展示 8 个 result 和按
+exact `result_id` 绑定的 12 条 attribution；每张卡同时显示 raw/display status、
+reader summary、assertion kind、`investment_facing=false`、limitations 与 source refs。
+页面显式声明 `coverage_scope=ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS` 和
+`historical_repository_coverage_complete=false`，不声称全仓历史覆盖。当前
+`index.html`=`92180 bytes`、SHA-256=
+`b7540d87caf212faca015b71e80a5fe5080342a55d94580f68b61a045492e78a`；`responses.json`
+与 `validation.json` 字节及 SHA 保持不变。actual-input double-build 与离线 DOM audit PASS，
+DOM 为 `8 unique results / 12 unique attributions / 8 result disclosures / 0 script/form/iframe/external`。
+Browser 自动刷新仍被本地 `file://` URL policy 阻止且未绕过，当前等待 Owner 手工
+visual acceptance。该 ledger 不重算研究/归因，不是自由文本 RAG、LLM authority、
+HTTP 服务、投资建议或 strategy approval。
+
 ## TRADING-2467 O1 Blind Calendar Re-entry Policy
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

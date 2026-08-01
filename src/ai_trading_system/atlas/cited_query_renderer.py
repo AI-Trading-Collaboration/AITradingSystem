@@ -18,9 +18,16 @@ from ai_trading_system.atlas.cited_query_validation import (
 from ai_trading_system.contracts.strategy_research_cited_query import (
     CITED_QUERY_QUESTION_CATALOG,
     CitedQueryAnswerStatus,
+    CitedQueryCitation,
     CitedQueryQuestionId,
     StrategyResearchCitedQueryRequest,
     StrategyResearchCitedQueryResponse,
+)
+from ai_trading_system.contracts.strategy_research_explorer import (
+    AssertionKind,
+    AttributionDirection,
+    ResearchAttribution,
+    ResearchResultCard,
 )
 from ai_trading_system.platform.artifacts import write_bytes_atomic
 
@@ -31,6 +38,30 @@ _STATUS_LABELS = {
     CitedQueryAnswerStatus.ANSWERED: "证据完整",
     CitedQueryAnswerStatus.LIMITED: "有依据，但上下文有限",
     CitedQueryAnswerStatus.BLOCKED: "无法可靠回答",
+}
+_RESULT_STATUS_LABELS = {
+    "NOT_DUE": "尚未到期",
+    "DUE": "待处理",
+    "RUNNING": "进行中",
+    "PASS": "已通过",
+    "LIMITED": "证据有限",
+    "SKIPPED": "已跳过",
+    "BLOCKED": "已阻断",
+    "FAILED": "未通过",
+}
+_ASSERTION_LABELS = {
+    AssertionKind.DATA_FACT: "数据事实",
+    AssertionKind.RULE_JUDGMENT: "规则判断",
+    AssertionKind.MODEL_RESULT: "模型结果",
+    AssertionKind.RESEARCHER_INTERPRETATION: "研究者解释",
+    AssertionKind.OWNER_DECISION: "Owner 决策",
+}
+_ATTRIBUTION_DIRECTION_LABELS = {
+    AttributionDirection.SUPPORTS: "支持",
+    AttributionDirection.CONTRADICTS: "反对 / 阻断",
+    AttributionDirection.MIXED: "影响混合",
+    AttributionDirection.NEUTRAL: "中性",
+    AttributionDirection.UNKNOWN: "未知",
 }
 
 
@@ -166,7 +197,7 @@ def build_cited_query_showcase(
     )
 
 
-def _render_citation(citation: object) -> str:
+def _render_citation(citation: CitedQueryCitation) -> str:
     known_at = "未记录" if citation.known_at is None else citation.known_at.isoformat()
     available_at = "未记录" if citation.available_at is None else citation.available_at.isoformat()
     entity_hashes = (
@@ -229,6 +260,146 @@ def _render_response(response: StrategyResearchCitedQueryResponse) -> str:
       </details>
       <p class="identity">response <code>{escape(response.response_id)}</code> · request <code>{escape(response.request.request_id)}</code></p>
     </article>
+    """
+
+
+def _result_status_tone(status_code: str) -> str:
+    if status_code == "PASS":
+        return "result-pass"
+    if status_code == "LIMITED":
+        return "result-limited"
+    if status_code in {"BLOCKED", "FAILED"}:
+        return "result-blocked"
+    if status_code == "RUNNING":
+        return "result-active"
+    return "result-neutral"
+
+
+def _render_result_attribution(item: ResearchAttribution) -> str:
+    source_refs = "".join(
+        f"<li><code>{escape(source_ref_id)}</code></li>" for source_ref_id in item.source_ref_ids
+    )
+    return (
+        f'<li class="result-attribution" data-attribution-id="{escape(item.attribution_id)}" '
+        f'data-attribution-direction="{escape(item.direction.value)}">'
+        '<div class="attribution-heading">'
+        f'<span class="direction direction-{escape(item.direction.value.lower())}">'
+        f"{escape(_ATTRIBUTION_DIRECTION_LABELS[item.direction])}"
+        f"<code>{escape(item.direction.value)}</code></span>"
+        f'<code class="attribution-id">{escape(item.attribution_id)}</code>'
+        "</div>"
+        f"<p>{escape(item.explanation)}</p>"
+        '<dl class="attribution-meta">'
+        f"<div><dt>来源节点</dt><dd><code>{escape(item.source_node_id)}</code></dd></div>"
+        f"<div><dt>信息类型</dt><dd>{escape(_ASSERTION_LABELS[item.assertion_kind])} "
+        f"<code>{escape(item.assertion_kind.value)}</code></dd></div>"
+        "</dl>"
+        f'<ul class="result-source-refs">{source_refs}</ul>'
+        "</li>"
+    )
+
+
+def _render_result_ledger_card(
+    result: ResearchResultCard,
+    attributions: tuple[ResearchAttribution, ...],
+) -> str:
+    limitations = "".join(f"<li>{escape(item)}</li>" for item in result.limitations)
+    source_refs = "".join(
+        f"<li><code>{escape(source_ref_id)}</code></li>" for source_ref_id in result.source_ref_ids
+    )
+    attribution_rows = "".join(_render_result_attribution(item) for item in attributions)
+    display_status = result.display_status.value
+    raw_status = result.raw_status.value
+    return f"""
+    <article class="result-ledger-card" data-result-id="{escape(result.result_id)}" data-raw-status="{escape(raw_status)}" data-display-status="{escape(display_status)}">
+      <div class="result-ledger-head">
+        <div>
+          <p class="result-sequence">RESULT · <code>{escape(result.result_id)}</code></p>
+          <h3>{escape(result.title)}</h3>
+          <p class="result-node">对应节点 <code>{escape(result.node_id)}</code></p>
+        </div>
+        <span class="result-status {_result_status_tone(display_status)}">
+          <strong>{escape(_RESULT_STATUS_LABELS[display_status])}</strong>
+          <code>{escape(display_status)}</code>
+        </span>
+      </div>
+      <p class="result-summary">{escape(result.reader_summary)}</p>
+      <div class="result-status-pair" aria-label="机器状态与展示状态">
+        <span><small>机器原始状态</small><strong>{escape(_RESULT_STATUS_LABELS[raw_status])}</strong><code>{escape(raw_status)}</code></span>
+        <span><small>读者展示状态</small><strong>{escape(_RESULT_STATUS_LABELS[display_status])}</strong><code>{escape(display_status)}</code></span>
+        <span><small>信息类型</small><strong>{escape(_ASSERTION_LABELS[result.assertion_kind])}</strong><code>{escape(result.assertion_kind.value)}</code></span>
+        <span><small>投资结论</small><strong>不是</strong><code>investment_facing=false</code></span>
+      </div>
+      <details class="result-evidence">
+        <summary>查看限制、来源与 {len(attributions)} 条归因</summary>
+        <div class="result-evidence-body">
+          <section>
+            <h4>限制</h4>
+            <ul>{limitations or '<li>没有额外限制。</li>'}</ul>
+          </section>
+          <section>
+            <h4>Canonical source refs</h4>
+            <ul class="result-source-refs">{source_refs}</ul>
+          </section>
+          <section class="result-attribution-section">
+            <h4>全部关联归因</h4>
+            <ol class="result-attributions">{attribution_rows or '<li>当前没有关联归因。</li>'}</ol>
+          </section>
+        </div>
+      </details>
+    </article>
+    """
+
+
+def _render_result_ledger(showcase: AtlasCitedQueryShowcase) -> str:
+    snapshot = load_validated_snapshot_payload(showcase.snapshot_payload)
+    attributions_by_result: dict[str, list[ResearchAttribution]] = {
+        result.result_id: [] for result in snapshot.results
+    }
+    for attribution in snapshot.attributions:
+        try:
+            attributions_by_result[attribution.result_id].append(attribution)
+        except KeyError as exc:
+            raise ValueError(
+                "ATLAS_RESULT_LEDGER_ORPHAN_ATTRIBUTION:" + attribution.attribution_id
+            ) from exc
+    cards = "".join(
+        _render_result_ledger_card(
+            result,
+            tuple(attributions_by_result[result.result_id]),
+        )
+        for result in snapshot.results
+    )
+    status_order = ("PASS", "LIMITED", "BLOCKED", "NOT_DUE", "RUNNING", "DUE", "FAILED", "SKIPPED")
+    status_counts = {
+        status: sum(result.display_status.value == status for result in snapshot.results)
+        for status in status_order
+    }
+    status_summary = "".join(
+        f'<span class="ledger-count {_result_status_tone(status)}" data-ledger-status="{escape(status)}">'
+        f"<strong>{count}</strong>{escape(_RESULT_STATUS_LABELS[status])}<code>{escape(status)}</code></span>"
+        for status, count in status_counts.items()
+        if count
+    )
+    return f"""
+    <section class="result-ledger" id="all-in-scope-results" aria-labelledby="result-ledger-title" data-coverage-scope="ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS" data-historical-repository-coverage-complete="false">
+      <div class="result-ledger-intro">
+        <div>
+          <p class="section-kicker">RESULT LEDGER · CANONICAL SNAPSHOT ONLY</p>
+          <h2 id="result-ledger-title">当前覆盖范围内的全部研究结果</h2>
+          <p>这里完整列出 validated Atlas snapshot 中的 {len(snapshot.results)} 个 result 与 {len(snapshot.attributions)} 条 attribution；顺序沿用 canonical snapshot，不做“最好”或“最相关”排序。</p>
+        </div>
+        <div class="coverage-boundary" aria-label="覆盖范围边界">
+          <strong>先看覆盖边界</strong>
+          <p>这是 Atlas V1.1 已接入的代表性 campaigns，不是全仓历史研究的完整清单。</p>
+          <code>coverage_scope=ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS</code>
+          <code>historical_repository_coverage_complete=false</code>
+        </div>
+      </div>
+      <div class="ledger-summary" aria-label="结果展示状态分布">{status_summary}</div>
+      <p class="ledger-reading-note"><strong>怎样读：</strong>先看标题、摘要和“读者展示状态”；展开后再看限制、source refs 与归因。raw/display status 均不是投资评级，工程 PASS 也不等于 strategy PASS。</p>
+      <div class="result-ledger-grid">{cards}</div>
+    </section>
     """
 
 
@@ -735,6 +906,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     )
     cards = "".join(_render_response(item) for item in showcase.responses)
     system_flow = _render_system_flow_map(showcase)
+    result_ledger = _render_result_ledger(showcase)
     snapshot_id = str(showcase.snapshot_payload["snapshot_id"])
     diff_id = str(showcase.diff_payload["diff_id"])
     return f"""<!doctype html>
@@ -859,6 +1031,59 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .provenance-refs li {{ margin:.2rem 0; color:var(--muted); font-size:.64rem; overflow-wrap:anywhere; }}
     .provenance-boundary {{ margin:.75rem 0 0; color:var(--muted); font-size:.72rem; }}
     .flow-safety {{ margin:1rem 0 0; padding:.75rem .9rem; border-left:4px solid var(--amber); border-radius:.45rem; color:#6e531b; background:#fff8e9; font-size:.78rem; }}
+    .result-ledger {{ margin:0 0 1.5rem; padding:1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; }}
+    .result-ledger-intro {{ display:grid; grid-template-columns:minmax(0,1.65fr) minmax(260px,.85fr); gap:1rem; align-items:start; }}
+    .result-ledger-intro h2 {{ margin:.25rem 0 .4rem; font-size:clamp(1.35rem,2.6vw,2rem); line-height:1.18; }}
+    .result-ledger-intro > div:first-child > p:last-child {{ max-width:700px; margin:.25rem 0; color:var(--muted); }}
+    .coverage-boundary {{ padding:.85rem .9rem; border:1px solid #e8c880; border-radius:.72rem; color:#684a11; background:#fff9e9; }}
+    .coverage-boundary strong,.coverage-boundary code {{ display:block; }}
+    .coverage-boundary p {{ margin:.3rem 0 .55rem; font-size:.78rem; }}
+    .coverage-boundary code {{ color:#80601e; font-size:.62rem; line-height:1.55; overflow-wrap:anywhere; }}
+    .ledger-summary {{ display:flex; flex-wrap:wrap; gap:.55rem; margin:1rem 0 .75rem; }}
+    .ledger-count {{ display:grid; grid-template-columns:auto auto; align-items:center; gap:0 .35rem; min-width:120px; padding:.55rem .7rem; border:1px solid currentColor; border-radius:.65rem; background:#fff; font-size:.72rem; font-weight:800; }}
+    .ledger-count strong {{ grid-row:1/3; font-size:1.35rem; line-height:1; }}
+    .ledger-count code {{ color:currentColor; font-size:.56rem; }}
+    .ledger-reading-note {{ margin:.65rem 0 1rem; padding:.7rem .8rem; border-left:4px solid var(--teal); color:#425168; background:#f2f8f7; font-size:.78rem; }}
+    .result-ledger-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; }}
+    .result-ledger-card {{ min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:.82rem; background:#fbfcfe; }}
+    .result-ledger-head {{ display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; padding:.9rem .95rem .6rem; }}
+    .result-ledger-head h3 {{ margin:.18rem 0 .25rem; font-size:1rem; line-height:1.35; }}
+    .result-sequence,.result-node {{ margin:0; color:var(--muted); font-size:.64rem; overflow-wrap:anywhere; }}
+    .result-status {{ display:grid; flex:0 0 106px; gap:.08rem; padding:.35rem .45rem; border:1px solid currentColor; border-radius:.55rem; background:#fff; text-align:right; }}
+    .result-status strong {{ font-size:.7rem; }}
+    .result-status code {{ color:currentColor; font-size:.57rem; }}
+    .result-pass {{ color:#087a55; }}
+    .result-limited {{ color:#9a6500; }}
+    .result-blocked {{ color:#aa3d51; }}
+    .result-active {{ color:#1769aa; }}
+    .result-neutral {{ color:#697589; }}
+    .result-summary {{ margin:0; padding:.1rem .95rem .8rem; color:#34445b; font-size:.83rem; }}
+    .result-status-pair {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.45rem; padding:0 .95rem .9rem; }}
+    .result-status-pair span {{ min-width:0; padding:.5rem .55rem; border:1px solid #e0e5ed; border-radius:.55rem; background:#fff; }}
+    .result-status-pair small,.result-status-pair strong,.result-status-pair code {{ display:block; }}
+    .result-status-pair small {{ color:var(--muted); font-size:.6rem; font-weight:800; }}
+    .result-status-pair strong {{ margin:.12rem 0; font-size:.72rem; }}
+    .result-status-pair code {{ color:#68758a; font-size:.56rem; overflow-wrap:anywhere; }}
+    .result-evidence {{ border-top:1px solid var(--line); background:#fff; }}
+    .result-evidence > summary {{ padding:.75rem .95rem; color:var(--blue); font-size:.75rem; }}
+    .result-evidence-body {{ padding:0 .95rem .95rem; }}
+    .result-evidence-body h4 {{ margin:.75rem 0 .28rem; font-size:.72rem; letter-spacing:.05em; text-transform:uppercase; }}
+    .result-evidence-body ul {{ margin:.25rem 0; padding-left:1.15rem; color:#536176; font-size:.7rem; }}
+    .result-source-refs {{ display:flex; flex-wrap:wrap; gap:.35rem; padding:0!important; list-style:none; }}
+    .result-source-refs li {{ min-width:0; padding:.2rem .35rem; border-radius:.35rem; background:#edf2f8; overflow-wrap:anywhere; }}
+    .result-attribution-section {{ margin-top:.75rem; padding-top:.05rem; border-top:1px solid #e4e8ef; }}
+    .result-attributions {{ display:grid; gap:.5rem; margin:.35rem 0 0; padding:0; list-style:none; }}
+    .result-attribution {{ min-width:0; padding:.65rem .7rem; border:1px solid #e0e5ed; border-radius:.58rem; background:#f8fafc; }}
+    .attribution-heading {{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; }}
+    .direction {{ display:inline-flex; align-items:center; gap:.3rem; font-size:.66rem; font-weight:850; }}
+    .direction code {{ color:currentColor; font-size:.55rem; }}
+    .direction-supports {{ color:#087a55; }} .direction-contradicts {{ color:#aa3d51; }} .direction-mixed {{ color:#9a6500; }} .direction-neutral,.direction-unknown {{ color:#697589; }}
+    .attribution-id {{ color:#68758a; font-size:.56rem; text-align:right; overflow-wrap:anywhere; }}
+    .result-attribution > p {{ margin:.5rem 0; color:#3e4c61; font-size:.72rem; }}
+    .attribution-meta {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.35rem; margin:.4rem 0; }}
+    .attribution-meta div {{ min-width:0; padding:.4rem .45rem; border-radius:.42rem; background:#fff; }}
+    .attribution-meta dt {{ color:var(--muted); font-size:.57rem; font-weight:850; }}
+    .attribution-meta dd {{ margin:.12rem 0 0; font-size:.65rem; overflow-wrap:anywhere; }}
     nav {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.55rem; margin-bottom:1.5rem; }}
     nav a {{ color:var(--navy); padding:.75rem; border:1px solid var(--line); border-radius:.7rem; background:#fff; text-decoration:none; font-size:.82rem; font-weight:750; }}
     nav a:hover {{ border-color:var(--blue); }}
@@ -887,8 +1112,8 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel {{ grid-template-columns:1fr; }} nav {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid {{ grid-template-columns:1fr; }} .flow-map {{ padding:1rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .answer-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} }}
+    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid,.result-ledger-grid,.result-status-pair,.attribution-meta {{ grid-template-columns:1fr; }} .flow-map,.result-ledger {{ padding:1rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
@@ -907,6 +1132,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
   <main>
     <p class="notice"><strong>怎样阅读：</strong>先看“一句话回答”，再看“限制”；需要审计时展开引用。LIMITED 不等于研究失败，只表示时间、DQ 或研究上下文尚不完整。本页不是投资建议，也不会触发交易。</p>
     {system_flow}
+    {result_ledger}
     <nav aria-label="五个固定问题">{navigation}</nav>
     <div class="answer-grid">{cards}</div>
     <footer>

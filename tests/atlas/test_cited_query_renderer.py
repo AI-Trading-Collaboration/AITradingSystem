@@ -3,10 +3,12 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
 from ai_trading_system.atlas.cited_query_renderer import (
+    AtlasCitedQueryShowcase,
     build_cited_query_showcase,
     render_cited_query_html,
     write_cited_query_artifacts,
@@ -21,7 +23,9 @@ from ai_trading_system.contracts import (
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _payloads(*, injected_summary: str = ""):
+def _payloads(
+    *, injected_summary: str = ""
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     before = build_atlas_bundle(
         repository_root=PROJECT_ROOT,
         exact_commit="f" * 40,
@@ -54,7 +58,7 @@ def _payloads(*, injected_summary: str = ""):
     )
 
 
-def _showcase(*, injected_summary: str = ""):
+def _showcase(*, injected_summary: str = "") -> AtlasCitedQueryShowcase:
     before, after, diff = _payloads(injected_summary=injected_summary)
     return build_cited_query_showcase(
         target_ids={
@@ -111,6 +115,16 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "不能推出",
         "下一合法动作",
         "不支持的问题必须通过独立任务扩展合同",
+        "当前覆盖范围内的全部研究结果",
+        "RESULT LEDGER · CANONICAL SNAPSHOT ONLY",
+        "这是 Atlas V1.1 已接入的代表性 campaigns",
+        "不是全仓历史研究的完整清单",
+        "coverage_scope=ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS",
+        "historical_repository_coverage_complete=false",
+        "机器原始状态",
+        "读者展示状态",
+        "全部关联归因",
+        "工程 PASS 也不等于 strategy PASS",
         "CANONICAL_SNAPSHOT_FIELD",
         "CANONICAL_SNAPSHOT_RELATION",
         "INDEPENDENT_VALIDATION",
@@ -165,6 +179,20 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "attr-restart-oos-limits-expansion" in html
     for response in showcase.responses:
         assert f"response_id={response.response_id}" in html
+    results = cast(list[dict[str, Any]], showcase.snapshot_payload["results"])
+    attributions = cast(list[dict[str, Any]], showcase.snapshot_payload["attributions"])
+    assert html.count('class="result-ledger-card"') == len(results) == 8
+    assert html.count('class="result-attribution"') == len(attributions) == 12
+    assert html.count('data-display-status="PASS"') == 2
+    assert html.count('data-display-status="LIMITED"') == 4
+    assert html.count('data-display-status="BLOCKED"') == 1
+    assert html.count('data-display-status="NOT_DUE"') == 1
+    for result in results:
+        assert f'data-result-id="{result["result_id"]}"' in html
+        for source_ref_id in result["source_ref_ids"]:
+            assert source_ref_id in html
+    for attribution in attributions:
+        assert f'data-attribution-id="{attribution["attribution_id"]}"' in html
     for progress_tone in (
         "progress-neutral",
         "progress-active",
@@ -211,6 +239,7 @@ def test_flow_status_fails_closed_on_duplicate_validation_binding() -> None:
 
 def test_flow_status_fails_closed_on_unreviewed_research_state() -> None:
     showcase = _showcase()
+    snapshot_nodes = cast(list[dict[str, Any]], showcase.snapshot_payload["nodes"])
     nodes = [
         {
             **item,
@@ -218,7 +247,7 @@ def test_flow_status_fails_closed_on_unreviewed_research_state() -> None:
                 "PASS" if item["node_id"] == "program-strategy-research" else item["raw_status"]
             ),
         }
-        for item in showcase.snapshot_payload["nodes"]
+        for item in snapshot_nodes
     ]
     invalid = replace(
         showcase,
@@ -233,6 +262,7 @@ def test_flow_status_fails_closed_on_unreviewed_research_state() -> None:
 
 def test_flow_status_fails_closed_on_attribution_result_mismatch() -> None:
     showcase = _showcase()
+    snapshot_attributions = cast(list[dict[str, Any]], showcase.snapshot_payload["attributions"])
     attributions = [
         {
             **item,
@@ -242,7 +272,7 @@ def test_flow_status_fails_closed_on_attribution_result_mismatch() -> None:
                 else item["result_id"]
             ),
         }
-        for item in showcase.snapshot_payload["attributions"]
+        for item in snapshot_attributions
     ]
     invalid = replace(
         showcase,
@@ -254,6 +284,25 @@ def test_flow_status_fails_closed_on_attribution_result_mismatch() -> None:
     with pytest.raises(
         ValueError,
         match="ATLAS_CITED_QUERY_FLOW_STATUS_ATTRIBUTION_RESULT_MISMATCH",
+    ):
+        render_cited_query_html(invalid)
+
+
+def test_result_ledger_fails_closed_when_snapshot_relation_is_orphaned() -> None:
+    showcase = _showcase()
+    snapshot_results = cast(list[dict[str, Any]], showcase.snapshot_payload["results"])
+    invalid = replace(
+        showcase,
+        snapshot_payload={
+            **showcase.snapshot_payload,
+            "results": [
+                item for item in snapshot_results if item["result_id"] != "result-atlas-contract"
+            ],
+        },
+    )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_SNAPSHOT_CONTRACT_INVALID",
     ):
         render_cited_query_html(invalid)
 
