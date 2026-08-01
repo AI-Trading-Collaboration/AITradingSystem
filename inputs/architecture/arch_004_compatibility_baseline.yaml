@@ -37136,6 +37136,7 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
   - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
   - src/ai_trading_system/atlas/__init__.py
   - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
   - tests/test_arch_004g_deprecation.py
   supersession:
     superseded_by_phase: TRADING-2475-ATLAS-HISTORICAL-COVERAGE-INVENTORY
@@ -37181,6 +37182,7 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
   - src/ai_trading_system/atlas/historical_coverage_inventory.py
   - tests/atlas/test_historical_coverage_inventory.py
   - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004f3_reporting_architecture.py
   - tests/test_arch_004g_deprecation.py
   sources:
   - path: config/atlas/historical_coverage_inventory.yaml
@@ -37190,10 +37192,10 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     sha256: 6816a90b1ab726a86f708d1187a882a709d6fe2bdc8cc32f1b185c5f7e67fd6c
     hash_normalization: git_eol_lf
   - path: docs/artifact_catalog.md
-    sha256: 86b6eca757009171e100604b60ea101baad3ebb2a08c908c829ae2ad6912a8d1
+    sha256: 902fc42937162af7ed4741fd5c37602eea3a2871606df0577d49ca4783dced5d
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md
-    sha256: 23fac9d96b2a037d345dd9c5f19c202188cff74bfbc628cc2c765d5c44cdba6f
+    sha256: dbc8076884db8c98765b2d68f9f9e4da021ae0542676c7d618415ce2dc7ee0a6
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
     sha256: 5e1facce2231cb2150b8156abc637e4e94c50ed4b8b95922138aa93270464a9f
@@ -37202,7 +37204,7 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     sha256: 31f6c270124bed92df03a88502139e0bdf476aee9f806cf40eac29a4b595a176
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-    sha256: 73fac12231475c9b3db547073085af11d60d656158ff440d450286865424a5f7
+    sha256: 969773e6ddd7a8d7ef52f6b2f06c8bd271d524fd50752f44fd549b522df39506
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_architecture_fitness.yaml
     sha256: 54fa4e2398231ad3d1d785b87d11f344a1916d3ce6cce34c1100e029eb3955a8
@@ -37211,7 +37213,7 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     sha256: 68c7ac2d3491e356e91fbeab7aa5993ae1ea06ddc0c849d63643b516f61b9c15
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: e5b25a1c1074fc7c90ffe9f208961f955baf30ae3109a1cc947db8c0b2838e8e
+    sha256: 9c05aecd0e01d5015154d86fa1d4bf681f8c102e542d17e1deef1584d7e08acf
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: a5ac8c74e41bba195dcc54291207fdd2ae4b289754d653c59032acd93315b265
@@ -37269,6 +37271,9 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
     sha256: d3207aec825dd925f752ea616e51d910433fcebac749edf2e50ab5c83812bbfc
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004f3_reporting_architecture.py
+    sha256: ddd3465d28ed62f7703abb89a834531a043223af29a52048bcf78ba0781fa9bd
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004g_deprecation.py
     sha256: 3aa38c0133de9164bb525e55887ecf6b56f918c795e18582dd17836e3567686b

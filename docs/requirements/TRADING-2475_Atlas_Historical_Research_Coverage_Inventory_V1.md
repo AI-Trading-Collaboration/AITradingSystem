@@ -173,6 +173,8 @@ inputs/architecture/**
 registry/development_tasks_shadow/**
 registry/development_tasks_shadow_v2/**
 tests/test_arch_004_refactor_policy.py
+tests/test_arch_004f3_reporting_architecture.py
+tests/test_arch_004g_deprecation.py
 ```
 
 resource claim：Git metadata、三个 declared YAML authorities 与 canonical Atlas output directory only；

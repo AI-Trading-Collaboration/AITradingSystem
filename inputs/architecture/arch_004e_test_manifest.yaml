@@ -8122,7 +8122,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004f3_reporting_architecture
   path: tests/test_arch_004f3_reporting_architecture.py
-  sha256: 729d1d7e1340d6984a670b7bb5db7190ddb6e15e2b7adaaacda47a4f865d6e56
+  sha256: ddd3465d28ed62f7703abb89a834531a043223af29a52048bcf78ba0781fa9bd
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
