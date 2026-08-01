@@ -1,12 +1,12 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: 0f5af7f06357ae7cc9ce164dbf04f960c653f9de1fb10dd9fbe58a50463d1e03
+baseline_checksum: a1503ad5e85c506c9e4e602f5d6835b2fd34ed1a9ac8480d5a79ae80eb681f50
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
-task_count: 941
-fragment_count: 941
+task_count: 942
+fragment_count: 942
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -1000,6 +1000,16 @@ fragments:
     line_number: 1606
     order_in_partition: 97
     row_sha256: 764b4dbf02390e2a753478b8bf5c14b506bfd783395757033f372bd5e03956b4
+- task_id: OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING
+  path: registry/development_tasks_shadow_v2/3f/3f59652a611696fac4af4e7ae8bf38c7b2d9af7da2e22d285e091e627ff750a7.yaml
+  file_sha256: 534ed328d73386a0cec19ea72aa7a12a920c3f12412af23d8d47a9a2055f5f25
+  fragment_checksum: b7ec7cb9b344dd2bd434128a1bb3316fecf5771fc24ee7421c0aadae5477fd0f
+  locator:
+    source_partition: active
+    source_path: docs/task_register.md
+    line_number: 1607
+    order_in_partition: 98
+    row_sha256: 53bf1fe1b9c19a1a968c92956ab3528ccb570f35ffb384b1a6749c079b9c0b3d
 - task_id: STORAGE-001
   path: registry/development_tasks_shadow_v2/4d/4d19e70e42d3faf827d173b61934063ee2b170c02bd93225e695aa6a229cd1e6.yaml
   file_sha256: 1912f6f453bcb8d7685f2c84cd7d9a9ed9b74a333c3389399f8d7ba99044f5e8
@@ -1007,8 +1017,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1607
-    order_in_partition: 98
+    line_number: 1608
+    order_in_partition: 99
     row_sha256: c0ab6b6b6622ef8b5496c2f34a714dfb39d330e26179fe09fa80d726b595173c
 - task_id: KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
   path: registry/development_tasks_shadow_v2/08/08160009ae5064c819c9b28d3a3570fc990e7770394722d5f364b8363f3320d1.yaml
@@ -1017,8 +1027,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1608
-    order_in_partition: 99
+    line_number: 1609
+    order_in_partition: 100
     row_sha256: afceef1d9e71c3108737c5a953a5782722cc21c754b8106f5cae2bf88c419e15
 - task_id: DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE
   path: registry/development_tasks_shadow_v2/57/578b1dc9044ebe170aa2f6d4825c5d5a6e55d83f994915efe1875c962e0d1641.yaml
@@ -1027,8 +1037,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1609
-    order_in_partition: 100
+    line_number: 1610
+    order_in_partition: 101
     row_sha256: 6d23c4305f100279a5816dd754221c21c4f3f5b92f64e5430e3bf8277cded303
 - task_id: PUBLISHING-001_MULTI_CARRIER_PUBLISHING
   path: registry/development_tasks_shadow_v2/9d/9da970077f876f2a7ec561063392c1ca544e4c3d9ceabf4b69ae44e20805e863.yaml
@@ -1037,8 +1047,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1610
-    order_in_partition: 101
+    line_number: 1611
+    order_in_partition: 102
     row_sha256: ff49474202b1fb2872cff9d9b81f17dc7233707d1be843ff24e721153897a04e
 - task_id: PLATFORM-UX-001_SYSTEM_UNDERSTANDING_WORKBENCH
   path: registry/development_tasks_shadow_v2/64/64a271b3a8abdb673cb4bde3141303c392d53d5d5923bff7052d30e97b61edc3.yaml
@@ -1047,8 +1057,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1611
-    order_in_partition: 102
+    line_number: 1612
+    order_in_partition: 103
     row_sha256: 963f90b69eb098a07bafe1916a1e0bebf0f092ef87d9759456e2dde40a2db1d4
 - task_id: TRADING-1088_MARKETSTACK_MISSED_DAY_TAIL_CATCH_UP
   path: registry/development_tasks_shadow_v2/42/4244b1c224a7a1640833ef7c0126f5becc62fbdfdad1c81d455a37b701b1c08d.yaml
@@ -1057,8 +1067,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1624
-    order_in_partition: 103
+    line_number: 1625
+    order_in_partition: 104
     row_sha256: 15c21994dc3bf43989461de8c13d2854c6241be33db54a2e79239b278b725c01
 - task_id: TRADING-2301_FIRST_LAYER_NEW_CANDIDATE_FAMILY_RESEARCH_BACKLOG_AND_FEASIBILITY_AUDIT
   path: registry/development_tasks_shadow_v2/5a/5a414523b2918e24307cc8ae54c255d5eabd66c3fe137ad698ce1eac8ebb2f7a.yaml
@@ -1067,8 +1077,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1635
-    order_in_partition: 104
+    line_number: 1636
+    order_in_partition: 105
     row_sha256: 8980214c3a2fbbd8d2e737747d8ae569e5c6f96478ba3056ebd93ee7fa025b6a
 - task_id: TRADING-2302_BREADTH_PARTICIPATION_DATA_FEASIBILITY_AND_CANDIDATE_SPEC
   path: registry/development_tasks_shadow_v2/9d/9dbef936ee64270f712ab5f69a0bde5505c7e18cd6ab90adcfef9a66bf5d87c6.yaml
@@ -1077,8 +1087,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1636
-    order_in_partition: 105
+    line_number: 1637
+    order_in_partition: 106
     row_sha256: fba01550438b57ccb347e4798d480fa40218309646ca1ddd2e4f613a0d64f38a
 - task_id: TRADING-2303_CURRENT_CONSTITUENTS_PROXY_DIAGNOSTICS_ONLY
   path: registry/development_tasks_shadow_v2/6d/6dc35145fe737659cedde59b5c7edaae684d8d754154131135ad6715cc8bedd6.yaml
@@ -1087,8 +1097,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1637
-    order_in_partition: 106
+    line_number: 1638
+    order_in_partition: 107
     row_sha256: 5783320a7bbe8d01a6ee805cab413233fdf4519beaadd1381d5629caa4af48a1
 - task_id: TRADING-2304_BREADTH_PROXY_SIGNAL_CONCEPT_SELECTION
   path: registry/development_tasks_shadow_v2/82/82ccbcd88325e6447b5448e330963bf1cad12a40a2aee2ccb146ceaf89e72632.yaml
@@ -1097,8 +1107,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1638
-    order_in_partition: 107
+    line_number: 1639
+    order_in_partition: 108
     row_sha256: 0af0693ec22a57d381ab9d4c56f35455d1fe90aaf760253aaf596eaff6930772
 - task_id: TRADING-2305_BREADTH_PROXY_CANDIDATE_GENERATOR_POC
   path: registry/development_tasks_shadow_v2/ad/ad2fc0db257fc55aaa0bf93328468d61f84031a0920e00bc480dcc6c367c7dfa.yaml
@@ -1107,8 +1117,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1639
-    order_in_partition: 108
+    line_number: 1640
+    order_in_partition: 109
     row_sha256: 684ec84a5de9f96859a77afa2bca7401b9c2e3ea5b290b35296a376b6dcd832f
 - task_id: TRADING-2306_BREADTH_PROXY_DIAGNOSTICS_VALIDATION
   path: registry/development_tasks_shadow_v2/38/3893b9f38973bda6768426c2ceda68f3b914c0ae9dba12955ea8d894bfe05d20.yaml
@@ -1117,8 +1127,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1640
-    order_in_partition: 109
+    line_number: 1641
+    order_in_partition: 110
     row_sha256: b8cb64137ce5b0288b7c9c6181005b85d320b80e85b8454a0b42dac5696a9f7c
 - task_id: TRADING-2307_AI_SEMICONDUCTOR_LEADERSHIP_CANDIDATE_FAMILY_FEASIBILITY_AUDIT
   path: registry/development_tasks_shadow_v2/61/617d3d1a17539c637cb17219997a350a9317d4c0f37bf50f9c7304414bc1e734.yaml
@@ -1127,8 +1137,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1641
-    order_in_partition: 110
+    line_number: 1642
+    order_in_partition: 111
     row_sha256: d43c15af39b979380bb1a337bc73eb0fa70f5448343f64cea91feb9d15886fee
 - task_id: TRADING-2308_AI_SEMICONDUCTOR_LEADERSHIP_GENERATOR_POC
   path: registry/development_tasks_shadow_v2/5b/5bbe0c223cb6c4c53ae533cb31fc761eb66414837cef796be5789c975e464a0f.yaml
@@ -1137,8 +1147,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1642
-    order_in_partition: 111
+    line_number: 1643
+    order_in_partition: 112
     row_sha256: e3caa7bf0a1e0381441b5eac6779e811258217fbd520f37aeff2783db97fa4bb
 - task_id: TRADING-2309_AI_LEADERSHIP_ACTUAL_PATH_VALIDATION
   path: registry/development_tasks_shadow_v2/7a/7abf0ab41f1f87ecae6bb042146d62615683c7181a1406d6e09744474e6237e1.yaml
@@ -1147,8 +1157,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1643
-    order_in_partition: 112
+    line_number: 1644
+    order_in_partition: 113
     row_sha256: 997ed6dd067380185be0f2100e5601701e589f4c808e138cb93223fe66aad2a8
 - task_id: TRADING-2310_AI_LEADERSHIP_SCOPE_REVIEW
   path: registry/development_tasks_shadow_v2/b9/b96a81754b09d1fbeeb009de2a84118d6283b7c7ca93cc6e8a91b5e636f98927.yaml
@@ -1157,8 +1167,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1644
-    order_in_partition: 113
+    line_number: 1645
+    order_in_partition: 114
     row_sha256: 7ac9c15b294342245931de975dd92de85d6e3c01886827d1a327c5f5d461392b
 - task_id: TRADING-2311_LIQUIDITY_RATES_PRESSURE_DATA_FEASIBILITY_AUDIT
   path: registry/development_tasks_shadow_v2/d0/d00c4d3d6d663910dbd27772a7354f9d43e7912ed560d941496e99cf07b22825.yaml
@@ -1167,8 +1177,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1645
-    order_in_partition: 114
+    line_number: 1646
+    order_in_partition: 115
     row_sha256: 785c514971af555eda4bfe975288be955d4a484d2f7121097ff05adc8399f1a1
 - task_id: TRADING-2312_LIQUIDITY_RATES_PRESSURE_GENERATOR_POC
   path: registry/development_tasks_shadow_v2/45/45d2419a114c3588be4c5a386f5d08c4af74727f19fdca673cb00b7dc80fc574.yaml
@@ -1177,8 +1187,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1646
-    order_in_partition: 115
+    line_number: 1647
+    order_in_partition: 116
     row_sha256: 5b07d7901e3488b5360b1bb9e69cbe9c65106d8d55f4106835201c0076472c3a
 - task_id: TRADING-2313_LIQUIDITY_RATES_ACTUAL_PATH_VALIDATION
   path: registry/development_tasks_shadow_v2/8d/8d17d1b322f40852c3b1040675926bdafad12b3c9b3dc6d1c063aeb08c7948a3.yaml
@@ -1187,8 +1197,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1647
-    order_in_partition: 116
+    line_number: 1648
+    order_in_partition: 117
     row_sha256: 2e58e72e4da2d717f16024f5aac897b16491e29d2873505bdb918a250f36d4bf
 - task_id: TRADING-2314_LIQUIDITY_RATES_SCOPE_REVIEW
   path: registry/development_tasks_shadow_v2/8b/8baf4e9df3e0f8820e1213a187fcb233a90506dbe59b58224b985e9097f08599.yaml
@@ -1197,8 +1207,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1648
-    order_in_partition: 117
+    line_number: 1649
+    order_in_partition: 118
     row_sha256: 9a4dfa8eeab9b1c7bada9c3bfeee925e2dc0de00179cc43fa823009047dfae9a
 - task_id: TRADING-2315_REGIME_STATE_MACHINE_DESIGN_AUDIT
   path: registry/development_tasks_shadow_v2/a1/a12692de2c133fb0f4939e5ab6b96c889afe8c8303af6880fb9f8085afd40b46.yaml
@@ -1207,8 +1217,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1649
-    order_in_partition: 118
+    line_number: 1650
+    order_in_partition: 119
     row_sha256: 161857066c0da1a7e1c74c1cfc352f697ccbca1e73359ed0898284081228929a
 - task_id: TRADING-2316_REGIME_LABEL_GENERATOR_DIAGNOSTIC_POC
   path: registry/development_tasks_shadow_v2/8a/8ac717bc6cb7975c7630428801f4a29995e9505bf34902f1c4266ccd2a3f9661.yaml
@@ -1217,8 +1227,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1650
-    order_in_partition: 119
+    line_number: 1651
+    order_in_partition: 120
     row_sha256: 27ba166420e70476b363156af74422c4e819553bb73f7d54e7e81a775dd8bd22
 - task_id: TRADING-2317_REGIME_SEGMENTED_CANDIDATE_VALIDATION
   path: registry/development_tasks_shadow_v2/fb/fb41fb898f794e8ee5be8951febaa4c8b0e83e8ea3e65fa471490da371c4388a.yaml
@@ -1227,8 +1237,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1651
-    order_in_partition: 120
+    line_number: 1652
+    order_in_partition: 121
     row_sha256: 30227a9efe670688bfa9e5628bfb90ad0e4159b56550245d2d1b4f14cb83dcb4
 - task_id: TRADING-2318_EVENT_CALENDAR_DATA_FEASIBILITY_AUDIT
   path: registry/development_tasks_shadow_v2/41/41eacadde5a4fb143a7f33c187d673fbf4340f12c5f5249345ea14e9ae6d882f.yaml
@@ -1237,8 +1247,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1652
-    order_in_partition: 121
+    line_number: 1653
+    order_in_partition: 122
     row_sha256: e293149534d416e04f3bb7245630ea0b78aba3a9d2caa5ac76978ec1befa54e0
 - task_id: TRADING-2319_EVENT_CALENDAR_GATING_GENERATOR_POC
   path: registry/development_tasks_shadow_v2/f7/f738bc0f88ddd750a793da0fa09e1a5cfe285680ecb4ef0b1b474a175f482393.yaml
@@ -1247,8 +1257,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1653
-    order_in_partition: 122
+    line_number: 1654
+    order_in_partition: 123
     row_sha256: 0f1d1e66b79849e40e790c723161a21a396494f3561b551cb3405c58ccfdfcdc
 - task_id: TRADING-2320_EVENT_GATING_VALIDATION
   path: registry/development_tasks_shadow_v2/01/013c01ab642c2d6076b60fda6292f6c7c1b1a0e7963359cf5b15dac155f72e6b.yaml
@@ -1257,8 +1267,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1654
-    order_in_partition: 123
+    line_number: 1655
+    order_in_partition: 124
     row_sha256: 828398fa656c9f1e2c502bb772eb6ee6a750c0f0401c559106974b15682b5c16
 - task_id: TRADING-2293_SCOPE_NARROWED_FORWARD_OBSERVE_READINESS_REVIEW
   path: registry/development_tasks_shadow_v2/e9/e9a46db521ca80d85866eb88062ea657859daf7683c2e450cc5829c076dbc869.yaml
@@ -1267,8 +1277,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1658
-    order_in_partition: 124
+    line_number: 1659
+    order_in_partition: 125
     row_sha256: 2d55c3b91b2d9e213f7022844d69949f3c12ff5d02463389146eaf28acbebd7f
 - task_id: TRADING-2292_SCOPE_NARROWED_CANDIDATE_ACTUAL_PATH_VALIDATION
   path: registry/development_tasks_shadow_v2/62/625a0d67b12dc7cef4d820e1d8cd57d84fdf46e90fe3b7969ae666331de6ce6c.yaml
@@ -1277,8 +1287,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1659
-    order_in_partition: 125
+    line_number: 1660
+    order_in_partition: 126
     row_sha256: 5b9087475443816666be0a95f20cc45aa02fd8b7a68d3db1d28398749a99d34d
 - task_id: TRADING-2291_SCOPE_NARROWED_CANDIDATE_REGENERATION
   path: registry/development_tasks_shadow_v2/cb/cbda7b4751698151fb4ecd8b7fdf6f63bf3619ea62b0379ae8fe188837852fd5.yaml
@@ -1287,8 +1297,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1660
-    order_in_partition: 126
+    line_number: 1661
+    order_in_partition: 127
     row_sha256: fe5503287d932541562fed2bd016f48fdea23071a6aba58057f3b8d2409a96e8
 - task_id: TRADING-2290_REFINED_CANDIDATE_LOCAL_EDGE_SCOPE_NARROWING_REVIEW
   path: registry/development_tasks_shadow_v2/c2/c28d15d30cadc13ad02ac473bfd6cce6ed23497945afb82cae06b2bfbc5e581f.yaml
@@ -1297,8 +1307,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1661
-    order_in_partition: 127
+    line_number: 1662
+    order_in_partition: 128
     row_sha256: 4c81093a867a06b4d25f9131d8fff29a096976f6932a15129ff2adaa2f490631
 - task_id: TRADING-2289_REFINED_CANDIDATE_ACTUAL_PATH_VALIDATION
   path: registry/development_tasks_shadow_v2/a7/a7fc87c4fe69c6c4b67f410f7890085f640e1b379313c5a8ce2b82f386978797.yaml
@@ -1307,8 +1317,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1662
-    order_in_partition: 128
+    line_number: 1663
+    order_in_partition: 129
     row_sha256: 7d2a3db3b4c00dcf6dc929160a05f747e7de31753f1ee844927710c72aaf68b4
 - task_id: TRADING-2299_CI_DEFAULT_FAST_GATE_AND_FULL_NIGHTLY
   path: registry/development_tasks_shadow_v2/fe/fe93433b0154b90f525fea2a86c9dd0091c396bfca25f66c6f67db31617b7a16.yaml
@@ -1317,8 +1327,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1663
-    order_in_partition: 129
+    line_number: 1664
+    order_in_partition: 130
     row_sha256: 892a290df27ebb848360462d476dae45d737cb783bf44db9c2044666dd659ee4
 - task_id: TRADING-2282_CANDIDATE_SIGNAL_BINDING_SCHEMA_BASELINE_REWRAP_POC
   path: registry/development_tasks_shadow_v2/77/7762fa7f1c6a66b50929bbcd7d84b550eb01c12508da62b160744d8f770096bf.yaml
@@ -1327,8 +1337,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1664
-    order_in_partition: 130
+    line_number: 1665
+    order_in_partition: 131
     row_sha256: 0f0b79fb83f74ebe2f7f10a0659748de28694ad8c50bcd1f7e606ef2df381c2a
 - task_id: TRADING-2275_FIRST_LAYER_GATE_POLICY_V2_RECONCILIATION
   path: registry/development_tasks_shadow_v2/ad/addae3cca13f4ce14e5cf5f008823ed4fa51b1648fe122bbd85141dba27bfcc8.yaml
@@ -1337,8 +1347,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1665
-    order_in_partition: 131
+    line_number: 1666
+    order_in_partition: 132
     row_sha256: c0f537eb0496ba8e59616a75cba2c414ec1e413d5ecefd8310e13a2fd542c9e4
 - task_id: TRADING-2276_FIRST_LAYER_ACTIVE_SELECTION_RULE_AUDIT
   path: registry/development_tasks_shadow_v2/6b/6b9bddaa98bed4dabc689a186ee7e160b10cc04b07eaefe3aaafaf2d06fe282c.yaml
@@ -1347,8 +1357,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1666
-    order_in_partition: 132
+    line_number: 1667
+    order_in_partition: 133
     row_sha256: 8cd35d486decd888f1673d2bb3ebdf29f40485b0a1d06a53115d16d9412a0d12
 - task_id: TRADING-2277_SPLIT_ACTIVE_SELECTION_AND_PROMOTION_POLICY
   path: registry/development_tasks_shadow_v2/23/23eee089e476c955bd07915d0bd855e2edf25a2a57726406781abbc2f0bf4f55.yaml
@@ -1357,8 +1367,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1667
-    order_in_partition: 133
+    line_number: 1668
+    order_in_partition: 134
     row_sha256: e3ab9addcf48e29a954c417de5a538aab6e5214a2c89430e16afa1bbc7c1a026
 - task_id: TRADING-2278_FIRST_LAYER_CHALLENGER_MATRIX_V2_RERUN
   path: registry/development_tasks_shadow_v2/6c/6c416145acf4351465e8dbec34eb87f30b9f1e00f4ec9cd4b10ef04e09140361.yaml
@@ -1367,8 +1377,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1668
-    order_in_partition: 134
+    line_number: 1669
+    order_in_partition: 135
     row_sha256: 0850abea0e1dd0ed3aa3cc5afe8803b3c13ee6e61c7bd3b8089ea3c55e8ab53b
 - task_id: TRADING-2279_FIRST_LAYER_BOUNDARY_CANDIDATE_OWNER_REVIEW_PACKAGE
   path: registry/development_tasks_shadow_v2/8c/8cd5d8352fbf6339536294945a05ce74dfd436a94c172e3c58c62149208ae6a1.yaml
@@ -1377,8 +1387,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1669
-    order_in_partition: 135
+    line_number: 1670
+    order_in_partition: 136
     row_sha256: 3651e0afa1aba5ac8b9f1f57d7626d9b08cc3bb901fdaddd087ce9c05870c21b
 - task_id: TRADING-2280_FIRST_LAYER_CANDIDATE_LEVEL_ACTUAL_PATH_VALIDATION
   path: registry/development_tasks_shadow_v2/f4/f4843923d29f4c6ead35c2aa085a661b344a9f80f92e55701be0dad2b78fed5f.yaml
@@ -1387,8 +1397,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1670
-    order_in_partition: 136
+    line_number: 1671
+    order_in_partition: 137
     row_sha256: 3e68bcc831ac76a2be179b1b2fb1257bad4d3105c0ce04cb8cd851ef8339377c
 - task_id: TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
   path: registry/development_tasks_shadow_v2/53/53ea7ab1658edf6ba8841ea9fe18603e691a44a8d5210be8b5c4799f383fc771.yaml
@@ -1397,8 +1407,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1671
-    order_in_partition: 137
+    line_number: 1672
+    order_in_partition: 138
     row_sha256: a149dffd5b69828e3fec89a27ceef719ad67c6320c23a8afb273f4278529b662
 - task_id: TRADING-2274A_EQUAL_WEIGHT_PROXY_DATA_AVAILABILITY_FIX
   path: registry/development_tasks_shadow_v2/1c/1cbe10a7728e0e5ef846f4ce9be1bee0ccba8465b55125775af8a21263d6b03a.yaml
@@ -1407,8 +1417,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1672
-    order_in_partition: 138
+    line_number: 1673
+    order_in_partition: 139
     row_sha256: c0c0699f178536b424b90ee00d5423154af432ad2d46315e3ae518977fca6554
 - task_id: TRADING-2274_FIRST_LAYER_PERFORMANCE_GATE_ACCEPTANCE_AUDIT
   path: registry/development_tasks_shadow_v2/ed/edc22a904ff4dcb11ac756b7f80b6a2e483f2cb3d69b3225ac8ac4cd926e3b6a.yaml
@@ -1417,8 +1427,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1673
-    order_in_partition: 139
+    line_number: 1674
+    order_in_partition: 140
     row_sha256: 028ea3d77106f0f4299c0180fb62456fd965efe07d7a854f41d7d6bc34d0c001
 - task_id: TRADING-2273_FIRST_LAYER_PROXY_CHALLENGER_EXPERIMENTS
   path: registry/development_tasks_shadow_v2/b6/b6551edd8f2b070f9d3263d70609eace83debf4f669ea721ba9951ecf27e7bd6.yaml
@@ -1427,8 +1437,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1674
-    order_in_partition: 140
+    line_number: 1675
+    order_in_partition: 141
     row_sha256: e0fa49664303a2608da551b2aec5877c2ecb4f22ac5ad234bb67a6104d3982d8
 - task_id: TRADING-2272_FIRST_LAYER_OBJECTIVE_AND_VALIDATION_REDESIGN
   path: registry/development_tasks_shadow_v2/85/85384ab91e74615ced8fece10266366e7c167e880f50ec19fe463170010a66ab.yaml
@@ -1437,8 +1447,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1675
-    order_in_partition: 141
+    line_number: 1676
+    order_in_partition: 142
     row_sha256: 56a643f5dba5c576af0d476c51dced25a9a1e7af985b60067543016b6717a77d
 - task_id: TRADING-2271_FREE_LOW_COST_FIRST_LAYER_PROXY_COVERAGE_AUDIT
   path: registry/development_tasks_shadow_v2/6d/6dcae8c74244feaafc2c765c6b84180be3dd887557173ac21dfe102a87c7d7f0.yaml
@@ -1447,8 +1457,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1676
-    order_in_partition: 142
+    line_number: 1677
+    order_in_partition: 143
     row_sha256: fc353f669140b066b6a2a6e68b7c9b707461241e3fce94ec88388228dc5d8a07
 - task_id: TRADING-2270_FIRST_LAYER_CURRENT_STATE_AND_FAILURE_TAXONOMY
   path: registry/development_tasks_shadow_v2/7c/7c0436551c3761794f12a1fd8eaaba9f5bd455191ceb042ea83ec1f8c0cd1d2d.yaml
@@ -1457,8 +1467,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1677
-    order_in_partition: 143
+    line_number: 1678
+    order_in_partition: 144
     row_sha256: db8682637760725870dbf3edc9da429bacfaabe2fd05405c5aabc1396bea693e
 - task_id: TRADING-2026_to_2045_FIRST_LAYER_CHANNEL_CLOSEOUT_REOPEN_CRITERIA
   path: registry/development_tasks_shadow_v2/8a/8a70ba3c1dac2b3df46e370cd87e32327df3052bab9a331d8b0626d723cd4c63.yaml
@@ -1467,8 +1477,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1678
-    order_in_partition: 144
+    line_number: 1679
+    order_in_partition: 145
     row_sha256: e925261b362d089494f60c63ffab7b52385c8b8d001d8d7cea7b1360f069028c
 - task_id: TRADING-2006_to_2025_RISK_ON_VETO_OBSERVE_ONLY_DIAGNOSTIC
   path: registry/development_tasks_shadow_v2/75/751459c7145c658fedca6470a868d2e837fc6c0a45ff6fd7b2d081d0a324b927.yaml
@@ -1477,8 +1487,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1679
-    order_in_partition: 145
+    line_number: 1680
+    order_in_partition: 146
     row_sha256: 45d5152dff4e3d99000077e2f9481b9e3aa8f3a44ebe236481234d3c3fdbd04f
 - task_id: TRADING-1976_to_2005_CHANNEL_SPECIFIC_FIRST_LAYER_V3
   path: registry/development_tasks_shadow_v2/2e/2e751a7a7fa73a2618792b25ccf948384684cb308e3ed02367bdd6b6003523c1.yaml
@@ -1487,8 +1497,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1680
-    order_in_partition: 146
+    line_number: 1681
+    order_in_partition: 147
     row_sha256: eea35343482846b56ce4285853f418e97f798ab2a62e4f9df62b815c70bb5f84
 - task_id: TRADING-1946_to_1975_INDICATOR_FAMILY_ABLATION_CHANNEL_SIGNAL_EVIDENCE
   path: registry/development_tasks_shadow_v2/e8/e83196e5ca1501240d0bc6868ed20af7e70700b3abd2bdae3567028b3d51e399.yaml
@@ -1497,8 +1507,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1681
-    order_in_partition: 147
+    line_number: 1682
+    order_in_partition: 148
     row_sha256: b5db7130fed654baeb6c0f1d099d791ff5e14cb22cd5f217e634a6162f10151b
 - task_id: TRADING-1906_to_1945_BOUNDARY_AWARE_TWO_LAYER_OPTIMIZATION_FRAMEWORK
   path: registry/development_tasks_shadow_v2/ac/ace7d7ee9e86745b1c90aea475191cf7a5b320fa866340118a84a4e8f2191f6a.yaml
@@ -1507,8 +1517,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1682
-    order_in_partition: 148
+    line_number: 1683
+    order_in_partition: 149
     row_sha256: b126690cb1081d82851e8f633510e84c093727bf93b362862f36f72aec262191
 - task_id: TRADING-1806_to_1885_TWO_LANE_OPTIMIZATION_MASTER_CLOSEOUT
   path: registry/development_tasks_shadow_v2/17/1717ccab9ef576b36246e080a3cbffb262b327ac7ac7469ab5b6ee1519d9550c.yaml
@@ -1517,8 +1527,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1683
-    order_in_partition: 149
+    line_number: 1684
+    order_in_partition: 150
     row_sha256: 2a900809f35732b82939eddd46ff55ea4d24e9c2c83cc7a7dbb5e86206dfd9bf
 - task_id: TRADING-1821_to_1840_DEFENSIVE_PRESERVATION_LANE_RESEARCH
   path: registry/development_tasks_shadow_v2/28/28f887acf08f8dffa11fa314e8e2c8ebbb7672332a64b449db256ef6aa207143.yaml
@@ -1527,8 +1537,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1684
-    order_in_partition: 150
+    line_number: 1685
+    order_in_partition: 151
     row_sha256: 4b325b013a3d9718158799cc80f492938a14b319571332abab7ed0913a434805
 - task_id: TRADING-1841_to_1860_RETURN_SEEKING_DIAGNOSTIC_LANE_RESEARCH
   path: registry/development_tasks_shadow_v2/2b/2b1fbd9967fec8a498c6afb4075d9754977e24eaa6842f21c74244cb1278c284.yaml
@@ -1537,8 +1547,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1685
-    order_in_partition: 151
+    line_number: 1686
+    order_in_partition: 152
     row_sha256: ab12ce5e5e2b35141cc26d0d622a08a6670d255a4d343356b7cbaf7d7ab1f7d9
 - task_id: TRADING-1806_to_1820_FIRST_LAYER_V2_CLOSEOUT_AND_LANE_SEPARATION_POLICY
   path: registry/development_tasks_shadow_v2/c9/c99b7c2452ea3693f1c98a443c3072044f864fb07a24bbef2f9e8739563b4807.yaml
@@ -1547,8 +1557,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1688
-    order_in_partition: 152
+    line_number: 1689
+    order_in_partition: 153
     row_sha256: 54562cefa90502b575f12ba91b024d6c0b6e578e8460a1286137b68e3a348d97
 - task_id: TRADING-1786_to_1805_FIRST_LAYER_V2_DEFENSIVE_PROBE_REGRESSION_DIAGNOSIS
   path: registry/development_tasks_shadow_v2/35/3512df66b89735fd310e3d74f47e79bff0cadb7abe7fffaf763903a496d25b09.yaml
@@ -1557,8 +1567,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1689
-    order_in_partition: 153
+    line_number: 1690
+    order_in_partition: 154
     row_sha256: ca0eb4a82a0c5d56bc50144ac482f44e526e32143a88edaf304df50fd1c53a93
 - task_id: TRADING-1716_to_1735_SECOND_LAYER_PROBE_LIBRARY_FREEZE
   path: registry/development_tasks_shadow_v2/65/6577f807e864d5186184c68a84197895aa6b44b2aefc8c5b9c03ef34cc926701.yaml
@@ -1567,8 +1577,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1690
-    order_in_partition: 154
+    line_number: 1691
+    order_in_partition: 155
     row_sha256: 65dd2d2e367b8d6db1300e63a191ed6db64d56c839f36b4c8b3b9edb6e1202d1
 - task_id: TRADING-1736_to_1765_FIRST_LAYER_V2_LABEL_FEATURE_MODEL_RESET
   path: registry/development_tasks_shadow_v2/ce/cea5b6a2779fb0d6be117bbcb82f32b810c042b8f6558bf1d383ece8b676f8f0.yaml
@@ -1577,8 +1587,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1691
-    order_in_partition: 155
+    line_number: 1692
+    order_in_partition: 156
     row_sha256: 0c062da5e24fbbfaffa2d21077cf77af0619f83d6f3570569e04be4849af60bb
 - task_id: TRADING-1766_to_1785_FIRST_LAYER_WALK_FORWARD_COVERAGE_REBUILD
   path: registry/development_tasks_shadow_v2/6f/6fd424dc107de1c7f83129d0455d104e091d389da020400ad766eb0570b4a419.yaml
@@ -1587,8 +1597,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1692
-    order_in_partition: 156
+    line_number: 1693
+    order_in_partition: 157
     row_sha256: 5e6ef345d576edda7aea73c7715931094207eed9ac539092d7e947b54ae9b819
 - task_id: TRADING-1706_to_1715_RESEARCH_WINDOW_ADOPTION_CLOSEOUT
   path: registry/development_tasks_shadow_v2/57/57dcdfebc0736979024c9ef4dc0cce3e8df4ff44fe891a1294068105081ba4d1.yaml
@@ -1597,8 +1607,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1693
-    order_in_partition: 157
+    line_number: 1694
+    order_in_partition: 158
     row_sha256: f5c5b940e102cee38be18d30a3f093d5aef093e2d05dc8635915e5d74c1a9928
 - task_id: TRADING-1666_to_1705_UPPER_STATE_LABEL_FEATURE_RESET
   path: registry/development_tasks_shadow_v2/2c/2c63cf5ed0eaa9be3dad032999634bee0cfd4c7cffff537c8eda74a54c082f99.yaml
@@ -1607,8 +1617,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1694
-    order_in_partition: 158
+    line_number: 1695
+    order_in_partition: 159
     row_sha256: c61be910c74080ffff24aa3756147ca781bbf697cf7d5f9a211f12394675dbbb
 - task_id: TRADING-1646_to_1665_RESEARCH_WINDOW_EXTENSION_VALIDATION
   path: registry/development_tasks_shadow_v2/28/28b8a7600d5860708d6e925d8475172726517291c4c39f6eada419f2bb2a5a2d.yaml
@@ -1617,8 +1627,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1695
-    order_in_partition: 159
+    line_number: 1696
+    order_in_partition: 160
     row_sha256: 137c5d04f5688ac16e94d74f982be02109aa8cb716ae7da53e3504c34e74118b
 - task_id: TRADING-1616_to_1645_FIRST_LAYER_UP_STATE_LEARNING_REPAIR
   path: registry/development_tasks_shadow_v2/f4/f41539d35ff76c7825b79a16d958d3d2d530e5f0dc8ad96ca4147a086a3757b9.yaml
@@ -1627,8 +1637,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1696
-    order_in_partition: 160
+    line_number: 1697
+    order_in_partition: 161
     row_sha256: 0dac9b8a90f9044ba02d073fc05d8b80808b257faa2cdee1412e3dcd25f287d9
 - task_id: TRADING-1547_to_1586_POLICY_AWARE_FIRST_LAYER_TREND_CALIBRATION
   path: registry/development_tasks_shadow_v2/70/706d3fe5774690ce2c18f57fe62e21f6dfc024f3159fca171868843ba16a6ecf.yaml
@@ -1637,8 +1647,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1697
-    order_in_partition: 161
+    line_number: 1698
+    order_in_partition: 162
     row_sha256: e39719339c582c8fad6397e078d8d32e83fbb55eda38e6cb37794d7e0e5e7394
 - task_id: TRADING-1527_to_1546_DEFENSIVE_OVERLAY_GATE_NO_SURVIVOR_DIAGNOSIS
   path: registry/development_tasks_shadow_v2/b9/b9a595885f00214510c7112c852d7af60d455dfe2371366208c0162b1e9f7ebe.yaml
@@ -1647,8 +1657,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1698
-    order_in_partition: 162
+    line_number: 1699
+    order_in_partition: 163
     row_sha256: 225cfe19f08f047c854df0a9b84cd4671be77db5617880036a0c42f714a08e79
 - task_id: TRADING-1526_EXPANDED_ACTUAL_PATH_CANDIDATE_FAILURE_MATRIX
   path: registry/development_tasks_shadow_v2/c2/c2563489af84763f301d2187f5296746e3224e230a0c75463a4d71a82ac670c6.yaml
@@ -1657,8 +1667,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1699
-    order_in_partition: 163
+    line_number: 1700
+    order_in_partition: 164
     row_sha256: 5cf0e05a054cb961b250bcc432f1f821d509869cc9fc90943acb156cca991338
 - task_id: TRADING-1506_to_1525_EXPANDED_QQQ_SGOV_TQQQ_ALLOCATION_SEARCH
   path: registry/development_tasks_shadow_v2/a9/a97a1f35a93bfbdbaf87974bcdc73265148d3f090472ca3f01f0a50951f603ca.yaml
@@ -1667,8 +1677,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1700
-    order_in_partition: 164
+    line_number: 1701
+    order_in_partition: 165
     row_sha256: 07ff15418ef4167c72210980b7e58255c6dec95fd8e3b21c2b0222ebfb32f32c
 - task_id: TRADING-1486_to_1505_DYNAMIC_STRATEGY_CLOSEOUT_DISPOSITION_REVIEW
   path: registry/development_tasks_shadow_v2/de/de8afe1bc951b2d7ec6c5b2663aa00924b62c12d9581a1ddcda1212664a01205.yaml
@@ -1677,8 +1687,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1701
-    order_in_partition: 165
+    line_number: 1702
+    order_in_partition: 166
     row_sha256: 050c51067da68472dd91b84687fb34d22f5b74f985627451a76b12d87605b3f8
 - task_id: TRADING-1326_to_1485_DYNAMIC_STRATEGY_REMAINING_HIDDEN_LIMIT_AUDIT
   path: registry/development_tasks_shadow_v2/78/788d74e9977506bac880d3c3c754b8cd0e69cde0a91669e4ca1cdbce92dd411c.yaml
@@ -1687,8 +1697,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1702
-    order_in_partition: 166
+    line_number: 1703
+    order_in_partition: 167
     row_sha256: e2994624a79bebeab7c4aad6f404a76f6218b95bb15ff0ac47e2e5628a8fddea
 - task_id: TRADING-1306_to_1325_PENDING_PLAN_SUPERSEDE_EVENT_OVERRIDE
   path: registry/development_tasks_shadow_v2/aa/aa2fc2d033d978e1c67eba38a6865c835901f8c2a37d0fac59bdaf9605779784.yaml
@@ -1697,8 +1707,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1703
-    order_in_partition: 167
+    line_number: 1704
+    order_in_partition: 168
     row_sha256: e2142a7ca94972b0fd1f716383f5deab5549ed322597a2359b22487e213a3e77
 - task_id: TRADING-1286_to_1305_SIGNAL_VALIDITY_STALENESS_REPAIR
   path: registry/development_tasks_shadow_v2/67/67b680b483b4f5ef11c16afe404223f0d82d78a0535d632c80f353f076ad68de.yaml
@@ -1707,8 +1717,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1704
-    order_in_partition: 168
+    line_number: 1705
+    order_in_partition: 169
     row_sha256: c8287e1e8b3bc9a0ceb2e472ee9e1242a7bf2d922424fd384262ac27c9234c14
 - task_id: TRADING-1256_to_1285_ACTUAL_PATH_OWNER_REVIEW_AND_POLICY_SENSITIVITY
   path: registry/development_tasks_shadow_v2/7f/7fcc0eff4da9ed8d030134864dff35e4619f689be9b1e184ffe3395273679775.yaml
@@ -1717,8 +1727,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1705
-    order_in_partition: 169
+    line_number: 1706
+    order_in_partition: 170
     row_sha256: b4216f8569643c77d9f77a4c5a99b5c0f6ec7de056bd2357909f99fea17b7558
 - task_id: TRADING-2297_TQQQ_ADJUSTMENT_RATIO_JUMP_WATCHLIST
   path: registry/development_tasks_shadow_v2/4e/4e88313c0cf6b7b6e8d860ee53ab84928dfee98c2eb3eb8560d2e86eeffc54be.yaml
@@ -1727,8 +1737,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1706
-    order_in_partition: 170
+    line_number: 1707
+    order_in_partition: 171
     row_sha256: 28b5babac59c5771c620459bc08cb414f6a1ac99e832c20f28cb5918b4160424
 - task_id: TRADING-1201_to_1220_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_CLOSEOUT
   path: registry/development_tasks_shadow_v2/02/0260e082356f1895e7b450e42d7bec0f9d388bb34c876ef0ba23db6e3f1e2d84.yaml
@@ -1737,8 +1747,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1707
-    order_in_partition: 171
+    line_number: 1708
+    order_in_partition: 172
     row_sha256: 4b60722de4716a339caeb007e567170f4037ab0a477b2fed0c7c8d51ae9fe0f8
 - task_id: TRADING-1221_to_1235_EXECUTION_SEMANTICS_ACTUAL_PATH_REBACKTEST_EVIDENCE_SNAPSHOT
   path: registry/development_tasks_shadow_v2/7a/7acdfc5c447a48b4bc6e61c1d4d5777ee5e81ea561afc493fcc432243d76b3d2.yaml
@@ -1747,8 +1757,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1708
-    order_in_partition: 172
+    line_number: 1709
+    order_in_partition: 173
     row_sha256: 4474761dac7740b575be7948d717dd91fc9e3632acde420397691a08a3ba4291
 - task_id: TRADING-1187_to_1200_CODEX_EXECUTION_SEMANTICS_REPAIR_AND_DYNAMIC_REBACKTEST
   path: registry/development_tasks_shadow_v2/1c/1c96b76ce420f6029247f366d31af14a83c8d927ad66399bef336af579c999e1.yaml
@@ -1757,8 +1767,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1709
-    order_in_partition: 173
+    line_number: 1710
+    order_in_partition: 174
     row_sha256: 27285e0cf85f3247afab10d39b2ec02add58c12573505ca1f1d6f77ae0fcf168
 - task_id: TRADING-1165_to_1186_DYNAMIC_STRATEGY_EXECUTION_SEMANTICS
   path: registry/development_tasks_shadow_v2/ee/ee9d85c1e0a6102bf4965e4436851429279cafb0165e9c41f8809931f74f948e.yaml
@@ -1767,8 +1777,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1710
-    order_in_partition: 174
+    line_number: 1711
+    order_in_partition: 175
     row_sha256: cc84c128b7cc8e2c42d5ec5d14be383d4e90462350f0dfea1c390f0b78370906
 - task_id: TRADING-1155_to_1164_MANUAL_EXTERNAL_PLATFORM_EVIDENCE_AND_SIGNOFF
   path: registry/development_tasks_shadow_v2/79/7963c898ba57ae83c8d51a32dde454b656b020973c5b3a9ac82bc7155f5c88e6.yaml
@@ -1777,8 +1787,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1711
-    order_in_partition: 175
+    line_number: 1712
+    order_in_partition: 176
     row_sha256: 0cdfa53bafefb6b45af86827f9045f792bd3d756921c208af1a386c61b359326
 - task_id: TRADING-1141_to_1154_EXTERNAL_VALIDATION_GATE_BALANCED_CORE_FORWARD_AGING_LAUNCH
   path: registry/development_tasks_shadow_v2/74/74c695d8877a2559b25b4b98f89c6836f7895134c388bc3674ec0a1c0535c54e.yaml
@@ -1787,8 +1797,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1712
-    order_in_partition: 176
+    line_number: 1713
+    order_in_partition: 177
     row_sha256: 03ce299a0f58f6f034c7f953b31e18f0a7880b52edf1bc8fd7351e40ab321b7a
 - task_id: TRADING-1129_to_1140_EXTERNAL_BACKTEST_VALIDATION_RECONCILIATION
   path: registry/development_tasks_shadow_v2/b6/b6ccb46896def380ad4640c07fb2dbe5c335002d58fd9c6081f619a4956852aa.yaml
@@ -1797,8 +1807,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1713
-    order_in_partition: 177
+    line_number: 1714
+    order_in_partition: 178
     row_sha256: a96217e0d9798ca025614000e794d22fd9792a854a612236162732d37469ef0f
 - task_id: TRADING-1119_to_1128_BALANCED_CORE_FORWARD_AGING_LAUNCH
   path: registry/development_tasks_shadow_v2/86/86548a2683b4400431bf640eeafbcbd35e8b2229ac37211ebf9e10e78d87b477.yaml
@@ -1807,8 +1817,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1714
-    order_in_partition: 178
+    line_number: 1715
+    order_in_partition: 179
     row_sha256: 16636193205208c9b9bcd77bd0734520ff9bdaae886ccd0d21dd2d7512d5061e
 - task_id: TRADING-1110_to_1118_GROWTH_TILT_FOCUSED_DIAGNOSIS_AND_WATCHLIST_RECONSIDERATION
   path: registry/development_tasks_shadow_v2/90/90a846d190e4c134578abfabb5f8631d5b36b951306fd173865d2d5653f4b8a0.yaml
@@ -1817,8 +1827,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1715
-    order_in_partition: 179
+    line_number: 1716
+    order_in_partition: 180
     row_sha256: 0c4e19ec117cc7bf7f0797c40a6064e8a677cbb5e72cde06354f24a69359cf4a
 - task_id: TRADING-1100_to_1109_EQUAL_RISK_GROWTH_TILT_REAL_RUN_RESULT_CONVERGENCE
   path: registry/development_tasks_shadow_v2/0c/0ce2367e66a8a02c89bd9d8d4fe0cd16063c2a1e7e69f48547815e4575ec9879.yaml
@@ -1827,8 +1837,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1716
-    order_in_partition: 180
+    line_number: 1717
+    order_in_partition: 181
     row_sha256: 2ec2656bfc20a780bbc1dfcdd178d04168bedf839346cb48d75609073b446d77
 - task_id: TRADING-1087_EXTERNAL_REQUEST_INCREMENTAL_REFRESH_GUARDRAILS
   path: registry/development_tasks_shadow_v2/18/1834b2e7581da97916dcafab888205679297125243bec1342ff17195e27b845f.yaml
@@ -1837,8 +1847,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1717
-    order_in_partition: 181
+    line_number: 1718
+    order_in_partition: 182
     row_sha256: 672184ef62d3bf0811c376d9cad7c7f401a17cc3f31b8a8b7cd58eb8df08937b
 - task_id: TRADING-1049_to_1056_EQUAL_RISK_GROWTH_V2_REAL_RUN_RESULT_CONVERGENCE
   path: registry/development_tasks_shadow_v2/21/21814c78878fd809905abaf0fbcd2d4eb839116b0abc1391bd7818e7f63fe157.yaml
@@ -1847,8 +1857,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1718
-    order_in_partition: 182
+    line_number: 1719
+    order_in_partition: 183
     row_sha256: 0fb0be3139ff072f6d0ad1714b14a709e4587fc2076069de4d20918d7d7f355e
 - task_id: TRADING-1031_to_1048_EQUAL_RISK_FORWARD_AGING_AND_LAYER2_GROWTH_RESTART
   path: registry/development_tasks_shadow_v2/d4/d4f4008fb8f025d6818d12f16eb404321b3f867ca07d95ce668f7696fd76bb44.yaml
@@ -1857,8 +1867,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1719
-    order_in_partition: 183
+    line_number: 1720
+    order_in_partition: 184
     row_sha256: 4d598179101b02de49460d1b790a6af66d4ef9b945b0e7bf37fd56cd4fc14768
 - task_id: TRADING-957_to_975_LAYER2_STRATEGY_COMPONENT_READINESS_FOR_LAYER1_METAPOLICY
   path: registry/development_tasks_shadow_v2/fd/fd5102c34a5885041305df27789b08b2d8e781007df8b73be8c1b830968da845.yaml
@@ -1867,8 +1877,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1720
-    order_in_partition: 184
+    line_number: 1721
+    order_in_partition: 185
     row_sha256: daa350b471a570d3557e746a39d45b5fa931b80f329ae566454ca26bb49df0c3
 - task_id: TRADING-976_to_985_LAYER1_META_POLICY_READINESS_GATE
   path: registry/development_tasks_shadow_v2/f9/f90779ffdd48b6b5af98a08e1e46fe5ea39ca7e0cefe4d488473c22496eae94e.yaml
@@ -1877,8 +1887,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1721
-    order_in_partition: 185
+    line_number: 1722
+    order_in_partition: 186
     row_sha256: dbdc8fe5afdd815334879f3a581078d18e1c521deb1b5d8ca2f44d014d5c07aa
 - task_id: TRADING-986_to_1000_LAYER1_SIMPLE_RULE_METAPOLICY_RESEARCH
   path: registry/development_tasks_shadow_v2/a4/a449fd2223053e63850acd97b0f9445ba983d62549bb7d45d988a9b92fbadc10.yaml
@@ -1887,8 +1897,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1722
-    order_in_partition: 186
+    line_number: 1723
+    order_in_partition: 187
     row_sha256: db4708bfd1a7453a93598cccb6df3db1287681e58ed4369b4b1f6d08bdeb607d
 - task_id: TRADING-1001_to_1008_LAYER1_SELECTOR_RESULT_REVIEW
   path: registry/development_tasks_shadow_v2/d7/d7ca74c2afae62e3bbe4367274572c66d648b2a74d8259eba7b0e5244222e2a9.yaml
@@ -1897,8 +1907,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1723
-    order_in_partition: 187
+    line_number: 1724
+    order_in_partition: 188
     row_sha256: 1194a801f00e58f7c6839ab58e7137953c7f0e40ad786d237313063dbbaa4ed7
 - task_id: TRADING-1009_to_1014_LAYER1_LOW_TURNOVER_SELECTOR_REFINEMENT
   path: registry/development_tasks_shadow_v2/d1/d1c87fe965ac1436dc63fe3c8f5075bf358e1b902faf679af8514551813df327.yaml
@@ -1907,8 +1917,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1724
-    order_in_partition: 188
+    line_number: 1725
+    order_in_partition: 189
     row_sha256: 443253d6b472de78266753043c7934e6732a7c0a5c460ce69b5b8291999994c7
 - task_id: TRADING-1015_to_1023_LAYER1_LOW_TURNOVER_FINAL_GATE
   path: registry/development_tasks_shadow_v2/83/83d8e12f9f67fd7b4153d37273a85bbb08cac122c08bad11343b49d4abe5a5bf.yaml
@@ -1917,8 +1927,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1725
-    order_in_partition: 189
+    line_number: 1726
+    order_in_partition: 190
     row_sha256: 39395ea5bbde96f18f16e8f3439dc6a5e1fab7c8c0127b044e31b593c11853a4
 - task_id: TRADING-1024_to_1030_LAYER1_ARCHIVE_EQUAL_RISK_FORWARD_AGING_STABILIZATION
   path: registry/development_tasks_shadow_v2/12/12bedeb4709c59b441580e488997a446e7fcbab1ca15ec6f9b16ea387af024d4.yaml
@@ -1927,8 +1937,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1726
-    order_in_partition: 190
+    line_number: 1727
+    order_in_partition: 191
     row_sha256: cb36037735adfa5c5a87ff7e75a31b78229ebafd3139278238cd46f3578ede3b
 - task_id: TRADING-947_to_956_QQQ_PLUS_GROWTH_CLOSEOUT_REAL_RUN
   path: registry/development_tasks_shadow_v2/9c/9c0889e6dd79407a9f6035118f65fc34505efffc089fd2eed44b487d03449bcf.yaml
@@ -1937,8 +1947,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1727
-    order_in_partition: 191
+    line_number: 1728
+    order_in_partition: 192
     row_sha256: 2328f89186b6b689b064b32608e2e448b2a9b23c43417b78a8bd457048321b45
 - task_id: TRADING-933_to_946_QQQ_OUTPERFORMANCE_GROWTH_CHALLENGER
   path: registry/development_tasks_shadow_v2/b3/b30735bfa155cc26acfc4bd351ab9a61c527b58f632c83afeded7689d928123a.yaml
@@ -1947,8 +1957,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1728
-    order_in_partition: 192
+    line_number: 1729
+    order_in_partition: 193
     row_sha256: fe1688a1e9aef034e94f3f09fecdda26c30af87309488d3edf627e9bb3cc8abd
 - task_id: TRADING-923_to_932_FORWARD_AGING_OBSERVATION_LAUNCH
   path: registry/development_tasks_shadow_v2/9a/9ad26ac90b1b81fa81965f5262fdbe45eb156fb4726a7bc593927ce1ec51f602.yaml
@@ -1957,8 +1967,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1729
-    order_in_partition: 193
+    line_number: 1730
+    order_in_partition: 194
     row_sha256: 1c15fb8a02752972a72c143fdc723d133e1c2233a7176fa4ed6bbd084ee45f94
 - task_id: TRADING-911_to_922_SIMPLE_BASELINE_DATA_REPAIR_FORWARD_AGING_UNBLOCK
   path: registry/development_tasks_shadow_v2/47/4727ba24d207de3504a1c007bb6ecb8f7a7c10f2f9960d20c38d18f647343bdd.yaml
@@ -1967,8 +1977,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1730
-    order_in_partition: 194
+    line_number: 1731
+    order_in_partition: 195
     row_sha256: 585acd8c14d61624c432375bde56d26c9c4b3e2759570a1da57bffe82cacca29
 - task_id: TRADING-894_to_910_SIMPLE_BASELINE_FORWARD_AGING_CONVERGENCE
   path: registry/development_tasks_shadow_v2/70/7056d03b26fd504d25dc2f4ad4a5044fd8b4a9874d8abcbe1968eadf8122b5eb.yaml
@@ -1977,8 +1987,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1731
-    order_in_partition: 195
+    line_number: 1732
+    order_in_partition: 196
     row_sha256: ccaaccddf34d4d36d4b7db73d5c0fcae5de48653b3a401bc277297ae9da1212a
 - task_id: TRADING-888_to_893_SIMPLE_BASELINE_CANDIDATE_VALIDATION
   path: registry/development_tasks_shadow_v2/a1/a1af41ac9172f6fb24e6883ca4fc3d4ba902385ce993e6612f2e84c330446e14.yaml
@@ -1987,8 +1997,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1732
-    order_in_partition: 196
+    line_number: 1733
+    order_in_partition: 197
     row_sha256: 91fa820252bc23fcbd7b4a6b4ad2861a7109a9d96c9db7370b62d0efd6609ae9
 - task_id: TRADING-879_to_887_SIMPLE_BASELINE_REAL_RUN_DECISION_PACK
   path: registry/development_tasks_shadow_v2/df/df35863e9a9cbc8f2c8f473a54f5fa0e086a23f73aa193cf159c923d5923edec.yaml
@@ -1997,8 +2007,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1733
-    order_in_partition: 197
+    line_number: 1734
+    order_in_partition: 198
     row_sha256: 5d358043ba1bc2054f1e29f56dd754aa81ecc3e4ff29cd3dfe93e66db627aea2
 - task_id: TRADING-865_to_878_SIMPLE_BASELINE_PORTFOLIO_CONTROL
   path: registry/development_tasks_shadow_v2/ee/ee3b1f1fc0828de89c692674a5c6ce9e4e35d680611f1daf5f9646b9127b16f3.yaml
@@ -2007,8 +2017,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1734
-    order_in_partition: 198
+    line_number: 1735
+    order_in_partition: 199
     row_sha256: 0a01cde8ef02604514b6c92d3f793a7cda01f2bd9d04e73fa195ba8507fd56d2
 - task_id: TRADING-827_TAIL_RISK_TRIGGER_LABEL_INDEPENDENCE_AUDIT
   path: registry/development_tasks_shadow_v2/22/225a1e971a3749a15f8d72b77e05e13cde1440f0ce481320286386de0631807d.yaml
@@ -2017,8 +2027,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1735
-    order_in_partition: 199
+    line_number: 1736
+    order_in_partition: 200
     row_sha256: fa81893c1e774f2f5ab219ad929fa2b17264d5ce2520fa75e087e580f23cd2d3
 - task_id: TRADING-828_INDEPENDENT_FORWARD_OUTCOME_VALIDATION
   path: registry/development_tasks_shadow_v2/3b/3be4fe943a94e47159f610a7a187649e514112c3cd647be3a1dbe0e9560f077e.yaml
@@ -2027,8 +2037,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1736
-    order_in_partition: 200
+    line_number: 1737
+    order_in_partition: 201
     row_sha256: 3cc5524edb1348615d59e0c3d385b33d019bd45726d5f139057b0206b43a067f
 - task_id: TRADING-829_FORWARD_OUTCOME_CONTRACT_AND_LINEAGE_AUDIT
   path: registry/development_tasks_shadow_v2/56/56e39a6376f84d4d0375278265359bfcbcbef39a185000ee81b9f98f99b30e5a.yaml
@@ -2037,8 +2047,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1737
-    order_in_partition: 201
+    line_number: 1738
+    order_in_partition: 202
     row_sha256: e2a6ad84f52d2e05ac7d84369679f0162dbe8c79334da7f234dca74a455d4c54
 - task_id: TRADING-830_DECISION_TIME_BOUNDARY_AUDIT
   path: registry/development_tasks_shadow_v2/9c/9c20017e2c715901442d29f8a38b32aeff402610c7a58287b3b9d3ec5407b953.yaml
@@ -2047,8 +2057,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1738
-    order_in_partition: 202
+    line_number: 1739
+    order_in_partition: 203
     row_sha256: 10f4f5f70db3d0ebc5da71da54accabec45a2ab4aa9bde84cb99d00c1cada2fe
 - task_id: TRADING-831_TAINTED_METRIC_QUARANTINE
   path: registry/development_tasks_shadow_v2/63/63f72e692e5b74e264cdc5d2b622083375eafce03cefd09544b1737182140ac1.yaml
@@ -2057,8 +2067,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1739
-    order_in_partition: 203
+    line_number: 1740
+    order_in_partition: 204
     row_sha256: c9dd282aabade8851bcdd60e19b569fbee009ee434e1509295307d0172c9767f
 - task_id: TRADING-832_FALLBACK_COUNTERFACTUAL_BASELINE_VALIDATION
   path: registry/development_tasks_shadow_v2/2d/2d2c25addceadeee90d86c1d863e37e9e5e2207f56cfbfb649d27d14fd57f0ea.yaml
@@ -2067,8 +2077,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1740
-    order_in_partition: 204
+    line_number: 1741
+    order_in_partition: 205
     row_sha256: 6751d1b71a9870afc2e4da3a2f50fa2062853c42cd78ae7f969dc5758f4e2225
 - task_id: TRADING-833_REGIME_STRATIFIED_INDEPENDENT_OUTCOME_REVIEW
   path: registry/development_tasks_shadow_v2/43/43216f222f81947f1115535fb5192c742c298fb1b0af20e79a1629e6a804fc3c.yaml
@@ -2077,8 +2087,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1741
-    order_in_partition: 205
+    line_number: 1742
+    order_in_partition: 206
     row_sha256: e1ddd2880cba180dba0071bc55577d0d4230c4b0be3bd607f8af6a95a064b97a
 - task_id: TRADING-834_THRESHOLD_SENSITIVITY_ROBUSTNESS_REVIEW
   path: registry/development_tasks_shadow_v2/6a/6a4545808b8407f71e4cb62ac89fdeb1529a3541e5b2fc6eb3bb480e4388ef8d.yaml
@@ -2087,8 +2097,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1742
-    order_in_partition: 206
+    line_number: 1743
+    order_in_partition: 207
     row_sha256: 4014cd1a3f37d1cb87c587cee4a9a40561f348dc37fb8db842272f77434d4730
 - task_id: TRADING-835_FALSE_POSITIVE_FALSE_NEGATIVE_COST_LEDGER
   path: registry/development_tasks_shadow_v2/4c/4c9af610e06430bc270561276d964c9ad2d292fadf678230db4d6a152add7372.yaml
@@ -2097,8 +2107,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1743
-    order_in_partition: 207
+    line_number: 1744
+    order_in_partition: 208
     row_sha256: 4d5a333d7b9276fc2afb9cbc8b2334d81e8d7d227216e4c20dc79f4920f648b8
 - task_id: TRADING-836_SAMPLE_COVERAGE_AND_EVIDENCE_MATURITY_GATE
   path: registry/development_tasks_shadow_v2/3a/3af4c77e69e32b2b969baca54af96fdbe2b05d5d7ededaa6d2c33f2b7be56915.yaml
@@ -2107,8 +2117,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1744
-    order_in_partition: 208
+    line_number: 1745
+    order_in_partition: 209
     row_sha256: d82e41674aada19a1bedd1e2656642061f49b14a5ca97541c827b8b1e7977327
 - task_id: TRADING-837_FORWARD_AGING_OBSERVATION_TRACKER
   path: registry/development_tasks_shadow_v2/30/30a119e08b97a481ed69d03393cb12ad198dd5116189b97ac68fb7ffa6b5bc3d.yaml
@@ -2117,8 +2127,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1745
-    order_in_partition: 209
+    line_number: 1746
+    order_in_partition: 210
     row_sha256: 20451aabbea6a320ce8d87e2f7a5cb24c7c769d1664552a22692f5ffe698ac7d
 - task_id: TRADING-838_LEAKAGE_STRESS_TEST_SUITE
   path: registry/development_tasks_shadow_v2/da/dae2f6eb2ce6ff0177a65bfc8ee3f7ad42f3f5284995a80835d31d16f69e2376.yaml
@@ -2127,8 +2137,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1746
-    order_in_partition: 210
+    line_number: 1747
+    order_in_partition: 211
     row_sha256: ecdbf10d3df32f77224fb9850ae9e625bb297e1e8f4c8244d377dabcd3b39a4e
 - task_id: TRADING-839_PROMOTION_GATE_HARD_BLOCK_INTEGRATION
   path: registry/development_tasks_shadow_v2/a4/a4568f7f0fb90a56d502d2106338373f8d5e726f035eb4c4c607d991b0b639bf.yaml
@@ -2137,8 +2147,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1747
-    order_in_partition: 211
+    line_number: 1748
+    order_in_partition: 212
     row_sha256: 19996b4eb9dd80db4337462002047cdd6318cd47068e8998736cc2cfa3294b33
 - task_id: TRADING-840_INDEPENDENT_TRIGGER_V2_CANDIDATE_BUILDER
   path: registry/development_tasks_shadow_v2/68/6828564e9dd22478f842aae1ebb424441bd06e841ed61e672ba10b3303e77e81.yaml
@@ -2147,8 +2157,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1748
-    order_in_partition: 212
+    line_number: 1749
+    order_in_partition: 213
     row_sha256: b5a0cfb40c4c78c8f11f04c73f3f803cb7dbefe28060894f199a3f0a8ffc4564
 - task_id: TRADING-841_TRIGGER_FEATURE_AVAILABILITY_CATALOG
   path: registry/development_tasks_shadow_v2/45/4572294105c47b9a518cd93d12350c7839a0531d7c8c3d0e068d82ffe1d23a26.yaml
@@ -2157,8 +2167,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1749
-    order_in_partition: 213
+    line_number: 1750
+    order_in_partition: 214
     row_sha256: e13865c4b1272e582c6333071bf42f31c9a09990dee71f444866c25aa364e1c3
 - task_id: TRADING-842_TAIL_RISK_RESEARCH_MASTER_REVIEW
   path: registry/development_tasks_shadow_v2/33/33174aebbe877ab56ccad8f15d05d5e9308e09bdff6b428e674f00caf1a0cd78.yaml
@@ -2167,8 +2177,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1750
-    order_in_partition: 214
+    line_number: 1751
+    order_in_partition: 215
     row_sha256: 897742b9e2eeb3389ee49a78d0f6b90c74bcc9b6c17a62285f2d2f502e269d9f
 - task_id: TRADING-843_TAIL_RISK_GOVERNANCE_ARTIFACT_SNAPSHOT
   path: registry/development_tasks_shadow_v2/ed/ed1ac324585385f673aaa6bb5fe3ff58abf3b307981ecd31ad91f1544cb4ddc0.yaml
@@ -2177,8 +2187,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1751
-    order_in_partition: 215
+    line_number: 1752
+    order_in_partition: 216
     row_sha256: 1d33e56fb84e04431a699683540aafcd246e768623e9b321a713103fccf7373b
 - task_id: TRADING-844_TAIL_RISK_STATUS_MATRIX_AGGREGATOR
   path: registry/development_tasks_shadow_v2/79/794f6c39e52a66fc1db75eac95b99d0b8aaf6ea9e342b1bf70525e77c3caac25.yaml
@@ -2187,8 +2197,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1752
-    order_in_partition: 216
+    line_number: 1753
+    order_in_partition: 217
     row_sha256: b38fbbdc5d59b9d8a56fcac9c64e6833e75fdbf02d73c2fe966996f47d1c10a9
 - task_id: TRADING-845_REAL_DATA_VS_FIXTURE_VALIDATION_AUDIT
   path: registry/development_tasks_shadow_v2/79/79b5237e2249ca4b211b74bace0e1e70bac1ad53d44108e95ec58e2bf5b599f2.yaml
@@ -2197,8 +2207,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1753
-    order_in_partition: 217
+    line_number: 1754
+    order_in_partition: 218
     row_sha256: 3116ed5904cd30464d34a8fb9b502991e9515736043e982f2b1b4bf6189f395b
 - task_id: TRADING-846_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW
   path: registry/development_tasks_shadow_v2/9b/9bd793977849d7899f5e85918f02308358acb7e7d48c88515ff98876767b567b.yaml
@@ -2207,8 +2217,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1754
-    order_in_partition: 218
+    line_number: 1755
+    order_in_partition: 219
     row_sha256: 9db040ccf3ecf4018f359fa5137fce0bd5f8de8e66124f932deb3d8d9885d08f
 - task_id: TRADING-847_COUNTERFACTUAL_BASELINE_RESULT_REVIEW
   path: registry/development_tasks_shadow_v2/3a/3a5b90816f90590b7734f49490cc6ae8720ceff3d9905e2bbc0157ca1ad86fcc.yaml
@@ -2217,8 +2227,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1755
-    order_in_partition: 219
+    line_number: 1756
+    order_in_partition: 220
     row_sha256: 8042d6aaeba0b7edbff2bf29058543d7e1b05d6300527bac5f533467b10e8d95
 - task_id: TRADING-848_TAIL_RISK_ARTIFACT_DETERMINISM_CHECK
   path: registry/development_tasks_shadow_v2/01/01c7fb38895a11bb8927c38cbacf42204c4c8e23627e3c87e181d62379d5bf1f.yaml
@@ -2227,8 +2237,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1756
-    order_in_partition: 220
+    line_number: 1757
+    order_in_partition: 221
     row_sha256: c5faaf473f73f9a80f14bd2ac57e63e08e051fb3319afdfcadab684e5501527c
 - task_id: TRADING-850_TASK_PROVENANCE_AND_COVERAGE_MAP
   path: registry/development_tasks_shadow_v2/1f/1f401ca1ed54e4eb8b9dc523b4862fa70c0d39eaf8eb1d408acaa8fe84a47fa3.yaml
@@ -2237,8 +2247,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1758
-    order_in_partition: 221
+    line_number: 1759
+    order_in_partition: 222
     row_sha256: 57e0aecbde9c839235b03598d14351157313dba5f326e5074fe12e1a85bcea99
 - task_id: TRADING-851_HARD_BLOCK_MUTATION_TESTS
   path: registry/development_tasks_shadow_v2/1d/1d38ed15d6c52bdee43d71d0bc9955a2536a223766f2cb018eca389859a06a98.yaml
@@ -2247,8 +2257,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1759
-    order_in_partition: 222
+    line_number: 1760
+    order_in_partition: 223
     row_sha256: 3c6647c2845970b42e7b47fe6be98da8afb8217345618050740fb151eb3d4e1c
 - task_id: TRADING-852_REPORT_REGISTRY_INTEGRITY_REVIEW
   path: registry/development_tasks_shadow_v2/f1/f1f36b0ed612fa45edd45e2c78d2c086af0e101ab955f967e3f58a3a7bdd16b9.yaml
@@ -2257,8 +2267,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1760
-    order_in_partition: 223
+    line_number: 1761
+    order_in_partition: 224
     row_sha256: a40b77e1c2b85bb927ca3ff4699ddbee75f06dcbee44d5ca0fc43663d373e3a2
 - task_id: TRADING-853_DAILY_READING_SAFETY_SUMMARY
   path: registry/development_tasks_shadow_v2/f3/f382351d4bc4b3b5c0a58e7d7bde9989c3c78bacbee7a8121fb237bb09f42b74.yaml
@@ -2267,8 +2277,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1761
-    order_in_partition: 224
+    line_number: 1762
+    order_in_partition: 225
     row_sha256: 5492ddc2d3b5668d83242fc094736f60f6476693c1b44f09a0a7d514ed9043e1
 - task_id: TRADING-854_INDEPENDENT_TRIGGER_V2_INPUT_QUALITY_REVIEW
   path: registry/development_tasks_shadow_v2/f9/f926820c10387603f81913824cf24ac6ab69b142f3489bb92ebb2ba81c385f2f.yaml
@@ -2277,8 +2287,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1762
-    order_in_partition: 225
+    line_number: 1763
+    order_in_partition: 226
     row_sha256: a0c71f9d853660d8103409a79a71732c1ada6eda2fbfce061a3f673b2a1f9ed9
 - task_id: TRADING-855_SIMPLE_BASELINE_EXPANSION
   path: registry/development_tasks_shadow_v2/f2/f2259c466690ee5a00b81289517ad5f6c9cdcdbb3303aec7c27b076225aaac66.yaml
@@ -2287,8 +2297,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1763
-    order_in_partition: 226
+    line_number: 1764
+    order_in_partition: 227
     row_sha256: adb60951cbece7c280bc37036f26332d27f697fc59fc5621780ad2f213c9b5f6
 - task_id: TRADING-856_BASELINE_DOMINANCE_GATE
   path: registry/development_tasks_shadow_v2/c1/c15775573896d2db646fb74f02cba8a2780367fa7cae7edf1feccc568e39f33c.yaml
@@ -2297,8 +2307,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1764
-    order_in_partition: 227
+    line_number: 1765
+    order_in_partition: 228
     row_sha256: c819a6ac3a965dad9569eccb0c9c98707854995926e49e19bfe1a402f8b78992
 - task_id: TRADING-857_TAIL_RISK_RESEARCH_READINESS_SCORE
   path: registry/development_tasks_shadow_v2/38/3811a73e2c7ea5fe66f79047a8e8be300b5f9b61062e6019e5886cd87b6f088b.yaml
@@ -2307,8 +2317,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1765
-    order_in_partition: 228
+    line_number: 1766
+    order_in_partition: 229
     row_sha256: ccb61a65c6b0b0fd40078355d1afd700bbac9669f51a0d36c65f0602f5f599fd
 - task_id: TRADING-858_TAIL_RISK_NEXT_DECISION_DOCUMENT
   path: registry/development_tasks_shadow_v2/ad/ad81f0868668170c2fee01cc8eb344402d02b1c8fb5c42b4c17d9fde1370f1e7.yaml
@@ -2317,8 +2327,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1766
-    order_in_partition: 229
+    line_number: 1767
+    order_in_partition: 230
     row_sha256: 2c9494b7cc2c4c3b874435d851be9e8d1e5a77b79e12ca2ae5b29fe839de7381
 - task_id: TRADING-859_WORKTREE_CHANGE_ATTRIBUTION_AND_SAFE_COMMIT_PLAN
   path: registry/development_tasks_shadow_v2/c4/c4f4b9c4ea41c4c8242dcb2b626677645feffdd5828bf30179272016ece328aa.yaml
@@ -2327,8 +2337,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1767
-    order_in_partition: 230
+    line_number: 1768
+    order_in_partition: 231
     row_sha256: 148b0322307d6a318773a50ed2040c12778e7cd5ba4d84aab07aeece443ce4cc
 - task_id: TRADING-860_SAFE_COMMIT_OR_PATCH_HANDOFF
   path: registry/development_tasks_shadow_v2/fe/fee154615db079eb1ebb0a783624129db2e734c93862ae0e7e437adcad52a19f.yaml
@@ -2337,8 +2347,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1768
-    order_in_partition: 231
+    line_number: 1769
+    order_in_partition: 232
     row_sha256: 569539455def8387f197a822ac339b94079cbf431d033bc731fa9dfd2a6918b2
 - task_id: TRADING-861_RUN_REAL_TAIL_RISK_GOVERNANCE_CLI_SUITE
   path: registry/development_tasks_shadow_v2/14/14ac7620d568af73fd2e2ff97404fb35ccd13c6c3958bd6246a473a53b8dc23e.yaml
@@ -2347,8 +2357,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1769
-    order_in_partition: 232
+    line_number: 1770
+    order_in_partition: 233
     row_sha256: d6e38bc575fea38b7c5ca0dc0ce8abaed3e3585064d6933c4a81b7344ab5fd38
 - task_id: TRADING-862_PROMOTION_HARD_BLOCK_END_TO_END_PROOF
   path: registry/development_tasks_shadow_v2/15/158ce1dbe0da05cb40f23137ad3dc63728139c9d342270f4ebb3a4f79b178d90.yaml
@@ -2357,8 +2367,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1770
-    order_in_partition: 233
+    line_number: 1771
+    order_in_partition: 234
     row_sha256: 375b61d2bddfdf1731e5b56e8336f6d889334b69d98534359cab3c20560ac947
 - task_id: TRADING-863_DAILY_BRIEF_TAIL_RISK_SAFETY_RENDER_REVIEW
   path: registry/development_tasks_shadow_v2/1d/1d386b173e7aa1c74fd6f0d911f4740c70689fb934875218937172f917e793be.yaml
@@ -2367,8 +2377,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1771
-    order_in_partition: 234
+    line_number: 1772
+    order_in_partition: 235
     row_sha256: 19c43a770475d474d5ff075c8b0c808810a6c45685562b23b4e938bf328a21c1
 - task_id: TRADING-864_TAIL_RISK_OWNER_REVIEW_PACK
   path: registry/development_tasks_shadow_v2/6b/6bb8d13c3a7f6bcb6146cff66a3e4d39dca28ebcbec2b09ac02f2b37930c2f7f.yaml
@@ -2377,8 +2387,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1772
-    order_in_partition: 235
+    line_number: 1773
+    order_in_partition: 236
     row_sha256: 3a28519031e5e8753a24a4ad92148eaf40879a19a4b657b8e8ca2f02777a458d
 - task_id: TRADING-826_TAIL_RISK_FALLBACK_BLOCKER_DIAGNOSTIC
   path: registry/development_tasks_shadow_v2/a8/a8c34ef440e37d09aada4aba91976f99d7b4d01cf05b94a1374481fb60cf028a.yaml
@@ -2387,8 +2397,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1773
-    order_in_partition: 236
+    line_number: 1774
+    order_in_partition: 237
     row_sha256: c8b5f4b8040a20b3d7a826fbac61d9e33a0bf2a26dcaa77dc1ea8096ef6b7565
 - task_id: TRADING-821_to_825_TAIL_RISK_FALLBACK_FALSIFICATION_AUDIT
   path: registry/development_tasks_shadow_v2/5e/5ecd6614091926c39e197278c75927ea23246b628c0267fe23016d075400cff5.yaml
@@ -2397,8 +2407,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1774
-    order_in_partition: 237
+    line_number: 1775
+    order_in_partition: 238
     row_sha256: 8ff0d83196ad4917a08c925c59a5aa50acc7b73648b658d564990702cf88a3c7
 - task_id: TRADING-821_VALIDATION_RUNTIME_CONTROLLED_STRATEGY_SPLIT
   path: registry/development_tasks_shadow_v2/04/044a6979ac49651404eba144f7232f55d4ab5010ac597616dab9db77bd7b6f59.yaml
@@ -2407,8 +2417,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1775
-    order_in_partition: 238
+    line_number: 1776
+    order_in_partition: 239
     row_sha256: 6ff3b089003d1a2bb44c62018b2bc5ad89fd827be10ec2eb1e8e9f90ec1de82c
 - task_id: TRADING-816_to_820_TAIL_RISK_FALLBACK_ROBUSTNESS
   path: registry/development_tasks_shadow_v2/20/20c7a6eb729765549f0a2f9d5aedd0f0028f14aa91f85a32e73794fe9df2e774.yaml
@@ -2417,8 +2427,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1776
-    order_in_partition: 239
+    line_number: 1777
+    order_in_partition: 240
     row_sha256: cef64e69c4afe9ba251dae6dfbfb09d950f844a42405426fe19e06eac6840690
 - task_id: TRADING-810_to_815_TAIL_RISK_POLICY_FAMILY
   path: registry/development_tasks_shadow_v2/56/566f56296a60406dd058e8b5fb6c772c7310f5d001e092db5e9cb9a36bffa9b1.yaml
@@ -2427,8 +2437,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1777
-    order_in_partition: 240
+    line_number: 1778
+    order_in_partition: 241
     row_sha256: d6013591939934b81461dfa29fa72df74fa09ee6d52d1b33a9765b66a294844a
 - task_id: TRADING-805_to_809_HORIZON_SELECTOR_CONTROLLED_RESEARCH
   path: registry/development_tasks_shadow_v2/d0/d0e55fcb520da5f730ab2c92bbd9ce97f69c4352d39e416fbfba3327e0d169af.yaml
@@ -2437,8 +2447,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1778
-    order_in_partition: 241
+    line_number: 1779
+    order_in_partition: 242
     row_sha256: 163cfc34c9708e1d4907e5bf8e84dd566e990f8aac201d27f688c47fc4ca869a
 - task_id: TRADING-800_to_804_VALUE_SURFACE_V2_COST_HORIZON_HOLDOUT
   path: registry/development_tasks_shadow_v2/3d/3d472d5eeaee9efc4a66922262c938298a76f762f127fd792f0a2dd9d605740d.yaml
@@ -2447,8 +2457,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1779
-    order_in_partition: 242
+    line_number: 1780
+    order_in_partition: 243
     row_sha256: fbd7a0475d7e9886d804a7766619579958344d7368cc88afd1e6fd87c3b5e1aa
 - task_id: TRADING-795_to_799_REGIME_CONDITIONED_VALUE_SURFACE
   path: registry/development_tasks_shadow_v2/52/5269f7e48cf4757064e7570c5f41aeccf764c6f54137ca075dcb4a11af48d246.yaml
@@ -2457,8 +2467,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1780
-    order_in_partition: 243
+    line_number: 1781
+    order_in_partition: 244
     row_sha256: 77a419630406a885fdbf89725e21cb719df865211d20ff8ea46d451b6dc8b44f
 - task_id: TRADING-790_to_794_VALUE_SURFACE_FAILURE_ATTRIBUTION
   path: registry/development_tasks_shadow_v2/74/74f4b8ca783e26b7b309ca6096435f481e2d1a95f4c2da86a934772c117d0819.yaml
@@ -2467,8 +2477,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1781
-    order_in_partition: 244
+    line_number: 1782
+    order_in_partition: 245
     row_sha256: 079f08e07da25cb71951ee6e27285c810ee51d89478035302b5b94f11baf4c1e
 - task_id: TRADING-785_to_789_VALUE_SURFACE_WALK_FORWARD_EXPANSION
   path: registry/development_tasks_shadow_v2/72/7255026fdcea48ac55762486c619866dc0be98cf034e83f7d2a5eccb66bd8c6e.yaml
@@ -2477,8 +2487,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1782
-    order_in_partition: 245
+    line_number: 1783
+    order_in_partition: 246
     row_sha256: 55ca61488e3228830760f981ebbe1aa1eefb139750a7ba54cf4f355a817a83c1
 - task_id: TRADING-780_to_784_CONTROLLED_VALUE_SURFACE_REVIEW
   path: registry/development_tasks_shadow_v2/a4/a452aea0f1e7fb07d65f68175ea2808e9854a43c27129befa9607054f0a58610.yaml
@@ -2487,8 +2497,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1783
-    order_in_partition: 246
+    line_number: 1784
+    order_in_partition: 247
     row_sha256: 87dddd59ba212e84cfcff830f87f3737fe77bc42422537a060ce383cb71e3ea1
 - task_id: TRADING-775_to_779_CONTROLLED_STRATEGY_RESEARCH_NEXT_STAGE
   path: registry/development_tasks_shadow_v2/88/88493267fcd077ce3bb7f6915dd878f920d58b90e19e8276788c6f8b1af3f50b.yaml
@@ -2497,8 +2507,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1784
-    order_in_partition: 247
+    line_number: 1785
+    order_in_partition: 248
     row_sha256: 7e3fc5a64d63a8f3f250984c908466cd51e4fba27253bd78a5875d84d3d51114
 - task_id: TRADING-770_to_774_CONTROLLED_STRATEGY_CANDIDATE_RESEARCH
   path: registry/development_tasks_shadow_v2/94/94e3b2ec49830a912e5fab06751cbaed18877eeb20cb9d2e7958fa0e8dffdc41.yaml
@@ -2507,8 +2517,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1785
-    order_in_partition: 248
+    line_number: 1786
+    order_in_partition: 249
     row_sha256: 9ed6ef3549112b7924291062fe5d7cb5a48fad493e339dc0fa2b4fb7af5a1102
 - task_id: TRADING-765_to_769_CONTROLLED_RESEARCH_EXPANSION_AND_FORWARD_SCHEDULE
   path: registry/development_tasks_shadow_v2/d0/d0349009866ee6651cef0f380ebf262d9fda5be7fcb460b8f0728bda8d006292.yaml
@@ -2517,8 +2527,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1786
-    order_in_partition: 249
+    line_number: 1787
+    order_in_partition: 250
     row_sha256: d8ff1f385393ca51f6428ca4e9c51dc00e27baa2c2713f5df1a007981f01047c
 - task_id: TRADING-760_to_764_CONTROLLED_RESEARCH_BATCH
   path: registry/development_tasks_shadow_v2/f9/f9cbdd62a5fa3aa930158f80e2c2452eae3a80fc792d7720fa00d0e366884de2.yaml
@@ -2527,8 +2537,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1787
-    order_in_partition: 250
+    line_number: 1788
+    order_in_partition: 251
     row_sha256: 2f699eca7bff370d75e023b81a0b7905530f57904bc17e63a66e782516df3511
 - task_id: TRADING-759_FIRST_CURRENT_SUBSCRIPTION_SOURCE_QUALIFICATION_BATCH
   path: registry/development_tasks_shadow_v2/28/28356e278e32a05cc1f22669889baac4f395faeb8e95a8733ae9d69219c7997b.yaml
@@ -2537,8 +2547,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1788
-    order_in_partition: 251
+    line_number: 1789
+    order_in_partition: 252
     row_sha256: 6f622579cab9bdb68c01591addaa8a4a3db39170246dcab9ea67a1cf22295132
 - task_id: TRADING-738_CURRENT_SUBSCRIPTION_ENTITLEMENT_COVERAGE_AUDIT
   path: registry/development_tasks_shadow_v2/cf/cf68fd82a19de384806752f80e52d9186dac8240020e2368f08d12a6db95711e.yaml
@@ -2547,8 +2557,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1789
-    order_in_partition: 252
+    line_number: 1790
+    order_in_partition: 253
     row_sha256: 50932c0ae8de56effbe069804f11f80b8860b7b1a217ed7e32d81748fdbfcc8a
 - task_id: TRADING-739_to_758_CURRENT_SUBSCRIPTION_FIRST_SOURCE_QUALIFICATION_AND_CONTROLLED_RESEARCH
   path: registry/development_tasks_shadow_v2/5b/5bcbf062e2e584dda0555c7d13e3afaead45a80fca4ec53f94a79713c170b9e5.yaml
@@ -2557,8 +2567,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1790
-    order_in_partition: 253
+    line_number: 1791
+    order_in_partition: 254
     row_sha256: 64ed24466ffb77d05d36b98af0b7eb0a541400756fce27f1a9e3b82a69b6f22f
 - task_id: TRADING-737_SOURCE_LEVEL_QUALIFICATION_REQUIREMENTS
   path: registry/development_tasks_shadow_v2/26/265d4886781c65a15c4650caefe877aa0153528f565342df3d9adf531d59e404.yaml
@@ -2567,8 +2577,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1791
-    order_in_partition: 254
+    line_number: 1792
+    order_in_partition: 255
     row_sha256: 4440f420dd7da7abd648f95096d818297210219fc3b4ce69e93d0da047872a58
 - task_id: TRADING-736_DATA_SOURCE_REMEDIATION_EXECUTION
   path: registry/development_tasks_shadow_v2/3b/3bf8b78b9855b3c724c322260ec93d336d81bc3f7da0c1756dd53a1f8cfacb0b.yaml
@@ -2577,8 +2587,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1792
-    order_in_partition: 255
+    line_number: 1793
+    order_in_partition: 256
     row_sha256: b2e6ee78f42991f84f324616be6c3c8407ab7c33d64673867197f43683dfd106
 - task_id: TRADING-735_DATA_SOURCE_QUALIFICATION_REMEDIATION
   path: registry/development_tasks_shadow_v2/fe/fecdb439f308368d93a623929b767c376fb5c850d03dc2b225dbae6fdde2e9d7.yaml
@@ -2587,8 +2597,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1793
-    order_in_partition: 256
+    line_number: 1794
+    order_in_partition: 257
     row_sha256: f7e3a82c3919d509d27fed341e65cea8c64f191237bb111123a9a54ace759b50
 - task_id: TRADING-734_DATA_FOUNDATION_REAL_DATA_ACCEPTANCE
   path: registry/development_tasks_shadow_v2/36/3622db1c5f1c392271e1698fe4bdbe512c9f6bc9bf8dd098566243234ac11bad.yaml
@@ -2597,8 +2607,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1794
-    order_in_partition: 257
+    line_number: 1795
+    order_in_partition: 258
     row_sha256: 23362dd9ebb7f9a8f7c64da3ad1aebe92b2c44df53753834748c76a23f5ae8d1
 - task_id: TRADING-726_PIT_FEATURE_STORE_SNAPSHOT_REGISTRY
   path: registry/development_tasks_shadow_v2/57/577357f365bb3e8570ecc6e915c800196465dfcae5c6a62a9cf2d8dc8f3f52b7.yaml
@@ -2607,8 +2617,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1795
-    order_in_partition: 258
+    line_number: 1796
+    order_in_partition: 259
     row_sha256: 78d878ea3050cc70c26c02325b16be357e365623c5fa8284fb76d3af5aec216a
 - task_id: TRADING-727_TRADABLE_UNIVERSE_ASSET_MASTER
   path: registry/development_tasks_shadow_v2/df/df26b82c38ce2318ed5b3d0119fa321033d17bbc8d1f869b3b0e3a81d1b87bc6.yaml
@@ -2617,8 +2627,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1796
-    order_in_partition: 259
+    line_number: 1797
+    order_in_partition: 260
     row_sha256: 070066bcd704c452b9c3a231bfd0cd53963e00b807f2345eaf73fda364d73a0e
 - task_id: TRADING-728_COST_LIQUIDITY_TRADABILITY_MODEL
   path: registry/development_tasks_shadow_v2/b1/b1fa13577aae3c271f03493da82b04a09d8c59c81596ae7e992e1e9e6c6fdfe0.yaml
@@ -2627,8 +2637,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1797
-    order_in_partition: 260
+    line_number: 1798
+    order_in_partition: 261
     row_sha256: dcc1e7be856e68d799ea101d7f0e9fbbff2c76b0a36065ddc4e33d9cc31f8e4a
 - task_id: TRADING-729_REGIME_EVENT_CLUSTER_LABEL_STORE
   path: registry/development_tasks_shadow_v2/b8/b8a58b5fb3d4640ec169b5c26052a12fd34fef6e072ba0b9457fe000ea6110a3.yaml
@@ -2637,8 +2647,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1798
-    order_in_partition: 261
+    line_number: 1799
+    order_in_partition: 262
     row_sha256: 7ea682bbbea5c6564b84fdddc7f51b66af4c1309880297aef4401ce8b7d738f0
 - task_id: TRADING-730_EXPERIMENT_RESULT_WAREHOUSE_RUN_REGISTRY
   path: registry/development_tasks_shadow_v2/ec/ecf209f3a2518b9214569cc7993f7aec1511679bf88ef0c546449c5d56c3dc85.yaml
@@ -2647,8 +2657,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1799
-    order_in_partition: 262
+    line_number: 1800
+    order_in_partition: 263
     row_sha256: db41ca946f3d36c39883dae21f6dc0a0314812090f7e68e7b125616fefa9ea0b
 - task_id: TRADING-731_PARALLEL_BACKFILL_CACHE_CHECKPOINT_ENGINE
   path: registry/development_tasks_shadow_v2/85/854794d2ff3c64eb68c44faba8c4f8e345212d7746b2e4dbef3a6ae63524c48a.yaml
@@ -2657,8 +2667,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1800
-    order_in_partition: 263
+    line_number: 1801
+    order_in_partition: 264
     row_sha256: b2565bb671ebb4069b7d9ac507b755ffc7c19eb9f83dee7c35604175ed33f85f
 - task_id: TRADING-732_FORWARD_EVIDENCE_DAILY_DECISION_ARCHIVE
   path: registry/development_tasks_shadow_v2/b5/b56f18ab9779785d8627d4aa89f4af00fd2a6a750d4adc44788dae5012108106.yaml
@@ -2667,8 +2677,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1801
-    order_in_partition: 264
+    line_number: 1802
+    order_in_partition: 265
     row_sha256: 7939ad3860a7e7d898a54df6eb6a84183d4660c31b2994c67a32c9e741b76dae
 - task_id: TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
   path: registry/development_tasks_shadow_v2/50/504719e3ed689127cb88c5fb9af639a66ba873974c4c974a376e699389b2999d.yaml
@@ -2677,8 +2687,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1802
-    order_in_partition: 265
+    line_number: 1803
+    order_in_partition: 266
     row_sha256: b9a0927c2e01de538accc3a564d2e08595a204d04280b82fda88b2bc368e3cd5
 - task_id: TRADING-703_RESEARCH_PROTOCOL_REGISTRY_CORE_SCHEMAS
   path: registry/development_tasks_shadow_v2/87/87e85ab3ca9d796b816e83be3c71d19fbd52d4f257e795913a2cb324fc2ebd48.yaml
@@ -2687,8 +2697,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1803
-    order_in_partition: 266
+    line_number: 1804
+    order_in_partition: 267
     row_sha256: d0c10dcbecae9a02918cc86be56ee849e8e6e21385d389612b610eed939636fe
 - task_id: TRADING-704_EVIDENCE_LEDGER_SOURCE_POLICY
   path: registry/development_tasks_shadow_v2/76/765169a9d9c41fb22c80c6ce92c12b5742dcdd0e33b690b8e5798ec71c6f0dd9.yaml
@@ -2697,8 +2707,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1804
-    order_in_partition: 267
+    line_number: 1805
+    order_in_partition: 268
     row_sha256: f58f5d52728646f3aa4df3ea02fef11ec34aadef07611f99f31111f85a44e029
 - task_id: TRADING-705_MULTI_AXIS_STATE_EVALUATOR
   path: registry/development_tasks_shadow_v2/4f/4f30b3f1b643138dd9bfbc169120c6b3db845287b5fe21adce378fd66ecb1740.yaml
@@ -2707,8 +2717,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1805
-    order_in_partition: 268
+    line_number: 1806
+    order_in_partition: 269
     row_sha256: 14edd8d444c28adb85552b1408c8f3fc71823fea58ccc15372abb8af41b84df0
 - task_id: TRADING-706_SAMPLE_QUALITY_EFFECTIVE_EVIDENCE_AUDIT
   path: registry/development_tasks_shadow_v2/17/175b21bed23485b2a41a7673e24a4e0393887d58ac924fa9994456ba5e7193b0.yaml
@@ -2717,8 +2727,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1806
-    order_in_partition: 269
+    line_number: 1807
+    order_in_partition: 270
     row_sha256: e92d91e25e91fb7b9c653095834dbbb70061a16c3ac70d8ebde03cbf747ddcd9
 - task_id: TRADING-707_THRESHOLD_DEPENDENCY_CALIBRATION_GOVERNANCE
   path: registry/development_tasks_shadow_v2/36/36795186ac6499a504069d7da4d3ea401875a58bab8169dd592148412d18adfc.yaml
@@ -2727,8 +2737,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1807
-    order_in_partition: 270
+    line_number: 1808
+    order_in_partition: 271
     row_sha256: a99cd7b7be0be36a58963d7fbacf57ab7c30e49520c0f806b3e2c2a25f788b51
 - task_id: TRADING-708_PROMOTION_READINESS_POLICY_DECISION_LEDGER
   path: registry/development_tasks_shadow_v2/f0/f0e10a9ad1a923f32d1e39c2545dda6f21c23fbc90326ce9296817057efbd19b.yaml
@@ -2737,8 +2747,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1808
-    order_in_partition: 271
+    line_number: 1809
+    order_in_partition: 272
     row_sha256: e7b6c53283aa0878214e3d3b5831da24fa7adba43b458721c5a38e5d2154a8b4
 - task_id: TRADING-709_ARTIFACT_CATALOG_UNIFIED_RESEARCH_ROLLUP
   path: registry/development_tasks_shadow_v2/d6/d65eb293c998030f4420a966a39186f58a716d26a4aff8cf1895d73477a8bde5.yaml
@@ -2747,8 +2757,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1809
-    order_in_partition: 272
+    line_number: 1810
+    order_in_partition: 273
     row_sha256: 582338aaa64ce34cc9073cd5ff896682b7624da0b92b551490a369bddd7e0927
 - task_id: TRADING-710_WATCHLIST_STOP_RERUN_PIVOT_TRIGGER
   path: registry/development_tasks_shadow_v2/14/147263161422db61fd4b7d56d8dd769f8c72193069b821310b41e7204ab88783.yaml
@@ -2757,8 +2767,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1810
-    order_in_partition: 273
+    line_number: 1811
+    order_in_partition: 274
     row_sha256: 6a9e06424e20426640e1b28823d652ab42be6c00bfbaa8a53fee5b3f8af097de
 - task_id: TRADING-711_STRATEGY_PAIR_REVERSE_DIAGNOSTICS
   path: registry/development_tasks_shadow_v2/c5/c5926a75ab43fcca33cadec9f5e25a0d799791913a6c63217ec79cb13fa434e1.yaml
@@ -2767,8 +2777,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1811
-    order_in_partition: 274
+    line_number: 1812
+    order_in_partition: 275
     row_sha256: 4bd672e3d20404240f8991573b843f10d0a52aa7eac9b7e69025f6a7941ca660
 - task_id: TRADING-712_REGRET_CASEBOOK_NEGATIVE_RESULT_LEDGER
   path: registry/development_tasks_shadow_v2/18/18777bf1851e2f66fe10eee4d84dc21d43c3699e7481acbed7fef2b7c6076bbe.yaml
@@ -2777,8 +2787,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1812
-    order_in_partition: 275
+    line_number: 1813
+    order_in_partition: 276
     row_sha256: dfe5ba4d1951f5c7606dbd37f95c9eef6ce52850e33111e93d4a32bd63ba7c9b
 - task_id: TRADING-713_BENCHMARK_CONTROLS_FALSIFICATION_HARNESS
   path: registry/development_tasks_shadow_v2/40/4047e8086bf9c892b8c1530c3689a784929fdb5663cf8b2148435337b4b115b1.yaml
@@ -2787,8 +2797,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1813
-    order_in_partition: 276
+    line_number: 1814
+    order_in_partition: 277
     row_sha256: 5a0a258822ae1033805a5b30f3136d7b96e1b1da569f25baef3332e45db08abc
 - task_id: TRADING-714_RESEARCH_PREFLIGHT_KILL_PAUSE_PIVOT_POLICY
   path: registry/development_tasks_shadow_v2/db/dbd2be18e714d64b468099027035e5c2dff24545e26316daa86b8e5eef553fcb.yaml
@@ -2797,8 +2807,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1814
-    order_in_partition: 277
+    line_number: 1815
+    order_in_partition: 278
     row_sha256: 8bf6645d28d416ad36ad67db46cdc66b547445ec2bd27dd377a18ac9bf65955c
 - task_id: TRADING-715_HYPOTHESIS_COMPILER_MUTATION_DIRECTION_GENERATOR
   path: registry/development_tasks_shadow_v2/4e/4e3e7d42b8009bca564ab04f7c306ca92c90cc86113d135a173d6315dab358b4.yaml
@@ -2807,8 +2817,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1815
-    order_in_partition: 278
+    line_number: 1816
+    order_in_partition: 279
     row_sha256: 1e44aa4c7c49c37fb0b100ee0cce0076bc8d85bfd39679d505fd3798d8941d5e
 - task_id: TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
   path: registry/development_tasks_shadow_v2/e0/e07826b0978885696511d1749ed456c5e6789646fe519405675d03d8f7b1c2ad.yaml
@@ -2817,8 +2827,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1816
-    order_in_partition: 279
+    line_number: 1817
+    order_in_partition: 280
     row_sha256: 17cc85f4b629c5f426946422df9ef17587e06ae56f1170e106ccc10f17138018
 - task_id: TRADING-717_PIT_ACTION_OUTCOME_DATASET
   path: registry/development_tasks_shadow_v2/dc/dc59d8344c96b92b36af652bd813505439ca1bce356601e75ae3a56d718d496f.yaml
@@ -2827,8 +2837,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1817
-    order_in_partition: 280
+    line_number: 1818
+    order_in_partition: 281
     row_sha256: 7155c81107f75cd6fafdea524a15b3706df7f240556cb2cf982972c23fa1d721
 - task_id: TRADING-718_STRATEGY_ADAPTER_MULTI_FIDELITY_EVALUATION
   path: registry/development_tasks_shadow_v2/4c/4c7dc45837690600cc88d7858c64a10b23ce99174f683b7aee454caa07932d75.yaml
@@ -2837,8 +2847,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1818
-    order_in_partition: 281
+    line_number: 1819
+    order_in_partition: 282
     row_sha256: be015cbd7cdbd4b2cb818673d402885f1dc0e2c97d8319a6357b99ab3beb8e1a
 - task_id: TRADING-719_HORIZON_CONDITIONED_VALUE_SURFACE_BASELINE
   path: registry/development_tasks_shadow_v2/e0/e0ec4d72f6de3bbad88d9f8401f6bea499da34578ee46541d63eb3b9c7770143.yaml
@@ -2847,8 +2857,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1819
-    order_in_partition: 282
+    line_number: 1820
+    order_in_partition: 283
     row_sha256: 467d3f18a5258f1e6641647f26b2b0e80b953f612f29d36b3a404ea2f1136b4f
 - task_id: TRADING-720_ADVANCED_POLICY_RESEARCH_SANDBOX
   path: registry/development_tasks_shadow_v2/3f/3f851a43a0200e6963b2163ffdd5aa9d693329f306b0fa0ac08c82302c0858a4.yaml
@@ -2857,8 +2867,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1820
-    order_in_partition: 283
+    line_number: 1821
+    order_in_partition: 284
     row_sha256: a8cc589c1d4f0c8edd3991538ca265fbb79d2aef8203e65275081c0d0afe337d
 - task_id: TRADING-721_RESEARCH_WORKSTREAM_ORCHESTRATOR
   path: registry/development_tasks_shadow_v2/d0/d0a4919c754b1c6d12feb4c4f77992a391ec2c114e44ebb48139a3270be6fc0a.yaml
@@ -2867,8 +2877,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1821
-    order_in_partition: 284
+    line_number: 1822
+    order_in_partition: 285
     row_sha256: 4107ae5016cf63b0eb48c937c7f2800f55131abe1ffbcfbff06f47b570fde77a
 - task_id: TRADING-722_BATCH_EXPERIMENT_PACK_REVIEW_BOARD
   path: registry/development_tasks_shadow_v2/9c/9c47daf602ce3dc9dfddaaf3fb817423b58df58b07fb551fb1caeb271babc715.yaml
@@ -2877,8 +2887,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1822
-    order_in_partition: 285
+    line_number: 1823
+    order_in_partition: 286
     row_sha256: 74c926026bdfe5bbe9e0464b4d20cbd40f2e5ce1fccff85db341a86e0c0fb19b
 - task_id: TRADING-723_RESEARCH_OPS_DASHBOARD_WIP_GOVERNANCE
   path: registry/development_tasks_shadow_v2/31/3176f12010ff674a75d7398a7b7a71cdfbdf99b52a56c5902ba8cc2b43283816.yaml
@@ -2887,8 +2897,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1823
-    order_in_partition: 286
+    line_number: 1824
+    order_in_partition: 287
     row_sha256: fe5035040d996f07ff76cb9b558fa24d91ea5023d42ad956577022f1b9a33663
 - task_id: TRADING-724_FORWARD_PAPER_SHADOW_COHORT_READINESS
   path: registry/development_tasks_shadow_v2/b7/b7de9c50c2e8d4be5b5ae7694e1d112c697ab2cdc066563bf5d224c1f03ea329.yaml
@@ -2897,8 +2907,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1824
-    order_in_partition: 287
+    line_number: 1825
+    order_in_partition: 288
     row_sha256: 87ea84764f533c3478d077d29b2199dc9e5d3fb466a8eaf7330f3f4121cb09bd
 - task_id: TRADING-725_MASTER_VALIDATION_MIGRATION_DOCUMENTATION_ROLLUP
   path: registry/development_tasks_shadow_v2/93/93b15ab0e62c40e84d328f49e93fdfef79e8765173a14d87ca9bb9a4b9efc4f3.yaml
@@ -2907,8 +2917,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1825
-    order_in_partition: 288
+    line_number: 1826
+    order_in_partition: 289
     row_sha256: 668ccc816af416e2b096d7f0bc21e4099d202865d7591b130da22ea83ae95ffe
 - task_id: TRADING-702_PIT_DATA_SOURCE_READINESS_AUDIT
   path: registry/development_tasks_shadow_v2/a3/a3f1f6e901149d1ed1e7862d6829bea1c20076601378600516aa8c992136e9ab.yaml
@@ -2917,8 +2927,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1826
-    order_in_partition: 289
+    line_number: 1827
+    order_in_partition: 290
     row_sha256: 3c048e2c1250abd5be77e901ae73cadb85fe1f66387f8d22084c4d5e3fa1b31a
 - task_id: TRADING-701_DYNAMIC_TREND_FULL_ADVISORY_EXPANSION
   path: registry/development_tasks_shadow_v2/ac/ac2add8c14ff09c06dda02d9fc97b5b0f194ada1b882536a8daeb7011f502b68.yaml
@@ -2927,8 +2937,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1827
-    order_in_partition: 290
+    line_number: 1828
+    order_in_partition: 291
     row_sha256: 19b5630127206990d7fe2c6fd8255e20fd742cbb21d2267345b41db56624e46a
 - task_id: TRADING-700_DYNAMIC_TREND_BRIDGE_CONSISTENCY_AUDIT
   path: registry/development_tasks_shadow_v2/6e/6e9b10325d538cf8214c0e105e8bff74e1e890d150f357a7d47506c033817c1d.yaml
@@ -2937,8 +2947,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1828
-    order_in_partition: 291
+    line_number: 1829
+    order_in_partition: 292
     row_sha256: 5f49d32a840d4ca2753d92d54edecbce9c57fc1149b6e5c449545c83aada595b
 - task_id: TRADING-699_DYNAMIC_TREND_EVIDENCE_COVERAGE_EXPANSION
   path: registry/development_tasks_shadow_v2/a7/a7e8d6c07a622a4dd8d60123b78b91c546969b88fe15e6ac5e81f13c1f8e5010.yaml
@@ -2947,8 +2957,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1829
-    order_in_partition: 292
+    line_number: 1830
+    order_in_partition: 293
     row_sha256: 64ba4c0c6abd93d1a31c6a2e842e727b520ed87ca28fa6f727b056f429c58498
 - task_id: TRADING-698_DYNAMIC_TREND_THRESHOLD_SENSITIVITY_REVIEW
   path: registry/development_tasks_shadow_v2/f8/f8cec1d06f9d36a89dd6c6d7ad3c37755c1e8b25292dcee76e82483b80bf56e3.yaml
@@ -2957,8 +2967,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1830
-    order_in_partition: 293
+    line_number: 1831
+    order_in_partition: 294
     row_sha256: 93a5898dbad2de126a2d368614efb6c4218b7947d3f38e124b8714182e8e85f9
 - task_id: TRADING-697_DYNAMIC_TREND_THRESHOLD_CALIBRATION_PREP
   path: registry/development_tasks_shadow_v2/ac/ac21e7098c2ab059a28e003f09ba5569ad1fa281b2d56c59cda219d6de0eebce.yaml
@@ -2967,8 +2977,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1831
-    order_in_partition: 294
+    line_number: 1832
+    order_in_partition: 295
     row_sha256: 28ab1ae810e6275253bb7fdbc0e335e5b786a5d4ce3b578286e70d2cee3e81ce
 - task_id: TRADING-696_THRESHOLD_CALIBRATION_FOLLOW_UP_PLAN
   path: registry/development_tasks_shadow_v2/b7/b7a39cb11f950fedc07374ca01c81d976b8e6e2c85da11c10d6632ef1dc18252.yaml
@@ -2977,8 +2987,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1832
-    order_in_partition: 295
+    line_number: 1833
+    order_in_partition: 296
     row_sha256: 68edef8e837f2b714e979d13d9bf980a5aa2cc4413bafa43156e76abab7bc9c6
 - task_id: TRADING-695_INDICATOR_RESEARCH_EVIDENCE_GATE_THRESHOLD_CALIBRATION
   path: registry/development_tasks_shadow_v2/1d/1d2dd9afe05352149785682bceecfb3549e3cdb88db2be2fb14d7e7452febd7b.yaml
@@ -2987,8 +2997,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1833
-    order_in_partition: 296
+    line_number: 1834
+    order_in_partition: 297
     row_sha256: 8b8dc9341345c934fc481b4fad4de7a2ca5de1232616aa972cc529e7d11d0bdb
 - task_id: TRADING-693_THRESHOLD_REGISTRY_AND_CALIBRATION_AUDIT
   path: registry/development_tasks_shadow_v2/69/69fa032e9879c35217c77110a9aeb070d9a768507183ee4d4524c8145663fc82.yaml
@@ -2997,8 +3007,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1834
-    order_in_partition: 297
+    line_number: 1835
+    order_in_partition: 298
     row_sha256: b96c035bb9283228581d1682d1cd1c408efc6d17ff659a57d4c82865a64e5368
 - task_id: TRADING-665_to_685_INDICATOR_TO_SIGNAL_RESEARCH_FRAMEWORK_V1
   path: registry/development_tasks_shadow_v2/e0/e0798270ebf75b071edfa516057a3822db10671b83356811c69fdfb32b18345b.yaml
@@ -3007,8 +3017,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1835
-    order_in_partition: 298
+    line_number: 1836
+    order_in_partition: 299
     row_sha256: 3daadf08e7ba1faf7ae723bfd0d66bf1a8c0e58dbcf17dc4aab6eecd1342cadf
 - task_id: TRADING-654_to_660_B2_OWNER_DECISION_AND_REDESIGN_PLAN
   path: registry/development_tasks_shadow_v2/59/59304afe23b3120129331cef7bf3c9c8e5b693f56c3514fd67c787d508d40cab.yaml
@@ -3017,8 +3027,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1836
-    order_in_partition: 299
+    line_number: 1837
+    order_in_partition: 300
     row_sha256: cde682b7cbac475cebe8e728ff158adcdb79c5e018509c7f447dc8252e07d2c9
 - task_id: TRADING-649_to_653_CAMPAIGN_B2_FINALIZATION
   path: registry/development_tasks_shadow_v2/92/92deed6b109549d6914a3aeb43959c56fd08a1f4d74d48b4063bfd05b77b5dcf.yaml
@@ -3027,8 +3037,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1837
-    order_in_partition: 300
+    line_number: 1838
+    order_in_partition: 301
     row_sha256: ce31312a42cf8e8cf1cdb1f2144c6bc3135691150df1dcb9bf0ea3b02ccb7255
 - task_id: TRADING-641_to_648_RESEARCH_CAMPAIGN_B2_FULL_COMPUTE_COVERAGE
   path: registry/development_tasks_shadow_v2/3c/3c41a9ca8a417c04bb6cce050c0f8402b314f2fefab424d2589d113d43b5d420.yaml
@@ -3037,8 +3047,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1838
-    order_in_partition: 301
+    line_number: 1839
+    order_in_partition: 302
     row_sha256: ac8c8c60acbde996518aedfdc3fab4606a87cd530ebd9c4096d8ddd3d5467637
 - task_id: TRADING-631_to_640_RESEARCH_CAMPAIGN_EXECUTION_ADAPTERS
   path: registry/development_tasks_shadow_v2/f9/f9889170da74ec4fbf89a0eb5189bba079a35a4644e3c67607b6bf4a3b40cb65.yaml
@@ -3047,8 +3057,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1839
-    order_in_partition: 302
+    line_number: 1840
+    order_in_partition: 303
     row_sha256: 64b0045e6ab6b934e831a7f746a16f30e8d5203ce44cda4917e39ba0c3c4a3b3
 - task_id: TRADING-623_to_630_RESEARCH_CAMPAIGN_STAGE_ADAPTERS
   path: registry/development_tasks_shadow_v2/26/26d5ff25fc9774ff6b18dbdbbb2ebecdad42061a32afe28314990c06fd12d170.yaml
@@ -3057,8 +3067,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1840
-    order_in_partition: 303
+    line_number: 1841
+    order_in_partition: 304
     row_sha256: f4482d67445cb4b516878090fb0799a4bba2ecc9b34b1e818d1fc8ae75a517bf
 - task_id: TRADING-605_to_622_RESEARCH_CAMPAIGN_CONTROL_PLANE
   path: registry/development_tasks_shadow_v2/8d/8d8f63a13ddf8a741aee0a4d3c643640e4fba64fd572b9285ffcd037c8fee378.yaml
@@ -3067,8 +3077,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1841
-    order_in_partition: 304
+    line_number: 1842
+    order_in_partition: 305
     row_sha256: b216a7beb218e59fb22aaf9d80cc8e7b758cd98bd65c691a7a38d4f0ee765761
 - task_id: TRADING-597_to_604_B2_FINAL_EVIDENCE_AND_ROLE_DECISION
   path: registry/development_tasks_shadow_v2/95/95ea45e6091b679d63bdd7bc35bace9a27ab6f79aee571ae69ecf1873298065d.yaml
@@ -3077,8 +3087,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1842
-    order_in_partition: 305
+    line_number: 1843
+    order_in_partition: 306
     row_sha256: 74470f612c603a6a7bff4ac49d818d99a6f72d0f43a4301c8ce354c84c625c95
 - task_id: TRADING-588_to_596_B2_TARGETED_EVIDENCE_AND_ROLE_SCOPE
   path: registry/development_tasks_shadow_v2/db/dbbf0c944b21998cf58e881335885f76860830da8aa85864c8f095d3240513bf.yaml
@@ -3087,8 +3097,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1843
-    order_in_partition: 306
+    line_number: 1844
+    order_in_partition: 307
     row_sha256: 2d601c5ae1cf86adea3a98e54f0735c192b1fdddeb5773b82aa80f1c4617face
 - task_id: TRADING-582_to_587_B2_COMPLETE_DIAGNOSTIC_FOLLOWUP
   path: registry/development_tasks_shadow_v2/f8/f8ab21b078e4ba6a7f5114a99309d1ae6124cffd2db22e4a51a006495d806bdb.yaml
@@ -3097,8 +3107,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1844
-    order_in_partition: 307
+    line_number: 1845
+    order_in_partition: 308
     row_sha256: 77ea5063f3b8e871d7a87ebf86eb68f0bf7a18c9b731864e4a232d465f3c09ce
 - task_id: TRADING-575_to_580_B2_CONTROL_WINDOW_EVIDENCE_COMPLETION
   path: registry/development_tasks_shadow_v2/76/763503df1ae367a85f6cb3c11e4fa3ae910468b171431fd27751a6f0ef9fa2ce.yaml
@@ -3107,8 +3117,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1845
-    order_in_partition: 308
+    line_number: 1846
+    order_in_partition: 309
     row_sha256: b518661de36627af6c7a7a51eab0977df56e58b8620149f76795606037ae5960
 - task_id: TRADING-565_to_574_B2_FULL_DIAGNOSTIC_AND_B3_RESOLUTION
   path: registry/development_tasks_shadow_v2/c2/c2fc96648f7c0913cd161be1d1ee089561eb243c84c726637f0578f3355bc31d.yaml
@@ -3117,8 +3127,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1846
-    order_in_partition: 309
+    line_number: 1847
+    order_in_partition: 310
     row_sha256: 5dc171a60a0fa1e208c43bda53a0bea4b81605451136c6bfd1356fe1cc46026d
 - task_id: TRADING-557_to_564_B2_EVIDENCE_EXPANSION_AND_B3_PRECHECK_V2
   path: registry/development_tasks_shadow_v2/96/96a98b22e92009d418511d7f77088d8ba1afd34c0f86fefef4236db7d53cf49a.yaml
@@ -3127,8 +3137,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1847
-    order_in_partition: 310
+    line_number: 1848
+    order_in_partition: 311
     row_sha256: 3f0e5b36a4b6da2fdecccf4e4f5f37f25c5fa38f15010afb7de9451759c0d4a7
 - task_id: TRADING-537_to_556_POST_B2_B3_RISK_AND_REDESIGN_RESEARCH
   path: registry/development_tasks_shadow_v2/09/096ba761a184370bf043b1094628f1d366e48efab4b151f3484ef65797deaaee.yaml
@@ -3137,8 +3147,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1848
-    order_in_partition: 311
+    line_number: 1849
+    order_in_partition: 312
     row_sha256: f2b0aed1eefc1a2f22beb3cbdbb407700ff953db7d2a3aab3dbebccee0794304
 - task_id: TRADING-530_to_536_B2_RISK_OVERLAY_AND_B3_BRANCHING
   path: registry/development_tasks_shadow_v2/38/38b5b8447fdcd223f429701093d8bc132ff6e9cd54c63e625086b346c90d5d6a.yaml
@@ -3147,8 +3157,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1849
-    order_in_partition: 312
+    line_number: 1850
+    order_in_partition: 313
     row_sha256: ed6aa16d88bebeec7747a7eb727febe70ca8bd1fdcaa3c55af79ac0a6dc68153
 - task_id: TRADING-525_to_529_B2_B3_B4_DIAGNOSTIC_EXPANSION
   path: registry/development_tasks_shadow_v2/84/84af1ec50ea224d44e4ae822717da6a1bb5ae771f21f14ae73f2edf99673dc53.yaml
@@ -3157,8 +3167,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1850
-    order_in_partition: 313
+    line_number: 1851
+    order_in_partition: 314
     row_sha256: 4ba74bb6550452f0df9d921c02e7c24cf8467a921b642dcaed956a9459040f3e
 - task_id: TRADING-521_to_524_B1_B4_DIAGNOSIS_BATCH
   path: registry/development_tasks_shadow_v2/bf/bfc36d4bd6021532ddf9d81a4db61ab86aaa05f110cf4f893f2deb6eae9b0b7d.yaml
@@ -3167,8 +3177,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1851
-    order_in_partition: 314
+    line_number: 1852
+    order_in_partition: 315
     row_sha256: c8bd0c7c3f1064e67c36ec2122f0a902d3997be0183dc2464201240fbfd0403b
 - task_id: TRADING-511E_to_520_ABLATION_BOUNDARY_INTERACTION
   path: registry/development_tasks_shadow_v2/8a/8a48e49fd8752ca993c53d2edba5e763fa3fc0dc62d24756bf8b3bdd2ef5bcd5.yaml
@@ -3177,8 +3187,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1852
-    order_in_partition: 315
+    line_number: 1853
+    order_in_partition: 316
     row_sha256: 97c8d60141024b99abcdca47b673e9a7349d6e7af256c2ba1d1999018d417dc5
 - task_id: TRADING-511A_to_511D_WEIGHT_RESEARCH_UNBLOCK_BATCH
   path: registry/development_tasks_shadow_v2/85/859695f83c916ddfac499db2a0201dfda84b3a644e437bf5b98d15177ddd4529.yaml
@@ -3187,8 +3197,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1853
-    order_in_partition: 316
+    line_number: 1854
+    order_in_partition: 317
     row_sha256: 71ee26613c7870bf88b3637e55fcdcaea4dfc54f9dd8043dcb63c41d1e25f238
 - task_id: TRADING-505_to_520_WEIGHT_RESEARCH_PROGRAM_V1
   path: registry/development_tasks_shadow_v2/b4/b46751002b9778a5e8caf13b4f86bc42e7cf9ba6c66efc60ec59b81cbe1bf150.yaml
@@ -3197,8 +3207,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1854
-    order_in_partition: 317
+    line_number: 1855
+    order_in_partition: 318
     row_sha256: 7bca8ff765dbb998a7dc18dc2f6ba34985707da2e846ed13c3ce25e463e26c63
 - task_id: TRADING-471_to_485_EVIDENCE_REPAIR_AND_CANDIDATE_REVISION
   path: registry/development_tasks_shadow_v2/49/4976ee17482ca0291eb7bba49553a61e99a816b5e9827f327630381feee98b6a.yaml
@@ -3207,8 +3217,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1855
-    order_in_partition: 318
+    line_number: 1856
+    order_in_partition: 319
     row_sha256: 709c1441b6c5cc6e9145481ddc5a7e43bcb8137e4f71cf41e351851034699b10
 - task_id: TRADING-420_to_428_TARGETED_RECOVERY_AFTER_408_419
   path: registry/development_tasks_shadow_v2/09/09d67eb27fe354a3ce9ecb6c7ac7b4db749756385d1b4158202e2f25ba712b76.yaml
@@ -3217,8 +3227,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1856
-    order_in_partition: 319
+    line_number: 1857
+    order_in_partition: 320
     row_sha256: db2bb0baade51b6299091f8ef051629dda0f7d874763efebb209dacc87b2b670
 - task_id: TRADING-408_to_419_RECOVERY_BLOCKER_RESOLUTION_BATCH
   path: registry/development_tasks_shadow_v2/37/37ccc468bc81af67789a047df781ef813f44769c630d1d2fba4d4fda690a32ec.yaml
@@ -3227,8 +3237,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1857
-    order_in_partition: 320
+    line_number: 1858
+    order_in_partition: 321
     row_sha256: ae1455a5c4a74b1de74b4553d7fce4ef326176aaf323229b8ced6cfa2845c5cb
 - task_id: TRADING-349_CANDIDATE_DECISION_LEDGER
   path: registry/development_tasks_shadow_v2/66/6641d2b1ba4a7b98eece6022f6050c0e8614eb2bc31711f33f99fd4245984e51.yaml
@@ -3237,8 +3247,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1858
-    order_in_partition: 321
+    line_number: 1859
+    order_in_partition: 322
     row_sha256: cfdeabdd0fef9fc6306b9e44bc0c8e50eee8b35350233377d1f276a71c247ca0
 - task_id: TRADING-350_PAPER_SHADOW_PROTOCOL
   path: registry/development_tasks_shadow_v2/6d/6dc75fe9fc5c011f61bc10fa176c06a7f6414e77dba53ce7d5a4e6b4262f91ac.yaml
@@ -3247,8 +3257,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1859
-    order_in_partition: 322
+    line_number: 1860
+    order_in_partition: 323
     row_sha256: d3b4800b6352df08781efae4aec1d602cd1f2e86bcc86afb78491cce7976bc0b
 - task_id: TRADING-346_FORMAL_RESEARCH_METHOD_CONTRACT
   path: registry/development_tasks_shadow_v2/30/3025bddb2ace2afaee6fe1cde835c14896e09aa7303d2db852ab3bb1592f8478.yaml
@@ -3257,8 +3267,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1861
-    order_in_partition: 323
+    line_number: 1862
+    order_in_partition: 324
     row_sha256: 89b4a0dd42e80bdce0e4c8610074d6f13f9527309eda8966873d4085c22cb92b
 - task_id: TRADING-336_to_345_FILTERED_SIGNAL_CANDIDATE_EVIDENCE_EXPANSION_AND_FORMALIZATION_READINESS
   path: registry/development_tasks_shadow_v2/66/669525b3e1dacdf07d06b7adadf583a62d5c41ae95ccd03d1a7ce393c8d2935b.yaml
@@ -3267,8 +3277,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1862
-    order_in_partition: 324
+    line_number: 1863
+    order_in_partition: 325
     row_sha256: ca473c1bfe0acbcacde6c29dede8734b45ec8701870e9a5e5768586571cdac38
 - task_id: TRADING-326_to_335_SIGNAL_FEATURE_DIAGNOSIS_AND_CANDIDATE_QUALITY_FILTER_PIPELINE
   path: registry/development_tasks_shadow_v2/00/00f45471bb02c2bbc3b7da3c6f07715f7757e3a985608e3460bd2eb6d7f19798.yaml
@@ -3277,8 +3287,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1863
-    order_in_partition: 325
+    line_number: 1864
+    order_in_partition: 326
     row_sha256: 839b07d13dc5e95d89ec17694ece9ddd1f0c6a4c7c85cfa8ff0be0042539224e
 - task_id: TRADING-316_to_325_SIGNAL_LEVEL_DIAGNOSIS_AND_GATE_CALIBRATION_WITH_TARGETED_MICRO_SEARCH_V4
   path: registry/development_tasks_shadow_v2/f5/f5e39760492dda611e01b7c7437e68fb20dae0ecfe9f0d852d3911594640e62b.yaml
@@ -3287,8 +3297,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1864
-    order_in_partition: 326
+    line_number: 1865
+    order_in_partition: 327
     row_sha256: 64f9391d3b09ae000664517c6e603122293f7c6c973651009f46008dddde52ac
 - task_id: TRADING-306_to_315_NO_PROMOTION_DIAGNOSTICS_AND_TARGETED_SEARCH_V3
   path: registry/development_tasks_shadow_v2/c1/c18729232b4dc3f346ff5230a3ce6d11aab48ae20f5b9280b9aa57117ff1f464.yaml
@@ -3297,8 +3307,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1865
-    order_in_partition: 327
+    line_number: 1866
+    order_in_partition: 328
     row_sha256: 716b4061b2bbb34cc8e8a7834d9330897f5478de9f917ade2402e56fbf3acdbf
 - task_id: TRADING-286_to_305_WEIGHT_OPTIMIZATION_BATCH_SEARCH_AND_ADAPTIVE_PROMOTION_PIPELINE
   path: registry/development_tasks_shadow_v2/1c/1c8396922a6c0effb31561a9a331ae364adbfd0e18526b0d0c217af3773d3a8a.yaml
@@ -3307,8 +3317,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1866
-    order_in_partition: 328
+    line_number: 1867
+    order_in_partition: 329
     row_sha256: 84b4d92088624cb6395646105c19c2a499eaca981c08c3bb8af14954cc39507f
 - task_id: TRADING-281_to_285_SMOOTHED_DATA_REFRESH_EXECUTION_AND_SCHEDULED_RETRY_OPERATIONS
   path: registry/development_tasks_shadow_v2/bd/bd734bea4d08a8b5d3df4efbfca2a409dbb2d3a7f8c5f4d3f4d6ff142eca2c8a.yaml
@@ -3317,8 +3327,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1867
-    order_in_partition: 329
+    line_number: 1868
+    order_in_partition: 330
     row_sha256: 045ed61fe0218e6d6bb6b50340635694b648f32d06c7c1b2800665ddea845c79
 - task_id: TRADING-276_to_280_SMOOTHED_FORWARD_DATA_FRESHNESS_AND_LATEST_AVAILABLE_BOOTSTRAP
   path: registry/development_tasks_shadow_v2/4f/4ff83927485de0563db354c3461ad4b40052811b1ba1336a7ae55d698e1d3712.yaml
@@ -3327,8 +3337,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1868
-    order_in_partition: 330
+    line_number: 1869
+    order_in_partition: 331
     row_sha256: 0b9d6705ca8148455f1d59992c96f9adc28379481beda960b500bdf5abef1cef
 - task_id: TRADING-271_to_275_SMOOTHED_FORWARD_SAMPLE_BOOTSTRAP_AND_DAILY_EVIDENCE_COLLECTION
   path: registry/development_tasks_shadow_v2/48/48a52d995c591e91939485550e9be3fd29074f76ba0090de2e2713e9feb600f8.yaml
@@ -3337,8 +3347,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1869
-    order_in_partition: 331
+    line_number: 1870
+    order_in_partition: 332
     row_sha256: 476aa6d823a149c337f884ec4762e005e5d43d028de4f2538f65477b44a60bc7
 - task_id: TRADING-256_to_260_SMOOTHED_EVIDENCE_COMPLETENESS_AND_PROMOTION_READINESS
   path: registry/development_tasks_shadow_v2/3b/3bd6fb8e42549904045bc72e2b8f2b154b78e2ba60ff0405fb544a2e66c2c172.yaml
@@ -3347,8 +3357,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1870
-    order_in_partition: 332
+    line_number: 1871
+    order_in_partition: 333
     row_sha256: 5f8af7424d630ffd14da646dee2efc72bebf5b123e8e8033aef5c9fb1974a6de
 - task_id: TRADING-251_to_255_SMOOTHED_METHOD_EVIDENCE_DRILLDOWN_AND_FORWARD_CONFIRMATION
   path: registry/development_tasks_shadow_v2/3b/3bc1447d40f2907c0d4991a43be30c03fb6c5b555bc2b83d0ba55c5b0cefcd87.yaml
@@ -3357,8 +3367,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1871
-    order_in_partition: 333
+    line_number: 1872
+    order_in_partition: 334
     row_sha256: 7eb01ceaca883e4793636b90dfd9b5c6228313bb223d9c34e1117d01284d6229
 - task_id: TRADING-246_to_250_SMOOTHED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
   path: registry/development_tasks_shadow_v2/d1/d18d6bd9e956a680db4af3238bd8184496ba059eed8cd34cdab5390230f7b960.yaml
@@ -3367,8 +3377,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1872
-    order_in_partition: 334
+    line_number: 1873
+    order_in_partition: 335
     row_sha256: bdcdf41019f05deecb3ce0cb25e0a69b2fc593a37eeb78f51821ab7368b5a42c
 - task_id: TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
   path: registry/development_tasks_shadow_v2/b4/b4fcc2342f2653920383504d76b0e1c9122a664f5316942b6e7a7de969a87f11.yaml
@@ -3377,8 +3387,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1873
-    order_in_partition: 335
+    line_number: 1874
+    order_in_partition: 336
     row_sha256: 3939167b66ca6b3618945579db8c49b84f797aafc395b515a0d80aeec2d1994b
 - task_id: TRADING-239_to_245_WEIGHT_OPTIMIZATION_EXPERIMENT_FACTORY
   path: registry/development_tasks_shadow_v2/0a/0af52a5e23bc8aeb5ac782f9342068edd18dc06e38a3a6a9f64b5ebbb08b6a80.yaml
@@ -3387,8 +3397,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1874
-    order_in_partition: 336
+    line_number: 1875
+    order_in_partition: 337
     row_sha256: c28ba268be1130722805759e51bf06108b7ab6971a14a933b6e75bbf65c43bfe
 - task_id: TRADING-229_to_233_RISK_CAPPED_LIMITED_ADJUSTMENT_RESEARCH_METHOD
   path: registry/development_tasks_shadow_v2/7f/7f5fb6c26429da133d403d62669f96a4d379da9d543583ce527652243d8fb4e1.yaml
@@ -3397,8 +3407,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1875
-    order_in_partition: 337
+    line_number: 1876
+    order_in_partition: 338
     row_sha256: d00cb0801bae71d7027151746601500031b2920ef30d0d7bbb4a25de60839430
 - task_id: TRADING-224_to_228_LIMITED_ADJUSTMENT_WEAKNESS_DIAGNOSIS_AND_RESEARCH_METHOD_REFINEMENT
   path: registry/development_tasks_shadow_v2/20/20ff79e6a0925ea0c52184d5ddd52b4f609ee3260ea737af433dd34310fde6b8.yaml
@@ -3407,8 +3417,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1876
-    order_in_partition: 338
+    line_number: 1877
+    order_in_partition: 339
     row_sha256: dd0e3ba3a2347871b2997ab6845f475bc1924742ee498553cc19833d1812c94e
 - task_id: TRADING-219_to_223_PAPER_SHADOW_SELECTION_DRILLDOWN_AND_RESEARCH_METHOD_HARDENING
   path: registry/development_tasks_shadow_v2/a6/a629a57e4704abc2633ccc470f6d4ad30d8715dbab1399113d2692bee69af8ee.yaml
@@ -3417,8 +3427,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1877
-    order_in_partition: 339
+    line_number: 1878
+    order_in_partition: 340
     row_sha256: 879f35a6265df89bbcbc75c366810a38c6fe2679c9bc7dafa6421fa29030eee1
 - task_id: TRADING-214_to_218_PAPER_SHADOW_HISTORICAL_BACKFILL_AND_ROLLING_TARGET_EVALUATION
   path: registry/development_tasks_shadow_v2/31/315a31d0308ccb1a9a95f51f5d7e6a04ffdeb147675bd788a38733758ccb77e6.yaml
@@ -3427,8 +3437,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1878
-    order_in_partition: 340
+    line_number: 1879
+    order_in_partition: 341
     row_sha256: e92a027c05cb0e67000d83134081eeec79d29878e9ac246bb612a5b0d175c7cf
 - task_id: TRADING-209_to_213_SYSTEM_TARGET_PORTFOLIO_AND_PAPER_SHADOW
   path: registry/development_tasks_shadow_v2/4e/4e5be58d76af7c80c36a9a21626d41cc0f6e64823ec64d775f83526c5cfd9208.yaml
@@ -3437,8 +3447,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1879
-    order_in_partition: 341
+    line_number: 1880
+    order_in_partition: 342
     row_sha256: aa6fbc1ffeb0cf4489e96c60e50467cfd78fbd03c8fb5589968fd30455b6b568
 - task_id: TRADING-204_to_208_REAL_MANUAL_SNAPSHOT_DRY_RUN
   path: registry/development_tasks_shadow_v2/cb/cbb7d2e28892527451898306f4fc04b2ff2d1d819c600c61acda42d2a599d54e.yaml
@@ -3447,8 +3457,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1880
-    order_in_partition: 342
+    line_number: 1881
+    order_in_partition: 343
     row_sha256: 76aeacbbf162052ce6d7a75314f31b6a5206752a7d4075c92b916a760752d1bd
 - task_id: TRADING-199_to_203_MANUAL_PORTFOLIO_GUARDRAILS
   path: registry/development_tasks_shadow_v2/d3/d33fc5e86598c762dede400e686a42c95de42d27a1cddd16452fc0b0f72208e9.yaml
@@ -3457,8 +3467,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1881
-    order_in_partition: 343
+    line_number: 1882
+    order_in_partition: 344
     row_sha256: d14abaa5058e3530c49845d5a2684022d18957b51a8b07664708f2243d4915e6
 - task_id: TRADING-189_to_198_DEFENSIVE_HYPOTHESIS_FORWARD_EVIDENCE
   path: registry/development_tasks_shadow_v2/ca/caeb15fc3d423bd47329b34c05ca88fb26a5d03b92082d5ccd72d24648098643.yaml
@@ -3467,8 +3477,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1882
-    order_in_partition: 344
+    line_number: 1883
+    order_in_partition: 345
     row_sha256: 4151f78fa81640415141e69b0c9d4681ddfa12610ed4254095fe2018151c230c
 - task_id: TRADING-184_to_188_PRESSURE_REGIME_DEFENSIVE_VALIDATION
   path: registry/development_tasks_shadow_v2/a0/a09852a700eeae58556bbd0c29bf6039acc97101a301c1b8575017609296254a.yaml
@@ -3477,8 +3487,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1883
-    order_in_partition: 345
+    line_number: 1884
+    order_in_partition: 346
     row_sha256: 3b775782422d42b9530dc0fcbab7a9fc4d525e4777311d50822c6e137fc10444
 - task_id: TRADING-179_to_183_CONFIRMATION_CYCLE_WEEKLY_OPS
   path: registry/development_tasks_shadow_v2/30/30d775586f4c6dfb47e509223835e2cfa9cc86ec431203d3d4f56cfc042a9be7.yaml
@@ -3487,8 +3497,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1884
-    order_in_partition: 346
+    line_number: 1885
+    order_in_partition: 347
     row_sha256: 77b6b7343515dceae6f9174466633b8316c73ce5f50e5cbd81cd1c0bf041a4b8
 - task_id: TRADING-174_to_178_FORWARD_CONFIRMATION_CYCLE
   path: registry/development_tasks_shadow_v2/01/01ead18d43bc1bc6f8083d3acd31f7a852d3543ff46aa853136194eb5d749384.yaml
@@ -3497,8 +3507,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1885
-    order_in_partition: 347
+    line_number: 1886
+    order_in_partition: 348
     row_sha256: a8f5feed2d09705a2d36069955c67cf0ef6893d5f64064ac716af42782ba18c7
 - task_id: TRADING-169_to_173
   path: registry/development_tasks_shadow_v2/63/633a80f5646c0522379f20660e21ea2f9f3907a9cd378def26728f1431d44715.yaml
@@ -3507,8 +3517,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1887
-    order_in_partition: 348
+    line_number: 1888
+    order_in_partition: 349
     row_sha256: 4daf895373f565ddf82c5dc8e9bf770a30dc0dfad7e4401133d3a4c95a47022c
 - task_id: TRADING-161_to_168
   path: registry/development_tasks_shadow_v2/ad/adcc7b3ba052644019ac56df99fd944b35e72ef2d1d3be39c19575f6d4f8410a.yaml
@@ -3517,8 +3527,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1888
-    order_in_partition: 349
+    line_number: 1889
+    order_in_partition: 350
     row_sha256: 168975ad05321cebea00d9fbc0b78a9fee20788dc7804543d231a92df21639a1
 - task_id: TRADING-156_to_160
   path: registry/development_tasks_shadow_v2/c3/c32b7b715b7bf04baed59de2a3a3e1ff62bf8dd746f23a3b9b00181ee43ef317.yaml
@@ -3527,8 +3537,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1889
-    order_in_partition: 350
+    line_number: 1890
+    order_in_partition: 351
     row_sha256: 6d7c939ba00dcf8372e25a1035d2cae865c26792e2e966159c45c4f3514ec1a1
 - task_id: TRADING-151_to_155
   path: registry/development_tasks_shadow_v2/03/0345e06e66c5ecddb597214e8cc0d8669b3e299391dd02414eddce1333555360.yaml
@@ -3537,8 +3547,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1890
-    order_in_partition: 351
+    line_number: 1891
+    order_in_partition: 352
     row_sha256: a6f244825fe51f3d59315ad875aa5e7c26c9bba0efc15e3d86ddb56613986137
 - task_id: TRADING-146_to_150
   path: registry/development_tasks_shadow_v2/5b/5b590cd43f74dae5de010cb1686e7fc8dcfc79eda80e35bf855c8a39afd4ed6f.yaml
@@ -3547,8 +3557,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1891
-    order_in_partition: 352
+    line_number: 1892
+    order_in_partition: 353
     row_sha256: 707ce0bca40ad930b10f6c9c2f4c9143c9724da17e77fe3cc08d2d6d5c4a3a17
 - task_id: TRADING-141_to_145
   path: registry/development_tasks_shadow_v2/5e/5e42856a82226b71e25e8c8ecfcc11540c1809f0b3acef8b86b4c8daa06d2263.yaml
@@ -3557,8 +3567,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1892
-    order_in_partition: 353
+    line_number: 1893
+    order_in_partition: 354
     row_sha256: 6d61b01ed20c210b2d1245bfab16d0d3e21dcd321a694504b74ccc22f44664bf
 - task_id: TRADING-136_to_140
   path: registry/development_tasks_shadow_v2/05/0513538a681fb62a656a4e45f52ce565aab8a82dc0111119031bb7ef7a58cc67.yaml
@@ -3567,8 +3577,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1893
-    order_in_partition: 354
+    line_number: 1894
+    order_in_partition: 355
     row_sha256: 4c7bd7e878e26ad146ee3cb31d631976c8bb621133088ad5ebb65a421eefdf84
 - task_id: TRADING-131_to_135
   path: registry/development_tasks_shadow_v2/03/03ef482b1539e86e76a37f4dbde5ff43a86f2d8afe44bc295d84f80561c48b55.yaml
@@ -3577,8 +3587,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1894
-    order_in_partition: 355
+    line_number: 1895
+    order_in_partition: 356
     row_sha256: 85c19611e951f048b3209c650b9ff5099491aa093e0a481e9285bcc5b2370409
 - task_id: TRADING-126_to_130
   path: registry/development_tasks_shadow_v2/11/1137897a103e86c2f8b44257b470c5eca30a2fdd5ae13bbc525d3118df3914ff.yaml
@@ -3587,8 +3597,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1895
-    order_in_partition: 356
+    line_number: 1896
+    order_in_partition: 357
     row_sha256: 1128343f02634820d4acafb4471a1f8d83c3d02c3fe118aa3872ef0536b0e03a
 - task_id: TRADING-114_to_120
   path: registry/development_tasks_shadow_v2/86/86da1e3e43631fb8216fb2341f5e15cb7ff418ce94d7e374209518e902d43162.yaml
@@ -3597,8 +3607,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1896
-    order_in_partition: 357
+    line_number: 1897
+    order_in_partition: 358
     row_sha256: ec4e463c9721e65bb45ae035767b4fc667c3e2db7b52219e252715458b7c060f
 - task_id: TRADING-121_to_125
   path: registry/development_tasks_shadow_v2/42/424c6c8e4d8ece6354460b9550d8402b90ceada60fcfe89dc35dbdcdf11edca9.yaml
@@ -3607,8 +3617,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1897
-    order_in_partition: 358
+    line_number: 1898
+    order_in_partition: 359
     row_sha256: cffb002e6c5fdfba7d49f211939519b09ec2820fc82dde0829d150c1096540f2
 - task_id: TRADING-111_to_113
   path: registry/development_tasks_shadow_v2/fd/fdc5929c6e5da05c646679904421a30e4f53d2b19baadf22a9011ba6207d958b.yaml
@@ -3617,8 +3627,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1898
-    order_in_partition: 359
+    line_number: 1899
+    order_in_partition: 360
     row_sha256: 641a27cb3793713ff76f390a7a7bb65f63fd8c55112c1ee30911cc68373f67cf
 - task_id: TRADING-102_to_110
   path: registry/development_tasks_shadow_v2/23/234f0cd7c86d2fd1ac5892fc577c82687f82aafdd4e9458fec8a906b8d3ca047.yaml
@@ -3627,8 +3637,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1899
-    order_in_partition: 360
+    line_number: 1900
+    order_in_partition: 361
     row_sha256: ad1454b18044cb6d2989d8e2b15288b07dbfe79910b62a774b115e379022697b
 - task_id: TRADING-092
   path: registry/development_tasks_shadow_v2/1a/1a29bfd3016cc16386290babd42f5ebb03eb98b22eae14a10cf18d1e727e0b6f.yaml
@@ -3637,8 +3647,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1900
-    order_in_partition: 361
+    line_number: 1901
+    order_in_partition: 362
     row_sha256: 57684596c4f55aecb1ef6093a51c9cc2b4afe85d43b81065d547bd5263c915df
 - task_id: TRADING-091
   path: registry/development_tasks_shadow_v2/87/87409b2f622ac0c948306f8facf9ca2923ee2fedb4a49245c44f017b78b8c4a7.yaml
@@ -3647,8 +3657,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1901
-    order_in_partition: 362
+    line_number: 1902
+    order_in_partition: 363
     row_sha256: 602222e4402c16228fc2e2760aa4460bdf9fc42a106df37f061dd15ac4e11a06
 - task_id: TRADING-090
   path: registry/development_tasks_shadow_v2/bd/bd4792709be1600b604b5ae4ed2c2ca986ad5430016d69cac48829348233a7b5.yaml
@@ -3657,8 +3667,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1902
-    order_in_partition: 363
+    line_number: 1903
+    order_in_partition: 364
     row_sha256: 018f0f4093d8dfae737e1916ec11aef12bf98cf6b7cf395605dcbd710752a80a
 - task_id: TRADING-089
   path: registry/development_tasks_shadow_v2/da/da002c5987902bdc8f31ebd673f7e3343539e831be82c438de9d0fef881b49a0.yaml
@@ -3667,8 +3677,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1903
-    order_in_partition: 364
+    line_number: 1904
+    order_in_partition: 365
     row_sha256: b762e29aff3d7c80b31adffa4514f11e68d1cbe9c656364ca87ccb17aaa59458
 - task_id: TRADING-088
   path: registry/development_tasks_shadow_v2/20/204a880861cefd4936239d647519a89055b909ff4bdd447f00bfc7bf831446fb.yaml
@@ -3677,8 +3687,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1904
-    order_in_partition: 365
+    line_number: 1905
+    order_in_partition: 366
     row_sha256: eacd26ce9ca20f90dcd39a14b4e2d7927fb018d13299c22adb12485221871834
 - task_id: TRADING-087
   path: registry/development_tasks_shadow_v2/51/51a3ef3f555ee4e724f79d83e38b6a2388063508120badb67ce5281cd9811b2a.yaml
@@ -3687,8 +3697,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1905
-    order_in_partition: 366
+    line_number: 1906
+    order_in_partition: 367
     row_sha256: 59b04a82b2ed2456adc3c7d492707073b8f6b1e2ea9ee9c496e281ef6987bff3
 - task_id: TRADING-086
   path: registry/development_tasks_shadow_v2/92/92203a5cf8e07ef1c85fa91f28e1d21e1442c5631a25233e1722014b4fe7b77e.yaml
@@ -3697,8 +3707,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1906
-    order_in_partition: 367
+    line_number: 1907
+    order_in_partition: 368
     row_sha256: 657a4ae5bea057a6f8cc66abde1507b4bbcf69ecea860408e4542d0ad5e38c53
 - task_id: TRADING-085
   path: registry/development_tasks_shadow_v2/4e/4ebda495a4fe6ebce248bbc35aacbf5041db20fcfed3adf295543724091b4e1b.yaml
@@ -3707,8 +3717,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1907
-    order_in_partition: 368
+    line_number: 1908
+    order_in_partition: 369
     row_sha256: 16367103f2642326859fc36ed2fa58fbf656a4f41f2ba8e62b006d00da77da88
 - task_id: TRADING-084
   path: registry/development_tasks_shadow_v2/a0/a0477b85935918070e82482cc31b0497b663d8da6ec3521dc71df6b10a605319.yaml
@@ -3717,8 +3727,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1908
-    order_in_partition: 369
+    line_number: 1909
+    order_in_partition: 370
     row_sha256: dabc55e16e60425001242deb33a91ee1d61d175fd019f83be98f377eff796f0c
 - task_id: TRADING-083
   path: registry/development_tasks_shadow_v2/6d/6d3e82bbd8aa284a202c4027d27f690953f443d57164ff36fb9c09360b887c37.yaml
@@ -3727,8 +3737,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1909
-    order_in_partition: 370
+    line_number: 1910
+    order_in_partition: 371
     row_sha256: 6081ddf21b2fc59d5d602b9fc8da68e44d68f8b2d752a7c7dda5d9760b702214
 - task_id: TRADING-082
   path: registry/development_tasks_shadow_v2/83/835f072332910b13fe76becceced0c4e4487e12bf20d19ef110bf61c4a018e4a.yaml
@@ -3737,8 +3747,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1910
-    order_in_partition: 371
+    line_number: 1911
+    order_in_partition: 372
     row_sha256: 6578b343fb07e30155d238f5743db1621ed12558a6b8d07b2ada79ed5ea140e5
 - task_id: TRADING-081
   path: registry/development_tasks_shadow_v2/a3/a3548fff94d34d24ea90fb04f4e165e4509ba4d7fe4d842447ab2601292b35f2.yaml
@@ -3747,8 +3757,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1911
-    order_in_partition: 372
+    line_number: 1912
+    order_in_partition: 373
     row_sha256: 364616761968c6b6fde868460012703f63c5ac14a02ed29800839a8ad7f387ad
 - task_id: TRADING-080
   path: registry/development_tasks_shadow_v2/e3/e3c17d1b9321ceebe67ced5f80993b497b77d4e5f438ddbd17733986395e28ca.yaml
@@ -3757,8 +3767,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1912
-    order_in_partition: 373
+    line_number: 1913
+    order_in_partition: 374
     row_sha256: 3f78677f0bf0650ae9a7df85e4329c60ceadbf0afb6a63116f6d319bd3a7d2c0
 - task_id: TRADING-079
   path: registry/development_tasks_shadow_v2/41/415ab693073c377db709a42e7d5ebbd05dc827d78f4cf8c0c523be1dba6e03c9.yaml
@@ -3767,8 +3777,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1913
-    order_in_partition: 374
+    line_number: 1914
+    order_in_partition: 375
     row_sha256: e91bbddfc6fafeda86fa059e486d6f03d9e1e066089cfa820dab201e6208278c
 - task_id: TRADING-078
   path: registry/development_tasks_shadow_v2/fa/fa3f71327f2406959b55197cc09495648cf86a0b5fd6d0fe330f1c7a0823c3e1.yaml
@@ -3777,8 +3787,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1914
-    order_in_partition: 375
+    line_number: 1915
+    order_in_partition: 376
     row_sha256: d6ab37bc3c10b8f237da830e008763b8443baaa78721079b4ece3c0f7389a3fb
 - task_id: TRADING-031A
   path: registry/development_tasks_shadow_v2/df/df8104772ce39878b6239cb58ead27858ce0eeb5da4aa212f2310543101b2b40.yaml
@@ -3787,8 +3797,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1915
-    order_in_partition: 376
+    line_number: 1916
+    order_in_partition: 377
     row_sha256: 66d696ee5881e75412570270a9fef5e044eb342d6acad9a49bb14c4542598e9f
 - task_id: TRADING-032A
   path: registry/development_tasks_shadow_v2/a4/a4770862b85423ba1c993403892d7b4bbd2ec477d1b275acc0862f11ce245002.yaml
@@ -3797,8 +3807,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1916
-    order_in_partition: 377
+    line_number: 1917
+    order_in_partition: 378
     row_sha256: ce6aefb871dfb93168128820b6788176e45dbbd11ce5ed617aebe2a4a1288db4
 - task_id: TRADING-033A
   path: registry/development_tasks_shadow_v2/71/71a008a130fffa3af27808a41c4ceece2b1281e4f64c0b979663ccf14f762b8d.yaml
@@ -3807,8 +3817,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1917
-    order_in_partition: 378
+    line_number: 1918
+    order_in_partition: 379
     row_sha256: f69037fc8654abe1abe293c5b5750b820205b172f76711f3f50f318841f1f5a2
 - task_id: TRADING-014A
   path: registry/development_tasks_shadow_v2/fb/fb2dbef41f4bea01f1304a49e1878a24e6935d1d62ed9b0e73a012044bd573fd.yaml
@@ -3817,8 +3827,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1918
-    order_in_partition: 379
+    line_number: 1919
+    order_in_partition: 380
     row_sha256: db107cc25c06d2cbc9910c989a14180c7815d0a238013da3b4ad7d7438a27e7c
 - task_id: TRADING-014B
   path: registry/development_tasks_shadow_v2/bc/bc8afd878492a5f9cbbb41d1e835728fd0b0fcab40ef854e8d2a237a588267a5.yaml
@@ -3827,8 +3837,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1919
-    order_in_partition: 380
+    line_number: 1920
+    order_in_partition: 381
     row_sha256: fc7248594223ee9e1f9f01c3eed59573c571b85f7b9d6d7945fc38a8e80bb1dc
 - task_id: TRADING-018A1
   path: registry/development_tasks_shadow_v2/ff/ff96ab11faace74ba46e71de75290b186ce7a5b09cd2cd782591aa1d4b6fca13.yaml
@@ -3837,8 +3847,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1920
-    order_in_partition: 381
+    line_number: 1921
+    order_in_partition: 382
     row_sha256: 665808cad259145e1666b5cc597f1196f8ab5ab25878af4821d10ed3740ef45d
 - task_id: TRADING-018B1
   path: registry/development_tasks_shadow_v2/88/886282fbb950f3bc749849c2f92143e32e076dc80ec1bed213bcda7d3f86747a.yaml
@@ -3847,8 +3857,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1921
-    order_in_partition: 382
+    line_number: 1922
+    order_in_partition: 383
     row_sha256: fa70e5f5d41cba89b8d143c959980aab83db2a4b680107a5e9b8f5562ab9c63f
 - task_id: TRADING-014C
   path: registry/development_tasks_shadow_v2/60/600a7f8a05a61b0f85267450a6cccb4ad77cf26e458241932cae4b0115857416.yaml
@@ -3857,8 +3867,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1922
-    order_in_partition: 383
+    line_number: 1923
+    order_in_partition: 384
     row_sha256: 29a112373dde20c47b62b228846c1866589a51647766f74bca19686b3118d61a
 - task_id: TRADING-006B
   path: registry/development_tasks_shadow_v2/e6/e652976695464732c1780e1cf8bc84d07d0e4f848816e9376ff70a605678f688.yaml
@@ -3867,8 +3877,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1923
-    order_in_partition: 384
+    line_number: 1924
+    order_in_partition: 385
     row_sha256: 55d67fad2da9a4df93c109fdd0e88b1020d78e20399667100607d44ed81ed85a
 - task_id: LLM-005
   path: registry/development_tasks_shadow_v2/97/97ed79d85c77f95e8b4c5123b953e6ee1c8a169ca06b540b8aaf05b6a6a07ced.yaml
@@ -3877,8 +3887,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1924
-    order_in_partition: 385
+    line_number: 1925
+    order_in_partition: 386
     row_sha256: 13da823a50ee8ff9ef8b907cdb7e23a0116df21eafd8b95ca71c98c32db62bf8
 - task_id: CALIBRATION-003
   path: registry/development_tasks_shadow_v2/b2/b2e2f2713ee02a42c12738bd0954c536b1f9b731188897cff97436083e528850.yaml
@@ -3887,8 +3897,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1925
-    order_in_partition: 386
+    line_number: 1926
+    order_in_partition: 387
     row_sha256: cca648f18fd9df24904a0c98a7c52693e645703e8472594a298736f27143b360
 - task_id: CALIBRATION-004
   path: registry/development_tasks_shadow_v2/b1/b105217b6a75bd011206c2a305c06cd88b44a7ad46e84c178d680f1bebc6d09c.yaml
@@ -3897,8 +3907,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1926
-    order_in_partition: 387
+    line_number: 1927
+    order_in_partition: 388
     row_sha256: bc254fdda7944e56d12024e065b1b5ce38f006a8767645764644228d27198fad
 - task_id: CALIBRATION-005
   path: registry/development_tasks_shadow_v2/3f/3f4b3ad085323fa5654cee65a82988659cf0ba1450e946a7c7cf9d5eed90e77e.yaml
@@ -3907,8 +3917,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1927
-    order_in_partition: 388
+    line_number: 1928
+    order_in_partition: 389
     row_sha256: cc0eed47dae8caed1857ee4b955809d8b47ab5b295e479359da67684778347eb
 - task_id: PROD-002
   path: registry/development_tasks_shadow_v2/dd/dda2ab99bb435239e5828ad0eff2bec06b86106ff3bca1a4960f001dd733db1b.yaml
@@ -3917,8 +3927,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1928
-    order_in_partition: 389
+    line_number: 1929
+    order_in_partition: 390
     row_sha256: 159b914b1aa1b4519a81a77dd676e33bf77683dd49ff74f91b07bcf71014903c
 - task_id: THESIS-002
   path: registry/development_tasks_shadow_v2/6d/6d7fd1454512459867f06c5e145b6d417dde8081df14e592b45367c762af82b3.yaml
@@ -3927,8 +3937,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1929
-    order_in_partition: 390
+    line_number: 1930
+    order_in_partition: 391
     row_sha256: afd49e12a4598c9c0955392dd0bcd35346f974a58a6e8cb24c1ee6cbe2062908
 - task_id: PROD-004
   path: registry/development_tasks_shadow_v2/09/09c1c512d95624d2f7900d3d5afdef258c36c149419f762eaa3b460d9553c435.yaml
@@ -3937,8 +3947,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1930
-    order_in_partition: 391
+    line_number: 1931
+    order_in_partition: 392
     row_sha256: 8cb8a538632f575d50568937ef4fca27dfd15357950cfaea68d626c4947420aa
 - task_id: PROD-005
   path: registry/development_tasks_shadow_v2/b0/b0c88446da608850002d54b3b3e11bc67f3a44cc2d1af26820c2082b85b33f85.yaml
@@ -3947,8 +3957,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1931
-    order_in_partition: 392
+    line_number: 1932
+    order_in_partition: 393
     row_sha256: aff58c3cb0ff85bcd4d1e4aaffd5dde2781196f8bd62b48cf8b7ffd2b3fc4e49
 - task_id: PROD-006
   path: registry/development_tasks_shadow_v2/d9/d986eabbebfb712c2706fa6f6f44014e3da09ab5bf3ccd76e9b32a0b4719e3b7.yaml
@@ -3957,8 +3967,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1932
-    order_in_partition: 393
+    line_number: 1933
+    order_in_partition: 394
     row_sha256: 35d98ba059abd9bc3279e72913cb03a00beab2ab6522be7c8ad45af1a0380b3f
 - task_id: TRADING-2269_NORGATE_PLATINUM_DECISION_WORDING_RECONCILIATION
   path: registry/development_tasks_shadow_v2/c5/c513eb443d730a6167855bfac7e51fd22423ec3343e60d2bfc0b55ba37649d2e.yaml
@@ -3967,8 +3977,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1961
-    order_in_partition: 394
+    line_number: 1962
+    order_in_partition: 395
     row_sha256: 4b561a754b20425295d0a173522b0984c80107138e6f9a626a524ca02f8f30e2
 - task_id: TRADING-2268_NORGATE_2Y_PARTIAL_EVIDENCE_REVIEW_AND_PLATINUM_DECISION_MEMO
   path: registry/development_tasks_shadow_v2/25/258ac2de53e8faaa641da1863f6a40cb48aa40998e93e5280cbdfe47f3fbabb1.yaml
@@ -3977,8 +3987,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1962
-    order_in_partition: 395
+    line_number: 1963
+    order_in_partition: 396
     row_sha256: 9d5f4fa0acc5bf6c23d5207b5e77b108f591c2df0a00509302a0b476afaf196b
 - task_id: TRADING-2267_NORGATE_TRIAL_2Y_PARTIAL_EFFECTIVENESS_VALIDATION
   path: registry/development_tasks_shadow_v2/c0/c033496addcdceb3164e34403581a198d7b6123958a580770497aa5556c44ff3.yaml
@@ -3987,8 +3997,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1963
-    order_in_partition: 396
+    line_number: 1964
+    order_in_partition: 397
     row_sha256: 36dc857753dee334ff46e0a44920a4c509496b9061c05026b7eccadbac56d226
 - task_id: TRADING-2266_to_2295_NORGATE_TRIAL_INTEGRATION_SPIKE
   path: registry/development_tasks_shadow_v2/d2/d279398a4ab769db653bb1b6e4803b02cc44689c0be0971847fd38278346b391.yaml
@@ -3997,8 +4007,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1964
-    order_in_partition: 397
+    line_number: 1965
+    order_in_partition: 398
     row_sha256: b646aae7f3d4cccf873ddbfce3e3a7fef84928c759241e4965f8604f8bf26480
 - task_id: TRADING-2246_to_2265_PAID_DATA_DUE_DILIGENCE_TRUE_BREADTH
   path: registry/development_tasks_shadow_v2/08/08e104a1fbbc978d13b86c1865cd669396043da102a32d227e411917b927a3f2.yaml
@@ -4007,8 +4017,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1965
-    order_in_partition: 398
+    line_number: 1966
+    order_in_partition: 399
     row_sha256: ee90b7517bf67052f95c84f90a0bae8c654009a0f62cb8f27f54cd86c4f8f10c
 - task_id: TRADING-2086_to_2245_POST_2085_REABLATION_PROXY_REOPEN_ROADMAP
   path: registry/development_tasks_shadow_v2/8d/8da7f6a9ea6b57415e880088f5480ab6cc8067413127bbedc5ae1081079d9762.yaml
@@ -4017,8 +4027,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1966
-    order_in_partition: 399
+    line_number: 1967
+    order_in_partition: 400
     row_sha256: e992b2a26966f63c1e1a59343b4d5bcd15c3d082c07c7abdde5358e46eabd5c6
 - task_id: DEVX-001_TEMPORARY_WORKSPACE_LIFECYCLE_AND_CLEANUP
   path: registry/development_tasks_shadow_v2/ec/ece5b0e0c4bdf06659bac12fcee89e26a29932c6a547f791d0f6937e9c43a77c.yaml
@@ -4027,8 +4037,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1967
-    order_in_partition: 400
+    line_number: 1968
+    order_in_partition: 401
     row_sha256: f979f29da38a5b5348e8680b8e06689830b33c7d5f8d322dff5c0f77d9bd710d
 - task_id: DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
   path: registry/development_tasks_shadow_v2/18/1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00.yaml
@@ -4037,8 +4047,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1968
-    order_in_partition: 401
+    line_number: 1969
+    order_in_partition: 402
     row_sha256: 65329b40fc1cd47a5cec78003e68af754dd9259fe8e1b4f0394b17fb9428a422
 - task_id: DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
   path: registry/development_tasks_shadow_v2/7b/7b04799972c59b71610e961e1ef5b68bb12230cdbf7f125bd217d27f2a281504.yaml
@@ -4047,8 +4057,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1969
-    order_in_partition: 402
+    line_number: 1970
+    order_in_partition: 403
     row_sha256: 4d7b75e0a06642ac1899cced6ab345b52ea772118b7cb6b82e7a04e4a64e6282
 - task_id: TRADING-2046_to_2085_FREE_PIT_DATA_SOURCE_INGESTION
   path: registry/development_tasks_shadow_v2/b7/b7bddbbee3cba9fca0785a15edb740c5edd3e08c35ff12c350861a1d892d0cbe.yaml
@@ -4057,8 +4067,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1970
-    order_in_partition: 403
+    line_number: 1971
+    order_in_partition: 404
     row_sha256: 3a549422f73f65375b8341c45cd9ade735e142eeb9d92c630d422a6b527fbc82
 - task_id: GOV-006_ACTIVE_TASK_PORTFOLIO_NORMALIZATION
   path: registry/development_tasks_shadow_v2/a8/a889ac095c84e348bbccdb3fe2bbed2bb6cbb781cadb112285ad69236ba6cf51.yaml
@@ -4067,8 +4077,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1971
-    order_in_partition: 404
+    line_number: 1972
+    order_in_partition: 405
     row_sha256: 74b9be7e11225ec8fc2cdd9bb80d82e5c3f98db6e153c0be48ce85b776c171ba
 - task_id: ARCH-004W15_D0B3_G4B_G3_CLOSE_PARALLEL_READINESS
   path: registry/development_tasks_shadow_v2/b6/b6378ad05312e36eb0833a1c72c22409e1ed532e905653453c12c74b98a8b49f.yaml
@@ -4077,8 +4087,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1972
-    order_in_partition: 405
+    line_number: 1973
+    order_in_partition: 406
     row_sha256: 503b73a84edc6a36c0d727d2fc8a865879c248ec1fae83ecfce52ddf1ab1acbb
 - task_id: ARCH-004G4_OPERATIONS_PERIODIC_CONSUMER_MIGRATION
   path: registry/development_tasks_shadow_v2/51/514384dec130163d9713ff69ea1b73a422ad6ec131cd603f24d51e762d3ca3d6.yaml
@@ -4087,8 +4097,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1973
-    order_in_partition: 406
+    line_number: 1974
+    order_in_partition: 407
     row_sha256: 819f1eaa5b30e0bd73d2e6cc27c82a2a54f9a2c3cf5155a90793ea9ab0be8287
 - task_id: ARCH-004G3_REPORTING_NATIVE_MIGRATION
   path: registry/development_tasks_shadow_v2/e9/e977535673f7acd3be62f3915aaedec6d22598a52698a237144356d414738674.yaml
@@ -4097,8 +4107,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1974
-    order_in_partition: 407
+    line_number: 1975
+    order_in_partition: 408
     row_sha256: c344a6142ce28387785712adb7a4612bce118b5dba4febddd4ace73b6fab002d
 - task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
   path: registry/development_tasks_shadow_v2/21/2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47.yaml
@@ -4107,8 +4117,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1975
-    order_in_partition: 408
+    line_number: 1976
+    order_in_partition: 409
     row_sha256: 89eb58a98cb0c0674ab81108d4a8da48e15ab827b7b6d8f04a6f0962785fb3fe
 - task_id: ARCH-005S4E_CHECKOUT_HANDOFF_AND_SOURCE_RECONCILIATION
   path: registry/development_tasks_shadow_v2/5f/5f2863af3be3b748326a830beac9e9046b678d403b968cc4671b85f5e92ab111.yaml
@@ -4117,8 +4127,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1976
-    order_in_partition: 409
+    line_number: 1977
+    order_in_partition: 410
     row_sha256: de4e58388a3b863e46827d35cf970e537ac91ed52e2f95c1724f09c628b72085
 - task_id: ARCH-004G5_RESEARCH_WRAPPER_MIGRATION
   path: registry/development_tasks_shadow_v2/74/742e8a85c69149942d2d85c1d5ded5e6a3dad9a34e87ac65e844110dce18c7ad.yaml
@@ -4127,8 +4137,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1977
-    order_in_partition: 410
+    line_number: 1978
+    order_in_partition: 411
     row_sha256: 0f4d572176a66b331881a28449d9fa8c0b8c11879cc2c936d5af6e70778d6ddf
 - task_id: PROD-003
   path: registry/development_tasks_shadow_v2/33/33b88fa1e99dbeeef9e82971ece0fceca99a3ba9fc2e24eebc122261b7ef9929.yaml
@@ -4137,8 +4147,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 1985
-    order_in_partition: 411
+    line_number: 1986
+    order_in_partition: 412
     row_sha256: d8294ed8e4ad2aea19418990e24f3ae6befdb32d2f58ee060cc6e567aedd95d8
 - task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
   path: registry/development_tasks_shadow_v2/6d/6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c.yaml
@@ -4147,8 +4157,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2023
-    order_in_partition: 412
+    line_number: 2024
+    order_in_partition: 413
     row_sha256: abf188c29348564023d3322a9d37798d570bb6f3544132a99707487a7d70135e
 - task_id: TRADING-2460_DECISION_TARGET_CAPABILITY_AUDIT_LABEL_FOUNDATION
   path: registry/development_tasks_shadow_v2/fa/fa0369fb8c3d8bd54932895e8aa2d98e9f5714e267d6db571abab8f860eb5b9d.yaml
@@ -4157,8 +4167,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2029
-    order_in_partition: 413
+    line_number: 2030
+    order_in_partition: 414
     row_sha256: 8592db2da2f52b8b65a23e75740021b56166ab3d9950fb8cf04044088c3c045a
 - task_id: TRADING-2464_O1_RELATIVE_OPPORTUNITY_SPREAD_CAPABILITY_AUDIT
   path: registry/development_tasks_shadow_v2/95/9565d5b43c59b45d09c1a7da7a9af33b0450699bb7f353036792d392a640a5ff.yaml
@@ -4167,8 +4177,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2035
-    order_in_partition: 414
+    line_number: 2036
+    order_in_partition: 415
     row_sha256: 8e7f5d29cc7f850e274b1b2fcb1d92dd65908329e99c32f47efe0e57dec44b9d
 - task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
   path: registry/development_tasks_shadow_v2/c8/c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82.yaml
@@ -4177,8 +4187,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2041
-    order_in_partition: 415
+    line_number: 2042
+    order_in_partition: 416
     row_sha256: 69b74023a423d48e0ecba74cd8f3894420e637e5b087b3db35cf132eb5ac78a0
 - task_id: TRADING-2466_ATLAS_STRATEGY_RESEARCH_PATH_AND_ATTRIBUTION_EXPLORER
   path: registry/development_tasks_shadow_v2/32/32d2e28c907cc5428ccae430de7714911d8ad3d415107e86745a2a956c17750f.yaml
@@ -4187,8 +4197,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2047
-    order_in_partition: 416
+    line_number: 2048
+    order_in_partition: 417
     row_sha256: d8d814737c6ac9f5bb340c545a3c3c3ae6f62ec2a3b5f52ab4ce917990491f0e
 - task_id: TRADING-2467_O1_BLIND_CALENDAR_REENTRY_POLICY_SLOT_FREEZE
   path: registry/development_tasks_shadow_v2/32/328a656788b3f4be5997c7ed292538e0de463b66283c145aa45361a82a1fa40a.yaml
@@ -4197,8 +4207,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2053
-    order_in_partition: 417
+    line_number: 2054
+    order_in_partition: 418
     row_sha256: 5a192a201381a02035d10524a8c13be1c112dc3afec9deed62cea35c3f9d11fe
 - task_id: TRADING-2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
   path: registry/development_tasks_shadow_v2/26/26f0dd3ed99948702f1063d42115a166aa00a991edb5fa020e0f6c648d3c49fd.yaml
@@ -4207,8 +4217,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2059
-    order_in_partition: 418
+    line_number: 2060
+    order_in_partition: 419
     row_sha256: 40b4b83722cc54dd3ce6faea7d9ad54cbced20fdb58e139a0605ddf49b1a2e7a
 - task_id: TRADING-2469_ATLAS_CROSS_SNAPSHOT_DIFF_V1
   path: registry/development_tasks_shadow_v2/0d/0d9ce11b3a8853cc85db745c94e39d9d29453ccc304cae1ff42316e964dd3404.yaml
@@ -4217,8 +4227,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2065
-    order_in_partition: 419
+    line_number: 2066
+    order_in_partition: 420
     row_sha256: 015650882dc6f7a8fcd36d2d6fcfeda256bcb3ba284f8dedaf12066d77d789d5
 - task_id: TRADING-2470_ATLAS_CITATION_FIRST_QUERY_API_V1
   path: registry/development_tasks_shadow_v2/56/56e04cfef7666f9a332e66fde40ebc46f82ce3b57509f11bbdafc21625362701.yaml
@@ -4227,8 +4237,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2071
-    order_in_partition: 420
+    line_number: 2072
+    order_in_partition: 421
     row_sha256: 3a4f605edaa2d22512324f1c6a0d5d6679afbfb8139a0701fab8587fbcbe54af
 - task_id: TRADING-2471_ATLAS_STRATEGY_SYSTEM_FLOW_FOCUS_MAP_V1
   path: registry/development_tasks_shadow_v2/1c/1ca300277d17dfbbc24856a795ef80c7a438da03fa8c0991596152041ac3a29f.yaml
@@ -4237,8 +4247,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2072
-    order_in_partition: 421
+    line_number: 2073
+    order_in_partition: 422
     row_sha256: 1104e940262948aa029cff9111b3f1fd448e0cd2e0b16f8f0d7c55bc963a6817
 - task_id: TRADING-2472_ATLAS_NODE_STATUS_PROVENANCE_V1
   path: registry/development_tasks_shadow_v2/7f/7f3e2b8623ecfcd7a0f40d56ec5215be95d37c9391773d660eec26a71b9a4aa6.yaml
@@ -4247,8 +4257,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2073
-    order_in_partition: 422
+    line_number: 2074
+    order_in_partition: 423
     row_sha256: 7015851c121e95127b21dbf87a27ccd3e410cf455979b71a36c255a5c675d0dc
 - task_id: TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
   path: registry/development_tasks_shadow_v2/86/86400046a257eb64ca496c090375e861b5768daa558fb803233ff7cbaf031c4e.yaml
@@ -4257,8 +4267,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2074
-    order_in_partition: 423
+    line_number: 2075
+    order_in_partition: 424
     row_sha256: 3cc34197faa65387dd0e308383dbc7081dff9ff2b9e0afcf1596a87cdecbc3d5
 - task_id: TRADING-2474_ATLAS_RESULT_LEDGER_V1
   path: registry/development_tasks_shadow_v2/57/579d8c62ba12adf159c282580d7a9120107e03052091effccba1b7447701caf8.yaml
@@ -4267,8 +4277,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2075
-    order_in_partition: 424
+    line_number: 2076
+    order_in_partition: 425
     row_sha256: 0fad68e3873a8d234b313644b822e3e572ab09e6ef58947c5420d5e323c8b3b0
 - task_id: TRADING-2475_ATLAS_HISTORICAL_RESEARCH_COVERAGE_INVENTORY_V1
   path: registry/development_tasks_shadow_v2/98/98a63b2b2f2551f884e3384372d95c1d8788326db0ef1f67123aada901a2783f.yaml
@@ -4277,8 +4287,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2076
-    order_in_partition: 425
+    line_number: 2077
+    order_in_partition: 426
     row_sha256: 60ab71239a988a702dcc139f8b42eb40daf6d7db231d57ff2e8d9df40a07469b
 - task_id: TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
   path: registry/development_tasks_shadow_v2/6e/6efdb8af5737f89e41f3467dc553c6308b441767c303da39c76a4d6f6b133ca3.yaml
@@ -4287,8 +4297,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2077
-    order_in_partition: 426
+    line_number: 2078
+    order_in_partition: 427
     row_sha256: 74832405edacd40b291141167f3fc6293d9ee857e91717d758230125cd8aa765
 - task_id: TRADING-2477_ATLAS_HISTORICAL_SOURCE_REGISTRATION_TYPED_ADAPTER_V1
   path: registry/development_tasks_shadow_v2/cc/cc9dfa03308d2633228df3f64303172ceb6f95815547ea05d179b58d87798829.yaml
@@ -4297,8 +4307,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2078
-    order_in_partition: 427
+    line_number: 2079
+    order_in_partition: 428
     row_sha256: c41a43f00eeeb0479ba834ae0b714571acf430aa9517541d5c64c7d0636690f7
 - task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
   path: registry/development_tasks_shadow_v2/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
@@ -4307,8 +4317,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2084
-    order_in_partition: 428
+    line_number: 2085
+    order_in_partition: 429
     row_sha256: e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
 - task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
   path: registry/development_tasks_shadow_v2/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
@@ -4317,8 +4327,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2095
-    order_in_partition: 429
+    line_number: 2096
+    order_in_partition: 430
     row_sha256: 00c78d701acb49a84fc05e7feb7f982e633659e6773283b6c36bf37408fa416c
 - task_id: DATA-GOV-002C2_RATE_ROW_ISSUE_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
   path: registry/development_tasks_shadow_v2/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
@@ -4327,8 +4337,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2096
-    order_in_partition: 430
+    line_number: 2097
+    order_in_partition: 431
     row_sha256: 8f376507448e44d888fec05f56dfa09bbd5f8726b96411cdcbea46f49216d798
 - task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
   path: registry/development_tasks_shadow_v2/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
@@ -4337,8 +4347,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2097
-    order_in_partition: 431
+    line_number: 2098
+    order_in_partition: 432
     row_sha256: 3d45faa1a11b516e93abcebf834b22fe93fd5d01a02257c055e350a40135b5a6
 - task_id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
   path: registry/development_tasks_shadow_v2/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
@@ -4347,8 +4357,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2098
-    order_in_partition: 432
+    line_number: 2099
+    order_in_partition: 433
     row_sha256: b459d595b72d3e7b5950cb3032b0cd322a8ed42ec807611ed5cd325b55ef922a
 - task_id: DATA-GOV-002C3_RATE_ROW_ISSUE_TYPED_ATTRIBUTION_CONTRACT_WAVE
   path: registry/development_tasks_shadow_v2/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
@@ -4357,8 +4367,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2099
-    order_in_partition: 433
+    line_number: 2100
+    order_in_partition: 434
     row_sha256: 64bbdef0ee29f8f9d3b821c215a4668df2c140c68c10d7ebd8697f112fa4da7f
 - task_id: DEVX-004_COMPLETED_TASK_CLOSEOUT_REGISTRATION
   path: registry/development_tasks_shadow_v2/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
@@ -4367,8 +4377,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2100
-    order_in_partition: 434
+    line_number: 2101
+    order_in_partition: 435
     row_sha256: 5b74b38e0167d8d6be300289d55eb3c0ff3822125a4d8314c5ef6bacfe9502cf
 - task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
   path: registry/development_tasks_shadow_v2/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
@@ -4377,8 +4387,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2101
-    order_in_partition: 435
+    line_number: 2102
+    order_in_partition: 436
     row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
 - task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
   path: registry/development_tasks_shadow_v2/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
@@ -4387,8 +4397,8 @@ fragments:
   locator:
     source_partition: active
     source_path: docs/task_register.md
-    line_number: 2102
-    order_in_partition: 436
+    line_number: 2103
+    order_in_partition: 437
     row_sha256: dfe2e992ac1d62a79f6a18cdf8d34af038f474966b6fec24a52746f5cc5ea839
 - task_id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
   path: registry/development_tasks_shadow_v2/2f/2f0204077a83040b98eb365dbea62ff7ac8c8e6f6b0816335084b43d02013b35.yaml
@@ -9443,8 +9453,8 @@ fragments:
 generated_views:
 - source: active
   source_path: docs/task_register.md
-  source_sha256: 0f9968a80b6f3735b775304d6ce5bd90e90bfa46a8649e39abcfcd4aa3142f3c
-  rendered_sha256: 0f9968a80b6f3735b775304d6ce5bd90e90bfa46a8649e39abcfcd4aa3142f3c
+  source_sha256: b4cd2a49ec28673806c3941476eb873208e180e4a1ca6121d9c846b816f17d2a
+  rendered_sha256: b4cd2a49ec28673806c3941476eb873208e180e4a1ca6121d9c846b816f17d2a
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -10440,4 +10450,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 84e94229a69a7687dd0368a9cc316db8928acc3f01f32edca6c7fc45ccc90207
+index_checksum: d0babfe577a31104a53e46ee0737c0c0e7d552e82544e0f6b2bd0610b3a48bea

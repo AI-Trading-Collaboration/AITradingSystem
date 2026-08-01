@@ -1726,6 +1726,33 @@ flowchart LR
     C -.-> N["production_effect=none / no weights / no broker"]
 ```
 
+OPS-073 在 OPS-071 之前增加 scheduler terminal-parent routing，而不改变 recovery control
+plane。`ops_scheduler_checkout_policy.v3` 先把最新 terminal parent 分为四类：合法同日尾链进入
+`RECOVERABLE_SAME_AS_OF_TAIL`；无合法 replay boundary 且 resolver 仍为 parent 日期时进入
+`WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY`，不调用业务 trigger；resolver 严格前进到新
+provider-ready trading day，且 fresh workflow/idempotency key 无 state/active lock、active
+deployment/exact release 通过后进入 `READY_FOR_NEW_AS_OF_ORDINARY`，由现有唯一
+`aitradingsystem-pit` scheduler 调用一次无 recovery 参数的 ordinary `aits ops daily-run`；
+secret/API、external provider、owner-only decision、non-idempotent 或 unsafe boundary 进入
+`BLOCKED_EXTERNAL_OR_OWNER`。旧 parent bytes 始终 immutable，新日期运行不是 recovery child，
+不新增 scheduler，不扩大 provider/capture/DQ/PIT/score replay 或 production/broker 权限。
+
+```mermaid
+flowchart LR
+    P["Latest terminal FAILED / BLOCKED parent"] --> D["ops_scheduler_terminal_disposition.v1"]
+    D -->|"same as-of + reviewed tail eligible"| R["RECOVERABLE_SAME_AS_OF_TAIL"]
+    D -->|"same as-of + no legal boundary"| W["WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY<br/>no trigger"]
+    W --> N["Resolver advances to later provider-ready as-of"]
+    N --> G["Fresh key: no state / no lock<br/>active deployment + exact release"]
+    G -->|"PASS"| O["READY_FOR_NEW_AS_OF_ORDINARY<br/>existing scheduler; no recovery args"]
+    D -->|"external / owner / non-idempotent / unsafe"| B["BLOCKED_EXTERNAL_OR_OWNER"]
+    R --> T["Only trigger: aits ops daily-run"]
+    O --> T
+    G -->|"FAIL"| B
+    P -.-> I["Parent state / ledger / manifest bytes immutable"]
+    T -.-> S["production_effect=none / no weights / no broker"]
+```
+
 OPS-067 在这条 controlled path 上增加 canonical finalization hard gate。普通 steps 全部完成后，
 lease 仍保持 active；系统冻结 executor metadata，生成 current-run dashboard、daily decision
 summary、blocked-only order intent candidates 和最终 Reader Brief，再对最终 Reader Brief bytes

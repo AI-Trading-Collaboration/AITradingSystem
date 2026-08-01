@@ -4,6 +4,7 @@ import json
 import subprocess
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -14,8 +15,10 @@ import ai_trading_system.cli_commands.ops as ops_cli
 import ai_trading_system.ops_scheduler_checkout as scheduler_checkout
 from ai_trading_system.ops_scheduler_checkout import (
     DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH,
+    OpsSchedulerTerminalDisposition,
     inspect_ops_scheduler_checkout,
     load_ops_scheduler_checkout_policy,
+    resolve_ops_scheduler_terminal_disposition,
 )
 
 EXPECTED_REMOTE = "git@github.com:AI-Trading-Collaboration/AITradingSystem.git"
@@ -31,9 +34,7 @@ def independent_checkouts(tmp_path: Path) -> tuple[Path, Path, str]:
 
 
 def test_policy_requires_receipt_gated_independent_clone() -> None:
-    policy = load_ops_scheduler_checkout_policy(
-        DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH
-    )
+    policy = load_ops_scheduler_checkout_policy(DEFAULT_OPS_SCHEDULER_CHECKOUT_POLICY_PATH)
 
     assert policy.status == "REVIEWED_RECEIPT_GATED_DEPLOYMENT"
     assert policy.unified_external_trigger == ("aits", "ops", "daily-run")
@@ -44,6 +45,126 @@ def test_policy_requires_receipt_gated_independent_clone() -> None:
     assert policy.scheduler_provider == "codex_automation"
     assert policy.scheduler_entry_count == 1
     assert policy.windows_task_scheduler_entries_allowed is False
+    assert policy.terminal_dispositions == tuple(
+        item.value for item in OpsSchedulerTerminalDisposition
+    )
+    assert policy.same_as_of_ordinary_allowed is False
+    assert policy.ordinary_requires_as_of_strictly_after_parent is True
+    assert policy.ordinary_requires_fresh_idempotency_key is True
+    assert policy.ordinary_requires_no_active_lock is True
+    assert policy.nonrecoverable_parent_recovery_allowed is False
+    assert policy.parent_bytes_must_remain_immutable is True
+    assert policy.new_business_scheduler_entry_allowed is False
+
+
+def test_terminal_disposition_waits_when_same_as_of_is_not_recoverable() -> None:
+    decision = resolve_ops_scheduler_terminal_disposition(
+        parent_status="FAILED",
+        parent_as_of=date(2026, 7, 31),
+        resolved_as_of=date(2026, 7, 31),
+        recovery_eligible=False,
+        fresh_state_exists=True,
+        fresh_lock_exists=False,
+        active_deployment_accepted=True,
+    )
+
+    assert decision["disposition"] == ("WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY")
+    assert decision["trigger_allowed"] is False
+    assert decision["trigger_mode"] == "NONE"
+    assert decision["same_as_of_ordinary_allowed"] is False
+    assert decision["parent_bytes_must_remain_immutable"] is True
+
+
+def test_terminal_disposition_allows_reviewed_same_as_of_tail_recovery() -> None:
+    decision = resolve_ops_scheduler_terminal_disposition(
+        parent_status="BLOCKED",
+        parent_as_of=date(2026, 7, 31),
+        resolved_as_of=date(2026, 7, 31),
+        recovery_eligible=True,
+        fresh_state_exists=True,
+        fresh_lock_exists=False,
+        active_deployment_accepted=True,
+    )
+
+    assert decision["disposition"] == "RECOVERABLE_SAME_AS_OF_TAIL"
+    assert decision["trigger_allowed"] is True
+    assert decision["trigger_mode"] == "RECOVERY"
+    assert decision["recovery_arguments_required"] is True
+
+
+def test_terminal_disposition_allows_new_as_of_ordinary_on_fresh_key() -> None:
+    decision = resolve_ops_scheduler_terminal_disposition(
+        parent_status="FAILED",
+        parent_as_of=date(2026, 7, 31),
+        resolved_as_of=date(2026, 8, 3),
+        recovery_eligible=False,
+        fresh_state_exists=False,
+        fresh_lock_exists=False,
+        active_deployment_accepted=True,
+    )
+
+    assert decision["disposition"] == "READY_FOR_NEW_AS_OF_ORDINARY"
+    assert decision["trigger_allowed"] is True
+    assert decision["trigger_mode"] == "ORDINARY"
+    assert decision["recovery_arguments_required"] is False
+    assert decision["scheduler_entry_count"] == 1
+    assert decision["unified_external_trigger"] == ["aits", "ops", "daily-run"]
+
+
+@pytest.mark.parametrize(
+    ("fresh_state_exists", "fresh_lock_exists", "active_deployment_accepted", "reason"),
+    [
+        (True, False, True, "FRESH_IDEMPOTENCY_KEY_STATE_ALREADY_EXISTS"),
+        (False, True, True, "FRESH_IDEMPOTENCY_KEY_ACTIVE_LOCK_EXISTS"),
+        (False, False, False, "ACTIVE_DEPLOYMENT_NOT_ACCEPTED"),
+    ],
+)
+def test_terminal_disposition_blocks_unsafe_new_as_of_ordinary(
+    fresh_state_exists: bool,
+    fresh_lock_exists: bool,
+    active_deployment_accepted: bool,
+    reason: str,
+) -> None:
+    decision = resolve_ops_scheduler_terminal_disposition(
+        parent_status="FAILED",
+        parent_as_of=date(2026, 7, 31),
+        resolved_as_of=date(2026, 8, 3),
+        recovery_eligible=False,
+        fresh_state_exists=fresh_state_exists,
+        fresh_lock_exists=fresh_lock_exists,
+        active_deployment_accepted=active_deployment_accepted,
+    )
+
+    assert decision["disposition"] == "BLOCKED_EXTERNAL_OR_OWNER"
+    assert decision["trigger_allowed"] is False
+    assert reason in decision["reason_codes"]
+
+
+def test_terminal_disposition_blocks_as_of_regression_and_external_boundary() -> None:
+    regressed = resolve_ops_scheduler_terminal_disposition(
+        parent_status="FAILED",
+        parent_as_of=date(2026, 7, 31),
+        resolved_as_of=date(2026, 7, 30),
+        recovery_eligible=False,
+        fresh_state_exists=False,
+        fresh_lock_exists=False,
+        active_deployment_accepted=True,
+    )
+    external = resolve_ops_scheduler_terminal_disposition(
+        parent_status="FAILED",
+        parent_as_of=date(2026, 7, 31),
+        resolved_as_of=date(2026, 8, 3),
+        recovery_eligible=False,
+        fresh_state_exists=False,
+        fresh_lock_exists=False,
+        active_deployment_accepted=True,
+        external_or_owner_blocked=True,
+    )
+
+    assert regressed["reason_codes"] == ["RESOLVED_AS_OF_PRECEDES_PARENT"]
+    assert external["reason_codes"] == ["EXTERNAL_OR_OWNER_BLOCKED"]
+    assert regressed["trigger_allowed"] is False
+    assert external["trigger_allowed"] is False
 
 
 def test_clean_exact_independent_clone_passes_candidate_only(

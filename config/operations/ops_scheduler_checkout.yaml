@@ -1,6 +1,6 @@
-schema_version: ops_scheduler_checkout_policy.v2
-policy_id: ops_scheduler_checkout_v2
-version: 2.0.0
+schema_version: ops_scheduler_checkout_policy.v3
+policy_id: ops_scheduler_checkout_v3
+version: 3.0.0
 status: REVIEWED_RECEIPT_GATED_DEPLOYMENT
 owner: operations_owner_and_project_owner
 reviewed_at: 2026-07-27
@@ -32,6 +32,20 @@ trigger:
     - daily-run
   manual_execution_option: --manual-execution
   separate_periodic_scheduler_entries_allowed: false
+terminal_parent_routing:
+  schema_version: ops_scheduler_terminal_disposition_policy.v1
+  dispositions:
+    - RECOVERABLE_SAME_AS_OF_TAIL
+    - WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY
+    - READY_FOR_NEW_AS_OF_ORDINARY
+    - BLOCKED_EXTERNAL_OR_OWNER
+  same_as_of_ordinary_allowed: false
+  ordinary_requires_as_of_strictly_after_parent: true
+  ordinary_requires_fresh_idempotency_key: true
+  ordinary_requires_no_active_lock: true
+  nonrecoverable_parent_recovery_allowed: false
+  parent_bytes_must_remain_immutable: true
+  new_business_scheduler_entry_allowed: false
 deployment:
   activation_mode: ACTIVE_OWNER_ACCEPTED_RECEIPT_REQUIRED
   acceptance_schema: ops_deployment_acceptance.v1
@@ -51,4 +65,5 @@ safety:
 review_condition: >
   Review when the repository remote/ref, environment contract, checkout or Git
   common-dir identity, executable provenance, release receipt, scheduler trigger,
-  deployment acceptance, credential scope, or safety boundary changes.
+  terminal-parent disposition, deployment acceptance, credential scope, or safety
+  boundary changes.

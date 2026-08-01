@@ -1,0 +1,129 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING
+  title: null
+  domain: Operations / nonrecoverable terminal disposition and ordinary acceptance
+    routing
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：完成 exact candidate 正式验证、普通 push、exact release promotion 与 existing
+    automation 原位切换；operations owner：复核首个新 as-of ordinary acceptance
+  requirement_refs:
+  - docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_and_Ordinary_Acceptance_Routing.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_and_Ordinary_Acceptance_Routing.md`。OPS-072
+    parent 在 score 前失败且不满足 OPS-071 recovery allowlist；scheduler checkout policy v3
+    已增加四类 disposition pure resolver，automation prompt 将原位补齐 nonrecoverable parent
+    等待新 provider-ready as-of 的分支。现有唯一 scheduler `aitradingsystem-pit` 保持不变，不新增第二业务
+    trigger。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 四类 disposition 明确；同 as-of recovery 规则/allowlist不变；不可恢复 parent 保持 immutable并等待严格更晚
+      as-of；fresh key 无 state/lock且 active release/receipt通过后进入 `READY_FOR_NEW_AS_OF_ORDINARY`，由
+      existing automation 执行一次无 recovery 参数的 ordinary daily；focused+正式验证、push、promotion/acceptance与
+      automation pin完成；无 weights/broker/trading。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 1607
+    row_sha256: 53bf1fe1b9c19a1a968c92956ab3528ccb570f35ffb384b1a6749c079b9c0b3d
+    cell_count: 8
+    all_cells:
+    - OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING
+    - Operations / nonrecoverable terminal disposition and ordinary acceptance routing
+    - P0
+    - VALIDATING
+    - Codex：完成 exact candidate 正式验证、普通 push、exact release promotion 与 existing automation
+      原位切换；operations owner：复核首个新 as-of ordinary acceptance
+    - 详见 `docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_and_Ordinary_Acceptance_Routing.md`。OPS-072
+      parent 在 score 前失败且不满足 OPS-071 recovery allowlist；scheduler checkout policy
+      v3 已增加四类 disposition pure resolver，automation prompt 将原位补齐 nonrecoverable parent
+      等待新 provider-ready as-of 的分支。现有唯一 scheduler `aitradingsystem-pit` 保持不变，不新增第二业务
+      trigger。
+    - 四类 disposition 明确；同 as-of recovery 规则/allowlist不变；不可恢复 parent 保持 immutable并等待严格更晚
+      as-of；fresh key 无 state/lock且 active release/receipt通过后进入 `READY_FOR_NEW_AS_OF_ORDINARY`，由
+      existing automation 执行一次无 recovery 参数的 ordinary daily；focused+正式验证、push、promotion/acceptance与
+      automation pin完成；无 weights/broker/trading。
+    - 2026-08-02：focused/task-shadow并行 pytest=`31 passed`，Ruff/Black PASS；task shadow
+      942 tasks、v1/v2 byte-identical。当前事件 disposition=`WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY`；最早
+      provider-ready=`2026-08-04 08:00 JST`，existing automation 首次合适计划点=`2026-08-04
+      09:30 JST`。task worktree exit condition见 supporting requirement。
+    raw_line: '|OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING|Operations
+      / nonrecoverable terminal disposition and ordinary acceptance routing|P0|VALIDATING|Codex：完成
+      exact candidate 正式验证、普通 push、exact release promotion 与 existing automation 原位切换；operations
+      owner：复核首个新 as-of ordinary acceptance|详见 `docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_and_Ordinary_Acceptance_Routing.md`。OPS-072
+      parent 在 score 前失败且不满足 OPS-071 recovery allowlist；scheduler checkout policy
+      v3 已增加四类 disposition pure resolver，automation prompt 将原位补齐 nonrecoverable parent
+      等待新 provider-ready as-of 的分支。现有唯一 scheduler `aitradingsystem-pit` 保持不变，不新增第二业务
+      trigger。|四类 disposition 明确；同 as-of recovery 规则/allowlist不变；不可恢复 parent 保持 immutable并等待严格更晚
+      as-of；fresh key 无 state/lock且 active release/receipt通过后进入 `READY_FOR_NEW_AS_OF_ORDINARY`，由
+      existing automation 执行一次无 recovery 参数的 ordinary daily；focused+正式验证、push、promotion/acceptance与
+      automation pin完成；无 weights/broker/trading。|2026-08-02：focused/task-shadow并行
+      pytest=`31 passed`，Ruff/Black PASS；task shadow 942 tasks、v1/v2 byte-identical。当前事件
+      disposition=`WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY`；最早 provider-ready=`2026-08-04
+      08:00 JST`，existing automation 首次合适计划点=`2026-08-04 09:30 JST`。task worktree
+      exit condition见 supporting requirement。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-53bf1fe1b9c19a1a968c9295
+  task_id: OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex：完成 exact candidate 正式验证、普通 push、exact release promotion 与 existing
+      automation 原位切换；operations owner：复核首个新 as-of ordinary acceptance
+    notes: 2026-08-02：focused/task-shadow并行 pytest=`31 passed`，Ruff/Black PASS；task
+      shadow 942 tasks、v1/v2 byte-identical。当前事件 disposition=`WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY`；最早
+      provider-ready=`2026-08-04 08:00 JST`，existing automation 首次合适计划点=`2026-08-04
+      09:30 JST`。task worktree exit condition见 supporting requirement。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:53bf1fe1b9c19a1a968c92956ab3528ccb570f35ffb384b1a6749c079b9c0b3d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING
+  - Operations / nonrecoverable terminal disposition and ordinary acceptance routing
+  - P0
+  - VALIDATING
+  - Codex：完成 exact candidate 正式验证、普通 push、exact release promotion 与 existing automation
+    原位切换；operations owner：复核首个新 as-of ordinary acceptance
+  - 详见 `docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_and_Ordinary_Acceptance_Routing.md`。OPS-072
+    parent 在 score 前失败且不满足 OPS-071 recovery allowlist；scheduler checkout policy v3
+    已增加四类 disposition pure resolver，automation prompt 将原位补齐 nonrecoverable parent
+    等待新 provider-ready as-of 的分支。现有唯一 scheduler `aitradingsystem-pit` 保持不变，不新增第二业务
+    trigger。
+  - 四类 disposition 明确；同 as-of recovery 规则/allowlist不变；不可恢复 parent 保持 immutable并等待严格更晚
+    as-of；fresh key 无 state/lock且 active release/receipt通过后进入 `READY_FOR_NEW_AS_OF_ORDINARY`，由
+    existing automation 执行一次无 recovery 参数的 ordinary daily；focused+正式验证、push、promotion/acceptance与
+    automation pin完成；无 weights/broker/trading。
+  - 2026-08-02：focused/task-shadow并行 pytest=`31 passed`，Ruff/Black PASS；task shadow
+    942 tasks、v1/v2 byte-identical。当前事件 disposition=`WAIT_FOR_NEXT_PROVIDER_READY_AS_OF_ORDINARY`；最早
+    provider-ready=`2026-08-04 08:00 JST`，existing automation 首次合适计划点=`2026-08-04
+    09:30 JST`。task worktree exit condition见 supporting requirement。
+  docs_links:
+  - docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_and_Ordinary_Acceptance_Routing.md
+  terminal: false
+  raw_row_sha256: 53bf1fe1b9c19a1a968c92956ab3528ccb570f35ffb384b1a6749c079b9c0b3d
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: af19809ecbbae5f031c64999949e4bfba85b355bfb15decb4cb8b8cfd81cbfde
