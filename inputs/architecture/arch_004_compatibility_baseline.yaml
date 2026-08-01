@@ -37192,19 +37192,19 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     sha256: 6816a90b1ab726a86f708d1187a882a709d6fe2bdc8cc32f1b185c5f7e67fd6c
     hash_normalization: git_eol_lf
   - path: docs/artifact_catalog.md
-    sha256: 902fc42937162af7ed4741fd5c37602eea3a2871606df0577d49ca4783dced5d
+    sha256: 98275ffa236aab79a5930e9d5fa0b8eabd71ed6814570114c4df9ab4500867a7
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md
-    sha256: dbc8076884db8c98765b2d68f9f9e4da021ae0542676c7d618415ce2dc7ee0a6
+    sha256: d833be9e5f5c30e43425017f4dce80955826ca6842594c41f9debf9c13617f50
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
     sha256: 5e1facce2231cb2150b8156abc637e4e94c50ed4b8b95922138aa93270464a9f
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 31f6c270124bed92df03a88502139e0bdf476aee9f806cf40eac29a4b595a176
+    sha256: 6b4ba13275ff147198f2673bb096123a61dbc381d472052c262ed834fa379b84
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
-    sha256: 969773e6ddd7a8d7ef52f6b2f06c8bd271d524fd50752f44fd549b522df39506
+    sha256: 2c50399dda56f7848298ecf48a1439ebd921ffad41a489b0a2df435e59bd3310
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_architecture_fitness.yaml
     sha256: 54fa4e2398231ad3d1d785b87d11f344a1916d3ce6cce34c1100e029eb3955a8
@@ -37219,13 +37219,13 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     sha256: a5ac8c74e41bba195dcc54291207fdd2ae4b289754d653c59032acd93315b265
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: e70bf39d8214c84fc4c0cfa95d2d2bfa4732187b9a0fa1a41c5a0292f0d672fb
+    sha256: 53e2eb7607ea01487296cb8f44e6139c77f692798d186e778b71b3640f2e6ceb
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: e200949b4ef7a60616a0d773c256d03b484b9c44394db00f3b00e0d636bf9ecf
+    sha256: 324c63b811c302d379c67b2f07077be133b4a16b0c991daacd6d25f0feb8b97a
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
-    sha256: 7ad8451a444dbf4df31d84605aa3f73d6a595b8b24f781ef1704be9f5e3e2d18
+    sha256: 42fd948d8983251d3c82c2cb640d97400b3e37b54f0633c2f23b6b3bd9625bd9
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
     sha256: 125e2d47480899797fee31ef5550f940a000c1cfed5a7ba35081e30d499bb16a
@@ -37243,7 +37243,7 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     sha256: ad912f55159cbba7a7fab4d91819148c8a58d59fee04ef635e665b5913adfead
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/98/98a63b2b2f2551f884e3384372d95c1d8788326db0ef1f67123aada901a2783f.yaml
-    sha256: ad46b1ea1cb80a97c67d7dca76fc970d507732d098ef3af31eeaf06fee789536
+    sha256: 197248326360a28d0b412677327d7b9d615645db021415c3ad1abc0944907739
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
     sha256: 7f3bc8de451da160d0c300176235555c6f43f710c55a3188605916747378d0c2
@@ -37258,7 +37258,7 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     sha256: 6a308eaa2531c90f84593dfc7a001fae9e2e92dcf4215046fd5218ce3c2f2f17
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow_v2/98/98a63b2b2f2551f884e3384372d95c1d8788326db0ef1f67123aada901a2783f.yaml
-    sha256: cb7889f6b214c2983c3b82f616a7e107caeabd8a7a83295cdf004bba8fd66291
+    sha256: 807d1fbed9f258c63e17bc96fd404aaa1cf26c8a95d69a8fe6f1fed8a87a744c
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/atlas/__init__.py
     sha256: bfa56afb107e6d82798fd805777a06a01a2c4a11134ab9dd078616b2b937a5ce
@@ -37320,13 +37320,13 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
     known_exclusion_leak_check: PASS_ZERO_MATCHES
     task_registry: PASS_BYTE_IDENTICAL_938_TASKS
     generated_architecture: PASS_1058_MODULES_1229_TESTS
-    deprecation_inventory: PENDING
-    compatibility_authority: PENDING
-    architecture: PENDING
-    contract: PENDING
-    integration: PENDING
-    reproducibility: PENDING
-    full: PENDING
+    deprecation_inventory: PASS_9_TESTS
+    compatibility_authority: PASS_161_TESTS_COMBINED_170
+    architecture: PASS_817_TESTS_RUNTIME_architecture-fitness_20260801T061125Z_AFTER_INITIAL_813_PASS_4_REPORT_COVERAGE_FAILURES
+    contract: PASS_276_TESTS_RUNTIME_contract-validation_20260801T061432Z
+    integration: PASS_995_TESTS_643_WARNINGS_RUNTIME_integration_20260801T062017Z
+    reproducibility: PASS_24_TESTS_RUNTIME_reproducibility_20260801T062143Z
+    full: PASS_7878_TESTS_3_SKIPPED_643_WARNINGS_RUNTIME_full_20260801T062232Z
     final_tree_architecture: PENDING
     final_tree_contract: PENDING
   safety:

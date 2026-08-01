@@ -14,17 +14,17 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Atlas/reporting coordinator：完成 generated authority、append-only compatibility
-    与 formal closeout
+  next_owner: Owner / Atlas coordinator：从 291 条 tracked-unregistered review queue
+    选择首批 exact adapters 时另立任务
   requirement_refs:
   - docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。承接
-    TRADING-2474 的 `historical_repository_coverage_complete=false`；V1 只读取 report/source
-    registry 与 exact-commit Git path metadata，显式排除 known-unrelated path，不读取研究 artifact
-    内容，不推导 result/status/conclusion。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。V1
+    已完成 path/report-level inventory、独立重建与 canonical artifacts；只读取 report/source registry
+    和 exact-commit Git path metadata，known-unrelated path 双侧先排除，不读取研究 artifact 内容，不推导
+    result/status/conclusion。当前 cited-query 页面仍未接入全仓历史结果。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: exact commit/input/path-manifest hashes可重算；research report、exact/wildcard
@@ -34,45 +34,49 @@ task_record:
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 4dc3911a1c4b1b214e8c01af5c016b7bda9c0b68110cd6f8d4303c4b6e6a025e
+  row_sha256: 60ab71239a988a702dcc139f8b42eb40daf6d7db231d57ff2e8d9df40a07469b
   cell_count: 8
   all_cells:
   - TRADING-2475_ATLAS_HISTORICAL_RESEARCH_COVERAGE_INVENTORY_V1
   - Publishing & Experience / Atlas repository historical research coverage census
   - P1
-  - IN_PROGRESS
-  - Atlas/reporting coordinator：完成 generated authority、append-only compatibility 与
-    formal closeout
-  - 详见 `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。承接
-    TRADING-2474 的 `historical_repository_coverage_complete=false`；V1 只读取 report/source
-    registry 与 exact-commit Git path metadata，显式排除 known-unrelated path，不读取研究 artifact
-    内容，不推导 result/status/conclusion。
+  - BASELINE_DONE
+  - Owner / Atlas coordinator：从 291 条 tracked-unregistered review queue 选择首批 exact
+    adapters 时另立任务
+  - 详见 `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。V1
+    已完成 path/report-level inventory、独立重建与 canonical artifacts；只读取 report/source registry
+    和 exact-commit Git path metadata，known-unrelated path 双侧先排除，不读取研究 artifact 内容，不推导
+    result/status/conclusion。当前 cited-query 页面仍未接入全仓历史结果。
   - exact commit/input/path-manifest hashes可重算；research report、exact/wildcard declaration、tracked
     registered/unregistered、Atlas exact-path crosswalk分类闭合；known exclusion零读取；deterministic
     JSON/Markdown/validation；当前页面与 8/12 identity 不变；focused/formal PASS；`production_effect=none`、`broker_action=none`。
-  - 2026-08-01：Owner token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。checkpoint=`3367d0003…`；actual
-    inventory=`962 research reports / 4470 declarations / 1434 tracked paths / 291
-    tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
-    / 15 checks`；当前推进 generated/compatibility/formal closeout。
+  - 2026-08-01：Owner token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。inventory=`962
+    research reports / 4470 declarations / 1434 tracked paths / 1143 exact-registered
+    / 291 tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
+    / 15 checks`；compatibility/deprecation=`170 passed`；正式 Architecture 首轮 `813 passed
+    / 4 reporting coverage failures`，根因修复后=`817 passed`；Contract/Integration/Reproducibility/Full=`276/995/24/7878
+    passed`，Full 另有 `3 skipped / 643 warnings`。
   raw_line: '|TRADING-2475_ATLAS_HISTORICAL_RESEARCH_COVERAGE_INVENTORY_V1|Publishing
-    & Experience / Atlas repository historical research coverage census|P1|IN_PROGRESS|Atlas/reporting
-    coordinator：完成 generated authority、append-only compatibility 与 formal closeout|详见
-    `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。承接
-    TRADING-2474 的 `historical_repository_coverage_complete=false`；V1 只读取 report/source
-    registry 与 exact-commit Git path metadata，显式排除 known-unrelated path，不读取研究 artifact
-    内容，不推导 result/status/conclusion。|exact commit/input/path-manifest hashes可重算；research
-    report、exact/wildcard declaration、tracked registered/unregistered、Atlas exact-path
-    crosswalk分类闭合；known exclusion零读取；deterministic JSON/Markdown/validation；当前页面与
+    & Experience / Atlas repository historical research coverage census|P1|BASELINE_DONE|Owner
+    / Atlas coordinator：从 291 条 tracked-unregistered review queue 选择首批 exact adapters
+    时另立任务|详见 `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。V1
+    已完成 path/report-level inventory、独立重建与 canonical artifacts；只读取 report/source registry
+    和 exact-commit Git path metadata，known-unrelated path 双侧先排除，不读取研究 artifact 内容，不推导
+    result/status/conclusion。当前 cited-query 页面仍未接入全仓历史结果。|exact commit/input/path-manifest
+    hashes可重算；research report、exact/wildcard declaration、tracked registered/unregistered、Atlas
+    exact-path crosswalk分类闭合；known exclusion零读取；deterministic JSON/Markdown/validation；当前页面与
     8/12 identity 不变；focused/formal PASS；`production_effect=none`、`broker_action=none`。|2026-08-01：Owner
-    token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。checkpoint=`3367d0003…`；actual
-    inventory=`962 research reports / 4470 declarations / 1434 tracked paths / 291
-    tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
-    / 15 checks`；当前推进 generated/compatibility/formal closeout。|'
+    token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。inventory=`962
+    research reports / 4470 declarations / 1434 tracked paths / 1143 exact-registered
+    / 291 tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
+    / 15 checks`；compatibility/deprecation=`170 passed`；正式 Architecture 首轮 `813 passed
+    / 4 reporting coverage failures`，根因修复后=`817 passed`；Contract/Integration/Reproducibility/Full=`276/995/24/7878
+    passed`，Full 另有 `3 skipped / 643 warnings`。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-4dc3911a1c4b1b214e8c01af
+  event_id: legacy-import-60ab71239a988a702dcc139f
   task_id: TRADING-2475_ATLAS_HISTORICAL_RESEARCH_COVERAGE_INVENTORY_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -82,42 +86,46 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: Atlas/reporting coordinator：完成 generated authority、append-only compatibility
-      与 formal closeout
-    notes: 2026-08-01：Owner token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。checkpoint=`3367d0003…`；actual
-      inventory=`962 research reports / 4470 declarations / 1434 tracked paths / 291
-      tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
-      / 15 checks`；当前推进 generated/compatibility/formal closeout。
+    next_owner: Owner / Atlas coordinator：从 291 条 tracked-unregistered review queue
+      选择首批 exact adapters 时另立任务
+    notes: 2026-08-01：Owner token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。inventory=`962
+      research reports / 4470 declarations / 1434 tracked paths / 1143 exact-registered
+      / 291 tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
+      / 15 checks`；compatibility/deprecation=`170 passed`；正式 Architecture 首轮 `813
+      passed / 4 reporting coverage failures`，根因修复后=`817 passed`；Contract/Integration/Reproducibility/Full=`276/995/24/7878
+      passed`，Full 另有 `3 skipped / 643 warnings`。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:4dc3911a1c4b1b214e8c01af5c016b7bda9c0b68110cd6f8d4303c4b6e6a025e
+  - sha256:60ab71239a988a702dcc139f8b42eb40daf6d7db231d57ff2e8d9df40a07469b
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2475_ATLAS_HISTORICAL_RESEARCH_COVERAGE_INVENTORY_V1
   - Publishing & Experience / Atlas repository historical research coverage census
   - P1
-  - IN_PROGRESS
-  - Atlas/reporting coordinator：完成 generated authority、append-only compatibility 与
-    formal closeout
-  - 详见 `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。承接
-    TRADING-2474 的 `historical_repository_coverage_complete=false`；V1 只读取 report/source
-    registry 与 exact-commit Git path metadata，显式排除 known-unrelated path，不读取研究 artifact
-    内容，不推导 result/status/conclusion。
+  - BASELINE_DONE
+  - Owner / Atlas coordinator：从 291 条 tracked-unregistered review queue 选择首批 exact
+    adapters 时另立任务
+  - 详见 `docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md`。V1
+    已完成 path/report-level inventory、独立重建与 canonical artifacts；只读取 report/source registry
+    和 exact-commit Git path metadata，known-unrelated path 双侧先排除，不读取研究 artifact 内容，不推导
+    result/status/conclusion。当前 cited-query 页面仍未接入全仓历史结果。
   - exact commit/input/path-manifest hashes可重算；research report、exact/wildcard declaration、tracked
     registered/unregistered、Atlas exact-path crosswalk分类闭合；known exclusion零读取；deterministic
     JSON/Markdown/validation；当前页面与 8/12 identity 不变；focused/formal PASS；`production_effect=none`、`broker_action=none`。
-  - 2026-08-01：Owner token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。checkpoint=`3367d0003…`；actual
-    inventory=`962 research reports / 4470 declarations / 1434 tracked paths / 291
-    tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
-    / 15 checks`；当前推进 generated/compatibility/formal closeout。
+  - 2026-08-01：Owner token=`owner_decision:TRADING-2475:2026-08-01:advance_atlas_historical_coverage_inventory_v1`。inventory=`962
+    research reports / 4470 declarations / 1434 tracked paths / 1143 exact-registered
+    / 291 tracked-unregistered / 8 Atlas sources`，double-build byte-identical，validation=`PASS
+    / 15 checks`；compatibility/deprecation=`170 passed`；正式 Architecture 首轮 `813 passed
+    / 4 reporting coverage failures`，根因修复后=`817 passed`；Contract/Integration/Reproducibility/Full=`276/995/24/7878
+    passed`，Full 另有 `3 skipped / 643 warnings`。
   docs_links:
   - docs/requirements/TRADING-2475_Atlas_Historical_Research_Coverage_Inventory_V1.md
   terminal: false
-  raw_row_sha256: 4dc3911a1c4b1b214e8c01af5c016b7bda9c0b68110cd6f8d4303c4b6e6a025e
+  raw_row_sha256: 60ab71239a988a702dcc139f8b42eb40daf6d7db231d57ff2e8d9df40a07469b
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: 60a6e097016b2346bf42c73ff87952db756a1cd7b31f2dc9d2ae4d42d7408eeb
+fragment_checksum: 13faa54c5e748b0990bcfd5c9604819d9f3ef0ac8ad96912863f5533377a9f93

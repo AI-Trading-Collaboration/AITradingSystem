@@ -233,6 +233,15 @@ data acquisition、DQ、model、backtest、production 或 broker resource。
   research paths / 1143 tracked exact-registered / 291 tracked-unregistered / 8 Atlas source paths`；
   Atlas source 中 `4` 个被 research registry exact 登记，`1` 个位于 declared tracked roots。
   current snapshot 复核仍为 `8 sources / 8 results / 12 attributions`。
+- 2026-08-01：formal candidate=`74d0d4fc1d60242518a70ef5b8c16ce5bcb6d0a7`。Architecture
+  首轮=`813 passed / 4 failed`，四项均为新增 registry entry 后仍冻结在 `1368` 的 reporting
+  coverage 断言或 catalog command warning；未发现 inventory、研究语义、DQ 或投资逻辑失败。扩展
+  governed claims、补齐 registry command 与机械计数后定向=`5 passed`，完整 Architecture 重跑=
+  `817 passed`，runtime=`architecture-fitness_20260801T061125Z`。其余正式门禁：Contract=
+  `276 passed`（`contract-validation_20260801T061432Z`），Integration=`995 passed / 643 warnings`
+  （`integration_20260801T062017Z`），Reproducibility=`24 passed`
+  （`reproducibility_20260801T062143Z`），Full=`7878 passed / 3 skipped / 643 warnings`
+  （`full_20260801T062232Z`）。首轮 Architecture FAIL artifact 保留，不以重跑覆盖。
 
 ## 10. Canonical evidence
 
