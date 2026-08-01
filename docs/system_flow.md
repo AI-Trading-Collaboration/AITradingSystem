@@ -3,7 +3,8 @@
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
 TRADING-2466 / TRADING-2468 Atlas 在现有研究结果之上增加只读解释层，不进入数据、模型、评分、
-回测或交易计算路径。V1.1 只覆盖四条代表性路径：历史 R0-R2 evidence closure、QLD role-limited
+回测或交易计算路径。V1.2 source registry 包含 13 个 sources，但 graph 仍只覆盖四条代表性路径：
+历史 R0-R2 evidence closure、QLD role-limited
 implementation、decision-target / label foundation，以及 O1 current/future；它不是全部历史研究的
 完成性声明。`config/atlas/source_registry.yaml` 只允许 Git-authoritative、checksum-bound source；
 `AtlasSourceProjector` 绑定 exact commit、path、content SHA、window、DQ/context readiness 与 limitation，
@@ -105,6 +106,19 @@ adapter readiness，不是研究或投资 verdict。独立 validator 从 exact c
 与 allowlist bytes 重建 pack；本任务不修改 Atlas source registry、snapshot/public query schema 或页面，
 不生成 result/attribution，也不执行 DQ、model、backtest、HTTP/LLM、production 或 broker action。
 
+TRADING-2477 消费 Owner 对上述 review pack 的精确决策，只将 B0 baseline、B1-B4 component
+attribution、final branch decision、monthly review 与 weight-program snapshot 五份 JSON 注册为
+`PUBLISHED_ARTIFACT`。`historical_source_adapters.yaml` 冻结 candidate/role/source/path、review commit、
+Git blob SHA-1 与 canonical SHA-256；typed reader 从调用者给定的 exact commit 读取 blob，交叉校验
+source registry、schema/task/report identity、required fields 与安全边界，再分别生成 `BASELINE`、
+`COMPONENT_ATTRIBUTION`、`BRANCH_DECISION`、`MONTHLY_REVIEW`、`PROGRAM_SNAPSHOT` payload。缺失、
+path traversal、blob/hash/schema/identity/lineage drift 全部 fail closed；program snapshot 原始文件没有
+DQ receipt，因此 typed record 明确保留 `data_quality=null`，不会补造 DQ 结论。五个 source 都固定为
+`research_context_complete=false / data_quality_ready=false / legacy_history_partial=true`，不被任何
+node/result/attribution 引用；snapshot 结构只从 8 增至 13 sources，仍为 21 nodes / 22 edges /
+8 results / 12 attributions。`next_research_program_roadmap.json` 继续因 lineage 缺口排除；当前 cited-query
+HTML 不重建，page/result projection、研究采纳、DQ/model/backtest 与 production/broker action 全部关闭。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -112,7 +126,7 @@ V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再�
 
 ```mermaid
 flowchart LR
-    HIST["R0-R2 evidence closure<br/>legacy comparison / evidence incomplete"] --> SRC["Atlas V1.1 source registry<br/>8 exact Git sources / 4 campaigns"]
+    HIST["R0-R2 evidence closure<br/>legacy comparison / evidence incomplete"] --> SRC["Atlas V1.2 source registry<br/>13 exact Git sources / 4 projected campaigns"]
     QLD["QLD role evaluation<br/>scoped warning / global DQ FAIL"] --> SRC
     LABEL["Label foundation + target redesign<br/>scoped ready / no model"] --> SRC
     V1["O1 V1 closed policy<br/>coverage blocked / model NOT_EVALUATED"] --> SRC
@@ -142,6 +156,11 @@ flowchart LR
     AART["Exact-commit candidate blobs<br/>JSON shape + Markdown companion"] --> AREV
     AREV --> AVAL["Independent adapter review validation<br/>receipts + slots + dispositions"]
     AVAL --> AOUT["Owner review JSON + Markdown<br/>no source registration or result projection"]
+    AOUT -->|"Owner approves exact five"| HREG["TRADING-2477 source registration<br/>5 historical PUBLISHED_ARTIFACT refs"]
+    HJSON["Five approved exact Git JSON blobs<br/>roadmap excluded"] --> HREG
+    HREG --> SRC
+    HREG --> HADAPT["Five typed historical adapters<br/>hash + schema + lineage fail closed"]
+    HADAPT -.-> HSTOP["No node/result/page projection<br/>production_effect=none"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
@@ -149,6 +168,7 @@ flowchart LR
     QWEB -.-> NONE
     HOUT -.-> NONE
     AOUT -.-> NONE
+    HADAPT -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。

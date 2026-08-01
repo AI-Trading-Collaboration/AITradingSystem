@@ -269,6 +269,10 @@ broker resource。
   reproducibility_20260801T084538Z`，Full=`7884 passed / 3 skipped / 644 warnings /
   full_20260801T084611Z`。Review pack baseline 已完成；下一合法动作仍是 Owner 精确批准
   candidate id + artifact SHA，未执行 source registration、typed adapter 或页面投影。
+- 2026-08-02：Owner 通过
+  `owner_decision:TRADING-2477:2026-08-02:approve_five_historical_sources_for_registration_and_typed_adapter_v1`
+  精确批准五个 `NEEDS_SOURCE_REGISTRATION` candidate 进入后续 TRADING-2477；review pack 本身与
+  disposition 作为历史决策输入保持不变。Roadmap 仍为 `NEEDS_SCHEMA_NORMALIZATION`，没有被批准。
 
 ## 11. Canonical evidence
 

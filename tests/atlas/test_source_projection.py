@@ -41,7 +41,7 @@ def test_projected_sources_bind_exact_commit_and_content_sha() -> None:
         registry=registry,
         exact_commit=EXACT_COMMIT,
     )
-    assert len(sources) == 8
+    assert len(sources) == 13
     assert len({item.source_ref_id for item in sources}) == len(sources)
     assert all(item.exact_commit == EXACT_COMMIT for item in sources)
     assert {item.source_kind for item in sources} == {

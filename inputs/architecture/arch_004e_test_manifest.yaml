@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1230
-test_count: 1170
+test_file_count: 1231
+test_count: 1171
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -121,6 +121,22 @@ tests:
   suite: full
   covered_module_prefixes:
   - src/ai_trading_system/
+- test_id: tests.atlas.test_historical_source_adapters
+  path: tests/atlas/test_historical_source_adapters.py
+  sha256: 3e42823f748d5e9d81f3fbcd05ddfb395e9e28c68672c59529ea99c968a4de65
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
 - test_id: tests.atlas.test_html_renderer
   path: tests/atlas/test_html_renderer.py
   sha256: 947dbffd42d9481869176585ba54e88b2c8a524ae1b3df632ad5b5d83f16df4c
@@ -139,7 +155,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_snapshot_builder
   path: tests/atlas/test_snapshot_builder.py
-  sha256: a6a5836d614f9d510424e6dbba3d98d2703cea8eac5d25199bb26d0d71394851
+  sha256: 33ed7d8ccc08ad6db8dec358a78ae218723f20c5c9b9e2e9f808c7713b5c68ce
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -171,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_source_projection
   path: tests/atlas/test_source_projection.py
-  sha256: 44a62ecf6a22711a0d27151a8e6a907a5bb87822a996e0236c86704e6dff71b6
+  sha256: 46c5c6ef6e31a2af2ff1073cae6aad36763ad18f1e58a432d272b29d7eb8cb61
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +203,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_source_registry_coverage
   path: tests/atlas/test_source_registry_coverage.py
-  sha256: 21e65d53d7510e41640aa754b63ed0a8638887f5f882656243100e71b359e221
+  sha256: 3a57016d48e873c9bf85d293b22a7feb713bd36ca698550a454397c295fd0f37
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7850,7 +7866,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 5d5f847588493cc2bde375f5c8cd35ea7b9b6d12364b2d54c7d74785bde4cdeb
+  sha256: 9b550d558cf6298dd416a237aec572b8eebc3c313c8b855740c5add6a28dfaf5
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8246,7 +8262,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 98564918b2d46b4519e86b6a2d0356f5a12cea8a576378f153553da8ddde4b44
+  sha256: c3f3de35c823437da0382d72399e32942f16590522a123da2f64992d5dca8b51
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

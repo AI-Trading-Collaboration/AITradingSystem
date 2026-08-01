@@ -18,6 +18,11 @@ EXPECTED_SOURCE_PATHS = {
     "config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml",
     "config/research/o1_relative_opportunity_capability_audit_v1.yaml",
     "docs/research/strategy_research_restart_r0_r2_closeout_2026-07-20.md",
+    "docs/research/b0_static_strategic_baseline_result.json",
+    "docs/research/b1_b4_component_result_attribution.json",
+    "docs/research/final_branch_decision_snapshot.json",
+    "docs/research/monthly_research_program_review.json",
+    "docs/research/weight_research_program_v1_snapshot.json",
     "docs/requirements/TRADING-2446_to_2448_Research_Restart_R0_R2.md",
     "docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md",
     "docs/requirements/TRADING-2460_Decision_Target_Capability_Audit_Label_Foundation.md",
@@ -38,7 +43,7 @@ def _bundle():
     )
 
 
-def test_v1_1_covers_exact_reviewed_git_sources() -> None:
+def test_v1_2_covers_exact_reviewed_git_sources() -> None:
     sources = _bundle().snapshot.sources
     assert {item.source_path for item in sources} == EXPECTED_SOURCE_PATHS
     assert all(item.exact_commit == EXACT_COMMIT for item in sources)
@@ -99,8 +104,30 @@ def test_registry_declares_current_primary_window_only() -> None:
     bundle = _bundle()
     assert bundle.primary_research_start == "2021-02-22"
     restart = next(
-        item
-        for item in bundle.snapshot.results
-        if item.result_id == "result-restart-r2"
+        item for item in bundle.snapshot.results if item.result_id == "result-restart-r2"
     )
     assert any("2022-12-01" in limitation for limitation in restart.limitations)
+
+
+def test_historical_sources_are_registered_without_graph_projection() -> None:
+    snapshot = _bundle().snapshot
+    historical = {
+        item.source_ref_id: item
+        for item in snapshot.sources
+        if item.source_ref_id.startswith("historical-")
+    }
+    assert len(historical) == 5
+    for source in historical.values():
+        assert source.legacy_history_partial
+        assert not source.research_context_complete
+        assert not source.data_quality_ready
+    referenced_source_ids = (
+        {source_ref_id for node in snapshot.nodes for source_ref_id in node.source_ref_ids}
+        | {source_ref_id for result in snapshot.results for source_ref_id in result.source_ref_ids}
+        | {
+            source_ref_id
+            for attribution in snapshot.attributions
+            for source_ref_id in attribution.source_ref_ids
+        }
+    )
+    assert not set(historical) & referenced_source_ids

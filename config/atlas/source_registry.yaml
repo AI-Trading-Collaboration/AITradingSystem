@@ -1,7 +1,7 @@
 schema_version: atlas_source_registry.v1
-registry_id: TRADING_2468_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_1
-title: Atlas 策略研究主线与结果归因 · Canonical Coverage V1.1
-as_of: "2026-07-30T00:00:00+09:00"
+registry_id: TRADING_2477_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_2
+title: Atlas 策略研究主线与结果归因 · Canonical Coverage V1.2
+as_of: "2026-08-02T00:00:00+09:00"
 primary_research_start: "2021-02-22"
 reader_notice: 本页只读投影已发布的 Git 权威，覆盖四条代表性研究主线；它不是投资建议，不会重算研究结果、计算仓位或发起交易，也不声称已覆盖全部历史研究。
 
@@ -98,6 +98,54 @@ sources:
     data_quality_ready: false
     legacy_history_partial: false
     limitation: 这是 Owner-approved inactive policy slot；真实 coverage 仍需未来独立授权。
+  - source_ref_id: historical-b0-baseline
+    source_kind: PUBLISHED_ARTIFACT
+    source_path: docs/research/b0_static_strategic_baseline_result.json
+    artifact_identity: report:TRADING-510_B0_STATIC_STRATEGIC_BASELINE_RESULT
+    requested_start: "2023-01-03"
+    requested_end: "2023-07-31"
+    evaluated_start: "2023-01-03"
+    evaluated_end: "2023-07-27"
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: true
+    limitation: 这是单一 normal-market mini-window 的 B0 control 历史结果；不能证明 B1-B6 增量价值，也不能替代当前 2021-02-22 primary research default。
+  - source_ref_id: historical-b1-b4-attribution
+    source_kind: PUBLISHED_ARTIFACT
+    source_path: docs/research/b1_b4_component_result_attribution.json
+    artifact_identity: report:TRADING-521_B1_B4_COMPONENT_RESULT_ATTRIBUTION
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: true
+    limitation: 这是历史 mini-window component attribution；B1 只显示 mixed usefulness，B2-B4 未形成可推广的独立有效性结论。
+  - source_ref_id: historical-final-branch-decision
+    source_kind: PUBLISHED_ARTIFACT
+    source_path: docs/research/final_branch_decision_snapshot.json
+    artifact_identity: report:TRADING-556_FINAL_BRANCH_DECISION_SNAPSHOT
+    requested_start: "2022-12-01"
+    requested_end: "2026-06-18"
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: true
+    limitation: 这是保留旧窗口语义的历史 branch snapshot；CONTINUE_B2_ONLY_PATH 不构成当前默认窗口、候选晋级或生产授权。
+  - source_ref_id: historical-monthly-program-review
+    source_kind: PUBLISHED_ARTIFACT
+    source_path: docs/research/monthly_research_program_review.json
+    artifact_identity: report:TRADING-555_MONTHLY_RESEARCH_PROGRAM_REVIEW
+    requested_start: "2022-12-01"
+    requested_end: "2026-06-18"
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: true
+    limitation: 这是 2026-06 历史月度研究复盘；B2-only 仍需更多证据，B3/B4/B5/B6/v3 的阻塞状态不得被解释为当前策略结论。
+  - source_ref_id: historical-weight-program-snapshot
+    source_kind: PUBLISHED_ARTIFACT
+    source_path: docs/research/weight_research_program_v1_snapshot.json
+    artifact_identity: report:TRADING-520_WEIGHT_RESEARCH_PROGRAM_V1_SNAPSHOT
+    research_context_complete: false
+    data_quality_ready: false
+    legacy_history_partial: true
+    limitation: 这是 B0-B6 historical program snapshot；mini-backfill、mixed/inconclusive evidence 与未访问 holdout 只支持人工审阅，不支持 v3、权重或生产动作。
 nodes:
   - node_id: program-strategy-research
     node_kind: PROGRAM

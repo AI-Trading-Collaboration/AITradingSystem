@@ -1,0 +1,87 @@
+schema_version: atlas_historical_source_adapter_registry.v1
+registry_id: TRADING_2477_ATLAS_HISTORICAL_SOURCE_ADAPTERS_V1
+policy_version: TRADING-2477-v1
+status: ACTIVE_RESEARCH_ONLY
+owner: project_owner
+approval_token: owner_decision:TRADING-2477:2026-08-02:approve_five_historical_sources_for_registration_and_typed_adapter_v1
+review_pack_id: TRADING_2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
+review_exact_commit: b385f4140b54d936c57f889a55c6f5ba99d074f9
+primary_research_start: "2021-02-22"
+source_registry_path: config/atlas/source_registry.yaml
+expected_registered_source_count: 13
+production_effect: none
+broker_action: none
+historical_record: true
+current_primary_default: false
+result_projection_allowed: false
+investment_conclusion_generated: false
+investment_conclusion_allowed: false
+backtest_execution_allowed: false
+model_execution_allowed: false
+page_projection_allowed: false
+
+excluded_candidates:
+  - candidate_family_id: atlas_historical_candidate_next_roadmap_v1
+    source_path: docs/research/next_research_program_roadmap.json
+    reason: 缺少满足机械校验要求的 lineage slot；本任务不得读取、注册或适配该工件。
+
+adapters:
+  - candidate_family_id: atlas_historical_candidate_b0_baseline_v1
+    role_code: BASELINE
+    source_ref_id: historical-b0-baseline
+    source_path: docs/research/b0_static_strategic_baseline_result.json
+    artifact_identity: report:TRADING-510_B0_STATIC_STRATEGIC_BASELINE_RESULT
+    approved_git_blob_sha1: 056c341e58a7bd9e861cf58f99a006e80b634156
+    approved_sha256: 33a1c71b9aab8a307c2dacc890a5d1b776f28854ee1efba6bbe757a6d2614b2b
+    expected_schema_version: 1
+    expected_task_id: TRADING-510
+    expected_report_type: b0_static_strategic_baseline_result
+    required_fields: [window, baseline_source, required_outputs, data_quality_gate, reader_brief, safety_boundary]
+
+  - candidate_family_id: atlas_historical_candidate_b1_b4_attribution_v1
+    role_code: COMPONENT_ATTRIBUTION
+    source_ref_id: historical-b1-b4-attribution
+    source_path: docs/research/b1_b4_component_result_attribution.json
+    artifact_identity: report:TRADING-521_B1_B4_COMPONENT_RESULT_ATTRIBUTION
+    approved_git_blob_sha1: 393fa6888fb9ef247fff8fdaf54fdd5f79a2dc62
+    approved_sha256: ab8f6c7acbd3eeb01820e302e79282f47e7771d9d2268e627bda6226c588d840
+    expected_schema_version: 1
+    expected_task_id: TRADING-521
+    expected_report_type: b1_b4_component_result_attribution
+    required_fields: [comparisons, module_usefulness, source_artifacts, data_quality_gate, reader_brief, safety_boundary]
+
+  - candidate_family_id: atlas_historical_candidate_final_branch_decision_v1
+    role_code: BRANCH_DECISION
+    source_ref_id: historical-final-branch-decision
+    source_path: docs/research/final_branch_decision_snapshot.json
+    artifact_identity: report:TRADING-556_FINAL_BRANCH_DECISION_SNAPSHOT
+    approved_git_blob_sha1: 2dc441a29176438fd683985117dbb3a1bc24fe98
+    approved_sha256: e7efb46b7b539bfce54b8163b70b7934c508b7653032955ae5ea7dfdbe4046e4
+    expected_schema_version: 1
+    expected_task_id: TRADING-556
+    expected_report_type: final_branch_decision_snapshot
+    required_fields: [selected_branch, requested_date_range, source_artifacts, data_quality_gate, reader_brief, safety_boundary]
+
+  - candidate_family_id: atlas_historical_candidate_monthly_review_v1
+    role_code: MONTHLY_REVIEW
+    source_ref_id: historical-monthly-program-review
+    source_path: docs/research/monthly_research_program_review.json
+    artifact_identity: report:TRADING-555_MONTHLY_RESEARCH_PROGRAM_REVIEW
+    approved_git_blob_sha1: 680901b0411ecbdd80d3a82d7e49fdfc5c987110
+    approved_sha256: c66864a68153926e2edabe5e6c7699146c19d116db9007054b483983ade824d3
+    expected_schema_version: 1
+    expected_task_id: TRADING-555
+    expected_report_type: monthly_research_program_review
+    required_fields: [active_blockers, next_month_research_plan, requested_date_range, source_artifacts, data_quality_gate, reader_brief, safety_boundary]
+
+  - candidate_family_id: atlas_historical_candidate_program_snapshot_v1
+    role_code: PROGRAM_SNAPSHOT
+    source_ref_id: historical-weight-program-snapshot
+    source_path: docs/research/weight_research_program_v1_snapshot.json
+    artifact_identity: report:TRADING-520_WEIGHT_RESEARCH_PROGRAM_V1_SNAPSHOT
+    approved_git_blob_sha1: f7bf07ed7857ce243a13dc07269f4fcb2204d33f
+    approved_sha256: a367544cec737523716548a0642ad939d504ea06dfe7c08861c0ddf9ab6c095c
+    expected_schema_version: 1
+    expected_task_id: TRADING-520
+    expected_report_type: weight_research_program_v1_snapshot
+    required_fields: [b0_to_b6_results, phase_statuses, included_artifacts, reader_brief, safety_boundary]

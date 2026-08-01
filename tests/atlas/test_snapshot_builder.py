@@ -23,7 +23,7 @@ def test_canonical_registry_builds_closed_deterministic_snapshot() -> None:
     )
     assert first.snapshot.canonical_json_bytes() == (second.snapshot.canonical_json_bytes())
     assert first.snapshot.snapshot_id == second.snapshot.snapshot_id
-    assert len(first.snapshot.sources) == 8
+    assert len(first.snapshot.sources) == 13
     assert len(first.snapshot.nodes) == 21
     assert len(first.snapshot.edges) == 22
     assert len(first.snapshot.results) == 8

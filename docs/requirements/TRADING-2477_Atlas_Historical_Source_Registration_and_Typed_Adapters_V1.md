@@ -221,3 +221,21 @@ external source；不得启动 HTTP/browser/LLM/DQ/model/backtest/production/bro
   02d3e0b266c514af7dd4ebd9e36dfffe86bdba62`，无 active lease。五个 Git blob SHA-1 与 Git
   canonical SHA-256 复核均与 TRADING-2476 review pack 一致；工作区 raw hash 差异仅来自 EOL，
   Git diff 为零。
+- 2026-08-02：registration checkpoint=`9e90ccfb9a079473bab0e4f2af0c665c8a7a3ea1`；从该 exact
+  local-main base 创建 `codex/trading-2477-atlas-historical-source-adapters`，START/LANE preflight
+  均 PASS，无 active lease、path/module/contract/resource conflict，也未创建临时 worktree/clone/cache。
+- 2026-08-02：S1/S2 已实现。Atlas registry V1.2 新增五个 `PUBLISHED_ARTIFACT` refs；typed adapter
+  从 exact Git commit 读取 canonical blob，校验 blob SHA-1、SHA-256、source crosswalk、JSON identity、
+  required fields、role payload、lineage 与固定安全边界。Program snapshot 没有原始 DQ receipt，输出
+  显式 `data_quality=null`；未替它推断或补造 DQ 结论。Roadmap 未读取、未注册、未适配。
+- 2026-08-02：parallel focused Atlas adapter/source/snapshot=`27 passed`；修正 review commit 的一次
+  测试夹具转录错误后重跑全绿。Registry 结构实测为 `13 sources / 21 nodes / 22 edges / 8 results /
+  12 attributions`，primary default 仍为 `2021-02-22`，新增 sources 未被 graph/result/attribution 引用。
+- 2026-08-02：首次 combined compatibility 命令被 120 秒外层时限终止，没有改用 serial；同一
+  `-n 16 --dist loadfile` 口径重跑后为 `190 passed / 73 failed`，失败全部来自新增/变更文件尚未进入
+  append-only compatibility hash authority，以及格式化后 generated manifest 变旧。按既有治理合同追加
+  TRADING-2477 current-hash authority 并重新生成，不改写任何历史 section；这不是 Atlas 语义失败。
+- 2026-08-02：本任务实现状态在 final tree 标为 `BASELINE_DONE`；未完成项只剩需另行 Owner 授权的
+  page/result projection，不是本任务实现 blocker。正式五级验证必须在该树全部 PASS 才允许
+  integration。Runtime artifact ids 与 counts 在最终交付记录绑定，不为回写数字而制造 compatibility
+  hash cycle；若任一 formal gate 失败，必须恢复 `IN_PROGRESS` 并停止集成。
