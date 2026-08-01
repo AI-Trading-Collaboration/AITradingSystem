@@ -231,7 +231,8 @@ inputs/architecture/**
 - governed mode：`SINGLE_LANE`；
 - registration base：`8a91a61711bb0d924a033a1049769b76b8969322`；
 - planned branch：`codex/trading-2479-atlas-historical-projection-review`；
-- implementation workspace：登记后创建 task-identifiable worktree；
+- implementation workspace：`D:/Work/AITradingSystem_trading2479_review`；purpose 为在独立
+  task branch 构建 review-only artifacts，owner 为 TRADING-2479 coordinator；
 - exit condition：review pack 验收、验证、ff-only main、ordinary push、canonical evidence handoff、
   worktree/branch audit cleanup 完成；
 - review artifacts 为 retained governed evidence，可从 Git 与 deterministic builder 恢复；
@@ -246,3 +247,5 @@ inputs/architecture/**
   shared task shadow/register 写入边界。
 - 2026-08-02：READ_ONLY preflight PASS；main worktree audit PASS，`local main=origin/main`，无 active
   lease。原冻结任务 checkout 保持 clean 历史分支，不参与本任务写入。
+- 2026-08-02：task registry generate/validate PASS，V1/V2 均为 958 tasks、byte-identical；focused
+  task-shadow tests=`13 passed`，registration checkpoint=`b26a71c8943f2f9a9160623fc1d23c3f544cf29c`。
