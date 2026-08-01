@@ -1586,7 +1586,331 @@ TRADING_2476_ADAPTER_REVIEW_NEW_SOURCE_PATHS = frozenset(
         "tests/atlas/test_historical_adapter_review.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2476_ADAPTER_REVIEW_SECTION
+OPS_072_TRANSPORT_SECTION = "phase_ops_072_daily_official_policy_transport_resilience"
+OPS_072_TRANSPORT_BASE_COMMIT = "18d0678e520d885df9ef00da48577680832d08c7"
+OPS_072_TRANSPORT_BASELINE_GIT_BLOB = "53445fe993b98b5b056b0893009cac1bd3acc111"
+OPS_072_TRANSPORT_HISTORICAL_PREFIX_BYTE_COUNT = 2_344_003
+OPS_072_TRANSPORT_HISTORICAL_PREFIX_SHA256 = (
+    "d1a15582c60ee802379b7bca6c0cc82f5d62ec73a4d6269ccfa595815dbd7eab"
+)
+OPS_072_TRANSPORT_REMOVED_SOURCE_PATHS = frozenset()
+OPS_072_TRANSPORT_NEW_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/OPS-072_Daily_Official_Policy_Transport_Resilience.md",
+        "docs/runbook_daily_ops.md",
+        "registry/development_tasks_shadow/active/00/00f45471bb02c2bbc3b7da3c6f07715f7757e3a985608e3460bd2eb6d7f19798.yaml",
+        "registry/development_tasks_shadow/active/01/013c01ab642c2d6076b60fda6292f6c7c1b1a0e7963359cf5b15dac155f72e6b.yaml",
+        "registry/development_tasks_shadow/active/01/01c7fb38895a11bb8927c38cbacf42204c4c8e23627e3c87e181d62379d5bf1f.yaml",
+        "registry/development_tasks_shadow/active/01/01ead18d43bc1bc6f8083d3acd31f7a852d3543ff46aa853136194eb5d749384.yaml",
+        "registry/development_tasks_shadow/active/02/0260e082356f1895e7b450e42d7bec0f9d388bb34c876ef0ba23db6e3f1e2d84.yaml",
+        "registry/development_tasks_shadow/active/03/0345e06e66c5ecddb597214e8cc0d8669b3e299391dd02414eddce1333555360.yaml",
+        "registry/development_tasks_shadow/active/03/03ef482b1539e86e76a37f4dbde5ff43a86f2d8afe44bc295d84f80561c48b55.yaml",
+        "registry/development_tasks_shadow/active/04/044a6979ac49651404eba144f7232f55d4ab5010ac597616dab9db77bd7b6f59.yaml",
+        "registry/development_tasks_shadow/active/05/0513538a681fb62a656a4e45f52ce565aab8a82dc0111119031bb7ef7a58cc67.yaml",
+        "registry/development_tasks_shadow/active/08/08160009ae5064c819c9b28d3a3570fc990e7770394722d5f364b8363f3320d1.yaml",
+        "registry/development_tasks_shadow/active/08/08e104a1fbbc978d13b86c1865cd669396043da102a32d227e411917b927a3f2.yaml",
+        "registry/development_tasks_shadow/active/09/096ba761a184370bf043b1094628f1d366e48efab4b151f3484ef65797deaaee.yaml",
+        "registry/development_tasks_shadow/active/09/09c1c512d95624d2f7900d3d5afdef258c36c149419f762eaa3b460d9553c435.yaml",
+        "registry/development_tasks_shadow/active/09/09d67eb27fe354a3ce9ecb6c7ac7b4db749756385d1b4158202e2f25ba712b76.yaml",
+        "registry/development_tasks_shadow/active/0a/0af52a5e23bc8aeb5ac782f9342068edd18dc06e38a3a6a9f64b5ebbb08b6a80.yaml",
+        "registry/development_tasks_shadow/active/0c/0ce2367e66a8a02c89bd9d8d4fe0cd16063c2a1e7e69f48547815e4575ec9879.yaml",
+        "registry/development_tasks_shadow/active/11/1137897a103e86c2f8b44257b470c5eca30a2fdd5ae13bbc525d3118df3914ff.yaml",
+        "registry/development_tasks_shadow/active/12/12bedeb4709c59b441580e488997a446e7fcbab1ca15ec6f9b16ea387af024d4.yaml",
+        "registry/development_tasks_shadow/active/14/147263161422db61fd4b7d56d8dd769f8c72193069b821310b41e7204ab88783.yaml",
+        "registry/development_tasks_shadow/active/14/14ac7620d568af73fd2e2ff97404fb35ccd13c6c3958bd6246a473a53b8dc23e.yaml",
+        "registry/development_tasks_shadow/active/15/158ce1dbe0da05cb40f23137ad3dc63728139c9d342270f4ebb3a4f79b178d90.yaml",
+        "registry/development_tasks_shadow/active/17/1717ccab9ef576b36246e080a3cbffb262b327ac7ac7469ab5b6ee1519d9550c.yaml",
+        "registry/development_tasks_shadow/active/17/175b21bed23485b2a41a7673e24a4e0393887d58ac924fa9994456ba5e7193b0.yaml",
+        "registry/development_tasks_shadow/active/18/1834b2e7581da97916dcafab888205679297125243bec1342ff17195e27b845f.yaml",
+        "registry/development_tasks_shadow/active/18/18777bf1851e2f66fe10eee4d84dc21d43c3699e7481acbed7fef2b7c6076bbe.yaml",
+        "registry/development_tasks_shadow/active/1a/1a29bfd3016cc16386290babd42f5ebb03eb98b22eae14a10cf18d1e727e0b6f.yaml",
+        "registry/development_tasks_shadow/active/1c/1c8396922a6c0effb31561a9a331ae364adbfd0e18526b0d0c217af3773d3a8a.yaml",
+        "registry/development_tasks_shadow/active/1c/1c96b76ce420f6029247f366d31af14a83c8d927ad66399bef336af579c999e1.yaml",
+        "registry/development_tasks_shadow/active/1c/1cbe10a7728e0e5ef846f4ce9be1bee0ccba8465b55125775af8a21263d6b03a.yaml",
+        "registry/development_tasks_shadow/active/1d/1d2dd9afe05352149785682bceecfb3549e3cdb88db2be2fb14d7e7452febd7b.yaml",
+        "registry/development_tasks_shadow/active/1d/1d386b173e7aa1c74fd6f0d911f4740c70689fb934875218937172f917e793be.yaml",
+        "registry/development_tasks_shadow/active/1d/1d38ed15d6c52bdee43d71d0bc9955a2536a223766f2cb018eca389859a06a98.yaml",
+        "registry/development_tasks_shadow/active/1f/1f401ca1ed54e4eb8b9dc523b4862fa70c0d39eaf8eb1d408acaa8fe84a47fa3.yaml",
+        "registry/development_tasks_shadow/active/20/204a880861cefd4936239d647519a89055b909ff4bdd447f00bfc7bf831446fb.yaml",
+        "registry/development_tasks_shadow/active/20/20c7a6eb729765549f0a2f9d5aedd0f0028f14aa91f85a32e73794fe9df2e774.yaml",
+        "registry/development_tasks_shadow/active/20/20ff79e6a0925ea0c52184d5ddd52b4f609ee3260ea737af433dd34310fde6b8.yaml",
+        "registry/development_tasks_shadow/active/21/21814c78878fd809905abaf0fbcd2d4eb839116b0abc1391bd7818e7f63fe157.yaml",
+        "registry/development_tasks_shadow/active/22/225a1e971a3749a15f8d72b77e05e13cde1440f0ce481320286386de0631807d.yaml",
+        "registry/development_tasks_shadow/active/23/234f0cd7c86d2fd1ac5892fc577c82687f82aafdd4e9458fec8a906b8d3ca047.yaml",
+        "registry/development_tasks_shadow/active/23/23eee089e476c955bd07915d0bd855e2edf25a2a57726406781abbc2f0bf4f55.yaml",
+        "registry/development_tasks_shadow/active/25/258ac2de53e8faaa641da1863f6a40cb48aa40998e93e5280cbdfe47f3fbabb1.yaml",
+        "registry/development_tasks_shadow/active/26/265d4886781c65a15c4650caefe877aa0153528f565342df3d9adf531d59e404.yaml",
+        "registry/development_tasks_shadow/active/26/26d5ff25fc9774ff6b18dbdbbb2ebecdad42061a32afe28314990c06fd12d170.yaml",
+        "registry/development_tasks_shadow/active/28/28356e278e32a05cc1f22669889baac4f395faeb8e95a8733ae9d69219c7997b.yaml",
+        "registry/development_tasks_shadow/active/28/28b8a7600d5860708d6e925d8475172726517291c4c39f6eada419f2bb2a5a2d.yaml",
+        "registry/development_tasks_shadow/active/28/28f887acf08f8dffa11fa314e8e2c8ebbb7672332a64b449db256ef6aa207143.yaml",
+        "registry/development_tasks_shadow/active/2b/2b1fbd9967fec8a498c6afb4075d9754977e24eaa6842f21c74244cb1278c284.yaml",
+        "registry/development_tasks_shadow/active/2c/2c63cf5ed0eaa9be3dad032999634bee0cfd4c7cffff537c8eda74a54c082f99.yaml",
+        "registry/development_tasks_shadow/active/2d/2d2c25addceadeee90d86c1d863e37e9e5e2207f56cfbfb649d27d14fd57f0ea.yaml",
+        "registry/development_tasks_shadow/active/2e/2e751a7a7fa73a2618792b25ccf948384684cb308e3ed02367bdd6b6003523c1.yaml",
+        "registry/development_tasks_shadow/active/30/3025bddb2ace2afaee6fe1cde835c14896e09aa7303d2db852ab3bb1592f8478.yaml",
+        "registry/development_tasks_shadow/active/30/30a119e08b97a481ed69d03393cb12ad198dd5116189b97ac68fb7ffa6b5bc3d.yaml",
+        "registry/development_tasks_shadow/active/30/30d775586f4c6dfb47e509223835e2cfa9cc86ec431203d3d4f56cfc042a9be7.yaml",
+        "registry/development_tasks_shadow/active/31/315a31d0308ccb1a9a95f51f5d7e6a04ffdeb147675bd788a38733758ccb77e6.yaml",
+        "registry/development_tasks_shadow/active/31/3176f12010ff674a75d7398a7b7a71cdfbdf99b52a56c5902ba8cc2b43283816.yaml",
+        "registry/development_tasks_shadow/active/32/328a656788b3f4be5997c7ed292538e0de463b66283c145aa45361a82a1fa40a.yaml",
+        "registry/development_tasks_shadow/active/32/32d2e28c907cc5428ccae430de7714911d8ad3d415107e86745a2a956c17750f.yaml",
+        "registry/development_tasks_shadow/active/33/33174aebbe877ab56ccad8f15d05d5e9308e09bdff6b428e674f00caf1a0cd78.yaml",
+        "registry/development_tasks_shadow/active/35/3512df66b89735fd310e3d74f47e79bff0cadb7abe7fffaf763903a496d25b09.yaml",
+        "registry/development_tasks_shadow/active/36/3622db1c5f1c392271e1698fe4bdbe512c9f6bc9bf8dd098566243234ac11bad.yaml",
+        "registry/development_tasks_shadow/active/36/36795186ac6499a504069d7da4d3ea401875a58bab8169dd592148412d18adfc.yaml",
+        "registry/development_tasks_shadow/active/37/37ccc468bc81af67789a047df781ef813f44769c630d1d2fba4d4fda690a32ec.yaml",
+        "registry/development_tasks_shadow/active/38/3811a73e2c7ea5fe66f79047a8e8be300b5f9b61062e6019e5886cd87b6f088b.yaml",
+        "registry/development_tasks_shadow/active/38/3893b9f38973bda6768426c2ceda68f3b914c0ae9dba12955ea8d894bfe05d20.yaml",
+        "registry/development_tasks_shadow/active/38/38b5b8447fdcd223f429701093d8bc132ff6e9cd54c63e625086b346c90d5d6a.yaml",
+        "registry/development_tasks_shadow/active/3a/3a5b90816f90590b7734f49490cc6ae8720ceff3d9905e2bbc0157ca1ad86fcc.yaml",
+        "registry/development_tasks_shadow/active/3a/3af4c77e69e32b2b969baca54af96fdbe2b05d5d7ededaa6d2c33f2b7be56915.yaml",
+        "registry/development_tasks_shadow/active/3b/3bc1447d40f2907c0d4991a43be30c03fb6c5b555bc2b83d0ba55c5b0cefcd87.yaml",
+        "registry/development_tasks_shadow/active/3b/3bd6fb8e42549904045bc72e2b8f2b154b78e2ba60ff0405fb544a2e66c2c172.yaml",
+        "registry/development_tasks_shadow/active/3b/3be4fe943a94e47159f610a7a187649e514112c3cd647be3a1dbe0e9560f077e.yaml",
+        "registry/development_tasks_shadow/active/3b/3bf8b78b9855b3c724c322260ec93d336d81bc3f7da0c1756dd53a1f8cfacb0b.yaml",
+        "registry/development_tasks_shadow/active/3c/3c41a9ca8a417c04bb6cce050c0f8402b314f2fefab424d2589d113d43b5d420.yaml",
+        "registry/development_tasks_shadow/active/3d/3d472d5eeaee9efc4a66922262c938298a76f762f127fd792f0a2dd9d605740d.yaml",
+        "registry/development_tasks_shadow/active/3f/3f4b3ad085323fa5654cee65a82988659cf0ba1450e946a7c7cf9d5eed90e77e.yaml",
+        "registry/development_tasks_shadow/active/3f/3f851a43a0200e6963b2163ffdd5aa9d693329f306b0fa0ac08c82302c0858a4.yaml",
+        "registry/development_tasks_shadow/active/40/4047e8086bf9c892b8c1530c3689a784929fdb5663cf8b2148435337b4b115b1.yaml",
+        "registry/development_tasks_shadow/active/41/415ab693073c377db709a42e7d5ebbd05dc827d78f4cf8c0c523be1dba6e03c9.yaml",
+        "registry/development_tasks_shadow/active/41/41eacadde5a4fb143a7f33c187d673fbf4340f12c5f5249345ea14e9ae6d882f.yaml",
+        "registry/development_tasks_shadow/active/42/4244b1c224a7a1640833ef7c0126f5becc62fbdfdad1c81d455a37b701b1c08d.yaml",
+        "registry/development_tasks_shadow/active/42/424c6c8e4d8ece6354460b9550d8402b90ceada60fcfe89dc35dbdcdf11edca9.yaml",
+        "registry/development_tasks_shadow/active/43/43216f222f81947f1115535fb5192c742c298fb1b0af20e79a1629e6a804fc3c.yaml",
+        "registry/development_tasks_shadow/active/45/4572294105c47b9a518cd93d12350c7839a0531d7c8c3d0e068d82ffe1d23a26.yaml",
+        "registry/development_tasks_shadow/active/45/45d2419a114c3588be4c5a386f5d08c4af74727f19fdca673cb00b7dc80fc574.yaml",
+        "registry/development_tasks_shadow/active/47/4727ba24d207de3504a1c007bb6ecb8f7a7c10f2f9960d20c38d18f647343bdd.yaml",
+        "registry/development_tasks_shadow/active/48/48a52d995c591e91939485550e9be3fd29074f76ba0090de2e2713e9feb600f8.yaml",
+        "registry/development_tasks_shadow/active/49/4976ee17482ca0291eb7bba49553a61e99a816b5e9827f327630381feee98b6a.yaml",
+        "registry/development_tasks_shadow/active/4c/4c7dc45837690600cc88d7858c64a10b23ce99174f683b7aee454caa07932d75.yaml",
+        "registry/development_tasks_shadow/active/4c/4c9af610e06430bc270561276d964c9ad2d292fadf678230db4d6a152add7372.yaml",
+        "registry/development_tasks_shadow/active/4d/4d19e70e42d3faf827d173b61934063ee2b170c02bd93225e695aa6a229cd1e6.yaml",
+        "registry/development_tasks_shadow/active/4e/4e3e7d42b8009bca564ab04f7c306ca92c90cc86113d135a173d6315dab358b4.yaml",
+        "registry/development_tasks_shadow/active/4e/4e5be58d76af7c80c36a9a21626d41cc0f6e64823ec64d775f83526c5cfd9208.yaml",
+        "registry/development_tasks_shadow/active/4e/4e88313c0cf6b7b6e8d860ee53ab84928dfee98c2eb3eb8560d2e86eeffc54be.yaml",
+        "registry/development_tasks_shadow/active/4e/4ebda495a4fe6ebce248bbc35aacbf5041db20fcfed3adf295543724091b4e1b.yaml",
+        "registry/development_tasks_shadow/active/4f/4f30b3f1b643138dd9bfbc169120c6b3db845287b5fe21adce378fd66ecb1740.yaml",
+        "registry/development_tasks_shadow/active/4f/4ff83927485de0563db354c3461ad4b40052811b1ba1336a7ae55d698e1d3712.yaml",
+        "registry/development_tasks_shadow/active/50/504719e3ed689127cb88c5fb9af639a66ba873974c4c974a376e699389b2999d.yaml",
+        "registry/development_tasks_shadow/active/51/51a3ef3f555ee4e724f79d83e38b6a2388063508120badb67ce5281cd9811b2a.yaml",
+        "registry/development_tasks_shadow/active/52/5269f7e48cf4757064e7570c5f41aeccf764c6f54137ca075dcb4a11af48d246.yaml",
+        "registry/development_tasks_shadow/active/53/53ea7ab1658edf6ba8841ea9fe18603e691a44a8d5210be8b5c4799f383fc771.yaml",
+        "registry/development_tasks_shadow/active/56/566f56296a60406dd058e8b5fb6c772c7310f5d001e092db5e9cb9a36bffa9b1.yaml",
+        "registry/development_tasks_shadow/active/56/56e39a6376f84d4d0375278265359bfcbcbef39a185000ee81b9f98f99b30e5a.yaml",
+        "registry/development_tasks_shadow/active/57/577357f365bb3e8570ecc6e915c800196465dfcae5c6a62a9cf2d8dc8f3f52b7.yaml",
+        "registry/development_tasks_shadow/active/57/578b1dc9044ebe170aa2f6d4825c5d5a6e55d83f994915efe1875c962e0d1641.yaml",
+        "registry/development_tasks_shadow/active/57/57dcdfebc0736979024c9ef4dc0cce3e8df4ff44fe891a1294068105081ba4d1.yaml",
+        "registry/development_tasks_shadow/active/59/59304afe23b3120129331cef7bf3c9c8e5b693f56c3514fd67c787d508d40cab.yaml",
+        "registry/development_tasks_shadow/active/5a/5a414523b2918e24307cc8ae54c255d5eabd66c3fe137ad698ce1eac8ebb2f7a.yaml",
+        "registry/development_tasks_shadow/active/5b/5b590cd43f74dae5de010cb1686e7fc8dcfc79eda80e35bf855c8a39afd4ed6f.yaml",
+        "registry/development_tasks_shadow/active/5b/5bbe0c223cb6c4c53ae533cb31fc761eb66414837cef796be5789c975e464a0f.yaml",
+        "registry/development_tasks_shadow/active/5b/5bcbf062e2e584dda0555c7d13e3afaead45a80fca4ec53f94a79713c170b9e5.yaml",
+        "registry/development_tasks_shadow/active/5e/5e42856a82226b71e25e8c8ecfcc11540c1809f0b3acef8b86b4c8daa06d2263.yaml",
+        "registry/development_tasks_shadow/active/5e/5ecd6614091926c39e197278c75927ea23246b628c0267fe23016d075400cff5.yaml",
+        "registry/development_tasks_shadow/active/60/600a7f8a05a61b0f85267450a6cccb4ad77cf26e458241932cae4b0115857416.yaml",
+        "registry/development_tasks_shadow/active/61/617d3d1a17539c637cb17219997a350a9317d4c0f37bf50f9c7304414bc1e734.yaml",
+        "registry/development_tasks_shadow/active/62/625a0d67b12dc7cef4d820e1d8cd57d84fdf46e90fe3b7969ae666331de6ce6c.yaml",
+        "registry/development_tasks_shadow/active/63/633a80f5646c0522379f20660e21ea2f9f3907a9cd378def26728f1431d44715.yaml",
+        "registry/development_tasks_shadow/active/63/63f72e692e5b74e264cdc5d2b622083375eafce03cefd09544b1737182140ac1.yaml",
+        "registry/development_tasks_shadow/active/64/64a271b3a8abdb673cb4bde3141303c392d53d5d5923bff7052d30e97b61edc3.yaml",
+        "registry/development_tasks_shadow/active/65/6577f807e864d5186184c68a84197895aa6b44b2aefc8c5b9c03ef34cc926701.yaml",
+        "registry/development_tasks_shadow/active/66/6641d2b1ba4a7b98eece6022f6050c0e8614eb2bc31711f33f99fd4245984e51.yaml",
+        "registry/development_tasks_shadow/active/66/669525b3e1dacdf07d06b7adadf583a62d5c41ae95ccd03d1a7ce393c8d2935b.yaml",
+        "registry/development_tasks_shadow/active/67/67b680b483b4f5ef11c16afe404223f0d82d78a0535d632c80f353f076ad68de.yaml",
+        "registry/development_tasks_shadow/active/68/6828564e9dd22478f842aae1ebb424441bd06e841ed61e672ba10b3303e77e81.yaml",
+        "registry/development_tasks_shadow/active/69/69fa032e9879c35217c77110a9aeb070d9a768507183ee4d4524c8145663fc82.yaml",
+        "registry/development_tasks_shadow/active/6a/6a4545808b8407f71e4cb62ac89fdeb1529a3541e5b2fc6eb3bb480e4388ef8d.yaml",
+        "registry/development_tasks_shadow/active/6b/6b9bddaa98bed4dabc689a186ee7e160b10cc04b07eaefe3aaafaf2d06fe282c.yaml",
+        "registry/development_tasks_shadow/active/6b/6bb8d13c3a7f6bcb6146cff66a3e4d39dca28ebcbec2b09ac02f2b37930c2f7f.yaml",
+        "registry/development_tasks_shadow/active/6c/6c416145acf4351465e8dbec34eb87f30b9f1e00f4ec9cd4b10ef04e09140361.yaml",
+        "registry/development_tasks_shadow/active/6d/6d3e82bbd8aa284a202c4027d27f690953f443d57164ff36fb9c09360b887c37.yaml",
+        "registry/development_tasks_shadow/active/6d/6d7fd1454512459867f06c5e145b6d417dde8081df14e592b45367c762af82b3.yaml",
+        "registry/development_tasks_shadow/active/6d/6dc35145fe737659cedde59b5c7edaae684d8d754154131135ad6715cc8bedd6.yaml",
+        "registry/development_tasks_shadow/active/6d/6dc75fe9fc5c011f61bc10fa176c06a7f6414e77dba53ce7d5a4e6b4262f91ac.yaml",
+        "registry/development_tasks_shadow/active/6d/6dcae8c74244feaafc2c765c6b84180be3dd887557173ac21dfe102a87c7d7f0.yaml",
+        "registry/development_tasks_shadow/active/6e/6e9b10325d538cf8214c0e105e8bff74e1e890d150f357a7d47506c033817c1d.yaml",
+        "registry/development_tasks_shadow/active/6f/6fd424dc107de1c7f83129d0455d104e091d389da020400ad766eb0570b4a419.yaml",
+        "registry/development_tasks_shadow/active/70/7056d03b26fd504d25dc2f4ad4a5044fd8b4a9874d8abcbe1968eadf8122b5eb.yaml",
+        "registry/development_tasks_shadow/active/70/706d3fe5774690ce2c18f57fe62e21f6dfc024f3159fca171868843ba16a6ecf.yaml",
+        "registry/development_tasks_shadow/active/71/71a008a130fffa3af27808a41c4ceece2b1281e4f64c0b979663ccf14f762b8d.yaml",
+        "registry/development_tasks_shadow/active/72/7255026fdcea48ac55762486c619866dc0be98cf034e83f7d2a5eccb66bd8c6e.yaml",
+        "registry/development_tasks_shadow/active/74/74c695d8877a2559b25b4b98f89c6836f7895134c388bc3674ec0a1c0535c54e.yaml",
+        "registry/development_tasks_shadow/active/74/74f4b8ca783e26b7b309ca6096435f481e2d1a95f4c2da86a934772c117d0819.yaml",
+        "registry/development_tasks_shadow/active/75/751459c7145c658fedca6470a868d2e837fc6c0a45ff6fd7b2d081d0a324b927.yaml",
+        "registry/development_tasks_shadow/active/76/763503df1ae367a85f6cb3c11e4fa3ae910468b171431fd27751a6f0ef9fa2ce.yaml",
+        "registry/development_tasks_shadow/active/76/765169a9d9c41fb22c80c6ce92c12b5742dcdd0e33b690b8e5798ec71c6f0dd9.yaml",
+        "registry/development_tasks_shadow/active/77/7762fa7f1c6a66b50929bbcd7d84b550eb01c12508da62b160744d8f770096bf.yaml",
+        "registry/development_tasks_shadow/active/78/788d74e9977506bac880d3c3c754b8cd0e69cde0a91669e4ca1cdbce92dd411c.yaml",
+        "registry/development_tasks_shadow/active/79/794f6c39e52a66fc1db75eac95b99d0b8aaf6ea9e342b1bf70525e77c3caac25.yaml",
+        "registry/development_tasks_shadow/active/79/7963c898ba57ae83c8d51a32dde454b656b020973c5b3a9ac82bc7155f5c88e6.yaml",
+        "registry/development_tasks_shadow/active/79/79b5237e2249ca4b211b74bace0e1e70bac1ad53d44108e95ec58e2bf5b599f2.yaml",
+        "registry/development_tasks_shadow/active/7a/7abf0ab41f1f87ecae6bb042146d62615683c7181a1406d6e09744474e6237e1.yaml",
+        "registry/development_tasks_shadow/active/7a/7acdfc5c447a48b4bc6e61c1d4d5777ee5e81ea561afc493fcc432243d76b3d2.yaml",
+        "registry/development_tasks_shadow/active/7c/7c0436551c3761794f12a1fd8eaaba9f5bd455191ceb042ea83ec1f8c0cd1d2d.yaml",
+        "registry/development_tasks_shadow/active/7f/7f5fb6c26429da133d403d62669f96a4d379da9d543583ce527652243d8fb4e1.yaml",
+        "registry/development_tasks_shadow/active/7f/7fcc0eff4da9ed8d030134864dff35e4619f689be9b1e184ffe3395273679775.yaml",
+        "registry/development_tasks_shadow/active/82/82ccbcd88325e6447b5448e330963bf1cad12a40a2aee2ccb146ceaf89e72632.yaml",
+        "registry/development_tasks_shadow/active/83/835f072332910b13fe76becceced0c4e4487e12bf20d19ef110bf61c4a018e4a.yaml",
+        "registry/development_tasks_shadow/active/83/83d8e12f9f67fd7b4153d37273a85bbb08cac122c08bad11343b49d4abe5a5bf.yaml",
+        "registry/development_tasks_shadow/active/84/84af1ec50ea224d44e4ae822717da6a1bb5ae771f21f14ae73f2edf99673dc53.yaml",
+        "registry/development_tasks_shadow/active/85/85384ab91e74615ced8fece10266366e7c167e880f50ec19fe463170010a66ab.yaml",
+        "registry/development_tasks_shadow/active/85/854794d2ff3c64eb68c44faba8c4f8e345212d7746b2e4dbef3a6ae63524c48a.yaml",
+        "registry/development_tasks_shadow/active/85/859695f83c916ddfac499db2a0201dfda84b3a644e437bf5b98d15177ddd4529.yaml",
+        "registry/development_tasks_shadow/active/86/86548a2683b4400431bf640eeafbcbd35e8b2229ac37211ebf9e10e78d87b477.yaml",
+        "registry/development_tasks_shadow/active/86/86da1e3e43631fb8216fb2341f5e15cb7ff418ce94d7e374209518e902d43162.yaml",
+        "registry/development_tasks_shadow/active/87/87409b2f622ac0c948306f8facf9ca2923ee2fedb4a49245c44f017b78b8c4a7.yaml",
+        "registry/development_tasks_shadow/active/87/87e85ab3ca9d796b816e83be3c71d19fbd52d4f257e795913a2cb324fc2ebd48.yaml",
+        "registry/development_tasks_shadow/active/88/88493267fcd077ce3bb7f6915dd878f920d58b90e19e8276788c6f8b1af3f50b.yaml",
+        "registry/development_tasks_shadow/active/88/886282fbb950f3bc749849c2f92143e32e076dc80ec1bed213bcda7d3f86747a.yaml",
+        "registry/development_tasks_shadow/active/8a/8a48e49fd8752ca993c53d2edba5e763fa3fc0dc62d24756bf8b3bdd2ef5bcd5.yaml",
+        "registry/development_tasks_shadow/active/8a/8a70ba3c1dac2b3df46e370cd87e32327df3052bab9a331d8b0626d723cd4c63.yaml",
+        "registry/development_tasks_shadow/active/8b/8baf4e9df3e0f8820e1213a187fcb233a90506dbe59b58224b985e9097f08599.yaml",
+        "registry/development_tasks_shadow/active/8c/8cd5d8352fbf6339536294945a05ce74dfd436a94c172e3c58c62149208ae6a1.yaml",
+        "registry/development_tasks_shadow/active/8d/8d17d1b322f40852c3b1040675926bdafad12b3c9b3dc6d1c063aeb08c7948a3.yaml",
+        "registry/development_tasks_shadow/active/8d/8d8f63a13ddf8a741aee0a4d3c643640e4fba64fd572b9285ffcd037c8fee378.yaml",
+        "registry/development_tasks_shadow/active/8d/8da7f6a9ea6b57415e880088f5480ab6cc8067413127bbedc5ae1081079d9762.yaml",
+        "registry/development_tasks_shadow/active/90/90a846d190e4c134578abfabb5f8631d5b36b951306fd173865d2d5653f4b8a0.yaml",
+        "registry/development_tasks_shadow/active/92/92203a5cf8e07ef1c85fa91f28e1d21e1442c5631a25233e1722014b4fe7b77e.yaml",
+        "registry/development_tasks_shadow/active/92/92deed6b109549d6914a3aeb43959c56fd08a1f4d74d48b4063bfd05b77b5dcf.yaml",
+        "registry/development_tasks_shadow/active/93/93b15ab0e62c40e84d328f49e93fdfef79e8765173a14d87ca9bb9a4b9efc4f3.yaml",
+        "registry/development_tasks_shadow/active/94/94e3b2ec49830a912e5fab06751cbaed18877eeb20cb9d2e7958fa0e8dffdc41.yaml",
+        "registry/development_tasks_shadow/active/95/95ea45e6091b679d63bdd7bc35bace9a27ab6f79aee571ae69ecf1873298065d.yaml",
+        "registry/development_tasks_shadow/active/96/96a98b22e92009d418511d7f77088d8ba1afd34c0f86fefef4236db7d53cf49a.yaml",
+        "registry/development_tasks_shadow/active/97/97ed79d85c77f95e8b4c5123b953e6ee1c8a169ca06b540b8aaf05b6a6a07ced.yaml",
+        "registry/development_tasks_shadow/active/9a/9ad26ac90b1b81fa81965f5262fdbe45eb156fb4726a7bc593927ce1ec51f602.yaml",
+        "registry/development_tasks_shadow/active/9b/9bd793977849d7899f5e85918f02308358acb7e7d48c88515ff98876767b567b.yaml",
+        "registry/development_tasks_shadow/active/9c/9c0889e6dd79407a9f6035118f65fc34505efffc089fd2eed44b487d03449bcf.yaml",
+        "registry/development_tasks_shadow/active/9c/9c20017e2c715901442d29f8a38b32aeff402610c7a58287b3b9d3ec5407b953.yaml",
+        "registry/development_tasks_shadow/active/9c/9c47daf602ce3dc9dfddaaf3fb817423b58df58b07fb551fb1caeb271babc715.yaml",
+        "registry/development_tasks_shadow/active/9d/9da970077f876f2a7ec561063392c1ca544e4c3d9ceabf4b69ae44e20805e863.yaml",
+        "registry/development_tasks_shadow/active/9d/9dbef936ee64270f712ab5f69a0bde5505c7e18cd6ab90adcfef9a66bf5d87c6.yaml",
+        "registry/development_tasks_shadow/active/a0/a0477b85935918070e82482cc31b0497b663d8da6ec3521dc71df6b10a605319.yaml",
+        "registry/development_tasks_shadow/active/a0/a09852a700eeae58556bbd0c29bf6039acc97101a301c1b8575017609296254a.yaml",
+        "registry/development_tasks_shadow/active/a1/a12692de2c133fb0f4939e5ab6b96c889afe8c8303af6880fb9f8085afd40b46.yaml",
+        "registry/development_tasks_shadow/active/a1/a1af41ac9172f6fb24e6883ca4fc3d4ba902385ce993e6612f2e84c330446e14.yaml",
+        "registry/development_tasks_shadow/active/a3/a3548fff94d34d24ea90fb04f4e165e4509ba4d7fe4d842447ab2601292b35f2.yaml",
+        "registry/development_tasks_shadow/active/a3/a3f1f6e901149d1ed1e7862d6829bea1c20076601378600516aa8c992136e9ab.yaml",
+        "registry/development_tasks_shadow/active/a4/a449fd2223053e63850acd97b0f9445ba983d62549bb7d45d988a9b92fbadc10.yaml",
+        "registry/development_tasks_shadow/active/a4/a452aea0f1e7fb07d65f68175ea2808e9854a43c27129befa9607054f0a58610.yaml",
+        "registry/development_tasks_shadow/active/a4/a4568f7f0fb90a56d502d2106338373f8d5e726f035eb4c4c607d991b0b639bf.yaml",
+        "registry/development_tasks_shadow/active/a4/a4770862b85423ba1c993403892d7b4bbd2ec477d1b275acc0862f11ce245002.yaml",
+        "registry/development_tasks_shadow/active/a6/a629a57e4704abc2633ccc470f6d4ad30d8715dbab1399113d2692bee69af8ee.yaml",
+        "registry/development_tasks_shadow/active/a7/a7e8d6c07a622a4dd8d60123b78b91c546969b88fe15e6ac5e81f13c1f8e5010.yaml",
+        "registry/development_tasks_shadow/active/a7/a7fc87c4fe69c6c4b67f410f7890085f640e1b379313c5a8ce2b82f386978797.yaml",
+        "registry/development_tasks_shadow/active/a8/a8c34ef440e37d09aada4aba91976f99d7b4d01cf05b94a1374481fb60cf028a.yaml",
+        "registry/development_tasks_shadow/active/a9/a97a1f35a93bfbdbaf87974bcdc73265148d3f090472ca3f01f0a50951f603ca.yaml",
+        "registry/development_tasks_shadow/active/aa/aa2fc2d033d978e1c67eba38a6865c835901f8c2a37d0fac59bdaf9605779784.yaml",
+        "registry/development_tasks_shadow/active/ac/ac21e7098c2ab059a28e003f09ba5569ad1fa281b2d56c59cda219d6de0eebce.yaml",
+        "registry/development_tasks_shadow/active/ac/ac2add8c14ff09c06dda02d9fc97b5b0f194ada1b882536a8daeb7011f502b68.yaml",
+        "registry/development_tasks_shadow/active/ac/ace7d7ee9e86745b1c90aea475191cf7a5b320fa866340118a84a4e8f2191f6a.yaml",
+        "registry/development_tasks_shadow/active/ad/ad2fc0db257fc55aaa0bf93328468d61f84031a0920e00bc480dcc6c367c7dfa.yaml",
+        "registry/development_tasks_shadow/active/ad/ad81f0868668170c2fee01cc8eb344402d02b1c8fb5c42b4c17d9fde1370f1e7.yaml",
+        "registry/development_tasks_shadow/active/ad/adcc7b3ba052644019ac56df99fd944b35e72ef2d1d3be39c19575f6d4f8410a.yaml",
+        "registry/development_tasks_shadow/active/ad/addae3cca13f4ce14e5cf5f008823ed4fa51b1648fe122bbd85141dba27bfcc8.yaml",
+        "registry/development_tasks_shadow/active/b0/b0c88446da608850002d54b3b3e11bc67f3a44cc2d1af26820c2082b85b33f85.yaml",
+        "registry/development_tasks_shadow/active/b1/b105217b6a75bd011206c2a305c06cd88b44a7ad46e84c178d680f1bebc6d09c.yaml",
+        "registry/development_tasks_shadow/active/b1/b1fa13577aae3c271f03493da82b04a09d8c59c81596ae7e992e1e9e6c6fdfe0.yaml",
+        "registry/development_tasks_shadow/active/b2/b2e2f2713ee02a42c12738bd0954c536b1f9b731188897cff97436083e528850.yaml",
+        "registry/development_tasks_shadow/active/b3/b30735bfa155cc26acfc4bd351ab9a61c527b58f632c83afeded7689d928123a.yaml",
+        "registry/development_tasks_shadow/active/b4/b46751002b9778a5e8caf13b4f86bc42e7cf9ba6c66efc60ec59b81cbe1bf150.yaml",
+        "registry/development_tasks_shadow/active/b4/b4fcc2342f2653920383504d76b0e1c9122a664f5316942b6e7a7de969a87f11.yaml",
+        "registry/development_tasks_shadow/active/b5/b56f18ab9779785d8627d4aa89f4af00fd2a6a750d4adc44788dae5012108106.yaml",
+        "registry/development_tasks_shadow/active/b6/b6378ad05312e36eb0833a1c72c22409e1ed532e905653453c12c74b98a8b49f.yaml",
+        "registry/development_tasks_shadow/active/b6/b6551edd8f2b070f9d3263d70609eace83debf4f669ea721ba9951ecf27e7bd6.yaml",
+        "registry/development_tasks_shadow/active/b6/b6ccb46896def380ad4640c07fb2dbe5c335002d58fd9c6081f619a4956852aa.yaml",
+        "registry/development_tasks_shadow/active/b7/b7a39cb11f950fedc07374ca01c81d976b8e6e2c85da11c10d6632ef1dc18252.yaml",
+        "registry/development_tasks_shadow/active/b7/b7bddbbee3cba9fca0785a15edb740c5edd3e08c35ff12c350861a1d892d0cbe.yaml",
+        "registry/development_tasks_shadow/active/b7/b7de9c50c2e8d4be5b5ae7694e1d112c697ab2cdc066563bf5d224c1f03ea329.yaml",
+        "registry/development_tasks_shadow/active/b8/b8a58b5fb3d4640ec169b5c26052a12fd34fef6e072ba0b9457fe000ea6110a3.yaml",
+        "registry/development_tasks_shadow/active/b9/b96a81754b09d1fbeeb009de2a84118d6283b7c7ca93cc6e8a91b5e636f98927.yaml",
+        "registry/development_tasks_shadow/active/b9/b9a595885f00214510c7112c852d7af60d455dfe2371366208c0162b1e9f7ebe.yaml",
+        "registry/development_tasks_shadow/active/bc/bc8afd878492a5f9cbbb41d1e835728fd0b0fcab40ef854e8d2a237a588267a5.yaml",
+        "registry/development_tasks_shadow/active/bd/bd4792709be1600b604b5ae4ed2c2ca986ad5430016d69cac48829348233a7b5.yaml",
+        "registry/development_tasks_shadow/active/bd/bd734bea4d08a8b5d3df4efbfca2a409dbb2d3a7f8c5f4d3f4d6ff142eca2c8a.yaml",
+        "registry/development_tasks_shadow/active/bf/bfc36d4bd6021532ddf9d81a4db61ab86aaa05f110cf4f893f2deb6eae9b0b7d.yaml",
+        "registry/development_tasks_shadow/active/c0/c033496addcdceb3164e34403581a198d7b6123958a580770497aa5556c44ff3.yaml",
+        "registry/development_tasks_shadow/active/c1/c15775573896d2db646fb74f02cba8a2780367fa7cae7edf1feccc568e39f33c.yaml",
+        "registry/development_tasks_shadow/active/c1/c18729232b4dc3f346ff5230a3ce6d11aab48ae20f5b9280b9aa57117ff1f464.yaml",
+        "registry/development_tasks_shadow/active/c2/c2563489af84763f301d2187f5296746e3224e230a0c75463a4d71a82ac670c6.yaml",
+        "registry/development_tasks_shadow/active/c2/c28d15d30cadc13ad02ac473bfd6cce6ed23497945afb82cae06b2bfbc5e581f.yaml",
+        "registry/development_tasks_shadow/active/c2/c2fc96648f7c0913cd161be1d1ee089561eb243c84c726637f0578f3355bc31d.yaml",
+        "registry/development_tasks_shadow/active/c3/c32b7b715b7bf04baed59de2a3a3e1ff62bf8dd746f23a3b9b00181ee43ef317.yaml",
+        "registry/development_tasks_shadow/active/c4/c4f4b9c4ea41c4c8242dcb2b626677645feffdd5828bf30179272016ece328aa.yaml",
+        "registry/development_tasks_shadow/active/c5/c513eb443d730a6167855bfac7e51fd22423ec3343e60d2bfc0b55ba37649d2e.yaml",
+        "registry/development_tasks_shadow/active/c5/c5926a75ab43fcca33cadec9f5e25a0d799791913a6c63217ec79cb13fa434e1.yaml",
+        "registry/development_tasks_shadow/active/c9/c99b7c2452ea3693f1c98a443c3072044f864fb07a24bbef2f9e8739563b4807.yaml",
+        "registry/development_tasks_shadow/active/ca/caeb15fc3d423bd47329b34c05ca88fb26a5d03b92082d5ccd72d24648098643.yaml",
+        "registry/development_tasks_shadow/active/cb/cbb7d2e28892527451898306f4fc04b2ff2d1d819c600c61acda42d2a599d54e.yaml",
+        "registry/development_tasks_shadow/active/cb/cbda7b4751698151fb4ecd8b7fdf6f63bf3619ea62b0379ae8fe188837852fd5.yaml",
+        "registry/development_tasks_shadow/active/cc/cc5d66fdce5006a1d4cbaefa1142e28928bbc354c9e102614980e568fd665dbc.yaml",
+        "registry/development_tasks_shadow/active/ce/cea5b6a2779fb0d6be117bbcb82f32b810c042b8f6558bf1d383ece8b676f8f0.yaml",
+        "registry/development_tasks_shadow/active/cf/cf68fd82a19de384806752f80e52d9186dac8240020e2368f08d12a6db95711e.yaml",
+        "registry/development_tasks_shadow/active/d0/d00c4d3d6d663910dbd27772a7354f9d43e7912ed560d941496e99cf07b22825.yaml",
+        "registry/development_tasks_shadow/active/d0/d0349009866ee6651cef0f380ebf262d9fda5be7fcb460b8f0728bda8d006292.yaml",
+        "registry/development_tasks_shadow/active/d0/d0a4919c754b1c6d12feb4c4f77992a391ec2c114e44ebb48139a3270be6fc0a.yaml",
+        "registry/development_tasks_shadow/active/d0/d0e55fcb520da5f730ab2c92bbd9ce97f69c4352d39e416fbfba3327e0d169af.yaml",
+        "registry/development_tasks_shadow/active/d1/d18d6bd9e956a680db4af3238bd8184496ba059eed8cd34cdab5390230f7b960.yaml",
+        "registry/development_tasks_shadow/active/d1/d1c87fe965ac1436dc63fe3c8f5075bf358e1b902faf679af8514551813df327.yaml",
+        "registry/development_tasks_shadow/active/d2/d279398a4ab769db653bb1b6e4803b02cc44689c0be0971847fd38278346b391.yaml",
+        "registry/development_tasks_shadow/active/d3/d33fc5e86598c762dede400e686a42c95de42d27a1cddd16452fc0b0f72208e9.yaml",
+        "registry/development_tasks_shadow/active/d4/d4f4008fb8f025d6818d12f16eb404321b3f867ca07d95ce668f7696fd76bb44.yaml",
+        "registry/development_tasks_shadow/active/d6/d65eb293c998030f4420a966a39186f58a716d26a4aff8cf1895d73477a8bde5.yaml",
+        "registry/development_tasks_shadow/active/d7/d7ca74c2afae62e3bbe4367274572c66d648b2a74d8259eba7b0e5244222e2a9.yaml",
+        "registry/development_tasks_shadow/active/d9/d986eabbebfb712c2706fa6f6f44014e3da09ab5bf3ccd76e9b32a0b4719e3b7.yaml",
+        "registry/development_tasks_shadow/active/da/da002c5987902bdc8f31ebd673f7e3343539e831be82c438de9d0fef881b49a0.yaml",
+        "registry/development_tasks_shadow/active/da/dae2f6eb2ce6ff0177a65bfc8ee3f7ad42f3f5284995a80835d31d16f69e2376.yaml",
+        "registry/development_tasks_shadow/active/db/dbbf0c944b21998cf58e881335885f76860830da8aa85864c8f095d3240513bf.yaml",
+        "registry/development_tasks_shadow/active/db/dbd2be18e714d64b468099027035e5c2dff24545e26316daa86b8e5eef553fcb.yaml",
+        "registry/development_tasks_shadow/active/dc/dc59d8344c96b92b36af652bd813505439ca1bce356601e75ae3a56d718d496f.yaml",
+        "registry/development_tasks_shadow/active/dd/dda2ab99bb435239e5828ad0eff2bec06b86106ff3bca1a4960f001dd733db1b.yaml",
+        "registry/development_tasks_shadow/active/de/de8afe1bc951b2d7ec6c5b2663aa00924b62c12d9581a1ddcda1212664a01205.yaml",
+        "registry/development_tasks_shadow/active/df/df26b82c38ce2318ed5b3d0119fa321033d17bbc8d1f869b3b0e3a81d1b87bc6.yaml",
+        "registry/development_tasks_shadow/active/df/df35863e9a9cbc8f2c8f473a54f5fa0e086a23f73aa193cf159c923d5923edec.yaml",
+        "registry/development_tasks_shadow/active/df/df8104772ce39878b6239cb58ead27858ce0eeb5da4aa212f2310543101b2b40.yaml",
+        "registry/development_tasks_shadow/active/e0/e07826b0978885696511d1749ed456c5e6789646fe519405675d03d8f7b1c2ad.yaml",
+        "registry/development_tasks_shadow/active/e0/e0798270ebf75b071edfa516057a3822db10671b83356811c69fdfb32b18345b.yaml",
+        "registry/development_tasks_shadow/active/e0/e0ec4d72f6de3bbad88d9f8401f6bea499da34578ee46541d63eb3b9c7770143.yaml",
+        "registry/development_tasks_shadow/active/e3/e3c17d1b9321ceebe67ced5f80993b497b77d4e5f438ddbd17733986395e28ca.yaml",
+        "registry/development_tasks_shadow/active/e6/e652976695464732c1780e1cf8bc84d07d0e4f848816e9376ff70a605678f688.yaml",
+        "registry/development_tasks_shadow/active/e8/e83196e5ca1501240d0bc6868ed20af7e70700b3abd2bdae3567028b3d51e399.yaml",
+        "registry/development_tasks_shadow/active/e9/e9a46db521ca80d85866eb88062ea657859daf7683c2e450cc5829c076dbc869.yaml",
+        "registry/development_tasks_shadow/active/ec/ecf209f3a2518b9214569cc7993f7aec1511679bf88ef0c546449c5d56c3dc85.yaml",
+        "registry/development_tasks_shadow/active/ed/ed1ac324585385f673aaa6bb5fe3ff58abf3b307981ecd31ad91f1544cb4ddc0.yaml",
+        "registry/development_tasks_shadow/active/ed/edc22a904ff4dcb11ac756b7f80b6a2e483f2cb3d69b3225ac8ac4cd926e3b6a.yaml",
+        "registry/development_tasks_shadow/active/ee/ee3b1f1fc0828de89c692674a5c6ce9e4e35d680611f1daf5f9646b9127b16f3.yaml",
+        "registry/development_tasks_shadow/active/ee/ee9d85c1e0a6102bf4965e4436851429279cafb0165e9c41f8809931f74f948e.yaml",
+        "registry/development_tasks_shadow/active/f0/f0e10a9ad1a923f32d1e39c2545dda6f21c23fbc90326ce9296817057efbd19b.yaml",
+        "registry/development_tasks_shadow/active/f1/f1f36b0ed612fa45edd45e2c78d2c086af0e101ab955f967e3f58a3a7bdd16b9.yaml",
+        "registry/development_tasks_shadow/active/f2/f2259c466690ee5a00b81289517ad5f6c9cdcdbb3303aec7c27b076225aaac66.yaml",
+        "registry/development_tasks_shadow/active/f3/f382351d4bc4b3b5c0a58e7d7bde9989c3c78bacbee7a8121fb237bb09f42b74.yaml",
+        "registry/development_tasks_shadow/active/f4/f41539d35ff76c7825b79a16d958d3d2d530e5f0dc8ad96ca4147a086a3757b9.yaml",
+        "registry/development_tasks_shadow/active/f4/f4843923d29f4c6ead35c2aa085a661b344a9f80f92e55701be0dad2b78fed5f.yaml",
+        "registry/development_tasks_shadow/active/f5/f5e39760492dda611e01b7c7437e68fb20dae0ecfe9f0d852d3911594640e62b.yaml",
+        "registry/development_tasks_shadow/active/f7/f738bc0f88ddd750a793da0fa09e1a5cfe285680ecb4ef0b1b474a175f482393.yaml",
+        "registry/development_tasks_shadow/active/f8/f8ab21b078e4ba6a7f5114a99309d1ae6124cffd2db22e4a51a006495d806bdb.yaml",
+        "registry/development_tasks_shadow/active/f8/f8cec1d06f9d36a89dd6c6d7ad3c37755c1e8b25292dcee76e82483b80bf56e3.yaml",
+        "registry/development_tasks_shadow/active/f9/f90779ffdd48b6b5af98a08e1e46fe5ea39ca7e0cefe4d488473c22496eae94e.yaml",
+        "registry/development_tasks_shadow/active/f9/f926820c10387603f81913824cf24ac6ab69b142f3489bb92ebb2ba81c385f2f.yaml",
+        "registry/development_tasks_shadow/active/f9/f9889170da74ec4fbf89a0eb5189bba079a35a4644e3c67607b6bf4a3b40cb65.yaml",
+        "registry/development_tasks_shadow/active/f9/f9cbdd62a5fa3aa930158f80e2c2452eae3a80fc792d7720fa00d0e366884de2.yaml",
+        "registry/development_tasks_shadow/active/fa/fa3f71327f2406959b55197cc09495648cf86a0b5fd6d0fe330f1c7a0823c3e1.yaml",
+        "registry/development_tasks_shadow/active/fb/fb2dbef41f4bea01f1304a49e1878a24e6935d1d62ed9b0e73a012044bd573fd.yaml",
+        "registry/development_tasks_shadow/active/fb/fb41fb898f794e8ee5be8951febaa4c8b0e83e8ea3e65fa471490da371c4388a.yaml",
+        "registry/development_tasks_shadow/active/fd/fd5102c34a5885041305df27789b08b2d8e781007df8b73be8c1b830968da845.yaml",
+        "registry/development_tasks_shadow/active/fd/fdc5929c6e5da05c646679904421a30e4f53d2b19baadf22a9011ba6207d958b.yaml",
+        "registry/development_tasks_shadow/active/fe/fe93433b0154b90f525fea2a86c9dd0091c396bfca25f66c6f67db31617b7a16.yaml",
+        "registry/development_tasks_shadow/active/fe/fecdb439f308368d93a623929b767c376fb5c850d03dc2b225dbae6fdde2e9d7.yaml",
+        "registry/development_tasks_shadow/active/fe/fee154615db079eb1ebb0a783624129db2e734c93862ae0e7e437adcad52a19f.yaml",
+        "registry/development_tasks_shadow/active/ff/ff96ab11faace74ba46e71de75290b186ce7a5b09cd2cd782591aa1d4b6fca13.yaml",
+        "registry/development_tasks_shadow_v2/cc/cc5d66fdce5006a1d4cbaefa1142e28928bbc354c9e102614980e568fd665dbc.yaml",
+        "src/ai_trading_system/cli_commands/risk_events.py",
+        "src/ai_trading_system/official_policy_sources.py",
+        "tests/test_official_policy_sources.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = OPS_072_TRANSPORT_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3317,6 +3641,23 @@ def _trading_2476_adapter_review_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _ops_072_transport_base_baseline_blob() -> bytes:
+    object_name = f"{OPS_072_TRANSPORT_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == OPS_072_TRANSPORT_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -5024,6 +5365,24 @@ def _assert_trading_2476_adapter_review_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2476_ADAPTER_REVIEW_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_ops_072_transport_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = OPS_072_TRANSPORT_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == OPS_072_TRANSPORT_HISTORICAL_PREFIX_SHA256
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "OPS-072 transport historical prefix differs from immutable "
+        "TRADING-2476 adapter-review authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{OPS_072_TRANSPORT_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -7131,8 +7490,26 @@ def _trading_2474_result_ledger_superseded_live_source_paths() -> frozenset[str]
 
 
 @cache
+def _ops_072_transport_superseded_live_source_paths() -> frozenset[str]:
+    _assert_ops_072_transport_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_072_transport_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[OPS_072_TRANSPORT_SECTION]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
 def _trading_2474_result_ledger_source_paths() -> frozenset[str]:
     sources = _compatibility_baseline()[TRADING_2474_RESULT_LEDGER_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _ops_072_transport_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[OPS_072_TRANSPORT_SECTION]["sources"]
     assert isinstance(sources, list)
     return frozenset(str(source["path"]) for source in sources)
 
@@ -7171,6 +7548,10 @@ def _trading_2475_historical_coverage_all_current_authority_paths() -> frozenset
         _trading_2475_historical_coverage_superseded_live_source_paths()
         | _trading_2475_historical_coverage_source_paths()
     )
+
+@cache
+def _ops_072_transport_all_current_authority_paths() -> frozenset[str]:
+    return _ops_072_transport_superseded_live_source_paths() | _ops_072_transport_source_paths()
 
 
 @cache
@@ -7805,11 +8186,45 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
                 if not is_historical:
                     active[str(source["path"])] = source
     normalization_migrations = _normalization_migrations_before(stop_section)
-    return frozenset(
+    mismatches = frozenset(
         path
         for path, source in active.items()
         if not _source_matches_checkout(source, normalization_migrations)
     )
+    if stop_section != OPS_072_TRANSPORT_SECTION and OPS_072_TRANSPORT_SECTION in baseline:
+        section_ids = list(baseline)
+        stop_index = section_ids.index(stop_section)
+        ops_index = section_ids.index(OPS_072_TRANSPORT_SECTION)
+        last_pre_ops_owner: dict[str, int] = {}
+        for section_index, section_id in enumerate(section_ids[:ops_index]):
+            section = baseline[section_id]
+            if not isinstance(section, dict):
+                continue
+            for source_key in ("frozen_sources", "sources"):
+                records = section.get(source_key, [])
+                if not isinstance(records, list):
+                    continue
+                for source in records:
+                    if not isinstance(source, dict) or "path" not in source:
+                        continue
+                    is_historical = any(
+                        str(key).startswith("historical_") and bool(value)
+                        for key, value in source.items()
+                    )
+                    if not is_historical:
+                        last_pre_ops_owner[str(source["path"])] = section_index
+        recorded_superseded_paths = {
+            str(path) for path in baseline[stop_section].get("superseded_live_source_paths", [])
+        }
+        ops_superseded_paths = {
+            str(path)
+            for path in baseline[OPS_072_TRANSPORT_SECTION]["superseded_live_source_paths"]
+        }
+        retroactive_paths = {
+            path for path in ops_superseded_paths if last_pre_ops_owner.get(path, -1) < stop_index
+        }
+        return mismatches - (retroactive_paths - recorded_superseded_paths)
+    return mismatches
 
 
 @cache
@@ -8330,6 +8745,11 @@ def _trading_2476_adapter_review_prior_active_source_mismatches() -> frozenset[s
     return _latest_active_source_mismatches(TRADING_2476_ADAPTER_REVIEW_SECTION)
 
 
+@cache
+def _ops_072_transport_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(OPS_072_TRANSPORT_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -8373,7 +8793,15 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2476_ADAPTER_REVIEW_SECTION in baseline:
+    if OPS_072_TRANSPORT_SECTION in baseline:
+        current_superseded_paths = _ops_072_transport_superseded_live_source_paths()
+        assert _ops_072_transport_prior_active_source_mismatches() == current_superseded_paths
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2476_adapter_review_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = OPS_072_TRANSPORT_SECTION
+    elif TRADING_2476_ADAPTER_REVIEW_SECTION in baseline:
         current_superseded_paths = _trading_2476_adapter_review_superseded_live_source_paths()
         assert _trading_2476_adapter_review_prior_active_source_mismatches() == (
             current_superseded_paths
@@ -18836,7 +19264,7 @@ def test_trading_2465_reentry_preregistration_is_current_hash_authority() -> Non
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["implementation"] == {
         "planning_snapshot_commit": ("fb4687244e04228ae2e5c4dd425f82cb1e35291c"),
         "web_pro_advisory": {
@@ -18948,7 +19376,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     fragment_authority = phase["generated_fragment_authority"]
     assert fragment_authority == {
@@ -18961,7 +19389,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 939
+    assert v2_index["fragment_count"] == 940
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -19079,7 +19507,7 @@ def test_trading_2466_2467_integration_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "integration_order": ["TRADING-2467", "TRADING-2466"],
@@ -19176,7 +19604,7 @@ def test_trading_2468_atlas_coverage_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "atlas_surface": "STATIC_HTML_JSON_READ_ONLY",
@@ -19286,7 +19714,7 @@ def test_trading_2469_diff_contract_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "contract_source_commit": TRADING_2469_DIFF_CONTRACT_BASE_COMMIT,
@@ -19397,7 +19825,7 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "consumer_source_commit": TRADING_2469_DIFF_CONSUMER_BASE_COMMIT,
@@ -19512,7 +19940,7 @@ def test_trading_2470_cited_query_contract_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "contract_source_commit": TRADING_2470_CITED_QUERY_CONTRACT_BASE_COMMIT,
@@ -19626,7 +20054,7 @@ def test_trading_2470_cited_query_amendment_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "contract_amendment_source_commit": (TRADING_2470_CITED_QUERY_AMENDMENT_BASE_COMMIT),
@@ -19735,7 +20163,7 @@ def test_trading_2470_cited_query_consumer_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     implementation = phase["implementation"]
     assert implementation == {
@@ -19905,7 +20333,7 @@ def test_trading_2471_flow_focus_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "visual_source_commit": "bb81c06be4abb36cd7ef47f9e3df3c37fc398835",
@@ -20063,7 +20491,7 @@ def test_trading_2472_status_provenance_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "visual_source_commit": TRADING_2472_STATUS_PROVENANCE_BASE_COMMIT,
@@ -20220,7 +20648,7 @@ def test_trading_2473_evidence_drilldown_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
             continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "visual_source_commit": TRADING_2473_EVIDENCE_DRILLDOWN_BASE_COMMIT,
@@ -20370,9 +20798,7 @@ def test_trading_2474_result_ledger_is_current_hash_authority() -> None:
     current_superseded = _trading_2475_historical_coverage_superseded_live_source_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        if str(source["path"]) in current_superseded:
-            continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "visual_source_commit": TRADING_2474_RESULT_LEDGER_BASE_COMMIT,
@@ -20475,7 +20901,9 @@ def test_trading_2475_historical_coverage_is_current_hash_authority() -> None:
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     assert TRADING_2475_HISTORICAL_COVERAGE_SECTION in baseline
-    assert next(reversed(baseline)) == TRADING_2476_ADAPTER_REVIEW_SECTION
+    assert list(baseline).index(TRADING_2475_HISTORICAL_COVERAGE_SECTION) < list(baseline).index(
+        TRADING_2476_ADAPTER_REVIEW_SECTION
+    )
     phase = baseline[TRADING_2475_HISTORICAL_COVERAGE_SECTION]
     assert phase["schema_version"] == (
         "trading_2475_atlas_historical_coverage_inventory_compatibility.v1"
@@ -20523,9 +20951,7 @@ def test_trading_2475_historical_coverage_is_current_hash_authority() -> None:
     current_superseded = _trading_2476_adapter_review_superseded_live_source_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        if str(source["path"]) in current_superseded:
-            continue
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "implementation_checkpoint": TRADING_2475_HISTORICAL_COVERAGE_BASE_COMMIT,
@@ -20634,7 +21060,9 @@ def test_trading_2476_adapter_review_is_current_hash_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2476_ADAPTER_REVIEW_SECTION
+    assert list(baseline).index(TRADING_2476_ADAPTER_REVIEW_SECTION) < list(baseline).index(
+        OPS_072_TRANSPORT_SECTION
+    )
     phase = baseline[TRADING_2476_ADAPTER_REVIEW_SECTION]
     assert phase["schema_version"] == (
         "trading_2476_atlas_historical_adapter_review_compatibility.v1"
@@ -20681,7 +21109,7 @@ def test_trading_2476_adapter_review_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
         "implementation_checkpoint": TRADING_2476_ADAPTER_REVIEW_BASE_COMMIT,
@@ -20784,6 +21212,100 @@ def test_trading_2476_adapter_review_is_current_hash_authority() -> None:
             bytes(tampered),
             base_blob,
         )
+
+
+def test_ops_072_transport_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _ops_072_transport_base_baseline_blob()
+    _assert_ops_072_transport_historical_prefix_immutable(current_bytes, base_blob)
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == OPS_072_TRANSPORT_SECTION
+    phase = baseline[OPS_072_TRANSPORT_SECTION]
+    assert phase["schema_version"] == (
+        "ops_072_daily_official_policy_transport_resilience_compatibility.v1"
+    )
+    assert phase["status"] == "VALIDATING"
+    assert phase["boundary_id"] == "OPS-072-DAILY-OFFICIAL-POLICY-TRANSPORT"
+    assert phase["task_ids"] == ["OPS-072_DAILY_OFFICIAL_POLICY_TRANSPORT_RESILIENCE"]
+    assert phase["owner_decisions"] == [
+        "owner_decision:OPS-072:2026-08-01:approve_durable_transport_resilience_release_v1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": OPS_072_TRANSPORT_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": OPS_072_TRANSPORT_BASELINE_GIT_BLOB,
+        "raw_byte_count": OPS_072_TRANSPORT_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": OPS_072_TRANSPORT_HISTORICAL_PREFIX_SHA256,
+        "append_offset": OPS_072_TRANSPORT_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(_ops_072_transport_prior_active_source_mismatches())
+    assert set(phase["removed_live_source_paths"]) == OPS_072_TRANSPORT_REMOVED_SOURCE_PATHS
+    assert set(phase["new_source_paths"]) == OPS_072_TRANSPORT_NEW_SOURCE_PATHS
+    expected = (
+        superseded | OPS_072_TRANSPORT_NEW_SOURCE_PATHS
+    ) - OPS_072_TRANSPORT_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "OPS-072-DAILY-OFFICIAL-POLICY-TRANSPORT",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2476_ADAPTER_REVIEW_SECTION,
+        "current_hash_authority": f"{OPS_072_TRANSPORT_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["implementation"] == {
+        "transport_retry_scope": "PRE_RESPONSE_ONLY",
+        "transport_max_attempts": 3,
+        "transport_backoff_seconds": [1.0, 2.0],
+        "http_status_retry_allowed": False,
+        "parser_schema_retry_allowed": False,
+        "typed_exhaustion_code": "official_policy_source_transport_exhausted",
+        "typed_blocker_code": "PROVIDER_UNAVAILABLE",
+        "bare_candidate_count_permission_match_allowed": False,
+        "component_attempt_budget_expanded": False,
+        "historical_recapture_allowed": False,
+        "recovery_parent_run_id": "daily_ops_run:2026-07-31:20260801T014510Z",
+        "recovery_reason_code": "RECOVERY_BOUNDARY_NOT_ALLOWLISTED_SCORE_NOT_PASS",
+        "task_shadow_source": "LEGACY_MARKDOWN_ONLY",
+        "task_shadow_v2_cutover_performed": False,
+    }
+    assert phase["validation"] == {
+        "focused": "PASS_50_TESTS",
+        "fast_unit": "PENDING_FINAL_COMMIT",
+        "architecture": "PENDING_FINAL_COMMIT",
+        "contract": "PENDING_FINAL_COMMIT",
+        "integration": "PENDING_FINAL_COMMIT",
+        "reproducibility": "PENDING_FINAL_COMMIT",
+        "full": "PENDING_FINAL_COMMIT",
+    }
+    assert phase["safety"] == {
+        "runtime_checkout_directly_modified": False,
+        "second_daily_trigger_executed": False,
+        "recovery_allowlist_expanded": False,
+        "production_weight_write": False,
+        "active_shadow_weight_write": False,
+        "broker_action": "none",
+        "trading_action": False,
+        "production_effect": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[OPS_072_TRANSPORT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_ops_072_transport_historical_prefix_immutable(bytes(tampered), base_blob)
 
 
 def test_trading_2463_s4_freeze_records_approved_policy_and_stops() -> None:

@@ -151,3 +151,25 @@ score 恢复，则必须明确记录该 parent 不可恢复，并由下一 provi
   漏判一项 task-shadow 归类，发现后未触碰用户路径，改为从隔离 worktree 与历史 owner
   顺序重新计算并逐项验哈希。DevEx generate/validate PASS（1057 modules、1228 tests、
   0 violations），兼容链与 DevEx 聚焦回归最终 `174 passed`。
+- 2026-08-01：集成期间 local/remote main 前进到 `0c3780c6`，新增 TRADING-2474
+  result-ledger EOF authority。按 validated drift plan
+  `integration-revalidation-63a64b734b3c049c98c9` 从该 latest main 重建唯一 coordinator
+  candidate，没有改写既有 section。OPS-072 新 authority 以
+  `6cb5fa9d702b17ac7a8477277d07f069b4ce0300` 的 compatibility blob
+  `2b23798714a00e9fa36843260c9080da104cdb00` 为不可变前缀（2,310,736 bytes，
+  SHA-256 `9872b533fecbea9243ede323a9a31d7ef782f6c8969bb2d6a7931f5803f40140`），
+  重新登记 44 个既有 live mismatch、312 个 new source、356 个 current source；task registry
+  generate/validate PASS（938 tasks，byte-identical），DevEx generate/validate PASS（1057 modules、
+  1228 tests、0 violations），最终 compatibility / source / capture 聚合回归 `212 passed`。
+- 2026-08-01：基于 TRADING-2475 authority 的 candidate `f23fa632` 已完成 Fast、Architecture、
+  Contract、Integration、Reproducibility 与 Full 六层正式验证（Full `7886 passed / 5 skipped`），
+  但验证期间 main 串行推进并完成 TRADING-2476，故该组证据只保留为诊断证据，不用于最终
+  promotion。按新 drift plan `integration-revalidation-0584f62404b8b00e70e0` 从 exact main
+  `cb1d5270042991a1952c0e88a04efca8a8edab36` 重建 coordinator candidate，并将 TRADING-2476
+  compatibility bytes 保持为不可变历史前缀。当前 OPS-072 EOF authority 以
+  `18d0678e520d885df9ef00da48577680832d08c7` 的 compatibility blob
+  `53445fe993b98b5b056b0893009cac1bd3acc111` 为前缀（2,344,003 bytes，SHA-256
+  `d1a15582c60ee802379b7bca6c0cc82f5d62ec73a4d6269ccfa595815dbd7eab`），登记 46 个既有 live
+  mismatch、312 个 new source、358 个 current source。最终 candidate 必须重新完成六层正式验证
+  后方可进入 ordinary main push、exact release promotion 与 deployment acceptance；本 invocation
+  仍禁止第二次 daily trigger。
