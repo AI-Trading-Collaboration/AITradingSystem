@@ -252,3 +252,33 @@ broker resource。
   inventory、adapter-readiness disposition、canonical renderer 与独立重建 validator 已实现。实际结构观察
   为 5 组五类槽齐全、`next_research_program_roadmap` 缺可机械证明的 lineage 槽；未序列化任何
   status/result/limitation 字段值。Black、Ruff、strict mypy PASS，parallel focused=`5 passed`。
+- 2026-08-01：actual-input checkpoint=`b385f4140b54d936c57f889a55c6f5ba99d074f9`，
+  review_pack=`atlas_historical_adapter_review_c6762a379ab3eeb7bb49`。六组 disposition=`5
+  NEEDS_SOURCE_REGISTRATION / 1 NEEDS_SCHEMA_NORMALIZATION / 0 rejected`；double-build
+  byte-identical，independent validation=`PASS / 17 checks`。当前 Atlas snapshot 复核仍为
+  `8 sources / 8 results / 12 attributions`，cited-query HTML 仍为 `92180 bytes / SHA-256
+  b7540d87caf212faca015b71e80a5fe5080342a55d94580f68b61a045492e78a`。
+- 2026-08-01：report registry/catalog/system flow、task shadow、generated architecture、deprecation
+  inventory 与 append-only compatibility authority 已接线。Task shadow=`939 tasks`，generated=
+  `1059 modules / 1230 tests`；Atlas/reporting/docs focused=`82 passed`，compatibility/deprecation=
+  `171 passed`。下一步在 clean candidate 上执行正式门禁。
+
+## 11. Canonical evidence
+
+|Identity|Value|
+|---|---|
+|Policy|`4244 bytes / SHA-256 14aadbb54b33180710c447fc49f7a6348281b59d2e932e6678e3f9edab9eefb5`|
+|TRADING-2475 inventory|`atlas_historical_coverage_inventory_3a09ccafea85f96382db / SHA-256 02497cee0e708cc8f8f9ce345c7bf3fb382194b2eff59bbc85278538645c3e0d`|
+|B0 baseline JSON|`SHA-256 33a1c71b9aab8a307c2dacc890a5d1b776f28854ee1efba6bbe757a6d2614b2b`|
+|B1/B4 attribution JSON|`SHA-256 ab8f6c7acbd3eeb01820e302e79282f47e7771d9d2268e627bda6226c588d840`|
+|Final branch decision JSON|`SHA-256 e7efb46b7b539bfce54b8163b70b7934c508b7653032955ae5ea7dfdbe4046e4`|
+|Monthly review JSON|`SHA-256 c66864a68153926e2edabe5e6c7699146c19d116db9007054b483983ade824d3`|
+|Next roadmap JSON|`SHA-256 6da3f543f774bf2f9abb841450c5ce5d984a6306e9b19d444c189a40d360375f`|
+|Program snapshot JSON|`SHA-256 a367544cec737523716548a0642ad939d504ea06dfe7c08861c0ddf9ab6c095c`|
+|`review_pack.json`|`87970 bytes / SHA-256 0bc741fadc5664194133365b83185b000f85041b3c1d45dcb2e16e48564102ec`|
+|`review_pack.md`|`3190 bytes / SHA-256 f34e65eb280943c50f17957d648022d3f85fc0667a47869ba6080d6feaf80628`|
+|`validation.json`|`1372 bytes / SHA-256 ab365582080f494a8ba204256d7cd0787eec2d21073e78cb88de072310805491`|
+
+以上三份 canonical outputs 位于
+`outputs/atlas/historical_adapter_review/trading_2476_v1/`，是 Owner adapter decision 的只读输入；
+它们不进入当前 cited-query page identity。

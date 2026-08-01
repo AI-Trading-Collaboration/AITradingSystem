@@ -32725,3 +32725,25 @@ reports:
     required_for_daily_reading: false
     production_effect: none
     broker_action: none
+  - report_id: atlas_historical_adapter_review_pack
+    title: Atlas Historical Adapter Review Pack V1
+    group: research
+    cadence: ad_hoc
+    audience: project_owner
+    owner: atlas_research_governance
+    command: python_api_ai_trading_system_atlas_write_historical_adapter_review_artifacts
+    artifact_globs:
+      - outputs/atlas/historical_adapter_review/trading_2476_v1/review_pack.json
+      - outputs/atlas/historical_adapter_review/trading_2476_v1/review_pack.md
+      - outputs/atlas/historical_adapter_review/trading_2476_v1/validation.json
+    artifact_selection_policy: latest_available
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Rebuild when the TRADING-2475 inventory identity, exact candidate bytes,
+      allowlist, reviewed slot policy, or adapter-readiness rules change.
+    owner_action: review_candidate_id_and_artifact_sha_before_source_registration
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+    production_effect: none
+    broker_action: none

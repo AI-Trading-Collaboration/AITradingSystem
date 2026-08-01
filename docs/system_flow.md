@@ -95,6 +95,16 @@ inventory identity、input receipts、path-manifest hash、records 与 totals；
 审计输入，尚未接入当前页面，不改变 Atlas snapshot 的 8 results / 12 attributions，也不执行 DQ、
 model、backtest、HTTP/LLM、production 或 broker action。
 
+TRADING-2476 以该 inventory 为审计入口，只读取六组冻结 JSON/Markdown companion（12 条 exact
+allowlist paths）形成首批 historical adapter review pack。reader 保存 candidate Git blob/content
+receipts、bounded JSON pointer/type inventory、Markdown title/token presence，并按 reviewed policy
+机械检查 identity/window/lineage/result-or-status/limitation 五类结构槽；除 exact identifiers、candidate
+paths 与 bounded title 外，不序列化 status/result/limitation 等研究字段值。当前 5 组结构槽齐全但仍
+`NEEDS_SOURCE_REGISTRATION`，ROADMAP 缺 lineage 槽而为 `NEEDS_SCHEMA_NORMALIZATION`。这些状态只说明
+adapter readiness，不是研究或投资 verdict。独立 validator 从 exact commit、TRADING-2475 inventory
+与 allowlist bytes 重建 pack；本任务不修改 Atlas source registry、snapshot/public query schema 或页面，
+不生成 result/attribution，也不执行 DQ、model、backtest、HTTP/LLM、production 或 broker action。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -128,12 +138,17 @@ flowchart LR
     SRC --> HINV
     HINV --> HVAL["Independent inventory validation<br/>receipts + manifest + records + totals"]
     HVAL --> HOUT["Canonical inventory JSON + Markdown<br/>historical adapter selection input"]
+    HOUT --> AREV["TRADING-2476 adapter review pack<br/>6 families / 12 exact allowlist artifacts"]
+    AART["Exact-commit candidate blobs<br/>JSON shape + Markdown companion"] --> AREV
+    AREV --> AVAL["Independent adapter review validation<br/>receipts + slots + dispositions"]
+    AVAL --> AOUT["Owner review JSON + Markdown<br/>no source registration or result projection"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
     DWEB -.-> NONE
     QWEB -.-> NONE
     HOUT -.-> NONE
+    AOUT -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。

@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1229
-test_count: 1169
+test_file_count: 1230
+test_count: 1170
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -76,6 +76,22 @@ tests:
 - test_id: tests.atlas.test_diff_validation
   path: tests/atlas/test_diff_validation.py
   sha256: cf924ed874988ebec1ce647e2dc5515c1ca8bf2951686401458b151bfbc7471f
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.atlas.test_historical_adapter_review
+  path: tests/atlas/test_historical_adapter_review.py
+  sha256: 3225ab813f248762cbfd52ea0636ee50117a02ee019a44e8f79492d203466aea
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -7834,7 +7850,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: d3207aec825dd925f752ea616e51d910433fcebac749edf2e50ab5c83812bbfc
+  sha256: bcdad665ef5a93c008e0347a935c365629ce9d8656d4efabdbeedbec9ec1312d
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8122,7 +8138,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004f3_reporting_architecture
   path: tests/test_arch_004f3_reporting_architecture.py
-  sha256: ddd3465d28ed62f7703abb89a834531a043223af29a52048bcf78ba0781fa9bd
+  sha256: 89cda7e46ec3bd26698b686d58b02bfb7f9e42f286cce1dc8dadc640a8f7c787
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8230,7 +8246,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 3aa38c0133de9164bb525e55887ecf6b56f918c795e18582dd17836e3567686b
+  sha256: 98564918b2d46b4519e86b6a2d0356f5a12cea8a576378f153553da8ddde4b44
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality

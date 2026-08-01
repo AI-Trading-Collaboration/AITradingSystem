@@ -1562,7 +1562,31 @@ TRADING_2475_HISTORICAL_COVERAGE_NEW_SOURCE_PATHS = frozenset(
         "tests/atlas/test_historical_coverage_inventory.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2475_HISTORICAL_COVERAGE_SECTION
+TRADING_2476_ADAPTER_REVIEW_SECTION = "phase_trading_2476_atlas_historical_adapter_review_closeout"
+TRADING_2476_ADAPTER_REVIEW_BASE_COMMIT = "b385f4140b54d936c57f889a55c6f5ba99d074f9"
+TRADING_2476_ADAPTER_REVIEW_BASELINE_GIT_BLOB = "8453fa6fbed66bcba7ec915e40fb4a7005a1baf7"
+TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT = 2_325_805
+TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_SHA256 = (
+    "3dc035b0774af414d2066d78d58c324cde56e051e739ce4d72186afa8c7ef2fe"
+)
+TRADING_2476_ADAPTER_REVIEW_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2476_ADAPTER_REVIEW_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/atlas/historical_adapter_review_policy.yaml",
+        "docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md",
+        (
+            "registry/development_tasks_shadow/active/6e/"
+            "6efdb8af5737f89e41f3467dc553c6308b441767c303da39c76a4d6f6b133ca3.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/6e/"
+            "6efdb8af5737f89e41f3467dc553c6308b441767c303da39c76a4d6f6b133ca3.yaml"
+        ),
+        "src/ai_trading_system/atlas/historical_adapter_review.py",
+        "tests/atlas/test_historical_adapter_review.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2476_ADAPTER_REVIEW_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3276,6 +3300,23 @@ def _trading_2475_historical_coverage_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2476_adapter_review_base_baseline_blob() -> bytes:
+    object_name = f"{TRADING_2476_ADAPTER_REVIEW_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2476_ADAPTER_REVIEW_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -4963,6 +5004,26 @@ def _assert_trading_2475_historical_coverage_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2475_HISTORICAL_COVERAGE_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2476_adapter_review_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2476 adapter-review historical prefix differs from immutable "
+        "TRADING-2475 historical-coverage authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2476_ADAPTER_REVIEW_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -7113,6 +7174,34 @@ def _trading_2475_historical_coverage_all_current_authority_paths() -> frozenset
 
 
 @cache
+def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2476_adapter_review_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2476_adapter_review_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2476_ADAPTER_REVIEW_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2476_adapter_review_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2476_ADAPTER_REVIEW_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2476_adapter_review_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2476_adapter_review_superseded_live_source_paths()
+        | _trading_2476_adapter_review_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _trading_2463_superseded_live_source_paths()
@@ -8133,6 +8222,7 @@ def _trading_2470_cited_query_contract_prior_active_source_mismatches() -> froze
         | _trading_2473_evidence_drilldown_all_current_authority_paths()
         | _trading_2474_result_ledger_all_current_authority_paths()
         | _trading_2475_historical_coverage_all_current_authority_paths()
+        | _trading_2476_adapter_review_all_current_authority_paths()
     )
     recorded_superseded_paths = _trading_2470_cited_query_contract_superseded_live_source_paths()
     return _latest_active_source_mismatches(TRADING_2470_CITED_QUERY_CONTRACT_SECTION) - (
@@ -8151,6 +8241,7 @@ def _trading_2470_cited_query_amendment_prior_active_source_mismatches() -> froz
             | _trading_2473_evidence_drilldown_all_current_authority_paths()
             | _trading_2474_result_ledger_all_current_authority_paths()
             | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -8166,6 +8257,7 @@ def _trading_2470_cited_query_consumer_prior_active_source_mismatches() -> froze
             | _trading_2473_evidence_drilldown_all_current_authority_paths()
             | _trading_2474_result_ledger_all_current_authority_paths()
             | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -8180,6 +8272,7 @@ def _trading_2471_flow_focus_prior_active_source_mismatches() -> frozenset[str]:
             | _trading_2473_evidence_drilldown_all_current_authority_paths()
             | _trading_2474_result_ledger_all_current_authority_paths()
             | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -8193,6 +8286,7 @@ def _trading_2472_status_provenance_prior_active_source_mismatches() -> frozense
             _trading_2473_evidence_drilldown_all_current_authority_paths()
             | _trading_2474_result_ledger_all_current_authority_paths()
             | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -8205,6 +8299,7 @@ def _trading_2473_evidence_drilldown_prior_active_source_mismatches() -> frozens
         (
             _trading_2474_result_ledger_all_current_authority_paths()
             | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -8214,13 +8309,25 @@ def _trading_2473_evidence_drilldown_prior_active_source_mismatches() -> frozens
 def _trading_2474_result_ledger_prior_active_source_mismatches() -> frozenset[str]:
     recorded_superseded_paths = _trading_2474_result_ledger_superseded_live_source_paths()
     return _latest_active_source_mismatches(TRADING_2474_RESULT_LEDGER_SECTION) - (
-        _trading_2475_historical_coverage_all_current_authority_paths() - recorded_superseded_paths
+        (
+            _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+        )
+        - recorded_superseded_paths
     )
 
 
 @cache
 def _trading_2475_historical_coverage_prior_active_source_mismatches() -> frozenset[str]:
-    return _latest_active_source_mismatches(TRADING_2475_HISTORICAL_COVERAGE_SECTION)
+    recorded_superseded_paths = _trading_2475_historical_coverage_superseded_live_source_paths()
+    return _latest_active_source_mismatches(TRADING_2475_HISTORICAL_COVERAGE_SECTION) - (
+        _trading_2476_adapter_review_all_current_authority_paths() - recorded_superseded_paths
+    )
+
+
+@cache
+def _trading_2476_adapter_review_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2476_ADAPTER_REVIEW_SECTION)
 
 
 def _trading_2470_prior_hash_authority_paths(
@@ -8266,7 +8373,17 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2475_HISTORICAL_COVERAGE_SECTION in baseline:
+    if TRADING_2476_ADAPTER_REVIEW_SECTION in baseline:
+        current_superseded_paths = _trading_2476_adapter_review_superseded_live_source_paths()
+        assert _trading_2476_adapter_review_prior_active_source_mismatches() == (
+            current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2475_historical_coverage_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2476_ADAPTER_REVIEW_SECTION
+    elif TRADING_2475_HISTORICAL_COVERAGE_SECTION in baseline:
         current_superseded_paths = _trading_2475_historical_coverage_superseded_live_source_paths()
         assert _trading_2475_historical_coverage_prior_active_source_mismatches() == (
             current_superseded_paths
@@ -18844,7 +18961,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 938
+    assert v2_index["fragment_count"] == 939
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -20357,7 +20474,8 @@ def test_trading_2475_historical_coverage_is_current_hash_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2475_HISTORICAL_COVERAGE_SECTION
+    assert TRADING_2475_HISTORICAL_COVERAGE_SECTION in baseline
+    assert next(reversed(baseline)) == TRADING_2476_ADAPTER_REVIEW_SECTION
     phase = baseline[TRADING_2475_HISTORICAL_COVERAGE_SECTION]
     assert phase["schema_version"] == (
         "trading_2475_atlas_historical_coverage_inventory_compatibility.v1"
@@ -20402,8 +20520,11 @@ def test_trading_2475_historical_coverage_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    current_superseded = _trading_2476_adapter_review_superseded_live_source_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in current_superseded:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
@@ -20500,6 +20621,166 @@ def test_trading_2475_historical_coverage_is_current_hash_authority() -> None:
     tampered[TRADING_2475_HISTORICAL_COVERAGE_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2475_historical_coverage_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2476_adapter_review_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2476_adapter_review_base_baseline_blob()
+    _assert_trading_2476_adapter_review_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2476_ADAPTER_REVIEW_SECTION
+    phase = baseline[TRADING_2476_ADAPTER_REVIEW_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2476_atlas_historical_adapter_review_compatibility.v1"
+    )
+    assert phase["status"] in {"VALIDATING", "BASELINE_DONE"}
+    assert phase["boundary_id"] == "TRADING-2476-ATLAS-HISTORICAL-ADAPTER-REVIEW"
+    assert phase["task_ids"] == ["TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1"]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2476:2026-08-01:" "advance_atlas_historical_adapter_review_pack_v1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2476_ADAPTER_REVIEW_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2476_ADAPTER_REVIEW_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(_trading_2476_adapter_review_prior_active_source_mismatches())
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2476_ADAPTER_REVIEW_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == TRADING_2476_ADAPTER_REVIEW_NEW_SOURCE_PATHS
+    expected = (
+        superseded | TRADING_2476_ADAPTER_REVIEW_NEW_SOURCE_PATHS
+    ) - TRADING_2476_ADAPTER_REVIEW_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2476-ATLAS-HISTORICAL-ADAPTER-REVIEW",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2475_HISTORICAL_COVERAGE_SECTION,
+        "current_hash_authority": f"{TRADING_2476_ADAPTER_REVIEW_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["implementation"] == {
+        "implementation_checkpoint": TRADING_2476_ADAPTER_REVIEW_BASE_COMMIT,
+        "review_pack_id": "atlas_historical_adapter_review_c6762a379ab3eeb7bb49",
+        "inventory_id": "atlas_historical_coverage_inventory_3a09ccafea85f96382db",
+        "candidate_family_count": 6,
+        "candidate_artifact_count": 12,
+        "complete_required_slot_candidate_count": 5,
+        "owner_review_ready_candidate_count": 5,
+        "source_registration_candidate_count": 5,
+        "schema_normalization_candidate_count": 1,
+        "rejected_candidate_count": 0,
+        "allowlist_outside_research_content_read_count": 0,
+        "source_registration_performed": False,
+        "atlas_result_projection_performed": False,
+        "research_value_projection_performed": False,
+        "current_page_connected": False,
+        "current_snapshot_source_count": 8,
+        "current_snapshot_result_count": 8,
+        "current_snapshot_attribution_count": 12,
+        "task_shadow_source": "LEGACY_MARKDOWN_ONLY",
+        "task_shadow_v2_cutover_performed": False,
+    }
+    candidate_artifacts = phase["candidate_artifacts"]
+    candidate_paths = [str(item["path"]) for item in candidate_artifacts]
+    assert len(candidate_paths) == 12
+    assert candidate_paths == sorted(candidate_paths, key=str.casefold)
+    assert len(candidate_paths) == len(set(candidate_paths))
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in candidate_paths
+    assert all(len(str(item["git_blob_sha1"])) == 40 for item in candidate_artifacts)
+    assert all(len(str(item["sha256"])) == 64 for item in candidate_artifacts)
+    assert all(
+        type(item["size_bytes"]) is int and item["size_bytes"] > 0 for item in candidate_artifacts
+    )
+    assert phase["preview_artifacts"] == [
+        {
+            "path": ("outputs/atlas/historical_adapter_review/trading_2476_v1/" "review_pack.json"),
+            "sha256": "0bc741fadc5664194133365b83185b000f85041b3c1d45dcb2e16e48564102ec",
+            "size_bytes": 87970,
+        },
+        {
+            "path": ("outputs/atlas/historical_adapter_review/trading_2476_v1/" "review_pack.md"),
+            "sha256": "f34e65eb280943c50f17957d648022d3f85fc0667a47869ba6080d6feaf80628",
+            "size_bytes": 3190,
+        },
+        {
+            "path": ("outputs/atlas/historical_adapter_review/trading_2476_v1/" "validation.json"),
+            "sha256": "ab365582080f494a8ba204256d7cd0787eec2d21073e78cb88de072310805491",
+            "size_bytes": 1372,
+        },
+    ]
+    validation = phase["validation"]
+    assert set(validation) == {
+        "review_focused",
+        "atlas_reporting_focused",
+        "ruff",
+        "black",
+        "mypy",
+        "actual_input_double_build",
+        "research_value_boundary",
+        "task_registry",
+        "generated_architecture",
+        "deprecation_inventory",
+        "compatibility_authority",
+        "architecture",
+        "contract",
+        "integration",
+        "reproducibility",
+        "full",
+        "final_tree_architecture",
+        "final_tree_contract",
+    }
+    assert validation["review_focused"] == "PASS_5_TESTS"
+    assert validation["atlas_reporting_focused"] == "PASS_82_TESTS"
+    assert all(value == "PENDING" or str(value).startswith("PASS") for value in validation.values())
+    assert phase["safety"] == {
+        "snapshot_or_diff_semantics_changed": False,
+        "query_public_contract_changed": False,
+        "candidate_artifact_content_read_count": 12,
+        "allowlist_outside_research_content_read_count": 0,
+        "research_field_value_projection_executed": False,
+        "source_registration_executed": False,
+        "result_or_attribution_projection_executed": False,
+        "market_or_cache_read": False,
+        "external_network_used": False,
+        "llm_called": False,
+        "investment_conclusion_generated": False,
+        "data_acquisition_executed": False,
+        "dq_execution_executed": False,
+        "model_training_executed": False,
+        "backtest_executed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2476_ADAPTER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2476_adapter_review_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

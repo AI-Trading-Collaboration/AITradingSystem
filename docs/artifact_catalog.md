@@ -74,6 +74,12 @@ Browser 自动刷新仍被本地 `file://` URL policy 阻止且未绕过；Owner
 visual acceptance。该 ledger 不重算研究/归因，不是自由文本 RAG、LLM authority、
 HTTP 服务、投资建议或 strategy approval。
 
+## TRADING-2476 Atlas Historical Adapter Review Pack V1
+
+|Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
+|---|---|---|---|---|---|---|
+|`config/atlas/historical_adapter_review_policy.yaml`<br/>`outputs/atlas/historical_adapter_review/trading_2476_v1/review_pack.json`<br/>`outputs/atlas/historical_adapter_review/trading_2476_v1/review_pack.md`<br/>`outputs/atlas/historical_adapter_review/trading_2476_v1/validation.json`|Registry command `python_api_ai_trading_system_atlas_write_historical_adapter_review_artifacts`；Python API `build_historical_adapter_review` / `write_historical_adapter_review_artifacts`；independent `validate_historical_adapter_review`|TRADING-2475 inventory `atlas_historical_coverage_inventory_3a09ccafea85f96382db`、exact commit `b385f4140b54d936c57f889a55c6f5ba99d074f9` 与六组 JSON/Markdown exact allowlist blobs|`atlas_historical_adapter_review_policy.v1`、`atlas_historical_adapter_review_pack.v1`、`atlas_historical_adapter_review_validation.v1`；inventory/classification、Git blob/content receipts、bounded pointer/type inventory、companion title/token、five-slot readiness、known exclusion/no-projection 与 canonical rebuild byte identity|Project Owner 审阅 candidate id + artifact SHA；后续 source registration/typed adapter/page projection 必须另获授权并另立任务|否；`production_effect=none`、`broker_action=none`|Pack=`atlas_historical_adapter_review_c6762a379ab3eeb7bb49`。六组中 `5 NEEDS_SOURCE_REGISTRATION / 1 NEEDS_SCHEMA_NORMALIZATION / 0 rejected`；三份输出为 `87970 / 3190 / 1372 bytes`，SHA-256=`0bc741fa… / f34e65eb… / ab365582…`，actual-input double-build byte-identical、validation=`PASS / 17 checks`。只保存 identifiers/path/title 与字段形态，不保存 status/result/limitation 等研究值；Atlas 8/8/12 与 cited-query HTML 不变。|
+
 ## TRADING-2475 Atlas Historical Research Coverage Inventory V1
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
