@@ -40474,7 +40474,7 @@ phase_ops_073_nonrecoverable_terminal_disposition_and_ordinary_acceptance_routin
     sha256: ab8b264711dbfa5cab0fa1db192ef8e7affe354fd05b85a7c64e1ac54f48f40f
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: 9b28abd4d576a1723a9296be84ff799e534167e61ae7eea38a8553bb500eedab
+    sha256: 2d2a7bcdb59604eaf1cbfaa7460828867e3506f7b3cdb2740470aa1396a52310
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
     sha256: 57cd87996111c68fe2c37886982e7437984ef2d5e23f21ac9e11c2b0fd829041
@@ -41512,7 +41512,7 @@ phase_ops_073_nonrecoverable_terminal_disposition_and_ordinary_acceptance_routin
     sha256: 2edee3d80298c519929db90d0b85be803eac2051451328ad401f831bed5c099e
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: e6d17d1ff5bf2ff24b6657c69180b81255ed57a7c1cea71daa80f31a3b10321e
+    sha256: e3ac99acb23705a4a2ad7f2d67fb8b4871d6666c5713ea7ae61b14f1857dc649
     hash_normalization: git_eol_lf
   - path: tests/test_ops_scheduler_checkout.py
     sha256: 8b3fc8a07893ebbd8341d324220be6c35e1e9e0bd832ca580d731aa1ac53b2c8

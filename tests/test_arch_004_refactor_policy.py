@@ -7702,10 +7702,13 @@ def _trading_2477_historical_adapter_source_paths() -> frozenset[str]:
 
 @cache
 def _trading_2477_historical_adapter_all_current_authority_paths() -> frozenset[str]:
-    return (
+    paths = (
         _trading_2477_historical_adapter_superseded_live_source_paths()
         | _trading_2477_historical_adapter_source_paths()
     )
+    if OPS_073_TERMINAL_DISPOSITION_SECTION in _compatibility_baseline():
+        paths |= _ops_073_terminal_disposition_all_current_authority_paths()
+    return paths
 
 
 @cache
@@ -8373,12 +8376,17 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         for path, source in active.items()
         if not _source_matches_checkout(source, normalization_migrations)
     )
-    if stop_section != OPS_072_TRANSPORT_SECTION and OPS_072_TRANSPORT_SECTION in baseline:
+    for authority_section in (
+        OPS_072_TRANSPORT_SECTION,
+        OPS_073_TERMINAL_DISPOSITION_SECTION,
+    ):
+        if stop_section == authority_section or authority_section not in baseline:
+            continue
         section_ids = list(baseline)
         stop_index = section_ids.index(stop_section)
-        ops_index = section_ids.index(OPS_072_TRANSPORT_SECTION)
-        last_pre_ops_owner: dict[str, int] = {}
-        for section_index, section_id in enumerate(section_ids[:ops_index]):
+        authority_index = section_ids.index(authority_section)
+        last_pre_authority_owner: dict[str, int] = {}
+        for section_index, section_id in enumerate(section_ids[:authority_index]):
             section = baseline[section_id]
             if not isinstance(section, dict):
                 continue
@@ -8394,18 +8402,19 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
                         for key, value in source.items()
                     )
                     if not is_historical:
-                        last_pre_ops_owner[str(source["path"])] = section_index
+                        last_pre_authority_owner[str(source["path"])] = section_index
         recorded_superseded_paths = {
             str(path) for path in baseline[stop_section].get("superseded_live_source_paths", [])
         }
-        ops_superseded_paths = {
-            str(path)
-            for path in baseline[OPS_072_TRANSPORT_SECTION]["superseded_live_source_paths"]
+        authority_superseded_paths = {
+            str(path) for path in baseline[authority_section]["superseded_live_source_paths"]
         }
         retroactive_paths = {
-            path for path in ops_superseded_paths if last_pre_ops_owner.get(path, -1) < stop_index
+            path
+            for path in authority_superseded_paths
+            if last_pre_authority_owner.get(path, -1) < stop_index
         }
-        return mismatches - (retroactive_paths - recorded_superseded_paths)
+        mismatches = mismatches - (retroactive_paths - recorded_superseded_paths)
     return mismatches
 
 
