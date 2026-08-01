@@ -1936,7 +1936,33 @@ TRADING_2477_HISTORICAL_ADAPTER_NEW_SOURCE_PATHS = frozenset(
         "tests/atlas/test_historical_source_adapters.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2477_HISTORICAL_ADAPTER_SECTION
+OPS_073_TERMINAL_DISPOSITION_SECTION = (
+    "phase_ops_073_nonrecoverable_terminal_disposition_and_ordinary_acceptance_routing"
+)
+OPS_073_TERMINAL_DISPOSITION_BASE_COMMIT = "d90e1abcbea2f5c0451816a67e24d832d9a446c0"
+OPS_073_TERMINAL_DISPOSITION_BASELINE_GIT_BLOB = "d7e4da4cb2de966fbe2df69dbf86fe7b1ed9ea9a"
+OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_BYTE_COUNT = 2_523_436
+OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_SHA256 = (
+    "1fad82ec28a9550b0fcd0414104ded9efffc270e63efc62439e08ca9f64e57b2"
+)
+OPS_073_TERMINAL_DISPOSITION_REMOVED_SOURCE_PATHS = frozenset()
+OPS_073_TERMINAL_DISPOSITION_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "docs/requirements/OPS-073_Nonrecoverable_Terminal_Disposition_"
+            "and_Ordinary_Acceptance_Routing.md"
+        ),
+        (
+            "registry/development_tasks_shadow/active/3f/"
+            "3f59652a611696fac4af4e7ae8bf38c7b2d9af7da2e22d285e091e627ff750a7.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/3f/"
+            "3f59652a611696fac4af4e7ae8bf38c7b2d9af7da2e22d285e091e627ff750a7.yaml"
+        ),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = OPS_073_TERMINAL_DISPOSITION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3697,6 +3723,25 @@ def _trading_2477_historical_adapter_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _ops_073_terminal_disposition_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{OPS_073_TERMINAL_DISPOSITION_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == OPS_073_TERMINAL_DISPOSITION_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -5442,6 +5487,27 @@ def _assert_trading_2477_historical_adapter_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2477_HISTORICAL_ADAPTER_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_ops_073_terminal_disposition_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert (
+        hashlib.sha256(base_blob).hexdigest()
+        == OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "OPS-073 terminal-disposition historical prefix differs from immutable "
+        "TRADING-2477 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{OPS_073_TERMINAL_DISPOSITION_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -7643,6 +7709,34 @@ def _trading_2477_historical_adapter_all_current_authority_paths() -> frozenset[
 
 
 @cache
+def _ops_073_terminal_disposition_superseded_live_source_paths() -> frozenset[str]:
+    _assert_ops_073_terminal_disposition_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _ops_073_terminal_disposition_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[OPS_073_TERMINAL_DISPOSITION_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _ops_073_terminal_disposition_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[OPS_073_TERMINAL_DISPOSITION_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _ops_073_terminal_disposition_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _ops_073_terminal_disposition_superseded_live_source_paths()
+        | _ops_073_terminal_disposition_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -8863,7 +8957,15 @@ def _ops_072_transport_prior_active_source_mismatches() -> frozenset[str]:
 
 @cache
 def _trading_2477_historical_adapter_prior_active_source_mismatches() -> frozenset[str]:
-    return _latest_active_source_mismatches(TRADING_2477_HISTORICAL_ADAPTER_SECTION)
+    recorded = _trading_2477_historical_adapter_superseded_live_source_paths()
+    return _latest_active_source_mismatches(TRADING_2477_HISTORICAL_ADAPTER_SECTION) - (
+        _ops_073_terminal_disposition_all_current_authority_paths() - recorded
+    )
+
+
+@cache
+def _ops_073_terminal_disposition_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(OPS_073_TERMINAL_DISPOSITION_SECTION)
 
 
 def _trading_2470_prior_hash_authority_paths(
@@ -8909,7 +9011,28 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2477_HISTORICAL_ADAPTER_SECTION in baseline:
+    if OPS_073_TERMINAL_DISPOSITION_SECTION in baseline:
+        current_superseded_paths = _ops_073_terminal_disposition_superseded_live_source_paths()
+        assert (
+            _ops_073_terminal_disposition_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2470_cited_query_contract_all_current_authority_paths()
+            | _trading_2470_cited_query_amendment_all_current_authority_paths()
+            | _trading_2470_cited_query_consumer_all_current_authority_paths()
+            | _trading_2471_flow_focus_all_current_authority_paths()
+            | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+            | _ops_072_transport_all_current_authority_paths()
+            | _trading_2477_historical_adapter_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = OPS_073_TERMINAL_DISPOSITION_SECTION
+    elif TRADING_2477_HISTORICAL_ADAPTER_SECTION in baseline:
         current_superseded_paths = _trading_2477_historical_adapter_superseded_live_source_paths()
         assert _trading_2477_historical_adapter_prior_active_source_mismatches() == (
             current_superseded_paths
@@ -19525,7 +19648,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 941
+    assert v2_index["fragment_count"] == 942
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -21420,12 +21543,14 @@ def test_ops_072_transport_is_current_hash_authority() -> None:
         _assert_ops_072_transport_historical_prefix_immutable(bytes(tampered), base_blob)
 
 
-def test_trading_2477_historical_adapter_is_current_hash_authority() -> None:
+def test_trading_2477_historical_adapter_is_predecessor_hash_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     base_blob = _trading_2477_historical_adapter_base_baseline_blob()
     _assert_trading_2477_historical_adapter_prefix_immutable(current_bytes, base_blob)
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2477_HISTORICAL_ADAPTER_SECTION
+    assert list(baseline).index(TRADING_2477_HISTORICAL_ADAPTER_SECTION) + 1 == list(
+        baseline
+    ).index(OPS_073_TERMINAL_DISPOSITION_SECTION)
     phase = baseline[TRADING_2477_HISTORICAL_ADAPTER_SECTION]
     assert phase["schema_version"] == (
         "trading_2477_atlas_historical_source_registration_typed_adapter_compatibility.v1"
@@ -21476,7 +21601,7 @@ def test_trading_2477_historical_adapter_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["research_window"] == {
         "primary_research_start": "2021-02-22",
@@ -21530,6 +21655,116 @@ def test_trading_2477_historical_adapter_is_current_hash_authority() -> None:
     tampered[TRADING_2477_HISTORICAL_ADAPTER_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2477_historical_adapter_prefix_immutable(bytes(tampered), base_blob)
+
+
+def test_ops_073_terminal_disposition_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _ops_073_terminal_disposition_base_baseline_blob()
+    _assert_ops_073_terminal_disposition_historical_prefix_immutable(current_bytes, base_blob)
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == OPS_073_TERMINAL_DISPOSITION_SECTION
+    phase = baseline[OPS_073_TERMINAL_DISPOSITION_SECTION]
+    assert phase["schema_version"] == (
+        "ops_073_nonrecoverable_terminal_disposition_compatibility.v1"
+    )
+    assert phase["status"] == "VALIDATING"
+    assert phase["boundary_id"] == (
+        "OPS-073-NONRECOVERABLE-TERMINAL-DISPOSITION-AND-ORDINARY-ACCEPTANCE"
+    )
+    assert phase["task_ids"] == [
+        "OPS-073_NONRECOVERABLE_TERMINAL_DISPOSITION_AND_ORDINARY_ACCEPTANCE_ROUTING"
+    ]
+    assert phase["owner_decisions"] == [
+        "owner_decision:OPS-073:2026-08-02:"
+        "add_terminal_disposition_and_single_scheduler_acceptance_v1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": OPS_073_TERMINAL_DISPOSITION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": OPS_073_TERMINAL_DISPOSITION_BASELINE_GIT_BLOB,
+        "raw_byte_count": OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_SHA256,
+        "append_offset": OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(_ops_073_terminal_disposition_prior_active_source_mismatches())
+    assert (
+        set(phase["removed_live_source_paths"]) == OPS_073_TERMINAL_DISPOSITION_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == OPS_073_TERMINAL_DISPOSITION_NEW_SOURCE_PATHS
+    expected = (
+        superseded | OPS_073_TERMINAL_DISPOSITION_NEW_SOURCE_PATHS
+    ) - OPS_073_TERMINAL_DISPOSITION_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "OPS-073-NONRECOVERABLE-TERMINAL-DISPOSITION-AND-ORDINARY-ACCEPTANCE"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2477_HISTORICAL_ADAPTER_SECTION,
+        "current_hash_authority": f"{OPS_073_TERMINAL_DISPOSITION_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["research_window"] == {
+        "primary_research_start": "2021-02-22",
+        "legacy_2022_default_active": False,
+    }
+    assert phase["implementation"] == {
+        "terminal_disposition_policy_version": "3.0.0",
+        "disposition_count": 4,
+        "same_as_of_ordinary_allowed": False,
+        "ordinary_requires_later_as_of": True,
+        "ordinary_requires_fresh_key_and_no_lock": True,
+        "nonrecoverable_parent_recovery_allowed": False,
+        "existing_scheduler_reused": True,
+        "new_business_scheduler_added": False,
+        "first_provider_ready_jst": "2026-08-04T08:00:00+09:00",
+        "first_existing_scheduler_gate_jst": "2026-08-04T09:30:00+09:00",
+        "task_shadow_source": "LEGACY_MARKDOWN_ONLY",
+        "task_shadow_v2_cutover_performed": False,
+    }
+    assert phase["validation"] == {
+        "focused": "PASS_31_TESTS",
+        "fast_unit": "PASS_347_TESTS",
+        "architecture_frozen_lane": "PASS_821_TESTS",
+        "contract_frozen_lane": "PASS_276_TESTS",
+        "integration_frozen_lane": "PASS_995_TESTS",
+        "reproducibility_frozen_lane": "PASS_24_TESTS",
+        "full_frozen_lane": "FAIL_NONFORMAL_RESOURCE_COMPETITION_AND_BASE_DRIFT",
+        "final_integration_gates": "PENDING_EXCLUSIVE_SERIAL_RERUN",
+    }
+    assert phase["safety"] == {
+        "runtime_checkout_directly_modified": False,
+        "daily_trigger_executed": False,
+        "second_scheduler_added": False,
+        "recovery_allowlist_expanded": False,
+        "production_weight_write": False,
+        "active_shadow_weight_write": False,
+        "broker_action": "none",
+        "trading_action": False,
+        "production_effect": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[OPS_073_TERMINAL_DISPOSITION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_ops_073_terminal_disposition_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
 
 
 def test_trading_2463_s4_freeze_records_approved_policy_and_stops() -> None:
