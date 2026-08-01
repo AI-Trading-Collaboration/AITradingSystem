@@ -8128,6 +8128,11 @@ def _trading_2470_cited_query_contract_prior_active_source_mismatches() -> froze
     later_authority_paths = (
         _trading_2470_cited_query_amendment_all_current_authority_paths()
         | _trading_2470_cited_query_consumer_all_current_authority_paths()
+        | _trading_2471_flow_focus_all_current_authority_paths()
+        | _trading_2472_status_provenance_all_current_authority_paths()
+        | _trading_2473_evidence_drilldown_all_current_authority_paths()
+        | _trading_2474_result_ledger_all_current_authority_paths()
+        | _trading_2475_historical_coverage_all_current_authority_paths()
     )
     recorded_superseded_paths = _trading_2470_cited_query_contract_superseded_live_source_paths()
     return _latest_active_source_mismatches(TRADING_2470_CITED_QUERY_CONTRACT_SECTION) - (
@@ -8144,6 +8149,8 @@ def _trading_2470_cited_query_amendment_prior_active_source_mismatches() -> froz
             | _trading_2471_flow_focus_all_current_authority_paths()
             | _trading_2472_status_provenance_all_current_authority_paths()
             | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -18792,6 +18799,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
     assert superseded <= current_prior_drift
     assert current_prior_drift - superseded <= set(
         _trading_2466_2467_integration_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
     )
     assert phase["supersession"] == {
         "superseded_by_phase": (
@@ -18815,7 +18823,10 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
-    current_superseded = _trading_2466_2467_integration_superseded_live_source_paths()
+    current_superseded = (
+        _trading_2466_2467_integration_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in current_superseded:
@@ -18833,7 +18844,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 937
+    assert v2_index["fragment_count"] == 938
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -18922,7 +18933,7 @@ def test_trading_2466_2467_integration_is_current_hash_authority() -> None:
             if TRADING_2469_DIFF_CONTRACT_SECTION in _compatibility_baseline()
             else _trading_2468_atlas_coverage_superseded_live_source_paths()
         )
-    )
+    ) | _trading_2475_historical_coverage_superseded_live_source_paths()
     assert current_prior_drift - superseded <= set(current_successor_superseded)
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2466_2467_INTEGRATION_REMOVED_SOURCE_PATHS
@@ -19019,7 +19030,7 @@ def test_trading_2468_atlas_coverage_is_current_hash_authority() -> None:
         | _trading_2469_diff_consumer_superseded_live_source_paths()
         if TRADING_2469_DIFF_CONSUMER_SECTION in _compatibility_baseline()
         else _trading_2469_diff_contract_superseded_live_source_paths()
-    )
+    ) | _trading_2475_historical_coverage_superseded_live_source_paths()
     assert current_prior_drift - superseded <= set(current_successor_superseded)
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2468_ATLAS_COVERAGE_REMOVED_SOURCE_PATHS
@@ -19123,6 +19134,7 @@ def test_trading_2469_diff_contract_is_current_hash_authority() -> None:
         | _trading_2470_cited_query_contract_superseded_live_source_paths()
         | _trading_2470_cited_query_amendment_superseded_live_source_paths()
         | _trading_2470_cited_query_consumer_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
     )
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2469_DIFF_CONTRACT_REMOVED_SOURCE_PATHS
@@ -19151,6 +19163,7 @@ def test_trading_2469_diff_contract_is_current_hash_authority() -> None:
         | _trading_2470_cited_query_contract_superseded_live_source_paths()
         | _trading_2470_cited_query_amendment_superseded_live_source_paths()
         | _trading_2470_cited_query_consumer_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
@@ -19233,6 +19246,7 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
         _trading_2470_cited_query_contract_superseded_live_source_paths()
         | _trading_2470_cited_query_amendment_superseded_live_source_paths()
         | _trading_2470_cited_query_consumer_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
     )
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2469_DIFF_CONSUMER_REMOVED_SOURCE_PATHS
@@ -19260,6 +19274,7 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
         _trading_2470_cited_query_contract_superseded_live_source_paths()
         | _trading_2470_cited_query_amendment_superseded_live_source_paths()
         | _trading_2470_cited_query_consumer_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
@@ -19374,6 +19389,7 @@ def test_trading_2470_cited_query_contract_is_current_hash_authority() -> None:
         | _trading_2470_cited_query_consumer_superseded_live_source_paths()
         | _trading_2471_flow_focus_superseded_live_source_paths()
         | _trading_2472_status_provenance_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
@@ -19487,6 +19503,7 @@ def test_trading_2470_cited_query_amendment_is_current_hash_authority() -> None:
         _trading_2470_cited_query_consumer_superseded_live_source_paths()
         | _trading_2471_flow_focus_superseded_live_source_paths()
         | _trading_2472_status_provenance_superseded_live_source_paths()
+        | _trading_2475_historical_coverage_superseded_live_source_paths()
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
