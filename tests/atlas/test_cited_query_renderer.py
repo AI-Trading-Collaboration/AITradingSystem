@@ -102,6 +102,15 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "待人工复核",
         "状态依据台账",
         "为什么是这个状态",
+        "怎样展开",
+        "展开节点依据",
+        "收起节点依据",
+        "这个节点现在意味着什么",
+        "状态为什么是这样",
+        "可以确认",
+        "不能推出",
+        "下一合法动作",
+        "不支持的问题必须通过独立任务扩展合同",
         "CANONICAL_SNAPSHOT_FIELD",
         "CANONICAL_SNAPSHOT_RELATION",
         "INDEPENDENT_VALIDATION",
@@ -127,7 +136,19 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     for response in showcase.responses:
         assert response.request.target_id in html
     assert html.count('class="flow-stage ') == 8
+    assert html.count('class="flow-stage-shell"') == 8
+    assert html.count('data-drilldown-stage="') == 8
+    assert html.count('class="stage-drilldown"') == 8
+    assert html.count('class="drilldown-grid"') == 8
+    assert html.count('class="drilldown-evidence"') == 8
     assert html.count('aria-current="step"') == 1
+    assert html.count(' open aria-current="step"') == 1
+    assert (
+        '<details class="flow-stage flow-current" '
+        'data-stage="CITATION_FIRST_QUERY" '
+        'data-progress-status="VALIDATED" '
+        'data-drilldown-stage="CITATION_FIRST_QUERY" open aria-current="step">'
+    ) in html
     assert html.count('data-progress-status="NOT_EXECUTED_BY_PAGE"') == 2
     assert html.count('data-progress-status="IN_PROGRESS"') == 1
     assert html.count('data-progress-status="LIMITED"') == 2
@@ -154,6 +175,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         assert progress_tone in html
     assert "<script" not in html
     assert "<form" not in html
+    assert "<iframe" not in html
     assert "http://" not in html
     assert "https://" not in html
     assert 'lang="zh-CN"' in html

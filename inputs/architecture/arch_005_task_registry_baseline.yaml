@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1656134
-    sha256: 6a0fa2f8da2a156296ff30ee2388b7da7c567b5eaaf335d52e01fffd6d3911d0
+    byte_count: 1656472
+    sha256: 3e34c4b314d5b7d7014c00e9e96d435f5d740c9ffae1a0f64017722983941642
     row_count: 431
     final_newline: true
     task_id_order_sha256: 2a01d12fc301253f148ae65a58154d476536e0198d76cbe551f4a597971800e8
-    row_checksum_order_sha256: 57eb70673aa7190b71e2cfc84c23e8c9d180b6ea69ed2ce97477721c30cee12e
+    row_checksum_order_sha256: bfca69345a0dd3e8e7945d763dbbc9363e76a0e3629e7f87d6c46c67e9e15926
     task_row_newline_counts:
       LF: 431
   - source: completed
@@ -122,17 +122,17 @@ inventory:
   status_counts:
     BASELINE_DONE: 128
     BLOCKED_EXTERNAL: 11
-    BLOCKED_OWNER_INPUT: 8
+    BLOCKED_OWNER_INPUT: 9
     DEFERRED: 1
     DONE: 493
     DROPPED: 12
-    IN_PROGRESS: 7
+    IN_PROGRESS: 6
     PROPOSED: 9
     READY: 1
     VALIDATING: 266
   task_id_set_sha256: 43ac5d0a5a2be544aff082cacf28bae7e38bca8fdf19b3fc7d20c6af94f70baa
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 00561f7a895927549c41c5c70fbd537ce1a1e385cdc39570f4fc8d4afae1c7a3
+  owner_set_sha256: 4b61abef718afa5876e81f055ee9e274b43ed9361116d4a58b3979ef185b8665
   docs_link_set_sha256: 3738635c3f4eaaa59ec0a163cad42143641d74634545f7ce647a0169daf6816b
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3085,7 +3085,7 @@ inventory:
   - task_id: TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
     source: active
     line_number: 2073
-    row_sha256: 2e0324a516b64d3a6eb8e9eabff859897beee4a3720770c4ec58d214801eb62f
+    row_sha256: 5dbeac0b3e5720b865bc6b22aaf725dfca70e71a88632b406d68baf7a00df7c7
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7691,4 +7691,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: f51fa144a015dd9b61e4543380c30e1651f090579f607e078ffc05fccb16ebd6
+baseline_checksum: 3ed158d11e29c05605c35bc644cb62b137bca4a8393cf6332b2472ce20acc9ec

@@ -419,7 +419,7 @@ def _build_flow_status_provenance(
             source_kind="OWNER_REVIEW_POLICY",
             reason_zh="页面无自动 promotion；后续推进、停止或新增任务必须由 Owner 人工决定。",
             exact_refs=(
-                "owner_decision:TRADING-2472:2026-07-31:advance_atlas_node_status_provenance_v1",
+                "owner_decision:TRADING-2473:2026-08-01:advance_atlas_node_evidence_drilldown_v1",
             ),
         ),
     )
@@ -485,6 +485,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "市场、宏观、基本面与人工治理信息。",
             "flow-context",
             "上游上下文",
+            "可以确认这些输入位于整个策略系统上游，而当前页面没有读取或执行它们。",
+            "不能据此判断输入已经刷新、完整、通过 DQ 或适合形成投资结论。",
+            "需要更新输入时，离开本页并通过受治理的数据获取与校验流程另行执行。",
         ),
         (
             "DATA_QUALITY_GATE",
@@ -492,6 +495,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Schema、完整性、新鲜度、PIT 与 validate-data。",
             "flow-context",
             "上游上下文",
+            "可以确认 DQ 是数据进入研究、评分或回测前的必经门禁，本页没有运行该门禁。",
+            "不能把“本页未执行”解释为 DQ PASS，也不能解释为 DQ FAIL。",
+            "任何数据依赖流程都应先运行 aits validate-data 或调用同一校验代码路径。",
         ),
         (
             "RESEARCH_MAINLINE",
@@ -499,6 +505,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "研究问题、策略路径与候选方法。",
             "flow-focus",
             "当前研究关注",
+            "可以确认 canonical snapshot 中当前研究主线节点仍处于 RUNNING。",
+            "不能据此断言候选方法有效、研究已经完成或具备 promotion readiness。",
+            "继续阅读主线回答及其 exact citations；新实验必须通过已登记任务推进。",
         ),
         (
             "BACKTEST_AND_EVALUATION",
@@ -506,6 +515,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Primary window、OOS、stress 与结果状态。",
             "flow-focus",
             "当前研究关注",
+            "可以确认当前 canonical result 保留 LIMITED 状态及其证据限制。",
+            "不能据此推出收益稳健、OOS 充分、风险可接受或策略已经通过。",
+            "先复核结果卡的限制与窗口证据；需要新回测时另走数据门禁和受治理执行路径。",
         ),
         (
             "RESULT_ATTRIBUTION",
@@ -513,6 +525,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "实际结果、驱动因素、限制与失败原因。",
             "flow-focus",
             "当前研究关注",
+            "可以确认 exact attribution 与当前 LIMITED result 的结构化关系已经闭合。",
+            "不能把相关关系升级为因果结论，也不能据此自动调整策略或仓位。",
+            "继续检查归因回答、限制与反证；新的因果实验或参数变更必须另立任务。",
         ),
         (
             "ATLAS_SNAPSHOT_DIFF",
@@ -520,6 +535,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "Validated snapshot、diff、source lineage。",
             "flow-focus",
             "当前研究关注",
+            "可以确认指定 snapshot change response 的结构、identity 与引用闭包通过独立验证。",
+            "不能由“发生变化”推断新版本更优，也不能把结构验证解释为策略验证。",
+            "查看快照变化回答和 exact citations，逐项复核新增、移除与语义变化。",
         ),
         (
             "CITATION_FIRST_QUERY",
@@ -527,6 +545,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "五个固定问题、claim 与 citation closure。",
             "flow-current",
             "你在这里",
+            "可以确认五个批准问题均有 exact response，并与各自 PASS validation 一一绑定。",
+            "不能回答未批准的自由问题，也不提供投资建议、自动 promotion 或交易动作。",
+            "展开下方问答卡与完整引用；不支持的问题必须通过独立任务扩展合同。",
         ),
         (
             "OWNER_DECISION_BOUNDARY",
@@ -534,31 +555,77 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "人工复核、后续任务或明确停止，不自动 promotion。",
             "flow-boundary",
             "本页以外",
+            "可以确认本页没有自动 promotion，后续动作必须经过 Owner 人工决定。",
+            "不能从页面状态、颜色或 validator PASS 推断 Owner 已批准投资或生产使用。",
+            "Owner 复核 canonical preview 后，决定继续、停止或登记下一项独立任务。",
         ),
     )
     status_provenance = _build_flow_status_provenance(showcase)
     status_by_stage = {item.stage_id: item for item in status_provenance}
-    if set(status_by_stage) != {item[0] for item in stage_definitions}:
+    stage_ids = tuple(item[0] for item in stage_definitions)
+    if (
+        len(stage_ids) != 8
+        or len(set(stage_ids)) != len(stage_ids)
+        or set(status_by_stage) != set(stage_ids)
+    ):
         raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_STAGE_SET_INVALID")
+    if any(
+        not value
+        for item in stage_definitions
+        for value in (item[1], item[2], item[3], item[4], item[5], item[6], item[7])
+    ):
+        raise ValueError("ATLAS_CITED_QUERY_FLOW_DRILLDOWN_COPY_INVALID")
     stage_cards = "".join(
         (
-            f'<li class="flow-stage {escape(role_tone)}" '
+            '<li class="flow-stage-shell">'
+            f'<details class="flow-stage {escape(role_tone)}" '
             f'data-stage="{escape(stage_id)}" '
-            f'data-progress-status="{escape(status_by_stage[stage_id].status_code)}"'
-            + (' aria-current="step"' if role_tone == "flow-current" else "")
+            f'data-progress-status="{escape(status_by_stage[stage_id].status_code)}" '
+            f'data-drilldown-stage="{escape(stage_id)}"'
+            + (' open aria-current="step"' if stage_id == "CITATION_FIRST_QUERY" else "")
             + ">"
-            '<div class="stage-top">'
+            '<summary class="stage-summary">'
+            '<span class="stage-top">'
             f'<span class="stage-number">{index:02d}</span>'
             f'<span class="stage-badge">{escape(role_badge)}</span>'
-            "</div>"
-            f"<h3>{escape(title)}</h3>"
-            f"<p>{escape(description)}</p>"
+            "</span>"
+            f'<span class="stage-title">{escape(title)}</span>'
+            f'<span class="stage-description">{escape(description)}</span>'
             f'<code class="stage-id">{escape(stage_id)}</code>'
-            f'<div class="stage-progress {escape(status_by_stage[stage_id].status_tone)}">'
+            f'<span class="stage-progress {escape(status_by_stage[stage_id].status_tone)}">'
             '<span class="progress-dot" aria-hidden="true"></span>'
             f"<strong>{escape(status_by_stage[stage_id].status_label)}</strong>"
             f"<code>{escape(status_by_stage[stage_id].status_code)}</code>"
+            "</span>"
+            '<span class="stage-disclosure-cue">'
+            '<span class="cue-closed">展开节点依据</span>'
+            '<span class="cue-open">收起节点依据</span>'
+            '<i aria-hidden="true">⌄</i>'
+            "</span>"
+            "</summary>"
+            f'<div class="stage-drilldown" data-drilldown-source="{escape(status_by_stage[stage_id].source_kind)}">'
+            '<p class="drilldown-intro">这个节点现在意味着什么</p>'
+            '<dl class="drilldown-grid">'
+            '<div class="drilldown-wide"><dt>状态为什么是这样</dt>'
+            f"<dd>{escape(status_by_stage[stage_id].reason_zh)}</dd></div>"
+            "<div><dt>可以确认</dt>"
+            f"<dd>{escape(can_conclude)}</dd></div>"
+            "<div><dt>不能推出</dt>"
+            f"<dd>{escape(cannot_conclude)}</dd></div>"
+            '<div class="drilldown-wide"><dt>下一合法动作</dt>'
+            f"<dd>{escape(next_action)}</dd></div>"
+            "</dl>"
+            '<div class="drilldown-evidence">'
+            f"<p>source kind <code>{escape(status_by_stage[stage_id].source_kind)}</code></p>"
+            '<ul class="drilldown-refs">'
+            + "".join(
+                f"<li><code>{escape(ref)}</code></li>"
+                for ref in status_by_stage[stage_id].exact_refs
+            )
+            + "</ul>"
             "</div>"
+            "</div>"
+            "</details>"
             "</li>"
         )
         for index, (
@@ -567,6 +634,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             description,
             role_tone,
             role_badge,
+            can_conclude,
+            cannot_conclude,
+            next_action,
         ) in enumerate(stage_definitions, start=1)
     )
     provenance_ledger = "".join(
@@ -620,6 +690,7 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         <span class="progress-review"><i aria-hidden="true"></i>待人工复核</span>
         <small>颜色表示节点在当前 evidence view 中的进展，不代表策略 PASS 或投资评级。</small>
       </div>
+      <p class="drilldown-help"><strong>怎样展开：</strong>点击任一节点，查看它的状态依据、exact reference、能与不能推出的结论，以及下一合法动作。当前页面节点默认展开。</p>
       <ol class="system-flow">{stage_cards}</ol>
       <div class="focus-panel">
         <div class="focus-copy">
@@ -713,16 +784,21 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .progress-limited {{ color:#9a6500; }}
     .progress-validated {{ color:#087a55; }}
     .progress-review {{ color:#7650a8; }}
+    .drilldown-help {{ margin:0 0 .8rem; color:var(--muted); font-size:.76rem; line-height:1.5; }}
     .system-flow {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-areas:"s1 s2 s3 s4" "s8 s7 s6 s5"; gap:1.25rem .9rem; margin:0; padding:0; list-style:none; counter-reset:flow; }}
-    .flow-stage {{ position:relative; display:flex; min-width:0; min-height:196px; padding:.82rem; border:1px solid var(--line); border-radius:.82rem; background:#f8fafc; flex-direction:column; }}
-    .flow-stage:nth-child(1) {{ grid-area:s1; }} .flow-stage:nth-child(2) {{ grid-area:s2; }} .flow-stage:nth-child(3) {{ grid-area:s3; }} .flow-stage:nth-child(4) {{ grid-area:s4; }}
-    .flow-stage:nth-child(5) {{ grid-area:s5; }} .flow-stage:nth-child(6) {{ grid-area:s6; }} .flow-stage:nth-child(7) {{ grid-area:s7; }} .flow-stage:nth-child(8) {{ grid-area:s8; }}
-    .flow-stage::after {{ position:absolute; z-index:2; content:"→"; right:-.78rem; top:50%; width:.65rem; color:#95a0b2; font-size:1.1rem; font-weight:900; text-align:center; transform:translateY(-50%); }}
-    .flow-stage:nth-child(4)::after {{ content:"↓"; right:50%; top:auto; bottom:-1.18rem; transform:translateX(50%); }}
-    .flow-stage:nth-child(n+5):nth-child(-n+7)::after {{ content:"←"; right:auto; left:-.78rem; }}
-    .flow-stage:nth-child(8)::after {{ display:none; }}
-    .flow-stage h3 {{ margin:.55rem 0 .28rem; font-size:.96rem; line-height:1.25; }}
-    .flow-stage p {{ margin:0 0 .55rem; color:var(--muted); font-size:.76rem; line-height:1.42; }}
+    .flow-stage-shell {{ position:relative; min-width:0; }}
+    .flow-stage-shell:nth-child(1) {{ grid-area:s1; }} .flow-stage-shell:nth-child(2) {{ grid-area:s2; }} .flow-stage-shell:nth-child(3) {{ grid-area:s3; }} .flow-stage-shell:nth-child(4) {{ grid-area:s4; }}
+    .flow-stage-shell:nth-child(5) {{ grid-area:s5; }} .flow-stage-shell:nth-child(6) {{ grid-area:s6; }} .flow-stage-shell:nth-child(7) {{ grid-area:s7; }} .flow-stage-shell:nth-child(8) {{ grid-area:s8; }}
+    .flow-stage-shell::after {{ position:absolute; z-index:2; content:"→"; right:-.78rem; top:98px; width:.65rem; color:#95a0b2; font-size:1.1rem; font-weight:900; text-align:center; transform:translateY(-50%); }}
+    .flow-stage-shell:nth-child(4)::after {{ content:"↓"; right:50%; top:auto; bottom:-1.18rem; transform:translateX(50%); }}
+    .flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"←"; right:auto; left:-.78rem; }}
+    .flow-stage-shell:nth-child(8)::after {{ display:none; }}
+    .flow-stage {{ min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:.82rem; background:#f8fafc; }}
+    .flow-stage > .stage-summary {{ display:flex; min-height:196px; padding:.82rem; list-style:none; flex-direction:column; }}
+    .flow-stage > .stage-summary::-webkit-details-marker {{ display:none; }}
+    .flow-stage > .stage-summary:focus-visible {{ outline:3px solid #6e9fea; outline-offset:-3px; }}
+    .stage-title {{ margin:.55rem 0 .28rem; font-size:.96rem; font-weight:850; line-height:1.25; }}
+    .stage-description {{ margin:0 0 .55rem; color:var(--muted); font-size:.76rem; line-height:1.42; }}
     .flow-stage code {{ display:block; color:#7b8596; font-size:.64rem; }}
     .flow-stage .stage-id {{ margin-bottom:.65rem; }}
     .stage-top {{ display:flex; align-items:center; justify-content:space-between; gap:.4rem; }}
@@ -731,12 +807,30 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .stage-progress {{ display:grid; grid-template-columns:auto 1fr; align-items:center; gap:.08rem .35rem; margin-top:auto; padding:.43rem .5rem; border:1px solid currentColor; border-radius:.55rem; background:#fff; }}
     .stage-progress strong {{ font-size:.7rem; line-height:1.2; }}
     .stage-progress code {{ grid-column:2; color:currentColor; font-size:.56rem; line-height:1.2; overflow-wrap:anywhere; }}
+    .stage-disclosure-cue {{ display:flex; align-items:center; justify-content:space-between; gap:.4rem; margin:.58rem 0 -.15rem; padding-top:.5rem; border-top:1px solid #dce2eb; color:#315fba; font-size:.65rem; font-weight:850; }}
+    .stage-disclosure-cue i {{ font-style:normal; font-size:.95rem; transition:transform .16s ease; }}
+    .cue-open {{ display:none; }}
+    .flow-stage[open] .cue-open {{ display:inline; }}
+    .flow-stage[open] .cue-closed {{ display:none; }}
+    .flow-stage[open] .stage-disclosure-cue i {{ transform:rotate(180deg); }}
+    .stage-drilldown {{ padding:.85rem; border-top:1px solid #dbe2ec; color:var(--ink); background:#fff; }}
+    .drilldown-intro {{ margin:0 0 .65rem; color:#233b61; font-size:.75rem; font-weight:900; letter-spacing:.02em; }}
+    .drilldown-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; margin:0; }}
+    .drilldown-grid > div {{ min-width:0; padding:.58rem .62rem; border:1px solid #e0e6ee; border-radius:.58rem; background:#f8fafc; }}
+    .drilldown-grid .drilldown-wide {{ grid-column:1/-1; }}
+    .drilldown-grid dt {{ color:#536176; font-size:.62rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase; }}
+    .drilldown-grid dd {{ margin:.22rem 0 0; color:#354257; font-size:.7rem; line-height:1.48; }}
+    .drilldown-evidence {{ margin-top:.65rem; padding:.58rem .62rem; border-left:3px solid #7aa6df; background:#f3f7fd; }}
+    .drilldown-evidence p {{ margin:0 0 .3rem; color:#536176; font-size:.65rem; }}
+    .drilldown-refs {{ margin:0; padding-left:1rem; }}
+    .drilldown-refs li {{ margin:.18rem 0; color:#5b687c; font-size:.6rem; overflow-wrap:anywhere; }}
     .flow-focus {{ border-color:#8bcfc4; background:var(--teal-soft); }}
     .flow-focus .stage-badge {{ color:#08665f; background:#ccebe5; }}
     .flow-current {{ color:#fff; border-color:var(--blue); background:linear-gradient(145deg,var(--blue),#234977); box-shadow:0 8px 20px #315fba2b; }}
-    .flow-current p,.flow-current .stage-id,.flow-current .stage-number {{ color:#dce8ff; }}
+    .flow-current .stage-description,.flow-current .stage-id,.flow-current .stage-number {{ color:#dce8ff; }}
     .flow-current .stage-badge {{ color:#173b70; background:#fff; }}
     .flow-current .stage-progress {{ background:#fff; }}
+    .flow-current .stage-disclosure-cue {{ border-top-color:#6d8db7; color:#fff; }}
     .flow-boundary {{ border-style:dashed; border-color:#8994a7; background:#f8fafc; }}
     .focus-panel {{ display:grid; grid-template-columns:minmax(220px,.8fr) minmax(0,2.2fr); gap:1rem; margin-top:1.2rem; padding:1rem; border-radius:.82rem; background:#f3f8f7; }}
     .focus-copy h3 {{ margin:.2rem 0 .3rem; font-size:1.1rem; }}
@@ -793,9 +887,10 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage::after,.flow-stage:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:50%; bottom:auto; transform:translateY(-50%); }} .flow-stage:nth-child(2)::after,.flow-stage:nth-child(4)::after,.flow-stage:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage:nth-child(3)::after,.flow-stage:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:50%; bottom:auto; transform:translateY(-50%); }} .flow-stage:nth-child(8)::after {{ display:none; }} .focus-panel {{ grid-template-columns:1fr; }} nav {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger {{ grid-template-columns:1fr; }} .flow-map {{ padding:1rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage {{ min-height:0; }} .flow-stage::after,.flow-stage:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage:nth-child(8)::after {{ display:none; }} .answer-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} }}
-    @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
+    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel {{ grid-template-columns:1fr; }} nav {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid {{ grid-template-columns:1fr; }} .flow-map {{ padding:1rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .answer-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} }}
+    @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
+    @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
 </head>
 <body>

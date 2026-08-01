@@ -20,7 +20,7 @@
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
 |---|---|---|---|---|---|---|
-|`outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html`<br/>`outputs/atlas/strategy_research_cited_query/trading_2470_v1/responses.json`<br/>`outputs/atlas/strategy_research_cited_query/trading_2470_v1/validation.json`|Python API `answer_cited_query` / `build_cited_query_showcase` / `write_cited_query_artifacts`；independent `validate_serialized_cited_query_response`|Validated TRADING-2468 V1.1 snapshot `917c0d38…`、TRADING-2466 prior snapshot、TRADING-2469 diff `d5aa7e38…`；canonical preview 显式指定 `program-strategy-research`、`result-restart-r2`、`attr-restart-oos-limits-expansion`、semantic change `5f2258c0…` 与 `restart-r0-r2-requirement`|`strategy_research_cited_query_request.v1`、`strategy_research_cited_query_response.v1`、`strategy_research_cited_query_claim.v1`、`strategy_research_cited_query_citation.v1`、`atlas_cited_query_validation.v1`；五个固定 question IDs、exact target matrix、100% source coverage、entity hash/lineage/citation closure、ANSWERED/LIMITED/BLOCKED、canonical bytes、no script/form/external/write|低金融知识读者按“固定问题 → 一句话回答 → 限制 → 完整引用”查看研究主线、实际结果、归因、快照变化与来源时点；未来 adapter 只能映射到既有问题/target，不得成为事实 authority|否；`production_effect=none`、`broker_action=none`|canonical preview 三文件 SHA-256 分别为 `b4c5c6fd…`、`d3317e3f…`、`dd17b181…`，double-build byte-identical，5/5 independent validation PASS；真实 source 的 `known_at/available_at` 为 null，因此五个示例均诚实显示 `LIMITED`，不得以 `as_of` 代填。当前静态 contract/escaping/no-horizontal-overflow design checks PASS；本地 `file://` 真实浏览器验收被 Web Pro URL policy 阻止，未伪报 visual PASS，退出条件是可访问本地 artifact 的 reviewed browser surface 完成人工复核。不是自由文本 RAG、LLM authority、HTTP 服务、投资建议或策略 approval。|
+|`outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html`<br/>`outputs/atlas/strategy_research_cited_query/trading_2470_v1/responses.json`<br/>`outputs/atlas/strategy_research_cited_query/trading_2470_v1/validation.json`|Python API `answer_cited_query` / `build_cited_query_showcase` / `write_cited_query_artifacts`；independent `validate_serialized_cited_query_response`|Validated TRADING-2468 V1.1 snapshot `917c0d38…`、TRADING-2466 prior snapshot、TRADING-2469 diff `d5aa7e38…`；canonical preview 显式指定 `program-strategy-research`、`result-restart-r2`、`attr-restart-oos-limits-expansion`、semantic change `5f2258c0…` 与 `restart-r0-r2-requirement`|`strategy_research_cited_query_request.v1`、`strategy_research_cited_query_response.v1`、`strategy_research_cited_query_claim.v1`、`strategy_research_cited_query_citation.v1`、`atlas_cited_query_validation.v1`；五个固定 question IDs、exact target matrix、100% source coverage、entity hash/lineage/citation closure、ANSWERED/LIMITED/BLOCKED、canonical bytes、no script/form/iframe/external/write|低金融知识读者按“固定问题 → 一句话回答 → 限制 → 完整引用”查看研究主线、实际结果、归因、快照变化与来源时点，并可从八阶段流程节点展开 evidence drilldown；未来 adapter 只能映射到既有问题/target，不得成为事实 authority|否；`production_effect=none`、`broker_action=none`|canonical preview 三文件 SHA-256 分别为 `0e3b1b28…`、`d3317e3f…`、`dd17b181…`，double-build byte-identical，5/5 independent validation PASS；真实 source 的 `known_at/available_at` 为 null，因此五个示例均诚实显示 `LIMITED`，不得以 `as_of` 代填。当前静态 contract/escaping/responsive/native disclosure checks PASS；本地 `file://` 自动化验收被 Browser URL policy 阻止且未绕过，TRADING-2473 的 Owner 手工视觉复核待完成。不是自由文本 RAG、LLM authority、HTTP 服务、投资建议或策略 approval。|
 
 TRADING-2471 在同一 `index.html` 增加八阶段全系统 flow focus map：第 3–6 阶段标识
 canonical research focus，第 7 阶段唯一标记“你在这里”，第 8 阶段保留为 Owner 决策边界。
@@ -45,6 +45,17 @@ result `display_status=LIMITED`，归因必须精确指向该 result；Atlas dif
 browser automation 仍被本地 `file://` URL policy 阻止且未绕过，Owner visual acceptance
 已于 2026-08-01 单独记录为 `OWNER_MANUAL_VISUAL_PASS`。该验收只确认展示可读性，
 不改变 strategy、DQ、promotion、production 或 broker 状态。
+
+TRADING-2473 在同一 `index.html` 把八个流程节点升级为 native `<details>/<summary>` evidence
+drilldown；第 7 阶段是唯一 current/open 节点，其他节点默认收起。每个展开面板都显示职责、来自
+同一 structured provenance 的状态原因/source kind/exact refs、可以确认、不能推出与下一合法动作，
+且不执行 JavaScript、HTTP、LLM 或任何写操作。更新后的 `index.html` 为 `59847 bytes`、SHA-256
+`0e3b1b2855975c0c54e1baee3965de1198a677b4d11793ed22694c2bbaef8bb3`；
+`responses.json` 与 `validation.json` 字节和 SHA 保持不变。actual-input double-build byte-identical，
+static DOM audit=`8 details / 8 stages / 1 current / 1 current-open / 0 script/form/iframe/external`，
+renderer focused=`7 passed`、Atlas/citation focused=`63 passed`。Browser URL policy 阻止自动刷新
+本地 `file://` 页面且禁止 workaround，因此 automation 状态为 `NOT_EXECUTED_URL_POLICY`；退出条件是
+Owner 在 canonical preview 手工复核节点展开/收起、默认当前节点与窄屏可读性。
 
 ## TRADING-2467 O1 Blind Calendar Re-entry Policy
 

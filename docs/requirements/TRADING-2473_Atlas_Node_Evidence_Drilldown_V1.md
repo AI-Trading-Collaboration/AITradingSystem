@@ -7,7 +7,7 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 Owner 决定：
 
@@ -131,6 +131,7 @@ data cache、strategy artifact 或额外长期 worktree。
 
 - governed mode：`SINGLE_LANE`；
 - registration base：`818e49fe7bfd7a1064b737b5612f37a0ab712e31`；
+- registration commit / lane frozen base：`eea2d61d5123220c98adf3448600357de6065f2a`；
 - task branch：`codex/trading-2473-atlas-node-evidence-drilldown`；
 - known-unrelated exclusion：
   `docs/research/growth_tilt_owner_diagnosis_pack.md`，不得读取、hash、复制、stage、修改或删除；
@@ -142,4 +143,18 @@ data cache、strategy artifact 或额外长期 worktree。
 
 - 2026-08-01：TRADING-2472 完成 local-main/remote closeout 后，Owner 确认按推荐方向继续。
   登记 TRADING-2473，选择低风险的 native static drilldown；HTTP adapter 与自由文本/LLM consumer
-  继续留待独立 Owner 决策。本轮尚未修改 renderer、canonical preview 或公共合同。
+  继续留待独立 Owner 决策。
+- 2026-08-01：实现八个 native `<details>/<summary>` disclosure，`CITATION_FIRST_QUERY` 唯一
+  current/open；每个节点展示职责、structured reason、source kind、exact refs、可/不可推出结论和
+  下一合法动作。renderer focused=`7 passed`、Atlas/citation focused=`63 passed`、Ruff/Black PASS；
+  static DOM audit=`8 details / 8 stages / 1 current / 1 current-open / 0 script/form/iframe/external`。
+- 2026-08-01：使用 canonical actual inputs 双构建，三文件 byte-identical；`index.html` 更新为
+  `59847 bytes`、SHA-256
+  `0e3b1b2855975c0c54e1baee3965de1198a677b4d11793ed22694c2bbaef8bb3`，
+  `responses.json`=`d3317e3f7a852a59d323181ed647f07eaf51bc63ec0d9f389cba054f85b32f07`、
+  `validation.json`=`dd17b1819e48539d7f7d166199c31f80c401453d7c91b2f3176788d2a44f86b4`
+  均未变化。两个固定临时构建目录已审计为空并删除，canonical evidence 保留，临时副本不可恢复。
+- 2026-08-01：Browser URL policy 拒绝对本地 `file://` tab 执行 reload，且明确禁止 workaround；
+  automation 记为 `NOT_EXECUTED_URL_POLICY`，未伪报 visual PASS。实现已完成，任务转为
+  `BLOCKED_OWNER_INPUT`；解除条件是 Owner 手工刷新 canonical preview，确认节点展开/收起、
+  current 默认展开和整体/窄屏可读性，然后再运行正式 closeout validation。

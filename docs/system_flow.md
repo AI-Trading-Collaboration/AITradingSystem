@@ -66,6 +66,14 @@ entity、relation、response/validation 缺失、重复或不一致都会停止�
 validator PASS 仍只表示 evidence structure/citation closure valid，不是 strategy PASS、DQ PASS、
 投资评级或自动 promotion。
 
+TRADING-2473 在同一静态流程图上增加八个 native `<details>/<summary>` 节点级 evidence
+drilldown。`CITATION_FIRST_QUERY` 是唯一 current stage 且默认展开，其余节点默认收起；收起时仍可
+直接看到节点角色和进展状态，展开后显示该节点的通俗职责、状态原因、source kind、exact refs、
+“可以确认 / 不能推出”边界与下一合法动作。状态原因和来源引用继续复用 TRADING-2472 的同一份
+structured provenance，不建立第二套展示真相；职责、解释边界和下一动作是冻结的 reader semantics，
+不得反向改变 snapshot、diff、response 或 validation。该 disclosure 仍是无 script、无网络、只读的
+静态投影，不新增执行路径、public contract、HTTP/LLM consumer、production 或 broker action。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -91,7 +99,8 @@ flowchart LR
     QRY --> QVAL["Independent response validation<br/>entity hash + source coverage + closure"]
     QVAL --> QMAP["TRADING-2471 system flow focus map<br/>8 stages + exact-ID current focus"]
     QMAP --> QPROV["TRADING-2472 status provenance<br/>structured fields + exact validation refs"]
-    QPROV --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
+    QPROV --> QDRILL["TRADING-2473 node evidence drilldown<br/>8 native details / current open"]
+    QDRILL --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
