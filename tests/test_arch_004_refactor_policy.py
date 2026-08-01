@@ -1492,7 +1492,30 @@ TRADING_2472_STATUS_PROVENANCE_NEW_SOURCE_PATHS = frozenset(
         ),
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2472_STATUS_PROVENANCE_SECTION
+TRADING_2473_EVIDENCE_DRILLDOWN_SECTION = (
+    "phase_trading_2473_atlas_node_evidence_drilldown_closeout"
+)
+TRADING_2473_EVIDENCE_DRILLDOWN_BASE_COMMIT = "fba5d7af499269c41d9c56fbd98d90d291b0adb6"
+TRADING_2473_EVIDENCE_DRILLDOWN_BASELINE_GIT_BLOB = "0aaa7126fbbb67bd311bc8b228153622e133e40d"
+TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_BYTE_COUNT = 2_285_104
+TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_SHA256 = (
+    "76ff505138802cf5ea24fb6ea6f214571ff242d1289c2b114ed7b3e14f98dbc8"
+)
+TRADING_2473_EVIDENCE_DRILLDOWN_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2473_EVIDENCE_DRILLDOWN_NEW_SOURCE_PATHS = frozenset(
+    {
+        "docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md",
+        (
+            "registry/development_tasks_shadow/active/86/"
+            "86400046a257eb64ca496c090375e861b5768daa558fb803233ff7cbaf031c4e.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/86/"
+            "86400046a257eb64ca496c090375e861b5768daa558fb803233ff7cbaf031c4e.yaml"
+        ),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2473_EVIDENCE_DRILLDOWN_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3151,6 +3174,25 @@ def _trading_2472_status_provenance_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2473_evidence_drilldown_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2473_EVIDENCE_DRILLDOWN_BASE_COMMIT}:" f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2473_EVIDENCE_DRILLDOWN_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -4778,6 +4820,26 @@ def _assert_trading_2472_status_provenance_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2472_STATUS_PROVENANCE_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2473_evidence_drilldown_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2473 evidence-drilldown historical prefix differs from immutable "
+        "TRADING-2472 status-provenance authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2473_EVIDENCE_DRILLDOWN_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -6844,6 +6906,34 @@ def _trading_2472_status_provenance_all_current_authority_paths() -> frozenset[s
 
 
 @cache
+def _trading_2473_evidence_drilldown_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2473_evidence_drilldown_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2473_evidence_drilldown_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2473_EVIDENCE_DRILLDOWN_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2473_evidence_drilldown_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2473_EVIDENCE_DRILLDOWN_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2473_evidence_drilldown_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2473_evidence_drilldown_superseded_live_source_paths()
+        | _trading_2473_evidence_drilldown_source_paths()
+    )
+
+
+@cache
 def _trading_2463_all_superseded_live_source_paths() -> frozenset[str]:
     paths = (
         _trading_2463_superseded_live_source_paths()
@@ -7874,6 +7964,7 @@ def _trading_2470_cited_query_amendment_prior_active_source_mismatches() -> froz
             _trading_2470_cited_query_consumer_all_current_authority_paths()
             | _trading_2471_flow_focus_all_current_authority_paths()
             | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -7886,6 +7977,7 @@ def _trading_2470_cited_query_consumer_prior_active_source_mismatches() -> froze
         (
             _trading_2471_flow_focus_all_current_authority_paths()
             | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
         )
         - recorded_superseded_paths
     )
@@ -7901,7 +7993,15 @@ def _trading_2471_flow_focus_prior_active_source_mismatches() -> frozenset[str]:
 
 @cache
 def _trading_2472_status_provenance_prior_active_source_mismatches() -> frozenset[str]:
-    return _latest_active_source_mismatches(TRADING_2472_STATUS_PROVENANCE_SECTION)
+    recorded_superseded_paths = _trading_2472_status_provenance_superseded_live_source_paths()
+    return _latest_active_source_mismatches(TRADING_2472_STATUS_PROVENANCE_SECTION) - (
+        _trading_2473_evidence_drilldown_all_current_authority_paths() - recorded_superseded_paths
+    )
+
+
+@cache
+def _trading_2473_evidence_drilldown_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2473_EVIDENCE_DRILLDOWN_SECTION)
 
 
 def _trading_2470_prior_hash_authority_paths(
@@ -7947,7 +8047,17 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2472_STATUS_PROVENANCE_SECTION in baseline:
+    if TRADING_2473_EVIDENCE_DRILLDOWN_SECTION in baseline:
+        current_superseded_paths = _trading_2473_evidence_drilldown_superseded_live_source_paths()
+        assert (
+            _trading_2473_evidence_drilldown_prior_active_source_mismatches()
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2472_status_provenance_all_current_authority_paths() | current_superseded_paths
+        )
+        authority_section = TRADING_2473_EVIDENCE_DRILLDOWN_SECTION
+    elif TRADING_2472_STATUS_PROVENANCE_SECTION in baseline:
         current_superseded_paths = _trading_2472_status_provenance_superseded_live_source_paths()
         assert (
             _trading_2472_status_provenance_prior_active_source_mismatches()
@@ -18492,7 +18602,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    assert v2_index["fragment_count"] == 935
+    assert v2_index["fragment_count"] == 936
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
         str(record["path"]).startswith(f"{fragment_authority['fragment_root']}/")
@@ -19525,7 +19635,9 @@ def test_trading_2472_status_provenance_is_current_hash_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2472_STATUS_PROVENANCE_SECTION
+    assert list(baseline).index(TRADING_2472_STATUS_PROVENANCE_SECTION) < list(baseline).index(
+        TRADING_2473_EVIDENCE_DRILLDOWN_SECTION
+    )
     phase = baseline[TRADING_2472_STATUS_PROVENANCE_SECTION]
     assert phase["schema_version"] == ("trading_2472_atlas_node_status_provenance_compatibility.v1")
     assert phase["status"] == "BASELINE_DONE"
@@ -19569,8 +19681,11 @@ def test_trading_2472_status_provenance_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    current_superseded = _trading_2473_evidence_drilldown_superseded_live_source_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in current_superseded:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["implementation"] == {
@@ -19656,6 +19771,158 @@ def test_trading_2472_status_provenance_is_current_hash_authority() -> None:
     tampered[TRADING_2472_STATUS_PROVENANCE_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2472_status_provenance_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2473_evidence_drilldown_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2473_evidence_drilldown_base_baseline_blob()
+    _assert_trading_2473_evidence_drilldown_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2473_EVIDENCE_DRILLDOWN_SECTION
+    phase = baseline[TRADING_2473_EVIDENCE_DRILLDOWN_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2473_atlas_node_evidence_drilldown_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == "TRADING-2473-ATLAS-NODE-EVIDENCE-DRILLDOWN"
+    assert phase["task_ids"] == ["TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1"]
+    assert phase["owner_decisions"] == [
+        ("owner_decision:TRADING-2473:2026-08-01:" "advance_atlas_node_evidence_drilldown_v1"),
+        (
+            "owner_decision:TRADING-2473:2026-08-01:"
+            "accept_atlas_node_evidence_drilldown_visual_v1"
+        ),
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2473_EVIDENCE_DRILLDOWN_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2473_EVIDENCE_DRILLDOWN_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(_trading_2473_evidence_drilldown_prior_active_source_mismatches())
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2473_EVIDENCE_DRILLDOWN_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (TRADING_2473_EVIDENCE_DRILLDOWN_NEW_SOURCE_PATHS)
+    expected = (
+        superseded | TRADING_2473_EVIDENCE_DRILLDOWN_NEW_SOURCE_PATHS
+    ) - TRADING_2473_EVIDENCE_DRILLDOWN_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2473-ATLAS-NODE-EVIDENCE-DRILLDOWN",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2472_STATUS_PROVENANCE_SECTION,
+        "current_hash_authority": f"{TRADING_2473_EVIDENCE_DRILLDOWN_SECTION}.sources",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["implementation"] == {
+        "visual_source_commit": TRADING_2473_EVIDENCE_DRILLDOWN_BASE_COMMIT,
+        "stage_count": 8,
+        "native_disclosure_count": 8,
+        "current_stage": "CITATION_FIRST_QUERY",
+        "default_open_stage": "CITATION_FIRST_QUERY",
+        "structured_provenance_reused": True,
+        "reader_semantics_frozen": True,
+        "javascript_or_network_required": False,
+        "progress_status_is_investment_rating": False,
+        "browser_automation_review": "NOT_EXECUTED_URL_POLICY",
+        "owner_manual_visual_review": "OWNER_MANUAL_VISUAL_PASS",
+        "task_shadow_source": "LEGACY_MARKDOWN_ONLY",
+        "task_shadow_v2_cutover_performed": False,
+    }
+    assert phase["preview_artifacts"] == [
+        {
+            "path": ("outputs/atlas/strategy_research_cited_query/" "trading_2470_v1/index.html"),
+            "sha256": ("0e3b1b2855975c0c54e1baee3965de1198a677b4d11793ed22694c2bbaef8bb3"),
+            "size_bytes": 59847,
+        },
+        {
+            "path": (
+                "outputs/atlas/strategy_research_cited_query/" "trading_2470_v1/responses.json"
+            ),
+            "sha256": ("d3317e3f7a852a59d323181ed647f07eaf51bc63ec0d9f389cba054f85b32f07"),
+            "size_bytes": 15304,
+        },
+        {
+            "path": (
+                "outputs/atlas/strategy_research_cited_query/" "trading_2470_v1/validation.json"
+            ),
+            "sha256": ("dd17b1819e48539d7f7d166199c31f80c401453d7c91b2f3176788d2a44f86b4"),
+            "size_bytes": 1875,
+        },
+    ]
+    validation = phase["validation"]
+    assert set(validation) == {
+        "renderer_focused",
+        "focused_atlas_contract",
+        "governed_focused",
+        "ruff",
+        "black",
+        "actual_input_double_build",
+        "static_html_contract",
+        "owner_manual_visual_review",
+        "task_registry",
+        "generated_architecture",
+        "deprecation_inventory",
+        "compatibility_authority",
+        "architecture",
+        "contract",
+        "integration",
+        "reproducibility",
+        "full",
+        "final_tree_architecture",
+        "final_tree_contract",
+    }
+    assert validation["renderer_focused"] == "PASS_7_TESTS"
+    assert validation["focused_atlas_contract"] == "PASS_63_TESTS"
+    assert validation["governed_focused"] == "PASS_25_TESTS"
+    assert validation["owner_manual_visual_review"] == "OWNER_MANUAL_VISUAL_PASS"
+    assert all(
+        value == "PENDING" or value == "OWNER_MANUAL_VISUAL_PASS" or str(value).startswith("PASS")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "snapshot_or_diff_semantics_changed": False,
+        "query_public_contract_changed": False,
+        "claim_text_status_inference_executed": False,
+        "market_or_cache_read": False,
+        "external_network_used": False,
+        "llm_called": False,
+        "investment_conclusion_generated": False,
+        "data_acquisition_executed": False,
+        "dq_execution_executed": False,
+        "model_training_executed": False,
+        "backtest_executed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2473_EVIDENCE_DRILLDOWN_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2473_evidence_drilldown_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

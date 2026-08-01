@@ -7,12 +7,18 @@
 
 优先级：`P1`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
 ```text
 owner_decision:TRADING-2473:2026-08-01:advance_atlas_node_evidence_drilldown_v1
+```
+
+后续 Owner 决定：
+
+```text
+owner_decision:TRADING-2473:2026-08-01:accept_atlas_node_evidence_drilldown_visual_v1
 ```
 
 production effect：`none`
@@ -158,3 +164,24 @@ data cache、strategy artifact 或额外长期 worktree。
   automation 记为 `NOT_EXECUTED_URL_POLICY`，未伪报 visual PASS。实现已完成，任务转为
   `BLOCKED_OWNER_INPUT`；解除条件是 Owner 手工刷新 canonical preview，确认节点展开/收起、
   current 默认展开和整体/窄屏可读性，然后再运行正式 closeout validation。
+- 2026-08-01：Owner 已在 canonical preview 完成人工视觉验收并明确“验收通过，继续推进”；
+  acceptance token=`owner_decision:TRADING-2473:2026-08-01:accept_atlas_node_evidence_drilldown_visual_v1`，
+  记录为 `OWNER_MANUAL_VISUAL_PASS`。任务转为 `BASELINE_DONE` 并进入正式治理验证；该验收不改变
+  strategy、DQ、promotion、production 或 broker 状态。
+- 2026-08-01：append-only compatibility authority 首次写回因补丁上下文误匹配而 fail closed；
+  在未提交状态下精确移除错位新增段，复核历史前缀恢复为 `2285104 bytes / SHA-256
+  76ff505138802cf5ea24fb6ea6f214571ff242d1289c2b114ed7b3e14f98dbc8` 后，重新追加到 EOF。
+  新 authority 的定向 compatibility/deprecation=`11 passed`。完整集合首轮=`167 passed / 1 failed`，
+  唯一失败是 DEVX-006 当前 v2 index 总数断言仍为 `935`，而本任务登记后权威 count 已为 `936`；
+  修复只更新 current count 断言，历史 fragment authority=`928` 保持不变。
+- 2026-08-01：修复后 compatibility/deprecation=`168 passed`（compatibility=`159`、
+  deprecation=`9`）。正式验证全部 PASS：Architecture=`815 passed`，runtime=
+  `architecture-fitness_20260801T023030Z`；Contract=`276 passed`，runtime=
+  `contract-validation_20260801T023251Z`；Integration=`995 passed / 643 warnings`，runtime=
+  `integration_20260801T023541Z`；Reproducibility=`24 passed`，runtime=
+  `reproducibility_20260801T023721Z`；Full=`7870 passed / 3 skipped / 644 warnings`，runtime=
+  `full_20260801T023753Z`。下一步是写回这些结果后对最终树复跑 Architecture/Contract。
+- 2026-08-01：治理结果写回后的最终树复验 PASS：Architecture=`815 passed`，runtime=
+  `architecture-fitness_20260801T030504Z`；Contract=`276 passed`，runtime=
+  `contract-validation_20260801T030717Z`。写回 final-tree runtime 后再执行 post-record
+  Architecture/Contract，作为最终提交树的闭合确认。
