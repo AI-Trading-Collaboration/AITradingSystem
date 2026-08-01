@@ -7,7 +7,7 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
@@ -261,7 +261,14 @@ broker resource。
 - 2026-08-01：report registry/catalog/system flow、task shadow、generated architecture、deprecation
   inventory 与 append-only compatibility authority 已接线。Task shadow=`939 tasks`，generated=
   `1059 modules / 1230 tests`；Atlas/reporting/docs focused=`82 passed`，compatibility/deprecation=
-  `171 passed`。下一步在 clean candidate 上执行正式门禁。
+  `171 passed`。
+- 2026-08-01：治理提交 `284a35e48ebbc5b99eda9d4519b47047a612bd00` 的正式门禁全部
+  PASS：Architecture=`818 passed / architecture-fitness_20260801T083725Z`，Contract=`276 passed /
+  contract-validation_20260801T084148Z`，Integration=`995 passed / 643 warnings /
+  integration_20260801T084432Z`，Reproducibility=`24 passed /
+  reproducibility_20260801T084538Z`，Full=`7884 passed / 3 skipped / 644 warnings /
+  full_20260801T084611Z`。Review pack baseline 已完成；下一合法动作仍是 Owner 精确批准
+  candidate id + artifact SHA，未执行 source registration、typed adapter 或页面投影。
 
 ## 11. Canonical evidence
 

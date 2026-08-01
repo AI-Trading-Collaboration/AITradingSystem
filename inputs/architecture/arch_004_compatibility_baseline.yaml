@@ -37347,7 +37347,7 @@ phase_trading_2475_atlas_historical_coverage_inventory_closeout:
 
 phase_trading_2476_atlas_historical_adapter_review_closeout:
   schema_version: trading_2476_atlas_historical_adapter_review_compatibility.v1
-  status: VALIDATING
+  status: BASELINE_DONE
   boundary_id: TRADING-2476-ATLAS-HISTORICAL-ADAPTER-REVIEW
   task_ids:
   - TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
@@ -37451,13 +37451,13 @@ phase_trading_2476_atlas_historical_adapter_review_closeout:
     sha256: 3a6097f9591d6f889705a75512b79f2b857692aeb4b1ce8629ad48a383fc2351
     hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md
-    sha256: dcfc20f81f50f18830d2c44a6841a17bbd938f0acf92bbe96484146d8cb19aaa
+    sha256: c587002ab3780753379cb985998adc2e83a1a29d5be0bf26a66eaaed7c0b2ec1
     hash_normalization: git_eol_lf
   - path: docs/system_flow.md
     sha256: d3533aeef3f4b64eb54db2cd98e894499b3a2c10276c9906583720e3ed6b8f6d
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: dbc3dbe24f13f9617a3d2f734436e52d03b7ee530d5ef9a2c715f0cb95bdf056
+    sha256: 9ad6a6b928134f2bef1bcaafde8a8ba065abb7ce40cc28c57849a4c6f013c953
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
     sha256: 8bbdd22669b03de08a8df447a6d0c27743511d7e8afd8e05940d08aa349a67dd
@@ -37475,13 +37475,13 @@ phase_trading_2476_atlas_historical_adapter_review_closeout:
     sha256: 8ff7b196a8e1ebc247696a1e1d68d735de2222bf570d72178e53fac0d13863f2
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: b7bb08a107960f690031beb66f6233ff3d55ce0216b75d196d8a32edc61d7c8b
+    sha256: 5f3626d54737bc5fd512151d4628070470e1506658624cfcd7a2883f2189ffc1
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 6e2cdfedffb504debe0b2839791e36babd5bad9e0b0a5482c18f421de660ba83
+    sha256: fc9f99b833154df8091814dbeda73c69a4cb8f42f6a38535c13873f26f5ac21b
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
-    sha256: bc3eeb71cf4b295bf8d5595b500e0e45d4f8555fab6701fab026277bffe0e752
+    sha256: 9b2dcb699dae199bab11784d4f368f814b411891d7fb76be6f6c264c572be6ab
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
     sha256: a349eba6a20ea2db790d523373346547ccb43472d7261034402097e34ca850ed
@@ -37490,7 +37490,7 @@ phase_trading_2476_atlas_historical_adapter_review_closeout:
     sha256: daf7dd954066cd0cf15ac45a23a7cfc56a5bdd8132d03d2c773e8f1372875a74
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/6e/6efdb8af5737f89e41f3467dc553c6308b441767c303da39c76a4d6f6b133ca3.yaml
-    sha256: 980edeb2387f1f35b3a279277664ba7d036f246d5e63273627a11d28238fe4c4
+    sha256: f4d497889dfbc55d422af88f37a250973e15bf69b4dc5986e4a503327077ad24
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
     sha256: f19f14999299a6cfe9b1348a694076607c5d430f9a70c13ca750d91b275e6872
@@ -37514,7 +37514,7 @@ phase_trading_2476_atlas_historical_adapter_review_closeout:
     sha256: c8e6a9af10a65f0c4368171f5345df61bb7a8fca7ca092da6686b455511e20da
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow_v2/6e/6efdb8af5737f89e41f3467dc553c6308b441767c303da39c76a4d6f6b133ca3.yaml
-    sha256: ce202e43ebeffa6adfcc0b2a22bc3b816f71718809b778014fc534c0e976e583
+    sha256: 3b3fbe4d737f65c976c38a7cc49ef8b7f23a154d4b3518c25eec46888eec90f1
     hash_normalization: git_eol_lf
   - path: src/ai_trading_system/atlas/__init__.py
     sha256: a0b3856d30c5e8efe8295665e2e50cb6f3935eaa282b8dd706df854650ee0658
@@ -37626,11 +37626,11 @@ phase_trading_2476_atlas_historical_adapter_review_closeout:
     generated_architecture: PASS_1059_MODULES_1230_TESTS
     deprecation_inventory: PASS_9_TESTS
     compatibility_authority: PASS_162_TESTS_COMBINED_171
-    architecture: PENDING
-    contract: PENDING
-    integration: PENDING
-    reproducibility: PENDING
-    full: PENDING
+    architecture: PASS_818_TESTS_RUNTIME_architecture-fitness_20260801T083725Z
+    contract: PASS_276_TESTS_RUNTIME_contract-validation_20260801T084148Z
+    integration: PASS_995_TESTS_643_WARNINGS_RUNTIME_integration_20260801T084432Z
+    reproducibility: PASS_24_TESTS_RUNTIME_reproducibility_20260801T084538Z
+    full: PASS_7884_TESTS_3_SKIPPED_644_WARNINGS_RUNTIME_full_20260801T084611Z
     final_tree_architecture: PENDING
     final_tree_contract: PENDING
   safety:
