@@ -247,3 +247,7 @@ broker resource。
   TRADING-2475 inventory path records，未打开任何 candidate research artifact bytes。
 - 2026-08-01：从 291 条 queue 机械冻结六组 JSON/Markdown companion；选择只决定审阅范围，
   不代表文件内容正确、适合生产或已成为 Atlas source/result。
+- 2026-08-01：S1 policy、exact-commit allowlist reader、bounded JSON pointer/Markdown title-token
+  inventory、adapter-readiness disposition、canonical renderer 与独立重建 validator 已实现。实际结构观察
+  为 5 组五类槽齐全、`next_research_program_roadmap` 缺可机械证明的 lineage 槽；未序列化任何
+  status/result/limitation 字段值。Black、Ruff、strict mypy PASS，parallel focused=`5 passed`。

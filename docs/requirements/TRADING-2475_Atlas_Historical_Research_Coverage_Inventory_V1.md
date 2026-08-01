@@ -7,7 +7,7 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 

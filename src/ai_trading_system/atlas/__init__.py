@@ -27,10 +27,17 @@ from ai_trading_system.atlas.diff_validation import (
     validate_serialized_snapshot_diff,
     validate_snapshot_diff_bundle,
 )
-from ai_trading_system.atlas.html_renderer import (
-    AtlasRenderedArtifact,
-    render_atlas_html,
-    write_atlas_artifacts,
+from ai_trading_system.atlas.historical_adapter_review import (
+    HistoricalAdapterReviewError,
+    HistoricalAdapterReviewPack,
+    HistoricalAdapterReviewPolicy,
+    HistoricalAdapterReviewRenderedArtifact,
+    HistoricalAdapterReviewValidationResult,
+    build_historical_adapter_review,
+    build_historical_adapter_review_from_payloads,
+    render_historical_adapter_review_markdown,
+    validate_historical_adapter_review,
+    write_historical_adapter_review_artifacts,
 )
 from ai_trading_system.atlas.historical_coverage_inventory import (
     HistoricalCoverageInventory,
@@ -43,6 +50,11 @@ from ai_trading_system.atlas.historical_coverage_inventory import (
     render_historical_coverage_markdown,
     validate_historical_coverage_inventory,
     write_historical_coverage_inventory_artifacts,
+)
+from ai_trading_system.atlas.html_renderer import (
+    AtlasRenderedArtifact,
+    render_atlas_html,
+    write_atlas_artifacts,
 )
 from ai_trading_system.atlas.snapshot_builder import (
     AtlasExplorerBundle,
@@ -88,6 +100,11 @@ __all__ = [
     "AtlasSourceRegistry",
     "AtlasValidationResult",
     "CitedQueryValidationResult",
+    "HistoricalAdapterReviewError",
+    "HistoricalAdapterReviewPack",
+    "HistoricalAdapterReviewPolicy",
+    "HistoricalAdapterReviewRenderedArtifact",
+    "HistoricalAdapterReviewValidationResult",
     "HistoricalCoverageInventory",
     "HistoricalCoverageInventoryError",
     "HistoricalCoveragePolicy",
@@ -97,6 +114,8 @@ __all__ = [
     "build_snapshot_diff",
     "build_atlas_bundle",
     "build_cited_query_showcase",
+    "build_historical_adapter_review",
+    "build_historical_adapter_review_from_payloads",
     "build_historical_coverage_inventory",
     "build_historical_coverage_inventory_from_payloads",
     "cited_query_validation_json_bytes",
@@ -110,9 +129,11 @@ __all__ = [
     "project_source_refs",
     "render_atlas_html",
     "render_cited_query_html",
+    "render_historical_adapter_review_markdown",
     "render_historical_coverage_markdown",
     "render_snapshot_diff_html",
     "validate_atlas_bundle",
+    "validate_historical_adapter_review",
     "validate_historical_coverage_inventory",
     "validate_serialized_snapshot_diff",
     "validate_serialized_cited_query_response",
@@ -120,6 +141,7 @@ __all__ = [
     "validation_json_bytes",
     "write_atlas_artifacts",
     "write_cited_query_artifacts",
+    "write_historical_adapter_review_artifacts",
     "write_historical_coverage_inventory_artifacts",
     "write_snapshot_diff_artifacts",
 ]

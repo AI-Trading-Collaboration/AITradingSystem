@@ -1,0 +1,126 @@
+schema_version: atlas_historical_adapter_review_policy.v1
+policy_id: TRADING_2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
+policy_version: 1
+status: REVIEWED_PILOT_V1
+owner: atlas_research_governance
+rationale: >
+  Review a bounded first batch of structured historical research artifacts before
+  any Atlas source registration or result projection. Readiness is determined
+  only from exact receipts and reviewed JSON field-shape rules, never from prose
+  interpretation or investment outcomes.
+review_condition: before_source_registration_or_public_projection
+inventory:
+  path: outputs/atlas/historical_research_coverage_inventory/trading_2475_v1/inventory.json
+  expected_inventory_id: atlas_historical_coverage_inventory_3a09ccafea85f96382db
+  expected_sha256: 02497cee0e708cc8f8f9ce345c7bf3fb382194b2eff59bbc85278538645c3e0d
+  required_schema_version: atlas_historical_coverage_inventory.v1
+  required_classification: TRACKED_UNREGISTERED_REVIEW_REQUIRED
+excluded_paths:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+candidate_families:
+  - candidate_family_id: atlas_historical_candidate_b0_baseline_v1
+    role_code: BASELINE
+    json_path: docs/research/b0_static_strategic_baseline_result.json
+    markdown_path: docs/research/b0_static_strategic_baseline_result.md
+  - candidate_family_id: atlas_historical_candidate_b1_b4_attribution_v1
+    role_code: COMPONENT_ATTRIBUTION
+    json_path: docs/research/b1_b4_component_result_attribution.json
+    markdown_path: docs/research/b1_b4_component_result_attribution.md
+  - candidate_family_id: atlas_historical_candidate_final_branch_decision_v1
+    role_code: BRANCH_DECISION
+    json_path: docs/research/final_branch_decision_snapshot.json
+    markdown_path: docs/research/final_branch_decision_snapshot.md
+  - candidate_family_id: atlas_historical_candidate_monthly_review_v1
+    role_code: MONTHLY_REVIEW
+    json_path: docs/research/monthly_research_program_review.json
+    markdown_path: docs/research/monthly_research_program_review.md
+  - candidate_family_id: atlas_historical_candidate_next_roadmap_v1
+    role_code: ROADMAP
+    json_path: docs/research/next_research_program_roadmap.json
+    markdown_path: docs/research/next_research_program_roadmap.md
+  - candidate_family_id: atlas_historical_candidate_program_snapshot_v1
+    role_code: PROGRAM_SNAPSHOT
+    json_path: docs/research/weight_research_program_v1_snapshot.json
+    markdown_path: docs/research/weight_research_program_v1_snapshot.md
+required_slots:
+  - identity
+  - window
+  - lineage
+  - result_or_status
+  - limitation
+slot_rules:
+  identity:
+    exact_fields:
+      - schema_version
+      - task_id
+      - report_type
+      - experiment_id
+      - layer_id
+    suffixes: []
+  window:
+    exact_fields:
+      - window
+      - requested_date_range
+      - as_of
+      - generated_at
+    suffixes: []
+  lineage:
+    exact_fields:
+      - source_artifacts
+      - included_artifacts
+      - baseline_source
+      - backtest_artifacts
+      - data_quality_gate
+      - required_outputs
+    suffixes: []
+  result_or_status:
+    exact_fields:
+      - status
+      - comparisons
+      - b0_to_b6_results
+      - phase_statuses
+      - selected_branch
+      - hypotheses
+      - module_usefulness
+    suffixes:
+      - _status
+  limitation:
+    exact_fields:
+      - limitations
+      - safety_boundary
+      - hard_constraints
+      - active_blockers
+      - blocked_modules
+      - forbidden_outputs_absent
+      - holdout_accessed
+    suffixes: []
+identity_value_fields:
+  - task_id
+  - report_type
+  - experiment_id
+  - layer_id
+markdown_tokens:
+  - window
+  - status
+  - result
+  - attribution
+  - limitation
+  - 限制
+  - 结论
+max_pointer_records_per_candidate: 512
+max_markdown_title_characters: 160
+max_identity_token_characters: 128
+disposition_codes:
+  - READY_FOR_OWNER_ADAPTER_REVIEW
+  - NEEDS_SCHEMA_NORMALIZATION
+  - NEEDS_SOURCE_REGISTRATION
+  - REJECTED_FROM_FIRST_BATCH
+safety:
+  candidate_artifact_content_read_count: 12
+  allowlist_outside_research_content_read_count: 0
+  source_registration_performed: false
+  atlas_result_projection_performed: false
+  research_value_projection_performed: false
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none
