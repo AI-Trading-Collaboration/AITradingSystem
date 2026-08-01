@@ -101,7 +101,7 @@ class HistoricalAdapterReviewPack:
             "inventory_receipt": dict(self.inventory_receipt),
             "candidate_records": [dict(item) for item in self.candidate_records],
             "summary": dict(self.summary),
-            "safety": _safety_payload(),
+            "safety": _safety_payload(self.summary["candidate_artifact_count"]),
         }
 
     @property
@@ -134,7 +134,7 @@ class HistoricalAdapterReviewValidationResult:
             "checks": list(self.checks),
             "errors": list(self.errors),
             "observed_summary": dict(self.observed_summary),
-            **_safety_payload(),
+            **_safety_payload(self.observed_summary["candidate_artifact_count"]),
         }
 
     def canonical_json_bytes(self) -> bytes:
@@ -277,7 +277,7 @@ def validate_historical_adapter_review(
     serialized = review_pack.to_dict()
     if MANDATORY_EXCLUDED_REPOSITORY_PATH in _all_string_values(serialized):
         errors.append("KNOWN_EXCLUSION_LEAKED_INTO_REVIEW_PACK")
-    if serialized.get("safety") != _safety_payload():
+    if serialized.get("safety") != _safety_payload(review_pack.summary["candidate_artifact_count"]):
         errors.append("REVIEW_PACK_SAFETY_BOUNDARY_MISMATCH")
     return HistoricalAdapterReviewValidationResult(
         status="PASS" if not errors else "FAIL",
@@ -318,7 +318,10 @@ def render_historical_adapter_review_markdown(
             "",
             f"- review_pack_id：`{review_pack.review_pack_id}`",
             f"- exact_commit：`{review_pack.exact_commit}`",
-            "- 口径：只审阅 exact allowlist 的字段形态与来源收据，不输出研究字段值。",
+            (
+                "- 口径：只审阅 exact allowlist 的字段形态与来源收据；仅保留 identifiers、"
+                "candidate paths 与 bounded title，不输出 status/result/limitation 等研究值。"
+            ),
             "- 本包不是策略结论、source registration 或页面接入授权。",
             "",
             "## 一眼看懂",
@@ -528,7 +531,7 @@ def _load_policy(payload: Mapping[str, object]) -> HistoricalAdapterReviewPolicy
     if disposition_codes != DISPOSITION_CODES:
         raise HistoricalAdapterReviewError("DISPOSITION_CODES_MISMATCH")
     safety = _mapping(payload.get("safety"), "safety")
-    if dict(safety) != _safety_payload():
+    if dict(safety) != _safety_payload(len(candidate_paths)):
         raise HistoricalAdapterReviewError("HISTORICAL_ADAPTER_REVIEW_SAFETY_MISMATCH")
     required_classification = _required_text(inventory, "required_classification")
     if required_classification != EXPECTED_INVENTORY_CLASSIFICATION:
@@ -809,9 +812,9 @@ def _all_string_values(value: object) -> set[str]:
     return values
 
 
-def _safety_payload() -> dict[str, object]:
+def _safety_payload(candidate_artifact_content_read_count: int) -> dict[str, object]:
     return {
-        "candidate_artifact_content_read_count": 12,
+        "candidate_artifact_content_read_count": candidate_artifact_content_read_count,
         "allowlist_outside_research_content_read_count": 0,
         "source_registration_performed": False,
         "atlas_result_projection_performed": False,

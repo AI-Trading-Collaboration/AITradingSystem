@@ -98,7 +98,7 @@ def _policy_bytes(*, include_lineage: bool = True) -> bytes:
             "REJECTED_FROM_FIRST_BATCH",
         ],
         "safety": {
-            "candidate_artifact_content_read_count": 12,
+            "candidate_artifact_content_read_count": 2,
             "allowlist_outside_research_content_read_count": 0,
             "source_registration_performed": False,
             "atlas_result_projection_performed": False,

@@ -211,7 +211,8 @@ broker resource。
 
 1. 12 条 candidate path 与 TRADING-2475 inventory id/classification exact 绑定；
 2. candidate Git blob/content SHA/size 可重算，allowlist 外 research content read count 为 0；
-3. JSON pointer/shape inventory 有界、稳定排序且不复制自由文本正文；
+3. JSON pointer/shape inventory 有界、稳定排序；仅保留 exact identifiers、candidate paths 与 bounded
+   Markdown title，不复制 status/result/limitation 等研究字段值或自由文本正文；
 4. Markdown 仅保存 bounded title/token presence 与 receipt，不输出长引用；
 5. identity/window/lineage/result-or-status/limitation 槽按 reviewed policy 机械判断；
 6. disposition 只表达 adapter readiness，不表达策略优劣或研究正确性；
