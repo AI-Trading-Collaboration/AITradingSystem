@@ -217,3 +217,17 @@ no network/server/LLM/write/production/broker resource
   投资评级、production 或 broker approval。实现与视觉基线转 `BASELINE_DONE`，由
   coordinator 继续执行 append-only authority、formal gates 与 governed closeout；formal
   结果写回前不得视为完成 local-main/remote closeout。
+- 2026-08-01：append-only compatibility authority 已以
+  `d84ed6915e1f879f64c69683b320663ccce0e1e9` 的原始 baseline blob 作为 immutable prefix；
+  前缀=`2297927 bytes / SHA-256 3a471f4d2f1e0cd03bb820bf5d6e780f1e26d5f84dc39cc57cb24acf14c956a7`，
+  唯一 TRADING-2474 section 从精确 EOF 开始。task registry=`937 tasks`，generated
+  architecture=`1057 modules / 1228 tests`，compatibility/deprecation=`169 passed`。
+- 2026-08-01：pre-formal candidate=`d3d66f1b7bdc6ec9692faacdfce87f806d12ac3e`。正式验证
+  PASS：Architecture=`816 passed`，runtime=`architecture-fitness_20260801T040918Z`；
+  Contract 首次执行因外层命令 `124s` timeout 被终止，未形成 PASS 且不是测试断言失败；确认无残留
+  pytest 后从同一 candidate 以更长受控时限重跑，`276 passed`，runtime=
+  `contract-validation_20260801T041348Z`；Integration=`995 passed / 642 warnings`，runtime=
+  `integration_20260801T041601Z`；Reproducibility=`24 passed`，runtime=
+  `reproducibility_20260801T041652Z`；Full=`7872 passed / 3 skipped / 644 warnings`，runtime=
+  `full_20260801T041725Z`。下一步仅写回这些证据并对 final tree 复跑 Architecture/Contract，
+  不改变 research、DQ、investment、production 或 broker 边界。
