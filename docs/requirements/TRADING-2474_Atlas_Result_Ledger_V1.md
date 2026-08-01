@@ -231,3 +231,13 @@ no network/server/LLM/write/production/broker resource
   `reproducibility_20260801T041652Z`；Full=`7872 passed / 3 skipped / 644 warnings`，runtime=
   `full_20260801T041725Z`。下一步仅写回这些证据并对 final tree 复跑 Architecture/Contract，
   不改变 research、DQ、investment、production 或 broker 边界。
+- 2026-08-01：formal evidence 写回提交=`a53f75106f034dcb07bd0ff737aa62d40bd6b38a`；
+  final-tree Architecture=`816 passed`，runtime=`architecture-fitness_20260801T044057Z`；
+  final-tree Contract=`276 passed`，runtime=`contract-validation_20260801T044327Z`。写回这两个
+  runtime ID 后还需对最终提交树执行 post-record Architecture/Contract，作为不再产生 tracked
+  证据写回的闭合确认。
+- 2026-08-01：Git staged closeout 期间两次观察到 `index.lock` 竞争。第一次锁为零字节且无
+  `git`/`git-lfs` 进程，按精确绝对路径移除后正常提交；第二次在复核期间自行释放，未执行删除，
+  保留 staged 内容后直接重试提交成功。两次均未改写 tracked 内容、未丢失 staged 数据，也未用
+  reset/checkout 等绕过；若后续任务再次稳定复现，应另立 DevEx 诊断任务，而不是在本任务引入
+  自动删锁逻辑。
