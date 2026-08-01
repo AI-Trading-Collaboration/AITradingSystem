@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import ssl
+import urllib.error
 from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -12,6 +15,8 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.official_policy_sources import (
     OfficialPolicyHttpResponse,
+    OfficialPolicyTransportError,
+    UrllibOfficialPolicyHttpClient,
     _row_count,
     build_official_policy_source_requests,
     fetch_official_policy_sources,
@@ -132,6 +137,25 @@ class FailingOfficialPolicyHttpClient:
         raise OSError("network unavailable")
 
 
+class ExhaustedOfficialPolicyHttpClient:
+    def get(
+        self,
+        url: str,
+        *,
+        headers: Mapping[str, str] | None = None,
+        timeout: int = 30,
+    ) -> OfficialPolicyHttpResponse:
+        _ = (url, headers)
+        raise OfficialPolicyTransportError(
+            attempt_count=3,
+            max_attempts=3,
+            timeout_seconds=timeout,
+            exception=urllib.error.URLError(
+                ssl.SSLEOFError("EOF occurred in violation of protocol")
+            ),
+        )
+
+
 def test_fetch_official_policy_sources_writes_raw_candidates_and_manifest(
     tmp_path: Path,
 ) -> None:
@@ -182,6 +206,8 @@ def test_fetch_official_policy_sources_writes_raw_candidates_and_manifest(
     )
     assert "dummy-congress-value" not in "\n".join(manifest["endpoint"].astype(str))
     assert "dummy-govinfo-value" not in "\n".join(manifest["endpoint"].astype(str))
+    assert set(manifest["transport_attempt_count"]) == {1}
+    assert "| Source | Provider | HTTP | Attempts |" in markdown
 
 
 def test_federal_register_request_uses_supported_fields_query() -> None:
@@ -247,6 +273,168 @@ def test_fetch_official_policy_sources_records_download_failure(tmp_path: Path) 
     assert report.payload_count == 0
     assert not manifest_path.exists()
     assert "official_policy_source_download_failed" in {issue.code for issue in report.issues}
+
+
+def test_urllib_client_retries_transient_tls_before_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    sleeps: list[float] = []
+
+    def fake_cached_get(**kwargs: object) -> SimpleNamespace:
+        calls.append(str(kwargs["url"]))
+        if len(calls) < 3:
+            raise urllib.error.URLError(ssl.SSLEOFError("EOF occurred in violation of protocol"))
+        return SimpleNamespace(status_code=200, headers={}, content=b"{}")
+
+    monkeypatch.setattr(
+        "ai_trading_system.official_policy_sources.cached_urllib_get",
+        fake_cached_get,
+    )
+    client = UrllibOfficialPolicyHttpClient(sleeper=sleeps.append)
+
+    response = client.get("https://api.govinfo.gov/collections/FR/test")
+
+    assert response.status_code == 200
+    assert response.transport_attempt_count == 3
+    assert len(calls) == 3
+    assert sleeps == [1.0, 2.0]
+
+
+def test_urllib_client_transport_exhaustion_is_typed_and_redacted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    sleeps: list[float] = []
+
+    def fake_cached_get(**kwargs: object) -> SimpleNamespace:
+        calls.append(str(kwargs["url"]))
+        raise urllib.error.URLError("SSL EOF occurred; api_key=owner-secret&format=json")
+
+    monkeypatch.setattr(
+        "ai_trading_system.official_policy_sources.cached_urllib_get",
+        fake_cached_get,
+    )
+    client = UrllibOfficialPolicyHttpClient(sleeper=sleeps.append)
+
+    with pytest.raises(OfficialPolicyTransportError) as captured:
+        client.get("https://api.govinfo.gov/collections/FR/test")
+
+    error = captured.value
+    assert error.attempt_count == 3
+    assert error.max_attempts == 3
+    assert error.exception_type == "URLError"
+    assert "owner-secret" not in str(error)
+    assert "api_key=***" in str(error)
+    assert len(calls) == 3
+    assert sleeps == [1.0, 2.0]
+
+
+def test_urllib_client_does_not_retry_http_status_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    sleeps: list[float] = []
+
+    def fake_cached_get(**kwargs: object) -> SimpleNamespace:
+        calls.append(str(kwargs["url"]))
+        raise urllib.error.HTTPError(
+            str(kwargs["url"]),
+            401,
+            "Unauthorized",
+            hdrs=None,
+            fp=None,
+        )
+
+    monkeypatch.setattr(
+        "ai_trading_system.official_policy_sources.cached_urllib_get",
+        fake_cached_get,
+    )
+    client = UrllibOfficialPolicyHttpClient(sleeper=sleeps.append)
+
+    with pytest.raises(urllib.error.HTTPError):
+        client.get("https://api.govinfo.gov/collections/FR/test")
+
+    assert len(calls) == 1
+    assert sleeps == []
+
+
+def test_urllib_client_returns_http_503_without_transport_retry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    sleeps: list[float] = []
+
+    def fake_cached_get(**kwargs: object) -> SimpleNamespace:
+        calls.append(str(kwargs["url"]))
+        return SimpleNamespace(status_code=503, headers={}, content=b"unavailable")
+
+    monkeypatch.setattr(
+        "ai_trading_system.official_policy_sources.cached_urllib_get",
+        fake_cached_get,
+    )
+    client = UrllibOfficialPolicyHttpClient(sleeper=sleeps.append)
+
+    response = client.get("https://api.govinfo.gov/collections/FR/test")
+
+    assert response.status_code == 503
+    assert response.transport_attempt_count == 1
+    assert len(calls) == 1
+    assert sleeps == []
+
+
+def test_fetch_official_policy_sources_exposes_transport_blocker(
+    tmp_path: Path,
+) -> None:
+    report = fetch_official_policy_sources(
+        as_of=date(2026, 7, 31),
+        since=date(2026, 7, 28),
+        raw_dir=tmp_path / "raw",
+        processed_dir=tmp_path / "processed",
+        api_keys={"GOVINFO_API_KEY": "dummy-value"},
+        selected_source_ids=["official_govinfo_federal_register"],
+        http_client=ExhaustedOfficialPolicyHttpClient(),
+    )
+
+    assert report.status == "FAIL"
+    assert report.blocker_codes == ("PROVIDER_UNAVAILABLE",)
+    assert {issue.code for issue in report.issues} == {"official_policy_source_transport_exhausted"}
+    assert "attempt_count=3" in report.issues[0].message
+
+
+def test_fetch_official_sources_cli_prints_stable_transport_blocker(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    report = fetch_official_policy_sources(
+        as_of=date(2026, 7, 31),
+        since=date(2026, 7, 28),
+        raw_dir=tmp_path / "raw",
+        processed_dir=tmp_path / "processed",
+        api_keys={"GOVINFO_API_KEY": "dummy-value"},
+        selected_source_ids=["official_govinfo_federal_register"],
+        http_client=ExhaustedOfficialPolicyHttpClient(),
+    )
+    monkeypatch.setattr(
+        "ai_trading_system.cli_commands.risk_events.fetch_official_policy_sources",
+        lambda **_kwargs: report,
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "risk-events",
+            "fetch-official-sources",
+            "--as-of",
+            "2026-07-31",
+            "--output-path",
+            str(tmp_path / "official_policy_sources_2026-07-31.md"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "blocker_code=PROVIDER_UNAVAILABLE" in result.stdout
+    assert "issue_codes=official_policy_source_transport_exhausted" in result.stdout
 
 
 def test_ofac_xml_row_count_handles_namespaced_records() -> None:

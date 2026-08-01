@@ -5798,6 +5798,16 @@ flowchart TD
 
 FMP EOD adapter 对 requests `Timeout` / `ConnectionError`（含 `SSLError`）只做三次以内、递增短退避的请求级重试；HTTP status、JSON/schema/provider error 不重试，最终 pre-response failure 以脱敏 `ProviderDownloadError` 记录 cache identity、attempt count、timeout 和已完成行数。该修复避免单次瞬时 TLS reset 直接消耗整个 canonical `download_data` step attempt，但不改变 request cache、fail-closed、DQ、downstream gate、production weight 或 broker/trading 边界。
 
+OPS-072 将同一窄化纪律接入 official policy/geopolitical provider adapter：每个 provider request
+在 external request cache 之后，只对 pre-response TLS/timeout/connection failure 做最多 3 次、
+1/2 秒退避；HTTP status、parser/schema/provider error 不重试。成功 raw payload 与 download
+manifest 记录 `transport_attempt_count`；最终 exhaustion 产生 typed
+`official_policy_source_transport_exhausted` / `PROVIDER_UNAVAILABLE` 与脱敏 attempt/timeout/
+exception evidence，CLI 输出 stable `blocker_code=`。Daily capture 对 401/403 的 fuzzy 分类改为
+要求明确 HTTP/status/auth 上下文，候选数量等裸数字不再误报 permission。失败仍只形成
+`PARTIAL_CAPTURE` 并阻断 `score_daily` descendants，不扩大 component attempt、historical
+recapture、recovery allowlist、production/active-shadow weight 或 broker/trading boundary。
+
 ### Strict PIT 缺口的一次性受限证据（OPS-063）
 
 2026-07-13/14 缺少 contemporaneous FMP forward PIT、SEC 与 OpenAI prereview hard inputs，因而 canonical daily status 永久保持 `INSUFFICIENT_DATA`，除非未来取得原始 archived inputs。Owner 批准的 `limited_non_pit_reconstruction.v1` 只冻结 cache-only market/macro facts、source SHA、DQ 与 null contract，且位于隔离 replay 目录；它没有 reusable producer/validator、report-registry 或 Reader Brief routing，不生成 score、position、Decision Snapshot，也不进入 weekly/governance/promotion/backtest/production。需要复跑时必须另建受治理链路，不能把 live refetch 解释为历史 PIT。
@@ -5839,8 +5849,8 @@ flowchart TD
     PE --> PE1["写入 portfolio_exposure_YYYY-MM-DD.md<br/>ticker、产业链节点、地区、客户链、因子、相关性簇"]
     R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store<br/>先读取稳定 UTF-8 YAML 文本快照，再解析并记录 load_error<br/>输出 PIT 可信度、历史来源和回测用途"]
     R --> OPX{"是否启用<br/>--risk-event-openai-precheck"}
-    OPX -->|是| OPF2["抓取官方政策/地缘来源<br/>fetch_official_policy_sources<br/>写 raw payload、manifest、候选 CSV 和官方来源报告；row_count / candidate parser 按 source fail closed"]
-    OPF2 -->|FAIL| OPFSTOP["停止<br/>输出 official_policy_sources 报告、错误数量和结构化 parser 诊断"]
+    OPX -->|是| OPF2["抓取官方政策/地缘来源<br/>fetch_official_policy_sources<br/>pre-response transport 最多3次/1-2秒退避；写 raw payload、manifest、候选 CSV 和官方来源报告；HTTP/parser 按 source fail closed"]
+    OPF2 -->|FAIL| OPFSTOP["停止<br/>输出 official_policy_sources 报告、stable blocker、attempt/timeout/exception 或结构化 parser 诊断"]
     OPF2 -->|PASS 或 PASS_WITH_WARNINGS| RPO2["OpenAI 风险事件 metadata_only 自动预审<br/>读取 risk_event_daily_official_precheck profile；store=false；短 TTL agent 精确请求缓存；生产最新已完成交易日由 daily-run 或显式 score-daily cutoff 允许 request_timestamp <= visibility_cutoff；历史 as-of 或无 cutoff 仍按 as-of 当日 UTC 末尾 fail closed；provider 权限和 cache_allowed fail closed；irrelevant 不进人工队列"]
     RPO2 -->|FAIL| RPOSTOP["停止<br/>输出 risk_event_prereview_openai 报告"]
     RPO2 -->|PASS 或 PASS_WITH_WARNINGS| RPQ2["写入 risk_event_prereview_queue.json<br/>候选上限、model、reasoning、timeout、HTTP client、cache TTL 和重试次数来自 profile；请求最终失败则整批停止；llm_extracted / pending_review"]
@@ -6573,10 +6583,10 @@ flowchart TD
 |风险事件校验|`aits risk-events validate` / `src/ai_trading_system/cli_commands/risk_events.py`|校验风险等级、产业链引用、相关标的和动作规则；`risk-events` Typer 命令组已迁入低耦合命令模块，主入口仍保持命令名、参数、退出码和报告语义兼容|已实现基础版|
 |风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源、S/A/B/C/D/X 证据等级、严重性、概率、影响范围、时效性、可逆性、动作等级、人工复核人、复核日期、复核决策、理由、下次复核日期和时间线；也可记录人工复核声明，说明指定窗口内已检查来源范围且未发现未记录重大风险事件；保守 source policy 下 `S/A` 可支持评分和仓位闸门，`B` 只支持普通评分，`C/D/X` 只复核|已实现基础版|
 |风险事件每日复核声明|`aits risk-events record-review-attestation` / `src/ai_trading_system/cli_commands/risk_events.py`|在用户显式提供复核人、来源范围和理由后写入 `review_attestation` YAML；声明只表示人工复核覆盖窗口和列出的来源范围，不会自动触发仓位闸门，也不会覆盖已记录 active/watch 发生记录；命令语义随 `risk-events` 模块化迁移保持兼容|已实现基础版|
-|风险事件官方来源抓取|`aits risk-events fetch-official-sources` / `src/ai_trading_system/cli_commands/risk_events.py`|按 owner 确认的低成本官方来源组合抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL；写入 raw payload、download manifest、待复核候选 CSV 和中文报告；Congress.gov/GovInfo 缺 API key 时显式跳过并报告；候选强制 `pending_review` 和 `production_effect=none`，不得直接评分、触发仓位闸门或写入正式 occurrence；命令语义随 `risk-events` 模块化迁移保持兼容|已实现基础版|
-|官方政策来源原始缓存|`data/raw/official_policy_sources/YYYY-MM-DD/*`|保存官方来源原始 JSON/XML/HTML payload，文件名包含 source_id 和 checksum 前缀；manifest 记录 provider、endpoint、请求参数、下载时间、row count、输出路径和 checksum；API key 不写入报告或 manifest|已实现基础版|
+|风险事件官方来源抓取|`aits risk-events fetch-official-sources` / `src/ai_trading_system/cli_commands/risk_events.py`|按 owner 确认的低成本官方来源组合抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL；每个 request 只对 pre-response TLS/timeout/connection 做最多3次1/2秒退避，HTTP status、parser/schema/provider error不重试；写入 raw payload、download manifest、待复核候选 CSV 和中文报告；最终 transport exhaustion 输出 typed issue 和 stable blocker；Congress.gov/GovInfo 缺 API key 时显式跳过并报告；候选强制 `pending_review` 和 `production_effect=none`，不得直接评分、触发仓位闸门或写入正式 occurrence|OPS-072|
+|官方政策来源原始缓存|`data/raw/official_policy_sources/YYYY-MM-DD/*`|保存官方来源原始 JSON/XML/HTML payload，文件名包含 source_id 和 checksum 前缀；manifest 记录 provider、endpoint、请求参数、下载时间、transport attempt count、row count、输出路径和 checksum；API key 不写入报告或 manifest|OPS-072|
 |官方政策来源待复核候选|`data/processed/official_policy_source_candidates_YYYY-MM-DD.csv`|从官方来源 metadata/title/summary 中抽取政策/地缘候选，记录 source_id、provider、source URL、published_at、matched risk_id/ticker/node、raw payload checksum 和人工复核问题；只能作为 owner 每日复核、AI 模块相关性 triage 和 reviewed occurrence CSV 的输入|已实现基础版|
-|官方政策来源抓取报告|`outputs/reports/official_policy_sources_YYYY-MM-DD.md`|中文输出抓取状态、来源数、payload 数、候选数、错误/警告、跳过来源、每个 payload 的 row count/checksum、逐 source 解析错误和候选摘要；报告声明不代表已确认事件或无事件结论；raw payload 写入后 parser 异常必须 fail closed 并保留结构化错误，不得裸 traceback 中断报告生成|已实现基础版|
+|官方政策来源抓取报告|`outputs/reports/official_policy_sources_YYYY-MM-DD.md`|中文输出抓取状态、来源数、payload 数、候选数、错误/警告、跳过来源、每个 payload 的 transport attempts/row count/checksum、stable blocker、逐 source transport/parser 错误和候选摘要；报告声明不代表已确认事件或无事件结论；transport exhaustion 与 raw payload 写入后的 parser 异常均必须 fail closed 并保留结构化错误，不得裸 traceback 中断报告生成|OPS-072|
 |官方政策来源 AI 模块 triage|`aits risk-events triage-official-candidates` / `src/ai_trading_system/cli_commands/risk_events.py`|读取官方来源待复核候选 CSV，按 AI 模块直接相关性输出 `must_review`、`review_next`、`sample_review`、`auto_low_relevance`、`duplicate_or_noise`；分类优先看标题、URL、来源名称和明确 metadata，不盲目继承宽泛 sanctions/geopolitics 自动映射出的 ticker 或 risk_id；输出强制 `production_effect=none`，不得写入正式 occurrence、评分或仓位闸门；命令语义随 `risk-events` 模块化迁移保持兼容|已实现基础版|
 |官方政策来源 AI 模块 triage CSV|`data/processed/official_policy_candidate_triage_YYYY-MM-DD.csv`|保存原始候选引用、matched topic/risk/ticker/node、triage bucket、AI relevance score、命中信号、分类理由和复核策略；`auto_low_relevance` 只代表低优先级，不代表已确认无风险|已实现基础版|
 |官方政策来源 AI 模块 triage 报告|`outputs/reports/risk_event_candidate_triage_YYYY-MM-DD.md`|中文输出 bucket 统计、高优先级候选、降低优先级候选摘要、方法边界和问题清单；用于减少人工复核面，不替代复核声明|已实现基础版|

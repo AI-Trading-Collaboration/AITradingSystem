@@ -106,6 +106,16 @@ Windows Task Scheduler/cron/GitHub Actions；该部署需要 owner 独立完成�
 
 FMP EOD 价格请求对 requests `Timeout` / `ConnectionError`（含 `SSLError`）采用最多三次的请求级有界重试，默认以 1 秒、2 秒递增退避；只有未收到响应的 transient transport error 可重试。HTTP status、invalid JSON、schema/provider error 仍立即 fail closed。重试耗尽时，`download_data_diagnostics_YYYY-MM-DD.md` 应记录脱敏请求参数、cache identity、attempt count、timeout 和异常类型；不得因重试删除 canonical state/ledger、跳过 `aits validate-data` 或提高 scheduler step attempt budget。
 
+OPS-072 后，official policy/geopolitical adapter 对每个来源应用同样窄化的 pre-response
+transport retry：TLS/timeout/connection 最多 3 次，退避 1 秒、2 秒；HTTP status、parser/schema/
+provider error 不重试。成功来源报告与 download manifest 记录
+`transport_attempt_count`；最终 exhaustion 在官方来源报告中记录
+`official_policy_source_transport_exhausted`、`PROVIDER_UNAVAILABLE`、attempt/max-attempt、
+timeout、exception type 与脱敏 message。CLI 另输出 stable `blocker_code=`，capture 只接受带
+HTTP/status/auth 上下文的 401/403，不把候选数量等裸数字误判为 permission。若该 component
+仍失败，`score_daily` 及其 Reader Brief/dashboard/lineage descendants 必须 BLOCKED；不要删除
+source state、手工失效成功 cache、用第二个 trigger 重跑同 parent，或补造当日评分。
+
 OPS-063 的 `limited_non_pit_reconstruction.v1` 仅是 2026-07-13/14 缺 contemporaneous hard inputs 时经 owner 批准的一次性 manual evidence。它不属于 `aits ops daily-run`、periodic-dispatch、Reader Brief 或 governance 下游，canonical daily status 仍为 `INSUFFICIENT_DATA`；operator 不得用 live refetch、7/15 snapshot 或该 bundle 补造 PIT、score、position 或投资结论。未来若需复跑，必须先新建受治理 producer/validator 任务。
 
 OPS-068 已建立受治理的 `limited_non_pit_reconstruction.v2` producer/validator，仅用于 owner 批准后的 2026-07-21 隔离历史事实证据。运行前必须先完成 explicit cache-only inventory，并显式传入 inventory bundle、owner decision id、bundle id 和需要保持 byte-identical 的 canonical cache/state/ledger guard paths：

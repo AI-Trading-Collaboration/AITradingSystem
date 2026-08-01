@@ -1356,12 +1356,20 @@ def _classify_source_blocker(
     normalized = error_summary.casefold()
     if return_code == 0 and missing_expected_paths:
         return "FILESYSTEM_INTEGRITY_FAILURE"
+    for blocker_code in sorted(_SUPPORTED_BLOCKER_CODES - {"NONE"}):
+        if f"blocker_code={blocker_code.casefold()}" in normalized:
+            return blocker_code
     if any(
         token in normalized
         for token in ("api key", "credential", "missing key", "token required")
     ):
         return "CREDENTIAL_MISSING"
-    if any(token in normalized for token in ("401", "403", "forbidden", "permission denied")):
+    if (
+        re.search(r"\b(?:http(?:\s+status)?|status(?:_code)?)\s*[=:]?\s*40[13]\b", normalized)
+        or "unauthorized" in normalized
+        or "forbidden" in normalized
+        or "permission denied" in normalized
+    ):
         return "PROVIDER_PERMISSION_DENIED"
     if any(token in normalized for token in ("429", "quota", "rate limit")):
         return "PROVIDER_QUOTA_EXHAUSTED"
@@ -1372,7 +1380,19 @@ def _classify_source_blocker(
         return "PROVIDER_SCHEMA_INVALID"
     if any(
         token in normalized
-        for token in ("timeout", "timed out", "connection", "502", "503", "504", "unavailable")
+        for token in (
+            "timeout",
+            "timed out",
+            "connection",
+            "ssl",
+            "unexpected_eof",
+            "eof occurred in violation of protocol",
+            "urlerror",
+            "502",
+            "503",
+            "504",
+            "unavailable",
+        )
     ):
         return "PROVIDER_UNAVAILABLE"
     if "no space" in normalized or "read-only file system" in normalized:

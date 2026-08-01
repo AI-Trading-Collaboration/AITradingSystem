@@ -517,6 +517,11 @@ def fetch_official_policy_sources_command(
     console.print(f"报告：{report_path}")
     console.print(f"Raw payload：{report.payload_count}；待复核候选：{report.candidate_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    for blocker_code in report.blocker_codes:
+        console.print(f"blocker_code={blocker_code}")
+    if report.issues:
+        issue_codes = ",".join(sorted({issue.code for issue in report.issues}))
+        console.print(f"issue_codes={issue_codes}")
     console.print("候选记录保持 pending_review，未写入评分或仓位闸门。")
     if not report.passed:
         raise typer.Exit(code=1)

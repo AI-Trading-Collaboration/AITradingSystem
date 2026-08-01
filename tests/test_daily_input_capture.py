@@ -710,6 +710,40 @@ def test_non_retryable_quota_blocker_does_not_consume_other_source_budgets(
     assert all(item["attempt_count"] == 1 for item in result.component_results[1:])
 
 
+def test_source_blocker_classifier_uses_stable_transport_marker_before_candidate_count() -> None:
+    blocker_code = capture_module._classify_source_blocker(
+        error_summary=(
+            "官方政策/地缘来源抓取状态：FAIL；待复核候选：401；错误数：1；"
+            "blocker_code=PROVIDER_UNAVAILABLE；"
+            "issue_codes=official_policy_source_transport_exhausted"
+        ),
+        return_code=1,
+        missing_expected_paths=(),
+    )
+
+    assert blocker_code == "PROVIDER_UNAVAILABLE"
+
+
+def test_source_blocker_classifier_does_not_treat_bare_candidate_401_as_http_status() -> None:
+    blocker_code = capture_module._classify_source_blocker(
+        error_summary="待复核候选：401；错误数：1",
+        return_code=1,
+        missing_expected_paths=(),
+    )
+
+    assert blocker_code == "REQUEST_FAILED"
+
+
+def test_source_blocker_classifier_still_recognizes_contextual_http_401() -> None:
+    blocker_code = capture_module._classify_source_blocker(
+        error_summary="official_govinfo_federal_register HTTP status=401",
+        return_code=1,
+        missing_expected_paths=(),
+    )
+
+    assert blocker_code == "PROVIDER_PERMISSION_DENIED"
+
+
 def test_active_source_lease_blocks_only_its_component(tmp_path: Path) -> None:
     policy_path = tmp_path / "capture_policy.yaml"
     _write_policy(policy_path, tmp_path)

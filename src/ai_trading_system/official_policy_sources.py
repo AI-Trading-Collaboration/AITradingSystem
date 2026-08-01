@@ -3,10 +3,12 @@ from __future__ import annotations
 import csv
 import json
 import re
+import ssl
+import time
 import urllib.error
 import urllib.parse
 import xml.etree.ElementTree as ET
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
@@ -50,6 +52,8 @@ _OFAC_RECORD_TAGS = frozenset({"sdnentry", "entry", "sanctionsentry", "profile"}
 
 _USER_AGENT = "AITradingSystem policy source fetcher; contact=project-owner"
 _DEFAULT_LIMIT = 50
+_OFFICIAL_POLICY_TRANSPORT_MAX_ATTEMPTS = 3
+_OFFICIAL_POLICY_TRANSPORT_BACKOFF_SECONDS = (1.0, 2.0)
 
 
 class OfficialPolicyIssueSeverity(StrEnum):
@@ -63,6 +67,7 @@ class OfficialPolicyIssue:
     code: str
     message: str
     source_id: str | None = None
+    blocker_code: str | None = None
 
 
 @dataclass(frozen=True)
@@ -70,6 +75,29 @@ class OfficialPolicyHttpResponse:
     status_code: int
     headers: Mapping[str, str]
     body: bytes
+    transport_attempt_count: int = 1
+
+
+class OfficialPolicyTransportError(RuntimeError):
+    def __init__(
+        self,
+        *,
+        attempt_count: int,
+        max_attempts: int,
+        timeout_seconds: int,
+        exception: BaseException,
+    ) -> None:
+        self.attempt_count = attempt_count
+        self.max_attempts = max_attempts
+        self.timeout_seconds = timeout_seconds
+        self.exception_type = type(exception).__name__
+        self.exception_message = _sanitize_transport_error(exception)
+        super().__init__(
+            "official policy transport exhausted; "
+            f"attempt_count={attempt_count}; max_attempts={max_attempts}; "
+            f"timeout_seconds={timeout_seconds}; exception_type={self.exception_type}; "
+            f"exception_message={self.exception_message}"
+        )
 
 
 class OfficialPolicyHttpClient(Protocol):
@@ -83,7 +111,20 @@ class OfficialPolicyHttpClient(Protocol):
         """Download one official source payload."""
 
 
+@dataclass
 class UrllibOfficialPolicyHttpClient:
+    max_attempts: int = _OFFICIAL_POLICY_TRANSPORT_MAX_ATTEMPTS
+    retry_backoff_seconds: tuple[float, ...] = _OFFICIAL_POLICY_TRANSPORT_BACKOFF_SECONDS
+    sleeper: Callable[[float], None] = time.sleep
+
+    def __post_init__(self) -> None:
+        if self.max_attempts <= 0:
+            raise ValueError("max_attempts must be positive")
+        if len(self.retry_backoff_seconds) < self.max_attempts - 1:
+            raise ValueError("retry_backoff_seconds must cover every retry")
+        if any(delay < 0 for delay in self.retry_backoff_seconds):
+            raise ValueError("retry_backoff_seconds cannot contain negative delays")
+
     def get(
         self,
         url: str,
@@ -91,18 +132,39 @@ class UrllibOfficialPolicyHttpClient:
         headers: Mapping[str, str] | None = None,
         timeout: int = 30,
     ) -> OfficialPolicyHttpResponse:
-        response = cached_urllib_get(
-            provider="Official policy source",
-            api_family="source_fetch",
-            url=url,
-            headers=headers,
-            timeout=timeout,
-        )
-        return OfficialPolicyHttpResponse(
-            status_code=response.status_code,
-            headers=response.headers,
-            body=response.content,
-        )
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = cached_urllib_get(
+                    provider="Official policy source",
+                    api_family="source_fetch",
+                    url=url,
+                    headers=headers,
+                    timeout=timeout,
+                )
+            except (
+                TimeoutError,
+                ConnectionError,
+                ssl.SSLError,
+                urllib.error.URLError,
+            ) as exc:
+                if not _is_retryable_transport_error(exc):
+                    raise
+                if attempt >= self.max_attempts:
+                    raise OfficialPolicyTransportError(
+                        attempt_count=attempt,
+                        max_attempts=self.max_attempts,
+                        timeout_seconds=timeout,
+                        exception=exc,
+                    ) from exc
+                self.sleeper(self.retry_backoff_seconds[attempt - 1])
+                continue
+            return OfficialPolicyHttpResponse(
+                status_code=response.status_code,
+                headers=response.headers,
+                body=response.content,
+                transport_attempt_count=attempt,
+            )
+        raise AssertionError("official policy transport retry loop did not terminate")
 
 
 @dataclass(frozen=True)
@@ -131,6 +193,7 @@ class OfficialPolicyRawPayload:
     checksum_sha256: str
     row_count: int
     candidate_count: int
+    transport_attempt_count: int = 1
 
 
 @dataclass(frozen=True)
@@ -197,6 +260,19 @@ class OfficialPolicySourceFetchReport:
         return self.error_count == 0
 
     @property
+    def blocker_codes(self) -> tuple[str, ...]:
+        return tuple(
+            sorted(
+                {
+                    issue.blocker_code
+                    for issue in self.issues
+                    if issue.severity == OfficialPolicyIssueSeverity.ERROR
+                    and issue.blocker_code is not None
+                }
+            )
+        )
+
+    @property
     def status(self) -> str:
         if self.error_count:
             return "FAIL"
@@ -251,6 +327,7 @@ def fetch_official_policy_sources(
                 code="official_policy_source_unknown_source_id",
                 source_id=source_id,
                 message=f"未知官方来源 source_id：{source_id}。",
+                blocker_code="REQUEST_FAILED",
             )
         )
 
@@ -274,6 +351,17 @@ def fetch_official_policy_sources(
 
         try:
             response = client.get(request.endpoint, headers=_headers_for(request))
+        except OfficialPolicyTransportError as exc:
+            issues.append(
+                OfficialPolicyIssue(
+                    severity=OfficialPolicyIssueSeverity.ERROR,
+                    code="official_policy_source_transport_exhausted",
+                    source_id=request.source_id,
+                    blocker_code="PROVIDER_UNAVAILABLE",
+                    message=f"{request.source_id} transport exhausted；{exc}",
+                )
+            )
+            continue
         except (OSError, TimeoutError, urllib.error.URLError) as exc:
             issues.append(
                 OfficialPolicyIssue(
@@ -281,6 +369,7 @@ def fetch_official_policy_sources(
                     code="official_policy_source_download_failed",
                     source_id=request.source_id,
                     message=(f"{request.source_id} 下载失败：" f"{type(exc).__name__}: {exc}"),
+                    blocker_code=_blocker_code_for_download_exception(exc),
                 )
             )
             continue
@@ -311,6 +400,7 @@ def fetch_official_policy_sources(
                             f"raw_payload={output_path}；checksum={checksum}；"
                             f"{type(exc).__name__}: {exc}"
                         ),
+                        blocker_code="PROVIDER_SCHEMA_INVALID",
                     )
                 )
         if response.status_code >= 400:
@@ -323,6 +413,7 @@ def fetch_official_policy_sources(
                         f"{request.source_id} HTTP status={response.status_code}；"
                         "已保存响应用于排查，但本来源不能视为成功抓取。"
                     ),
+                    blocker_code=_blocker_code_for_http_status(response.status_code),
                 )
             )
         payload = OfficialPolicyRawPayload(
@@ -338,6 +429,7 @@ def fetch_official_policy_sources(
             checksum_sha256=checksum,
             row_count=row_count,
             candidate_count=len(request_candidates),
+            transport_attempt_count=response.transport_attempt_count,
         )
         payloads.append(payload)
         candidates.extend(request_candidates)
@@ -549,6 +641,10 @@ def render_official_policy_fetch_report(report: OfficialPolicySourceFetchReport)
             "- USTR 页面和 CSL 下载结果用于人工复核线索；正式评分仍需要 source policy、"
             "发生记录和复核声明通过校验。"
         ),
+        (
+            "- 单个来源只对 pre-response TLS/timeout/connection failure 做 3 次有界尝试；"
+            "HTTP status、parser/schema/provider error 不进入 transport retry。"
+        ),
         "",
         "## 来源抓取结果",
         "",
@@ -556,8 +652,8 @@ def render_official_policy_fetch_report(report: OfficialPolicySourceFetchReport)
     if report.payloads:
         lines.extend(
             [
-                "| Source | Provider | HTTP | Row count | 候选 | Raw payload | SHA256 |",
-                "|---|---|---:|---:|---:|---|---|",
+                "| Source | Provider | HTTP | Attempts | Row count | 候选 | Raw payload | SHA256 |",
+                "|---|---|---:|---:|---:|---:|---|---|",
             ]
         )
         for payload in report.payloads:
@@ -566,6 +662,7 @@ def render_official_policy_fetch_report(report: OfficialPolicySourceFetchReport)
                 f"{payload.source_id} | "
                 f"{_escape_markdown_table(payload.provider)} | "
                 f"{payload.status_code} | "
+                f"{payload.transport_attempt_count} | "
                 f"{payload.row_count} | "
                 f"{payload.candidate_count} | "
                 f"`{payload.output_path}` | "
@@ -600,13 +697,19 @@ def render_official_policy_fetch_report(report: OfficialPolicySourceFetchReport)
 
     lines.extend(["", "## 问题", ""])
     if report.issues:
-        lines.extend(["| 级别 | Source | Code | 说明 |", "|---|---|---|---|"])
+        lines.extend(
+            [
+                "| 级别 | Source | Code | Blocker | 说明 |",
+                "|---|---|---|---|---|",
+            ]
+        )
         for issue in report.issues:
             lines.append(
                 "| "
                 f"{_issue_label(issue.severity)} | "
                 f"{issue.source_id or ''} | "
                 f"{issue.code} | "
+                f"{issue.blocker_code or ''} | "
                 f"{_escape_markdown_table(issue.message)} |"
             )
     else:
@@ -1242,9 +1345,47 @@ def _download_manifest_records(
             "output_path": str(payload.output_path),
             "row_count": payload.row_count,
             "checksum_sha256": payload.checksum_sha256,
+            "transport_attempt_count": payload.transport_attempt_count,
         }
         for payload in report.payloads
     )
+
+
+def _is_retryable_transport_error(exception: BaseException) -> bool:
+    if isinstance(exception, urllib.error.HTTPError):
+        return False
+    return isinstance(
+        exception,
+        (TimeoutError, ConnectionError, ssl.SSLError, urllib.error.URLError),
+    )
+
+
+def _sanitize_transport_error(exception: BaseException) -> str:
+    message = str(exception)
+    message = re.sub(
+        r"(?i)(api[_-]?key|token|authorization)=([^&\s;,)]+)",
+        r"\1=***",
+        message,
+    )
+    return message[:500]
+
+
+def _blocker_code_for_download_exception(exception: BaseException) -> str:
+    if _is_retryable_transport_error(exception):
+        return "PROVIDER_UNAVAILABLE"
+    if isinstance(exception, PermissionError):
+        return "FILESYSTEM_INTEGRITY_FAILURE"
+    return "REQUEST_FAILED"
+
+
+def _blocker_code_for_http_status(status_code: int) -> str:
+    if status_code in {401, 403}:
+        return "PROVIDER_PERMISSION_DENIED"
+    if status_code == 429:
+        return "PROVIDER_QUOTA_EXHAUSTED"
+    if 500 <= status_code <= 599:
+        return "PROVIDER_UNAVAILABLE"
+    return "REQUEST_FAILED"
 
 
 def _raw_output_path(
