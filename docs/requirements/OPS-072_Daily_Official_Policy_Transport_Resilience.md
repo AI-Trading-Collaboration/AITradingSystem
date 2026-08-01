@@ -143,3 +143,11 @@ score 恢复，则必须明确记录该 parent 不可恢复，并由下一 provi
   直接脚本显式使用本 worktree `src`。Generator 与 validator 均 PASS、compatibility views
   byte-identical、cutover=false。初始 claim 漏列 `registry/development_tasks_shadow_v2`，在发现
   唯一新 v2 fragment 后立即披露并扩展 coordinator claim；该 fragment 不被删除或绕过。
+- 2026-08-01：完成最小串行 compatibility contract wave。历史前缀仍为
+  `2285104` bytes / SHA-256
+  `76ff505138802cf5ea24fb6ea6f214571ff242d1289c2b114ed7b3e14f98dbc8`，
+  OPS-072 为唯一 EOF authority；其集合为 42 个既有 live mismatch、313 个新 source、
+  355 个 current source。初始 authority 采样误带入共享 checkout 的两项 Atlas 用户改动并
+  漏判一项 task-shadow 归类，发现后未触碰用户路径，改为从隔离 worktree 与历史 owner
+  顺序重新计算并逐项验哈希。DevEx generate/validate PASS（1057 modules、1228 tests、
+  0 violations），兼容链与 DevEx 聚焦回归最终 `174 passed`。

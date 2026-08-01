@@ -1359,10 +1359,8 @@ def _classify_source_blocker(
     for blocker_code in sorted(_SUPPORTED_BLOCKER_CODES - {"NONE"}):
         if f"blocker_code={blocker_code.casefold()}" in normalized:
             return blocker_code
-    if any(
-        token in normalized
-        for token in ("api key", "credential", "missing key", "token required")
-    ):
+    credential_markers = ("api key", "credential", "missing key", "token required")
+    if any(token in normalized for token in credential_markers):
         return "CREDENTIAL_MISSING"
     if (
         re.search(r"\b(?:http(?:\s+status)?|status(?:_code)?)\s*[=:]?\s*40[13]\b", normalized)
