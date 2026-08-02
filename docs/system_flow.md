@@ -7192,3 +7192,55 @@ right 或生成 order。
 `QQQ_SINGLE_LEG_SELECTION_V1_READY` 仍依赖 Owner-reviewed tracked active policy。外部 QuantConnect token
 未授予，本节点不登录/建 project/运行 backtest，不 roll/multi-leg/short，不下单/成交/会计/计算收益，固定
 research-only、production/broker=false/none。
+
+## TRADING-2486 QQQ Options Minute Execution Reality Model V1
+
+`config/research/qqq_options_minute_execution_reality_v1.yaml` 在 2481 shared lifecycle records、2482
+DQ/PIT evaluator、2484 adapter lineage 与 2485 canonical selection decision 之后冻结离线 minute execution
+mechanics。`qqq_options_research.minute_execution` 不复制 shared record：所有 intent/event/fill 只使用 2481
+`OrderIntentRecord`、`OrderEventRecord`、`FillEventRecord` 的 `seal()` / `from_json_bytes()` / canonical
+content-hash authority。
+
+```text
+2485 canonical SelectionDecisionRecord + loaded exact selection policy
+  -> adapter/candidate-set/selector hashes cross-bind
+  -> default 2486 unauthorized => EXECUTION_POLICY_REVIEW_REQUIRED + cash/no order/no fill
+  -> 2485 selection blocked/no contract => typed cash/no order/no fill
+canonical selection-stage 2482 DQReportRecord
+  -> strict bytes/file hash/scope/as-of/run/range/code/contract/adapter replay
+  -> required selection-stage checks must be factual PASS
+  -> selection PASS never promotes not-yet-evaluated order/fill checks
+reviewed 2486 active policy (synthetic fixtures only while tracked default is blocked)
+  -> intent strictly after selection; not_before at next minute boundary
+  -> submit latency; earliest eligible quote begins in the next independent minute
+  -x-> same-bar quote / DAILY close / future or fill-forward ambiguity
+sorted MINUTE quote facts + exact source checksums
+  -> BUY_TO_OPEN uses ASK; SELL_TO_CLOSE uses BID
+  -> marketable-limit and fill-within-limit bound
+  -> reviewed slippage / fee / partial capacity / cancel timeout
+  -> 2482 evaluator recomputes signal < selection < intent <= submit < fill-quote <= fill
+  -> 2481 sealed order/fill events
+  -> FILLED / PARTIAL_CANCELED / NO_FILL_CANCELED / REJECTED
+  -> canonical result identity and byte-identical replay independent of input ordering
+```
+
+tracked default policy 为 `OWNER_REVIEW_REQUIRED_BASELINE`、`execution_authorized=false`。submission/fill
+latency、maximum quote age、marketable-limit buffer、slippage、fee、per-quote partial capacity 和 cancel timeout
+全部为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；2486 不从 QuantConnect sample、test fixture 或 Web 建议复制数值。
+zero slippage 仅可在显式 `ISOLATION_SENSITIVITY`、`reality_baseline=false` 情景中隔离其他变量，不能作为
+reality/default baseline。
+
+execution quote-set 与 result identity 同时绑定 signal/selection/intent/submit/quote/fill/cancel/reject 时间、
+source checksum、2481 contract/shared-policy、2482 DQ/PIT、2484 adapter、2485 selector 与 2486 execution
+policy lineage。quote 输入先按时间/source id canonical-sort；排列不改变 partial replay。missing/stale/non-
+marketable quote 只能 no-fill/cancel，crossed quote 或 venue rejection 只能 typed reject；任何 fill 必须
+`quote_end_utc < fill_at_utc`，BUY price 不高于 limit、SELL price 不低于 limit，sequence/cumulative quantity
+严格单调。
+
+execution-stage report 由 2482 evaluator 从事实重新生成；selection checks PASS 不能伪造 full lifecycle PASS，
+`evidence_identity`、`provider_raw_checksum` 等尚未评估项继续留作 `NOT_EVALUATED`。local cached-data DQ、
+adapter admission 或 selector decision 都不能替代 option-event DQ。本节点不做 2487 cash/accounting/PnL，
+result 固定 `accounting_status=NOT_EVALUATED`；不登录 QuantConnect、不建 project、不调用 API/CLI/HTTP、
+不运行 cloud/paper/live/broker/production、不导出 raw rows。工程退出为
+`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY_POLICY_BLOCKED`；完整
+`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY` 仍依赖 Owner-reviewed tracked numeric policy 与独立 evidence。

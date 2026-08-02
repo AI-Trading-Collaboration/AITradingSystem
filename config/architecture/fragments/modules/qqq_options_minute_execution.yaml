@@ -1,0 +1,19 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_minute_execution
+fragment_kind: module
+owner: options_execution_research_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/minute_execution.py
+public_contracts:
+  - UnresolvedExecutionCriteria
+  - ActiveExecutionCriteria
+  - QQQOptionMinuteExecutionSafety
+  - QQQOptionMinuteExecutionPolicy
+  - QQQOptionMinuteExecutionPolicyLoadResult
+  - QQQOptionExecutionQuoteInput
+  - QQQOptionExecutionRequest
+  - QQQOptionExecutionResult
+  - load_qqq_options_minute_execution_policy
+  - build_qqq_option_execution_quote_set_sha256
+  - simulate_qqq_option_minute_execution
+compatibility_facades: []
+deprecation_status: active_reference_architecture

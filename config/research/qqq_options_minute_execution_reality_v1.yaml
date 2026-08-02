@@ -1,0 +1,48 @@
+schema_version: qqq_options_minute_execution_reality_policy.v1
+policy_id: qqq_options_minute_execution_reality_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED_BASELINE
+owner: project_owner_and_options_execution_governance
+owner_decision: owner_decision:TRADING-2486:2026-08-02:freeze_minute_execution_mechanics_without_unreviewed_numeric_policy
+rationale: Freeze deterministic next-independent-minute execution mechanics while keeping every latency, slippage, fee, quote-freshness, limit-buffer, partial-fill and timeout value fail closed until explicit Owner review.
+intended_effect: Identical governed inputs produce identical typed cash-preservation or execution replay without daily-close, same-bar, mid-price, last-price or hidden fill assumptions.
+validation_plan: Run policy drift, canonical DQ replay, chronology, quote-side, limit-bound, partial, reject, cancel, permutation, property, golden and predecessor-binding tests before governed final-tree validation.
+review_condition: Review before activating any execution scenario, consuming real minute option quotes, or using an execution result in an investment-facing backtest.
+expiry_condition: Supersede only through an Owner-reviewed tracked policy change with calibration evidence, review or expiry condition, compatibility coverage and final-tree validation.
+execution_authorized: false
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+adapter_policy_sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+selection_policy_sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30
+primary_research_start: 2021-02-22
+approved_non_primary_authority_count: 0
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+criteria:
+  mode: UNRESOLVED
+  scenario_role: UNKNOWN_REQUIRES_POLICY_REVIEW
+  dq_caveat: UNKNOWN_REQUIRES_POLICY_REVIEW
+  submission_latency_ms: UNKNOWN_REQUIRES_POLICY_REVIEW
+  fill_latency_ms: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_quote_age_ms: UNKNOWN_REQUIRES_POLICY_REVIEW
+  marketable_limit_buffer_per_share: UNKNOWN_REQUIRES_POLICY_REVIEW
+  slippage_per_share: UNKNOWN_REQUIRES_POLICY_REVIEW
+  fee_per_contract_usd: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_contracts_per_quote: UNKNOWN_REQUIRES_POLICY_REVIEW
+  cancel_after_ms: UNKNOWN_REQUIRES_POLICY_REVIEW
+  reality_baseline: false
+safety:
+  research_only: true
+  long_premium_only: true
+  minute_quotes_only: true
+  next_independent_minute_required: true
+  daily_close_fill_allowed: false
+  same_bar_fill_allowed: false
+  fill_forward_allowed: false
+  mid_or_last_price_fill_allowed: false
+  cloud_run_authorized: false
+  external_order_allowed: false
+  raw_options_data_export_allowed: false
+  production_effect: none
+  broker_action: none

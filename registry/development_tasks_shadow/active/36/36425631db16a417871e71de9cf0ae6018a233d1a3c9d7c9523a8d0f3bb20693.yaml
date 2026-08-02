@@ -11,49 +11,74 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: execution simulation：等待 TRADING-2481/2482/2484/2485
-  requirement_refs: []
+  next_owner: project owner：审核 latency/slippage/fee/quote age/marketable-limit buffer/partial-fill/cancel
+    timeout policy；TRADING-2487 owner：只可消费 2486 sealed execution events，不得激活 blocked
+    policy
+  requirement_refs:
+  - docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 实现 next-independent-minute intent、bid/ask-side
-    marketable-limit、partial/reject/cancel、latency/slippage sensitivities；禁止 daily-close
-    与 same-bar fill。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md`。offline
+    next-independent-minute intent、bid/ask-side marketable-limit、partial/reject/cancel、canonical
+    2482 execution DQ replay 与 deterministic result 已完成；禁止 daily-close/same-bar，不激活
+    2485 blocked selection。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: event chronology、limit bounds、stale/missing quote/no-fill、partial replay、fee/slippage/fill
-      identity unit/property/golden PASS；更新 system flow；退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`。
+    text: event chronology、limit bounds、canonical DQ facts、stale/missing quote/no-fill、partial
+      replay、fee/slippage/fill identity unit/property/golden PASS；default unauthorized
+      与 selection-blocked typed cash-preservation；system flow/generated/final formal
+      PASS；工程退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY_POLICY_BLOCKED`，完整退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`
+      仍 blocked。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2094
-    row_sha256: 3726a05148334f8e0ce70d2bfeceba8a41eeb9524fc6f7d13584d840a65c7b49
+    row_sha256: 12e5f516fbf47989e63265fd4b3d1006ca04586ff590fd2e907c70e721427b62
     cell_count: 8
     all_cells:
     - TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1
     - Execution simulation / minute quote chronology, fill and slippage
     - P1
-    - PROPOSED
-    - execution simulation：等待 TRADING-2481/2482/2484/2485
-    - 实现 next-independent-minute intent、bid/ask-side marketable-limit、partial/reject/cancel、latency/slippage
-      sensitivities；禁止 daily-close 与 same-bar fill。
-    - event chronology、limit bounds、stale/missing quote/no-fill、partial replay、fee/slippage/fill
-      identity unit/property/golden PASS；更新 system flow；退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`。
-    - 默认 zero slippage 只可作为 isolation sensitivity，不能作 reality baseline。
+    - BASELINE_DONE
+    - project owner：审核 latency/slippage/fee/quote age/marketable-limit buffer/partial-fill/cancel
+      timeout policy；TRADING-2487 owner：只可消费 2486 sealed execution events，不得激活 blocked
+      policy
+    - 详见 `docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md`。offline
+      next-independent-minute intent、bid/ask-side marketable-limit、partial/reject/cancel、canonical
+      2482 execution DQ replay 与 deterministic result 已完成；禁止 daily-close/same-bar，不激活
+      2485 blocked selection。
+    - event chronology、limit bounds、canonical DQ facts、stale/missing quote/no-fill、partial
+      replay、fee/slippage/fill identity unit/property/golden PASS；default unauthorized
+      与 selection-blocked typed cash-preservation；system flow/generated/final formal
+      PASS；工程退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY_POLICY_BLOCKED`，完整退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`
+      仍 blocked。
+    - 2026-08-02：policy SHA=`8c8823dd...226a`，module SHA=`e2f50a6f...3feb`；focused=`26`、2481–2486
+      adjacent=`164` PASS，Ruff/mypy/compileall、DevEx/task shadow PASS。全部 execution
+      数值仍 `UNKNOWN_REQUIRES_POLICY_REVIEW`；zero slippage 仅 isolation sensitivity；formal
+      final-tree 待收口，external action=none。
     raw_line: '|TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1|Execution
-      simulation / minute quote chronology, fill and slippage|P1|PROPOSED|execution
-      simulation：等待 TRADING-2481/2482/2484/2485|实现 next-independent-minute intent、bid/ask-side
-      marketable-limit、partial/reject/cancel、latency/slippage sensitivities；禁止 daily-close
-      与 same-bar fill。|event chronology、limit bounds、stale/missing quote/no-fill、partial
-      replay、fee/slippage/fill identity unit/property/golden PASS；更新 system flow；退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`。|默认
-      zero slippage 只可作为 isolation sensitivity，不能作 reality baseline。|'
+      simulation / minute quote chronology, fill and slippage|P1|BASELINE_DONE|project
+      owner：审核 latency/slippage/fee/quote age/marketable-limit buffer/partial-fill/cancel
+      timeout policy；TRADING-2487 owner：只可消费 2486 sealed execution events，不得激活 blocked
+      policy|详见 `docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md`。offline
+      next-independent-minute intent、bid/ask-side marketable-limit、partial/reject/cancel、canonical
+      2482 execution DQ replay 与 deterministic result 已完成；禁止 daily-close/same-bar，不激活
+      2485 blocked selection。|event chronology、limit bounds、canonical DQ facts、stale/missing
+      quote/no-fill、partial replay、fee/slippage/fill identity unit/property/golden
+      PASS；default unauthorized 与 selection-blocked typed cash-preservation；system
+      flow/generated/final formal PASS；工程退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY_POLICY_BLOCKED`，完整退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`
+      仍 blocked。|2026-08-02：policy SHA=`8c8823dd...226a`，module SHA=`e2f50a6f...3feb`；focused=`26`、2481–2486
+      adjacent=`164` PASS，Ruff/mypy/compileall、DevEx/task shadow PASS。全部 execution
+      数值仍 `UNKNOWN_REQUIRES_POLICY_REVIEW`；zero slippage 仅 isolation sensitivity；formal
+      final-tree 待收口，external action=none。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-3726a05148334f8e0ce70d2b
+  event_id: legacy-import-12e5f516fbf47989e63265fd
   task_id: TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -63,29 +88,45 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: execution simulation：等待 TRADING-2481/2482/2484/2485
-    notes: 默认 zero slippage 只可作为 isolation sensitivity，不能作 reality baseline。
+    next_owner: project owner：审核 latency/slippage/fee/quote age/marketable-limit buffer/partial-fill/cancel
+      timeout policy；TRADING-2487 owner：只可消费 2486 sealed execution events，不得激活 blocked
+      policy
+    notes: 2026-08-02：policy SHA=`8c8823dd...226a`，module SHA=`e2f50a6f...3feb`；focused=`26`、2481–2486
+      adjacent=`164` PASS，Ruff/mypy/compileall、DevEx/task shadow PASS。全部 execution
+      数值仍 `UNKNOWN_REQUIRES_POLICY_REVIEW`；zero slippage 仅 isolation sensitivity；formal
+      final-tree 待收口，external action=none。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:3726a05148334f8e0ce70d2bfeceba8a41eeb9524fc6f7d13584d840a65c7b49
+  - sha256:12e5f516fbf47989e63265fd4b3d1006ca04586ff590fd2e907c70e721427b62
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1
   - Execution simulation / minute quote chronology, fill and slippage
   - P1
-  - PROPOSED
-  - execution simulation：等待 TRADING-2481/2482/2484/2485
-  - 实现 next-independent-minute intent、bid/ask-side marketable-limit、partial/reject/cancel、latency/slippage
-    sensitivities；禁止 daily-close 与 same-bar fill。
-  - event chronology、limit bounds、stale/missing quote/no-fill、partial replay、fee/slippage/fill
-    identity unit/property/golden PASS；更新 system flow；退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`。
-  - 默认 zero slippage 只可作为 isolation sensitivity，不能作 reality baseline。
-  docs_links: []
+  - BASELINE_DONE
+  - project owner：审核 latency/slippage/fee/quote age/marketable-limit buffer/partial-fill/cancel
+    timeout policy；TRADING-2487 owner：只可消费 2486 sealed execution events，不得激活 blocked
+    policy
+  - 详见 `docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md`。offline
+    next-independent-minute intent、bid/ask-side marketable-limit、partial/reject/cancel、canonical
+    2482 execution DQ replay 与 deterministic result 已完成；禁止 daily-close/same-bar，不激活
+    2485 blocked selection。
+  - event chronology、limit bounds、canonical DQ facts、stale/missing quote/no-fill、partial
+    replay、fee/slippage/fill identity unit/property/golden PASS；default unauthorized
+    与 selection-blocked typed cash-preservation；system flow/generated/final formal
+    PASS；工程退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY_POLICY_BLOCKED`，完整退出=`MINUTE_QUOTE_EXECUTION_MODEL_V1_READY`
+    仍 blocked。
+  - 2026-08-02：policy SHA=`8c8823dd...226a`，module SHA=`e2f50a6f...3feb`；focused=`26`、2481–2486
+    adjacent=`164` PASS，Ruff/mypy/compileall、DevEx/task shadow PASS。全部 execution 数值仍
+    `UNKNOWN_REQUIRES_POLICY_REVIEW`；zero slippage 仅 isolation sensitivity；formal
+    final-tree 待收口，external action=none。
+  docs_links:
+  - docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md
   terminal: false
-  raw_row_sha256: 3726a05148334f8e0ce70d2bfeceba8a41eeb9524fc6f7d13584d840a65c7b49
+  raw_row_sha256: 12e5f516fbf47989e63265fd4b3d1006ca04586ff590fd2e907c70e721427b62
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 19f941da8b50aa17ab88616f148908f8f2beb7290afda12be1afe5f61f680cc6
+fragment_checksum: 34e077acb3f70e2d480b77ca96551e755e09364334be68b41e2a2175c4ca72df
