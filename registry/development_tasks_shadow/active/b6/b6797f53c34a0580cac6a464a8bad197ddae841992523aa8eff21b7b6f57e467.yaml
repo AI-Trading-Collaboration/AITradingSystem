@@ -11,50 +11,68 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: external platform engineering：等待 TRADING-2480..2483
-  requirement_refs: []
+  next_owner: TRADING-2485 owner：从 2484 ordinary-pushed exact main 继承 adapter authority
+    开发 deterministic universe selection；project owner：外部 QuantConnect token 仍未授予
+  requirement_refs:
+  - docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 定义 manifest loader、QQQ subscriptions、RAW
-    normalization、engine metadata、Free project-file limits 和 result mapping；不创建 production/live/broker
-    project。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md`。offline
+    typed adapter、strict 2483 package replay、2480 receipt binding、QQQ/RAW/MINUTE subscription、engine
+    metadata、Free project-file descriptor 与 manual-result mapping 已冻结；不创建/修改 cloud
+    project，不登录平台，不运行 backtest。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 无 secret/live node/Object Store/API/CLI 免费层假设；manifest mismatch、wrong range/code/policy/engine
-      fail closed；synthetic adapter/security/contract tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
+    text: package extra/missing/symlink/tamper、wrong range/code/policy/engine、capability
+      receipt drift 均 fail closed；canonical descriptor 小于 32KB；无 secret/Object Store/API/CLI/HTTP
+      输入假设；focused/adjacent/compatibility 与 final-tree formal PASS；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2092
-    row_sha256: 5e66a2c3f7b7b8b195af080b8600bccb07c58f40cd88be602cebdef551da3f34
+    row_sha256: a77ae282418e038c55a6dc33730b6c343f58cc9ec8ecb629781aef33a57a9a96
     cell_count: 8
     all_cells:
     - TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
     - External platform engineering / safe QuantConnect project adapter boundary
     - P1
-    - PROPOSED
-    - external platform engineering：等待 TRADING-2480..2483
-    - 定义 manifest loader、QQQ subscriptions、RAW normalization、engine metadata、Free
-      project-file limits 和 result mapping；不创建 production/live/broker project。
-    - 无 secret/live node/Object Store/API/CLI 免费层假设；manifest mismatch、wrong range/code/policy/engine
-      fail closed；synthetic adapter/security/contract tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
-    - 真实 cloud project/run 只能由 TRADING-2492 的独立 Owner token 授权。
+    - BASELINE_DONE
+    - TRADING-2485 owner：从 2484 ordinary-pushed exact main 继承 adapter authority 开发
+      deterministic universe selection；project owner：外部 QuantConnect token 仍未授予
+    - 详见 `docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md`。offline
+      typed adapter、strict 2483 package replay、2480 receipt binding、QQQ/RAW/MINUTE
+      subscription、engine metadata、Free project-file descriptor 与 manual-result mapping
+      已冻结；不创建/修改 cloud project，不登录平台，不运行 backtest。
+    - package extra/missing/symlink/tamper、wrong range/code/policy/engine、capability
+      receipt drift 均 fail closed；canonical descriptor 小于 32KB；无 secret/Object Store/API/CLI/HTTP
+      输入假设；focused/adjacent/compatibility 与 final-tree formal PASS；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
+    - 2026-08-02：policy SHA=`b9e48f0b...92616`；focused/adjacent/compatibility=`23/114/181`
+      PASS。首个 final-tree attempt 五级=`828/276/995/24/8050` PASS（Full 5 skipped/644
+      warnings），随后发现 closeout status 尚未写回；未错误复用旧证据，先转 `BASELINE_DONE`、重建 generated/hash
+      authority 并要求最终树完整重跑。真实 input admission、cloud project/run 仍仅可由 TRADING-2492
+      独立 Owner token 授权；`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1|External platform
-      engineering / safe QuantConnect project adapter boundary|P1|PROPOSED|external
-      platform engineering：等待 TRADING-2480..2483|定义 manifest loader、QQQ subscriptions、RAW
-      normalization、engine metadata、Free project-file limits 和 result mapping；不创建
-      production/live/broker project。|无 secret/live node/Object Store/API/CLI 免费层假设；manifest
-      mismatch、wrong range/code/policy/engine fail closed；synthetic adapter/security/contract
-      tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。|真实 cloud
-      project/run 只能由 TRADING-2492 的独立 Owner token 授权。|'
+      engineering / safe QuantConnect project adapter boundary|P1|BASELINE_DONE|TRADING-2485
+      owner：从 2484 ordinary-pushed exact main 继承 adapter authority 开发 deterministic
+      universe selection；project owner：外部 QuantConnect token 仍未授予|详见 `docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md`。offline
+      typed adapter、strict 2483 package replay、2480 receipt binding、QQQ/RAW/MINUTE
+      subscription、engine metadata、Free project-file descriptor 与 manual-result mapping
+      已冻结；不创建/修改 cloud project，不登录平台，不运行 backtest。|package extra/missing/symlink/tamper、wrong
+      range/code/policy/engine、capability receipt drift 均 fail closed；canonical descriptor
+      小于 32KB；无 secret/Object Store/API/CLI/HTTP 输入假设；focused/adjacent/compatibility
+      与 final-tree formal PASS；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。|2026-08-02：policy
+      SHA=`b9e48f0b...92616`；focused/adjacent/compatibility=`23/114/181` PASS。首个 final-tree
+      attempt 五级=`828/276/995/24/8050` PASS（Full 5 skipped/644 warnings），随后发现 closeout
+      status 尚未写回；未错误复用旧证据，先转 `BASELINE_DONE`、重建 generated/hash authority 并要求最终树完整重跑。真实
+      input admission、cloud project/run 仍仅可由 TRADING-2492 独立 Owner token 授权；`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-5e66a2c3f7b7b8b195af080b
+  event_id: legacy-import-a77ae282418e038c55a6dc33
   task_id: TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -64,29 +82,42 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: external platform engineering：等待 TRADING-2480..2483
-    notes: 真实 cloud project/run 只能由 TRADING-2492 的独立 Owner token 授权。
+    next_owner: TRADING-2485 owner：从 2484 ordinary-pushed exact main 继承 adapter authority
+      开发 deterministic universe selection；project owner：外部 QuantConnect token 仍未授予
+    notes: 2026-08-02：policy SHA=`b9e48f0b...92616`；focused/adjacent/compatibility=`23/114/181`
+      PASS。首个 final-tree attempt 五级=`828/276/995/24/8050` PASS（Full 5 skipped/644
+      warnings），随后发现 closeout status 尚未写回；未错误复用旧证据，先转 `BASELINE_DONE`、重建 generated/hash
+      authority 并要求最终树完整重跑。真实 input admission、cloud project/run 仍仅可由 TRADING-2492
+      独立 Owner token 授权；`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:5e66a2c3f7b7b8b195af080b8600bccb07c58f40cd88be602cebdef551da3f34
+  - sha256:a77ae282418e038c55a6dc33730b6c343f58cc9ec8ecb629781aef33a57a9a96
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
   - External platform engineering / safe QuantConnect project adapter boundary
   - P1
-  - PROPOSED
-  - external platform engineering：等待 TRADING-2480..2483
-  - 定义 manifest loader、QQQ subscriptions、RAW normalization、engine metadata、Free project-file
-    limits 和 result mapping；不创建 production/live/broker project。
-  - 无 secret/live node/Object Store/API/CLI 免费层假设；manifest mismatch、wrong range/code/policy/engine
-    fail closed；synthetic adapter/security/contract tests PASS；更新 system flow；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
-  - 真实 cloud project/run 只能由 TRADING-2492 的独立 Owner token 授权。
-  docs_links: []
+  - BASELINE_DONE
+  - TRADING-2485 owner：从 2484 ordinary-pushed exact main 继承 adapter authority 开发 deterministic
+    universe selection；project owner：外部 QuantConnect token 仍未授予
+  - 详见 `docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md`。offline
+    typed adapter、strict 2483 package replay、2480 receipt binding、QQQ/RAW/MINUTE subscription、engine
+    metadata、Free project-file descriptor 与 manual-result mapping 已冻结；不创建/修改 cloud
+    project，不登录平台，不运行 backtest。
+  - package extra/missing/symlink/tamper、wrong range/code/policy/engine、capability
+    receipt drift 均 fail closed；canonical descriptor 小于 32KB；无 secret/Object Store/API/CLI/HTTP
+    输入假设；focused/adjacent/compatibility 与 final-tree formal PASS；退出=`QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN`。
+  - 2026-08-02：policy SHA=`b9e48f0b...92616`；focused/adjacent/compatibility=`23/114/181`
+    PASS。首个 final-tree attempt 五级=`828/276/995/24/8050` PASS（Full 5 skipped/644 warnings），随后发现
+    closeout status 尚未写回；未错误复用旧证据，先转 `BASELINE_DONE`、重建 generated/hash authority 并要求最终树完整重跑。真实
+    input admission、cloud project/run 仍仅可由 TRADING-2492 独立 Owner token 授权；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md
   terminal: false
-  raw_row_sha256: 5e66a2c3f7b7b8b195af080b8600bccb07c58f40cd88be602cebdef551da3f34
+  raw_row_sha256: a77ae282418e038c55a6dc33730b6c343f58cc9ec8ecb629781aef33a57a9a96
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 84492467a3e8610cde3bbb3e408db5cc42e6a23d795ff8bd18a69c84993b187b
+fragment_checksum: 23ad71bb46d249644e345ebc0a3208e007580f09d1dec2b682b2c06bee3b863c

@@ -1,0 +1,112 @@
+schema_version: qc_qqq_options_project_adapter_policy.v1
+policy_id: qc_qqq_options_project_adapter_contract_v1
+policy_version: 1.0.0
+status: REVIEWED_OFFLINE_CONTRACT_BASELINE
+owner: project_owner_and_external_platform_engineering
+owner_instruction: owner_instruction:2026-08-02:proceed_with_offline_qqq_options_engineering
+rationale: Freeze a content-bound QuantConnect project adapter descriptor without claiming that a signal package has entered a cloud project or that a cloud run is authorized.
+intended_effect: Downstream selection and execution modules can consume one deterministic QQQ subscription, engine-identity, project-file, and result-mapping boundary while external platform facts remain blocked on real evidence.
+validation_plan: Strictly replay the signal package and capability receipt, exercise inventory/hash/range/policy/code tamper negatives, enforce the 32KB descriptor limit, and run governed focused and formal validation.
+review_condition: Review before changing any predecessor hash, subscription, project-file transport, engine identity, evidence mapping, export classification, external authorization, cloud-run, production, or broker boundary.
+expiry_condition: Supersede only through an owner-reviewed versioned contract with downstream compatibility evidence.
+platform: QuantConnect
+algorithm_language: Python
+signal_export_policy_sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+primary_research_start: 2021-02-22
+approved_non_primary_authority_count: 0
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+subscription:
+  underlying: QQQ
+  market: USA
+  underlying_security_type: EQUITY
+  underlying_resolution: MINUTE
+  underlying_data_normalization: RAW
+  option_security_type: OPTION
+  option_resolution: MINUTE
+  signal_resolution: DAILY
+  execution_resolution: MINUTE
+  storage_timezone: UTC
+  exchange_timezone: America/New_York
+project_file_boundary:
+  maximum_file_bytes: 32768
+  descriptor_input_mode: CONTENT_BOUND_DESCRIPTOR_ONLY
+  complete_signal_input_admission: UNKNOWN_REQUIRES_PLATFORM_EVIDENCE
+  offline_descriptor_generation_allowed: true
+  object_store_allowed: false
+  api_allowed: false
+  cli_allowed: false
+  remote_http_allowed: false
+  secrets_allowed: false
+  raw_option_rows_allowed: false
+engine_identity:
+  status: REQUIRED_NOT_OBSERVED
+  required_fields:
+    - adapter_descriptor_sha256
+    - algorithm_language
+    - backtest_id
+    - evaluated_end
+    - evaluated_start
+    - lean_engine_identity
+    - project_id
+    - repository_code_sha
+    - requested_end
+    - requested_start
+    - resource_runtime_telemetry
+result_mappings:
+  - mapping_id: logs
+    platform_artifact: Logs
+    timestamp_semantics: ALGORITHM_TIMEZONE
+    export_classification: EXPORT_ALLOWED_DERIVED
+    collection_authority_task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  - mapping_id: orders_csv
+    platform_artifact: Orders CSV
+    timestamp_semantics: UTC
+    export_classification: EXPORT_ALLOWED_DERIVED
+    collection_authority_task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  - mapping_id: project_files
+    platform_artifact: Project Files
+    timestamp_semantics: NOT_APPLICABLE
+    export_classification: EXPORT_ALLOWED_DERIVED
+    collection_authority_task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  - mapping_id: report_pdf
+    platform_artifact: Report PDF
+    timestamp_semantics: MIXED_DECLARED_BY_ARTIFACT
+    export_classification: EXPORT_ALLOWED_DERIVED
+    collection_authority_task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  - mapping_id: results_json
+    platform_artifact: Results JSON
+    timestamp_semantics: UTC
+    export_classification: EXPORT_ALLOWED_DERIVED
+    collection_authority_task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+  - mapping_id: trades_csv
+    platform_artifact: Trades CSV
+    timestamp_semantics: UTC
+    export_classification: EXPORT_ALLOWED_DERIVED
+    collection_authority_task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+raw_option_export_classifications:
+  - EXPORT_PROHIBITED
+  - QC_ONLY_NOT_EXPORTED
+decision: QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN
+safety:
+  research_only: true
+  external_platform_action_allowed: false
+  project_creation_allowed: false
+  cloud_run_authorized: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  promotion_allowed: false
+  raw_options_data_export_allowed: false
+  strategy_execution_allowed: false
+  production_effect: none
+  broker_action: none
+official_sources:
+  - https://www.quantconnect.com/docs/v2/cloud-platform/projects/files
+  - https://www.quantconnect.com/docs/v2/cloud-platform/object-store
+  - https://www.quantconnect.com/docs/v2/writing-algorithms/universes/equity-options
+  - https://www.quantconnect.com/docs/v2/writing-algorithms/securities/asset-classes/equity-options/requesting-data/individual-contracts
+  - https://www.quantconnect.com/docs/v2/cloud-platform/backtesting/results
+official_sources_reviewed_on: 2026-08-02

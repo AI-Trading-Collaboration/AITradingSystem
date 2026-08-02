@@ -1,0 +1,20 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_project_adapter
+fragment_kind: module
+owner: external_platform_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/qc_project_adapter.py
+public_contracts:
+  - QCSubscriptionContract
+  - QCProjectFileBoundary
+  - QCEngineIdentityRequirement
+  - QCResultMappingRule
+  - QCProjectAdapterSafety
+  - QCProjectAdapterPolicy
+  - QCProjectAdapterPolicyLoadResult
+  - LoadedQQQOptionsSignalPackage
+  - QCProjectAdapterDescriptor
+  - load_qc_qqq_options_project_adapter_policy
+  - load_qqq_options_signal_package_for_qc
+  - build_qc_qqq_options_project_adapter_descriptor
+compatibility_facades: []
+deprecation_status: active_reference_architecture

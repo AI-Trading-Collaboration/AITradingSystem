@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1682604
-    sha256: 441776ed2df22a81fbad5025821ded6e32b720c37f955135cc8fc1a4a135a75f
+    byte_count: 1683396
+    sha256: c89e1bfc28e6c41ffdd889af2f1617d83a0885e8581a1cb6057025872f81521f
     row_count: 453
     final_newline: true
     task_id_order_sha256: 6406ef7b4e436f3e502f076087b4b7267497d3eab71458d3e78d2dd8331686a8
-    row_checksum_order_sha256: d9510b8696b1f11783ea7ce995bb1f5865175b41121f57a2b5f0826bbb3d7c80
+    row_checksum_order_sha256: 0ff16c647529aab0a78d9d3729f9e1700029c393adf6e30397e0f57170c34dcb
     task_row_newline_counts:
       LF: 453
   - source: completed
@@ -120,20 +120,20 @@ inventory:
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
-    BASELINE_DONE: 139
+    BASELINE_DONE: 140
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
     DONE: 493
     DROPPED: 12
     IN_PROGRESS: 6
-    PROPOSED: 19
+    PROPOSED: 18
     READY: 1
     VALIDATING: 268
   task_id_set_sha256: 1d556a7668a30a3515ba2bd88c9488a25f437cb965ae42ef1b6e3cbb12f8b8e4
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: fe4376b78267e2414cc9eadf0f0dee935ea109f646e5e560c26589a55cc9f73e
-  docs_link_set_sha256: d3130b570a346d51a6b7e90c60182a21b4df78231a41fb928dcbee84b3d385c3
+  owner_set_sha256: 3775cc1b31873c1614f448299d7c5141566bf781891cfed818188fae55358743
+  docs_link_set_sha256: 0cb3284ebd1b9e4a3cb1695bf9b26b732a4af821a31fee0e717d48565a6480b5
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -3176,7 +3176,7 @@ inventory:
   - task_id: TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
     source: active
     line_number: 2092
-    row_sha256: 5e66a2c3f7b7b8b195af080b8600bccb07c58f40cd88be602cebdef551da3f34
+    row_sha256: a77ae282418e038c55a6dc33730b6c343f58cc9ec8ecb629781aef33a57a9a96
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7845,4 +7845,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 144422452da28912de9c925aa7504f9b735cf14d1134bfec6c718072585b2f09
+baseline_checksum: bc226612117f68a6f8ba567fd01edd55caae1a9d4d98fa470d32f9b2b28e3880

@@ -7099,3 +7099,45 @@ selection/fill PASS。当前 engine identity=`UNKNOWN`、evidence admission=`CAP
 本节点不访问 QuantConnect、不含 raw options rows、不选约、不执行订单/成交/会计/收益计算，固定
 research-only、promotion/paper-shadow/production/raw-export/strategy-execution/cloud-pilot=false，
 `production_effect=none`、`broker_action=none`。
+
+## TRADING-2484 QuantConnect QQQ Options Project Adapter Contract V1
+
+`config/research/qc_qqq_options_project_adapter_contract_v1.yaml` 把 2480 capability admission、2481 shared
+contract、2482 DQ/PIT identity 与 2483 immutable signal package 串成一条 offline adapter contract；
+`qqq_options_research.qc_project_adapter` 首先严格扫描 package root，拒绝 root/file symlink、非 regular
+entry、extra/missing file，再用 2483 receipt/index 与 2481 `RunManifestRecord` / `DailySignalRecord` 的
+`from_json_bytes()` 复放 exact canonical bytes。receipt、index、manifest、daily signal 的 relative path、
+SHA-256、byte count、run/range/policy/code/source/lineage 与 safety 必须全部闭合，package 才能进入 adapter。
+
+```text
+2483 immutable signal package
+  -> strict inventory / canonical replay / checksum / range / lineage gate
+2480 canonical capability receipt + bound policy/evidence
+  -> existing receipt verifier / decision / blocking reasons gate
+reviewed 2484 policy
+  -> QQQ Equity MINUTE + RAW
+  -> QQQ Equity Option MINUTE
+  -> DAILY signal / MINUTE execution contract
+  -> <= 32768-byte content-bound adapter descriptor
+  -> engine/project/backtest/runtime identity requirements
+  -> Results / Orders / Trades / Logs / Report / Project Files mapping slots
+  -> QC_ADAPTER_CONTRACT_READY_NO_CLOUD_RUN
+  -x-> input admission / project creation / cloud run (Owner token absent)
+  -> future 2485 deterministic contract selection (threshold policy still required)
+```
+
+descriptor 只包含 content-bound identity，不嵌入 daily signal rows 或 raw option rows；其大小不超过 Free
+project 单文件 32768 bytes。该尺寸 PASS 只证明 descriptor 可表示，不证明完整 signal package 已进入 cloud
+project。complete input admission 固定为 `UNKNOWN_REQUIRES_PLATFORM_EVIDENCE`；Object Store、API、CLI、
+remote HTTP、secret 和 raw-data embedding 全部禁止或不可假设。2480 当前 receipt 即使是
+`CAPABILITY_OR_LICENSE_BLOCKED`，仍可生成 offline descriptor，但 `cloud_run_authorized` 永远为 false；
+未来 receipt confirmed 也不能由 2484 自行授权 cloud run。
+
+subscription 固定 QQQ / USA / underlying `RAW` / option `MINUTE` / signal `DAILY` / execution `MINUTE`，不在
+本节点设置 DTE、moneyness、delta、spread、OI 或 volume 数值阈值。primary requested/evaluated start 继续是
+`2021-02-22`，当前 non-primary authority allowlist 为空，`2022-12-01` 仅为 legacy non-default marker；
+option-event DQ/PIT 继续 `NOT_EVALUATED`。Results/Orders/Trades 的下载时间声明 UTC，Logs 声明 algorithm
+timezone；这些仅是 2489 的 collection mapping，不是已采集 evidence 或 license 结论。raw option chain、
+quote 与 OI 继续 `QC_ONLY_NOT_EXPORTED / EXPORT_PROHIBITED`。本节点不访问 QuantConnect、不创建 project、
+不运行 backtest、不选约/下单/成交/会计/计算收益，固定 research-only、promotion/paper/live/production/
+broker=false/none。

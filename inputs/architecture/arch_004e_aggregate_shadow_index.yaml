@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 29
+fragment_count: 31
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: e853a58bf2e957730e4547f8640c1bc4506fa9ed69184769d1d3723a7e347b62
+  current_sha256: a7a03d09636267ff70c07efc07384a41df204a427cf0eb4e87e3629948dc0f93
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 11
+  fragment_count: 12
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -44,6 +44,7 @@ targets:
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/flows/owner_daily_brief.yaml
   - config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
+  - config/architecture/fragments/flows/qc_qqq_options_project_adapter.yaml
   - config/architecture/fragments/flows/qqq_options_dq_pit_identity.yaml
   - config/architecture/fragments/flows/qqq_options_shared_contract.yaml
   - config/architecture/fragments/flows/qqq_options_signal_package.yaml
@@ -134,6 +135,13 @@ fragments:
   path: config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
   sha256: 5a6ba11bc5a87afd9eb23e35992fd61d2b7fe52213097db4ac052efdd6640353
   generated_source_of_truth_active: false
+- fragment_id: flow.qc_qqq_options_project_adapter
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qc_qqq_options_project_adapter.yaml
+  sha256: f5d2181db068627eee699b8df066ad81f9b1834927671993b8c01d2c306e4b3b
+  generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_dq_pit_identity
   fragment_kind: flow
   owner: architecture_governance
@@ -189,6 +197,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_capability_admission.yaml
   sha256: 6f8187a96d1c23894c5ac6123d85068365b4760d0706b263584e77194b15f824
+  generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_project_adapter
+  fragment_kind: module
+  owner: external_platform_engineering
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_project_adapter.yaml
+  sha256: 541aab357a56d4de5c2c7ffacfad7d372e5a646856bbdf40f4fca712efc4d50c
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_dq_pit_identity
   fragment_kind: module
