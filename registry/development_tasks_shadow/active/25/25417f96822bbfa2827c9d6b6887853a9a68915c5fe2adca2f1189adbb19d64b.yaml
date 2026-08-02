@@ -12,54 +12,66 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner + research platform + data governance：先明确是否授权受控 QuantConnect
-    entitlement/data/evidence 核验
-  requirement_refs: []
+  next_owner: project owner + research platform + data governance：决定是否授权受控 QuantConnect
+    entitlement/data/evidence 核验；engineering coordinator：在获得精确 Owner token 前保持 external
+    probe blocked
+  requirement_refs:
+  - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 依赖 Owner 新 token；仅允许 bounded capability/license/evidence
-    probe，不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。详见 TRADING-2478 requirement/advisory。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
+    typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
+    已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Free input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
       identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与
-      exit condition；输出 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；无投资指标。
+      exit condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
+      exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2088
-    row_sha256: 78e76b296aeff44224db797c611a2c1f90bf24d77c4033e4f0b3a4f87881f3cf
+    row_sha256: 8335799ceb0258bcf4384a8883bd7287a45038a0220fafaa2e6d71e484182acf
     cell_count: 8
     all_cells:
     - TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
     - External platform / QuantConnect Free capability, licensing and evidence admission
     - P0
-    - PROPOSED
-    - project owner + research platform + data governance：先明确是否授权受控 QuantConnect entitlement/data/evidence
-      核验
-    - 依赖 Owner 新 token；仅允许 bounded capability/license/evidence probe，不实现策略、不跑全窗、不下载
-      raw options data、不形成收益结论。详见 TRADING-2478 requirement/advisory。
+    - BASELINE_DONE
+    - project owner + research platform + data governance：决定是否授权受控 QuantConnect entitlement/data/evidence
+      核验；engineering coordinator：在获得精确 Owner token 前保持 external probe blocked
+    - 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
+      typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
+      已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。
     - Free input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
       identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与
-      exit condition；输出 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；无投资指标。
-    - 2026-08-02：由 Web Pro advisory 建议并经本地官方文档对账登记；当前未授权登录或运行平台，`production_effect=none`、`broker_action=none`。
+      exit condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
+      exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。
+    - 2026-08-02：offline admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成
+      QuantConnect 外部操作授权。Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一
+      exit condition=明确 external evidence probe token；`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1|External
-      platform / QuantConnect Free capability, licensing and evidence admission|P0|PROPOSED|project
-      owner + research platform + data governance：先明确是否授权受控 QuantConnect entitlement/data/evidence
-      核验|依赖 Owner 新 token；仅允许 bounded capability/license/evidence probe，不实现策略、不跑全窗、不下载
-      raw options data、不形成收益结论。详见 TRADING-2478 requirement/advisory。|Free input artifact、QQQ
-      data availability、resource/runtime、Results/Orders/Trades/Logs、engine identity、per-field
-      export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与 exit condition；输出
-      `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；无投资指标。|2026-08-02：由
-      Web Pro advisory 建议并经本地官方文档对账登记；当前未授权登录或运行平台，`production_effect=none`、`broker_action=none`。|'
+      platform / QuantConnect Free capability, licensing and evidence admission|P0|BASELINE_DONE|project
+      owner + research platform + data governance：决定是否授权受控 QuantConnect entitlement/data/evidence
+      核验；engineering coordinator：在获得精确 Owner token 前保持 external probe blocked|详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
+      typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
+      已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。|Free
+      input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
+      identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与
+      exit condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
+      exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。|2026-08-02：offline
+      admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成 QuantConnect
+      外部操作授权。Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一 exit condition=明确
+      external evidence probe token；`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-78e76b296aeff44224db797c
+  event_id: legacy-import-8335799ceb0258bcf4384a88
   task_id: TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -69,32 +81,40 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: project owner + research platform + data governance：先明确是否授权受控 QuantConnect
-      entitlement/data/evidence 核验
-    notes: 2026-08-02：由 Web Pro advisory 建议并经本地官方文档对账登记；当前未授权登录或运行平台，`production_effect=none`、`broker_action=none`。
+    next_owner: project owner + research platform + data governance：决定是否授权受控 QuantConnect
+      entitlement/data/evidence 核验；engineering coordinator：在获得精确 Owner token 前保持 external
+      probe blocked
+    notes: 2026-08-02：offline admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成
+      QuantConnect 外部操作授权。Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一
+      exit condition=明确 external evidence probe token；`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:78e76b296aeff44224db797c611a2c1f90bf24d77c4033e4f0b3a4f87881f3cf
+  - sha256:8335799ceb0258bcf4384a8883bd7287a45038a0220fafaa2e6d71e484182acf
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
   - External platform / QuantConnect Free capability, licensing and evidence admission
   - P0
-  - PROPOSED
-  - project owner + research platform + data governance：先明确是否授权受控 QuantConnect entitlement/data/evidence
-    核验
-  - 依赖 Owner 新 token；仅允许 bounded capability/license/evidence probe，不实现策略、不跑全窗、不下载
-    raw options data、不形成收益结论。详见 TRADING-2478 requirement/advisory。
+  - BASELINE_DONE
+  - project owner + research platform + data governance：决定是否授权受控 QuantConnect entitlement/data/evidence
+    核验；engineering coordinator：在获得精确 Owner token 前保持 external probe blocked
+  - 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
+    typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
+    已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。
   - Free input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
     identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与 exit
-    condition；输出 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；无投资指标。
-  - 2026-08-02：由 Web Pro advisory 建议并经本地官方文档对账登记；当前未授权登录或运行平台，`production_effect=none`、`broker_action=none`。
-  docs_links: []
+    condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
+    exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。
+  - 2026-08-02：offline admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成
+    QuantConnect 外部操作授权。Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一
+    exit condition=明确 external evidence probe token；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
   terminal: false
-  raw_row_sha256: 78e76b296aeff44224db797c611a2c1f90bf24d77c4033e4f0b3a4f87881f3cf
+  raw_row_sha256: 8335799ceb0258bcf4384a8883bd7287a45038a0220fafaa2e6d71e484182acf
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 5e14c7c0a108a9f81d42a1acff9d65825295dcafa3a18f57a4c130011ec649b6
+fragment_checksum: 123fa74927ad2c83c90a339e2e61903db436a8a0c9ba8e753a6ff85c1994ba01

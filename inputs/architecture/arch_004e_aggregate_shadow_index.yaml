@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 21
+fragment_count: 23
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,15 +34,16 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: d97e19be091c82783a67cee5d75888a07bf8301d463c66fded831fd8b6e74de3
+  current_sha256: 06c247d49db0ec830d626c841599791af62cfbc08686ddb0d2c6f2016c1aab10
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 7
+  fragment_count: 8
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
   - config/architecture/fragments/flows/data_quality_capability.yaml
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/flows/owner_daily_brief.yaml
+  - config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
   - config/architecture/fragments/flows/report_audit_index.yaml
   - config/architecture/fragments/flows/research_review_pack.yaml
 fragments:
@@ -123,6 +124,13 @@ fragments:
   path: config/architecture/fragments/flows/owner_daily_brief.yaml
   sha256: 8339d4efe7f02026bb8e3da5104104c9dda917f5133339c20a8364dbf715fd18
   generated_source_of_truth_active: false
+- fragment_id: flow.qc_qqq_options_capability_admission
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
+  sha256: 5a6ba11bc5a87afd9eb23e35992fd61d2b7fe52213097db4ac052efdd6640353
+  generated_source_of_truth_active: false
 - fragment_id: flow.report_audit_index
   fragment_kind: flow
   owner: architecture_governance
@@ -150,6 +158,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/data_quality_capability_discovery.yaml
   sha256: 8e3b2858572886d9cee994176af06e572a5b7d059d89467bfeb2ae660aadf811
+  generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_capability_admission
+  fragment_kind: module
+  owner: research_platform
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_capability_admission.yaml
+  sha256: 6f8187a96d1c23894c5ac6123d85068365b4760d0706b263584e77194b15f824
   generated_source_of_truth_active: false
 - fragment_id: module.research_framework
   fragment_kind: module

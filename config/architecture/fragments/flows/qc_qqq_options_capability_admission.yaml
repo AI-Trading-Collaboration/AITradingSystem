@@ -1,0 +1,15 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qc_qqq_options_capability_admission
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: reviewed_public_docs_and_future_authorized_platform_evidence
+stages:
+  - public_docs_preauthorization_template
+  - typed_capability_and_field_license_evidence
+  - exact_policy_and_evidence_byte_binding
+  - deterministic_fail_closed_admission_receipt
+  - owner_authorized_external_probe_future
+  - bounded_pilot_preparation_gate_only
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

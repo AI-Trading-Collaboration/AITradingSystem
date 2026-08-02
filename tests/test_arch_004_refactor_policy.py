@@ -2051,7 +2051,39 @@ TRADING_2479_HISTORICAL_PROJECTION_NEW_SOURCE_PATHS = frozenset(
         "tests/test_arch_004g_deprecation.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2479_HISTORICAL_PROJECTION_SECTION
+TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION = (
+    "phase_trading_2480_qc_qqq_options_capability_license_evidence_admission"
+)
+TRADING_2480_QC_CAPABILITY_ADMISSION_BASE_COMMIT = (
+    "fea75a2aa71ba2add1cbf274d31f8bb99a1bfce0"
+)
+TRADING_2480_QC_CAPABILITY_ADMISSION_BASELINE_GIT_BLOB = (
+    "ae995024464a7d37ec9c6c23fae01ce7ac7f5b39"
+)
+TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_BYTE_COUNT = 2_734_319
+TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_SHA256 = (
+    "d3a4814c6cae049bca43182dbc02f8f5dfc89d630189af919474075d2ef7b196"
+)
+TRADING_2480_QC_CAPABILITY_ADMISSION_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2480_QC_CAPABILITY_ADMISSION_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {"inputs/architecture/arch_004g_deprecation_inventory.yaml"}
+)
+TRADING_2480_QC_CAPABILITY_ADMISSION_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml",
+        "config/architecture/fragments/modules/qc_qqq_options_capability_admission.yaml",
+        "config/research/qc_qqq_options_capability_admission_v1.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md"
+        ),
+        "inputs/external_validation/qc_qqq_options_capability_evidence.template.json",
+        "src/ai_trading_system/contracts/qc_qqq_options_capability_admission.py",
+        "src/ai_trading_system/qqq_options_capability_admission.py",
+        "tests/test_qc_qqq_options_capability_admission.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3871,6 +3903,26 @@ def _trading_2479_historical_projection_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2480_qc_capability_admission_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2480_QC_CAPABILITY_ADMISSION_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2480_QC_CAPABILITY_ADMISSION_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -5677,6 +5729,26 @@ def _assert_trading_2479_historical_projection_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2479_HISTORICAL_PROJECTION_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2480_qc_capability_admission_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2480 QC capability admission historical prefix differs from "
+        "immutable TRADING-2479 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -7963,9 +8035,42 @@ def _trading_2479_historical_projection_source_paths() -> frozenset[str]:
 
 @cache
 def _trading_2479_historical_projection_all_current_authority_paths() -> frozenset[str]:
-    return (
+    paths = (
         _trading_2479_historical_projection_superseded_live_source_paths()
         | _trading_2479_historical_projection_source_paths()
+    )
+    if TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION in _compatibility_baseline():
+        paths |= _trading_2480_qc_capability_admission_all_current_authority_paths()
+    return paths
+
+
+@cache
+def _trading_2480_qc_capability_admission_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2480_qc_capability_admission_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2480_qc_capability_admission_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2480_qc_capability_admission_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2480_qc_capability_admission_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2480_qc_capability_admission_superseded_live_source_paths()
+        | _trading_2480_qc_capability_admission_source_paths()
     )
 
 
@@ -9217,6 +9322,11 @@ def _trading_2479_historical_projection_prior_active_source_mismatches() -> froz
     return _latest_active_source_mismatches(TRADING_2479_HISTORICAL_PROJECTION_SECTION)
 
 
+@cache
+def _trading_2480_qc_capability_admission_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -9260,7 +9370,34 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2479_HISTORICAL_PROJECTION_SECTION in baseline:
+    if TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2480_qc_capability_admission_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2479_historical_projection_prior_active_source_mismatches()
+            | TRADING_2480_QC_CAPABILITY_ADMISSION_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2470_cited_query_contract_all_current_authority_paths()
+            | _trading_2470_cited_query_amendment_all_current_authority_paths()
+            | _trading_2470_cited_query_consumer_all_current_authority_paths()
+            | _trading_2471_flow_focus_all_current_authority_paths()
+            | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+            | _ops_072_transport_all_current_authority_paths()
+            | _trading_2477_historical_adapter_all_current_authority_paths()
+            | _ops_073_terminal_disposition_all_current_authority_paths()
+            | _trading_2478_quantconnect_planning_all_current_authority_paths()
+            | _trading_2479_historical_projection_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION
+    elif TRADING_2479_HISTORICAL_PROJECTION_SECTION in baseline:
         current_superseded_paths = (
             _trading_2479_historical_projection_superseded_live_source_paths()
         )
@@ -22214,7 +22351,9 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2479_HISTORICAL_PROJECTION_SECTION
+    assert list(baseline).index(TRADING_2479_HISTORICAL_PROJECTION_SECTION) + 1 == list(
+        baseline
+    ).index(TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION)
     phase = baseline[TRADING_2479_HISTORICAL_PROJECTION_SECTION]
     assert phase["schema_version"] == (
         "trading_2479_atlas_historical_projection_review_compatibility.v1"
@@ -22247,10 +22386,15 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == set(
+    current_prior_drift = set(
         _trading_2479_historical_projection_prior_active_source_mismatches()
         | TRADING_2479_HISTORICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
+    current_successor_authority = set(
+        _trading_2480_qc_capability_admission_all_current_authority_paths()
+    )
+    assert superseded - current_prior_drift <= current_successor_authority
+    assert current_prior_drift - superseded <= current_successor_authority
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2479_HISTORICAL_PROJECTION_REMOVED_SOURCE_PATHS
     )
@@ -22281,6 +22425,8 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in current_successor_authority:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -22328,6 +22474,130 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
     tampered[TRADING_2479_HISTORICAL_PROJECTION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2479_historical_projection_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2480_qc_capability_admission_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2480_qc_capability_admission_base_baseline_blob()
+    _assert_trading_2480_qc_capability_admission_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION
+    phase = baseline[TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2480_qc_qqq_options_capability_admission_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2480-QC-QQQ-OPTIONS-CAPABILITY-LICENSE-EVIDENCE-ADMISSION-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2480:2026-08-02:"
+        "continue_offline_admission_baseline_without_external_platform_action_v1"
+    ]
+    assert phase["external_owner_authorization"] == (
+        "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2480_QC_CAPABILITY_ADMISSION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2480_QC_CAPABILITY_ADMISSION_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (
+            TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2479_historical_projection_prior_active_source_mismatches()
+        | TRADING_2480_QC_CAPABILITY_ADMISSION_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2480_QC_CAPABILITY_ADMISSION_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2480_QC_CAPABILITY_ADMISSION_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2480_QC_CAPABILITY_ADMISSION_NEW_SOURCE_PATHS
+    ) - TRADING_2480_QC_CAPABILITY_ADMISSION_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2480-QC-QQQ-OPTIONS-CAPABILITY-LICENSE-EVIDENCE-ADMISSION-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2479_HISTORICAL_PROJECTION_SECTION,
+        "current_hash_authority": (
+            f"{TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 958,
+        "active_task_count": 453,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["admission_baseline"] == {
+        "required_capability_item_count": 21,
+        "field_export_rule_count": 12,
+        "public_doc_template_item_count": 21,
+        "public_doc_template_field_count": 12,
+        "unauthorized_template_decision": "CAPABILITY_OR_LICENSE_BLOCKED",
+        "external_probe_performed": False,
+        "bounded_cloud_pilot_authorized": False,
+        "primary_research_window_executed": False,
+    }
+    assert phase["validation"] == {
+        "focused_capability": "PASS_6_TESTS",
+        "compatibility_regression": "PENDING_FINAL_TREE",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "quantconnect_accessed": False,
+        "cloud_project_created_or_modified": False,
+        "cloud_backtest_run": False,
+        "vendor_data_downloaded": False,
+        "raw_options_data_exported": False,
+        "strategy_or_investment_conclusion_generated": False,
+        "known_unrelated_bytes_read": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2480_QC_CAPABILITY_ADMISSION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2480_qc_capability_admission_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

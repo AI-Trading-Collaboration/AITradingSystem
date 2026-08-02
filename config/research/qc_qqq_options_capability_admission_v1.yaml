@@ -1,0 +1,209 @@
+schema_version: qc_qqq_options_capability_admission_policy.v1
+policy_id: qc_qqq_options_capability_admission_v1
+policy_version: 1.0.0
+status: PREAUTHORIZATION_BASELINE
+owner: engineering_coordinator_pending_owner_authorization
+required_owner_authorization_id: owner_decision:TRADING-2480:2026-08-02:authorize_bounded_qc_capability_license_evidence_probe_v1
+owner_authorization_required: true
+platform: QuantConnect
+item_rules:
+  - item_id: account_entitlement
+    allowed_source_kinds:
+      - MANUAL_ATTESTATION
+      - PLATFORM_UI
+    rationale: Actual organization entitlement must come from the authorized account context.
+  - item_id: actual_evaluated_range
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Requested dates cannot substitute for the platform-evaluated range.
+  - item_id: backtest_identity
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: A content-bound backtest identifier is required for later evidence lineage.
+  - item_id: daily_iv_greeks_freshness
+    allowed_source_kinds:
+      - OFFICIAL_PUBLIC_DOCS
+      - PLATFORM_ARTIFACT
+    rationale: Daily prior-session model values must not be represented as minute market observations.
+  - item_id: dataset_license_boundary
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - OFFICIAL_PUBLIC_DOCS
+    rationale: Cloud use, download, internal use and redistribution permissions are separate claims.
+  - item_id: free_backtest_node_assignment
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Public B-MICRO specifications do not prove the node assigned to the actual probe.
+  - item_id: free_tier_feature_boundary
+    allowed_source_kinds:
+      - OFFICIAL_PUBLIC_DOCS
+      - PLATFORM_UI
+    rationale: Free cloud features and paid API/CLI boundaries must be explicit.
+  - item_id: input_artifact_admission
+    allowed_source_kinds:
+      - MANUAL_ATTESTATION
+      - PLATFORM_ARTIFACT
+    rationale: The probe must prove how a content-bound input artifact enters the Free project.
+  - item_id: lean_engine_identity
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Results without an exact LEAN engine identity are insufficient platform evidence.
+  - item_id: logs_export
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Log export availability and truncation must be observed on the actual result.
+  - item_id: manual_bundle_completeness
+    allowed_source_kinds:
+      - MANUAL_ATTESTATION
+    rationale: A named collector must attest that all mandatory files were captured and hashed.
+  - item_id: minute_quotebar_availability
+    allowed_source_kinds:
+      - OFFICIAL_PUBLIC_DOCS
+      - PLATFORM_ARTIFACT
+    rationale: QuoteBar support is necessary but actual QQQ coverage remains a separate item.
+  - item_id: minute_tradebar_availability
+    allowed_source_kinds:
+      - OFFICIAL_PUBLIC_DOCS
+      - PLATFORM_ARTIFACT
+    rationale: TradeBar support is necessary but cannot substitute for quotes.
+  - item_id: open_interest_availability
+    allowed_source_kinds:
+      - OFFICIAL_PUBLIC_DOCS
+      - PLATFORM_ARTIFACT
+    rationale: Open interest availability and its daily freshness must remain visible.
+  - item_id: orders_export
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: The actual result must expose order evidence suitable for local reconciliation.
+  - item_id: project_identity
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Project and code identity must be bound independently from the backtest identifier.
+  - item_id: qqq_option_chain_coverage
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+    rationale: Actual session and contract coverage cannot be inferred from the dataset catalog.
+  - item_id: qqq_option_dataset_visibility
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Public dataset availability does not prove access in the selected organization.
+  - item_id: resource_runtime_telemetry
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Runtime and memory evidence are required before any range expansion.
+  - item_id: results_export
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: The actual result must support a bounded typed evidence handoff.
+  - item_id: trades_export
+    allowed_source_kinds:
+      - PLATFORM_ARTIFACT
+      - PLATFORM_UI
+    rationale: Closed-trade export availability must be observed rather than assumed.
+field_export_rules:
+  - field_id: derived_contract_identity
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Stable contract identity is required locally without exporting a raw chain.
+  - field_id: derived_selection_reason
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Local reconciliation needs a derived selection reason and policy lineage.
+  - field_id: diagnostic_logs
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Logs may carry bounded diagnostics but must never encode raw datasets.
+  - field_id: lean_engine_identity
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Engine identity is required for reproducibility and contains no market rows.
+  - field_id: order_summary
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Order summaries are necessary for event chronology reconciliation.
+  - field_id: project_backtest_identity
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Project and backtest ids are required evidence lineage.
+  - field_id: raw_minute_quote
+    required_classification: QC_ONLY_NOT_EXPORTED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - OFFICIAL_PUBLIC_DOCS
+    rationale: Raw minute quotes remain inside QuantConnect and must not enter repository artifacts.
+  - field_id: raw_open_interest
+    required_classification: QC_ONLY_NOT_EXPORTED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - OFFICIAL_PUBLIC_DOCS
+    rationale: Raw open-interest observations remain provider-bound platform data.
+  - field_id: raw_option_chain
+    required_classification: QC_ONLY_NOT_EXPORTED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - OFFICIAL_PUBLIC_DOCS
+    rationale: Raw option-chain rows may not be reconstructed, logged, downloaded or redistributed.
+  - field_id: result_statistics
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Result statistics are derived evidence and still require license review.
+  - field_id: runtime_statistics
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Resource telemetry is required for capacity admission.
+  - field_id: trade_summary
+    required_classification: EXPORT_ALLOWED_DERIVED
+    allowed_source_kinds:
+      - LICENSE_REVIEW
+      - PLATFORM_ARTIFACT
+    rationale: Trade summaries are necessary for independent accounting reconciliation.
+allowed_evidence_source_kinds:
+  - LICENSE_REVIEW
+  - MANUAL_ATTESTATION
+  - OFFICIAL_PUBLIC_DOCS
+  - PLATFORM_ARTIFACT
+  - PLATFORM_UI
+  - REPOSITORY_REQUIREMENT
+confirmed_decision: CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT
+blocked_decision: CAPABILITY_OR_LICENSE_BLOCKED
+safety:
+  research_only: true
+  manual_review_required: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  raw_options_data_download_allowed: false
+  strategy_execution_allowed: false
+  bounded_cloud_pilot_authorized: false
+  production_effect: none
+  broker_action: none
+review_condition: >-
+  Any change to required evidence, source authority, export classification, Owner token,
+  platform, data scope, strategy scope, execution permission, promotion, production or
+  broker boundary requires a new reviewed policy version.
