@@ -1,0 +1,127 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1
+  task_id_sha256: 52c9bf68f880b3858608da701110172ef361dfac7de407b9656dc309bebe18e6
+task_record:
+  task_id: TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1
+  title: null
+  domain: Publishing & Experience / reader-facing status explanation authority
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas renderer coordinator：从 2495 pushed exact main 启动 TRADING-2496
+    consumer wave；Project owner：在新页面复核低金融知识读者语义
+  requirement_refs:
+  - docs/requirements/TRADING-2495_Atlas_Reader_Status_Explanation_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2495_Atlas_Reader_Status_Explanation_Contract_V1.md`。独立、版本化、只读的
+    status-explanation sidecar、Owner-reviewed authority policy、typed projection/validator
+    已完成；现实工作、已完成事实、未满足条件/证据缺口、读者结论边界与可观察转变事件均绑定 exact authority。现有 snapshot/diff/query
+    schema 保持不变，renderer 不得从 RUNNING/LIMITED 或自由摘要猜测具体原因。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: contract/projection focused=`16 passed`，Atlas adjacent=`40 passed`，compatibility/deprecation=`186
+      passed`；8 个 stage、status/fingerprint/target/source refs 与 deterministic replay
+      闭合；`validation_summary=INSUFFICIENT_AUTHORITY` 如实保留缺失责任/转变依据；`TRADING-2481..2493`
+      排除，primary start=`2021-02-22`。最终五级门禁与 ordinary push 在本任务 closeout 执行，随后才允许 2496
+      消费该 sidecar。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 2ca0819c207d260bad2dee924e23609286fdd7399e92bd6ed24310172041dcb1
+  cell_count: 8
+  all_cells:
+  - TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1
+  - Publishing & Experience / reader-facing status explanation authority
+  - P1
+  - BASELINE_DONE
+  - Atlas renderer coordinator：从 2495 pushed exact main 启动 TRADING-2496 consumer wave；Project
+    owner：在新页面复核低金融知识读者语义
+  - 详见 `docs/requirements/TRADING-2495_Atlas_Reader_Status_Explanation_Contract_V1.md`。独立、版本化、只读的
+    status-explanation sidecar、Owner-reviewed authority policy、typed projection/validator
+    已完成；现实工作、已完成事实、未满足条件/证据缺口、读者结论边界与可观察转变事件均绑定 exact authority。现有 snapshot/diff/query
+    schema 保持不变，renderer 不得从 RUNNING/LIMITED 或自由摘要猜测具体原因。
+  - contract/projection focused=`16 passed`，Atlas adjacent=`40 passed`，compatibility/deprecation=`186
+    passed`；8 个 stage、status/fingerprint/target/source refs 与 deterministic replay
+    闭合；`validation_summary=INSUFFICIENT_AUTHORITY` 如实保留缺失责任/转变依据；`TRADING-2481..2493`
+    排除，primary start=`2021-02-22`。最终五级门禁与 ordinary push 在本任务 closeout 执行，随后才允许 2496
+    消费该 sidecar。
+  - 2026-08-03：Owner token=`owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1`。policy
+    SHA-256=`53264bb92fe5f0125990d9f936bced00a0e0a1a7c338d90acc28adbf86b11f10`；fixture
+    bundle SHA-256=`bc424b8602ce219a82a84d43f580ae108517f6a729dced30bce97baaaa1f6f34`。本状态仅表示
+    contract baseline 完成，不表示页面人工验收或策略 PASS；`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1|Publishing
+    & Experience / reader-facing status explanation authority|P1|BASELINE_DONE|Atlas
+    renderer coordinator：从 2495 pushed exact main 启动 TRADING-2496 consumer wave；Project
+    owner：在新页面复核低金融知识读者语义|详见 `docs/requirements/TRADING-2495_Atlas_Reader_Status_Explanation_Contract_V1.md`。独立、版本化、只读的
+    status-explanation sidecar、Owner-reviewed authority policy、typed projection/validator
+    已完成；现实工作、已完成事实、未满足条件/证据缺口、读者结论边界与可观察转变事件均绑定 exact authority。现有 snapshot/diff/query
+    schema 保持不变，renderer 不得从 RUNNING/LIMITED 或自由摘要猜测具体原因。|contract/projection focused=`16
+    passed`，Atlas adjacent=`40 passed`，compatibility/deprecation=`186 passed`；8 个
+    stage、status/fingerprint/target/source refs 与 deterministic replay 闭合；`validation_summary=INSUFFICIENT_AUTHORITY`
+    如实保留缺失责任/转变依据；`TRADING-2481..2493` 排除，primary start=`2021-02-22`。最终五级门禁与 ordinary
+    push 在本任务 closeout 执行，随后才允许 2496 消费该 sidecar。|2026-08-03：Owner token=`owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1`。policy
+    SHA-256=`53264bb92fe5f0125990d9f936bced00a0e0a1a7c338d90acc28adbf86b11f10`；fixture
+    bundle SHA-256=`bc424b8602ce219a82a84d43f580ae108517f6a729dced30bce97baaaa1f6f34`。本状态仅表示
+    contract baseline 完成，不表示页面人工验收或策略 PASS；`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2ca0819c207d260bad2dee92
+  task_id: TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas renderer coordinator：从 2495 pushed exact main 启动 TRADING-2496
+      consumer wave；Project owner：在新页面复核低金融知识读者语义
+    notes: 2026-08-03：Owner token=`owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1`。policy
+      SHA-256=`53264bb92fe5f0125990d9f936bced00a0e0a1a7c338d90acc28adbf86b11f10`；fixture
+      bundle SHA-256=`bc424b8602ce219a82a84d43f580ae108517f6a729dced30bce97baaaa1f6f34`。本状态仅表示
+      contract baseline 完成，不表示页面人工验收或策略 PASS；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:2ca0819c207d260bad2dee924e23609286fdd7399e92bd6ed24310172041dcb1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1
+  - Publishing & Experience / reader-facing status explanation authority
+  - P1
+  - BASELINE_DONE
+  - Atlas renderer coordinator：从 2495 pushed exact main 启动 TRADING-2496 consumer wave；Project
+    owner：在新页面复核低金融知识读者语义
+  - 详见 `docs/requirements/TRADING-2495_Atlas_Reader_Status_Explanation_Contract_V1.md`。独立、版本化、只读的
+    status-explanation sidecar、Owner-reviewed authority policy、typed projection/validator
+    已完成；现实工作、已完成事实、未满足条件/证据缺口、读者结论边界与可观察转变事件均绑定 exact authority。现有 snapshot/diff/query
+    schema 保持不变，renderer 不得从 RUNNING/LIMITED 或自由摘要猜测具体原因。
+  - contract/projection focused=`16 passed`，Atlas adjacent=`40 passed`，compatibility/deprecation=`186
+    passed`；8 个 stage、status/fingerprint/target/source refs 与 deterministic replay
+    闭合；`validation_summary=INSUFFICIENT_AUTHORITY` 如实保留缺失责任/转变依据；`TRADING-2481..2493`
+    排除，primary start=`2021-02-22`。最终五级门禁与 ordinary push 在本任务 closeout 执行，随后才允许 2496
+    消费该 sidecar。
+  - 2026-08-03：Owner token=`owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1`。policy
+    SHA-256=`53264bb92fe5f0125990d9f936bced00a0e0a1a7c338d90acc28adbf86b11f10`；fixture
+    bundle SHA-256=`bc424b8602ce219a82a84d43f580ae108517f6a729dced30bce97baaaa1f6f34`。本状态仅表示
+    contract baseline 完成，不表示页面人工验收或策略 PASS；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2495_Atlas_Reader_Status_Explanation_Contract_V1.md
+  terminal: false
+  raw_row_sha256: 2ca0819c207d260bad2dee924e23609286fdd7399e92bd6ed24310172041dcb1
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 5267728bafa77010a5a3ea8b58451bb05fa408f931f9385ff44b4e16f55b5fc8

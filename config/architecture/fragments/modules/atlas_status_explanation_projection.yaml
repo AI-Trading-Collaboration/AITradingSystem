@@ -1,0 +1,15 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_status_explanation_projection
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/status_explanation_projection.py
+public_contracts:
+  - StatusExplanationAuthorityPolicy
+  - StatusExplanationProjectionError
+  - StatusExplanationProjectionValidation
+  - load_status_explanation_authority_policy
+  - project_status_explanations
+  - build_status_explanation_bundle
+  - validate_status_explanation_bundle
+compatibility_facades: []
+deprecation_status: active_reference_architecture

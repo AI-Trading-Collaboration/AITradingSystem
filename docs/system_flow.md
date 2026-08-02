@@ -146,6 +146,20 @@ source original status 与 mapping rationale，并在页面流程图中显示隔
 review-only builder 显式关闭 active projection，因此 TRADING-2479 的 base/candidate 历史证据仍可
 重建；roadmap、DQ/model/backtest/external platform/production/broker 行为继续关闭。
 
+TRADING-2495 在 canonical snapshot/status provenance 与 reader renderer 之间新增只读、版本化的
+`strategy_research_status_explanation.v1` sidecar contract。authority policy 不从 `RUNNING`、
+`LIMITED` 或中文摘要关键词猜测原因，而是把 `current_work`、`completed_milestones`、
+`unmet_conditions`、`evidence_gaps`、`reader_impact`、`transition_conditions`、
+`responsible_role`、`next_reader_action` 与 exact source refs 显式绑定。字段缺失必须区分
+`NOT_RECORDED / NOT_APPLICABLE / NOT_YET_DUE / SOURCE_UNAVAILABLE /
+OWNER_DECISION_PENDING`；authority conflict、lineage/status/fingerprint/source drift 则整体 fail closed。
+当前八阶段 bundle 的 canonical status 仍来自原 target 或冻结的页面执行边界；研究主线继续是
+`RUNNING`，结果与归因继续是 `LIMITED`，sidecar 不执行状态转换。当前记录仍缺少若干 current work、
+责任角色和正式转变条件，因此 bundle 正确返回 `INSUFFICIENT_AUTHORITY`，这表示页面应诚实显示
+“尚未记录”，不是 validator FAIL，也不得伪报完整解释 PASS。`TRADING-2481..2493` 继续排除，
+primary start 保持 `2021-02-22`；本合同波不重建 HTML，后继 renderer consumer 必须等待 Owner
+接受 explanation authority 后另行启动。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -196,6 +210,10 @@ flowchart LR
     HADAPT --> HCAN
     HCAN --> PROJ
     HCAN --> QLEDGER
+    XAUTH["TRADING-2495 explanation authority policy<br/>typed facts + explicit missing states"] --> XPROJ["Status explanation sidecar projection<br/>8 stages + exact target/status/source binding"]
+    SNAP --> XPROJ
+    XPROJ --> XVAL["Independent explanation validation<br/>fingerprint + lineage + anti-fabrication"]
+    XVAL -.-> XHANDOFF["TRADING-2496 renderer handoff<br/>blocked until Owner accepts authority"]
     HPWEB -.-> HSTOP["Review artifact remains immutable<br/>no automatic projection or investment verdict"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
@@ -207,6 +225,7 @@ flowchart LR
     HADAPT -.-> NONE
     HPWEB -.-> NONE
     HCAN -.-> NONE
+    XVAL -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。

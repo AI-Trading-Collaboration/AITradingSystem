@@ -1,0 +1,593 @@
+schema_version: atlas_status_explanation_authority.v1
+policy_id: atlas_reader_status_explanation_authority_v1
+policy_version: 1.0.0
+status: OWNER_REVIEWED_BASELINE
+owner_decision: owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1
+contract_schema_id: strategy_research_status_explanation.v1
+contract_schema_version: 1.0.0
+template_version: atlas_reader_status_explanation_template.v1
+primary_research_start: '2021-02-22'
+excluded_task_ids:
+  - TRADING-2481
+  - TRADING-2482
+  - TRADING-2483
+  - TRADING-2484
+  - TRADING-2485
+  - TRADING-2486
+  - TRADING-2487
+  - TRADING-2488
+  - TRADING-2489
+  - TRADING-2490
+  - TRADING-2491
+  - TRADING-2492
+  - TRADING-2493
+safety:
+  investment_conclusion_generated: false
+  research_executed: false
+  backtest_executed: false
+  data_quality_executed: false
+  canonical_status_mutated: false
+  external_platform_action: false
+  production_effect: none
+  broker_action: none
+stage_records:
+  - stage_id: DATA_INPUTS
+    target_kind: RENDERER_STAGE
+    target_id: DATA_INPUTS
+    status_code: NOT_EXECUTED_BY_PAGE
+    status_object_scope: PAGE_EXECUTION_BOUNDARY
+    summary_fact_ids: [data-inputs-current, data-inputs-gap]
+    facts:
+      - fact_id: data-inputs-current
+        fact_kind: CURRENT_WORK
+        value_state: NOT_APPLICABLE
+        text_zh: 本页不获取或刷新市场、宏观、基本面及人工治理输入。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: []
+      - fact_id: data-inputs-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: PRESENT
+        text_zh: 当前页面只消费已经进入 Atlas 的受审阅快照与来源记录。
+        authority_kind: CANONICAL_SNAPSHOT
+        authority_id: CURRENT_SNAPSHOT
+        source_ref_ids: [atlas-registry]
+      - fact_id: data-inputs-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: NOT_APPLICABLE
+        text_zh: 本页不承担上游输入是否完成的判定。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: []
+      - fact_id: data-inputs-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: NOT_RECORDED
+        text_zh: 当前快照没有记录各上游输入在本页生成时是否已刷新或通过数据质量检查。
+        authority_kind: CANONICAL_SNAPSHOT
+        authority_id: CURRENT_SNAPSHOT
+        source_ref_ids: []
+      - fact_id: data-inputs-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: 这里不能说明上游数据已经完整、最新或适合形成投资结论。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: [atlas-registry]
+    transition_conditions:
+      - condition_id: data-inputs-transition
+        value_state: NOT_APPLICABLE
+        description_zh: 本页不维护上游输入状态，也不触发状态转换。
+        current_state: null
+        observable_event: null
+        deciding_authority_kind: null
+        deciding_authority_id: null
+        target_status: null
+        source_ref_ids: []
+    responsible_role:
+      fact_id: data-inputs-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: NOT_RECORDED
+      text_zh: 当前快照没有记录本次上游输入刷新责任角色。
+      authority_kind: CANONICAL_SNAPSHOT
+      authority_id: CURRENT_SNAPSHOT
+      source_ref_ids: []
+    next_reader_action: 查看本节点的技术依据，确认本页只读边界与实际输入来源。
+    technical_refs: [atlas-registry]
+    checked_authority_scope: [CURRENT_SNAPSHOT, ATLAS_SOURCE_REGISTRY]
+    checked_authority_ids: [CURRENT_SNAPSHOT, atlas-registry]
+    authority_bindings:
+      - authority_kind: CANONICAL_SNAPSHOT
+        authority_id: CURRENT_SNAPSHOT
+        source_ref_ids: [atlas-registry]
+
+  - stage_id: DATA_QUALITY_GATE
+    target_kind: RENDERER_STAGE
+    target_id: DATA_QUALITY_GATE
+    status_code: NOT_EXECUTED_BY_PAGE
+    status_object_scope: PAGE_EXECUTION_BOUNDARY
+    summary_fact_ids: [dq-current, dq-gap]
+    facts:
+      - fact_id: dq-current
+        fact_kind: CURRENT_WORK
+        value_state: PRESENT
+        text_zh: 当前页面没有运行 aits validate-data 或等价数据质量门禁。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: [atlas-registry]
+      - fact_id: dq-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: NOT_APPLICABLE
+        text_zh: 本页没有可报告的数据质量执行里程碑。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: []
+      - fact_id: dq-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: PRESENT
+        text_zh: 任何依赖新数据的研究或回测都必须在其受治理流程中另行通过数据质量门禁。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: [atlas-registry]
+      - fact_id: dq-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: NOT_RECORDED
+        text_zh: 当前页面记录没有绑定一次适用于本页全部输入的数据质量执行回执。
+        authority_kind: CANONICAL_SNAPSHOT
+        authority_id: CURRENT_SNAPSHOT
+        source_ref_ids: []
+      - fact_id: dq-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: 本页未执行数据质量门禁既不表示 PASS，也不表示 FAIL。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: [atlas-registry]
+    transition_conditions:
+      - condition_id: dq-transition
+        value_state: NOT_APPLICABLE
+        description_zh: 本页不维护数据质量执行状态，也不触发 DQ 状态转换。
+        current_state: null
+        observable_event: null
+        deciding_authority_kind: null
+        deciding_authority_id: null
+        target_status: null
+        source_ref_ids: []
+    responsible_role:
+      fact_id: dq-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: NOT_RECORDED
+      text_zh: 当前快照没有记录适用于下一次数据依赖执行的责任角色。
+      authority_kind: CANONICAL_SNAPSHOT
+      authority_id: CURRENT_SNAPSHOT
+      source_ref_ids: []
+    next_reader_action: 把“本页未执行”理解为执行边界；需要数据质量结论时查看对应运行回执。
+    technical_refs: [atlas-registry]
+    checked_authority_scope: [CURRENT_SNAPSHOT, ATLAS_SOURCE_REGISTRY]
+    checked_authority_ids: [CURRENT_SNAPSHOT, atlas-registry]
+    authority_bindings:
+      - authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: [atlas-registry]
+
+  - stage_id: RESEARCH_MAINLINE
+    target_kind: NODE
+    target_id: program-strategy-research
+    status_code: RUNNING
+    status_object_scope: NODE_RAW_STATUS
+    summary_fact_ids: [research-current, research-completed, research-gap]
+    facts:
+      - fact_id: research-current
+        fact_kind: CURRENT_WORK
+        value_state: NOT_RECORDED
+        text_zh: 当前受审阅记录没有把 RUNNING 拆解为一个具体正在执行的研究子任务。
+        authority_kind: CANONICAL_NODE
+        authority_id: program-strategy-research
+        source_ref_ids: []
+      - fact_id: research-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: PRESENT
+        text_zh: R0～R2 工程链和相关 validator 记录已经形成。
+        authority_kind: CANONICAL_RESULT
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+      - fact_id: research-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: PRESENT
+        text_zh: 新候选扩展继续暂停，不能启动新的候选或参数搜索。
+        authority_kind: CANONICAL_NODE
+        authority_id: stop-restart-expansion
+        source_ref_ids: [restart-r0-r2-closeout]
+      - fact_id: research-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: PRESENT
+        text_zh: 真实样本外、event-risk 与 forward maturity 证据仍不足。
+        authority_kind: CANONICAL_RESULT
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-closeout]
+      - fact_id: research-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: 你可以确认研究流程仍开放并已有工程证据，不能据此判断候选方法有效、研究完成或适合投资。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+    transition_conditions:
+      - condition_id: research-transition
+        value_state: NOT_RECORDED
+        description_zh: 当前 authority 没有记录一个可观察事件、决定角色和候选目标状态组成的完整转变条件。
+        current_state: null
+        observable_event: null
+        deciding_authority_kind: null
+        deciding_authority_id: null
+        target_status: null
+        source_ref_ids: []
+    responsible_role:
+      fact_id: research-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: NOT_RECORDED
+      text_zh: 当前受审阅记录没有给出负责这一 RUNNING 状态的公开角色。
+      authority_kind: CANONICAL_NODE
+      authority_id: program-strategy-research
+      source_ref_ids: []
+    next_reader_action: 查看研究主线摘要、R0～R2 结果限制和对应原始出处；未知项不要从 RUNNING 反推。
+    technical_refs: [atlas-registry, restart-r0-r2-requirement, restart-r0-r2-closeout]
+    checked_authority_scope: [CURRENT_NODE, LINKED_RESULT, LINKED_ATTRIBUTIONS, SOURCE_REFS]
+    checked_authority_ids: [program-strategy-research, result-restart-r2, attr-restart-oos-limits-expansion, attr-restart-incomplete-evidence]
+    authority_bindings:
+      - authority_kind: CANONICAL_NODE
+        authority_id: program-strategy-research
+        source_ref_ids: [atlas-registry]
+      - authority_kind: CANONICAL_RESULT
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+
+  - stage_id: BACKTEST_AND_EVALUATION
+    target_kind: RESULT
+    target_id: result-restart-r2
+    status_code: LIMITED
+    status_object_scope: RESULT_DISPLAY_STATUS
+    summary_fact_ids: [backtest-completed, backtest-gap]
+    facts:
+      - fact_id: backtest-current
+        fact_kind: CURRENT_WORK
+        value_state: NOT_APPLICABLE
+        text_zh: 这是一张已有结果卡，不表示本页正在执行新的回测。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: []
+      - fact_id: backtest-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: PRESENT
+        text_zh: R0～R2 工程与 validator 已完成并可从原始出处重建。
+        authority_kind: CANONICAL_RESULT
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+      - fact_id: backtest-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: PRESENT
+        text_zh: Source top-N 与 locked holdout 重叠，当前不能声称获得无偏样本外结论。
+        authority_kind: CANONICAL_RESULT
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-closeout]
+      - fact_id: backtest-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: PRESENT
+        text_zh: event_risk_high 样本量未达到已记录要求，20/60 日 outcome 尚未成熟，并存在 archive gaps。
+        authority_kind: ATTRIBUTION
+        authority_id: attr-restart-incomplete-evidence
+        source_ref_ids: [restart-r0-r2-closeout]
+      - fact_id: backtest-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: 当前只能确认工程和证据链可重建，不能判断收益稳健、样本外充分、风险可接受或策略已经通过。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+    transition_conditions:
+      - condition_id: backtest-transition
+        value_state: NOT_RECORDED
+        description_zh: 当前记录列出了限制，但没有完整记录 LIMITED 的验收条件、决定角色和候选目标状态。
+        current_state: null
+        observable_event: null
+        deciding_authority_kind: null
+        deciding_authority_id: null
+        target_status: null
+        source_ref_ids: []
+    responsible_role:
+      fact_id: backtest-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: NOT_RECORDED
+      text_zh: 当前结果卡没有记录负责补齐这些评估条件的公开角色。
+      authority_kind: CANONICAL_RESULT
+      authority_id: result-restart-r2
+      source_ref_ids: []
+    next_reader_action: 查看结果卡的限制和归因，先区分“工程验证通过”与“策略效果已经验证”。
+    technical_refs: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+    checked_authority_scope: [CURRENT_RESULT, LINKED_ATTRIBUTIONS, SOURCE_REFS]
+    checked_authority_ids: [result-restart-r2, attr-restart-oos-limits-expansion, attr-restart-incomplete-evidence]
+    authority_bindings:
+      - authority_kind: CANONICAL_RESULT
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+      - authority_kind: ATTRIBUTION
+        authority_id: attr-restart-incomplete-evidence
+        source_ref_ids: [restart-r0-r2-closeout]
+
+  - stage_id: RESULT_ATTRIBUTION
+    target_kind: ATTRIBUTION
+    target_id: attr-restart-oos-limits-expansion
+    status_code: LIMITED
+    status_object_scope: ATTRIBUTED_RESULT_DISPLAY_STATUS
+    summary_fact_ids: [attribution-completed, attribution-gap]
+    facts:
+      - fact_id: attribution-current
+        fact_kind: CURRENT_WORK
+        value_state: NOT_APPLICABLE
+        text_zh: 本节点展示已有归因，不在页面内执行新的原因分析。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: []
+      - fact_id: attribution-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: PRESENT
+        text_zh: 当前结果已绑定无偏样本外限制和未成熟证据两类 exact attribution。
+        authority_kind: ATTRIBUTION
+        authority_id: attr-restart-oos-limits-expansion
+        source_ref_ids: [restart-r0-r2-closeout]
+      - fact_id: attribution-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: PRESENT
+        text_zh: 现有归因反对把结果升级为可扩展策略证据。
+        authority_kind: ATTRIBUTION
+        authority_id: attr-restart-oos-limits-expansion
+        source_ref_ids: [restart-r0-r2-closeout]
+      - fact_id: attribution-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: PRESENT
+        text_zh: event-risk、20/60 日 maturity 与 archive 完整性仍限制当前结论范围。
+        authority_kind: ATTRIBUTION
+        authority_id: attr-restart-incomplete-evidence
+        source_ref_ids: [restart-r0-r2-closeout]
+      - fact_id: attribution-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: 归因解释为什么结论受限，但不会把 LIMITED 结果升级为策略通过或投资建议。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: result-restart-r2
+        source_ref_ids: [restart-r0-r2-closeout]
+    transition_conditions:
+      - condition_id: attribution-transition
+        value_state: NOT_RECORDED
+        description_zh: 当前 attribution 没有单独定义可改变 result status 的转变 authority。
+        current_state: null
+        observable_event: null
+        deciding_authority_kind: null
+        deciding_authority_id: null
+        target_status: null
+        source_ref_ids: []
+    responsible_role:
+      fact_id: attribution-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: NOT_RECORDED
+      text_zh: 当前 attribution 没有记录负责解除限制的公开角色。
+      authority_kind: ATTRIBUTION
+      authority_id: attr-restart-oos-limits-expansion
+      source_ref_ids: []
+    next_reader_action: 对照查看两条归因与其原始出处，区分已确认限制和尚未记录的完成判据。
+    technical_refs: [restart-r0-r2-closeout]
+    checked_authority_scope: [CURRENT_ATTRIBUTION, ATTRIBUTED_RESULT, SOURCE_REFS]
+    checked_authority_ids: [attr-restart-oos-limits-expansion, attr-restart-incomplete-evidence, result-restart-r2]
+    authority_bindings:
+      - authority_kind: ATTRIBUTION
+        authority_id: attr-restart-oos-limits-expansion
+        source_ref_ids: [restart-r0-r2-closeout]
+      - authority_kind: ATTRIBUTION
+        authority_id: attr-restart-incomplete-evidence
+        source_ref_ids: [restart-r0-r2-closeout]
+
+  - stage_id: ATLAS_SNAPSHOT_DIFF
+    target_kind: RENDERER_STAGE
+    target_id: ATLAS_SNAPSHOT_DIFF
+    status_code: VALIDATED
+    status_object_scope: INDEPENDENT_VALIDATION
+    summary_fact_ids: [diff-completed, diff-impact]
+    facts:
+      - fact_id: diff-current
+        fact_kind: CURRENT_WORK
+        value_state: NOT_APPLICABLE
+        text_zh: 本节点核对已有快照变化，不在页面内修改快照。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: []
+      - fact_id: diff-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: PRESENT
+        text_zh: 页面要求快照变化响应通过独立结构与引用闭包校验。
+        authority_kind: INDEPENDENT_VALIDATION
+        authority_id: ATLAS_SNAPSHOT_DIFF_VALIDATOR
+        source_ref_ids: [atlas-registry]
+      - fact_id: diff-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: NOT_APPLICABLE
+        text_zh: 结构校验通过不产生策略验收条件。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: []
+      - fact_id: diff-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: NOT_APPLICABLE
+        text_zh: 本合同不把结构校验结果解释成研究证据缺口。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: []
+      - fact_id: diff-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: 这里的“已验证”只表示变化记录与引用一致，不表示策略有效。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: [atlas-registry]
+    transition_conditions:
+      - condition_id: diff-transition
+        value_state: NOT_APPLICABLE
+        description_zh: validator 不自动改变研究、策略或 Owner decision 状态。
+        current_state: null
+        observable_event: null
+        deciding_authority_kind: null
+        deciding_authority_id: null
+        target_status: null
+        source_ref_ids: []
+    responsible_role:
+      fact_id: diff-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: NOT_APPLICABLE
+      text_zh: 该节点报告 deterministic validator 结果，不公开推断个人责任角色。
+      authority_kind: INDEPENDENT_VALIDATION
+      authority_id: ATLAS_SNAPSHOT_DIFF_VALIDATOR
+      source_ref_ids: []
+    next_reader_action: 查看变化对象、before/after identity 和独立 validation 依据。
+    technical_refs: [atlas-registry]
+    checked_authority_scope: [SNAPSHOT_DIFF, INDEPENDENT_VALIDATION]
+    checked_authority_ids: [ATLAS_SNAPSHOT_DIFF_VALIDATOR, atlas-registry]
+    authority_bindings:
+      - authority_kind: INDEPENDENT_VALIDATION
+        authority_id: ATLAS_SNAPSHOT_DIFF_VALIDATOR
+        source_ref_ids: [atlas-registry]
+
+  - stage_id: CITATION_FIRST_QUERY
+    target_kind: RENDERER_STAGE
+    target_id: CITATION_FIRST_QUERY
+    status_code: VALIDATED
+    status_object_scope: INDEPENDENT_VALIDATION_SET
+    summary_fact_ids: [query-completed, query-impact]
+    facts:
+      - fact_id: query-current
+        fact_kind: CURRENT_WORK
+        value_state: PRESENT
+        text_zh: 当前页面用固定问题读取 snapshot、result、attribution、diff 与 source lineage。
+        authority_kind: PAGE_EXECUTION_BOUNDARY
+        authority_id: atlas_reader_status_explanation_authority_v1
+        source_ref_ids: [atlas-registry]
+      - fact_id: query-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: PRESENT
+        text_zh: 页面要求每个回答与独立 validation 一一绑定并通过引用闭包校验。
+        authority_kind: INDEPENDENT_VALIDATION
+        authority_id: ATLAS_CITED_QUERY_VALIDATION_SET
+        source_ref_ids: [atlas-registry]
+      - fact_id: query-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: NOT_APPLICABLE
+        text_zh: 引用闭包不是研究或投资晋级条件。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: []
+      - fact_id: query-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: NOT_APPLICABLE
+        text_zh: 本节点不把查询结构校验解释为策略证据缺口。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: []
+      - fact_id: query-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: 查询校验通过只说明回答可追溯，不说明研究结论或策略通过。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: [atlas-registry]
+    transition_conditions:
+      - condition_id: query-transition
+        value_state: NOT_APPLICABLE
+        description_zh: query validator 不自动改变任何 canonical status。
+        current_state: null
+        observable_event: null
+        deciding_authority_kind: null
+        deciding_authority_id: null
+        target_status: null
+        source_ref_ids: []
+    responsible_role:
+      fact_id: query-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: NOT_APPLICABLE
+      text_zh: 该节点报告 deterministic query validation，不公开推断个人责任角色。
+      authority_kind: INDEPENDENT_VALIDATION
+      authority_id: ATLAS_CITED_QUERY_VALIDATION_SET
+      source_ref_ids: []
+    next_reader_action: 先读普通语言结论；需要核对时再展开 exact citations 与 lineage。
+    technical_refs: [atlas-registry]
+    checked_authority_scope: [CITED_QUERY_RESPONSES, INDEPENDENT_VALIDATIONS]
+    checked_authority_ids: [ATLAS_CITED_QUERY_VALIDATION_SET, atlas-registry]
+    authority_bindings:
+      - authority_kind: INDEPENDENT_VALIDATION
+        authority_id: ATLAS_CITED_QUERY_VALIDATION_SET
+        source_ref_ids: [atlas-registry]
+
+  - stage_id: OWNER_DECISION_BOUNDARY
+    target_kind: RENDERER_STAGE
+    target_id: OWNER_DECISION_BOUNDARY
+    status_code: PENDING_OWNER_REVIEW
+    status_object_scope: OWNER_REVIEW_POLICY
+    summary_fact_ids: [owner-current, owner-impact]
+    facts:
+      - fact_id: owner-current
+        fact_kind: CURRENT_WORK
+        value_state: PRESENT
+        text_zh: 页面解释合同已获准开发，但最终低金融知识读者语义仍等待 Owner 人工验收。
+        authority_kind: OWNER_DECISION
+        authority_id: owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1
+        source_ref_ids: [atlas-registry]
+      - fact_id: owner-completed
+        fact_kind: COMPLETED_MILESTONE
+        value_state: PRESENT
+        text_zh: Owner 已选择先冻结解释 authority、再改 renderer 的顺序。
+        authority_kind: OWNER_DECISION
+        authority_id: owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1
+        source_ref_ids: [atlas-registry]
+      - fact_id: owner-unmet
+        fact_kind: UNMET_CONDITION
+        value_state: OWNER_DECISION_PENDING
+        text_zh: 页面人工可读性验收尚未完成，不能预写为 PASS。
+        authority_kind: OWNER_DECISION
+        authority_id: TRADING-2495_OWNER_REVIEW
+        source_ref_ids: []
+      - fact_id: owner-gap
+        fact_kind: EVIDENCE_GAP
+        value_state: NOT_APPLICABLE
+        text_zh: 本节点等待的是页面语义决定，不把它伪装成策略证据缺口。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: []
+      - fact_id: owner-impact
+        fact_kind: READER_IMPACT
+        value_state: PRESENT
+        text_zh: Owner 的页面验收只决定解释是否清楚，不会批准策略、仓位、production 或 broker action。
+        authority_kind: STABLE_READER_SEMANTICS
+        authority_id: atlas-registry
+        source_ref_ids: [atlas-registry]
+    transition_conditions:
+      - condition_id: owner-transition
+        value_state: PRESENT
+        description_zh: Owner 完成低金融知识读者脚本验收并提供明确 acceptance token 后，页面任务才可从待复核转为已验收。
+        current_state: PENDING_OWNER_REVIEW
+        observable_event: OWNER_LOW_FINANCE_USABILITY_ACCEPTANCE_TOKEN_RECORDED
+        deciding_authority_kind: OWNER_DECISION
+        deciding_authority_id: PROJECT_OWNER
+        target_status: OWNER_ACCEPTED
+        source_ref_ids: [atlas-registry]
+    responsible_role:
+      fact_id: owner-role
+      fact_kind: RESPONSIBLE_ROLE
+      value_state: PRESENT
+      text_zh: Project owner 负责最终页面语义验收；Atlas coordinator 负责提供静态 review artifact。
+      authority_kind: OWNER_DECISION
+      authority_id: owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1
+      source_ref_ids: [atlas-registry]
+    next_reader_action: 在页面实现后按四问脚本复核，并明确给出接受或需修改的结论。
+    technical_refs: [atlas-registry]
+    checked_authority_scope: [OWNER_DECISION, TASK_REQUIREMENT, PAGE_REVIEW_BOUNDARY]
+    checked_authority_ids: [owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1, TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1]
+    authority_bindings:
+      - authority_kind: OWNER_DECISION
+        authority_id: owner_decision:TRADING-2495:2026-08-03:approve_contract_first_reader_explanation_v1
+        source_ref_ids: [atlas-registry]
