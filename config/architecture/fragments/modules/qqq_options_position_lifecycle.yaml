@@ -1,0 +1,29 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_position_lifecycle
+fragment_kind: module
+owner: options_position_lifecycle_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/position_lifecycle.py
+public_contracts:
+  - DEFAULT_QQQ_OPTIONS_POSITION_LIFECYCLE_POLICY_PATH
+  - LifecycleObservationKind
+  - LifecycleExternalEventType
+  - LifecycleReason
+  - LifecycleScenarioRole
+  - UnresolvedPositionLifecycleCriteria
+  - ActivePositionLifecycleCriteria
+  - QQQOptionPositionLifecycleSafety
+  - QQQOptionPositionLifecyclePolicy
+  - QQQOptionPositionLifecyclePolicyLoadResult
+  - QQQOptionExecutionResultArtifact
+  - QQQOptionCandidateSnapshotArtifact
+  - QQQOptionLifecycleMarketObservation
+  - QQQOptionLifecycleExternalEvent
+  - QQQOptionPositionLifecycleRequest
+  - QQQOptionLifecyclePositionSummary
+  - QQQOptionPositionLifecycleResult
+  - QQQOptionPositionLifecycleContractError
+  - load_qqq_options_position_lifecycle_policy
+  - build_qqq_option_position_lifecycle_input_sha256
+  - replay_qqq_option_position_lifecycle
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1687371
-    sha256: 0adfca65ec4a06af460cc54e1adbf57b3a0db7de8e37918229abf10ce1026044
+    byte_count: 1688422
+    sha256: f86b19af66ebfc2298106034fe5ca9b488f96bf6a760f2b0a020c7a2bfd9b609
     row_count: 454
     final_newline: true
     task_id_order_sha256: 53bb0d16239189f37159ce0f3656de4e2019e0a2288fb03c3728fcc839377499
-    row_checksum_order_sha256: 92900c25ecfa22dc17056571dc16839ffedfb03220ea478a113e90ed89ac35b0
+    row_checksum_order_sha256: e8746bf2d45e64ed84024dfe4fc51e56452a26ac7d597e05d9d10921c72364ce
     task_row_newline_counts:
       LF: 454
   - source: completed
@@ -120,20 +120,20 @@ inventory:
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
-    BASELINE_DONE: 144
+    BASELINE_DONE: 145
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
     DONE: 493
     DROPPED: 12
     IN_PROGRESS: 6
-    PROPOSED: 15
+    PROPOSED: 14
     READY: 1
     VALIDATING: 268
   task_id_set_sha256: 6b41581bac7e8e086977c9b96d07c3eaca3e49a7d3a4f29d30ef86262a25daca
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: ff8e4286022ff33de98e2a031381845de3bef9177c2b328622e2bbb11b298517
-  docs_link_set_sha256: e88376ada09fd3045e79a2a57451f56ffa26bc34789c36300ad74ce24574271d
+  owner_set_sha256: 4cc04ca018e4ba0ce20b953ac88693e8afed422d7a1ac6fbf971f8ce521ce362
+  docs_link_set_sha256: 6190d628202348c8e8c75f2c7f6f1752b1946b77b5622f9d2b1dc5afcaa44db9
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
     source: active
@@ -3204,7 +3204,7 @@ inventory:
   - task_id: TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
     source: active
     line_number: 2096
-    row_sha256: d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+    row_sha256: 59bb4202f2915c6439d4cb8b46e615a54e90d33b0860810a733498eae4a325d3
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -6850,11 +6850,11 @@ inventory:
     history_completeness: LEGACY_HISTORY_PARTIAL
 consumer_characterization:
   status: PASS_CHARACTERIZED
-  consumer_count: 134
+  consumer_count: 135
   runtime_consumer_count: 9
-  test_consumer_count: 122
+  test_consumer_count: 123
   script_consumer_count: 3
-  consumer_set_sha256: b323642afc706e4068f6d2af0681b9c6357e87d1cdac89c365d24369574acec4
+  consumer_set_sha256: 8e7c80cd5e014bfaeebc783101d3a03d058a2626f8a4e3488b0366389c072298
   source_cutover_allowed: false
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
@@ -7700,7 +7700,7 @@ consumer_characterization:
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 16
+    reference_count: 17
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
     rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
@@ -7800,6 +7800,13 @@ consumer_characterization:
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
     rollback: READ_LEGACY_MARKDOWN_DIRECT
+  - path: tests/test_trading2452_architecture_contract.py
+    role: test
+    targets:
+    - docs/task_register.md
+    reference_count: 1
+    migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: scripts/generate_qqq_plus_growth_closeout_artifacts.py
     role: script
     targets:
@@ -7852,4 +7859,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: d114a53d08e7f0baf283a428ee5ddde4cdafa82e7d19d5426a2d8218664e0bc7
+baseline_checksum: 830c23dbc664852887772c81fc5ad4143ebbe449c65f1176970be77178038407

@@ -11,49 +11,78 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: risk controls：等待 TRADING-2485..2487
-  requirement_refs: []
+  next_owner: project owner：独立审核 pre-expiry buffer、observation freshness、expiry disposition
+    与任何可影响投资解释的数值/方法；TRADING-2490/2491 owner：只消费 sealed lifecycle output，不得重定义 2481–2487
+    authority
+  requirement_refs:
+  - docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 实现 open/partial/exit/blocked/closed/invalid
-    state machine、pre-expiry guard、exercise/assignment/corporate-action reason codes；不启用
-    short-premium assignment 研究。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md`。复用
+    2481 `PositionLifecycleEventRecord`，消费 2485 candidate metadata、2486 canonical
+    execution 与 2487 sealed accounting；open/partial/exit/blocked/closed/invalid、reviewed-calendar
+    pre-expiry guard、expiry/exercise/assignment/corporate-action scope gate offline
+    mechanics 已完成，不启用 short-premium、roll 或 underlying delivery。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying
-      split 均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。
+    text: default unauthorized/cash preservation；ITM call/put、OTM expiry、missing/stale
+      exit quote、unexpected exercise/assignment、underlying split、DQ/PIT FAIL/NOT_EVALUATED、tamper/permutation
+      均有 unit/property/golden；valid OTM expiry downstream snapshot 与 2487 cash/cost
+      basis 对账；工程退出=`LONG_PREMIUM_LIFECYCLE_V1_READY_POLICY_BLOCKED`，完整退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`
+      仍需 Owner-reviewed policy/evidence。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2096
-    row_sha256: d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+    row_sha256: 59bb4202f2915c6439d4cb8b46e615a54e90d33b0860810a733498eae4a325d3
     cell_count: 8
     all_cells:
     - TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
     - Risk controls / option position lifecycle and scope violations
     - P1
-    - PROPOSED
-    - risk controls：等待 TRADING-2485..2487
-    - 实现 open/partial/exit/blocked/closed/invalid state machine、pre-expiry guard、exercise/assignment/corporate-action
-      reason codes；不启用 short-premium assignment 研究。
-    - ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying
-      split 均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。
-    - 产生 QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。
+    - BASELINE_DONE
+    - project owner：独立审核 pre-expiry buffer、observation freshness、expiry disposition
+      与任何可影响投资解释的数值/方法；TRADING-2490/2491 owner：只消费 sealed lifecycle output，不得重定义 2481–2487
+      authority
+    - 详见 `docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md`。复用
+      2481 `PositionLifecycleEventRecord`，消费 2485 candidate metadata、2486 canonical
+      execution 与 2487 sealed accounting；open/partial/exit/blocked/closed/invalid、reviewed-calendar
+      pre-expiry guard、expiry/exercise/assignment/corporate-action scope gate offline
+      mechanics 已完成，不启用 short-premium、roll 或 underlying delivery。
+    - default unauthorized/cash preservation；ITM call/put、OTM expiry、missing/stale
+      exit quote、unexpected exercise/assignment、underlying split、DQ/PIT FAIL/NOT_EVALUATED、tamper/permutation
+      均有 unit/property/golden；valid OTM expiry downstream snapshot 与 2487 cash/cost
+      basis 对账；工程退出=`LONG_PREMIUM_LIFECYCLE_V1_READY_POLICY_BLOCKED`，完整退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`
+      仍需 Owner-reviewed policy/evidence。
+    - 2026-08-03：exact base=`13292726540dc78039a85f17a39f64ddbee956d1`；policy SHA=`1798b669...37582`；focused
+      final=`29 passed`，formal final-tree 待收口。tracked default 仍 unauthorized，全部可调数值/方法为
+      `UNKNOWN_REQUIRES_POLICY_REVIEW`；ITM/exercise/assignment/corporate action/unresolved
+      expiry invalid run；无 QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production
+      动作。
     raw_line: '|TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1|Risk
-      controls / option position lifecycle and scope violations|P1|PROPOSED|risk controls：等待
-      TRADING-2485..2487|实现 open/partial/exit/blocked/closed/invalid state machine、pre-expiry
-      guard、exercise/assignment/corporate-action reason codes；不启用 short-premium assignment
-      研究。|ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying
-      split 均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。|产生
-      QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。|'
+      controls / option position lifecycle and scope violations|P1|BASELINE_DONE|project
+      owner：独立审核 pre-expiry buffer、observation freshness、expiry disposition 与任何可影响投资解释的数值/方法；TRADING-2490/2491
+      owner：只消费 sealed lifecycle output，不得重定义 2481–2487 authority|详见 `docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md`。复用
+      2481 `PositionLifecycleEventRecord`，消费 2485 candidate metadata、2486 canonical
+      execution 与 2487 sealed accounting；open/partial/exit/blocked/closed/invalid、reviewed-calendar
+      pre-expiry guard、expiry/exercise/assignment/corporate-action scope gate offline
+      mechanics 已完成，不启用 short-premium、roll 或 underlying delivery。|default unauthorized/cash
+      preservation；ITM call/put、OTM expiry、missing/stale exit quote、unexpected exercise/assignment、underlying
+      split、DQ/PIT FAIL/NOT_EVALUATED、tamper/permutation 均有 unit/property/golden；valid
+      OTM expiry downstream snapshot 与 2487 cash/cost basis 对账；工程退出=`LONG_PREMIUM_LIFECYCLE_V1_READY_POLICY_BLOCKED`，完整退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`
+      仍需 Owner-reviewed policy/evidence。|2026-08-03：exact base=`13292726540dc78039a85f17a39f64ddbee956d1`；policy
+      SHA=`1798b669...37582`；focused final=`29 passed`，formal final-tree 待收口。tracked
+      default 仍 unauthorized，全部可调数值/方法为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；ITM/exercise/assignment/corporate
+      action/unresolved expiry invalid run；无 QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production
+      动作。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-d762252396dabbcc58179c6e
+  event_id: legacy-import-59bb4202f2915c6439d4cb8b
   task_id: TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -63,29 +92,48 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: risk controls：等待 TRADING-2485..2487
-    notes: 产生 QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。
+    next_owner: project owner：独立审核 pre-expiry buffer、observation freshness、expiry
+      disposition 与任何可影响投资解释的数值/方法；TRADING-2490/2491 owner：只消费 sealed lifecycle output，不得重定义
+      2481–2487 authority
+    notes: 2026-08-03：exact base=`13292726540dc78039a85f17a39f64ddbee956d1`；policy
+      SHA=`1798b669...37582`；focused final=`29 passed`，formal final-tree 待收口。tracked
+      default 仍 unauthorized，全部可调数值/方法为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；ITM/exercise/assignment/corporate
+      action/unresolved expiry invalid run；无 QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production
+      动作。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+  - sha256:59bb4202f2915c6439d4cb8b46e615a54e90d33b0860810a733498eae4a325d3
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
   - Risk controls / option position lifecycle and scope violations
   - P1
-  - PROPOSED
-  - risk controls：等待 TRADING-2485..2487
-  - 实现 open/partial/exit/blocked/closed/invalid state machine、pre-expiry guard、exercise/assignment/corporate-action
-    reason codes；不启用 short-premium assignment 研究。
-  - ITM call/put、OTM expiry、missing exit quote、unexpected assignment、underlying split
-    均有确定状态和 property/golden tests；更新 system flow；退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`。
-  - 产生 QQQ shares/short、assignment 或 unresolved expiry 默认使首阶段 run invalid。
-  docs_links: []
+  - BASELINE_DONE
+  - project owner：独立审核 pre-expiry buffer、observation freshness、expiry disposition
+    与任何可影响投资解释的数值/方法；TRADING-2490/2491 owner：只消费 sealed lifecycle output，不得重定义 2481–2487
+    authority
+  - 详见 `docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md`。复用
+    2481 `PositionLifecycleEventRecord`，消费 2485 candidate metadata、2486 canonical
+    execution 与 2487 sealed accounting；open/partial/exit/blocked/closed/invalid、reviewed-calendar
+    pre-expiry guard、expiry/exercise/assignment/corporate-action scope gate offline
+    mechanics 已完成，不启用 short-premium、roll 或 underlying delivery。
+  - default unauthorized/cash preservation；ITM call/put、OTM expiry、missing/stale exit
+    quote、unexpected exercise/assignment、underlying split、DQ/PIT FAIL/NOT_EVALUATED、tamper/permutation
+    均有 unit/property/golden；valid OTM expiry downstream snapshot 与 2487 cash/cost
+    basis 对账；工程退出=`LONG_PREMIUM_LIFECYCLE_V1_READY_POLICY_BLOCKED`，完整退出=`LONG_PREMIUM_LIFECYCLE_V1_READY`
+    仍需 Owner-reviewed policy/evidence。
+  - 2026-08-03：exact base=`13292726540dc78039a85f17a39f64ddbee956d1`；policy SHA=`1798b669...37582`；focused
+    final=`29 passed`，formal final-tree 待收口。tracked default 仍 unauthorized，全部可调数值/方法为
+    `UNKNOWN_REQUIRES_POLICY_REVIEW`；ITM/exercise/assignment/corporate action/unresolved
+    expiry invalid run；无 QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production
+    动作。
+  docs_links:
+  - docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md
   terminal: false
-  raw_row_sha256: d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+  raw_row_sha256: 59bb4202f2915c6439d4cb8b46e615a54e90d33b0860810a733498eae4a325d3
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 076d6cc5e2781ad50a13297fda2038e1601f6d8a5365c510b3010377207b7fd1
+fragment_checksum: bc26514e3e828c91fa08cb868d5a16518b7aac814c1ee5fe24a1a4ee3a7f570c

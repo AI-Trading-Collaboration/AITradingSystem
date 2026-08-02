@@ -1,0 +1,53 @@
+schema_version: qqq_options_lifecycle_expiry_corporate_action_safety_policy.v1
+policy_id: qqq_options_lifecycle_expiry_corporate_action_safety_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED_BASELINE
+owner: project_owner
+owner_decision: owner_decision:TRADING-2488:2026-08-03:implement_offline_long_premium_lifecycle_safety_policy_blocked_v1
+rationale: Establish deterministic long-premium lifecycle, expiry, exercise, assignment, and corporate-action safety mechanics without inventing investment-facing thresholds or platform evidence.
+intended_effect: Fail closed before any unresolved expiry or underlying exposure can be interpreted as a valid QQQ options research result.
+validation_plan: Unit, property, golden, adjacent contract, compatibility, architecture, integration, reproducibility, and exclusive Full validation on the final tree.
+review_condition: Project Owner must independently review every lifecycle timing, freshness, expiry-source, and disposition policy before activation.
+expiry_condition: Supersede only through a versioned reviewed policy with calibration or platform evidence and backward-compatibility tests.
+lifecycle_authorized: false
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+adapter_policy_sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+selection_policy_sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30
+execution_policy_sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+accounting_policy_sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+primary_research_start: '2021-02-22'
+approved_non_primary_authority_count: 0
+legacy_non_default_start: '2022-12-01'
+legacy_non_default_start_is_default: false
+criteria:
+  mode: UNRESOLVED
+  scenario_role: UNKNOWN_REQUIRES_POLICY_REVIEW
+  dq_caveat: UNKNOWN_REQUIRES_POLICY_REVIEW
+  pre_expiry_guard_sessions: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_exit_quote_age_ms: UNKNOWN_REQUIRES_POLICY_REVIEW
+  expiry_settlement_source_policy: UNKNOWN_REQUIRES_POLICY_REVIEW
+  scope_violation_disposition: UNKNOWN_REQUIRES_POLICY_REVIEW
+  reality_baseline: false
+safety:
+  research_only: true
+  long_premium_only: true
+  short_option_allowed: false
+  multi_leg_allowed: false
+  roll_allowed: false
+  margin_allowed: false
+  underlying_share_delivery_allowed: false
+  short_underlying_allowed: false
+  assignment_allowed: false
+  exercise_completion_allowed: false
+  corporate_action_adjustment_allowed: false
+  new_order_intent_allowed: false
+  new_fill_allowed: false
+  daily_close_exit_allowed: false
+  same_bar_fill_allowed: false
+  cloud_run_authorized: false
+  external_order_allowed: false
+  raw_options_data_export_allowed: false
+  production_effect: none
+  broker_action: none

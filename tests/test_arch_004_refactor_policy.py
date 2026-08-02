@@ -2356,6 +2356,56 @@ TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_NEW_SOURCE_PATHS = frozenset(
         "tests/atlas/test_historical_canonical_projection.py",
     }
 )
+TRADING_2488_QQQ_OPTIONS_POSITION_LIFECYCLE_CURRENT_AUTHORITY_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qqq_options_position_lifecycle.yaml",
+        "config/architecture/fragments/modules/qqq_options_position_lifecycle.yaml",
+        (
+            "config/research/"
+            "qqq_options_lifecycle_expiry_corporate_action_safety_v1.yaml"
+        ),
+        (
+            "docs/requirements/"
+            "TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md"
+        ),
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        (
+            "registry/development_tasks_shadow/active/1a/"
+            "1a86e01a1935bf07852594655d43883215af0e04acb6aa01b8918d89d71a2b40.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/1a/"
+            "1a86e01a1935bf07852594655d43883215af0e04acb6aa01b8918d89d71a2b40.yaml"
+        ),
+        "src/ai_trading_system/qqq_options_research/position_lifecycle.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_qqq_options_position_lifecycle.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
+TRADING_2488_QQQ_OPTIONS_POSITION_LIFECYCLE_SUCCESSOR_SHADOW_PATHS = frozenset(
+    {
+        (
+            "registry/development_tasks_shadow/active/1a/"
+            "1a86e01a1935bf07852594655d43883215af0e04acb6aa01b8918d89d71a2b40.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/1a/"
+            "1a86e01a1935bf07852594655d43883215af0e04acb6aa01b8918d89d71a2b40.yaml"
+        ),
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
 LATEST_COMPATIBILITY_SECTION = TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
@@ -8908,6 +8958,16 @@ def _trading_2494_atlas_historical_canonical_projection_all_current_authority_pa
 
 
 @cache
+def _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths()
+        | TRADING_2488_QQQ_OPTIONS_POSITION_LIFECYCLE_CURRENT_AUTHORITY_PATHS
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -9585,6 +9645,15 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
             if last_pre_authority_owner.get(path, -1) < stop_index
         }
         mismatches = mismatches - (retroactive_paths - recorded_superseded_paths)
+    if TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION in baseline:
+        # TRADING-2488 is a post-2494 successor authority and therefore has no
+        # appendable compatibility section of its own.  Only its exact declared
+        # current-authority paths may leave earlier captured hashes; every other
+        # live source mismatch remains visible to the historical assertions.
+        mismatches = (
+            mismatches
+            - TRADING_2488_QQQ_OPTIONS_POSITION_LIFECYCLE_SUCCESSOR_SHADOW_PATHS
+        )
     return mismatches
 
 
@@ -10205,8 +10274,11 @@ def _trading_2487_qqq_options_cash_accounting_prior_active_source_mismatches() -
 def _trading_2494_atlas_historical_canonical_projection_prior_active_source_mismatches() -> (
     frozenset[str]
 ):
-    return _latest_active_source_mismatches(
-        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+    return (
+        _latest_active_source_mismatches(
+            TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+        )
+        - TRADING_2488_QQQ_OPTIONS_POSITION_LIFECYCLE_SUCCESSOR_SHADOW_PATHS
     )
 
 
@@ -10286,6 +10358,7 @@ def _source_sha256(source: dict[str, object]) -> str:
             | _trading_2486_qqq_options_minute_execution_all_current_authority_paths()
             | _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
             | current_superseded_paths
+            | TRADING_2488_QQQ_OPTIONS_POSITION_LIFECYCLE_CURRENT_AUTHORITY_PATHS
         )
         authority_section = TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
     elif TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION in baseline:
@@ -23390,7 +23463,7 @@ def test_trading_2478_quantconnect_planning_is_current_hash_authority() -> None:
     current_prior_drift = set(_trading_2478_quantconnect_planning_prior_active_source_mismatches())
     assert superseded <= current_prior_drift
     current_successor_authority = set(
-        _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert current_prior_drift - superseded <= current_successor_authority
     assert set(phase["removed_live_source_paths"]) == (
@@ -23505,7 +23578,7 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
         | TRADING_2479_HISTORICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     current_successor_authority = set(
-        _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= current_successor_authority
     assert current_prior_drift - superseded <= current_successor_authority
@@ -23627,7 +23700,7 @@ def test_trading_2480_qc_capability_admission_is_current_hash_authority() -> Non
         _trading_2480_qc_capability_admission_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -23742,7 +23815,7 @@ def test_trading_2481_qqq_options_shared_contract_has_2482_successor_authority()
         _trading_2481_qqq_options_shared_contract_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -23861,7 +23934,7 @@ def test_trading_2482_qqq_options_dq_pit_identity_has_2483_successor_authority()
         _trading_2482_qqq_options_dq_pit_identity_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -23984,7 +24057,7 @@ def test_trading_2483_qqq_options_signal_package_has_2484_successor_authority() 
         _trading_2483_qqq_options_signal_package_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24117,7 +24190,7 @@ def test_trading_2484_qc_project_adapter_has_2485_successor_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     current_prior_drift = set(_trading_2484_qc_project_adapter_prior_active_source_mismatches())
     successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24259,7 +24332,7 @@ def test_trading_2485_qqq_option_selection_has_2486_successor_authority() -> Non
         _trading_2485_qqq_option_selection_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24421,7 +24494,7 @@ def test_trading_2486_minute_execution_has_2487_successor_authority() -> None:
         _trading_2486_qqq_options_minute_execution_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24603,7 +24676,7 @@ def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
         _trading_2487_qqq_options_cash_accounting_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths()
+        _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24820,6 +24893,10 @@ def test_trading_2494_atlas_historical_projection_is_current_hash_authority() ->
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in (
+            TRADING_2488_QQQ_OPTIONS_POSITION_LIFECYCLE_CURRENT_AUTHORITY_PATHS
+        ):
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {

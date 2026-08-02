@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: d114a53d08e7f0baf283a428ee5ddde4cdafa82e7d19d5426a2d8218664e0bc7
+baseline_checksum: 830c23dbc664852887772c81fc5ad4143ebbe449c65f1176970be77178038407
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
@@ -4412,14 +4412,14 @@ fragments:
     row_sha256: 13e751e0f85b94b30adf4ab031baecfce291b91d1f8342c816f650d1915b54f0
 - task_id: TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
   path: registry/development_tasks_shadow_v2/1a/1a86e01a1935bf07852594655d43883215af0e04acb6aa01b8918d89d71a2b40.yaml
-  file_sha256: c4792003be5db2b581703866d6951a7c9a408c3a76fba2b7f3a03038aac2f698
-  fragment_checksum: 0ce70a84e5f84dc21ae8eee4e262590d3f813f209f978a23d0a2afd4a02ec59a
+  file_sha256: 63389635e2eceda07dcbc2ceeb1388a93f056c76a840485c505ee0b3cdedce76
+  fragment_checksum: 851c1e51aef9afd421653bbe104c39e3cb10f863a06dc5a02e3367b8f90604c1
   locator:
     source_partition: active
     source_path: docs/task_register.md
     line_number: 2096
     order_in_partition: 439
-    row_sha256: d762252396dabbcc58179c6ea171bb7e54689ebee0b3fec4b6888336ae03d042
+    row_sha256: 59bb4202f2915c6439d4cb8b46e615a54e90d33b0860810a733498eae4a325d3
 - task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
   path: registry/development_tasks_shadow_v2/b9/b9b4e9ee72ee6c1c0d5b70dfbdec4a7e654194cba343b9c4f067c21ee1ea43f3.yaml
   file_sha256: 23a4304131075f088e29b85ab4f6f89a027a320e07bd334328d8a8fa225b79d9
@@ -9623,8 +9623,8 @@ fragments:
 generated_views:
 - source: active
   source_path: docs/task_register.md
-  source_sha256: 0adfca65ec4a06af460cc54e1adbf57b3a0db7de8e37918229abf10ce1026044
-  rendered_sha256: 0adfca65ec4a06af460cc54e1adbf57b3a0db7de8e37918229abf10ce1026044
+  source_sha256: f86b19af66ebfc2298106034fe5ca9b488f96bf6a760f2b0a020c7a2bfd9b609
+  rendered_sha256: f86b19af66ebfc2298106034fe5ca9b488f96bf6a760f2b0a020c7a2bfd9b609
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -9635,11 +9635,11 @@ generated_views:
   persisted_in_git: false
 consumer_inventory:
   status: PASS_CHARACTERIZED
-  consumer_count: 134
+  consumer_count: 135
   runtime_consumer_count: 9
-  test_consumer_count: 122
+  test_consumer_count: 123
   script_consumer_count: 3
-  consumer_set_sha256: b323642afc706e4068f6d2af0681b9c6357e87d1cdac89c365d24369574acec4
+  consumer_set_sha256: 8e7c80cd5e014bfaeebc783101d3a03d058a2626f8a4e3488b0366389c072298
   source_cutover_allowed: false
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
@@ -10485,7 +10485,7 @@ consumer_inventory:
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 16
+    reference_count: 17
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
     rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
@@ -10585,6 +10585,13 @@ consumer_inventory:
     reference_count: 2
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
     rollback: READ_LEGACY_MARKDOWN_DIRECT
+  - path: tests/test_trading2452_architecture_contract.py
+    role: test
+    targets:
+    - docs/task_register.md
+    reference_count: 1
+    migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: scripts/generate_qqq_plus_growth_closeout_artifacts.py
     role: script
     targets:
@@ -10620,4 +10627,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 04afc7f3f9ee807b3cd22455b50371836e14eea729fdda3dacb697b71d08ab47
+index_checksum: ac099635d785efb87e28ee0789e9500934e9eeb466003f8caf32aae43886ecdd

@@ -7319,3 +7319,56 @@ QuantConnect、不调用 API/CLI/HTTP、不运行 cloud/paper/live/broker/produc
 工程退出为 `QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY_POLICY_BLOCKED`；完整
 `QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY` 仍依赖 Owner-reviewed tracked accounting policy 与独立 platform/local
 reconciliation evidence。expiry/exercise/assignment/corporate action 继续由 2488 承接。
+
+## TRADING-2488 QQQ Options Lifecycle / Expiry / Corporate-Action Safety V1
+
+`config/research/qqq_options_lifecycle_expiry_corporate_action_safety_v1.yaml` 在 2481 shared
+`PositionLifecycleEventRecord` / `PortfolioSnapshotRecord`、2482 DQ/PIT identity、2485 canonical
+candidate、2486 sealed minute execution result 与 2487 sealed cash accounting result 之后冻结纯离线
+long-premium position lifecycle。`qqq_options_research.position_lifecycle` 不复制 shared record，也不生成
+新 order intent 或 fill；它只用 canonical bytes/file hashes 重放既有 execution/accounting 事实。
+
+```text
+2481 RunManifestRecord + 2485 ContractCandidateSnapshotRecord
++ 2486 QQQOptionExecutionResult + 2487 QQQOptionCashAccountingResult
+  -> strict canonical bytes/file/content hash and exact policy/contract/run/range lineage replay
+  -> default 2488 unauthorized => LIFECYCLE_POLICY_REVIEW_REQUIRED
+     -> cash preservation / no lifecycle event / no position / no downstream snapshot
+  -> 2487 blocked/no-fill/reject/cancel => ACCOUNTING_REPLAY_BLOCKED_CASH_PRESERVED
+     -> no invented FLAT/open state and no partial lifecycle publication
+  -> future OWNER_REVIEWED_ACTIVE policy only
+     -> BUY_TO_OPEN intent/fill => FLAT -> INTENT_PENDING -> OPEN or OPEN_PARTIAL
+     -> no daily-close exit / same-bar fill / roll / scale-in / short option / margin / QQQ shares
+reviewed exchange-session calendar + pre-expiry guard
+  -> fresh MINUTE exit quote with canonical event DQ/PIT PASS => EXIT_PENDING
+  -> missing/stale/FAIL/NOT_EVALUATED quote => EXIT_BLOCKED
+expiry session + canonical reviewed settlement DQ/PIT report
+  -> OTM/ATM => EXIT_PENDING -> CLOSED / zero cash delta / remaining basis realized
+  -> ITM => SCOPE_VIOLATION -> INVALID_RUN / no downstream snapshot or share delivery
+unexpected exercise / assignment / split / dividend / merger / symbol or contract adjustment
+  -> SCOPE_VIOLATION -> INVALID_RUN / no downstream snapshot
+  -> sealed 2481 lifecycle events + reconciled PortfolioSnapshotRecord
+  -> permutation-stable input/result identity and byte-identical replay
+```
+
+tracked default policy 为 `OWNER_REVIEW_REQUIRED_BASELINE`、`lifecycle_authorized=false`。pre-expiry guard
+sessions、exit quote freshness、expiry settlement source/method 与 scope-violation disposition 全部为
+`UNKNOWN_REQUIRES_POLICY_REVIEW`；测试中的 active values 只能标记 `SYNTHETIC_TEST_ONLY`、
+`reality_baseline=false`，验证状态机、Decimal 算术与 fail-closed mechanics，不能成为项目参数、投资结论或现实
+基线。
+
+每个 observation/external event 必须携带 canonical `DQReportRecord` bytes 与 file hash；report 的 schema、scope、
+run/range/repository/contract、DQ/PIT policy、source id/checksum 和 as-of chronology 必须从事实重新校验。
+selection/execution/accounting PASS 不能伪造 lifecycle-stage PASS；missing、FAIL 或 `NOT_EVALUATED` expiry
+settlement 永不产生 worthless-close 结论。
+
+OTM/ATM worthless-close 只把 2487 remaining cost basis 从 unrealized 移到 realized，cash delta 固定为零；ITM
+expiry、exercise、assignment 或任何未建模 corporate action 必须 invalid run，禁止隐式 assignment、exercise
+completion、underlying share delivery、short underlying、roll 或 synthetic adjustment。输出继续使用 2481 shared
+envelope/seal/from-json/canonical authority，并固定 `new_order_intent_count=0`、`new_fill_count=0`。
+
+本节点固定 primary requested/evaluated start=`2021-02-22`；`2022-12-01` 不是新 run 默认。不登录
+QuantConnect、不调用 API/CLI/HTTP、不运行 cloud/paper/live/broker/production、不导出 raw option rows。
+工程退出为 `LONG_PREMIUM_LIFECYCLE_V1_READY_POLICY_BLOCKED`；完整
+`LONG_PREMIUM_LIFECYCLE_V1_READY` 仍依赖 Owner-reviewed tracked lifecycle policy 与独立 event/platform
+reconciliation evidence。

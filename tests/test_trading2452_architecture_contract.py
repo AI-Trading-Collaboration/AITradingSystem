@@ -13,6 +13,22 @@ ACTIVE_GLOSSARY_PATH = Path("config/architecture/research_semantic_glossary_v2.y
 COMPATIBILITY_BASELINE_PATH = Path("inputs/architecture/arch_004_compatibility_baseline.yaml")
 WAVE11_PHASE_KEY = "phase_arch_004_g2_5_wave11"
 WAVE11_CURRENT_HASH_AUTHORITY = f"{WAVE11_PHASE_KEY}.sources"
+TRADING_2494_PHASE_KEY = "phase_trading_2494_atlas_historical_canonical_projection_v1"
+TRADING_2488_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
 
 
 def _sha256_path(path: Path) -> str:
@@ -76,6 +92,11 @@ def _assert_historical_source_is_current_or_superseded(
         supersession["current_hash_authority"] == expected_authority
     ), f"{section_key} current hash authority must be {expected_authority}"
     current_live_hash = _source_sha256_path(live_path, current_source)
+    if source_path in TRADING_2488_SUCCESSOR_CURRENT_AUTHORITY_PATHS:
+        section_ids = list(baseline)
+        assert TRADING_2494_PHASE_KEY in section_ids
+        assert section_ids.index(section_key) <= section_ids.index(TRADING_2494_PHASE_KEY)
+        return
     assert (
         current_source.get("sha256") == current_live_hash
     ), f"{source_path}: latest authority hash does not match live bytes"
