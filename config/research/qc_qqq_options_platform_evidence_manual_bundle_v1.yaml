@@ -1,0 +1,126 @@
+schema_version: qc_qqq_options_platform_evidence_manual_bundle_policy.v1
+policy_id: qc_qqq_options_platform_evidence_manual_bundle_v1
+policy_version: 1.0.0
+status: REVIEWED_OFFLINE_CONTRACT_BASELINE
+owner: engineering_coordinator_pending_owner_authorization
+owner_instruction: Define and validate an offline manual-evidence package only; do not access QuantConnect.
+rationale: A strict local package boundary is required before an authorized collector may retain derived QuantConnect run evidence.
+intended_effect: Make later reconciliation inputs complete, content-bound, independently attested, and export-safe without authorizing collection.
+validation_plan: Synthetic package unit, property, golden, lineage, security, and deterministic replay tests precede formal repository validation.
+review_condition: Activate collection only after TRADING-2492 records an explicit Owner decision and a verified confirmed capability receipt exists.
+expiry_condition: Replace this baseline if QuantConnect changes result artifacts, license terms, tier behavior, or engine identity fields.
+platform: QuantConnect
+collection_authorized: false
+owner_authorization_token: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+required_collection_authority_task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_PLATFORM_ACTION_AUTHORIZATION_V1
+required_capability_decision: CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT
+capability_policy_sha256: 8183b17501fef6a628ae600df0ce4ef0edf30370a5d40d32c35a895cdcc04f89
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+adapter_policy_sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+primary_research_start: 2021-02-22
+approved_non_primary_roles: []
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+expected_directories:
+  - artifacts
+  - attestations
+expected_inventory:
+  - artifact_index.json
+  - artifacts/logs.txt
+  - artifacts/orders.csv
+  - artifacts/platform_ui.png
+  - artifacts/project_files.zip
+  - artifacts/report.pdf
+  - artifacts/results.json
+  - artifacts/trades.csv
+  - attestations/collector.json
+  - attestations/independent_reviewer.json
+  - bundle_metadata.json
+  - platform_evidence_manifest.json
+artifact_rules:
+  - artifact_id: logs
+    locator: artifacts/logs.txt
+    platform_artifact: Logs
+    timestamp_semantics: ALGORITHM_TIMEZONE
+    media_type: text/plain
+    maximum_bytes: 10485760
+    text_security_scan_required: true
+    export_classification: EXPORT_ALLOWED_DERIVED
+  - artifact_id: orders_csv
+    locator: artifacts/orders.csv
+    platform_artifact: Orders CSV
+    timestamp_semantics: UTC
+    media_type: text/csv
+    maximum_bytes: 10485760
+    text_security_scan_required: true
+    export_classification: EXPORT_ALLOWED_DERIVED
+  - artifact_id: platform_ui
+    locator: artifacts/platform_ui.png
+    platform_artifact: Platform UI Screenshot
+    timestamp_semantics: UTC
+    media_type: image/png
+    maximum_bytes: 10485760
+    text_security_scan_required: false
+    export_classification: EXPORT_ALLOWED_DERIVED
+  - artifact_id: project_files
+    locator: artifacts/project_files.zip
+    platform_artifact: Project Files
+    timestamp_semantics: NOT_APPLICABLE
+    media_type: application/zip
+    maximum_bytes: 10485760
+    text_security_scan_required: false
+    export_classification: EXPORT_ALLOWED_DERIVED
+  - artifact_id: report_pdf
+    locator: artifacts/report.pdf
+    platform_artifact: Report PDF
+    timestamp_semantics: MIXED_DECLARED_BY_ARTIFACT
+    media_type: application/pdf
+    maximum_bytes: 10485760
+    text_security_scan_required: false
+    export_classification: EXPORT_ALLOWED_DERIVED
+  - artifact_id: results_json
+    locator: artifacts/results.json
+    platform_artifact: Results JSON
+    timestamp_semantics: UTC
+    media_type: application/json
+    maximum_bytes: 10485760
+    text_security_scan_required: true
+    export_classification: EXPORT_ALLOWED_DERIVED
+  - artifact_id: trades_csv
+    locator: artifacts/trades.csv
+    platform_artifact: Trades CSV
+    timestamp_semantics: UTC
+    media_type: text/csv
+    maximum_bytes: 10485760
+    text_security_scan_required: true
+    export_classification: EXPORT_ALLOWED_DERIVED
+text_security_markers:
+  - account_id
+  - api_key
+  - authorization_bearer
+  - brokerage_account
+  - client_secret
+  - open_interest_rows
+  - option_chain_rows
+  - option_quote_rows
+  - private_key
+  - refresh_token
+decision: QC_MANUAL_EVIDENCE_BUNDLE_V1_READY
+safety:
+  research_only: true
+  external_platform_action_allowed: false
+  cloud_run_authorized: false
+  api_allowed: false
+  cli_allowed: false
+  remote_http_allowed: false
+  raw_options_data_export_allowed: false
+  account_or_broker_identifiers_allowed: false
+  secrets_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  promotion_allowed: false
+  strategy_execution_allowed: false
+  production_effect: none
+  broker_action: none

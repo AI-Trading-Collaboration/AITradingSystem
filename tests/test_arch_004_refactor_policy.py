@@ -2570,6 +2570,66 @@ TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_NEW_SOURCE_PATHS = frozens
     }
 )
 LATEST_COMPATIBILITY_SECTION = TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION = (
+    "phase_trading_2489_qc_platform_evidence_manual_bundle_v1"
+)
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_BASE_COMMIT = (
+    "ddde87301b970d8ef82160034fe9b836f9579435"
+)
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_BASELINE_GIT_BLOB = (
+    "5d0668e210dc82f41c6d15e2cae92975dde93997"
+)
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_BYTE_COUNT = 2_871_382
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_SHA256 = (
+    "c7ae8d494a825237dab5492d6af12040b9e016b3bb777f49b4022071a0d3ab87"
+)
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        (
+            "registry/development_tasks_shadow/active/b9/"
+            "b9b4e9ee72ee6c1c0d5b70dfbdec4a7e654194cba343b9c4f067c21ee1ea43f3.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/b9/"
+            "b9b4e9ee72ee6c1c0d5b70dfbdec4a7e654194cba343b9c4f067c21ee1ea43f3.yaml"
+        ),
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
+TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "config/architecture/fragments/flows/"
+            "qc_qqq_options_platform_evidence_manual_bundle.yaml"
+        ),
+        (
+            "config/architecture/fragments/modules/"
+            "qc_qqq_options_platform_evidence_manual_bundle.yaml"
+        ),
+        "config/research/qc_qqq_options_platform_evidence_manual_bundle_v1.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md"
+        ),
+        "docs/runbooks/qc_qqq_options_manual_evidence_collection_v1.md",
+        "src/ai_trading_system/qqq_options_research/platform_evidence_bundle.py",
+        "tests/test_qc_qqq_options_platform_evidence_bundle.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -4588,6 +4648,26 @@ def _trading_2496_atlas_reader_status_explanation_renderer_base_baseline_blob() 
         text=True,
     ).stdout.strip()
     assert object_id == (TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_BASELINE_GIT_BLOB)
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2489_qc_platform_evidence_manual_bundle_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -6623,6 +6703,30 @@ def _assert_trading_2496_atlas_reader_status_explanation_renderer_historical_pre
     suffix = current_bytes[expected_count:]
     expected_marker = (
         f"\n{TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION}:\n".encode()
+    )
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2489_qc_platform_evidence_manual_bundle_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2489 QC platform evidence bundle historical prefix differs from "
+        "immutable TRADING-2496 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"\n{TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION}:\n".encode()
     )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
@@ -9260,6 +9364,41 @@ def _trading_2496_atlas_reader_status_explanation_renderer_all_current_authority
 
 
 @cache
+def _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2489_qc_platform_evidence_manual_bundle_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2489_qc_platform_evidence_manual_bundle_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+    ]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2489_qc_platform_evidence_manual_bundle_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+    ]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2496_atlas_reader_status_explanation_renderer_all_current_authority_paths()
+        | _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+        | _trading_2489_qc_platform_evidence_manual_bundle_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -10570,15 +10709,32 @@ def _trading_2494_atlas_historical_canonical_projection_prior_active_source_mism
 def _trading_2495_atlas_reader_status_explanation_prior_active_source_mismatches() -> frozenset[
     str
 ]:
-    return _latest_active_source_mismatches(TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION)
+    mismatches = _latest_active_source_mismatches(
+        TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION
+    )
+    if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in _compatibility_baseline():
+        mismatches -= _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+    return mismatches
 
 
 @cache
 def _trading_2496_atlas_reader_status_explanation_renderer_prior_active_source_mismatches() -> (
     frozenset[str]
 ):
-    return _latest_active_source_mismatches(
+    mismatches = _latest_active_source_mismatches(
         TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    )
+    if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in _compatibility_baseline():
+        mismatches -= _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+    return mismatches
+
+
+@cache
+def _trading_2489_qc_platform_evidence_manual_bundle_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
     )
 
 
@@ -10625,7 +10781,44 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION in baseline:
+    if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2489_qc_platform_evidence_manual_bundle_prior_active_source_mismatches()
+            | TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2470_cited_query_contract_all_current_authority_paths()
+            | _trading_2470_cited_query_amendment_all_current_authority_paths()
+            | _trading_2470_cited_query_consumer_all_current_authority_paths()
+            | _trading_2471_flow_focus_all_current_authority_paths()
+            | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+            | _ops_072_transport_all_current_authority_paths()
+            | _trading_2477_historical_adapter_all_current_authority_paths()
+            | _ops_073_terminal_disposition_all_current_authority_paths()
+            | _trading_2478_quantconnect_planning_all_current_authority_paths()
+            | _trading_2479_historical_projection_all_current_authority_paths()
+            | _trading_2480_qc_capability_admission_all_current_authority_paths()
+            | _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+            | _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths()
+            | _trading_2483_qqq_options_signal_package_all_current_authority_paths()
+            | _trading_2484_qc_project_adapter_all_current_authority_paths()
+            | _trading_2485_qqq_option_selection_all_current_authority_paths()
+            | _trading_2486_qqq_options_minute_execution_all_current_authority_paths()
+            | _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+            | _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
+            | _trading_2496_atlas_reader_status_explanation_renderer_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+    elif TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION in baseline:
         current_superseded_paths = (
             _trading_2495_atlas_reader_status_explanation_superseded_live_source_paths()
         )
@@ -23799,7 +23992,7 @@ def test_trading_2478_quantconnect_planning_is_current_hash_authority() -> None:
     current_prior_drift = set(_trading_2478_quantconnect_planning_prior_active_source_mismatches())
     assert superseded <= current_prior_drift
     current_successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert current_prior_drift - superseded <= current_successor_authority
     assert set(phase["removed_live_source_paths"]) == (
@@ -23914,7 +24107,7 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
         | TRADING_2479_HISTORICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     current_successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= current_successor_authority
     assert current_prior_drift - superseded <= current_successor_authority
@@ -24036,7 +24229,7 @@ def test_trading_2480_qc_capability_admission_is_current_hash_authority() -> Non
         _trading_2480_qc_capability_admission_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24151,7 +24344,7 @@ def test_trading_2481_qqq_options_shared_contract_has_2482_successor_authority()
         _trading_2481_qqq_options_shared_contract_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24270,7 +24463,7 @@ def test_trading_2482_qqq_options_dq_pit_identity_has_2483_successor_authority()
         _trading_2482_qqq_options_dq_pit_identity_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24393,7 +24586,7 @@ def test_trading_2483_qqq_options_signal_package_has_2484_successor_authority() 
         _trading_2483_qqq_options_signal_package_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24526,7 +24719,7 @@ def test_trading_2484_qc_project_adapter_has_2485_successor_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     current_prior_drift = set(_trading_2484_qc_project_adapter_prior_active_source_mismatches())
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24666,7 +24859,7 @@ def test_trading_2485_qqq_option_selection_has_2486_successor_authority() -> Non
     superseded = set(phase["superseded_live_source_paths"])
     current_prior_drift = set(_trading_2485_qqq_option_selection_prior_active_source_mismatches())
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24820,7 +25013,7 @@ def test_trading_2486_minute_execution_has_2487_successor_authority() -> None:
         _trading_2486_qqq_options_minute_execution_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24955,7 +25148,7 @@ def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     assert next(reversed(baseline)) == (
-        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
     )
     phase = baseline[TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION]
     assert phase["schema_version"] == (
@@ -24986,7 +25179,7 @@ def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
         _trading_2487_qqq_options_cash_accounting_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -25118,7 +25311,7 @@ def test_trading_2494_atlas_historical_projection_has_2495_successor_authority()
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     assert next(reversed(baseline)) == (
-        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
     )
     phase = baseline[TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION]
     assert phase["schema_version"] == (
@@ -25152,7 +25345,7 @@ def test_trading_2494_atlas_historical_projection_has_2495_successor_authority()
         | TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     successor_authority = set(
-        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -25255,7 +25448,7 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     assert next(reversed(baseline)) == (
-        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
     )
     phase = baseline[TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION]
     assert phase["schema_version"] == (
@@ -25315,7 +25508,7 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     successor_paths = (
-        _trading_2496_atlas_reader_status_explanation_renderer_superseded_live_source_paths()
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
@@ -25391,7 +25584,7 @@ def test_trading_2496_atlas_reader_renderer_is_current_hash_authority() -> None:
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
     assert next(reversed(baseline)) == (
-        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
     )
     phase = baseline[TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION]
     assert phase["schema_version"] == (
@@ -25450,8 +25643,13 @@ def test_trading_2496_atlas_reader_renderer_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    successor_paths = (
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_paths:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -25528,6 +25726,147 @@ def test_trading_2496_atlas_reader_renderer_is_current_hash_authority() -> None:
     ] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2496_atlas_reader_status_explanation_renderer_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2489_qc_platform_evidence_bundle_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2489_qc_platform_evidence_manual_bundle_base_baseline_blob()
+    _assert_trading_2489_qc_platform_evidence_manual_bundle_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+    phase = baseline[TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2489_qc_platform_evidence_manual_bundle_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2489-QC-QQQ-OPTIONS-PLATFORM-EVIDENCE-MANUAL-BUNDLE-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2489:2026-08-03:implement_offline_manual_evidence_bundle_contract_v1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (
+            TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2489_qc_platform_evidence_manual_bundle_prior_active_source_mismatches()
+        | TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_NEW_SOURCE_PATHS
+    ) - TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2489-QC-QQQ-OPTIONS-PLATFORM-EVIDENCE-MANUAL-BUNDLE-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 961,
+        "active_task_count": 456,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["manual_bundle"] == {
+        "policy_schema": "qc_qqq_options_platform_evidence_manual_bundle_policy.v1",
+        "metadata_schema": "qc_qqq_options_manual_evidence_bundle_metadata.v1",
+        "artifact_index_schema": "qc_qqq_options_manual_evidence_artifact_index.v1",
+        "attestation_schema": "qc_qqq_options_manual_evidence_attestation.v1",
+        "validation_schema": "qc_qqq_options_platform_evidence_bundle_validation.v1",
+        "policy_sha256": "bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1",
+        "module_sha256": "8d3d12db0542e30454ce4d7673fa357f4eaef7c3c43fab38e4cd8dc3be8a1565",
+        "expected_file_count": 12,
+        "derived_artifact_count": 7,
+        "inherited_result_mapping_count": 6,
+        "two_person_attestation_required": True,
+        "primary_research_start": "2021-02-22",
+        "legacy_2022_default_active": False,
+        "collection_authorized": False,
+        "owner_authorization_token": "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS",
+        "required_collection_authority_task": (
+            "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_PLATFORM_ACTION_AUTHORIZATION_V1"
+        ),
+        "ready_disposition": "MANUAL_COLLECTION_READY_FOR_LOCAL_RECONCILIATION",
+        "incomplete_disposition": "MANUAL_COLLECTION_INCOMPLETE",
+        "invalid_disposition": "MANUAL_COLLECTION_INVALID",
+        "option_event_dq_status": "NOT_EVALUATED",
+        "option_event_pit_status": "NOT_EVALUATED",
+    }
+    assert phase["validation"] == {
+        "focused_bundle": "PASS_22_TESTS",
+        "adjacent_2480_through_2489": "PASS_259_TESTS",
+        "compatibility_regression": "PASS_188_TESTS",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "capability_receipt_reconstructed_from_facts": True,
+        "caller_manifest_trusted": False,
+        "raw_option_rows_allowed": False,
+        "secret_account_broker_identifiers_allowed": False,
+        "external_platform_action": "none",
+        "cloud_run_authorized": False,
+        "api_cli_http_allowed": False,
+        "data_quality_executed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2489_qc_platform_evidence_manual_bundle_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

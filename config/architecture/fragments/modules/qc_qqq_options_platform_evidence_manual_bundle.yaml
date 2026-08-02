@@ -1,0 +1,24 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_platform_evidence_manual_bundle
+fragment_kind: module
+owner: external_platform_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/platform_evidence_bundle.py
+public_contracts:
+  - QCManualArtifactRule
+  - QCApprovedNonPrimaryWindow
+  - QCPlatformEvidenceBundleSafety
+  - QCPlatformEvidenceBundlePolicy
+  - QCPlatformEvidenceBundlePolicyLoadResult
+  - QCEngineIdentityField
+  - QCManualEvidenceArtifactIndex
+  - QCManualEvidenceBundleMetadata
+  - QCManualEvidenceAttestation
+  - QCPlatformEvidenceBundleDescriptor
+  - QCPlatformEvidenceBundleValidationRecord
+  - LoadedQCPlatformEvidenceBundle
+  - load_qc_qqq_options_platform_evidence_bundle_policy
+  - build_qc_qqq_options_platform_evidence_bundle_descriptor
+  - build_qc_qqq_options_platform_evidence_manifest
+  - load_qc_qqq_options_manual_evidence_bundle
+compatibility_facades: []
+deprecation_status: active_reference_architecture

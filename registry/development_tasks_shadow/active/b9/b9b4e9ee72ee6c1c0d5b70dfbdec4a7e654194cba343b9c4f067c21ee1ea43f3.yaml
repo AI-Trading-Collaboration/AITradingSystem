@@ -11,48 +11,72 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: evidence engineering + data governance：等待 TRADING-2480..2482
-  requirement_refs: []
+  next_owner: evidence engineering + data governance：离线 strict bundle contract/runbook
+    已完成；真实 QuantConnect collection 仍等待 TRADING-2492 独立 Owner 授权
+  requirement_refs:
+  - docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum
-    bundle、engine/tier/license status 与收集 runbook；禁止用 logs 导出 chain。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md`。复用
+    2480 verified capability receipt、2481 `PlatformEvidenceManifestRecord`、2482 DQ/PIT
+    与 2484 六项 result mapping，定义 Results/Orders/Trades/Logs/Report/Project Files/screenshot/two-person
+    attestation/checksum strict bundle；禁止用 logs 或其他 artifact 导出/reconstruct chain、minute
+    quote、OI 或 secret/account/broker identifiers。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
-      fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
+    text: mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review、forged
+      receipt、wrong engine/range/lineage、extra/symlink/path traversal、canonical replay
+      fixtures PASS；更新 system flow；工程退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2097
-    row_sha256: 991ee9f21b30d3a3cf442a20698f060f96ef1b1765f69e34aa6c3862eca0cd0b
+    row_sha256: 96f0e8a614e79c7b55bbdb29e7f992716f306ca9fef9e17bdc963290c10c5ce2
     cell_count: 8
     all_cells:
     - TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
     - Evidence engineering / Free Cloud manual result bundle
     - P1
-    - PROPOSED
-    - evidence engineering + data governance：等待 TRADING-2480..2482
-    - 定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum bundle、engine/tier/license
-      status 与收集 runbook；禁止用 logs 导出 chain。
-    - mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
-      fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
-    - 只定义合同和 runbook；实际收集依赖 TRADING-2492 授权。
+    - BASELINE_DONE
+    - evidence engineering + data governance：离线 strict bundle contract/runbook 已完成；真实
+      QuantConnect collection 仍等待 TRADING-2492 独立 Owner 授权
+    - 详见 `docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md`。复用
+      2480 verified capability receipt、2481 `PlatformEvidenceManifestRecord`、2482
+      DQ/PIT 与 2484 六项 result mapping，定义 Results/Orders/Trades/Logs/Report/Project
+      Files/screenshot/two-person attestation/checksum strict bundle；禁止用 logs 或其他
+      artifact 导出/reconstruct chain、minute quote、OI 或 secret/account/broker identifiers。
+    - mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review、forged
+      receipt、wrong engine/range/lineage、extra/symlink/path traversal、canonical replay
+      fixtures PASS；更新 system flow；工程退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
+    - 2026-08-03：SINGLE_LANE START/LANE PASS；policy/module/runbook/fragments/system
+      flow 与 22-test synthetic matrix 已实现，tracked default=`collection_authorized=false`，Owner
+      token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`。离线 baseline 标记 `BASELINE_DONE`；实际
+      collection/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 未执行且未授权，退出条件为
+      TRADING-2492 exact Owner-reviewed token + confirmed capability receipt。
     raw_line: '|TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1|Evidence
-      engineering / Free Cloud manual result bundle|P1|PROPOSED|evidence engineering
-      + data governance：等待 TRADING-2480..2482|定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum
-      bundle、engine/tier/license status 与收集 runbook；禁止用 logs 导出 chain。|mandatory file
-      缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
-      fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。|只定义合同和
-      runbook；实际收集依赖 TRADING-2492 授权。|'
+      engineering / Free Cloud manual result bundle|P1|BASELINE_DONE|evidence engineering
+      + data governance：离线 strict bundle contract/runbook 已完成；真实 QuantConnect collection
+      仍等待 TRADING-2492 独立 Owner 授权|详见 `docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md`。复用
+      2480 verified capability receipt、2481 `PlatformEvidenceManifestRecord`、2482
+      DQ/PIT 与 2484 六项 result mapping，定义 Results/Orders/Trades/Logs/Report/Project
+      Files/screenshot/two-person attestation/checksum strict bundle；禁止用 logs 或其他
+      artifact 导出/reconstruct chain、minute quote、OI 或 secret/account/broker identifiers。|mandatory
+      file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review、forged
+      receipt、wrong engine/range/lineage、extra/symlink/path traversal、canonical replay
+      fixtures PASS；更新 system flow；工程退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。|2026-08-03：SINGLE_LANE
+      START/LANE PASS；policy/module/runbook/fragments/system flow 与 22-test synthetic
+      matrix 已实现，tracked default=`collection_authorized=false`，Owner token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`。离线
+      baseline 标记 `BASELINE_DONE`；实际 collection/cloud/API/CLI/HTTP/raw export/paper/live/broker/production
+      未执行且未授权，退出条件为 TRADING-2492 exact Owner-reviewed token + confirmed capability
+      receipt。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-991ee9f21b30d3a3cf442a20
+  event_id: legacy-import-96f0e8a614e79c7b55bbdb29
   task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -62,29 +86,44 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: evidence engineering + data governance：等待 TRADING-2480..2482
-    notes: 只定义合同和 runbook；实际收集依赖 TRADING-2492 授权。
+    next_owner: evidence engineering + data governance：离线 strict bundle contract/runbook
+      已完成；真实 QuantConnect collection 仍等待 TRADING-2492 独立 Owner 授权
+    notes: 2026-08-03：SINGLE_LANE START/LANE PASS；policy/module/runbook/fragments/system
+      flow 与 22-test synthetic matrix 已实现，tracked default=`collection_authorized=false`，Owner
+      token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`。离线 baseline 标记 `BASELINE_DONE`；实际
+      collection/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 未执行且未授权，退出条件为
+      TRADING-2492 exact Owner-reviewed token + confirmed capability receipt。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:991ee9f21b30d3a3cf442a20698f060f96ef1b1765f69e34aa6c3862eca0cd0b
+  - sha256:96f0e8a614e79c7b55bbdb29e7f992716f306ca9fef9e17bdc963290c10c5ce2
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
   - Evidence engineering / Free Cloud manual result bundle
   - P1
-  - PROPOSED
-  - evidence engineering + data governance：等待 TRADING-2480..2482
-  - 定义 Results/Orders/Trades/Logs/Report/screenshots/attestation/checksum bundle、engine/tier/license
-    status 与收集 runbook；禁止用 logs 导出 chain。
-  - mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review
-    fixtures PASS；更新 system flow；退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
-  - 只定义合同和 runbook；实际收集依赖 TRADING-2492 授权。
-  docs_links: []
+  - BASELINE_DONE
+  - evidence engineering + data governance：离线 strict bundle contract/runbook 已完成；真实
+    QuantConnect collection 仍等待 TRADING-2492 独立 Owner 授权
+  - 详见 `docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md`。复用
+    2480 verified capability receipt、2481 `PlatformEvidenceManifestRecord`、2482 DQ/PIT
+    与 2484 六项 result mapping，定义 Results/Orders/Trades/Logs/Report/Project Files/screenshot/two-person
+    attestation/checksum strict bundle；禁止用 logs 或其他 artifact 导出/reconstruct chain、minute
+    quote、OI 或 secret/account/broker identifiers。
+  - mandatory file 缺失即 `MANUAL_COLLECTION_INCOMPLETE`；tamper/missing/checksum/license/security/two-person-review、forged
+    receipt、wrong engine/range/lineage、extra/symlink/path traversal、canonical replay
+    fixtures PASS；更新 system flow；工程退出=`QC_MANUAL_EVIDENCE_BUNDLE_V1_READY`。
+  - 2026-08-03：SINGLE_LANE START/LANE PASS；policy/module/runbook/fragments/system
+    flow 与 22-test synthetic matrix 已实现，tracked default=`collection_authorized=false`，Owner
+    token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`。离线 baseline 标记 `BASELINE_DONE`；实际
+    collection/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 未执行且未授权，退出条件为
+    TRADING-2492 exact Owner-reviewed token + confirmed capability receipt。
+  docs_links:
+  - docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md
   terminal: false
-  raw_row_sha256: 991ee9f21b30d3a3cf442a20698f060f96ef1b1765f69e34aa6c3862eca0cd0b
+  raw_row_sha256: 96f0e8a614e79c7b55bbdb29e7f992716f306ca9fef9e17bdc963290c10c5ce2
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 8a598e7d507db21248cd5a800ac5146f654363e7cdadcddf8a1c91bd980eede6
+fragment_checksum: 6701940e681c880faf1329271aa91886512ae659e18d9c2d35e93ebcca7dd00b

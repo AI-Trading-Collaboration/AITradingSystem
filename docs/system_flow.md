@@ -7404,3 +7404,47 @@ QuantConnect、不调用 API/CLI/HTTP、不运行 cloud/paper/live/broker/produc
 工程退出为 `LONG_PREMIUM_LIFECYCLE_V1_READY_POLICY_BLOCKED`；完整
 `LONG_PREMIUM_LIFECYCLE_V1_READY` 仍依赖 Owner-reviewed tracked lifecycle policy 与独立 event/platform
 reconciliation evidence。
+
+## TRADING-2489 QuantConnect QQQ Options Platform Evidence Manual Bundle V1
+
+`config/research/qc_qqq_options_platform_evidence_manual_bundle_v1.yaml` 在 2480 capability admission、2481
+shared `EvidenceArtifact` / `PlatformEvidenceManifestRecord`、2482 DQ/PIT identity 与 2484 result mapping 之后，
+冻结严格离线的 QuantConnect derived evidence package 合同。`qqq_options_research.platform_evidence_bundle`
+不复制 shared record，也不信任 caller 自报的 PASS、manifest 或 receipt；capability 状态必须由 2480 verifier
+从 exact policy/evidence/receipt bytes 重建，platform manifest 必须由 artifact、metadata 与 policy 事实重建。
+
+```text
+tracked 2489 policy
+  -> REVIEWED_OFFLINE_CONTRACT_BASELINE / collection_authorized=false
+  -x-> QuantConnect login/project/cloud/API/CLI/HTTP/export action
+future 2492 exact Owner token + verified 2480 confirmed capability receipt
+  -> exact 12-file non-link package inventory
+  -> six inherited 2484 result artifacts + one sanitized platform UI screenshot
+  -> UTF-8/CSV/JSON/ZIP/PDF/PNG shape + SHA-256 + byte count + size gate
+  -> no raw chain/quote/OI rows, secret, account id or broker id
+bundle metadata
+  -> project/backtest/Lean/runtime + exact 11 engine identity fields
+  -> tier/license/engine all factual CONFIRMED
+  -> PRIMARY requested/evaluated start=2021-02-22
+  -> other start only reviewed SENSITIVITY/PROXY/STRESS role + DQ caveat
+2481 shared PlatformEvidenceManifestRecord rebuilt from facts
+  -> distinct collector + independent reviewer content-bound attestations
+  -> MANUAL_COLLECTION_READY_FOR_LOCAL_RECONCILIATION
+  -> future 2490 local reconciliation only
+```
+
+package inventory 固定 `bundle_metadata.json`、`artifact_index.json`、
+`platform_evidence_manifest.json`、Logs/Orders CSV/Project Files/Report PDF/Results JSON/Trades CSV、去敏 UI
+screenshot 与 collector/reviewer attestations。拒绝 symlink/junction/reparse point、extra/missing entry、case alias、
+path traversal、ZIP symlink、noncanonical control bytes、hash/byte-count drift 与 caller-supplied manifest semantic drift。
+缺失 artifact 或 tier/engine/license UNKNOWN 使用 `MANUAL_COLLECTION_INCOMPLETE`；contradicted evidence、伪造
+receipt、越权内容或 identity mismatch 使用 `MANUAL_COLLECTION_INVALID`。只有全部 confirmed 才能返回 sealed
+validation record；同一 immutable package 重放必须 byte-identical。
+
+tracked default Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`，实际 collection authority 属于
+TRADING-2492，不属于 2489。primary window 固定从 `2021-02-22` 请求并评估；`2022-12-01` 不是默认。
+本节点不读取 cached market/macro data，故不调用 `aits validate-data`，但 option-event DQ/PIT 继续明确为
+`NOT_EVALUATED`，不能从 selection/execution 或 capability evidence 伪升 PASS。ready 只表示 package 可供 2490
+本地 reconciliation，不表示策略有效、Free tier 足够、promotion、paper/live、production 或 broker approval；
+全部 safety 固定 research-only、raw-export/strategy-execution/promotion/paper/production=false、
+`production_effect=none`、`broker_action=none`。
