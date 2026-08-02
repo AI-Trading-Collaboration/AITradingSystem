@@ -134,6 +134,18 @@ pack、检查 stable-ID collision、DQ/window distinction、roadmap exclusion、
 writer。即使 Owner 手工验收本 review page，真正 node/result/attribution/page projection 仍需后续
 独立任务和新 Owner token。
 
+TRADING-2494 消费新的精确 Owner token，把 TRADING-2479 已审阅的五份 typed historical records
+激活为 canonical Atlas historical lane。`historical_canonical_projection.yaml` 绑定 review policy
+SHA-256、五个 source refs、stable IDs、base/projected counts 与安全边界；projector 只在
+TRADING-2477 V1.2 base registry 上追加六个 nodes、六条 `CONTAINS` edges、五个 results 和五条
+`NEUTRAL` provenance attributions，形成 V1.3 的 `13 sources / 27 nodes / 28 edges / 13 results /
+17 attributions`。四个 `raw_status=PASS` 只表示历史 artifact 已形成，program snapshot 保持
+`LIMITED`；五个 display status 全部为 `LIMITED`、`investment_facing=false`。结果卡结构化保存
+source original status 与 mapping rationale，并在页面流程图中显示隔离历史支线；“你在这里”仍是
+第 7 阶段 Citation-first 页面。`TRADING-2481..2493` 明确排除，不进入 snapshot/page/status authority。
+review-only builder 显式关闭 active projection，因此 TRADING-2479 的 base/candidate 历史证据仍可
+重建；roadmap、DQ/model/backtest/external platform/production/broker 行为继续关闭。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -141,7 +153,7 @@ V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再�
 
 ```mermaid
 flowchart LR
-    HIST["R0-R2 evidence closure<br/>legacy comparison / evidence incomplete"] --> SRC["Atlas V1.2 source registry<br/>13 exact Git sources / 4 projected campaigns"]
+    HIST["R0-R2 evidence closure<br/>legacy comparison / evidence incomplete"] --> SRC["Atlas V1.3 canonical coverage<br/>13 exact Git sources / 5 projected campaigns"]
     QLD["QLD role evaluation<br/>scoped warning / global DQ FAIL"] --> SRC
     LABEL["Label foundation + target redesign<br/>scoped ready / no model"] --> SRC
     V1["O1 V1 closed policy<br/>coverage blocked / model NOT_EVALUATED"] --> SRC
@@ -160,7 +172,7 @@ flowchart LR
     QVAL --> QMAP["TRADING-2471 system flow focus map<br/>8 stages + exact-ID current focus"]
     QMAP --> QPROV["TRADING-2472 status provenance<br/>structured fields + exact validation refs"]
     QPROV --> QDRILL["TRADING-2473 node evidence drilldown<br/>8 native details / current open"]
-    QDRILL --> QLEDGER["TRADING-2474 result ledger<br/>all in-scope results + attributions"]
+    QDRILL --> QLEDGER["TRADING-2474 + 2494 result ledger<br/>13 results / 17 attributions"]
     QLEDGER --> QWEB["Static answer cards + JSON<br/>claim → citation → lineage"]
     RREG["Report registry<br/>research entries + exact/wildcard declarations"] --> HINV["TRADING-2475 historical coverage inventory<br/>path/report classification only"]
     GTREE["Exact-commit Git tree metadata<br/>declared research roots + exact exclusion"] --> HINV
@@ -180,7 +192,11 @@ flowchart LR
     QWEB --> HPREV
     HPREV --> HPVAL["Independent review validation<br/>counts + collisions + DQ/window + page identity"]
     HPVAL --> HPWEB["Review-only static HTML + JSON + Markdown<br/>current 13/21/22/8/12 → candidate 13/27/28/13/17"]
-    HPWEB -.-> HSTOP["No node/result/page projection<br/>production_effect=none"]
+    HPWEB -->|"Owner authorizes exact reviewed projection"| HCAN["TRADING-2494 canonical historical projection<br/>review SHA + 5 typed sources + safety"]
+    HADAPT --> HCAN
+    HCAN --> PROJ
+    HCAN --> QLEDGER
+    HPWEB -.-> HSTOP["Review artifact remains immutable<br/>no automatic projection or investment verdict"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
     WEB -.-> NONE["production_effect=none<br/>broker_action=none"]
@@ -190,6 +206,7 @@ flowchart LR
     AOUT -.-> NONE
     HADAPT -.-> NONE
     HPWEB -.-> NONE
+    HCAN -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。

@@ -1,0 +1,86 @@
+schema_version: atlas_historical_canonical_projection_policy.v1
+projection_id: TRADING_2494_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_3
+status: ACTIVE_REVIEWED_BASELINE
+owner_decision: owner_decision:TRADING-2494:2026-08-02:advance_atlas_page_and_hold_trading_2481_2493_for_owner_review_v1
+primary_research_start: '2021-02-22'
+base_registry_id: TRADING_2477_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_2
+projected_title: Atlas 策略研究主线与结果归因 · Canonical Coverage V1.3
+reader_notice: 本页只读投影已发布的 Git 权威，覆盖四条代表性研究主线与五份已审阅历史记录；它不是投资建议，不会重算研究结果、计算仓位或发起交易，也不声称已覆盖全部历史研究。
+review_policy_path: config/atlas/historical_projection_review.yaml
+review_policy_sha256: ac7061aff2f9c4386d667bd415e93ec73ddb0babae35b16e88ee8e04303db0aa
+expected_base_counts:
+  sources: 13
+  nodes: 21
+  edges: 22
+  results: 8
+  attributions: 12
+expected_projected_counts:
+  sources: 13
+  nodes: 27
+  edges: 28
+  results: 13
+  attributions: 17
+group_source_ref_id: atlas-registry
+root_edge_label: 已审阅历史研究支线
+records:
+  - source_ref_id: historical-b0-baseline
+    edge_label: B0 control historical evidence
+    attribution_explanation: 只绑定 B0 历史 control artifact 与本结果，不表达当前策略有效性或投资方向。
+    limitations:
+      - 历史 DQ：PASS_WITH_WARNINGS；该状态只属于原始 mini-window artifact。
+      - 历史窗口：requested 2023-01-03 至 2023-07-31；evaluated 2023-01-03 至 2023-07-27。
+      - 单一 normal-market control window，未使用 untouched holdout，不支持候选晋级。
+  - source_ref_id: historical-b1-b4-attribution
+    edge_label: B1–B4 historical component attribution
+    attribution_explanation: 只绑定 B1–B4 历史归因 artifact 与本结果，不表达收益贡献或当前因果结论。
+    limitations:
+      - 历史 DQ：PASS_WITH_WARNINGS；不同组件结论为 mixed、unconfirmed 或 inconclusive。
+      - 历史窗口为多个 mini-window 诊断，不具备当前 primary conclusion 身份。
+      - 该归因是 provenance，不是当前策略有效性或参数选择依据。
+  - source_ref_id: historical-weight-program-snapshot
+    edge_label: historical weight program snapshot
+    attribution_explanation: 只绑定历史 program snapshot 与本结果；缺失 DQ receipt 保持 null，不补造 PASS。
+    limitations:
+      - 历史 DQ：未提供（null）；不得从其他 artifact 继承或补造。
+      - B5/B6/v3 仍被证据不足与 inconclusive interaction 阻断。
+      - 该快照不构成 target weights、promotion readiness 或当前研究默认。
+  - source_ref_id: historical-monthly-program-review
+    edge_label: historical monthly program review
+    attribution_explanation: 只绑定历史月度复盘 artifact 与本结果，不表达当前 Owner 决策或投资方向。
+    limitations:
+      - 历史 DQ：PASS_WITH_WARNINGS；复盘记录的是治理状态，不是策略收益结论。
+      - 历史 requested window 从 2022-12-01 开始，仅保留 legacy historical role。
+      - B2-only 仍需更多证据，B3/B4/B5/B6/v3 的阻塞不能升级为当前判断。
+  - source_ref_id: historical-final-branch-decision
+    edge_label: historical final branch decision
+    attribution_explanation: 只绑定历史 branch decision artifact 与本结果；它不是当前 Owner decision。
+    limitations:
+      - 历史 DQ：PASS_WITH_WARNINGS；decision 表示当时路径治理已形成，不表示策略 PASS。
+      - 历史 requested window 从 2022-12-01 开始，不改变 2021-02-22 primary default。
+      - CONTINUE_B2_ONLY_PATH 不授权当前候选晋级、paper-shadow、production 或 broker action。
+excluded_task_ids:
+  - TRADING-2481
+  - TRADING-2482
+  - TRADING-2483
+  - TRADING-2484
+  - TRADING-2485
+  - TRADING-2486
+  - TRADING-2487
+  - TRADING-2488
+  - TRADING-2489
+  - TRADING-2490
+  - TRADING-2491
+  - TRADING-2492
+  - TRADING-2493
+safety:
+  canonical_projection_active: true
+  historical_records_only: true
+  qqq_options_projection_performed: false
+  investment_conclusion_generated: false
+  current_focus_changed: false
+  data_quality_executed: false
+  model_execution_allowed: false
+  backtest_execution_allowed: false
+  external_platform_action: none
+  production_effect: none
+  broker_action: none

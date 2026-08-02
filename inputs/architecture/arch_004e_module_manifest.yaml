@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1073
+module_count: 1074
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -149,7 +149,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.__init__
   path: src/ai_trading_system/atlas/__init__.py
-  sha256: 502f2383e0064fcf358dcd776057a5deed54d34789e4553e14a55dc94292651e
+  sha256: ff87e7a314b24e1aa7b6dbb47ad33d4933c24e0118c6825aedcb37f97eba7efd
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: 7c512a83254905e7d96b9df64242a21f2c345420601ef5dac3a877c3626a936a
+  sha256: abf4b3e3c50ac4f1715cc408e4da6f423cf60f65c4643a62d5a55d9d7b9d1e45
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -287,6 +287,26 @@ modules:
   validation_tiers:
   - fast-unit
   shared_integration: false
+- module_id: src.ai_trading_system.atlas.historical_canonical_projection
+  path: src/ai_trading_system/atlas/historical_canonical_projection.py
+  sha256: d4de3169d7d0b8280cd6a0928923f9d9d13589e39ec92ca67817d6bafc40981c
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
 - module_id: src.ai_trading_system.atlas.historical_coverage_inventory
   path: src/ai_trading_system/atlas/historical_coverage_inventory.py
   sha256: d0792721303d2ac448efbd66efbe779bd1c310f78e7909b88cc722d6d7ecc532
@@ -309,7 +329,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.historical_projection_review
   path: src/ai_trading_system/atlas/historical_projection_review.py
-  sha256: 13717ead913279047b1f9bc4b907b6cb488969f74326b90e35e154ef9688f46d
+  sha256: 47a38247bbe38d52067934334f58ed794b7733b28bc9e0b6ce37b53b980be0ad
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -389,7 +409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.snapshot_builder
   path: src/ai_trading_system/atlas/snapshot_builder.py
-  sha256: 32b888d8462ed8a00384496b6becf282d40d51c28823e9fe36d86c42442a96f0
+  sha256: a2c61d686fae146dbddc602037b7bdfcf50ad60bd6d67a8ac741b619b331c74b
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2753,7 +2773,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.strategy_research_explorer
   path: src/ai_trading_system/contracts/strategy_research_explorer.py
-  sha256: 9ecd5a47f1e5ab0d4d821bb384d6a3b4bd8942a6bff2d83c9a6b5abfcad8b9b5
+  sha256: 5f36fd5994c36479e8d306d55a868d8b64dc7e631de247f7d4ac1cd006bbc62e
   rule_id: contracts
   owner_profile: architecture
   owners:

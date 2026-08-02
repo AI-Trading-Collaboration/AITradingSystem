@@ -24,10 +24,23 @@ def test_canonical_registry_builds_closed_deterministic_snapshot() -> None:
     assert first.snapshot.canonical_json_bytes() == (second.snapshot.canonical_json_bytes())
     assert first.snapshot.snapshot_id == second.snapshot.snapshot_id
     assert len(first.snapshot.sources) == 13
-    assert len(first.snapshot.nodes) == 21
-    assert len(first.snapshot.edges) == 22
-    assert len(first.snapshot.results) == 8
-    assert len(first.snapshot.attributions) == 12
+    assert len(first.snapshot.nodes) == 27
+    assert len(first.snapshot.edges) == 28
+    assert len(first.snapshot.results) == 13
+    assert len(first.snapshot.attributions) == 17
+
+
+def test_review_only_base_snapshot_remains_available_without_active_projection() -> None:
+    bundle = build_atlas_bundle(
+        repository_root=PROJECT_ROOT,
+        exact_commit=EXACT_COMMIT,
+        include_historical_projection=False,
+    )
+    assert len(bundle.snapshot.sources) == 13
+    assert len(bundle.snapshot.nodes) == 21
+    assert len(bundle.snapshot.edges) == 22
+    assert len(bundle.snapshot.results) == 8
+    assert len(bundle.snapshot.attributions) == 12
 
 
 def test_snapshot_keeps_research_status_separate_from_validation_pass() -> None:
@@ -44,6 +57,14 @@ def test_snapshot_keeps_research_status_separate_from_validation_pass() -> None:
     assert results["result-atlas-contract"].raw_status is CanonicalStatus.PASS
     assert "不是策略 PASS" in results["result-atlas-contract"].reader_summary
     assert not any(item.investment_facing for item in results.values())
+    historical = {
+        result_id: item
+        for result_id, item in results.items()
+        if item.source_original_status is not None
+    }
+    assert len(historical) == 5
+    assert {item.display_status for item in historical.values()} == {CanonicalStatus.LIMITED}
+    assert all(item.status_mapping_rationale for item in historical.values())
 
 
 def test_snapshot_uses_only_explicit_assertion_kinds() -> None:

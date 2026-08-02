@@ -134,6 +134,44 @@ def test_snapshot_round_trip_is_byte_deterministic() -> None:
     assert rebuilt.snapshot_id == snapshot.compute_snapshot_id()
 
 
+def test_historical_result_status_context_round_trips_without_affecting_current_results() -> None:
+    current = _result()
+    assert "source_original_status" not in current.to_dict()
+    historical = ResearchResultCard(
+        result_id="result-historical-1",
+        node_id="node-2",
+        title="历史结果",
+        raw_status=CanonicalStatus.PASS,
+        display_status=CanonicalStatus.LIMITED,
+        reader_summary="只表示历史 artifact 已形成。",
+        assertion_kind=AssertionKind.RESEARCHER_INTERPRETATION,
+        source_ref_ids=("source-1",),
+        investment_facing=False,
+        limitations=("不是当前投资结论。",),
+        source_original_status="HISTORICAL_READY",
+        status_mapping_rationale="原始 artifact ready，但证据窗口有限。",
+    )
+    assert ResearchResultCard.from_dict(historical.to_dict()) == historical
+
+
+def test_historical_result_status_context_must_be_complete() -> None:
+    with pytest.raises(
+        StrategyResearchExplorerContractError,
+        match="STRATEGY_EXPLORER_RESULT_STATUS_CONTEXT_INCOMPLETE",
+    ):
+        ResearchResultCard(
+            result_id="result-historical-1",
+            node_id="node-2",
+            title="历史结果",
+            raw_status=CanonicalStatus.PASS,
+            display_status=CanonicalStatus.LIMITED,
+            reader_summary="只表示历史 artifact 已形成。",
+            assertion_kind=AssertionKind.RESEARCHER_INTERPRETATION,
+            source_ref_ids=("source-1",),
+            source_original_status="HISTORICAL_READY",
+        )
+
+
 def test_all_serialized_objects_expose_schema_version() -> None:
     payload = _snapshot().to_dict()
     assert payload["schema_version"] == "strategy_research_explorer_snapshot.v1"

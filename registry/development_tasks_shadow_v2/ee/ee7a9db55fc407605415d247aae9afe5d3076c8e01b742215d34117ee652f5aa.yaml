@@ -1,0 +1,117 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1
+  task_id_sha256: ee7a9db55fc407605415d247aae9afe5d3076c8e01b742215d34117ee652f5aa
+task_record:
+  task_id: TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1
+  title: null
+  domain: Publishing & Experience / Atlas reviewed historical lane canonical projection
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas coordinator：完成治理哈希/正式门禁与 main handoff；Project owner：复核新页面视觉与语义
+  requirement_refs:
+  - docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md`。只把
+    TRADING-2477/2479 已 exact 审阅的五份 historical typed records 投影到 canonical snapshot/page；TRADING-2481..2493
+    保持 Owner 再检查边界，不进入 Atlas 页面、不改变其任务或研究状态。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: canonical counts=`13/27/28/13/17`；五份 historical typed records、状态映射、DQ/window/limitations
+      与 5 条 `NEUTRAL` provenance 已进入 canonical 页面；冻结 lane=`106 passed`，latest-main
+      candidate=`105 passed / 1 skipped`（ignored page 未 hydration），页面 deterministic/static
+      检查 PASS。剩余缺口仅为 final-tree formal gates、main handoff，以及独立的 Owner manual visual
+      review；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: dafeba17771b8096b5aa24ca60b3de179976636a4b9e37378a5b000037ed01c9
+  cell_count: 8
+  all_cells:
+  - TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1
+  - Publishing & Experience / Atlas reviewed historical lane canonical projection
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：完成治理哈希/正式门禁与 main handoff；Project owner：复核新页面视觉与语义
+  - 详见 `docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md`。只把
+    TRADING-2477/2479 已 exact 审阅的五份 historical typed records 投影到 canonical snapshot/page；TRADING-2481..2493
+    保持 Owner 再检查边界，不进入 Atlas 页面、不改变其任务或研究状态。
+  - canonical counts=`13/27/28/13/17`；五份 historical typed records、状态映射、DQ/window/limitations
+    与 5 条 `NEUTRAL` provenance 已进入 canonical 页面；冻结 lane=`106 passed`，latest-main candidate=`105
+    passed / 1 skipped`（ignored page 未 hydration），页面 deterministic/static 检查 PASS。剩余缺口仅为
+    final-tree formal gates、main handoff，以及独立的 Owner manual visual review；`production_effect=none`、`broker_action=none`。
+  - 2026-08-02：Owner token=`owner_decision:TRADING-2494:2026-08-02:advance_atlas_page_and_hold_trading_2481_2493_for_owner_review_v1`。页面
+    artifact hashes 与治理失败修复链、drift plan=`integration-revalidation-6140afa51893da8f5696`
+    见 requirement；manual visual=`PENDING_OWNER_REVIEW`。本授权不表示 QQQ options 2481–2493
+    已验收，也不授权新研究、回测、外部平台、production 或 broker 行为。
+  raw_line: '|TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1|Publishing & Experience
+    / Atlas reviewed historical lane canonical projection|P1|BASELINE_DONE|Atlas coordinator：完成治理哈希/正式门禁与
+    main handoff；Project owner：复核新页面视觉与语义|详见 `docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md`。只把
+    TRADING-2477/2479 已 exact 审阅的五份 historical typed records 投影到 canonical snapshot/page；TRADING-2481..2493
+    保持 Owner 再检查边界，不进入 Atlas 页面、不改变其任务或研究状态。|canonical counts=`13/27/28/13/17`；五份
+    historical typed records、状态映射、DQ/window/limitations 与 5 条 `NEUTRAL` provenance
+    已进入 canonical 页面；冻结 lane=`106 passed`，latest-main candidate=`105 passed / 1 skipped`（ignored
+    page 未 hydration），页面 deterministic/static 检查 PASS。剩余缺口仅为 final-tree formal gates、main
+    handoff，以及独立的 Owner manual visual review；`production_effect=none`、`broker_action=none`。|2026-08-02：Owner
+    token=`owner_decision:TRADING-2494:2026-08-02:advance_atlas_page_and_hold_trading_2481_2493_for_owner_review_v1`。页面
+    artifact hashes 与治理失败修复链、drift plan=`integration-revalidation-6140afa51893da8f5696`
+    见 requirement；manual visual=`PENDING_OWNER_REVIEW`。本授权不表示 QQQ options 2481–2493
+    已验收，也不授权新研究、回测、外部平台、production 或 broker 行为。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dafeba17771b8096b5aa24ca
+  task_id: TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas coordinator：完成治理哈希/正式门禁与 main handoff；Project owner：复核新页面视觉与语义
+    notes: 2026-08-02：Owner token=`owner_decision:TRADING-2494:2026-08-02:advance_atlas_page_and_hold_trading_2481_2493_for_owner_review_v1`。页面
+      artifact hashes 与治理失败修复链、drift plan=`integration-revalidation-6140afa51893da8f5696`
+      见 requirement；manual visual=`PENDING_OWNER_REVIEW`。本授权不表示 QQQ options 2481–2493
+      已验收，也不授权新研究、回测、外部平台、production 或 broker 行为。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:dafeba17771b8096b5aa24ca60b3de179976636a4b9e37378a5b000037ed01c9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1
+  - Publishing & Experience / Atlas reviewed historical lane canonical projection
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：完成治理哈希/正式门禁与 main handoff；Project owner：复核新页面视觉与语义
+  - 详见 `docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md`。只把
+    TRADING-2477/2479 已 exact 审阅的五份 historical typed records 投影到 canonical snapshot/page；TRADING-2481..2493
+    保持 Owner 再检查边界，不进入 Atlas 页面、不改变其任务或研究状态。
+  - canonical counts=`13/27/28/13/17`；五份 historical typed records、状态映射、DQ/window/limitations
+    与 5 条 `NEUTRAL` provenance 已进入 canonical 页面；冻结 lane=`106 passed`，latest-main candidate=`105
+    passed / 1 skipped`（ignored page 未 hydration），页面 deterministic/static 检查 PASS。剩余缺口仅为
+    final-tree formal gates、main handoff，以及独立的 Owner manual visual review；`production_effect=none`、`broker_action=none`。
+  - 2026-08-02：Owner token=`owner_decision:TRADING-2494:2026-08-02:advance_atlas_page_and_hold_trading_2481_2493_for_owner_review_v1`。页面
+    artifact hashes 与治理失败修复链、drift plan=`integration-revalidation-6140afa51893da8f5696`
+    见 requirement；manual visual=`PENDING_OWNER_REVIEW`。本授权不表示 QQQ options 2481–2493
+    已验收，也不授权新研究、回测、外部平台、production 或 broker 行为。
+  docs_links:
+  - docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md
+  terminal: false
+  raw_row_sha256: dafeba17771b8096b5aa24ca60b3de179976636a4b9e37378a5b000037ed01c9
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 4982b10a94239fd094b521045a6762a6b21b6b568856429afd9500552676dc2d

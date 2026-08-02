@@ -33,6 +33,7 @@ EXPECTED_CAMPAIGN_IDS = {
     "campaign-qld-implementation",
     "campaign-decision-target",
     "campaign-o1-current-future",
+    "campaign-historical-weight-research",
 }
 
 
@@ -65,7 +66,7 @@ def test_legacy_and_scoped_dq_boundaries_are_fail_closed() -> None:
         assert "canonical full-cache DQ" in source.limitation
 
 
-def test_all_four_campaigns_are_reachable_from_program_root() -> None:
+def test_all_five_campaigns_are_reachable_from_program_root() -> None:
     snapshot = _bundle().snapshot
     node_map = {item.node_id: item for item in snapshot.nodes}
     campaign_ids = {
@@ -109,7 +110,7 @@ def test_registry_declares_current_primary_window_only() -> None:
     assert any("2022-12-01" in limitation for limitation in restart.limitations)
 
 
-def test_historical_sources_are_registered_without_graph_projection() -> None:
+def test_historical_sources_are_registered_and_projected_with_limited_status() -> None:
     snapshot = _bundle().snapshot
     historical = {
         item.source_ref_id: item
@@ -130,4 +131,14 @@ def test_historical_sources_are_registered_without_graph_projection() -> None:
             for source_ref_id in attribution.source_ref_ids
         }
     )
-    assert not set(historical) & referenced_source_ids
+    assert set(historical) <= referenced_source_ids
+    historical_results = {
+        item.result_id: item for item in snapshot.results if item.source_original_status is not None
+    }
+    assert len(historical_results) == 5
+    assert all(
+        item.display_status is CanonicalStatus.LIMITED
+        and not item.investment_facing
+        and item.status_mapping_rationale
+        for item in historical_results.values()
+    )

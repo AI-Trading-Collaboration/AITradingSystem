@@ -117,13 +117,17 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "不支持的问题必须通过独立任务扩展合同",
         "当前覆盖范围内的全部研究结果",
         "RESULT LEDGER · CANONICAL SNAPSHOT ONLY",
-        "这是 Atlas V1.1 已接入的代表性 campaigns",
+        "这是 Atlas V1.3 的代表性主线 + 五份已审阅历史记录",
         "不是全仓历史研究的完整清单",
-        "coverage_scope=ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS",
+        "coverage_scope=ATLAS_V1_3_REPRESENTATIVE_PLUS_REVIEWED_HISTORY",
         "historical_repository_coverage_complete=false",
         "机器原始状态",
         "读者展示状态",
         "全部关联归因",
+        "历史权重研究支线已经纳入证据地图，但不是当前关注",
+        "历史材料 · 非当前结论",
+        "来源原始状态",
+        "为什么这样映射",
         "工程 PASS 也不等于 strategy PASS",
         "CANONICAL_SNAPSHOT_FIELD",
         "CANONICAL_SNAPSHOT_RELATION",
@@ -181,10 +185,12 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         assert f"response_id={response.response_id}" in html
     results = cast(list[dict[str, Any]], showcase.snapshot_payload["results"])
     attributions = cast(list[dict[str, Any]], showcase.snapshot_payload["attributions"])
-    assert html.count('class="result-ledger-card"') == len(results) == 8
-    assert html.count('class="result-attribution"') == len(attributions) == 12
+    assert html.count('data-historical-record="') == len(results) == 13
+    assert html.count('data-historical-record="true"') == 5
+    assert html.count('data-historical-result-id="') == 5
+    assert html.count('class="result-attribution"') == len(attributions) == 17
     assert html.count('data-display-status="PASS"') == 2
-    assert html.count('data-display-status="LIMITED"') == 4
+    assert html.count('data-display-status="LIMITED"') == 9
     assert html.count('data-display-status="BLOCKED"') == 1
     assert html.count('data-display-status="NOT_DUE"') == 1
     for result in results:

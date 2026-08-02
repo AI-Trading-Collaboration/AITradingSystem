@@ -264,7 +264,7 @@ def test_forbidden_roadmap_policy_cannot_be_removed(
         _build(monkeypatch, tmp_path, policy_mutator=remove)
 
 
-def test_local_canonical_page_identity_when_available() -> None:
+def test_local_canonical_page_uses_2494_successor_identity_when_available() -> None:
     canonical_policy = _policy()["canonical_page"]
     assert isinstance(canonical_policy, dict)
     repository_path = canonical_policy["repository_path"]
@@ -276,7 +276,9 @@ def test_local_canonical_page_identity_when_available() -> None:
     if not canonical.is_file():
         pytest.skip("local canonical ignored artifact not hydrated")
     payload = canonical.read_bytes()
-    assert len(payload) == 92180
+    assert len(payload) == 114555
     assert sha256(payload).hexdigest() == (
-        "b7540d87caf212faca015b71e80a5fe5080342a55d94580f68b61a045492e78a"
+        "d29a3c3363c6bdbb443c33d8194f74ce261d283d4900f91439794da4e358a365"
     )
+    assert payload.count(b'data-historical-record="true"') == 5
+    assert all(f"TRADING-{task_id}".encode() not in payload for task_id in range(2481, 2494))

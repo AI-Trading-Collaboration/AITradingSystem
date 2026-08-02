@@ -170,6 +170,7 @@ def build_historical_projection_review(
         repository_root=root,
         exact_commit=evidence_exact_commit,
         registry_path=root / PurePosixPath(source_registry_path),
+        include_historical_projection=False,
     )
     if adapter_bundle.primary_research_start != PRIMARY_RESEARCH_START:
         raise HistoricalProjectionReviewError("PRIMARY_RESEARCH_START_DRIFT")

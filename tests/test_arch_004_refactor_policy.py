@@ -2269,7 +2269,94 @@ TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_NEW_SOURCE_PATHS = frozenset(
         "tests/test_qqq_options_cash_accounting.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION
+
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION = (
+    "phase_trading_2494_atlas_historical_canonical_projection_v1"
+)
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_BASE_COMMIT = (
+    "3731ee04d83688c9d9bb321ab0496c77ae65c232"
+)
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_BASELINE_GIT_BLOB = (
+    "c04aa6c49532a1cf14cbdd769c6a7678cb807754"
+)
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_BYTE_COUNT = (
+    2_825_568
+)
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_SHA256 = (
+    "9863d9b3822490ab9a2f3b148027c29174b472e689c8281bf4f6f2bf627dc49b"
+)
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS = (
+    frozenset(
+        {
+            "docs/artifact_catalog.md",
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_005_task_registry_baseline.yaml",
+            "inputs/architecture/arch_005_task_shadow_index.yaml",
+            "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+            (
+                "registry/development_tasks_shadow/active/16/"
+                "1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/2c/"
+                "2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/76/"
+                "76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/8c/"
+                "8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/98/"
+                "989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/d8/"
+                "d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/e6/"
+                "e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/e6/"
+                "e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow/active/fe/"
+                "fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml"
+            ),
+            "tests/test_arch_004_refactor_policy.py",
+        }
+    )
+)
+TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/atlas_historical_canonical_projection.yaml",
+        "config/architecture/fragments/modules/atlas_historical_canonical_projection.yaml",
+        "config/atlas/historical_canonical_projection.yaml",
+        "docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md",
+        (
+            "registry/development_tasks_shadow/active/ee/"
+            "ee7a9db55fc407605415d247aae9afe5d3076c8e01b742215d34117ee652f5aa.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/ee/"
+            "ee7a9db55fc407605415d247aae9afe5d3076c8e01b742215d34117ee652f5aa.yaml"
+        ),
+        "src/ai_trading_system/atlas/historical_canonical_projection.py",
+        "tests/atlas/test_historical_canonical_projection.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -4230,6 +4317,29 @@ def _trading_2487_qqq_options_cash_accounting_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2494_atlas_historical_canonical_projection_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert (
+        object_id
+        == TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_BASELINE_GIT_BLOB
+    )
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -6202,6 +6312,30 @@ def _assert_trading_2487_qqq_options_cash_accounting_historical_prefix_immutable
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2494_atlas_historical_canonical_projection_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2494 Atlas projection historical prefix differs from immutable "
+        "exact-main compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"\n{TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION}:\n".encode()
+    )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -8739,6 +8873,41 @@ def _trading_2487_qqq_options_cash_accounting_all_current_authority_paths() -> (
 
 
 @cache
+def _trading_2494_atlas_historical_canonical_projection_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2494_atlas_historical_canonical_projection_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2494_atlas_historical_canonical_projection_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+    ]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2494_atlas_historical_canonical_projection_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+    ]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        | _trading_2494_atlas_historical_canonical_projection_superseded_live_source_paths()
+        | _trading_2494_atlas_historical_canonical_projection_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -9379,6 +9548,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
     for authority_section in (
         OPS_072_TRANSPORT_SECTION,
         OPS_073_TERMINAL_DISPOSITION_SECTION,
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -10031,6 +10201,15 @@ def _trading_2487_qqq_options_cash_accounting_prior_active_source_mismatches() -
     return _latest_active_source_mismatches(TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION)
 
 
+@cache
+def _trading_2494_atlas_historical_canonical_projection_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+    )
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -10074,7 +10253,42 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION in baseline:
+    if TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2494_atlas_historical_canonical_projection_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2494_atlas_historical_canonical_projection_prior_active_source_mismatches()
+            | TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2470_cited_query_contract_all_current_authority_paths()
+            | _trading_2470_cited_query_amendment_all_current_authority_paths()
+            | _trading_2470_cited_query_consumer_all_current_authority_paths()
+            | _trading_2471_flow_focus_all_current_authority_paths()
+            | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+            | _ops_072_transport_all_current_authority_paths()
+            | _trading_2477_historical_adapter_all_current_authority_paths()
+            | _ops_073_terminal_disposition_all_current_authority_paths()
+            | _trading_2478_quantconnect_planning_all_current_authority_paths()
+            | _trading_2479_historical_projection_all_current_authority_paths()
+            | _trading_2480_qc_capability_admission_all_current_authority_paths()
+            | _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+            | _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths()
+            | _trading_2483_qqq_options_signal_package_all_current_authority_paths()
+            | _trading_2484_qc_project_adapter_all_current_authority_paths()
+            | _trading_2485_qqq_option_selection_all_current_authority_paths()
+            | _trading_2486_qqq_options_minute_execution_all_current_authority_paths()
+            | _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+    elif TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION in baseline:
         current_superseded_paths = (
             _trading_2487_qqq_options_cash_accounting_superseded_live_source_paths()
         )
@@ -23176,7 +23390,7 @@ def test_trading_2478_quantconnect_planning_is_current_hash_authority() -> None:
     current_prior_drift = set(_trading_2478_quantconnect_planning_prior_active_source_mismatches())
     assert superseded <= current_prior_drift
     current_successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths()
     )
     assert current_prior_drift - superseded <= current_successor_authority
     assert set(phase["removed_live_source_paths"]) == (
@@ -23291,7 +23505,7 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
         | TRADING_2479_HISTORICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     current_successor_authority = set(
-        _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+        _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= current_successor_authority
     assert current_prior_drift - superseded <= current_successor_authority
@@ -24205,7 +24419,6 @@ def test_trading_2486_minute_execution_has_2487_successor_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     current_prior_drift = set(
         _trading_2486_qqq_options_minute_execution_prior_active_source_mismatches()
-        | TRADING_2486_QQQ_OPTIONS_MINUTE_EXECUTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     successor_authority = set(
         _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
@@ -24342,7 +24555,7 @@ def test_trading_2486_minute_execution_has_2487_successor_authority() -> None:
         )
 
 
-def test_trading_2487_cash_accounting_is_current_hash_authority() -> None:
+def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     base_blob = _trading_2487_qqq_options_cash_accounting_base_baseline_blob()
     _assert_trading_2487_qqq_options_cash_accounting_historical_prefix_immutable(
@@ -24350,7 +24563,9 @@ def test_trading_2487_cash_accounting_is_current_hash_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION
+    assert next(reversed(baseline)) == (
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+    )
     phase = baseline[TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION]
     assert phase["schema_version"] == (
         "trading_2487_qqq_options_cash_premium_settlement_accounting_compatibility.v1"
@@ -24384,10 +24599,14 @@ def test_trading_2487_cash_accounting_is_current_hash_authority() -> None:
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == set(
+    current_prior_drift = set(
         _trading_2487_qqq_options_cash_accounting_prior_active_source_mismatches()
-        | TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_ADDITIONAL_SUPERSESSION_PATHS
     )
+    successor_authority = set(
+        _trading_2494_atlas_historical_canonical_projection_all_current_authority_paths()
+    )
+    assert superseded - current_prior_drift <= successor_authority
+    assert current_prior_drift - superseded <= successor_authority
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_REMOVED_SOURCE_PATHS
     )
@@ -24420,6 +24639,8 @@ def test_trading_2487_cash_accounting_is_current_hash_authority() -> None:
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_authority:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -24513,6 +24734,150 @@ def test_trading_2487_cash_accounting_is_current_hash_authority() -> None:
     ] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2487_qqq_options_cash_accounting_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2494_atlas_historical_projection_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2494_atlas_historical_canonical_projection_base_baseline_blob()
+    _assert_trading_2494_atlas_historical_canonical_projection_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == (
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION
+    )
+    phase = baseline[TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2494_atlas_historical_canonical_projection_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == "TRADING-2494-ATLAS-HISTORICAL-CANONICAL-PROJECTION-V1"
+    assert phase["task_ids"] == [
+        "TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2494:2026-08-02:"
+        "advance_atlas_page_and_hold_trading_2481_2493_for_owner_review_v1"
+    ]
+    assert phase["manual_visual_status"] == "PENDING_OWNER_REVIEW"
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": (
+            TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_BASELINE_GIT_BLOB
+        ),
+        "raw_byte_count": (
+            TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (
+            TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": (
+            TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2494_atlas_historical_canonical_projection_prior_active_source_mismatches()
+        | TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded
+        | TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_NEW_SOURCE_PATHS
+    ) - TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2494-ATLAS-HISTORICAL-CANONICAL-PROJECTION-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 959,
+        "active_task_count": 454,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["projection_contract"] == {
+        "policy_schema": "atlas_historical_canonical_projection_policy.v1",
+        "projection_id": "TRADING_2494_ATLAS_CANONICAL_SOURCE_COVERAGE_V1_3",
+        "policy_status": "ACTIVE_REVIEWED_BASELINE",
+        "policy_sha256": (
+            "4491ef16a600cdf9d699a9d7e3ac16356352238be137b70577af915029ddf4ec"
+        ),
+        "review_policy_sha256": (
+            "ac7061aff2f9c4386d667bd415e93ec73ddb0babae35b16e88ee8e04303db0aa"
+        ),
+        "base_counts": "13/21/22/8/12",
+        "projected_counts": "13/27/28/13/17",
+        "historical_result_count": 5,
+        "historical_flow_node_count": 5,
+        "current_marker_count": 1,
+        "excluded_task_range": "TRADING-2481..TRADING-2493",
+        "primary_research_start": "2021-02-22",
+        "legacy_non_default_start": "2022-12-01",
+        "canonical_projection_api": "build_historical_canonical_projection",
+        "snapshot_projection_api": "apply_historical_canonical_projection",
+    }
+    assert phase["validation"] == {
+        "focused_atlas": "PASS_105_TESTS_1_SKIPPED_LOCAL_ARTIFACT_NOT_HYDRATED",
+        "original_regression_coverage": "PASS_50_TESTS",
+        "compatibility_regression": "PASS_185_TESTS",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "qqq_options_2481_through_2493_projected": False,
+        "investment_conclusion_generated": False,
+        "current_focus_changed": False,
+        "data_quality_executed": False,
+        "model_or_backtest_executed": False,
+        "external_platform_action": "none",
+        "known_unrelated_bytes_read": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_HISTORICAL_PREFIX_BYTE_COUNT
+        - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2494_atlas_historical_canonical_projection_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

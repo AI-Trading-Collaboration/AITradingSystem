@@ -17,6 +17,10 @@ from ai_trading_system.contracts.strategy_research_explorer import (
     StrategyResearchExplorerSnapshot,
 )
 
+from .historical_canonical_projection import (
+    apply_historical_canonical_projection,
+    build_historical_canonical_projection,
+)
 from .source_projection import (
     AtlasGlossaryEntry,
     AtlasSourceProjectionError,
@@ -39,6 +43,8 @@ def build_atlas_bundle(
     repository_root: Path,
     exact_commit: str,
     registry_path: Path | None = None,
+    include_historical_projection: bool = True,
+    historical_projection_path: Path | None = None,
 ) -> AtlasExplorerBundle:
     root = repository_root.resolve()
     selected_registry_path = (
@@ -47,6 +53,12 @@ def build_atlas_bundle(
         else root / "config" / "atlas" / "source_registry.yaml"
     )
     registry = load_source_registry(selected_registry_path)
+    if include_historical_projection:
+        projection = build_historical_canonical_projection(
+            repository_root=root,
+            policy_path=historical_projection_path,
+        )
+        registry = apply_historical_canonical_projection(registry, projection)
     sources = project_source_refs(
         repository_root=root,
         registry=registry,
@@ -104,6 +116,16 @@ def _result(payload: Mapping[str, object]) -> ResearchResultCard:
         source_ref_ids=_string_tuple(payload, "source_ref_ids"),
         investment_facing=payload.get("investment_facing") is True,
         limitations=_string_tuple(payload, "limitations"),
+        source_original_status=(
+            None
+            if payload.get("source_original_status") is None
+            else _text(payload, "source_original_status")
+        ),
+        status_mapping_rationale=(
+            None
+            if payload.get("status_mapping_rationale") is None
+            else _text(payload, "status_mapping_rationale")
+        ),
     )
 
 

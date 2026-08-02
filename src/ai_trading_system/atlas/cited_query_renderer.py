@@ -256,7 +256,7 @@ def _render_response(response: StrategyResearchCitedQueryResponse) -> str:
       </section>
       <details>
         <summary>查看 {len(response.citations)} 条完整引用与 lineage</summary>
-        <ul class="citations">{citations or '<li>没有通过引用闭包的证据。</li>'}</ul>
+        <ul class="citations">{citations or "<li>没有通过引用闭包的证据。</li>"}</ul>
       </details>
       <p class="identity">response <code>{escape(response.response_id)}</code> · request <code>{escape(response.request.request_id)}</code></p>
     </article>
@@ -310,11 +310,34 @@ def _render_result_ledger_card(
     attribution_rows = "".join(_render_result_attribution(item) for item in attributions)
     display_status = result.display_status.value
     raw_status = result.raw_status.value
+    is_historical = result.source_original_status is not None
+    historical_badge = (
+        '<span class="historical-result-badge">历史材料 · 非当前结论</span>'
+        if is_historical
+        else ""
+    )
+    original_status = (
+        ""
+        if result.source_original_status is None
+        else (
+            "<span><small>来源原始状态</small><strong>历史 artifact 状态</strong>"
+            f"<code>{escape(result.source_original_status)}</code></span>"
+        )
+    )
+    mapping_rationale = (
+        ""
+        if result.status_mapping_rationale is None
+        else (
+            '<p class="historical-status-rationale"><strong>为什么这样映射：</strong>'
+            f"{escape(result.status_mapping_rationale)}</p>"
+        )
+    )
     return f"""
-    <article class="result-ledger-card" data-result-id="{escape(result.result_id)}" data-raw-status="{escape(raw_status)}" data-display-status="{escape(display_status)}">
+    <article class="result-ledger-card{" historical-result-card" if is_historical else ""}" data-result-id="{escape(result.result_id)}" data-raw-status="{escape(raw_status)}" data-display-status="{escape(display_status)}" data-historical-record="{"true" if is_historical else "false"}"{(' data-source-original-status="' + escape(result.source_original_status or "") + '"') if is_historical else ""}>
       <div class="result-ledger-head">
         <div>
           <p class="result-sequence">RESULT · <code>{escape(result.result_id)}</code></p>
+          {historical_badge}
           <h3>{escape(result.title)}</h3>
           <p class="result-node">对应节点 <code>{escape(result.node_id)}</code></p>
         </div>
@@ -329,13 +352,15 @@ def _render_result_ledger_card(
         <span><small>读者展示状态</small><strong>{escape(_RESULT_STATUS_LABELS[display_status])}</strong><code>{escape(display_status)}</code></span>
         <span><small>信息类型</small><strong>{escape(_ASSERTION_LABELS[result.assertion_kind])}</strong><code>{escape(result.assertion_kind.value)}</code></span>
         <span><small>投资结论</small><strong>不是</strong><code>investment_facing=false</code></span>
+        {original_status}
       </div>
+      {mapping_rationale}
       <details class="result-evidence">
         <summary>查看限制、来源与 {len(attributions)} 条归因</summary>
         <div class="result-evidence-body">
           <section>
             <h4>限制</h4>
-            <ul>{limitations or '<li>没有额外限制。</li>'}</ul>
+            <ul>{limitations or "<li>没有额外限制。</li>"}</ul>
           </section>
           <section>
             <h4>Canonical source refs</h4>
@@ -343,7 +368,7 @@ def _render_result_ledger_card(
           </section>
           <section class="result-attribution-section">
             <h4>全部关联归因</h4>
-            <ol class="result-attributions">{attribution_rows or '<li>当前没有关联归因。</li>'}</ol>
+            <ol class="result-attributions">{attribution_rows or "<li>当前没有关联归因。</li>"}</ol>
           </section>
         </div>
       </details>
@@ -353,6 +378,14 @@ def _render_result_ledger_card(
 
 def _render_result_ledger(showcase: AtlasCitedQueryShowcase) -> str:
     snapshot = load_validated_snapshot_payload(showcase.snapshot_payload)
+    historical_results = tuple(
+        item for item in snapshot.results if item.source_original_status is not None
+    )
+    if len(historical_results) != 5 or any(
+        item.display_status.value != "LIMITED" or item.investment_facing
+        for item in historical_results
+    ):
+        raise ValueError("ATLAS_RESULT_LEDGER_HISTORICAL_PROJECTION_SET_INVALID")
     attributions_by_result: dict[str, list[ResearchAttribution]] = {
         result.result_id: [] for result in snapshot.results
     }
@@ -382,17 +415,17 @@ def _render_result_ledger(showcase: AtlasCitedQueryShowcase) -> str:
         if count
     )
     return f"""
-    <section class="result-ledger" id="all-in-scope-results" aria-labelledby="result-ledger-title" data-coverage-scope="ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS" data-historical-repository-coverage-complete="false">
+    <section class="result-ledger" id="all-in-scope-results" aria-labelledby="result-ledger-title" data-coverage-scope="ATLAS_V1_3_REPRESENTATIVE_PLUS_REVIEWED_HISTORY" data-historical-repository-coverage-complete="false" data-historical-result-count="{len(historical_results)}">
       <div class="result-ledger-intro">
         <div>
           <p class="section-kicker">RESULT LEDGER · CANONICAL SNAPSHOT ONLY</p>
           <h2 id="result-ledger-title">当前覆盖范围内的全部研究结果</h2>
-          <p>这里完整列出 validated Atlas snapshot 中的 {len(snapshot.results)} 个 result 与 {len(snapshot.attributions)} 条 attribution；顺序沿用 canonical snapshot，不做“最好”或“最相关”排序。</p>
+          <p>这里完整列出 validated Atlas snapshot 中的 {len(snapshot.results)} 个 result 与 {len(snapshot.attributions)} 条 attribution，其中 {len(historical_results)} 个是已审阅历史材料；顺序沿用 canonical snapshot，不做“最好”或“最相关”排序。</p>
         </div>
         <div class="coverage-boundary" aria-label="覆盖范围边界">
           <strong>先看覆盖边界</strong>
-          <p>这是 Atlas V1.1 已接入的代表性 campaigns，不是全仓历史研究的完整清单。</p>
-          <code>coverage_scope=ATLAS_V1_1_REPRESENTATIVE_CAMPAIGNS</code>
+          <p>这是 Atlas V1.3 的代表性主线 + 五份已审阅历史记录，不是全仓历史研究的完整清单；历史 PASS 不等于当前策略 PASS。</p>
+          <code>coverage_scope=ATLAS_V1_3_REPRESENTATIVE_PLUS_REVIEWED_HISTORY</code>
           <code>historical_repository_coverage_complete=false</code>
         </div>
       </div>
@@ -400,6 +433,56 @@ def _render_result_ledger(showcase: AtlasCitedQueryShowcase) -> str:
       <p class="ledger-reading-note"><strong>怎样读：</strong>先看标题、摘要和“读者展示状态”；展开后再看限制、source refs 与归因。raw/display status 均不是投资评级，工程 PASS 也不等于 strategy PASS。</p>
       <div class="result-ledger-grid">{cards}</div>
     </section>
+    """
+
+
+def _render_historical_flow_lane(showcase: AtlasCitedQueryShowcase) -> str:
+    snapshot = load_validated_snapshot_payload(showcase.snapshot_payload)
+    historical_results = tuple(
+        item for item in snapshot.results if item.source_original_status is not None
+    )
+    historical_result_ids = {item.result_id for item in historical_results}
+    historical_attributions = tuple(
+        item for item in snapshot.attributions if item.result_id in historical_result_ids
+    )
+    if (
+        len(historical_results) != 5
+        or len(historical_attributions) != 5
+        or any(
+            item.direction is not AttributionDirection.NEUTRAL for item in historical_attributions
+        )
+    ):
+        raise ValueError("ATLAS_HISTORICAL_FLOW_LANE_PROVENANCE_INVALID")
+    attribution_counts = {
+        result_id: sum(item.result_id == result_id for item in historical_attributions)
+        for result_id in historical_result_ids
+    }
+    if set(attribution_counts.values()) != {1}:
+        raise ValueError("ATLAS_HISTORICAL_FLOW_LANE_ATTRIBUTION_CARDINALITY_INVALID")
+    cards = "".join(
+        (
+            f'<li class="historical-lane-item" data-historical-result-id="{escape(item.result_id)}">'
+            '<span class="historical-lane-status">历史 · LIMITED</span>'
+            f"<strong>{escape(item.title)}</strong>"
+            f"<code>{escape(item.source_original_status or '')}</code>"
+            "<small>NEUTRAL provenance · 非当前关注</small>"
+            "</li>"
+        )
+        for item in historical_results
+    )
+    return f"""
+      <section class="historical-flow-lane" aria-labelledby="historical-flow-title" data-historical-lane-active="false" data-historical-result-count="5">
+        <div class="historical-lane-head">
+          <div>
+            <p class="section-kicker">REVIEWED HISTORY · ISOLATED LANE</p>
+            <h3 id="historical-flow-title">历史权重研究支线已经纳入证据地图，但不是当前关注</h3>
+            <p>这五份材料只补全历史路径和来源。卡片顺序是阅读顺序，不表示因果或优先级；四个 canonical raw PASS 只表示历史 artifact 已形成。</p>
+          </div>
+          <span class="historical-lane-boundary"><strong>5</strong> 项历史记录<small>全部 display LIMITED</small></span>
+        </div>
+        <ol class="historical-lane-grid">{cards}</ol>
+        <p class="historical-lane-note"><strong>与当前位置的关系：</strong>“你在这里”仍是第 7 阶段 Citation-first 页面；历史支线没有 active marker，也没有改变当前研究、DQ、回测或 Owner 决策状态。</p>
+      </section>
     """
 
 
@@ -746,6 +829,7 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         for value in (item[1], item[2], item[3], item[4], item[5], item[6], item[7])
     ):
         raise ValueError("ATLAS_CITED_QUERY_FLOW_DRILLDOWN_COPY_INVALID")
+    historical_flow_lane = _render_historical_flow_lane(showcase)
     stage_cards = "".join(
         (
             '<li class="flow-stage-shell">'
@@ -871,6 +955,7 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         </div>
         <ul class="focus-ledger">{focus_ledger}</ul>
       </div>
+      {historical_flow_lane}
       <section class="provenance-panel" aria-labelledby="status-provenance-title">
         <div class="provenance-copy">
           <p class="section-kicker">STATUS PROVENANCE · STRUCTURED FIELDS ONLY</p>
@@ -1013,6 +1098,22 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .focus-item small {{ color:var(--muted); }}
     .focus-item code {{ display:block; margin:.28rem 0; font-size:.68rem; overflow-wrap:anywhere; }}
     .focus-status {{ color:var(--amber); font-size:.68rem; font-weight:800; }}
+    .historical-flow-lane {{ margin-top:1rem; padding:1rem; border:1px dashed #c59c4b; border-radius:.82rem; background:#fffbf1; }}
+    .historical-lane-head {{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }}
+    .historical-lane-head h3 {{ margin:.2rem 0 .3rem; font-size:1.1rem; }}
+    .historical-lane-head p {{ max-width:760px; margin:.2rem 0; color:#705b32; font-size:.78rem; }}
+    .historical-lane-boundary {{ flex:0 0 150px; padding:.6rem .7rem; border:1px solid #e1c78e; border-radius:.65rem; color:#715319; background:#fff; text-align:center; }}
+    .historical-lane-boundary strong,.historical-lane-boundary small {{ display:block; }}
+    .historical-lane-boundary strong {{ font-size:1.3rem; }}
+    .historical-lane-boundary small {{ color:#8b7040; font-size:.62rem; }}
+    .historical-lane-grid {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.5rem; margin:.8rem 0 0; padding:0; list-style:none; }}
+    .historical-lane-item {{ min-width:0; padding:.65rem; border:1px solid #ead9b5; border-radius:.62rem; background:#fff; }}
+    .historical-lane-item strong,.historical-lane-item code,.historical-lane-item small {{ display:block; }}
+    .historical-lane-item strong {{ margin:.28rem 0; font-size:.72rem; line-height:1.35; }}
+    .historical-lane-item code {{ color:#80663b; font-size:.56rem; overflow-wrap:anywhere; }}
+    .historical-lane-item small {{ margin-top:.35rem; color:#8a7653; font-size:.58rem; }}
+    .historical-lane-status {{ display:inline-block; padding:.12rem .35rem; border-radius:999px; color:#875c08; background:#fff0ca; font-size:.58rem; font-weight:850; }}
+    .historical-lane-note {{ margin:.75rem 0 0; padding:.62rem .7rem; border-left:3px solid #c59c4b; color:#705b32; background:#fff; font-size:.7rem; }}
     .provenance-panel {{ margin-top:1rem; padding:1rem; border:1px solid #dfe5ee; border-radius:.82rem; background:#fafbfc; }}
     .provenance-copy {{ display:flex; align-items:end; justify-content:space-between; gap:1rem; margin-bottom:.75rem; }}
     .provenance-copy h3 {{ margin:.2rem 0 0; font-size:1.1rem; }}
@@ -1046,9 +1147,11 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .ledger-reading-note {{ margin:.65rem 0 1rem; padding:.7rem .8rem; border-left:4px solid var(--teal); color:#425168; background:#f2f8f7; font-size:.78rem; }}
     .result-ledger-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; }}
     .result-ledger-card {{ min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:.82rem; background:#fbfcfe; }}
+    .historical-result-card {{ border-color:#d8bd83; background:#fffdf7; }}
     .result-ledger-head {{ display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; padding:.9rem .95rem .6rem; }}
     .result-ledger-head h3 {{ margin:.18rem 0 .25rem; font-size:1rem; line-height:1.35; }}
     .result-sequence,.result-node {{ margin:0; color:var(--muted); font-size:.64rem; overflow-wrap:anywhere; }}
+    .historical-result-badge {{ display:inline-block; margin-top:.35rem; padding:.13rem .42rem; border-radius:999px; color:#805a12; background:#fff0c8; font-size:.61rem; font-weight:850; }}
     .result-status {{ display:grid; flex:0 0 106px; gap:.08rem; padding:.35rem .45rem; border:1px solid currentColor; border-radius:.55rem; background:#fff; text-align:right; }}
     .result-status strong {{ font-size:.7rem; }}
     .result-status code {{ color:currentColor; font-size:.57rem; }}
@@ -1064,6 +1167,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .result-status-pair small {{ color:var(--muted); font-size:.6rem; font-weight:800; }}
     .result-status-pair strong {{ margin:.12rem 0; font-size:.72rem; }}
     .result-status-pair code {{ color:#68758a; font-size:.56rem; overflow-wrap:anywhere; }}
+    .historical-status-rationale {{ margin:0 .95rem .9rem; padding:.62rem .7rem; border-left:3px solid #c59c4b; color:#6e572d; background:#fff9e9; font-size:.72rem; }}
     .result-evidence {{ border-top:1px solid var(--line); background:#fff; }}
     .result-evidence > summary {{ padding:.75rem .95rem; color:var(--blue); font-size:.75rem; }}
     .result-evidence-body {{ padding:0 .95rem .95rem; }}
@@ -1112,8 +1216,8 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid,.result-ledger-grid,.result-status-pair,.attribution-meta {{ grid-template-columns:1fr; }} .flow-map,.result-ledger {{ padding:1rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta {{ grid-template-columns:1fr; }} .flow-map,.result-ledger {{ padding:1rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>

@@ -1,0 +1,14 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_historical_canonical_projection
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/historical_canonical_projection.py
+public_contracts:
+  - HistoricalCanonicalProjection
+  - HistoricalCanonicalProjectionError
+  - HistoricalCanonicalProjectionValidation
+  - build_historical_canonical_projection
+  - apply_historical_canonical_projection
+  - validate_historical_canonical_projection_sources
+compatibility_facades: []
+deprecation_status: active_reference_architecture

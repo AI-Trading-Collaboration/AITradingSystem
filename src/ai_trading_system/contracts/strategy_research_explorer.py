@@ -336,6 +336,8 @@ class ResearchResultCard:
     source_ref_ids: tuple[str, ...]
     investment_facing: bool = False
     limitations: tuple[str, ...] = ()
+    source_original_status: str | None = None
+    status_mapping_rationale: str | None = None
 
     def __post_init__(self) -> None:
         for value, field in (
@@ -348,9 +350,16 @@ class ResearchResultCard:
         _require_source_ids(self.source_ref_ids, f"result:{self.result_id}")
         if any(not item.strip() for item in self.limitations):
             raise StrategyResearchExplorerContractError("STRATEGY_EXPLORER_EMPTY_LIMITATION")
+        if (self.source_original_status is None) != (self.status_mapping_rationale is None):
+            raise StrategyResearchExplorerContractError(
+                "STRATEGY_EXPLORER_RESULT_STATUS_CONTEXT_INCOMPLETE"
+            )
+        if self.source_original_status is not None:
+            _required_text(self.source_original_status, "result.source_original_status")
+            _required_text(self.status_mapping_rationale or "", "result.status_mapping_rationale")
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        payload: dict[str, object] = {
             "schema_version": self.schema_version,
             "result_id": self.result_id,
             "node_id": self.node_id,
@@ -363,6 +372,10 @@ class ResearchResultCard:
             "investment_facing": self.investment_facing,
             "limitations": list(self.limitations),
         }
+        if self.source_original_status is not None:
+            payload["source_original_status"] = self.source_original_status
+            payload["status_mapping_rationale"] = self.status_mapping_rationale
+        return payload
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, object]) -> ResearchResultCard:
@@ -377,6 +390,16 @@ class ResearchResultCard:
             source_ref_ids=_string_tuple(payload.get("source_ref_ids"), "result.source_ref_ids"),
             investment_facing=payload.get("investment_facing") is True,
             limitations=_string_tuple(payload.get("limitations"), "result.limitations"),
+            source_original_status=(
+                None
+                if payload.get("source_original_status") is None
+                else str(payload.get("source_original_status"))
+            ),
+            status_mapping_rationale=(
+                None
+                if payload.get("status_mapping_rationale") is None
+                else str(payload.get("status_mapping_rationale"))
+            ),
         )
 
 
