@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: bc226612117f68a6f8ba567fd01edd55caae1a9d4d98fa470d32f9b2b28e3880
+baseline_checksum: 50a9522b5b8aaaf35ad8b2f77ed7a1f8b60e41da04cf6673a2c62da1b8645c67
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
@@ -4382,14 +4382,14 @@ fragments:
     row_sha256: a77ae282418e038c55a6dc33730b6c343f58cc9ec8ecb629781aef33a57a9a96
 - task_id: TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
   path: registry/development_tasks_shadow_v2/39/39a1bf396a138a63f79d0187db317bfc92aa70672ffc086e502bf2638901993d.yaml
-  file_sha256: 06941099c0c6577fa816019cddd61ef77b76101dddb1c89eb61548075ba665a2
-  fragment_checksum: 615a3cf540a34a8b0faa8d3301add31b817ec5d3aa4d819cde0a7634f832b888
+  file_sha256: 61e859e89a4b91944f9000286d349e912604b56c04f825994e3f5c103da92ed1
+  fragment_checksum: 38e87287961f005c5fc30ec1eac5ed1d3a4ca4085c7eec1c41e3f674b0ce2927
   locator:
     source_partition: active
     source_path: docs/task_register.md
     line_number: 2093
     order_in_partition: 436
-    row_sha256: fc92437e86470a9f87348ba8fdc087cc2afcd652b07c16956dbf25ab5eaed6f2
+    row_sha256: 6404fffa3e265632d2846f15bf3dcc06de1774b9c3453a34f832542afe6c41cd
 - task_id: TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1
   path: registry/development_tasks_shadow_v2/36/36425631db16a417871e71de9cf0ae6018a233d1a3c9d7c9523a8d0f3bb20693.yaml
   file_sha256: 9dfc93f3491ea258e5e33887086974fd0b319cdcbc75b092a9409b1b5f447555
@@ -9613,8 +9613,8 @@ fragments:
 generated_views:
 - source: active
   source_path: docs/task_register.md
-  source_sha256: c89e1bfc28e6c41ffdd889af2f1617d83a0885e8581a1cb6057025872f81521f
-  rendered_sha256: c89e1bfc28e6c41ffdd889af2f1617d83a0885e8581a1cb6057025872f81521f
+  source_sha256: a1e0877a78250af7908bb90a4f7ebf98c63031c8734893fdeae5e18c69ed8652
+  rendered_sha256: a1e0877a78250af7908bb90a4f7ebf98c63031c8734893fdeae5e18c69ed8652
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -10610,4 +10610,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 3e650f2e43be9dc4519d0a2c8348806a94e7062df46028ccfda89a23906352d3
+index_checksum: 9398d5964c487ee127255e3416c22ac53d3c7a5d856bc27607c5c31f347277f8

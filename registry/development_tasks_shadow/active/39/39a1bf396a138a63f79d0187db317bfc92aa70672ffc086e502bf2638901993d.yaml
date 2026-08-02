@@ -11,49 +11,68 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: options research engineering：等待 TRADING-2481/2482/2484
-  requirement_refs: []
+  next_owner: project owner：独立审核 DTE/moneyness/delta/spread/OI/volume 与 rank policy；TRADING-2486
+    owner：只可继承 policy-blocked selector boundary，不得自行激活 selection
+  requirement_refs:
+  - docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 实现 policy-driven long call/put single-contract
-    selection、stable SID/tie-break、daily Greeks/OI freshness 与 no-contract cash behavior；不
-    roll、不 multi-leg、不 short。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md`。offline
+    policy-driven long call/put single-contract engine、stable SID/tie-break、canonical
+    candidate/decision output 与 no-contract cash preservation 已完成；继承 2481–2484，不 roll、不
+    multi-leg、不 short、不访问 QuantConnect。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 相同输入得到相同 SID；invalid/stale/crossed quote 和无合约不放宽 policy；unit/property/golden
-      PASS；更新 system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。
+    text: 同一输入/policy 得到同一 SID/hash；invalid/stale/crossed/duplicate/wrong prior session/UNKNOWN
+      DQ fail closed；FLAT/unresolved/no-eligible 均不生成 order；unit/property/golden、system
+      flow、generated/formal PASS。工程退出=`QQQ_SINGLE_LEG_SELECTOR_ENGINE_V1_READY_POLICY_BLOCKED`；完整退出仍为
+      `QQQ_SINGLE_LEG_SELECTION_V1_READY`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2093
-    row_sha256: fc92437e86470a9f87348ba8fdc087cc2afcd652b07c16956dbf25ab5eaed6f2
+    row_sha256: 6404fffa3e265632d2846f15bf3dcc06de1774b9c3453a34f832542afe6c41cd
     cell_count: 8
     all_cells:
     - TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
     - Options research engineering / QQQ long-premium deterministic contract selection
     - P1
-    - PROPOSED
-    - options research engineering：等待 TRADING-2481/2482/2484
-    - 实现 policy-driven long call/put single-contract selection、stable SID/tie-break、daily
-      Greeks/OI freshness 与 no-contract cash behavior；不 roll、不 multi-leg、不 short。
-    - 相同输入得到相同 SID；invalid/stale/crossed quote 和无合约不放宽 policy；unit/property/golden
-      PASS；更新 system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。
-    - DTE/moneyness/delta/spread/OI/volume 均需 Owner-reviewed policy，不得硬编码。
+    - BASELINE_DONE
+    - project owner：独立审核 DTE/moneyness/delta/spread/OI/volume 与 rank policy；TRADING-2486
+      owner：只可继承 policy-blocked selector boundary，不得自行激活 selection
+    - 详见 `docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md`。offline
+      policy-driven long call/put single-contract engine、stable SID/tie-break、canonical
+      candidate/decision output 与 no-contract cash preservation 已完成；继承 2481–2484，不
+      roll、不 multi-leg、不 short、不访问 QuantConnect。
+    - 同一输入/policy 得到同一 SID/hash；invalid/stale/crossed/duplicate/wrong prior session/UNKNOWN
+      DQ fail closed；FLAT/unresolved/no-eligible 均不生成 order；unit/property/golden、system
+      flow、generated/formal PASS。工程退出=`QQQ_SINGLE_LEG_SELECTOR_ENGINE_V1_READY_POLICY_BLOCKED`；完整退出仍为
+      `QQQ_SINGLE_LEG_SELECTION_V1_READY`。
+    - 2026-08-02：focused/2481–2485/2480–2485=`30/132/138` PASS，Ruff/mypy/compileall、DevEx/task
+      shadow PASS；tracked default policy=`OWNER_REVIEW_REQUIRED_BASELINE`、`selection_authorized=false`，全部
+      numeric/rank fields=`UNKNOWN_REQUIRES_POLICY_REVIEW`。状态转 `BASELINE_DONE`；final-tree
+      compatibility/formal evidence 待收口。external token 未授予，`production_effect=none`、`broker_action=none`。
     raw_line: '|TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1|Options
-      research engineering / QQQ long-premium deterministic contract selection|P1|PROPOSED|options
-      research engineering：等待 TRADING-2481/2482/2484|实现 policy-driven long call/put
-      single-contract selection、stable SID/tie-break、daily Greeks/OI freshness 与 no-contract
-      cash behavior；不 roll、不 multi-leg、不 short。|相同输入得到相同 SID；invalid/stale/crossed
-      quote 和无合约不放宽 policy；unit/property/golden PASS；更新 system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。|DTE/moneyness/delta/spread/OI/volume
-      均需 Owner-reviewed policy，不得硬编码。|'
+      research engineering / QQQ long-premium deterministic contract selection|P1|BASELINE_DONE|project
+      owner：独立审核 DTE/moneyness/delta/spread/OI/volume 与 rank policy；TRADING-2486 owner：只可继承
+      policy-blocked selector boundary，不得自行激活 selection|详见 `docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md`。offline
+      policy-driven long call/put single-contract engine、stable SID/tie-break、canonical
+      candidate/decision output 与 no-contract cash preservation 已完成；继承 2481–2484，不
+      roll、不 multi-leg、不 short、不访问 QuantConnect。|同一输入/policy 得到同一 SID/hash；invalid/stale/crossed/duplicate/wrong
+      prior session/UNKNOWN DQ fail closed；FLAT/unresolved/no-eligible 均不生成 order；unit/property/golden、system
+      flow、generated/formal PASS。工程退出=`QQQ_SINGLE_LEG_SELECTOR_ENGINE_V1_READY_POLICY_BLOCKED`；完整退出仍为
+      `QQQ_SINGLE_LEG_SELECTION_V1_READY`。|2026-08-02：focused/2481–2485/2480–2485=`30/132/138`
+      PASS，Ruff/mypy/compileall、DevEx/task shadow PASS；tracked default policy=`OWNER_REVIEW_REQUIRED_BASELINE`、`selection_authorized=false`，全部
+      numeric/rank fields=`UNKNOWN_REQUIRES_POLICY_REVIEW`。状态转 `BASELINE_DONE`；final-tree
+      compatibility/formal evidence 待收口。external token 未授予，`production_effect=none`、`broker_action=none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-fc92437e86470a9f87348ba8
+  event_id: legacy-import-6404fffa3e265632d2846f15
   task_id: TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -63,29 +82,42 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: options research engineering：等待 TRADING-2481/2482/2484
-    notes: DTE/moneyness/delta/spread/OI/volume 均需 Owner-reviewed policy，不得硬编码。
+    next_owner: project owner：独立审核 DTE/moneyness/delta/spread/OI/volume 与 rank policy；TRADING-2486
+      owner：只可继承 policy-blocked selector boundary，不得自行激活 selection
+    notes: 2026-08-02：focused/2481–2485/2480–2485=`30/132/138` PASS，Ruff/mypy/compileall、DevEx/task
+      shadow PASS；tracked default policy=`OWNER_REVIEW_REQUIRED_BASELINE`、`selection_authorized=false`，全部
+      numeric/rank fields=`UNKNOWN_REQUIRES_POLICY_REVIEW`。状态转 `BASELINE_DONE`；final-tree
+      compatibility/formal evidence 待收口。external token 未授予，`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:fc92437e86470a9f87348ba8fdc087cc2afcd652b07c16956dbf25ab5eaed6f2
+  - sha256:6404fffa3e265632d2846f15bf3dcc06de1774b9c3453a34f832542afe6c41cd
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
   - Options research engineering / QQQ long-premium deterministic contract selection
   - P1
-  - PROPOSED
-  - options research engineering：等待 TRADING-2481/2482/2484
-  - 实现 policy-driven long call/put single-contract selection、stable SID/tie-break、daily
-    Greeks/OI freshness 与 no-contract cash behavior；不 roll、不 multi-leg、不 short。
-  - 相同输入得到相同 SID；invalid/stale/crossed quote 和无合约不放宽 policy；unit/property/golden PASS；更新
-    system flow；退出=`QQQ_SINGLE_LEG_SELECTION_V1_READY`。
-  - DTE/moneyness/delta/spread/OI/volume 均需 Owner-reviewed policy，不得硬编码。
-  docs_links: []
+  - BASELINE_DONE
+  - project owner：独立审核 DTE/moneyness/delta/spread/OI/volume 与 rank policy；TRADING-2486
+    owner：只可继承 policy-blocked selector boundary，不得自行激活 selection
+  - 详见 `docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md`。offline
+    policy-driven long call/put single-contract engine、stable SID/tie-break、canonical
+    candidate/decision output 与 no-contract cash preservation 已完成；继承 2481–2484，不 roll、不
+    multi-leg、不 short、不访问 QuantConnect。
+  - 同一输入/policy 得到同一 SID/hash；invalid/stale/crossed/duplicate/wrong prior session/UNKNOWN
+    DQ fail closed；FLAT/unresolved/no-eligible 均不生成 order；unit/property/golden、system
+    flow、generated/formal PASS。工程退出=`QQQ_SINGLE_LEG_SELECTOR_ENGINE_V1_READY_POLICY_BLOCKED`；完整退出仍为
+    `QQQ_SINGLE_LEG_SELECTION_V1_READY`。
+  - 2026-08-02：focused/2481–2485/2480–2485=`30/132/138` PASS，Ruff/mypy/compileall、DevEx/task
+    shadow PASS；tracked default policy=`OWNER_REVIEW_REQUIRED_BASELINE`、`selection_authorized=false`，全部
+    numeric/rank fields=`UNKNOWN_REQUIRES_POLICY_REVIEW`。状态转 `BASELINE_DONE`；final-tree
+    compatibility/formal evidence 待收口。external token 未授予，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md
   terminal: false
-  raw_row_sha256: fc92437e86470a9f87348ba8fdc087cc2afcd652b07c16956dbf25ab5eaed6f2
+  raw_row_sha256: 6404fffa3e265632d2846f15bf3dcc06de1774b9c3453a34f832542afe6c41cd
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 8d007a9bbcba56759235f5e2ebb88f5819db9f8d9638560aaa9b3f387c424666
+fragment_checksum: 37e40bd2a472fab526c3ad6b382e01942b66baac4f1be6d538e1807f73d9c2c9

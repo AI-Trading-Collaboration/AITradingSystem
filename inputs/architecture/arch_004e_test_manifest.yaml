@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1237
-test_count: 1177
+test_file_count: 1238
+test_count: 1178
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -7882,7 +7882,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: de46537d731eb86aa3220cdd4a3dac0e7e1f1e40eb0aa259d2c952b0564e370b
+  sha256: 48bfc49350d5ab121ec9aa2c0f6a1390d7afebebb5602624cbe42156e7d6224a
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8278,7 +8278,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: f74075e0983e82c164a6e550c2eb7a1f102d93b73b4f9807745fb2f01e6bac25
+  sha256: b7e0e986e529d0c0679fffa2b93fbfa4b42f6d82fbee8523604c2f3da77edb0d
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -14289,6 +14289,22 @@ tests:
 - test_id: tests.test_qc_qqq_options_project_adapter
   path: tests/test_qc_qqq_options_project_adapter.py
   sha256: 16087f989f4f184669fea3344904b2da943a914e22196f5ed4179149c7396e80
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_qqq_options_deterministic_selection
+  path: tests/test_qqq_options_deterministic_selection.py
+  sha256: f191942121c440a98b399722aec88d6415dc1352edb81b966337c771a63379f3
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

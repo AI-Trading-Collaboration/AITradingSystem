@@ -7141,3 +7141,54 @@ timezone；这些仅是 2489 的 collection mapping，不是已采集 evidence �
 quote 与 OI 继续 `QC_ONLY_NOT_EXPORTED / EXPORT_PROHIBITED`。本节点不访问 QuantConnect、不创建 project、
 不运行 backtest、不选约/下单/成交/会计/计算收益，固定 research-only、promotion/paper/live/production/
 broker=false/none。
+
+## TRADING-2485 QQQ Option Universe Deterministic Selection V1
+
+`config/research/qqq_options_deterministic_selection_v1.yaml` 在 2481 shared contract、2482 DQ/PIT、2483
+daily signal package 与 2484 adapter descriptor 之后，冻结离线 long-premium 单合约选择引擎。
+`qqq_options_research.deterministic_selection` 重验 descriptor/daily signal 的 run、range、repository code、
+2481–2484 policy hashes、QQQ RAW/MINUTE subscription、primary `2021-02-22` window、option-event
+`NOT_EVALUATED` 与 no-cloud/no-order safety；caller 不能用新对象覆盖 frozen envelope、DQ 或 adapter 语义。
+
+```text
+2484 canonical adapter descriptor + 2483 DailySignalRecord
+  -> exact run/range/code/policy/subscription/safety binding
+candidate raw-source checksum + canonical 2482 DQReportRecord
+  -> exact source/report/content/check-set binding
+  -> selection-stage chain/quote/freshness/OI/model/calendar/mapping/cache/engine checks PASS
+  -> full option-event DQ/PIT remains NOT_EVALUATED until order/fill lifecycle completes
+reviewed 2485 selection policy
+  -> default OWNER_REVIEW_REQUIRED_BASELINE
+     -x-> active filtering/ranking (all numeric/rank fields UNKNOWN)
+     -> SELECTION_POLICY_REVIEW_REQUIRED + cash preservation
+  -> future OWNER_REVIEWED_ACTIVE policy only
+     -> CALL/PUT direction gate
+     -> derived DTE + strike/underlying moneyness + quote age + relative spread
+     -> DTE/moneyness/absolute-delta/quote-age/spread/OI/volume gates
+     -> policy-ordered rank + exact option_sid final tie-break
+     -> 2481 ContractCandidateSnapshotRecord / SelectionDecisionRecord seal
+  -> FLAT / unresolved / no eligible contract => cash, no order
+  -> future 2486 minute execution only after active policy and remaining evidence gates
+```
+
+tracked default policy 的 DTE、moneyness、delta、quote age、spread、OI、volume 与 rank components 全部为
+`UNKNOWN_REQUIRES_POLICY_REVIEW`，`selection_authorized=false`；候选存在也不得选择。测试中的 synthetic
+active 数值仅验证纯引擎 determinism，不是项目默认或投资 authority。未来 active policy 必须同时保存 owner、
+decision、rationale、effect、validation、review/expiry，并把 exact policy SHA 写入 candidate-set identity 与
+全部输出 envelope。
+
+candidate input 不接受 caller 重复提供 DTE/moneyness：DTE 由 expiry-selection session 精确计算，moneyness
+由 strike/underlying price 精确计算；quote age 与 relative spread 同样由 typed quote facts计算。duplicate SID、
+float/naive time、missing/crossed/future quote、wrong prior exchange session、DQ report/source/hash/range drift、
+selection-stage UNKNOWN/FAIL 均 fail closed。candidate-set SHA 绑定 sorted candidate semantics、raw-source
+checksum、DQ report content/file hash、adapter descriptor、daily signal、selection time 与 selection policy；输入
+顺序不影响结果。没有 eligible candidate 时只输出 `NO_ELIGIBLE_CONTRACT_CASH`，不得扩宽 threshold、改变
+right 或生成 order。
+
+本节点只生成 canonical candidate/decision derived records；raw option rows 继续
+`QC_ONLY_NOT_EXPORTED / EXPORT_PROHIBITED`，全局 option-event DQ/PIT 只可保持 `NOT_EVALUATED` 或更严格
+`FAIL`，不得在 selection 阶段伪升 PASS。工程基线退出是
+`QQQ_SINGLE_LEG_SELECTOR_ENGINE_V1_READY_POLICY_BLOCKED`；完整
+`QQQ_SINGLE_LEG_SELECTION_V1_READY` 仍依赖 Owner-reviewed tracked active policy。外部 QuantConnect token
+未授予，本节点不登录/建 project/运行 backtest，不 roll/multi-leg/short，不下单/成交/会计/计算收益，固定
+research-only、production/broker=false/none。

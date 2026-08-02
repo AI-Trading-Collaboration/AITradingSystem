@@ -1,0 +1,60 @@
+schema_version: qqq_option_deterministic_selection_policy.v1
+policy_id: qqq_options_deterministic_selection_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED_BASELINE
+owner: project_owner_and_options_research_governance
+owner_decision: owner_decision:TRADING-2485:2026-08-02:freeze_deterministic_selector_engine_without_unreviewed_numeric_or_rank_policy
+rationale: Freeze deterministic long-premium single-contract selection mechanics while keeping every investment-facing selection threshold and rank priority fail closed until explicit Owner review.
+intended_effect: Identical governed inputs produce identical candidate-set identity and no-contract or selected-SID records without silently widening eligibility or authorizing external execution.
+validation_plan: Run policy drift, canonical DQ replay, permutation, property, golden, tamper, no-contract and predecessor-binding tests before governed final-tree validation.
+review_condition: Review before activating any DTE, moneyness, delta, quote-age, spread, open-interest, volume or rank policy, or before consuming real QuantConnect option rows.
+expiry_condition: Supersede only through an Owner-reviewed tracked policy change with calibration evidence, review or expiry condition, compatibility coverage and final-tree validation.
+selection_authorized: false
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+signal_export_policy_sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+adapter_policy_sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+primary_research_start: 2021-02-22
+approved_non_primary_authority_count: 0
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+selection_stage_required_check_ids:
+  - cache_identity
+  - chain_presence
+  - engine_identity
+  - exchange_calendar_identity
+  - fill_forward_ambiguity
+  - local_cache_dq_scope_separation
+  - open_interest_freshness
+  - prior_day_model_freshness
+  - quote_freshness
+  - quote_integrity
+  - signal_selection_chronology
+  - symbol_mapping_identity
+criteria:
+  mode: UNRESOLVED
+  min_dte: UNKNOWN_REQUIRES_POLICY_REVIEW
+  target_dte: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_dte: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_abs_moneyness_deviation: UNKNOWN_REQUIRES_POLICY_REVIEW
+  min_abs_delta: UNKNOWN_REQUIRES_POLICY_REVIEW
+  target_abs_delta: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_abs_delta: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_quote_age_seconds: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_relative_spread: UNKNOWN_REQUIRES_POLICY_REVIEW
+  min_open_interest: UNKNOWN_REQUIRES_POLICY_REVIEW
+  min_volume: UNKNOWN_REQUIRES_POLICY_REVIEW
+  rank_components: UNKNOWN_REQUIRES_POLICY_REVIEW
+safety:
+  research_only: true
+  long_premium_only: true
+  single_leg_only: true
+  roll_allowed: false
+  multi_leg_allowed: false
+  short_option_allowed: false
+  order_generation_allowed: false
+  cloud_run_authorized: false
+  raw_options_data_export_allowed: false
+  production_effect: none
+  broker_action: none
