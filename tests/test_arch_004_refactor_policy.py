@@ -2095,7 +2095,35 @@ TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_NEW_SOURCE_PATHS = frozenset(
         "tests/test_qqq_options_shared_contract.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION = (
+    "phase_trading_2482_qqq_options_dq_pit_cache_evidence_identity_v1"
+)
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_BASE_COMMIT = (
+    "f1260cd7be35c6810e97f636d1ec9cfaa0c32449"
+)
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_BASELINE_GIT_BLOB = (
+    "81b32b0577d10fc948f766bab3ca0979fbb975f3"
+)
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_BYTE_COUNT = 2_765_046
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_SHA256 = (
+    "d7ee3d95a83830a827f6c898d96cc71bfe5d22e21ab7628619d332a9d083c1fb"
+)
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_ADDITIONAL_SUPERSESSION_PATHS = frozenset()
+TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qqq_options_dq_pit_identity.yaml",
+        "config/architecture/fragments/modules/qqq_options_dq_pit_identity.yaml",
+        "config/research/qqq_options_dq_pit_identity_v1.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md"
+        ),
+        "src/ai_trading_system/qqq_options_research/dq_pit_identity.py",
+        "tests/test_qqq_options_dq_pit_identity.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -3949,6 +3977,26 @@ def _trading_2481_qqq_options_shared_contract_base_baseline_blob() -> bytes:
     ).stdout
 
 
+@cache
+def _trading_2482_qqq_options_dq_pit_identity_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
 def _assert_wave11_historical_prefix_immutable(
     current_bytes: bytes,
     base_blob: bytes,
@@ -5794,6 +5842,26 @@ def _assert_trading_2481_qqq_options_shared_contract_historical_prefix_immutable
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2482_qqq_options_dq_pit_identity_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2482 QQQ options DQ/PIT identity historical prefix differs from "
+        "immutable TRADING-2481 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"\n{TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -8145,6 +8213,41 @@ def _trading_2481_qqq_options_shared_contract_all_current_authority_paths() -> f
 
 
 @cache
+def _trading_2482_qqq_options_dq_pit_identity_superseded_live_source_paths() -> frozenset[
+    str
+]:
+    _assert_trading_2482_qqq_options_dq_pit_identity_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2482_qqq_options_dq_pit_identity_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2482_qqq_options_dq_pit_identity_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths() -> frozenset[
+    str
+]:
+    return (
+        _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+        | _trading_2482_qqq_options_dq_pit_identity_superseded_live_source_paths()
+        | _trading_2482_qqq_options_dq_pit_identity_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -9403,6 +9506,13 @@ def _trading_2481_qqq_options_shared_contract_prior_active_source_mismatches() -
     return _latest_active_source_mismatches(TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION)
 
 
+@cache
+def _trading_2482_qqq_options_dq_pit_identity_prior_active_source_mismatches() -> frozenset[
+    str
+]:
+    return _latest_active_source_mismatches(TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -9446,7 +9556,36 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION in baseline:
+    if TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2482_qqq_options_dq_pit_identity_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2482_qqq_options_dq_pit_identity_prior_active_source_mismatches()
+            | TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2470_cited_query_contract_all_current_authority_paths()
+            | _trading_2470_cited_query_amendment_all_current_authority_paths()
+            | _trading_2470_cited_query_consumer_all_current_authority_paths()
+            | _trading_2471_flow_focus_all_current_authority_paths()
+            | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+            | _ops_072_transport_all_current_authority_paths()
+            | _trading_2477_historical_adapter_all_current_authority_paths()
+            | _ops_073_terminal_disposition_all_current_authority_paths()
+            | _trading_2478_quantconnect_planning_all_current_authority_paths()
+            | _trading_2479_historical_projection_all_current_authority_paths()
+            | _trading_2480_qc_capability_admission_all_current_authority_paths()
+            | _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION
+    elif TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION in baseline:
         current_superseded_paths = (
             _trading_2481_qqq_options_shared_contract_superseded_live_source_paths()
         )
@@ -22363,8 +22502,7 @@ def test_trading_2478_quantconnect_planning_is_current_hash_authority() -> None:
     current_prior_drift = set(_trading_2478_quantconnect_planning_prior_active_source_mismatches())
     assert superseded <= current_prior_drift
     current_successor_authority = set(
-        _trading_2479_historical_projection_all_current_authority_paths()
-        | _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+        _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths()
     )
     assert current_prior_drift - superseded <= current_successor_authority
     assert set(phase["removed_live_source_paths"]) == (
@@ -22479,8 +22617,7 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
         | TRADING_2479_HISTORICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     current_successor_authority = set(
-        _trading_2480_qc_capability_admission_all_current_authority_paths()
-        | _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+        _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= current_successor_authority
     assert current_prior_drift - superseded <= current_successor_authority
@@ -22602,7 +22739,7 @@ def test_trading_2480_qc_capability_admission_is_current_hash_authority() -> Non
         _trading_2480_qc_capability_admission_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+        _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -22680,7 +22817,7 @@ def test_trading_2480_qc_capability_admission_is_current_hash_authority() -> Non
         )
 
 
-def test_trading_2481_qqq_options_shared_contract_is_current_hash_authority() -> None:
+def test_trading_2481_qqq_options_shared_contract_has_2482_successor_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     base_blob = _trading_2481_qqq_options_shared_contract_base_baseline_blob()
     _assert_trading_2481_qqq_options_shared_contract_historical_prefix_immutable(
@@ -22688,7 +22825,9 @@ def test_trading_2481_qqq_options_shared_contract_is_current_hash_authority() ->
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION
+    assert list(baseline).index(TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION) + 1 == list(
+        baseline
+    ).index(TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION)
     phase = baseline[TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION]
     assert phase["schema_version"] == (
         "trading_2481_qqq_options_shared_schema_policy_freeze_compatibility.v1"
@@ -22711,10 +22850,14 @@ def test_trading_2481_qqq_options_shared_contract_is_current_hash_authority() ->
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
-    assert superseded == set(
-        _trading_2480_qc_capability_admission_prior_active_source_mismatches()
-        | TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_ADDITIONAL_SUPERSESSION_PATHS
+    current_prior_drift = set(
+        _trading_2481_qqq_options_shared_contract_prior_active_source_mismatches()
     )
+    successor_authority = set(
+        _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths()
+    )
+    assert superseded - current_prior_drift <= successor_authority
+    assert current_prior_drift - superseded <= successor_authority
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_REMOVED_SOURCE_PATHS
     )
@@ -22741,7 +22884,7 @@ def test_trading_2481_qqq_options_shared_contract_is_current_hash_authority() ->
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
         "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
@@ -22787,6 +22930,139 @@ def test_trading_2481_qqq_options_shared_contract_is_current_hash_authority() ->
     tampered[TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2481_qqq_options_shared_contract_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2482_qqq_options_dq_pit_identity_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2482_qqq_options_dq_pit_identity_base_baseline_blob()
+    _assert_trading_2482_qqq_options_dq_pit_identity_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION
+    phase = baseline[TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2482_qqq_options_dq_pit_cache_evidence_identity_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == "TRADING-2482-QQQ-OPTIONS-DQ-PIT-IDENTITY-V1"
+    assert phase["task_ids"] == [
+        "TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2482:2026-08-02:"
+        "freeze_fail_closed_dq_pit_cache_evidence_identity_without_unreviewed_thresholds"
+    ]
+    assert phase["external_owner_authorization"] == (
+        "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (
+            TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2482_qqq_options_dq_pit_identity_prior_active_source_mismatches()
+        | TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_NEW_SOURCE_PATHS
+    ) - TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2482-QQQ-OPTIONS-DQ-PIT-IDENTITY-V1",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 958,
+        "active_task_count": 453,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["dq_pit_identity_freeze"] == {
+        "shared_record_model": "DQReportRecord",
+        "shared_contract_sha256": (
+            "c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b"
+        ),
+        "shared_policy_sha256": (
+            "d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349"
+        ),
+        "dq_policy_sha256": (
+            "1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358"
+        ),
+        "required_check_count": 15,
+        "canonical_cache_receipt": "qqq_options_cache_identity_receipt.v1",
+        "local_cache_dq_substitution_allowed": False,
+        "unknown_can_pass": False,
+        "numeric_thresholds_frozen": False,
+    }
+    assert phase["validation"] == {
+        "focused_dq_pit_identity": "PASS_32_TESTS",
+        "adjacent_shared_contract": "PASS_60_TESTS",
+        "compatibility_regression": "PASS_239_TESTS",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "quantconnect_accessed": False,
+        "cloud_project_created_or_modified": False,
+        "cloud_backtest_run": False,
+        "vendor_data_downloaded": False,
+        "raw_options_data_exported": False,
+        "investment_threshold_added": False,
+        "strategy_execution_allowed": False,
+        "known_unrelated_bytes_read": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2482_qqq_options_dq_pit_identity_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

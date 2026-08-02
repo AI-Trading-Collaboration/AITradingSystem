@@ -1,0 +1,125 @@
+schema_version: qqq_options_dq_pit_identity_policy.v1
+policy_id: qqq_options_dq_pit_identity_v1
+policy_version: 1.0.0
+status: REVIEWED_BASELINE_FAIL_CLOSED
+owner: project_owner_and_data_governance
+owner_decision: owner_decision:TRADING-2482:2026-08-02:freeze_fail_closed_dq_pit_cache_evidence_identity_without_unreviewed_thresholds
+rationale: Freeze deterministic option-event DQ, PIT, cache, engine, and evidence identity checks before signal export, selection, execution, or cloud backtests.
+intended_effect: Unknown, missing, stale, chronologically invalid, or identity-drifted evidence cannot be interpreted as research-ready PASS.
+validation_plan: Run negative, PIT, canonical replay, tamper, and property tests, followed by governed Architecture, Contract, Integration, Reproducibility, and exclusive Full validation.
+review_condition: Review before adding a provider adapter, numeric freshness or spread threshold, contract selection, fill model, or externally collected QuantConnect evidence.
+expiry_condition: Supersede only through an owner-reviewed serial contract wave with compatibility and migration evidence.
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+required_check_ids:
+  - cache_identity
+  - chain_presence
+  - engine_identity
+  - evidence_identity
+  - exchange_calendar_identity
+  - fill_forward_ambiguity
+  - local_cache_dq_scope_separation
+  - open_interest_freshness
+  - order_fill_chronology
+  - prior_day_model_freshness
+  - provider_raw_checksum
+  - quote_freshness
+  - quote_integrity
+  - signal_selection_chronology
+  - symbol_mapping_identity
+reason_codes:
+  - CACHE_CONTRACT_IDENTITY_MISMATCH
+  - CACHE_IDENTITY_COLLISION
+  - CACHE_POLICY_IDENTITY_MISMATCH
+  - CANDIDATE_MISSING
+  - CHAIN_MISSING
+  - ENGINE_IDENTITY_ASSESSMENT_FAIL
+  - ENGINE_IDENTITY_MISMATCH
+  - ENGINE_IDENTITY_UNKNOWN
+  - EVIDENCE_IDENTITY_ASSESSMENT_FAIL
+  - EVIDENCE_IDENTITY_MISMATCH
+  - EVIDENCE_IDENTITY_UNKNOWN
+  - EVIDENCE_MANIFEST_IDENTITY_MISMATCH
+  - EVIDENCE_MANIFEST_MISSING
+  - EVIDENCE_MANIFEST_NOT_CONFIRMED
+  - EXCHANGE_CALENDAR_IDENTITY_ASSESSMENT_FAIL
+  - EXCHANGE_CALENDAR_IDENTITY_MISMATCH
+  - EXCHANGE_CALENDAR_IDENTITY_UNKNOWN
+  - FILL_FORWARD_AMBIGUITY
+  - FILL_FORWARD_STATUS_UNKNOWN
+  - MODEL_AS_OF_MISSING
+  - MODEL_FRESHNESS_FAIL
+  - MODEL_FRESHNESS_UNKNOWN
+  - MODEL_SESSION_NOT_EXACT_PRIOR
+  - OI_AS_OF_MISSING
+  - OI_FRESHNESS_FAIL
+  - OI_FRESHNESS_UNKNOWN
+  - OI_SESSION_NOT_EXACT_PRIOR
+  - ORDER_FILL_CHRONOLOGY_INVALID
+  - ORDER_FILL_CHRONOLOGY_MISSING
+  - PROVIDER_RAW_CHECKSUM_UNAVAILABLE
+  - PROVIDER_RAW_CHECKSUM_UNKNOWN
+  - QUOTE_AFTER_SELECTION
+  - QUOTE_CROSSED
+  - QUOTE_FRESHNESS_FAIL
+  - QUOTE_FRESHNESS_UNKNOWN
+  - QUOTE_MISSING
+  - QUOTE_NEGATIVE_BID
+  - QUOTE_SINGLE_SIDED
+  - QUOTE_TIMESTAMP_MISSING
+  - QUOTE_ZERO_ASK
+  - SIGNAL_SELECTION_CHRONOLOGY_INVALID
+  - SIGNAL_SELECTION_CHRONOLOGY_MISSING
+  - SYMBOL_MAPPING_IDENTITY_ASSESSMENT_FAIL
+  - SYMBOL_MAPPING_IDENTITY_MISMATCH
+  - SYMBOL_MAPPING_IDENTITY_UNKNOWN
+chronology_fields:
+  - signal_as_of_utc
+  - selection_snapshot_utc
+  - order_intent_utc
+  - order_submit_utc
+  - fill_quote_end_utc
+  - fill_utc
+chronology_expression: signal_as_of_utc < selection_snapshot_utc < order_intent_utc <= order_submit_utc < fill_quote_end_utc <= fill_utc
+cache_identity_components:
+  - calendar_identity
+  - dataset
+  - dq_policy_sha256
+  - engine_identity
+  - mapping_identity
+  - normalization_identity
+  - option_sid
+  - provider
+  - repository_code_sha
+  - requested_end
+  - requested_start
+  - resolution
+  - shared_contract_sha256
+  - source_checksum_evidence
+  - underlying
+source_checksum_availability_states:
+  - AVAILABLE
+  - UNKNOWN
+  - UNAVAILABLE_PROVIDER_DOES_NOT_EXPOSE
+numeric_thresholds:
+  max_quote_age_seconds: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_relative_spread: UNKNOWN_REQUIRES_POLICY_REVIEW
+  min_open_interest: UNKNOWN_REQUIRES_POLICY_REVIEW
+  min_volume: UNKNOWN_REQUIRES_POLICY_REVIEW
+daily_freshness_rule: EXACT_PRIOR_EXCHANGE_SESSION
+local_cache_dq_substitution_allowed: false
+unknown_can_pass: false
+raw_field_classifications:
+  - EXPORT_PROHIBITED
+  - QC_ONLY_NOT_EXPORTED
+license_unknown_state: UNKNOWN_REQUIRES_LICENSE_REVIEW
+safety:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  raw_options_data_export_allowed: false
+  strategy_execution_allowed: false
+  bounded_cloud_pilot_authorized: false
+  production_effect: none
+  broker_action: none

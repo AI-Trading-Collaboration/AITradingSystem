@@ -7040,3 +7040,27 @@ license 未闭合时保持 `UNKNOWN_REQUIRES_LICENSE_REVIEW`。本节点不登�
 不运行 cloud backtest，也不读取本地 cached market/macro data，因此不生成或伪造 `aits validate-data`
 PASS；固定 promotion/paper-shadow/production/execution/export authorization=false，
 `production_effect=none`、`broker_action=none`。
+
+## TRADING-2482 QQQ Options DQ / PIT / Cache / Evidence Identity V1
+
+`config/research/qqq_options_dq_pit_identity_v1.yaml` 在 2481 shared contract 之后冻结 option-event
+data-quality 与 point-in-time 语义。`qqq_options_research.dq_pit_identity` 接收 typed chain/quote/OI/Greeks、
+exchange calendar、symbol mapping、signal-to-fill chronology、cache、engine、platform evidence observation，
+逐项生成稳定 `DQCheckResult`，最后只能通过 2481 `DQReportRecord.seal()` 输出 canonical derived report；
+它不新增第二套 envelope、DQ/PIT enum 或 evidence record。
+
+本地 cached market/macro 的 `aits validate-data` 状态与 QuantConnect option-event DQ 是两条独立状态轴：
+local cache PASS 不能替代 option-event PASS，option-event PASS 也不能覆盖 local cache FAIL / NOT_EVALUATED。
+missing/single-sided/negative-bid/zero-ask/crossed/future/stale quote、错误 prior exchange session、freshness
+UNKNOWN、calendar/mapping drift、same-bar/fill-forward ambiguity、cache collision、engine/evidence mismatch 均
+fail closed；任何 UNKNOWN 只能产生 `NOT_EVALUATED` 或更严格的 `FAIL`，不能降格为 warning 后 PASS。
+
+cache identity 绑定 provider/dataset/SID/resolution/requested range、calendar/mapping/normalization、DQ policy、
+shared contract、repository code、engine 与 source checksum evidence。provider 不提供 raw checksum 时显式记录
+`PROVIDER_RAW_CHECKSUM_UNAVAILABLE`，不伪造 raw lineage；raw option fields 仍只允许
+`QC_ONLY_NOT_EXPORTED / EXPORT_PROHIBITED`。权威时序为
+`signal < selection < intent <= submit < eligible fill quote <= fill`，但本节点不实现 signal export、
+contract selection、order/fill engine、accounting 或 cloud backtest。quote-age、spread、OI/volume 等数值阈值
+继续为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；external Owner token 仍未授予，固定 research-only、
+promotion/paper-shadow/production/raw-export/cloud-pilot=false，`production_effect=none`、
+`broker_action=none`。

@@ -14,46 +14,59 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: data governance + architecture：等待 TRADING-2480/2481
-  requirement_refs: []
+  next_owner: TRADING-2483 owner：从 2482 ordinary-pushed exact main 消费本 DQ/PIT identity；project
+    owner：外部平台 token 仍需独立授权
+  requirement_refs:
+  - docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 冻结 chain/quote/OI/Greeks/calendar/mapping/signal
-    chronology、engine、cache key、manual evidence completeness 与 fail-closed reason
-    codes；不得放宽现有 DQ/PIT。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md`。offline
+    evaluator/policy 已从 exact base `f1260cd7...` 继承 2481 shared contract/policy，冻结
+    15 个 chain/quote/OI/Greeks/calendar/mapping/chronology/engine/cache/evidence checks；不重定义
+    envelope，不执行 external platform action。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
-      collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
+    text: 32 focused、60 shared-adjacent、239 compatibility/governance PASS；local cache
+      DQ 与 option-event DQ 分轴，UNKNOWN 不得 PASS，canonical cache/report replay 与 tamper/negative/PIT/property
+      coverage 完整；system flow 已更新；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 4c887a0cfb306718e03ae951fe44b19794bab1985af2655581ad51194e7d4651
+  row_sha256: 2d78074e84888c296385093144640e9f7c4b255c39b297fef9e0a9cd94da7759
   cell_count: 8
   all_cells:
   - TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
   - Data governance / option chain, quote, OI, Greeks, chronology and evidence identity
   - P0
-  - PROPOSED
-  - data governance + architecture：等待 TRADING-2480/2481
-  - 冻结 chain/quote/OI/Greeks/calendar/mapping/signal chronology、engine、cache key、manual
-    evidence completeness 与 fail-closed reason codes；不得放宽现有 DQ/PIT。
-  - stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
-    collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
-  - provider raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。
+  - BASELINE_DONE
+  - TRADING-2483 owner：从 2482 ordinary-pushed exact main 消费本 DQ/PIT identity；project
+    owner：外部平台 token 仍需独立授权
+  - 详见 `docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md`。offline
+    evaluator/policy 已从 exact base `f1260cd7...` 继承 2481 shared contract/policy，冻结
+    15 个 chain/quote/OI/Greeks/calendar/mapping/chronology/engine/cache/evidence checks；不重定义
+    envelope，不执行 external platform action。
+  - 32 focused、60 shared-adjacent、239 compatibility/governance PASS；local cache DQ
+    与 option-event DQ 分轴，UNKNOWN 不得 PASS，canonical cache/report replay 与 tamper/negative/PIT/property
+    coverage 完整；system flow 已更新；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
+  - 2026-08-02：offline baseline 完成，policy SHA-256=`1e0128c4...b2358`；provider raw
+    checksum 不可得时显式 `NOT_EVALUATED`，不伪造 lineage；Owner external token 仍 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；`production_effect=none`、`broker_action=none`。
   raw_line: '|TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1|Data governance
-    / option chain, quote, OI, Greeks, chronology and evidence identity|P0|PROPOSED|data
-    governance + architecture：等待 TRADING-2480/2481|冻结 chain/quote/OI/Greeks/calendar/mapping/signal
-    chronology、engine、cache key、manual evidence completeness 与 fail-closed reason
-    codes；不得放宽现有 DQ/PIT。|stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
-    collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。|provider
-    raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。|'
+    / option chain, quote, OI, Greeks, chronology and evidence identity|P0|BASELINE_DONE|TRADING-2483
+    owner：从 2482 ordinary-pushed exact main 消费本 DQ/PIT identity；project owner：外部平台
+    token 仍需独立授权|详见 `docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md`。offline
+    evaluator/policy 已从 exact base `f1260cd7...` 继承 2481 shared contract/policy，冻结
+    15 个 chain/quote/OI/Greeks/calendar/mapping/chronology/engine/cache/evidence checks；不重定义
+    envelope，不执行 external platform action。|32 focused、60 shared-adjacent、239 compatibility/governance
+    PASS；local cache DQ 与 option-event DQ 分轴，UNKNOWN 不得 PASS，canonical cache/report
+    replay 与 tamper/negative/PIT/property coverage 完整；system flow 已更新；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。|2026-08-02：offline
+    baseline 完成，policy SHA-256=`1e0128c4...b2358`；provider raw checksum 不可得时显式 `NOT_EVALUATED`，不伪造
+    lineage；Owner external token 仍 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；`production_effect=none`、`broker_action=none`。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-4c887a0cfb306718e03ae951
+  event_id: legacy-import-2d78074e84888c2963850931
   task_id: TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -63,30 +76,38 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: data governance + architecture：等待 TRADING-2480/2481
-    notes: provider raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。
+    next_owner: TRADING-2483 owner：从 2482 ordinary-pushed exact main 消费本 DQ/PIT identity；project
+      owner：外部平台 token 仍需独立授权
+    notes: 2026-08-02：offline baseline 完成，policy SHA-256=`1e0128c4...b2358`；provider
+      raw checksum 不可得时显式 `NOT_EVALUATED`，不伪造 lineage；Owner external token 仍 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:4c887a0cfb306718e03ae951fe44b19794bab1985af2655581ad51194e7d4651
+  - sha256:2d78074e84888c296385093144640e9f7c4b255c39b297fef9e0a9cd94da7759
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
   - Data governance / option chain, quote, OI, Greeks, chronology and evidence identity
   - P0
-  - PROPOSED
-  - data governance + architecture：等待 TRADING-2480/2481
-  - 冻结 chain/quote/OI/Greeks/calendar/mapping/signal chronology、engine、cache key、manual
-    evidence completeness 与 fail-closed reason codes；不得放宽现有 DQ/PIT。
-  - stale/missing/crossed/zero quote、daily freshness、same-bar/fill-forward、calendar/mapping/cache
-    collision、engine/evidence identity 有 negative/PIT/property tests；更新 system flow；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
-  - provider raw checksum 不可得时显式记录，不伪造本地 raw-data lineage。
-  docs_links: []
+  - BASELINE_DONE
+  - TRADING-2483 owner：从 2482 ordinary-pushed exact main 消费本 DQ/PIT identity；project
+    owner：外部平台 token 仍需独立授权
+  - 详见 `docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md`。offline
+    evaluator/policy 已从 exact base `f1260cd7...` 继承 2481 shared contract/policy，冻结
+    15 个 chain/quote/OI/Greeks/calendar/mapping/chronology/engine/cache/evidence checks；不重定义
+    envelope，不执行 external platform action。
+  - 32 focused、60 shared-adjacent、239 compatibility/governance PASS；local cache DQ
+    与 option-event DQ 分轴，UNKNOWN 不得 PASS，canonical cache/report replay 与 tamper/negative/PIT/property
+    coverage 完整；system flow 已更新；退出=`QQQ_OPTIONS_DQ_PIT_IDENTITY_V1_FROZEN`。
+  - 2026-08-02：offline baseline 完成，policy SHA-256=`1e0128c4...b2358`；provider raw
+    checksum 不可得时显式 `NOT_EVALUATED`，不伪造 lineage；Owner external token 仍 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md
   terminal: false
-  raw_row_sha256: 4c887a0cfb306718e03ae951fe44b19794bab1985af2655581ad51194e7d4651
+  raw_row_sha256: 2d78074e84888c296385093144640e9f7c4b255c39b297fef9e0a9cd94da7759
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: d3a130fcf0f1f36dae81a5b8d750741a8390eda9edc15e04538a0af3c6d1f979
+fragment_checksum: d2bff6bcfc11155fba8f4e3d5b23c314bdfdf854b7bcf605859c95db306b9d64
