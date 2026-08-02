@@ -8,7 +8,7 @@ module_specific_overlap_count: 0
 test_orphan_count: 0
 test_specific_overlap_count: 0
 aggregate_target_count: 3
-aggregate_fragment_count: 44
+aggregate_fragment_count: 46
 dependency_gate:
   policy_id: arch_004c_platform_dependency_policy
   status: PASS

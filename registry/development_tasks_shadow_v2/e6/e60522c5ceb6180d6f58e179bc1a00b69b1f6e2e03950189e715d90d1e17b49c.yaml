@@ -1,0 +1,116 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  task_id_sha256: e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c
+task_record:
+  task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  title: null
+  domain: Publishing & Experience / reader-first status explanation consumer and page
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas renderer coordinator：完成正式门禁、ordinary push/cleanup 并释放 2489；Project
+    owner：在 canonical page 复核视觉层级与低金融知识读者可读性
+  requirement_refs:
+  - docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 8 个节点逐一绑定 validated explanation record；value states 显式区分；五文件 deterministic；原
+      cited-query response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static
+      DOM、compatibility 与正式五级 PASS。Owner visual review 独立，不由自动化伪写；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 2a16c14972ce8264039d3ab57038ce7c450eebfa4b03ae07945543d5a9b85c6c
+  cell_count: 8
+  all_cells:
+  - TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  - Publishing & Experience / reader-first status explanation consumer and page
+  - P1
+  - BASELINE_DONE
+  - Atlas renderer coordinator：完成正式门禁、ordinary push/cleanup 并释放 2489；Project owner：在
+    canonical page 复核视觉层级与低金融知识读者可读性
+  - 详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。
+  - 8 个节点逐一绑定 validated explanation record；value states 显式区分；五文件 deterministic；原 cited-query
+    response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static DOM、compatibility
+    与正式五级 PASS。Owner visual review 独立，不由自动化伪写；`production_effect=none`、`broker_action=none`。
+  - 2026-08-03：typed renderer focused=`9 passed`，Ruff/strict mypy PASS；canonical `index/responses/status-validation/status-sidecar/validation`
+    连续两次 SHA/size byte-identical，sidecar validation=PASS。in-app browser 对 `file://`
+    返回 `NOT_EXECUTED_URL_POLICY`，未绕过；`owner_manual_visual_pass=PENDING`。本状态只表示 engineering
+    baseline 完成，不表示策略 PASS、投资建议、生产批准或人工视觉验收。
+  raw_line: '|TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1|Publishing
+    & Experience / reader-first status explanation consumer and page|P1|BASELINE_DONE|Atlas
+    renderer coordinator：完成正式门禁、ordinary push/cleanup 并释放 2489；Project owner：在 canonical
+    page 复核视觉层级与低金融知识读者可读性|详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。|8 个节点逐一绑定 validated explanation record；value
+    states 显式区分；五文件 deterministic；原 cited-query response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static
+    DOM、compatibility 与正式五级 PASS。Owner visual review 独立，不由自动化伪写；`production_effect=none`、`broker_action=none`。|2026-08-03：typed
+    renderer focused=`9 passed`，Ruff/strict mypy PASS；canonical `index/responses/status-validation/status-sidecar/validation`
+    连续两次 SHA/size byte-identical，sidecar validation=PASS。in-app browser 对 `file://`
+    返回 `NOT_EXECUTED_URL_POLICY`，未绕过；`owner_manual_visual_pass=PENDING`。本状态只表示 engineering
+    baseline 完成，不表示策略 PASS、投资建议、生产批准或人工视觉验收。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2a16c14972ce8264039d3ab5
+  task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas renderer coordinator：完成正式门禁、ordinary push/cleanup 并释放 2489；Project
+      owner：在 canonical page 复核视觉层级与低金融知识读者可读性
+    notes: 2026-08-03：typed renderer focused=`9 passed`，Ruff/strict mypy PASS；canonical
+      `index/responses/status-validation/status-sidecar/validation` 连续两次 SHA/size
+      byte-identical，sidecar validation=PASS。in-app browser 对 `file://` 返回 `NOT_EXECUTED_URL_POLICY`，未绕过；`owner_manual_visual_pass=PENDING`。本状态只表示
+      engineering baseline 完成，不表示策略 PASS、投资建议、生产批准或人工视觉验收。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:2a16c14972ce8264039d3ab57038ce7c450eebfa4b03ae07945543d5a9b85c6c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  - Publishing & Experience / reader-first status explanation consumer and page
+  - P1
+  - BASELINE_DONE
+  - Atlas renderer coordinator：完成正式门禁、ordinary push/cleanup 并释放 2489；Project owner：在
+    canonical page 复核视觉层级与低金融知识读者可读性
+  - 详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。
+  - 8 个节点逐一绑定 validated explanation record；value states 显式区分；五文件 deterministic；原 cited-query
+    response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static DOM、compatibility
+    与正式五级 PASS。Owner visual review 独立，不由自动化伪写；`production_effect=none`、`broker_action=none`。
+  - 2026-08-03：typed renderer focused=`9 passed`，Ruff/strict mypy PASS；canonical `index/responses/status-validation/status-sidecar/validation`
+    连续两次 SHA/size byte-identical，sidecar validation=PASS。in-app browser 对 `file://`
+    返回 `NOT_EXECUTED_URL_POLICY`，未绕过；`owner_manual_visual_pass=PENDING`。本状态只表示 engineering
+    baseline 完成，不表示策略 PASS、投资建议、生产批准或人工视觉验收。
+  docs_links:
+  - docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+  terminal: false
+  raw_row_sha256: 2a16c14972ce8264039d3ab57038ce7c450eebfa4b03ae07945543d5a9b85c6c
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 3a57bb4d6d9fee2920e50ca2a1c99eedd8b33773b91940f6070f3a31aeaf52c7

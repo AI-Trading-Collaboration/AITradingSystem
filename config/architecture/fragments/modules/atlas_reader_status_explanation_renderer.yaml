@@ -1,0 +1,16 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_reader_status_explanation_renderer
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/cited_query_renderer.py
+public_contracts:
+  - AtlasCitedQueryRenderedArtifact
+  - AtlasCitedQueryShowcase
+  - build_cited_query_showcase
+  - cited_query_responses_json_bytes
+  - cited_query_validations_json_bytes
+  - render_cited_query_html
+  - status_explanation_validation_json_bytes
+  - write_cited_query_artifacts
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -160,6 +160,17 @@ OWNER_DECISION_PENDING`；authority conflict、lineage/status/fingerprint/source
 primary start 保持 `2021-02-22`；本合同波不重建 HTML，后继 renderer consumer 必须等待 Owner
 接受 explanation authority 后另行启动。
 
+TRADING-2496 已把上述 sidecar 接入 canonical Citation-first 页面。每个流程节点现在固定按
+“一句话结论 → 正在做什么 → 已完成什么 → 还缺什么 → 为什么重要 → 什么会改变当前状态 →
+由谁负责/下一步 → 查看审计依据”展示；普通语言事实来自 typed explanation record，technical refs、
+authority bindings、checked scopes/IDs 与 source refs 默认折叠。`PRESENT` 与
+`NOT_RECORDED / NOT_APPLICABLE / NOT_YET_DUE / SOURCE_UNAVAILABLE /
+OWNER_DECISION_PENDING` 具有不同 badge，未知项不会被默认文案伪装为已知事实。writer 在原
+`index.html / responses.json / validation.json` 之外新增 canonical
+`status_explanations.json / status_explanation_validation.json`，并在渲染和写出前复验 snapshot、
+bundle、policy、stage、status 与 cited-query validation binding。该 consumer 不改变 2495 状态，
+不引入 `TRADING-2481..2493`，也不执行 DQ、回测、投资结论、生产或 broker 动作。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -213,7 +224,8 @@ flowchart LR
     XAUTH["TRADING-2495 explanation authority policy<br/>typed facts + explicit missing states"] --> XPROJ["Status explanation sidecar projection<br/>8 stages + exact target/status/source binding"]
     SNAP --> XPROJ
     XPROJ --> XVAL["Independent explanation validation<br/>fingerprint + lineage + anti-fabrication"]
-    XVAL -.-> XHANDOFF["TRADING-2496 renderer handoff<br/>blocked until Owner accepts authority"]
+    XVAL --> XRENDER["TRADING-2496 reader-first renderer<br/>8 stages / plain facts / explicit missing states"]
+    XRENDER --> XART["Deterministic static page + 4 JSON artifacts<br/>technical authority folded under audit disclosure"]
     HPWEB -.-> HSTOP["Review artifact remains immutable<br/>no automatic projection or investment verdict"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
@@ -226,6 +238,7 @@ flowchart LR
     HPWEB -.-> NONE
     HCAN -.-> NONE
     XVAL -.-> NONE
+    XART -.-> NONE
 ```
 
 ARCH-005 S2～S4 在 S0/S1 shadow registry 之后新增非 cutover 的并行研发控制链。

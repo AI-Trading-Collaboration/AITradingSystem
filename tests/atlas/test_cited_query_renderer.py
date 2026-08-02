@@ -18,6 +18,7 @@ from ai_trading_system.atlas.snapshot_diff import build_snapshot_diff
 from ai_trading_system.contracts import (
     CitedQueryQuestionId,
     StrategyResearchExplorerSnapshot,
+    StrategyResearchStatusExplanationBundle,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -104,17 +105,23 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "证据有限",
         "已验证",
         "待人工复核",
-        "状态依据台账",
-        "为什么是这个状态",
+        "状态审计附录",
+        "供需要追溯的读者",
         "怎样展开",
-        "展开节点依据",
-        "收起节点依据",
-        "这个节点现在意味着什么",
-        "状态为什么是这样",
-        "可以确认",
-        "不能推出",
-        "下一合法动作",
-        "不支持的问题必须通过独立任务扩展合同",
+        "展开读者说明",
+        "收起读者说明",
+        "一句话结论",
+        "正在做什么",
+        "已完成什么",
+        "还缺什么",
+        "为什么重要",
+        "什么会改变当前状态",
+        "由谁负责，以及下一步怎么读",
+        "查看审计依据",
+        "已有依据",
+        "尚未登记",
+        "不适用于本页",
+        "先读普通语言结论；需要核对时再展开 exact citations 与 lineage",
         "当前覆盖范围内的全部研究结果",
         "RESULT LEDGER · CANONICAL SNAPSHOT ONLY",
         "这是 Atlas V1.3 的代表性主线 + 五份已审阅历史记录",
@@ -129,8 +136,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "来源原始状态",
         "为什么这样映射",
         "工程 PASS 也不等于 strategy PASS",
-        "CANONICAL_SNAPSHOT_FIELD",
-        "CANONICAL_SNAPSHOT_RELATION",
+        "NODE_RAW_STATUS",
+        "RESULT_DISPLAY_STATUS",
+        "CANONICAL_NODE",
+        "CANONICAL_RESULT",
         "INDEPENDENT_VALIDATION",
         "INDEPENDENT_VALIDATION_SET",
         "PAGE_EXECUTION_BOUNDARY",
@@ -157,8 +166,16 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert html.count('class="flow-stage-shell"') == 8
     assert html.count('data-drilldown-stage="') == 8
     assert html.count('class="stage-drilldown"') == 8
-    assert html.count('class="drilldown-grid"') == 8
-    assert html.count('class="drilldown-evidence"') == 8
+    assert html.count('class="reader-explanation"') == 8
+    assert html.count('class="reader-conclusion"') == 8
+    assert html.count('class="reader-audit"') == 8
+    assert html.count('data-reader-section="conclusion"') == 8
+    assert html.count('data-reader-section="current_work"') == 8
+    assert html.count('data-reader-section="completed"') == 8
+    assert html.count('data-reader-section="remaining_gaps"') == 8
+    assert html.count('data-reader-section="reader_impact"') == 8
+    assert html.count('data-reader-section="what_changes"') == 8
+    assert html.count('data-reader-section="owner_and_next"') == 8
     assert html.count('aria-current="step"') == 1
     assert html.count(' open aria-current="step"') == 1
     assert (
@@ -168,21 +185,45 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         'data-drilldown-stage="CITATION_FIRST_QUERY" open aria-current="step">'
     ) in html
     assert html.count('data-progress-status="NOT_EXECUTED_BY_PAGE"') == 2
-    assert html.count('data-progress-status="IN_PROGRESS"') == 1
+    assert html.count('data-progress-status="RUNNING"') == 1
     assert html.count('data-progress-status="LIMITED"') == 2
     assert html.count('data-progress-status="VALIDATED"') == 2
     assert html.count('data-progress-status="PENDING_OWNER_REVIEW"') == 1
     assert html.count('class="provenance-item"') == 8
     assert html.count('data-provenance-stage="') == 8
     assert (
-        'data-provenance-stage="RESEARCH_MAINLINE" '
-        'data-provenance-source="CANONICAL_SNAPSHOT_FIELD"'
+        'data-provenance-stage="RESEARCH_MAINLINE" data-provenance-source="NODE_RAW_STATUS"'
     ) in html
-    assert "raw_status=RUNNING" in html
-    assert "display_status=LIMITED" in html
+    assert "当前受审阅记录没有把 RUNNING 拆解为一个具体正在执行的研究子任务" in html
+    assert "真实样本外、event-risk 与 forward maturity 证据仍不足" in html
     assert "attr-restart-oos-limits-expansion" in html
-    for response in showcase.responses:
-        assert f"response_id={response.response_id}" in html
+    for excluded_task_number in range(2481, 2494):
+        assert f"TRADING-{excluded_task_number}" not in html
+    for legacy_primary_label in (
+        "状态为什么是这样",
+        "可以确认",
+        "不能推出",
+        "下一合法动作",
+    ):
+        assert f"<h4>{legacy_primary_label}</h4>" not in html
+    first_reader_card = html[
+        html.index('<div class="reader-explanation">') : html.index(
+            "</div></details></div>", html.index('<div class="reader-explanation">')
+        )
+    ]
+    reader_order = (
+        'data-reader-section="conclusion"',
+        'data-reader-section="current_work"',
+        'data-reader-section="completed"',
+        'data-reader-section="remaining_gaps"',
+        'data-reader-section="reader_impact"',
+        'data-reader-section="what_changes"',
+        'data-reader-section="owner_and_next"',
+        'class="reader-audit"',
+    )
+    assert tuple(first_reader_card.index(item) for item in reader_order) == tuple(
+        sorted(first_reader_card.index(item) for item in reader_order)
+    )
     results = cast(list[dict[str, Any]], showcase.snapshot_payload["results"])
     attributions = cast(list[dict[str, Any]], showcase.snapshot_payload["attributions"])
     assert html.count('data-historical-record="') == len(results) == 13
@@ -261,7 +302,7 @@ def test_flow_status_fails_closed_on_unreviewed_research_state() -> None:
     )
     with pytest.raises(
         ValueError,
-        match="ATLAS_CITED_QUERY_FLOW_STATUS_RESEARCH_STATE_INVALID:PASS",
+        match="ATLAS_CITED_QUERY_SNAPSHOT_CONTRACT_INVALID",
     ):
         render_cited_query_html(invalid)
 
@@ -289,7 +330,7 @@ def test_flow_status_fails_closed_on_attribution_result_mismatch() -> None:
     )
     with pytest.raises(
         ValueError,
-        match="ATLAS_CITED_QUERY_FLOW_STATUS_ATTRIBUTION_RESULT_MISMATCH",
+        match="ATLAS_CITED_QUERY_SNAPSHOT_CONTRACT_INVALID",
     ):
         render_cited_query_html(invalid)
 
@@ -323,7 +364,41 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     showcase = _showcase()
     first = write_cited_query_artifacts(showcase, tmp_path / "first")
     second = write_cited_query_artifacts(showcase, tmp_path / "second")
+    assert tuple(Path(item.path).name for item in first) == (
+        "index.html",
+        "responses.json",
+        "status_explanation_validation.json",
+        "status_explanations.json",
+        "validation.json",
+    )
     assert [item.sha256 for item in first] == [item.sha256 for item in second]
     assert [item.size_bytes for item in first] == [item.size_bytes for item in second]
-    for name in ("index.html", "responses.json", "validation.json"):
+    for name in (
+        "index.html",
+        "responses.json",
+        "status_explanation_validation.json",
+        "status_explanations.json",
+        "validation.json",
+    ):
         assert (tmp_path / "first" / name).read_bytes() == (tmp_path / "second" / name).read_bytes()
+    sidecar_bytes = (tmp_path / "first" / "status_explanations.json").read_bytes()
+    assert sidecar_bytes == showcase.status_explanations.canonical_bytes
+    replayed = StrategyResearchStatusExplanationBundle.from_json_bytes(sidecar_bytes)
+    assert replayed.canonical_bytes == sidecar_bytes
+    assert replayed.content_sha256 == showcase.status_explanations.content_sha256
+
+
+def test_renderer_rejects_status_explanation_validation_drift() -> None:
+    showcase = _showcase()
+    invalid = replace(
+        showcase,
+        status_explanation_validation=replace(
+            showcase.status_explanation_validation,
+            bundle_sha256="0" * 64,
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_STATUS_EXPLANATION_BINDING_INVALID",
+    ):
+        render_cited_query_html(invalid)

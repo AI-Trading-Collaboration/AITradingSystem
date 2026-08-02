@@ -2485,7 +2485,91 @@ TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_NEW_SOURCE_PATHS = frozenset(
         "tests/test_strategy_research_status_explanation_contract.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION = (
+    "phase_trading_2496_atlas_reader_status_explanation_renderer_v1"
+)
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_BASE_COMMIT = (
+    "d437ae7cf059f58a5cdd14cb61849166dd29b3b9"
+)
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_BASELINE_GIT_BLOB = (
+    "6cf375ab7c55160eaef1c49c25b5848948262a95"
+)
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_BYTE_COUNT = 2_857_480
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_SHA256 = (
+    "1033f1f97b1da8634cc4ac60847285fe12118b0d29ba86d5fa2aa82fae970152"
+)
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {
+        "docs/artifact_catalog.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        (
+            "registry/development_tasks_shadow/active/16/"
+            "1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/2c/"
+            "2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/76/"
+            "76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/8c/"
+            "8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/98/"
+            "989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/d8/"
+            "d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/e6/"
+            "e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/e6/"
+            "e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/fe/"
+            "fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml"
+        ),
+        "src/ai_trading_system/atlas/cited_query_renderer.py",
+        "tests/atlas/test_cited_query_renderer.py",
+        "tests/atlas/test_historical_projection_review.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
+TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/atlas_reader_status_explanation_page.yaml",
+        "config/architecture/fragments/modules/atlas_reader_status_explanation_renderer.yaml",
+        "docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md",
+        (
+            "registry/development_tasks_shadow/active/e6/"
+            "e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/e6/"
+            "e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml"
+        ),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -4484,6 +4568,26 @@ def _trading_2495_atlas_reader_status_explanation_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2496_atlas_reader_status_explanation_renderer_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == (TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_BASELINE_GIT_BLOB)
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -6496,6 +6600,30 @@ def _assert_trading_2495_atlas_reader_status_explanation_historical_prefix_immut
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"\n{TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2496_atlas_reader_status_explanation_renderer_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2496 Atlas reader renderer historical prefix differs from "
+        "immutable TRADING-2495 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"\n{TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION}:\n".encode()
+    )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -9097,6 +9225,41 @@ def _trading_2495_atlas_reader_status_explanation_all_current_authority_paths() 
 
 
 @cache
+def _trading_2496_atlas_reader_status_explanation_renderer_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2496_atlas_reader_status_explanation_renderer_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2496_atlas_reader_status_explanation_renderer_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    ]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2496_atlas_reader_status_explanation_renderer_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    ]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2496_atlas_reader_status_explanation_renderer_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2495_atlas_reader_status_explanation_all_current_authority_paths()
+        | _trading_2496_atlas_reader_status_explanation_renderer_superseded_live_source_paths()
+        | _trading_2496_atlas_reader_status_explanation_renderer_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -10408,6 +10571,15 @@ def _trading_2495_atlas_reader_status_explanation_prior_active_source_mismatches
     str
 ]:
     return _latest_active_source_mismatches(TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION)
+
+
+@cache
+def _trading_2496_atlas_reader_status_explanation_renderer_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    )
 
 
 def _trading_2470_prior_hash_authority_paths(
@@ -24782,7 +24954,9 @@ def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION
+    assert next(reversed(baseline)) == (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    )
     phase = baseline[TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION]
     assert phase["schema_version"] == (
         "trading_2487_qqq_options_cash_premium_settlement_accounting_compatibility.v1"
@@ -24943,7 +25117,9 @@ def test_trading_2494_atlas_historical_projection_has_2495_successor_authority()
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION
+    assert next(reversed(baseline)) == (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    )
     phase = baseline[TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION]
     assert phase["schema_version"] == (
         "trading_2494_atlas_historical_canonical_projection_compatibility.v1"
@@ -25078,7 +25254,9 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION
+    assert next(reversed(baseline)) == (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    )
     phase = baseline[TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION]
     assert phase["schema_version"] == (
         "trading_2495_atlas_reader_status_explanation_compatibility.v1"
@@ -25136,8 +25314,13 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    successor_paths = (
+        _trading_2496_atlas_reader_status_explanation_renderer_superseded_live_source_paths()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_paths:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -25194,6 +25377,157 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
     tampered[TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2495_atlas_reader_status_explanation_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2496_atlas_reader_renderer_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2496_atlas_reader_status_explanation_renderer_base_baseline_blob()
+    _assert_trading_2496_atlas_reader_status_explanation_renderer_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
+    )
+    phase = baseline[TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2496_atlas_reader_status_explanation_renderer_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == ("TRADING-2496-ATLAS-READER-STATUS-EXPLANATION-RENDERER-V1")
+    assert phase["task_ids"] == ["TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1"]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2496:2026-08-03:implement_reader_first_explanation_renderer_v1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": (TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_BASELINE_GIT_BLOB),
+        "raw_byte_count": (
+            TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (
+            TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": (
+            TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2496_atlas_reader_status_explanation_renderer_prior_active_source_mismatches()
+        | TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_NEW_SOURCE_PATHS
+    ) - TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": ("TRADING-2496-ATLAS-READER-STATUS-EXPLANATION-RENDERER-V1"),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION),
+        "current_hash_authority": (
+            f"{TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 961,
+        "active_task_count": 456,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["reader_renderer"] == {
+        "sidecar_schema": "strategy_research_status_explanation.v1",
+        "validation_schema": "atlas_status_explanation_projection_validation.v1",
+        "policy_sha256": ("53264bb92fe5f0125990d9f936bced00a0e0a1a7c338d90acc28adbf86b11f10"),
+        "stage_count": 8,
+        "reader_section_order": [
+            "CONCLUSION",
+            "CURRENT_WORK",
+            "COMPLETED_MILESTONES",
+            "REMAINING_GAPS",
+            "READER_IMPACT",
+            "TRANSITION_CONDITIONS",
+            "RESPONSIBLE_ROLE_AND_NEXT_ACTION",
+            "AUDIT_DISCLOSURE",
+        ],
+        "artifact_count": 5,
+        "index_html_sha256": ("436b7da54bba188c643d79660451f9e4350e7d88f7d5b8c9dd0bb5977b9e6603"),
+        "responses_json_sha256": (
+            "c9eee6e0e585d9f109cbb2fd36d99a42dfa48368dcd20d8deb20c24a612c4e13"
+        ),
+        "validation_json_sha256": (
+            "8136aeecc56f306fd4453021de88b5cac01dfd1e06436cf3ca56b28c91605dd1"
+        ),
+        "status_explanations_json_sha256": (
+            "625c7a77e1fb0085dbde0a8180a3372c4e9898d45a543640fe19e21eaa52972b"
+        ),
+        "status_explanation_validation_json_sha256": (
+            "ec562ea470c4a293bf3ec581bcbf69eb3712534eaa21ad2d6601b3f176356cdc"
+        ),
+        "sidecar_validation_status": "PASS",
+        "double_build_byte_identical": True,
+        "automatic_visual_status": "NOT_EXECUTED_URL_POLICY",
+        "owner_manual_visual_status": "PENDING_OWNER_REVIEW",
+        "primary_research_start": "2021-02-22",
+        "excluded_task_range": "TRADING-2481..TRADING-2493",
+    }
+    validation = phase["validation"]
+    assert validation["focused_renderer"] == "PASS_9_TESTS"
+    assert all(
+        value == "PENDING_FINAL_TREE"
+        or str(value).startswith("PASS_")
+        or str(value).startswith("FAIL_")
+        for value in validation.values()
+    )
+    assert phase["safety"] == {
+        "facts_inferred_from_status_or_prose": False,
+        "status_transition_executed": False,
+        "cited_query_contract_redefined": False,
+        "qqq_options_2481_through_2493_projected": False,
+        "investment_conclusion_generated": False,
+        "data_quality_executed": False,
+        "model_or_backtest_executed": False,
+        "external_platform_action": "none",
+        "known_unrelated_bytes_read": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2496_atlas_reader_status_explanation_renderer_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

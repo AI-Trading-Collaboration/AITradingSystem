@@ -264,7 +264,7 @@ def test_forbidden_roadmap_policy_cannot_be_removed(
         _build(monkeypatch, tmp_path, policy_mutator=remove)
 
 
-def test_local_canonical_page_uses_2494_successor_identity_when_available() -> None:
+def test_local_canonical_page_uses_2496_successor_identity_when_available() -> None:
     canonical_policy = _policy()["canonical_page"]
     assert isinstance(canonical_policy, dict)
     repository_path = canonical_policy["repository_path"]
@@ -276,9 +276,25 @@ def test_local_canonical_page_uses_2494_successor_identity_when_available() -> N
     if not canonical.is_file():
         pytest.skip("local canonical ignored artifact not hydrated")
     payload = canonical.read_bytes()
-    assert len(payload) == 114555
+    assert len(payload) == 139118
     assert sha256(payload).hexdigest() == (
-        "d29a3c3363c6bdbb443c33d8194f74ce261d283d4900f91439794da4e358a365"
+        "436b7da54bba188c643d79660451f9e4350e7d88f7d5b8c9dd0bb5977b9e6603"
     )
     assert payload.count(b'data-historical-record="true"') == 5
     assert all(f"TRADING-{task_id}".encode() not in payload for task_id in range(2481, 2494))
+    expected_sidecars = {
+        "status_explanations.json": (
+            27641,
+            "625c7a77e1fb0085dbde0a8180a3372c4e9898d45a543640fe19e21eaa52972b",
+        ),
+        "status_explanation_validation.json": (
+            684,
+            "ec562ea470c4a293bf3ec581bcbf69eb3712534eaa21ad2d6601b3f176356cdc",
+        ),
+    }
+    for name, (expected_size, expected_sha256) in expected_sidecars.items():
+        sidecar = canonical.parent / name
+        assert sidecar.is_file()
+        sidecar_payload = sidecar.read_bytes()
+        assert len(sidecar_payload) == expected_size
+        assert sha256(sidecar_payload).hexdigest() == expected_sha256
