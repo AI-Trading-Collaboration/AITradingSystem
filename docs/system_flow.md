@@ -7064,3 +7064,38 @@ contract selection、order/fill engine、accounting 或 cloud backtest。quote-a
 继续为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；external Owner token 仍未授予，固定 research-only、
 promotion/paper-shadow/production/raw-export/cloud-pilot=false，`production_effect=none`、
 `broker_action=none`。
+
+## TRADING-2483 QQQ Options Signal / Run Manifest Export V1
+
+`config/research/qqq_options_signal_export_v1.yaml` 在 2481 shared contract 与 2482 DQ/PIT identity 之后，
+冻结一条 offline、derived-only 的 signal package 路径。`qqq_options_research.signal_package` 只接收已经
+规范化为 `LONG_CALL / LONG_PUT / FLAT` 的 typed daily signal、对应 canonical normalized-source bytes 和
+canonical `aits validate-data` execution receipt path/as-of/policy/input-role set；builder 内部调用
+`verify_data_quality_execution_receipt()`，重新验证 content-addressed receipt、report、policy、validator
+sources、calendar、invocation 和全部 bound input bytes，并从 `VerifiedDataQualityPreflight` 派生 local DQ
+declaration。调用者自报 `PASS`、任意 report bytes、semantic FAIL/PASS_WITH_WARNINGS/UNKNOWN、scope/as-of/
+hash/window mismatch 均不能进入 package。它不从旧 ETF CSV 的 `date` 或 `bullish / bearish / neutral`
+推断 source cutoff、effective session 或 options direction。ETF direction mapping 继续为
+`UNKNOWN_REQUIRES_OWNER_REVIEW`，任何 mapping table 或非 2481 signal enum 都 fail closed。
+
+每个 signal 必须绑定 reviewed XNYS session：`source_data_cutoff_utc` 不早于当日 regular/partial close，
+generation 仍在同一 exchange-local session，`earliest_effective_session` 是后继首个有效 session；weekend、
+regular holiday 与 reviewed special closure 不能按 calendar day 平滑。evaluated range 内每个有效 session
+必须恰有一条记录，`FLAT` 也必须显式存在；duplicate、missing、extra、non-session 或 range drift 均拒绝。
+每条输出复用 2481 `DailySignalRecord.seal()`，随后生成 sorted `signal_index.json`，并把其 exact-byte
+SHA-256 写入 2481 `RunManifestRecord.signal_artifact_sha256`。`initial_cash_usd` 是 run-required positive
+Decimal，不在全局 policy 硬编码。primary package 的 requested/evaluated start 固定为项目默认
+`2021-02-22`；`2022-12-01` 明确不是默认。其他 start 只能使用 exact policy 中登记的 reviewed
+`PROXY / SENSITIVITY / STRESS` authority，并保留 Owner decision、rationale、DQ caveat 与 review condition；
+当前 allowlist 为空，因此 baseline 对所有 non-primary start fail closed。
+
+最终 package 固定为 `daily_signals/<session>.json`、`signal_index.json`、`run_manifest.json` 与
+`package_receipt.json`。receipt 显式绑定 source artifact、local DQ report、calendar、repository code、2481
+contract/shared policy、2482 DQ/PIT policy、2483 export policy 和全部 artifact checksum；existing directory
+只有 exact-byte inventory 一致时才 idempotent PASS，缺失、额外或 tampered bytes 不覆盖。signal/run 的
+`dq_status=PASS` 仅表示 local source package gate，`pit_status=PASS` 仅表示 signal chronology；receipt 同时
+固定 `option_event_dq_status=NOT_EVALUATED` 与 `option_event_pit_status=NOT_EVALUATED`，不得冒充后续
+selection/fill PASS。当前 engine identity=`UNKNOWN`、evidence admission=`CAPABILITY_OR_LICENSE_BLOCKED`；
+本节点不访问 QuantConnect、不含 raw options rows、不选约、不执行订单/成交/会计/收益计算，固定
+research-only、promotion/paper-shadow/production/raw-export/strategy-execution/cloud-pilot=false，
+`production_effect=none`、`broker_action=none`。

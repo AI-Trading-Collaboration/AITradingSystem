@@ -1,0 +1,60 @@
+schema_version: qqq_options_signal_export_policy.v1
+policy_id: qqq_options_signal_export_v1
+policy_version: 1.0.0
+status: REVIEWED_OFFLINE_BASELINE
+owner: project_owner_and_research_engineering
+owner_instruction: owner_instruction:2026-08-02:proceed_with_offline_qqq_options_engineering
+rationale: Freeze an immutable and replayable normalized daily-signal package before any QuantConnect adapter, option selection, execution, accounting, or return calculation is implemented.
+intended_effect: A downstream consumer can verify the exact signal, source, local data-quality, calendar, policy, contract, and code identity without inferring point-in-time facts from filenames or dates.
+validation_plan: Run canonical replay, checksum, calendar, exact-coverage, lag, tamper, idempotence, and fail-closed mapping tests, followed by governed repository validation tiers.
+review_condition: Review before enabling an ETF direction mapping, changing signal lag or coverage, changing package layout, admitting external evidence, or adding any option selection or execution behavior.
+expiry_condition: Supersede only through an owner-reviewed versioned policy and package migration with backward-compatibility evidence.
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+calendar_id: XNYS
+calendar_policy_id: us_equity_special_closure_registry
+calendar_policy_version: 1.0.0
+calendar_policy_sha256: c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4
+input_mode: PRE_NORMALIZED_ONLY
+approved_signal_values:
+  - FLAT
+  - LONG_CALL
+  - LONG_PUT
+etf_signal_mapping_status: UNKNOWN_REQUIRES_OWNER_REVIEW
+etf_signal_mapping_allowed: false
+signal_lag_sessions: 1
+effective_session_rule: NEXT_VALID_US_EQUITY_SESSION
+coverage_rule: EXACTLY_ONE_SIGNAL_PER_EVALUATED_SESSION
+source_cutoff_rule: AT_OR_AFTER_REVIEWED_SESSION_CLOSE
+generation_rule: SAME_EXCHANGE_SESSION_AS_SOURCE_CUTOFF
+primary_research_start: 2021-02-22
+primary_window_role: PRIMARY
+non_primary_window_roles:
+  - PROXY
+  - SENSITIVITY
+  - STRESS
+approved_non_primary_window_authorities: []
+non_primary_window_requires_reviewed_authority: true
+non_primary_window_requires_dq_caveat: true
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+package_layout:
+  - daily_signals/<YYYY-MM-DD>.json
+  - package_receipt.json
+  - run_manifest.json
+  - signal_index.json
+canonical_json: UTF8_SORTED_KEYS_INDENT2_LF_NO_NAN
+artifact_export_classification: EXPORT_ALLOWED_DERIVED
+option_event_dq_status: NOT_EVALUATED
+option_event_pit_status: NOT_EVALUATED
+safety:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  raw_options_data_export_allowed: false
+  strategy_execution_allowed: false
+  bounded_cloud_pilot_authorized: false
+  production_effect: none
+  broker_action: none
