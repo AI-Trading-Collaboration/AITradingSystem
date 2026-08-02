@@ -1,0 +1,26 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_shared_contract
+fragment_kind: module
+owner: research_platform
+module_prefix: src/ai_trading_system/qqq_options_research/
+public_contracts:
+  - QQQOptionsRecordEnvelope
+  - QQQOptionsSafetyBoundary
+  - QQQ_OPTIONS_CONTRACT_SHA256
+  - RunManifestRecord
+  - DailySignalRecord
+  - ContractCandidateSnapshotRecord
+  - SelectionDecisionRecord
+  - OrderIntentRecord
+  - OrderEventRecord
+  - FillEventRecord
+  - PositionLifecycleEventRecord
+  - PortfolioSnapshotRecord
+  - DQReportRecord
+  - PlatformEvidenceManifestRecord
+  - ReconciliationReportRecord
+  - QQQOptionsSharedContractPolicy
+  - canonical_qqq_options_contract_schema_bytes
+  - load_qqq_options_shared_contract_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: ae12a18b00864e907a6951b29d35b28eb3594b1a68435e24be81ce9eec0b3088
+baseline_checksum: 8d33a4645fba61818ba18927e1fa923792e00dd0ca903c510909f60e0a30b7a7
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
@@ -4342,14 +4342,14 @@ fragments:
     row_sha256: 8335799ceb0258bcf4384a8883bd7287a45038a0220fafaa2e6d71e484182acf
 - task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
   path: registry/development_tasks_shadow_v2/6f/6f7aef41886b2c2728eb4f76ad629ef8437026cbe3c5add9ae0e36a9bc1b6674.yaml
-  file_sha256: 2ef053a67e551377e953ceba51b886fc2c62e6d5b4d8b4399c6e575cdb511ac6
-  fragment_checksum: bf630a8bafc08ffe7fc4b1b2fbad9427c968460e6ee43ddedb86c504dfab5f2b
+  file_sha256: 5a5641f0aadf40e6706541a8b464d2093fedeb14661e51326d1af0f5eb1d8a8e
+  fragment_checksum: 95c402402707f01105296674484dd26931d00a35b6ec57944f7e66ef88f3e847
   locator:
     source_partition: active
     source_path: docs/task_register.md
     line_number: 2089
     order_in_partition: 432
-    row_sha256: 4cb3e93b33816b6b6218db1cd0eb2011016b72625bb6532aabdde23d9bedf193
+    row_sha256: 3974f62d95a61339053f144ead9fd006a81eee3bf0d734fd7530c553be85b93c
 - task_id: TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
   path: registry/development_tasks_shadow_v2/bd/bd9f1341c1b6a5675abc41de945143331127f5bc010d3a2141451f6a617b820d.yaml
   file_sha256: 9784cd69dd4aa5743b231cddf378b1e6fd8c44e42cc6ed3e1a8997b301500535
@@ -9613,8 +9613,8 @@ fragments:
 generated_views:
 - source: active
   source_path: docs/task_register.md
-  source_sha256: 5e32f07cad9d2d5c35eab7ec5a988f2db63e89ecf672ac94abf35c499a862a85
-  rendered_sha256: 5e32f07cad9d2d5c35eab7ec5a988f2db63e89ecf672ac94abf35c499a862a85
+  source_sha256: bea15d9c6e2f894d24dd333a6ed24285f4c8b8077914096b2750fe96b1cc58c5
+  rendered_sha256: bea15d9c6e2f894d24dd333a6ed24285f4c8b8077914096b2750fe96b1cc58c5
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -10610,4 +10610,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 0d118efd8ad03014c8aee41f302ad0242c823083a38620c1dcaf68a1a73f5e56
+index_checksum: 69035adf3d3b91360d9120c5d182b2d77912ae42d6083028d807b89504935fd4

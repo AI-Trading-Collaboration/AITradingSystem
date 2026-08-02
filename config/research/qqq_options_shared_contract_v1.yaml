@@ -1,0 +1,99 @@
+schema_version: qqq_options_shared_contract_policy.v1
+policy_id: qqq_options_shared_contract_v1
+policy_version: 1.0.0
+status: REVIEWED_ACTIVE_CONTRACT_FREEZE
+owner: project_owner
+owner_decision: owner_decision:TRADING-2481:2026-08-02:freeze_shared_schema_policy_v1_without_thresholds_or_platform_actions
+rationale: Freeze one auditable and fail-closed shared contract before any QuantConnect adapter, replay engine, or investment-facing calibration is implemented.
+intended_effect: Keep every later QQQ options module on identical record identity, PIT, DQ, evidence, unit, timezone, lineage, and safety semantics.
+validation_plan: Breaking-schema tests, canonical seal and replay tests, policy drift tests, architecture validation, and final repository validation tiers.
+review_condition: Review before any schema field, enum, unit, timezone, export class, lifecycle, DQ, PIT, evidence, or safety semantic changes.
+expiry_condition: Supersede only through an owner-reviewed versioned contract migration with backward-compatibility evidence.
+
+supported_schemas:
+  - schema_name: contract_candidate_snapshot
+    schema_version: 1.0.0
+    model_name: ContractCandidateSnapshotRecord
+  - schema_name: daily_signal
+    schema_version: 1.0.0
+    model_name: DailySignalRecord
+  - schema_name: dq_report
+    schema_version: 1.0.0
+    model_name: DQReportRecord
+  - schema_name: fill_event
+    schema_version: 1.0.0
+    model_name: FillEventRecord
+  - schema_name: order_event
+    schema_version: 1.0.0
+    model_name: OrderEventRecord
+  - schema_name: order_intent
+    schema_version: 1.0.0
+    model_name: OrderIntentRecord
+  - schema_name: platform_evidence_manifest
+    schema_version: 1.0.0
+    model_name: PlatformEvidenceManifestRecord
+  - schema_name: portfolio_snapshot
+    schema_version: 1.0.0
+    model_name: PortfolioSnapshotRecord
+  - schema_name: position_lifecycle_event
+    schema_version: 1.0.0
+    model_name: PositionLifecycleEventRecord
+  - schema_name: reconciliation_report
+    schema_version: 1.0.0
+    model_name: ReconciliationReportRecord
+  - schema_name: run_manifest
+    schema_version: 1.0.0
+    model_name: RunManifestRecord
+  - schema_name: selection_decision
+    schema_version: 1.0.0
+    model_name: SelectionDecisionRecord
+
+enum_contracts:
+  - enum_id: capability_status
+    values: [CONFIRMED, CONTRADICTED, UNKNOWN]
+  - enum_id: dq_pit_status
+    values: [FAIL, NOT_EVALUATED, PASS]
+  - enum_id: export_classification
+    values: [EXPORT_ALLOWED_DERIVED, EXPORT_PROHIBITED, QC_ONLY_NOT_EXPORTED, UNKNOWN_REQUIRES_LICENSE_REVIEW]
+  - enum_id: option_right
+    values: [CALL, PUT]
+  - enum_id: order_lifecycle
+    values: [CANCELED, CREATED, FILLED, PARTIALLY_FILLED, REJECTED, SUBMITTED, UPDATED]
+  - enum_id: order_side
+    values: [BUY_TO_OPEN, SELL_TO_CLOSE]
+  - enum_id: position_lifecycle
+    values: [CLOSED, EXIT_BLOCKED, EXIT_PENDING, FLAT, INTENT_PENDING, INVALID_RUN, OPEN, OPEN_PARTIAL, SCOPE_VIOLATION]
+  - enum_id: reconciliation_status
+    values: [EXPLAINED_DIFFERENCE, FAIL, INCOMPLETE, PASS]
+  - enum_id: signal_direction
+    values: [FLAT, LONG_CALL, LONG_PUT]
+
+account_currency: USD
+premium_unit: USD_PER_SHARE
+cash_unit: USD
+storage_timezone: UTC
+exchange_timezone: America/New_York
+checksum_algorithm: SHA-256
+canonical_json: UTF8_SORTED_KEYS_INDENT2_LF_NO_NAN
+contract_schema_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+allowed_export_classifications:
+  - EXPORT_ALLOWED_DERIVED
+  - EXPORT_PROHIBITED
+  - QC_ONLY_NOT_EXPORTED
+  - UNKNOWN_REQUIRES_LICENSE_REVIEW
+raw_field_classifications:
+  - EXPORT_PROHIBITED
+  - QC_ONLY_NOT_EXPORTED
+investment_thresholds_frozen: false
+threshold_owner_review_exit_condition: Add thresholds only through a separately reviewed heuristic policy with owner, rationale, validation evidence, and review or expiry condition.
+license_unknown_state: UNKNOWN_REQUIRES_LICENSE_REVIEW
+safety:
+  research_only: true
+  promotion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  raw_options_data_export_allowed: false
+  strategy_execution_allowed: false
+  bounded_cloud_pilot_authorized: false
+  production_effect: none
+  broker_action: none

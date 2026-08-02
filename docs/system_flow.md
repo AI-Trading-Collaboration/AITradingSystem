@@ -7018,3 +7018,25 @@ receipt。任一 required item/field 缺失、未确认、source 不合格、lic
 data、不生成 features/scoring/backtest/daily investment report，因此不调用或伪造 `aits validate-data` PASS；
 固定 `research_only=true`、`manual_review_required=true`、promotion/paper-shadow/production/strategy
 execution/raw-data-download/cloud-pilot 全部 false，`production_effect=none`、`broker_action=none`。
+
+## TRADING-2481 QQQ Options Shared Schema / Policy Freeze V1
+
+`config/research/qqq_options_shared_contract_v1.yaml` 是后继 QuantConnect adapter、本地 reference
+engine 与 reconciliation 模块共同继承的契约源；它固定 12 个 versioned record model、共用 envelope、
+public enums、USD / USD-per-share 单位、UTC storage timezone、America/New_York exchange timezone、
+SHA-256 lineage、canonical contract schema SHA-256、per-field export classification 和 research-only
+safety boundary，不定义或批准任何投资阈值。`qqq_options_research.contracts` 把 run manifest、daily
+signal、contract candidate、selection、
+order intent/event、fill、position lifecycle、portfolio、DQ、platform evidence 和 reconciliation 记录封装为
+strict frozen models；每条记录只能通过 `seal()` 计算 semantic content SHA-256，并只能通过
+`from_json_bytes()` 接受 UTF-8、sorted keys、indent=2、LF、no-NaN 的 exact canonical bytes。
+
+后继模块必须原样继承 `requested/evaluated range`、`source_ids/source_checksums`、`dq_status`、
+`pit_status`、`export_classification`、`lineage_id`、`policy_id/version/sha256`、`repository_code_sha`、
+`contract_schema_sha256`、`content_sha256` 和 `safety`，不得在 adapter 或 engine 内重定义相近字段。
+原始 option rows 仍只能是
+`QC_ONLY_NOT_EXPORTED` 或 `EXPORT_PROHIBITED`；platform evidence 禁止 raw rows、account/broker identifiers，
+license 未闭合时保持 `UNKNOWN_REQUIRES_LICENSE_REVIEW`。本节点不登录 QuantConnect、不下载数据、
+不运行 cloud backtest，也不读取本地 cached market/macro data，因此不生成或伪造 `aits validate-data`
+PASS；固定 promotion/paper-shadow/production/execution/export authorization=false，
+`production_effect=none`、`broker_action=none`。
