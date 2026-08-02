@@ -265,15 +265,14 @@ def test_forbidden_roadmap_policy_cannot_be_removed(
 
 
 def test_local_canonical_page_identity_when_available() -> None:
-    canonical = (
-        ROOT.parent
-        / "AITradingSystem"
-        / "outputs"
-        / "atlas"
-        / "strategy_research_cited_query"
-        / "trading_2470_v1"
-        / "index.html"
-    )
+    canonical_policy = _policy()["canonical_page"]
+    assert isinstance(canonical_policy, dict)
+    repository_path = canonical_policy["repository_path"]
+    assert isinstance(repository_path, str)
+    relative_path = Path(repository_path)
+    assert not relative_path.is_absolute()
+    assert ".." not in relative_path.parts
+    canonical = ROOT / relative_path
     if not canonical.is_file():
         pytest.skip("local canonical ignored artifact not hydrated")
     payload = canonical.read_bytes()

@@ -1,0 +1,25 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_cash_accounting
+fragment_kind: module
+owner: options_portfolio_accounting_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/cash_accounting.py
+public_contracts:
+  - DEFAULT_QQQ_OPTIONS_CASH_ACCOUNTING_POLICY_PATH
+  - UnresolvedCashAccountingCriteria
+  - ActiveCashAccountingCriteria
+  - QQQOptionCashAccountingSafety
+  - QQQOptionCashAccountingPolicy
+  - QQQOptionCashAccountingPolicyLoadResult
+  - QQQOptionIntentAccountingInput
+  - QQQOptionValuationQuoteInput
+  - QQQOptionCashAccountingRequest
+  - QQQOptionCashLedgerEntry
+  - QQQOptionAccountingLot
+  - QQQOptionAccountingPosition
+  - QQQOptionCashAccountingResult
+  - QQQOptionCashAccountingContractError
+  - load_qqq_options_cash_accounting_policy
+  - build_qqq_option_cash_accounting_input_sha256
+  - replay_qqq_option_cash_accounting
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -1,0 +1,49 @@
+schema_version: qqq_options_cash_premium_settlement_accounting_policy.v1
+policy_id: qqq_options_cash_premium_settlement_accounting_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED_BASELINE
+owner: project_owner_and_options_portfolio_accounting_governance
+owner_decision: owner_decision:TRADING-2487:2026-08-02:build_offline_accounting_mechanics_without_unreviewed_numeric_policy
+rationale: Freeze deterministic long-premium cash, reservation, fee, settlement and liquidation-value mechanics while every investment-facing amount, lag, cost-basis and freshness rule remains fail closed pending explicit Owner review.
+intended_effect: Identical canonical run and execution artifacts produce identical typed cash-preservation or accounting replay without margin, negative settled cash, short options, QQQ shares, hidden settlement assumptions or unreviewed valuation marks.
+validation_plan: Run policy drift, canonical artifact admission, Decimal cash identity, reservation release, partial/reject/cancel, reviewed-session settlement, FIFO, no-short, bid valuation, permutation, property, golden and predecessor-binding tests before governed final-tree validation.
+review_condition: Review before activating accounting, choosing initial capital or budget, consuming real execution results, or using any portfolio snapshot in an investment-facing backtest.
+expiry_condition: Supersede only through an Owner-reviewed tracked policy change with calibration evidence, settlement and rounding authority, review or expiry condition, compatibility coverage and final-tree validation.
+accounting_authorized: false
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+execution_policy_sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+primary_research_start: 2021-02-22
+approved_non_primary_authority_count: 0
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+criteria:
+  mode: UNRESOLVED
+  scenario_role: UNKNOWN_REQUIRES_POLICY_REVIEW
+  dq_caveat: UNKNOWN_REQUIRES_POLICY_REVIEW
+  approved_initial_cash_usd: UNKNOWN_REQUIRES_POLICY_REVIEW
+  premium_budget_usd: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_contracts_per_order: UNKNOWN_REQUIRES_POLICY_REVIEW
+  fee_buffer_per_contract_usd: UNKNOWN_REQUIRES_POLICY_REVIEW
+  sell_proceeds_settlement_lag_sessions: UNKNOWN_REQUIRES_POLICY_REVIEW
+  max_valuation_quote_age_ms: UNKNOWN_REQUIRES_POLICY_REVIEW
+  cost_basis_method: UNKNOWN_REQUIRES_POLICY_REVIEW
+  include_fees_in_cost_basis: UNKNOWN_REQUIRES_POLICY_REVIEW
+  cash_quantum_usd: UNKNOWN_REQUIRES_POLICY_REVIEW
+  rounding_mode: UNKNOWN_REQUIRES_POLICY_REVIEW
+  reality_baseline: false
+safety:
+  research_only: true
+  cash_account_only: true
+  long_premium_only: true
+  margin_allowed: false
+  negative_settled_cash_allowed: false
+  short_option_allowed: false
+  qqq_share_position_allowed: false
+  bid_liquidation_value_required: true
+  daily_close_valuation_allowed: false
+  cloud_run_authorized: false
+  external_order_allowed: false
+  raw_options_data_export_allowed: false
+  production_effect: none
+  broker_action: none

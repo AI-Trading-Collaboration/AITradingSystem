@@ -7244,3 +7244,61 @@ result 固定 `accounting_status=NOT_EVALUATED`；不登录 QuantConnect、不�
 不运行 cloud/paper/live/broker/production、不导出 raw rows。工程退出为
 `MINUTE_QUOTE_EXECUTION_MODEL_V1_READY_POLICY_BLOCKED`；完整
 `MINUTE_QUOTE_EXECUTION_MODEL_V1_READY` 仍依赖 Owner-reviewed tracked numeric policy 与独立 evidence。
+
+## TRADING-2487 QQQ Options Cash / Premium / Settlement Accounting V1
+
+`config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml` 在 2481 shared envelope 与
+`RunManifestRecord` / order / fill / `PortfolioSnapshotRecord`、2482 DQ/PIT identity 及 2486 sealed minute
+execution result 之后冻结纯离线 long-premium cash-account mechanics。`qqq_options_research.cash_accounting`
+不复制 shared record；输入只接受 canonical bytes/file hashes，输出用 task-local sealed ledger/lot/position
+明细重算并封装唯一的 2481 shared portfolio snapshot。
+
+```text
+2481 canonical RunManifestRecord + one or more 2486 QQQOptionExecutionResult artifacts
+  -> strict canonical bytes/file hash/content hash replay
+  -> exact run/range/repository/contract/execution-policy/accounting-NOT_EVALUATED binding
+  -> duplicate intent/order/fill/platform identity or input permutation ambiguity fail closed
+reviewed exchange-session calendar + actual intent/fill contract multiplier
+  -> default 2487 unauthorized => ACCOUNTING_POLICY_REVIEW_REQUIRED
+     -> cash preservation / no ledger / no position / no snapshot
+  -> future OWNER_REVIEWED_ACTIVE policy only
+     -> BUY_TO_OPEN limit-premium + per-contract fee-buffer reservation
+     -> settled available cash / premium budget / max contracts gate
+     -> partial fill actual premium + fee debit and price-improvement release
+     -> cancel/reject/unfilled remainder releases reservation
+     -x-> margin / negative settled cash / short option / QQQ shares
+     -> SELL_TO_CLOSE cannot exceed existing long lots
+     -> sell net proceeds remain unsettled until reviewed due session
+     -> weekend/holiday never synthesized as a trading session
+policy-declared FIFO + explicit fee-in-basis treatment
+  -> realized PnL and remaining lot cost replay
+contemporaneous MINUTE BID valuation for every open SID
+  -x-> missing/stale/crossed/future/extra SID or DAILY close/mid/last
+  -> bid liquidation value + unrealized PnL
+  -> sealed ledger recurrence / positions / shared PortfolioSnapshotRecord reconciliation
+  -> canonical accounting result and permutation-stable input/result identity
+```
+
+tracked default policy 为 `OWNER_REVIEW_REQUIRED_BASELINE`、`accounting_authorized=false`。initial cash、premium
+budget、max contracts、fee buffer、sell settlement lag、valuation freshness、cost-basis method、fee treatment、
+cash quantum 与 rounding mode 全部是 `UNKNOWN_REQUIRES_POLICY_REVIEW`。测试中的 active values 只能标记
+`SYNTHETIC_TEST_ONLY`、`reality_baseline=false`，验证 Decimal 算术与 replay mechanics，不能成为项目参数、
+投资结论或现实基线。
+
+reservation 使用 intent limit、actual contract multiplier、contracts 与 policy fee buffer 精确计算；它只减少
+available settled cash，不虚构现金支出。BUY fill 以 actual fill price/multiplier/contracts 扣除 premium 与 sealed
+fee，逐笔释放 limit reservation；reject/cancel/no-fill 不产生 portfolio mutation。SELL fill 只允许关闭已有 long
+lot，net proceeds 先进入 unsettled cash，再由 policy lag 与 reviewed exchange-session calendar 决定 due session；
+禁止用自然日跨周末平滑、隐含 T+1、margin、负现金或 synthetic QQQ share position。
+
+open position 只接受 contemporaneous MINUTE BID liquidation mark；不使用 ask/mid/last/DAILY close，也不把
+missing/stale/crossed/future quote 伪装成零。task-local ledger/lot/position 的 hash、chronology、balance recurrence、
+source checksum 与 policy/input lineage 必须和 shared `PortfolioSnapshotRecord` cash、fees、quantity、market value、
+realized/unrealized PnL 对账。2486 selection/execution DQ PASS 不能提升未完成的全生命周期 DQ/PIT；snapshot 使用
+manifest 与 order/fill 事实的最差状态。
+
+本节点固定 primary requested/evaluated start=`2021-02-22`；`2022-12-01` 不是新 run 默认。不登录
+QuantConnect、不调用 API/CLI/HTTP、不运行 cloud/paper/live/broker/production、不导出 raw option rows。
+工程退出为 `QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY_POLICY_BLOCKED`；完整
+`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY` 仍依赖 Owner-reviewed tracked accounting policy 与独立 platform/local
+reconciliation evidence。expiry/exercise/assignment/corporate action 继续由 2488 承接。

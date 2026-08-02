@@ -43523,3 +43523,202 @@ phase_trading_2486_qqq_options_minute_execution_reality_model_v1:
     known_unrelated_bytes_read: false
     production_effect: none
     broker_action: none
+
+phase_trading_2487_qqq_options_cash_premium_settlement_accounting_v1:
+  schema_version: trading_2487_qqq_options_cash_premium_settlement_accounting_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2487-QQQ-OPTIONS-CASH-PREMIUM-SETTLEMENT-ACCOUNTING-V1
+  task_ids:
+  - TRADING-2487_QQQ_OPTIONS_CASH_PREMIUM_SETTLEMENT_ACCOUNTING_V1
+  owner_decisions:
+  - owner_decision:TRADING-2487:2026-08-02:build_offline_accounting_mechanics_without_unreviewed_numeric_policy
+  external_owner_authorization: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+  prior_sections_immutability:
+    source_commit: 3e21bb33f56763f3fbea4539abddd5674817b5ee
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: a2fa549d422ec4333c61b96524c95c0ae2ba0121
+    raw_byte_count: 2814676
+    raw_sha256: abfe39f1c287c344e7e9e9e4fbaf2e330f16121bca7af916ecb62dddfba5fd0d
+    append_offset: 2814676
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/e9/e994edebf60f47965ed6fa0feaa3da27f60d4998603ed7689165a95e11bfe0bb.yaml
+  - registry/development_tasks_shadow_v2/e9/e994edebf60f47965ed6fa0feaa3da27f60d4998603ed7689165a95e11bfe0bb.yaml
+  - tests/atlas/test_historical_projection_review.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/architecture/fragments/flows/qqq_options_cash_accounting.yaml
+  - config/architecture/fragments/modules/qqq_options_cash_accounting.yaml
+  - config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml
+  - docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md
+  - src/ai_trading_system/qqq_options_research/cash_accounting.py
+  - tests/test_qqq_options_cash_accounting.py
+  source_delta_paths:
+  - config/architecture/fragments/flows/qqq_options_cash_accounting.yaml
+  - config/architecture/fragments/modules/qqq_options_cash_accounting.yaml
+  - config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml
+  - docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/e9/e994edebf60f47965ed6fa0feaa3da27f60d4998603ed7689165a95e11bfe0bb.yaml
+  - registry/development_tasks_shadow_v2/e9/e994edebf60f47965ed6fa0feaa3da27f60d4998603ed7689165a95e11bfe0bb.yaml
+  - src/ai_trading_system/qqq_options_research/cash_accounting.py
+  - tests/atlas/test_historical_projection_review.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_qqq_options_cash_accounting.py
+  supersession:
+    superseded_by_phase: TRADING-2487-QQQ-OPTIONS-CASH-PREMIUM-SETTLEMENT-ACCOUNTING-V1
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2486_qqq_options_minute_execution_reality_model_v1
+    current_hash_authority: phase_trading_2487_qqq_options_cash_premium_settlement_accounting_v1.sources
+  sources:
+  - path: config/architecture/fragments/flows/qqq_options_cash_accounting.yaml
+    sha256: 5872655b13e78fe9071e1152c17126db57cea85b6ed9f1a16766ba716f6bd8f7
+    hash_normalization: git_eol_lf
+  - path: config/architecture/fragments/modules/qqq_options_cash_accounting.yaml
+    sha256: 4976840bff9fddc833bdcb50e8d6a611a6245c6bc498935c646cd7e87b6d5716
+    hash_normalization: git_eol_lf
+  - path: config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml
+    sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md
+    sha256: 36feab593c5b2d4fa668ffd20c751d74f4582b66146b3ad4386ef0a5509c2a71
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: ae5c0f0fbadbf319ad050977244e475d487e476c8d2f4d9356e8ff33f9de3f0e
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 30b66137785e76239a94900b9b4f009c3a6853b71f4f3ea30088b67af840d5f2
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 645f68c7c8eeb786966f78a5002c9439006a3af80022a52910aa4020b46bcfef
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 5b5d891b2a004a33fa988ef91e771f28132180b99b92ff320aecf14afdd062de
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: f01ef14bbcd5c098c14bfa4d97bd91c085998ec54104850c4545bd56de959280
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 131f1b736db622288b4e4910e850c7230d09a278fd727280819ff794130f7a4a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: 0d69709f2db6047b9002561a1be544d17a166812699ea0b8d3f818c82469c2ab
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: fb1d508a575044415b57b3aedce3405e93f5e71a0b11174e36c3d02a422a409a
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 472c441918c726a36a7b61c1f43dfd1f73f0baf6800d95fe87cd8e0bf1aa6f43
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: 6d6cfd8a422ad95f5b2d24ee79fd5c5054f81a030be073e78b53b3149bbf6d6f
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e9/e994edebf60f47965ed6fa0feaa3da27f60d4998603ed7689165a95e11bfe0bb.yaml
+    sha256: 716ab816897915d8669fe41ef502992e0a224e935b36908184e4f92c34ef087c
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/e9/e994edebf60f47965ed6fa0feaa3da27f60d4998603ed7689165a95e11bfe0bb.yaml
+    sha256: 8c69f3484e63701ad4c50bcff648b7173b9e81c4fdbc14b2027762e3e7aca966
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/qqq_options_research/cash_accounting.py
+    sha256: 562c4933f609d022035e444290548e1610d87ca015cfc2d2a56feefc08b2c0e8
+    hash_normalization: git_eol_lf
+  - path: tests/atlas/test_historical_projection_review.py
+    sha256: 507b08f95ff3042edd2deeb8a2a4f6c840eea61ba885908e9f259bd284c3679c
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 49c423e6990fbf2e1be3f33df7fc4af266dddd5ec3f0610ba23fed1a04de6576
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: cd849b3dba953d44764fbcd3bad2d5d9bba570519b7bbabbe641a0702b74b465
+    hash_normalization: git_eol_lf
+  - path: tests/test_qqq_options_cash_accounting.py
+    sha256: b67e330cfa6e443edef14919700809e8ab047f56379810c91e6bc9d4a422baff
+    hash_normalization: git_eol_lf
+  generated_fragment_authority:
+    mode: INDEX_TRANSITIVE_SHA256_AUTHORITY
+    index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    fragment_root: registry/development_tasks_shadow_v2
+    fragment_count: 958
+    active_task_count: 453
+    completed_task_count: 505
+    stable_path_key: sha256(task_id)
+    loader_hash_replay: PASS
+  accounting_contract_freeze:
+    policy_schema: qqq_options_cash_premium_settlement_accounting_policy.v1
+    policy_id: qqq_options_cash_premium_settlement_accounting_v1
+    policy_version: 1.0.0
+    policy_status: OWNER_REVIEW_REQUIRED_BASELINE
+    policy_sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+    accounting_authorized: false
+    criteria_mode: UNRESOLVED
+    unknown_accounting_policy_field_count: 12
+    owner_reviewed_active_policy_count: 0
+    shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+    shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+    execution_policy_sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+    shared_output_record: PortfolioSnapshotRecord
+    task_local_output_records:
+    - QQQOptionCashLedgerEntry
+    - QQQOptionAccountingLot
+    - QQQOptionAccountingPosition
+    - QQQOptionCashAccountingResult
+    canonical_seal_api: QQQOptionCashLedgerEntry.seal+QQQOptionAccountingLot.seal+QQQOptionAccountingPosition.seal+QQQOptionCashAccountingResult.seal
+    exact_replay_api: QQQOptionCashAccountingResult.from_json_bytes+replay_qqq_option_cash_accounting
+    input_hash_api: build_qqq_option_cash_accounting_input_sha256
+    primary_research_start: '2021-02-22'
+    legacy_non_default_start: '2022-12-01'
+    approved_non_primary_window_authority_count: 0
+    default_unresolved_reason: ACCOUNTING_POLICY_REVIEW_REQUIRED
+    blocked_execution_reason: EXECUTION_BLOCKED_CASH_PRESERVED
+    valuation_side: BID
+    cost_basis_method: UNKNOWN_REQUIRES_POLICY_REVIEW
+    margin_allowed: false
+    negative_settled_cash_allowed: false
+    short_option_allowed: false
+    daily_close_valuation_allowed: false
+    engineering_exit: QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY_POLICY_BLOCKED
+    complete_exit_blocked: QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY
+  validation:
+    focused_accounting: PASS_38_TESTS
+    adjacent_2480_through_2487: PASS_208_TESTS
+    compatibility_regression: PASS_184_TESTS
+    formal_five_gate: PENDING_FINAL_TREE
+  safety:
+    quantconnect_accessed: false
+    cloud_project_created_or_modified: false
+    cloud_backtest_run: false
+    vendor_data_downloaded: false
+    raw_options_data_exported: false
+    investment_threshold_added: false
+    accounting_policy_activated: false
+    margin_or_short_enabled: false
+    external_order_generated: false
+    paper_live_broker_or_production_action: false
+    known_unrelated_bytes_read: false
+    production_effect: none
+    broker_action: none

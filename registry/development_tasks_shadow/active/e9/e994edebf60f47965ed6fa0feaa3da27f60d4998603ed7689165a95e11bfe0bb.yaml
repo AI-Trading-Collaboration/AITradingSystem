@@ -11,49 +11,68 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: portfolio accounting：等待 TRADING-2481/2486
-  requirement_refs: []
+  next_owner: project owner：独立审核 initial cash/premium budget/max contracts/fee buffer/settlement
+    lag/cost basis/valuation freshness，并提供 platform/local reconciliation evidence；TRADING-2488
+    owner：只消费 sealed accounting output，不得激活 blocked policy
+  requirement_refs:
+  - docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 实现 actual multiplier、premium、fee、cash
-    reservation、partial fill、settled/unsettled cash 与 liquidation valuation；不允许 margin、negative
-    settled cash、short option/QQQ。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md`。canonical
+    2481/2486 admission、actual multiplier、Decimal reservation/premium/fee、partial/reject/cancel、settled/unsettled
+    cash、reviewed-session settlement、FIFO lots、bid liquidation 与 shared snapshot 对账的
+    offline mechanics 已完成；predecessor authority 不变。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: decimal cash identities、reservation release、reject/partial/T+1 fixtures
-      与 platform/local recomputation PASS；更新 system flow；退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`。
+    text: focused unit/property/golden、2480–2487 adjacent、Ruff/compile 与 generated/compat/final-tree
+      formal 验证；工程退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY_POLICY_BLOCKED`，完整退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`
+      仍需 reviewed policy/evidence。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2095
-    row_sha256: b89c9171d6d8df5a396808d733469b5945b0cfc83a539ee192f893d6275b45db
+    row_sha256: 13e751e0f85b94b30adf4ab031baecfce291b91d1f8342c816f650d1915b54f0
     cell_count: 8
     all_cells:
     - TRADING-2487_QQQ_OPTIONS_CASH_PREMIUM_SETTLEMENT_ACCOUNTING_V1
     - Portfolio accounting / multiplier, premium, fees and cash settlement
     - P1
-    - PROPOSED
-    - portfolio accounting：等待 TRADING-2481/2486
-    - 实现 actual multiplier、premium、fee、cash reservation、partial fill、settled/unsettled
-      cash 与 liquidation valuation；不允许 margin、negative settled cash、short option/QQQ。
-    - decimal cash identities、reservation release、reject/partial/T+1 fixtures 与 platform/local
-      recomputation PASS；更新 system flow；退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`。
-    - initial cash/premium budget/max contracts/fee buffer 属于 reviewed policy。
+    - BASELINE_DONE
+    - project owner：独立审核 initial cash/premium budget/max contracts/fee buffer/settlement
+      lag/cost basis/valuation freshness，并提供 platform/local reconciliation evidence；TRADING-2488
+      owner：只消费 sealed accounting output，不得激活 blocked policy
+    - 详见 `docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md`。canonical
+      2481/2486 admission、actual multiplier、Decimal reservation/premium/fee、partial/reject/cancel、settled/unsettled
+      cash、reviewed-session settlement、FIFO lots、bid liquidation 与 shared snapshot
+      对账的 offline mechanics 已完成；predecessor authority 不变。
+    - focused unit/property/golden、2480–2487 adjacent、Ruff/compile 与 generated/compat/final-tree
+      formal 验证；工程退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY_POLICY_BLOCKED`，完整退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`
+      仍需 reviewed policy/evidence。
+    - 2026-08-02：exact base=`3e21bb33f56763f3fbea4539abddd5674817b5ee`；policy/module
+      SHA=`faa2659e...b1484e`/`562c4933...2c0e8`；focused=`38`、2480–2487 adjacent=`208`
+      PASS。tracked default 仍 unauthorized，全部投资解释数值/方法为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；formal
+      final-tree 待本候选收口，external action=none。
     raw_line: '|TRADING-2487_QQQ_OPTIONS_CASH_PREMIUM_SETTLEMENT_ACCOUNTING_V1|Portfolio
-      accounting / multiplier, premium, fees and cash settlement|P1|PROPOSED|portfolio
-      accounting：等待 TRADING-2481/2486|实现 actual multiplier、premium、fee、cash reservation、partial
-      fill、settled/unsettled cash 与 liquidation valuation；不允许 margin、negative settled
-      cash、short option/QQQ。|decimal cash identities、reservation release、reject/partial/T+1
-      fixtures 与 platform/local recomputation PASS；更新 system flow；退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`。|initial
-      cash/premium budget/max contracts/fee buffer 属于 reviewed policy。|'
+      accounting / multiplier, premium, fees and cash settlement|P1|BASELINE_DONE|project
+      owner：独立审核 initial cash/premium budget/max contracts/fee buffer/settlement lag/cost
+      basis/valuation freshness，并提供 platform/local reconciliation evidence；TRADING-2488
+      owner：只消费 sealed accounting output，不得激活 blocked policy|详见 `docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md`。canonical
+      2481/2486 admission、actual multiplier、Decimal reservation/premium/fee、partial/reject/cancel、settled/unsettled
+      cash、reviewed-session settlement、FIFO lots、bid liquidation 与 shared snapshot
+      对账的 offline mechanics 已完成；predecessor authority 不变。|focused unit/property/golden、2480–2487
+      adjacent、Ruff/compile 与 generated/compat/final-tree formal 验证；工程退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY_POLICY_BLOCKED`，完整退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`
+      仍需 reviewed policy/evidence。|2026-08-02：exact base=`3e21bb33f56763f3fbea4539abddd5674817b5ee`；policy/module
+      SHA=`faa2659e...b1484e`/`562c4933...2c0e8`；focused=`38`、2480–2487 adjacent=`208`
+      PASS。tracked default 仍 unauthorized，全部投资解释数值/方法为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；formal
+      final-tree 待本候选收口，external action=none。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b89c9171d6d8df5a396808d7
+  event_id: legacy-import-13e751e0f85b94b30adf4ab0
   task_id: TRADING-2487_QQQ_OPTIONS_CASH_PREMIUM_SETTLEMENT_ACCOUNTING_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -63,29 +82,43 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: portfolio accounting：等待 TRADING-2481/2486
-    notes: initial cash/premium budget/max contracts/fee buffer 属于 reviewed policy。
+    next_owner: project owner：独立审核 initial cash/premium budget/max contracts/fee buffer/settlement
+      lag/cost basis/valuation freshness，并提供 platform/local reconciliation evidence；TRADING-2488
+      owner：只消费 sealed accounting output，不得激活 blocked policy
+    notes: 2026-08-02：exact base=`3e21bb33f56763f3fbea4539abddd5674817b5ee`；policy/module
+      SHA=`faa2659e...b1484e`/`562c4933...2c0e8`；focused=`38`、2480–2487 adjacent=`208`
+      PASS。tracked default 仍 unauthorized，全部投资解释数值/方法为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；formal
+      final-tree 待本候选收口，external action=none。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:b89c9171d6d8df5a396808d733469b5945b0cfc83a539ee192f893d6275b45db
+  - sha256:13e751e0f85b94b30adf4ab031baecfce291b91d1f8342c816f650d1915b54f0
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2487_QQQ_OPTIONS_CASH_PREMIUM_SETTLEMENT_ACCOUNTING_V1
   - Portfolio accounting / multiplier, premium, fees and cash settlement
   - P1
-  - PROPOSED
-  - portfolio accounting：等待 TRADING-2481/2486
-  - 实现 actual multiplier、premium、fee、cash reservation、partial fill、settled/unsettled
-    cash 与 liquidation valuation；不允许 margin、negative settled cash、short option/QQQ。
-  - decimal cash identities、reservation release、reject/partial/T+1 fixtures 与 platform/local
-    recomputation PASS；更新 system flow；退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`。
-  - initial cash/premium budget/max contracts/fee buffer 属于 reviewed policy。
-  docs_links: []
+  - BASELINE_DONE
+  - project owner：独立审核 initial cash/premium budget/max contracts/fee buffer/settlement
+    lag/cost basis/valuation freshness，并提供 platform/local reconciliation evidence；TRADING-2488
+    owner：只消费 sealed accounting output，不得激活 blocked policy
+  - 详见 `docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md`。canonical
+    2481/2486 admission、actual multiplier、Decimal reservation/premium/fee、partial/reject/cancel、settled/unsettled
+    cash、reviewed-session settlement、FIFO lots、bid liquidation 与 shared snapshot 对账的
+    offline mechanics 已完成；predecessor authority 不变。
+  - focused unit/property/golden、2480–2487 adjacent、Ruff/compile 与 generated/compat/final-tree
+    formal 验证；工程退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY_POLICY_BLOCKED`，完整退出=`QQQ_OPTIONS_CASH_ACCOUNTING_V1_READY`
+    仍需 reviewed policy/evidence。
+  - 2026-08-02：exact base=`3e21bb33f56763f3fbea4539abddd5674817b5ee`；policy/module
+    SHA=`faa2659e...b1484e`/`562c4933...2c0e8`；focused=`38`、2480–2487 adjacent=`208`
+    PASS。tracked default 仍 unauthorized，全部投资解释数值/方法为 `UNKNOWN_REQUIRES_POLICY_REVIEW`；formal
+    final-tree 待本候选收口，external action=none。
+  docs_links:
+  - docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md
   terminal: false
-  raw_row_sha256: b89c9171d6d8df5a396808d733469b5945b0cfc83a539ee192f893d6275b45db
+  raw_row_sha256: 13e751e0f85b94b30adf4ab031baecfce291b91d1f8342c816f650d1915b54f0
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 8bed89c53f62fc5c4ab26beb1495221202a8b27651f6696bdfedc746069135dc
+fragment_checksum: f353dcee7652bab643dc80c5ca9bc9180395d9b9fafa3efc4b25ef04df71b0e1

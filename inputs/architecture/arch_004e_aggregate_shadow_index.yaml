@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 35
+fragment_count: 37
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: da6f71fcf114ba9df8388c849431a09a934bc513775086108a53db3aec0f36f3
+  current_sha256: ae5c0f0fbadbf319ad050977244e475d487e476c8d2f4d9356e8ff33f9de3f0e
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 14
+  fragment_count: 15
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -45,6 +45,7 @@ targets:
   - config/architecture/fragments/flows/owner_daily_brief.yaml
   - config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
   - config/architecture/fragments/flows/qc_qqq_options_project_adapter.yaml
+  - config/architecture/fragments/flows/qqq_options_cash_accounting.yaml
   - config/architecture/fragments/flows/qqq_options_deterministic_selection.yaml
   - config/architecture/fragments/flows/qqq_options_dq_pit_identity.yaml
   - config/architecture/fragments/flows/qqq_options_minute_execution.yaml
@@ -144,6 +145,13 @@ fragments:
   path: config/architecture/fragments/flows/qc_qqq_options_project_adapter.yaml
   sha256: f5d2181db068627eee699b8df066ad81f9b1834927671993b8c01d2c306e4b3b
   generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_cash_accounting
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_cash_accounting.yaml
+  sha256: 5872655b13e78fe9071e1152c17126db57cea85b6ed9f1a16766ba716f6bd8f7
+  generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_deterministic_selection
   fragment_kind: flow
   owner: architecture_governance
@@ -220,6 +228,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_project_adapter.yaml
   sha256: 541aab357a56d4de5c2c7ffacfad7d372e5a646856bbdf40f4fca712efc4d50c
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_cash_accounting
+  fragment_kind: module
+  owner: options_portfolio_accounting_engineering
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_cash_accounting.yaml
+  sha256: 4976840bff9fddc833bdcb50e8d6a611a6245c6bc498935c646cd7e87b6d5716
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_deterministic_selection
   fragment_kind: module
