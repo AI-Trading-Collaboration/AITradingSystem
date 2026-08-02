@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1679608
-    sha256: 7632c0c2790ec50170cdbd39d95edd22391243afa7ade606cced5598ff973233
+    byte_count: 1679912
+    sha256: ba8124a8ec849718c818577fcef323b99fb16d8efb31f6684aa8f4bcc98547fc
     row_count: 453
     final_newline: true
     task_id_order_sha256: 6406ef7b4e436f3e502f076087b4b7267497d3eab71458d3e78d2dd8331686a8
-    row_checksum_order_sha256: 0a6b5019098bba94e1a51587e583985e335a4b2647e8e16fcad9cc0619f1a7f2
+    row_checksum_order_sha256: bcd4781b676af1ade2f09374ab8c56e2c1ae462e80a6ed36b77facf1ac23735e
     task_row_newline_counts:
       LF: 453
   - source: completed
@@ -120,19 +120,19 @@ inventory:
   task_id_overlap_count: 0
   ambiguous_extra_cell_row_count: 55
   status_counts:
-    BASELINE_DONE: 134
+    BASELINE_DONE: 135
     BLOCKED_EXTERNAL: 11
     BLOCKED_OWNER_INPUT: 8
     DEFERRED: 1
     DONE: 493
     DROPPED: 12
-    IN_PROGRESS: 7
+    IN_PROGRESS: 6
     PROPOSED: 23
     READY: 1
     VALIDATING: 268
   task_id_set_sha256: 1d556a7668a30a3515ba2bd88c9488a25f437cb965ae42ef1b6e3cbb12f8b8e4
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 8d38fe6a9f67bf4fa30e144e81887e9d4a94c6b329c9384b851469df1ac449db
+  owner_set_sha256: a7cc4dff792a4fa07965377c8c93cac3f542ada53e68b446354e5c60ef71cb7a
   docs_link_set_sha256: 0da7d4e76f1a9053e166541d0ab18d4239d1fe150fdf779b646cda9d67c71e95
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3141,7 +3141,7 @@ inventory:
   - task_id: TRADING-2479_ATLAS_HISTORICAL_PROJECTION_REVIEW_PACK_V1
     source: active
     line_number: 2082
-    row_sha256: 042b40d958d7a1bf5e294d025c5dc50765d7d0c18ad68711b17eb74f78fca6a9
+    row_sha256: abdc6dcbcd2a29f52bdb978fe75dec29e91d4ab2b678696c06935b52d3a297d1
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7845,4 +7845,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 9a72d7b92c6f1089cebbdc956fcafd4c1a6c4e6ede034b69b36156dc759c87ae
+baseline_checksum: f59078bed6465b851a3270ac243af76154d620a8b0dff34af5e39f8387a0fc3d

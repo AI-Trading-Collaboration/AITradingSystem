@@ -7,12 +7,13 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 Owner 决定：
 
 ```text
 owner_decision:TRADING-2479:2026-08-02:advance_atlas_historical_projection_review_pack_v1
+owner_decision:TRADING-2479:2026-08-02:continue_review_pack_closeout_without_canonical_projection_v1
 ```
 
 production effect：`none`
@@ -161,6 +162,8 @@ config/atlas/historical_projection_review.yaml
 src/ai_trading_system/atlas/historical_projection_review.py
 src/ai_trading_system/atlas/historical_projection_review_renderer.py
 tests/atlas/test_historical_projection_review.py
+tests/test_arch_004_refactor_policy.py
+tests/test_arch_004g_deprecation.py
 src/ai_trading_system/atlas/__init__.py
 docs/task_register.md
 docs/requirements/TRADING-2479_Atlas_Historical_Projection_Review_Pack_V1.md
@@ -282,3 +285,25 @@ inputs/architecture/**
   SHA-256/size 与 handoff 完全一致（`5afc81ae… / a7c070c9… / 6994b8ed… / 1785c2c6…`）；
   未修改或伪造 artifact 内容。随后 task registry generate/validate=`958/958 PASS`、V1/V2
   byte-identical，focused task-shadow=`13 passed`。此前 fail-closed run 继续保留为修复 parent 说明。
+- 2026-08-02：Owner 指示“继续推进相关任务”；本任务据此进入 compatibility authority 与正式
+  closeout gates，但该指示只授权收口 review pack，不伪记独立的手工视觉 PASS，也不授权把五份
+  historical records 投影进 canonical snapshot/page。实际 canonical projection 继续要求后续独立
+  Owner token。
+- 2026-08-02：实现与 review-only 产物已达到 `BASELINE_DONE`；remaining boundary 是正式五级门
+  对 final tracked tree 的验证以及未来 canonical projection 的独立 Owner 决策。该状态不表示
+  `owner_manual_visual_pass`，也不将 historical `PASS` 映射为当前投资结论。
+- 2026-08-02：final-tree Architecture 首轮=`821 passed / 2 failed`，artifact=
+  `outputs/validation_runtime/architecture-fitness_20260801T232039Z/test_runtime_summary.json`；未启动
+  Contract 或后续门。两项失败均为新增 Atlas module/test 引起的治理基线同步：deprecation inventory
+  identity/counts 由 `1060/1231` 更新为 `1062/1232`，以及 OPS-073 predecessor test 需要显式接受
+  TRADING-2478/2479 successor authority。该 run 保留为 failure-fix parent，修复后从 Architecture
+  重新串行验证。
+- 2026-08-02：Architecture 修复重跑、Contract、Integration、Reproducibility 分别以
+  `823/276/995/24 passed` 通过；Full 首轮=`7929 passed / 5 skipped / 2 failed`，artifact=
+  `outputs/validation_runtime/full_20260801T233442Z/test_runtime_summary.json`。两项失败均为
+  `tests/test_trading2452_architecture_contract.py` 对 `docs/system_flow.md`、
+  `docs/artifact_catalog.md`、`arch_004e_module_manifest.yaml` 与
+  `arch_004e_aggregate_shadow_index.yaml` 的 historical supersession 审计：current hashes 已进入
+  TRADING-2479 sources，但这些已有历史路径被误列为 new-only authority。
+  修复为显式 additional supersession，不改写历史 section；Full artifact 保留为
+  `failure_fix_rerun` direct parent，final tracked tree 从 Architecture 重跑全部五级门。
