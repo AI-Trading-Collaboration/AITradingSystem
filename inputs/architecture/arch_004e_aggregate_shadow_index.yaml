@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 52
+fragment_count: 54
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: bc3c4dfa9d8ee6f718794817f44e5ee33fc95507c13bb7fe6a0ef82d2612e61c
+  current_sha256: 6b9834c7750be8174bd51aa6d5fcaf05148d419f8e9a18e19b311e8c31772134
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 22
+  fragment_count: 23
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -46,6 +46,7 @@ targets:
   - config/architecture/fragments/flows/data_quality_capability.yaml
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/flows/owner_daily_brief.yaml
+  - config/architecture/fragments/flows/qc_qqq_options_bounded_cloud_pilot.yaml
   - config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
   - config/architecture/fragments/flows/qc_qqq_options_local_ingest_reconciliation.yaml
   - config/architecture/fragments/flows/qc_qqq_options_platform_evidence_manual_bundle.yaml
@@ -158,6 +159,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/owner_daily_brief.yaml
   sha256: 8339d4efe7f02026bb8e3da5104104c9dda917f5133339c20a8364dbf715fd18
+  generated_source_of_truth_active: false
+- fragment_id: flow.qc_qqq_options_bounded_cloud_pilot
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qc_qqq_options_bounded_cloud_pilot.yaml
+  sha256: 9473ce875e6f891f93c29d00af2b0980d1fc2479bf65f792fdc029ddee890313
   generated_source_of_truth_active: false
 - fragment_id: flow.qc_qqq_options_capability_admission
   fragment_kind: flow
@@ -291,6 +299,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/data_quality_capability_discovery.yaml
   sha256: 8e3b2858572886d9cee994176af06e572a5b7d059d89467bfeb2ae660aadf811
+  generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_bounded_cloud_pilot
+  fragment_kind: module
+  owner: external_validation_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_bounded_cloud_pilot.yaml
+  sha256: 67cb6f09f44ccd89d4b0b3bc3a90a727d8c183c92089994dc54866f8173c2cc7
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_capability_admission
   fragment_kind: module

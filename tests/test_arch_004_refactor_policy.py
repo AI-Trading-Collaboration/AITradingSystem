@@ -2755,6 +2755,63 @@ TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_NEW_SOURCE_PATHS = froze
 LATEST_COMPATIBILITY_SECTION = (
     TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION
 )
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION = (
+    "phase_trading_2492_qc_qqq_options_bounded_cloud_pilot_v1"
+)
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_BASE_COMMIT = (
+    "55858bedfa898f076eae496675aa2d669a5a6eed"
+)
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_BASELINE_GIT_BLOB = (
+    "7365f7bd84e95294332bb173c3f165e527c8569d"
+)
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_BYTE_COUNT = (
+    2_902_264
+)
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_SHA256 = (
+    "61e031b6ad6a6037a54b5381364470af359f89fb48ec2bf728e21bd285106b96"
+)
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_ADDITIONAL_SUPERSESSION_PATHS = (
+    frozenset(
+        {
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_baseline.yaml",
+            "inputs/architecture/arch_005_task_shadow_index.yaml",
+            "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+            (
+                "registry/development_tasks_shadow/active/10/"
+                "10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow_v2/10/"
+                "10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml"
+            ),
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_arch_004g_deprecation.py",
+            "tests/test_trading2452_architecture_contract.py",
+        }
+    )
+)
+TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qc_qqq_options_bounded_cloud_pilot.yaml",
+        "config/architecture/fragments/modules/qc_qqq_options_bounded_cloud_pilot.yaml",
+        "config/research/qc_qqq_options_bounded_free_cloud_pilot_v1.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"
+        ),
+        "src/ai_trading_system/qqq_options_research/bounded_cloud_pilot.py",
+        "tests/test_qc_qqq_options_bounded_cloud_pilot.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -4835,6 +4892,26 @@ def _trading_2491_qqq_options_cross_layer_validation_harness_base_baseline_blob(
     assert object_id == (
         TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_BASELINE_GIT_BLOB
     )
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2492_qc_qqq_options_bounded_cloud_pilot_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -6940,6 +7017,30 @@ def _assert_trading_2491_qqq_options_cross_layer_validation_harness_historical_p
     suffix = current_bytes[expected_count:]
     expected_marker = (
         f"{TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION}:\n".encode()
+    )
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2492_qc_qqq_options_bounded_cloud_pilot_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2492 bounded cloud pilot historical prefix differs from immutable "
+        "TRADING-2491 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"{TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION}:\n".encode()
     )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
@@ -9651,6 +9752,10 @@ def _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths() -
             _trading_2491_qqq_options_cross_layer_validation_harness_superseded_live_source_paths()
             | _trading_2491_qqq_options_cross_layer_validation_harness_source_paths()
         )
+    if TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION in (
+        _compatibility_baseline()
+    ):
+        paths |= _trading_2492_qc_qqq_options_bounded_cloud_pilot_successor_authority_paths()
     return paths
 
 
@@ -9712,6 +9817,51 @@ def _trading_2491_qqq_options_cross_layer_validation_harness_all_current_authori
         | _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
         | _trading_2491_qqq_options_cross_layer_validation_harness_superseded_live_source_paths()
         | _trading_2491_qqq_options_cross_layer_validation_harness_source_paths()
+    )
+
+
+@cache
+def _trading_2492_qc_qqq_options_bounded_cloud_pilot_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2492_qc_qqq_options_bounded_cloud_pilot_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2492_qc_qqq_options_bounded_cloud_pilot_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION
+    ]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2492_qc_qqq_options_bounded_cloud_pilot_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION
+    ]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2492_qc_qqq_options_bounded_cloud_pilot_successor_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2492_qc_qqq_options_bounded_cloud_pilot_superseded_live_source_paths()
+        | _trading_2492_qc_qqq_options_bounded_cloud_pilot_source_paths()
+    )
+
+
+@cache
+def _trading_2492_qc_qqq_options_bounded_cloud_pilot_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2491_qqq_options_cross_layer_validation_harness_all_current_authority_paths()
+        | _trading_2492_qc_qqq_options_bounded_cloud_pilot_superseded_live_source_paths()
+        | _trading_2492_qc_qqq_options_bounded_cloud_pilot_source_paths()
     )
 
 
@@ -11030,7 +11180,9 @@ def _trading_2495_atlas_reader_status_explanation_prior_active_source_mismatches
         TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION
     )
     if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in _compatibility_baseline():
-        mismatches -= _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+        mismatches -= (
+            _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+        )
     if TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION in _compatibility_baseline():
         mismatches -= _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths()
     if TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION in (
@@ -11038,6 +11190,12 @@ def _trading_2495_atlas_reader_status_explanation_prior_active_source_mismatches
     ):
         mismatches -= (
             _trading_2491_qqq_options_cross_layer_validation_harness_superseded_live_source_paths()
+        )
+    if TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_successor_authority_paths()
         )
     return mismatches
 
@@ -11050,7 +11208,9 @@ def _trading_2496_atlas_reader_status_explanation_renderer_prior_active_source_m
         TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION
     )
     if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in _compatibility_baseline():
-        mismatches -= _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+        mismatches -= (
+            _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+        )
     if TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION in _compatibility_baseline():
         mismatches -= _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths()
     if TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION in (
@@ -11058,6 +11218,12 @@ def _trading_2496_atlas_reader_status_explanation_renderer_prior_active_source_m
     ):
         mismatches -= (
             _trading_2491_qqq_options_cross_layer_validation_harness_superseded_live_source_paths()
+        )
+    if TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_successor_authority_paths()
         )
     return mismatches
 
@@ -11077,6 +11243,12 @@ def _trading_2489_qc_platform_evidence_manual_bundle_prior_active_source_mismatc
         mismatches -= (
             _trading_2491_qqq_options_cross_layer_validation_harness_superseded_live_source_paths()
         )
+    if TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_successor_authority_paths()
+        )
     return mismatches
 
 
@@ -11093,6 +11265,12 @@ def _trading_2490_qc_local_ingest_reconciliation_prior_active_source_mismatches(
         mismatches -= (
             _trading_2491_qqq_options_cross_layer_validation_harness_superseded_live_source_paths()
         )
+    if TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_successor_authority_paths()
+        )
     return mismatches
 
 
@@ -11100,8 +11278,24 @@ def _trading_2490_qc_local_ingest_reconciliation_prior_active_source_mismatches(
 def _trading_2491_qqq_options_cross_layer_validation_harness_prior_active_source_mismatches() -> (
     frozenset[str]
 ):
-    return _latest_active_source_mismatches(
+    mismatches = _latest_active_source_mismatches(
         TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION
+    )
+    if TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_superseded_live_source_paths()
+        )
+    return mismatches
+
+
+@cache
+def _trading_2492_qc_qqq_options_bounded_cloud_pilot_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION
     )
 
 
@@ -11148,7 +11342,20 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION in baseline:
+    if TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_prior_active_source_mismatches()
+            | TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2492_qc_qqq_options_bounded_cloud_pilot_all_current_authority_paths()
+        )
+        authority_section = TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION
+    elif TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION in baseline:
         current_superseded_paths = (
             _trading_2491_qqq_options_cross_layer_validation_harness_superseded_live_source_paths()
         )
@@ -26517,8 +26724,13 @@ def test_trading_2491_cross_layer_validation_harness_is_current_hash_authority()
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    successor_paths = (
+        _trading_2492_qc_qqq_options_bounded_cloud_pilot_successor_authority_paths()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_paths:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -26579,6 +26791,151 @@ def test_trading_2491_cross_layer_validation_harness_is_current_hash_authority()
     ] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2491_qqq_options_cross_layer_validation_harness_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2492_bounded_cloud_pilot_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2492_qc_qqq_options_bounded_cloud_pilot_base_baseline_blob()
+    _assert_trading_2492_qc_qqq_options_bounded_cloud_pilot_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2492_qc_qqq_options_bounded_cloud_pilot_compatibility.v1"
+    )
+    assert phase["status"] == "BLOCKED_OWNER_INPUT"
+    assert phase["boundary_id"] == (
+        "TRADING-2492-QC-QQQ-OPTIONS-BOUNDED-CLOUD-PILOT-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        (
+            "owner_decision:TRADING-2492:2026-08-03:"
+            "preregister_offline_owner_blocked_bounded_cloud_pilot_v1"
+        )
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": (
+            TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_BASELINE_GIT_BLOB
+        ),
+        "raw_byte_count": (
+            TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (
+            TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": (
+            TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2492_qc_qqq_options_bounded_cloud_pilot_prior_active_source_mismatches()
+        | TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_NEW_SOURCE_PATHS
+    ) - TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": "TRADING-2492-QC-QQQ-OPTIONS-BOUNDED-CLOUD-PILOT-V1",
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 961,
+        "active_task_count": 456,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["bounded_cloud_pilot"] == {
+        "policy_schema": "qc_qqq_options_bounded_cloud_pilot_policy.v1",
+        "preregistration_schema": (
+            "qc_qqq_options_bounded_cloud_pilot_preregistration.v1"
+        ),
+        "readiness_report_schema": (
+            "qc_qqq_options_bounded_cloud_pilot_readiness_report.v1"
+        ),
+        "policy_sha256": "05416c9e2a547eaba15959e4335b7a4aa965d07d8e191351247ae8bcd7c0ffb1",
+        "module_sha256": "4467f02efaae6a7355b16ff017d2c2a112ae2fcf6990a5deefec4e8c132ca2da",
+        "authority_binding_count": 25,
+        "scope_field_count": 12,
+        "required_evidence_role_count": 10,
+        "readiness_item_count": 12,
+        "primary_research_start": "2021-02-22",
+        "legacy_2022_default_active": False,
+        "owner_authorization_token": "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS",
+        "preregistration_status": "BLOCKED_OWNER_AUTHORIZATION_AND_SCOPE",
+        "decision": "PILOT_PREREGISTRATION_READY_OWNER_BLOCKED",
+    }
+    assert phase["validation"] == {
+        "focused_preregistration": "PASS_24_TESTS",
+        "adjacent_2480_through_2492": "PASS_344_TESTS",
+        "compatibility_regression": "PASS_191_TESTS",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "caller_token_may_authorize_pilot": False,
+        "synthetic_pass_may_authorize_pilot": False,
+        "external_platform_action": "none",
+        "cloud_run_authorized": False,
+        "api_cli_http_object_store_allowed": False,
+        "raw_option_rows_allowed": False,
+        "cash_preservation_required": True,
+        "order_creation_allowed": False,
+        "fill_creation_allowed": False,
+        "investment_interpretation_allowed": False,
+        "range_expansion_allowed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_HISTORICAL_PREFIX_BYTE_COUNT
+        - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2492_qc_qqq_options_bounded_cloud_pilot_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

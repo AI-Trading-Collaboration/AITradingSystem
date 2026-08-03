@@ -1,0 +1,268 @@
+schema_version: qc_qqq_options_bounded_cloud_pilot_policy.v1
+policy_id: qc_qqq_options_bounded_free_cloud_pilot_v1
+policy_version: 1.0.0
+status: BLOCKED_OWNER_INPUT
+owner: project_owner_pilot_coordinator_and_independent_reviewer
+owner_authorization_token: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+rationale: Preregister a deterministic evidence and review boundary for one future bounded QuantConnect Free Cloud QQQ options smoke pilot without authorizing login, project mutation, cloud execution, data export or any investment-facing numeric scope.
+intended_effect: Exact predecessor drift, caller-forged readiness, unreviewed dates or numeric bounds and incomplete platform evidence fail closed while the offline preregistration remains cash-preserving and creates no orders or fills.
+validation_plan: Run exact authority replay, policy and canonical-record tamper, scope inventory, Owner-token, primary-window, blocked-readiness, evidence inventory, permutation, property and adjacent compatibility tests before final-tree validation.
+review_condition: Review through a tracked serial policy change before any QuantConnect login, project action, cloud run, evidence collection, local reconciliation acceptance or pilot disposition.
+expiry_condition: Supersede only after an Owner-reviewed authorization records exact scope, rationale, validation evidence, reviewer, expiry and revocation conditions; retain this blocked baseline as historical authority.
+pilot_role: BOUNDED_PLATFORM_SMOKE_NOT_RESEARCH_CONCLUSION
+primary_research_start: 2021-02-22
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+authority_bindings:
+  - authority_id: TRADING-2480-MODULE
+    path: src/ai_trading_system/contracts/qc_qqq_options_capability_admission.py
+    sha256: 7c75abeaff4d99b085c95889b686554f3589be93c62fdf82e25c9ea37f44a7c4
+  - authority_id: TRADING-2480-POLICY
+    path: config/research/qc_qqq_options_capability_admission_v1.yaml
+    sha256: 8183b17501fef6a628ae600df0ce4ef0edf30370a5d40d32c35a895cdcc04f89
+  - authority_id: TRADING-2481-MODULE
+    path: src/ai_trading_system/qqq_options_research/contracts.py
+    sha256: 84020b2c7b7263b65d6b437ba178a0f7b94d678dc47561418fca48fce7792830
+  - authority_id: TRADING-2481-POLICY
+    path: config/research/qqq_options_shared_contract_v1.yaml
+    sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+  - authority_id: TRADING-2482-MODULE
+    path: src/ai_trading_system/qqq_options_research/dq_pit_identity.py
+    sha256: baf9baffe1bc441342b9acfcca0010d3a40482bc63b8f5f16629d8b29326ef07
+  - authority_id: TRADING-2482-POLICY
+    path: config/research/qqq_options_dq_pit_identity_v1.yaml
+    sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+  - authority_id: TRADING-2483-MODULE
+    path: src/ai_trading_system/qqq_options_research/signal_package.py
+    sha256: ada45b6768b50180f2c21a54b0bed8c3bbf2b1a16ca965767b32569c0fce0cac
+  - authority_id: TRADING-2483-POLICY
+    path: config/research/qqq_options_signal_export_v1.yaml
+    sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+  - authority_id: TRADING-2484-MODULE
+    path: src/ai_trading_system/qqq_options_research/qc_project_adapter.py
+    sha256: 86420ad9875cac47c5317ceeeda8892f5aa8d2ad310a0fe84ac7762fa4cf90a8
+  - authority_id: TRADING-2484-POLICY
+    path: config/research/qc_qqq_options_project_adapter_contract_v1.yaml
+    sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+  - authority_id: TRADING-2485-MODULE
+    path: src/ai_trading_system/qqq_options_research/deterministic_selection.py
+    sha256: 3d9d98466c64dfcedfd5b0db17acb749e7183cfc5496a98575de43a8fa74b0b4
+  - authority_id: TRADING-2485-POLICY
+    path: config/research/qqq_options_deterministic_selection_v1.yaml
+    sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30
+  - authority_id: TRADING-2486-MODULE
+    path: src/ai_trading_system/qqq_options_research/minute_execution.py
+    sha256: e2f50a6fef80295d79d28fba1f40b7943ec2a2d14e0d2375084c6c87c4e13feb
+  - authority_id: TRADING-2486-POLICY
+    path: config/research/qqq_options_minute_execution_reality_v1.yaml
+    sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+  - authority_id: TRADING-2487-MODULE
+    path: src/ai_trading_system/qqq_options_research/cash_accounting.py
+    sha256: 562c4933f609d022035e444290548e1610d87ca015cfc2d2a56feefc08b2c0e8
+  - authority_id: TRADING-2487-POLICY
+    path: config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml
+    sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+  - authority_id: TRADING-2488-MODULE
+    path: src/ai_trading_system/qqq_options_research/position_lifecycle.py
+    sha256: 8f5b8b28773be3a71366cf906ad1cc0a3b4721d91fc3f4450f7028959550d322
+  - authority_id: TRADING-2488-POLICY
+    path: config/research/qqq_options_lifecycle_expiry_corporate_action_safety_v1.yaml
+    sha256: 1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582
+  - authority_id: TRADING-2489-MODULE
+    path: src/ai_trading_system/qqq_options_research/platform_evidence_bundle.py
+    sha256: 8d3d12db0542e30454ce4d7673fa357f4eaef7c3c43fab38e4cd8dc3be8a1565
+  - authority_id: TRADING-2489-POLICY
+    path: config/research/qc_qqq_options_platform_evidence_manual_bundle_v1.yaml
+    sha256: bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1
+  - authority_id: TRADING-2490-MODULE
+    path: src/ai_trading_system/qqq_options_research/local_reconciliation.py
+    sha256: 1d6d7c5f34431001a18002046cdae93a6f85793516dea3b6598be1902cb8655b
+  - authority_id: TRADING-2490-POLICY
+    path: config/research/qc_qqq_options_local_ingest_reconciliation_v1.yaml
+    sha256: 7253bf64f0e0d25dcae9a9d53fdb8d38f741dfd3a034af6737857ca33f39e875
+  - authority_id: TRADING-2491-GOLDEN
+    path: config/research/qqq_options_cross_layer_validation_golden_v1.yaml
+    sha256: 43902ac3907ed75d06fecfafd0e70ef62a20701ee77bf81f47f232e4fab6fa1b
+  - authority_id: TRADING-2491-MODULE
+    path: src/ai_trading_system/qqq_options_research/cross_layer_validation.py
+    sha256: 5d0e7d50ecdc011f9b8000f626631d4f25e1c199f182118bb2e82b76e99a9965
+  - authority_id: TRADING-2491-POLICY
+    path: config/research/qqq_options_cross_layer_validation_harness_v1.yaml
+    sha256: 7ba24214b29d6d13873eeb53e72ad9072fb6262f9e09a688a99f885a97b9a4c0
+scope_fields:
+  - field_id: CLOUD_COMPUTE_BUDGET
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: project_owner
+    exit_condition: Record a reviewed Free Cloud compute budget and stop condition.
+  - field_id: FEE_POLICY
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: research_owner
+    exit_condition: Record an evidence-backed fee policy; zero fee may only be an isolation sensitivity.
+  - field_id: MAXIMUM_CONTRACT_QUANTITY
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: project_owner
+    exit_condition: Record an exact reviewed long-only contract cap no greater than the qualitative one-contract boundary.
+  - field_id: MAXIMUM_ORDER_COUNT
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: project_owner
+    exit_condition: Record an exact reviewed low-order cap for the bounded smoke.
+  - field_id: MAXIMUM_RUNTIME
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: project_owner
+    exit_condition: Record a reviewed runtime boundary and abort condition.
+  - field_id: PARTIAL_FILL_POLICY
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: research_owner
+    exit_condition: Record an evidence-backed partial-fill reality policy.
+  - field_id: REALITY_LATENCY_POLICY
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: research_owner
+    exit_condition: Record an evidence-backed latency policy and isolation sensitivities.
+  - field_id: REALITY_SLIPPAGE_POLICY
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: research_owner
+    exit_condition: Record an evidence-backed slippage policy; zero slippage is not the reality baseline.
+  - field_id: RECONCILIATION_TOLERANCE
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: independent_reviewer
+    exit_condition: Record export mapping, rounding and tolerance evidence before accepting numeric differences.
+  - field_id: REQUESTED_END
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: project_owner
+    exit_condition: Record the exact reviewed requested end date inside the validated primary range.
+  - field_id: REQUESTED_START
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: project_owner
+    exit_condition: Record the exact reviewed requested start date and smoke-only role; 2022-12-01 is not a default.
+  - field_id: RESOURCE_TELEMETRY_LIMIT
+    status: UNKNOWN_REQUIRES_OWNER_REVIEW
+    owner: independent_reviewer
+    exit_condition: Record required telemetry fields and reviewed acceptance or escalation handling.
+required_evidence:
+  - evidence_role: CAPABILITY_RECEIPT
+    source_task: TRADING-2480
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: CROSS_LAYER_CHECKLIST
+    source_task: TRADING-2491
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: ENGINE_PROJECT_IDENTITY
+    source_task: TRADING-2484
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: LOCAL_RECONCILIATION
+    source_task: TRADING-2490
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: MANUAL_EVIDENCE_BUNDLE
+    source_task: TRADING-2489
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: OPTION_EVENT_DQ_PIT
+    source_task: TRADING-2482
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: PILOT_RUN_RECEIPT
+    source_task: TRADING-2492
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: RESOURCE_TELEMETRY
+    source_task: TRADING-2492
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: REVIEWER_ATTESTATION
+    source_task: TRADING-2492
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+  - evidence_role: RUN_RANGE
+    source_task: TRADING-2492
+    current_status: NOT_EVALUATED_NO_AUTHORIZED_PILOT
+    required_for_disposition: true
+readiness_items:
+  - item_id: CAPABILITY_RECEIPT_CONFIRMED
+    source_task: TRADING-2480
+    owner: pilot_coordinator
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: CROSS_LAYER_CHECKLIST_FACT_DERIVED
+    source_task: TRADING-2491
+    owner: independent_reviewer
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: ENGINE_PROJECT_IDENTITY_BOUND
+    source_task: TRADING-2484
+    owner: pilot_coordinator
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: EXTERNAL_OWNER_TOKEN_GRANTED
+    source_task: TRADING-2492
+    owner: project_owner
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: LOCAL_RECONCILIATION_EXPLAINED
+    source_task: TRADING-2490
+    owner: independent_reviewer
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: MANUAL_BUNDLE_COMPLETE
+    source_task: TRADING-2489
+    owner: pilot_coordinator
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: NO_PROHIBITED_ACTION_CONFIRMED
+    source_task: TRADING-2492
+    owner: independent_reviewer
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: OPTION_EVENT_DQ_PIT_REVIEWED
+    source_task: TRADING-2482
+    owner: data_governance
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: PILOT_SCOPE_OWNER_REVIEWED
+    source_task: TRADING-2492
+    owner: project_owner
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: RESOURCE_TELEMETRY_COMPLETE
+    source_task: TRADING-2492
+    owner: independent_reviewer
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: RUN_RANGE_CONFIRMED
+    source_task: TRADING-2492
+    owner: pilot_coordinator
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+  - item_id: TWO_PERSON_ATTESTATION_COMPLETE
+    source_task: TRADING-2489
+    owner: independent_reviewer
+    current_status: BLOCKED
+    evidence_status: NOT_EVALUATED
+blocking_reason_codes:
+  - OWNER_AUTHORIZATION_NOT_GRANTED
+  - OWNER_REVIEWED_PILOT_SCOPE_NOT_GRANTED
+allowed_final_dispositions:
+  - BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION
+  - PILOT_NO_GO_LICENSE_OR_EVIDENCE
+  - PILOT_REQUIRES_PAID_TIER
+safety:
+  research_only: true
+  external_platform_action_allowed: false
+  cloud_run_authorized: false
+  api_allowed: false
+  cli_allowed: false
+  remote_http_allowed: false
+  object_store_allowed: false
+  raw_options_data_export_allowed: false
+  synthetic_pass_may_authorize_pilot: false
+  caller_token_may_authorize_pilot: false
+  investment_interpretation_allowed: false
+  range_expansion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action_allowed: false
+  production_effect: none
+  broker_action: none
+decision: PILOT_PREREGISTRATION_READY_OWNER_BLOCKED

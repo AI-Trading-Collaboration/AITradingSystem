@@ -1,0 +1,24 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_bounded_cloud_pilot
+fragment_kind: module
+owner: external_validation_governance
+module_prefix: src/ai_trading_system/qqq_options_research/bounded_cloud_pilot.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_POLICY_PATH
+  - QQQOptionsBoundedCloudPilotContractError
+  - QQQOptionsBoundedCloudPilotPolicy
+  - QQQOptionsBoundedCloudPilotPolicyLoadResult
+  - QQQOptionsBoundedCloudPilotPreregistration
+  - QQQOptionsBoundedCloudPilotReadinessReport
+  - QQQOptionsBoundedPilotAuthorityBinding
+  - QQQOptionsBoundedPilotEvidenceRequirement
+  - QQQOptionsBoundedPilotReadinessItemPolicy
+  - QQQOptionsBoundedPilotReadinessItemState
+  - QQQOptionsBoundedPilotSafety
+  - QQQOptionsBoundedPilotScopeFieldPolicy
+  - QQQOptionsBoundedPilotScopeFieldState
+  - build_qc_qqq_options_bounded_cloud_pilot_preregistration
+  - evaluate_qc_qqq_options_bounded_cloud_pilot_readiness
+  - load_qc_qqq_options_bounded_cloud_pilot_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture

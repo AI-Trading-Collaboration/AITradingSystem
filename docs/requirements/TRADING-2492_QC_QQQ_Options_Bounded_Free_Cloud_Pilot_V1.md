@@ -1,0 +1,201 @@
+# TRADING-2492：QQQ Options Bounded QuantConnect Free Cloud Pilot V1
+
+最后更新：2026-08-03
+
+稳定任务 ID：`TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1`
+
+优先级：`P0`
+
+状态：`BLOCKED_OWNER_INPUT`
+
+mode：`SINGLE_LANE`
+
+production effect：`none`
+
+broker action：`none`
+
+外部平台 Owner token：`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`
+
+当前工程阶段：`OFFLINE_PREREGISTRATION_AND_READINESS_CONTRACT`
+
+## 1. 目标与当前可执行边界
+
+本任务最终目标是在独立 Owner 授权后，执行一次 preregistered、严格限界的 QuantConnect Free Cloud
+QQQ options smoke pilot，验证真实平台上的 minute subscription、事件时序、单张 long-premium 选约、
+next-independent-minute execution、现金核算、manual evidence collection 与 local reconciliation。
+
+当前没有 QuantConnect 登录、project、API、CLI、HTTP 或 cloud run 授权，也没有 Owner-reviewed pilot
+日期、order cap、resource cap 或现实模型数值。当前仅实现 strictly offline、deterministic、fail-closed 的：
+
+1. pilot policy 与 inherited authority exact binding；
+2. Owner 未授权时的 canonical preregistration/readiness record；
+3. 未 reviewed 数值和日期不得被 caller 自报 READY 的 typed blocker；
+4. 真实执行后必须交付的 evidence inventory、review roles 和最终 disposition contract；
+5. unit/property/golden/tamper coverage、architecture fragments 与 system flow。
+
+该离线阶段完成不等于 cloud pilot 已运行，也不满足本任务完整退出条件。task status 保持
+`BLOCKED_OWNER_INPUT`，直到 Owner 以 reviewed tracked policy/token 明确授权平台动作与 pilot scope。
+
+## 2. 非目标与禁止事项
+
+未获得独立 Owner authorization 前，本任务不：
+
+- 登录 QuantConnect、创建或修改 project、调用 API/CLI/HTTP/Object Store 或运行 cloud backtest；
+- 读取、下载、复制、重建或导出 raw option chain、minute quote、OpenInterest、Greeks 或 provider rows；
+- 自行选择 pilot 日期、窗口长度、order cap、resource cap、latency、slippage、fee、partial-fill、
+  spread、OI、volume、DTE、moneyness、delta、position cap 或 reconciliation tolerance；
+- 激活 2485 selection、2486 execution、2487 accounting、2488 lifecycle、2489 collection 或 2490
+  reconciliation 的 tracked unauthorized/policy-blocked defaults；
+- 使用 synthetic fixture、2491 PASS、caller supplied token、任意 receipt bytes 或 checklist 字段伪造
+  platform readiness；
+- 宣称策略有效、回测有效、范围可扩、Free tier 足够、付费升级必要或可以 paper/live/production；
+- 做 short、assignment、exercise、underlying delivery、roll、multi-leg、LEAPS 或 Wheel；
+- 改写 TRADING-2481–2491 shared schema、DQ/PIT、adapter、selector、execution、accounting、lifecycle、
+  evidence、reconciliation 或 golden authority。
+
+所有离线输出必须固定：`external_action_executed=false`、`cloud_run_authorized=false`、
+`investment_interpretation_allowed=false`、`range_expansion_allowed=false`、`production_effect=none`、
+`broker_action=none`。
+
+## 3. Inherited exact authority
+
+2492 policy 必须 exact-bind 并在 loader 中重算下列 predecessor policy/module authority：
+
+- 2480 capability/license/evidence admission；
+- 2481 shared sealed records 与 safety envelope；
+- 2482 DQ/PIT/cache/evidence identity；
+- 2483 daily signal/run package 与 primary research window；
+- 2484 QuantConnect project adapter descriptor；
+- 2485 deterministic selection；
+- 2486 minute execution reality model；
+- 2487 cash/premium/settlement accounting；
+- 2488 lifecycle/expiry/corporate-action safety；
+- 2489 manual evidence bundle；
+- 2490 local ingest/reconciliation；
+- 2491 cross-layer synthetic harness、golden 与 blocked cloud checklist。
+
+任何 missing、extra authority id、duplicate、symlink、path escape、hash drift 或非 regular file 必须 fail
+closed。实现只调用 predecessor 的 canonical/seal/from-json authority，不复制 shared record。
+
+## 4. Research window 与 pilot scope governance
+
+项目 primary research default 继续是 `2021-02-22` 起始的 validated QQQ/SGOV/TQQQ window；
+`2022-12-01` 绝不是新 run 默认。
+
+2492 cloud smoke 是 `BOUNDED_PLATFORM_SMOKE_NOT_RESEARCH_CONCLUSION`，不是 primary backtest。真实 pilot 的：
+
+- `requested_start`、`requested_end`；
+- `maximum_order_count`、`maximum_contract_quantity`；
+- compute/time/resource budget；
+- any numeric reality-model/tolerance value
+
+在当前 tracked policy 中全部保持 `UNKNOWN_REQUIRES_OWNER_REVIEW`。未来 Owner-reviewed scope 必须记录 rationale、
+intended effect、validation evidence、review/expiry condition，并说明 requested/evaluated range。窗口必须位于
+primary validated range 内；若要使用其他历史起点，只能有 reviewed sensitivity/proxy/stress role 和 DQ caveat。
+
+“最多一张合约”“低订单”“极短窗口”只作为定性上界要求；没有 Owner-reviewed exact integer/date/resource
+values 时不得被实现转成自选数值。
+
+## 5. Offline preregistration contract
+
+task-owned contract 计划包括：
+
+- policy/authority/scope-field/evidence-role/readiness-item/safety models；
+- sealed `QQQOptionsBoundedCloudPilotPreregistration`；
+- sealed per-item readiness result 与 aggregate readiness report；
+- typed `QQQOptionsBoundedCloudPilotContractError`；
+- strict policy loader、blocked preregistration builder、readiness evaluator 与 canonical replay API。
+
+所有 sealed records 使用 strict、extra-forbid、frozen model，提供 `seal`、`canonical_bytes`、
+`canonical_sha256` 与 `from_json_bytes`。拒绝 noncanonical JSON、caller hash、NaN/Inf、naive/future timestamp、
+unsorted/duplicate item、unknown scope、path/hash/schema/lineage mismatch 与 input permutation drift。
+
+当前 builder 不接受任意 caller token 来激活执行。tracked policy 未经 Owner-reviewed serial change 前，输出必须：
+
+- status=`BLOCKED_OWNER_AUTHORIZATION_AND_SCOPE`；
+- owner token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；
+- every real-platform readiness item=`NOT_EVALUATED` 或 `BLOCKED`；
+- `pilot_authorized=false`、`external_action_executed=false`；
+- typed cash-preservation/no-order/no-fill disposition；
+- blocking reasons 至少包括 `OWNER_AUTHORIZATION_NOT_GRANTED` 与
+  `OWNER_REVIEWED_PILOT_SCOPE_NOT_GRANTED`。
+
+2491 cloud checklist 只能作为继承的 blocked authority；synthetic PASS 不能转换为 2492 READY。
+
+## 6. 真实 pilot 的前置条件与 evidence inventory
+
+只有后续 Owner-reviewed tracked authority 同时满足以下条件，真实平台动作才可能单独执行：
+
+1. exact Owner authorization id/token、授权人、reviewer、scope、expiry 与 revocation condition；
+2. 2480 confirmed capability receipt，并 canonical replay 为
+   `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT`；
+3. Owner-reviewed exact requested range、order/contract/resource bounds；
+4. 2485–2490 所需 policy 或明确保持 blocked 的 no-order smoke design；
+5. 2491 checklist 每项由真实 evidence 事实派生，不信任 caller declaration；
+6. 2484 exact project/code/subscription/engine identity；
+7. 2489 strict manual bundle collection 与 two-person attestation；
+8. 2490 explained local reconciliation；
+9. no same-bar、no daily-close、no short、no assignment/exercise/underlying delivery；
+10. external platform secrets、account/broker identifiers 与 raw rows 不进入 tracked evidence。
+
+真实 run evidence inventory 必须包括 requested/evaluated ranges、code/project/engine identity、capability
+receipt、resource telemetry、orders/fills/cash/lifecycle、2491 checklist facts、2489 complete bundle、2490
+reconciliation、DQ/PIT axes、license/export classification、two-person review 与 immutable checksums。
+
+## 7. Final disposition contract
+
+在真实 evidence 完整并经 independent review 前，不得生成最终 disposition。最终只能是：
+
+- `BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION`；
+- `PILOT_REQUIRES_PAID_TIER`；
+- `PILOT_NO_GO_LICENSE_OR_EVIDENCE`。
+
+任何 UNKNOWN、missing evidence、unexplained reconciliation、license/export uncertainty 或 resource telemetry
+缺失都不能产生第一个结论。该 disposition 仅交给 TRADING-2493 Owner stage gate；不授权 range expansion、
+investment conclusion、paper/live/production 或 broker action。
+
+## 8. Acceptance criteria
+
+离线 preregistration stage：
+
+- exact authority hash replay、policy canonical load 与 symlink/path/tamper negatives PASS；
+- unknown Owner token/scope/numeric fields 强制 blocked；caller-forged READY/token/receipt/checklist 被拒绝；
+- 2021-02-22 primary boundary 保留，2022-12-01-not-default 与 unreviewed alternate-window negatives PASS；
+- evidence inventory、review roles、typed blockers、cash/no-order/no-fill、permutation/canonical replay PASS；
+- system flow、module/flow fragments、task register、generated/task shadow/current hashes 同步；
+- focused、adjacent、compatibility/deprecation 与 final-tree formal gates PASS；
+- 外部 QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 动作全部为 none。
+
+完整任务退出：
+
+- 另行获得 exact Owner authorization 和 reviewed scope；
+- 真实 bounded pilot、manual bundle、reconciliation 与 independent review 完成；
+- 生成上述三个 disposition 之一并交接 TRADING-2493。
+
+## 9. 当前 blocker 与退出条件
+
+blocker：`OWNER_AUTHORIZATION_AND_REVIEWED_PILOT_SCOPE_NOT_GRANTED`。
+
+next owner：project owner + pilot coordinator + independent reviewer。
+
+解除 blocker 所需输入：明确授权是否允许登录/创建或修改 project/运行一次 bounded cloud backtest/下载
+export-safe manual evidence，并提供 reviewed exact dates、order/contract/resource bounds、授权 expiry 与 reviewer。
+
+在这些输入到达前，本任务只推进离线工程 baseline，状态不得改为 `BASELINE_DONE` 或任何 pilot success。
+
+## 10. 2026-08-03 离线工程进度
+
+- governed `SINGLE_LANE` START/LANE preflight 从 exact main
+  `55858bedfa898f076eae496675aa2d669a5a6eed` PASS；`contract_change=true` 仅声明 2492 task-owned
+  policy/public contract，未修改 predecessor shared authority；
+- policy exact-bind 2480–2491 共 25 项 module/policy/golden authority；scope/evidence/readiness inventory
+  分别为 12/10/12；
+- default preregistration/readiness 固定 `BLOCKED_OWNER_AUTHORIZATION_AND_SCOPE`、cash preservation、
+  order/fill=0、external action=false；caller 无激活入口；
+- focused 首轮同覆盖 `python -m pytest -n 16 --dist loadfile` 为 `24 passed`；Ruff、mypy、compileall PASS；
+- DevEx 为 `1081 modules / 1248 tests / 856 writers / 0 violations`；task shadow
+  `961/456/505` byte-identical；
+- architecture fragments/system flow 已同步；compatibility/current-source authority 与 final-tree formal gates
+  在同一 frozen candidate 收口；
+- QuantConnect 登录/project/cloud/API/CLI/HTTP/Object Store/raw export/paper/live/broker/production 动作均
+  未执行，Owner token 与 reviewed pilot scope blocker 不变。

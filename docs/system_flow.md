@@ -7524,3 +7524,36 @@ primary requested/evaluated start 固定 `2021-02-22`；`2022-12-01` 不是默�
 cloud smoke checklist 固定 Owner token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`、
 `external_action_executed=false`。range expansion、promotion、paper/live/production/broker 全部 false/none，
 `production_effect=none`、`broker_action=none`。完整 cloud smoke authority 只属于后续 Owner-reviewed task。
+
+## TRADING-2492 QuantConnect QQQ Options Bounded Free Cloud Pilot V1
+
+`config/research/qc_qqq_options_bounded_free_cloud_pilot_v1.yaml` 在 2480–2491 exact authority 之上冻结
+strictly offline 的 pilot preregistration/readiness contract。当前 Owner token 是
+`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`，所以 `qqq_options_research.bounded_cloud_pilot` 只生成
+cash-preserving、no-order、no-fill 的 sealed blocked record；它不登录 QuantConnect，不创建或修改 project，
+不调用 API/CLI/HTTP/Object Store，也不运行 cloud backtest。
+
+```text
+2480–2490 exact policy/module authority
+2491 exact policy/module/golden + canonical blocked cloud checklist
+  -> 25 authority hashes replayed from current checkout
+  -> PRIMARY boundary 2021-02-22; 2022-12-01 remains non-default
+  -> 12 pilot scope fields = UNKNOWN_REQUIRES_OWNER_REVIEW / NOT_GRANTED
+  -> 10 required evidence roles = NOT_EVALUATED_NO_AUTHORIZED_PILOT
+  -> 12 readiness items = BLOCKED / NOT_EVALUATED
+  -> sealed preregistration + sealed readiness report
+  -> BLOCKED_OWNER_AUTHORIZATION_AND_SCOPE
+  -> cash preservation / order_count=0 / fill_count=0
+  -x-> caller token, synthetic PASS, cloud run or final pilot disposition
+```
+
+当前 scope 不填 requested dates、order/contract/resource cap、latency、slippage、fee、partial-fill 或
+reconciliation tolerance。真实 pilot 需要 Owner-reviewed exact scope、2480 confirmed capability receipt、2484
+engine/project identity、2489 complete manual bundle、2490 explained reconciliation、option-event DQ/PIT、resource
+telemetry 与 two-person attestation；2491 checklist 必须从真实事实派生，不能信任 caller declaration。
+
+只有真实 evidence 完整且 independent review 后，才允许形成
+`BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION`、`PILOT_REQUIRES_PAID_TIER` 或
+`PILOT_NO_GO_LICENSE_OR_EVIDENCE` 之一并交给 2493。离线 preregistration baseline 不产生任何 final
+disposition，不允许 investment interpretation、range expansion、paper/live/production/broker，固定
+`production_effect=none`、`broker_action=none`。
