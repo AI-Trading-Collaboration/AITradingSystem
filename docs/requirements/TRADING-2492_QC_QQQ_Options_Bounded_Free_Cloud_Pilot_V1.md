@@ -199,3 +199,10 @@ export-safe manual evidence，并提供 reviewed exact dates、order/contract/re
   在同一 frozen candidate 收口；
 - QuantConnect 登录/project/cloud/API/CLI/HTTP/Object Store/raw export/paper/live/broker/production 动作均
   未执行，Owner token 与 reviewed pilot scope blocker 不变。
+- 2026-08-03：TRADING-2480 read-only evidence serial contract wave 只刷新 2480/2489/2490/2491 exact
+  authority bindings；policy LF SHA-256=`60ed5237fc37e4d44737fe295f4d341a58d318ecad59f8cdf753a0486609f66e`，
+  authority set SHA-256=`34d960e7f90c5270495bf4dbbf010a6b67354a43713c00fabdbaa098e72515df`，
+  default preregistration/readiness SHA-256 分别为
+  `3b2f38fc2672dc2915a0e1b48a9df195bd76295c75cbfe9f82e708581bb49233` /
+  `c75c4008fec682c8a227f3fd37bce6e44a705308f9233dc74072cde9ca1c3bd6`。2480 receipt 仍 blocked，
+  12 个 scope fields 仍 `UNKNOWN_REQUIRES_OWNER_REVIEW`，2492 不因 2480 登录只读授权而激活。

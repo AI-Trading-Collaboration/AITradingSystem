@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 6b9834c7750be8174bd51aa6d5fcaf05148d419f8e9a18e19b311e8c31772134
+  current_sha256: 4ed4561626586638cf5c9f8b44e982ebee99b976372ff9bb0534c3df55f3ca3f
   fragment_root: config/architecture/fragments/flows
   fragment_count: 23
   fragment_paths:
@@ -172,7 +172,7 @@ fragments:
   owner: architecture_governance
   target_id: system_flow
   path: config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
-  sha256: 5a6ba11bc5a87afd9eb23e35992fd61d2b7fe52213097db4ac052efdd6640353
+  sha256: c7f67cf33016f7f38b22898d5856d54b623ad1002a93d551e67f7685e3a72668
   generated_source_of_truth_active: false
 - fragment_id: flow.qc_qqq_options_local_ingest_reconciliation
   fragment_kind: flow

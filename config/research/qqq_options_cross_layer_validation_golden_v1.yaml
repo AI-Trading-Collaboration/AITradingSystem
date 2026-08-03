@@ -1,5 +1,5 @@
 schema_version: qqq_options_cross_layer_validation_golden.v1
-policy_sha256: 7ba24214b29d6d13873eeb53e72ad9072fb6262f9e09a688a99f885a97b9a4c0
+policy_sha256: 363f7596aa874b819b8377f278e6a503134fa87895553415b7636a5288a13f11
 scenario_goldens:
   - scenario_id: CORPORATE_ACTION_SCOPE_INVALID
     fixture_sha256: 38cd329ee1b5a1ae5f3952566d2e613ee9abd59ebde8c587d1c2bc8d6aa626ab
@@ -21,6 +21,6 @@ scenario_goldens:
     fixture_sha256: 933296582f637f27d259ccdd4bb4b7746544138d5e2518e6cf545c335f8cda2d
   - scenario_id: VENUE_REJECTED_CASH
     fixture_sha256: 0e7af602b134f34cb21d29219dcffdfa767d8b1587aa7cfe721a03d79df46585
-corpus_sha256: 662c3a6d43950c9310ce9d51420f28a095e820476a3157b00de47cd326af7cef
+corpus_sha256: 74325026a521bba6bd7b22bd8f9d9c600f1016e2fed2a5a8f97a27b89ad1819c
 historical_golden_rewrite_allowed: false
 synthetic_fixture_is_platform_evidence: false

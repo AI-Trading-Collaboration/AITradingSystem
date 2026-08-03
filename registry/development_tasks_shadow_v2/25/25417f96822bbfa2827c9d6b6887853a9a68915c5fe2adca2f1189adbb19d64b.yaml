@@ -14,63 +14,64 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner + research platform + data governance：决定是否授权受控 QuantConnect
-    entitlement/data/evidence 核验；engineering coordinator：在获得精确 Owner token 前保持 external
-    probe blocked
+  next_owner: independent reviewer：复核 canonical evidence/receipt；project owner：若需闭合
+    QQQ chain、engine/runtime/result artifact，另行决定更高权限 project/run probe；engineering
+    coordinator：保持 2492 blocked
   requirement_refs:
   - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
-    typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
-    已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。
+    baseline + 2026-08-03 authorized read-only UI evidence 已完成；授权已消费失效。禁止 project
+    mutation、cloud backtest、API/CLI、raw download、paper/live/broker/production 的边界全程保持。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: Free input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
       identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与
-      exit condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
-      exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。
+      exit condition；canonical evidence/receipt exact replay；output=`CAPABILITY_OR_LICENSE_BLOCKED`、`bounded_pilot_preparation_allowed=false`；无账户标识、raw
+      rows 或投资指标。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 8335799ceb0258bcf4384a8883bd7287a45038a0220fafaa2e6d71e484182acf
+  row_sha256: a70f7ef266cb7a8ee17c778df22ccab3433aea6389810f963ab73d8e29a83214
   cell_count: 8
   all_cells:
   - TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
   - External platform / QuantConnect Free capability, licensing and evidence admission
   - P0
   - BASELINE_DONE
-  - project owner + research platform + data governance：决定是否授权受控 QuantConnect entitlement/data/evidence
-    核验；engineering coordinator：在获得精确 Owner token 前保持 external probe blocked
+  - independent reviewer：复核 canonical evidence/receipt；project owner：若需闭合 QQQ chain、engine/runtime/result
+    artifact，另行决定更高权限 project/run probe；engineering coordinator：保持 2492 blocked
   - 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
-    typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
-    已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。
+    baseline + 2026-08-03 authorized read-only UI evidence 已完成；授权已消费失效。禁止 project
+    mutation、cloud backtest、API/CLI、raw download、paper/live/broker/production 的边界全程保持。
   - Free input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
     identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与 exit
-    condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
-    exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。
-  - 2026-08-02：offline admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成
-    QuantConnect 外部操作授权。Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一
-    exit condition=明确 external evidence probe token；`production_effect=none`、`broker_action=none`。
+    condition；canonical evidence/receipt exact replay；output=`CAPABILITY_OR_LICENSE_BLOCKED`、`bounded_pilot_preparation_allowed=false`；无账户标识、raw
+    rows 或投资指标。
+  - 2026-08-03：policy/evidence SHA-256=`e2a429e7…b2cc`/`a9f3eb13…6053`，receipt id=`qc_qqq_options_admission_e3a987…ba04`；Owner
+    token 精确匹配，能力/字段仅 `7/21`、`3/12` confirmed。focused 同覆盖 failure-fix 轨迹=`35/18→37/16→37/16→51/2→53/0`，2480–2492
+    adjacent=`114 PASS`；2492 仍有 QQQ-specific/run evidence 与 12 个 reviewed scope blockers。授权=`CONSUMED_AND_EXPIRED_AFTER_EVIDENCE_PROBE`；`production_effect=none`、`broker_action=none`。
   raw_line: '|TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1|External
-    platform / QuantConnect Free capability, licensing and evidence admission|P0|BASELINE_DONE|project
-    owner + research platform + data governance：决定是否授权受控 QuantConnect entitlement/data/evidence
-    核验；engineering coordinator：在获得精确 Owner token 前保持 external probe blocked|详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
-    typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
-    已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。|Free
+    platform / QuantConnect Free capability, licensing and evidence admission|P0|BASELINE_DONE|independent
+    reviewer：复核 canonical evidence/receipt；project owner：若需闭合 QQQ chain、engine/runtime/result
+    artifact，另行决定更高权限 project/run probe；engineering coordinator：保持 2492 blocked|详见
+    `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
+    baseline + 2026-08-03 authorized read-only UI evidence 已完成；授权已消费失效。禁止 project
+    mutation、cloud backtest、API/CLI、raw download、paper/live/broker/production 的边界全程保持。|Free
     input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
     identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与 exit
-    condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
-    exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。|2026-08-02：offline
-    admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成 QuantConnect 外部操作授权。Owner
-    token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一 exit condition=明确 external
-    evidence probe token；`production_effect=none`、`broker_action=none`。|'
+    condition；canonical evidence/receipt exact replay；output=`CAPABILITY_OR_LICENSE_BLOCKED`、`bounded_pilot_preparation_allowed=false`；无账户标识、raw
+    rows 或投资指标。|2026-08-03：policy/evidence SHA-256=`e2a429e7…b2cc`/`a9f3eb13…6053`，receipt
+    id=`qc_qqq_options_admission_e3a987…ba04`；Owner token 精确匹配，能力/字段仅 `7/21`、`3/12`
+    confirmed。focused 同覆盖 failure-fix 轨迹=`35/18→37/16→37/16→51/2→53/0`，2480–2492 adjacent=`114
+    PASS`；2492 仍有 QQQ-specific/run evidence 与 12 个 reviewed scope blockers。授权=`CONSUMED_AND_EXPIRED_AFTER_EVIDENCE_PROBE`；`production_effect=none`、`broker_action=none`。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-8335799ceb0258bcf4384a88
+  event_id: legacy-import-a70f7ef266cb7a8ee17c778d
   task_id: TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -83,16 +84,18 @@ initial_event:
   to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: project owner + research platform + data governance：决定是否授权受控 QuantConnect
-      entitlement/data/evidence 核验；engineering coordinator：在获得精确 Owner token 前保持 external
-      probe blocked
-    notes: 2026-08-02：offline admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成
-      QuantConnect 外部操作授权。Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一
-      exit condition=明确 external evidence probe token；`production_effect=none`、`broker_action=none`。
+    next_owner: independent reviewer：复核 canonical evidence/receipt；project owner：若需闭合
+      QQQ chain、engine/runtime/result artifact，另行决定更高权限 project/run probe；engineering
+      coordinator：保持 2492 blocked
+    notes: 2026-08-03：policy/evidence SHA-256=`e2a429e7…b2cc`/`a9f3eb13…6053`，receipt
+      id=`qc_qqq_options_admission_e3a987…ba04`；Owner token 精确匹配，能力/字段仅 `7/21`、`3/12`
+      confirmed。focused 同覆盖 failure-fix 轨迹=`35/18→37/16→37/16→51/2→53/0`，2480–2492
+      adjacent=`114 PASS`；2492 仍有 QQQ-specific/run evidence 与 12 个 reviewed scope
+      blockers。授权=`CONSUMED_AND_EXPIRED_AFTER_EVIDENCE_PROBE`；`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:8335799ceb0258bcf4384a8883bd7287a45038a0220fafaa2e6d71e484182acf
+  - sha256:a70f7ef266cb7a8ee17c778df22ccab3433aea6389810f963ab73d8e29a83214
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -100,21 +103,21 @@ projection:
   - External platform / QuantConnect Free capability, licensing and evidence admission
   - P0
   - BASELINE_DONE
-  - project owner + research platform + data governance：决定是否授权受控 QuantConnect entitlement/data/evidence
-    核验；engineering coordinator：在获得精确 Owner token 前保持 external probe blocked
+  - independent reviewer：复核 canonical evidence/receipt；project owner：若需闭合 QQQ chain、engine/runtime/result
+    artifact，另行决定更高权限 project/run probe；engineering coordinator：保持 2492 blocked
   - 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。offline
-    typed evidence/field-license matrix/deterministic receipt 和 fail-closed tests
-    已完成；外部登录、project、cloud run、下载仍依赖新 Owner token。不实现策略、不跑全窗、不下载 raw options data、不形成收益结论。
+    baseline + 2026-08-03 authorized read-only UI evidence 已完成；授权已消费失效。禁止 project
+    mutation、cloud backtest、API/CLI、raw download、paper/live/broker/production 的边界全程保持。
   - Free input artifact、QQQ data availability、resource/runtime、Results/Orders/Trades/Logs、engine
     identity、per-field export/license matrix 均有 CONFIRMED/UNKNOWN/CONTRADICTED 与 exit
-    condition；output 只允许 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或 `CAPABILITY_OR_LICENSE_BLOCKED`；policy/evidence
-    exact-byte binding、tamper negative tests 与 focused/formal PASS；无投资指标。
-  - 2026-08-02：offline admission baseline 已完成并进入 `BASELINE_DONE`；“继续推进相关任务”仅授权离线工程，不构成
-    QuantConnect 外部操作授权。Owner token 仍为 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；下一
-    exit condition=明确 external evidence probe token；`production_effect=none`、`broker_action=none`。
+    condition；canonical evidence/receipt exact replay；output=`CAPABILITY_OR_LICENSE_BLOCKED`、`bounded_pilot_preparation_allowed=false`；无账户标识、raw
+    rows 或投资指标。
+  - 2026-08-03：policy/evidence SHA-256=`e2a429e7…b2cc`/`a9f3eb13…6053`，receipt id=`qc_qqq_options_admission_e3a987…ba04`；Owner
+    token 精确匹配，能力/字段仅 `7/21`、`3/12` confirmed。focused 同覆盖 failure-fix 轨迹=`35/18→37/16→37/16→51/2→53/0`，2480–2492
+    adjacent=`114 PASS`；2492 仍有 QQQ-specific/run evidence 与 12 个 reviewed scope blockers。授权=`CONSUMED_AND_EXPIRED_AFTER_EVIDENCE_PROBE`；`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
   terminal: false
-  raw_row_sha256: 8335799ceb0258bcf4384a8883bd7287a45038a0220fafaa2e6d71e484182acf
+  raw_row_sha256: a70f7ef266cb7a8ee17c778df22ccab3433aea6389810f963ab73d8e29a83214
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: 3e294f73a918fda2b140b6887da6e2a142df3b827cb0d45c865bc347d94aaf7a
+fragment_checksum: 9c21205cc0b06759164f847a69a43b44bd2155b2d9395e6f85c7d434ec916b62

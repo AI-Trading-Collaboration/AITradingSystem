@@ -1,0 +1,381 @@
+{
+  "account_or_broker_identifiers_included": false,
+  "captured_at": "2026-08-03T14:55:30Z",
+  "external_action_authorized": true,
+  "field_exports": [
+    {
+      "exit_condition": "Obtain written license review confirming this derived identity may be retained internally.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "derived_contract_identity",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "The repository requires stable contract identity but has no platform or license evidence yet. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": "Obtain written license review confirming the bounded derived selection explanation may be retained.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "derived_selection_reason",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "No permitted derived selection-reason export has been established. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": "Confirm that bounded diagnostics can be exported without embedding market-data rows.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "diagnostic_logs",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "Generic log download is documented, but permitted content and actual completeness are unverified. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": "Capture exact LEAN identity and confirm it may be retained as internal evidence.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "lean_engine_identity",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "No exact engine identity has been captured from an authorized probe. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": "Review the actual Orders export and its license classification after a separately authorized bounded cloud run.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "order_summary",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "Generic Orders download is documented, but the actual probe artifact has not been captured. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": "Capture project and backtest ids and complete license review for internal retention.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "project_backtest_identity",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "No authorized project or backtest exists. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": null,
+      "export_classification": "QC_ONLY_NOT_EXPORTED",
+      "field_id": "raw_minute_quote",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/cloud-platform/datasets/licensing",
+      "status": "CONFIRMED",
+      "summary": "Cloud access and download licensing are separate; raw minute quotes remain platform-only in v1."
+    },
+    {
+      "exit_condition": null,
+      "export_classification": "QC_ONLY_NOT_EXPORTED",
+      "field_id": "raw_open_interest",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/cloud-platform/datasets/licensing",
+      "status": "CONFIRMED",
+      "summary": "Raw open-interest observations remain provider-bound platform data in v1."
+    },
+    {
+      "exit_condition": null,
+      "export_classification": "QC_ONLY_NOT_EXPORTED",
+      "field_id": "raw_option_chain",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/cloud-platform/datasets/licensing",
+      "status": "CONFIRMED",
+      "summary": "Raw option-chain rows may not be downloaded, reconstructed in logs, or redistributed by this task."
+    },
+    {
+      "exit_condition": "Review the actual Results export and confirm permitted internal retention.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "result_statistics",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "Generic Results download is documented, but actual export content is unverified. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": "Capture runtime telemetry and confirm its permitted export classification.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "runtime_statistics",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "No actual runtime or memory telemetry has been captured. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    },
+    {
+      "exit_condition": "Review the actual Trades export and confirm permitted internal retention.",
+      "export_classification": "UNKNOWN_REQUIRES_LICENSE_REVIEW",
+      "field_id": "trade_summary",
+      "raw_rows_embedded": false,
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "REPOSITORY_REQUIREMENT",
+      "source_locator": "docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md",
+      "status": "UNKNOWN",
+      "summary": "Generic Trades download is documented, but the actual probe artifact has not been captured. The 2026-08-03 read-only probe produced no admissible platform artifact or independent license review for this field."
+    }
+  ],
+  "investment_metrics_included": false,
+  "items": [
+    {
+      "exit_condition": null,
+      "item_id": "account_entitlement",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_authenticated_organization_home:identifiers_redacted",
+      "status": "CONFIRMED",
+      "summary": "The active organization displayed the Free tier; account, organization, member, credit, cookie, and credential identifiers were not retained."
+    },
+    {
+      "exit_condition": "Obtain a separate Owner-reviewed authorization for a bounded cloud run and capture requested and evaluated dates.",
+      "item_id": "actual_evaluated_range",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:no_authorized_run",
+      "status": "UNKNOWN",
+      "summary": "No project creation or cloud backtest was authorized, so no requested or evaluated range exists."
+    },
+    {
+      "exit_condition": "Obtain a separate Owner-reviewed authorization for a bounded cloud run and capture a content-bound backtest id.",
+      "item_id": "backtest_identity",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:no_authorized_run",
+      "status": "UNKNOWN",
+      "summary": "No cloud backtest was authorized or run, so no content-bound backtest identity exists."
+    },
+    {
+      "exit_condition": null,
+      "item_id": "daily_iv_greeks_freshness",
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/writing-algorithms/universes/equity-options",
+      "status": "CONFIRMED",
+      "summary": "Universe IV and Greeks are daily model values computed from prior-session data, not minute market observations."
+    },
+    {
+      "exit_condition": null,
+      "item_id": "dataset_license_boundary",
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/cloud-platform/datasets/licensing",
+      "status": "CONFIRMED",
+      "summary": "Cloud use, local download, internal LEAN use and redistribution are distinct license claims."
+    },
+    {
+      "exit_condition": "Capture the node actually assigned to a separately authorized bounded probe and its runtime telemetry.",
+      "item_id": "free_backtest_node_assignment",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_organization_resources:identifiers_redacted",
+      "status": "UNKNOWN",
+      "summary": "The organization Resources page displayed one Community B-MICRO backtest node allocation, but no authorized run exists to prove actual assignment."
+    },
+    {
+      "exit_condition": null,
+      "item_id": "free_tier_feature_boundary",
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/cloud-platform/organizations/tier-features",
+      "status": "CONFIRMED",
+      "summary": "Free provides cloud minute-to-daily access and one backtest/research node; API and CLI are paid-tier features."
+    },
+    {
+      "exit_condition": "Obtain a separate Owner-reviewed authorization to demonstrate a content-bound input artifact in a disposable project.",
+      "item_id": "input_artifact_admission",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "MANUAL_ATTESTATION",
+      "source_locator": "owner_decision:TRADING-2480:2026-08-03:read_only_probe_boundary",
+      "status": "UNKNOWN",
+      "summary": "The authorization prohibited project creation or modification, so no content-bound input artifact was admitted."
+    },
+    {
+      "exit_condition": "Capture exact LEAN engine identity from a separately authorized bounded result.",
+      "item_id": "lean_engine_identity",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:no_authorized_result",
+      "status": "UNKNOWN",
+      "summary": "No result was produced under the read-only authorization, so exact LEAN engine identity remains unavailable."
+    },
+    {
+      "exit_condition": "Capture and hash bounded logs from a separately authorized probe without encoding raw market data.",
+      "item_id": "logs_export",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:no_authorized_result",
+      "status": "UNKNOWN",
+      "summary": "No result exists from which log availability, completeness, or truncation can be observed."
+    },
+    {
+      "exit_condition": "Complete the authorized collection checklist after all mandatory artifacts exist and obtain independent checksum review.",
+      "item_id": "manual_bundle_completeness",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "MANUAL_ATTESTATION",
+      "source_locator": "manual_attestation:trading_2480_read_only_probe_incomplete_bundle",
+      "status": "UNKNOWN",
+      "summary": "The sanitized read-only facts were collected, but mandatory run and result artifacts do not exist and independent review is pending."
+    },
+    {
+      "exit_condition": null,
+      "item_id": "minute_quotebar_availability",
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/writing-algorithms/datasets/algoseek/us-equity-options",
+      "status": "CONFIRMED",
+      "summary": "The US Equity Options dataset documents minute QuoteBar history support."
+    },
+    {
+      "exit_condition": null,
+      "item_id": "minute_tradebar_availability",
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/writing-algorithms/datasets/algoseek/us-equity-options",
+      "status": "CONFIRMED",
+      "summary": "The US Equity Options dataset documents minute TradeBar history support."
+    },
+    {
+      "exit_condition": null,
+      "item_id": "open_interest_availability",
+      "recorded_at": "2026-08-02T00:00:00Z",
+      "recorded_by": "engineering_coordinator_public_docs_review",
+      "source_kind": "OFFICIAL_PUBLIC_DOCS",
+      "source_locator": "https://www.quantconnect.com/docs/v2/writing-algorithms/datasets/algoseek/us-equity-options",
+      "status": "CONFIRMED",
+      "summary": "The dataset documents OpenInterest objects while actual QQQ completeness remains unverified."
+    },
+    {
+      "exit_condition": "Capture and hash the actual Orders export from a separately authorized bounded probe.",
+      "item_id": "orders_export",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:no_authorized_result",
+      "status": "UNKNOWN",
+      "summary": "No result exists from which an Orders export can be observed or hashed."
+    },
+    {
+      "exit_condition": "Obtain a separate Owner-reviewed authorization and capture project id plus exact code hash.",
+      "item_id": "project_identity",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:project_mutation_prohibited",
+      "status": "UNKNOWN",
+      "summary": "Project creation and modification were prohibited, so no probe project or exact project code identity exists."
+    },
+    {
+      "exit_condition": "Measure QQQ session and contract coverage in a separately authorized bounded probe.",
+      "item_id": "qqq_option_chain_coverage",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_ARTIFACT",
+      "source_locator": "platform_artifact:not_available_no_authorized_cloud_run",
+      "status": "UNKNOWN",
+      "summary": "Dataset-wide coverage cannot establish QQQ session and contract coverage, and no platform artifact was authorized."
+    },
+    {
+      "exit_condition": "Verify QQQ-specific options visibility through an account-scoped supported-assets view or a separately authorized platform artifact.",
+      "item_id": "qqq_option_dataset_visibility",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "https://www.quantconnect.com/datasets/algoseek-us-equity-options",
+      "status": "UNKNOWN",
+      "summary": "The authenticated catalog displayed US Equity Options as Free in Cloud, but the UI did not provide a reproducible QQQ-specific supported-asset fact."
+    },
+    {
+      "exit_condition": "Capture actual runtime, RAM, data-point, and assigned-node evidence from a separately authorized bounded probe.",
+      "item_id": "resource_runtime_telemetry",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_organization_resources:identifiers_redacted",
+      "status": "UNKNOWN",
+      "summary": "The Resources page displayed account allocations, including one Community B-MICRO backtest node, but no run-level runtime, RAM, or data-point telemetry exists."
+    },
+    {
+      "exit_condition": "Capture and hash the actual Results export from a separately authorized bounded probe.",
+      "item_id": "results_export",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:no_authorized_result",
+      "status": "UNKNOWN",
+      "summary": "No result exists from which a Results export can be observed or hashed."
+    },
+    {
+      "exit_condition": "Capture and hash the actual Trades export from a separately authorized bounded probe.",
+      "item_id": "trades_export",
+      "recorded_at": "2026-08-03T14:55:00Z",
+      "recorded_by": "engineering_coordinator_authorized_browser_probe",
+      "source_kind": "PLATFORM_UI",
+      "source_locator": "platform_ui:quantconnect_algorithm_lab:no_authorized_result",
+      "status": "UNKNOWN",
+      "summary": "No result exists from which a Trades export can be observed or hashed."
+    }
+  ],
+  "owner_authorization_id": "owner_decision:TRADING-2480:2026-08-03:authorize_bounded_qc_capability_license_evidence_probe_v1",
+  "platform": "QuantConnect",
+  "probe_id": "trading_2480_read_only_qc_capability_probe_20260803_v1",
+  "raw_options_data_included": false,
+  "safety": {
+    "bounded_cloud_pilot_authorized": false,
+    "broker_action": "none",
+    "manual_review_required": true,
+    "paper_shadow_allowed": false,
+    "production_allowed": false,
+    "production_effect": "none",
+    "promotion_allowed": false,
+    "raw_options_data_download_allowed": false,
+    "research_only": true,
+    "strategy_execution_allowed": false
+  },
+  "schema_version": "qc_qqq_options_capability_evidence.v1"
+}

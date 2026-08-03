@@ -60,7 +60,7 @@ execution、2487 accounting、2488 lifecycle canonical outputs 逐层 cross-bind
 |2486 execution policy|`8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a`|只从 `QQQOptionExecutionResult.from_json_bytes` 重建 order/fill facts；same-bar/daily-close fill 与未评估 DQ 不得被外部结果洗白。|
 |2487 accounting policy|`faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e`|只从 `QQQOptionCashAccountingResult.from_json_bytes` 重建 Decimal ledger、cash、fee、lot、position 与 snapshot。|
 |2488 lifecycle policy|`1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582`|只从 `QQQOptionPositionLifecycleResult.from_json_bytes` 重建 lifecycle event/state/scope/cash preservation。|
-|2489 evidence bundle policy|`bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1`|必须调用 2489 strict loader；只消费其已重验的 export-safe files、metadata、manifest、attestations 与 checksums。|
+|2489 evidence bundle policy|`16a638da88595c029acce0e7bcfcac7a847a40fe9d3d1d6289e259367cf7310d`|必须调用 2489 strict loader；只消费其已重验的 export-safe files、metadata、manifest、attestations 与 checksums。|
 
 2490 不复制上述 sealed records。若后继需要改变 shared schema、DQ/PIT/cache/license/public contract，则停止本 lane，
 先完成最小 serial contract wave。
@@ -271,3 +271,7 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   prefix=`2881870 bytes / SHA-256 44fcdba26ae22ca5682f0ca6a2b3b7a63f35d660b84932744be18fb0cc191524`。
   task status 现写回 `BASELINE_DONE`；正式 final-tree five-tier 尚未启动，必须在最终 generated/current hash replay
   再 PASS 后串行运行，Full 保持独占。
+- 2026-08-03：TRADING-2480 read-only evidence serial contract wave 仅刷新 2489 evidence policy 的 inherited
+  exact hash；本 policy LF SHA-256 变为
+  `7b813e5288b3de9d792c9d958f2e0b0cac6252dc92aa50ed9539248ce03bbe5d`。mapping、tolerance、
+  reconciliation authorization 与 blocked disposition 语义均未改变。

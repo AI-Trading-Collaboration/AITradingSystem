@@ -66,13 +66,13 @@ authority_bindings:
     sha256: 8d3d12db0542e30454ce4d7673fa357f4eaef7c3c43fab38e4cd8dc3be8a1565
   - authority_id: TRADING-2489-POLICY
     path: config/research/qc_qqq_options_platform_evidence_manual_bundle_v1.yaml
-    sha256: bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1
+    sha256: 16a638da88595c029acce0e7bcfcac7a847a40fe9d3d1d6289e259367cf7310d
   - authority_id: TRADING-2490-MODULE
     path: src/ai_trading_system/qqq_options_research/local_reconciliation.py
     sha256: 1d6d7c5f34431001a18002046cdae93a6f85793516dea3b6598be1902cb8655b
   - authority_id: TRADING-2490-POLICY
     path: config/research/qc_qqq_options_local_ingest_reconciliation_v1.yaml
-    sha256: 7253bf64f0e0d25dcae9a9d53fdb8d38f741dfd3a034af6737857ca33f39e875
+    sha256: 7b813e5288b3de9d792c9d958f2e0b0cac6252dc92aa50ed9539248ce03bbe5d
 scenarios:
   - scenario_id: CORPORATE_ACTION_SCOPE_INVALID
     stimulus_class: CORPORATE_ACTION

@@ -26,8 +26,8 @@ from ai_trading_system.qqq_options_research.cross_layer_validation import (
 
 ROOT = Path(__file__).resolve().parents[1]
 AT = datetime(2026, 8, 3, 0, 0, tzinfo=UTC)
-POLICY_SHA256 = "7ba24214b29d6d13873eeb53e72ad9072fb6262f9e09a688a99f885a97b9a4c0"
-CORPUS_SHA256 = "662c3a6d43950c9310ce9d51420f28a095e820476a3157b00de47cd326af7cef"
+POLICY_SHA256 = "363f7596aa874b819b8377f278e6a503134fa87895553415b7636a5288a13f11"
+CORPUS_SHA256 = "74325026a521bba6bd7b22bd8f9d9c600f1016e2fed2a5a8f97a27b89ad1819c"
 SCENARIO_IDS = (
     "CORPORATE_ACTION_SCOPE_INVALID",
     "CROSSED_QUOTE_INVALID",

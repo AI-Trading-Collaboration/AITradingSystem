@@ -45,7 +45,7 @@ Report、Project Files、platform screenshot、engine/tier/license status、双�
 
 |Authority|Exact identity|2489 用法|
 |---|---|---|
-|2480 capability policy|`config/research/qc_qqq_options_capability_admission_v1.yaml` SHA-256=`8183b17501fef6a628ae600df0ce4ef0edf30370a5d40d32c35a895cdcc04f89`|只通过 `verify_qc_qqq_options_capability_admission_receipt` 从 canonical policy/evidence bytes 重建并验证 receipt；caller 自报 decision 不具 authority。|
+|2480 capability policy|`config/research/qc_qqq_options_capability_admission_v1.yaml` SHA-256=`e2a429e7a6e2537c064261546f32771d4f824449f548a905befe5a93f1a6b2cc`|只通过 `verify_qc_qqq_options_capability_admission_receipt` 从 canonical policy/evidence bytes 重建并验证 receipt；caller 自报 decision 不具 authority。|
 |2481 shared contract schema|SHA-256=`c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b`|只用既有 `EvidenceArtifact`、`PlatformEvidenceManifestRecord`、`CapabilityStatus`、`ExportClassification`、`QQQOptionsSafetyBoundary` 及其 `seal/from_json_bytes/canonical_bytes/content_sha256`；不复制 shared record。|
 |2481 shared policy|SHA-256=`d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349`|继承 research-only、no promotion/export/execution safety。|
 |2482 DQ/PIT policy|SHA-256=`1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358`|platform option-event DQ/PIT 与 local cached-data DQ 分轴；2489 只做 artifact evidence validation，状态保持 `NOT_EVALUATED`，不得伪造 PASS。|
@@ -301,7 +301,7 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   runner=0。`SINGLE_LANE START --contract-change` preflight PASS，无 blocker/lease/warning。本次首写仅更新
   task row 与 requirement；LANE PASS 前不写 policy/module/tests/runbook/fragments。
 - 2026-08-03：LANE preflight PASS 后完成 task-owned policy/module/tests/runbook、architecture fragments 与
-  system-flow wiring。tracked policy SHA-256=`bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1`，
+  system-flow wiring。tracked policy SHA-256=`16a638da88595c029acce0e7bcfcac7a847a40fe9d3d1d6289e259367cf7310d`，
   module LF SHA-256=`8d3d12db0542e30454ce4d7673fa357f4eaef7c3c43fab38e4cd8dc3be8a1565`。
   public API 固定为 `QCManualArtifactRule`、`QCApprovedNonPrimaryWindow`、
   `QCPlatformEvidenceBundleSafety`、`QCPlatformEvidenceBundlePolicy`、
@@ -332,3 +332,7 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   source hashes，不改历史 payload、不降低 prefix/exact-byte/hash 验证，首次全绿为
   `188 passed in 115.72s`；写回 failure-fix 记录并刷新 current hashes 后，同覆盖 final-byte 重跑为
   `188 passed in 115.61s`。上述 FAIL 均保留为 focused failure-fix 证据，不是 formal gate evidence。
+- 2026-08-03：TRADING-2480 read-only evidence wave 将 capability policy 升级为 v1.1.0；本 policy 仅刷新
+  exact inherited `capability_policy_sha256`，自身 LF SHA-256 变为
+  `16a638da88595c029acce0e7bcfcac7a847a40fe9d3d1d6289e259367cf7310d`。manual bundle schema、
+  file inventory、collection authorization、license/export 与 safety 语义均未重定义；真实 collection 仍 blocked。

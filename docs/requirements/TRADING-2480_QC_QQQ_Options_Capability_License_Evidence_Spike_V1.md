@@ -1,6 +1,6 @@
 # TRADING-2480：QuantConnect QQQ Options Capability / License / Evidence Spike V1
 
-最后更新：2026-08-02
+最后更新：2026-08-03
 
 稳定任务 ID：
 `TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1`
@@ -12,7 +12,8 @@
 当前授权边界：
 
 ```text
-owner_authorization:NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+owner_authorization_state:CONSUMED_AND_EXPIRED_AFTER_EVIDENCE_PROBE
+owner_authorization_id:owner_decision:TRADING-2480:2026-08-03:authorize_bounded_qc_capability_license_evidence_probe_v1
 ```
 
 production effect：`none`
@@ -25,8 +26,10 @@ broker action：`none`
 entitlement、QQQ options data、输入、输出、资源、engine identity 与字段许可证据收敛为 typed、
 可重算且 fail-closed 的 receipt，再决定是否允许进入后续 bounded pilot 准备。
 
-当前 Owner 尚未授权登录 QuantConnect、创建或修改 cloud project、运行 backtest、下载平台文件或
-读取账户状态。本轮只实现不依赖该授权的离线 admission baseline：
+2026-08-03 Owner 已授权登录 QuantConnect，并只读核验 Free tier、QQQ Options 数据 entitlement、
+engine/resource、result artifact 与 license/export 边界。授权明确禁止创建或修改 project、运行 cloud
+backtest、API/CLI、下载 raw options data、paper/live/broker/production；完成本次 evidence 核验即失效，
+并需要 independent reviewer 复核。此前完成的离线 admission baseline 包括：
 
 1. reviewed policy manifest；
 2. typed evidence、field-export matrix 与 admission receipt；
@@ -112,6 +115,8 @@ Task-owned：
 - `src/ai_trading_system/qqq_options_capability_admission.py`；
 - `config/research/qc_qqq_options_capability_admission_v1.yaml`；
 - `inputs/external_validation/qc_qqq_options_capability_evidence.template.json`；
+- `inputs/external_validation/qc_qqq_options_capability_evidence_20260803.json`；
+- `inputs/external_validation/qc_qqq_options_admission_e3a987b2b671e922175b35783dded6f4bbfa51dd5aaa523f415547026434ba04.json`；
 - `tests/test_qc_qqq_options_capability_admission.py`；
 - 对应 architecture module/flow fragments。
 
@@ -141,17 +146,21 @@ Coordinator-owned：
   unsafe boundary、path/timestamp/checksum tamper 全部 fail closed；
 - focused pytest 通过；system flow 和 architecture fragment 同步。
 
-### S2：后续外部核验（当前未授权）
+### S2：受限外部核验（2026-08-03 已授权）
 
-只有 Owner 提供以下或等价的不可歧义 token 后才可开始：
+本次只读核验使用以下精确 Owner token：
 
 ```text
-owner_decision:TRADING-2480:2026-08-02:authorize_bounded_qc_capability_license_evidence_probe_v1
+owner_decision:TRADING-2480:2026-08-03:authorize_bounded_qc_capability_license_evidence_probe_v1
 ```
 
-该阶段仍只允许 research-only、极小窗口/零策略收益结论的 capability probe；不得下载 raw options
-data、不得 paper/live/broker、不得运行 primary full window。真实 evidence 完整后重跑 evaluator，输出
-`CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或保持 blocked。
+该阶段只允许 research-only、登录后只读 UI capability probe；不得创建或修改 project、运行任何 cloud
+backtest、调用 API/CLI、下载 raw options data、paper/live/broker/production，也不得运行 primary full
+window。只读 UI 无法直接证明的 QQQ 单标的实际覆盖、project/backtest/LEAN identity、evaluated range、
+真实 runtime 与 result exports 必须保持 `UNKNOWN`，不得用 dataset-wide catalog 或公开文档替代。
+真实 evidence 写入 canonical artifact 后重跑 evaluator，输出
+`CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或保持 blocked；完成证据核验后本 token 失效并等待 independent
+reviewer。
 
 ## 7. Governed execution 与生命周期
 
@@ -175,3 +184,31 @@ data、不得 paper/live/broker、不得运行 primary full window。真实 evid
   未授权 template deterministic 输出 `CAPABILITY_OR_LICENSE_BLOCKED`。任务进入
   `BASELINE_DONE`，下一 exit condition 仍是 Project Owner 提供精确 external evidence probe token；
   在此之前不访问 QuantConnect，也不进入 cloud pilot。
+- 2026-08-03：Owner 授予精确只读 probe token。登录账户 UI 直接显示 Free tier；organization resources
+  显示 1 个 Community B-MICRO backtest node、1 个 Community R-MICRO research node、0 个 live node；
+  US Equity Options catalog/detail 显示 cloud 免费、约 4,000 symbols、Minute/Hourly/Daily、TradeBar/
+  QuoteBar/OpenInterest、2012-01 起始边界；license UI 明确 cloud 内部使用免费、local LEAN download
+  按文件收费且只限 licensed organization 内部使用，禁止 redistribution/conversion。本次未保留账户或
+  organization identifiers、credit、cookie、secret、截图或 raw rows。
+- 2026-08-03：dataset catalog 不能直接证明 QQQ 单标的 entitlement/chain coverage；Data Explorer 链接
+  未形成可复核的 QQQ-specific supported-asset 事实，且禁止创建 project 或运行 cloud backtest。因此
+  `qqq_option_dataset_visibility`、`qqq_option_chain_coverage`、actual range、project/backtest/LEAN identity、
+  runtime telemetry 与 Results/Orders/Trades/Logs exports 均继续为 `UNKNOWN`；evaluator 必须保持
+  `CAPABILITY_OR_LICENSE_BLOCKED`。下一 exit condition=governed canonical evidence + policy token binding
+  完成、focused/formal PASS、ordinary push、independent reviewer 复核。
+- 2026-08-03：canonical evidence SHA-256=`a9f3eb13e298cbf0d1eaa10609c9d88699673428e9e060c4604854af61586053`；
+  policy v1.1.0 SHA-256=`e2a429e7a6e2537c064261546f32771d4f824449f548a905befe5a93f1a6b2cc`；
+  deterministic receipt id=`qc_qqq_options_admission_e3a987b2b671e922175b35783dded6f4bbfa51dd5aaa523f415547026434ba04`、
+  receipt file SHA-256=`9c16be766a58a571b0378534b80a61d0f94b0e923ce305fcf75ac8ec53cfd000`。
+  Owner token 已精确匹配，但仅 `7/21` capability items 与 `3/12` field export rules 为 confirmed；
+  receipt 因 typed unknown/source/classification blockers 继续输出 `CAPABILITY_OR_LICENSE_BLOCKED`，
+  `bounded_pilot_preparation_allowed=false`。
+- 2026-08-03：focused 同覆盖
+  `python -m pytest -n 16 --dist loadfile tests/test_qc_qqq_options_capability_admission.py
+  tests/test_qc_qqq_options_platform_evidence_bundle.py tests/test_qc_qqq_options_bounded_cloud_pilot.py`
+  failure-fix terminal 依次为 `35 passed / 18 failed in 5.84s`、`37/16 in 5.14s`、
+  `37/16 in 5.53s`、`51/2 in 5.41s`、`53 passed in 5.47s`；失败均来自 2489→2492 exact-hash、
+  cross-layer golden/corpus 或 derived identity 的严格级联，未降低验证。扩展 2480/2489/2490/2491/2492
+  adjacent 首轮 `112 passed / 2 failed in 6.33s`，修复 deterministic corpus expected hash 后同覆盖
+  `114 passed in 6.15s`。正式五级仍需在 final generated/current-authority tree 串行运行；任务状态写回
+  `BASELINE_DONE` 后 tracked bytes 必须在 Full 前冻结。

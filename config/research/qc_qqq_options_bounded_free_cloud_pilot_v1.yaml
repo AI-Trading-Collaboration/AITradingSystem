@@ -19,7 +19,7 @@ authority_bindings:
     sha256: 7c75abeaff4d99b085c95889b686554f3589be93c62fdf82e25c9ea37f44a7c4
   - authority_id: TRADING-2480-POLICY
     path: config/research/qc_qqq_options_capability_admission_v1.yaml
-    sha256: 8183b17501fef6a628ae600df0ce4ef0edf30370a5d40d32c35a895cdcc04f89
+    sha256: e2a429e7a6e2537c064261546f32771d4f824449f548a905befe5a93f1a6b2cc
   - authority_id: TRADING-2481-MODULE
     path: src/ai_trading_system/qqq_options_research/contracts.py
     sha256: 84020b2c7b7263b65d6b437ba178a0f7b94d678dc47561418fca48fce7792830
@@ -73,22 +73,22 @@ authority_bindings:
     sha256: 8d3d12db0542e30454ce4d7673fa357f4eaef7c3c43fab38e4cd8dc3be8a1565
   - authority_id: TRADING-2489-POLICY
     path: config/research/qc_qqq_options_platform_evidence_manual_bundle_v1.yaml
-    sha256: bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1
+    sha256: 16a638da88595c029acce0e7bcfcac7a847a40fe9d3d1d6289e259367cf7310d
   - authority_id: TRADING-2490-MODULE
     path: src/ai_trading_system/qqq_options_research/local_reconciliation.py
     sha256: 1d6d7c5f34431001a18002046cdae93a6f85793516dea3b6598be1902cb8655b
   - authority_id: TRADING-2490-POLICY
     path: config/research/qc_qqq_options_local_ingest_reconciliation_v1.yaml
-    sha256: 7253bf64f0e0d25dcae9a9d53fdb8d38f741dfd3a034af6737857ca33f39e875
+    sha256: 7b813e5288b3de9d792c9d958f2e0b0cac6252dc92aa50ed9539248ce03bbe5d
   - authority_id: TRADING-2491-GOLDEN
     path: config/research/qqq_options_cross_layer_validation_golden_v1.yaml
-    sha256: 43902ac3907ed75d06fecfafd0e70ef62a20701ee77bf81f47f232e4fab6fa1b
+    sha256: 5d8b3fc9f96a32432ff65e2b1ce842126d6d1845a7f2a11cab655e1e35f4a9da
   - authority_id: TRADING-2491-MODULE
     path: src/ai_trading_system/qqq_options_research/cross_layer_validation.py
     sha256: 5d0e7d50ecdc011f9b8000f626631d4f25e1c199f182118bb2e82b76e99a9965
   - authority_id: TRADING-2491-POLICY
     path: config/research/qqq_options_cross_layer_validation_harness_v1.yaml
-    sha256: 7ba24214b29d6d13873eeb53e72ad9072fb6262f9e09a688a99f885a97b9a4c0
+    sha256: 363f7596aa874b819b8377f278e6a503134fa87895553415b7636a5288a13f11
 scope_fields:
   - field_id: CLOUD_COMPUTE_BUDGET
     status: UNKNOWN_REQUIRES_OWNER_REVIEW

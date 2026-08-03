@@ -204,3 +204,8 @@ known-unrelated exclusion `docs/research/growth_tilt_owner_diagnosis_pack.md` �
   `1080 modules / 1247 tests / 856 writers / 0 violations`，task shadow 为 `961/456/505` 且 byte-identical。
   compatibility/deprecation 与 final-tree formal five-tier evidence 在同一 frozen candidate 收口；任何失败必须保留
   failure-fix parent，不能用旧树证据替代。外部平台动作继续为 none。
+- 2026-08-03：TRADING-2480 read-only evidence serial contract wave 按 2489→2490→2491 顺序刷新 exact
+  authority bindings；policy LF SHA-256=`363f7596aa874b819b8377f278e6a503134fa87895553415b7636a5288a13f11`，
+  golden LF SHA-256=`5d8b3fc9f96a32432ff65e2b1ce842126d6d1845a7f2a11cab655e1e35f4a9da`，
+  corpus SHA-256=`74325026a521bba6bd7b22bd8f9d9c600f1016e2fed2a5a8f97a27b89ad1819c`。
+  scenario fixtures/expected semantics 未改，synthetic evidence 仍不得授权 pilot。

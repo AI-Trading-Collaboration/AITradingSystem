@@ -24,6 +24,16 @@ from ai_trading_system.qqq_options_capability_admission import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CAPTURED_AT = datetime(2026, 8, 2, tzinfo=UTC)
+AUTHORIZED_READ_ONLY_EVIDENCE_PATH = (
+    PROJECT_ROOT
+    / "inputs/external_validation/qc_qqq_options_capability_evidence_20260803.json"
+)
+AUTHORIZED_READ_ONLY_RECEIPT_PATH = (
+    PROJECT_ROOT
+    / "inputs/external_validation/"
+    "qc_qqq_options_admission_"
+    "e3a987b2b671e922175b35783dded6f4bbfa51dd5aaa523f415547026434ba04.json"
+)
 
 
 def test_public_docs_template_is_deterministic_and_remains_blocked(tmp_path: Path) -> None:
@@ -44,6 +54,58 @@ def test_public_docs_template_is_deterministic_and_remains_blocked(tmp_path: Pat
     assert first.receipt.safety.broker_action == "none"
     assert first.receipt.safety.bounded_cloud_pilot_authorized is False
     assert verify_qc_qqq_options_capability_admission_receipt(first.receipt_path) == first.receipt
+
+
+def test_authorized_read_only_probe_is_sanitized_and_remains_fail_closed(
+    tmp_path: Path,
+) -> None:
+    evidence = load_qc_qqq_options_capability_evidence(AUTHORIZED_READ_ONLY_EVIDENCE_PATH)
+    result = evaluate_qc_qqq_options_capability_admission(
+        evidence_path=AUTHORIZED_READ_ONLY_EVIDENCE_PATH,
+        output_root=tmp_path,
+    )
+    receipt = result.receipt
+    items = {item.item_id: item for item in evidence.items}
+
+    assert evidence.external_action_authorized is True
+    assert evidence.owner_authorization_id == (
+        "owner_decision:TRADING-2480:2026-08-03:"
+        "authorize_bounded_qc_capability_license_evidence_probe_v1"
+    )
+    assert evidence.raw_options_data_included is False
+    assert evidence.investment_metrics_included is False
+    assert evidence.account_or_broker_identifiers_included is False
+    assert items["account_entitlement"].status == "CONFIRMED"
+    assert items["account_entitlement"].source_kind == "PLATFORM_UI"
+    for item_id in (
+        "actual_evaluated_range",
+        "backtest_identity",
+        "lean_engine_identity",
+        "project_identity",
+        "qqq_option_chain_coverage",
+        "qqq_option_dataset_visibility",
+        "resource_runtime_telemetry",
+        "results_export",
+    ):
+        assert items[item_id].status == "UNKNOWN"
+
+    assert receipt.decision == "CAPABILITY_OR_LICENSE_BLOCKED"
+    assert receipt.bounded_pilot_preparation_allowed is False
+    assert receipt.confirmed_item_count == 7
+    assert receipt.required_item_count == 21
+    assert "OWNER_AUTHORIZATION_MISSING_OR_MISMATCH" not in receipt.blocking_reason_codes
+    assert "REQUIRED_ITEM_UNKNOWN:qqq_option_dataset_visibility" in (
+        receipt.blocking_reason_codes
+    )
+    assert "REQUIRED_ITEM_UNKNOWN:lean_engine_identity" in receipt.blocking_reason_codes
+    assert verify_qc_qqq_options_capability_admission_receipt(
+        result.receipt_path,
+        evidence_path=AUTHORIZED_READ_ONLY_EVIDENCE_PATH,
+    ) == receipt
+    assert verify_qc_qqq_options_capability_admission_receipt(
+        AUTHORIZED_READ_ONLY_RECEIPT_PATH,
+        evidence_path=AUTHORIZED_READ_ONLY_EVIDENCE_PATH,
+    ) == receipt
 
 
 def test_complete_authorized_evidence_allows_bounded_pilot_preparation_only(

@@ -1,9 +1,9 @@
 schema_version: qc_qqq_options_capability_admission_policy.v1
 policy_id: qc_qqq_options_capability_admission_v1
-policy_version: 1.0.0
+policy_version: 1.1.0
 status: PREAUTHORIZATION_BASELINE
-owner: engineering_coordinator_pending_owner_authorization
-required_owner_authorization_id: owner_decision:TRADING-2480:2026-08-02:authorize_bounded_qc_capability_license_evidence_probe_v1
+owner: project_owner_authorized_independent_review_pending
+required_owner_authorization_id: owner_decision:TRADING-2480:2026-08-03:authorize_bounded_qc_capability_license_evidence_probe_v1
 owner_authorization_required: true
 platform: QuantConnect
 item_rules:
