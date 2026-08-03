@@ -1,0 +1,32 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_local_ingest_reconciliation
+fragment_kind: module
+owner: independent_validation_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/local_reconciliation.py
+public_contracts:
+  - QCReconciliationDifferenceClass
+  - QCReconciliationDisposition
+  - QCReconciliationOutcome
+  - QCPlatformColumnMapping
+  - UnresolvedLocalReconciliationCriteria
+  - ActiveLocalReconciliationCriteria
+  - QCLocalReconciliationSafety
+  - QCLocalReconciliationPolicy
+  - QCLocalReconciliationPolicyLoadResult
+  - QCCanonicalArtifact
+  - QCLocalReconciliationRequest
+  - QCPlatformOrderFact
+  - QCPlatformFillFact
+  - QCPlatformCashFact
+  - QCPlatformLifecycleFact
+  - QCPlatformMetricFact
+  - QCPlatformReconciliationProjection
+  - QCExactReconciliationCheck
+  - QCReconciliationDifference
+  - QCLocalReconciliationResult
+  - QCLocalReconciliationContractError
+  - load_qc_qqq_options_local_reconciliation_policy
+  - build_qc_qqq_options_local_reconciliation_input_sha256
+  - reconcile_qc_qqq_options_local_evidence
+compatibility_facades: []
+deprecation_status: active_reference_architecture

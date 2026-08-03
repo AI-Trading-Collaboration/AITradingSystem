@@ -13,46 +13,57 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: validation engineering：等待 TRADING-2483/2487/2488/2489
-  requirement_refs: []
+  next_owner: validation engineering：真实 bundle/容差映射仍等待 TRADING-2492 Owner-reviewed
+    evidence 与 policy；tracked default 继续 policy-blocked
+  requirement_refs:
+  - docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics
-    和 difference taxonomy；不重建受限 raw chain/quotes。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md`。已实现
+    2489 strict reload、2483/2486/2487/2488 canonical replay、Results/Orders/Trades
+    normalized facts、exact/numeric reconciliation 与 typed taxonomy；不重建受限 raw chain/quotes。
   acceptance_criteria:
   - criterion_id: legacy_markdown
     text: LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION 七类差异闭合；external
       PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system
-      flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
+      flow；工程退出=`LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED`，完整退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: c4d0631865a0738ea2b44dee7f116d3648440f10511cb4f55d15ad3745342282
+  row_sha256: f35ba2dc73d20792cab91d1fe88e4bc31f8efe63bdc61daeb7641c2b89275202
   cell_count: 8
   all_cells:
   - TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
   - Independent validation / external option event and accounting reconciliation
   - P1
-  - PROPOSED
-  - validation engineering：等待 TRADING-2483/2487/2488/2489
-  - 读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics 和 difference taxonomy；不重建受限
-    raw chain/quotes。
+  - BASELINE_DONE
+  - validation engineering：真实 bundle/容差映射仍等待 TRADING-2492 Owner-reviewed evidence
+    与 policy；tracked default 继续 policy-blocked
+  - 详见 `docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md`。已实现
+    2489 strict reload、2483/2486/2487/2488 canonical replay、Results/Orders/Trades
+    normalized facts、exact/numeric reconciliation 与 typed taxonomy；不重建受限 raw chain/quotes。
   - LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION 七类差异闭合；external
-    PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
-  - 容差/rounding 必须进入 reviewed policy，identity/symbol/qty/state 默认 exact。
+    PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system flow；工程退出=`LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED`，完整退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
+  - 2026-08-03：baseline 实现完成；focused 22、adjacent 281、compat/deprecation 189 PASS，DevEx/task
+    shadow/current authority PASS；正式 final-tree five-tier 待运行。容差/rounding/export field
+    mapping 仍须 reviewed policy；外部平台动作=none。
   raw_line: '|TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1|Independent
-    validation / external option event and accounting reconciliation|P1|PROPOSED|validation
-    engineering：等待 TRADING-2483/2487/2488/2489|读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics
-    和 difference taxonomy；不重建受限 raw chain/quotes。|LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION
+    validation / external option event and accounting reconciliation|P1|BASELINE_DONE|validation
+    engineering：真实 bundle/容差映射仍等待 TRADING-2492 Owner-reviewed evidence 与 policy；tracked
+    default 继续 policy-blocked|详见 `docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md`。已实现
+    2489 strict reload、2483/2486/2487/2488 canonical replay、Results/Orders/Trades
+    normalized facts、exact/numeric reconciliation 与 typed taxonomy；不重建受限 raw chain/quotes。|LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION
     七类差异闭合；external PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests
-    PASS；更新 system flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。|容差/rounding 必须进入 reviewed
-    policy，identity/symbol/qty/state 默认 exact。|'
+    PASS；更新 system flow；工程退出=`LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED`，完整退出=`LOCAL_QC_RECONCILIATION_V1_READY`。|2026-08-03：baseline
+    实现完成；focused 22、adjacent 281、compat/deprecation 189 PASS，DevEx/task shadow/current
+    authority PASS；正式 final-tree five-tier 待运行。容差/rounding/export field mapping 仍须
+    reviewed policy；外部平台动作=none。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-c4d0631865a0738ea2b44dee
+  event_id: legacy-import-f35ba2dc73d20792cab91d1f
   task_id: TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -62,30 +73,38 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: validation engineering：等待 TRADING-2483/2487/2488/2489
-    notes: 容差/rounding 必须进入 reviewed policy，identity/symbol/qty/state 默认 exact。
+    next_owner: validation engineering：真实 bundle/容差映射仍等待 TRADING-2492 Owner-reviewed
+      evidence 与 policy；tracked default 继续 policy-blocked
+    notes: 2026-08-03：baseline 实现完成；focused 22、adjacent 281、compat/deprecation 189
+      PASS，DevEx/task shadow/current authority PASS；正式 final-tree five-tier 待运行。容差/rounding/export
+      field mapping 仍须 reviewed policy；外部平台动作=none。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:c4d0631865a0738ea2b44dee7f116d3648440f10511cb4f55d15ad3745342282
+  - sha256:f35ba2dc73d20792cab91d1fe88e4bc31f8efe63bdc61daeb7641c2b89275202
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
   - Independent validation / external option event and accounting reconciliation
   - P1
-  - PROPOSED
-  - validation engineering：等待 TRADING-2483/2487/2488/2489
-  - 读取许可允许的 evidence，重算 lineage、orders/fills、cash、lifecycle、metrics 和 difference taxonomy；不重建受限
-    raw chain/quotes。
+  - BASELINE_DONE
+  - validation engineering：真实 bundle/容差映射仍等待 TRADING-2492 Owner-reviewed evidence
+    与 policy；tracked default 继续 policy-blocked
+  - 详见 `docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md`。已实现
+    2489 strict reload、2483/2486/2487/2488 canonical replay、Results/Orders/Trades
+    normalized facts、exact/numeric reconciliation 与 typed taxonomy；不重建受限 raw chain/quotes。
   - LOGIC/PLATFORM/PROVIDER/TIMING/REALITY_MODEL/LICENSE/MANUAL_COLLECTION 七类差异闭合；external
-    PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system flow；退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
-  - 容差/rounding 必须进入 reviewed policy，identity/symbol/qty/state 默认 exact。
-  docs_links: []
+    PASS 不覆盖 internal FAIL；contract/golden/tamper/tolerance tests PASS；更新 system flow；工程退出=`LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED`，完整退出=`LOCAL_QC_RECONCILIATION_V1_READY`。
+  - 2026-08-03：baseline 实现完成；focused 22、adjacent 281、compat/deprecation 189 PASS，DevEx/task
+    shadow/current authority PASS；正式 final-tree five-tier 待运行。容差/rounding/export field
+    mapping 仍须 reviewed policy；外部平台动作=none。
+  docs_links:
+  - docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md
   terminal: false
-  raw_row_sha256: c4d0631865a0738ea2b44dee7f116d3648440f10511cb4f55d15ad3745342282
+  raw_row_sha256: f35ba2dc73d20792cab91d1fe88e4bc31f8efe63bdc61daeb7641c2b89275202
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: c5eabe5f596c02842e17caa4e332b7320fe548d8a1989a454abcda99caadc695
+fragment_checksum: 87dd9534d03cb7b4eac18af5ac0d6d9a86afb107701fe64518489c5226e4f24b

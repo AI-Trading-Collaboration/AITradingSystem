@@ -1,0 +1,85 @@
+schema_version: qc_qqq_options_local_ingest_reconciliation_policy.v1
+policy_id: qc_qqq_options_local_ingest_reconciliation_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED_BASELINE
+owner: project_owner_and_independent_validation_governance
+owner_decision: owner_decision:TRADING-2490:2026-08-03:build_offline_reconciliation_mechanics_without_unreviewed_platform_mapping_or_tolerance
+rationale: Freeze deterministic export-safe QuantConnect ingest and cross-layer reconciliation mechanics while real export mappings, timestamp parsing, rounding and numeric tolerances remain fail closed pending Owner-reviewed platform evidence.
+intended_effect: Identical canonical predecessor artifacts and a strictly validated manual evidence bundle produce identical typed reconciliation results without reconstructing raw option rows, activating blocked research policy, or allowing external PASS to override internal failure.
+validation_plan: Run policy drift, strict loader invocation, canonical replay, lineage, order, fill, cash, lifecycle, taxonomy, tolerance, permutation, property, golden and predecessor-binding tests before governed final-tree validation.
+review_condition: Review before ingesting real QuantConnect exports, accepting any numeric difference, or using a reconciliation result for pilot range expansion.
+expiry_condition: Supersede only through an Owner-reviewed tracked policy change with real export samples, mapping and tolerance evidence, review or expiry condition, compatibility coverage and final-tree validation.
+reconciliation_authorized: false
+owner_authorization_status: NOT_GRANTED_FOR_RECONCILIATION_POLICY
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+signal_export_policy_sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+adapter_policy_sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+selection_policy_sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30
+execution_policy_sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+accounting_policy_sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+lifecycle_policy_sha256: 1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582
+platform_evidence_policy_sha256: bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1
+primary_research_start: 2021-02-22
+approved_non_primary_authority_count: 0
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+difference_classes:
+  - LICENSE
+  - LOGIC
+  - MANUAL_COLLECTION
+  - PLATFORM
+  - PROVIDER
+  - REALITY_MODEL
+  - TIMING
+dispositions:
+  - ACCEPTED_EXPLAINED
+  - BLOCKED_EVIDENCE
+  - INVALID_RUN
+  - REQUIRES_FIX
+exact_comparison_fields:
+  - evaluated_range
+  - fill_identity
+  - lineage
+  - order_identity
+  - order_side
+  - order_state
+  - option_sid
+  - quantity
+  - repository_code_sha
+  - requested_range
+  - source_checksum
+  - underlying
+criteria:
+  mode: UNRESOLVED
+  ingest_profile_status: UNKNOWN_REQUIRES_PLATFORM_EVIDENCE
+  tolerance_policy_status: UNKNOWN_REQUIRES_POLICY_REVIEW
+  results_projection_key: UNKNOWN_REQUIRES_PLATFORM_EVIDENCE
+  orders_csv_column_mapping: []
+  trades_csv_column_mapping: []
+  monetary_absolute_tolerance_usd: UNKNOWN_REQUIRES_POLICY_REVIEW
+  metric_absolute_tolerance: UNKNOWN_REQUIRES_POLICY_REVIEW
+  timing_absolute_tolerance_seconds: UNKNOWN_REQUIRES_POLICY_REVIEW
+  decimal_rounding_policy: UNKNOWN_REQUIRES_POLICY_REVIEW
+  reviewed_authority_id: UNKNOWN_REQUIRES_POLICY_REVIEW
+safety:
+  research_only: true
+  external_platform_action_allowed: false
+  cloud_run_authorized: false
+  api_allowed: false
+  cli_allowed: false
+  remote_http_allowed: false
+  object_store_allowed: false
+  raw_options_data_export_allowed: false
+  raw_option_chain_reconstruction_allowed: false
+  raw_minute_quote_reconstruction_allowed: false
+  raw_open_interest_reconstruction_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  promotion_allowed: false
+  strategy_execution_allowed: false
+  external_pass_may_override_internal_failure: false
+  production_effect: none
+  broker_action: none
+decision: LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED

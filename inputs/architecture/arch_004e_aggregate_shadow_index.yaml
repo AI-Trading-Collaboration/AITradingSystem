@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 48
+fragment_count: 50
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 0f5da7bf383e34c9c788addc41277b42a5a39c4214cd41df82a8d7096b6eb10d
+  current_sha256: a08d5c3bfd26e4d9f8258d95b74f1beb28bfbd67fc888ca7fbc03930747b6281
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 20
+  fragment_count: 21
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -47,6 +47,7 @@ targets:
   - config/architecture/fragments/flows/growth_tilt_candidate_family_closure.yaml
   - config/architecture/fragments/flows/owner_daily_brief.yaml
   - config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
+  - config/architecture/fragments/flows/qc_qqq_options_local_ingest_reconciliation.yaml
   - config/architecture/fragments/flows/qc_qqq_options_platform_evidence_manual_bundle.yaml
   - config/architecture/fragments/flows/qc_qqq_options_project_adapter.yaml
   - config/architecture/fragments/flows/qqq_options_cash_accounting.yaml
@@ -163,6 +164,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/qc_qqq_options_capability_admission.yaml
   sha256: 5a6ba11bc5a87afd9eb23e35992fd61d2b7fe52213097db4ac052efdd6640353
+  generated_source_of_truth_active: false
+- fragment_id: flow.qc_qqq_options_local_ingest_reconciliation
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qc_qqq_options_local_ingest_reconciliation.yaml
+  sha256: d4adfa7015250c2dafa49845c38ff1064a8178883c4414ef197438408b91f227
   generated_source_of_truth_active: false
 - fragment_id: flow.qc_qqq_options_platform_evidence_manual_bundle
   fragment_kind: flow
@@ -282,6 +290,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_capability_admission.yaml
   sha256: 6f8187a96d1c23894c5ac6123d85068365b4760d0706b263584e77194b15f824
+  generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_local_ingest_reconciliation
+  fragment_kind: module
+  owner: independent_validation_engineering
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_local_ingest_reconciliation.yaml
+  sha256: 85d8ac86942f116d87c31956520c21fea6e82ff6e1331026e5fbb360bed9807b
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_platform_evidence_manual_bundle
   fragment_kind: module

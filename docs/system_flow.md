@@ -7448,3 +7448,45 @@ TRADING-2492，不属于 2489。primary window 固定从 `2021-02-22` 请求并�
 本地 reconciliation，不表示策略有效、Free tier 足够、promotion、paper/live、production 或 broker approval；
 全部 safety 固定 research-only、raw-export/strategy-execution/promotion/paper/production=false、
 `production_effect=none`、`broker_action=none`。
+
+## TRADING-2490 QuantConnect QQQ Options Local Ingest / Reconciliation V1
+
+`config/research/qc_qqq_options_local_ingest_reconciliation_v1.yaml` 在 2483 canonical run package、2486 sealed
+minute execution、2487 cash accounting、2488 lifecycle 与 2489 strict manual evidence bundle 之后，冻结纯离线、
+content-bound 的 independent reconciliation 合同。`qqq_options_research.local_reconciliation` 不接受 caller 构造的
+ready bundle；active path 必须重新调用 2489 strict loader，再按 Owner-reviewed ingest profile 解析 Results JSON、
+Orders CSV 与 Trades CSV。tracked default 的平台字段 mapping、Decimal/timestamp rounding 和 tolerance 仍分别是
+`UNKNOWN_REQUIRES_PLATFORM_EVIDENCE` / `UNKNOWN_REQUIRES_POLICY_REVIEW`，因此只输出
+`LOCAL_RECONCILIATION_POLICY_BLOCKED`，不会猜测 QuantConnect export schema。
+
+```text
+2483 canonical run manifest
+2486 canonical execution results
+2487 sealed ledger / cash / positions / portfolio snapshot
+2488 sealed lifecycle result
+  -> strict from_json_bytes replay + run/range/policy/lineage/source binding
+2489 actual package paths + capability receipt/policies
+  -> rerun strict evidence loader
+  -> MANUAL_COLLECTION_READY_FOR_LOCAL_RECONCILIATION only
+  -> reviewed Results projection + Orders/Trades CSV mapping
+  -> exact identity/SID/side/quantity/state/range/lineage/source checks
+  -> reviewed price/fee/cash/PnL/metric/timing Decimal tolerance checks
+  -> 2481 ReconciliationReportRecord + task-owned exact/difference/result records
+  -> LOGIC / PLATFORM / PROVIDER / TIMING / REALITY_MODEL / LICENSE / MANUAL_COLLECTION
+  -> ACCEPTED_EXPLAINED / REQUIRES_FIX / BLOCKED_EVIDENCE / INVALID_RUN
+  -> LOCAL_RECONCILIATION_READY_FOR_OWNER_REVIEW or typed fail-closed outcome
+```
+
+Identity、symbol/SID、side、quantity、state、range、lineage 与 checksum 默认 exact；price、fee、cash、PnL、
+metrics、timestamp tolerance/rounding 只能来自 reviewed active policy。2490 不改写 2489 bundle-validation 的
+option-event DQ/PIT=`NOT_EVALUATED`；只有 Results export 内的 canonical 2481 `DQReportRecord` 通过
+schema/status/scope/range/lineage/checksum 重验后，才在独立 result 轴派生 option-event DQ/PIT。external PASS 永不
+覆盖 internal FAIL/NOT_EVALUATED、blocked execution/accounting/lifecycle 或 invalid run。
+
+primary requested/evaluated start 固定 `2021-02-22`；`2022-12-01` 不是默认，其他起点只接受已在 2489 policy
+绑定的 reviewed sensitivity/proxy/stress role 与 DQ caveat。本节点不读取 cached market/macro 或 raw option
+chain/quote/OI，不运行 `aits validate-data`、QuantConnect/cloud/API/CLI/HTTP/Object Store，不创建 order/fill，
+不激活 predecessor policy，不批准 range expansion/promotion/paper/live/production/broker；固定
+`production_effect=none`、`broker_action=none`。工程出口为
+`LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED`；完整出口仍等待 2492 Owner-reviewed mapping/tolerance 与
+真实 manual bundle。

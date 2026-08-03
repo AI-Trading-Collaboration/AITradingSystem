@@ -13,8 +13,8 @@ ACTIVE_GLOSSARY_PATH = Path("config/architecture/research_semantic_glossary_v2.y
 COMPATIBILITY_BASELINE_PATH = Path("inputs/architecture/arch_004_compatibility_baseline.yaml")
 WAVE11_PHASE_KEY = "phase_arch_004_g2_5_wave11"
 WAVE11_CURRENT_HASH_AUTHORITY = f"{WAVE11_PHASE_KEY}.sources"
-TRADING_2489_PHASE_KEY = "phase_trading_2489_qc_platform_evidence_manual_bundle_v1"
-TRADING_2489_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
+TRADING_2490_PHASE_KEY = "phase_trading_2490_qc_qqq_options_local_ingest_reconciliation_v1"
+TRADING_2490_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         "docs/system_flow.md",
         "docs/task_register.md",
@@ -27,12 +27,12 @@ TRADING_2489_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
         "inputs/architecture/arch_005_task_shadow_index.yaml",
         "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
         (
-            "registry/development_tasks_shadow/active/b9/"
-            "b9b4e9ee72ee6c1c0d5b70dfbdec4a7e654194cba343b9c4f067c21ee1ea43f3.yaml"
+            "registry/development_tasks_shadow/active/06/"
+            "065aa4e4a4d192cef68318b8a93d6de16c7043698777aeae5f9b2e32183fdefc.yaml"
         ),
         (
-            "registry/development_tasks_shadow_v2/b9/"
-            "b9b4e9ee72ee6c1c0d5b70dfbdec4a7e654194cba343b9c4f067c21ee1ea43f3.yaml"
+            "registry/development_tasks_shadow_v2/06/"
+            "065aa4e4a4d192cef68318b8a93d6de16c7043698777aeae5f9b2e32183fdefc.yaml"
         ),
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_arch_004g_deprecation.py",
@@ -102,10 +102,10 @@ def _assert_historical_source_is_current_or_superseded(
         f"{section_key} current hash authority must be {expected_authority}"
     )
     current_live_hash = _source_sha256_path(live_path, current_source)
-    if source_path in TRADING_2489_SUCCESSOR_CURRENT_AUTHORITY_PATHS:
+    if source_path in TRADING_2490_SUCCESSOR_CURRENT_AUTHORITY_PATHS:
         section_ids = list(baseline)
-        assert TRADING_2489_PHASE_KEY in section_ids
-        assert section_ids.index(section_key) <= section_ids.index(TRADING_2489_PHASE_KEY)
+        assert TRADING_2490_PHASE_KEY in section_ids
+        assert section_ids.index(section_key) <= section_ids.index(TRADING_2490_PHASE_KEY)
         return
     assert current_source.get("sha256") == current_live_hash, (
         f"{source_path}: latest authority hash does not match live bytes"

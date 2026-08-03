@@ -2630,6 +2630,65 @@ TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_NEW_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION = (
+    "phase_trading_2490_qc_qqq_options_local_ingest_reconciliation_v1"
+)
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_BASE_COMMIT = (
+    "7866052bca1dcc63154500bc5803c3086c729e30"
+)
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_BASELINE_GIT_BLOB = (
+    "0bb1e121ae24de115d72324c4e6245c50daf9e17"
+)
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT = 2_881_870
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_SHA256 = (
+    "44fcdba26ae22ca5682f0ca6a2b3b7a63f35d660b84932744be18fb0cc191524"
+)
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        (
+            "registry/development_tasks_shadow/active/06/"
+            "065aa4e4a4d192cef68318b8a93d6de16c7043698777aeae5f9b2e32183fdefc.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/06/"
+            "065aa4e4a4d192cef68318b8a93d6de16c7043698777aeae5f9b2e32183fdefc.yaml"
+        ),
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
+TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "config/architecture/fragments/flows/"
+            "qc_qqq_options_local_ingest_reconciliation.yaml"
+        ),
+        (
+            "config/architecture/fragments/modules/"
+            "qc_qqq_options_local_ingest_reconciliation.yaml"
+        ),
+        "config/research/qc_qqq_options_local_ingest_reconciliation_v1.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md"
+        ),
+        "src/ai_trading_system/qqq_options_research/local_reconciliation.py",
+        "tests/test_qc_qqq_options_local_reconciliation.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -4668,6 +4727,26 @@ def _trading_2489_qc_platform_evidence_manual_bundle_base_baseline_blob() -> byt
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2490_qc_local_ingest_reconciliation_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -6727,6 +6806,28 @@ def _assert_trading_2489_qc_platform_evidence_manual_bundle_historical_prefix_im
     suffix = current_bytes[expected_count:]
     expected_marker = (
         f"\n{TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION}:\n".encode()
+    )
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2490_qc_local_ingest_reconciliation_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2490 QC local reconciliation historical prefix differs from "
+        "immutable TRADING-2489 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"\n{TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION}:\n".encode()
     )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
@@ -9399,6 +9500,41 @@ def _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths
 
 
 @cache
+def _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2490_qc_local_ingest_reconciliation_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2490_qc_local_ingest_reconciliation_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2490_qc_local_ingest_reconciliation_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        | _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths()
+        | _trading_2490_qc_local_ingest_reconciliation_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -10714,6 +10850,8 @@ def _trading_2495_atlas_reader_status_explanation_prior_active_source_mismatches
     )
     if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in _compatibility_baseline():
         mismatches -= _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+    if TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION in _compatibility_baseline():
+        mismatches -= _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths()
     return mismatches
 
 
@@ -10726,6 +10864,8 @@ def _trading_2496_atlas_reader_status_explanation_renderer_prior_active_source_m
     )
     if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in _compatibility_baseline():
         mismatches -= _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
+    if TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION in _compatibility_baseline():
+        mismatches -= _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths()
     return mismatches
 
 
@@ -10733,8 +10873,20 @@ def _trading_2496_atlas_reader_status_explanation_renderer_prior_active_source_m
 def _trading_2489_qc_platform_evidence_manual_bundle_prior_active_source_mismatches() -> (
     frozenset[str]
 ):
-    return _latest_active_source_mismatches(
+    mismatches = _latest_active_source_mismatches(
         TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+    )
+    if TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION in _compatibility_baseline():
+        mismatches -= _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths()
+    return mismatches
+
+
+@cache
+def _trading_2490_qc_local_ingest_reconciliation_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION
     )
 
 
@@ -10781,7 +10933,44 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in baseline:
+    if TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2490_qc_local_ingest_reconciliation_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2490_qc_local_ingest_reconciliation_prior_active_source_mismatches()
+            | TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2470_cited_query_contract_all_current_authority_paths()
+            | _trading_2470_cited_query_amendment_all_current_authority_paths()
+            | _trading_2470_cited_query_consumer_all_current_authority_paths()
+            | _trading_2471_flow_focus_all_current_authority_paths()
+            | _trading_2472_status_provenance_all_current_authority_paths()
+            | _trading_2473_evidence_drilldown_all_current_authority_paths()
+            | _trading_2474_result_ledger_all_current_authority_paths()
+            | _trading_2475_historical_coverage_all_current_authority_paths()
+            | _trading_2476_adapter_review_all_current_authority_paths()
+            | _ops_072_transport_all_current_authority_paths()
+            | _trading_2477_historical_adapter_all_current_authority_paths()
+            | _ops_073_terminal_disposition_all_current_authority_paths()
+            | _trading_2478_quantconnect_planning_all_current_authority_paths()
+            | _trading_2479_historical_projection_all_current_authority_paths()
+            | _trading_2480_qc_capability_admission_all_current_authority_paths()
+            | _trading_2481_qqq_options_shared_contract_all_current_authority_paths()
+            | _trading_2482_qqq_options_dq_pit_identity_all_current_authority_paths()
+            | _trading_2483_qqq_options_signal_package_all_current_authority_paths()
+            | _trading_2484_qc_project_adapter_all_current_authority_paths()
+            | _trading_2485_qqq_option_selection_all_current_authority_paths()
+            | _trading_2486_qqq_options_minute_execution_all_current_authority_paths()
+            | _trading_2487_qqq_options_cash_accounting_all_current_authority_paths()
+            | _trading_2488_qqq_options_position_lifecycle_all_current_authority_paths()
+            | _trading_2496_atlas_reader_status_explanation_renderer_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION
+    elif TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION in baseline:
         current_superseded_paths = (
             _trading_2489_qc_platform_evidence_manual_bundle_superseded_live_source_paths()
         )
@@ -23992,7 +24181,7 @@ def test_trading_2478_quantconnect_planning_is_current_hash_authority() -> None:
     current_prior_drift = set(_trading_2478_quantconnect_planning_prior_active_source_mismatches())
     assert superseded <= current_prior_drift
     current_successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert current_prior_drift - superseded <= current_successor_authority
     assert set(phase["removed_live_source_paths"]) == (
@@ -24107,7 +24296,7 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
         | TRADING_2479_HISTORICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     current_successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= current_successor_authority
     assert current_prior_drift - superseded <= current_successor_authority
@@ -24229,7 +24418,7 @@ def test_trading_2480_qc_capability_admission_is_current_hash_authority() -> Non
         _trading_2480_qc_capability_admission_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24344,7 +24533,7 @@ def test_trading_2481_qqq_options_shared_contract_has_2482_successor_authority()
         _trading_2481_qqq_options_shared_contract_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24463,7 +24652,7 @@ def test_trading_2482_qqq_options_dq_pit_identity_has_2483_successor_authority()
         _trading_2482_qqq_options_dq_pit_identity_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24586,7 +24775,7 @@ def test_trading_2483_qqq_options_signal_package_has_2484_successor_authority() 
         _trading_2483_qqq_options_signal_package_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24719,7 +24908,7 @@ def test_trading_2484_qc_project_adapter_has_2485_successor_authority() -> None:
     superseded = set(phase["superseded_live_source_paths"])
     current_prior_drift = set(_trading_2484_qc_project_adapter_prior_active_source_mismatches())
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -24859,7 +25048,7 @@ def test_trading_2485_qqq_option_selection_has_2486_successor_authority() -> Non
     superseded = set(phase["superseded_live_source_paths"])
     current_prior_drift = set(_trading_2485_qqq_option_selection_prior_active_source_mismatches())
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -25013,7 +25202,7 @@ def test_trading_2486_minute_execution_has_2487_successor_authority() -> None:
         _trading_2486_qqq_options_minute_execution_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -25147,9 +25336,7 @@ def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == (
-        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
-    )
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION]
     assert phase["schema_version"] == (
         "trading_2487_qqq_options_cash_premium_settlement_accounting_compatibility.v1"
@@ -25179,7 +25366,7 @@ def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
         _trading_2487_qqq_options_cash_accounting_prior_active_source_mismatches()
     )
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -25310,9 +25497,7 @@ def test_trading_2494_atlas_historical_projection_has_2495_successor_authority()
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == (
-        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
-    )
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION]
     assert phase["schema_version"] == (
         "trading_2494_atlas_historical_canonical_projection_compatibility.v1"
@@ -25345,7 +25530,7 @@ def test_trading_2494_atlas_historical_projection_has_2495_successor_authority()
         | TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_ADDITIONAL_SUPERSESSION_PATHS
     )
     successor_authority = set(
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     assert superseded - current_prior_drift <= successor_authority
     assert current_prior_drift - superseded <= successor_authority
@@ -25447,9 +25632,7 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == (
-        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
-    )
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION]
     assert phase["schema_version"] == (
         "trading_2495_atlas_reader_status_explanation_compatibility.v1"
@@ -25508,7 +25691,7 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     successor_paths = (
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
@@ -25583,9 +25766,7 @@ def test_trading_2496_atlas_reader_renderer_is_current_hash_authority() -> None:
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == (
-        TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
-    )
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION]
     assert phase["schema_version"] == (
         "trading_2496_atlas_reader_status_explanation_renderer_compatibility.v1"
@@ -25644,7 +25825,7 @@ def test_trading_2496_atlas_reader_renderer_is_current_hash_authority() -> None:
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
     successor_paths = (
-        _trading_2489_qc_platform_evidence_manual_bundle_all_current_authority_paths()
+        _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
@@ -25739,7 +25920,7 @@ def test_trading_2489_qc_platform_evidence_bundle_is_current_hash_authority() ->
         base_blob,
     )
     baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
-    assert next(reversed(baseline)) == TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION]
     assert phase["schema_version"] == (
         "trading_2489_qc_platform_evidence_manual_bundle_compatibility.v1"
@@ -25803,8 +25984,11 @@ def test_trading_2489_qc_platform_evidence_bundle_is_current_hash_authority() ->
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    successor_paths = _trading_2490_qc_local_ingest_reconciliation_all_current_authority_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_paths:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -25867,6 +26051,148 @@ def test_trading_2489_qc_platform_evidence_bundle_is_current_hash_authority() ->
     ] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2489_qc_platform_evidence_manual_bundle_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2490_qc_local_reconciliation_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2490_qc_local_ingest_reconciliation_base_baseline_blob()
+    _assert_trading_2490_qc_local_ingest_reconciliation_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION
+    phase = baseline[TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2490_qc_qqq_options_local_ingest_reconciliation_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2490-QC-QQQ-OPTIONS-LOCAL-INGEST-RECONCILIATION-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        (
+            "owner_decision:TRADING-2490:2026-08-03:"
+            "build_offline_reconciliation_mechanics_without_unreviewed_platform_mapping_or_tolerance"
+        )
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (
+            TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2490_qc_local_ingest_reconciliation_prior_active_source_mismatches()
+        | TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_NEW_SOURCE_PATHS
+    ) - TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2490-QC-QQQ-OPTIONS-LOCAL-INGEST-RECONCILIATION-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
+    assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 961,
+        "active_task_count": 456,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["local_reconciliation"] == {
+        "policy_schema": "qc_qqq_options_local_ingest_reconciliation_policy.v1",
+        "request_schema": "qc_qqq_options_local_reconciliation_request.v1",
+        "projection_schema": "qc_qqq_options_platform_reconciliation_projection.v1",
+        "result_schema": "qc_qqq_options_local_reconciliation_result.v1",
+        "policy_sha256": "7253bf64f0e0d25dcae9a9d53fdb8d38f741dfd3a034af6737857ca33f39e875",
+        "module_sha256": "1d6d7c5f34431001a18002046cdae93a6f85793516dea3b6598be1902cb8655b",
+        "difference_class_count": 7,
+        "disposition_count": 4,
+        "outcome_count": 5,
+        "exact_comparison_field_count": 12,
+        "primary_research_start": "2021-02-22",
+        "legacy_2022_default_active": False,
+        "reconciliation_authorized": False,
+        "owner_authorization_status": "NOT_GRANTED_FOR_RECONCILIATION_POLICY",
+        "default_outcome": "LOCAL_RECONCILIATION_POLICY_BLOCKED",
+        "decision": "LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED",
+        "option_event_dq_without_canonical_report": "NOT_EVALUATED",
+        "option_event_pit_without_canonical_report": "NOT_EVALUATED",
+    }
+    assert phase["validation"] == {
+        "focused_reconciliation": "PASS_22_TESTS",
+        "adjacent_2480_through_2490": "PASS_281_TESTS",
+        "compatibility_regression": "PASS_189_TESTS",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "strict_2489_loader_rerun": True,
+        "caller_loaded_bundle_trusted": False,
+        "external_pass_may_override_internal_failure": False,
+        "raw_option_rows_allowed": False,
+        "unreviewed_mapping_or_tolerance_allowed": False,
+        "external_platform_action": "none",
+        "cloud_run_authorized": False,
+        "api_cli_http_allowed": False,
+        "data_quality_executed": False,
+        "investment_interpretation_allowed": False,
+        "range_expansion_allowed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2490_qc_local_ingest_reconciliation_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )
