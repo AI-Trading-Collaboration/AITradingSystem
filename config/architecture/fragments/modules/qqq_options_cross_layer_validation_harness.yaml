@@ -1,0 +1,31 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_cross_layer_validation_harness
+fragment_kind: module
+owner: independent_validation_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/cross_layer_validation.py
+public_contracts:
+  - DEFAULT_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_GOLDEN_PATH
+  - DEFAULT_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_POLICY_PATH
+  - LoadedQQQOptionsCrossLayerHarness
+  - QQQOptionsAuthorityBinding
+  - QQQOptionsCloudSmokeChecklist
+  - QQQOptionsCloudSmokeChecklistItem
+  - QQQOptionsCrossLayerArtifactBinding
+  - QQQOptionsCrossLayerGoldenManifest
+  - QQQOptionsCrossLayerHarnessPolicy
+  - QQQOptionsCrossLayerHarnessPolicyLoadResult
+  - QQQOptionsCrossLayerObservation
+  - QQQOptionsCrossLayerScenarioSpec
+  - QQQOptionsCrossLayerValidationError
+  - QQQOptionsCrossLayerValidationReport
+  - QQQOptionsRequiredArtifactContract
+  - QQQOptionsScenarioGolden
+  - QQQOptionsScenarioValidation
+  - build_qqq_options_cloud_smoke_checklist
+  - build_qqq_options_cross_layer_validation_report
+  - build_qqq_options_validation_corpus_sha256
+  - load_qqq_options_cross_layer_validation_harness
+  - load_qqq_options_cross_layer_validation_policy
+  - validate_qqq_options_cross_layer_observation
+compatibility_facades: []
+deprecation_status: active_reference_architecture

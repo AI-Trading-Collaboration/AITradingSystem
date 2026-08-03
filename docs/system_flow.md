@@ -7490,3 +7490,37 @@ chain/quote/OI，不运行 `aits validate-data`、QuantConnect/cloud/API/CLI/HTT
 `production_effect=none`、`broker_action=none`。工程出口为
 `LOCAL_QC_RECONCILIATION_V1_READY_POLICY_BLOCKED`；完整出口仍等待 2492 Owner-reviewed mapping/tolerance 与
 真实 manual bundle。
+
+## TRADING-2491 QQQ Options Cross-Layer Validation Harness V1
+
+`config/research/qqq_options_cross_layer_validation_harness_v1.yaml` 与 tracked golden manifest 在 2481–2490
+冻结合同之上增加 strictly offline 的 cross-layer QA harness。`qqq_options_research.cross_layer_validation`
+逐项重算十个 predecessor policy/module 的 LF-normalized SHA-256，并对十个 synthetic scenario 的 semantic
+payload、per-scenario fixture hash 与 aggregate corpus hash 做 exact replay；缺失、symlink、path escape、hash
+drift、duplicate、missing/extra scenario 或 caller-supplied semantic drift 均 fail closed。
+
+```text
+2481–2490 exact policy/module authority
+  -> tracked ten-scenario synthetic corpus
+  -> exact terminal layer/status/reasons/order/fill/cash/run/DQ/PIT expectations
+  -> required artifact schema/path/hash/byte-count binding
+  -> tracked per-scenario golden hashes + aggregate corpus hash
+  -> sealed per-scenario validation + permutation-stable aggregate report
+  -> synthetic coverage PASS only
+  -x-> platform evidence, real DQ/PIT PASS, investment interpretation or pilot authorization
+2491 cloud smoke checklist
+  -> BLOCKED_OWNER_AUTHORIZATION
+  -> all external checks pending/not evaluated
+  -x-> QuantConnect login/project/cloud/API/CLI/HTTP/Object Store/action
+```
+
+corpus 精确覆盖 valid、stale/crossed/missing quote、no eligible contract、partial fill + cancel、venue reject、
+insufficient settled cash、ITM expiry scope 与 corporate-action scope。每条 observation/report/checklist 都使用
+strict sealed canonical JSON authority；输入排列不改变 report bytes。aggregate PASS 不覆盖 fixture 中保留的
+FAIL/NOT_EVALUATED DQ/PIT，也不将 synthetic evidence 伪装成 platform evidence。
+
+primary requested/evaluated start 固定 `2021-02-22`；`2022-12-01` 不是默认。2491 不读取 cached market/macro
+或 raw option rows，不运行 `aits validate-data`，不激活 2485–2490 policy，不填任何未 reviewed 数值阈值；
+cloud smoke checklist 固定 Owner token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`、
+`external_action_executed=false`。range expansion、promotion、paper/live/production/broker 全部 false/none，
+`production_effect=none`、`broker_action=none`。完整 cloud smoke authority 只属于后续 Owner-reviewed task。

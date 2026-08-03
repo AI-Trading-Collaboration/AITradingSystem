@@ -11,47 +11,66 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: QA + lane owners：合同冻结后并行维护
-  requirement_refs: []
+  next_owner: project owner + 2492 pilot coordinator：2491 offline harness 已冻结；2492
+    external pilot/Owner token 与任何 pilot 数值仍未授权
+  requirement_refs:
+  - docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 统一 valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient
-    cash、ITM expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md`。已建立
+    policy-bound ten-scenario corpus、tracked golden manifest、sealed observation/report
+    与 blocked cloud smoke checklist；只消费 2481–2490 public/canonical authority，不重定义
+    schema/policy/DQ/PIT。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: unit/contract/golden/property/synthetic integration 全覆盖；schema 变化明确使 golden
-      失效；按影响更新 system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
+    text: valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient
+      cash、ITM expiry/corporate action exact fixtures；schema/module/policy drift fail
+      closed；focused 39 与 2480–2491 adjacent 320 已 PASS，static/generated/current-authority
+      与 final formal evidence 须 PASS；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2099
-    row_sha256: fa642e9f4eda73198af60ef62b0816f7681f9bde7c2feb0bce578bac073aeb5c
+    row_sha256: 40139eb138a69d32751b0eea6f6aab8a6d23cfd4bf5f950607c68e6aef9f5123
     cell_count: 8
     all_cells:
     - TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
     - QA / synthetic fixtures, golden outputs and cloud smoke checklist
     - P1
-    - PROPOSED
-    - QA + lane owners：合同冻结后并行维护
-    - 统一 valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient
-      cash、ITM expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。
-    - unit/contract/golden/property/synthetic integration 全覆盖；schema 变化明确使 golden
-      失效；按影响更新 system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
-    - shared QA owner 不得私自修改 schema/policy/DQ identity。
+    - BASELINE_DONE
+    - project owner + 2492 pilot coordinator：2491 offline harness 已冻结；2492 external
+      pilot/Owner token 与任何 pilot 数值仍未授权
+    - 详见 `docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md`。已建立
+      policy-bound ten-scenario corpus、tracked golden manifest、sealed observation/report
+      与 blocked cloud smoke checklist；只消费 2481–2490 public/canonical authority，不重定义
+      schema/policy/DQ/PIT。
+    - valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient cash、ITM
+      expiry/corporate action exact fixtures；schema/module/policy drift fail closed；focused
+      39 与 2480–2491 adjacent 320 已 PASS，static/generated/current-authority 与 final
+      formal evidence 须 PASS；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
+    - 2026-08-03：offline baseline 已实现，默认 checklist=`BLOCKED_OWNER_AUTHORIZATION`；外部
+      QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 动作均
+      none。
     raw_line: '|TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1|QA / synthetic
-      fixtures, golden outputs and cloud smoke checklist|P1|PROPOSED|QA + lane owners：合同冻结后并行维护|统一
-      valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient cash、ITM
-      expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。|unit/contract/golden/property/synthetic
-      integration 全覆盖；schema 变化明确使 golden 失效；按影响更新 system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。|shared
-      QA owner 不得私自修改 schema/policy/DQ identity。|'
+      fixtures, golden outputs and cloud smoke checklist|P1|BASELINE_DONE|project
+      owner + 2492 pilot coordinator：2491 offline harness 已冻结；2492 external pilot/Owner
+      token 与任何 pilot 数值仍未授权|详见 `docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md`。已建立
+      policy-bound ten-scenario corpus、tracked golden manifest、sealed observation/report
+      与 blocked cloud smoke checklist；只消费 2481–2490 public/canonical authority，不重定义
+      schema/policy/DQ/PIT。|valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient
+      cash、ITM expiry/corporate action exact fixtures；schema/module/policy drift fail
+      closed；focused 39 与 2480–2491 adjacent 320 已 PASS，static/generated/current-authority
+      与 final formal evidence 须 PASS；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。|2026-08-03：offline
+      baseline 已实现，默认 checklist=`BLOCKED_OWNER_AUTHORIZATION`；外部 QuantConnect/cloud/API/CLI/HTTP/raw
+      export/paper/live/broker/production 动作均 none。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-fa642e9f4eda73198af60ef6
+  event_id: legacy-import-40139eb138a69d32751b0eea
   task_id: TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -61,29 +80,39 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: PROPOSED
+  to_status: BASELINE_DONE
   payload:
     priority: P1
-    next_owner: QA + lane owners：合同冻结后并行维护
-    notes: shared QA owner 不得私自修改 schema/policy/DQ identity。
+    next_owner: project owner + 2492 pilot coordinator：2491 offline harness 已冻结；2492
+      external pilot/Owner token 与任何 pilot 数值仍未授权
+    notes: 2026-08-03：offline baseline 已实现，默认 checklist=`BLOCKED_OWNER_AUTHORIZATION`；外部
+      QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 动作均
+      none。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:fa642e9f4eda73198af60ef62b0816f7681f9bde7c2feb0bce578bac073aeb5c
+  - sha256:40139eb138a69d32751b0eea6f6aab8a6d23cfd4bf5f950607c68e6aef9f5123
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
   - QA / synthetic fixtures, golden outputs and cloud smoke checklist
   - P1
-  - PROPOSED
-  - QA + lane owners：合同冻结后并行维护
-  - 统一 valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient cash、ITM
-    expiry/corporate-action fixtures 与 expected hashes；不替代真实 pilot。
-  - unit/contract/golden/property/synthetic integration 全覆盖；schema 变化明确使 golden 失效；按影响更新
-    system flow；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
-  - shared QA owner 不得私自修改 schema/policy/DQ identity。
-  docs_links: []
+  - BASELINE_DONE
+  - project owner + 2492 pilot coordinator：2491 offline harness 已冻结；2492 external
+    pilot/Owner token 与任何 pilot 数值仍未授权
+  - 详见 `docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md`。已建立
+    policy-bound ten-scenario corpus、tracked golden manifest、sealed observation/report
+    与 blocked cloud smoke checklist；只消费 2481–2490 public/canonical authority，不重定义
+    schema/policy/DQ/PIT。
+  - valid/stale/crossed/missing quote、no-contract、partial/reject/insufficient cash、ITM
+    expiry/corporate action exact fixtures；schema/module/policy drift fail closed；focused
+    39 与 2480–2491 adjacent 320 已 PASS，static/generated/current-authority 与 final
+    formal evidence 须 PASS；退出=`QQQ_OPTIONS_VALIDATION_HARNESS_READY`。
+  - 2026-08-03：offline baseline 已实现，默认 checklist=`BLOCKED_OWNER_AUTHORIZATION`；外部
+    QuantConnect/cloud/API/CLI/HTTP/raw export/paper/live/broker/production 动作均 none。
+  docs_links:
+  - docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md
   terminal: false
-  raw_row_sha256: fa642e9f4eda73198af60ef62b0816f7681f9bde7c2feb0bce578bac073aeb5c
+  raw_row_sha256: 40139eb138a69d32751b0eea6f6aab8a6d23cfd4bf5f950607c68e6aef9f5123
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: dfb4c7fa08f100b572b25aeb88bdfb08fc11bfe19d521467bd3470f68629fcc8
+fragment_checksum: 2da8f13f49251418d448681f4f15ceea0a5192dcddad5f7dfdff7a8b96dc0dc3

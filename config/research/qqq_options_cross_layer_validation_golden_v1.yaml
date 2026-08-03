@@ -1,0 +1,26 @@
+schema_version: qqq_options_cross_layer_validation_golden.v1
+policy_sha256: 7ba24214b29d6d13873eeb53e72ad9072fb6262f9e09a688a99f885a97b9a4c0
+scenario_goldens:
+  - scenario_id: CORPORATE_ACTION_SCOPE_INVALID
+    fixture_sha256: 38cd329ee1b5a1ae5f3952566d2e613ee9abd59ebde8c587d1c2bc8d6aa626ab
+  - scenario_id: CROSSED_QUOTE_INVALID
+    fixture_sha256: a74d81053b445389b186a0034b8e1853035603f18a424c50c668a7bb4df9b216
+  - scenario_id: INSUFFICIENT_SETTLED_CASH
+    fixture_sha256: cda38868a24be1586a65370f6e84342cd38143b8e41f87e21055af1657c469d5
+  - scenario_id: ITM_EXPIRY_SCOPE_INVALID
+    fixture_sha256: ab615becb15047aea3f180d8982343a7202ccce2935f65593557ac651de798aa
+  - scenario_id: MISSING_QUOTE_INVALID
+    fixture_sha256: 8002c1782625665dbd0f78f360b8dfe299a33aaaefccba2d00c654603549845c
+  - scenario_id: NO_ELIGIBLE_CONTRACT_CASH
+    fixture_sha256: 2ac8bc62d07cb9ade4723d63310b81051a18ef603d7ffec8c0a1d5eecc943cdb
+  - scenario_id: PARTIAL_FILL_CANCELED
+    fixture_sha256: d371bb52eca0e8a358d4a1e05a10ce5187aceeeb8387ac1b6c6f2d7149d4fd8c
+  - scenario_id: STALE_QUOTE_REJECTED
+    fixture_sha256: 024395ef576a3c1e2c88ae275d8e46798e8576904d729814985a97db7d27ada5
+  - scenario_id: VALID_CROSS_LAYER_SYNTHETIC
+    fixture_sha256: 933296582f637f27d259ccdd4bb4b7746544138d5e2518e6cf545c335f8cda2d
+  - scenario_id: VENUE_REJECTED_CASH
+    fixture_sha256: 0e7af602b134f34cb21d29219dcffdfa767d8b1587aa7cfe721a03d79df46585
+corpus_sha256: 662c3a6d43950c9310ce9d51420f28a095e820476a3157b00de47cd326af7cef
+historical_golden_rewrite_allowed: false
+synthetic_fixture_is_platform_evidence: false

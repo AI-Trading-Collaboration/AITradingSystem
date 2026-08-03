@@ -1,0 +1,278 @@
+schema_version: qqq_options_cross_layer_validation_harness_policy.v1
+policy_id: qqq_options_cross_layer_validation_harness_v1
+policy_version: 1.0.0
+status: VALIDATION_BASELINE
+owner: qa_coordinator_and_independent_validation_governance
+owner_decision: owner_decision:TRADING-2491:2026-08-03:freeze_offline_cross_layer_fixture_golden_and_blocked_cloud_checklist_v1
+rationale: Bind a deterministic synthetic cross-layer scenario corpus to the exact public policy and module authority frozen by TRADING-2481 through TRADING-2490 without presenting synthetic outputs as QuantConnect evidence.
+intended_effect: Schema, module, policy, fixture or expected-semantic drift fails closed while the cloud smoke checklist remains blocked until TRADING-2492 receives an independent Owner-reviewed authorization and scope.
+validation_plan: Run authority replay, policy and golden tamper, scenario completeness, exact observation, property, canonical replay, checklist authorization and adjacent integration tests before final-tree validation.
+review_condition: Review whenever any predecessor public schema/module/policy changes or before TRADING-2492 external pilot preregistration.
+expiry_condition: Supersede only through a reviewed tracked policy and golden migration with explicit old-golden retention and final-tree compatibility evidence.
+primary_research_start: 2021-02-22
+legacy_non_default_start: 2022-12-01
+legacy_non_default_start_is_default: false
+authority_bindings:
+  - authority_id: TRADING-2481-MODULE
+    path: src/ai_trading_system/qqq_options_research/contracts.py
+    sha256: 84020b2c7b7263b65d6b437ba178a0f7b94d678dc47561418fca48fce7792830
+  - authority_id: TRADING-2481-POLICY
+    path: config/research/qqq_options_shared_contract_v1.yaml
+    sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+  - authority_id: TRADING-2482-MODULE
+    path: src/ai_trading_system/qqq_options_research/dq_pit_identity.py
+    sha256: baf9baffe1bc441342b9acfcca0010d3a40482bc63b8f5f16629d8b29326ef07
+  - authority_id: TRADING-2482-POLICY
+    path: config/research/qqq_options_dq_pit_identity_v1.yaml
+    sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+  - authority_id: TRADING-2483-MODULE
+    path: src/ai_trading_system/qqq_options_research/signal_package.py
+    sha256: ada45b6768b50180f2c21a54b0bed8c3bbf2b1a16ca965767b32569c0fce0cac
+  - authority_id: TRADING-2483-POLICY
+    path: config/research/qqq_options_signal_export_v1.yaml
+    sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+  - authority_id: TRADING-2484-MODULE
+    path: src/ai_trading_system/qqq_options_research/qc_project_adapter.py
+    sha256: 86420ad9875cac47c5317ceeeda8892f5aa8d2ad310a0fe84ac7762fa4cf90a8
+  - authority_id: TRADING-2484-POLICY
+    path: config/research/qc_qqq_options_project_adapter_contract_v1.yaml
+    sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+  - authority_id: TRADING-2485-MODULE
+    path: src/ai_trading_system/qqq_options_research/deterministic_selection.py
+    sha256: 3d9d98466c64dfcedfd5b0db17acb749e7183cfc5496a98575de43a8fa74b0b4
+  - authority_id: TRADING-2485-POLICY
+    path: config/research/qqq_options_deterministic_selection_v1.yaml
+    sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30
+  - authority_id: TRADING-2486-MODULE
+    path: src/ai_trading_system/qqq_options_research/minute_execution.py
+    sha256: e2f50a6fef80295d79d28fba1f40b7943ec2a2d14e0d2375084c6c87c4e13feb
+  - authority_id: TRADING-2486-POLICY
+    path: config/research/qqq_options_minute_execution_reality_v1.yaml
+    sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+  - authority_id: TRADING-2487-MODULE
+    path: src/ai_trading_system/qqq_options_research/cash_accounting.py
+    sha256: 562c4933f609d022035e444290548e1610d87ca015cfc2d2a56feefc08b2c0e8
+  - authority_id: TRADING-2487-POLICY
+    path: config/research/qqq_options_cash_premium_settlement_accounting_v1.yaml
+    sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+  - authority_id: TRADING-2488-MODULE
+    path: src/ai_trading_system/qqq_options_research/position_lifecycle.py
+    sha256: 8f5b8b28773be3a71366cf906ad1cc0a3b4721d91fc3f4450f7028959550d322
+  - authority_id: TRADING-2488-POLICY
+    path: config/research/qqq_options_lifecycle_expiry_corporate_action_safety_v1.yaml
+    sha256: 1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582
+  - authority_id: TRADING-2489-MODULE
+    path: src/ai_trading_system/qqq_options_research/platform_evidence_bundle.py
+    sha256: 8d3d12db0542e30454ce4d7673fa357f4eaef7c3c43fab38e4cd8dc3be8a1565
+  - authority_id: TRADING-2489-POLICY
+    path: config/research/qc_qqq_options_platform_evidence_manual_bundle_v1.yaml
+    sha256: bb316475cbef921a7716a00d0dfc5675b831d09a49b53a0fb3215e4889b041e1
+  - authority_id: TRADING-2490-MODULE
+    path: src/ai_trading_system/qqq_options_research/local_reconciliation.py
+    sha256: 1d6d7c5f34431001a18002046cdae93a6f85793516dea3b6598be1902cb8655b
+  - authority_id: TRADING-2490-POLICY
+    path: config/research/qc_qqq_options_local_ingest_reconciliation_v1.yaml
+    sha256: 7253bf64f0e0d25dcae9a9d53fdb8d38f741dfd3a034af6737857ca33f39e875
+scenarios:
+  - scenario_id: CORPORATE_ACTION_SCOPE_INVALID
+    stimulus_class: CORPORATE_ACTION
+    terminal_layer: LIFECYCLE
+    expected_status: INVALID
+    expected_reason_codes: [EXTERNAL_SCOPE_VIOLATION_INVALID_RUN]
+    expected_order_count: 0
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: false
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: LIFECYCLE_RESULT
+        contract_id: qqq_options_position_lifecycle_result.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic corporate-action scope rejection only; no underlying adjustment, option deliverable reconstruction or broker event is executed.
+  - scenario_id: CROSSED_QUOTE_INVALID
+    stimulus_class: CROSSED_QUOTE
+    terminal_layer: INPUT
+    expected_status: INVALID
+    expected_reason_codes: [CROSSED_QUOTE]
+    expected_order_count: 0
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: false
+    expected_dq_status: NOT_EVALUATED
+    expected_pit_status: NOT_EVALUATED
+    required_artifacts:
+      - artifact_role: SELECTION_INPUT_VALIDATION
+        contract_id: QQQOptionSelectionCandidateInput.validation.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic input validation failure; no quote is repaired and no order is created.
+  - scenario_id: INSUFFICIENT_SETTLED_CASH
+    stimulus_class: INSUFFICIENT_CASH
+    terminal_layer: ACCOUNTING
+    expected_status: REJECTED
+    expected_reason_codes: [INSUFFICIENT_SETTLED_CASH]
+    expected_order_count: 1
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: false
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: ACCOUNTING_RESULT
+        contract_id: qqq_options_cash_accounting_result.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic settled-cash rejection only; it is not a reviewed position-size or premium-budget policy.
+  - scenario_id: ITM_EXPIRY_SCOPE_INVALID
+    stimulus_class: ITM_EXPIRY
+    terminal_layer: LIFECYCLE
+    expected_status: INVALID
+    expected_reason_codes: [EXPIRY_SCOPE_VIOLATION_INVALID_RUN]
+    expected_order_count: 0
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: false
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: LIFECYCLE_RESULT
+        contract_id: qqq_options_position_lifecycle_result.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic ITM expiry scope invalidation only; exercise, assignment and underlying delivery remain prohibited.
+  - scenario_id: MISSING_QUOTE_INVALID
+    stimulus_class: MISSING_QUOTE
+    terminal_layer: INPUT
+    expected_status: INVALID
+    expected_reason_codes: [MISSING_QUOTE_FIELD]
+    expected_order_count: 0
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: false
+    expected_dq_status: NOT_EVALUATED
+    expected_pit_status: NOT_EVALUATED
+    required_artifacts:
+      - artifact_role: SELECTION_INPUT_VALIDATION
+        contract_id: QQQOptionSelectionCandidateInput.validation.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic missing-quote rejection only; no daily close or same-bar fallback is permitted.
+  - scenario_id: NO_ELIGIBLE_CONTRACT_CASH
+    stimulus_class: NO_CONTRACT
+    terminal_layer: SELECTION
+    expected_status: BLOCKED
+    expected_reason_codes: [NO_ELIGIBLE_CONTRACT_CASH]
+    expected_order_count: 0
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: true
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: SELECTION_RESULT
+        contract_id: QQQOptionSelectionResult.canonical_bytes.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic no-contract cash-preservation disposition; selection bounds are not widened.
+  - scenario_id: PARTIAL_FILL_CANCELED
+    stimulus_class: PARTIAL_FILL
+    terminal_layer: EXECUTION
+    expected_status: PARTIAL
+    expected_reason_codes: [PARTIAL_CANCELED]
+    expected_order_count: 1
+    expected_fill_count: 1
+    cash_preservation_required: false
+    run_valid: true
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: EXECUTION_RESULT
+        contract_id: qqq_options_minute_execution_result.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic partial-fill replay; latency, slippage, fee and partial-fill numeric baselines remain unresolved policy.
+  - scenario_id: STALE_QUOTE_REJECTED
+    stimulus_class: STALE_QUOTE
+    terminal_layer: SELECTION
+    expected_status: REJECTED
+    expected_reason_codes: [QUOTE_TOO_OLD]
+    expected_order_count: 0
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: true
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: SELECTION_RESULT
+        contract_id: QQQOptionSelectionResult.canonical_bytes.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic stale-quote rejection; quote freshness threshold remains inherited and is not recalibrated here.
+  - scenario_id: VALID_CROSS_LAYER_SYNTHETIC
+    stimulus_class: VALID
+    terminal_layer: RECONCILIATION
+    expected_status: READY_FOR_OWNER_REVIEW
+    expected_reason_codes: [LOCAL_RECONCILIATION_READY_FOR_OWNER_REVIEW]
+    expected_order_count: 1
+    expected_fill_count: 1
+    cash_preservation_required: false
+    run_valid: true
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: ACCOUNTING_RESULT
+        contract_id: qqq_options_cash_accounting_result.v1
+      - artifact_role: EXECUTION_RESULT
+        contract_id: qqq_options_minute_execution_result.v1
+      - artifact_role: LIFECYCLE_RESULT
+        contract_id: qqq_options_position_lifecycle_result.v1
+      - artifact_role: RECONCILIATION_RESULT
+        contract_id: qc_qqq_options_local_reconciliation_result.v1
+      - artifact_role: SELECTION_RESULT
+        contract_id: QQQOptionSelectionResult.canonical_bytes.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic mechanics-only cross-layer success; it is not QuantConnect evidence, strategy validity or pilot authorization.
+  - scenario_id: VENUE_REJECTED_CASH
+    stimulus_class: VENUE_REJECT
+    terminal_layer: EXECUTION
+    expected_status: REJECTED
+    expected_reason_codes: [VENUE_REJECTED]
+    expected_order_count: 1
+    expected_fill_count: 0
+    cash_preservation_required: true
+    run_valid: true
+    expected_dq_status: PASS
+    expected_pit_status: PASS
+    required_artifacts:
+      - artifact_role: EXECUTION_RESULT
+        contract_id: qqq_options_minute_execution_result.v1
+    evidence_classification: SYNTHETIC_TEST_ONLY_NOT_PLATFORM_EVIDENCE
+    caveat: Synthetic venue rejection; it does not assert real engine or broker behavior.
+cloud_checklist_item_ids:
+  - CAPABILITY_RECEIPT_VERIFIED
+  - DQ_PIT_REVIEWED
+  - ENGINE_SUBSCRIPTION_BOUND
+  - EXACT_CODE_PROJECT_IDENTITY
+  - LOCAL_RECONCILIATION_EXPLAINED
+  - NO_RAW_EXPORT_CONFIRMED
+  - OWNER_TOKEN_GRANTED
+  - PRIMARY_WINDOW_BOUND
+  - RESOURCE_BOUNDARY_REVIEWED
+  - RESULT_MAPPING_COMPLETE
+  - STAGE_GATE_HANDOFF_READY
+  - TWO_PERSON_ATTESTATION_COMPLETE
+safety:
+  research_only: true
+  synthetic_fixture_is_platform_evidence: false
+  synthetic_pass_may_authorize_pilot: false
+  investment_interpretation_allowed: false
+  pilot_authorized: false
+  range_expansion_allowed: false
+  external_platform_action_allowed: false
+  cloud_run_authorized: false
+  api_allowed: false
+  cli_allowed: false
+  remote_http_allowed: false
+  object_store_allowed: false
+  raw_options_data_export_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  promotion_allowed: false
+  broker_action_allowed: false
+  production_effect: none
+  broker_action: none
+decision: QQQ_OPTIONS_VALIDATION_HARNESS_READY
