@@ -16,6 +16,9 @@ WAVE11_CURRENT_HASH_AUTHORITY = f"{WAVE11_PHASE_KEY}.sources"
 TRADING_2480_CAPABILITY_DISCOVERY_EVIDENCE_PHASE_KEY = (
     "phase_trading_2480_qc_qqq_options_capability_discovery_evidence_v1"
 )
+TRADING_2480_CAPABILITY_DISCOVERY_REVIEW_PHASE_KEY = (
+    "phase_trading_2480_qc_qqq_options_capability_discovery_review_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         "docs/system_flow.md",
@@ -96,24 +99,24 @@ def _assert_historical_source_is_current_or_superseded(
     )
     section_key, section, current_source = latest_authority
     supersession = section["supersession"]
-    assert (
-        supersession["historical_hashes_rewritten"] is False
-    ), f"{section_key} must preserve historical source hashes"
+    assert supersession["historical_hashes_rewritten"] is False, (
+        f"{section_key} must preserve historical source hashes"
+    )
     expected_authority = f"{section_key}.sources"
-    assert (
-        supersession["current_hash_authority"] == expected_authority
-    ), f"{section_key} current hash authority must be {expected_authority}"
+    assert supersession["current_hash_authority"] == expected_authority, (
+        f"{section_key} current hash authority must be {expected_authority}"
+    )
     current_live_hash = _source_sha256_path(live_path, current_source)
     if source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS:
         section_ids = list(baseline)
-        assert TRADING_2480_CAPABILITY_DISCOVERY_EVIDENCE_PHASE_KEY in section_ids
+        assert TRADING_2480_CAPABILITY_DISCOVERY_REVIEW_PHASE_KEY in section_ids
         assert section_ids.index(section_key) <= section_ids.index(
-            TRADING_2480_CAPABILITY_DISCOVERY_EVIDENCE_PHASE_KEY
+            TRADING_2480_CAPABILITY_DISCOVERY_REVIEW_PHASE_KEY
         )
         return
-    assert (
-        current_source.get("sha256") == current_live_hash
-    ), f"{source_path}: latest authority hash does not match live bytes"
+    assert current_source.get("sha256") == current_live_hash, (
+        f"{source_path}: latest authority hash does not match live bytes"
+    )
 
 
 def test_trading2452_active_glossary_supersedes_frozen_v1_without_rewriting_it() -> None:

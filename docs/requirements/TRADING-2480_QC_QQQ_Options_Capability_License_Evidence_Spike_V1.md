@@ -7,13 +7,15 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`BASELINE_DONE`
 
 当前授权边界：
 
 ```text
 owner_authorization_state:EXPIRED_AFTER_FIRST_RUN_TERMINAL
 owner_authorization_id:owner_decision:TRADING-2480:2026-08-04:authorize_single_no_order_qc_capability_discovery_run_v1
+independent_review_status:ACCEPTED_WITH_DISCLOSED_POST_TERMINAL_ARTIFACT_DOWNLOAD
+owner_attestation_id:owner_attestation:TRADING-2480:2026-08-04:accept_qc_capability_discovery_evidence_v1
 ```
 
 production effect：`none`
@@ -202,6 +204,34 @@ content-bound authorization overlay 绑定历史 blocked receipt，不改写它�
 外部动作前必须先完成 overlay strict loader/tamper tests、applicable final-tree validation、ordinary
 main push 与 exact SHA 复核。
 
+### S4：independent reviewer attestation（2026-08-04 已接受）
+
+`project_owner` 在首次 run terminal 且 canonical evidence 关闭后，以不同于 collector 的身份提供：
+
+```text
+owner_attestation:TRADING-2480:2026-08-04:accept_qc_capability_discovery_evidence_v1
+evidence_file_sha256:2d4c14e23d8b8f824d5b4f93db257f6d4852af31a12966535d21cc5d26a4807a
+project_id:34808569
+backtest_id:cc699b521d94b44e877b4fc18d514181
+review_artifact_sha256:e4b440e39d3402cec77c8b22264f870ccc05d935ab5c6d8b21c939bcba62f2d4
+reviewed_free_tier_and_community_b_micro:true
+reviewed_build_id_and_deployment:true
+exceptions:post_terminal_reviewer_result_json_downloaded_no_raw_option_rows
+```
+
+复核后下载的 `Hyper Active Red Galago.json` 是 17,322-byte aggregate backtest result；它只用于
+reviewer 验证 `Completed`、同一 backtest identity、`2025-12-02`、zero orders/trades/P&L、
+cash preservation 与 zero fees/holdings/volume。对完整 JSON 文本执行
+`CASE_INSENSITIVE_JSON_TEXT_FIELD_NAME_SCAN_V1` 后，`bid_price`、`ask_price`、`open_interest`、
+`option_chain`、`contract_count` 出现次数均为 0，因此没有 raw option rows。下载文件不复制或提交到
+repository；只在 canonical review addendum 中保留 SHA-256、byte count 与 export-safe aggregate facts。
+
+原 discovery evidence 是已关闭的历史事实，仍保持其原字节与其中的
+`PENDING_OWNER_REVIEW`，不通过回写伪造事后状态。独立 review addendum 用 exact file/semantic hashes
+重放并绑定它。接受 review 只关闭 TRADING-2480 的 independent-review exit condition；既有 admission
+仍为 `CAPABILITY_OR_LICENSE_BLOCKED`，`bounded_pilot_preparation_allowed=false`，option-event DQ/PIT
+仍为 `NOT_EVALUATED`，不激活 TRADING-2492，也不允许投资解释、第二次 run 或后续外部动作。
+
 ## 7. Governed execution 与生命周期
 
 - mode：`SINGLE_LANE`；
@@ -215,7 +245,8 @@ main push 与 exact SHA 复核。
 - pre-run exit condition：authorization overlay focused/current-authority/formal PASS、validated commit ff-only
   到 local main、普通 push 与 exact SHA 复核成功；完成前不得触碰 QuantConnect project/run；
 - post-run exit condition：首次 terminal 后 token 立即失效，export-safe evidence 进入 governed bundle，
-  `project_owner` 对 exact bytes/hash 独立复核；project 在复核前保留且不得执行第二次 run。
+  `project_owner` 对 exact bytes/hash 独立复核；本 exit condition 已由 S4 attestation 满足，project
+  仍不得执行第二次 run，后续 project 生命周期动作需要独立授权。
 
 ## 8. 进度记录
 
@@ -299,3 +330,12 @@ main push 与 exact SHA 复核。
   `CAPABILITY_OR_LICENSE_BLOCKED`、`bounded_pilot_preparation_allowed=false`、option-event DQ/PIT=
   `NOT_EVALUATED`，TRADING-2492 继续 blocked。下一 exit condition 是 `project_owner` 在查看保留的
   QuantConnect result page 后，对上述 exact evidence bytes/hash 提供独立 attestation；collector 不得代签。
+- 2026-08-04：`project_owner` 以不同于 collector 的 independent reviewer 身份接受 exact evidence，
+  attestation id=`owner_attestation:TRADING-2480:2026-08-04:accept_qc_capability_discovery_evidence_v1`。
+  Reviewer 在 terminal 后下载 17,322-byte aggregate result JSON，SHA-256=
+  `e4b440e39d3402cec77c8b22264f870ccc05d935ab5c6d8b21c939bcba62f2d4`；该下载作为唯一披露例外，
+  文件未复制进 repository，字段名扫描未发现 raw option rows。Canonical review addendum semantic/file
+  SHA-256=`fd13eabddc2cd0cd8ae2acd7b64756e24822469de4b5c55cce9008d60f147eda`/
+  `a5c9b9357e2b50a7f69d2710b35f184829917414f0dc8e297709f2fbf14c4ca3`。任务转为
+  `BASELINE_DONE`，但 admission、DQ/PIT 与 TRADING-2492 的 blocked 状态均不改变；不授权第二次 run、
+  project mutation、raw download、paper/live/broker/production 或投资结论。

@@ -7111,6 +7111,27 @@ validated S3 authorization overlay + exact repository/project-code SHA
   -x-> admission upgrade, 2492 activation, DQ/PIT PASS, investment conclusion
 ```
 
+随后 `project_owner` 以 independent reviewer 身份提供 exact attestation。Review loader 不改写上述已关闭
+evidence，而是重验其 file SHA-256=`2d4c14e2…4807a` 与 semantic SHA-256=`bd00355e…2702`，并交叉绑定
+project/backtest/build/Free `Community B-MICRO`/deployment/project-code facts。Reviewer 在首次 terminal 后
+下载 17,322-byte aggregate result JSON（SHA-256=`e4b440e3…2f2d4`）；这是已披露例外，文件不进入
+repository。Canonical review 只记录 Completed、同一 session、zero orders/trades/P&L、cash preservation、
+zero fees/holdings/volume，以及对 JSON 文本的 raw option field-name scan 全零结果。
+
+```text
+immutable closed discovery evidence + exact file/semantic hashes
+  + independent owner attestation (reviewer != collector)
+  + aggregate result SHA/size/identity/zero-activity facts
+  + disclosed post-terminal download; no raw option rows; artifact not committed
+  -> ACCEPTED_WITH_DISCLOSED_POST_TERMINAL_ARTIFACT_DOWNLOAD
+  -x-> rewrite original evidence, admission upgrade, DQ/PIT PASS, 2492 activation
+```
+
+因此 independent-review exit condition 已关闭，但 capability/license admission 仍为
+`CAPABILITY_OR_LICENSE_BLOCKED`、bounded pilot preparation 仍为 false、option-event DQ/PIT 仍为
+`NOT_EVALUATED`。本节点不产生投资解释，不授权第二次 run、project mutation 或任何 paper/live/broker/
+production 动作。
+
 当前 sealed evidence 直接观察到 `48` contracts / `48` two-sided quotes / `48` non-zero OI，
 `Total Orders=0`、fills/holdings/volume=`0`、fees=`$0.00`、start/end equity 均为 `$100,000`；这只证明
 该单日 no-order capability probe 可运行，不证明完整研究窗覆盖、策略有效性或执行现实性。既有
