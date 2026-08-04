@@ -45424,3 +45424,189 @@ phase_trading_2480_qc_qqq_options_capability_read_only_evidence_probe_v1:
     investment_interpretation_allowed: false
     production_effect: none
     broker_action: none
+phase_trading_2480_qc_qqq_options_capability_discovery_authorization_v1:
+  schema_version: trading_2480_qc_capability_discovery_authorization_compatibility.v1
+  status: IN_PROGRESS_AUTHORIZED_PRE_RUN
+  boundary_id: TRADING-2480-QC-QQQ-OPTIONS-CAPABILITY-DISCOVERY-AUTHORIZATION-V1
+  task_ids:
+  - TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
+  owner_decisions:
+  - owner_decision:TRADING-2480:2026-08-04:authorize_single_no_order_qc_capability_discovery_run_v1
+  owner_authorization_state: ACTIVE_PRE_RUN_NOT_CONSUMED
+  prior_sections_immutability:
+    source_commit: d48dfca936cc8bd13a7dbf2cc9fb2d302b3d4488
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: a8f1245fc878b3f62f46a0c212be1fec43dd7ab4
+    raw_byte_count: 2925718
+    raw_sha256: cba66abd06a5c8557d6b9975f6fbc9ec51364415def7b1a01f0af10feac431b1
+    append_offset: 2925718
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/25/25417f96822bbfa2827c9d6b6887853a9a68915c5fe2adca2f1189adbb19d64b.yaml
+  - registry/development_tasks_shadow_v2/25/25417f96822bbfa2827c9d6b6887853a9a68915c5fe2adca2f1189adbb19d64b.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_trading2452_architecture_contract.py
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/architecture/fragments/flows/qc_qqq_options_capability_discovery_authorization.yaml
+  - config/architecture/fragments/modules/qc_qqq_options_capability_discovery_authorization.yaml
+  - config/research/qc_qqq_options_capability_discovery_authorization_v1.yaml
+  - src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_authorization.py
+  - src/ai_trading_system/qqq_options_capability_discovery_authorization.py
+  - tests/test_qc_qqq_options_capability_discovery_authorization.py
+  source_delta_paths:
+  - config/architecture/fragments/flows/qc_qqq_options_capability_discovery_authorization.yaml
+  - config/architecture/fragments/modules/qc_qqq_options_capability_discovery_authorization.yaml
+  - config/research/qc_qqq_options_capability_discovery_authorization_v1.yaml
+  - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/25/25417f96822bbfa2827c9d6b6887853a9a68915c5fe2adca2f1189adbb19d64b.yaml
+  - registry/development_tasks_shadow_v2/25/25417f96822bbfa2827c9d6b6887853a9a68915c5fe2adca2f1189adbb19d64b.yaml
+  - src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_authorization.py
+  - src/ai_trading_system/qqq_options_capability_discovery_authorization.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_qc_qqq_options_capability_discovery_authorization.py
+  - tests/test_trading2452_architecture_contract.py
+  supersession:
+    superseded_by_phase: TRADING-2480-QC-QQQ-OPTIONS-CAPABILITY-DISCOVERY-AUTHORIZATION-V1
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2480_qc_qqq_options_capability_read_only_evidence_probe_v1
+    current_hash_authority: phase_trading_2480_qc_qqq_options_capability_discovery_authorization_v1.sources
+  sources:
+  - path: config/architecture/fragments/flows/qc_qqq_options_capability_discovery_authorization.yaml
+    sha256: bd540c47188e94fffbf8752134fd1ee585efee3be3f0e3342364e10f26e623ad
+    hash_normalization: git_eol_lf
+  - path: config/architecture/fragments/modules/qc_qqq_options_capability_discovery_authorization.yaml
+    sha256: 3b1e397150f198a2b639508c6d2cf969b1e5ca177b1f6e989e8f686a3bfa38a5
+    hash_normalization: git_eol_lf
+  - path: config/research/qc_qqq_options_capability_discovery_authorization_v1.yaml
+    sha256: 7eb3d18aab85d49e04ce0d369c895d0bb6d622b5f843c6a6f2d209b8227fa333
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
+    sha256: 98774a3a8db30447a2890d2163bd7ae31d894faaffc821ca69e6cc9b6b6c6d90
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: 43198c1a16d28313d31776fc7de65b6950c6113437ff4479b22c88ef3a65a475
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 8c0a211adad490b325daa7a98796d2f544417f56b12c194695dff3da087aa98e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: 6d778be52fde6523304e300f0765b8592d2cadec80774a0ada1dfaf7148986b2
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: e68ea0fcae6610c4d520dd96da92fbc6c21608c0d1287441541b4728fd4680f6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 0f710f9a127572343c2648dc9cc2ecad4393319ab941b50e0ff7cf4b8df2d236
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 480c67cdc33a1c7c549f2caab80bd5a41832942557b1c4727c1c2734e247adf4
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: c89b7c69198a85a0bd411218c86aaad8040ba659b01fab5a9a5167e24b346985
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 6569460138c63f542e42fd8ad206b3b7fb39873efb38ee957b9582a29e2022a4
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 1eddcb8159cb535dd8b7e02d04de1a3269c4ad5c232f36543b1acdddc520d446
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: 8ddfcb905a1f1640090dc05708fbe35dfb18878ad793c600fb2ad5a73114391e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/25/25417f96822bbfa2827c9d6b6887853a9a68915c5fe2adca2f1189adbb19d64b.yaml
+    sha256: 03a51db8dfee0de500b3c1c89a807366aa212720fb691b75c8005538e18837b2
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/25/25417f96822bbfa2827c9d6b6887853a9a68915c5fe2adca2f1189adbb19d64b.yaml
+    sha256: 017e13012920caa1bbfef0699cfd82b3fd1873f37ca3facf5fe340b5775012ca
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_authorization.py
+    sha256: f8798f5ddbb4d4fb32d7c1474b6c6cc8184f8a426b9237510b0bafa34ed45b22
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/qqq_options_capability_discovery_authorization.py
+    sha256: a28018378c44c3504ec828a01656ca3a8f2c8eca377d2fbca1700805c06c422a
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: eb01ccf401414871beff9c3033cf12240a02f2e7a9d0de4932406bb337ee04e1
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 3867946abdf467afdae7a559cb6e339722c7fe8f1ed9ecf196e5c542692e2f7f
+    hash_normalization: git_eol_lf
+  - path: tests/test_qc_qqq_options_capability_discovery_authorization.py
+    sha256: cbda9fda45356cae4de2ccbfe324697d680f9fc37e6f551d1697b79660b12ffd
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2452_architecture_contract.py
+    sha256: 1926853dc66ec28f6cc12a5d1715c5d4fad2245d8c10000397dd2f15233f8df7
+    hash_normalization: git_eol_lf
+  generated_fragment_authority:
+    mode: INDEX_TRANSITIVE_SHA256_AUTHORITY
+    index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    fragment_root: registry/development_tasks_shadow_v2
+    fragment_count: 961
+    active_task_count: 456
+    completed_task_count: 505
+    stable_path_key: sha256(task_id)
+    loader_hash_replay: PASS
+  capability_discovery_authorization:
+    policy_schema: qc_qqq_options_capability_discovery_authorization.v1
+    policy_sha256: 7eb3d18aab85d49e04ce0d369c895d0bb6d622b5f843c6a6f2d209b8227fa333
+    canonical_authorization_sha256: 0d68713647bd0eed7e7a0d143cfbf0648487f400f844d34f8d2f5673f3c7e291
+    contract_module_sha256: f8798f5ddbb4d4fb32d7c1474b6c6cc8184f8a426b9237510b0bafa34ed45b22
+    loader_module_sha256: a28018378c44c3504ec828a01656ca3a8f2c8eca377d2fbca1700805c06c422a
+    requested_start: '2025-12-02'
+    requested_end: '2025-12-02'
+    maximum_runtime_minutes: 10
+    maximum_projects: 1
+    maximum_cloud_backtests: 1
+    maximum_order_count: 0
+    maximum_contract_quantity: 0
+    collector_id: codex_pilot_coordinator
+    independent_reviewer_id: project_owner
+    decision: CAPABILITY_DISCOVERY_AUTHORIZED_NO_ORDER
+  validation:
+    focused_authorization_initial: FAIL_1_PASS_19_TESTS
+    focused_authorization_failure_fix: PASS_20_TESTS
+    focused_authorization_final: PASS_20_TESTS
+    adjacent_2480_through_2492: PASS_127_TESTS
+    compatibility_regression: PASS_193_TESTS
+    formal_five_gate: PENDING_FINAL_TREE
+  safety:
+    external_platform_access: NOT_YET_EXECUTED
+    isolated_project_authorized: true
+    single_free_cloud_backtest_authorized: true
+    orders_allowed: false
+    fills_allowed: false
+    positions_allowed: false
+    api_cli_http_object_store_allowed: false
+    raw_option_rows_allowed: false
+    independent_review_required: true
+    selection_or_pilot_activated: false
+    investment_interpretation_allowed: false
+    production_effect: none
+    broker_action: none

@@ -1,19 +1,19 @@
 # TRADING-2480：QuantConnect QQQ Options Capability / License / Evidence Spike V1
 
-最后更新：2026-08-03
+最后更新：2026-08-04
 
 稳定任务 ID：
 `TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1`
 
 优先级：`P0`
 
-状态：`BASELINE_DONE`
+状态：`IN_PROGRESS`
 
 当前授权边界：
 
 ```text
-owner_authorization_state:CONSUMED_AND_EXPIRED_AFTER_EVIDENCE_PROBE
-owner_authorization_id:owner_decision:TRADING-2480:2026-08-03:authorize_bounded_qc_capability_license_evidence_probe_v1
+owner_authorization_state:ACTIVE_SINGLE_NO_ORDER_CAPABILITY_DISCOVERY
+owner_authorization_id:owner_decision:TRADING-2480:2026-08-04:authorize_single_no_order_qc_capability_discovery_run_v1
 ```
 
 production effect：`none`
@@ -113,7 +113,10 @@ Task-owned：
 - `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`；
 - `src/ai_trading_system/contracts/qc_qqq_options_capability_admission.py`；
 - `src/ai_trading_system/qqq_options_capability_admission.py`；
+- `src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_authorization.py`；
+- `src/ai_trading_system/qqq_options_capability_discovery_authorization.py`；
 - `config/research/qc_qqq_options_capability_admission_v1.yaml`；
+- `config/research/qc_qqq_options_capability_discovery_authorization_v1.yaml`；
 - `inputs/external_validation/qc_qqq_options_capability_evidence.template.json`；
 - `inputs/external_validation/qc_qqq_options_capability_evidence_20260803.json`；
 - `inputs/external_validation/qc_qqq_options_admission_e3a987b2b671e922175b35783dded6f4bbfa51dd5aaa523f415547026434ba04.json`；
@@ -162,17 +165,53 @@ window。只读 UI 无法直接证明的 QQQ 单标的实际覆盖、project/bac
 `CAPABILITY_CONFIRMED_FOR_BOUNDED_PILOT` 或保持 blocked；完成证据核验后本 token 失效并等待 independent
 reviewer。
 
+### S3：单无订单 capability-discovery cloud run（2026-08-04 已授权）
+
+本阶段使用以下精确 Owner token：
+
+```text
+owner_decision:TRADING-2480:2026-08-04:authorize_single_no_order_qc_capability_discovery_run_v1
+```
+
+本 token 只授权一次 `CAPABILITY_DISCOVERY_NO_ORDER_NOT_RESEARCH_CONCLUSION` 运行：
+
+- `requested_start=requested_end=2025-12-02`，该日必须由 reviewed XNYS calendar 重算为
+  `NORMAL_TRADING_DAY`，且位于 `historical_seen_2025_sample=2025-01-02..2025-12-31`；
+- `maximum_runtime_minutes=10`、`maximum_projects=1`、`maximum_cloud_backtests=1`；
+- `maximum_order_count=0`、`maximum_contract_quantity=0`；selector、execution、accounting、
+  lifecycle 均不激活，任何 order/fill/position/cash mutation 均为违规并停止；
+- compute budget 固定 `FREE_TIER_ONLY_ABORT_BEFORE_PAID_OR_UPGRADE`；任何付费、升级、额度异常或
+  第二次 run 都不在授权内；
+- collector=`codex_pilot_coordinator`，independent reviewer=`project_owner`；两者必须保持不同
+  `attested_by`，reviewer 只能在 evidence bundle 关闭后对 exact bytes/hash 进行复核；
+- 允许登录后通过 UI 创建或修改一个隔离 project、执行一次 Free Cloud backtest、观察
+  QQQ-specific option visibility/derived chain counts、project/backtest/LEAN identity、node/runtime
+  telemetry 和 Results/Orders/Trades/Logs 制品是否存在；
+- 禁止 API/CLI/direct HTTP/Object Store、raw option chain/minute quote/OpenInterest/Greeks 下载或
+  导出、raw-row logging、optimization、paper/live/broker/production、收益结论或范围扩张；
+- token 在首次 cloud run terminal（PASS/FAIL/cancel/timeout）、首次 evidence capture 完成、Owner
+  revoke 或边界违规中最早发生者时立即失效；project 在 reviewer 完成前不删除。
+
+为保留 2026-08-03 admission policy/evidence/receipt 的 exact-byte replay，S3 通过独立、strict、
+content-bound authorization overlay 绑定历史 blocked receipt，不改写它们。Overlay 只能放行
+无订单 capability discovery，不得把当前 `CAPABILITY_OR_LICENSE_BLOCKED` 提升为 pilot-ready。
+外部动作前必须先完成 overlay strict loader/tamper tests、applicable final-tree validation、ordinary
+main push 与 exact SHA 复核。
+
 ## 7. Governed execution 与生命周期
 
 - mode：`SINGLE_LANE`；
-- frozen base：`fea75a2aa71ba2add1cbf274d31f8bb99a1bfce0`；
-- branch：`codex/trading-2480-qc-capability-admission`；
-- 使用现有 `D:/Work/AITradingSystem_ops073_integration` checkout，不创建额外 worktree、clone 或 cache；
-- external browser/account action：`none`；
+- frozen base：`d48dfca936cc8bd13a7dbf2cc9fb2d302b3d4488`；
+- branch：`codex/trading-2480-qc-capability-discovery`；
+- 使用 `D:/Work/AITradingSystem` checkout，不创建额外 worktree、clone 或 cache；
+- pre-run policy wave 的 external browser/account action：`none`；只在 validated overlay ordinary-pushed exact main
+  之后才能执行 S3 授权的一次 UI/project/cloud action；
 - 任务代码与文档由 Git 恢复；runtime validation evidence 进入 canonical
   `outputs/validation_runtime`；
-- exit condition：offline baseline focused/formal PASS、validated commit ff-only 到 local main、普通 push
-  成功、task branch 审计后删除；外部核验缺口继续保留在 task register，不用临时 workaround 绕过。
+- pre-run exit condition：authorization overlay focused/current-authority/formal PASS、validated commit ff-only
+  到 local main、普通 push 与 exact SHA 复核成功；完成前不得触碰 QuantConnect project/run；
+- post-run exit condition：首次 terminal 后 token 立即失效，export-safe evidence 进入 governed bundle，
+  `project_owner` 对 exact bytes/hash 独立复核；project 在复核前保留且不得执行第二次 run。
 
 ## 8. 进度记录
 
@@ -212,3 +251,26 @@ reviewer。
   adjacent 首轮 `112 passed / 2 failed in 6.33s`，修复 deterministic corpus expected hash 后同覆盖
   `114 passed in 6.15s`。正式五级仍需在 final generated/current-authority tree 串行运行；任务状态写回
   `BASELINE_DONE` 后 tracked bytes 必须在 Full 前冻结。
+- 2026-08-04：Owner 授予 S3 精确 token，并授权 coordinator 按 reviewed calendar 选择日期。
+  Coordinator 选定 `2025-12-02`；本地 XNYS authority 重算为 Tuesday/
+  `NORMAL_TRADING_DAY`/16:00 ET，且位于 reviewed `historical_seen_2025_sample`。Owner 指定
+  `project_owner` 为 independent reviewer；collector 固定为不同身份 `codex_pilot_coordinator`。
+  SINGLE_LANE START/LANE preflight 均在 exact main
+  `d48dfca936cc8bd13a7dbf2cc9fb2d302b3d4488` PASS，active lease=[]。当前只实现并验证
+  pre-run overlay，在其 ordinary push 前不操作 QuantConnect。邻接 authority 审计发现 2492 exact-bind
+  旧 admission contract module；因此 overlay 改为全新独立 contract/runtime module，旧 admission
+  policy/evidence/receipt/module/fragment 均恢复 exact base bytes，不制造 2489–2492 hash cascade。
+- 2026-08-04：independent overlay policy/contract/loader raw SHA-256 分别为
+  `7eb3d18aab85d49e04ce0d369c895d0bb6d622b5f843c6a6f2d209b8227fa333`、
+  `f8798f5ddbb4d4fb32d7c1474b6c6cc8184f8a426b9237510b0bafa34ed45b22`、
+  `a28018378c44c3504ec828a01656ca3a8f2c8eca377d2fbca1700805c06c422a`；canonical
+  authorization SHA-256=`0d68713647bd0eed7e7a0d143cfbf0648487f400f844d34f8d2f5673f3c7e291`。
+  Focused 首轮 `19 passed / 1 failed in 3.33s`，唯一失败是 Python 3.14 `Path.relative_to`
+  对 `..` 保留导致 escape 在文件存在性检查处先报错；最小修复为访问前显式拒绝 `..`，同覆盖
+  failure-fix=`20 passed in 2.91s`，独立模块重构后 final=`20 passed in 2.93s`。2480/2489–2492
+  邻接覆盖=`127 passed in 6.74s`。Compatibility/deprecation 首轮
+  `190 passed / 2 failed in 122.06s`，仅为新 module/test 导致 frozen inventory 与旧 EOF/current-hash
+  authority stale；采用 append-only 新 section 接管，不改历史 payload 或降低 exact-byte/hash 验证。
+  Final-authority 同覆盖重跑=`193 passed in 113.97s`；另有一次 10 秒外层 wrapper timeout 在 pytest
+  terminal 前中止、无 node FAIL，不计验证证据。正式 Architecture 只允许在状态写回、generated/source
+  hashes 刷新和同覆盖 final replay 再次通过后启动。

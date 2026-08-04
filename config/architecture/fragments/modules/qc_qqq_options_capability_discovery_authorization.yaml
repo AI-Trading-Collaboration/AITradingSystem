@@ -1,0 +1,11 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_capability_discovery_authorization
+fragment_kind: module
+owner: research_platform
+module_prefix: src/ai_trading_system/qqq_options_capability_discovery_authorization.py
+public_contracts:
+  - QCCapabilityDiscoveryAuthorization
+  - QCCapabilityDiscoveryAuthorizationLoadResult
+  - load_qc_qqq_options_capability_discovery_authorization
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -1,0 +1,16 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qc_qqq_options_capability_discovery_authorization
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: owner_reviewed_single_no_order_capability_discovery_overlay
+stages:
+  - exact_owner_authorization_and_single_use_expiry_boundary
+  - prior_blocked_admission_policy_evidence_and_receipt_exact_replay
+  - reviewed_xnys_normal_session_and_historical_seen_window_binding
+  - one_project_one_free_cloud_run_ten_minute_zero_order_zero_contract_boundary
+  - paid_raw_export_api_cli_http_object_store_and_second_run_prohibited
+  - collector_and_independent_reviewer_identity_separation
+  - external_action_waits_for_validated_overlay_ordinary_main_push
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

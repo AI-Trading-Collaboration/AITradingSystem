@@ -1,0 +1,112 @@
+schema_version: qc_qqq_options_capability_discovery_authorization.v1
+policy_id: qc_qqq_options_capability_discovery_authorization_v1
+policy_version: 1.0.0
+status: OWNER_REVIEWED_ACTIVE
+owner_authorization_id: owner_decision:TRADING-2480:2026-08-04:authorize_single_no_order_qc_capability_discovery_run_v1
+platform: QuantConnect
+run_role: CAPABILITY_DISCOVERY_NO_ORDER_NOT_RESEARCH_CONCLUSION
+authorization_effective_date: 2026-08-04
+rationale: >-
+  The read-only account probe could not close QQQ-specific entitlement, engine,
+  runtime or result-artifact facts. One content-bound no-order Free Cloud run is
+  the smallest reviewed action that can collect those facts without activating
+  selection, execution, accounting, lifecycle or investment interpretation.
+intended_effect: >-
+  Permit exactly one cash-preserving capability-discovery attempt while retaining
+  the prior blocked admission receipt and failing closed on paid resources, raw
+  data export, orders, fills, positions, a second run or any broader platform use.
+validation_plan: >-
+  Strictly replay all bound predecessor bytes and hashes, reviewed calendar and
+  historical-window facts, exact scope, actor separation, allowed/prohibited
+  actions and safety invariants before the authorization can be used.
+review_condition: >-
+  Review again before changing the date, runtime, compute budget, project or run
+  count, order or contract boundary, actor identities, evidence/export scope or
+  any downstream pilot readiness conclusion.
+expiry_condition: >-
+  Expire at the earliest of the first cloud-run terminal state, completion of the
+  first evidence capture, Owner revocation or any boundary violation; do not
+  delete the isolated project before independent review completes.
+revocation_condition: >-
+  The Project Owner may revoke before submission, and the coordinator must stop
+  immediately on paid or upgrade prompts, scope drift, identity mismatch, raw-row
+  exposure, an order or fill, or unavailable export-safe evidence.
+prior_admission_policy_path: config/research/qc_qqq_options_capability_admission_v1.yaml
+prior_admission_policy_sha256: e2a429e7a6e2537c064261546f32771d4f824449f548a905befe5a93f1a6b2cc
+prior_evidence_path: inputs/external_validation/qc_qqq_options_capability_evidence_20260803.json
+prior_evidence_sha256: a9f3eb13e298cbf0d1eaa10609c9d88699673428e9e060c4604854af61586053
+prior_receipt_path: inputs/external_validation/qc_qqq_options_admission_e3a987b2b671e922175b35783dded6f4bbfa51dd5aaa523f415547026434ba04.json
+prior_receipt_sha256: 9c16be766a58a571b0378534b80a61d0f94b0e923ce305fcf75ac8ec53cfd000
+prior_admission_decision: CAPABILITY_OR_LICENSE_BLOCKED
+prior_bounded_pilot_preparation_allowed: false
+prior_confirmed_item_count: 7
+prior_required_item_count: 21
+prior_confirmed_field_count: 3
+prior_required_field_count: 12
+calendar_id: XNYS
+calendar_policy_path: config/data/us_equity_special_closure_registry.yaml
+calendar_policy_sha256: c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4
+research_window_policy_path: config/research/dynamic_walk_forward_policy.yaml
+research_window_policy_sha256: 0f050b071944594dac369a698e5ae25c3b8de85122e280612866c61b82ed6226
+research_window_split_id: historical_seen_2025_sample
+research_window_start: 2025-01-02
+research_window_end: 2025-12-31
+primary_research_start: 2021-02-22
+scope:
+  requested_start: 2025-12-02
+  requested_end: 2025-12-02
+  maximum_runtime_minutes: 10
+  maximum_projects: 1
+  maximum_cloud_backtests: 1
+  maximum_order_count: 0
+  maximum_contract_quantity: 0
+  cloud_compute_budget: FREE_TIER_ONLY_ABORT_BEFORE_PAID_OR_UPGRADE
+actors:
+  collector_id: codex_pilot_coordinator
+  independent_reviewer_id: project_owner
+  reviewer_attestation_timing: AFTER_EVIDENCE_BUNDLE_CLOSE
+  collector_and_reviewer_must_differ: true
+allowed_actions:
+  - CAPTURE_EXPORT_SAFE_DERIVED_EVIDENCE
+  - CREATE_OR_MODIFY_ONE_ISOLATED_PROJECT
+  - INSPECT_DERIVED_QQQ_OPTION_VISIBILITY_AND_COUNTS
+  - INSPECT_PROJECT_BACKTEST_LEAN_IDENTITY
+  - INSPECT_RESOURCE_RUNTIME_TELEMETRY
+  - INSPECT_RESULT_ARTIFACT_PRESENCE
+  - RUN_ONE_FREE_CLOUD_BACKTEST
+prohibited_actions:
+  - API_OR_CLI_OR_DIRECT_HTTP_OR_OBJECT_STORE
+  - INVESTMENT_INTERPRETATION_OR_RANGE_EXPANSION
+  - OPTIMIZATION
+  - ORDER_OR_FILL_OR_POSITION_OR_CASH_MUTATION
+  - PAID_OR_UPGRADE
+  - PAPER_OR_LIVE_OR_BROKER_OR_PRODUCTION
+  - RAW_OPTION_DATA_DOWNLOAD_OR_EXPORT_OR_LOGGING
+  - SECOND_CLOUD_BACKTEST
+safety:
+  research_only: true
+  external_action_authorized: true
+  project_mutation_authorized: true
+  cloud_backtest_authorized: true
+  derived_qqq_option_counts_allowed: true
+  result_artifact_presence_inspection_allowed: true
+  api_allowed: false
+  cli_allowed: false
+  direct_http_allowed: false
+  object_store_allowed: false
+  raw_options_data_download_allowed: false
+  raw_rows_may_be_logged: false
+  strategy_execution_allowed: false
+  orders_allowed: false
+  fills_allowed: false
+  positions_allowed: false
+  optimization_allowed: false
+  investment_interpretation_allowed: false
+  range_expansion_allowed: false
+  paper_shadow_allowed: false
+  live_allowed: false
+  broker_action_allowed: false
+  production_allowed: false
+  production_effect: none
+  broker_action: none
+decision: CAPABILITY_DISCOVERY_AUTHORIZED_NO_ORDER
