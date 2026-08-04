@@ -7092,6 +7092,32 @@ evidence bundle 关闭后 attestation。Overlay 必须先完成 focused/formal�
 exact SHA 复核，其后才可用 UI 执行一次授权动作；首次 run terminal、evidence capture、
 Owner revoke 或边界违规即失效。该授权不自动解锁 TRADING-2492。
 
+2026-08-04 唯一外部动作已在 overlay ordinary-pushed exact code SHA
+`2db95f6422bfccb4d53876ad4b3e86912fff1309` 后执行，并在首次 terminal 时耗尽授权。
+`qqq_options_capability_discovery_evidence` 只消费由 authenticated UI 得到的 export-safe derived facts：
+project/backtest/build/LEAN identity、Free `Community B-MICRO`、精确 requested/evaluated session、运行时间与
+data-point telemetry、QQQ chain/quote/OI 聚合计数、zero-order/cash-preservation 结果，以及 result surface
+presence。它不下载 Results、Orders、Trades、Logs 或 raw options data，不保留账户/broker identifier、secret、
+raw row 或收益指标。
+
+```text
+validated S3 authorization overlay + exact repository/project-code SHA
+  -> one authenticated project + one Free no-order cloud backtest
+  -> first terminal expires Owner token; no retry / no second run
+  -> QQQ option visibility and aggregate counts only
+  -> LEAN/runtime/node/result-surface presence + zero-order cash preservation
+  -> canonical discovery evidence seal + authorization replay
+  -> PENDING_OWNER_REVIEW
+  -x-> admission upgrade, 2492 activation, DQ/PIT PASS, investment conclusion
+```
+
+当前 sealed evidence 直接观察到 `48` contracts / `48` two-sided quotes / `48` non-zero OI，
+`Total Orders=0`、fills/holdings/volume=`0`、fees=`$0.00`、start/end equity 均为 `$100,000`；这只证明
+该单日 no-order capability probe 可运行，不证明完整研究窗覆盖、策略有效性或执行现实性。既有
+`CAPABILITY_OR_LICENSE_BLOCKED` receipt 不被改写，`bounded_pilot_preparation_allowed=false`、
+option-event DQ/PIT=`NOT_EVALUATED`。`project_owner` 必须在 evidence bundle 关闭后复核 exact bytes/hash；
+reviewer attestation 前 TRADING-2492 继续 blocked，project 保留且不得删除。
+
 ## TRADING-2481 QQQ Options Shared Schema / Policy Freeze V1
 
 `config/research/qqq_options_shared_contract_v1.yaml` 是后继 QuantConnect adapter、本地 reference

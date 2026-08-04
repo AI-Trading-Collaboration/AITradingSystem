@@ -1,0 +1,125 @@
+{
+  "account_tier": "FREE",
+  "algorithm_runtime_seconds": "1.68",
+  "authorization_canonical_sha256": "0d68713647bd0eed7e7a0d143cfbf0648487f400f844d34f8d2f5673f3c7e291",
+  "authorization_policy_path": "config/research/qc_qqq_options_capability_discovery_authorization_v1.yaml",
+  "authorization_policy_sha256": "7eb3d18aab85d49e04ce0d369c895d0bb6d622b5f843c6a6f2d209b8227fa333",
+  "authorization_terminal_state": "EXPIRED_AFTER_FIRST_RUN_TERMINAL",
+  "backtest_id": "cc699b521d94b44e877b4fc18d514181",
+  "backtest_name": "Hyper Active Red Galago",
+  "bounded_pilot_preparation_allowed": false,
+  "build_id": "200b2b-8b7b28",
+  "cloud_compute": "Community B-MICRO",
+  "collector_id": "codex_pilot_coordinator",
+  "content_sha256": "bd00355e1609c591778f53f745ca2762b9da83542ee602f2faec58cc11662702",
+  "data_point_count": 73771,
+  "data_points_per_second": 44000,
+  "decision": "CAPABILITY_DISCOVERY_EVIDENCE_COLLECTED_REVIEW_PENDING",
+  "deployment_seconds": "16.393",
+  "end_equity_usd": "100000.00",
+  "evaluated_end": "2025-12-02",
+  "evaluated_start": "2025-12-02",
+  "evidence_id": "trading_2480_qc_capability_discovery_20260804_v1",
+  "fills": 0,
+  "holdings": 0,
+  "independent_review_status": "PENDING_OWNER_REVIEW",
+  "independent_reviewer_id": "project_owner",
+  "lean_engine_identity": "LEAN Engine v2.5.0.0.17970",
+  "limitations": [
+    "Independent review by project_owner is pending.",
+    "No raw option-chain, quote, OpenInterest, or Greeks rows were retained.",
+    "Result surfaces were observed in the UI but were not downloaded.",
+    "The single session is capability evidence only and is not a strategy or investment result."
+  ],
+  "open_interest_nonzero_count": 48,
+  "option_chain_present": true,
+  "option_contract_count": 48,
+  "option_event_dq_status": "NOT_EVALUATED",
+  "option_event_pit_status": "NOT_EVALUATED",
+  "option_observation_at_new_york": "2025-12-02T09:31:00-05:00",
+  "owner_authorization_id": "owner_decision:TRADING-2480:2026-08-04:authorize_single_no_order_qc_capability_discovery_run_v1",
+  "platform": "QuantConnect",
+  "portfolio_invested": false,
+  "prior_admission_decision": "CAPABILITY_OR_LICENSE_BLOCKED",
+  "project_code_sha256": "fcf2c8f4717a47bb685d8ea54d241092f525f24899585a0b9c26c6b73b1af86c",
+  "project_id": "34808569",
+  "project_locator": "https://www.quantconnect.com/project/34808569",
+  "project_name": "Sleepy Yellow-Green Shark",
+  "repository_code_sha": "2db95f6422bfccb4d53876ad4b3e86912fff1309",
+  "requested_end": "2025-12-02",
+  "requested_start": "2025-12-02",
+  "result_surfaces": [
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "CODE"
+    },
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "DOWNLOAD_RESULTS"
+    },
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "INSIGHTS"
+    },
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "LOGS"
+    },
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "ORDERS"
+    },
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "OVERVIEW"
+    },
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "REPORT"
+    },
+    {
+      "downloaded": false,
+      "status": "OBSERVED_AVAILABLE",
+      "surface_id": "TRADES"
+    }
+  ],
+  "run_role": "CAPABILITY_DISCOVERY_NO_ORDER_NOT_RESEARCH_CONCLUSION",
+  "safety": {
+    "account_or_broker_identifiers_included": false,
+    "api_used": false,
+    "broker_action": "none",
+    "broker_action_used": false,
+    "cli_used": false,
+    "direct_http_used": false,
+    "investment_interpretation_allowed": false,
+    "investment_metrics_included": false,
+    "live_used": false,
+    "object_store_used": false,
+    "optimization_used": false,
+    "paper_shadow_used": false,
+    "production_effect": "none",
+    "production_used": false,
+    "range_expansion_allowed": false,
+    "raw_options_data_downloaded": false,
+    "raw_rows_logged": false,
+    "research_only": true,
+    "result_artifacts_downloaded": false,
+    "second_cloud_backtest_used": false,
+    "secrets_included": false
+  },
+  "schema_version": "qc_qqq_options_capability_discovery_evidence.v1",
+  "start_equity_usd": "100000.00",
+  "submitted_at_utc": "2026-08-04T03:54:15.305000Z",
+  "terminal_at_utc": "2026-08-04T03:54:37Z",
+  "total_fees_usd": "0.00",
+  "total_orders": 0,
+  "two_sided_quote_count": 48,
+  "volume": 0
+}

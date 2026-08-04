@@ -7,12 +7,12 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 当前授权边界：
 
 ```text
-owner_authorization_state:ACTIVE_SINGLE_NO_ORDER_CAPABILITY_DISCOVERY
+owner_authorization_state:EXPIRED_AFTER_FIRST_RUN_TERMINAL
 owner_authorization_id:owner_decision:TRADING-2480:2026-08-04:authorize_single_no_order_qc_capability_discovery_run_v1
 ```
 
@@ -115,12 +115,16 @@ Task-owned：
 - `src/ai_trading_system/qqq_options_capability_admission.py`；
 - `src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_authorization.py`；
 - `src/ai_trading_system/qqq_options_capability_discovery_authorization.py`；
+- `src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_evidence.py`；
+- `src/ai_trading_system/qqq_options_capability_discovery_evidence.py`；
 - `config/research/qc_qqq_options_capability_admission_v1.yaml`；
 - `config/research/qc_qqq_options_capability_discovery_authorization_v1.yaml`；
 - `inputs/external_validation/qc_qqq_options_capability_evidence.template.json`；
 - `inputs/external_validation/qc_qqq_options_capability_evidence_20260803.json`；
+- `inputs/external_validation/qc_qqq_options_capability_discovery_evidence_20260804.json`；
 - `inputs/external_validation/qc_qqq_options_admission_e3a987b2b671e922175b35783dded6f4bbfa51dd5aaa523f415547026434ba04.json`；
 - `tests/test_qc_qqq_options_capability_admission.py`；
+- `tests/test_qc_qqq_options_capability_discovery_evidence.py`；
 - 对应 architecture module/flow fragments。
 
 Coordinator-owned：
@@ -274,3 +278,24 @@ main push 与 exact SHA 复核。
   Final-authority 同覆盖重跑=`193 passed in 113.97s`；另有一次 10 秒外层 wrapper timeout 在 pytest
   terminal 前中止、无 node FAIL，不计验证证据。正式 Architecture 只允许在状态写回、generated/source
   hashes 刷新和同覆盖 final replay 再次通过后启动。
+- 2026-08-04：validated overlay 已 ordinary-pushed 到 exact repository code SHA
+  `2db95f6422bfccb4d53876ad4b3e86912fff1309` 后，coordinator 通过已登录 QuantConnect UI 创建唯一 project
+  `34808569`，写入 exact project code SHA-256=`fcf2c8f4717a47bb685d8ea54d241092f525f24899585a0b9c26c6b73b1af86c`，
+  在 Free `Community B-MICRO` 上提交唯一 backtest `cc699b521d94b44e877b4fc18d514181`。运行范围精确为
+  `2025-12-02..2025-12-02`，LEAN=`2.5.0.0.17970`；算法运行 `1.68s`、部署 `16.393s`、处理
+  `73,771` data points。在 09:31 New York 观察到 QQQ option chain：`48` contracts、`48` two-sided
+  quotes、`48` non-zero OI；只保留这些 derived counts，未保留 raw chain/quote/OI/Greeks row。
+- 2026-08-04：Results UI 显示 `Total Orders=0`、fills/holdings/volume=`0`、fees=`$0.00`、start/end
+  equity=`$100,000/$100,000`，且 Overview/Report/Orders/Trades/Insights/Logs/Code/Download Results surface
+  均存在但未下载。API/CLI/direct HTTP/Object Store/optimization/paid upgrade/second run/paper/live/broker/
+  production 均未执行。首次 run terminal 已令 Owner token 永久失效；不得重跑或删除 project。
+- 2026-08-04：export-safe canonical evidence 已关闭为
+  `qc_qqq_options_capability_discovery_evidence_20260804.json`；semantic content SHA-256=
+  `bd00355e1609c591778f53f745ca2762b9da83542ee602f2faec58cc11662702`，file/canonical SHA-256=
+  `2d4c14e23d8b8f824d5b4f93db257f6d4852af31a12966535d21cc5d26a4807a`。新 strict contract/loader
+  exact replay S3 authorization、date/actor/identity/runtime/count/cash/safety bindings；focused evidence+
+  authorization=`23 passed in 2.88s`。当前 decision 仅为
+  `CAPABILITY_DISCOVERY_EVIDENCE_COLLECTED_REVIEW_PENDING`；既有 admission 继续
+  `CAPABILITY_OR_LICENSE_BLOCKED`、`bounded_pilot_preparation_allowed=false`、option-event DQ/PIT=
+  `NOT_EVALUATED`，TRADING-2492 继续 blocked。下一 exit condition 是 `project_owner` 在查看保留的
+  QuantConnect result page 后，对上述 exact evidence bytes/hash 提供独立 attestation；collector 不得代签。
