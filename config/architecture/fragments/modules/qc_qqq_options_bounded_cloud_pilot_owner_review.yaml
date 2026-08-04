@@ -1,0 +1,25 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_bounded_cloud_pilot_owner_review
+fragment_kind: module
+owner: external_validation_governance
+module_prefix: src/ai_trading_system/qqq_options_research/bounded_cloud_pilot_owner_review.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_OWNER_REVIEW_PROPOSAL_PATH
+  - QQQOptionsBoundedPilotOwnerReviewContractError
+  - QQQOptionsBoundedPilotOwnerReviewPack
+  - QQQOptionsBoundedPilotOwnerReviewProposal
+  - QQQOptionsBoundedPilotOwnerReviewProposalLoadResult
+  - QQQOptionsBoundedPilotProposalAccountingScope
+  - QQQOptionsBoundedPilotProposalAuthorityBinding
+  - QQQOptionsBoundedPilotProposalEvidenceScope
+  - QQQOptionsBoundedPilotProposalExecutionScope
+  - QQQOptionsBoundedPilotProposalLifecycleScope
+  - QQQOptionsBoundedPilotProposalPlatformScope
+  - QQQOptionsBoundedPilotProposalReconciliationScope
+  - QQQOptionsBoundedPilotProposalResearchWindow
+  - QQQOptionsBoundedPilotProposalSafety
+  - QQQOptionsBoundedPilotProposalSelectionScope
+  - build_qc_qqq_options_bounded_cloud_pilot_owner_review_pack
+  - load_qc_qqq_options_bounded_cloud_pilot_owner_review_proposal
+compatibility_facades: []
+deprecation_status: active_reference_architecture

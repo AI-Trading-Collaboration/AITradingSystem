@@ -2996,6 +2996,75 @@ TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_NEW_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION = (
+    "phase_trading_2492_qc_qqq_options_bounded_pilot_owner_review_proposal_v1"
+)
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_BASE_COMMIT = (
+    "d1c45decf8d41fb0ef47b0db8f9868263f2e7c45"
+)
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_BASELINE_GIT_BLOB = (
+    "7eacac3b01a276fa2498bdaaa4dc881bfd93cae5"
+)
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_BYTE_COUNT = (
+    2_957_975
+)
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_SHA256 = (
+    "5da9bbdca566b57213b8930789384e3f235d38578eaa0bcb5caa90f282f7eaa1"
+)
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_ADDITIONAL_SUPERSESSION_PATHS = (
+    frozenset(
+        {
+            (
+                "docs/requirements/"
+                "TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"
+            ),
+            "docs/system_flow.md",
+            "docs/task_register.md",
+            "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+            "inputs/architecture/arch_004e_architecture_fitness.yaml",
+            "inputs/architecture/arch_004e_module_manifest.yaml",
+            "inputs/architecture/arch_004e_test_manifest.yaml",
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "inputs/architecture/arch_005_task_registry_baseline.yaml",
+            "inputs/architecture/arch_005_task_shadow_index.yaml",
+            "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+            (
+                "registry/development_tasks_shadow/active/10/"
+                "10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml"
+            ),
+            (
+                "registry/development_tasks_shadow_v2/10/"
+                "10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml"
+            ),
+            "tests/test_arch_004_refactor_policy.py",
+            "tests/test_arch_004g_deprecation.py",
+            "tests/test_trading2452_architecture_contract.py",
+        }
+    )
+)
+TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "config/architecture/fragments/flows/"
+            "qc_qqq_options_bounded_cloud_pilot_owner_review.yaml"
+        ),
+        (
+            "config/architecture/fragments/modules/"
+            "qc_qqq_options_bounded_cloud_pilot_owner_review.yaml"
+        ),
+        (
+            "config/research/"
+            "qc_qqq_options_bounded_cloud_pilot_owner_review_proposal_v1.yaml"
+        ),
+        (
+            "src/ai_trading_system/qqq_options_research/"
+            "bounded_cloud_pilot_owner_review.py"
+        ),
+        "tests/test_qc_qqq_options_bounded_cloud_pilot_owner_review.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -5174,6 +5243,28 @@ def _trading_2480_qc_capability_discovery_review_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == (TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_BASELINE_GIT_BLOB)
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2492_qc_bounded_pilot_owner_review_proposal_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == (
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_BASELINE_GIT_BLOB
+    )
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -7376,6 +7467,30 @@ def _assert_trading_2480_qc_capability_discovery_review_historical_prefix_immuta
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"{TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2492_qc_bounded_pilot_owner_review_proposal_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2492 owner-review proposal historical prefix differs from immutable "
+        "2480 discovery-review compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"{TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION}:\n".encode()
+    )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -10338,6 +10453,41 @@ def _trading_2480_qc_capability_discovery_review_all_current_authority_paths() -
 
 
 @cache
+def _trading_2492_qc_bounded_pilot_owner_review_proposal_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2492_qc_bounded_pilot_owner_review_proposal_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2492_qc_bounded_pilot_owner_review_proposal_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION
+    ]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2492_qc_bounded_pilot_owner_review_proposal_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION
+    ]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2492_qc_bounded_pilot_owner_review_proposal_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2480_qc_capability_discovery_review_all_current_authority_paths()
+        | _trading_2492_qc_bounded_pilot_owner_review_proposal_superseded_live_source_paths()
+        | _trading_2492_qc_bounded_pilot_owner_review_proposal_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -11781,6 +11931,12 @@ def _trading_2480_qc_capability_discovery_authorization_prior_active_source_mism
     )
     if TRADING_2480_QC_CAPABILITY_DISCOVERY_EVIDENCE_SECTION in (_compatibility_baseline()):
         mismatches -= _trading_2480_qc_capability_discovery_evidence_superseded_live_source_paths()
+    if TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_bounded_pilot_owner_review_proposal_superseded_live_source_paths()
+        )
     return mismatches
 
 
@@ -11793,12 +11949,36 @@ def _trading_2480_qc_capability_discovery_evidence_prior_active_source_mismatche
     )
     if TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION in (_compatibility_baseline()):
         mismatches -= _trading_2480_qc_capability_discovery_review_superseded_live_source_paths()
+    if TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_bounded_pilot_owner_review_proposal_superseded_live_source_paths()
+        )
     return mismatches
 
 
 @cache
 def _trading_2480_qc_capability_discovery_review_prior_active_source_mismatches() -> frozenset[str]:
-    return _latest_active_source_mismatches(TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION)
+    mismatches = _latest_active_source_mismatches(
+        TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION
+    )
+    if TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION in (
+        _compatibility_baseline()
+    ):
+        mismatches -= (
+            _trading_2492_qc_bounded_pilot_owner_review_proposal_superseded_live_source_paths()
+        )
+    return mismatches
+
+
+@cache
+def _trading_2492_qc_bounded_pilot_owner_review_proposal_prior_active_source_mismatches() -> (
+    frozenset[str]
+):
+    return _latest_active_source_mismatches(
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION
+    )
 
 
 def _trading_2470_prior_hash_authority_paths(
@@ -11844,7 +12024,20 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION in baseline:
+    if TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2492_qc_bounded_pilot_owner_review_proposal_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2492_qc_bounded_pilot_owner_review_proposal_prior_active_source_mismatches()
+            | TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2492_qc_bounded_pilot_owner_review_proposal_all_current_authority_paths()
+        )
+        authority_section = TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION
+    elif TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION in baseline:
         current_superseded_paths = (
             _trading_2480_qc_capability_discovery_review_superseded_live_source_paths()
         )
@@ -27704,11 +27897,16 @@ def test_trading_2480_capability_discovery_authorization_is_current_hash_authori
     assert set(source_paths) == expected
     assert WAVE11_BASELINE_REPOSITORY_PATH not in source_paths
     assert WAVE14_S2_PROHIBITED_USER_PATH not in source_paths
-    successor_paths = (
-        _trading_2480_qc_capability_discovery_evidence_all_current_authority_paths()
-        if TRADING_2480_QC_CAPABILITY_DISCOVERY_EVIDENCE_SECTION in baseline
-        else frozenset()
-    )
+    if TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION in baseline:
+        successor_paths = (
+            _trading_2492_qc_bounded_pilot_owner_review_proposal_all_current_authority_paths()
+        )
+    elif TRADING_2480_QC_CAPABILITY_DISCOVERY_EVIDENCE_SECTION in baseline:
+        successor_paths = (
+            _trading_2480_qc_capability_discovery_evidence_all_current_authority_paths()
+        )
+    else:
+        successor_paths = frozenset()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in successor_paths:
@@ -28002,8 +28200,15 @@ def test_trading_2480_capability_discovery_review_is_current_hash_authority() ->
     assert source_paths == sorted(source_paths, key=str.casefold)
     assert len(source_paths) == len(set(source_paths))
     assert set(source_paths) == expected
+    successor_paths = (
+        _trading_2492_qc_bounded_pilot_owner_review_proposal_all_current_authority_paths()
+        if TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION in baseline
+        else frozenset()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_paths:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -28067,6 +28272,170 @@ def test_trading_2480_capability_discovery_review_is_current_hash_authority() ->
     tampered[TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2480_qc_capability_discovery_review_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2492_owner_review_proposal_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2492_qc_bounded_pilot_owner_review_proposal_base_baseline_blob()
+    _assert_trading_2492_qc_bounded_pilot_owner_review_proposal_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2492_qc_bounded_pilot_owner_review_proposal_compatibility.v1"
+    )
+    assert phase["status"] == "BLOCKED_OWNER_REVIEW_PROPOSAL_READY"
+    assert phase["boundary_id"] == (
+        "TRADING-2492-QC-QQQ-OPTIONS-BOUNDED-PILOT-OWNER-REVIEW-PROPOSAL-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1"
+    ]
+    assert phase["owner_instruction"] == (
+        "OWNER_ALLOWED_COORDINATOR_TO_SELECT_PROPOSED_VALUES"
+    )
+    assert phase["owner_authorization_token"] == (
+        "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS"
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": (
+            TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_BASELINE_GIT_BLOB
+        ),
+        "raw_byte_count": (
+            TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (
+            TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": (
+            TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2492_qc_bounded_pilot_owner_review_proposal_prior_active_source_mismatches()
+        | TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_NEW_SOURCE_PATHS
+    ) - TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2492-QC-QQQ-OPTIONS-BOUNDED-PILOT-OWNER-REVIEW-PROPOSAL-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 961,
+        "active_task_count": 456,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["owner_review_proposal"] == {
+        "proposal_schema": (
+            "qc_qqq_options_bounded_cloud_pilot_owner_review_proposal.v1"
+        ),
+        "proposal_policy_sha256": (
+            "9b3e50731663871e01626f0360c717ecdd14278c63f81e74ed79c4c2fd4041de"
+        ),
+        "proposal_authority_set_sha256": (
+            "69578c198823b95ba16b5f6c2780c3a7e24104babe2c6cc1fed8cd740c446bea"
+        ),
+        "blocked_2492_policy_sha256": (
+            "60ed5237fc37e4d44737fe295f4d341a58d318ecad59f8cdf753a0486609f66e"
+        ),
+        "capability_review_file_sha256": (
+            "a5c9b9357e2b50a7f69d2710b35f184829917414f0dc8e297709f2fbf14c4ca3"
+        ),
+        "capability_evidence_file_sha256": (
+            "2d4c14e23d8b8f824d5b4f93db257f6d4852af31a12966535d21cc5d26a4807a"
+        ),
+        "prior_admission_decision": "CAPABILITY_OR_LICENSE_BLOCKED",
+        "bounded_pilot_preparation_allowed_by_capability_review": False,
+        "option_event_dq_status": "NOT_EVALUATED",
+        "option_event_pit_status": "NOT_EVALUATED",
+        "requested_start": "2025-12-02",
+        "requested_end": "2025-12-02",
+        "primary_research_start": "2021-02-22",
+        "legacy_2022_default_active": False,
+        "account_tier": "FREE",
+        "cloud_compute": "Community B-MICRO",
+        "maximum_project_mutation_count": 1,
+        "maximum_cloud_backtest_count": 1,
+        "maximum_order_count": 1,
+        "maximum_contract_quantity": 1,
+        "maximum_runtime_seconds": 300,
+        "proposal_expires_on": "2026-08-12",
+        "decision": "OWNER_REVIEW_REQUIRED_NO_EXTERNAL_ACTION",
+    }
+    assert phase["validation"] == {
+        "focused_first_attempt": "FAIL_52_PASS_1_FAIL_TYPED_MISSING_PATH_MESSAGE",
+        "focused_failure_fix": "PASS_53_TESTS_SAME_N16_LOADFILE_COVERAGE",
+        "ruff_mypy_compileall": "PASS",
+        "compatibility_regression": "PENDING_FINAL_TREE",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "proposal_only": True,
+        "external_platform_action_allowed": False,
+        "project_mutation_allowed": False,
+        "cloud_run_allowed": False,
+        "api_cli_http_object_store_allowed": False,
+        "raw_options_data_export_allowed": False,
+        "selection_execution_accounting_lifecycle_activated": False,
+        "order_count": 0,
+        "fill_count": 0,
+        "cash_preservation_required": True,
+        "investment_interpretation_allowed": False,
+        "range_expansion_allowed": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_HISTORICAL_PREFIX_BYTE_COUNT
+        - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2492_qc_bounded_pilot_owner_review_proposal_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

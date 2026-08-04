@@ -7628,3 +7628,34 @@ telemetry 与 two-person attestation；2491 checklist 必须从真实事实派�
 `PILOT_NO_GO_LICENSE_OR_EVIDENCE` 之一并交给 2493。离线 preregistration baseline 不产生任何 final
 disposition，不允许 investment interpretation、range expansion、paper/live/production/broker，固定
 `production_effect=none`、`broker_action=none`。
+
+2026-08-05 起，Owner 允许 engineering coordinator 选择一组“待审建议值”，但没有授权任何外部动作。
+`config/research/qc_qqq_options_bounded_cloud_pilot_owner_review_proposal_v1.yaml` 与
+`qqq_options_research.bounded_cloud_pilot_owner_review` 构成独立 proposal layer；它不改写上面的 blocked
+policy/preregistration/readiness authority，也没有 caller token 或 activation API。
+
+```text
+2480 accepted discovery review + exact evidence/contract/loader hashes
+  -> retain CAPABILITY_OR_LICENSE_BLOCKED
+  -> retain bounded_pilot_preparation_allowed=false
+  -> retain option-event DQ/PIT=NOT_EVALUATED
+frozen 2492 blocked module/policy + 2480–2491 authority replay
+  -> proposed 2025-12-02 single XNYS technical smoke
+  -> proposed Free / Community B-MICRO / <=1 project mutation / <=1 run
+  -> proposed <=1 order / <=1 long-call contract / 300s / 250000 data points
+  -> proposed DTE-delta-spread-OI-volume deterministic selection values
+  -> proposed next-independent-minute marketable-limit execution
+  -> nonzero $0.01/share reality slippage; zero only isolation sensitivity
+  -> proposed $100000 initial cash / $2000 premium budget / T+1 / FIFO
+  -> export-safe 2489 bundle + distinct project_owner reviewer
+  -> sealed OWNER_REVIEW_REQUIRED_NO_EXTERNAL_ACTION pack
+  -> cash preservation / order_count=0 / fill_count=0
+  -x-> project mutation, cloud run, selection/execution activation or range expansion
+```
+
+日期选择的唯一依据是 2480 accepted review 已在 `2025-12-02` 实际确认 Free Community B-MICRO 与 QQQ
+minute option chain；它不是研究窗选择或投资结论。primary default 继续是 `2021-02-22`，`2022-12-01`
+仍绝非默认。所有提案数值都带 rationale、validation、review、expiry/revocation condition，并固定
+`PROPOSED_OWNER_REVIEW_REQUIRED`。只有 Owner 对最终 proposal policy SHA-256 另发 exact authorization 后，
+才可以在新边界中考虑一次 cloud action；本 proposal 自身始终保持 external/project/cloud/order/fill=false、
+`production_effect=none`、`broker_action=none`。

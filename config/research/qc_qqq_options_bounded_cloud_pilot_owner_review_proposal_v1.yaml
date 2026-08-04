@@ -1,0 +1,166 @@
+schema_version: qc_qqq_options_bounded_cloud_pilot_owner_review_proposal.v1
+proposal_id: qc_qqq_options_bounded_cloud_pilot_owner_review_proposal_v1
+proposal_version: 1.0.0
+status: PROPOSED_OWNER_REVIEW_REQUIRED
+owner: project_owner
+prepared_by: codex_pilot_coordinator
+owner_instruction: OWNER_ALLOWED_COORDINATOR_TO_SELECT_PROPOSED_VALUES
+owner_authorization_token: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+decision: OWNER_REVIEW_REQUIRED_NO_EXTERNAL_ACTION
+rationale: Select one deliberately small, technically useful pilot scope from the only XNYS session with accepted Free Community B-MICRO QQQ option-chain discovery evidence, while preserving the existing 2492 blocked admission and requiring a new exact Owner authorization before any platform action.
+intended_effect: Give the Owner one hash-bound proposal to accept or reject without activating selection, execution, accounting, lifecycle, cloud access, project mutation, orders, fills, evidence download or investment interpretation.
+validation_plan: Exact-bind the accepted 2480 review and evidence plus the frozen 2492 blocked module and policy; validate every proposed numeric field, primary-window role, deterministic ranking, next-independent-minute chronology, cash preservation, evidence boundary, reviewer separation, canonical replay and tamper failure before final-tree gates.
+review_condition: The project Owner must review the final proposal policy SHA-256, exact requested range, all numeric bounds, project and cloud actions, evidence collection scope, reviewer identity, expiry and revocation conditions before issuing a separate exact authorization.
+expiry_condition: This proposal expires without authorization after 2026-08-12 or immediately upon any bound authority, QuantConnect tier, entitlement, engine, project, artifact, DQ/PIT, selector, execution, accounting, lifecycle or reconciliation policy change.
+revocation_condition: Any Owner revocation, platform tier or entitlement change, unexpected resource use, prohibited artifact content, raw option row exposure, DQ/PIT FAIL or NOT_EVALUATED at an execution stage, or unexplained reconciliation difference revokes the proposal and requires cash preservation.
+proposal_expires_on: 2026-08-12
+pilot_role: BOUNDED_PLATFORM_SMOKE_NOT_RESEARCH_CONCLUSION
+authority_bindings:
+  - authority_id: TRADING-2480-DISCOVERY-EVIDENCE-CONTRACT
+    path: src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_evidence.py
+    sha256: 9676baf83fa29f9866daf23283c7fa939e0cdb1b7d5a0af92c9bcaa536a3eb71
+  - authority_id: TRADING-2480-DISCOVERY-EVIDENCE-LOADER
+    path: src/ai_trading_system/qqq_options_capability_discovery_evidence.py
+    sha256: 6e17bc3738f11b8af2424f180c8676443e152fec0e6fab9e01b37ca68812f4b7
+  - authority_id: TRADING-2480-DISCOVERY-EVIDENCE-RECORD
+    path: inputs/external_validation/qc_qqq_options_capability_discovery_evidence_20260804.json
+    sha256: 2d4c14e23d8b8f824d5b4f93db257f6d4852af31a12966535d21cc5d26a4807a
+  - authority_id: TRADING-2480-DISCOVERY-REVIEW-CONTRACT
+    path: src/ai_trading_system/contracts/qc_qqq_options_capability_discovery_review.py
+    sha256: ea6683df03bc65376c55e030f4af352a0906f1699f8d7f70e70ccd176006b5b2
+  - authority_id: TRADING-2480-DISCOVERY-REVIEW-LOADER
+    path: src/ai_trading_system/qqq_options_capability_discovery_review.py
+    sha256: edf78ebd7b1c8471322e7c4487dcadf06bbdb66dc244d07067b47da44c9af873
+  - authority_id: TRADING-2480-DISCOVERY-REVIEW-RECORD
+    path: inputs/external_validation/qc_qqq_options_capability_discovery_review_20260804.json
+    sha256: a5c9b9357e2b50a7f69d2710b35f184829917414f0dc8e297709f2fbf14c4ca3
+  - authority_id: TRADING-2492-BLOCKED-MODULE
+    path: src/ai_trading_system/qqq_options_research/bounded_cloud_pilot.py
+    sha256: 4467f02efaae6a7355b16ff017d2c2a112ae2fcf6990a5deefec4e8c132ca2da
+  - authority_id: TRADING-2492-BLOCKED-POLICY
+    path: config/research/qc_qqq_options_bounded_free_cloud_pilot_v1.yaml
+    sha256: 60ed5237fc37e4d44737fe295f4d341a58d318ecad59f8cdf753a0486609f66e
+research_window:
+  primary_research_start: 2021-02-22
+  requested_start: 2025-12-02
+  requested_end: 2025-12-02
+  expected_evaluated_start: 2025-12-02
+  expected_evaluated_end: 2025-12-02
+  calendar_id: XNYS
+  role: BOUNDED_PLATFORM_SMOKE_NOT_RESEARCH_CONCLUSION
+  dq_caveat: SINGLE_CONFIRMED_ENTITLEMENT_SESSION_NOT_RESEARCH_WINDOW
+  legacy_non_default_start: 2022-12-01
+  legacy_non_default_start_is_default: false
+platform_scope:
+  account_tier: FREE
+  cloud_compute: Community B-MICRO
+  project_action: CREATE_OR_MUTATE_ONE_DEDICATED_PILOT_PROJECT
+  maximum_project_mutation_count: 1
+  maximum_cloud_backtest_count: 1
+  maximum_runtime_seconds: 300
+  maximum_processed_data_points: 250000
+  maximum_order_count: 1
+  maximum_contract_quantity: 1
+  ticker: QQQ
+  equity_resolution: MINUTE
+  option_resolution: MINUTE
+selection_scope:
+  technical_direction: LONG_CALL
+  observation_time_new_york: "09:31:00"
+  minimum_dte: 7
+  target_dte: 14
+  maximum_dte: 21
+  maximum_absolute_moneyness_deviation: "0.05"
+  minimum_absolute_delta: "0.30"
+  target_absolute_delta: "0.40"
+  maximum_absolute_delta: "0.55"
+  maximum_quote_age_seconds: 60
+  maximum_relative_spread: "0.20"
+  minimum_open_interest: 10
+  minimum_volume: 0
+  rank_components:
+    - ABSOLUTE_DTE_DISTANCE
+    - ABSOLUTE_DELTA_DISTANCE
+    - RELATIVE_SPREAD
+    - NEGATIVE_OPEN_INTEREST
+    - NEGATIVE_VOLUME
+    - STABLE_SID
+  no_eligible_contract_disposition: NO_ORDER_CASH_PRESERVATION
+execution_scope:
+  submission_timing: NEXT_INDEPENDENT_MINUTE_AFTER_INTENT
+  fill_timing: NEXT_INDEPENDENT_MINUTE_AFTER_SUBMISSION
+  submission_latency_ms: 60000
+  fill_latency_ms: 60000
+  maximum_quote_age_ms: 60000
+  marketable_limit_buffer_per_share_usd: "0.01"
+  reality_slippage_per_share_usd: "0.01"
+  zero_slippage_isolation_sensitivity_per_share_usd: "0.00"
+  zero_slippage_is_reality_baseline: false
+  fee_per_contract_usd: "0.65"
+  maximum_contracts_per_quote: 1
+  cancel_after_ms: 60000
+  partial_fill_policy: PRESERVE_PARTIAL_AND_CANCEL_REMAINDER_AFTER_TIMEOUT
+  stale_missing_crossed_quote_disposition: NO_FILL_CANCEL_CASH_PRESERVATION
+accounting_scope:
+  approved_initial_cash_usd: "100000.00"
+  premium_budget_usd: "2000.00"
+  maximum_contracts_per_order: 1
+  fee_buffer_per_contract_usd: "1.00"
+  sell_proceeds_settlement_lag_sessions: 1
+  maximum_valuation_quote_age_ms: 60000
+  cost_basis_method: FIFO
+  include_fees_in_cost_basis: true
+  cash_quantum_usd: "0.01"
+  rounding_mode: ROUND_HALF_EVEN
+lifecycle_scope:
+  pre_expiry_guard_sessions: 2
+  maximum_exit_quote_age_ms: 60000
+  expiry_settlement_source_policy: QC_ENGINE_EVENT_WITH_LOCAL_RECONCILIATION
+  scope_violation_disposition: INVALIDATE_RUN_CASH_PRESERVATION
+  unexpected_exercise_assignment_disposition: INVALIDATE_RUN_NO_UNDERLYING_DELIVERY
+  corporate_action_disposition: INVALIDATE_RUN_NO_ADJUSTMENT_INFERENCE
+reconciliation_scope:
+  monetary_tolerance_usd: "0.01"
+  price_tolerance_usd: "0.01"
+  timestamp_tolerance_seconds: 60
+  exact_order_fill_contract_identity_required: true
+  unexplained_difference_disposition: PILOT_REQUIRES_REVIEW_NO_RANGE_EXPANSION
+evidence_scope:
+  collector_id: codex_pilot_coordinator
+  independent_reviewer_id: project_owner
+  two_person_attestation_required: true
+  manual_bundle_required: true
+  result_mapping_ids:
+    - logs
+    - orders_csv
+    - project_files
+    - report_pdf
+    - results_json
+    - trades_csv
+  aggregate_export_safe_artifacts_only: true
+  raw_option_rows_allowed: false
+safety:
+  proposal_only: true
+  pilot_authorized: false
+  external_platform_action_allowed: false
+  project_mutation_allowed: false
+  cloud_run_allowed: false
+  api_allowed: false
+  cli_allowed: false
+  remote_http_allowed: false
+  object_store_allowed: false
+  raw_options_data_export_allowed: false
+  selection_activated: false
+  execution_activated: false
+  accounting_activated: false
+  lifecycle_activated: false
+  order_creation_allowed: false
+  fill_creation_allowed: false
+  cash_preservation_required: true
+  investment_interpretation_allowed: false
+  range_expansion_allowed: false
+  paper_shadow_allowed: false
+  production_allowed: false
+  broker_action_allowed: false
+  production_effect: none
+  broker_action: none

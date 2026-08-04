@@ -42,8 +42,10 @@ next-independent-minute execution、现金核算、manual evidence collection �
 
 - 登录 QuantConnect、创建或修改 project、调用 API/CLI/HTTP/Object Store 或运行 cloud backtest；
 - 读取、下载、复制、重建或导出 raw option chain、minute quote、OpenInterest、Greeks 或 provider rows；
-- 自行选择 pilot 日期、窗口长度、order cap、resource cap、latency、slippage、fee、partial-fill、
-  spread、OI、volume、DTE、moneyness、delta、position cap 或 reconciliation tolerance；
+- 自行把 pilot 日期、窗口长度、order cap、resource cap、latency、slippage、fee、partial-fill、
+  spread、OI、volume、DTE、moneyness、delta、position cap 或 reconciliation tolerance 标记为
+  Owner-reviewed/active；Owner 已允许工程线选择一组待审建议值，但该建议只能进入独立
+  `PROPOSED_OWNER_REVIEW_REQUIRED` authority，不能改写本文件冻结的 blocked baseline；
 - 激活 2485 selection、2486 execution、2487 accounting、2488 lifecycle、2489 collection 或 2490
   reconciliation 的 tracked unauthorized/policy-blocked defaults；
 - 使用 synthetic fixture、2491 PASS、caller supplied token、任意 receipt bytes 或 checklist 字段伪造
@@ -206,3 +208,57 @@ export-safe manual evidence，并提供 reviewed exact dates、order/contract/re
   `3b2f38fc2672dc2915a0e1b48a9df195bd76295c75cbfe9f82e708581bb49233` /
   `c75c4008fec682c8a227f3fd37bce6e44a705308f9233dc74072cde9ca1c3bd6`。2480 receipt 仍 blocked，
   12 个 scope fields 仍 `UNKNOWN_REQUIRES_OWNER_REVIEW`，2492 不因 2480 登录只读授权而激活。
+
+## 11. 2026-08-05 Owner-review proposal wave
+
+Owner 已明确允许 engineering coordinator 选择一组建议参数，以减少逐项人工挑数；该指示只授权
+strictly offline proposal engineering，不是 QuantConnect 登录、project mutation、cloud run、artifact
+download 或 order-path authorization。原 2492 blocked policy、preregistration 和 readiness contract 保持
+byte-for-byte authority，不因 proposal 存在而变为 READY。
+
+本 wave 使用独立 task-owned policy/API：
+
+- `config/research/qc_qqq_options_bounded_cloud_pilot_owner_review_proposal_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/bounded_cloud_pilot_owner_review.py`；
+- `tests/test_qc_qqq_options_bounded_cloud_pilot_owner_review.py`。
+
+建议值冻结为一次技术 smoke，而不是策略结论：
+
+- requested range=`2025-12-02..2025-12-02`，因为 2480 accepted review 已在该 XNYS session
+  观察到 Free / Community B-MICRO / QQQ minute option chain；项目 primary research default 仍从
+  `2021-02-22` 开始，`2022-12-01` 仍绝非默认；
+- dedicated project mutation/create cap=`1`、cloud backtest cap=`1`、runtime cap=`300s`、processed data
+  points cap=`250000`、order cap=`1`、long-premium quantity cap=`1`；
+- technical direction=`LONG_CALL`；selection=`DTE 7/14/21`、absolute delta=`0.30/0.40/0.55`、
+  max absolute moneyness deviation=`0.05`、quote age=`60s`、relative spread=`0.20`、OI floor=`10`、
+  volume floor=`0`，并使用 deterministic DTE→delta→spread→OI→volume→SID rank；
+- next-independent-minute execution：submission/fill latency 分别=`60000/60000ms`、marketable-limit
+  buffer=`$0.01/share`、reality slippage=`$0.01/share`、fee=`$0.65/contract`、quote age=`60000ms`、
+  cancel timeout=`60000ms`；zero-slippage 只保留 isolation sensitivity；
+- initial cash=`$100000`、premium budget=`$2000`、fee buffer=`$1/contract`、T+1 cash settlement、FIFO、
+  fee included in cost basis、cash quantum=`$0.01`、`ROUND_HALF_EVEN`；
+- pre-expiry guard=`2 XNYS sessions`，任何 unexpected exercise/assignment/corporate action、DQ/PIT
+  FAIL/NOT_EVALUATED、stale/missing/crossed quote 或 scope violation 都必须 no-order/cancel/invalid-run；
+- monetary/price reconciliation tolerance=`$0.01`，timestamp tolerance=`60s`；只允许 2489
+  export-safe aggregate/manual evidence，raw option rows、API/CLI/HTTP/Object Store 与 secrets 继续禁止。
+
+这些数值是带 rationale、intended effect、validation plan、review/expiry/revocation condition 的临时
+pilot proposal。proposal loader 必须 exact-bind 2480 accepted review、2480 evidence、原 2492 blocked
+module/policy；还必须显式验证 2480 `bounded_pilot_preparation_allowed=false` 与 prior admission
+`CAPABILITY_OR_LICENSE_BLOCKED`，因此不能把 accepted discovery evidence 冒充 pilot admission。
+
+owner-review pack 只能输出 `OWNER_REVIEW_REQUIRED_NO_EXTERNAL_ACTION`、cash preservation、order/fill=0、
+external action=false。任何 caller token、配置 tamper、authority drift、日期/primary-window 混淆、阈值越界、
+zero-slippage baseline、same-bar/daily-close、short/multi-leg/assignment 或 reviewer=collector 都 fail closed。
+完成本 wave 后 task 仍为 `BLOCKED_OWNER_INPUT`；下一步只能由 Owner 对 final proposal policy SHA-256
+签发新的 exact authorization，随后才可另行执行一次已审 scope 的 cloud pilot。
+
+实现进度：governed `SINGLE_LANE` START/LANE 从 exact main
+`d1c45decf8d41fb0ef47b0db8f9868263f2e7c45` PASS，`contract_change=true` 只覆盖 2492 task-owned
+proposal API。policy LF SHA-256=`9b3e50731663871e01626f0360c717ecdd14278c63f81e74ed79c4c2fd4041de`，
+authority-set SHA-256=`69578c198823b95ba16b5f6c2780c3a7e24104babe2c6cc1fed8cd740c446bea`。
+focused 首轮在完全相同的 `-n 16 --dist loadfile` 53-test 覆盖下为 `52 passed / 1 failed`，唯一失败是
+missing-policy negative 收到 Windows `FileNotFoundError` 文本而非 typed regular-file message；helper 先验证
+regular file 后，同覆盖 failure-fix 为 `53 passed in 3.95s`。Ruff、mypy、compileall PASS；DevEx
+`1088 modules / 1252 tests / 856 writers / 0 violations`，task shadow=`961/456/505` byte-identical。
+兼容层/current hashes 与 final-tree formal gates 尚需在冻结候选上完成；外部平台动作持续为 none。

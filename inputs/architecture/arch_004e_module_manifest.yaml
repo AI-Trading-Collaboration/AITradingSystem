@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1087
+module_count: 1088
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -16093,6 +16093,26 @@ modules:
 - module_id: src.ai_trading_system.qqq_options_research.bounded_cloud_pilot
   path: src/ai_trading_system/qqq_options_research/bounded_cloud_pilot.py
   sha256: 4467f02efaae6a7355b16ff017d2c2a112ae2fcf6990a5deefec4e8c132ca2da
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.bounded_cloud_pilot_owner_review
+  path: src/ai_trading_system/qqq_options_research/bounded_cloud_pilot_owner_review.py
+  sha256: ebfea790cb81cb33ebc68417ada7b549440fec570e54c6b5a9ab26a11aafeba9
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
