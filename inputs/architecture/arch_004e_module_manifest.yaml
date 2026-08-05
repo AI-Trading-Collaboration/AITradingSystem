@@ -2049,7 +2049,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_commands.score_daily
   path: src/ai_trading_system/cli_commands/score_daily.py
-  sha256: ccb7692be6596db996488252c6e496918c88de0e7f3ecf5834d41ed8be0fd5d0
+  sha256: bf501ccbf4f44415158f42c75893e2f4588be0a4288d30158172fedf0d23ab71
   rule_id: cli_commands
   owner_profile: platform
   owners:
@@ -2313,7 +2313,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.cli_direct
   path: src/ai_trading_system/cli_direct.py
-  sha256: 36c4c6681daf99f5fce4ed15e1f57f43c3ce53722e8e27892f021bc7ed3d5151
+  sha256: bb1e1a5ca53388729e1ced57d514d790d21be6dc6b3dc844f31d6f5311389b54
   rule_id: cli_entrypoints
   owner_profile: platform
   owners:
@@ -3091,7 +3091,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.daily_input_capture
   path: src/ai_trading_system/daily_input_capture.py
-  sha256: 523757489b741221fd299386464b3220685e5ffa3312a14ab129033cf9a872d0
+  sha256: 44124fd0ae430e7fc3b59b59c4ede81d4dd186c8f693e8822f38e11a78926d32
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -14610,7 +14610,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.ops_daily
   path: src/ai_trading_system/ops_daily.py
-  sha256: 3c55d52882241c5672032a041283613918da20790b399c063d5ae69b526e1458
+  sha256: d392b3667ef8fb226f68d9a628b0410b899ddec06ae1f98e06eea9b0039e5497
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
