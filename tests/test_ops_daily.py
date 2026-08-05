@@ -1165,6 +1165,10 @@ def test_daily_ops_plan_capture_replaces_sec_and_valuation_fetch_before_score() 
     assert tsm_merge.blocks_downstream is True
     assert "merge-tsm-ir-sec-metrics" in tsm_merge.command
     assert "--valuation-path" in score.command
+    capture_manifest_index = score.command.index("--official-policy-capture-manifest-path") + 1
+    assert score.command[capture_manifest_index].endswith(
+        "daily_input_capture_manifest_2026-05-06.json"
+    )
     assert "daily_input_capture" in " ".join(score.command)
 
 
@@ -1329,16 +1333,12 @@ def test_partial_capture_blocks_only_missing_component_consumers(
         skip_risk_event_openai_precheck=True,
     )
     _write_daily_pass_status_artifacts(plan)
-    capture_step = next(
-        step for step in plan.steps if step.step_id == "capture_daily_inputs"
-    )
+    capture_step = next(step for step in plan.steps if step.step_id == "capture_daily_inputs")
     manifest = json.loads(capture_step.produced_paths[0].read_text(encoding="utf-8"))
     manifest["status"] = "PARTIAL_CAPTURE"
-    next(
-        row
-        for row in manifest["component_results"]
-        if row["component_id"] == "sec_companyfacts"
-    )["status"] = "FAIL"
+    next(row for row in manifest["component_results"] if row["component_id"] == "sec_companyfacts")[
+        "status"
+    ] = "FAIL"
     capture_step.produced_paths[0].write_text(
         json.dumps(manifest),
         encoding="utf-8",
@@ -1846,9 +1846,7 @@ def test_daily_ops_reader_brief_quality_json_gate_allows_limited_context(
 def test_daily_ops_capture_validation_gate_uses_native_versioned_schema(
     tmp_path: Path,
 ) -> None:
-    validation_path = (
-        tmp_path / "daily_input_capture_validation_2026-05-06.json"
-    )
+    validation_path = tmp_path / "daily_input_capture_validation_2026-05-06.json"
     step = DailyOpsStep(
         step_id="capture_daily_inputs",
         title="capture",
@@ -1879,9 +1877,7 @@ def test_daily_ops_capture_validation_gate_uses_native_versioned_schema(
     payload = json.loads(validation_path.read_text(encoding="utf-8"))
     payload["schema_version"] = 1
     validation_path.write_text(json.dumps(payload), encoding="utf-8")
-    assert "artifact_status_schema_invalid" in (
-        _post_step_artifact_status_error(step) or ""
-    )
+    assert "artifact_status_schema_invalid" in (_post_step_artifact_status_error(step) or "")
 
 
 @pytest.mark.parametrize("schema_version", [True, 1.0, "1"])

@@ -584,6 +584,10 @@ def _dispatch(args: list[str]) -> None:
                     _optional_path(args, "--valuation-path")
                     or score_daily_cli.PROJECT_ROOT / "data" / "external" / "valuation_snapshots"
                 ),
+                official_policy_capture_manifest_path=_optional_path(
+                    args,
+                    "--official-policy-capture-manifest-path",
+                ),
             )
 
         authorization_profile = _option(args, "--consumer-authorization-profile")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import os
@@ -17,6 +18,10 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.download_publication import resolve_download_publication
+from ai_trading_system.official_policy_sources import (
+    OfficialPolicyCandidate,
+    load_official_policy_candidates_csv,
+)
 from ai_trading_system.platform.artifacts import (
     canonical_json_bytes,
     load_strict_json_path,
@@ -262,6 +267,45 @@ class DailyInputCaptureResult:
         return self.validation_status == "PASS"
 
 
+@dataclass(frozen=True)
+class VerifiedOfficialPolicyCapture:
+    """Official-policy evidence already captured and verified for one daily run."""
+
+    as_of: date
+    manifest_path: Path
+    manifest_sha256: str
+    source_report_path: Path
+    source_report_sha256: str
+    candidates_path: Path
+    candidates_sha256: str
+    download_manifest_path: Path
+    download_manifest_sha256: str
+    payload_count: int
+    candidates: tuple[OfficialPolicyCandidate, ...]
+    production_effect: str = "none"
+    provider_request_performed: bool = False
+
+    @property
+    def candidate_count(self) -> int:
+        return len(self.candidates)
+
+    @property
+    def error_count(self) -> int:
+        return 0
+
+    @property
+    def warning_count(self) -> int:
+        return 0
+
+    @property
+    def passed(self) -> bool:
+        return True
+
+    @property
+    def status(self) -> str:
+        return "PASS"
+
+
 CaptureRunner = Callable[..., subprocess.CompletedProcess[str]]
 CaptureSnapshotter = Callable[[CaptureComponent], None]
 CaptureSleeper = Callable[[float], None]
@@ -319,10 +363,7 @@ def load_daily_input_capture_policy(
             isinstance(item, str) and item for item in supersedes_raw
         ):
             raise ValueError(f"invalid supersedes_source_revisions: {component_id}")
-        if (
-            len(set(supersedes_raw)) != len(supersedes_raw)
-            or source_revision in supersedes_raw
-        ):
+        if len(set(supersedes_raw)) != len(supersedes_raw) or source_revision in supersedes_raw:
             raise ValueError(f"invalid source revision lineage: {component_id}")
         max_attempts = _positive_int(component_raw.get("max_attempts"), "max_attempts")
         retry_delay_seconds = _non_negative_int(
@@ -444,9 +485,7 @@ def build_daily_input_capture_components(
             ].supersedes_source_revisions,
             max_attempts=component_policy["market_macro"].max_attempts,
             retry_delay_seconds=component_policy["market_macro"].retry_delay_seconds,
-            retryable_blocker_codes=component_policy[
-                "market_macro"
-            ].retryable_blocker_codes,
+            retryable_blocker_codes=component_policy["market_macro"].retryable_blocker_codes,
             recovery_mode=component_policy["market_macro"].recovery_mode,
             snapshot_sources=(
                 market_raw_dir / "prices_daily.csv",
@@ -498,9 +537,7 @@ def build_daily_input_capture_components(
             ].supersedes_source_revisions,
             max_attempts=component_policy["fmp_forward_pit"].max_attempts,
             retry_delay_seconds=component_policy["fmp_forward_pit"].retry_delay_seconds,
-            retryable_blocker_codes=component_policy[
-                "fmp_forward_pit"
-            ].retryable_blocker_codes,
+            retryable_blocker_codes=component_policy["fmp_forward_pit"].retryable_blocker_codes,
             recovery_mode=component_policy["fmp_forward_pit"].recovery_mode,
         ),
         CaptureComponent(
@@ -523,9 +560,7 @@ def build_daily_input_capture_components(
             ].supersedes_source_revisions,
             max_attempts=component_policy["sec_companyfacts"].max_attempts,
             retry_delay_seconds=component_policy["sec_companyfacts"].retry_delay_seconds,
-            retryable_blocker_codes=component_policy[
-                "sec_companyfacts"
-            ].retryable_blocker_codes,
+            retryable_blocker_codes=component_policy["sec_companyfacts"].retryable_blocker_codes,
             recovery_mode=component_policy["sec_companyfacts"].recovery_mode,
         ),
         CaptureComponent(
@@ -560,9 +595,7 @@ def build_daily_input_capture_components(
             ].supersedes_source_revisions,
             max_attempts=component_policy["fmp_valuation"].max_attempts,
             retry_delay_seconds=component_policy["fmp_valuation"].retry_delay_seconds,
-            retryable_blocker_codes=component_policy[
-                "fmp_valuation"
-            ].retryable_blocker_codes,
+            retryable_blocker_codes=component_policy["fmp_valuation"].retryable_blocker_codes,
             recovery_mode=component_policy["fmp_valuation"].recovery_mode,
         ),
         CaptureComponent(
@@ -594,9 +627,7 @@ def build_daily_input_capture_components(
                 "official_policy_sources"
             ].supersedes_source_revisions,
             max_attempts=component_policy["official_policy_sources"].max_attempts,
-            retry_delay_seconds=component_policy[
-                "official_policy_sources"
-            ].retry_delay_seconds,
+            retry_delay_seconds=component_policy["official_policy_sources"].retry_delay_seconds,
             retryable_blocker_codes=component_policy[
                 "official_policy_sources"
             ].retryable_blocker_codes,
@@ -921,9 +952,7 @@ def _capture_component_with_source_control(
                 and blocker_code in component.retryable_blocker_codes
                 and len(prior_attempts) + 1 < component.max_attempts
             )
-            retry_after_seconds = (
-                component.retry_delay_seconds if retry_allowed else None
-            )
+            retry_after_seconds = component.retry_delay_seconds if retry_allowed else None
             attempt_ended = _aware_now(clock)
             attempt = {
                 "attempt_number": len(prior_attempts) + 1,
@@ -985,9 +1014,7 @@ def _capture_component_with_source_control(
                 "policy_version": policy.policy_version,
                 "policy_sha256": policy_sha256,
                 "source_revision": component.source_revision,
-                "supersedes_source_revisions": list(
-                    component.supersedes_source_revisions
-                ),
+                "supersedes_source_revisions": list(component.supersedes_source_revisions),
                 "superseded_state_path": (
                     _relative_path(superseded_state_path, project_root)
                     if superseded_state_path is not None
@@ -1143,11 +1170,7 @@ def _reusable_pass_component_result(
         if not isinstance(artifact, Mapping):
             return None
         path_value = artifact.get("path")
-        if (
-            not isinstance(path_value, str)
-            or not path_value
-            or path_value in recorded_by_path
-        ):
+        if not isinstance(path_value, str) or not path_value or path_value in recorded_by_path:
             return None
         recorded_by_path[path_value] = artifact
 
@@ -1166,8 +1189,7 @@ def _reusable_pass_component_result(
         current_paths - recorded_paths
         or excluded_paths - allowed_excluded_paths
         or any(
-            recorded_by_path[path].get("size_bytes")
-            != current_by_path[path]["size_bytes"]
+            recorded_by_path[path].get("size_bytes") != current_by_path[path]["size_bytes"]
             or recorded_by_path[path].get("sha256") != current_by_path[path]["sha256"]
             for path in current_paths
         )
@@ -1233,11 +1255,12 @@ def _acquire_source_lease(
             return None, "BLOCKED_LEASE_RECLAIM", reclaim_issue
         stale_reclaimed = True
     acquired_at = _aware_now(clock)
-    lease_id = "source-lease-" + hashlib.sha256(
-        (
-            f"{idempotency_key}:{acquired_at.isoformat()}:{os.getpid()}"
-        ).encode()
-    ).hexdigest()[:20]
+    lease_id = (
+        "source-lease-"
+        + hashlib.sha256(
+            (f"{idempotency_key}:{acquired_at.isoformat()}:{os.getpid()}").encode()
+        ).hexdigest()[:20]
+    )
     lease = {
         "schema_version": "daily_input_capture_source_lease.v1",
         "lease_id": lease_id,
@@ -1673,15 +1696,11 @@ def validate_daily_input_capture_manifest(
                 component_policy=component_policy,
                 issues=issues,
             )
-        if (
-            attempt_count == 0
-            and blocker_code
-            not in {
-                "SOURCE_ATTEMPT_BUDGET_EXHAUSTED",
-                "SOURCE_LEASE_CONFLICT",
-                "SOURCE_STATE_INVALID",
-            }
-        ):
+        if attempt_count == 0 and blocker_code not in {
+            "SOURCE_ATTEMPT_BUDGET_EXHAUSTED",
+            "SOURCE_LEASE_CONFLICT",
+            "SOURCE_STATE_INVALID",
+        }:
             issues.append(
                 {
                     "code": "ZERO_ATTEMPT_BLOCKER_INVALID",
@@ -1768,6 +1787,262 @@ def validate_daily_input_capture_manifest(
     }
 
 
+def load_verified_official_policy_capture(
+    *,
+    as_of: date,
+    manifest_path: Path,
+    project_root: Path = PROJECT_ROOT,
+    policy_path: Path = DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+) -> VerifiedOfficialPolicyCapture:
+    """Load same-as-of official-policy capture artifacts after strict lineage checks."""
+
+    manifest_path = Path(manifest_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=project_root)
+    paths = daily_input_capture_paths(as_of, policy=policy)
+    if manifest_path.resolve() != paths.manifest_json.resolve():
+        raise ValueError(
+            "official-policy capture manifest 必须绑定 date-scoped canonical path："
+            f"{paths.manifest_json}"
+        )
+    validation = validate_daily_input_capture_manifest(
+        manifest_path,
+        project_root=project_root,
+        policy_path=policy_path,
+    )
+    if validation.get("status") != "PASS":
+        issue_codes = ",".join(
+            str(issue.get("code", "UNKNOWN"))
+            for issue in validation.get("issues", [])
+            if isinstance(issue, Mapping)
+        )
+        raise ValueError(
+            "official-policy capture manifest 校验失败：" f"{issue_codes or 'UNKNOWN'}"
+        )
+    payload = load_strict_json_path(manifest_path)
+    if not isinstance(payload, Mapping):
+        raise ValueError("official-policy capture manifest 必须为 object")
+    if payload.get("as_of") != as_of.isoformat() or payload.get("status") != "CAPTURED":
+        raise ValueError("official-policy capture manifest 不是 same-as-of CAPTURED evidence")
+
+    component_results = payload.get("component_results")
+    if not isinstance(component_results, list):
+        raise ValueError("official-policy capture component_results 无效")
+    official_components = [
+        item
+        for item in component_results
+        if isinstance(item, Mapping) and item.get("component_id") == "official_policy_sources"
+    ]
+    if len(official_components) != 1:
+        raise ValueError("official-policy capture component 必须唯一")
+    component = official_components[0]
+    if component.get("status") != "PASS" or component.get("blocker_code") != "NONE":
+        raise ValueError("official-policy capture component 未通过")
+
+    artifact_records = component.get("artifacts")
+    if not isinstance(artifact_records, list):
+        raise ValueError("official-policy capture artifact list 无效")
+    artifacts_by_path: dict[Path, Mapping[str, object]] = {}
+    for record in artifact_records:
+        if not isinstance(record, Mapping):
+            raise ValueError("official-policy capture artifact record 无效")
+        relative_text = record.get("path")
+        if not isinstance(relative_text, str) or not relative_text:
+            raise ValueError("official-policy capture artifact path 无效")
+        relative_path = Path(relative_text)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            raise ValueError("official-policy capture artifact path 越界")
+        resolved = (project_root / relative_path).resolve()
+        if resolved in artifacts_by_path:
+            raise ValueError("official-policy capture artifact path 重复")
+        artifacts_by_path[resolved] = record
+
+    required_paths = (
+        paths.official_candidates_path,
+        paths.official_download_manifest_path,
+        paths.official_fetch_report_path,
+    )
+    for required_path in required_paths:
+        if required_path.resolve() not in artifacts_by_path:
+            raise ValueError(f"official-policy capture 缺少必需 artifact：{required_path}")
+
+    payload_rows = _load_verified_official_policy_download_rows(
+        paths.official_download_manifest_path,
+        project_root=project_root,
+        raw_run_dir=paths.official_raw_dir / as_of.isoformat(),
+        artifacts_by_path=artifacts_by_path,
+    )
+    candidates = load_official_policy_candidates_csv(paths.official_candidates_path)
+    _validate_official_policy_candidates(
+        candidates,
+        as_of=as_of,
+        project_root=project_root,
+        raw_run_dir=paths.official_raw_dir / as_of.isoformat(),
+        payload_rows=payload_rows,
+        artifacts_by_path=artifacts_by_path,
+    )
+    raw_run_dir = (paths.official_raw_dir / as_of.isoformat()).resolve()
+    raw_artifact_paths = {
+        artifact_path
+        for artifact_path in artifacts_by_path
+        if artifact_path.is_relative_to(raw_run_dir)
+    }
+    if raw_artifact_paths != set(payload_rows):
+        raise ValueError("official-policy raw artifacts 与 download manifest 不一致")
+
+    return VerifiedOfficialPolicyCapture(
+        as_of=as_of,
+        manifest_path=manifest_path,
+        manifest_sha256=sha256_path(manifest_path),
+        source_report_path=paths.official_fetch_report_path,
+        source_report_sha256=sha256_path(paths.official_fetch_report_path),
+        candidates_path=paths.official_candidates_path,
+        candidates_sha256=sha256_path(paths.official_candidates_path),
+        download_manifest_path=paths.official_download_manifest_path,
+        download_manifest_sha256=sha256_path(paths.official_download_manifest_path),
+        payload_count=len(payload_rows),
+        candidates=candidates,
+    )
+
+
+def write_verified_official_policy_capture_report(
+    evidence: VerifiedOfficialPolicyCapture,
+    output_path: Path,
+) -> Path:
+    lines = [
+        "# 官方政策/地缘留存 capture 消费报告",
+        "",
+        f"- 状态：{evidence.status}",
+        f"- 评估日期：{evidence.as_of.isoformat()}",
+        "- evidence_mode：`verified_retained_daily_capture`",
+        f"- provider_request_performed：`{str(evidence.provider_request_performed).lower()}`",
+        f"- capture manifest：`{evidence.manifest_path}`",
+        f"- capture manifest SHA256：`{evidence.manifest_sha256}`",
+        f"- source fetch report：`{evidence.source_report_path}`",
+        f"- source fetch report SHA256：`{evidence.source_report_sha256}`",
+        f"- download manifest：`{evidence.download_manifest_path}`",
+        f"- download manifest SHA256：`{evidence.download_manifest_sha256}`",
+        f"- candidate CSV：`{evidence.candidates_path}`",
+        f"- candidate CSV SHA256：`{evidence.candidates_sha256}`",
+        f"- 官方 payload 数：{evidence.payload_count}",
+        f"- 待人工复核候选数：{evidence.candidate_count}",
+        f"- production_effect：`{evidence.production_effect}`",
+        "",
+        "## 验证边界",
+        "",
+        "- 本报告只消费同 as-of daily capture 中已留存的官方来源证据。",
+        (
+            "- manifest policy/status/component 以及 artifact path/size/SHA "
+            "已通过同一 capture validator。"
+        ),
+        "- candidate as_of/review/production boundary 与 raw payload path/SHA lineage 已逐条校验。",
+        "- 本步骤未发起 official-policy provider 请求，校验失败时不回退至 live fetch。",
+    ]
+    write_markdown_atomic(output_path, "\n".join(lines) + "\n")
+    return output_path
+
+
+def _load_verified_official_policy_download_rows(
+    manifest_path: Path,
+    *,
+    project_root: Path,
+    raw_run_dir: Path,
+    artifacts_by_path: Mapping[Path, Mapping[str, object]],
+) -> dict[Path, tuple[str, str, int]]:
+    with manifest_path.open("r", newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        required_columns = {
+            "source_id",
+            "output_path",
+            "row_count",
+            "checksum_sha256",
+        }
+        missing_columns = required_columns - set(reader.fieldnames or ())
+        if missing_columns:
+            raise ValueError(
+                "official-policy download manifest 缺少必需字段："
+                + ",".join(sorted(missing_columns))
+            )
+        rows = list(reader)
+    if not rows:
+        raise ValueError("official-policy download manifest 不得为空")
+    result: dict[Path, tuple[str, str, int]] = {}
+    source_ids: set[str] = set()
+    raw_root = raw_run_dir.resolve()
+    for index, row in enumerate(rows, 2):
+        source_id = str(row.get("source_id", "")).strip()
+        checksum = str(row.get("checksum_sha256", "")).strip()
+        output_text = str(row.get("output_path", "")).strip()
+        try:
+            row_count = int(str(row.get("row_count", "")))
+        except ValueError as exc:
+            raise ValueError(
+                f"official-policy download manifest row_count 无效：row {index}"
+            ) from exc
+        if not source_id or source_id in source_ids:
+            raise ValueError(f"official-policy download manifest source_id 无效：row {index}")
+        source_ids.add(source_id)
+        if len(checksum) != 64 or row_count < 0:
+            raise ValueError(f"official-policy download manifest 证据无效：row {index}")
+        output_path = Path(output_text)
+        if not output_path.is_absolute():
+            output_path = project_root / output_path
+        resolved = output_path.resolve()
+        if not resolved.is_relative_to(raw_root):
+            raise ValueError(f"official-policy raw payload path 越界：row {index}")
+        artifact = artifacts_by_path.get(resolved)
+        if artifact is None or artifact.get("sha256") != checksum:
+            raise ValueError(f"official-policy raw payload lineage 不匹配：row {index}")
+        if resolved in result:
+            raise ValueError(f"official-policy raw payload path 重复：row {index}")
+        result[resolved] = (source_id, checksum, row_count)
+    return result
+
+
+def _validate_official_policy_candidates(
+    candidates: Sequence[OfficialPolicyCandidate],
+    *,
+    as_of: date,
+    project_root: Path,
+    raw_run_dir: Path,
+    payload_rows: Mapping[Path, tuple[str, str, int]],
+    artifacts_by_path: Mapping[Path, Mapping[str, object]],
+) -> None:
+    candidate_ids: set[str] = set()
+    raw_root = raw_run_dir.resolve()
+    for candidate in candidates:
+        if not candidate.candidate_id or candidate.candidate_id in candidate_ids:
+            raise ValueError("official-policy candidate_id 必须唯一且非空")
+        candidate_ids.add(candidate.candidate_id)
+        if candidate.as_of != as_of or candidate.captured_at != as_of:
+            raise ValueError(f"official-policy candidate as_of 不匹配：{candidate.candidate_id}")
+        if candidate.published_at is not None and candidate.published_at > as_of:
+            raise ValueError(f"official-policy candidate 含未来发布日期：{candidate.candidate_id}")
+        if candidate.production_effect != "none" or candidate.review_status != "pending_review":
+            raise ValueError(f"official-policy candidate 安全边界不匹配：{candidate.candidate_id}")
+        raw_path = candidate.raw_payload_path
+        if not raw_path.is_absolute():
+            raw_path = project_root / raw_path
+        resolved = raw_path.resolve()
+        if not resolved.is_relative_to(raw_root):
+            raise ValueError(f"official-policy candidate raw path 越界：{candidate.candidate_id}")
+        payload_row = payload_rows.get(resolved)
+        artifact = artifacts_by_path.get(resolved)
+        if payload_row is None or artifact is None:
+            raise ValueError(
+                f"official-policy candidate raw lineage 缺失：{candidate.candidate_id}"
+            )
+        source_id, checksum, row_count = payload_row
+        if (
+            candidate.source_id != source_id
+            or candidate.raw_payload_sha256 != checksum
+            or candidate.row_count != row_count
+            or artifact.get("sha256") != checksum
+        ):
+            raise ValueError(
+                f"official-policy candidate raw lineage 不匹配：{candidate.candidate_id}"
+            )
+
+
 def build_daily_input_capture_gap_ledger(
     *,
     as_of: date,
@@ -1846,9 +2121,8 @@ def build_daily_input_capture_recovery_queue(
 ) -> dict[str, object]:
     policy = load_daily_input_capture_policy(policy_path, project_root=project_root)
     sessions = gap_ledger.get("sessions")
-    if (
-        gap_ledger.get("schema_version") != DAILY_INPUT_GAP_LEDGER_SCHEMA_VERSION
-        or not isinstance(sessions, list)
+    if gap_ledger.get("schema_version") != DAILY_INPUT_GAP_LEDGER_SCHEMA_VERSION or not isinstance(
+        sessions, list
     ):
         raise ValueError("validated daily input capture gap ledger required")
     queue_items: list[dict[str, object]] = []
@@ -1902,13 +2176,16 @@ def build_daily_input_capture_recovery_queue(
                 "recovery_mode": recovery_mode,
                 "source_gap_status": row_status,
             }
-            recovery_id = "daily-input-recovery-" + hashlib.sha256(
-                json.dumps(
-                    recovery_body,
-                    sort_keys=True,
-                    separators=(",", ":"),
-                ).encode("utf-8")
-            ).hexdigest()[:20]
+            recovery_id = (
+                "daily-input-recovery-"
+                + hashlib.sha256(
+                    json.dumps(
+                        recovery_body,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
+                ).hexdigest()[:20]
+            )
             queue_items.append(
                 {
                     "recovery_id": recovery_id,
@@ -1921,9 +2198,7 @@ def build_daily_input_capture_recovery_queue(
                     "source_manifest_path": manifest_path_value,
                     "source_blocker_code": failed_result.get("blocker_code"),
                     "source_attempt_count": failed_result.get("attempt_count", 0),
-                    "source_idempotency_key": failed_result.get(
-                        "source_idempotency_key"
-                    ),
+                    "source_idempotency_key": failed_result.get("source_idempotency_key"),
                     "production_effect": "none",
                     "broker_action": False,
                     "trading_action": False,
@@ -2042,17 +2317,13 @@ def validate_daily_input_capture_recovery_queue(
         except ValueError:
             issues.append({"code": "QUEUE_SESSION_DATE_INVALID", "message": component_id})
         else:
-            if session_date < policy.tracking_start or not is_us_equity_trading_day(
-                session_date
-            ):
+            if session_date < policy.tracking_start or not is_us_equity_trading_day(session_date):
                 issues.append({"code": "QUEUE_SESSION_NOT_TRACKED", "message": component_id})
     if payload.get("item_count") != len(items):
         issues.append({"code": "QUEUE_ITEM_COUNT_MISMATCH", "message": str(len(items))})
     expected_counts = {
         status: sum(
-            1
-            for item in items
-            if isinstance(item, Mapping) and item.get("action_status") == status
+            1 for item in items if isinstance(item, Mapping) and item.get("action_status") == status
         )
         for status in (
             "READY_FOR_MANUAL_RECOVERY",

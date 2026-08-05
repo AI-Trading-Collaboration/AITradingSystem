@@ -1118,7 +1118,7 @@ def test_daily_plan_writes_additive_deterministic_non_executing_shadow_sidecar(
     assert payload["shadow_plan"]["execution_enabled"] is False
     assert payload["shadow_plan"]["due_resolution"]["status"] == "DUE"
     assert payload["workflow_spec"]["semantic_revision"] == (
-        "scheduled=scheduled_tasks_v6;capture=daily_input_capture_v5"
+        "scheduled=scheduled_tasks_v6;capture=daily_input_capture_v6"
     )
     assert plan.workflow_semantic_revision == payload["workflow_spec"]["semantic_revision"]
     assert payload["runtime_control_policy"]["policy_id"] == "operations_runtime_control_v1"

@@ -114,6 +114,32 @@ def test_cli_direct_score_daily_threads_date_scoped_valuation_path(
     assert captured["valuation_path"] == valuation_path
 
 
+def test_cli_direct_score_daily_threads_official_policy_capture_manifest(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+    manifest_path = tmp_path / "daily_input_capture_manifest_2026-08-04.json"
+
+    def fake_score_daily(**kwargs: object) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", fake_score_daily)
+
+    exit_code = cli_direct.main(
+        [
+            "score-daily",
+            "--as-of",
+            "2026-08-04",
+            "--official-policy-capture-manifest-path",
+            str(manifest_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["official_policy_capture_manifest_path"] == manifest_path
+
+
 def test_cli_direct_dispatches_capture_and_date_scoped_source_paths(
     monkeypatch,
     tmp_path: Path,

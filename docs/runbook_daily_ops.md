@@ -116,6 +116,16 @@ HTTP/status/auth 上下文的 401/403，不把候选数量等裸数字误判为 
 仍失败，`score_daily` 及其 Reader Brief/dashboard/lineage descendants 必须 BLOCKED；不要删除
 source state、手工失效成功 cache、用第二个 trigger 重跑同 parent，或补造当日评分。
 
+OPS-074 后，trading-day capture-active plan 会把同 `as_of` canonical
+`daily_input_capture_manifest` 显式传给 `score_daily`。评分必须先用同一 capture
+validator 复核 policy/status/component 与 artifact path/size/SHA，然后校验 download
+manifest、candidate `as_of`/review/production boundary 和 raw payload path/SHA lineage。
+验证通过后只读取留存 candidate CSV，不发起第二次 official-policy provider
+请求；canonical report 必须披露 `evidence_mode=verified_retained_daily_capture`、
+`provider_request_performed=false` 和 exact evidence SHA。任一 missing/tamper/drift/as-of
+mismatch 都 fail closed，不回退至 live fetch。只有未传 capture manifest 的 manual/non-daily
+`score-daily` 保留原 live-fetch contract。
+
 OPS-063 的 `limited_non_pit_reconstruction.v1` 仅是 2026-07-13/14 缺 contemporaneous hard inputs 时经 owner 批准的一次性 manual evidence。它不属于 `aits ops daily-run`、periodic-dispatch、Reader Brief 或 governance 下游，canonical daily status 仍为 `INSUFFICIENT_DATA`；operator 不得用 live refetch、7/15 snapshot 或该 bundle 补造 PIT、score、position 或投资结论。未来若需复跑，必须先新建受治理 producer/validator 任务。
 
 OPS-068 已建立受治理的 `limited_non_pit_reconstruction.v2` producer/validator，仅用于 owner 批准后的 2026-07-21 隔离历史事实证据。运行前必须先完成 explicit cache-only inventory，并显式传入 inventory bundle、owner decision id、bundle id 和需要保持 byte-identical 的 canonical cache/state/ledger guard paths：

@@ -579,6 +579,12 @@ def build_daily_ops_plan(
         # those capture opportunities; score-daily still fails closed on its own env.
         score_required_env = ()
         score_command.extend(["--valuation-path", str(valuation_snapshots_dir)])
+        score_command.extend(
+            [
+                "--official-policy-capture-manifest-path",
+                str(capture_paths.manifest_json),
+            ]
+        )
     if run_id:
         score_command.extend(["--run-id", run_id])
     score_enabled = market_session.is_trading_day

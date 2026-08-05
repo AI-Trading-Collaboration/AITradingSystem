@@ -794,7 +794,7 @@ capture validation 使用 native `daily_input_capture_validation.v1` schema，�
 `production_effect=none`，因此 contract 对齐只消除误阻断，不提升缺失 component 的消费权限。
 OPS-070 S2 为每个 `source/session` 建立独立 state、attempt history、idempotency key 和 active
 lease；retry budget、delay、retryable blocker、lease TTL、recovery mode 与
-component-scoped `source_revision` 来自 `daily_input_capture_policy.v5`。活动 lease 和
+component-scoped `source_revision` 来自 `daily_input_capture_policy.v6`。活动 lease 和
 non-retryable failure 只阻断该 source，stale lease 在 takeover 前进入 immutable history。
 未变 PASS revision 继续复用原 state/key；显式 superseding revision 只重开目标 component，
 并将新 state 隔离到 revision path，旧 terminal bytes 不改写。
@@ -5966,7 +5966,11 @@ flowchart TD
     PE --> PE1["写入 portfolio_exposure_YYYY-MM-DD.md<br/>ticker、产业链节点、地区、客户链、因子、相关性簇"]
     R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store<br/>先读取稳定 UTF-8 YAML 文本快照，再解析并记录 load_error<br/>输出 PIT 可信度、历史来源和回测用途"]
     R --> OPX{"是否启用<br/>--risk-event-openai-precheck"}
-    OPX -->|是| OPF2["抓取官方政策/地缘来源<br/>fetch_official_policy_sources<br/>pre-response transport 最多3次/1-2秒退避；写 raw payload、manifest、候选 CSV 和官方来源报告；HTTP/parser 按 source fail closed"]
+    OPX -->|是| OPC{"是否传入 same-as-of<br/>daily capture manifest"}
+    OPC -->|是| OPR["严格消费留存 official-policy evidence<br/>复用 capture validator；校验 manifest/component/path/size/SHA、candidate as_of 与 raw lineage<br/>provider_request_performed=false"]
+    OPR -->|FAIL| OPFSTOP["停止<br/>输出 exact capture/lineage 诊断；不回退 live fetch"]
+    OPR -->|PASS| RPO2
+    OPC -->|否：manual/non-daily| OPF2["抓取官方政策/地缘来源<br/>fetch_official_policy_sources<br/>pre-response transport 最多3次/1-2秒退避；写 raw payload、manifest、候选 CSV 和官方来源报告；HTTP/parser 按 source fail closed"]
     OPF2 -->|FAIL| OPFSTOP["停止<br/>输出 official_policy_sources 报告、stable blocker、attempt/timeout/exception 或结构化 parser 诊断"]
     OPF2 -->|PASS 或 PASS_WITH_WARNINGS| RPO2["OpenAI 风险事件 metadata_only 自动预审<br/>读取 risk_event_daily_official_precheck profile；store=false；短 TTL agent 精确请求缓存；生产最新已完成交易日由 daily-run 或显式 score-daily cutoff 允许 request_timestamp <= visibility_cutoff；历史 as-of 或无 cutoff 仍按 as-of 当日 UTC 末尾 fail closed；provider 权限和 cache_allowed fail closed；irrelevant 不进人工队列"]
     RPO2 -->|FAIL| RPOSTOP["停止<br/>输出 risk_event_prereview_openai 报告"]
@@ -6704,6 +6708,7 @@ flowchart TD
 |官方政策来源原始缓存|`data/raw/official_policy_sources/YYYY-MM-DD/*`|保存官方来源原始 JSON/XML/HTML payload，文件名包含 source_id 和 checksum 前缀；manifest 记录 provider、endpoint、请求参数、下载时间、transport attempt count、row count、输出路径和 checksum；API key 不写入报告或 manifest|OPS-072|
 |官方政策来源待复核候选|`data/processed/official_policy_source_candidates_YYYY-MM-DD.csv`|从官方来源 metadata/title/summary 中抽取政策/地缘候选，记录 source_id、provider、source URL、published_at、matched risk_id/ticker/node、raw payload checksum 和人工复核问题；只能作为 owner 每日复核、AI 模块相关性 triage 和 reviewed occurrence CSV 的输入|已实现基础版|
 |官方政策来源抓取报告|`outputs/reports/official_policy_sources_YYYY-MM-DD.md`|中文输出抓取状态、来源数、payload 数、候选数、错误/警告、跳过来源、每个 payload 的 transport attempts/row count/checksum、stable blocker、逐 source transport/parser 错误和候选摘要；报告声明不代表已确认事件或无事件结论；transport exhaustion 与 raw payload 写入后的 parser 异常均必须 fail closed 并保留结构化错误，不得裸 traceback 中断报告生成|OPS-072|
+|capture-active 官方政策留存消费|`outputs/daily_input_capture/YYYY-MM-DD/daily_input_capture_manifest_YYYY-MM-DD.json` + `data/raw/daily_input_capture/YYYY-MM-DD/official_policy_download_manifest.csv` + `data/processed/daily_input_capture/YYYY-MM-DD/official_policy/official_policy_source_candidates_YYYY-MM-DD.csv` + `outputs/reports/official_policy_sources_YYYY-MM-DD.md`|trading-day `score_daily` 显式接收 same-as-of capture manifest，复用 capture validator 并验证 component、artifact path/size/SHA、download rows、candidate as-of/review/production boundary 和 raw lineage；canonical report 标记 `verified_retained_daily_capture`、exact evidence SHA 与 `provider_request_performed=false`；缺失或漂移 fail closed 且不 live refetch|OPS-074|
 |官方政策来源 AI 模块 triage|`aits risk-events triage-official-candidates` / `src/ai_trading_system/cli_commands/risk_events.py`|读取官方来源待复核候选 CSV，按 AI 模块直接相关性输出 `must_review`、`review_next`、`sample_review`、`auto_low_relevance`、`duplicate_or_noise`；分类优先看标题、URL、来源名称和明确 metadata，不盲目继承宽泛 sanctions/geopolitics 自动映射出的 ticker 或 risk_id；输出强制 `production_effect=none`，不得写入正式 occurrence、评分或仓位闸门；命令语义随 `risk-events` 模块化迁移保持兼容|已实现基础版|
 |官方政策来源 AI 模块 triage CSV|`data/processed/official_policy_candidate_triage_YYYY-MM-DD.csv`|保存原始候选引用、matched topic/risk/ticker/node、triage bucket、AI relevance score、命中信号、分类理由和复核策略；`auto_low_relevance` 只代表低优先级，不代表已确认无风险|已实现基础版|
 |官方政策来源 AI 模块 triage 报告|`outputs/reports/risk_event_candidate_triage_YYYY-MM-DD.md`|中文输出 bucket 统计、高优先级候选、降低优先级候选摘要、方法边界和问题清单；用于减少人工复核面，不替代复核声明|已实现基础版|

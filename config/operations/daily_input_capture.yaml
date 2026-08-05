@@ -1,8 +1,8 @@
 schema_version: daily_input_capture_policy.v2
-policy_version: daily_input_capture_v5
+policy_version: daily_input_capture_v6
 owner: operations_owner_and_data_platform_owner
 status: REVIEWED
-reviewed_at: 2026-07-25
+reviewed_at: 2026-08-05
 calendar_authority: XNYS
 decision_session_policy: XNYS_DECISION_SESSION_ALIGNED
 tracking_start: 2026-07-24
@@ -74,7 +74,7 @@ source_control:
     only component-owned raw/normalized/report artifacts. Consumer-owned aggregate
     manifests may be rebuilt downstream and are excluded with an explicit reuse
     disclosure; they cannot weaken exact source artifact verification.
-  validation_evidence: OPS-070 fault injection and formal validation tiers
+  validation_evidence: OPS-070 fault injection plus OPS-074 retained-consumer validation
   review_condition: >
     Review and bump the affected component source_revision when provider behavior,
     source eligibility, command, attempt budget, retry delay, recovery semantics,
@@ -98,4 +98,8 @@ review_condition: >
 rationale: >
   Preserve every independently available daily source before strict downstream
   gates. A partial capture remains non-consumable but prevents one provider or
-  data-quality failure from erasing evidence from all other providers.
+  data-quality failure from erasing evidence from all other providers. Under
+  daily_input_capture_v6, capture-active score-daily consumers must bind the exact
+  same-as-of manifest and verified official-policy artifact lineage; they must not
+  repeat provider requests after capture has succeeded and must fail closed without
+  a live-fetch fallback on missing, tampered, or drifted retained evidence.

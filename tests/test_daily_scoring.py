@@ -799,6 +799,52 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
     assert "不会单独把执行动作改成 `wait_manual_review`" in section
 
 
+def test_official_policy_precheck_uses_retained_capture_without_provider_request(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    manifest_path = tmp_path / "capture_manifest.json"
+    output_path = tmp_path / "official_policy_evidence.md"
+    candidates_path = tmp_path / "candidates.csv"
+    evidence = SimpleNamespace(candidates_path=candidates_path)
+    written: list[tuple[object, Path]] = []
+
+    monkeypatch.setattr(
+        score_daily_cli,
+        "load_verified_official_policy_capture",
+        lambda **_: evidence,
+    )
+    monkeypatch.setattr(
+        score_daily_cli,
+        "write_verified_official_policy_capture_report",
+        lambda value, path: written.append((value, path)),
+    )
+
+    def unexpected_provider_request(**_: object):
+        raise AssertionError("retained capture path must not call provider fetch")
+
+    monkeypatch.setattr(
+        score_daily_cli,
+        "fetch_official_policy_sources",
+        unexpected_provider_request,
+    )
+
+    resolved, resolved_candidates_path = score_daily_cli._resolve_official_policy_precheck_evidence(
+        as_of=date(2026, 8, 4),
+        capture_manifest_path=manifest_path,
+        output_path=output_path,
+        selected_source_ids=None,
+        limit=50,
+        api_keys={},
+        project_root=tmp_path,
+        capture_policy_path=tmp_path / "capture_policy.yaml",
+    )
+
+    assert resolved is evidence
+    assert resolved_candidates_path == candidates_path
+    assert written == [(evidence, output_path)]
+
+
 def test_belief_state_is_read_only_and_keeps_position_unchanged(
     tmp_path: Path,
 ) -> None:

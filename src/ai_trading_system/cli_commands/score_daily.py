@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import os
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Annotated, Literal
@@ -74,6 +74,12 @@ from ai_trading_system.config import (
     load_universe,
     load_watchlist,
     market_regime_by_id,
+)
+from ai_trading_system.daily_input_capture import (
+    DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+    VerifiedOfficialPolicyCapture,
+    load_verified_official_policy_capture,
+    write_verified_official_policy_capture_report,
 )
 from ai_trading_system.data.quality import (
     DataQualityReport,
@@ -155,6 +161,7 @@ from ai_trading_system.llm_request_profiles import (
 from ai_trading_system.official_policy_sources import (
     DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
     DEFAULT_OFFICIAL_POLICY_RAW_DIR,
+    OfficialPolicySourceFetchReport,
     default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
     fetch_official_policy_sources,
@@ -419,6 +426,46 @@ def _project_relative_path(path: Path) -> Path:
 def _is_production_scores_daily_path(path: Path) -> bool:
     production_path = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv"
     return path.resolve() == production_path.resolve()
+
+
+def _resolve_official_policy_precheck_evidence(
+    *,
+    as_of: date,
+    capture_manifest_path: Path | None,
+    output_path: Path,
+    selected_source_ids: Sequence[str] | None,
+    limit: int,
+    api_keys: dict[str, str],
+    project_root: Path = PROJECT_ROOT,
+    capture_policy_path: Path = DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+) -> tuple[OfficialPolicySourceFetchReport | VerifiedOfficialPolicyCapture, Path]:
+    if capture_manifest_path is not None:
+        if selected_source_ids:
+            raise ValueError("retained official-policy capture 不允许叠加 live source_id 筛选")
+        evidence = load_verified_official_policy_capture(
+            as_of=as_of,
+            manifest_path=capture_manifest_path,
+            project_root=project_root,
+            policy_path=capture_policy_path,
+        )
+        write_verified_official_policy_capture_report(evidence, output_path)
+        return evidence, evidence.candidates_path
+
+    report = fetch_official_policy_sources(
+        as_of=as_of,
+        since=None,
+        raw_dir=DEFAULT_OFFICIAL_POLICY_RAW_DIR,
+        processed_dir=DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+        api_keys=api_keys,
+        selected_source_ids=selected_source_ids,
+        limit=limit,
+        download_manifest_path=project_root / "data" / "raw" / "download_manifest.csv",
+    )
+    write_official_policy_fetch_report(report, output_path)
+    return report, default_official_policy_candidates_path(
+        DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+        as_of,
+    )
 
 
 @score_daily_app.callback(invoke_without_command=True)
@@ -688,6 +735,15 @@ def score_daily(
     official_policy_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 官方政策/地缘来源自动抓取报告输出路径。"),
+    ] = None,
+    official_policy_capture_manifest_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "可选 same-as-of daily capture manifest；设置后严格复用已验证"
+                " official-policy artifacts，不发起 provider 请求。"
+            )
+        ),
     ] = None,
     official_policy_source_ids: Annotated[
         str | None,
@@ -1184,7 +1240,9 @@ def score_daily(
             f"警告数：{risk_events_validation_report.warning_count}"
         )
         raise typer.Exit(code=1)
-    official_policy_fetch_report = None
+    official_policy_fetch_report: (
+        OfficialPolicySourceFetchReport | VerifiedOfficialPolicyCapture | None
+    ) = None
     risk_event_prereview_report = None
     llm_formal_report = None
     if risk_event_openai_precheck:
@@ -1259,23 +1317,25 @@ def score_daily(
         selected_official_source_ids = (
             _parse_csv_items(official_policy_source_ids) if official_policy_source_ids else None
         )
-        official_policy_fetch_report = fetch_official_policy_sources(
-            as_of=score_date,
-            since=None,
-            raw_dir=DEFAULT_OFFICIAL_POLICY_RAW_DIR,
-            processed_dir=DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
-            api_keys={
-                "CONGRESS_API_KEY": os.getenv("CONGRESS_API_KEY", ""),
-                "GOVINFO_API_KEY": os.getenv("GOVINFO_API_KEY", ""),
-            },
-            selected_source_ids=selected_official_source_ids,
-            limit=effective_official_policy_limit,
-            download_manifest_path=PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
-        )
-        write_official_policy_fetch_report(
-            official_policy_fetch_report,
-            official_policy_report_output,
-        )
+        try:
+            official_policy_fetch_report, official_candidates_path = (
+                _resolve_official_policy_precheck_evidence(
+                    as_of=score_date,
+                    capture_manifest_path=official_policy_capture_manifest_path,
+                    output_path=official_policy_report_output,
+                    selected_source_ids=selected_official_source_ids,
+                    limit=effective_official_policy_limit,
+                    api_keys={
+                        "CONGRESS_API_KEY": os.getenv("CONGRESS_API_KEY", ""),
+                        "GOVINFO_API_KEY": os.getenv("GOVINFO_API_KEY", ""),
+                    },
+                )
+            )
+        except (OSError, ValueError) as exc:
+            console.print("[red]官方政策/地缘留存 capture 校验失败，已停止每日评分。[/red]")
+            console.print(f"Capture manifest：{official_policy_capture_manifest_path}")
+            console.print(f"原因：{exc}")
+            raise typer.Exit(code=1) from exc
         if not official_policy_fetch_report.passed:
             console.print("[red]官方政策/地缘来源抓取失败，已停止每日评分。[/red]")
             console.print(f"官方来源抓取报告：{official_policy_report_output}")
@@ -1284,10 +1344,6 @@ def score_daily(
                 f"警告数：{official_policy_fetch_report.warning_count}"
             )
             raise typer.Exit(code=1)
-        official_candidates_path = default_official_policy_candidates_path(
-            DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
-            score_date,
-        )
         risk_event_prereview_report = run_openai_risk_event_prereview_for_official_candidates(
             official_policy_fetch_report.candidates,
             api_key=os.getenv(openai_api_key_env, ""),

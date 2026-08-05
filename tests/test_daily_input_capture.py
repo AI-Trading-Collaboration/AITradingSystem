@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import hashlib
 import json
 import subprocess
 from datetime import UTC, date, datetime
@@ -13,8 +15,16 @@ from ai_trading_system.daily_input_capture import (
     capture_daily_inputs,
     daily_input_capture_paths,
     load_daily_input_capture_policy,
+    load_verified_official_policy_capture,
     validate_daily_input_capture_manifest,
     validate_daily_input_capture_recovery_queue,
+)
+from ai_trading_system.official_policy_sources import (
+    OfficialPolicyCandidate,
+    OfficialPolicyRawPayload,
+    OfficialPolicySourceFetchReport,
+    write_official_policy_candidates_csv,
+    write_official_policy_fetch_report,
 )
 from ai_trading_system.ops_daily import build_daily_ops_plan
 
@@ -143,7 +153,7 @@ def _runner_for_components(
 def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
     policy = load_daily_input_capture_policy()
 
-    assert policy.policy_version == "daily_input_capture_v5"
+    assert policy.policy_version == "daily_input_capture_v6"
     assert policy.tracking_start == date(2026, 7, 24)
     assert policy.blocker_taxonomy_version == "daily_input_capture_blockers_v1"
     assert policy.lease_ttl_seconds == 1800
@@ -159,9 +169,7 @@ def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
         "PROVIDER_UNAVAILABLE",
         "REQUEST_FAILED",
     )
-    assert policy.component_policies["market_macro"].recovery_mode == (
-        "IMMUTABLE_RAW_BACKFILL"
-    )
+    assert policy.component_policies["market_macro"].recovery_mode == ("IMMUTABLE_RAW_BACKFILL")
     assert policy.component_policies["sec_companyfacts"].recovery_mode == (
         "MANUAL_NON_PIT_RAW_REVIEW"
     )
@@ -173,6 +181,195 @@ def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
             "official_policy_sources",
         )
     } == {"HISTORICAL_RECAPTURE_FORBIDDEN"}
+
+
+def _capture_valid_official_policy_evidence(tmp_path: Path):
+    as_of = date(2026, 7, 27)
+    policy_path = tmp_path / "capture_policy.yaml"
+    _write_policy(policy_path, tmp_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    paths = daily_input_capture_paths(as_of, policy=policy)
+    components = build_daily_input_capture_components(
+        as_of=as_of,
+        paths=paths,
+        policy=policy,
+        project_root=tmp_path,
+    )
+    component_by_token = {
+        "download-data": components[0],
+        "pit-snapshots": components[1],
+        "download-sec-companyfacts": components[2],
+        "valuation": components[3],
+        "risk-events": components[4],
+    }
+
+    def runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        component = next(item for token, item in component_by_token.items() if token in command)
+        if component.component_id != "official_policy_sources":
+            for expected in component.expected_paths:
+                if expected.suffix:
+                    expected.parent.mkdir(parents=True, exist_ok=True)
+                    expected.write_text(f"{component.component_id}\n", encoding="utf-8")
+                else:
+                    expected.mkdir(parents=True, exist_ok=True)
+            return subprocess.CompletedProcess(command, 0, stdout="PASS", stderr="")
+
+        raw_path = paths.official_raw_dir / as_of.isoformat() / "official_test.json"
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        raw_bytes = b'{"items": [{"title": "test"}]}'
+        raw_path.write_bytes(raw_bytes)
+        checksum = hashlib.sha256(raw_bytes).hexdigest()
+        candidate = OfficialPolicyCandidate(
+            candidate_id="official:test:1",
+            as_of=as_of,
+            source_id="official_test",
+            provider="Test authority",
+            source_type="primary_source",
+            source_name="Test authority",
+            source_url="https://example.invalid/item/1",
+            source_title="Test official candidate",
+            published_at=as_of,
+            captured_at=as_of,
+            matched_topics=("export_controls",),
+            matched_risk_ids=("ai_chip_export_control_upgrade",),
+            affected_tickers=("NVDA",),
+            affected_nodes=("export_controls",),
+            evidence_grade_floor="A",
+            review_status="pending_review",
+            review_questions=("review",),
+            raw_payload_path=raw_path,
+            raw_payload_sha256=checksum,
+            row_count=1,
+            production_effect="none",
+        )
+        payload = OfficialPolicyRawPayload(
+            source_id="official_test",
+            provider="Test authority",
+            endpoint="https://example.invalid/api",
+            request_parameters={"as_of": as_of.isoformat()},
+            source_type="primary_source",
+            parser_kind="json",
+            downloaded_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
+            status_code=200,
+            output_path=raw_path,
+            checksum_sha256=checksum,
+            row_count=1,
+            candidate_count=1,
+        )
+        report = OfficialPolicySourceFetchReport(
+            as_of=as_of,
+            since=as_of,
+            generated_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
+            raw_dir=paths.official_raw_dir,
+            processed_dir=paths.official_processed_dir,
+            payloads=(payload,),
+            candidates=(candidate,),
+        )
+        write_official_policy_candidates_csv(report, paths.official_candidates_path)
+        write_official_policy_fetch_report(report, paths.official_fetch_report_path)
+        paths.official_download_manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        with paths.official_download_manifest_path.open(
+            "w", newline="", encoding="utf-8"
+        ) as handle:
+            writer = csv.DictWriter(
+                handle,
+                fieldnames=(
+                    "downloaded_at",
+                    "source_id",
+                    "provider",
+                    "endpoint",
+                    "request_parameters",
+                    "output_path",
+                    "row_count",
+                    "checksum_sha256",
+                    "transport_attempt_count",
+                ),
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    "downloaded_at": payload.downloaded_at.isoformat(),
+                    "source_id": payload.source_id,
+                    "provider": payload.provider,
+                    "endpoint": payload.endpoint,
+                    "request_parameters": json.dumps(payload.request_parameters),
+                    "output_path": str(raw_path),
+                    "row_count": payload.row_count,
+                    "checksum_sha256": checksum,
+                    "transport_attempt_count": 1,
+                }
+            )
+        return subprocess.CompletedProcess(command, 0, stdout="PASS", stderr="")
+
+    result = capture_daily_inputs(
+        as_of=as_of,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=runner,
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
+    )
+    assert result.status == "CAPTURED"
+    return as_of, policy_path, paths, result
+
+
+def test_verified_official_policy_capture_binds_manifest_and_raw_lineage(
+    tmp_path: Path,
+) -> None:
+    as_of, policy_path, paths, result = _capture_valid_official_policy_evidence(tmp_path)
+
+    evidence = load_verified_official_policy_capture(
+        as_of=as_of,
+        manifest_path=result.manifest_path,
+        project_root=tmp_path,
+        policy_path=policy_path,
+    )
+
+    assert evidence.status == "PASS"
+    assert evidence.payload_count == 1
+    assert evidence.candidate_count == 1
+    assert evidence.candidates_path == paths.official_candidates_path
+    assert evidence.provider_request_performed is False
+    assert evidence.production_effect == "none"
+
+
+def test_verified_official_policy_capture_rejects_semantic_candidate_tamper(
+    tmp_path: Path,
+) -> None:
+    as_of, policy_path, paths, result = _capture_valid_official_policy_evidence(tmp_path)
+    candidate_text = paths.official_candidates_path.read_text(encoding="utf-8")
+    paths.official_candidates_path.write_text(
+        candidate_text.replace("2026-07-27", "2026-07-24", 1),
+        encoding="utf-8",
+    )
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    official = next(
+        item
+        for item in manifest["component_results"]
+        if item["component_id"] == "official_policy_sources"
+    )
+    candidate_record = next(
+        item
+        for item in official["artifacts"]
+        if item["path"].endswith(paths.official_candidates_path.name)
+    )
+    candidate_record["sha256"] = hashlib.sha256(
+        paths.official_candidates_path.read_bytes()
+    ).hexdigest()
+    candidate_record["size_bytes"] = paths.official_candidates_path.stat().st_size
+    result.manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    try:
+        load_verified_official_policy_capture(
+            as_of=as_of,
+            manifest_path=result.manifest_path,
+            project_root=tmp_path,
+            policy_path=policy_path,
+        )
+    except ValueError as exc:
+        assert "candidate as_of" in str(exc)
+    else:
+        raise AssertionError("semantic candidate tamper must fail closed")
 
 
 def test_market_macro_snapshot_uses_validated_immutable_publication(
@@ -514,8 +711,7 @@ def test_fmp_pass_reuse_excludes_legacy_consumer_mutated_aggregate_manifest(
         "data/raw/daily_input_capture/2026-07-27/pit_snapshot_manifest.csv"
     ]
     assert all(
-        item["path"]
-        != "data/raw/daily_input_capture/2026-07-27/pit_snapshot_manifest.csv"
+        item["path"] != "data/raw/daily_input_capture/2026-07-27/pit_snapshot_manifest.csv"
         for item in fmp["artifacts"]
     )
     assert source_state_path.read_bytes() == source_state_bytes
@@ -591,9 +787,7 @@ def test_component_revision_reopens_only_superseded_failed_source(
         generated_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
     )
     assert first.status == "PARTIAL_CAPTURE"
-    legacy_market_state = (
-        policy.source_control_root / "2026-07-27" / "market_macro" / "state.json"
-    )
+    legacy_market_state = policy.source_control_root / "2026-07-27" / "market_macro" / "state.json"
     legacy_market_state_raw = legacy_market_state.read_bytes()
 
     revised = policy_path.read_text(encoding="utf-8").replace(
@@ -641,9 +835,7 @@ def test_component_revision_reopens_only_superseded_failed_source(
     assert market["superseded_state_path"] == (
         "outputs/source_control/2026-07-27/market_macro/state.json"
     )
-    assert all(
-        item["idempotency_reused"] is True for item in second.component_results[1:]
-    )
+    assert all(item["idempotency_reused"] is True for item in second.component_results[1:])
     assert legacy_market_state.read_bytes() == legacy_market_state_raw
     assert (
         policy.source_control_root
@@ -755,12 +947,7 @@ def test_active_source_lease_blocks_only_its_component(tmp_path: Path) -> None:
         policy=policy,
         project_root=tmp_path,
     )
-    lock_path = (
-        policy.source_control_root
-        / "2026-07-27"
-        / "market_macro"
-        / "active.lock"
-    )
+    lock_path = policy.source_control_root / "2026-07-27" / "market_macro" / "active.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path.write_text(
         json.dumps(
@@ -847,9 +1034,7 @@ def test_expired_source_lease_is_audited_before_recovery(tmp_path: Path) -> None
 
     assert result.status == "CAPTURED"
     assert result.component_results[0]["source_lease_status"] == "STALE_RECLAIMED"
-    assert (
-        source_root / "lease_history" / "source-lease-stale.expired.json"
-    ).is_file()
+    assert (source_root / "lease_history" / "source-lease-stale.expired.json").is_file()
     assert not lock_path.exists()
 
 
@@ -885,11 +1070,14 @@ def test_recovery_queue_for_missed_sessions_never_authorizes_historical_pit(
     }
     assert all(item["automatic_execution_allowed"] is False for item in queue["items"])
     assert all(item["strict_pit_eligible"] is False for item in queue["items"])
-    assert validate_daily_input_capture_recovery_queue(
-        queue_path,
-        project_root=tmp_path,
-        policy_path=policy_path,
-    )["status"] == "PASS"
+    assert (
+        validate_daily_input_capture_recovery_queue(
+            queue_path,
+            project_root=tmp_path,
+            policy_path=policy_path,
+        )["status"]
+        == "PASS"
+    )
 
     queue["historical_strict_pit_backfill_allowed"] = True
     queue_path.write_text(json.dumps(queue), encoding="utf-8")
