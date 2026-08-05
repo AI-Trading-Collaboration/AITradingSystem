@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -16,7 +16,7 @@ broker action：`none`
 
 外部平台 Owner token：`owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1`
 
-当前工程阶段：`TRACKED_SINGLE_USE_AUTHORIZATION_ADMISSION_PRE_RUN`
+当前工程阶段：`OWNER_ATTESTED_SCOPE_VIOLATION_TERMINAL_NO_GO`
 
 ## 1. 目标与当前可执行边界
 
@@ -176,16 +176,17 @@ investment conclusion、paper/live/production 或 broker action。
 - 真实 bounded pilot、manual bundle、reconciliation 与 independent review 完成；
 - 生成上述三个 disposition 之一并交接 TRADING-2493。
 
-## 9. 当前 blocker 与退出条件
+## 9. Terminal blocker 与退出条件
 
-blocker：`OWNER_AUTHORIZATION_AND_REVIEWED_PILOT_SCOPE_NOT_GRANTED`。
+原 Owner authorization、reviewed pilot scope 与 independent review blocker 均已关闭；本次 single-use token
+已经消费并永久失效。terminal blocker 是观测到的 `PROCESSED_DATA_POINTS_SCOPE_VIOLATION`，同时 2489
+真实 manual bundle 与 2490 reconciliation 仍受各自 shared policy 阻塞。
 
-next owner：project owner + pilot coordinator + independent reviewer。
+next owner：TRADING-2493 research owner + independent reviewer，仅负责把本次
+`PILOT_NO_GO_LICENSE_OR_EVIDENCE` 写入 stage-gate；不得把 2492 重新解释为 range-expansion GO。
 
-解除 blocker 所需输入：明确授权是否允许登录/创建或修改 project/运行一次 bounded cloud backtest/下载
-export-safe manual evidence，并提供 reviewed exact dates、order/contract/resource bounds、授权 expiry 与 reviewer。
-
-在这些输入到达前，本任务只推进离线工程 baseline，状态不得改为 `BASELINE_DONE` 或任何 pilot success。
+未来若提出另一轮 platform experiment，必须另立任务，先根据 `734127` observed data points 重新校准 reviewed
+resource cap，再取得新的 exact Owner authorization；不得复用本任务 token、project mutation 或 cloud-run budget。
 
 ## 10. 2026-08-03 离线工程进度
 
@@ -347,3 +348,30 @@ violation 时失效；不得修改项目或重跑，不得输出
 hash/bytes、单一 order/fill、分钟 chronology、fee/limit、734127>250000、无 raw rows 结构审计及
 2489/2490 blocked 事实，随后明确 accept/reject evidence record。review 完成前 final disposition=
 `NOT_ISSUED`、range expansion=false；TRADING-2493 不得提前启动。
+
+## 14. 2026-08-05 independent Owner review 与 terminal disposition
+
+`project_owner` 以与 collector `codex_pilot_coordinator` 不同的身份签发：
+
+`owner_attestation:TRADING-2492:2026-08-05:accept_bounded_qc_pilot_evidence_with_scope_violation_v1`
+
+attestation exact-bind：
+
+- execution evidence file SHA-256=`2e57bfec7119daa05f89e1a48d8e06d7ca5fda6b38846e8f3d985c3ccdc6293c`；
+- pending review request file SHA-256=`94d7aef27daab59fa5dcacf82e993086bdda57fa177520d6d370f90a75d1794f`；
+- result artifact SHA-256=`fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead`；
+- project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；
+- one order/one fill、processed data points=`734127`、reviewed cap=`250000`、scope violation=true；
+- no raw option rows=true，shared 2489/2490 blocked=true。
+
+新增 canonical
+`inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_owner_attestation_20260805.json`，但原 execution
+evidence 与 pending review request 保持 byte-for-byte 不变。Builder 必须从这两个 predecessor canonical
+records 派生 final record；caller 不能输入 disposition、hash、project/backtest 或 success flags。任何 tamper、
+hash drift、身份漂移、隐藏 cap breach、伪造 raw-row absence、伪造 shared unblock 或 range-expansion claim 均 fail closed。
+
+Owner 接受的是 evidence 本身及其 scope violation，不是 pilot success。terminal disposition 固定为
+`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；`range_expansion_allowed=false`、`further_cloud_action_authorized=false`、
+`investment_interpretation_allowed=false`、`production_effect=none`、`broker_action=none`。本任务完整退出条件已按
+NO-GO 路径满足，转 `BASELINE_DONE` 并只向 2493 交付治理签署输入；不授权重跑、改项目、API/CLI/HTTP/
+Object Store/raw download、付费升级推断、paper/live/broker/production。

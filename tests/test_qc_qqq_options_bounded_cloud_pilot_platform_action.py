@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import inspect
 import json
 from datetime import UTC, datetime
@@ -13,17 +14,23 @@ from ai_trading_system.qqq_options_research.bounded_cloud_pilot_platform_action 
     ALLOWED_ACTIONS,
     AUTHORIZATION_TASK_ID,
     EVIDENCE_SCOPE_CHECK_IDS,
+    EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256,
     EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256,
     EXPECTED_PROPOSAL_POLICY_SHA256,
+    EXPECTED_RESULT_ARTIFACT_SHA256,
+    EXPECTED_REVIEW_REQUEST_RECORD_SHA256,
     OWNER_AUTHORIZATION_ID,
+    OWNER_EVIDENCE_ATTESTATION_ID,
     OWNER_REVIEW_REQUEST_ITEMS,
     PROHIBITED_ACTIONS,
     QCBoundedCloudPilotEvidenceScopeCheck,
     QCBoundedCloudPilotExecutionEvidenceRecord,
+    QCBoundedCloudPilotIndependentReviewRecord,
     QCBoundedCloudPilotIndependentReviewRequestRecord,
     QCBoundedCloudPilotPlatformActionAuthorizationPolicy,
     QCBoundedCloudPilotPlatformActionContractError,
     QCBoundedCloudPilotPreRunAuthorizationRecord,
+    build_qc_qqq_options_bounded_cloud_pilot_independent_review_record,
     build_qc_qqq_options_bounded_cloud_pilot_pre_run_record,
     build_qc_qqq_options_bounded_cloud_pilot_project_source,
     load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization,
@@ -467,6 +474,106 @@ def test_tracked_execution_evidence_and_review_request_cross_bind() -> None:
     assert review.backtest_id == evidence.backtest_id
     assert review.scope_violation_ids == evidence.failed_scope_check_ids
     assert review.independent_review_completed is False
+
+
+def test_independent_review_record_is_derived_from_canonical_predecessors() -> None:
+    review = build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
+        project_root=ROOT
+    )
+
+    assert review.owner_attestation_id == OWNER_EVIDENCE_ATTESTATION_ID
+    assert review.evidence_record_sha256 == (
+        EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256
+    )
+    assert review.review_request_sha256 == EXPECTED_REVIEW_REQUEST_RECORD_SHA256
+    assert review.result_artifact_sha256 == EXPECTED_RESULT_ARTIFACT_SHA256
+    assert review.confirmed_processed_data_points == 734127
+    assert review.confirmed_reviewed_cap == 250000
+    assert review.confirmed_scope_violation is True
+    assert review.confirmed_no_raw_option_rows is True
+    assert review.confirmed_shared_2489_2490_blocked is True
+    assert review.disposition == "PILOT_NO_GO_LICENSE_OR_EVIDENCE"
+    assert review.range_expansion_allowed is False
+    assert review.further_cloud_action_authorized is False
+    assert review.investment_interpretation_allowed is False
+
+
+def test_tracked_independent_review_record_replays_exact_authority() -> None:
+    raw = (
+        ROOT
+        / "inputs/external_validation/"
+        "qc_qqq_options_bounded_cloud_pilot_owner_attestation_20260805.json"
+    ).read_bytes()
+    tracked = QCBoundedCloudPilotIndependentReviewRecord.from_json_bytes(raw)
+    rebuilt = build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
+        project_root=ROOT
+    )
+
+    assert tracked == rebuilt
+    assert tracked.canonical_bytes == raw
+    assert tracked.independent_review_completed is True
+    assert tracked.evidence_acceptance == "ACCEPTED_WITH_SCOPE_VIOLATION"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("evidence_record_sha256", "0" * 64),
+        ("review_request_sha256", "0" * 64),
+        ("result_artifact_sha256", "0" * 64),
+        ("project_id", "forged-project"),
+        ("backtest_id", "forged-backtest"),
+        ("confirmed_processed_data_points", 250000),
+        ("confirmed_scope_violation", False),
+        ("confirmed_no_raw_option_rows", False),
+        ("confirmed_shared_2489_2490_blocked", False),
+        ("disposition", "BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION"),
+        ("range_expansion_allowed", True),
+        ("further_cloud_action_authorized", True),
+    ],
+)
+def test_independent_review_rejects_forged_acceptance_or_identity(
+    field: str, value: object
+) -> None:
+    payload = build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
+        project_root=ROOT
+    ).model_dump(mode="json")
+    payload[field] = value
+
+    with pytest.raises(ValueError):
+        QCBoundedCloudPilotIndependentReviewRecord.model_validate(payload)
+
+
+def test_independent_review_builder_rejects_tampered_predecessor(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "inputs" / "external_validation"
+    target.mkdir(parents=True)
+    evidence_source = (
+        ROOT
+        / "inputs/external_validation/"
+        "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+    )
+    request_source = (
+        ROOT
+        / "inputs/external_validation/"
+        "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+    )
+    evidence_bytes = evidence_source.read_bytes()
+    assert (
+        hashlib.sha256(evidence_bytes).hexdigest()
+        == EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256
+    )
+    (target / evidence_source.name).write_bytes(evidence_bytes.replace(b"734127", b"734128"))
+    (target / request_source.name).write_bytes(request_source.read_bytes())
+
+    with pytest.raises(
+        QCBoundedCloudPilotPlatformActionContractError,
+        match="QC_BOUNDED_CLOUD_PILOT_INDEPENDENT_REVIEW_INVALID",
+    ):
+        build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
+            project_root=tmp_path
+        )
 
 
 def test_pre_run_builder_rejects_expired_authorization() -> None:

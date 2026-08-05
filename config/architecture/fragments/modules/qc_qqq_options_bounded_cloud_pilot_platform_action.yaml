@@ -8,21 +8,27 @@ public_contracts:
   - AUTHORIZATION_TASK_ID
   - DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH
   - EVIDENCE_SCOPE_CHECK_IDS
+  - EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256
   - EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256
   - EXPECTED_PROPOSAL_POLICY_SHA256
+  - EXPECTED_RESULT_ARTIFACT_SHA256
+  - EXPECTED_REVIEW_REQUEST_RECORD_SHA256
   - OWNER_AUTHORIZATION_ID
+  - OWNER_EVIDENCE_ATTESTATION_ID
   - OWNER_REVIEW_REQUEST_ITEMS
   - PROHIBITED_ACTIONS
   - QCBoundedCloudPilotActors
   - QCBoundedCloudPilotAuthorizationSafety
   - QCBoundedCloudPilotEvidenceScopeCheck
   - QCBoundedCloudPilotExecutionEvidenceRecord
+  - QCBoundedCloudPilotIndependentReviewRecord
   - QCBoundedCloudPilotIndependentReviewRequestRecord
   - QCBoundedCloudPilotPlatformActionAuthorizationLoadResult
   - QCBoundedCloudPilotPlatformActionAuthorizationPolicy
   - QCBoundedCloudPilotPlatformActionContractError
   - QCBoundedCloudPilotPreRunAuthorizationRecord
   - QCBoundedCloudPilotProjectSourceArtifact
+  - build_qc_qqq_options_bounded_cloud_pilot_independent_review_record
   - build_qc_qqq_options_bounded_cloud_pilot_pre_run_record
   - build_qc_qqq_options_bounded_cloud_pilot_project_source
   - load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization

@@ -7721,3 +7721,24 @@ platform log 的 DQ/PIT PASS 仅说明该次 selected option event 的日志事�
 `PASS_PLATFORM_LOG_ONLY`；它不能覆盖 2489/2490 shared policy blocker，也不能冒充完整 lifecycle DQ/PIT、
 license bundle 或 accounting reconciliation。Owner review 必须先确认 data-point cap violation 与证据 hash；
 在新的 reviewed shared policy/authorization 到位前，不得将本次 smoke 交给 2493 作为 range-expansion GO。
+
+随后 `project_owner` 以独立 reviewer 身份签发
+`owner_attestation:TRADING-2492:2026-08-05:accept_bounded_qc_pilot_evidence_with_scope_violation_v1`。
+`qc_qqq_options_bounded_pilot_independent_review_record.v1` 不改写上述 evidence 或 pending review request，
+而是重放二者的 canonical file SHA-256（分别为 `2e57bfec…6293c` 与 `94d7aef2…794f`），并交叉绑定
+result artifact SHA-256=`fdd11ab6…6ead`、project/backtest identity、one order/one fill、
+`734127 > 250000`、无 raw option rows 以及 2489/2490 仍 blocked 的事实。
+
+```text
+immutable execution evidence + immutable independent review request
+  + project_owner attestation (reviewer != collector)
+  -> ACCEPTED_WITH_SCOPE_VIOLATION
+  -> PILOT_NO_GO_LICENSE_OR_EVIDENCE
+  -> range_expansion=false / further_cloud_action=false
+  -> shared 2489 collection and 2490 reconciliation remain blocked
+  -x-> rerun, paid-tier inference, strategy validity, investment conclusion
+```
+
+该 NO-GO 是 2492 的 terminal disposition：它只允许 2493 消费并签署治理结论，不批准扩窗、再次 cloud
+action、付费升级结论或任何 paper/live/broker/production 行为。若未来需要新的平台实验，必须另立任务、
+重新校准 resource cap，并取得新的独立 Owner authorization；本次 single-use token 永久失效。

@@ -90,6 +90,19 @@ OWNER_REVIEW_REQUEST_ITEMS: tuple[str, ...] = (
     "VERIFY_SHARED_2489_2490_REMAIN_BLOCKED",
     "ACCEPT_OR_REJECT_EVIDENCE_RECORD",
 )
+OWNER_EVIDENCE_ATTESTATION_ID = (
+    "owner_attestation:TRADING-2492:2026-08-05:"
+    "accept_bounded_qc_pilot_evidence_with_scope_violation_v1"
+)
+EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256 = (
+    "2e57bfec7119daa05f89e1a48d8e06d7ca5fda6b38846e8f3d985c3ccdc6293c"
+)
+EXPECTED_REVIEW_REQUEST_RECORD_SHA256 = (
+    "94d7aef27daab59fa5dcacf82e993086bdda57fa177520d6d370f90a75d1794f"
+)
+EXPECTED_RESULT_ARTIFACT_SHA256 = (
+    "fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead"
+)
 
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -718,6 +731,77 @@ class QCBoundedCloudPilotIndependentReviewRequestRecord(_SealedModel):
         return self
 
 
+class QCBoundedCloudPilotIndependentReviewRecord(_SealedModel):
+    schema_version: Literal[
+        "qc_qqq_options_bounded_cloud_pilot_independent_review_record.v1"
+    ]
+    record_id: str
+    owner_attestation_id: Literal[
+        "owner_attestation:TRADING-2492:2026-08-05:"
+        "accept_bounded_qc_pilot_evidence_with_scope_violation_v1"
+    ]
+    owner_attestation_date: date
+    evidence_record_path: Literal[
+        "inputs/external_validation/"
+        "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+    ]
+    evidence_record_sha256: Literal[
+        "2e57bfec7119daa05f89e1a48d8e06d7ca5fda6b38846e8f3d985c3ccdc6293c"
+    ]
+    review_request_path: Literal[
+        "inputs/external_validation/"
+        "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+    ]
+    review_request_sha256: Literal[
+        "94d7aef27daab59fa5dcacf82e993086bdda57fa177520d6d370f90a75d1794f"
+    ]
+    result_artifact_sha256: Literal[
+        "fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead"
+    ]
+    project_id: Literal["34808569"]
+    backtest_id: Literal["6e70793600035ddc3d7f856319a352db"]
+    collector_id: Literal["codex_pilot_coordinator"]
+    independent_reviewer_id: Literal["project_owner"]
+    confirmed_one_order_one_fill: Literal[True]
+    confirmed_processed_data_points: Literal[734127]
+    confirmed_reviewed_cap: Literal[250000]
+    confirmed_scope_violation: Literal[True]
+    confirmed_no_raw_option_rows: Literal[True]
+    confirmed_shared_2489_2490_blocked: Literal[True]
+    failed_scope_check_ids: tuple[Literal["PROCESSED_DATA_POINTS"], ...]
+    evidence_acceptance: Literal["ACCEPTED_WITH_SCOPE_VIOLATION"]
+    authorization_state: Literal[
+        "INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"
+    ]
+    independent_review_completed: Literal[True]
+    disposition: Literal["PILOT_NO_GO_LICENSE_OR_EVIDENCE"]
+    range_expansion_allowed: Literal[False]
+    further_cloud_action_authorized: Literal[False]
+    investment_interpretation_allowed: Literal[False]
+    production_effect: Literal["none"]
+    broker_action: Literal["none"]
+
+    @field_validator("record_id")
+    @classmethod
+    def _validate_record_id(cls, value: str) -> str:
+        return _identifier(value, "record_id")
+
+    @field_validator("owner_attestation_date")
+    @classmethod
+    def _validate_owner_attestation_date(cls, value: date) -> date:
+        if value != date(2026, 8, 5):
+            raise ValueError("Owner attestation date drifted")
+        return value
+
+    @model_validator(mode="after")
+    def _validate_final_review(self) -> Self:
+        if self.failed_scope_check_ids != ("PROCESSED_DATA_POINTS",):
+            raise ValueError("final review must preserve the exact scope violation")
+        if self.confirmed_processed_data_points <= self.confirmed_reviewed_cap:
+            raise ValueError("final review must preserve the confirmed cap breach")
+        return self
+
+
 def load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization(
     path: Path = (
         DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH
@@ -937,6 +1021,113 @@ def _require_bound_regular_file(
     if not resolved.is_file():
         raise ValueError(f"{field} must be a regular file")
     return resolved
+
+
+def build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
+    *,
+    record_id: str = "qc_bounded_cloud_pilot_owner_attestation_20260805_v1",
+    project_root: Path = PROJECT_ROOT,
+) -> QCBoundedCloudPilotIndependentReviewRecord:
+    root = project_root.resolve()
+    try:
+        evidence_path = _require_bound_regular_file(
+            Path(
+                "inputs/external_validation/"
+                "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+            ),
+            project_root=root,
+            field="execution evidence record",
+        )
+        request_path = _require_bound_regular_file(
+            Path(
+                "inputs/external_validation/"
+                "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+            ),
+            project_root=root,
+            field="independent review request record",
+        )
+        evidence_raw = evidence_path.read_bytes()
+        request_raw = request_path.read_bytes()
+        evidence = QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(
+            evidence_raw
+        )
+        request = QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(
+            request_raw
+        )
+        evidence_sha256 = hashlib.sha256(evidence_raw).hexdigest()
+        request_sha256 = hashlib.sha256(request_raw).hexdigest()
+        if evidence_sha256 != EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256:
+            raise ValueError("execution evidence record SHA-256 drifted")
+        if request_sha256 != EXPECTED_REVIEW_REQUEST_RECORD_SHA256:
+            raise ValueError("independent review request SHA-256 drifted")
+        if evidence.result_artifact_sha256 != EXPECTED_RESULT_ARTIFACT_SHA256:
+            raise ValueError("result artifact SHA-256 drifted")
+        if request.evidence_record_sha256 != evidence_sha256:
+            raise ValueError("review request does not bind the execution evidence")
+        if request.result_artifact_sha256 != evidence.result_artifact_sha256:
+            raise ValueError("review request does not bind the result artifact")
+        if request.project_id != evidence.project_id:
+            raise ValueError("review request project identity drifted")
+        if request.backtest_id != evidence.backtest_id:
+            raise ValueError("review request backtest identity drifted")
+        if request.scope_violation_ids != evidence.failed_scope_check_ids:
+            raise ValueError("review request scope violation identity drifted")
+    except (OSError, ValueError) as exc:
+        raise QCBoundedCloudPilotPlatformActionContractError(
+            "QC_BOUNDED_CLOUD_PILOT_INDEPENDENT_REVIEW_INVALID",
+            str(exc),
+        ) from exc
+
+    return QCBoundedCloudPilotIndependentReviewRecord.seal(
+        schema_version=(
+            "qc_qqq_options_bounded_cloud_pilot_independent_review_record.v1"
+        ),
+        record_id=record_id,
+        owner_attestation_id=OWNER_EVIDENCE_ATTESTATION_ID,
+        owner_attestation_date=date(2026, 8, 5),
+        evidence_record_path=(
+            "inputs/external_validation/"
+            "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+        ),
+        evidence_record_sha256=evidence_sha256,
+        review_request_path=(
+            "inputs/external_validation/"
+            "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+        ),
+        review_request_sha256=request_sha256,
+        result_artifact_sha256=evidence.result_artifact_sha256,
+        project_id=evidence.project_id,
+        backtest_id=evidence.backtest_id,
+        collector_id=request.collector_id,
+        independent_reviewer_id=request.independent_reviewer_id,
+        confirmed_one_order_one_fill=(
+            evidence.order_count == 1
+            and evidence.fill_event_count == 1
+            and evidence.filled_quantity == 1
+        ),
+        confirmed_processed_data_points=evidence.processed_data_points,
+        confirmed_reviewed_cap=evidence.maximum_processed_data_points,
+        confirmed_scope_violation=(
+            evidence.processed_data_points > evidence.maximum_processed_data_points
+        ),
+        confirmed_no_raw_option_rows=not evidence.raw_options_rows_present,
+        confirmed_shared_2489_2490_blocked=(
+            evidence.shared_2489_bundle_status
+            == "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+            and evidence.shared_2490_reconciliation_status
+            == "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+        ),
+        failed_scope_check_ids=evidence.failed_scope_check_ids,
+        evidence_acceptance="ACCEPTED_WITH_SCOPE_VIOLATION",
+        authorization_state=evidence.authorization_state,
+        independent_review_completed=True,
+        disposition="PILOT_NO_GO_LICENSE_OR_EVIDENCE",
+        range_expansion_allowed=False,
+        further_cloud_action_authorized=False,
+        investment_interpretation_allowed=False,
+        production_effect="none",
+        broker_action="none",
+    )
 
 
 _QC_PROJECT_TEMPLATE = textwrap.dedent(
@@ -1187,8 +1378,12 @@ __all__ = [
     "AUTHORIZATION_TASK_ID",
     "DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH",
     "EVIDENCE_SCOPE_CHECK_IDS",
+    "EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256",
     "EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256",
     "EXPECTED_PROPOSAL_POLICY_SHA256",
+    "EXPECTED_RESULT_ARTIFACT_SHA256",
+    "EXPECTED_REVIEW_REQUEST_RECORD_SHA256",
+    "OWNER_EVIDENCE_ATTESTATION_ID",
     "OWNER_REVIEW_REQUEST_ITEMS",
     "OWNER_AUTHORIZATION_ID",
     "PROHIBITED_ACTIONS",
@@ -1199,9 +1394,11 @@ __all__ = [
     "QCBoundedCloudPilotPlatformActionContractError",
     "QCBoundedCloudPilotEvidenceScopeCheck",
     "QCBoundedCloudPilotExecutionEvidenceRecord",
+    "QCBoundedCloudPilotIndependentReviewRecord",
     "QCBoundedCloudPilotIndependentReviewRequestRecord",
     "QCBoundedCloudPilotPreRunAuthorizationRecord",
     "QCBoundedCloudPilotProjectSourceArtifact",
+    "build_qc_qqq_options_bounded_cloud_pilot_independent_review_record",
     "build_qc_qqq_options_bounded_cloud_pilot_pre_run_record",
     "build_qc_qqq_options_bounded_cloud_pilot_project_source",
     "load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization",
