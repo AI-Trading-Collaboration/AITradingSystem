@@ -46245,6 +46245,7 @@ phase_ops_074_daily_official_policy_capture_consumption_v1:
   - tests/test_daily_input_capture.py
   - tests/test_daily_scoring.py
   - tests/test_ops_daily.py
+  - tests/test_trading2452_architecture_contract.py
   removed_live_source_paths: []
   new_source_paths:
   - docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md
@@ -46297,6 +46298,7 @@ phase_ops_074_daily_official_policy_capture_consumption_v1:
   - tests/test_daily_input_capture.py
   - tests/test_daily_scoring.py
   - tests/test_ops_daily.py
+  - tests/test_trading2452_architecture_contract.py
   supersession:
     superseded_by_phase: OPS-074-DAILY-OFFICIAL-POLICY-CAPTURE-CONSUMPTION
     scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
@@ -46335,7 +46337,7 @@ phase_ops_074_daily_official_policy_capture_consumption_v1:
     sha256: db7404cb7d02e85e2d3792733d922258d1b291e337b1d66ae9199edc23bfb6a3
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: c262a84756b283c83335d257d208704bfbba351b9200e6173638c9f433658980
+    sha256: 4814976069651e96508430b15a9f0086f35a9215ef65535a9ab1a83a174a7a66
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
     sha256: 640656db32ed8f7a8b312dd3ee0f0b18361c439838f75b6d9db9f5d602a73e33
@@ -46422,7 +46424,7 @@ phase_ops_074_daily_official_policy_capture_consumption_v1:
     sha256: d392b3667ef8fb226f68d9a628b0410b899ddec06ae1f98e06eea9b0039e5497
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: fb29548850b44d70ec46a72848d712f87c6b6994dfe85b5ee2475626fb0746e6
+    sha256: d4b25b0f9ca4731539fffb2f50c82856bdf035568ba16a2465941167f5662a28
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004f1_operations_control_plane.py
     sha256: b89ff11d4ca7c9d72f5e73673d041b3f2789c2cdc31b3ba7039de931c9e34d44
@@ -46441,6 +46443,9 @@ phase_ops_074_daily_official_policy_capture_consumption_v1:
     hash_normalization: git_eol_lf
   - path: tests/test_ops_daily.py
     sha256: 02389b608a5494f004a0611d4bdc16b8d90495b3ca9bc3ecdb27cf87017ba7d9
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2452_architecture_contract.py
+    sha256: faeb34000fb3a2fbc9415f3add70b1a7f6a9e657a08073e1c7daa6b633668991
     hash_normalization: git_eol_lf
   generated_fragment_authority:
     mode: INDEX_TRANSITIVE_SHA256_AUTHORITY

@@ -3091,6 +3091,7 @@ OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_ADDITIONAL_SUPERSESSION_PATHS = froz
         "tests/test_daily_input_capture.py",
         "tests/test_daily_scoring.py",
         "tests/test_ops_daily.py",
+        "tests/test_trading2452_architecture_contract.py",
     }
 )
 OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_NEW_SOURCE_PATHS = frozenset(
