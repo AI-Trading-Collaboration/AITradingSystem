@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 1a05a5bfc8af9f54bf82919d87c6e713025889a1baadb98e93bf4b9c5267d270
+baseline_checksum: b802407349323c26e069a27a5f1688a17d92cad0ec138d4c4dd1068cd2ffe7f7
 source_of_truth: LEGACY_MARKDOWN_ONLY
 task_count: 962
 fragment_count: 962
@@ -3896,4 +3896,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 302b6ee48b6ee2f2663a6e7288caae9a47bac5b426f6916a88d9f27eff14913d
+index_checksum: c3d126289656c34dd8073955b2654bacf41e5b25bc17f7e3820ca3fceed39d3b

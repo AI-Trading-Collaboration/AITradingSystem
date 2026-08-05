@@ -46341,13 +46341,13 @@ phase_ops_074_daily_official_policy_capture_consumption_v1:
     sha256: 640656db32ed8f7a8b312dd3ee0f0b18361c439838f75b6d9db9f5d602a73e33
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 6e51dee1c7f69f6c5c9bc9bb911532292926bd7cd5fd7566f858aca950cc7650
+    sha256: 2785e71cf46282330204e809e5b3fa760f0ae18141d76e492f406eda1337f9c7
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 273169e43dc2414d069404c3219c9e62ef8858fd5e57d54844a7ca708de4e192
+    sha256: 60770d22eaf85982cf618c724192a61525e0f49a92a33bd78df8143b02d9c7ee
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
-    sha256: bbc522ee0ae19a859dae12da88a7045d5d3f1cada18a040d665fa0f6f61f052f
+    sha256: d690b8532a4ff6c5fed6d5e3a5ef46b2f76119072ac1283bc12ac076bbdc54ea
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/06/065aa4e4a4d192cef68318b8a93d6de16c7043698777aeae5f9b2e32183fdefc.yaml
     sha256: 71ce8800653325b6df4b60812c9b20ff9064ef8aeea1c2a5046b6c2b2132ffb8

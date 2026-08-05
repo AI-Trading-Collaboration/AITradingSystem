@@ -1,7 +1,7 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: 1a05a5bfc8af9f54bf82919d87c6e713025889a1baadb98e93bf4b9c5267d270
+baseline_checksum: b802407349323c26e069a27a5f1688a17d92cad0ec138d4c4dd1068cd2ffe7f7
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
@@ -9669,7 +9669,7 @@ consumer_inventory:
   runtime_consumer_count: 9
   test_consumer_count: 123
   script_consumer_count: 3
-  consumer_set_sha256: 54253d22d839183e851ee3402b049c9e5c5f012042627a644871f1494c0ad53c
+  consumer_set_sha256: e36da4e6631f57511cbee151550955073f17fa7ae3821c7ad137b43e9d8b1f80
   source_cutover_allowed: false
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
@@ -10515,7 +10515,7 @@ consumer_inventory:
     targets:
     - docs/task_register.md
     - docs/task_register_completed.md
-    reference_count: 28
+    reference_count: 29
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
     rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: tests/test_arch_004_wave12_g4_d0b_readiness.py
@@ -10657,4 +10657,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 420b02aa4745175c9b11ed702d93f1183b22ee571846cc984b549f29f2eba747
+index_checksum: 0b9d2337737b482ac80b3c07a69ad0d1ead36d46cf7e207eaeb69f738344ea4c
