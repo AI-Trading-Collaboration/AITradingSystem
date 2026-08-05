@@ -173,6 +173,26 @@ def test_pre_run_record_is_sealed_canonical_and_cash_preserving() -> None:
     )
 
 
+def test_tracked_pre_run_record_replays_exact_project_source_authority() -> None:
+    raw = (
+        ROOT
+        / "inputs/external_validation/"
+        "qc_qqq_options_bounded_cloud_pilot_authorization_20260805.json"
+    ).read_bytes()
+    record = QCBoundedCloudPilotPreRunAuthorizationRecord.from_json_bytes(raw)
+    project = build_qc_qqq_options_bounded_cloud_pilot_project_source(
+        repository_code_sha=record.repository_code_sha,
+        project_root=ROOT,
+    )
+
+    assert record.repository_code_sha == (
+        "ce724ed7b09b8dacd66255e8d791d56dce5c4293"
+    )
+    assert record.project_source_sha256 == project.source_sha256
+    assert record.project_source_byte_count == project.byte_count
+    assert record.authorization_policy_sha256 == _loaded().policy_sha256
+
+
 def test_pre_run_record_rejects_noncanonical_or_tampered_json() -> None:
     record = _record()
     payload = json.loads(record.canonical_bytes)
