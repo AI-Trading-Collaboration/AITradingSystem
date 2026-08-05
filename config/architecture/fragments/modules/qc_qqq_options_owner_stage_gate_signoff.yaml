@@ -1,0 +1,32 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_owner_stage_gate_signoff
+fragment_kind: module
+owner: research_governance
+module_prefix: src/ai_trading_system/qqq_options_research/owner_stage_gate_signoff.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_OWNER_ATTESTATION_PATH
+  - DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_POLICY_PATH
+  - DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_PROPOSAL_PATH
+  - EXPECTED_AUTHORITY_IDS
+  - EXPECTED_AXIS_DECISIONS
+  - EXPECTED_UNKNOWN_IDS
+  - OWNER_STAGE_GATE_DECISION_ID
+  - OwnerStageGateAxis
+  - OwnerStageGateDecision
+  - QCQQQOptionsOwnerStageGateAuthorityBinding
+  - QCQQQOptionsOwnerStageGateAxisDecision
+  - QCQQQOptionsOwnerStageGateAxisPolicy
+  - QCQQQOptionsOwnerStageGateContractError
+  - QCQQQOptionsOwnerStageGateOwnerAttestationRecord
+  - QCQQQOptionsOwnerStageGatePolicy
+  - QCQQQOptionsOwnerStageGatePolicyLoadResult
+  - QCQQQOptionsOwnerStageGateProposalRecord
+  - QCQQQOptionsOwnerStageGateSafety
+  - QCQQQOptionsOwnerStageGateSignoffRecord
+  - QCQQQOptionsOwnerStageGateUnknown
+  - QCQQQOptionsOwnerStageGateUnknownPolicy
+  - build_qc_qqq_options_owner_stage_gate_proposal
+  - build_qc_qqq_options_owner_stage_gate_signoff
+  - load_qc_qqq_options_owner_stage_gate_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture

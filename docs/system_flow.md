@@ -7742,3 +7742,36 @@ immutable execution evidence + immutable independent review request
 该 NO-GO 是 2492 的 terminal disposition：它只允许 2493 消费并签署治理结论，不批准扩窗、再次 cloud
 action、付费升级结论或任何 paper/live/broker/production 行为。若未来需要新的平台实验，必须另立任务、
 重新校准 resource cap，并取得新的独立 Owner authorization；本次 single-use token 永久失效。
+
+## TRADING-2493 QuantConnect QQQ Options Owner Stage-Gate Signoff V1
+
+`config/research/qc_qqq_options_owner_stage_gate_signoff_v1.yaml` 与
+`qqq_options_research.owner_stage_gate_signoff` 只消费 2492 terminal NO-GO authority。loader exact-bind
+platform-action module/policy、execution evidence、pending review request 与 Owner independent-review record，
+并通过 2492 的 `from_json_bytes` canonical API 重放 project/backtest/result identity、one-order/one-fill、
+`734127 > 250000`、无 raw rows、platform-log-only DQ/PIT 与 2489/2490 blocked 事实。
+
+```text
+2492 immutable evidence + review request + project_owner review
+  -> exact five-file hash/schema/canonical replay
+  -> capability=CONDITIONAL_GO
+  -> technical correctness=CONDITIONAL_GO
+  -> license/export=DQ/PIT=resource=shared reconciliation=NO_GO
+  -> range expansion=paid-tier upgrade=NO_GO
+  + five UNKNOWN records with owner and exit condition
+  -> aggregate recommendation=NO_GO_KEEP_BLOCKED
+  -> PENDING_OWNER_SIGNATURE proposal
+  + exact tracked Owner attestation
+  -> SIGNED_NO_GO terminal record
+```
+
+单轴 `CONDITIONAL_GO` 只说明一日 QQQ minute option chain 与独立分钟 submit/fill mechanics 曾被观察，
+不能提升为 aggregate GO。Free tier historical entitlement、2489 manual bundle、2490 reconciliation policy、
+resource cap calibration 与 primary `2021-02-22` research-window viability 都保留为
+`UNKNOWN_BLOCKS_GO`，并绑定独立 owner/exit condition；`2022-12-01` 不成为默认。
+
+工程线只能生成 `PENDING_OWNER_SIGNATURE` proposal，不能从 caller token 或自由文本伪造 terminal signoff。
+在 project owner exact-bind proposal/policy/axis hashes 并明确接受 `NO_GO_KEEP_BLOCKED` 前，任务保持
+`IN_PROGRESS`。无论是否签署，range expansion、further cloud action、paid-tier upgrade、investment
+interpretation、paper/live/broker/production 均为 false/none；未来任何平台实验或 short/roll/multi-leg/
+LEAPS/Wheel 必须另立任务和独立授权。
