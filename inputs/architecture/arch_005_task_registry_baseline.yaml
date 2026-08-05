@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1696786
-    sha256: d7553425a5f44c00df870e0c4693dd1144b340897e97706522d770598041e16e
+    byte_count: 1696822
+    sha256: a282c641084fd53be940cbe8e42720f72972e4da63fabcfa11ee9e9593ae2054
     row_count: 457
     final_newline: true
     task_id_order_sha256: f891735537788e004523bc35f296684acf0f80fbe9ab93d5b8a263d06f9a0872
-    row_checksum_order_sha256: ebefedb94d0ed5e033d0d2e6eca84888222b5b46eded9f3115b16ccfd18a30c9
+    row_checksum_order_sha256: 4bee13420d51df1d68ee2244e99d821a0b527378cc2fc36ca3016881838fdc35
     task_row_newline_counts:
       LF: 457
   - source: completed
@@ -122,17 +122,17 @@ inventory:
   status_counts:
     BASELINE_DONE: 151
     BLOCKED_EXTERNAL: 11
-    BLOCKED_OWNER_INPUT: 8
+    BLOCKED_OWNER_INPUT: 9
     DEFERRED: 1
     DONE: 493
     DROPPED: 12
-    IN_PROGRESS: 7
+    IN_PROGRESS: 6
     PROPOSED: 9
     READY: 1
     VALIDATING: 269
   task_id_set_sha256: 28fed7662f4ccd5658959f6060ef4e30fc587ee909a15eea2468555f60a8fdb4
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 904687f354771d0f3a2a46f697967cd8efe05df6af671f34303ff45903403e1b
+  owner_set_sha256: 72408867b6d56a8e6d9c940c1afe71c477d6ea63d7dbcb0b81c1d1de41f35c61
   docs_link_set_sha256: d5f0af3f4d1924e08ea271a5814aa09c6518feecd691ce0b168f43a77100af3a
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3246,7 +3246,7 @@ inventory:
   - task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
     source: active
     line_number: 2102
-    row_sha256: c5c22479af5a41a17c49ffc5eed92ee42e02cb093e0738a68c3e870d45f5c980
+    row_sha256: 0abeb7fe5b535ea33c5f10a96078655e25feb112efe616b5859eaaa5f70fb9c3
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7880,4 +7880,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 9b8cd09391095e2beede6885a747002493420808243f00681941310cdd8b452e
+baseline_checksum: 67793fab0de70d21e4d3a458f3a65c3b5dc1da6fd1ba09b921c6079a5987a1bb

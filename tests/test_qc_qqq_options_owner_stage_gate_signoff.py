@@ -174,6 +174,25 @@ def test_proposal_is_deterministic_canonical_and_golden() -> None:
     assert QCQQQOptionsOwnerStageGateProposalRecord.from_json_bytes(first.canonical_bytes) == first
 
 
+def test_tracked_proposal_exactly_replays_implementation_commit() -> None:
+    raw = (PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_PROPOSAL_PATH).read_bytes()
+    tracked = QCQQQOptionsOwnerStageGateProposalRecord.from_json_bytes(raw)
+    expected = build_qc_qqq_options_owner_stage_gate_proposal(
+        record_id="qc_qqq_options_owner_stage_gate_proposal_20260806_v1",
+        created_at_utc=_CREATED_AT,
+        repository_code_sha="3e56172cbc09bc9dabef9cc77cd40edf18c83b9b",
+    )
+
+    assert tracked == expected
+    assert tracked.canonical_bytes == raw
+    assert tracked.canonical_sha256 == (
+        "c638f0e75ad8faaa27df91e8c0710a4202e4e29229e1f13202de6514b184d3ef"
+    )
+    assert tracked.content_sha256 == (
+        "1a8da99b91245cf88d568d51d313d59986d5618a3e52b6a41d1cb562c7c58d89"
+    )
+
+
 def test_proposal_rejects_noncanonical_and_semantic_hash_tamper() -> None:
     proposal = _proposal()
     decoded = json.loads(proposal.canonical_bytes)

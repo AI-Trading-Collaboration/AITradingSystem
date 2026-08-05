@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BLOCKED_OWNER_INPUT`
 
 mode：`SINGLE_LANE`
 
@@ -110,6 +110,42 @@ sealed records 必须提供 `seal`、`canonical_bytes`、`canonical_sha256` 与 
 
 在 Owner exact token 尚未收到前，task 不得标为 `BASELINE_DONE`，也不得把 proposal 冒充签署结果。
 
+当前待签 proposal 已从 implementation commit
+`3e56172cbc09bc9dabef9cc77cd40edf18c83b9b` canonical 生成：
+
+- proposal file SHA-256=
+  `c638f0e75ad8faaa27df91e8c0710a4202e4e29229e1f13202de6514b184d3ef`；
+- proposal semantic `content_sha256`=
+  `1a8da99b91245cf88d568d51d313d59986d5618a3e52b6a41d1cb562c7c58d89`；
+- proposal byte count=`8836`；
+- policy file/canonical SHA-256=
+  `5bcfe8d29a70e79f110972d5b1df4fd6f013b0de5b6cb706220e40e09d8b51ff` /
+  `7e637c0eb6070e07e70d8b3d72789a37d646965c323cf95267c6f4799cfac238`；
+- authority-set SHA-256=
+  `0659a92c7de22202a1cba493c74cedaa86ea9e9bccf1238275b51ce18fc118fe`。
+
+Owner 若接受该 proposal，必须原样签发：
+
+```text
+owner_decision:TRADING-2493:2026-08-06:accept_no_go_keep_blocked_stage_gate_v1
+proposal_file_sha256:c638f0e75ad8faaa27df91e8c0710a4202e4e29229e1f13202de6514b184d3ef
+proposal_content_sha256:1a8da99b91245cf88d568d51d313d59986d5618a3e52b6a41d1cb562c7c58d89
+policy_file_sha256:5bcfe8d29a70e79f110972d5b1df4fd6f013b0de5b6cb706220e40e09d8b51ff
+policy_canonical_sha256:7e637c0eb6070e07e70d8b3d72789a37d646965c323cf95267c6f4799cfac238
+authority_set_sha256:0659a92c7de22202a1cba493c74cedaa86ea9e9bccf1238275b51ce18fc118fe
+accepted_aggregate_recommendation:NO_GO_KEEP_BLOCKED
+confirmed_scope_violation:true
+confirmed_shared_2489_2490_blocked:true
+confirmed_no_range_expansion:true
+confirmed_no_further_cloud_action:true
+confirmed_no_paid_upgrade_authorization:true
+confirmed_no_investment_interpretation:true
+confirmed_no_external_action:true
+independent_reviewer:project_owner
+```
+
+该 token 只签署 NO-GO governance disposition；不授权任何外部动作。
+
 ## 7. Safety 与投资解释边界
 
 所有 proposal/signoff 固定：
@@ -161,3 +197,7 @@ byte-identical。首个 compatibility command 被外层 184 秒 timeout 终止�
 append-only successor authority 级联，不含 2493 业务测试失败。该结果保留为 focused failure-fix evidence，
 正式 Architecture 继续暂停；在 proposal/Owner signoff final bytes 冻结后只追加一个 2493 current-authority
 section，不改历史 prefix，并用相同 198-test 覆盖重跑。
+
+implementation commit=`3e56172cbc09bc9dabef9cc77cd40edf18c83b9b`；proposal 已 canonical replay
+并转入 `PENDING_OWNER_SIGNATURE`。当前 blocker 仅为上述 exact Owner token；在 token 到位前不创建
+attestation/signoff，不更新 terminal task status，不启动正式五级门禁。

@@ -1,0 +1,203 @@
+{
+  "aggregate_recommendation": "NO_GO_KEEP_BLOCKED",
+  "authority_set_sha256": "0659a92c7de22202a1cba493c74cedaa86ea9e9bccf1238275b51ce18fc118fe",
+  "axis_decisions": [
+    {
+      "axis_id": "PLATFORM_CAPABILITY",
+      "decision": "CONDITIONAL_GO",
+      "evidence_refs": [
+        "owner_review.confirmed_one_order_one_fill",
+        "execution_evidence.account_tier",
+        "execution_evidence.cloud_compute"
+      ],
+      "observed_facts": [
+        "account_tier=FREE",
+        "cloud_compute=Community B-MICRO",
+        "one_simulated_long_call_fill_observed=true",
+        "historical_entitlement_complete=unknown"
+      ],
+      "reason_code": "SINGLE_SESSION_CAPABILITY_OBSERVED_NOT_ENTITLEMENT_PROOF",
+      "summary": "A single QQQ minute option-chain session and one simulated fill were observed, but historical entitlement and coverage remain unproven."
+    },
+    {
+      "axis_id": "TECHNICAL_CORRECTNESS",
+      "decision": "CONDITIONAL_GO",
+      "evidence_refs": [
+        "execution_evidence.intent_time_utc",
+        "execution_evidence.submit_time_utc",
+        "execution_evidence.fill_time_utc"
+      ],
+      "observed_facts": [
+        "intent_submit_fill_independent_minutes=true",
+        "one_order_one_fill=true",
+        "source_disposition=PILOT_NO_GO_LICENSE_OR_EVIDENCE"
+      ],
+      "reason_code": "BOUNDED_CHRONOLOGY_OBSERVED_SHARED_VALIDATION_INCOMPLETE",
+      "summary": "Independent-minute intent, submit and fill facts replay, but the bounded smoke is not complete strategy or shared reconciliation validation."
+    },
+    {
+      "axis_id": "LICENSE_EXPORT",
+      "decision": "NO_GO",
+      "evidence_refs": [
+        "execution_evidence.prior_capability_admission",
+        "owner_review.confirmed_no_raw_option_rows"
+      ],
+      "observed_facts": [
+        "prior_capability_admission=CAPABILITY_OR_LICENSE_BLOCKED",
+        "raw_options_rows_present=false",
+        "license_entitlement_for_range_expansion=unknown"
+      ],
+      "reason_code": "LICENSE_AND_EXPORT_ENTITLEMENT_NOT_ESTABLISHED",
+      "summary": "Absence of raw rows in this artifact does not establish license or export entitlement for a larger research range."
+    },
+    {
+      "axis_id": "DQ_PIT",
+      "decision": "NO_GO",
+      "evidence_refs": [
+        "execution_evidence.option_event_dq_status",
+        "execution_evidence.option_event_pit_status"
+      ],
+      "observed_facts": [
+        "option_event_dq_status=PASS_PLATFORM_LOG_ONLY",
+        "option_event_pit_status=PASS_PLATFORM_LOG_ONLY",
+        "shared_lifecycle_dq_pit_complete=false"
+      ],
+      "reason_code": "PLATFORM_LOG_ONLY_DQ_PIT_CANNOT_COVER_SHARED_LIFECYCLE",
+      "summary": "Platform-log-only DQ and PIT observations cannot replace the inherited shared DQ and PIT lifecycle."
+    },
+    {
+      "axis_id": "RESOURCE_BUDGET",
+      "decision": "NO_GO",
+      "evidence_refs": [
+        "owner_review.confirmed_processed_data_points",
+        "owner_review.confirmed_reviewed_cap",
+        "owner_review.failed_scope_check_ids"
+      ],
+      "observed_facts": [
+        "processed_data_points=734127",
+        "reviewed_cap=250000",
+        "scope_violation=PROCESSED_DATA_POINTS"
+      ],
+      "reason_code": "PROCESSED_DATA_POINTS_SCOPE_VIOLATION",
+      "summary": "Observed processed data points exceeded the reviewed pilot cap."
+    },
+    {
+      "axis_id": "SHARED_RECONCILIATION",
+      "decision": "NO_GO",
+      "evidence_refs": [
+        "execution_evidence.shared_2489_bundle_status",
+        "execution_evidence.shared_2490_reconciliation_status"
+      ],
+      "observed_facts": [
+        "shared_2489=BLOCKED_SHARED_POLICY_NOT_AUTHORIZED",
+        "shared_2490=BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+      ],
+      "reason_code": "SHARED_2489_2490_REMAIN_POLICY_BLOCKED",
+      "summary": "The strict manual bundle and local reconciliation authorities remain blocked by their shared policies."
+    },
+    {
+      "axis_id": "RANGE_EXPANSION",
+      "decision": "NO_GO",
+      "evidence_refs": [
+        "owner_review.disposition",
+        "owner_review.range_expansion_allowed",
+        "owner_review.further_cloud_action_authorized"
+      ],
+      "observed_facts": [
+        "range_expansion_allowed=false",
+        "further_cloud_action_authorized=false"
+      ],
+      "reason_code": "TERMINAL_PILOT_DISPOSITION_PROHIBITS_RANGE_EXPANSION",
+      "summary": "The accepted scope violation and terminal pilot disposition prohibit range or workload expansion."
+    },
+    {
+      "axis_id": "PAID_TIER_UPGRADE",
+      "decision": "NO_GO",
+      "evidence_refs": [
+        "owner_review.disposition",
+        "execution_evidence.prior_capability_admission"
+      ],
+      "observed_facts": [
+        "source_disposition=PILOT_NO_GO_LICENSE_OR_EVIDENCE",
+        "paid_tier_value_of_information_reviewed=false",
+        "paid_tier_upgrade_authorized=false"
+      ],
+      "reason_code": "PAID_TIER_VALUE_OF_INFORMATION_NOT_ESTABLISHED",
+      "summary": "The bounded evidence neither proves Free is sufficient nor justifies a paid-tier upgrade decision."
+    }
+  ],
+  "backtest_id": "6e70793600035ddc3d7f856319a352db",
+  "confirmed_no_raw_option_rows": true,
+  "confirmed_processed_data_points": 734127,
+  "confirmed_reviewed_cap": 250000,
+  "confirmed_scope_violation": true,
+  "confirmed_shared_2489_2490_blocked": true,
+  "content_sha256": "1a8da99b91245cf88d568d51d313d59986d5618a3e52b6a41d1cb562c7c58d89",
+  "created_at_utc": "2026-08-06T00:00:00Z",
+  "option_event_dq_status": "PASS_PLATFORM_LOG_ONLY",
+  "option_event_pit_status": "PASS_PLATFORM_LOG_ONLY",
+  "owner_signoff_completed": false,
+  "owner_signoff_status": "PENDING_OWNER_SIGNATURE",
+  "policy_canonical_sha256": "7e637c0eb6070e07e70d8b3d72789a37d646965c323cf95267c6f4799cfac238",
+  "policy_file_sha256": "5bcfe8d29a70e79f110972d5b1df4fd6f013b0de5b6cb706220e40e09d8b51ff",
+  "policy_id": "qc_qqq_options_owner_stage_gate_signoff_v1",
+  "policy_version": "1.0.0",
+  "predecessor_execution_evidence_file_sha256": "2e57bfec7119daa05f89e1a48d8e06d7ca5fda6b38846e8f3d985c3ccdc6293c",
+  "predecessor_owner_review_file_sha256": "3857b5fe52725ff1dfd7d101dda6e27ff3c2b1d89e28505d3a3d52c2bb9c1913",
+  "predecessor_review_request_file_sha256": "94d7aef27daab59fa5dcacf82e993086bdda57fa177520d6d370f90a75d1794f",
+  "project_id": "34808569",
+  "record_id": "qc_qqq_options_owner_stage_gate_proposal_20260806_v1",
+  "repository_code_sha": "3e56172cbc09bc9dabef9cc77cd40edf18c83b9b",
+  "result_artifact_sha256": "fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead",
+  "safety": {
+    "broker_action": "none",
+    "further_cloud_action_authorized": false,
+    "investment_interpretation_allowed": false,
+    "leaps_allowed": false,
+    "live_allowed": false,
+    "multi_leg_allowed": false,
+    "paid_tier_upgrade_authorized": false,
+    "paper_allowed": false,
+    "production_allowed": false,
+    "range_expansion_allowed": false,
+    "roll_allowed": false,
+    "short_options_allowed": false,
+    "wheel_allowed": false
+  },
+  "schema_version": "qc_qqq_options_owner_stage_gate_proposal.v1",
+  "source_authorization_state": "INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION",
+  "source_disposition": "PILOT_NO_GO_LICENSE_OR_EVIDENCE",
+  "terminal_stage_gate_issued": false,
+  "unknowns": [
+    {
+      "exit_condition": "A separately registered license and capability due-diligence task must bind auditable provider terms without another cloud action.",
+      "owner": "project_owner",
+      "status": "UNKNOWN_BLOCKS_GO",
+      "unknown_id": "FREE_TIER_HISTORICAL_ENTITLEMENT"
+    },
+    {
+      "exit_condition": "A reviewed collection policy and authorization must produce a complete strict manual evidence bundle.",
+      "owner": "TRADING-2489 evidence engineering and project_owner",
+      "status": "UNKNOWN_BLOCKS_GO",
+      "unknown_id": "TRADING_2489_MANUAL_BUNDLE_COLLECTION"
+    },
+    {
+      "exit_condition": "Reviewed tolerance, rounding and result-field mapping policy plus complete canonical reconciliation replay are required.",
+      "owner": "TRADING-2490 validation engineering and project_owner",
+      "status": "UNKNOWN_BLOCKS_GO",
+      "unknown_id": "TRADING_2490_RECONCILIATION_POLICY"
+    },
+    {
+      "exit_condition": "A new task must calibrate policy from the observed 734127 data points and obtain a new exact Owner authorization.",
+      "owner": "future separately registered pilot owner",
+      "status": "UNKNOWN_BLOCKS_GO",
+      "unknown_id": "RESOURCE_CAP_CALIBRATION"
+    },
+    {
+      "exit_condition": "A separately authorized governed research run must evaluate the project default window beginning 2021-02-22 with complete DQ and PIT evidence.",
+      "owner": "research owner",
+      "status": "UNKNOWN_BLOCKS_GO",
+      "unknown_id": "PRIMARY_RESEARCH_WINDOW_VIABILITY"
+    }
+  ]
+}

@@ -11,65 +11,66 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: engineering coordinator：生成 strictly offline canonical NO-GO proposal；project
-    owner 作为独立 reviewer：后续只签署 exact proposal/hash
+  next_owner: project owner 作为独立 reviewer：签署 requirement 中 exact proposal/policy/authority
+    hashes；engineering coordinator：收到 token 后生成 attestation/signoff、append-only authority
+    与 final gates
   requirement_refs:
   - docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。只消费
-    2492 terminal NO-GO evidence；实现 capability/technical/license/DQ-PIT/resource/reconciliation/range-expansion/paid-tier
-    八轴 stage gate、UNKNOWN owner/exit conditions 与 signed record validator；不登录或运行 QuantConnect。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。2492
+    terminal NO-GO 已派生八轴 stage gate：capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`；五项
+    UNKNOWN 有 owner/exit condition；aggregate=`NO_GO_KEEP_BLOCKED`。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: 逐项 GO/CONDITIONAL_GO/NO_GO；resource cap breach、platform-log-only DQ/PIT、2489/2490
-      blocked 与五文件 hash chain 不可隐藏；proposal canonical replay/negative/property/golden、system
-      flow/generated/current authority PASS；退出=Owner exact-bind `NO_GO_KEEP_BLOCKED`
-      signoff。
+    text: proposal file/content SHA=`c638f0e7...d3ef`/`1a8da99b...8d89` canonical
+      replay PASS；Owner 只可 exact-bind NO-GO，随后 attestation/signoff、system flow/generated/current
+      authority、focused/adjacent/compatibility/final-tree formal PASS；退出=签署的不可歧义 stage-gate
+      record。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
   legacy_source:
     path: docs/task_register.md
     source_partition: active
     line_number: 2102
-    row_sha256: c5c22479af5a41a17c49ffc5eed92ee42e02cb093e0738a68c3e870d45f5c980
+    row_sha256: 0abeb7fe5b535ea33c5f10a96078655e25feb112efe616b5859eaaa5f70fb9c3
     cell_count: 8
     all_cells:
     - TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
     - Research governance / capability, license, DQ/PIT and range-expansion decision
     - P0
-    - IN_PROGRESS
-    - engineering coordinator：生成 strictly offline canonical NO-GO proposal；project
-      owner 作为独立 reviewer：后续只签署 exact proposal/hash
-    - 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。只消费
-      2492 terminal NO-GO evidence；实现 capability/technical/license/DQ-PIT/resource/reconciliation/range-expansion/paid-tier
-      八轴 stage gate、UNKNOWN owner/exit conditions 与 signed record validator；不登录或运行
-      QuantConnect。
-    - 逐项 GO/CONDITIONAL_GO/NO_GO；resource cap breach、platform-log-only DQ/PIT、2489/2490
-      blocked 与五文件 hash chain 不可隐藏；proposal canonical replay/negative/property/golden、system
-      flow/generated/current authority PASS；退出=Owner exact-bind `NO_GO_KEEP_BLOCKED`
-      signoff。
-    - 2026-08-06：SINGLE_LANE START/LANE 从 `c7c0873...e5e4` PASS，当前只实施 offline proposal；range
+    - BLOCKED_OWNER_INPUT
+    - project owner 作为独立 reviewer：签署 requirement 中 exact proposal/policy/authority
+      hashes；engineering coordinator：收到 token 后生成 attestation/signoff、append-only
+      authority 与 final gates
+    - 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。2492
+      terminal NO-GO 已派生八轴 stage gate：capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`；五项
+      UNKNOWN 有 owner/exit condition；aggregate=`NO_GO_KEEP_BLOCKED`。
+    - proposal file/content SHA=`c638f0e7...d3ef`/`1a8da99b...8d89` canonical replay
+      PASS；Owner 只可 exact-bind NO-GO，随后 attestation/signoff、system flow/generated/current
+      authority、focused/adjacent/compatibility/final-tree formal PASS；退出=签署的不可歧义 stage-gate
+      record。
+    - 2026-08-06：implementation commit=`3e56172c...3b9b`；proposal=`PENDING_OWNER_SIGNATURE`。range
       expansion/further cloud/paid upgrade/investment/paper/live/broker/production
-      全部 false/none。任何后续 cloud pilot、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
+      全部 false/none；任何后续 experiment、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
     raw_line: '|TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1|Research governance
-      / capability, license, DQ/PIT and range-expansion decision|P0|IN_PROGRESS|engineering
-      coordinator：生成 strictly offline canonical NO-GO proposal；project owner 作为独立
-      reviewer：后续只签署 exact proposal/hash|详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。只消费
-      2492 terminal NO-GO evidence；实现 capability/technical/license/DQ-PIT/resource/reconciliation/range-expansion/paid-tier
-      八轴 stage gate、UNKNOWN owner/exit conditions 与 signed record validator；不登录或运行
-      QuantConnect。|逐项 GO/CONDITIONAL_GO/NO_GO；resource cap breach、platform-log-only
-      DQ/PIT、2489/2490 blocked 与五文件 hash chain 不可隐藏；proposal canonical replay/negative/property/golden、system
-      flow/generated/current authority PASS；退出=Owner exact-bind `NO_GO_KEEP_BLOCKED`
-      signoff。|2026-08-06：SINGLE_LANE START/LANE 从 `c7c0873...e5e4` PASS，当前只实施 offline
-      proposal；range expansion/further cloud/paid upgrade/investment/paper/live/broker/production
-      全部 false/none。任何后续 cloud pilot、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。|'
+      / capability, license, DQ/PIT and range-expansion decision|P0|BLOCKED_OWNER_INPUT|project
+      owner 作为独立 reviewer：签署 requirement 中 exact proposal/policy/authority hashes；engineering
+      coordinator：收到 token 后生成 attestation/signoff、append-only authority 与 final gates|详见
+      `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。2492
+      terminal NO-GO 已派生八轴 stage gate：capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`；五项
+      UNKNOWN 有 owner/exit condition；aggregate=`NO_GO_KEEP_BLOCKED`。|proposal file/content
+      SHA=`c638f0e7...d3ef`/`1a8da99b...8d89` canonical replay PASS；Owner 只可 exact-bind
+      NO-GO，随后 attestation/signoff、system flow/generated/current authority、focused/adjacent/compatibility/final-tree
+      formal PASS；退出=签署的不可歧义 stage-gate record。|2026-08-06：implementation commit=`3e56172c...3b9b`；proposal=`PENDING_OWNER_SIGNATURE`。range
+      expansion/further cloud/paid upgrade/investment/paper/live/broker/production
+      全部 false/none；任何后续 experiment、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-c5c22479af5a41a17c49ffc5
+  event_id: legacy-import-0abeb7fe5b535ea33c5f10a9
   task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -79,39 +80,40 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: IN_PROGRESS
+  to_status: BLOCKED_OWNER_INPUT
   payload:
     priority: P0
-    next_owner: engineering coordinator：生成 strictly offline canonical NO-GO proposal；project
-      owner 作为独立 reviewer：后续只签署 exact proposal/hash
-    notes: 2026-08-06：SINGLE_LANE START/LANE 从 `c7c0873...e5e4` PASS，当前只实施 offline
-      proposal；range expansion/further cloud/paid upgrade/investment/paper/live/broker/production
-      全部 false/none。任何后续 cloud pilot、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
+    next_owner: project owner 作为独立 reviewer：签署 requirement 中 exact proposal/policy/authority
+      hashes；engineering coordinator：收到 token 后生成 attestation/signoff、append-only
+      authority 与 final gates
+    notes: 2026-08-06：implementation commit=`3e56172c...3b9b`；proposal=`PENDING_OWNER_SIGNATURE`。range
+      expansion/further cloud/paid upgrade/investment/paper/live/broker/production
+      全部 false/none；任何后续 experiment、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:c5c22479af5a41a17c49ffc5eed92ee42e02cb093e0738a68c3e870d45f5c980
+  - sha256:0abeb7fe5b535ea33c5f10a96078655e25feb112efe616b5859eaaa5f70fb9c3
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
   - Research governance / capability, license, DQ/PIT and range-expansion decision
   - P0
-  - IN_PROGRESS
-  - engineering coordinator：生成 strictly offline canonical NO-GO proposal；project owner
-    作为独立 reviewer：后续只签署 exact proposal/hash
-  - 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。只消费
-    2492 terminal NO-GO evidence；实现 capability/technical/license/DQ-PIT/resource/reconciliation/range-expansion/paid-tier
-    八轴 stage gate、UNKNOWN owner/exit conditions 与 signed record validator；不登录或运行 QuantConnect。
-  - 逐项 GO/CONDITIONAL_GO/NO_GO；resource cap breach、platform-log-only DQ/PIT、2489/2490
-    blocked 与五文件 hash chain 不可隐藏；proposal canonical replay/negative/property/golden、system
-    flow/generated/current authority PASS；退出=Owner exact-bind `NO_GO_KEEP_BLOCKED`
-    signoff。
-  - 2026-08-06：SINGLE_LANE START/LANE 从 `c7c0873...e5e4` PASS，当前只实施 offline proposal；range
+  - BLOCKED_OWNER_INPUT
+  - project owner 作为独立 reviewer：签署 requirement 中 exact proposal/policy/authority hashes；engineering
+    coordinator：收到 token 后生成 attestation/signoff、append-only authority 与 final gates
+  - 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。2492
+    terminal NO-GO 已派生八轴 stage gate：capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`；五项
+    UNKNOWN 有 owner/exit condition；aggregate=`NO_GO_KEEP_BLOCKED`。
+  - proposal file/content SHA=`c638f0e7...d3ef`/`1a8da99b...8d89` canonical replay
+    PASS；Owner 只可 exact-bind NO-GO，随后 attestation/signoff、system flow/generated/current
+    authority、focused/adjacent/compatibility/final-tree formal PASS；退出=签署的不可歧义 stage-gate
+    record。
+  - 2026-08-06：implementation commit=`3e56172c...3b9b`；proposal=`PENDING_OWNER_SIGNATURE`。range
     expansion/further cloud/paid upgrade/investment/paper/live/broker/production 全部
-    false/none。任何后续 cloud pilot、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
+    false/none；任何后续 experiment、roll/short/multi-leg/LEAPS/Wheel 必须另立任务和独立授权。
   docs_links:
   - docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
   terminal: false
-  raw_row_sha256: c5c22479af5a41a17c49ffc5eed92ee42e02cb093e0738a68c3e870d45f5c980
+  raw_row_sha256: 0abeb7fe5b535ea33c5f10a96078655e25feb112efe616b5859eaaa5f70fb9c3
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: b29225e953b50c4166a172c74443aaa7c6574589d9773445910e3a58efeaeb51
+fragment_checksum: 95c04bd2c3776948106bf50ac84359063677b122079ff0f21d6922a4209661be
