@@ -201,6 +201,28 @@ def test_pre_run_builder_rejects_expired_authorization() -> None:
         )
 
 
+def test_pre_run_builder_uses_owner_decision_tokyo_effective_date() -> None:
+    first_tokyo_minute = datetime(2026, 8, 4, 15, 0, tzinfo=UTC)
+    record = build_qc_qqq_options_bounded_cloud_pilot_pre_run_record(
+        record_id="tokyo_effective_boundary",
+        created_at_utc=first_tokyo_minute,
+        repository_code_sha=REPOSITORY_SHA,
+        project_root=ROOT,
+    )
+    assert record.created_at_utc == first_tokyo_minute
+
+    with pytest.raises(
+        QCBoundedCloudPilotPlatformActionContractError,
+        match="QC_BOUNDED_CLOUD_PILOT_AUTHORIZATION_NOT_YET_EFFECTIVE",
+    ):
+        build_qc_qqq_options_bounded_cloud_pilot_pre_run_record(
+            record_id="tokyo_pre_effective_boundary",
+            created_at_utc=datetime(2026, 8, 4, 14, 59, 59, tzinfo=UTC),
+            repository_code_sha=REPOSITORY_SHA,
+            project_root=ROOT,
+        )
+
+
 def test_project_builder_rejects_invalid_repository_sha() -> None:
     with pytest.raises(ValueError, match="Git SHA"):
         build_qc_qqq_options_bounded_cloud_pilot_project_source(

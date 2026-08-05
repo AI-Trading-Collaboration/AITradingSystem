@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Literal, Self
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
@@ -65,6 +66,7 @@ _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 _IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 _TEXT_PATTERN = re.compile(r"^[^\x00-\x1f\x7f]+$")
+_AUTHORIZATION_ZONE = ZoneInfo("Asia/Tokyo")
 
 
 class QCBoundedCloudPilotPlatformActionContractError(ValueError):
@@ -530,10 +532,8 @@ def build_qc_qqq_options_bounded_cloud_pilot_pre_run_record(
     loaded = load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization(
         authorization_path, project_root=project_root
     )
-    if created < datetime.combine(
-        loaded.policy.authorization_effective_date,
-        datetime.min.time(),
-        tzinfo=UTC,
+    if created.astimezone(_AUTHORIZATION_ZONE).date() < (
+        loaded.policy.authorization_effective_date
     ):
         raise QCBoundedCloudPilotPlatformActionContractError(
             "QC_BOUNDED_CLOUD_PILOT_AUTHORIZATION_NOT_YET_EFFECTIVE",
