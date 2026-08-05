@@ -1,0 +1,33 @@
+{
+  "backtest_id": "6e70793600035ddc3d7f856319a352db",
+  "broker_action": "none",
+  "collector_id": "codex_pilot_coordinator",
+  "content_sha256": "b88810bfb714e359032308d6ecc0ebe5ad85ab4181a8c767c47e38425cf5a7d4",
+  "created_at_utc": "2026-08-05T02:22:00Z",
+  "evidence_record_path": "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json",
+  "evidence_record_sha256": "2e57bfec7119daa05f89e1a48d8e06d7ca5fda6b38846e8f3d985c3ccdc6293c",
+  "final_disposition": "NOT_ISSUED",
+  "independent_review_completed": false,
+  "independent_reviewer_id": "project_owner",
+  "production_effect": "none",
+  "project_id": "34808569",
+  "range_expansion_allowed": false,
+  "record_id": "qc_bounded_cloud_pilot_owner_review_request_20260805_v1",
+  "required_review_items": [
+    "VERIFY_PROJECT_AND_BACKTEST_ID",
+    "VERIFY_RESULT_ARTIFACT_SHA256_AND_BYTE_COUNT",
+    "VERIFY_ONE_ORDER_ONE_FILL_AND_QUANTITY_ONE",
+    "VERIFY_INTENT_SUBMIT_FILL_INDEPENDENT_MINUTES",
+    "VERIFY_REVIEWED_FEE_AND_LIMIT_PRICE",
+    "VERIFY_PROCESSED_DATA_POINT_SCOPE_VIOLATION",
+    "VERIFY_RESULT_JSON_HAS_NO_RAW_OPTION_ROWS",
+    "VERIFY_SHARED_2489_2490_REMAIN_BLOCKED",
+    "ACCEPT_OR_REJECT_EVIDENCE_RECORD"
+  ],
+  "result_artifact_sha256": "fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead",
+  "review_status": "PENDING_PROJECT_OWNER_REVIEW",
+  "schema_version": "qc_qqq_options_bounded_cloud_pilot_independent_review_request.v1",
+  "scope_violation_ids": [
+    "PROCESSED_DATA_POINTS"
+  ]
+}

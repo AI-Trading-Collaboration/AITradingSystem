@@ -12,10 +12,15 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.qqq_options_research.bounded_cloud_pilot_platform_action import (
     ALLOWED_ACTIONS,
     AUTHORIZATION_TASK_ID,
+    EVIDENCE_SCOPE_CHECK_IDS,
     EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256,
     EXPECTED_PROPOSAL_POLICY_SHA256,
     OWNER_AUTHORIZATION_ID,
+    OWNER_REVIEW_REQUEST_ITEMS,
     PROHIBITED_ACTIONS,
+    QCBoundedCloudPilotEvidenceScopeCheck,
+    QCBoundedCloudPilotExecutionEvidenceRecord,
+    QCBoundedCloudPilotIndependentReviewRequestRecord,
     QCBoundedCloudPilotPlatformActionAuthorizationPolicy,
     QCBoundedCloudPilotPlatformActionContractError,
     QCBoundedCloudPilotPreRunAuthorizationRecord,
@@ -53,6 +58,159 @@ def _policy_payload() -> dict[str, object]:
     )
     assert isinstance(payload, dict)
     return copy.deepcopy(payload)
+
+
+def _evidence_scope_checks() -> tuple[QCBoundedCloudPilotEvidenceScopeCheck, ...]:
+    facts = {
+        "ACCOUNT_TIER": ("FREE", "FREE", "ACCOUNT_TIER_CONFIRMED"),
+        "CLOUD_COMPUTE": (
+            "Community B-MICRO",
+            "Community B-MICRO",
+            "CLOUD_COMPUTE_CONFIRMED",
+        ),
+        "REQUESTED_EVALUATED_RANGE": (
+            "2025-12-02..2025-12-02",
+            "2025-12-02..2025-12-02",
+            "RANGE_CONFIRMED",
+        ),
+        "PROJECT_MUTATION_COUNT": ("<=1", "1", "PROJECT_MUTATION_CAP_MET"),
+        "CLOUD_BACKTEST_COUNT": ("<=1", "1", "CLOUD_BACKTEST_CAP_MET"),
+        "RUNTIME_SECONDS": ("<=300", "6.17", "RUNTIME_CAP_MET"),
+        "PROCESSED_DATA_POINTS": (
+            "<=250000",
+            "734127",
+            "MAXIMUM_PROCESSED_DATA_POINTS_EXCEEDED",
+        ),
+        "ORDER_COUNT": ("<=1", "1", "ORDER_CAP_MET"),
+        "CONTRACT_QUANTITY": ("<=1", "1", "CONTRACT_CAP_MET"),
+        "INTENT_SUBMIT_CHRONOLOGY": (
+            "60_SECONDS",
+            "60_SECONDS",
+            "NEXT_INDEPENDENT_MINUTE_CONFIRMED",
+        ),
+        "SUBMIT_FILL_CHRONOLOGY": (
+            "60_SECONDS",
+            "60_SECONDS",
+            "NEXT_INDEPENDENT_MINUTE_CONFIRMED",
+        ),
+        "FEE_PER_CONTRACT": ("0.65_USD", "0.65_USD", "FEE_CONFIRMED"),
+        "SOURCE_AUTHORITY": (
+            "97691704E1ED5D54071A8EC77B0DA895655DD4C6C7EEC8D9723D44CA22465A89",
+            "97691704E1ED5D54071A8EC77B0DA895655DD4C6C7EEC8D9723D44CA22465A89",
+            "SOURCE_AUTHORITY_CONFIRMED",
+        ),
+        "RESULT_TERMINAL": ("COMPLETED", "COMPLETED", "RESULT_TERMINAL_CONFIRMED"),
+        "RAW_OPTIONS_ROWS_ABSENT": (
+            "ABSENT",
+            "ABSENT",
+            "NO_RAW_OPTION_ROWS_CONFIRMED",
+        ),
+        "PROHIBITED_ACTIONS_ABSENT": (
+            "ABSENT",
+            "ABSENT",
+            "PROHIBITED_ACTIONS_NOT_OBSERVED",
+        ),
+    }
+    return tuple(
+        QCBoundedCloudPilotEvidenceScopeCheck(
+            check_id=check_id,
+            status="FAIL" if check_id == "PROCESSED_DATA_POINTS" else "PASS",
+            expected=facts[check_id][0],
+            observed=facts[check_id][1],
+            reason_code=facts[check_id][2],
+        )
+        for check_id in EVIDENCE_SCOPE_CHECK_IDS
+    )
+
+
+def _execution_evidence() -> QCBoundedCloudPilotExecutionEvidenceRecord:
+    return QCBoundedCloudPilotExecutionEvidenceRecord.seal(
+        schema_version="qc_qqq_options_bounded_cloud_pilot_execution_evidence_record.v1",
+        record_id="qc_bounded_cloud_pilot_execution_evidence_20260805_v1",
+        collected_at_utc=datetime(2026, 8, 5, 2, 20, tzinfo=UTC),
+        repository_source_authority_sha="ce724ed7b09b8dacd66255e8d791d56dce5c4293",
+        pre_run_authorization_record_sha256="d1fc79c209415260ebbc34b5ce231d67e4afa2097a87fdeebd92fb01d8c33d1e",
+        owner_authorization_id=OWNER_AUTHORIZATION_ID,
+        authorization_policy_sha256="2934ec3e43a9fb7db7357fa6d0fdc518098724eaed3ce14f46c93b7adf3747a7",
+        authorization_policy_canonical_sha256="cc61e318ea2cd1bce32c93bdc51a2b0a135d20d33ac2a0849918c8c20c8d3823",
+        proposal_policy_sha256=EXPECTED_PROPOSAL_POLICY_SHA256,
+        proposal_authority_set_sha256=EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256,
+        project_id="34808569",
+        project_name="Sleepy Yellow-Green Shark",
+        backtest_id="6e70793600035ddc3d7f856319a352db",
+        backtest_name="Well Dressed Yellow Green Leopard",
+        account_tier="FREE",
+        cloud_compute="Community B-MICRO",
+        engine_version="LEAN Engine v2.5.0.0.17970",
+        lean_version="master v17970",
+        project_source_sha256="97691704e1ed5d54071a8ec77b0da895655dd4c6c7eec8d9723d44ca22465a89",
+        project_source_byte_count=9876,
+        project_source_editor_line_endings="CRLF_CLIPBOARD_LF_CANONICAL",
+        requested_start="2025-12-02",
+        requested_end="2025-12-02",
+        evaluated_start="2025-12-02",
+        evaluated_end="2025-12-02",
+        project_mutation_count=1,
+        cloud_backtest_count=1,
+        runtime_seconds="6.17",
+        maximum_runtime_seconds=300,
+        processed_data_points=734127,
+        maximum_processed_data_points=250000,
+        data_points_per_second=119000,
+        order_count=1,
+        fill_event_count=1,
+        filled_quantity=1,
+        maximum_contract_quantity=1,
+        selected_contract_sid="QQQ YYBCLDUTHNL2|QQQ RIWIV7K5Z9LX",
+        selected_contract_display="QQQ 251215C00625000",
+        intent_time_utc="2025-12-02T14:31:00Z",
+        submit_time_utc="2025-12-02T14:32:00Z",
+        fill_time_utc="2025-12-02T14:33:00Z",
+        order_type="BUY_LIMIT",
+        order_status="FILLED",
+        limit_price_usd="6.44",
+        fill_price_usd="6.44",
+        fee_usd="0.65",
+        start_equity_usd="100000.00",
+        end_equity_usd="100088.35",
+        holdings_value_usd="733.00",
+        runtime_unrealized_usd="83.35",
+        result_state="Completed",
+        result_artifact_sha256="fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead",
+        result_artifact_byte_count=17356,
+        result_top_level_keys=(
+            "algorithmConfiguration",
+            "analysis",
+            "charts",
+            "orders",
+            "profitLoss",
+            "rollingWindow",
+            "runtimeStatistics",
+            "state",
+            "statistics",
+            "totalPerformance",
+        ),
+        raw_options_rows_present=False,
+        order_submission_snapshot_present=True,
+        broker_identifier_retained_in_tracked_evidence=False,
+        editor_warning_count=4,
+        editor_blocking_error_count=0,
+        option_event_dq_status="PASS_PLATFORM_LOG_ONLY",
+        option_event_pit_status="PASS_PLATFORM_LOG_ONLY",
+        shared_2489_bundle_status="BLOCKED_SHARED_POLICY_NOT_AUTHORIZED",
+        shared_2490_reconciliation_status="BLOCKED_SHARED_POLICY_NOT_AUTHORIZED",
+        prior_capability_admission="CAPABILITY_OR_LICENSE_BLOCKED",
+        scope_checks=_evidence_scope_checks(),
+        failed_scope_check_ids=("PROCESSED_DATA_POINTS",),
+        authorization_state="INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION",
+        independent_review_status="PENDING_PROJECT_OWNER_REVIEW",
+        final_disposition="NOT_ISSUED",
+        decision="PILOT_EVIDENCE_COLLECTED_SCOPE_VIOLATION_REVIEW_REQUIRED",
+        range_expansion_allowed=False,
+        investment_interpretation_allowed=False,
+        production_effect="none",
+        broker_action="none",
+    )
 
 
 def test_authorization_loads_exact_owner_scope_and_live_proposal() -> None:
@@ -206,6 +364,109 @@ def test_pre_run_record_rejects_noncanonical_or_tampered_json() -> None:
     ).encode("utf-8")
     with pytest.raises(ValueError):
         QCBoundedCloudPilotPreRunAuthorizationRecord.from_json_bytes(tampered)
+
+
+def test_execution_evidence_is_sealed_and_derives_scope_violation() -> None:
+    evidence = _execution_evidence()
+
+    assert evidence.order_count == 1
+    assert evidence.fill_event_count == 1
+    assert evidence.filled_quantity == 1
+    assert evidence.processed_data_points == 734127
+    assert evidence.maximum_processed_data_points == 250000
+    assert evidence.failed_scope_check_ids == ("PROCESSED_DATA_POINTS",)
+    assert evidence.authorization_state == (
+        "INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"
+    )
+    assert evidence.shared_2489_bundle_status == (
+        "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+    )
+    assert evidence.shared_2490_reconciliation_status == (
+        "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+    )
+    assert evidence.final_disposition == "NOT_ISSUED"
+    assert (
+        QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(
+            evidence.canonical_bytes
+        )
+        == evidence
+    )
+
+
+def test_execution_evidence_rejects_hidden_data_point_breach() -> None:
+    evidence = _execution_evidence()
+    payload = evidence.model_dump(mode="json")
+    payload["processed_data_points"] = 250000
+    with pytest.raises(ValueError, match="observed data-point breach"):
+        QCBoundedCloudPilotExecutionEvidenceRecord.model_validate(payload)
+
+    payload = evidence.model_dump(mode="json")
+    checks = payload["scope_checks"]
+    assert isinstance(checks, list)
+    checks[6]["status"] = "PASS"
+    with pytest.raises(ValueError, match="scope failure taxonomy"):
+        QCBoundedCloudPilotExecutionEvidenceRecord.model_validate(payload)
+
+
+def test_independent_review_request_preserves_pending_owner_boundary() -> None:
+    evidence = _execution_evidence()
+    request = QCBoundedCloudPilotIndependentReviewRequestRecord.seal(
+        schema_version="qc_qqq_options_bounded_cloud_pilot_independent_review_request.v1",
+        record_id="qc_bounded_cloud_pilot_owner_review_request_20260805_v1",
+        created_at_utc=datetime(2026, 8, 5, 2, 22, tzinfo=UTC),
+        evidence_record_path=(
+            "inputs/external_validation/"
+            "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+        ),
+        evidence_record_sha256=evidence.canonical_sha256,
+        result_artifact_sha256=evidence.result_artifact_sha256,
+        project_id="34808569",
+        backtest_id="6e70793600035ddc3d7f856319a352db",
+        collector_id="codex_pilot_coordinator",
+        independent_reviewer_id="project_owner",
+        required_review_items=OWNER_REVIEW_REQUEST_ITEMS,
+        scope_violation_ids=("PROCESSED_DATA_POINTS",),
+        review_status="PENDING_PROJECT_OWNER_REVIEW",
+        independent_review_completed=False,
+        final_disposition="NOT_ISSUED",
+        range_expansion_allowed=False,
+        production_effect="none",
+        broker_action="none",
+    )
+
+    assert request.independent_review_completed is False
+    assert request.review_status == "PENDING_PROJECT_OWNER_REVIEW"
+    assert request.final_disposition == "NOT_ISSUED"
+    assert (
+        QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(
+            request.canonical_bytes
+        )
+        == request
+    )
+
+
+def test_tracked_execution_evidence_and_review_request_cross_bind() -> None:
+    evidence = QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(
+        (
+            ROOT
+            / "inputs/external_validation/"
+            "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+        ).read_bytes()
+    )
+    review = QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(
+        (
+            ROOT
+            / "inputs/external_validation/"
+            "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+        ).read_bytes()
+    )
+
+    assert review.evidence_record_sha256 == evidence.canonical_sha256
+    assert review.result_artifact_sha256 == evidence.result_artifact_sha256
+    assert review.project_id == evidence.project_id
+    assert review.backtest_id == evidence.backtest_id
+    assert review.scope_violation_ids == evidence.failed_scope_check_ids
+    assert review.independent_review_completed is False
 
 
 def test_pre_run_builder_rejects_expired_authorization() -> None:

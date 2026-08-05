@@ -61,6 +61,35 @@ PROHIBITED_ACTIONS: tuple[str, ...] = (
     "PRODUCTION",
     "RAW_OPTIONS_DATA_DOWNLOAD",
 )
+EVIDENCE_SCOPE_CHECK_IDS: tuple[str, ...] = (
+    "ACCOUNT_TIER",
+    "CLOUD_COMPUTE",
+    "REQUESTED_EVALUATED_RANGE",
+    "PROJECT_MUTATION_COUNT",
+    "CLOUD_BACKTEST_COUNT",
+    "RUNTIME_SECONDS",
+    "PROCESSED_DATA_POINTS",
+    "ORDER_COUNT",
+    "CONTRACT_QUANTITY",
+    "INTENT_SUBMIT_CHRONOLOGY",
+    "SUBMIT_FILL_CHRONOLOGY",
+    "FEE_PER_CONTRACT",
+    "SOURCE_AUTHORITY",
+    "RESULT_TERMINAL",
+    "RAW_OPTIONS_ROWS_ABSENT",
+    "PROHIBITED_ACTIONS_ABSENT",
+)
+OWNER_REVIEW_REQUEST_ITEMS: tuple[str, ...] = (
+    "VERIFY_PROJECT_AND_BACKTEST_ID",
+    "VERIFY_RESULT_ARTIFACT_SHA256_AND_BYTE_COUNT",
+    "VERIFY_ONE_ORDER_ONE_FILL_AND_QUANTITY_ONE",
+    "VERIFY_INTENT_SUBMIT_FILL_INDEPENDENT_MINUTES",
+    "VERIFY_REVIEWED_FEE_AND_LIMIT_PRICE",
+    "VERIFY_PROCESSED_DATA_POINT_SCOPE_VIOLATION",
+    "VERIFY_RESULT_JSON_HAS_NO_RAW_OPTION_ROWS",
+    "VERIFY_SHARED_2489_2490_REMAIN_BLOCKED",
+    "ACCEPT_OR_REJECT_EVIDENCE_RECORD",
+)
 
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -433,6 +462,259 @@ class QCBoundedCloudPilotPreRunAuthorizationRecord(_SealedModel):
             raise ValueError("pre-run record requested range drifted")
         if self.created_at_utc > self.authorization_expires_at_utc:
             raise ValueError("pre-run record was created after authorization expiry")
+        return self
+
+
+class QCBoundedCloudPilotEvidenceScopeCheck(_StrictModel):
+    check_id: str
+    status: Literal["PASS", "FAIL", "NOT_EVALUATED"]
+    expected: str
+    observed: str
+    reason_code: str
+
+    @field_validator("check_id", "reason_code")
+    @classmethod
+    def _validate_identifier(cls, value: str, info: Any) -> str:
+        return _identifier(value, str(info.field_name))
+
+    @field_validator("expected", "observed")
+    @classmethod
+    def _validate_text(cls, value: str, info: Any) -> str:
+        return _required_text(value, str(info.field_name))
+
+
+class QCBoundedCloudPilotExecutionEvidenceRecord(_SealedModel):
+    schema_version: Literal[
+        "qc_qqq_options_bounded_cloud_pilot_execution_evidence_record.v1"
+    ]
+    record_id: str
+    collected_at_utc: datetime
+    repository_source_authority_sha: str
+    pre_run_authorization_record_sha256: str
+    owner_authorization_id: Literal[
+        "owner_decision:TRADING-2492:2026-08-05:"
+        "authorize_single_bounded_qc_free_cloud_pilot_v1"
+    ]
+    authorization_policy_sha256: str
+    authorization_policy_canonical_sha256: str
+    proposal_policy_sha256: Literal[
+        "9b3e50731663871e01626f0360c717ecdd14278c63f81e74ed79c4c2fd4041de"
+    ]
+    proposal_authority_set_sha256: Literal[
+        "69578c198823b95ba16b5f6c2780c3a7e24104babe2c6cc1fed8cd740c446bea"
+    ]
+    project_id: str
+    project_name: str
+    backtest_id: str
+    backtest_name: str
+    account_tier: Literal["FREE"]
+    cloud_compute: Literal["Community B-MICRO"]
+    engine_version: Literal["LEAN Engine v2.5.0.0.17970"]
+    lean_version: Literal["master v17970"]
+    project_source_sha256: str
+    project_source_byte_count: Literal[9876]
+    project_source_editor_line_endings: Literal["CRLF_CLIPBOARD_LF_CANONICAL"]
+    requested_start: date
+    requested_end: date
+    evaluated_start: date
+    evaluated_end: date
+    project_mutation_count: Literal[1]
+    cloud_backtest_count: Literal[1]
+    runtime_seconds: str
+    maximum_runtime_seconds: Literal[300]
+    processed_data_points: int
+    maximum_processed_data_points: Literal[250000]
+    data_points_per_second: int
+    order_count: Literal[1]
+    fill_event_count: Literal[1]
+    filled_quantity: Literal[1]
+    maximum_contract_quantity: Literal[1]
+    selected_contract_sid: str
+    selected_contract_display: str
+    intent_time_utc: datetime
+    submit_time_utc: datetime
+    fill_time_utc: datetime
+    order_type: Literal["BUY_LIMIT"]
+    order_status: Literal["FILLED"]
+    limit_price_usd: Literal["6.44"]
+    fill_price_usd: Literal["6.44"]
+    fee_usd: Literal["0.65"]
+    start_equity_usd: Literal["100000.00"]
+    end_equity_usd: Literal["100088.35"]
+    holdings_value_usd: Literal["733.00"]
+    runtime_unrealized_usd: Literal["83.35"]
+    result_state: Literal["Completed"]
+    result_artifact_sha256: str
+    result_artifact_byte_count: Literal[17356]
+    result_top_level_keys: tuple[str, ...]
+    raw_options_rows_present: Literal[False]
+    order_submission_snapshot_present: Literal[True]
+    broker_identifier_retained_in_tracked_evidence: Literal[False]
+    editor_warning_count: Literal[4]
+    editor_blocking_error_count: Literal[0]
+    option_event_dq_status: Literal["PASS_PLATFORM_LOG_ONLY"]
+    option_event_pit_status: Literal["PASS_PLATFORM_LOG_ONLY"]
+    shared_2489_bundle_status: Literal["BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"]
+    shared_2490_reconciliation_status: Literal[
+        "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+    ]
+    prior_capability_admission: Literal["CAPABILITY_OR_LICENSE_BLOCKED"]
+    scope_checks: tuple[QCBoundedCloudPilotEvidenceScopeCheck, ...]
+    failed_scope_check_ids: tuple[str, ...]
+    authorization_state: Literal[
+        "INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"
+    ]
+    independent_review_status: Literal["PENDING_PROJECT_OWNER_REVIEW"]
+    final_disposition: Literal["NOT_ISSUED"]
+    decision: Literal["PILOT_EVIDENCE_COLLECTED_SCOPE_VIOLATION_REVIEW_REQUIRED"]
+    range_expansion_allowed: Literal[False]
+    investment_interpretation_allowed: Literal[False]
+    production_effect: Literal["none"]
+    broker_action: Literal["none"]
+
+    @field_validator("record_id", "project_id", "backtest_id")
+    @classmethod
+    def _validate_identifier(cls, value: str, info: Any) -> str:
+        return _identifier(value, str(info.field_name))
+
+    @field_validator(
+        "project_name",
+        "backtest_name",
+        "selected_contract_sid",
+        "selected_contract_display",
+        "runtime_seconds",
+    )
+    @classmethod
+    def _validate_text(cls, value: str, info: Any) -> str:
+        return _required_text(value, str(info.field_name))
+
+    @field_validator(
+        "repository_source_authority_sha",
+    )
+    @classmethod
+    def _validate_git_sha(cls, value: str, info: Any) -> str:
+        return _git_sha(value, str(info.field_name))
+
+    @field_validator(
+        "pre_run_authorization_record_sha256",
+        "authorization_policy_sha256",
+        "authorization_policy_canonical_sha256",
+        "project_source_sha256",
+        "result_artifact_sha256",
+    )
+    @classmethod
+    def _validate_sha(cls, value: str, info: Any) -> str:
+        return _sha256(value, str(info.field_name))
+
+    @field_validator(
+        "collected_at_utc", "intent_time_utc", "submit_time_utc", "fill_time_utc"
+    )
+    @classmethod
+    def _validate_timestamp(cls, value: datetime, info: Any) -> datetime:
+        return _utc(value, str(info.field_name))
+
+    @model_validator(mode="after")
+    def _validate_evidence_facts(self) -> Self:
+        exact_keys = (
+            "algorithmConfiguration",
+            "analysis",
+            "charts",
+            "orders",
+            "profitLoss",
+            "rollingWindow",
+            "runtimeStatistics",
+            "state",
+            "statistics",
+            "totalPerformance",
+        )
+        if self.result_top_level_keys != exact_keys:
+            raise ValueError("result top-level key inventory drifted")
+        if self.requested_start != date(2025, 12, 2) or self.requested_end != date(
+            2025, 12, 2
+        ):
+            raise ValueError("requested range drifted")
+        if self.evaluated_start != self.requested_start or self.evaluated_end != (
+            self.requested_end
+        ):
+            raise ValueError("evaluated range differs from the reviewed request")
+        if not (
+            self.intent_time_utc < self.submit_time_utc < self.fill_time_utc
+        ):
+            raise ValueError("intent, submit and fill chronology must be strict")
+        if (self.submit_time_utc - self.intent_time_utc).total_seconds() != 60:
+            raise ValueError("intent to submit must be one independent minute")
+        if (self.fill_time_utc - self.submit_time_utc).total_seconds() != 60:
+            raise ValueError("submit to fill must be one independent minute")
+        if self.processed_data_points <= self.maximum_processed_data_points:
+            raise ValueError("tracked evidence must preserve the observed data-point breach")
+        if float(self.runtime_seconds) > self.maximum_runtime_seconds:
+            raise ValueError("tracked evidence runtime unexpectedly breaches its limit")
+        checks = {check.check_id: check for check in self.scope_checks}
+        if tuple(checks) != EVIDENCE_SCOPE_CHECK_IDS:
+            raise ValueError("scope checks must be complete, ordered and unique")
+        expected_failures = ("PROCESSED_DATA_POINTS",)
+        actual_failures = tuple(
+            check.check_id for check in self.scope_checks if check.status == "FAIL"
+        )
+        if actual_failures != expected_failures:
+            raise ValueError("scope failure taxonomy differs from observed facts")
+        if self.failed_scope_check_ids != expected_failures:
+            raise ValueError("failed scope check ids drifted")
+        if any(
+            check.status != "PASS"
+            for check in self.scope_checks
+            if check.check_id != "PROCESSED_DATA_POINTS"
+        ):
+            raise ValueError("non-data-point scope checks must preserve observed PASS")
+        return self
+
+
+class QCBoundedCloudPilotIndependentReviewRequestRecord(_SealedModel):
+    schema_version: Literal[
+        "qc_qqq_options_bounded_cloud_pilot_independent_review_request.v1"
+    ]
+    record_id: str
+    created_at_utc: datetime
+    evidence_record_path: Literal[
+        "inputs/external_validation/"
+        "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+    ]
+    evidence_record_sha256: str
+    result_artifact_sha256: str
+    project_id: Literal["34808569"]
+    backtest_id: Literal["6e70793600035ddc3d7f856319a352db"]
+    collector_id: Literal["codex_pilot_coordinator"]
+    independent_reviewer_id: Literal["project_owner"]
+    required_review_items: tuple[str, ...]
+    scope_violation_ids: tuple[Literal["PROCESSED_DATA_POINTS"], ...]
+    review_status: Literal["PENDING_PROJECT_OWNER_REVIEW"]
+    independent_review_completed: Literal[False]
+    final_disposition: Literal["NOT_ISSUED"]
+    range_expansion_allowed: Literal[False]
+    production_effect: Literal["none"]
+    broker_action: Literal["none"]
+
+    @field_validator("record_id")
+    @classmethod
+    def _validate_record_id(cls, value: str) -> str:
+        return _identifier(value, "record_id")
+
+    @field_validator("created_at_utc")
+    @classmethod
+    def _validate_timestamp(cls, value: datetime) -> datetime:
+        return _utc(value, "created_at_utc")
+
+    @field_validator("evidence_record_sha256", "result_artifact_sha256")
+    @classmethod
+    def _validate_sha(cls, value: str, info: Any) -> str:
+        return _sha256(value, str(info.field_name))
+
+    @model_validator(mode="after")
+    def _validate_review_request(self) -> Self:
+        if self.required_review_items != OWNER_REVIEW_REQUEST_ITEMS:
+            raise ValueError("Owner review item inventory drifted")
+        if self.scope_violation_ids != ("PROCESSED_DATA_POINTS",):
+            raise ValueError("review request must preserve the exact scope violation")
         return self
 
 
@@ -904,8 +1186,10 @@ __all__ = [
     "ALLOWED_ACTIONS",
     "AUTHORIZATION_TASK_ID",
     "DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH",
+    "EVIDENCE_SCOPE_CHECK_IDS",
     "EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256",
     "EXPECTED_PROPOSAL_POLICY_SHA256",
+    "OWNER_REVIEW_REQUEST_ITEMS",
     "OWNER_AUTHORIZATION_ID",
     "PROHIBITED_ACTIONS",
     "QCBoundedCloudPilotActors",
@@ -913,6 +1197,9 @@ __all__ = [
     "QCBoundedCloudPilotPlatformActionAuthorizationLoadResult",
     "QCBoundedCloudPilotPlatformActionAuthorizationPolicy",
     "QCBoundedCloudPilotPlatformActionContractError",
+    "QCBoundedCloudPilotEvidenceScopeCheck",
+    "QCBoundedCloudPilotExecutionEvidenceRecord",
+    "QCBoundedCloudPilotIndependentReviewRequestRecord",
     "QCBoundedCloudPilotPreRunAuthorizationRecord",
     "QCBoundedCloudPilotProjectSourceArtifact",
     "build_qc_qqq_options_bounded_cloud_pilot_pre_run_record",

@@ -301,3 +301,49 @@ Pre-run admission 实现进度：governed START/LANE 从 exact main
 74-test `-n16/loadfile` 覆盖为 `73 passed / 1 failed`，唯一失败是正确 fail-closed 日期错误文本与测试 regex
 不一致；只更正断言后同覆盖 `74 passed`。Ruff、strict mypy、compileall PASS；canonical `main.py`
 本地 compile 且小于 32768 bytes。此时 external action 仍为 none。
+
+## 13. 2026-08-05 terminal execution evidence 与 scope violation
+
+pre-run record 由 source-authority commit
+`ce724ed7b09b8dacd66255e8d791d56dce5c4293` 生成，canonical `main.py` 为 9876 bytes、
+SHA-256=`97691704e1ed5d54071a8ec77b0da895655dd4c6c7eec8d9723d44ca22465a89`。网页编辑器剪贴板
+回读为 CRLF；只做 LF 规范化后与 canonical bytes 完全一致。随后在既有 dedicated project
+`Sleepy Yellow-Green Shark`（project id=`34808569`）消费唯一一次 project mutation，并在 Free
+`Community B-MICRO` 消费唯一一次 cloud backtest。未调用 API/CLI/HTTP/Object Store，未下载 raw
+option rows，未执行 paper/live/broker/production。
+
+唯一 backtest=`Well Dressed Yellow Green Leopard`，id=
+`6e70793600035ddc3d7f856319a352db`，terminal=`Completed`。关键事实：
+
+- requested/evaluated range 均为 `2025-12-02..2025-12-02`；
+- LEAN Engine=`v2.5.0.0.17970`、project Lean=`master v17970`；
+- intent/submit/fill=`09:31/09:32/09:33 America/New_York`，严格各隔一分钟；
+- long call limit order/fill price=`$6.44/share`，quantity/order/fill=`1/1/1`，fee=`$0.65`；
+- start/end equity=`$100000.00/$100088.35`，terminal holdings=`$733.00`，runtime unrealized=`$83.35`；
+- runtime=`6.17s`，rate=`119k data points/s`，processed=`734127` data points；
+- result JSON=`17356 bytes`，SHA-256=
+  `fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead`。其 top-level inventory
+  只有 algorithm configuration、analysis、charts、orders、P&L、rolling/statistics/state/performance；
+  包含单一 order-submission snapshot，但没有 option chain、minute quote、Greeks 或 raw option rows。
+  下载文件保留在 Owner 的 `G:\Download`，tracked evidence 只保留 export-safe derived facts/hash，
+  不保留 result 内的 simulated broker id 或 backend hostname。
+
+scope audit 共 16 项，15 PASS；唯一 FAIL 是 `PROCESSED_DATA_POINTS`：reviewed maximum=`250000`，
+observed=`734127`。这不是策略收益结论，而是预注册 resource cap 违规。根据 authorization
+expiry/revocation 与 lifecycle policy，本次 single-use authority 在 terminal evidence collection 与 scope
+violation 时失效；不得修改项目或重跑，不得输出
+`BOUNDED_PILOT_ACCEPTED_FOR_RANGE_EXPANSION`。task-owned canonical evidence 位于：
+
+- `inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json`；
+- `inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_review_20260805.json`。
+
+第二个文件是 review request，不是 Owner attestation。2489 `collection_authorized=false` 与 2490
+`reconciliation_authorized=false` 仍是 shared authority；本 token 明确不得重定义 predecessor，故当前
+`shared_2489_bundle_status/shared_2490_reconciliation_status` 均为
+`BLOCKED_SHARED_POLICY_NOT_AUTHORIZED`。platform log 的 option-event DQ/PIT PASS 只按
+`PASS_PLATFORM_LOG_ONLY` 保留，不能冒充 shared lifecycle DQ/PIT 或 complete reconciliation PASS。
+
+任务状态转为 canonical `BLOCKED_OWNER_INPUT`，具体 blocker 是 independent review。project owner 必须独立核对 project/backtest identity、结果文件
+hash/bytes、单一 order/fill、分钟 chronology、fee/limit、734127>250000、无 raw rows 结构审计及
+2489/2490 blocked 事实，随后明确 accept/reject evidence record。review 完成前 final disposition=
+`NOT_ISSUED`、range expansion=false；TRADING-2493 不得提前启动。

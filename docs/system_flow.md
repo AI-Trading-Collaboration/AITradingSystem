@@ -7694,3 +7694,30 @@ Owner token + proposal policy SHA 9b3e5073...041de
 该授权仅允许 QuantConnect cloud backtest 内的 simulated order，不允许真实 broker order。任何 project source、
 proposal hash、requested/evaluated range、resource、chronology、DQ/PIT、artifact inventory 或 reviewer drift 都
 fail closed；terminal evidence 在 independent review 前不支持 range expansion 或投资解释。
+
+2026-08-05 唯一授权动作已执行并终止；authorization overlay 已不可再次使用。canonical task-owned evidence
+与 review request 分别为
+`inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json` 和
+`inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_review_20260805.json`。
+
+```text
+canonical source authority ce724ed7...c4293 / main.py SHA 97691704...65a89
+  -> one mutation in project 34808569
+  -> one Free Community B-MICRO backtest 6e707936...52db
+  -> Completed / LEAN v2.5.0.0.17970 / evaluated 2025-12-02
+  -> intent 09:31 -> submit 09:32 -> fill 09:33 America/New_York
+  -> one BUY_LIMIT / quantity 1 / fill $6.44 / fee $0.65
+  -> export-safe result JSON SHA fdd11ab6...6ead / no raw option rows
+  -> scope audit 15 PASS + 1 FAIL
+  -x-> processed data points 734127 > reviewed cap 250000
+  -> INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION
+  -> shared 2489 bundle remains collection_authorized=false
+  -> shared 2490 reconciliation remains reconciliation_authorized=false
+  -> PENDING_PROJECT_OWNER_REVIEW / final disposition NOT_ISSUED
+  -x-> rerun, project mutation, range expansion, investment/paper/live/broker/production
+```
+
+platform log 的 DQ/PIT PASS 仅说明该次 selected option event 的日志事实，记录为
+`PASS_PLATFORM_LOG_ONLY`；它不能覆盖 2489/2490 shared policy blocker，也不能冒充完整 lifecycle DQ/PIT、
+license bundle 或 accounting reconciliation。Owner review 必须先确认 data-point cap violation 与证据 hash；
+在新的 reviewed shared policy/authorization 到位前，不得将本次 smoke 交给 2493 作为 range-expansion GO。
