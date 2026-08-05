@@ -28,19 +28,13 @@ from ai_trading_system.qqq_options_research.bounded_cloud_pilot_owner_review imp
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH = Path(
-    "config/research/"
-    "qc_qqq_options_bounded_cloud_pilot_platform_action_authorization_v1.yaml"
+    "config/research/qc_qqq_options_bounded_cloud_pilot_platform_action_authorization_v1.yaml"
 )
 OWNER_AUTHORIZATION_ID = (
-    "owner_decision:TRADING-2492:2026-08-05:"
-    "authorize_single_bounded_qc_free_cloud_pilot_v1"
+    "owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1"
 )
-AUTHORIZATION_TASK_ID = (
-    "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_PLATFORM_ACTION_AUTHORIZATION_V1"
-)
-EXPECTED_PROPOSAL_POLICY_SHA256 = (
-    "9b3e50731663871e01626f0360c717ecdd14278c63f81e74ed79c4c2fd4041de"
-)
+AUTHORIZATION_TASK_ID = "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_PLATFORM_ACTION_AUTHORIZATION_V1"
+EXPECTED_PROPOSAL_POLICY_SHA256 = "9b3e50731663871e01626f0360c717ecdd14278c63f81e74ed79c4c2fd4041de"
 EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256 = (
     "69578c198823b95ba16b5f6c2780c3a7e24104babe2c6cc1fed8cd740c446bea"
 )
@@ -100,9 +94,7 @@ EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256 = (
 EXPECTED_REVIEW_REQUEST_RECORD_SHA256 = (
     "94d7aef27daab59fa5dcacf82e993086bdda57fa177520d6d370f90a75d1794f"
 )
-EXPECTED_RESULT_ARTIFACT_SHA256 = (
-    "fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead"
-)
+EXPECTED_RESULT_ARTIFACT_SHA256 = "fdd11ab6ce0791cc3ebd952269f670ba65a1b9747e663628ae462b52ff166ead"
 
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -191,12 +183,8 @@ class _SealedModel(_StrictModel):
 
     @classmethod
     def seal(cls, **payload: Any) -> Self:
-        semantic = cls.model_validate(
-            {**payload, "content_sha256": "0" * 64}
-        ).semantic_payload()
-        return cls.model_validate(
-            {**payload, "content_sha256": _canonical_sha256(semantic)}
-        )
+        semantic = cls.model_validate({**payload, "content_sha256": "0" * 64}).semantic_payload()
+        return cls.model_validate({**payload, "content_sha256": _canonical_sha256(semantic)})
 
     @classmethod
     def from_json_bytes(cls, raw: bytes) -> Self:
@@ -257,17 +245,14 @@ class QCBoundedCloudPilotPlatformActionAuthorizationPolicy(_StrictModel):
     schema_version: Literal[
         "qc_qqq_options_bounded_cloud_pilot_platform_action_authorization_policy.v1"
     ]
-    policy_id: Literal[
-        "qc_qqq_options_bounded_cloud_pilot_platform_action_authorization_v1"
-    ]
+    policy_id: Literal["qc_qqq_options_bounded_cloud_pilot_platform_action_authorization_v1"]
     policy_version: Literal["1.0.0"]
     status: Literal["OWNER_REVIEWED_ACTIVE_PRE_RUN"]
     authorization_task_id: Literal[
         "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_PLATFORM_ACTION_AUTHORIZATION_V1"
     ]
     owner_authorization_id: Literal[
-        "owner_decision:TRADING-2492:2026-08-05:"
-        "authorize_single_bounded_qc_free_cloud_pilot_v1"
+        "owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1"
     ]
     authorization_effective_date: date
     authorization_expires_at_utc: datetime
@@ -338,16 +323,11 @@ class QCBoundedCloudPilotPlatformActionAuthorizationPolicy(_StrictModel):
     def _validate_fixed_authorization(self) -> Self:
         if self.authorization_effective_date != date(2026, 8, 5):
             raise ValueError("authorization effective date drifted")
-        if self.authorization_expires_at_utc != datetime(
-            2026, 8, 12, tzinfo=UTC
-        ):
+        if self.authorization_expires_at_utc != datetime(2026, 8, 12, tzinfo=UTC):
             raise ValueError("authorization expiry drifted")
         if self.proposal_policy_sha256 != EXPECTED_PROPOSAL_POLICY_SHA256:
             raise ValueError("proposal policy hash differs from Owner decision")
-        if (
-            self.proposal_authority_set_sha256
-            != EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256
-        ):
+        if self.proposal_authority_set_sha256 != EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256:
             raise ValueError("proposal authority-set hash differs from Owner decision")
         return self
 
@@ -382,9 +362,7 @@ class QCBoundedCloudPilotProjectSourceArtifact:
 
 
 class QCBoundedCloudPilotPreRunAuthorizationRecord(_SealedModel):
-    schema_version: Literal[
-        "qc_qqq_options_bounded_cloud_pilot_pre_run_authorization_record.v1"
-    ]
+    schema_version: Literal["qc_qqq_options_bounded_cloud_pilot_pre_run_authorization_record.v1"]
     record_id: str
     created_at_utc: datetime
     repository_code_sha: str
@@ -392,8 +370,7 @@ class QCBoundedCloudPilotPreRunAuthorizationRecord(_SealedModel):
         "TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_PLATFORM_ACTION_AUTHORIZATION_V1"
     ]
     owner_authorization_id: Literal[
-        "owner_decision:TRADING-2492:2026-08-05:"
-        "authorize_single_bounded_qc_free_cloud_pilot_v1"
+        "owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1"
     ]
     authorization_policy_sha256: str
     authorization_policy_canonical_sha256: str
@@ -469,9 +446,7 @@ class QCBoundedCloudPilotPreRunAuthorizationRecord(_SealedModel):
 
     @model_validator(mode="after")
     def _validate_record_window(self) -> Self:
-        if self.requested_start != date(2025, 12, 2) or self.requested_end != date(
-            2025, 12, 2
-        ):
+        if self.requested_start != date(2025, 12, 2) or self.requested_end != date(2025, 12, 2):
             raise ValueError("pre-run record requested range drifted")
         if self.created_at_utc > self.authorization_expires_at_utc:
             raise ValueError("pre-run record was created after authorization expiry")
@@ -497,16 +472,13 @@ class QCBoundedCloudPilotEvidenceScopeCheck(_StrictModel):
 
 
 class QCBoundedCloudPilotExecutionEvidenceRecord(_SealedModel):
-    schema_version: Literal[
-        "qc_qqq_options_bounded_cloud_pilot_execution_evidence_record.v1"
-    ]
+    schema_version: Literal["qc_qqq_options_bounded_cloud_pilot_execution_evidence_record.v1"]
     record_id: str
     collected_at_utc: datetime
     repository_source_authority_sha: str
     pre_run_authorization_record_sha256: str
     owner_authorization_id: Literal[
-        "owner_decision:TRADING-2492:2026-08-05:"
-        "authorize_single_bounded_qc_free_cloud_pilot_v1"
+        "owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1"
     ]
     authorization_policy_sha256: str
     authorization_policy_canonical_sha256: str
@@ -568,15 +540,11 @@ class QCBoundedCloudPilotExecutionEvidenceRecord(_SealedModel):
     option_event_dq_status: Literal["PASS_PLATFORM_LOG_ONLY"]
     option_event_pit_status: Literal["PASS_PLATFORM_LOG_ONLY"]
     shared_2489_bundle_status: Literal["BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"]
-    shared_2490_reconciliation_status: Literal[
-        "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
-    ]
+    shared_2490_reconciliation_status: Literal["BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"]
     prior_capability_admission: Literal["CAPABILITY_OR_LICENSE_BLOCKED"]
     scope_checks: tuple[QCBoundedCloudPilotEvidenceScopeCheck, ...]
     failed_scope_check_ids: tuple[str, ...]
-    authorization_state: Literal[
-        "INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"
-    ]
+    authorization_state: Literal["INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"]
     independent_review_status: Literal["PENDING_PROJECT_OWNER_REVIEW"]
     final_disposition: Literal["NOT_ISSUED"]
     decision: Literal["PILOT_EVIDENCE_COLLECTED_SCOPE_VIOLATION_REVIEW_REQUIRED"]
@@ -619,9 +587,7 @@ class QCBoundedCloudPilotExecutionEvidenceRecord(_SealedModel):
     def _validate_sha(cls, value: str, info: Any) -> str:
         return _sha256(value, str(info.field_name))
 
-    @field_validator(
-        "collected_at_utc", "intent_time_utc", "submit_time_utc", "fill_time_utc"
-    )
+    @field_validator("collected_at_utc", "intent_time_utc", "submit_time_utc", "fill_time_utc")
     @classmethod
     def _validate_timestamp(cls, value: datetime, info: Any) -> datetime:
         return _utc(value, str(info.field_name))
@@ -642,17 +608,13 @@ class QCBoundedCloudPilotExecutionEvidenceRecord(_SealedModel):
         )
         if self.result_top_level_keys != exact_keys:
             raise ValueError("result top-level key inventory drifted")
-        if self.requested_start != date(2025, 12, 2) or self.requested_end != date(
-            2025, 12, 2
-        ):
+        if self.requested_start != date(2025, 12, 2) or self.requested_end != date(2025, 12, 2):
             raise ValueError("requested range drifted")
         if self.evaluated_start != self.requested_start or self.evaluated_end != (
             self.requested_end
         ):
             raise ValueError("evaluated range differs from the reviewed request")
-        if not (
-            self.intent_time_utc < self.submit_time_utc < self.fill_time_utc
-        ):
+        if not (self.intent_time_utc < self.submit_time_utc < self.fill_time_utc):
             raise ValueError("intent, submit and fill chronology must be strict")
         if (self.submit_time_utc - self.intent_time_utc).total_seconds() != 60:
             raise ValueError("intent to submit must be one independent minute")
@@ -683,14 +645,11 @@ class QCBoundedCloudPilotExecutionEvidenceRecord(_SealedModel):
 
 
 class QCBoundedCloudPilotIndependentReviewRequestRecord(_SealedModel):
-    schema_version: Literal[
-        "qc_qqq_options_bounded_cloud_pilot_independent_review_request.v1"
-    ]
+    schema_version: Literal["qc_qqq_options_bounded_cloud_pilot_independent_review_request.v1"]
     record_id: str
     created_at_utc: datetime
     evidence_record_path: Literal[
-        "inputs/external_validation/"
-        "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+        "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
     ]
     evidence_record_sha256: str
     result_artifact_sha256: str
@@ -732,9 +691,7 @@ class QCBoundedCloudPilotIndependentReviewRequestRecord(_SealedModel):
 
 
 class QCBoundedCloudPilotIndependentReviewRecord(_SealedModel):
-    schema_version: Literal[
-        "qc_qqq_options_bounded_cloud_pilot_independent_review_record.v1"
-    ]
+    schema_version: Literal["qc_qqq_options_bounded_cloud_pilot_independent_review_record.v1"]
     record_id: str
     owner_attestation_id: Literal[
         "owner_attestation:TRADING-2492:2026-08-05:"
@@ -742,15 +699,13 @@ class QCBoundedCloudPilotIndependentReviewRecord(_SealedModel):
     ]
     owner_attestation_date: date
     evidence_record_path: Literal[
-        "inputs/external_validation/"
-        "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+        "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
     ]
     evidence_record_sha256: Literal[
         "2e57bfec7119daa05f89e1a48d8e06d7ca5fda6b38846e8f3d985c3ccdc6293c"
     ]
     review_request_path: Literal[
-        "inputs/external_validation/"
-        "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+        "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
     ]
     review_request_sha256: Literal[
         "94d7aef27daab59fa5dcacf82e993086bdda57fa177520d6d370f90a75d1794f"
@@ -770,9 +725,7 @@ class QCBoundedCloudPilotIndependentReviewRecord(_SealedModel):
     confirmed_shared_2489_2490_blocked: Literal[True]
     failed_scope_check_ids: tuple[Literal["PROCESSED_DATA_POINTS"], ...]
     evidence_acceptance: Literal["ACCEPTED_WITH_SCOPE_VIOLATION"]
-    authorization_state: Literal[
-        "INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"
-    ]
+    authorization_state: Literal["INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"]
     independent_review_completed: Literal[True]
     disposition: Literal["PILOT_NO_GO_LICENSE_OR_EVIDENCE"]
     range_expansion_allowed: Literal[False]
@@ -803,9 +756,7 @@ class QCBoundedCloudPilotIndependentReviewRecord(_SealedModel):
 
 
 def load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization(
-    path: Path = (
-        DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH
-    ),
+    path: Path = (DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH),
     *,
     project_root: Path = PROJECT_ROOT,
 ) -> QCBoundedCloudPilotPlatformActionAuthorizationLoadResult:
@@ -820,9 +771,7 @@ def load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization(
         payload = safe_load_yaml_path(resolved_policy)
         if not isinstance(payload, dict):
             raise TypeError("authorization policy root must be a mapping")
-        policy = QCBoundedCloudPilotPlatformActionAuthorizationPolicy.model_validate(
-            payload
-        )
+        policy = QCBoundedCloudPilotPlatformActionAuthorizationPolicy.model_validate(payload)
         proposal = load_qc_qqq_options_bounded_cloud_pilot_owner_review_proposal(
             Path(policy.proposal_policy_path), project_root=resolved_root
         )
@@ -916,9 +865,7 @@ def build_qc_qqq_options_bounded_cloud_pilot_pre_run_record(
         project_root=project_root,
     )
     return QCBoundedCloudPilotPreRunAuthorizationRecord.seal(
-        schema_version=(
-            "qc_qqq_options_bounded_cloud_pilot_pre_run_authorization_record.v1"
-        ),
+        schema_version=("qc_qqq_options_bounded_cloud_pilot_pre_run_authorization_record.v1"),
         record_id=record_id,
         created_at_utc=created,
         repository_code_sha=repository_code_sha,
@@ -927,9 +874,7 @@ def build_qc_qqq_options_bounded_cloud_pilot_pre_run_record(
         authorization_policy_sha256=loaded.policy_sha256,
         authorization_policy_canonical_sha256=loaded.policy_canonical_sha256,
         proposal_policy_sha256=loaded.policy.proposal_policy_sha256,
-        proposal_authority_set_sha256=(
-            loaded.policy.proposal_authority_set_sha256
-        ),
+        proposal_authority_set_sha256=(loaded.policy.proposal_authority_set_sha256),
         project_file_name=project.file_name,
         project_algorithm_class=project.algorithm_class,
         project_source_sha256=project.source_sha256,
@@ -981,10 +926,7 @@ def _verify_proposal_binding(
             raise ValueError(f"authorized {field} differs from reviewed proposal")
     if policy.actors.collector_id != proposed.evidence_scope.collector_id:
         raise ValueError("authorization collector differs from reviewed proposal")
-    if (
-        policy.actors.independent_reviewer_id
-        != proposed.evidence_scope.independent_reviewer_id
-    ):
+    if policy.actors.independent_reviewer_id != proposed.evidence_scope.independent_reviewer_id:
         raise ValueError("authorization reviewer differs from reviewed proposal")
     if not proposed.safety.proposal_only or proposed.safety.pilot_authorized:
         raise ValueError("proposal predecessor safety authority drifted")
@@ -1040,20 +982,15 @@ def build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
         )
         request_path = _require_bound_regular_file(
             Path(
-                "inputs/external_validation/"
-                "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+                "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
             ),
             project_root=root,
             field="independent review request record",
         )
         evidence_raw = evidence_path.read_bytes()
         request_raw = request_path.read_bytes()
-        evidence = QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(
-            evidence_raw
-        )
-        request = QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(
-            request_raw
-        )
+        evidence = QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(evidence_raw)
+        request = QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(request_raw)
         evidence_sha256 = hashlib.sha256(evidence_raw).hexdigest()
         request_sha256 = hashlib.sha256(request_raw).hexdigest()
         if evidence_sha256 != EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256:
@@ -1079,20 +1016,16 @@ def build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
         ) from exc
 
     return QCBoundedCloudPilotIndependentReviewRecord.seal(
-        schema_version=(
-            "qc_qqq_options_bounded_cloud_pilot_independent_review_record.v1"
-        ),
+        schema_version=("qc_qqq_options_bounded_cloud_pilot_independent_review_record.v1"),
         record_id=record_id,
         owner_attestation_id=OWNER_EVIDENCE_ATTESTATION_ID,
         owner_attestation_date=date(2026, 8, 5),
         evidence_record_path=(
-            "inputs/external_validation/"
-            "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+            "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
         ),
         evidence_record_sha256=evidence_sha256,
         review_request_path=(
-            "inputs/external_validation/"
-            "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+            "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
         ),
         review_request_sha256=request_sha256,
         result_artifact_sha256=evidence.result_artifact_sha256,
@@ -1112,10 +1045,8 @@ def build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
         ),
         confirmed_no_raw_option_rows=not evidence.raw_options_rows_present,
         confirmed_shared_2489_2490_blocked=(
-            evidence.shared_2489_bundle_status
-            == "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
-            and evidence.shared_2490_reconciliation_status
-            == "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+            evidence.shared_2489_bundle_status == "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
+            and evidence.shared_2490_reconciliation_status == "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
         ),
         failed_scope_check_ids=evidence.failed_scope_check_ids,
         evidence_acceptance="ACCEPTED_WITH_SCOPE_VIOLATION",
@@ -1131,7 +1062,7 @@ def build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
 
 
 _QC_PROJECT_TEMPLATE = textwrap.dedent(
-    '''\
+    """\
     from AlgorithmImports import *
     from datetime import timedelta
 
@@ -1369,7 +1300,7 @@ _QC_PROJECT_TEMPLATE = textwrap.dedent(
                 f"|last_chain_count={self.last_chain_count}"
                 "|raw_rows_logged=false|broker_action=false"
             )
-    '''
+    """
 )
 
 

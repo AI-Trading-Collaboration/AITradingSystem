@@ -43,9 +43,7 @@ CREATED_AT = datetime(2026, 8, 5, 2, 0, tzinfo=UTC)
 
 
 def _loaded():
-    return load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization(
-        project_root=ROOT
-    )
+    return load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization(project_root=ROOT)
 
 
 def _record() -> QCBoundedCloudPilotPreRunAuthorizationRecord:
@@ -59,8 +57,7 @@ def _record() -> QCBoundedCloudPilotPreRunAuthorizationRecord:
 
 def _policy_payload() -> dict[str, object]:
     payload = safe_load_yaml_path(
-        ROOT
-        / "config/research/"
+        ROOT / "config/research/"
         "qc_qqq_options_bounded_cloud_pilot_platform_action_authorization_v1.yaml"
     )
     assert isinstance(payload, dict)
@@ -226,15 +223,9 @@ def test_authorization_loads_exact_owner_scope_and_live_proposal() -> None:
     assert loaded.policy.owner_authorization_id == OWNER_AUTHORIZATION_ID
     assert loaded.policy.authorization_task_id == AUTHORIZATION_TASK_ID
     assert loaded.policy.proposal_policy_sha256 == EXPECTED_PROPOSAL_POLICY_SHA256
-    assert (
-        loaded.policy.proposal_authority_set_sha256
-        == EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256
-    )
+    assert loaded.policy.proposal_authority_set_sha256 == EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256
     assert loaded.proposal.proposal_policy_sha256 == EXPECTED_PROPOSAL_POLICY_SHA256
-    assert (
-        loaded.proposal.authority_set_sha256
-        == EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256
-    )
+    assert loaded.proposal.authority_set_sha256 == EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256
     assert loaded.policy.allowed_actions == ALLOWED_ACTIONS
     assert loaded.policy.prohibited_actions == PROHIBITED_ACTIONS
 
@@ -331,17 +322,14 @@ def test_pre_run_record_is_sealed_canonical_and_cash_preserving() -> None:
     assert record.production_effect == "none"
     assert record.broker_action == "none"
     assert (
-        QCBoundedCloudPilotPreRunAuthorizationRecord.from_json_bytes(
-            record.canonical_bytes
-        )
+        QCBoundedCloudPilotPreRunAuthorizationRecord.from_json_bytes(record.canonical_bytes)
         == record
     )
 
 
 def test_tracked_pre_run_record_replays_exact_project_source_authority() -> None:
     raw = (
-        ROOT
-        / "inputs/external_validation/"
+        ROOT / "inputs/external_validation/"
         "qc_qqq_options_bounded_cloud_pilot_authorization_20260805.json"
     ).read_bytes()
     record = QCBoundedCloudPilotPreRunAuthorizationRecord.from_json_bytes(raw)
@@ -350,9 +338,7 @@ def test_tracked_pre_run_record_replays_exact_project_source_authority() -> None
         project_root=ROOT,
     )
 
-    assert record.repository_code_sha == (
-        "ce724ed7b09b8dacd66255e8d791d56dce5c4293"
-    )
+    assert record.repository_code_sha == ("ce724ed7b09b8dacd66255e8d791d56dce5c4293")
     assert record.project_source_sha256 == project.source_sha256
     assert record.project_source_byte_count == project.byte_count
     assert record.authorization_policy_sha256 == _loaded().policy_sha256
@@ -366,9 +352,9 @@ def test_pre_run_record_rejects_noncanonical_or_tampered_json() -> None:
         QCBoundedCloudPilotPreRunAuthorizationRecord.from_json_bytes(reordered)
 
     payload["project_mutation_count"] = 1
-    tampered = (
-        json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
-    ).encode("utf-8")
+    tampered = (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode(
+        "utf-8"
+    )
     with pytest.raises(ValueError):
         QCBoundedCloudPilotPreRunAuthorizationRecord.from_json_bytes(tampered)
 
@@ -385,17 +371,11 @@ def test_execution_evidence_is_sealed_and_derives_scope_violation() -> None:
     assert evidence.authorization_state == (
         "INVALIDATED_AFTER_EVIDENCE_COLLECTION_AND_SCOPE_VIOLATION"
     )
-    assert evidence.shared_2489_bundle_status == (
-        "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
-    )
-    assert evidence.shared_2490_reconciliation_status == (
-        "BLOCKED_SHARED_POLICY_NOT_AUTHORIZED"
-    )
+    assert evidence.shared_2489_bundle_status == ("BLOCKED_SHARED_POLICY_NOT_AUTHORIZED")
+    assert evidence.shared_2490_reconciliation_status == ("BLOCKED_SHARED_POLICY_NOT_AUTHORIZED")
     assert evidence.final_disposition == "NOT_ISSUED"
     assert (
-        QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(
-            evidence.canonical_bytes
-        )
+        QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(evidence.canonical_bytes)
         == evidence
     )
 
@@ -422,8 +402,7 @@ def test_independent_review_request_preserves_pending_owner_boundary() -> None:
         record_id="qc_bounded_cloud_pilot_owner_review_request_20260805_v1",
         created_at_utc=datetime(2026, 8, 5, 2, 22, tzinfo=UTC),
         evidence_record_path=(
-            "inputs/external_validation/"
-            "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
+            "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
         ),
         evidence_record_sha256=evidence.canonical_sha256,
         result_artifact_sha256=evidence.result_artifact_sha256,
@@ -445,9 +424,7 @@ def test_independent_review_request_preserves_pending_owner_boundary() -> None:
     assert request.review_status == "PENDING_PROJECT_OWNER_REVIEW"
     assert request.final_disposition == "NOT_ISSUED"
     assert (
-        QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(
-            request.canonical_bytes
-        )
+        QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(request.canonical_bytes)
         == request
     )
 
@@ -455,15 +432,13 @@ def test_independent_review_request_preserves_pending_owner_boundary() -> None:
 def test_tracked_execution_evidence_and_review_request_cross_bind() -> None:
     evidence = QCBoundedCloudPilotExecutionEvidenceRecord.from_json_bytes(
         (
-            ROOT
-            / "inputs/external_validation/"
+            ROOT / "inputs/external_validation/"
             "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
         ).read_bytes()
     )
     review = QCBoundedCloudPilotIndependentReviewRequestRecord.from_json_bytes(
         (
-            ROOT
-            / "inputs/external_validation/"
+            ROOT / "inputs/external_validation/"
             "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
         ).read_bytes()
     )
@@ -477,14 +452,10 @@ def test_tracked_execution_evidence_and_review_request_cross_bind() -> None:
 
 
 def test_independent_review_record_is_derived_from_canonical_predecessors() -> None:
-    review = build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
-        project_root=ROOT
-    )
+    review = build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(project_root=ROOT)
 
     assert review.owner_attestation_id == OWNER_EVIDENCE_ATTESTATION_ID
-    assert review.evidence_record_sha256 == (
-        EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256
-    )
+    assert review.evidence_record_sha256 == (EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256)
     assert review.review_request_sha256 == EXPECTED_REVIEW_REQUEST_RECORD_SHA256
     assert review.result_artifact_sha256 == EXPECTED_RESULT_ARTIFACT_SHA256
     assert review.confirmed_processed_data_points == 734127
@@ -500,14 +471,11 @@ def test_independent_review_record_is_derived_from_canonical_predecessors() -> N
 
 def test_tracked_independent_review_record_replays_exact_authority() -> None:
     raw = (
-        ROOT
-        / "inputs/external_validation/"
+        ROOT / "inputs/external_validation/"
         "qc_qqq_options_bounded_cloud_pilot_owner_attestation_20260805.json"
     ).read_bytes()
     tracked = QCBoundedCloudPilotIndependentReviewRecord.from_json_bytes(raw)
-    rebuilt = build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
-        project_root=ROOT
-    )
+    rebuilt = build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(project_root=ROOT)
 
     assert tracked == rebuilt
     assert tracked.canonical_bytes == raw
@@ -550,20 +518,14 @@ def test_independent_review_builder_rejects_tampered_predecessor(
     target = tmp_path / "inputs" / "external_validation"
     target.mkdir(parents=True)
     evidence_source = (
-        ROOT
-        / "inputs/external_validation/"
+        ROOT / "inputs/external_validation/"
         "qc_qqq_options_bounded_cloud_pilot_evidence_20260805.json"
     )
     request_source = (
-        ROOT
-        / "inputs/external_validation/"
-        "qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
+        ROOT / "inputs/external_validation/qc_qqq_options_bounded_cloud_pilot_review_20260805.json"
     )
     evidence_bytes = evidence_source.read_bytes()
-    assert (
-        hashlib.sha256(evidence_bytes).hexdigest()
-        == EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256
-    )
+    assert hashlib.sha256(evidence_bytes).hexdigest() == EXPECTED_EXECUTION_EVIDENCE_RECORD_SHA256
     (target / evidence_source.name).write_bytes(evidence_bytes.replace(b"734127", b"734128"))
     (target / request_source.name).write_bytes(request_source.read_bytes())
 
@@ -571,9 +533,7 @@ def test_independent_review_builder_rejects_tampered_predecessor(
         QCBoundedCloudPilotPlatformActionContractError,
         match="QC_BOUNDED_CLOUD_PILOT_INDEPENDENT_REVIEW_INVALID",
     ):
-        build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(
-            project_root=tmp_path
-        )
+        build_qc_qqq_options_bounded_cloud_pilot_independent_review_record(project_root=tmp_path)
 
 
 def test_pre_run_builder_rejects_expired_authorization() -> None:
@@ -640,15 +600,11 @@ def test_project_source_identity_changes_with_repository_authority() -> None:
             "owner_authorization_id",
         ),
         (
-            lambda payload: payload.__setitem__(
-                "proposal_policy_sha256", "0" * 64
-            ),
+            lambda payload: payload.__setitem__("proposal_policy_sha256", "0" * 64),
             "proposal policy hash",
         ),
         (
-            lambda payload: payload.__setitem__(
-                "proposal_authority_set_sha256", "0" * 64
-            ),
+            lambda payload: payload.__setitem__("proposal_authority_set_sha256", "0" * 64),
             "proposal authority-set hash",
         ),
         (
@@ -683,9 +639,7 @@ def test_project_source_identity_changes_with_repository_authority() -> None:
         ),
     ],
 )
-def test_authorization_model_rejects_scope_or_authority_drift(
-    mutate, message: str
-) -> None:
+def test_authorization_model_rejects_scope_or_authority_drift(mutate, message: str) -> None:
     payload = _policy_payload()
     mutate(payload)
 
@@ -713,14 +667,10 @@ def test_loader_rejects_missing_or_escaping_policy() -> None:
 
 def test_public_builders_have_no_caller_scope_or_activation_arguments() -> None:
     source_parameters = set(
-        inspect.signature(
-            build_qc_qqq_options_bounded_cloud_pilot_project_source
-        ).parameters
+        inspect.signature(build_qc_qqq_options_bounded_cloud_pilot_project_source).parameters
     )
     record_parameters = set(
-        inspect.signature(
-            build_qc_qqq_options_bounded_cloud_pilot_pre_run_record
-        ).parameters
+        inspect.signature(build_qc_qqq_options_bounded_cloud_pilot_pre_run_record).parameters
     )
 
     forbidden = {

@@ -13,75 +13,65 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: engineering coordinator：完成 offline owner-review proposal pack、current-authority
-    与 final-tree validation；project owner + independent reviewer：审阅 final policy SHA
-    后才可另发 exact external authorization
+  next_owner: TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO
+    处置并完成 stage-gate；2489/2490 owners：另行 reviewed policy 前 shared bundle/reconciliation
+    保持 blocked
   requirement_refs:
   - docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
   unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
-    2480–2491 exact-binding blocked preregistration/readiness authority保持不变；新增 task-owned
-    `PROPOSED_OWNER_REVIEW_REQUIRED` 参数包，建议单一 `2025-12-02` XNYS smoke、Free Community
-    B-MICRO、最多一次 project mutation/一次 cloud run/一张 long-premium 合约，并为 selection/execution/accounting/lifecycle/reconciliation
-    数值记录 rationale/review/expiry。该 proposal 不登录、不创建或修改 project、不运行 backtest、不授权 order/fill。
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: proposal 必须 exact-bind 2480 accepted review/evidence 与原 2492 blocked policy/module，并保留
-      prior admission blocked、DQ/PIT NOT_EVALUATED、cash/no-order/no-fill；caller token/tamper/hash
-      drift、same-bar/daily-close/short/multi-leg、zero-slippage reality baseline 与
-      reviewer=collector 均 fail closed。完整退出仍需 Owner 对 final proposal hash 授权、真实 requested/evaluated
-      range/resource telemetry、2489 bundle、2490 reconciliation 与 independent review。
+    text: evidence/request/attestation canonical hash chain、project/backtest/result
+      identity、one order/one fill、data-point cap violation、无 raw rows 与 shared blocker
+      均可重放；terminal disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range expansion/further
+      cloud action/investment interpretation 均 false。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: 49a95c74050d3ade423e2de8be6b5b0c7327e155482ca5aa5da21a7577162bdc
+  row_sha256: cb1d26f19e3a47c6a88a9c8322af57c746f0336880991d3a93a0a112ee56a51c
   cell_count: 8
   all_cells:
   - TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
   - External validation / preregistered bounded QuantConnect Free Cloud pilot
   - P0
-  - BLOCKED_OWNER_INPUT
-  - engineering coordinator：完成 offline owner-review proposal pack、current-authority
-    与 final-tree validation；project owner + independent reviewer：审阅 final policy SHA
-    后才可另发 exact external authorization
+  - BASELINE_DONE
+  - TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO 处置并完成 stage-gate；2489/2490
+    owners：另行 reviewed policy 前 shared bundle/reconciliation 保持 blocked
   - 详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
-    2480–2491 exact-binding blocked preregistration/readiness authority保持不变；新增 task-owned
-    `PROPOSED_OWNER_REVIEW_REQUIRED` 参数包，建议单一 `2025-12-02` XNYS smoke、Free Community
-    B-MICRO、最多一次 project mutation/一次 cloud run/一张 long-premium 合约，并为 selection/execution/accounting/lifecycle/reconciliation
-    数值记录 rationale/review/expiry。该 proposal 不登录、不创建或修改 project、不运行 backtest、不授权 order/fill。
-  - proposal 必须 exact-bind 2480 accepted review/evidence 与原 2492 blocked policy/module，并保留
-    prior admission blocked、DQ/PIT NOT_EVALUATED、cash/no-order/no-fill；caller token/tamper/hash
-    drift、same-bar/daily-close/short/multi-leg、zero-slippage reality baseline 与 reviewer=collector
-    均 fail closed。完整退出仍需 Owner 对 final proposal hash 授权、真实 requested/evaluated range/resource
-    telemetry、2489 bundle、2490 reconciliation 与 independent review。
-  - 2026-08-05：policy/authority SHA=`9b3e5073...041de`/`69578c19...46bea`；focused
-    failure-fix 同覆盖=`53 PASS`，Ruff/mypy/compileall、DevEx `1088/1252/856/0`、task shadow
-    `961/456/505` PASS。task 继续 `BLOCKED_OWNER_INPUT`，token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；QuantConnect/cloud/API/CLI/HTTP/raw
-    export/paper/live/broker/production 动作=none。
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。
+  - evidence/request/attestation canonical hash chain、project/backtest/result identity、one
+    order/one fill、data-point cap violation、无 raw rows 与 shared blocker 均可重放；terminal
+    disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range expansion/further cloud action/investment
+    interpretation 均 false。
+  - 2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+    SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+    attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+    attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+    Store/raw download/付费升级推断/paper/live/broker/production。
   raw_line: '|TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1|External validation
-    / preregistered bounded QuantConnect Free Cloud pilot|P0|BLOCKED_OWNER_INPUT|engineering
-    coordinator：完成 offline owner-review proposal pack、current-authority 与 final-tree
-    validation；project owner + independent reviewer：审阅 final policy SHA 后才可另发 exact
-    external authorization|详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
-    2480–2491 exact-binding blocked preregistration/readiness authority保持不变；新增 task-owned
-    `PROPOSED_OWNER_REVIEW_REQUIRED` 参数包，建议单一 `2025-12-02` XNYS smoke、Free Community
-    B-MICRO、最多一次 project mutation/一次 cloud run/一张 long-premium 合约，并为 selection/execution/accounting/lifecycle/reconciliation
-    数值记录 rationale/review/expiry。该 proposal 不登录、不创建或修改 project、不运行 backtest、不授权 order/fill。|proposal
-    必须 exact-bind 2480 accepted review/evidence 与原 2492 blocked policy/module，并保留
-    prior admission blocked、DQ/PIT NOT_EVALUATED、cash/no-order/no-fill；caller token/tamper/hash
-    drift、same-bar/daily-close/short/multi-leg、zero-slippage reality baseline 与 reviewer=collector
-    均 fail closed。完整退出仍需 Owner 对 final proposal hash 授权、真实 requested/evaluated range/resource
-    telemetry、2489 bundle、2490 reconciliation 与 independent review。|2026-08-05：policy/authority
-    SHA=`9b3e5073...041de`/`69578c19...46bea`；focused failure-fix 同覆盖=`53 PASS`，Ruff/mypy/compileall、DevEx
-    `1088/1252/856/0`、task shadow `961/456/505` PASS。task 继续 `BLOCKED_OWNER_INPUT`，token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；QuantConnect/cloud/API/CLI/HTTP/raw
-    export/paper/live/broker/production 动作=none。|'
+    / preregistered bounded QuantConnect Free Cloud pilot|P0|BASELINE_DONE|TRADING-2493
+    research owner + independent reviewer：只消费 terminal NO-GO 处置并完成 stage-gate；2489/2490
+    owners：另行 reviewed policy 前 shared bundle/reconciliation 保持 blocked|详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。|evidence/request/attestation
+    canonical hash chain、project/backtest/result identity、one order/one fill、data-point
+    cap violation、无 raw rows 与 shared blocker 均可重放；terminal disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range
+    expansion/further cloud action/investment interpretation 均 false。|2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+    SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+    attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+    attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+    Store/raw download/付费升级推断/paper/live/broker/production。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-49a95c74050d3ade423e2de8
+  event_id: legacy-import-cb1d26f19e3a47c6a88a9c83
   task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -91,47 +81,45 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: BLOCKED_OWNER_INPUT
+  to_status: BASELINE_DONE
   payload:
     priority: P0
-    next_owner: engineering coordinator：完成 offline owner-review proposal pack、current-authority
-      与 final-tree validation；project owner + independent reviewer：审阅 final policy
-      SHA 后才可另发 exact external authorization
-    notes: 2026-08-05：policy/authority SHA=`9b3e5073...041de`/`69578c19...46bea`；focused
-      failure-fix 同覆盖=`53 PASS`，Ruff/mypy/compileall、DevEx `1088/1252/856/0`、task
-      shadow `961/456/505` PASS。task 继续 `BLOCKED_OWNER_INPUT`，token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；QuantConnect/cloud/API/CLI/HTTP/raw
-      export/paper/live/broker/production 动作=none。
+    next_owner: TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO
+      处置并完成 stage-gate；2489/2490 owners：另行 reviewed policy 前 shared bundle/reconciliation
+      保持 blocked
+    notes: 2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+      SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+      attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+      attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+      Store/raw download/付费升级推断/paper/live/broker/production。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:49a95c74050d3ade423e2de8be6b5b0c7327e155482ca5aa5da21a7577162bdc
+  - sha256:cb1d26f19e3a47c6a88a9c8322af57c746f0336880991d3a93a0a112ee56a51c
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
   - TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
   - External validation / preregistered bounded QuantConnect Free Cloud pilot
   - P0
-  - BLOCKED_OWNER_INPUT
-  - engineering coordinator：完成 offline owner-review proposal pack、current-authority
-    与 final-tree validation；project owner + independent reviewer：审阅 final policy SHA
-    后才可另发 exact external authorization
+  - BASELINE_DONE
+  - TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO 处置并完成 stage-gate；2489/2490
+    owners：另行 reviewed policy 前 shared bundle/reconciliation 保持 blocked
   - 详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
-    2480–2491 exact-binding blocked preregistration/readiness authority保持不变；新增 task-owned
-    `PROPOSED_OWNER_REVIEW_REQUIRED` 参数包，建议单一 `2025-12-02` XNYS smoke、Free Community
-    B-MICRO、最多一次 project mutation/一次 cloud run/一张 long-premium 合约，并为 selection/execution/accounting/lifecycle/reconciliation
-    数值记录 rationale/review/expiry。该 proposal 不登录、不创建或修改 project、不运行 backtest、不授权 order/fill。
-  - proposal 必须 exact-bind 2480 accepted review/evidence 与原 2492 blocked policy/module，并保留
-    prior admission blocked、DQ/PIT NOT_EVALUATED、cash/no-order/no-fill；caller token/tamper/hash
-    drift、same-bar/daily-close/short/multi-leg、zero-slippage reality baseline 与 reviewer=collector
-    均 fail closed。完整退出仍需 Owner 对 final proposal hash 授权、真实 requested/evaluated range/resource
-    telemetry、2489 bundle、2490 reconciliation 与 independent review。
-  - 2026-08-05：policy/authority SHA=`9b3e5073...041de`/`69578c19...46bea`；focused
-    failure-fix 同覆盖=`53 PASS`，Ruff/mypy/compileall、DevEx `1088/1252/856/0`、task shadow
-    `961/456/505` PASS。task 继续 `BLOCKED_OWNER_INPUT`，token=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`；QuantConnect/cloud/API/CLI/HTTP/raw
-    export/paper/live/broker/production 动作=none。
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。
+  - evidence/request/attestation canonical hash chain、project/backtest/result identity、one
+    order/one fill、data-point cap violation、无 raw rows 与 shared blocker 均可重放；terminal
+    disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range expansion/further cloud action/investment
+    interpretation 均 false。
+  - 2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+    SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+    attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+    attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+    Store/raw download/付费升级推断/paper/live/broker/production。
   docs_links:
   - docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
   terminal: false
-  raw_row_sha256: 49a95c74050d3ade423e2de8be6b5b0c7327e155482ca5aa5da21a7577162bdc
+  raw_row_sha256: cb1d26f19e3a47c6a88a9c8322af57c746f0336880991d3a93a0a112ee56a51c
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: 3807f2f4de617eb33378e6017fcfed48332faa9528453aa6c95ed6581c19aa08
+fragment_checksum: 2b77650cf5da943e7c035261608ac1bf3b43989f792cdfc704383aee7c7bcdd8

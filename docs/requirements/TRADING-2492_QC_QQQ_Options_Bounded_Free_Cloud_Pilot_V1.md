@@ -391,3 +391,10 @@ Object Store/raw download、付费升级推断、paper/live/broker/production。
   并执行 `git worktree prune`；
 - recoverability：删除前实现由 task commit 与 pushed main commit 恢复，formal runtime evidence 保留在 canonical
   `outputs/validation_runtime`；若 closeout 未完成则不得清理该 workspace。
+
+该新 worktree 不携带四个 ignored ARCH-005 bootstrap runtime summary。为完成 registry 的 canonical
+handoff replay，仅从 tracked `arch_005_bootstrap_validation_bundle.json` 所冻结、并由 canonical main checkout
+现有同 hash 文件复核的四个 exact bytes 做临时 hydration；限定路径为 handoff 中的 fast-unit、
+architecture-fitness、contract-validation、full 四个 summary，不读取其他 runtime output。hydrated bytes 只供
+registry generate/validate 使用，不作为 TRADING-2492 新验证证据，并随本 integration worktree 一并删除；任一
+路径或 SHA-256 不符即 fail closed。
