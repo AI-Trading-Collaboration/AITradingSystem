@@ -375,3 +375,19 @@ Owner 接受的是 evidence 本身及其 scope violation，不是 pilot success�
 `investment_interpretation_allowed=false`、`production_effect=none`、`broker_action=none`。本任务完整退出条件已按
 NO-GO 路径满足，转 `BASELINE_DONE` 并只向 2493 交付治理签署输入；不授权重跑、改项目、API/CLI/HTTP/
 Object Store/raw download、付费升级推断、paper/live/broker/production。
+
+## 15. Latest-main integration workspace lifecycle
+
+本任务在 governed drift plan 放行后创建唯一 final-tree integration workspace：
+
+- owner task：`TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1`；
+- absolute path：`D:\Work\AITradingSystem_trading2492_integration`；
+- branch：`codex/trading-2492-terminal-no-go-integration`；
+- purpose：从 integration 时 exact latest local `main` 构建单一 coordinator candidate，人工协调
+  `docs/system_flow.md`、`docs/task_register.md` 与 compatibility successor authority，并只在该 final tree
+  重建 generated/shadow state、运行正式五级门禁；
+- exit condition：candidate ordinary non-force push 后，确认 task/main/origin SHA 相同、canonical tracked evidence
+  已入库、runtime artifacts 已保留、无 runner/unique untracked or ignored content，再删除 integration branch/worktree
+  并执行 `git worktree prune`；
+- recoverability：删除前实现由 task commit 与 pushed main commit 恢复，formal runtime evidence 保留在 canonical
+  `outputs/validation_runtime`；若 closeout 未完成则不得清理该 workspace。
