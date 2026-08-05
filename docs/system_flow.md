@@ -7664,3 +7664,33 @@ minute option chain；它不是研究窗选择或投资结论。primary default 
 `PROPOSED_OWNER_REVIEW_REQUIRED`。只有 Owner 对最终 proposal policy SHA-256 另发 exact authorization 后，
 才可以在新边界中考虑一次 cloud action；本 proposal 自身始终保持 external/project/cloud/order/fill=false、
 `production_effect=none`、`broker_action=none`。
+
+2026-08-05 Owner 进一步签发 exact single-use token
+`owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1`。
+`config/research/qc_qqq_options_bounded_cloud_pilot_platform_action_authorization_v1.yaml` 与
+`qqq_options_research.bounded_cloud_pilot_platform_action` 形成 task-owned authorization overlay；原 2480
+admission、2481–2491 shared policy 和原 2492 blocked/proposal authority 保持不变。
+
+```text
+Owner token + proposal policy SHA 9b3e5073...041de
+  + proposal authority-set SHA 69578c19...46bea
+  -> strict token/scope/expiry/actor/action replay
+  -> retain prior CAPABILITY_OR_LICENSE_BLOCKED as historical fact
+  -> canonical main.py <=32768 bytes, content-bound to repository/policy/proposal
+  -> ACTIVE_PRE_RUN_NOT_CONSUMED sealed record
+  -> at most one dedicated project mutation
+  -> at most one 2025-12-02 Free Community B-MICRO cloud backtest
+  -> at most one simulated long-call limit order / one contract
+  -> 09:31 deterministic option-event intent
+  -> submit no earlier than next independent minute
+  -> fill accepted no earlier than the following independent minute
+  -> 60-second cancel with partial-fill preservation
+  -> export-safe 2489 manual evidence + 2490 reconciliation
+  -> project_owner independent review
+  -> authorization expires at first terminal/evidence close or 2026-08-12
+  -x-> API/CLI/HTTP/Object Store/raw download/paper/live/broker/production
+```
+
+该授权仅允许 QuantConnect cloud backtest 内的 simulated order，不允许真实 broker order。任何 project source、
+proposal hash、requested/evaluated range、resource、chronology、DQ/PIT、artifact inventory 或 reviewer drift 都
+fail closed；terminal evidence 在 independent review 前不支持 range expansion 或投资解释。

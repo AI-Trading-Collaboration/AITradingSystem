@@ -1,0 +1,25 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_bounded_cloud_pilot_platform_action
+fragment_kind: module
+owner: external_validation_governance
+module_prefix: src/ai_trading_system/qqq_options_research/bounded_cloud_pilot_platform_action.py
+public_contracts:
+  - ALLOWED_ACTIONS
+  - AUTHORIZATION_TASK_ID
+  - DEFAULT_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_PLATFORM_ACTION_AUTHORIZATION_PATH
+  - EXPECTED_PROPOSAL_AUTHORITY_SET_SHA256
+  - EXPECTED_PROPOSAL_POLICY_SHA256
+  - OWNER_AUTHORIZATION_ID
+  - PROHIBITED_ACTIONS
+  - QCBoundedCloudPilotActors
+  - QCBoundedCloudPilotAuthorizationSafety
+  - QCBoundedCloudPilotPlatformActionAuthorizationLoadResult
+  - QCBoundedCloudPilotPlatformActionAuthorizationPolicy
+  - QCBoundedCloudPilotPlatformActionContractError
+  - QCBoundedCloudPilotPreRunAuthorizationRecord
+  - QCBoundedCloudPilotProjectSourceArtifact
+  - build_qc_qqq_options_bounded_cloud_pilot_pre_run_record
+  - build_qc_qqq_options_bounded_cloud_pilot_project_source
+  - load_qc_qqq_options_bounded_cloud_pilot_platform_action_authorization
+compatibility_facades: []
+deprecation_status: active_reference_architecture

@@ -1,12 +1,12 @@
 # TRADING-2492：QQQ Options Bounded QuantConnect Free Cloud Pilot V1
 
-最后更新：2026-08-03
+最后更新：2026-08-05
 
 稳定任务 ID：`TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1`
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`IN_PROGRESS`
 
 mode：`SINGLE_LANE`
 
@@ -14,9 +14,9 @@ production effect：`none`
 
 broker action：`none`
 
-外部平台 Owner token：`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`
+外部平台 Owner token：`owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1`
 
-当前工程阶段：`OFFLINE_PREREGISTRATION_AND_READINESS_CONTRACT`
+当前工程阶段：`TRACKED_SINGLE_USE_AUTHORIZATION_ADMISSION_PRE_RUN`
 
 ## 1. 目标与当前可执行边界
 
@@ -24,8 +24,10 @@ broker action：`none`
 QQQ options smoke pilot，验证真实平台上的 minute subscription、事件时序、单张 long-premium 选约、
 next-independent-minute execution、现金核算、manual evidence collection 与 local reconciliation。
 
-当前没有 QuantConnect 登录、project、API、CLI、HTTP 或 cloud run 授权，也没有 Owner-reviewed pilot
-日期、order cap、resource cap 或现实模型数值。当前仅实现 strictly offline、deterministic、fail-closed 的：
+2026-08-05 Owner 已 exact-bind proposal policy/authority hash，签发一次性 bounded pilot 授权。该授权在
+tracked admission、project source identity、focused/formal validation 与 pre-run audit 完成前不产生平台动作；
+API、CLI、HTTP、Object Store、raw options download、paper/live/broker/production 继续禁止。此前已完成的
+strictly offline、deterministic、fail-closed 基线包括：
 
 1. pilot policy 与 inherited authority exact binding；
 2. Owner 未授权时的 canonical preregistration/readiness record；
@@ -262,3 +264,40 @@ missing-policy negative 收到 Windows `FileNotFoundError` 文本而非 typed re
 regular file 后，同覆盖 failure-fix 为 `53 passed in 3.95s`。Ruff、mypy、compileall PASS；DevEx
 `1088 modules / 1252 tests / 856 writers / 0 violations`，task shadow=`961/456/505` byte-identical。
 兼容层/current hashes 与 final-tree formal gates 尚需在冻结候选上完成；外部平台动作持续为 none。
+
+## 12. 2026-08-05 single-use platform action authorization
+
+Owner 签发：
+
+`owner_decision:TRADING-2492:2026-08-05:authorize_single_bounded_qc_free_cloud_pilot_v1`
+
+授权 exact-bind：
+
+- proposal policy SHA-256=`9b3e50731663871e01626f0360c717ecdd14278c63f81e74ed79c4c2fd4041de`；
+- proposal authority-set SHA-256=`69578c198823b95ba16b5f6c2780c3a7e24104babe2c6cc1fed8cd740c446bea`；
+- requested range=`2025-12-02..2025-12-02`；
+- maximum project mutations/cloud backtests/orders/contracts=`1/1/1/1`；
+- collector=`codex_pilot_coordinator`，independent reviewer=`project_owner`；
+- expiry=`2026-08-12T00:00:00Z`，single-use=true，evidence collection 完成后立即失效；
+- allowed=`quantconnect_login,dedicated_project_create_or_modify,cloud_backtest,export_safe_manual_evidence_collection`；
+- prohibited=`api,cli,http,object_store,raw_options_data_download,paper,live,broker,production`。
+
+该 token 只允许一次 cloud backtest 内的 simulated long-premium order；不产生真实券商订单。授权 overlay
+不得改写 2480 prior admission、2481–2491 shared schema/policy 或原 2492 blocked/proposal authority；必须如实
+记录 prior admission 仍为 `CAPABILITY_OR_LICENSE_BLOCKED`，并以 Owner exact decision 作为本次单次 smoke
+例外的唯一授权来源。任何 hash/scope/expiry/reviewer/project-source drift 均在平台动作前 fail closed。
+
+本 wave 复用 clean checkout `D:\Work\AITradingSystem_ops073_integration`，owner task 为 TRADING-2492，
+用途是隔离当前 OPS-074 dirty main checkout；exit condition 为 task candidate ordinary-push 后 checkout clean、
+任务分支删除并释放 `main`。canonical evidence 必须先进入 governed location 并通过 hash/audit，才允许清理。
+
+截至本段写入，QuantConnect project mutation/cloud run/evidence download 均尚未执行；下一步是构建并验证
+task-owned authorization admission、canonical project file 与 pre-run record。
+
+Pre-run admission 实现进度：governed START/LANE 从 exact main
+`5dc32d240a9fe440e3d7b8fe6a5651a0461849f9` PASS；authorization policy file SHA-256=
+`2934ec3e43a9fb7db7357fa6d0fdc518098724eaed3ce14f46c93b7adf3747a7`，canonical semantic SHA-256=
+`cc61e318ea2cd1bce32c93bdc51a2b0a135d20d33ac2a0849918c8c20c8d3823`。focused 首轮同一
+74-test `-n16/loadfile` 覆盖为 `73 passed / 1 failed`，唯一失败是正确 fail-closed 日期错误文本与测试 regex
+不一致；只更正断言后同覆盖 `74 passed`。Ruff、strict mypy、compileall PASS；canonical `main.py`
+本地 compile 且小于 32768 bytes。此时 external action 仍为 none。
