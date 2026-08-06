@@ -25,6 +25,9 @@ TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY = (
 TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY = (
     "phase_trading_2492_qc_qqq_options_bounded_pilot_terminal_no_go_v1"
 )
+TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY = (
+    "phase_trading_2493_qc_qqq_options_owner_stage_gate_signoff_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -45,6 +48,10 @@ TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
         (
             "registry/development_tasks_shadow_v2/10/"
             "10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/a4/"
+            "a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b.yaml"
         ),
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_arch_004g_deprecation.py",
@@ -116,13 +123,14 @@ def _assert_historical_source_is_current_or_superseded(
     current_live_hash = _source_sha256_path(live_path, current_source)
     if (
         source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
-        and section_key != TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY
+        and section_key != TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY
     ):
         section_ids = list(baseline)
         assert TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY in section_ids
         assert TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY in section_ids
+        assert TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY in section_ids
         assert section_ids.index(section_key) <= section_ids.index(
-            TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY
+            TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY
         )
         return
     assert current_source.get("sha256") == current_live_hash, (

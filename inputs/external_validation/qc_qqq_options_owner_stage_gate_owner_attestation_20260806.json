@@ -1,0 +1,33 @@
+{
+  "accepted_aggregate_recommendation": "NO_GO_KEEP_BLOCKED",
+  "accepted_axis_decisions": [
+    "PLATFORM_CAPABILITY=CONDITIONAL_GO",
+    "TECHNICAL_CORRECTNESS=CONDITIONAL_GO",
+    "LICENSE_EXPORT=NO_GO",
+    "DQ_PIT=NO_GO",
+    "RESOURCE_BUDGET=NO_GO",
+    "SHARED_RECONCILIATION=NO_GO",
+    "RANGE_EXPANSION=NO_GO",
+    "PAID_TIER_UPGRADE=NO_GO"
+  ],
+  "authority_set_sha256": "0659a92c7de22202a1cba493c74cedaa86ea9e9bccf1238275b51ce18fc118fe",
+  "confirmed_no_external_action": true,
+  "confirmed_no_further_cloud_action": true,
+  "confirmed_no_investment_interpretation": true,
+  "confirmed_no_paid_upgrade_authorization": true,
+  "confirmed_no_range_expansion": true,
+  "confirmed_scope_violation": true,
+  "confirmed_shared_2489_2490_blocked": true,
+  "content_sha256": "80db4e1738558d7f5e0d460f03acc1033f1a342dcff721e7703ef21a5d2aeb54",
+  "decision_date": "2026-08-06",
+  "independent_reviewer_id": "project_owner",
+  "owner_decision_id": "owner_decision:TRADING-2493:2026-08-06:accept_no_go_keep_blocked_stage_gate_v1",
+  "policy_canonical_sha256": "7e637c0eb6070e07e70d8b3d72789a37d646965c323cf95267c6f4799cfac238",
+  "policy_file_sha256": "5bcfe8d29a70e79f110972d5b1df4fd6f013b0de5b6cb706220e40e09d8b51ff",
+  "proposal_content_sha256": "1a8da99b91245cf88d568d51d313d59986d5618a3e52b6a41d1cb562c7c58d89",
+  "proposal_file_sha256": "c638f0e75ad8faaa27df91e8c0710a4202e4e29229e1f13202de6514b184d3ef",
+  "proposal_path": "inputs/external_validation/qc_qqq_options_owner_stage_gate_proposal_20260806.json",
+  "record_id": "qc_qqq_options_owner_stage_gate_owner_attestation_20260806_v1",
+  "schema_version": "qc_qqq_options_owner_stage_gate_owner_attestation.v1",
+  "signer_id": "project_owner"
+}

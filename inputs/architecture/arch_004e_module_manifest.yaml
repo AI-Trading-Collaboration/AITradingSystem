@@ -16292,7 +16292,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.qqq_options_research.owner_stage_gate_signoff
   path: src/ai_trading_system/qqq_options_research/owner_stage_gate_signoff.py
-  sha256: 59fa813ea7e17bad13a567addf7f1ee3bf64ae6f41da4dd8ef6e4892d1952e89
+  sha256: 9e59d06b3f24cf47a042d3be634e4643980a160cd1f3b627ba709074e8b9104b
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

@@ -7771,7 +7771,12 @@ resource cap calibration 与 primary `2021-02-22` research-window viability 都�
 `UNKNOWN_BLOCKS_GO`，并绑定独立 owner/exit condition；`2022-12-01` 不成为默认。
 
 工程线只能生成 `PENDING_OWNER_SIGNATURE` proposal，不能从 caller token 或自由文本伪造 terminal signoff。
-在 project owner exact-bind proposal/policy/axis hashes 并明确接受 `NO_GO_KEEP_BLOCKED` 前，任务保持
-`IN_PROGRESS`。无论是否签署，range expansion、further cloud action、paid-tier upgrade、investment
+project owner 已通过 requirement 冻结的 exact token 绑定 proposal file/content、policy file/canonical、
+authority-set hashes，并明确接受 `NO_GO_KEEP_BLOCKED`。typed attestation/signoff replay 生成
+`qc_qqq_options_owner_stage_gate_owner_attestation_20260806.json` 与
+`qc_qqq_options_owner_stage_gate_signoff_20260806.json`，terminal status=`SIGNED_NO_GO`；该 terminal record
+保留八轴 decisions、五项 UNKNOWN/owner/exit condition 及 2492 scope violation/shared blockers，不把
+`CONDITIONAL_GO` 单轴提升为 aggregate GO。任务因此完成 NO-GO governance baseline，而非解除后继阻塞。
+无论是否签署，range expansion、further cloud action、paid-tier upgrade、investment
 interpretation、paper/live/broker/production 均为 false/none；未来任何平台实验或 short/roll/multi-leg/
 LEAPS/Wheel 必须另立任务和独立授权。

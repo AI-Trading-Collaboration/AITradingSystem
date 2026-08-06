@@ -14,6 +14,7 @@ from ai_trading_system.qqq_options_research.owner_stage_gate_signoff import (
     DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_OWNER_ATTESTATION_PATH,
     DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_POLICY_PATH,
     DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_PROPOSAL_PATH,
+    DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_PATH,
     EXPECTED_AXIS_DECISIONS,
     EXPECTED_UNKNOWN_IDS,
     OWNER_STAGE_GATE_DECISION_ID,
@@ -73,6 +74,7 @@ def _attestation(
         proposal_content_sha256=proposal.content_sha256,
         policy_file_sha256=proposal.policy_file_sha256,
         policy_canonical_sha256=proposal.policy_canonical_sha256,
+        authority_set_sha256=proposal.authority_set_sha256,
         signer_id="project_owner",
         independent_reviewer_id="project_owner",
         accepted_axis_decisions=tuple(
@@ -257,7 +259,8 @@ def test_symlink_authority_fails_closed_when_supported(tmp_path: Path) -> None:
         load_qc_qqq_options_owner_stage_gate_policy(project_root=root)
 
 
-def test_terminal_signoff_requires_tracked_owner_attestation() -> None:
+def test_terminal_signoff_requires_tracked_owner_attestation(tmp_path: Path) -> None:
+    root = _copy_project_authority(tmp_path)
     with pytest.raises(
         QCQQQOptionsOwnerStageGateContractError,
         match="QC_QQQ_OPTIONS_OWNER_STAGE_GATE_ATTESTATION_REQUIRED",
@@ -266,6 +269,7 @@ def test_terminal_signoff_requires_tracked_owner_attestation() -> None:
             record_id="qc_qqq_options_owner_stage_gate_signoff_20260806_v1",
             issued_at_utc=_CREATED_AT,
             repository_code_sha=_BASE_SHA,
+            project_root=root,
         )
 
 
@@ -307,6 +311,7 @@ def test_exact_owner_attestation_builds_signed_no_go_record(tmp_path: Path) -> N
     assert signoff.aggregate_decision == "NO_GO_KEEP_BLOCKED"
     assert signoff.signoff_status == "SIGNED_NO_GO"
     assert signoff.source_pilot_disposition == "PILOT_NO_GO_LICENSE_OR_EVIDENCE"
+    assert signoff.authority_set_sha256 == proposal.authority_set_sha256
     assert signoff.safety.further_cloud_action_authorized is False
 
 
@@ -330,3 +335,52 @@ def test_owner_attestation_binding_mismatch_fails_closed(tmp_path: Path) -> None
             repository_code_sha=_BASE_SHA,
             project_root=root,
         )
+
+
+def test_owner_attestation_authority_set_mismatch_fails_closed(tmp_path: Path) -> None:
+    root = _copy_project_authority(tmp_path)
+    proposal = _proposal(project_root=root)
+    proposal_path = root / DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_PROPOSAL_PATH
+    proposal_path.parent.mkdir(parents=True, exist_ok=True)
+    proposal_path.write_bytes(proposal.canonical_bytes)
+    proposal_sha = hashlib.sha256(proposal.canonical_bytes).hexdigest()
+    payload = _attestation(proposal, proposal_sha256=proposal_sha).model_dump(mode="json")
+    payload["authority_set_sha256"] = "0" * 64
+    attestation = QCQQQOptionsOwnerStageGateOwnerAttestationRecord.seal(**payload)
+    attestation_path = root / DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_OWNER_ATTESTATION_PATH
+    attestation_path.write_bytes(attestation.canonical_bytes)
+
+    with pytest.raises(
+        QCQQQOptionsOwnerStageGateContractError,
+        match="ATTESTATION_BINDING_MISMATCH",
+    ):
+        build_qc_qqq_options_owner_stage_gate_signoff(
+            record_id="qc_qqq_options_owner_stage_gate_signoff_20260806_v1",
+            issued_at_utc=_CREATED_AT,
+            repository_code_sha=_BASE_SHA,
+            project_root=root,
+        )
+
+
+def test_tracked_owner_attestation_and_signoff_are_canonical_and_bound() -> None:
+    proposal_raw = (
+        PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_PROPOSAL_PATH
+    ).read_bytes()
+    proposal = QCQQQOptionsOwnerStageGateProposalRecord.from_json_bytes(proposal_raw)
+    attestation_raw = (
+        PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_OWNER_ATTESTATION_PATH
+    ).read_bytes()
+    attestation = QCQQQOptionsOwnerStageGateOwnerAttestationRecord.from_json_bytes(attestation_raw)
+    signoff_path = PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_PATH
+    signoff_raw = signoff_path.read_bytes()
+
+    expected = build_qc_qqq_options_owner_stage_gate_signoff(
+        record_id="qc_qqq_options_owner_stage_gate_signoff_20260806_v1",
+        issued_at_utc=datetime(2026, 8, 6, 13, 57, 58, tzinfo=UTC),
+        repository_code_sha="afe58d615c09b10a43cc27547848122aa400a258",
+    )
+    assert attestation.proposal_file_sha256 == hashlib.sha256(proposal_raw).hexdigest()
+    assert attestation.proposal_content_sha256 == proposal.content_sha256
+    assert attestation.authority_set_sha256 == proposal.authority_set_sha256
+    assert expected.canonical_bytes == signoff_raw
+    assert expected.canonical_sha256 == hashlib.sha256(signoff_raw).hexdigest()

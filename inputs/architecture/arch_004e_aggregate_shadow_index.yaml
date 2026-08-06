@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: bb02bfd1e5a461504be85a0f04deaad753e9760f73d8c49a59a549863073b05e
+  current_sha256: dca12a7f13b0388c4f5ec810e5fc88ef0f42a30aaab532c9ed6c47bd61b23d63
   fragment_root: config/architecture/fragments/flows
   fragment_count: 29
   fragment_paths:
@@ -409,7 +409,7 @@ fragments:
   owner: research_governance
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_owner_stage_gate_signoff.yaml
-  sha256: b8b075f41d079cb5a66606d226ce463c9da243a22629891f625d98f3483c6aba
+  sha256: 6628de597d1773cf005c809c91e2059c651fd0a771982c54396f16fad2f712d8
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_platform_evidence_manual_bundle
   fragment_kind: module

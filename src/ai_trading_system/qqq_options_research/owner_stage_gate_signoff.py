@@ -29,6 +29,9 @@ DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_PROPOSAL_PATH = Path(
 DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_OWNER_ATTESTATION_PATH = Path(
     "inputs/external_validation/qc_qqq_options_owner_stage_gate_owner_attestation_20260806.json"
 )
+DEFAULT_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_PATH = Path(
+    "inputs/external_validation/qc_qqq_options_owner_stage_gate_signoff_20260806.json"
+)
 OWNER_STAGE_GATE_DECISION_ID = (
     "owner_decision:TRADING-2493:2026-08-06:accept_no_go_keep_blocked_stage_gate_v1"
 )
@@ -457,6 +460,7 @@ class QCQQQOptionsOwnerStageGateOwnerAttestationRecord(_SealedModel):
     proposal_content_sha256: str
     policy_file_sha256: str
     policy_canonical_sha256: str
+    authority_set_sha256: str
     signer_id: Literal["project_owner"]
     independent_reviewer_id: Literal["project_owner"]
     accepted_axis_decisions: tuple[str, ...]
@@ -479,6 +483,7 @@ class QCQQQOptionsOwnerStageGateOwnerAttestationRecord(_SealedModel):
         "proposal_content_sha256",
         "policy_file_sha256",
         "policy_canonical_sha256",
+        "authority_set_sha256",
     )
     @classmethod
     def _validate_hash(cls, value: str, info: Any) -> str:
@@ -510,6 +515,7 @@ class QCQQQOptionsOwnerStageGateSignoffRecord(_SealedModel):
     owner_attestation_content_sha256: str
     policy_file_sha256: str
     policy_canonical_sha256: str
+    authority_set_sha256: str
     project_id: Literal["34808569"]
     backtest_id: Literal["6e70793600035ddc3d7f856319a352db"]
     axis_decisions: tuple[QCQQQOptionsOwnerStageGateAxisDecision, ...]
@@ -541,6 +547,7 @@ class QCQQQOptionsOwnerStageGateSignoffRecord(_SealedModel):
         "owner_attestation_content_sha256",
         "policy_file_sha256",
         "policy_canonical_sha256",
+        "authority_set_sha256",
     )
     @classmethod
     def _validate_hash(cls, value: str, info: Any) -> str:
@@ -866,8 +873,10 @@ def build_qc_qqq_options_owner_stage_gate_signoff(
         and attestation.proposal_content_sha256 == proposal.content_sha256
         and attestation.policy_file_sha256 == loaded.policy_sha256
         and attestation.policy_canonical_sha256 == loaded.policy_canonical_sha256
+        and attestation.authority_set_sha256 == loaded.authority_set_sha256
         and proposal.policy_file_sha256 == loaded.policy_sha256
         and proposal.policy_canonical_sha256 == loaded.policy_canonical_sha256
+        and proposal.authority_set_sha256 == loaded.authority_set_sha256
     ):
         raise QCQQQOptionsOwnerStageGateContractError(
             "QC_QQQ_OPTIONS_OWNER_STAGE_GATE_ATTESTATION_BINDING_MISMATCH",
@@ -885,6 +894,7 @@ def build_qc_qqq_options_owner_stage_gate_signoff(
         owner_attestation_content_sha256=attestation.content_sha256,
         policy_file_sha256=loaded.policy_sha256,
         policy_canonical_sha256=loaded.policy_canonical_sha256,
+        authority_set_sha256=loaded.authority_set_sha256,
         project_id=proposal.project_id,
         backtest_id=proposal.backtest_id,
         axis_decisions=proposal.axis_decisions,

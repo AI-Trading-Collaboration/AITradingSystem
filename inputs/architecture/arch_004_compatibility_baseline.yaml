@@ -46678,3 +46678,206 @@ phase_trading_2492_qc_qqq_options_bounded_pilot_terminal_no_go_v1:
     paper_live_broker_production_action: false
     production_effect: none
     broker_action: none
+phase_trading_2493_qc_qqq_options_owner_stage_gate_signoff_v1:
+  schema_version: trading_2493_qc_qqq_options_owner_stage_gate_signoff_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2493-QC-QQQ-OPTIONS-OWNER-STAGE-GATE-SIGNOFF-V1
+  task_ids:
+  - TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  owner_decision: owner_decision:TRADING-2493:2026-08-06:accept_no_go_keep_blocked_stage_gate_v1
+  terminal_disposition: NO_GO_KEEP_BLOCKED
+  prior_sections_immutability:
+    source_commit: afe58d615c09b10a43cc27547848122aa400a258
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 42dedc57716a4eb65fb5f5768564775d79fff5d1
+    raw_byte_count: 2999370
+    raw_sha256: 44b33be33b4c12db87b90fa8fc7005b1849f1dd7ebd8991f913ad34aa42fa2bc
+    append_offset: 2999370
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/10/10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml
+  - registry/development_tasks_shadow_v2/10/10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml
+  - registry/development_tasks_shadow/active/a4/a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b.yaml
+  - registry/development_tasks_shadow_v2/a4/a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_trading2452_architecture_contract.py
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/architecture/fragments/flows/qc_qqq_options_owner_stage_gate_signoff.yaml
+  - config/architecture/fragments/modules/qc_qqq_options_owner_stage_gate_signoff.yaml
+  - config/research/qc_qqq_options_owner_stage_gate_signoff_v1.yaml
+  - docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
+  - inputs/external_validation/qc_qqq_options_owner_stage_gate_owner_attestation_20260806.json
+  - inputs/external_validation/qc_qqq_options_owner_stage_gate_proposal_20260806.json
+  - inputs/external_validation/qc_qqq_options_owner_stage_gate_signoff_20260806.json
+  - src/ai_trading_system/qqq_options_research/owner_stage_gate_signoff.py
+  - tests/test_qc_qqq_options_owner_stage_gate_signoff.py
+  source_delta_paths:
+  - config/architecture/fragments/flows/qc_qqq_options_owner_stage_gate_signoff.yaml
+  - config/architecture/fragments/modules/qc_qqq_options_owner_stage_gate_signoff.yaml
+  - config/research/qc_qqq_options_owner_stage_gate_signoff_v1.yaml
+  - docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
+  - docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
+  - docs/system_flow.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+  - inputs/architecture/arch_004e_architecture_fitness.yaml
+  - inputs/architecture/arch_004e_module_manifest.yaml
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_004g_deprecation_inventory.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - inputs/external_validation/qc_qqq_options_owner_stage_gate_owner_attestation_20260806.json
+  - inputs/external_validation/qc_qqq_options_owner_stage_gate_proposal_20260806.json
+  - inputs/external_validation/qc_qqq_options_owner_stage_gate_signoff_20260806.json
+  - registry/development_tasks_shadow/active/10/10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml
+  - registry/development_tasks_shadow_v2/10/10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml
+  - registry/development_tasks_shadow/active/a4/a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b.yaml
+  - registry/development_tasks_shadow_v2/a4/a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b.yaml
+  - src/ai_trading_system/qqq_options_research/owner_stage_gate_signoff.py
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_arch_004g_deprecation.py
+  - tests/test_qc_qqq_options_owner_stage_gate_signoff.py
+  - tests/test_trading2452_architecture_contract.py
+  supersession:
+    superseded_by_phase: TRADING-2493-QC-QQQ-OPTIONS-OWNER-STAGE-GATE-SIGNOFF-V1
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2492_qc_qqq_options_bounded_pilot_terminal_no_go_v1
+    current_hash_authority: phase_trading_2493_qc_qqq_options_owner_stage_gate_signoff_v1.sources
+  sources:
+  - path: config/architecture/fragments/flows/qc_qqq_options_owner_stage_gate_signoff.yaml
+    sha256: a12759cae0c84fccf66c263aac8f19ca31380528be737716e6b698eb97781c7c
+    hash_normalization: git_eol_lf
+  - path: config/architecture/fragments/modules/qc_qqq_options_owner_stage_gate_signoff.yaml
+    sha256: 6628de597d1773cf005c809c91e2059c651fd0a771982c54396f16fad2f712d8
+    hash_normalization: git_eol_lf
+  - path: config/research/qc_qqq_options_owner_stage_gate_signoff_v1.yaml
+    sha256: 5bcfe8d29a70e79f110972d5b1df4fd6f013b0de5b6cb706220e40e09d8b51ff
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
+    sha256: ca539cd05687e4acf5dd82b044a1668d6aef491d9ef4f06672a35a07b009b469
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
+    sha256: 467b8ecec45b6c94124bba595e89a2d7ae318f0a9ae74711878f8c8bdbabec56
+    hash_normalization: git_eol_lf
+  - path: docs/system_flow.md
+    sha256: dca12a7f13b0388c4f5ec810e5fc88ef0f42a30aaab532c9ed6c47bd61b23d63
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: d52acbd7cb85388f0f313a0305247b7380ea83d711a3e4b4561b56645df16941
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_aggregate_shadow_index.yaml
+    sha256: e490d0b9b1c58b90fb7d64ddb6d4268633220238d7bd69c9178cb71eaea542a1
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_architecture_fitness.yaml
+    sha256: 19897b076330942265d0bf51bcfff9ad45ec71dc82f97ca59ef72570f1008e55
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: fc32254f3e91426c4f931d7c834aad34ed7260b35510a1544e40829786aeab3e
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 20a5517473a6fbd11acd7a5b4cf4bcac273231a191546f84f012594672ecfcba
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004g_deprecation_inventory.yaml
+    sha256: b5fcd2cc2b09ea704820a3bcc0bd322ee3afeccf73942f34014b657f45c0cb36
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 9b23d754706cd8af3a8f33f13d835454a886d259bc0a478407fc6c9d0bea0db8
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: ba66eecb36ee6be353ad0eadef7fc5dbbb2b24565acdc315fbb87faa1bf8e518
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: 08ab5e19eb40a443e1928fcbacb2de95486b98d74a18d8f081eadbb0878d9c5e
+    hash_normalization: git_eol_lf
+  - path: inputs/external_validation/qc_qqq_options_owner_stage_gate_owner_attestation_20260806.json
+    sha256: 9b1592289b579dacb0608aeb18d73aac940ad92795484c2377f7f6e8ba2f4aa6
+    hash_normalization: git_eol_lf
+  - path: inputs/external_validation/qc_qqq_options_owner_stage_gate_proposal_20260806.json
+    sha256: c638f0e75ad8faaa27df91e8c0710a4202e4e29229e1f13202de6514b184d3ef
+    hash_normalization: git_eol_lf
+  - path: inputs/external_validation/qc_qqq_options_owner_stage_gate_signoff_20260806.json
+    sha256: dd9c9332d57e48de7541ca316a4b64594b1ecf03f0910551f1e63a4e60174d02
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/10/10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml
+    sha256: 7792ec1f257fdacbcb790cf0f313a9bb477cdacede758cc3c772c641b845f109
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/a4/a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b.yaml
+    sha256: 0ba00599370f455f48afbd57bdc54cff0a3c1140c2aa99a7a30e2f407b905036
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/10/10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef.yaml
+    sha256: 2ca3327062cec1e6977be721b4f28def04ebc742acbe9e029221bddbcfc67b24
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/a4/a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b.yaml
+    sha256: 2033979a097e14f1a39fdbe1e2a47b4158c2912552da6a3aa6eaccadf9f022bd
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/qqq_options_research/owner_stage_gate_signoff.py
+    sha256: 9e59d06b3f24cf47a042d3be634e4643980a160cd1f3b627ba709074e8b9104b
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 10dd17f22bebb84f7532ea24b42b21e84f29111b2c7e27e9619b1c1d913ca7a3
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004g_deprecation.py
+    sha256: 9acac449cfd5cad8cb0afe82d178375b33fd1513f4fbd75d38ca0aa9577b2dcb
+    hash_normalization: git_eol_lf
+  - path: tests/test_qc_qqq_options_owner_stage_gate_signoff.py
+    sha256: 55abcfdfa541f8d054309dc9f7b039d58c89ebe76f262ed591b4b096884af0a1
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2452_architecture_contract.py
+    sha256: 78d005204dff73ac9f5c161b0b018bb304e9dd3d6bf397519563d6a8940c393d
+    hash_normalization: git_eol_lf
+  generated_fragment_authority:
+    mode: INDEX_TRANSITIVE_SHA256_AUTHORITY
+    index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    fragment_root: registry/development_tasks_shadow_v2
+    fragment_count: 962
+    active_task_count: 457
+    completed_task_count: 505
+    stable_path_key: sha256(task_id)
+    loader_hash_replay: PASS
+  signed_no_go_authority:
+    proposal_file_sha256: c638f0e75ad8faaa27df91e8c0710a4202e4e29229e1f13202de6514b184d3ef
+    proposal_content_sha256: 1a8da99b91245cf88d568d51d313d59986d5618a3e52b6a41d1cb562c7c58d89
+    policy_file_sha256: 5bcfe8d29a70e79f110972d5b1df4fd6f013b0de5b6cb706220e40e09d8b51ff
+    policy_canonical_sha256: 7e637c0eb6070e07e70d8b3d72789a37d646965c323cf95267c6f4799cfac238
+    authority_set_sha256: 0659a92c7de22202a1cba493c74cedaa86ea9e9bccf1238275b51ce18fc118fe
+    owner_attestation_file_sha256: 9b1592289b579dacb0608aeb18d73aac940ad92795484c2377f7f6e8ba2f4aa6
+    owner_attestation_content_sha256: 80db4e1738558d7f5e0d460f03acc1033f1a342dcff721e7703ef21a5d2aeb54
+    terminal_signoff_file_sha256: dd9c9332d57e48de7541ca316a4b64594b1ecf03f0910551f1e63a4e60174d02
+    terminal_signoff_content_sha256: a6824fc8264d4719023dd23ae17f5deb1f64e9ee5e35dd87d8144519050f059f
+    project_id: '34808569'
+    backtest_id: 6e70793600035ddc3d7f856319a352db
+    aggregate_decision: NO_GO_KEEP_BLOCKED
+    signoff_status: SIGNED_NO_GO
+    scope_violation: true
+    shared_2489_2490_blocked: true
+  validation:
+    owner_stage_gate_focused_parallel_pytest: PASS_17_TESTS_N16_LOADFILE
+    compatibility_failure_fix_parent: FAIL_94_PASS_104_N16_LOADFILE
+    compatibility_regression: PENDING_FINAL_TREE
+    formal_five_gate: PENDING_FINAL_TREE
+  safety:
+    further_quantconnect_action_authorized: false
+    range_expansion_allowed: false
+    paid_tier_upgrade_authorized: false
+    investment_interpretation_allowed: false
+    raw_options_data_downloaded: false
+    paper_live_broker_production_action: false
+    production_effect: none
+    broker_action: none

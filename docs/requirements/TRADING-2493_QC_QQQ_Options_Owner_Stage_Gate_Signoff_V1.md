@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`BLOCKED_OWNER_INPUT`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -199,5 +199,21 @@ append-only successor authority 级联，不含 2493 业务测试失败。该结
 section，不改历史 prefix，并用相同 198-test 覆盖重跑。
 
 implementation commit=`3e56172cbc09bc9dabef9cc77cd40edf18c83b9b`；proposal 已 canonical replay
-并转入 `PENDING_OWNER_SIGNATURE`。当前 blocker 仅为上述 exact Owner token；在 token 到位前不创建
-attestation/signoff，不更新 terminal task status，不启动正式五级门禁。
+并转入 `PENDING_OWNER_SIGNATURE`。project owner 随后原样签发本 requirement 冻结 token；工程线通过
+typed seal/from-json/builder 路径生成 canonical Owner attestation 与 terminal signoff：
+
+- Owner attestation file/content SHA-256=
+  `9b1592289b579dacb0608aeb18d73aac940ad92795484c2377f7f6e8ba2f4aa6` /
+  `80db4e1738558d7f5e0d460f03acc1033f1a342dcff721e7703ef21a5d2aeb54`；
+- terminal signoff file/content SHA-256=
+  `dd9c9332d57e48de7541ca316a4b64594b1ecf03f0910551f1e63a4e60174d02` /
+  `a6824fc8264d4719023dd23ae17f5deb1f64e9ee5e35dd87d8144519050f059f`；
+- terminal status=`SIGNED_NO_GO`、aggregate=`NO_GO_KEEP_BLOCKED`，repository code SHA=
+  `afe58d615c09b10a43cc27547848122aa400a258`；
+- attestation/signoff 均 exact-bind proposal file/content、policy file/canonical 与 authority-set SHA，且保留
+  八轴 decisions、五项 UNKNOWN/owner/exit condition 和全部 false/none safety boundary。
+
+任务转为 `BASELINE_DONE` 仅表示 NO-GO governance signoff 已完整建立；它不解除 2489/2490、range、
+license、DQ/PIT、resource 或 primary-window blocker。当前阶段进入 S4 final generated/current authority 与
+formal validation；本次仍没有 QuantConnect/cloud/API/CLI/HTTP/Object Store/raw export/paper/live/broker/
+production 动作。
