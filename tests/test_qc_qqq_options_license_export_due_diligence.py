@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.qqq_options_research.license_export_due_diligence import (
     DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_POLICY_PATH,
+    DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_REPORT_PATH,
     EXPECTED_AXIS_STATUSES,
     EXPECTED_CLAIM_IDS,
     EXPECTED_SOURCE_IDS,
@@ -26,7 +27,7 @@ from ai_trading_system.qqq_options_research.license_export_due_diligence import 
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-_BASE_SHA = "967d3524876b34c11ee8235b2913ba841cf94b36"
+_IMPLEMENTATION_SHA = "2e63070771afb48eb5b6873806bc84ff560c10d4"
 _CREATED_AT = datetime(2026, 8, 7, 0, 0, tzinfo=UTC)
 _AUTHORITY_PATHS = (
     "inputs/external_validation/qc_qqq_options_owner_stage_gate_owner_attestation_20260806.json",
@@ -38,7 +39,7 @@ def _report(*, project_root: Path = PROJECT_ROOT) -> QCQQQOptionsLicenseExportDu
     return build_qc_qqq_options_license_export_due_diligence_report(
         record_id="qc_qqq_options_license_export_due_diligence_report_20260807_v1",
         created_at_utc=_CREATED_AT,
-        repository_code_sha=_BASE_SHA,
+        repository_code_sha=_IMPLEMENTATION_SHA,
         project_root=project_root,
     )
 
@@ -317,3 +318,17 @@ def test_predecessor_signed_no_go_is_preserved_in_report() -> None:
     assert report.predecessor_signoff_status == "SIGNED_NO_GO"
     assert report.predecessor_aggregate_decision == "NO_GO_KEEP_BLOCKED"
     assert report.predecessor_license_export_axis == "NO_GO"
+
+
+def test_tracked_report_is_canonical_and_replays_from_frozen_authority() -> None:
+    raw = (
+        PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_REPORT_PATH
+    ).read_bytes()
+    tracked = QCQQQOptionsLicenseExportDueDiligenceReport.from_json_bytes(raw)
+    expected = _report()
+
+    assert tracked == expected
+    assert raw == expected.canonical_bytes
+    assert expected.content_sha256 == (
+        "31e244287ed631a88617f72ddf6720925f4fd58d20f75066a57805c00f4afd7a"
+    )

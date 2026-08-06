@@ -1,0 +1,280 @@
+{
+  "aggregate_decision": "LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED",
+  "assessments": [
+    {
+      "axis_id": "FREE_CLOUD_DATA_CLASS_ACCESS",
+      "blocker": "Public docs do not prove account-specific QQQ Options entitlement or retention.",
+      "status": "PUBLIC_DOCS_CONDITIONAL_SUPPORT",
+      "supporting_claim_ids": [
+        "FREE_TIER_MINUTE_DAILY_CLOUD_DATA",
+        "US_EQUITY_OPTIONS_MINUTE_PROVIDER_COVERAGE"
+      ]
+    },
+    {
+      "axis_id": "QQQ_OPTIONS_ACCOUNT_ENTITLEMENT",
+      "blocker": "Export-safe account entitlement receipt or provider confirmation is absent.",
+      "status": "UNKNOWN_ACCOUNT_SPECIFIC_EVIDENCE_REQUIRED",
+      "supporting_claim_ids": [
+        "ACCOUNT_QQQ_OPTIONS_ENTITLEMENT_NOT_PROVEN"
+      ]
+    },
+    {
+      "axis_id": "PRIMARY_WINDOW_HISTORICAL_RETENTION",
+      "blocker": "Exact 2021-02-22 requested/evaluated account coverage has not been reviewed.",
+      "status": "UNKNOWN_ACCOUNT_SPECIFIC_EVIDENCE_REQUIRED",
+      "supporting_claim_ids": [
+        "PRIMARY_WINDOW_RETENTION_NOT_PROVEN"
+      ]
+    },
+    {
+      "axis_id": "RAW_OPTIONS_LOCAL_DOWNLOAD",
+      "blocker": "No separate US Equity Options download license is authorized or evidenced.",
+      "status": "NO_GO_SEPARATE_DOWNLOAD_LICENSE_REQUIRED",
+      "supporting_claim_ids": [
+        "CLOUD_AND_DOWNLOAD_LICENSES_ARE_DISTINCT"
+      ]
+    },
+    {
+      "axis_id": "RAW_OPTIONS_REDISTRIBUTION",
+      "blocker": "Raw row download, conversion, reconstruction, and redistribution remain prohibited.",
+      "status": "NO_GO_PROHIBITED",
+      "supporting_claim_ids": [
+        "DOWNLOAD_IS_INTERNAL_LEAN_ONLY_NO_REDISTRIBUTION"
+      ]
+    },
+    {
+      "axis_id": "DERIVED_BACKTEST_RESULT_EXPORT",
+      "blocker": "2489 reviewed collection policy and complete strict bundle are still absent.",
+      "status": "CONDITIONAL_DOCUMENTED_UI_EXPORT_ONLY",
+      "supporting_claim_ids": [
+        "DERIVED_BACKTEST_UI_EXPORTS_ARE_DOCUMENTED",
+        "AUTOMATED_PAGE_COPY_NOT_ADMITTED"
+      ]
+    },
+    {
+      "axis_id": "API_CLI_ACCESS",
+      "blocker": "API/CLI are not authorized and paid-tier value has not been reviewed.",
+      "status": "NO_GO_CURRENT_FREE_TIER",
+      "supporting_claim_ids": [
+        "API_CLI_IS_NOT_A_FREE_TIER_CAPABILITY"
+      ]
+    }
+  ],
+  "authority_set_sha256": "375da2b0720ed7da7bea67bf684ba38b334a88f1a32fcc7c6703177136f0a647",
+  "claims": [
+    {
+      "allowed_conclusion": "仅支持受限 cloud capability 的 conditional 判断，不证明 QQQ Options account entitlement。",
+      "claim_id": "FREE_TIER_MINUTE_DAILY_CLOUD_DATA",
+      "classification": "DOCUMENTED_FACT",
+      "exit_condition": "人工复核当前 tier 页面并与账户 Resources/Data 页面逐项对照。",
+      "owner": "project_owner",
+      "source_ids": [
+        "QC_TIER_FEATURES_DOC"
+      ],
+      "summary": "官方 tier 文档描述 Free tier 提供 minute 到 daily 的 cloud dataset class 访问。"
+    },
+    {
+      "allowed_conclusion": "只能描述 provider dataset，不得推出当前账户或 primary-window retention PASS。",
+      "claim_id": "US_EQUITY_OPTIONS_MINUTE_PROVIDER_COVERAGE",
+      "classification": "DOCUMENTED_FACT",
+      "exit_condition": "获取 account-specific QQQ Options entitlement 与 exact requested-window 可用性证据。",
+      "owner": "project_owner",
+      "source_ids": [
+        "QC_US_EQUITY_OPTIONS_DOC"
+      ],
+      "summary": "官方 dataset 文档描述 US Equity Options 具有 minute resolution 与 provider historical coverage。"
+    },
+    {
+      "allowed_conclusion": "当前 cloud evidence 不能授权 local raw download。",
+      "claim_id": "CLOUD_AND_DOWNLOAD_LICENSES_ARE_DISTINCT",
+      "classification": "DOCUMENTED_FACT",
+      "exit_condition": "取得适用于本组织与 US Equity Options 的 exact download license 证明。",
+      "owner": "project_owner",
+      "source_ids": [
+        "QC_DATASET_LICENSING_DOC"
+      ],
+      "summary": "官方 licensing 文档把 cloud license 与 download license 作为不同访问权利。"
+    },
+    {
+      "allowed_conclusion": "raw options download、转换、重建和 redistribution 保持 NO-GO。",
+      "claim_id": "DOWNLOAD_IS_INTERNAL_LEAN_ONLY_NO_REDISTRIBUTION",
+      "classification": "DOCUMENTED_FACT",
+      "exit_condition": "人工复核 provider agreement 与 Terms；任何更宽权利必须由书面 license 单独证明。",
+      "owner": "project_owner",
+      "source_ids": [
+        "QC_DATASET_LICENSING_DOC",
+        "QC_SITE_TERMS"
+      ],
+      "summary": "官方 licensing reference 对下载数据限定组织内部 LEAN 使用并禁止再分发或转换。"
+    },
+    {
+      "allowed_conclusion": "只支持 2489 对 export-safe derived artifacts 的 conditional collection，不支持 raw rows。",
+      "claim_id": "DERIVED_BACKTEST_UI_EXPORTS_ARE_DOCUMENTED",
+      "classification": "DOCUMENTED_FACT",
+      "exit_condition": "2489 reviewed collection policy、security review 与 complete strict bundle PASS。",
+      "owner": "TRADING-2489 evidence engineering + project_owner",
+      "source_ids": [
+        "QC_BACKTEST_RESULTS_DOC"
+      ],
+      "summary": "官方 Results 文档列出 report、orders、trades、logs 与 results 等 UI derived artifacts。"
+    },
+    {
+      "allowed_conclusion": "当前 Free tier 不调用 API/CLI，也不能据此自动批准付费升级。",
+      "claim_id": "API_CLI_IS_NOT_A_FREE_TIER_CAPABILITY",
+      "classification": "CONSERVATIVE_INFERENCE",
+      "exit_condition": "新的 paid-tier value-of-information proposal 与 exact Owner authorization。",
+      "owner": "project_owner",
+      "source_ids": [
+        "QC_TIER_FEATURES_DOC"
+      ],
+      "summary": "官方 tier 文档把 API/CLI 描述在 Quant Researcher tier，而非 Free tier capability。"
+    },
+    {
+      "allowed_conclusion": "QQQ Options account entitlement 保持 UNKNOWN，不能升级为 PASS。",
+      "claim_id": "ACCOUNT_QQQ_OPTIONS_ENTITLEMENT_NOT_PROVEN",
+      "classification": "EXPLICIT_UNKNOWN",
+      "exit_condition": "人工保存 export-safe account Data/entitlement receipt 或取得 provider 书面确认。",
+      "owner": "project_owner",
+      "source_ids": [
+        "QC_DATASET_LICENSING_DOC",
+        "QC_TIER_FEATURES_DOC",
+        "QC_US_EQUITY_OPTIONS_DOC"
+      ],
+      "summary": "公开文档不能证明 project/account 对 QQQ Options 的完整 entitlement。"
+    },
+    {
+      "allowed_conclusion": "不得运行、扩窗或宣称 primary-window viability。",
+      "claim_id": "PRIMARY_WINDOW_RETENTION_NOT_PROVEN",
+      "classification": "EXPLICIT_UNKNOWN",
+      "exit_condition": "新任务 exact-bind account entitlement，并以 2021-02-22 requested/evaluated range 形成 governed evidence。",
+      "owner": "research owner + project_owner",
+      "source_ids": [
+        "QC_US_EQUITY_OPTIONS_DOC"
+      ],
+      "summary": "Provider dataset start 不证明账户对 2021-02-22 primary research window 的完整 retention。"
+    },
+    {
+      "allowed_conclusion": "source-content checksum 明确保留 unavailable，不能伪造 evidence completeness。",
+      "claim_id": "AUTOMATED_PAGE_COPY_NOT_ADMITTED",
+      "classification": "CONSERVATIVE_INFERENCE",
+      "exit_condition": "Owner 人工复核 official pages，并提交不含受限正文的 typed attestation。",
+      "owner": "project_owner",
+      "source_ids": [
+        "QC_SITE_TERMS"
+      ],
+      "summary": "本任务不使用自动化复制、监控、抓取或挖掘保存 QuantConnect 页面正文。"
+    }
+  ],
+  "content_sha256": "31e244287ed631a88617f72ddf6720925f4fd58d20f75066a57805c00f4afd7a",
+  "created_at_utc": "2026-08-07T00:00:00Z",
+  "evaluated_range": null,
+  "legal_opinion_provided": false,
+  "option_event_dq_status": "NOT_EVALUATED",
+  "option_event_pit_status": "NOT_EVALUATED",
+  "owner_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+  "policy_canonical_sha256": "8e6e57d5dba9f0a91c5165c245e340be4b77abe7ec2adafea022dc379cbf5504",
+  "policy_file_sha256": "a657c5d0314561ef2c8b9898d0a907174eb6d6e8364da9788ba84dd60cb3bb3f",
+  "policy_id": "qc_qqq_options_license_export_due_diligence_v1",
+  "policy_version": "1.0.0",
+  "predecessor_aggregate_decision": "NO_GO_KEEP_BLOCKED",
+  "predecessor_license_export_axis": "NO_GO",
+  "predecessor_owner_attestation_content_sha256": "80db4e1738558d7f5e0d460f03acc1033f1a342dcff721e7703ef21a5d2aeb54",
+  "predecessor_owner_attestation_file_sha256": "9b1592289b579dacb0608aeb18d73aac940ad92795484c2377f7f6e8ba2f4aa6",
+  "predecessor_signoff_content_sha256": "a6824fc8264d4719023dd23ae17f5deb1f64e9ee5e35dd87d8144519050f059f",
+  "predecessor_signoff_file_sha256": "dd9c9332d57e48de7541ca316a4b64594b1ecf03f0910551f1e63a4e60174d02",
+  "predecessor_signoff_status": "SIGNED_NO_GO",
+  "primary_research_window_start": "2021-02-22",
+  "record_id": "qc_qqq_options_license_export_due_diligence_report_20260807_v1",
+  "repository_code_sha": "2e63070771afb48eb5b6873806bc84ff560c10d4",
+  "requested_range": null,
+  "research_run_performed": false,
+  "safety": {
+    "api_cli_http_object_store_used": false,
+    "broker_action": "none",
+    "cloud_backtest_performed": false,
+    "investment_interpretation_allowed": false,
+    "live_allowed": false,
+    "paid_tier_upgrade_authorized": false,
+    "paper_allowed": false,
+    "production_allowed": false,
+    "project_mutation_performed": false,
+    "quantconnect_login_performed": false,
+    "range_expansion_allowed": false,
+    "raw_options_data_downloaded": false
+  },
+  "schema_version": "qc_qqq_options_license_export_due_diligence_report.v1",
+  "sources": [
+    {
+      "capture_mode": "PUBLIC_REFERENCE_METADATA_ONLY_NO_PAGE_COPY",
+      "limitation": "只登记官方 URL 与工程摘要；未保存页面正文，不能替代 provider agreement 或账户 entitlement。",
+      "manual_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+      "manual_reviewer": "project_owner",
+      "retrieved_on": "2026-08-07",
+      "role": "DATASET_LICENSING",
+      "source_content_checksum_status": "NOT_CAPTURED_AUTOMATION_PROHIBITED",
+      "source_content_sha256": null,
+      "source_id": "QC_DATASET_LICENSING_DOC",
+      "url": "https://www.quantconnect.com/docs/v2/cloud-platform/datasets/licensing"
+    },
+    {
+      "capture_mode": "PUBLIC_REFERENCE_METADATA_ONLY_NO_PAGE_COPY",
+      "limitation": "Free tier capability 是公共产品描述，不证明特定账户、日期或 dataset retention。",
+      "manual_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+      "manual_reviewer": "project_owner",
+      "retrieved_on": "2026-08-07",
+      "role": "TIER_CAPABILITY",
+      "source_content_checksum_status": "NOT_CAPTURED_AUTOMATION_PROHIBITED",
+      "source_content_sha256": null,
+      "source_id": "QC_TIER_FEATURES_DOC",
+      "url": "https://www.quantconnect.com/docs/v2/cloud-platform/organizations/tier-features"
+    },
+    {
+      "capture_mode": "PUBLIC_REFERENCE_METADATA_ONLY_NO_PAGE_COPY",
+      "limitation": "资源规格与 quota 会变化；本记录不校准 2492 observed data-point cap。",
+      "manual_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+      "manual_reviewer": "project_owner",
+      "retrieved_on": "2026-08-07",
+      "role": "RESOURCE_LIMITS",
+      "source_content_checksum_status": "NOT_CAPTURED_AUTOMATION_PROHIBITED",
+      "source_content_sha256": null,
+      "source_id": "QC_RESOURCES_DOC",
+      "url": "https://www.quantconnect.com/docs/v2/cloud-platform/organizations/resources"
+    },
+    {
+      "capture_mode": "PUBLIC_REFERENCE_METADATA_ONLY_NO_PAGE_COPY",
+      "limitation": "Provider coverage start 与 resolution 不等于当前账户 entitlement 或 2021-02-22 全窗可用性。",
+      "manual_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+      "manual_reviewer": "project_owner",
+      "retrieved_on": "2026-08-07",
+      "role": "OPTION_DATASET_COVERAGE",
+      "source_content_checksum_status": "NOT_CAPTURED_AUTOMATION_PROHIBITED",
+      "source_content_sha256": null,
+      "source_id": "QC_US_EQUITY_OPTIONS_DOC",
+      "url": "https://www.quantconnect.com/docs/v2/writing-algorithms/datasets/algoseek/us-equity-options"
+    },
+    {
+      "capture_mode": "PUBLIC_REFERENCE_METADATA_ONLY_NO_PAGE_COPY",
+      "limitation": "UI derived artifacts 文档不授权 raw chain、minute quote、OI row 或受限数据重建。",
+      "manual_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+      "manual_reviewer": "project_owner",
+      "retrieved_on": "2026-08-07",
+      "role": "DERIVED_RESULT_EXPORT",
+      "source_content_checksum_status": "NOT_CAPTURED_AUTOMATION_PROHIBITED",
+      "source_content_sha256": null,
+      "source_id": "QC_BACKTEST_RESULTS_DOC",
+      "url": "https://www.quantconnect.com/docs/v2/cloud-platform/backtesting/results"
+    },
+    {
+      "capture_mode": "PUBLIC_REFERENCE_METADATA_ONLY_NO_PAGE_COPY",
+      "limitation": "Terms 需 Owner 人工逐字复核；工程线不自动复制、监控、抓取或保存网页正文。",
+      "manual_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+      "manual_reviewer": "project_owner",
+      "retrieved_on": "2026-08-07",
+      "role": "SITE_TERMS",
+      "source_content_checksum_status": "NOT_CAPTURED_AUTOMATION_PROHIBITED",
+      "source_content_sha256": null,
+      "source_id": "QC_SITE_TERMS",
+      "url": "https://www.quantconnect.com/terms/"
+    }
+  ]
+}

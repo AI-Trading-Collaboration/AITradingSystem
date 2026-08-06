@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -161,4 +161,23 @@ SINGLE_LANE START/LANE 随后在同一 exact base PASS，`contract_change=false`
 根因是 `Literal[date]` JSON round-trip；改为 exact date validator 后第二轮=`16 passed / 1 failed`，剩余
 仅为 test fixture 未使用 canonical Unicode serializer；修复 fixture 后同覆盖=`17 passed`，2493–2497
 adjacent=`34 passed`。两轮失败均为 focused failure-fix evidence，不是正式门禁；Ruff、format、strict
-mypy、compileall PASS。当前等待 implementation commit exact SHA 以生成 canonical tracked report。
+mypy、compileall PASS。
+
+implementation commit=`2e63070771afb48eb5b6873806bc84ff560c10d4`。canonical tracked report 已由该
+exact implementation authority deterministic 生成：file SHA-256=
+`5e8063754bae6e9e4cb3cca02dacd064e3ce368a1cdba9612df707a83ed48e80`，content SHA-256=
+`31e244287ed631a88617f72ddf6720925f4fd58d20f75066a57805c00f4afd7a`，policy file/canonical
+SHA-256=`a657c5d0314561ef2c8b9898d0a907174eb6d6e8364da9788ba84dd60cb3bb3f` /
+`8e6e57d5dba9f0a91c5165c245e340be4b77abe7ec2adafea022dc379cbf5504`，authority set
+SHA-256=`375da2b0720ed7da7bea67bf684ba38b334a88f1a32fcc7c6703177136f0a647`。tracked report
+canonical replay 后 focused=`18 passed`；aggregate 保持
+`LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。工程 baseline 已闭环，因此任务转
+`BASELINE_DONE`；剩余缺口仅能由 project owner 对 official pages/account entitlement/provider terms
+作人工复核并提交新的 exact proposal 关闭，2497 本身不授权任何外部动作。
+
+final-tree adjacent 2493+2497=`35 passed`。compatibility/deprecation 同一并行覆盖 200 tests：首轮
+`120 passed / 80 failed / 211.06s`，根因是生成新 EOF authority 前误带两条已由 2493 successor
+规则接管的 task-shadow path；删除虚假 source-delta 后第二轮=`198 passed / 2 failed / 125.85s`，
+剩余为新 EOF 缺少 transitive fragment authority 与 2493 仍直接比较 raw live hash；补 963-fragment
+authority 并改用既有 current-authority resolver 后第三轮=`200 passed / 129.18s`。两轮失败均为
+focused failure-fix evidence；历史 prefix exact-byte、source-hash 与 validation strength 未降低。

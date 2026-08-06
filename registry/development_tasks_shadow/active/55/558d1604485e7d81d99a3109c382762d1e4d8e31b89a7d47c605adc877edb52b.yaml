@@ -1,0 +1,141 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  title: null
+  domain: Data governance / QuantConnect QQQ Options license, entitlement and export
+    evidence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：人工复核 official pages、account-specific entitlement/provider
+    terms，并决定是否接受新的 exact proposal；license evidence engineering：仅在新 authority 到达后继续
+  requirement_refs:
+  - docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。只消费
+    2493 `SIGNED_NO_GO` 与 QuantConnect 官方公开 reference metadata；不登录、不抓取/保存网页正文、不修改
+    project、不运行 cloud backtest，不调用 API/CLI/HTTP/Object Store，也不下载 raw options data。公开文档不能证明账户在
+    `2021-02-22` primary window 的实际 entitlement。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: official source/claim/axis typed records 与 canonical report deterministic；Free
+      cloud use、QQQ Options account entitlement、historical retention、raw download/redistribution、derived
+      result export、API/CLI 分轴；missing source/manual review/content checksum unknown、forged
+      PASS、raw-export promotion、wrong 2493 hash 均 fail closed；system flow/generated/current
+      authority/focused/formal PASS；aggregate 默认保持 `LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2126
+    row_sha256: a35839a640b2f842a71c8435780ad60ad3136fc8376e69ebce96792214ba18a9
+    cell_count: 8
+    all_cells:
+    - TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+    - Data governance / QuantConnect QQQ Options license, entitlement and export evidence
+    - P0
+    - BASELINE_DONE
+    - project owner：人工复核 official pages、account-specific entitlement/provider terms，并决定是否接受新的
+      exact proposal；license evidence engineering：仅在新 authority 到达后继续
+    - 详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。只消费
+      2493 `SIGNED_NO_GO` 与 QuantConnect 官方公开 reference metadata；不登录、不抓取/保存网页正文、不修改
+      project、不运行 cloud backtest，不调用 API/CLI/HTTP/Object Store，也不下载 raw options data。公开文档不能证明账户在
+      `2021-02-22` primary window 的实际 entitlement。
+    - official source/claim/axis typed records 与 canonical report deterministic；Free
+      cloud use、QQQ Options account entitlement、historical retention、raw download/redistribution、derived
+      result export、API/CLI 分轴；missing source/manual review/content checksum unknown、forged
+      PASS、raw-export promotion、wrong 2493 hash 均 fail closed；system flow/generated/current
+      authority/focused/formal PASS；aggregate 默认保持 `LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。
+    - 2026-08-07：SINGLE_LANE `contract_change=false`；implementation commit=`2e630707...10d4`。strict
+      policy/loader、2493 replay、六 source/九 claim/七 axis、sealed report 与 canonical
+      tracked report 已闭环；report file/content SHA-256=`5e806375...e80`/`31e24428...d7a`，policy
+      file/canonical=`a657c5d0...bb3f`/`8e6e57d5...5504`，authority set=`375da2b0...a647`；focused/adjacent/compatibility=`18/35/200
+      passed`，aggregate=`LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。Terms 限制下只登记
+      URL/检索日/claim metadata，不保留网页快照或伪造 checksum；`production_effect=none`、`broker_action=none`、external
+      QuantConnect action=`none`。
+    raw_line: '|TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1|Data governance
+      / QuantConnect QQQ Options license, entitlement and export evidence|P0|BASELINE_DONE|project
+      owner：人工复核 official pages、account-specific entitlement/provider terms，并决定是否接受新的
+      exact proposal；license evidence engineering：仅在新 authority 到达后继续|详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。只消费
+      2493 `SIGNED_NO_GO` 与 QuantConnect 官方公开 reference metadata；不登录、不抓取/保存网页正文、不修改
+      project、不运行 cloud backtest，不调用 API/CLI/HTTP/Object Store，也不下载 raw options data。公开文档不能证明账户在
+      `2021-02-22` primary window 的实际 entitlement。|official source/claim/axis typed
+      records 与 canonical report deterministic；Free cloud use、QQQ Options account
+      entitlement、historical retention、raw download/redistribution、derived result
+      export、API/CLI 分轴；missing source/manual review/content checksum unknown、forged
+      PASS、raw-export promotion、wrong 2493 hash 均 fail closed；system flow/generated/current
+      authority/focused/formal PASS；aggregate 默认保持 `LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。|2026-08-07：SINGLE_LANE
+      `contract_change=false`；implementation commit=`2e630707...10d4`。strict policy/loader、2493
+      replay、六 source/九 claim/七 axis、sealed report 与 canonical tracked report 已闭环；report
+      file/content SHA-256=`5e806375...e80`/`31e24428...d7a`，policy file/canonical=`a657c5d0...bb3f`/`8e6e57d5...5504`，authority
+      set=`375da2b0...a647`；focused/adjacent/compatibility=`18/35/200 passed`，aggregate=`LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。Terms
+      限制下只登记 URL/检索日/claim metadata，不保留网页快照或伪造 checksum；`production_effect=none`、`broker_action=none`、external
+      QuantConnect action=`none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-a35839a640b2f842a71c8435
+  task_id: TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：人工复核 official pages、account-specific entitlement/provider
+      terms，并决定是否接受新的 exact proposal；license evidence engineering：仅在新 authority 到达后继续
+    notes: 2026-08-07：SINGLE_LANE `contract_change=false`；implementation commit=`2e630707...10d4`。strict
+      policy/loader、2493 replay、六 source/九 claim/七 axis、sealed report 与 canonical
+      tracked report 已闭环；report file/content SHA-256=`5e806375...e80`/`31e24428...d7a`，policy
+      file/canonical=`a657c5d0...bb3f`/`8e6e57d5...5504`，authority set=`375da2b0...a647`；focused/adjacent/compatibility=`18/35/200
+      passed`，aggregate=`LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。Terms 限制下只登记
+      URL/检索日/claim metadata，不保留网页快照或伪造 checksum；`production_effect=none`、`broker_action=none`、external
+      QuantConnect action=`none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:a35839a640b2f842a71c8435780ad60ad3136fc8376e69ebce96792214ba18a9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  - Data governance / QuantConnect QQQ Options license, entitlement and export evidence
+  - P0
+  - BASELINE_DONE
+  - project owner：人工复核 official pages、account-specific entitlement/provider terms，并决定是否接受新的
+    exact proposal；license evidence engineering：仅在新 authority 到达后继续
+  - 详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。只消费
+    2493 `SIGNED_NO_GO` 与 QuantConnect 官方公开 reference metadata；不登录、不抓取/保存网页正文、不修改
+    project、不运行 cloud backtest，不调用 API/CLI/HTTP/Object Store，也不下载 raw options data。公开文档不能证明账户在
+    `2021-02-22` primary window 的实际 entitlement。
+  - official source/claim/axis typed records 与 canonical report deterministic；Free
+    cloud use、QQQ Options account entitlement、historical retention、raw download/redistribution、derived
+    result export、API/CLI 分轴；missing source/manual review/content checksum unknown、forged
+    PASS、raw-export promotion、wrong 2493 hash 均 fail closed；system flow/generated/current
+    authority/focused/formal PASS；aggregate 默认保持 `LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。
+  - 2026-08-07：SINGLE_LANE `contract_change=false`；implementation commit=`2e630707...10d4`。strict
+    policy/loader、2493 replay、六 source/九 claim/七 axis、sealed report 与 canonical tracked
+    report 已闭环；report file/content SHA-256=`5e806375...e80`/`31e24428...d7a`，policy
+    file/canonical=`a657c5d0...bb3f`/`8e6e57d5...5504`，authority set=`375da2b0...a647`；focused/adjacent/compatibility=`18/35/200
+    passed`，aggregate=`LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED`。Terms 限制下只登记 URL/检索日/claim
+    metadata，不保留网页快照或伪造 checksum；`production_effect=none`、`broker_action=none`、external
+    QuantConnect action=`none`。
+  docs_links:
+  - docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+  terminal: false
+  raw_row_sha256: a35839a640b2f842a71c8435780ad60ad3136fc8376e69ebce96792214ba18a9
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: d0e8c930c592cf07f393194406a9599849ff8cb2d8d9ea0d4cd3618571af0bb9
