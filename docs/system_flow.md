@@ -7780,3 +7780,34 @@ authority-set hashes，并明确接受 `NO_GO_KEEP_BLOCKED`。typed attestation/
 无论是否签署，range expansion、further cloud action、paid-tier upgrade、investment
 interpretation、paper/live/broker/production 均为 false/none；未来任何平台实验或 short/roll/multi-leg/
 LEAPS/Wheel 必须另立任务和独立授权。
+
+## TRADING-2497 QuantConnect QQQ Options License / Export Due Diligence V1
+
+`config/research/qc_qqq_options_license_export_due_diligence_v1.yaml` 与
+`qqq_options_research.license_export_due_diligence` 从 2493 `SIGNED_NO_GO` 出发，只建立 strictly
+offline 的 public-reference metadata contract。它登记 QuantConnect 官方 Licensing、Tier Features、
+Resources、US Equity Options、Backtest Results 与 Terms URL、检索日期、source role、短 claim、人工
+review owner 和 exit condition，但不复制、抓取、缓存或保存网页正文，也不伪造 webpage checksum。
+
+```text
+2493 canonical Owner attestation + SIGNED_NO_GO signoff
+  -> exact file hash/schema/canonical/safety replay
+  + six official public-reference metadata records
+  -> documented fact / conservative inference / explicit unknown separation
+  -> Free minute-daily cloud data class = CONDITIONAL_SUPPORT
+  -> QQQ Options account entitlement = UNKNOWN_ACCOUNT_SPECIFIC_EVIDENCE_REQUIRED
+  -> 2021-02-22 historical retention = UNKNOWN_ACCOUNT_SPECIFIC_EVIDENCE_REQUIRED
+  -> raw local download = NO_GO_SEPARATE_DOWNLOAD_LICENSE_REQUIRED
+  -> raw redistribution = NO_GO_PROHIBITED
+  -> derived UI result export = CONDITIONAL_DOCUMENTED_UI_EXPORT_ONLY
+  -> API/CLI = NO_GO_CURRENT_FREE_TIER
+  -> LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED
+```
+
+Provider dataset start/resolution 不能替代账户 entitlement、requested/evaluated range 或 primary-window
+evidence；cloud access 不能提升为 download license。官方 Results UI 对 report/orders/trades/logs/results
+等 derived artifacts 的描述只允许 2489 后续在 reviewed collection policy 下收集 export-safe bundle，不能
+导出、转换、重建或再分发 raw option chain、minute quote、OI rows。2497 不运行 cached-data workflow，
+option-event DQ/PIT 保持 `NOT_EVALUATED`，不触发 `aits validate-data`；login/cloud run/project mutation/
+API/CLI/HTTP/Object Store/raw download/range expansion/paid upgrade/investment/paper/live/broker/production
+全部为 false/none。

@@ -1,0 +1,29 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_license_export_due_diligence
+fragment_kind: module
+owner: data_governance
+module_prefix: src/ai_trading_system/qqq_options_research/license_export_due_diligence.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_POLICY_PATH
+  - DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_REPORT_PATH
+  - EXPECTED_AXIS_STATUSES
+  - EXPECTED_CLAIM_IDS
+  - EXPECTED_SOURCE_IDS
+  - EXPECTED_SOURCE_URLS
+  - LicenseAssessmentAxis
+  - LicenseAssessmentStatus
+  - LicenseAuthorityBinding
+  - LicenseAxisAssessment
+  - LicenseClaimClassification
+  - LicenseClaimRecord
+  - LicenseEvidenceRole
+  - LicenseEvidenceSourceRecord
+  - QCQQQOptionsLicenseExportDueDiligenceContractError
+  - QCQQQOptionsLicenseExportDueDiligencePolicy
+  - QCQQQOptionsLicenseExportDueDiligencePolicyLoadResult
+  - QCQQQOptionsLicenseExportDueDiligenceReport
+  - QCQQQOptionsLicenseExportSafety
+  - build_qc_qqq_options_license_export_due_diligence_report
+  - load_qc_qqq_options_license_export_due_diligence_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture
