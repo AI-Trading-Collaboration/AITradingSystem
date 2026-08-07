@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qc_qqq_options_license_export_owner_review
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: exact_trading_2497_predecessor_report_and_owner_manual_hash_only_evidence
+stages:
+  - exact_predecessor_report_file_and_content_hash_replay
+  - six_owner_manual_files_recorded_by_role_byte_count_and_sha256_only
+  - cloud_access_and_download_price_listing_exact_mapping_as_observation_only
+  - free_account_and_cloud_access_conditional_without_full_entitlement_promotion
+  - tested_2025_12_02_session_not_promoted_to_2021_02_22_primary_window
+  - raw_download_purchase_subscription_redistribution_and_range_expansion_no_go
+  - derived_result_export_remains_blocked_by_trading_2489
+  - api_cli_and_paid_tier_remain_unauthorized
+  - deterministic_hash_bound_pending_owner_review_proposal
+  - no_external_action_owner_signature_or_investment_interpretation
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

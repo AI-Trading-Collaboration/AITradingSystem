@@ -6,11 +6,13 @@
 
 优先级：`P0`
 
-状态：`BASELINE_DONE`
+状态：`IN_PROGRESS`
 
 mode：`SINGLE_LANE`
 
 exact base：`967d3524876b34c11ee8235b2913ba841cf94b36`
+
+Owner-review continuation base：`1883c91535cb18bd8b9ef1efbd6b1d6be1fe5a0b`
 
 production effect：`none`
 
@@ -181,3 +183,39 @@ final-tree adjacent 2493+2497=`35 passed`。compatibility/deprecation 同一并�
 剩余为新 EOF 缺少 transitive fragment authority 与 2493 仍直接比较 raw live hash；补 963-fragment
 authority 并改用既有 current-authority resolver 后第三轮=`200 passed / 129.18s`。两轮失败均为
 focused failure-fix evidence；历史 prefix exact-byte、source-hash 与 validation strength 未降低。
+
+## 10. S3 Owner 人工复核 proposal continuation
+
+2026-08-07：Project Owner 已人工打开 QuantConnect 页面并提供 hash-only 外部证据；工程线不得把
+截图、PDF、网页正文、absolute user path 或组织 query identifier 复制到 tracked repository。proposal
+仅登记 portable evidence id、byte count、SHA-256、人工观察、证据角色与 limitation。原文件继续位于
+Owner 控制的外部位置或系统临时目录；repository 不声明长期保管、网页 checksum 完整性或法律意见。
+
+冻结的人工证据 inventory：
+
+| Evidence id | Bytes | SHA-256 | 允许支持的事实 |
+|---|---:|---|---|
+| `OWNER_ACCOUNT_ACTIVE_ORG_FREE_SCREENSHOT` | 526327 | `b06125aadd2353e3e12d54190e0d5ae84b10d10ac34124dca9dbb8aaef43d724` | 登录态 Active Organization 显示 `FREE`；不证明全历史 entitlement。 |
+| `OWNER_ORG_PLAN_RESOURCE_PRINT_PDF` | 579556 | `13ded5b86d015bafb7709b47ccf239b47bfe42eaa93e2d4f0d7b86ff19fdaa1d` | 17 页 plan comparison：Free 包含 Options Data、minute/hour/daily、Backtest Node=1、Research Node=1、Live Node=0、API/CLI 不在 Free。 |
+| `OWNER_US_EQUITY_OPTIONS_PRICING_1` | 340575 | `4dc85d89db6f5290d23a651242d4ebd5fcce3b6423d186778fd6f9cc3295cdbf` | US Equity Options `Cloud Access=Free`、Minute Download=`15 QCC/file`。 |
+| `OWNER_US_EQUITY_OPTIONS_PRICING_2` | 309760 | `97ce21bb4744e40b0b54749ec26f2fd8c55902a9c0532e1e7cd42e0da3852de9` | Hour Download=`900 QCC/file`、Daily Download=`300 QCC/file`。 |
+| `OWNER_US_EQUITY_OPTIONS_PRICING_3` | 256495 | `26aceca998ebc7548f325483149abb4d1700c97f068594c0becfff413a828acb` | Bulk Daily/Minute Updates=`$720/yr`/`$1,200/yr`、Bulk Hour Updates=`$1,440/yr`、Bulk Daily Download=`$12,000`。 |
+| `OWNER_US_EQUITY_OPTIONS_PRICING_4` | 250607 | `bfc321de857522e99073c2917199a21cf76251324914f3ef01ee607f7ac8b11a` | Bulk Hour/Minute Download=`$14,400`/`$30,000`。 |
+
+proposal 必须把以下边界写死：
+
+- 公开 dataset listing 的 `Cloud Access=Free` 与登录态 Free organization、既有 2493 单 session
+  evidence 合并后，只允许得到 `BOUNDED_TESTED_SESSION_SUPPORT`，不得推出完整账户历史 entitlement；
+- `2021-02-22` primary window 继续 `NOT_TESTED_ACCOUNT_SPECIFIC`，不得由 provider 2012 coverage、
+  pricing 页面或 2025-12-02 单日 run 升级；
+- local/raw download 是独立付费产品，当前未购买、未授权、未执行；所有 QCC/USD 数字只是人工
+  观察到的 listing facts，不是采购建议、预算授权或价格稳定承诺；
+- `Backtest Download Requests` 是 plan quota，不是 raw dataset Download License；
+- 2493 `NO_GO_KEEP_BLOCKED`、2489/2490 shared blocker、DQ/PIT、range expansion、paid upgrade、
+  investment interpretation、paper/live/production/broker 边界全部保持；
+- proposal 只能请求 Owner 接受或拒绝该边界，不授权 QuantConnect 登录、project mutation、cloud run、
+  API/CLI/HTTP/Object Store、download、purchase 或任何新外部动作。
+
+本 continuation 使用 task-owned typed policy/API、canonical proposal 与 negative/property/golden tests；
+不修改原 2497 due-diligence report bytes，也不重定义任何 predecessor/shared record。Owner 在收到 exact
+proposal file/content/policy/authority hashes 前无需自行拼写 decision token。

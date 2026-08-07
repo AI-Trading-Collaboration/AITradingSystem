@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 68
+fragment_count: 70
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: bfb2ee7332aeb415cae6b6f8bad679d6024005a9245ecf3832878124edd5f310
+  current_sha256: 45e7740a69be70ac38e0c5bf4844e67be85d0bdc6cd88aca739a128b0d35290f
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 30
+  fragment_count: 31
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -54,6 +54,7 @@ targets:
   - config/architecture/fragments/flows/qc_qqq_options_capability_discovery_evidence.yaml
   - config/architecture/fragments/flows/qc_qqq_options_capability_discovery_review.yaml
   - config/architecture/fragments/flows/qc_qqq_options_license_export_due_diligence.yaml
+  - config/architecture/fragments/flows/qc_qqq_options_license_export_owner_review.yaml
   - config/architecture/fragments/flows/qc_qqq_options_local_ingest_reconciliation.yaml
   - config/architecture/fragments/flows/qc_qqq_options_owner_stage_gate_signoff.yaml
   - config/architecture/fragments/flows/qc_qqq_options_platform_evidence_manual_bundle.yaml
@@ -222,6 +223,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/qc_qqq_options_license_export_due_diligence.yaml
   sha256: 9d9b096b99645e10f07fd39b58a84727e9e78bd5dd819020af0780a05aa2e85c
+  generated_source_of_truth_active: false
+- fragment_id: flow.qc_qqq_options_license_export_owner_review
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qc_qqq_options_license_export_owner_review.yaml
+  sha256: 3a6433d35d643c0eda97be5e9721c1a74f547948f93447b9be8d62505419e6c0
   generated_source_of_truth_active: false
 - fragment_id: flow.qc_qqq_options_local_ingest_reconciliation
   fragment_kind: flow
@@ -411,6 +419,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_license_export_due_diligence.yaml
   sha256: 88c3537b033fbe89a051333bc9cd4dd1b7f41aea071c46b1f5f702719d99a384
+  generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_license_export_owner_review
+  fragment_kind: module
+  owner: data_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_license_export_owner_review.yaml
+  sha256: 9848b77b208fe3a7e17ea0267dd1e37abb370220d7a6ca53fce903bbaf149644
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_local_ingest_reconciliation
   fragment_kind: module

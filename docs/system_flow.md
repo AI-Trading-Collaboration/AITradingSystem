@@ -7811,3 +7811,35 @@ evidence；cloud access 不能提升为 download license。官方 Results UI 对
 option-event DQ/PIT 保持 `NOT_EVALUATED`，不触发 `aits validate-data`；login/cloud run/project mutation/
 API/CLI/HTTP/Object Store/raw download/range expansion/paid upgrade/investment/paper/live/broker/production
 全部为 false/none。
+
+### 2497 Owner 人工证据复核提案
+
+`config/research/qc_qqq_options_license_export_owner_review_proposal_v1.yaml` 与
+`qqq_options_research.license_export_owner_review` 在原 2497 due-diligence report 保持 exact bytes 的
+前提下，接纳 project owner 人工提交的 1 个 Free organization 截图、1 个 plan/resource PDF 与 4 个
+US Equity Options pricing 截图。仓库只保存每个外部文件的 role、byte count、SHA-256、人工复核日期和
+最小 observation summary；不保存外部路径、URL、页面正文、截图或 PDF bytes，也不把页面标价解释为
+预算、购买、订阅或许可授权。
+
+```text
+2497 predecessor LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED report
+  -> exact file/content hash + canonical safety replay
+  + six Owner manual evidence identities (hash-only, no raw option rows)
+  -> Active Organization FREE + Cloud Access Free = conditional observation
+  -> exact download listing mapping = observation only
+  -> 2025-12-02 tested session remains bounded evidence
+  -> 2021-02-22 primary window = NOT_TESTED_ACCOUNT_SPECIFIC
+  -> raw download/purchase/subscription/redistribution/range expansion = NO-GO
+  -> derived export = blocked by TRADING-2489
+  -> API/CLI/paid tier = NO-GO
+  -> NO_GO_KEEP_BLOCKED_PRIMARY_WINDOW_AND_SHARED_GATES
+  -> hash-bound proposal awaiting independent project-owner acceptance or rejection
+```
+
+提案固定显示 Minute `15 QCC/file`、Hour `900 QCC/file`、Daily `300 QCC/file`、Bulk Daily Updates
+`$720/yr`、Bulk Minute Updates `$1,200/yr`、Bulk Hour Updates `$1,440/yr`、Bulk Daily Download
+`$12,000`、Bulk Hour Download `$14,400`、Bulk Minute Download `$30,000`。typed proposal 仍为
+`owner_review_completed=false`、`owner_attestation_present=false`；工程线不能代替 Owner 签署，也不能由
+Free、Cloud Access Free 或单日成功会话推出 full-window entitlement。QuantConnect login/project/cloud
+backtest/API/CLI/HTTP/Object Store/raw download/purchase/subscription/range expansion/paid upgrade/paper/live/
+broker/production/investment interpretation 均未被本提案授权。
