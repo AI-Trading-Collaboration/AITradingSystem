@@ -322,6 +322,7 @@ class QCQQQOptionsDailyCapabilityGateProposal(_SealedModel):
     policy_version: Literal["1.0.0"]
     policy_file_sha256: str
     policy_canonical_sha256: str
+    authority_set_sha256: str
     predecessor_proposal_file_sha256: str
     predecessor_proposal_content_sha256: str
     predecessor_policy_canonical_sha256: str
@@ -361,6 +362,7 @@ class QCQQQOptionsDailyCapabilityGateProposal(_SealedModel):
     @field_validator(
         "policy_file_sha256",
         "policy_canonical_sha256",
+        "authority_set_sha256",
         "predecessor_proposal_file_sha256",
         "predecessor_proposal_content_sha256",
         "predecessor_policy_canonical_sha256",
@@ -625,6 +627,22 @@ def build_qc_qqq_options_daily_capability_gate_proposal(
     )
     policy = loaded.policy
     predecessor = loaded.predecessor
+    authority_set_sha256 = _canonical_sha256(
+        {
+            "repository_code_sha": repository_code_sha,
+            "policy_file_sha256": loaded.policy_file_sha256,
+            "policy_canonical_sha256": loaded.policy_canonical_sha256,
+            "predecessor_proposal_file_sha256": policy.predecessor_proposal_file_sha256,
+            "predecessor_proposal_content_sha256": predecessor.content_sha256,
+            "predecessor_policy_canonical_sha256": policy.predecessor_policy_canonical_sha256,
+            "run_scope": policy.run_scope.model_dump(mode="json"),
+            "required_aggregate_fields": policy.required_aggregate_fields,
+            "allowed_actions_after_exact_owner_token": (
+                policy.allowed_actions_after_exact_owner_token
+            ),
+            "prohibited_actions": policy.prohibited_actions,
+        }
+    )
     return QCQQQOptionsDailyCapabilityGateProposal.seal(
         schema_version="qc_qqq_options_daily_capability_gate_proposal.v1",
         record_id=record_id,
@@ -634,6 +652,7 @@ def build_qc_qqq_options_daily_capability_gate_proposal(
         policy_version=policy.policy_version,
         policy_file_sha256=loaded.policy_file_sha256,
         policy_canonical_sha256=loaded.policy_canonical_sha256,
+        authority_set_sha256=authority_set_sha256,
         predecessor_proposal_file_sha256=policy.predecessor_proposal_file_sha256,
         predecessor_proposal_content_sha256=predecessor.content_sha256,
         predecessor_policy_canonical_sha256=policy.predecessor_policy_canonical_sha256,
