@@ -1,0 +1,29 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_daily_capability_gate_retry
+fragment_kind: module
+owner: external_validation
+module_prefix: src/ai_trading_system/qqq_options_research/daily_capability_gate_retry.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_POLICY_PATH
+  - DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_PROPOSAL_PATH
+  - EXPECTED_RETRY_ALLOWED_ACTIONS
+  - EXPECTED_RETRY_PROHIBITED_ACTIONS
+  - PREDECESSOR_BLOCKED_BUILD_ID
+  - PREDECESSOR_BLOCKED_SCREENSHOT_SHA256
+  - PREDECESSOR_POLICY_CANONICAL_SHA256
+  - PREDECESSOR_PROPOSAL_CONTENT_SHA256
+  - PREDECESSOR_PROPOSAL_FILE_SHA256
+  - PREDECESSOR_SCRIPT_LF_SHA256
+  - PROPOSED_RETRY_OWNER_DECISION
+  - DailyCapabilityRetryRunScope
+  - DailyCapabilityRetrySafety
+  - QCQQQOptionsDailyCapabilityGateRetryContractError
+  - QCQQQOptionsDailyCapabilityGateRetryPolicy
+  - QCQQQOptionsDailyCapabilityGateRetryPolicyLoadResult
+  - QCQQQOptionsDailyCapabilityGateRetryProposal
+  - QCQQQOptionsDailyCapabilityGateRetryProposalLoadResult
+  - build_qc_qqq_options_daily_capability_gate_retry_proposal
+  - load_qc_qqq_options_daily_capability_gate_retry_policy
+  - load_qc_qqq_options_daily_capability_gate_retry_proposal
+compatibility_facades: []
+deprecation_status: active_reference_architecture

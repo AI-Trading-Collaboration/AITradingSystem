@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qc_qqq_options_daily_capability_gate_retry
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: exact_trading_2498_blocked_attempt_and_owner_verified_account_claim
+stages:
+  - replay_2498_proposal_policy_script_build_and_blocked_screenshot_identity
+  - preserve_2498_token_invalidated_and_independent_review_pending
+  - freeze_existing_project_34808569_and_zero_project_mutations
+  - require_read_only_account_verified_and_exact_code_hash_precheck
+  - preserve_2021_02_22_through_2021_02_26_five_session_daily_scope
+  - authorize_only_one_new_zero_order_cloud_backtest_after_exact_owner_token
+  - collect_only_export_safe_session_aggregate_and_result_identity
+  - prohibit_project_mutation_second_run_raw_rows_purchase_and_range_expansion
+  - reuse_2498_go_no_go_unknown_gate_taxonomy_fail_closed
+  - require_independent_review_before_2499_registration
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

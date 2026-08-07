@@ -3384,12 +3384,8 @@ TRADING_2498_QC_DAILY_CAPABILITY_GATE_NEW_SOURCE_PATHS = frozenset(
 TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION = (
     "phase_trading_2496_atlas_reader_status_explanation_owner_visual_acceptance_v1"
 )
-TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASE_COMMIT = (
-    "72095ff0620c8fe7c7f2e059ca95e4b26eee5a3b"
-)
-TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASELINE_GIT_BLOB = (
-    "4fee71909c115ad3943fbe70cfcf267b0c457a9f"
-)
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASE_COMMIT = "72095ff0620c8fe7c7f2e059ca95e4b26eee5a3b"
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASELINE_GIT_BLOB = "4fee71909c115ad3943fbe70cfcf267b0c457a9f"
 TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_BYTE_COUNT = 3_044_567
 TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_SHA256 = (
     "ac1df7903b9c7f9204303aa427d2968ee6c0ccd76a44d61a76024ff680e0467e"
@@ -3402,7 +3398,88 @@ TRADING_2496_OWNER_VISUAL_ACCEPTANCE_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
     }
 )
 TRADING_2496_OWNER_VISUAL_ACCEPTANCE_NEW_SOURCE_PATHS = frozenset()
-LATEST_COMPATIBILITY_SECTION = TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION = (
+    "phase_trading_2500_qc_qqq_options_daily_capability_gate_retry_v1"
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_BASE_COMMIT = "340315019832787eb1d86b644ef298a40ca3516f"
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_BASELINE_GIT_BLOB = (
+    "f6a0e36d71f6aafc672fcf9df069bc5c1f87098e"
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_BYTE_COUNT = 3_050_751
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_SHA256 = (
+    "d387b1b7e6e2a6a35a45a849b29b7f6efa4b44c26d1f19a31d20503d2fa7d5cb"
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {
+        "docs/system_flow.md",
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        (
+            "registry/development_tasks_shadow/active/16/"
+            "1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/2c/"
+            "2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/76/"
+            "76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/8c/"
+            "8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/98/"
+            "989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/d8/"
+            "d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/e6/"
+            "e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/e6/"
+            "e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow/active/fe/"
+            "fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml"
+        ),
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qc_qqq_options_daily_capability_gate_retry.yaml",
+        "config/architecture/fragments/modules/qc_qqq_options_daily_capability_gate_retry.yaml",
+        "config/research/qc_qqq_options_daily_capability_gate_retry_v1.yaml",
+        "docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md",
+        (
+            "inputs/external_validation/"
+            "qc_qqq_options_daily_capability_gate_retry_proposal_20260808.json"
+        ),
+        (
+            "registry/development_tasks_shadow/active/8d/"
+            "8d8de50dbf2aecd71929a0c09f11eb706a0ff0035733c5cdfeb12f1e3eb0717d.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/8d/"
+            "8d8de50dbf2aecd71929a0c09f11eb706a0ff0035733c5cdfeb12f1e3eb0717d.yaml"
+        ),
+        "src/ai_trading_system/qqq_options_research/daily_capability_gate_retry.py",
+        "tests/test_qc_qqq_options_daily_capability_gate_retry.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -5729,8 +5806,7 @@ def _trading_2498_qc_daily_capability_gate_base_baseline_blob() -> bytes:
 @cache
 def _trading_2496_owner_visual_acceptance_base_baseline_blob() -> bytes:
     object_name = (
-        f"{TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASE_COMMIT}:"
-        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+        f"{TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASE_COMMIT}:{WAVE11_BASELINE_REPOSITORY_PATH}"
     )
     object_id = subprocess.run(
         ["git", "rev-parse", object_name],
@@ -5739,6 +5815,26 @@ def _trading_2496_owner_visual_acceptance_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2500_qc_daily_capability_gate_retry_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -8103,6 +8199,26 @@ def _assert_trading_2496_owner_visual_acceptance_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"{TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2500_qc_daily_capability_gate_retry_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2500 daily capability retry historical prefix differs from immutable "
+        "TRADING-2496 Owner visual acceptance compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -11311,6 +11427,37 @@ def _trading_2496_owner_visual_acceptance_all_current_authority_paths() -> froze
 
 
 @cache
+def _trading_2500_qc_daily_capability_gate_retry_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2500_qc_daily_capability_gate_retry_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2500_qc_daily_capability_gate_retry_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2500_qc_daily_capability_gate_retry_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2500_qc_daily_capability_gate_retry_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2496_owner_visual_acceptance_all_current_authority_paths()
+        | _trading_2500_qc_daily_capability_gate_retry_superseded_live_source_paths()
+        | _trading_2500_qc_daily_capability_gate_retry_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -12887,6 +13034,11 @@ def _trading_2496_owner_visual_acceptance_prior_active_source_mismatches() -> fr
     return _latest_active_source_mismatches(TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION)
 
 
+@cache
+def _trading_2500_qc_daily_capability_gate_retry_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -12930,7 +13082,20 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION in baseline:
+    if TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2500_qc_daily_capability_gate_retry_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2496_owner_visual_acceptance_prior_active_source_mismatches()
+            | TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2500_qc_daily_capability_gate_retry_all_current_authority_paths()
+        )
+        authority_section = TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION
+    elif TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION in baseline:
         current_superseded_paths = (
             _trading_2496_owner_visual_acceptance_superseded_live_source_paths()
         )
@@ -36720,9 +36885,7 @@ def test_trading_2496_owner_visual_acceptance_is_current_hash_authority() -> Non
     assert phase["boundary_id"] == (
         "TRADING-2496-ATLAS-READER-STATUS-EXPLANATION-OWNER-VISUAL-ACCEPTANCE-V1"
     )
-    assert phase["task_ids"] == [
-        "TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1"
-    ]
+    assert phase["task_ids"] == ["TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1"]
     assert phase["owner_decisions"] == [
         "owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1"
     ]
@@ -36744,9 +36907,7 @@ def test_trading_2496_owner_visual_acceptance_is_current_hash_authority() -> Non
     assert set(phase["removed_live_source_paths"]) == (
         TRADING_2496_OWNER_VISUAL_ACCEPTANCE_REMOVED_SOURCE_PATHS
     )
-    assert set(phase["new_source_paths"]) == (
-        TRADING_2496_OWNER_VISUAL_ACCEPTANCE_NEW_SOURCE_PATHS
-    )
+    assert set(phase["new_source_paths"]) == (TRADING_2496_OWNER_VISUAL_ACCEPTANCE_NEW_SOURCE_PATHS)
     expected = (
         superseded | TRADING_2496_OWNER_VISUAL_ACCEPTANCE_NEW_SOURCE_PATHS
     ) - TRADING_2496_OWNER_VISUAL_ACCEPTANCE_REMOVED_SOURCE_PATHS
@@ -36775,17 +36936,22 @@ def test_trading_2496_owner_visual_acceptance_is_current_hash_authority() -> Non
     assert source_paths == sorted(source_paths, key=str.casefold)
     assert len(source_paths) == len(set(source_paths))
     assert set(source_paths) == expected
+    successor_paths = (
+        _trading_2500_qc_daily_capability_gate_retry_superseded_live_source_paths()
+        if TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION in baseline
+        else frozenset()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_paths:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
     assert phase["acceptance_evidence"] == {
         "accepted_implementation_commit": "ddde87301b970d8ef82160034fe9b836f9579435",
         "canonical_page_path": (
             "outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html"
         ),
-        "index_html_sha256": (
-            "436b7da54bba188c643d79660451f9e4350e7d88f7d5b8c9dd0bb5977b9e6603"
-        ),
+        "index_html_sha256": ("436b7da54bba188c643d79660451f9e4350e7d88f7d5b8c9dd0bb5977b9e6603"),
         "status_explanations_sha256": (
             "625c7a77e1fb0085dbde0a8180a3372c4e9898d45a543640fe19e21eaa52972b"
         ),
@@ -36816,6 +36982,134 @@ def test_trading_2496_owner_visual_acceptance_is_current_hash_authority() -> Non
     tampered[TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2496_owner_visual_acceptance_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2500_daily_capability_gate_retry_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2500_qc_daily_capability_gate_retry_base_baseline_blob()
+    _assert_trading_2500_qc_daily_capability_gate_retry_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2500_qc_qqq_options_daily_capability_gate_retry_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == ("TRADING-2500-QC-QQQ-OPTIONS-DAILY-CAPABILITY-GATE-RETRY-V1")
+    assert phase["task_ids"] == ["TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1"]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_BYTE_COUNT),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2496_owner_visual_acceptance_prior_active_source_mismatches()
+        | TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_NEW_SOURCE_PATHS
+    ) - TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": ("TRADING-2500-QC-QQQ-OPTIONS-DAILY-CAPABILITY-GATE-RETRY-V1"),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION,
+        "current_hash_authority": (
+            f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 965,
+        "active_task_count": 460,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["proposal_authority"] == {
+        "implementation_commit": "c880bb9e55dbcf5c641756e80fdd2f9d00eaa0e2",
+        "proposal_file_sha256": (
+            "d5ecad8167e2abef7e5a8d6427604da5b6f59d4be50607228097191eba74239e"
+        ),
+        "proposal_content_sha256": (
+            "77570e7ff88e1c567c29d10dcfc534cef07628cab58ceb894da79c6075f013b9"
+        ),
+        "policy_file_sha256": ("851ee0fb3c2a14b25263b37115ece581869fee08dffac95e272960108c46bb19"),
+        "policy_canonical_sha256": (
+            "540107c9dce0fa08a8f461f8c733a1c1c5b413405bb2caf4a6a46501575f9e9d"
+        ),
+        "authority_set_sha256": (
+            "52f8246d8192f4fbf40c3aa415aee56bdbb5eb937f4778daa30fda42f06ad3a2"
+        ),
+        "project_id": "34808569",
+        "requested_start": "2021-02-22",
+        "requested_end": "2021-02-26",
+        "maximum_project_mutations": 0,
+        "maximum_cloud_backtests": 1,
+        "maximum_orders": 0,
+        "maximum_fills": 0,
+        "authorization_status": "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS",
+        "gate_decision": "UNKNOWN_EVIDENCE_INCOMPLETE",
+    }
+    assert phase["validation"] == {
+        "daily_capability_retry_focused_parallel_pytest": "PASS_44_TESTS_N16_LOADFILE",
+        "compatibility_failure_parent": "FAIL_199_PASS_3_FAIL_N16_LOADFILE",
+        "compatibility_regression": "PASS_203_TESTS_N16_LOADFILE",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "proposal_only": True,
+        "owner_token_present": False,
+        "external_platform_action_authorized": False,
+        "project_mutation_authorized": False,
+        "cloud_backtest_authorized": False,
+        "orders_or_fills_authorized": False,
+        "api_cli_http_object_store_authorized": False,
+        "raw_options_data_download_authorized": False,
+        "purchase_or_subscription_authorized": False,
+        "range_expansion_authorized": False,
+        "investment_interpretation_allowed": False,
+        "paper_live_broker_production_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2500_qc_daily_capability_gate_retry_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

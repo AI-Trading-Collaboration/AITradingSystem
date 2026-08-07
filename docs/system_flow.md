@@ -7872,3 +7872,30 @@ cloud authorization。
 backtest/API/CLI/HTTP/Object Store/raw download/purchase/subscription/range expansion 均未授权。即使 terminal
 gate 为 `GO_FOR_DAILY_ENGINEERING_ONLY`，它也不授权完整 `2021-02-22..present` cloud backtest，不解除
 2485–2490 policy/DQ/PIT/evidence/reconciliation 门禁，不产生投资解释，也不允许 paper/live/broker/production。
+
+## TRADING-2500 QuantConnect QQQ Options Daily Capability Gate Retry V1
+
+`config/research/qc_qqq_options_daily_capability_gate_retry_v1.yaml` 与
+`qqq_options_research.daily_capability_gate_retry` 只为 2498 在算法运行前被 account-verification gate
+拦截后的单次重试生成新的 hash-bound proposal。2498 token 已失效，Owner 的“已验证”声明只作为
+read-only UI precheck 的输入，不是 Cloud run authorization 或 capability PASS。
+
+```text
+2498 tracked proposal/policy + invalidated token + blocked attempt evidence
+  -> exact predecessor proposal file/content/policy replay
+  -> exact saved project code LF SHA-256 + blocked build/screenshot identity
+  -> predecessor independent review remains PENDING
+  -> existing project = 34808569; project mutations = 0
+  -> read-only account-verified UI + exact code hash precheck
+  -> requested range = 2021-02-22..2021-02-26; expected sessions = five
+  -> QQQ Equity RAW DAILY + QQQ Equity Options DAILY
+  -> maximum new cloud backtest = 1; orders = fills = 0
+  -> same session chain/contracts/two-sided quote/OI/Greeks/IV aggregates
+  -> same GO_FOR_DAILY_ENGINEERING_ONLY | NO_GO_CAPABILITY_OR_ENTITLEMENT
+     | UNKNOWN_EVIDENCE_INCOMPLETE taxonomy
+  -> only reviewed GO permits registering TRADING-2499
+```
+
+Exact new Owner token 前，proposal 保持 external action=false。Project mutation、second backtest、raw
+rows、API/CLI/HTTP/Object Store、download、purchase/subscription、range expansion、investment
+interpretation、paper/live/broker/production 均禁止；任何 account/code mismatch 均停止而不修复。

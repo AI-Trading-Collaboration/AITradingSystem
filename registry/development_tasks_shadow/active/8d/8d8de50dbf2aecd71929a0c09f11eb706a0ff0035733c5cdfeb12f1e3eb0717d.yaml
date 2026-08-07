@@ -1,0 +1,136 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  title: null
+  domain: External validation / verified-account retry of the QQQ Options DAILY capability
+    gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
+    coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
+    evidence
+  requirement_refs:
+  - docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
+    的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
+    token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
+    SHA-256=`1da0d834...43139`，不再修改项目。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: proposal 必须绑定 2498 proposal/policy、blocked screenshot/build/script identity、同一
+      `2021-02-22..2021-02-26` 五 session、project mutation=0、cloud backtest=1、orders/fills=0；运行前
+      read-only 复核 account verified 与 code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw
+      rows/API/CLI/HTTP/Object Store/download/purchase/range expansion 均 fail closed。只有
+      terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2138
+    row_sha256: b86ba7f003d8edce032a5376fa4c41ad4946ae2f1d88867a0d0b5e21324feb5c
+    cell_count: 8
+    all_cells:
+    - TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+    - External validation / verified-account retry of the QQQ Options DAILY capability
+      gate
+    - P0
+    - BASELINE_DONE
+    - project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
+      coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
+      evidence
+    - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
+      的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
+      token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
+      SHA-256=`1da0d834...43139`，不再修改项目。
+    - proposal 必须绑定 2498 proposal/policy、blocked screenshot/build/script identity、同一
+      `2021-02-22..2021-02-26` 五 session、project mutation=0、cloud backtest=1、orders/fills=0；运行前
+      read-only 复核 account verified 与 code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw
+      rows/API/CLI/HTTP/Object Store/download/purchase/range expansion 均 fail closed。只有
+      terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。
+    - 2026-08-08：proposal engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal
+      file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority
+      set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203 PASS。tracked
+      proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。
+    raw_line: '|TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1|External
+      validation / verified-account retry of the QQQ Options DAILY capability gate|P0|BASELINE_DONE|project
+      owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability coordinator：仅在
+      exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal evidence|详见
+      `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
+      的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
+      token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
+      SHA-256=`1da0d834...43139`，不再修改项目。|proposal 必须绑定 2498 proposal/policy、blocked
+      screenshot/build/script identity、同一 `2021-02-22..2021-02-26` 五 session、project
+      mutation=0、cloud backtest=1、orders/fills=0；运行前 read-only 复核 account verified
+      与 code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw rows/API/CLI/HTTP/Object Store/download/purchase/range
+      expansion 均 fail closed。只有 terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。|2026-08-08：proposal
+      engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal
+      file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority
+      set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203 PASS。tracked
+      proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-b86ba7f003d8edce032a5376
+  task_id: TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
+      coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
+      evidence
+    notes: 2026-08-08：proposal engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal
+      file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority
+      set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203 PASS。tracked
+      proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:b86ba7f003d8edce032a5376fa4c41ad4946ae2f1d88867a0d0b5e21324feb5c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  - External validation / verified-account retry of the QQQ Options DAILY capability
+    gate
+  - P0
+  - BASELINE_DONE
+  - project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
+    coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
+    evidence
+  - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
+    的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
+    token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
+    SHA-256=`1da0d834...43139`，不再修改项目。
+  - proposal 必须绑定 2498 proposal/policy、blocked screenshot/build/script identity、同一
+    `2021-02-22..2021-02-26` 五 session、project mutation=0、cloud backtest=1、orders/fills=0；运行前
+    read-only 复核 account verified 与 code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw
+    rows/API/CLI/HTTP/Object Store/download/purchase/range expansion 均 fail closed。只有
+    terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。
+  - 2026-08-08：proposal engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal
+    file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority
+    set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203 PASS。tracked
+    proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md
+  terminal: false
+  raw_row_sha256: b86ba7f003d8edce032a5376fa4c41ad4946ae2f1d88867a0d0b5e21324feb5c
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 1a9476bc41d667d261cf2fbceb3a3734e1b692d9140dd13c5b0ce1d0f5dbc7f5

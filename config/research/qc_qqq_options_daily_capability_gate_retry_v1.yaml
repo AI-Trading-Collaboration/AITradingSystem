@@ -1,0 +1,93 @@
+schema_version: qc_qqq_options_daily_capability_gate_retry_policy.v1
+policy_id: qc_qqq_options_daily_capability_gate_retry_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED
+owner: project_owner
+rationale: >-
+  Retry the unchanged zero-order QQQ Options DAILY capability gate only after
+  the Owner completed QuantConnect account verification and issues a new token.
+review_on: '2026-08-08'
+expires_on: '2026-08-15'
+predecessor_proposal_relative_path: inputs/external_validation/qc_qqq_options_daily_capability_gate_proposal_20260808.json
+predecessor_proposal_file_sha256: 6b226751453bc2d73e0e5ec14be6975124e3a0948435ff7282658a3c2fe3e5dc
+predecessor_proposal_content_sha256: 98566866892b081ad1011e7388348c780e506018e94d568f83b1fcef888a7f95
+predecessor_policy_canonical_sha256: 1ec345fdf36a101023eacaff6ca78450bd54b45290758438f0ae4a56b2ff63f9
+predecessor_script_lf_sha256: 1da0d834d5509aabd7fb3baeeff9b8b3f56eed3d9ba095679f84fda926843139
+predecessor_blocked_build_id: 7edc98-0a3a57
+predecessor_blocked_screenshot_sha256: c09620fa797936ab66cc0f757d3a46cca080bdcd67171474815fe3ac53ad2912
+predecessor_disposition: NO_GO_CAPABILITY_OR_ENTITLEMENT_ACCOUNT_VERIFICATION_REQUIRED
+predecessor_authorization_status: INVALIDATED_SINGLE_USE
+predecessor_backtest_id_present: false
+predecessor_independent_review_status: PENDING_INDEPENDENT_REVIEW
+account_verification_claim_status: OWNER_CLAIMED_REQUIRES_UI_CONFIRMATION
+run_scope:
+  target_project_id: 34808569
+  required_project_code_lf_sha256: 1da0d834d5509aabd7fb3baeeff9b8b3f56eed3d9ba095679f84fda926843139
+  requested_start: '2021-02-22'
+  requested_end: '2021-02-26'
+  expected_sessions:
+    - '2021-02-22'
+    - '2021-02-23'
+    - '2021-02-24'
+    - '2021-02-25'
+    - '2021-02-26'
+  ticker: QQQ
+  equity_resolution: DAILY
+  equity_normalization: RAW
+  option_resolution: DAILY
+  capability_only: true
+  account_verification_precheck_required: true
+  maximum_project_mutations: 0
+  maximum_cloud_backtests: 1
+  maximum_orders: 0
+  maximum_fills: 0
+  raw_rows_logged: false
+required_aggregate_fields:
+  - option_chain_present
+  - contract_count
+  - two_sided_quote_count
+  - positive_open_interest_count
+  - finite_greeks_count
+  - finite_implied_volatility_count
+  - raw_rows_logged
+  - orders_submitted
+allowed_actions_after_exact_owner_token:
+  - QUANTCONNECT_LOGIN
+  - READ_ONLY_ACCOUNT_PROJECT_CODE_PRECHECK
+  - RUN_ONE_ZERO_ORDER_CLOUD_BACKTEST
+  - EXPORT_SAFE_MANUAL_EVIDENCE_COLLECTION
+prohibited_actions:
+  - PROJECT_MUTATION
+  - CREATE_SECOND_PROJECT
+  - SECOND_CLOUD_BACKTEST
+  - SUBMIT_ORDER
+  - API
+  - CLI
+  - HTTP
+  - OBJECT_STORE
+  - RAW_OPTIONS_DATA_DOWNLOAD
+  - RAW_OPTION_ROW_LOGGING_OR_EXPORT
+  - PURCHASE_OR_SUBSCRIPTION
+  - RANGE_EXPANSION
+  - INVESTMENT_INTERPRETATION
+  - PAPER
+  - LIVE
+  - BROKER
+  - PRODUCTION
+proposed_owner_decision: owner_decision:TRADING-2500:2026-08-08:authorize_single_zero_order_verified_account_qc_daily_capability_retry_v1
+successor_task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+safety:
+  proposal_only: true
+  owner_signature_present: false
+  external_platform_action_authorized: false
+  project_mutation_authorized: false
+  cloud_backtest_authorized: false
+  api_cli_http_object_store_authorized: false
+  raw_options_download_authorized: false
+  purchase_or_subscription_authorized: false
+  range_expansion_authorized: false
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_action: none

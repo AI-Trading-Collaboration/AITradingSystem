@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1093
+module_count: 1094
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -16213,6 +16213,26 @@ modules:
 - module_id: src.ai_trading_system.qqq_options_research.daily_capability_gate
   path: src/ai_trading_system/qqq_options_research/daily_capability_gate.py
   sha256: fae1699e49e680895aa48c7e0d7eb3c5bd42e6af3f9112c4efdb165a2442745b
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.daily_capability_gate_retry
+  path: src/ai_trading_system/qqq_options_research/daily_capability_gate_retry.py
+  sha256: bbd33e0c63ccd27859f1c71e36a66a1eb523e9b27dbaf9a48e0f39c47505704d
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
