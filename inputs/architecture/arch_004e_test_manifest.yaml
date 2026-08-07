@@ -17010,7 +17010,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_trading2452_architecture_contract
   path: tests/test_trading2452_architecture_contract.py
-  sha256: 0453360a4d37812264447618eefdd1e6306c816f6c362d191c28d3ae3d577ce7
+  sha256: 65ef460e74efc3d03fc3de3b7bc5567a7ce4735a28b10350a1debd5093e6018e
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

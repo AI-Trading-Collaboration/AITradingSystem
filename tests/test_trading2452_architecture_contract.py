@@ -31,6 +31,9 @@ TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY = (
 TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY = (
     "phase_trading_2497_qc_qqq_options_license_export_due_diligence_v1"
 )
+TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY = (
+    "phase_trading_2497_qc_qqq_options_license_export_owner_review_proposal_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -126,15 +129,16 @@ def _assert_historical_source_is_current_or_superseded(
     current_live_hash = _source_sha256_path(live_path, current_source)
     if (
         source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
-        and section_key != TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY
+        and section_key != TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY
     ):
         section_ids = list(baseline)
         assert TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY in section_ids
         assert TRADING_2492_BOUNDED_PILOT_TERMINAL_NO_GO_PHASE_KEY in section_ids
         assert TRADING_2493_OWNER_STAGE_GATE_SIGNOFF_PHASE_KEY in section_ids
         assert TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY in section_ids
+        assert TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY in section_ids
         assert section_ids.index(section_key) <= section_ids.index(
-            TRADING_2497_LICENSE_EXPORT_DUE_DILIGENCE_PHASE_KEY
+            TRADING_2497_LICENSE_EXPORT_OWNER_REVIEW_PHASE_KEY
         )
         return
     assert current_source.get("sha256") == current_live_hash, (
