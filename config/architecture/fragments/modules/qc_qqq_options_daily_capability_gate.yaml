@@ -1,0 +1,30 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_daily_capability_gate
+fragment_kind: module
+owner: external_validation
+module_prefix: src/ai_trading_system/qqq_options_research/daily_capability_gate.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_POLICY_PATH
+  - DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_PROPOSAL_PATH
+  - EXPECTED_AGGREGATE_FIELDS
+  - EXPECTED_ALLOWED_ACTIONS
+  - EXPECTED_PROHIBITED_ACTIONS
+  - EXPECTED_SESSIONS
+  - PROPOSED_OWNER_DECISION
+  - DailyCapabilityGateDecision
+  - DailyCapabilityGateSafety
+  - DailyCapabilityRunScope
+  - DailyCapabilitySessionObservation
+  - QCQQQOptionsDailyCapabilityGateContractError
+  - QCQQQOptionsDailyCapabilityGatePolicy
+  - QCQQQOptionsDailyCapabilityGatePolicyLoadResult
+  - QCQQQOptionsDailyCapabilityGateProposal
+  - QCQQQOptionsDailyCapabilityGateProposalLoadResult
+  - QCQQQOptionsDailyCapabilityGateRecord
+  - QCQQQOptionsDailyCapabilityRunObservation
+  - build_qc_qqq_options_daily_capability_gate_proposal
+  - build_qc_qqq_options_daily_capability_gate_record
+  - load_qc_qqq_options_daily_capability_gate_policy
+  - load_qc_qqq_options_daily_capability_gate_proposal
+compatibility_facades: []
+deprecation_status: active_reference_architecture

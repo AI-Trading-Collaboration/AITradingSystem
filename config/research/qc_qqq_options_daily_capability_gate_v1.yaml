@@ -1,0 +1,83 @@
+schema_version: qc_qqq_options_daily_capability_gate_policy.v1
+policy_id: qc_qqq_options_daily_capability_gate_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED
+owner: project_owner
+rationale: >-
+  Verify account-specific QQQ Options DAILY capability at the primary research
+  window start before any daily backtest engineering begins.
+review_on: '2026-08-08'
+expires_on: '2026-08-15'
+predecessor_proposal_relative_path: inputs/external_validation/qc_qqq_options_license_export_owner_review_proposal_20260807.json
+predecessor_proposal_file_sha256: 66d7a7b8fcf38fe56f210fc3ca927b14325548383d0c2c02ab0c37fca5348098
+predecessor_proposal_content_sha256: 6b2c67dad95643ff7c43a502d921d5830eec037f2fe19c6fa5f64aaee99163ef
+predecessor_policy_canonical_sha256: 0137e1dbf36825b53574a25ac0d1b2ee55c685d402f20c0188e8dbf25034c8f2
+predecessor_aggregate_recommendation: NO_GO_KEEP_BLOCKED_PRIMARY_WINDOW_AND_SHARED_GATES
+run_scope:
+  target_project_id: 34808569
+  requested_start: '2021-02-22'
+  requested_end: '2021-02-26'
+  expected_sessions:
+    - '2021-02-22'
+    - '2021-02-23'
+    - '2021-02-24'
+    - '2021-02-25'
+    - '2021-02-26'
+  ticker: QQQ
+  equity_resolution: DAILY
+  equity_normalization: RAW
+  option_resolution: DAILY
+  capability_only: true
+  maximum_project_mutations: 1
+  maximum_cloud_backtests: 1
+  maximum_orders: 0
+  maximum_fills: 0
+  raw_rows_logged: false
+required_aggregate_fields:
+  - option_chain_present
+  - contract_count
+  - two_sided_quote_count
+  - positive_open_interest_count
+  - finite_greeks_count
+  - finite_implied_volatility_count
+  - raw_rows_logged
+  - orders_submitted
+allowed_actions_after_exact_owner_token:
+  - QUANTCONNECT_LOGIN
+  - MODIFY_EXISTING_DEDICATED_PROJECT_ONCE
+  - RUN_ONE_ZERO_ORDER_CLOUD_BACKTEST
+  - EXPORT_SAFE_MANUAL_EVIDENCE_COLLECTION
+prohibited_actions:
+  - CREATE_SECOND_PROJECT
+  - SECOND_CLOUD_BACKTEST
+  - SUBMIT_ORDER
+  - API
+  - CLI
+  - HTTP
+  - OBJECT_STORE
+  - RAW_OPTIONS_DATA_DOWNLOAD
+  - RAW_OPTION_ROW_LOGGING_OR_EXPORT
+  - PURCHASE_OR_SUBSCRIPTION
+  - RANGE_EXPANSION
+  - INVESTMENT_INTERPRETATION
+  - PAPER
+  - LIVE
+  - BROKER
+  - PRODUCTION
+proposed_owner_decision: owner_decision:TRADING-2498:2026-08-08:authorize_single_zero_order_qc_daily_capability_gate_v1
+successor_task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+safety:
+  proposal_only: true
+  owner_signature_present: false
+  quantconnect_login_authorized: false
+  project_mutation_authorized: false
+  cloud_backtest_authorized: false
+  api_cli_http_object_store_authorized: false
+  raw_options_download_authorized: false
+  purchase_or_subscription_authorized: false
+  range_expansion_authorized: false
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  production_allowed: false
+  broker_action: none

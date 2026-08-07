@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qc_qqq_options_daily_capability_gate
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: exact_trading_2493_2497_no_go_authority_and_owner_requested_daily_capability_first
+stages:
+  - replay_2497_hash_bound_no_go_owner_review_proposal
+  - freeze_2021_02_22_through_2021_02_26_primary_start_week
+  - freeze_qqq_equity_raw_daily_and_equity_options_daily
+  - freeze_one_existing_project_mutation_one_cloud_backtest_zero_orders_zero_fills
+  - collect_only_session_level_chain_quote_oi_greeks_iv_aggregates
+  - collect_engine_resource_data_point_range_and_result_identity
+  - prohibit_raw_rows_api_cli_http_object_store_download_purchase_and_range_expansion
+  - derive_go_for_daily_engineering_only_no_go_or_unknown_fail_closed
+  - require_independent_review_before_successor_task_registration
+  - keep_full_window_investment_paper_live_broker_and_production_blocked
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

@@ -7843,3 +7843,32 @@ US Equity Options pricing 截图。仓库只保存每个外部文件的 role、b
 Free、Cloud Access Free 或单日成功会话推出 full-window entitlement。QuantConnect login/project/cloud
 backtest/API/CLI/HTTP/Object Store/raw download/purchase/subscription/range expansion/paid upgrade/paper/live/
 broker/production/investment interpretation 均未被本提案授权。
+
+## TRADING-2498 QuantConnect QQQ Options Daily Capability Gate V1
+
+`config/research/qc_qqq_options_daily_capability_gate_v1.yaml` 与
+`qqq_options_research.daily_capability_gate` 把 Owner 的“能力先行、通过后再工程”要求冻结为 strictly
+offline、zero-order、hash-bound proposal。它继承 2493 `SIGNED_NO_GO` 和 2497
+`NO_GO_KEEP_BLOCKED_PRIMARY_WINDOW_AND_SHARED_GATES`，不把 2497 人工复核或 Free listing 当作新的
+cloud authorization。
+
+```text
+2493 SIGNED_NO_GO + 2497 hash-bound license/export proposal
+  -> exact predecessor proposal file/content/policy replay
+  -> requested range = 2021-02-22..2021-02-26
+  -> QQQ Equity RAW DAILY + QQQ Equity Options DAILY
+  -> expected sessions = five reviewed primary-start sessions
+  -> maximum project mutation = 1
+  -> maximum cloud backtest = 1
+  -> orders = fills = 0; portfolio invested = false
+  -> session aggregates: chain/contracts/two-sided quote/OI/Greeks/IV
+  -> engine/build/project/backtest/range/data-point/result identity
+  -> GO_FOR_DAILY_ENGINEERING_ONLY | NO_GO_CAPABILITY_OR_ENTITLEMENT
+     | UNKNOWN_EVIDENCE_INCOMPLETE
+  -> only GO permits registering TRADING-2499 offline engineering contract
+```
+
+在 exact Owner token 收到前，proposal 固定 `owner_token_present=false`，login/project mutation/cloud
+backtest/API/CLI/HTTP/Object Store/raw download/purchase/subscription/range expansion 均未授权。即使 terminal
+gate 为 `GO_FOR_DAILY_ENGINEERING_ONLY`，它也不授权完整 `2021-02-22..present` cloud backtest，不解除
+2485–2490 policy/DQ/PIT/evidence/reconciliation 门禁，不产生投资解释，也不允许 paper/live/broker/production。
