@@ -47413,3 +47413,114 @@ phase_trading_2498_qc_qqq_options_daily_capability_gate_v1:
     paper_live_broker_production_action: false
     production_effect: none
     broker_action: none
+phase_trading_2496_atlas_reader_status_explanation_owner_visual_acceptance_v1:
+  schema_version: trading_2496_atlas_reader_status_explanation_owner_visual_acceptance_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2496-ATLAS-READER-STATUS-EXPLANATION-OWNER-VISUAL-ACCEPTANCE-V1
+  task_ids:
+  - TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  owner_decisions:
+  - owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1
+  prior_sections_immutability:
+    source_commit: 72095ff0620c8fe7c7f2e059ca95e4b26eee5a3b
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 4fee71909c115ad3943fbe70cfcf267b0c457a9f
+    raw_byte_count: 3044567
+    raw_sha256: ac1df7903b9c7f9204303aa427d2968ee6c0ccd76a44d61a76024ff680e0467e
+    append_offset: 3044567
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/e6/e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml
+  - registry/development_tasks_shadow_v2/e6/e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_trading2452_architecture_contract.py
+  removed_live_source_paths: []
+  new_source_paths: []
+  source_delta_paths:
+  - docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/e6/e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml
+  - registry/development_tasks_shadow_v2/e6/e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_trading2452_architecture_contract.py
+  supersession:
+    superseded_by_phase: TRADING-2496-ATLAS-READER-STATUS-EXPLANATION-OWNER-VISUAL-ACCEPTANCE-V1
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_OWNER_ACCEPTANCE
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2498_qc_qqq_options_daily_capability_gate_v1
+    current_hash_authority: phase_trading_2496_atlas_reader_status_explanation_owner_visual_acceptance_v1.sources
+  generated_fragment_authority:
+    mode: INDEX_TRANSITIVE_SHA256_AUTHORITY
+    index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    fragment_root: registry/development_tasks_shadow_v2
+    fragment_count: 964
+    active_task_count: 459
+    completed_task_count: 505
+    stable_path_key: sha256(task_id)
+    loader_hash_replay: PASS
+  sources:
+  - path: docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+    sha256: 40e9e4f55a520d712bbbf6fba01d3a806a396a1b11aab027e9230ae17e8abbf5
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: ac5bb9090107ebf87ee1a91a2edcbdcf324808b4902551bddd523879eaadc60c
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 7238064d051584d9c8f9a360c73385f0284fcdaa020bcec2fd78a7048d3104c2
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 832bc74bc69890e44c78cc206dafe7ee44829ecad52ce2faabb52a375ddd0234
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: 47bcaf3c1af7c47a32cb33a10e2c9e1f3597e4078137496718be4e89fb557411
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: f623eb2b2fead80eac4a75ca27e6298b2245a4f8a97140ca000a522747049f12
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml
+    sha256: 15792240d3212d41d2656d18e4343461c38cf59c893d54cdb857e26e162eb1be
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/e6/e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c.yaml
+    sha256: 78782da97d7fc63bf5060d19a1ed3ee6971444f3e585be405617879e765fb8aa
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 7d5b401708a43d65edb2b0f80521cb1ed2ac96a389be90eeae7c8cb6f381c9a0
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2452_architecture_contract.py
+    sha256: 9ea90f5b29548974e08779098c30368c998863ef05b1c71dfb104117e43cc18e
+    hash_normalization: git_eol_lf
+  acceptance_evidence:
+    accepted_implementation_commit: ddde87301b970d8ef82160034fe9b836f9579435
+    canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
+    index_html_sha256: 436b7da54bba188c643d79660451f9e4350e7d88f7d5b8c9dd0bb5977b9e6603
+    status_explanations_sha256: 625c7a77e1fb0085dbde0a8180a3372c4e9898d45a543640fe19e21eaa52972b
+    status_explanation_validation_sha256: ec562ea470c4a293bf3ec581bcbf69eb3712534eaa21ad2d6601b3f176356cdc
+    owner_manual_visual_status: OWNER_MANUAL_VISUAL_PASS
+    accepted_at: '2026-08-08'
+  validation:
+    owner_manual_visual: OWNER_MANUAL_VISUAL_PASS
+    task_shadow_replay: PASS_964_TOTAL_459_ACTIVE_505_COMPLETED_BYTE_IDENTICAL
+    compatibility_regression: REQUIRED_FINAL_TREE
+    formal_validation: REQUIRED_FINAL_TREE
+  safety:
+    research_status_changed: false
+    strategy_pass_asserted: false
+    investment_advice_generated: false
+    trading_2481_2493_projection_authorized: false
+    remote_publication_authorized: false
+    external_platform_action_authorized: false
+    paper_live_broker_production_action: false
+    production_effect: none
+    broker_action: none

@@ -8,6 +8,8 @@
 - governed mode：`SINGLE_LANE`；
 - exact base：`d437ae7cf059f58a5cdd14cb61849166dd29b3b9`；
 - Owner token：`owner_decision:TRADING-2496:2026-08-03:implement_reader_first_explanation_renderer_v1`；
+- Owner visual acceptance token：`owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1`；
+- Owner manual visual status：`OWNER_MANUAL_VISUAL_PASS`；
 - predecessor：`TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1`；
 - production effect：`none`；broker action：`none`。
 
@@ -195,3 +197,8 @@ outputs/atlas/strategy_research_cited_query/trading_2470_v1/status_explanation_v
   尚未转交 2496 supersession；按 exact successor set 修复后相同 187 项覆盖=`187 passed`。
   historical projection local page test 已改为 2496 exact identity，并同时核验两个新增 sidecar；
   immutable compatibility prefix 与 2496 EOF marker 已重新逐字节验证 PASS。
+- 2026-08-08：Owner 在 canonical 页面完成视觉与低金融知识读者可读性验收，明确记录
+  `owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1` 与
+  `OWNER_MANUAL_VISUAL_PASS`。此前自动浏览器状态 `NOT_EXECUTED_URL_POLICY` 保留为独立历史事实，
+  不被人工验收改写。本验收不表示策略 PASS、投资建议或生产批准，不授权
+  `TRADING-2481..2493` 投影、远程发布、external platform、production 或 broker action。

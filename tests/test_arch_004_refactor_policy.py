@@ -3381,7 +3381,28 @@ TRADING_2498_QC_DAILY_CAPABILITY_GATE_NEW_SOURCE_PATHS = frozenset(
         "tests/test_qc_qqq_options_daily_capability_gate.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2498_QC_DAILY_CAPABILITY_GATE_SECTION
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION = (
+    "phase_trading_2496_atlas_reader_status_explanation_owner_visual_acceptance_v1"
+)
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASE_COMMIT = (
+    "72095ff0620c8fe7c7f2e059ca95e4b26eee5a3b"
+)
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASELINE_GIT_BLOB = (
+    "4fee71909c115ad3943fbe70cfcf267b0c457a9f"
+)
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_BYTE_COUNT = 3_044_567
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_SHA256 = (
+    "ac1df7903b9c7f9204303aa427d2968ee6c0ccd76a44d61a76024ff680e0467e"
+)
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "tests/test_trading2452_architecture_contract.py",
+    }
+)
+TRADING_2496_OWNER_VISUAL_ACCEPTANCE_NEW_SOURCE_PATHS = frozenset()
+LATEST_COMPATIBILITY_SECTION = TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -5698,6 +5719,26 @@ def _trading_2498_qc_daily_capability_gate_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2498_QC_DAILY_CAPABILITY_GATE_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2496_owner_visual_acceptance_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -8042,6 +8083,26 @@ def _assert_trading_2498_qc_daily_capability_gate_historical_prefix_immutable(
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"{TRADING_2498_QC_DAILY_CAPABILITY_GATE_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2496_owner_visual_acceptance_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2496 Owner visual acceptance historical prefix differs from "
+        "immutable TRADING-2498 compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"{TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -11221,6 +11282,35 @@ def _trading_2498_qc_daily_capability_gate_all_current_authority_paths() -> froz
 
 
 @cache
+def _trading_2496_owner_visual_acceptance_superseded_live_source_paths() -> frozenset[str]:
+    _assert_trading_2496_owner_visual_acceptance_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2496_owner_visual_acceptance_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2496_owner_visual_acceptance_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2496_owner_visual_acceptance_all_current_authority_paths() -> frozenset[str]:
+    return (
+        _trading_2498_qc_daily_capability_gate_all_current_authority_paths()
+        | _trading_2496_owner_visual_acceptance_superseded_live_source_paths()
+        | _trading_2496_owner_visual_acceptance_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -11903,6 +11993,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         OPS_073_TERMINAL_DISPOSITION_SECTION,
         TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION,
         TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION,
+        TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION,
         OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
@@ -12791,6 +12882,11 @@ def _trading_2498_qc_daily_capability_gate_prior_active_source_mismatches() -> f
     return _latest_active_source_mismatches(TRADING_2498_QC_DAILY_CAPABILITY_GATE_SECTION)
 
 
+@cache
+def _trading_2496_owner_visual_acceptance_prior_active_source_mismatches() -> frozenset[str]:
+    return _latest_active_source_mismatches(TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -12834,7 +12930,20 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2498_QC_DAILY_CAPABILITY_GATE_SECTION in baseline:
+    if TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2496_owner_visual_acceptance_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2496_owner_visual_acceptance_prior_active_source_mismatches()
+            | TRADING_2496_OWNER_VISUAL_ACCEPTANCE_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2496_owner_visual_acceptance_all_current_authority_paths()
+        )
+        authority_section = TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION
+    elif TRADING_2498_QC_DAILY_CAPABILITY_GATE_SECTION in baseline:
         current_superseded_paths = (
             _trading_2498_qc_daily_capability_gate_superseded_live_source_paths()
         )
@@ -36524,7 +36633,7 @@ def test_trading_2498_daily_capability_gate_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
         "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
@@ -36589,6 +36698,124 @@ def test_trading_2498_daily_capability_gate_is_current_hash_authority() -> None:
     tampered[TRADING_2498_QC_DAILY_CAPABILITY_GATE_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2498_qc_daily_capability_gate_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2496_owner_visual_acceptance_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2496_owner_visual_acceptance_base_baseline_blob()
+    _assert_trading_2496_owner_visual_acceptance_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2496_atlas_reader_status_explanation_owner_visual_acceptance_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2496-ATLAS-READER-STATUS-EXPLANATION-OWNER-VISUAL-ACCEPTANCE-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1"
+    ]
+    assert phase["owner_decisions"] == [
+        "owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2496_OWNER_VISUAL_ACCEPTANCE_BASELINE_GIT_BLOB,
+        "raw_byte_count": TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_BYTE_COUNT,
+        "raw_sha256": TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_SHA256,
+        "append_offset": TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_BYTE_COUNT,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2496_owner_visual_acceptance_prior_active_source_mismatches()
+        | TRADING_2496_OWNER_VISUAL_ACCEPTANCE_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2496_OWNER_VISUAL_ACCEPTANCE_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2496_OWNER_VISUAL_ACCEPTANCE_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2496_OWNER_VISUAL_ACCEPTANCE_NEW_SOURCE_PATHS
+    ) - TRADING_2496_OWNER_VISUAL_ACCEPTANCE_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2496-ATLAS-READER-STATUS-EXPLANATION-OWNER-VISUAL-ACCEPTANCE-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_OWNER_ACCEPTANCE",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": TRADING_2498_QC_DAILY_CAPABILITY_GATE_SECTION,
+        "current_hash_authority": f"{TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION}.sources",
+    }
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 964,
+        "active_task_count": 459,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["acceptance_evidence"] == {
+        "accepted_implementation_commit": "ddde87301b970d8ef82160034fe9b836f9579435",
+        "canonical_page_path": (
+            "outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html"
+        ),
+        "index_html_sha256": (
+            "436b7da54bba188c643d79660451f9e4350e7d88f7d5b8c9dd0bb5977b9e6603"
+        ),
+        "status_explanations_sha256": (
+            "625c7a77e1fb0085dbde0a8180a3372c4e9898d45a543640fe19e21eaa52972b"
+        ),
+        "status_explanation_validation_sha256": (
+            "ec562ea470c4a293bf3ec581bcbf69eb3712534eaa21ad2d6601b3f176356cdc"
+        ),
+        "owner_manual_visual_status": "OWNER_MANUAL_VISUAL_PASS",
+        "accepted_at": "2026-08-08",
+    }
+    assert phase["validation"] == {
+        "owner_manual_visual": "OWNER_MANUAL_VISUAL_PASS",
+        "task_shadow_replay": "PASS_964_TOTAL_459_ACTIVE_505_COMPLETED_BYTE_IDENTICAL",
+        "compatibility_regression": "REQUIRED_FINAL_TREE",
+        "formal_validation": "REQUIRED_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "research_status_changed": False,
+        "strategy_pass_asserted": False,
+        "investment_advice_generated": False,
+        "trading_2481_2493_projection_authorized": False,
+        "remote_publication_authorized": False,
+        "external_platform_action_authorized": False,
+        "paper_live_broker_production_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2496_OWNER_VISUAL_ACCEPTANCE_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2496_owner_visual_acceptance_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

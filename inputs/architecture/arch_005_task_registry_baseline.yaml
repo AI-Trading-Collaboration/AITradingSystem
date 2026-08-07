@@ -95,12 +95,12 @@ inventory:
   documents:
   - source: active
     path: docs/task_register.md
-    byte_count: 1700900
-    sha256: a5fe15f6abb3cb8d689a0e94d5d5396c4740977ba19c3e306f45f9af112ee4f6
+    byte_count: 1700848
+    sha256: ac5bb9090107ebf87ee1a91a2edcbdcf324808b4902551bddd523879eaadc60c
     row_count: 459
     final_newline: true
     task_id_order_sha256: 04e87482d514bf4627397d8c1fb72797ccc8b17531578ea37ead5a0ae2f652cf
-    row_checksum_order_sha256: 93180f038c55352bf73c9646b866c7b41243d7ebe62ac6c16ed76470cce86cdf
+    row_checksum_order_sha256: ab24aa3599c6251f88054c490cb0a291728df630d4e2d17e3d4a089acb98346e
     task_row_newline_counts:
       LF: 459
   - source: completed
@@ -132,7 +132,7 @@ inventory:
     VALIDATING: 269
   task_id_set_sha256: 389901b9941faae82138b3bc37c6331cfd7b20f6ef58c6573dfd91b123a83ea1
   status_set_sha256: 3e604499a28496298e3756f5a8c257c71df336a7a620211736479d69d40814dd
-  owner_set_sha256: 37059eafeb2e5a2f3b535c39a866d771bd79301fd847abc4aee7577dc35ae456
+  owner_set_sha256: 95b2a29ad362dafbb012f737c162ccb31e1ba261cb7b3ee4ae954a7e07271ee4
   docs_link_set_sha256: 63b4da70be4ee5371caa4f96bbb46a62a05fd4b3e29bf246a22a996e4e557f38
   row_checksums:
   - task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
@@ -3267,7 +3267,7 @@ inventory:
   - task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
     source: active
     line_number: 2120
-    row_sha256: 2a16c14972ce8264039d3ab57038ce7c450eebfa4b03ae07945543d5a9b85c6c
+    row_sha256: b20feb77ccf647df71635bd06a9d8c0b6e141f9fe218363afa02c1479214dc92
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7894,4 +7894,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 136e2981517e3a0d0d44151c7b68947da789e6e0f364b75eb4cb4ec27b215968
+baseline_checksum: e71da804a6af3e17daed46410890ce306fb7a235c51d3c09659feeb7c139b1ec
