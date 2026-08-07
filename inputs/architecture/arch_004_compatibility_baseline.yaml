@@ -47054,3 +47054,119 @@ phase_trading_2497_qc_qqq_options_license_export_due_diligence_v1:
     paper_live_broker_production_action: false
     production_effect: none
     broker_action: none
+phase_trading_2497_qc_qqq_options_license_export_owner_review_proposal_v1:
+  schema_version: trading_2497_qc_qqq_options_license_export_owner_review_compatibility.v1
+  status: BASELINE_DONE
+  boundary_id: TRADING-2497-QC-QQQ-OPTIONS-LICENSE-EXPORT-OWNER-REVIEW-PROPOSAL-V1
+  task_ids:
+  - TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  prior_sections_immutability:
+    source_commit: 9b94e4373d7fc0f1da021adcee537e2a1e0a709d
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: b517cfa3cecfb1ecb7d93360f09b0825c8a0973a
+    raw_byte_count: 3021810
+    raw_sha256: 3dc058127b8ef148e4efa8195b20982a0ae4f2170e0426f03a24aefa96578d4c
+    append_offset: 3021810
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+  - registry/development_tasks_shadow/active/55/558d1604485e7d81d99a3109c382762d1e4d8e31b89a7d47c605adc877edb52b.yaml
+  - registry/development_tasks_shadow_v2/55/558d1604485e7d81d99a3109c382762d1e4d8e31b89a7d47c605adc877edb52b.yaml
+  removed_live_source_paths: []
+  new_source_paths:
+  - config/architecture/fragments/flows/qc_qqq_options_license_export_owner_review.yaml
+  - config/architecture/fragments/modules/qc_qqq_options_license_export_owner_review.yaml
+  - config/research/qc_qqq_options_license_export_owner_review_proposal_v1.yaml
+  - inputs/external_validation/qc_qqq_options_license_export_owner_review_proposal_20260807.json
+  - src/ai_trading_system/qqq_options_research/license_export_owner_review.py
+  - tests/test_qc_qqq_options_license_export_owner_review.py
+  source_delta_paths:
+  - config/architecture/fragments/flows/qc_qqq_options_license_export_owner_review.yaml
+  - config/architecture/fragments/modules/qc_qqq_options_license_export_owner_review.yaml
+  - config/research/qc_qqq_options_license_export_owner_review_proposal_v1.yaml
+  - docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+  - inputs/external_validation/qc_qqq_options_license_export_owner_review_proposal_20260807.json
+  - registry/development_tasks_shadow/active/55/558d1604485e7d81d99a3109c382762d1e4d8e31b89a7d47c605adc877edb52b.yaml
+  - registry/development_tasks_shadow_v2/55/558d1604485e7d81d99a3109c382762d1e4d8e31b89a7d47c605adc877edb52b.yaml
+  - src/ai_trading_system/qqq_options_research/license_export_owner_review.py
+  - tests/test_qc_qqq_options_license_export_owner_review.py
+  supersession:
+    superseded_by_phase: TRADING-2497-QC-QQQ-OPTIONS-LICENSE-EXPORT-OWNER-REVIEW-PROPOSAL-V1
+    scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2497_qc_qqq_options_license_export_due_diligence_v1
+    current_hash_authority: phase_trading_2497_qc_qqq_options_license_export_owner_review_proposal_v1.sources
+  generated_fragment_authority:
+    mode: INDEX_TRANSITIVE_SHA256_AUTHORITY
+    index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    fragment_root: registry/development_tasks_shadow_v2
+    fragment_count: 963
+    active_task_count: 458
+    completed_task_count: 505
+    stable_path_key: sha256(task_id)
+    loader_hash_replay: PASS
+  sources:
+  - path: config/architecture/fragments/flows/qc_qqq_options_license_export_owner_review.yaml
+    sha256: 3a6433d35d643c0eda97be5e9721c1a74f547948f93447b9be8d62505419e6c0
+    hash_normalization: git_eol_lf
+  - path: config/architecture/fragments/modules/qc_qqq_options_license_export_owner_review.yaml
+    sha256: 9848b77b208fe3a7e17ea0267dd1e37abb370220d7a6ca53fce903bbaf149644
+    hash_normalization: git_eol_lf
+  - path: config/research/qc_qqq_options_license_export_owner_review_proposal_v1.yaml
+    sha256: f206447aee0c0daca74340c9e494753a5a970ac85f1784423679fd03f2b8ac0b
+    hash_normalization: git_eol_lf
+  - path: docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+    sha256: 083d3332decc299b9da82ebc5e454124732b46db94847ba47f56393240ff63c3
+    hash_normalization: git_eol_lf
+  - path: inputs/external_validation/qc_qqq_options_license_export_owner_review_proposal_20260807.json
+    sha256: 66d7a7b8fcf38fe56f210fc3ca927b14325548383d0c2c02ab0c37fca5348098
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/55/558d1604485e7d81d99a3109c382762d1e4d8e31b89a7d47c605adc877edb52b.yaml
+    sha256: 489555c52e225ec3a1d3260afe993ee4d32e166840764d28b1dd32f9e58b2d60
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/55/558d1604485e7d81d99a3109c382762d1e4d8e31b89a7d47c605adc877edb52b.yaml
+    sha256: 432e99a81ef92c6605c2ada522bb2e04b0a481fb90c3bb8a293c8b4ce7b7a706
+    hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/qqq_options_research/license_export_owner_review.py
+    sha256: f5fdfc940c404f10f50356e340fbe069c0dfa2bf50bb7211901e638652531cf9
+    hash_normalization: git_eol_lf
+  - path: tests/test_qc_qqq_options_license_export_owner_review.py
+    sha256: 8539678d8106520a6515293a767e6a02be338539c7635a10ac2e948711edffde
+    hash_normalization: git_eol_lf
+  evidence:
+    implementation_commit: 9b94e4373d7fc0f1da021adcee537e2a1e0a709d
+    predecessor_report_file_sha256: 5e8063754bae6e9e4cb3cca02dacd064e3ce368a1cdba9612df707a83ed48e80
+    predecessor_report_content_sha256: 31e244287ed631a88617f72ddf6720925f4fd58d20f75066a57805c00f4afd7a
+    policy_file_sha256: f206447aee0c0daca74340c9e494753a5a970ac85f1784423679fd03f2b8ac0b
+    policy_canonical_sha256: 0137e1dbf36825b53574a25ac0d1b2ee55c685d402f20c0188e8dbf25034c8f2
+    evidence_set_sha256: 0733917e0f8370c37a7c9dcb517ef0100da7240f1cd104077e7997b4ecd0977e
+    proposal_file_sha256: 66d7a7b8fcf38fe56f210fc3ca927b14325548383d0c2c02ab0c37fca5348098
+    proposal_content_sha256: 6b2c67dad95643ff7c43a502d921d5830eec037f2fe19c6fa5f64aaee99163ef
+    aggregate_recommendation: NO_GO_KEEP_BLOCKED_PRIMARY_WINDOW_AND_SHARED_GATES
+    owner_review_completed: false
+    owner_attestation_present: false
+    primary_research_window_start: '2021-02-22'
+    tested_session: '2025-12-02'
+  validation:
+    owner_review_focused_parallel_pytest: PASS_24_TESTS_N16_LOADFILE
+    adjacent_2493_2497_parallel_pytest: PASS_59_TESTS_N16_LOADFILE
+    compatibility_regression: REQUIRED_FINAL_TREE
+    formal_five_gate: REQUIRED_FINAL_TREE
+  safety:
+    proposal_only: true
+    owner_signature_present: false
+    external_platform_action_authorized: false
+    quantconnect_login_authorized: false
+    project_mutation_authorized: false
+    cloud_backtest_authorized: false
+    api_cli_http_object_store_authorized: false
+    raw_options_download_authorized: false
+    purchase_or_subscription_authorized: false
+    range_expansion_authorized: false
+    paid_tier_upgrade_authorized: false
+    investment_interpretation_allowed: false
+    paper_live_broker_production_action: false
+    production_effect: none
+    broker_action: none

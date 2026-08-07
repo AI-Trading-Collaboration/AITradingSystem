@@ -219,3 +219,19 @@ proposal 必须把以下边界写死：
 本 continuation 使用 task-owned typed policy/API、canonical proposal 与 negative/property/golden tests；
 不修改原 2497 due-diligence report bytes，也不重定义任何 predecessor/shared record。Owner 在收到 exact
 proposal file/content/policy/authority hashes 前无需自行拼写 decision token。
+
+S3 implementation authority 已冻结为
+`9b94e4373d7fc0f1da021adcee537e2a1e0a709d`。由该 exact commit 生成的 canonical proposal：
+
+- repository path=`inputs/external_validation/qc_qqq_options_license_export_owner_review_proposal_20260807.json`；
+- file/canonical SHA-256=`66d7a7b8fcf38fe56f210fc3ca927b14325548383d0c2c02ab0c37fca5348098`；
+- content SHA-256=`6b2c67dad95643ff7c43a502d921d5830eec037f2fe19c6fa5f64aaee99163ef`；
+- policy file/canonical SHA-256=`f206447aee0c0daca74340c9e494753a5a970ac85f1784423679fd03f2b8ac0b` /
+  `0137e1dbf36825b53574a25ac0d1b2ee55c685d402f20c0188e8dbf25034c8f2`；
+- evidence-set SHA-256=`0733917e0f8370c37a7c9dcb517ef0100da7240f1cd104077e7997b4ecd0977e`；
+- aggregate recommendation=`NO_GO_KEEP_BLOCKED_PRIMARY_WINDOW_AND_SHARED_GATES`；
+- `owner_review_completed=false`、`owner_attestation_present=false`。
+
+这使 S3 工程 baseline 完成并转 `BASELINE_DONE`，但不是 Owner 的接受记录，也不解除任何 blocker。
+Owner 可逐项核对上述 hashes、十个 listing facts、七轴 recommendation 与 safety flags 后，接受或拒绝
+proposal；工程线不得从 proposal 自行生成已签署 attestation。

@@ -17,6 +17,7 @@ from ai_trading_system.qqq_options_research.license_export_due_diligence import 
 )
 from ai_trading_system.qqq_options_research.license_export_owner_review import (
     DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_OWNER_REVIEW_POLICY_PATH,
+    DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_OWNER_REVIEW_PROPOSAL_PATH,
     EXPECTED_AXIS_RECOMMENDATIONS,
     EXPECTED_EVIDENCE,
     EXPECTED_LISTING_FACTS,
@@ -26,6 +27,7 @@ from ai_trading_system.qqq_options_research.license_export_owner_review import (
     QCQQQOptionsLicenseExportOwnerReviewProposal,
     build_qc_qqq_options_license_export_owner_review_proposal,
     load_qc_qqq_options_license_export_owner_review_policy,
+    load_qc_qqq_options_license_export_owner_review_proposal,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -323,3 +325,19 @@ def test_policy_path_escape_fails_closed(tmp_path: Path) -> None:
         match="repository-relative",
     ):
         load_qc_qqq_options_license_export_owner_review_policy(project_root=root)
+
+
+def test_tracked_proposal_is_canonical_and_replays_from_implementation_commit() -> None:
+    loaded = load_qc_qqq_options_license_export_owner_review_proposal()
+    raw = (
+        PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_LICENSE_EXPORT_OWNER_REVIEW_PROPOSAL_PATH
+    ).read_bytes()
+
+    assert loaded.proposal.repository_code_sha == ("9b94e4373d7fc0f1da021adcee537e2a1e0a709d")
+    assert loaded.proposal_file_sha256 == (
+        "66d7a7b8fcf38fe56f210fc3ca927b14325548383d0c2c02ab0c37fca5348098"
+    )
+    assert loaded.proposal.content_sha256 == (
+        "6b2c67dad95643ff7c43a502d921d5830eec037f2fe19c6fa5f64aaee99163ef"
+    )
+    assert raw == loaded.proposal.canonical_bytes

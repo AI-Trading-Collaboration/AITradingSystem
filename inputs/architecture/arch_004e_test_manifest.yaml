@@ -7914,7 +7914,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004_refactor_policy
   path: tests/test_arch_004_refactor_policy.py
-  sha256: 7a7be525c71b03ca3b83a75c59f1310c1c56858c3da2a1d7879c0b30c09a4ee3
+  sha256: 796edc80a3f1cd4ea93e50be3c1f584766114b64eefe6f51882acfd34d8dfeed
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -8310,7 +8310,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: 2f817135df3804ee7b9b33686f82108e6194fef40eb4bd85ac7d9daa88993c43
+  sha256: c203a4f6056eb5abc8e2b56a0f6d6ad0df329cbadd8991ebc87b7e9fdae4aa0b
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -14432,7 +14432,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_qc_qqq_options_license_export_owner_review
   path: tests/test_qc_qqq_options_license_export_owner_review.py
-  sha256: b6be7a561cb43f61895ab7fa43e2d9602949b001e1b0df0f1233234df0833cf3
+  sha256: 8539678d8106520a6515293a767e6a02be338539c7635a10ac2e948711edffde
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

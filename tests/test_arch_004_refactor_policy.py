@@ -3272,6 +3272,35 @@ TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_NEW_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_SECTION
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION = (
+    "phase_trading_2497_qc_qqq_options_license_export_owner_review_proposal_v1"
+)
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_BASE_COMMIT = (
+    "9b94e4373d7fc0f1da021adcee537e2a1e0a709d"
+)
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_BASELINE_GIT_BLOB = (
+    "b517cfa3cecfb1ecb7d93360f09b0825c8a0973a"
+)
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT = 3_021_810
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_SHA256 = (
+    "3dc058127b8ef148e4efa8195b20982a0ae4f2170e0426f03a24aefa96578d4c"
+)
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS = frozenset()
+TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qc_qqq_options_license_export_owner_review.yaml",
+        "config/architecture/fragments/modules/qc_qqq_options_license_export_owner_review.yaml",
+        "config/research/qc_qqq_options_license_export_owner_review_proposal_v1.yaml",
+        (
+            "inputs/external_validation/"
+            "qc_qqq_options_license_export_owner_review_proposal_20260807.json"
+        ),
+        "src/ai_trading_system/qqq_options_research/license_export_owner_review.py",
+        "tests/test_qc_qqq_options_license_export_owner_review.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -5549,6 +5578,26 @@ def _trading_2497_qc_license_export_due_diligence_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2497_qc_license_export_owner_review_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -7853,6 +7902,26 @@ def _assert_trading_2497_qc_license_export_due_diligence_historical_prefix_immut
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"{TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2497_qc_license_export_owner_review_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2497 Owner-review historical prefix differs from immutable "
+        "TRADING-2497 due-diligence compatibility authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"{TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -10972,6 +11041,41 @@ def _trading_2497_qc_license_export_due_diligence_all_current_authority_paths() 
 
 
 @cache
+def _trading_2497_qc_license_export_owner_review_superseded_live_source_paths() -> frozenset[
+    str
+]:
+    _assert_trading_2497_qc_license_export_owner_review_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2497_qc_license_export_owner_review_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2497_qc_license_export_owner_review_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2497_qc_license_export_owner_review_all_current_authority_paths() -> frozenset[
+    str
+]:
+    return (
+        _trading_2497_qc_license_export_due_diligence_all_current_authority_paths()
+        | _trading_2497_qc_license_export_owner_review_superseded_live_source_paths()
+        | _trading_2497_qc_license_export_owner_review_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -12532,6 +12636,13 @@ def _trading_2497_qc_license_export_due_diligence_prior_active_source_mismatches
     return _latest_active_source_mismatches(TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_SECTION)
 
 
+@cache
+def _trading_2497_qc_license_export_owner_review_prior_active_source_mismatches() -> frozenset[
+    str
+]:
+    return _latest_active_source_mismatches(TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION)
+
+
 def _trading_2470_prior_hash_authority_paths(
     current_paths: frozenset[str],
 ) -> frozenset[str]:
@@ -12575,7 +12686,20 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_SECTION in baseline:
+    if TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2497_qc_license_export_owner_review_superseded_live_source_paths()
+        )
+        assert (
+            _trading_2497_qc_license_export_owner_review_prior_active_source_mismatches()
+            | TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2497_qc_license_export_owner_review_all_current_authority_paths()
+        )
+        authority_section = TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION
+    elif TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_SECTION in baseline:
         current_superseded_paths = (
             _trading_2497_qc_license_export_due_diligence_superseded_live_source_paths()
         )
@@ -36015,7 +36139,7 @@ def test_trading_2497_license_export_due_diligence_is_current_hash_authority() -
     assert set(source_paths) == expected
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["evidence"] == {
         "implementation_commit": "2e63070771afb48eb5b6873806bc84ff560c10d4",
@@ -36058,6 +36182,145 @@ def test_trading_2497_license_export_due_diligence_is_current_hash_authority() -
     tampered[TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2497_qc_license_export_due_diligence_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2497_license_export_owner_review_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2497_qc_license_export_owner_review_base_baseline_blob()
+    _assert_trading_2497_qc_license_export_owner_review_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2497_qc_qqq_options_license_export_owner_review_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2497-QC-QQQ-OPTIONS-LICENSE-EXPORT-OWNER-REVIEW-PROPOSAL-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (
+            TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": (
+            TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _trading_2497_qc_license_export_owner_review_prior_active_source_mismatches()
+        | TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_NEW_SOURCE_PATHS
+    ) - TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2497-QC-QQQ-OPTIONS-LICENSE-EXPORT-OWNER-REVIEW-PROPOSAL-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["evidence"] == {
+        "implementation_commit": "9b94e4373d7fc0f1da021adcee537e2a1e0a709d",
+        "predecessor_report_file_sha256": (
+            "5e8063754bae6e9e4cb3cca02dacd064e3ce368a1cdba9612df707a83ed48e80"
+        ),
+        "predecessor_report_content_sha256": (
+            "31e244287ed631a88617f72ddf6720925f4fd58d20f75066a57805c00f4afd7a"
+        ),
+        "policy_file_sha256": (
+            "f206447aee0c0daca74340c9e494753a5a970ac85f1784423679fd03f2b8ac0b"
+        ),
+        "policy_canonical_sha256": (
+            "0137e1dbf36825b53574a25ac0d1b2ee55c685d402f20c0188e8dbf25034c8f2"
+        ),
+        "evidence_set_sha256": (
+            "0733917e0f8370c37a7c9dcb517ef0100da7240f1cd104077e7997b4ecd0977e"
+        ),
+        "proposal_file_sha256": (
+            "66d7a7b8fcf38fe56f210fc3ca927b14325548383d0c2c02ab0c37fca5348098"
+        ),
+        "proposal_content_sha256": (
+            "6b2c67dad95643ff7c43a502d921d5830eec037f2fe19c6fa5f64aaee99163ef"
+        ),
+        "aggregate_recommendation": (
+            "NO_GO_KEEP_BLOCKED_PRIMARY_WINDOW_AND_SHARED_GATES"
+        ),
+        "owner_review_completed": False,
+        "owner_attestation_present": False,
+        "primary_research_window_start": "2021-02-22",
+        "tested_session": "2025-12-02",
+    }
+    assert phase["validation"] == {
+        "owner_review_focused_parallel_pytest": "PASS_24_TESTS_N16_LOADFILE",
+        "adjacent_2493_2497_parallel_pytest": "PASS_59_TESTS_N16_LOADFILE",
+        "compatibility_regression": "REQUIRED_FINAL_TREE",
+        "formal_five_gate": "REQUIRED_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "proposal_only": True,
+        "owner_signature_present": False,
+        "external_platform_action_authorized": False,
+        "quantconnect_login_authorized": False,
+        "project_mutation_authorized": False,
+        "cloud_backtest_authorized": False,
+        "api_cli_http_object_store_authorized": False,
+        "raw_options_download_authorized": False,
+        "purchase_or_subscription_authorized": False,
+        "range_expansion_authorized": False,
+        "paid_tier_upgrade_authorized": False,
+        "investment_interpretation_allowed": False,
+        "paper_live_broker_production_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2497_qc_license_export_owner_review_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

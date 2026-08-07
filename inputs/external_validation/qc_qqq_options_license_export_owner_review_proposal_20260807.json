@@ -1,0 +1,287 @@
+{
+  "aggregate_recommendation": "NO_GO_KEEP_BLOCKED_PRIMARY_WINDOW_AND_SHARED_GATES",
+  "axis_recommendations": [
+    {
+      "axis_id": "FREE_CLOUD_DATA_CLASS_ACCESS",
+      "evidence_ids": [
+        "OWNER_ACCOUNT_ACTIVE_ORG_FREE_SCREENSHOT",
+        "OWNER_US_EQUITY_OPTIONS_PRICING_1"
+      ],
+      "reason_code": "FREE_CLOUD_LISTING_AND_FREE_ORG_OBSERVED",
+      "recommendation": "CONDITIONAL_GO_PUBLIC_FREE_AND_ACCOUNT_FREE",
+      "summary": "当前截图支持 Free 账户与 Cloud Access Free 的交集，但不外推数据日期范围。"
+    },
+    {
+      "axis_id": "QQQ_OPTIONS_ACCOUNT_ENTITLEMENT",
+      "evidence_ids": [
+        "OWNER_ACCOUNT_ACTIVE_ORG_FREE_SCREENSHOT",
+        "OWNER_US_EQUITY_OPTIONS_PRICING_1"
+      ],
+      "reason_code": "TESTED_SESSION_ONLY_PREDECESSOR_EVIDENCE",
+      "recommendation": "CONDITIONAL_GO_TESTED_SESSION_ONLY",
+      "summary": "仅继承 predecessor 对 2025-12-02 单日会话的证据，不宣称完整账户 entitlement。"
+    },
+    {
+      "axis_id": "PRIMARY_WINDOW_HISTORICAL_RETENTION",
+      "evidence_ids": [
+        "OWNER_ORG_PLAN_RESOURCE_PRINT_PDF",
+        "OWNER_US_EQUITY_OPTIONS_PRICING_1"
+      ],
+      "reason_code": "PRIMARY_WINDOW_ACCOUNT_COVERAGE_UNPROVEN",
+      "recommendation": "NO_GO_NOT_TESTED_ACCOUNT_SPECIFIC",
+      "summary": "2021-02-22 起的 primary window 未被 account-specific evidence 覆盖，继续 NO-GO。"
+    },
+    {
+      "axis_id": "RAW_OPTIONS_LOCAL_DOWNLOAD",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_1",
+        "OWNER_US_EQUITY_OPTIONS_PRICING_2",
+        "OWNER_US_EQUITY_OPTIONS_PRICING_3",
+        "OWNER_US_EQUITY_OPTIONS_PRICING_4"
+      ],
+      "reason_code": "SEPARATE_DOWNLOAD_PRICE_OBSERVED_NOT_AUTHORIZED",
+      "recommendation": "NO_GO_SEPARATE_PAID_DOWNLOAD_NOT_AUTHORIZED",
+      "summary": "页面存在单文件与 bulk 下载价格；没有购买、订阅或下载授权。"
+    },
+    {
+      "axis_id": "RAW_OPTIONS_REDISTRIBUTION",
+      "evidence_ids": [
+        "OWNER_ORG_PLAN_RESOURCE_PRINT_PDF",
+        "OWNER_US_EQUITY_OPTIONS_PRICING_1"
+      ],
+      "reason_code": "NO_REDISTRIBUTION_RIGHT_EVIDENCED",
+      "recommendation": "NO_GO_PROHIBITED",
+      "summary": "当前人工证据没有提供 raw options 再分发或重建权利。"
+    },
+    {
+      "axis_id": "DERIVED_BACKTEST_RESULT_EXPORT",
+      "evidence_ids": [
+        "OWNER_ORG_PLAN_RESOURCE_PRINT_PDF"
+      ],
+      "reason_code": "DERIVED_EXPORT_REQUIRES_2489_STRICT_BUNDLE",
+      "recommendation": "NO_GO_PENDING_TRADING_2489",
+      "summary": "derived artifact collection 继续由 TRADING-2489 审查，本提案不提升其状态。"
+    },
+    {
+      "axis_id": "API_CLI_ACCESS",
+      "evidence_ids": [
+        "OWNER_ACCOUNT_ACTIVE_ORG_FREE_SCREENSHOT",
+        "OWNER_ORG_PLAN_RESOURCE_PRINT_PDF"
+      ],
+      "reason_code": "FREE_TIER_NO_API_CLI_AUTHORIZATION",
+      "recommendation": "NO_GO_FREE_TIER",
+      "summary": "当前 Free tier 且无 API/CLI 授权，保持 NO-GO。"
+    }
+  ],
+  "content_sha256": "6b2c67dad95643ff7c43a502d921d5830eec037f2fe19c6fa5f64aaee99163ef",
+  "created_at_utc": "2026-08-07T00:00:00Z",
+  "evidence_set_sha256": "0733917e0f8370c37a7c9dcb517ef0100da7240f1cd104077e7997b4ecd0977e",
+  "legal_opinion_provided": false,
+  "listing_facts": [
+    {
+      "display_value": "Free",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_1"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "CLOUD_ACCESS"
+    },
+    {
+      "display_value": "15 QCC/file",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_1"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "MINUTE_DOWNLOAD"
+    },
+    {
+      "display_value": "900 QCC/file",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_2"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "HOUR_DOWNLOAD"
+    },
+    {
+      "display_value": "300 QCC/file",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_2"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "DAILY_DOWNLOAD"
+    },
+    {
+      "display_value": "$720/yr",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_3"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "BULK_DAILY_UPDATES"
+    },
+    {
+      "display_value": "$1,200/yr",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_3"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "BULK_MINUTE_UPDATES"
+    },
+    {
+      "display_value": "$1,440/yr",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_3"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "BULK_HOUR_UPDATES"
+    },
+    {
+      "display_value": "$12,000",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_3"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "BULK_DAILY_DOWNLOAD"
+    },
+    {
+      "display_value": "$14,400",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_4"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "BULK_HOUR_DOWNLOAD"
+    },
+    {
+      "display_value": "$30,000",
+      "evidence_ids": [
+        "OWNER_US_EQUITY_OPTIONS_PRICING_4"
+      ],
+      "interpretation": "OBSERVATION_ONLY_NOT_PURCHASE_OR_BUDGET_AUTHORITY",
+      "listing_id": "BULK_MINUTE_DOWNLOAD"
+    }
+  ],
+  "manual_evidence": [
+    {
+      "byte_count": 526327,
+      "capture_method": "OWNER_MANUAL_BROWSER_REVIEW",
+      "contains_raw_option_rows": false,
+      "evidence_id": "OWNER_ACCOUNT_ACTIVE_ORG_FREE_SCREENSHOT",
+      "evidence_kind": "PNG",
+      "observation_summary": "Owner 截图显示当前 Active Organization 标记为 FREE；这不证明 primary-window 数据保留范围。",
+      "retention_status": "HASH_ONLY_EXTERNAL_FILE_NOT_RETAINED_IN_REPOSITORY",
+      "reviewed_by": "project_owner",
+      "reviewed_on": "2026-08-07",
+      "role": "ACCOUNT_TIER",
+      "sha256": "b06125aadd2353e3e12d54190e0d5ae84b10d10ac34124dca9dbb8aaef43d724"
+    },
+    {
+      "byte_count": 579556,
+      "capture_method": "OWNER_MANUAL_BROWSER_REVIEW",
+      "contains_raw_option_rows": false,
+      "evidence_id": "OWNER_ORG_PLAN_RESOURCE_PRINT_PDF",
+      "evidence_kind": "PDF",
+      "observation_summary": "Owner 打印的 QuantConnect plan/resource 页面用于账户资源人工复核，不作为付费或数据许可授权。",
+      "retention_status": "HASH_ONLY_EXTERNAL_FILE_NOT_RETAINED_IN_REPOSITORY",
+      "reviewed_by": "project_owner",
+      "reviewed_on": "2026-08-07",
+      "role": "PLAN_RESOURCE_LIMITS",
+      "sha256": "13ded5b86d015bafb7709b47ccf239b47bfe42eaa93e2d4f0d7b86ff19fdaa1d"
+    },
+    {
+      "byte_count": 340575,
+      "capture_method": "OWNER_MANUAL_BROWSER_REVIEW",
+      "contains_raw_option_rows": false,
+      "evidence_id": "OWNER_US_EQUITY_OPTIONS_PRICING_1",
+      "evidence_kind": "PNG",
+      "observation_summary": "Owner 截图显示 US Equity Options Cloud Access 为 Free、Minute Download 为 15 QCC/file。",
+      "retention_status": "HASH_ONLY_EXTERNAL_FILE_NOT_RETAINED_IN_REPOSITORY",
+      "reviewed_by": "project_owner",
+      "reviewed_on": "2026-08-07",
+      "role": "DATASET_PRICING",
+      "sha256": "4dc85d89db6f5290d23a651242d4ebd5fcce3b6423d186778fd6f9cc3295cdbf"
+    },
+    {
+      "byte_count": 309760,
+      "capture_method": "OWNER_MANUAL_BROWSER_REVIEW",
+      "contains_raw_option_rows": false,
+      "evidence_id": "OWNER_US_EQUITY_OPTIONS_PRICING_2",
+      "evidence_kind": "PNG",
+      "observation_summary": "Owner 截图显示 Hour Download 为 900 QCC/file、Daily Download 为 300 QCC/file。",
+      "retention_status": "HASH_ONLY_EXTERNAL_FILE_NOT_RETAINED_IN_REPOSITORY",
+      "reviewed_by": "project_owner",
+      "reviewed_on": "2026-08-07",
+      "role": "DATASET_PRICING",
+      "sha256": "97ce21bb4744e40b0b54749ec26f2fd8c55902a9c0532e1e7cd42e0da3852de9"
+    },
+    {
+      "byte_count": 256495,
+      "capture_method": "OWNER_MANUAL_BROWSER_REVIEW",
+      "contains_raw_option_rows": false,
+      "evidence_id": "OWNER_US_EQUITY_OPTIONS_PRICING_3",
+      "evidence_kind": "PNG",
+      "observation_summary": "Owner 截图显示 Bulk Daily/Minute/Hour Updates 与 Bulk Daily Download 的页面标价。",
+      "retention_status": "HASH_ONLY_EXTERNAL_FILE_NOT_RETAINED_IN_REPOSITORY",
+      "reviewed_by": "project_owner",
+      "reviewed_on": "2026-08-07",
+      "role": "DATASET_PRICING",
+      "sha256": "26aceca998ebc7548f325483149abb4d1700c97f068594c0becfff413a828acb"
+    },
+    {
+      "byte_count": 250607,
+      "capture_method": "OWNER_MANUAL_BROWSER_REVIEW",
+      "contains_raw_option_rows": false,
+      "evidence_id": "OWNER_US_EQUITY_OPTIONS_PRICING_4",
+      "evidence_kind": "PNG",
+      "observation_summary": "Owner 截图显示 Bulk Hour Download 为 $14,400、Bulk Minute Download 为 $30,000。",
+      "retention_status": "HASH_ONLY_EXTERNAL_FILE_NOT_RETAINED_IN_REPOSITORY",
+      "reviewed_by": "project_owner",
+      "reviewed_on": "2026-08-07",
+      "role": "DATASET_PRICING",
+      "sha256": "bfc321de857522e99073c2917199a21cf76251324914f3ef01ee607f7ac8b11a"
+    }
+  ],
+  "owner_attestation_present": false,
+  "owner_review_checks": [
+    "CONFIRM_ACTIVE_ORGANIZATION_FREE",
+    "CONFIRM_FREE_PLAN_RESOURCE_LIMITS",
+    "CONFIRM_US_EQUITY_OPTIONS_CLOUD_ACCESS_FREE",
+    "CONFIRM_DOWNLOAD_PRICE_MAPPING_OBSERVATION_ONLY",
+    "CONFIRM_NO_PURCHASE_SUBSCRIPTION_OR_DOWNLOAD",
+    "CONFIRM_2021_02_22_PRIMARY_WINDOW_NOT_TESTED_ACCOUNT_SPECIFIC",
+    "CONFIRM_2493_NO_GO_AND_2489_2490_BLOCKERS_REMAIN",
+    "ACCEPT_OR_REJECT_HASH_BOUND_PROPOSAL"
+  ],
+  "owner_review_completed": false,
+  "policy_canonical_sha256": "0137e1dbf36825b53574a25ac0d1b2ee55c685d402f20c0188e8dbf25034c8f2",
+  "policy_file_sha256": "f206447aee0c0daca74340c9e494753a5a970ac85f1784423679fd03f2b8ac0b",
+  "policy_id": "qc_qqq_options_license_export_owner_review_proposal_v1",
+  "policy_version": "1.0.0",
+  "predecessor_aggregate_decision": "LICENSE_EXPORT_NO_GO_OWNER_REVIEW_REQUIRED",
+  "predecessor_owner_review_status": "PENDING_MANUAL_OWNER_REVIEW",
+  "predecessor_report_content_sha256": "31e244287ed631a88617f72ddf6720925f4fd58d20f75066a57805c00f4afd7a",
+  "predecessor_report_file_sha256": "5e8063754bae6e9e4cb3cca02dacd064e3ce368a1cdba9612df707a83ed48e80",
+  "primary_research_window_start": "2021-02-22",
+  "primary_window_status": "NOT_TESTED_ACCOUNT_SPECIFIC",
+  "proposed_owner_decision": "owner_decision:TRADING-2497:2026-08-07:accept_license_export_manual_review_keep_primary_window_and_shared_gates_blocked_v1",
+  "record_id": "qc_qqq_options_license_export_owner_review_proposal_20260807_v1",
+  "repository_code_sha": "9b94e4373d7fc0f1da021adcee537e2a1e0a709d",
+  "safety": {
+    "api_cli_http_object_store_authorized": false,
+    "broker_action": "none",
+    "cloud_backtest_authorized": false,
+    "external_platform_action_authorized": false,
+    "investment_interpretation_allowed": false,
+    "live_allowed": false,
+    "owner_signature_present": false,
+    "paid_tier_upgrade_authorized": false,
+    "paper_allowed": false,
+    "production_allowed": false,
+    "project_mutation_authorized": false,
+    "proposal_only": true,
+    "purchase_or_subscription_authorized": false,
+    "quantconnect_login_authorized": false,
+    "range_expansion_authorized": false,
+    "raw_options_download_authorized": false
+  },
+  "schema_version": "qc_qqq_options_license_export_owner_review_proposal.v1",
+  "tested_session": "2025-12-02"
+}
