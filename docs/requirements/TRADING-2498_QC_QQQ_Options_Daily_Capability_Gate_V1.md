@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -186,3 +186,33 @@ External capability gate：
 main `d26041175eee499e5ee69c27202bef3ba364fb67` PASS；TRADING-2498 此前未登记。本次仅执行
 coordinator-owned S0 task row/requirement mutation，Owner token 尚未授予，QuantConnect/cloud/项目/
 API/CLI/HTTP/Object Store/raw download/paper/live/broker/production 动作均为 none。
+
+SINGLE_LANE START/LANE 随后从同一 exact base PASS，`contract_change=false`。task-owned policy、
+strict loader、2497 proposal canonical replay、sealed proposal/session observation/run observation/gate
+record、typed three-way decision、negative/property/golden tests、architecture fragments 与 system flow
+已实现。focused 首轮 pytest=`51 passed`，strict mypy PASS；Ruff 首轮仅有 4 条 line-length 与 1 条
+unused-import 静态失败，没有 pytest node FAIL。最小格式修复后同覆盖=`51 passed`；tracked proposal
+loader 加入后同覆盖=`52 passed`，Ruff/format/strict mypy 全部 PASS。
+
+implementation authority=`676d6b1429ee1ef60fbfc4de1d62f9d6ee9184ce`。由该 exact commit 生成的
+canonical proposal：
+
+- repository path=`inputs/external_validation/qc_qqq_options_daily_capability_gate_proposal_20260808.json`；
+- file/canonical SHA-256=`6b226751453bc2d73e0e5ec14be6975124e3a0948435ff7282658a3c2fe3e5dc`；
+- content SHA-256=`98566866892b081ad1011e7388348c780e506018e94d568f83b1fcef888a7f95`；
+- policy file/canonical SHA-256=`0036996a1d4e9928f2f4b537a3e4158ada2efd15dc24cf6b0918467a1f647812` /
+  `1ec345fdf36a101023eacaff6ca78450bd54b45290758438f0ae4a56b2ff63f9`；
+- authority-set SHA-256=`b0f4145dfaf00bfbf90a905b80deab65cf10a0686221974a83a71a885a4a4908`；
+- proposed action=`authorize_single_zero_order_qc_daily_capability_gate_v1`；
+- authorization/gate=`NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS` /
+  `UNKNOWN_EVIDENCE_INCOMPLETE`。
+
+proposal 仍只是一份 Owner-review request，不授权任何 external action。必须先完成 generated/current
+authority 与 formal final-tree validation，再 ordinary push exact hashes；Owner 此前的自然语言方向不能
+替代后续 single-use exact token。
+
+兼容层首次以完全覆盖的 `-n 16 --dist loadfile` 运行得到 `199 passed / 2 failed`；两项均为新增
+module/test 导致的 ARCH-004G frozen inventory 与 task-shadow v2 current-authority 漂移，没有领域逻辑或
+pytest node 语义失败。该运行只作为 failure-fix parent；最小修复仅冻结 1093/1257 inventory 并追加
+TRADING-2498 current-authority section，不重写历史 prefix、不降低 source/hash 验证。任务工程基线因此转为
+`BASELINE_DONE`，但 external capability 仍被 Owner token 阻断，后继 TRADING-2499 仍未登记、未启动。

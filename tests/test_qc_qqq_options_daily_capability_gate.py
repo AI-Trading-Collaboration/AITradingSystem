@@ -23,6 +23,7 @@ from ai_trading_system.qqq_options_research.daily_capability_gate import (
     build_qc_qqq_options_daily_capability_gate_proposal,
     build_qc_qqq_options_daily_capability_gate_record,
     load_qc_qqq_options_daily_capability_gate_policy,
+    load_qc_qqq_options_daily_capability_gate_proposal,
 )
 
 REPOSITORY_CODE_SHA = "1" * 40
@@ -165,6 +166,20 @@ def test_proposal_is_deterministic_and_stays_unauthorized() -> None:
     assert first.gate_status == "UNKNOWN_EVIDENCE_INCOMPLETE"
     assert first.safety.cloud_backtest_authorized is False
     assert first.safety.project_mutation_authorized is False
+
+
+def test_tracked_proposal_replays_from_exact_implementation_commit() -> None:
+    loaded = load_qc_qqq_options_daily_capability_gate_proposal()
+    assert loaded.proposal.repository_code_sha == "676d6b1429ee1ef60fbfc4de1d62f9d6ee9184ce"
+    assert loaded.proposal == build_qc_qqq_options_daily_capability_gate_proposal(
+        record_id="qc_qqq_options_daily_capability_gate_proposal_20260808_v1",
+        created_at_utc=datetime(2026, 8, 8, tzinfo=UTC),
+        repository_code_sha="676d6b1429ee1ef60fbfc4de1d62f9d6ee9184ce",
+    )
+    assert loaded.proposal.authority_set_sha256 == (
+        "b0f4145dfaf00bfbf90a905b80deab65cf10a0686221974a83a71a885a4a4908"
+    )
+    assert loaded.proposal_file_sha256 == loaded.proposal.canonical_sha256
 
 
 def test_proposal_canonical_round_trip_and_format_tamper() -> None:
