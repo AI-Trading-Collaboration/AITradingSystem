@@ -32,7 +32,7 @@ task_record:
     path: docs/task_register.md
     source_partition: active
     line_number: 2150
-    row_sha256: c6dd804c455ca8c7f096724e52b661aa281151aa61d49843417e477db374b638
+    row_sha256: e24ca7f5973e8b253923d282faec931095215f0dcf3eaa1841b5106c18a4c160
     cell_count: 8
     all_cells:
     - TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
@@ -50,7 +50,7 @@ task_record:
       的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
     - 2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
       token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift
-      plan=`integration-revalidation-9be8d98f817905cd9f2e` 为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current
+      plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7` 为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current
       canonical page change=`none`。
     raw_line: '|TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1|Publishing
       & Experience / reader-safe QQQ Options projection owner review|P1|BASELINE_DONE|Atlas
@@ -63,13 +63,13 @@ task_record:
       优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO` 的支配；不以绿色或“已完成”暗示策略
       PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。|2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
       token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift
-      plan=`integration-revalidation-9be8d98f817905cd9f2e` 为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current
+      plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7` 为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current
       canonical page change=`none`。|'
     history_completeness: LEGACY_HISTORY_PARTIAL
     ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-c6dd804c455ca8c7f096724e
+  event_id: legacy-import-e24ca7f5973e8b253923d282
   task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -86,11 +86,11 @@ initial_event:
       任务；在该后继任务完成前保持当前页面与 2481–2493 排除规则不变
     notes: 2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
       token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift
-      plan=`integration-revalidation-9be8d98f817905cd9f2e` 为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current
+      plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7` 为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current
       canonical page change=`none`。
   rationale: Lossless legacy row import; historical event time is unavailable.
   evidence_refs:
-  - sha256:c6dd804c455ca8c7f096724e52b661aa281151aa61d49843417e477db374b638
+  - sha256:e24ca7f5973e8b253923d282faec931095215f0dcf3eaa1841b5106c18a4c160
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -107,12 +107,12 @@ projection:
     violation 优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO`
     的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
   - 2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
-    token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift plan=`integration-revalidation-9be8d98f817905cd9f2e`
+    token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7`
     为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current canonical
     page change=`none`。
   docs_links:
   - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
   terminal: false
-  raw_row_sha256: c6dd804c455ca8c7f096724e52b661aa281151aa61d49843417e477db374b638
+  raw_row_sha256: e24ca7f5973e8b253923d282faec931095215f0dcf3eaa1841b5106c18a4c160
 producer_version: arch_005_shadow_registry_compiler.v1
-fragment_checksum: 501fd7d1f658d21c12e2f2e1436791b2e818ddce4c02f91074114c7d2418d2e0
+fragment_checksum: aa44987bd27bd3b782fd49f5433ff4f0296fd7a48c0d52082fb0f12ef21588b1

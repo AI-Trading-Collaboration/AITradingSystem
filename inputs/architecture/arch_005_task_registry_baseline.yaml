@@ -96,11 +96,11 @@ inventory:
   - source: active
     path: docs/task_register.md
     byte_count: 1706799
-    sha256: e00c8129d9e4411d48d7621f37c343e16035fb582dc2d30d1d894e51397dfbb7
+    sha256: 007cdef46d4e6ab587a57d769fd492acda0e953b927bc27d7341a953d9d0905b
     row_count: 462
     final_newline: true
     task_id_order_sha256: a93d232ebf94ca3339b8ceb4ccb248a6eb98cd015eaaa9ee2921402352ab833c
-    row_checksum_order_sha256: eded5f291c4ee990e206924aba411fc682573ae86f377a983dd90a4065664290
+    row_checksum_order_sha256: 7893a92b76593795322d95d5010e335ff4de50abace5c3c025746c004a10ec69
     task_row_newline_counts:
       LF: 462
   - source: completed
@@ -3302,7 +3302,7 @@ inventory:
   - task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
     source: active
     line_number: 2150
-    row_sha256: c6dd804c455ca8c7f096724e52b661aa281151aa61d49843417e477db374b638
+    row_sha256: e24ca7f5973e8b253923d282faec931095215f0dcf3eaa1841b5106c18a4c160
     cell_count: 8
     field_projection: first_eight_cells_legacy_v1
     history_completeness: LEGACY_HISTORY_PARTIAL
@@ -7915,4 +7915,4 @@ safety:
   production_effect: none
   broker_action: none
 producer_version: arch_005_shadow_registry_compiler.v1
-baseline_checksum: 62c6f420c4aea221fc191357dce6b00a550e95220a224067c3d1efb3cd61b97c
+baseline_checksum: f21b1f7fe9c553c4fc47787e8d6019cc17c74764ad835244934a855e120726d3

@@ -295,7 +295,7 @@ registered known-unrelated exclusion。
 - 2026-08-08：基于 frozen base `2064a2e1855229f7260c725f8287174dc09b63f3`、lane head
   `7f227c6159426dc5b1aad0630efa72e5193666aa` 与 latest main
   `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 生成并验证 drift plan=
-  `integration-revalidation-9be8d98f817905cd9f2e`；decision=`READY_FOR_SINGLE_INTEGRATION_CANDIDATE`、
+  `integration-revalidation-9dff5eabaeb0c0a0e8c7`；decision=`READY_FOR_SINGLE_INTEGRATION_CANDIDATE`、
   overlap=[]、contract conflict=[]。
 - 当前：`BASELINE_DONE`。A/B/C/D 分层与 reader wording 已获接受并完成 latest-main integration；
   canonical projection、renderer/page mutation、外部动作与投资结论仍未启动，须由后继 serial

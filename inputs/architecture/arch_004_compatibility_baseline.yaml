@@ -48361,6 +48361,7 @@ phase_trading_2501_atlas_qqq_options_projection_owner_review_pack_v1:
   - docs/research/growth_tilt_owner_diagnosis_pack.md
   superseded_live_source_paths:
   - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
   - inputs/architecture/arch_005_task_shadow_v2_index.yaml
@@ -48373,6 +48374,7 @@ phase_trading_2501_atlas_qqq_options_projection_owner_review_pack_v1:
   source_delta_paths:
   - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
   - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
   - inputs/architecture/arch_005_task_shadow_v2_index.yaml
@@ -48396,25 +48398,28 @@ phase_trading_2501_atlas_qqq_options_projection_owner_review_pack_v1:
     loader_hash_replay: PASS
   sources:
   - path: docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
-    sha256: adc05b0c45515cecd9c44cb0f70b386a104f7f7638417e6b917012a66fd5e45c
+    sha256: 974128290ee4c9f1dc012492f024b4ae6eb61a795787d6bcffea9e46343545ee
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: e00c8129d9e4411d48d7621f37c343e16035fb582dc2d30d1d894e51397dfbb7
+    sha256: 007cdef46d4e6ab587a57d769fd492acda0e953b927bc27d7341a953d9d0905b
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: db3ebd27be8ce32a622e1568cb9dc8cdeb22508b130883c8acd33a8e7978e8fd
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 6cb5b3c91a42c53eaea85174db04edc93318fb566b0eed9c9bb3b1287cf08b7a
+    sha256: 31f25b35b9b01ad088abd4be2488deaae99a97b71dd73536c23e2505bf58be28
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 2381c64a755b23a550c026c628279c675ac7dc1b5718e1bdf02fd02a0c3ceba0
+    sha256: 76a1b45256f87ed8a65cf18ae5eaf6c2ab3d3663c52e843c71551d8a582df28c
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
-    sha256: b424d9d314b5aa4412d37ee70dd473ac018eb54c944540ea475c34aa77c9c5c4
+    sha256: 5262ec72ef208e97c2272143a20cf4d95dbac79978a3f4a769ca236bd4e1e6d9
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
-    sha256: 89b3b640d1f17aedec73ec81e013f2f90dee5038aa31c6680dfc58589ac6dbf3
+    sha256: 5135df4c96bea3a72c7b7e8908d18ca22346b79189588a6093f6d9dd5cf3fd7d
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow_v2/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
-    sha256: bc4a0a6ed8096d23e4ab5f9a54bfe4569b63c15e25a8721a867d3d631c82a234
+    sha256: c16e2ad7a17a05c9db6fbc81453c64b8b07d4aaec6a68372183f18aa00035f77
     hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
     sha256: af7425d8eba321e780384be3d33714b076d3f044bfc488ff128f81270256a630
