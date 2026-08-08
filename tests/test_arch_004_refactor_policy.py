@@ -3617,6 +3617,38 @@ TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_NEW_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION = (
+    "phase_trading_2501_atlas_qqq_options_projection_owner_review_pack_v1"
+)
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_BASE_COMMIT = (
+    "2cff6c2641d168f0b51120cf6150dbc46d0b9fec"
+)
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_BASELINE_GIT_BLOB = (
+    "ec6358cb0d126aca6e8c27f5a30b2e8f8e2b2f58"
+)
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT = 3_102_056
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_SHA256 = (
+    "4bba01af8533ddd89c6a5ffb6720227041d5c5800e1dc8b9363f9e232603d36a"
+)
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS = frozenset()
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "docs/requirements/"
+            "TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md"
+        ),
+        (
+            "registry/development_tasks_shadow/active/94/"
+            "9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/94/"
+            "9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml"
+        ),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -6036,6 +6068,26 @@ def _trading_2499_qqq_options_daily_primary_backtest_base_baseline_blob() -> byt
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2501_atlas_qqq_options_owner_review_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -8488,6 +8540,28 @@ def _assert_trading_2499_qqq_options_daily_primary_backtest_historical_prefix_im
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"{TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2501_atlas_qqq_options_owner_review_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2501 owner-review historical prefix differs from immutable "
+        "ordinary-pushed TRADING-2499 authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"{TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -11836,6 +11910,41 @@ def _trading_2499_qqq_options_daily_primary_backtest_all_current_authority_paths
 
 
 @cache
+def _trading_2501_atlas_qqq_options_owner_review_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2501_atlas_qqq_options_owner_review_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2501_atlas_qqq_options_owner_review_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2501_atlas_qqq_options_owner_review_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2501_atlas_qqq_options_owner_review_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2499_qqq_options_daily_primary_backtest_all_current_authority_paths()
+        | _trading_2501_atlas_qqq_options_owner_review_superseded_live_source_paths()
+        | _trading_2501_atlas_qqq_options_owner_review_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -13460,7 +13569,22 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION in baseline:
+    if TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2501_atlas_qqq_options_owner_review_superseded_live_source_paths()
+        )
+        assert (
+            _latest_active_source_mismatches(
+                TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION
+            )
+            | TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2501_atlas_qqq_options_owner_review_all_current_authority_paths()
+        )
+        authority_section = TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION
+    elif TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION in baseline:
         current_superseded_paths = (
             _trading_2499_qqq_options_daily_primary_backtest_superseded_live_source_paths()
         )
@@ -37905,7 +38029,7 @@ def test_trading_2499_daily_primary_backtest_contract_is_current_hash_authority(
     assert set(source_paths) == expected
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["generated_fragment_authority"] == {
         "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
         "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
@@ -37948,6 +38072,122 @@ def test_trading_2499_daily_primary_backtest_contract_is_current_hash_authority(
     tampered[TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2499_qqq_options_daily_primary_backtest_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2501_owner_review_acceptance_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2501_atlas_qqq_options_owner_review_base_baseline_blob()
+    _assert_trading_2501_atlas_qqq_options_owner_review_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2501_atlas_qqq_options_projection_owner_review_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2501-ATLAS-QQQ-OPTIONS-PROJECTION-OWNER-REVIEW-PACK-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1"
+    ]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_BASELINE_GIT_BLOB,
+        "raw_byte_count": (
+            TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_SHA256,
+        "append_offset": (
+            TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _latest_active_source_mismatches(TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION)
+        | TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_NEW_SOURCE_PATHS
+    ) - TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2501-ATLAS-QQQ-OPTIONS-PROJECTION-OWNER-REVIEW-PACK-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_OWNER_ACCEPTANCE",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 967,
+        "active_task_count": 462,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["owner_review_authority"] == {
+        "acceptance_token": (
+            "owner_decision:TRADING-2501:2026-08-08:"
+            "accept_read_only_owner_review_pack_recommendations_v1"
+        ),
+        "accepted_a": [2481, 2482, 2483, 2492, 2493],
+        "accepted_b": [2484, 2489, 2490, 2491],
+        "accepted_c": [2485, 2486, 2487, 2488],
+        "accepted_d": [],
+        "current_page_changed": False,
+        "successor_required": "SERIAL_PROJECTION_CONTRACT_AND_RENDERER_CONSUMER",
+    }
+    assert phase["validation"] == {
+        "acceptance_static_contract": "PASS",
+        "task_registry_focused_parallel_pytest": "PASS_23_TESTS_N16_LOADFILE",
+        "compatibility_regression": "REQUIRED_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "canonical_projection_changed": False,
+        "renderer_or_page_changed": False,
+        "investment_interpretation_allowed": False,
+        "paper_live_broker_production_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2501_atlas_qqq_options_owner_review_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

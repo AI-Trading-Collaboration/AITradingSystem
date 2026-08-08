@@ -6,7 +6,7 @@
 
 优先级：`P1`
 
-状态：`OWNER_ACCEPTED_PENDING_INTEGRATION`
+状态：`BASELINE_DONE`
 
 governed mode：`SINGLE_LANE`
 
@@ -28,8 +28,9 @@ TRADING-2494、TRADING-2495 与 TRADING-2496 的 canonical Atlas authority 都�
 面向 Owner 的只读审阅包，逐项决定哪些事实可以进入下一轮 canonical projection contract。
 
 本任务不改变现有页面、renderer、sidecar、canonical projection、研究状态、DQ/PIT、策略结论、
-研究窗口、QQQ Options contracts 或外部平台状态。当前 blocker 固定为
-`OWNER_PROJECTION_REVIEW_NOT_ACCEPTED`；在 Owner 签署逐项 decision 前，2481–2493 继续保持排除。
+研究窗口、QQQ Options contracts 或外部平台状态。Owner 已按 exact token 接受逐项 decision，
+因此本 review-pack blocker 已解除；在后继 serial projection contract/renderer consumer 完成前，
+2481–2493 仍继续保持排除，当前页面不变。
 
 ## 2. Authority 与可追溯性
 
@@ -291,8 +292,14 @@ registered known-unrelated exclusion。
   A/B/C/D 建议、2492/2493 dominance 与 Owner decision contract；
 - 2026-08-08：Owner 回复“按建议接受”，封存 acceptance token=
   `owner_decision:TRADING-2501:2026-08-08:accept_read_only_owner_review_pack_recommendations_v1`；
-- 当前：`OWNER_ACCEPTED_PENDING_INTEGRATION`。A/B/C/D 分层与 reader wording 已获接受，但 2501 尚未完成
-  latest-main integration；canonical projection、renderer/page mutation、外部动作与投资结论仍未启动。
+- 2026-08-08：基于 frozen base `2064a2e1855229f7260c725f8287174dc09b63f3`、lane head
+  `7f227c6159426dc5b1aad0630efa72e5193666aa` 与 latest main
+  `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 生成并验证 drift plan=
+  `integration-revalidation-9be8d98f817905cd9f2e`；decision=`READY_FOR_SINGLE_INTEGRATION_CANDIDATE`、
+  overlap=[]、contract conflict=[]。
+- 当前：`BASELINE_DONE`。A/B/C/D 分层与 reader wording 已获接受并完成 latest-main integration；
+  canonical projection、renderer/page mutation、外部动作与投资结论仍未启动，须由后继 serial
+  projection contract/renderer consumer 任务另行登记与实现。
 
 ## 11. Owner 初步验收入口
 
