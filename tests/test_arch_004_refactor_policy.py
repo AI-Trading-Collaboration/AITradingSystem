@@ -3631,16 +3631,27 @@ TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_HISTORICAL_PREFIX_SHA256 = (
     "4bba01af8533ddd89c6a5ffb6720227041d5c5800e1dc8b9363f9e232603d36a"
 )
 TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_REMOVED_SOURCE_PATHS = frozenset()
-TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS = frozenset()
+TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {"tests/test_trading2452_architecture_contract.py"}
+)
 TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_NEW_SOURCE_PATHS = frozenset(
     {
+        "docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md",
         (
             "docs/requirements/"
             "TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md"
         ),
         (
+            "registry/development_tasks_shadow/active/48/"
+            "48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml"
+        ),
+        (
             "registry/development_tasks_shadow/active/94/"
             "9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/48/"
+            "48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml"
         ),
         (
             "registry/development_tasks_shadow_v2/94/"
@@ -12111,6 +12122,8 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _trading_2465_reentry_preregistration_source_paths()
     if DEVX_006_TASK_SHADOW_V2_SECTION in baseline:
         paths |= _devx_006_task_shadow_v2_superseded_live_source_paths()
+    if TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION in baseline:
+        paths |= _trading_2501_atlas_qqq_options_owner_review_all_current_authority_paths()
     return paths
 
 
@@ -12545,13 +12558,15 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
                     continue
                 if not _source_matches_checkout(source, normalization_migrations):
                     mismatches.add(path)
-    if (
-        OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION in baseline
-        and stop_section != OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION
+    for authority_section in (
+        OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION,
+        TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION,
     ):
+        if authority_section not in baseline or stop_section == authority_section:
+            continue
         section_ids = list(baseline)
         stop_index = section_ids.index(stop_section)
-        authority_index = section_ids.index(OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION)
+        authority_index = section_ids.index(authority_section)
         last_pre_authority_owner: dict[str, int] = {}
         for section_index, section_id in enumerate(section_ids[:authority_index]):
             section = baseline[section_id]
@@ -12575,9 +12590,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         }
         authority_superseded_paths = {
             str(path)
-            for path in baseline[OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION][
-                "superseded_live_source_paths"
-            ]
+            for path in baseline[authority_section]["superseded_live_source_paths"]
         }
         retroactive_paths = {
             path
@@ -12629,6 +12642,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION,
         TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION,
         OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION,
+        TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -21490,7 +21504,13 @@ def test_arch_005m3_is_current_hash_authority() -> None:
         assert source["hash_normalization"] == "git_eol_lf"
         assert _source_sha256(source) == source["sha256"], source["path"]
 
-    for path in ARCH_005M3_FROZEN_PRODUCTION_PATHS:
+    later_changed_frozen_paths = ARCH_005M3_FROZEN_PRODUCTION_PATHS & (
+        _trading_2501_atlas_qqq_options_owner_review_superseded_live_source_paths()
+    )
+    assert later_changed_frozen_paths == {
+        "src/ai_trading_system/external_request_cache_revalidation_coordination.py"
+    }
+    for path in ARCH_005M3_FROZEN_PRODUCTION_PATHS - later_changed_frozen_paths:
         source = {"path": path, "hash_normalization": "git_eol_lf"}
         assert _raw_source_sha256(source) == _source_sha256_at_commit(
             source,
@@ -38151,8 +38171,8 @@ def test_trading_2501_owner_review_acceptance_is_current_hash_authority() -> Non
         "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
         "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
         "fragment_root": "registry/development_tasks_shadow_v2",
-        "fragment_count": 967,
-        "active_task_count": 462,
+        "fragment_count": 968,
+        "active_task_count": 463,
         "completed_task_count": 505,
         "stable_path_key": "sha256(task_id)",
         "loader_hash_replay": "PASS",

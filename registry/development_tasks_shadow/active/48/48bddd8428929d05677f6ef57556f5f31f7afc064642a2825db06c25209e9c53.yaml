@@ -1,0 +1,122 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-075_WINDOWS_REVALIDATION_ARBITER_OPEN_CONTENTION_RETRY
+  title: null
+  domain: Data platform / Windows external-request cache single-flight coordination
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform owner：观察后续 Windows spawned-process Full；如出现不同协调异常必须另建任务，不在本任务追加
+    fallback
+  requirement_refs:
+  - docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md`。2501
+    final-tree Full 的二进程同 key 回归测试暴露：Windows 上 arbiter lock file 的首次 open/create 可在进入既有
+    byte-lock 重试循环之前抛出瞬时 `PermissionError`，导致一个 child 异常退出。耐久修复已把 open/create 纳入同一
+    monotonic deadline，blocker=`none_after_failure_fix`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 首次 open/create 的 transient `PermissionError`/WinError 5、32、33 与 byte-lock
+      共用 reviewed timeout/poll deadline，耗尽时输出 typed `ARBITER_TIMEOUT`；lease、fencing、provider-call、DQ、cache
+      publication 与 investment semantics 不变；同-key spawned-process regression、兼容性与最终五级门禁全部
+      PASS，Full 以 `failure_fix_rerun` 绑定 `full_20260808T085520Z`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2156
+    row_sha256: 3d42043b825ad2ddd6bbd4e5881add341153d1e748c6769c52fbc9fb9ea15acc
+    cell_count: 8
+    all_cells:
+    - OPS-075_WINDOWS_REVALIDATION_ARBITER_OPEN_CONTENTION_RETRY
+    - Data platform / Windows external-request cache single-flight coordination
+    - P0
+    - BASELINE_DONE
+    - data platform owner：观察后续 Windows spawned-process Full；如出现不同协调异常必须另建任务，不在本任务追加
+      fallback
+    - 详见 `docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md`。2501
+      final-tree Full 的二进程同 key 回归测试暴露：Windows 上 arbiter lock file 的首次 open/create
+      可在进入既有 byte-lock 重试循环之前抛出瞬时 `PermissionError`，导致一个 child 异常退出。耐久修复已把 open/create
+      纳入同一 monotonic deadline，blocker=`none_after_failure_fix`。
+    - 首次 open/create 的 transient `PermissionError`/WinError 5、32、33 与 byte-lock 共用
+      reviewed timeout/poll deadline，耗尽时输出 typed `ARBITER_TIMEOUT`；lease、fencing、provider-call、DQ、cache
+      publication 与 investment semantics 不变；同-key spawned-process regression、兼容性与最终五级门禁全部
+      PASS，Full 以 `failure_fix_rerun` 绑定 `full_20260808T085520Z`。
+    - 2026-08-08：focused coordination=`22 passed`，compatibility/deprecation=`208 passed`，Ruff
+      PASS；两项 historical compatibility ceiling failure 已通过 2501 successor-aware current
+      authority 修复。最终五级证据仅写 canonical runtime artifacts，不再做 post-Full tracked mutation。`production_effect=none`、`broker_action=none`。
+    raw_line: '|OPS-075_WINDOWS_REVALIDATION_ARBITER_OPEN_CONTENTION_RETRY|Data platform
+      / Windows external-request cache single-flight coordination|P0|BASELINE_DONE|data
+      platform owner：观察后续 Windows spawned-process Full；如出现不同协调异常必须另建任务，不在本任务追加 fallback|详见
+      `docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md`。2501
+      final-tree Full 的二进程同 key 回归测试暴露：Windows 上 arbiter lock file 的首次 open/create
+      可在进入既有 byte-lock 重试循环之前抛出瞬时 `PermissionError`，导致一个 child 异常退出。耐久修复已把 open/create
+      纳入同一 monotonic deadline，blocker=`none_after_failure_fix`。|首次 open/create 的 transient
+      `PermissionError`/WinError 5、32、33 与 byte-lock 共用 reviewed timeout/poll deadline，耗尽时输出
+      typed `ARBITER_TIMEOUT`；lease、fencing、provider-call、DQ、cache publication 与 investment
+      semantics 不变；同-key spawned-process regression、兼容性与最终五级门禁全部 PASS，Full 以 `failure_fix_rerun`
+      绑定 `full_20260808T085520Z`。|2026-08-08：focused coordination=`22 passed`，compatibility/deprecation=`208
+      passed`，Ruff PASS；两项 historical compatibility ceiling failure 已通过 2501 successor-aware
+      current authority 修复。最终五级证据仅写 canonical runtime artifacts，不再做 post-Full tracked
+      mutation。`production_effect=none`、`broker_action=none`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3d42043b825ad2ddd6bbd4e5
+  task_id: OPS-075_WINDOWS_REVALIDATION_ARBITER_OPEN_CONTENTION_RETRY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: data platform owner：观察后续 Windows spawned-process Full；如出现不同协调异常必须另建任务，不在本任务追加
+      fallback
+    notes: 2026-08-08：focused coordination=`22 passed`，compatibility/deprecation=`208
+      passed`，Ruff PASS；两项 historical compatibility ceiling failure 已通过 2501 successor-aware
+      current authority 修复。最终五级证据仅写 canonical runtime artifacts，不再做 post-Full tracked
+      mutation。`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:3d42043b825ad2ddd6bbd4e5881add341153d1e748c6769c52fbc9fb9ea15acc
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-075_WINDOWS_REVALIDATION_ARBITER_OPEN_CONTENTION_RETRY
+  - Data platform / Windows external-request cache single-flight coordination
+  - P0
+  - BASELINE_DONE
+  - data platform owner：观察后续 Windows spawned-process Full；如出现不同协调异常必须另建任务，不在本任务追加
+    fallback
+  - 详见 `docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md`。2501
+    final-tree Full 的二进程同 key 回归测试暴露：Windows 上 arbiter lock file 的首次 open/create 可在进入既有
+    byte-lock 重试循环之前抛出瞬时 `PermissionError`，导致一个 child 异常退出。耐久修复已把 open/create 纳入同一
+    monotonic deadline，blocker=`none_after_failure_fix`。
+  - 首次 open/create 的 transient `PermissionError`/WinError 5、32、33 与 byte-lock 共用 reviewed
+    timeout/poll deadline，耗尽时输出 typed `ARBITER_TIMEOUT`；lease、fencing、provider-call、DQ、cache
+    publication 与 investment semantics 不变；同-key spawned-process regression、兼容性与最终五级门禁全部
+    PASS，Full 以 `failure_fix_rerun` 绑定 `full_20260808T085520Z`。
+  - 2026-08-08：focused coordination=`22 passed`，compatibility/deprecation=`208 passed`，Ruff
+    PASS；两项 historical compatibility ceiling failure 已通过 2501 successor-aware current
+    authority 修复。最终五级证据仅写 canonical runtime artifacts，不再做 post-Full tracked mutation。`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md
+  terminal: false
+  raw_row_sha256: 3d42043b825ad2ddd6bbd4e5881add341153d1e748c6769c52fbc9fb9ea15acc
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: acc5f34c5b337554d3dd10db30277b7ddbe4147a80e025829fc1506056973bb9

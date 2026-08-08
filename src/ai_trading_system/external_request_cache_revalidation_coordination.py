@@ -55,6 +55,7 @@ _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 _OWNER_ID_PATTERN = re.compile(r"owner-[a-z0-9-]{8,80}")
 _REASON_CODE_PATTERN = re.compile(r"[A-Z0-9_:-]{2,80}")
 _TRANSIENT_LOCK_ERRNOS = frozenset({errno.EACCES, errno.EAGAIN, errno.EDEADLK})
+_TRANSIENT_LOCK_WINERRORS = frozenset({5, 32, 33})
 
 
 class RevalidationCoordinationError(RuntimeError):
@@ -973,19 +974,31 @@ def _exclusive_file_lock(
     poll_seconds: float,
 ) -> Iterator[None]:
     path.parent.mkdir(parents=True, exist_ok=True)
-    handle = path.open("a+b", buffering=0)
     deadline = time.monotonic() + timeout_seconds
+    handle: Any | None = None
+    while handle is None:
+        try:
+            handle = path.open("a+b", buffering=0)
+        except OSError as exc:
+            if not _is_transient_lock_error(exc):
+                raise
+            if time.monotonic() >= deadline:
+                raise RevalidationCoordinationTimeout(
+                    "ARBITER_TIMEOUT", f"unable to open or lock {path}"
+                ) from exc
+            time.sleep(poll_seconds)
+
     acquired = False
     try:
         while not acquired:
             try:
                 _try_lock(handle)
             except OSError as exc:
-                if exc.errno not in _TRANSIENT_LOCK_ERRNOS and not isinstance(exc, PermissionError):
+                if not _is_transient_lock_error(exc):
                     raise
                 if time.monotonic() >= deadline:
                     raise RevalidationCoordinationTimeout(
-                        "ARBITER_TIMEOUT", f"unable to lock {path}"
+                        "ARBITER_TIMEOUT", f"unable to open or lock {path}"
                     ) from exc
                 time.sleep(poll_seconds)
             else:
@@ -1000,6 +1013,14 @@ def _exclusive_file_lock(
         if acquired:
             _unlock(handle)
         handle.close()
+
+
+def _is_transient_lock_error(exc: OSError) -> bool:
+    return (
+        isinstance(exc, PermissionError)
+        or exc.errno in _TRANSIENT_LOCK_ERRNOS
+        or getattr(exc, "winerror", None) in _TRANSIENT_LOCK_WINERRORS
+    )
 
 
 def _try_lock(handle: Any) -> None:

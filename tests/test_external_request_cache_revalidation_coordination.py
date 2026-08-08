@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import json
 import multiprocessing
 import os
@@ -14,6 +15,7 @@ from typing import Any, Literal
 
 import pytest
 
+import ai_trading_system.external_request_cache_revalidation_coordination as coordination
 from ai_trading_system.external_request_cache_revalidation_coordination import (
     ExternalRequestRevalidationCoordinator,
     RevalidationCoordinationError,
@@ -768,6 +770,57 @@ def test_pointer_or_event_tamper_fails_closed(tmp_path: Path, target: str) -> No
     assert coordinator.replay().status == "FAIL"
     with pytest.raises(RevalidationCoordinationIntegrityError):
         coordinator.acquire(probe)
+
+
+def test_file_lock_retries_transient_open_permission_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lock_path = tmp_path / "open-contention.lock"
+    original_open = Path.open
+    attempts = 0
+
+    def flaky_open(path: Path, *args: Any, **kwargs: Any) -> Any:
+        nonlocal attempts
+        if path == lock_path:
+            attempts += 1
+            if attempts == 1:
+                raise PermissionError(errno.EACCES, "transient open contention", path)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", flaky_open)
+
+    with coordination._exclusive_file_lock(
+        lock_path,
+        timeout_seconds=1.0,
+        poll_seconds=0.0,
+    ):
+        assert lock_path.is_file()
+
+    assert attempts == 2
+
+
+def test_file_lock_open_contention_deadline_uses_typed_timeout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lock_path = tmp_path / "open-timeout.lock"
+    original_open = Path.open
+
+    def denied_open(path: Path, *args: Any, **kwargs: Any) -> Any:
+        if path == lock_path:
+            raise PermissionError(errno.EACCES, "persistent open contention", path)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", denied_open)
+
+    with pytest.raises(RevalidationCoordinationTimeout, match="ARBITER_TIMEOUT"):
+        with coordination._exclusive_file_lock(
+            lock_path,
+            timeout_seconds=0.0,
+            poll_seconds=0.0,
+        ):
+            pytest.fail("timed-out open contention must not enter the critical section")
 
 
 @pytest.mark.parametrize("_iteration", range(20))

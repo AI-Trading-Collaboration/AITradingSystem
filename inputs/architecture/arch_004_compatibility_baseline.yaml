@@ -48361,26 +48361,58 @@ phase_trading_2501_atlas_qqq_options_projection_owner_review_pack_v1:
   - docs/research/growth_tilt_owner_diagnosis_pack.md
   superseded_live_source_paths:
   - docs/task_register.md
+  - inputs/architecture/arch_004e_module_manifest.yaml
   - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
   - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - src/ai_trading_system/external_request_cache_revalidation_coordination.py
   - tests/test_arch_004_refactor_policy.py
+  - tests/test_external_request_cache_revalidation_coordination.py
+  - tests/test_trading2452_architecture_contract.py
   removed_live_source_paths: []
   new_source_paths:
+  - docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md
   - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
+  - registry/development_tasks_shadow/active/48/48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml
   - registry/development_tasks_shadow/active/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
+  - registry/development_tasks_shadow_v2/48/48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml
   - registry/development_tasks_shadow_v2/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
   source_delta_paths:
+  - docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md
   - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
   - docs/task_register.md
+  - inputs/architecture/arch_004e_module_manifest.yaml
   - inputs/architecture/arch_004e_test_manifest.yaml
   - inputs/architecture/arch_005_task_registry_baseline.yaml
   - inputs/architecture/arch_005_task_shadow_index.yaml
   - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+  - registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+  - registry/development_tasks_shadow/active/48/48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml
+  - registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+  - registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
   - registry/development_tasks_shadow/active/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
+  - registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+  - registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+  - registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+  - registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+  - registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+  - registry/development_tasks_shadow_v2/48/48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml
   - registry/development_tasks_shadow_v2/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
+  - src/ai_trading_system/external_request_cache_revalidation_coordination.py
   - tests/test_arch_004_refactor_policy.py
+  - tests/test_external_request_cache_revalidation_coordination.py
+  - tests/test_trading2452_architecture_contract.py
   supersession:
     superseded_by_phase: TRADING-2501-ATLAS-QQQ-OPTIONS-PROJECTION-OWNER-REVIEW-PACK-V1
     scope: LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_OWNER_ACCEPTANCE
@@ -48391,38 +48423,86 @@ phase_trading_2501_atlas_qqq_options_projection_owner_review_pack_v1:
     mode: INDEX_TRANSITIVE_SHA256_AUTHORITY
     index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
     fragment_root: registry/development_tasks_shadow_v2
-    fragment_count: 967
-    active_task_count: 462
+    fragment_count: 968
+    active_task_count: 463
     completed_task_count: 505
     stable_path_key: sha256(task_id)
     loader_hash_replay: PASS
   sources:
+  - path: docs/requirements/OPS-075_Windows_Revalidation_Arbiter_Open_Contention_Retry.md
+    sha256: aabfa33dc5d94aa0e356223b22e6bbabf38c1d53f68f8c84b2515d287acb56f3
+    hash_normalization: git_eol_lf
   - path: docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
     sha256: 974128290ee4c9f1dc012492f024b4ae6eb61a795787d6bcffea9e46343545ee
     hash_normalization: git_eol_lf
   - path: docs/task_register.md
-    sha256: 007cdef46d4e6ab587a57d769fd492acda0e953b927bc27d7341a953d9d0905b
+    sha256: 3e24ea41cafdca571bd743e1bd9f14c8069968f91a220c1ec71cecf55fe51088
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_module_manifest.yaml
+    sha256: 45371f516c06cf9ecc621c66dde81b571efd1488836acee129dbd0a6c9bc2699
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_004e_test_manifest.yaml
-    sha256: db3ebd27be8ce32a622e1568cb9dc8cdeb22508b130883c8acd33a8e7978e8fd
+    sha256: b353444fbce77532b62d5f7e15df3b91791fb5cb4e166eb071b8fe99ee7c3fee
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_registry_baseline.yaml
-    sha256: 31f25b35b9b01ad088abd4be2488deaae99a97b71dd73536c23e2505bf58be28
+    sha256: f7f49486855b3ac7fd4894a1d3c36f9a0833c44d62fa3f717c34ba298850f050
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_index.yaml
-    sha256: 76a1b45256f87ed8a65cf18ae5eaf6c2ab3d3663c52e843c71551d8a582df28c
+    sha256: cd1687b109ceb78b88cd827aa9b58cc0709b7ef668c0ecc025b172d2e7831894
     hash_normalization: git_eol_lf
   - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
-    sha256: 5262ec72ef208e97c2272143a20cf4d95dbac79978a3f4a769ca236bd4e1e6d9
+    sha256: f9d1ef4d29519bd88477164df4dd9ec822063118e078cef4edd2bdffdfbcdcac
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/16/1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67.yaml
+    sha256: 27e08ee959e4ecada134906c5e5ad351382e55d98ebbcdd3ee548dc02982006a
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
+    sha256: ae1dbb02c38e44daa70dc6f4f7e286ce5409342c8eb7a12c1e60dae3191753fc
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/48/48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml
+    sha256: b7df192a6b9518637b3714eb051a62d6776d8ada04673a925c7ae4abce42606f
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/76/76c18e8bca6074a7c2a8006bf1f50fe4c2ce24ef304274dbda4fb1cef4cdbd3c.yaml
+    sha256: eda7b55ba0da3ab57d5a7d993b4203d99725a230edbc718b4d29bd664c97b5ca
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/8c/8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed.yaml
+    sha256: df427c3550948b76a2a33cfede858f874a453f6842950a0879b6a352826b30da
     hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow/active/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
     sha256: 5135df4c96bea3a72c7b7e8908d18ca22346b79189588a6093f6d9dd5cf3fd7d
     hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
+    sha256: 5a7cb293ffbaabac91bfc61af292aa1d0c4803e50bce2d9e8cdb987fea244700
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/d8/d880fd14c51a49a1e1df382c0f862ec2d23b204b47bf606946f48a5a6bc28f33.yaml
+    sha256: b63b8094a09f6e538d5ba92f1aa75ee873369f894caac55249fd1890479641af
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569.yaml
+    sha256: 518c79c675aa1acd4c74c42a9d4decbcd571d73d0b6fa5bd92e29ac752cfed9e
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/e6/e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08.yaml
+    sha256: 70d9691c61e502ab20788faf0cb47b9735157dd888b9056d233220fc5b9a2da6
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/fe/fe408478b9e90799a4e13ebe2da7c90b6a8eccc49444391dcb7c4f76208f5b83.yaml
+    sha256: e4f9843c1fbf7b4a717aa2acf8c0ccfa58a7d0a4126df3146a3a89ded4bb21bb
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/48/48bddd8428929d05677f6ef57556f5f31f7afc064642a2825db06c25209e9c53.yaml
+    sha256: 8c683efed578b865280ebf774b97425ca9754c05bd26c26aebbb524db70f566b
+    hash_normalization: git_eol_lf
   - path: registry/development_tasks_shadow_v2/94/9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6.yaml
     sha256: c16e2ad7a17a05c9db6fbc81453c64b8b07d4aaec6a68372183f18aa00035f77
     hash_normalization: git_eol_lf
+  - path: src/ai_trading_system/external_request_cache_revalidation_coordination.py
+    sha256: 889d85108ce3d56ad785f791b0b525ad72b7af6270f58bbe4e1dab4f2b152fcd
+    hash_normalization: git_eol_lf
   - path: tests/test_arch_004_refactor_policy.py
-    sha256: af7425d8eba321e780384be3d33714b076d3f044bfc488ff128f81270256a630
+    sha256: c70c8bb4a7815e9d53a306ffc0f3bd646c4b98e9d168f8cb8d6dd474c244e34a
+    hash_normalization: git_eol_lf
+  - path: tests/test_external_request_cache_revalidation_coordination.py
+    sha256: 89ae6c2c78dd8bc2957595264d7dd0d0b9c9f96a552f9904f7e0ba44cf22f734
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2452_architecture_contract.py
+    sha256: 403e49d1a210d8dfd2e9ba6d030bab4169427af6095a638204b156ac71b38d90
     hash_normalization: git_eol_lf
   owner_review_authority:
     acceptance_token: owner_decision:TRADING-2501:2026-08-08:accept_read_only_owner_review_pack_recommendations_v1
