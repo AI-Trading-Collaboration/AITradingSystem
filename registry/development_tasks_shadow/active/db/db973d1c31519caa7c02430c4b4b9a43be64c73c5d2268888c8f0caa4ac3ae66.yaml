@@ -1,0 +1,135 @@
+schema_version: arch_005_task_shadow_fragment.v1
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2503_ATLAS_QQQ_OPTIONS_SERIAL_PROJECTION_CONTRACT_RENDERER_CONSUMER_V1
+  title: null
+  domain: Publishing & Experience / reader-first QQQ Options canonical projection
+    and page consumer
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Project owner：在 canonical local page 复核 13 节点读者语义、2492/2493 阅读顺序与视觉层级；Atlas
+    coordinator：只在明确 acceptance/修改意见后更新 terminal review 状态
+  requirement_refs:
+  - docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md`。严格消费
+    TRADING-2501 已接受的 A/B/C/D、reader wording、2489 mismatch、2492 阅读顺序与 2493 dominance；2481–2493
+    已分成四组，并逐项分离 engineering、evidence、policy、external authority、strategy conclusion。`contract_change=true`，但不修改
+    QQQ research contracts、投资 policy、DQ/PIT 或任务真实状态。当前 blocker=`OWNER_MANUAL_VISUAL_REVIEW_PENDING`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 13 个 exact source 缺失/重复/漂移 fail closed；projection canonical bytes/seal/replay
+      deterministic；页面按“当前总判定→四组能力→每项已完成/未证明/仍阻塞→审计依据”展示，2492 必须先 NO-GO/原因/`734127
+      > 250000` 后 `1 order / 1 fill`，2493 aggregate NO-GO 支配 subordinate conditional；不得使用绿色或“完成”暗示策略
+      PASS；focused/static DOM/compatibility/formal、system flow/generated authority
+      闭合后 ordinary push；manual visual 仅由 Owner 明确验收。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  legacy_source:
+    path: docs/task_register.md
+    source_partition: active
+    line_number: 2162
+    row_sha256: 2319435ce2bd311356eb9b878aa530fba45703d7fbc994dd86d273c12462e115
+    cell_count: 8
+    all_cells:
+    - TRADING-2503_ATLAS_QQQ_OPTIONS_SERIAL_PROJECTION_CONTRACT_RENDERER_CONSUMER_V1
+    - Publishing & Experience / reader-first QQQ Options canonical projection and
+      page consumer
+    - P1
+    - BASELINE_DONE
+    - Project owner：在 canonical local page 复核 13 节点读者语义、2492/2493 阅读顺序与视觉层级；Atlas
+      coordinator：只在明确 acceptance/修改意见后更新 terminal review 状态
+    - 详见 `docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md`。严格消费
+      TRADING-2501 已接受的 A/B/C/D、reader wording、2489 mismatch、2492 阅读顺序与 2493 dominance；2481–2493
+      已分成四组，并逐项分离 engineering、evidence、policy、external authority、strategy conclusion。`contract_change=true`，但不修改
+      QQQ research contracts、投资 policy、DQ/PIT 或任务真实状态。当前 blocker=`OWNER_MANUAL_VISUAL_REVIEW_PENDING`。
+    - 13 个 exact source 缺失/重复/漂移 fail closed；projection canonical bytes/seal/replay
+      deterministic；页面按“当前总判定→四组能力→每项已完成/未证明/仍阻塞→审计依据”展示，2492 必须先 NO-GO/原因/`734127
+      > 250000` 后 `1 order / 1 fill`，2493 aggregate NO-GO 支配 subordinate conditional；不得使用绿色或“完成”暗示策略
+      PASS；focused/static DOM/compatibility/formal、system flow/generated authority
+      闭合后 ordinary push；manual visual 仅由 Owner 明确验收。
+    - 2026-08-08：从 exact main `154b12f2820f54441b7f7920465b469f31f52caf` 完成 typed
+      contract/renderer baseline；Atlas tests=`112 PASS`，DevEx=`1098/1261/856/0`，page
+      artifacts=7。in-app Browser `file://` 被 URL policy 拒绝且未绕过，automatic visual=`NOT_EXECUTED_URL_POLICY`；primary
+      start=`2021-02-22`，`investment_conclusion_generated=false`、external/cloud/raw/paper/live/broker/production
+      action=`none/false`。
+    raw_line: '|TRADING-2503_ATLAS_QQQ_OPTIONS_SERIAL_PROJECTION_CONTRACT_RENDERER_CONSUMER_V1|Publishing
+      & Experience / reader-first QQQ Options canonical projection and page consumer|P1|BASELINE_DONE|Project
+      owner：在 canonical local page 复核 13 节点读者语义、2492/2493 阅读顺序与视觉层级；Atlas coordinator：只在明确
+      acceptance/修改意见后更新 terminal review 状态|详见 `docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md`。严格消费
+      TRADING-2501 已接受的 A/B/C/D、reader wording、2489 mismatch、2492 阅读顺序与 2493 dominance；2481–2493
+      已分成四组，并逐项分离 engineering、evidence、policy、external authority、strategy conclusion。`contract_change=true`，但不修改
+      QQQ research contracts、投资 policy、DQ/PIT 或任务真实状态。当前 blocker=`OWNER_MANUAL_VISUAL_REVIEW_PENDING`。|13
+      个 exact source 缺失/重复/漂移 fail closed；projection canonical bytes/seal/replay deterministic；页面按“当前总判定→四组能力→每项已完成/未证明/仍阻塞→审计依据”展示，2492
+      必须先 NO-GO/原因/`734127 > 250000` 后 `1 order / 1 fill`，2493 aggregate NO-GO 支配
+      subordinate conditional；不得使用绿色或“完成”暗示策略 PASS；focused/static DOM/compatibility/formal、system
+      flow/generated authority 闭合后 ordinary push；manual visual 仅由 Owner 明确验收。|2026-08-08：从
+      exact main `154b12f2820f54441b7f7920465b469f31f52caf` 完成 typed contract/renderer
+      baseline；Atlas tests=`112 PASS`，DevEx=`1098/1261/856/0`，page artifacts=7。in-app
+      Browser `file://` 被 URL policy 拒绝且未绕过，automatic visual=`NOT_EXECUTED_URL_POLICY`；primary
+      start=`2021-02-22`，`investment_conclusion_generated=false`、external/cloud/raw/paper/live/broker/production
+      action=`none/false`。|'
+    history_completeness: LEGACY_HISTORY_PARTIAL
+    ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-2319435ce2bd311356eb9b87
+  task_id: TRADING-2503_ATLAS_QQQ_OPTIONS_SERIAL_PROJECTION_CONTRACT_RENDERER_CONSUMER_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: arch_005_shadow_importer
+  change_id: ARCH-005-S1-SHADOW-IMPORT
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：在 canonical local page 复核 13 节点读者语义、2492/2493 阅读顺序与视觉层级；Atlas
+      coordinator：只在明确 acceptance/修改意见后更新 terminal review 状态
+    notes: 2026-08-08：从 exact main `154b12f2820f54441b7f7920465b469f31f52caf` 完成 typed
+      contract/renderer baseline；Atlas tests=`112 PASS`，DevEx=`1098/1261/856/0`，page
+      artifacts=7。in-app Browser `file://` 被 URL policy 拒绝且未绕过，automatic visual=`NOT_EXECUTED_URL_POLICY`；primary
+      start=`2021-02-22`，`investment_conclusion_generated=false`、external/cloud/raw/paper/live/broker/production
+      action=`none/false`。
+  rationale: Lossless legacy row import; historical event time is unavailable.
+  evidence_refs:
+  - sha256:2319435ce2bd311356eb9b878aa530fba45703d7fbc994dd86d273c12462e115
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2503_ATLAS_QQQ_OPTIONS_SERIAL_PROJECTION_CONTRACT_RENDERER_CONSUMER_V1
+  - Publishing & Experience / reader-first QQQ Options canonical projection and page
+    consumer
+  - P1
+  - BASELINE_DONE
+  - Project owner：在 canonical local page 复核 13 节点读者语义、2492/2493 阅读顺序与视觉层级；Atlas coordinator：只在明确
+    acceptance/修改意见后更新 terminal review 状态
+  - 详见 `docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md`。严格消费
+    TRADING-2501 已接受的 A/B/C/D、reader wording、2489 mismatch、2492 阅读顺序与 2493 dominance；2481–2493
+    已分成四组，并逐项分离 engineering、evidence、policy、external authority、strategy conclusion。`contract_change=true`，但不修改
+    QQQ research contracts、投资 policy、DQ/PIT 或任务真实状态。当前 blocker=`OWNER_MANUAL_VISUAL_REVIEW_PENDING`。
+  - 13 个 exact source 缺失/重复/漂移 fail closed；projection canonical bytes/seal/replay
+    deterministic；页面按“当前总判定→四组能力→每项已完成/未证明/仍阻塞→审计依据”展示，2492 必须先 NO-GO/原因/`734127 >
+    250000` 后 `1 order / 1 fill`，2493 aggregate NO-GO 支配 subordinate conditional；不得使用绿色或“完成”暗示策略
+    PASS；focused/static DOM/compatibility/formal、system flow/generated authority 闭合后
+    ordinary push；manual visual 仅由 Owner 明确验收。
+  - 2026-08-08：从 exact main `154b12f2820f54441b7f7920465b469f31f52caf` 完成 typed contract/renderer
+    baseline；Atlas tests=`112 PASS`，DevEx=`1098/1261/856/0`，page artifacts=7。in-app
+    Browser `file://` 被 URL policy 拒绝且未绕过，automatic visual=`NOT_EXECUTED_URL_POLICY`；primary
+    start=`2021-02-22`，`investment_conclusion_generated=false`、external/cloud/raw/paper/live/broker/production
+    action=`none/false`。
+  docs_links:
+  - docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md
+  terminal: false
+  raw_row_sha256: 2319435ce2bd311356eb9b878aa530fba45703d7fbc994dd86d273c12462e115
+producer_version: arch_005_shadow_registry_compiler.v1
+fragment_checksum: 9ee5967500c569336b16233d14e7e6a7a50254909e25ea2eae6bd29683e5d348

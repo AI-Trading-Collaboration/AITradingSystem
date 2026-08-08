@@ -1,0 +1,280 @@
+schema_version: atlas_qqq_options_projection_policy.v1
+policy_id: atlas_qqq_options_projection_v1
+policy_version: 1.0.0
+owner_decision: owner_decision:TRADING-2501:2026-08-08:accept_read_only_owner_review_pack_recommendations_v1
+primary_research_start: '2021-02-22'
+aggregate_conclusion: NO_GO_KEEP_BLOCKED
+aggregate_explanation_zh: 工程底座、机械模块和证据工具都在推进，但真实 policy、完整证据与外部权限仍未闭合，因此还不能证明策略有效，也不能继续外部动作。
+source_set_sha256: 29c97b0524c0ccf2ce1b215da9122bbfa875f45b08d682145a7409d6c1abd11f
+groups:
+  - group_id: FOUNDATION_CONTRACTS
+    title_zh: 研究底座与输入合同
+    capability_zh: 底座已经能被严格重放，输入、质量和平台映射都有明确格式。
+    not_proven_zh: 这些合同不证明选券、成交、收益或真实平台覆盖。
+    owner_need_zh: 继续保持审计底座；只有后续独立 policy/evidence 决策才能向真实研究推进。
+    task_ids: [TRADING-2481, TRADING-2482, TRADING-2483, TRADING-2484]
+  - group_id: POLICY_BLOCKED_MECHANICS
+    title_zh: 已实现但未授权的策略机械
+    capability_zh: 选券、执行、记账和生命周期的运行方式已有可重复实现。
+    not_proven_zh: 决定真实行为的阈值与方法仍未获得 Owner review，默认只能保留现金。
+    owner_need_zh: 逐项审阅 selection、execution、accounting、lifecycle policy；不得由页面补写数值。
+    task_ids: [TRADING-2485, TRADING-2486, TRADING-2487, TRADING-2488]
+  - group_id: EVIDENCE_SCAFFOLDING
+    title_zh: 证据收集、对账与跨层检查
+    capability_zh: 工具已经会收证据、做对账、跑 synthetic 场景并暴露差异。
+    not_proven_zh: 工具 PASS 主要证明“检查机制可用”，不证明真实策略已经通过。
+    owner_need_zh: 补齐 reviewed collection/reconciliation policy 与真实 evidence，再判断是否具备升级条件。
+    task_ids: [TRADING-2489, TRADING-2490, TRADING-2491]
+  - group_id: EXTERNAL_EVIDENCE_AND_GOVERNANCE
+    title_zh: 唯一外部试点与治理总判定
+    capability_zh: 一次 bounded external pilot 留下了可重放事实，Owner 随后完成正式治理签署。
+    not_proven_zh: 试点违反预注册资源上限，不能证明收益、稳健性、扩窗能力或可部署性。
+    owner_need_zh: 保持 NO-GO；只有新的 exact proposal、证据和独立授权才能重新评估。
+    task_ids: [TRADING-2492, TRADING-2493]
+cards:
+  - task_id: TRADING-2481
+    group_id: FOUNDATION_CONTRACTS
+    layer: A
+    title_zh: 共享记录与安全边界
+    positioning_zh: 系统先统一“每一步研究结果该长什么样”。
+    completed_zh: 12 类 shared records、canonical seal/replay、安全与 export 边界已经冻结。
+    not_proven_zh: 这不证明任何选券、成交、收益或平台能力。
+    blocker_zh: 投资阈值和 external token 都未授予。
+    next_reader_action_zh: 把它理解为可审计底座，而不是策略成绩。
+    priority_facts: [合同底座已冻结]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: OFFLINE_CONTRACT_REPLAY
+      policy_readiness: FROZEN_WITHOUT_INVESTMENT_THRESHOLDS
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2481, path: docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md, git_blob: a6a17188e81da79d1d70555725c6e66bbeedd426, byte_count: 12767}
+    source_status_note: null
+  - task_id: TRADING-2482
+    group_id: FOUNDATION_CONTRACTS
+    layer: A
+    title_zh: DQ / PIT 与证据身份
+    positioning_zh: 系统已经知道如何确认数据来自哪里、何时可知、检查是否通过。
+    completed_zh: local-cache 与 option-event 分轴 DQ/PIT、15 项检查和 evidence identity 已冻结。
+    not_proven_zh: 不证明真实研究窗的 quote、OI 或 Greeks 完整、及时、可交易。
+    blocker_zh: freshness、spread 等数值 policy 未审。
+    next_reader_action_zh: 先确认真实数据质量证据，再讨论策略表现。
+    priority_facts: [质量检查规则已就位]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: OFFLINE_DQ_PIT_REPLAY
+      policy_readiness: NUMERIC_FRESHNESS_THRESHOLDS_UNRESOLVED
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2482, path: docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md, git_blob: 8c820d8ff60cb19a954a5a5e54ffb54913790bfb, byte_count: 10175}
+    source_status_note: null
+  - task_id: TRADING-2483
+    group_id: FOUNDATION_CONTRACTS
+    layer: A
+    title_zh: 日级信号与运行清单
+    positioning_zh: 研究输入可以按交易日打包、校验并重放。
+    completed_zh: daily signal/run package、primary window 与 canonical DQ receipt replay 已建立。
+    not_proven_zh: 不证明 ETF direction mapping、选券、执行或收益。
+    blocker_zh: ETF mapping 与 non-primary authority 未审。
+    next_reader_action_zh: 只把它视为可追溯输入，不视为策略信号已有效。
+    priority_facts: [研究输入包可审计]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: OFFLINE_SIGNAL_PACKAGE_REPLAY
+      policy_readiness: ETF_MAPPING_AND_NON_PRIMARY_UNRESOLVED
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2483, path: docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md, git_blob: d911ee2d3107e8bada019c8cfc1e9f49f51b412d, byte_count: 14863}
+    source_status_note: null
+  - task_id: TRADING-2484
+    group_id: FOUNDATION_CONTRACTS
+    layer: B
+    title_zh: QuantConnect 项目适配合同
+    positioning_zh: 本地系统与 QC 之间的字段和结果位置已经对齐。
+    completed_zh: adapter descriptor、subscription、engine 与六项 result mapping contract 已建立。
+    not_proven_zh: 不证明 entitlement、真实 engine identity、历史 coverage 或 cloud run 可用。
+    blocker_zh: external token 与 input admission 未授予。
+    next_reader_action_zh: 在证据层核对 adapter，不能据此宣布平台能力通过。
+    priority_facts: [离线 adapter contract 已就位]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: OFFLINE_ADAPTER_CONTRACT_REPLAY
+      policy_readiness: CONTRACT_READY_NO_CLOUD_RUN
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2484, path: docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md, git_blob: 59cb3f06a6ea26c9970077308f96a7361c75b053, byte_count: 13057}
+    source_status_note: null
+  - task_id: TRADING-2485
+    group_id: POLICY_BLOCKED_MECHANICS
+    layer: C
+    title_zh: 确定性选券
+    positioning_zh: 系统会按同一输入稳定地产生同一候选和选择结果。
+    completed_zh: candidate filtering/ranking、SID tie-break 与无合约时保留现金路径已实现。
+    not_proven_zh: 不证明哪组 DTE、delta、spread、OI、volume 或 rank 适合投资。
+    blocker_zh: selection_authorized=false；所有数值仍待 policy review。
+    next_reader_action_zh: 等待 Owner 审阅选券 policy；当前不下单。
+    priority_facts: [机械已实现, policy 未授权, cash preservation]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: SYNTHETIC_SELECTOR_MECHANICS
+      policy_readiness: OWNER_REVIEW_REQUIRED_SELECTION_FALSE
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2485, path: docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md, git_blob: 0ba4124cfffea203366c59deb4180b7679549f2e, byte_count: 12012}
+    source_status_note: null
+  - task_id: TRADING-2486
+    group_id: POLICY_BLOCKED_MECHANICS
+    layer: C
+    title_zh: 分钟级执行现实模型
+    positioning_zh: 系统知道订单从信号到报价、成交和取消应遵守哪些机械约束。
+    completed_zh: next-independent-minute、bid/ask side、limit、partial/reject/cancel 与 DQ replay 已实现。
+    not_proven_zh: 不证明真实 latency、slippage、fee、quote age 或成交概率。
+    blocker_zh: execution_authorized=false；现实模型数值未审。
+    next_reader_action_zh: 等待执行 policy 与外部证据；当前不生成真实 fill。
+    priority_facts: [机械已实现, execution policy 未授权, no fill]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: SYNTHETIC_EXECUTION_MECHANICS
+      policy_readiness: OWNER_REVIEW_REQUIRED_EXECUTION_FALSE
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2486, path: docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md, git_blob: 61317fe900d0100cbebf0683c711848ffda21f5b, byte_count: 15349}
+    source_status_note: null
+  - task_id: TRADING-2487
+    group_id: POLICY_BLOCKED_MECHANICS
+    layer: C
+    title_zh: 现金、权利金与结算记账
+    positioning_zh: 系统可以精确记录每笔 long-premium 交易怎样影响现金和持仓。
+    completed_zh: Decimal cash、reservation、premium、fee、settlement、lot 与 snapshot mechanics 已实现。
+    not_proven_zh: 不证明真实初始资金、预算、费用、结算方式或策略 PnL。
+    blocker_zh: accounting_authorized=false；cash、fee、settlement 方法未审。
+    next_reader_action_zh: 等待会计 policy；不要把记账正确理解为收益成立。
+    priority_facts: [会计机械已实现, accounting policy 未授权]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: SYNTHETIC_ACCOUNTING_MECHANICS
+      policy_readiness: OWNER_REVIEW_REQUIRED_ACCOUNTING_FALSE
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2487, path: docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md, git_blob: 12fc97779072a2784755f15a7af803bd7787047f, byte_count: 18000}
+    source_status_note: null
+  - task_id: TRADING-2488
+    group_id: POLICY_BLOCKED_MECHANICS
+    layer: C
+    title_zh: 持仓生命周期与到期安全
+    positioning_zh: 系统会在持仓、到期和异常事件上优先停住而不是猜测。
+    completed_zh: open/partial/exit/expiry/scope-violation lifecycle 与 fail-closed safety 已实现。
+    not_proven_zh: 不证明真实 exercise、assignment 或 corporate-action 处置可用。
+    blocker_zh: lifecycle_authorized=false；pre-expiry 与 settlement policy 未审。
+    next_reader_action_zh: 等待生命周期 policy；异常范围保持 invalid run。
+    priority_facts: [机械已实现, lifecycle policy 未授权, scope violation fail closed]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: SYNTHETIC_LIFECYCLE_MECHANICS
+      policy_readiness: OWNER_REVIEW_REQUIRED_LIFECYCLE_FALSE
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2488, path: docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md, git_blob: bac081ec5335a7672c4520acacefbdf118383b42, byte_count: 19025}
+    source_status_note: null
+  - task_id: TRADING-2489
+    group_id: EVIDENCE_SCAFFOLDING
+    layer: B
+    title_zh: 平台人工证据包
+    positioning_zh: 系统已定义人工收集一份平台结果时必须交付什么。
+    completed_zh: Results、Orders、Trades、Logs、Report、Project Files、截图与双人 attestation strict bundle 已定义。
+    not_proven_zh: 不证明真实 bundle 已完整收集，也不证明 license/export 已满足。
+    blocker_zh: collection_authorized=false；supporting requirement 与 task register 状态仍有历史不一致。
+    next_reader_action_zh: 先解决 source-status mismatch，再由新的授权收集真实 evidence。
+    priority_facts: [人工证据合同已就位, 尚未授权真实收集]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: OFFLINE_MANUAL_BUNDLE_CONTRACT_ONLY
+      policy_readiness: COLLECTION_AUTHORIZED_FALSE
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2489, path: docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md, git_blob: 2c13c30430dbdb889a84e45c8e4af7e939cb31d4, byte_count: 20461}
+    source_status_note: SOURCE_STATUS_MISMATCH_REVIEW_REQUIRED
+  - task_id: TRADING-2490
+    group_id: EVIDENCE_SCAFFOLDING
+    layer: B
+    title_zh: 本地 ingest 与对账
+    positioning_zh: 系统可以把平台事实规范化，并说明差异属于哪一类。
+    completed_zh: normalized ingest、七类 difference taxonomy 与 strict reconciliation 已定义。
+    not_proven_zh: 不证明真实 external/local facts 已按 reviewed tolerance 对齐。
+    blocker_zh: reconciliation_authorized=false；mapping 与 tolerance 未审。
+    next_reader_action_zh: 等待真实 bundle 与 reviewed reconciliation policy。
+    priority_facts: [对账工具已就位, 真实对账尚未授权]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: SYNTHETIC_RECONCILIATION_ONLY
+      policy_readiness: RECONCILIATION_AUTHORIZED_FALSE
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2490, path: docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md, git_blob: aebf21519ad13f7b796145bbbe392a943f3fc059, byte_count: 19295}
+    source_status_note: null
+  - task_id: TRADING-2491
+    group_id: EVIDENCE_SCAFFOLDING
+    layer: B
+    title_zh: 跨层 synthetic 验证
+    positioning_zh: 系统会用固定场景检查各层合同能否一致协作。
+    completed_zh: 十个 synthetic scenarios、golden identity、cross-layer report 与 blocked checklist 已建立。
+    not_proven_zh: synthetic PASS 不证明平台证据、市场有效性或可扩窗。
+    blocker_zh: pilot checklist 默认 BLOCKED_OWNER_AUTHORIZATION。
+    next_reader_action_zh: 把 PASS 限定为 synthetic 检查通过，继续等待 external evidence。
+    priority_facts: [synthetic-only, 跨层检查已就位]
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: SYNTHETIC_CROSS_LAYER_ONLY
+      policy_readiness: PILOT_AUTHORIZED_FALSE
+      external_authority: NOT_GRANTED
+      strategy_conclusion: NOT_ESTABLISHED
+    source: {task_id: TRADING-2491, path: docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md, git_blob: cbc706f0a0a342db8e9535602f529cd82968e92f, byte_count: 11492}
+    source_status_note: null
+  - task_id: TRADING-2492
+    group_id: EXTERNAL_EVIDENCE_AND_GOVERNANCE
+    layer: A
+    title_zh: Bounded Free Cloud 试点
+    positioning_zh: 唯一一次 bounded external pilot 已结束，结论是 NO-GO。
+    completed_zh: 单日 run、身份链、chronology 与结果事实可以重放。
+    not_proven_zh: 少量运行活动不证明收益、license、证据充分、扩窗或可部署。
+    blocker_zh: 唯一 scope violation 是 PROCESSED_DATA_POINTS：734127 超过预注册上限 250000；single-use token 已失效。
+    next_reader_action_zh: 先接受 cap violation 与 NO-GO，不允许用订单和成交反转结论。
+    priority_facts:
+      - PILOT_NO_GO_LICENSE_OR_EVIDENCE
+      - 唯一 scope violation 是 PROCESSED_DATA_POINTS
+      - 734127 > 250000
+      - 1 order / 1 fill
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: BOUNDED_EXTERNAL_EVIDENCE_SCOPE_VIOLATION
+      policy_readiness: SINGLE_USE_TOKEN_CONSUMED
+      external_authority: NO_FURTHER_ACTION_AUTHORIZED
+      strategy_conclusion: PILOT_NO_GO_LICENSE_OR_EVIDENCE
+    source: {task_id: TRADING-2492, path: docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md, git_blob: c8a47316c0e83f9469fa26d6956837aabd524bdf, byte_count: 26705}
+    source_status_note: null
+  - task_id: TRADING-2493
+    group_id: EXTERNAL_EVIDENCE_AND_GOVERNANCE
+    layer: A
+    title_zh: Owner 治理总判定
+    positioning_zh: 当前 QQQ Options 研究线的支配性结论是继续阻塞。
+    completed_zh: Owner 已 exact-bind 证据并签署 aggregate NO-GO。
+    not_proven_zh: subordinate capability/technical CONDITIONAL_GO 不能证明总体可继续。
+    blocker_zh: license、DQ/PIT、resource、reconciliation、range 与 paid axes 均保持 NO-GO。
+    next_reader_action_zh: 以 aggregate NO-GO 为准；等待新的 exact proposal 与独立授权。
+    priority_facts:
+      - NO_GO_KEEP_BLOCKED
+      - SIGNED_NO_GO
+      - subordinate capability/technical axes are CONDITIONAL_GO only
+    status_layers:
+      engineering_baseline: BASELINE_DONE
+      evidence_quality: OWNER_SIGNED_GOVERNANCE_RECORD
+      policy_readiness: SIGNED_NO_GO
+      external_authority: NO_EXTERNAL_ACTION_AUTHORIZED
+      strategy_conclusion: NO_GO_KEEP_BLOCKED
+    source: {task_id: TRADING-2493, path: docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md, git_blob: b4dbde69804a4aeccffe2692ebe9e5f42442f789, byte_count: 12387}
+    source_status_note: null
+safety:
+  investment_conclusion_generated: false
+  external_action: none
+  production_effect: none
+  broker_action: none

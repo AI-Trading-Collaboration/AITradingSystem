@@ -55,6 +55,9 @@ TRADING_2499_DAILY_PRIMARY_BACKTEST_CONTRACT_PHASE_KEY = (
 TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY = (
     "phase_trading_2501_atlas_qqq_options_projection_owner_review_pack_v1"
 )
+TRADING_2503_ATLAS_PROJECTION_RENDERER_PHASE_KEY = (
+    "phase_trading_2503_atlas_qqq_options_projection_renderer_v1"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -150,7 +153,11 @@ def _assert_historical_source_is_current_or_superseded(
     current_live_hash = _source_sha256_path(live_path, current_source)
     if (
         source_path in TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS
-        and section_key != TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY
+        and section_key
+        not in {
+            TRADING_2501_ATLAS_OWNER_REVIEW_PACK_PHASE_KEY,
+            TRADING_2503_ATLAS_PROJECTION_RENDERER_PHASE_KEY,
+        }
     ):
         section_ids = list(baseline)
         assert TRADING_2492_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_PHASE_KEY in section_ids

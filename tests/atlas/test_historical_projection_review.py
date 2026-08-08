@@ -264,7 +264,7 @@ def test_forbidden_roadmap_policy_cannot_be_removed(
         _build(monkeypatch, tmp_path, policy_mutator=remove)
 
 
-def test_local_canonical_page_uses_2496_successor_identity_when_available() -> None:
+def test_local_canonical_page_uses_2503_successor_identity_when_available() -> None:
     canonical_policy = _policy()["canonical_page"]
     assert isinstance(canonical_policy, dict)
     repository_path = canonical_policy["repository_path"]
@@ -276,20 +276,32 @@ def test_local_canonical_page_uses_2496_successor_identity_when_available() -> N
     if not canonical.is_file():
         pytest.skip("local canonical ignored artifact not hydrated")
     payload = canonical.read_bytes()
-    assert len(payload) == 139118
+    assert len(payload) == 182100
     assert sha256(payload).hexdigest() == (
-        "436b7da54bba188c643d79660451f9e4350e7d88f7d5b8c9dd0bb5977b9e6603"
+        "1bbfb90fb5b2eb7dd1cbea29e07ca60338e29ba995f5f263162736519d7ea337"
     )
     assert payload.count(b'data-historical-record="true"') == 5
-    assert all(f"TRADING-{task_id}".encode() not in payload for task_id in range(2481, 2494))
+    assert payload.count(b'data-aggregate-conclusion="NO_GO_KEEP_BLOCKED"') == 1
+    assert all(
+        payload.count(f'data-qqq-task="TRADING-{task_id}"'.encode()) == 1
+        for task_id in range(2481, 2494)
+    )
     expected_sidecars = {
         "status_explanations.json": (
             27641,
-            "625c7a77e1fb0085dbde0a8180a3372c4e9898d45a543640fe19e21eaa52972b",
+            "a4e832fdd043a81948b293becbe0a785d84fb5d48d0423fec90ec93984bd6d16",
         ),
         "status_explanation_validation.json": (
             684,
-            "ec562ea470c4a293bf3ec581bcbf69eb3712534eaa21ad2d6601b3f176356cdc",
+            "0465631c0862adca5acf4b41672294b1482e7a40aa68106c35489fbf8c7b8377",
+        ),
+        "qqq_options_projection.json": (
+            17551,
+            "cf22c77583ce3976d24e74df67077a13a46cd22c10f37a5b697b1e7fa2aa26df",
+        ),
+        "qqq_options_projection_validation.json": (
+            895,
+            "f05a577c00669cb2855b83c17a82ec1a8f1b212b630d3a94f836eb885f8348e2",
         ),
     }
     for name, (expected_size, expected_sha256) in expected_sidecars.items():

@@ -1,0 +1,14 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_qqq_options_projection
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/qqq_options_projection.py
+public_contracts:
+  - QQQOptionsProjectionError
+  - QQQOptionsProjectionPolicy
+  - QQQOptionsProjectionValidation
+  - load_qqq_options_projection_policy
+  - build_qqq_options_projection
+  - validate_qqq_options_projection
+compatibility_facades: []
+deprecation_status: active_reference_architecture

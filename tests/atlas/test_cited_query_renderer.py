@@ -20,6 +20,9 @@ from ai_trading_system.contracts import (
     StrategyResearchExplorerSnapshot,
     StrategyResearchStatusExplanationBundle,
 )
+from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
+    StrategyResearchQQQOptionsProjectionBundle,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -147,6 +150,31 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "不是 DQ FAIL",
         "不会运行",
         "production_effect",
+        "QQQ 期权研究链：做到哪里、还缺什么",
+        "当前总判定",
+        "暂不继续",
+        "NO_GO_KEEP_BLOCKED",
+        "可以确认",
+        "不能推出",
+        "当前关键原因",
+        "A / B / C 不是成绩",
+        "工程合同、机械与检查工具持续完善",
+        "策略有效、收益稳健或具备部署条件",
+        "试点超限，Owner 已签署 aggregate NO-GO",
+        "研究底座与输入合同",
+        "已实现但未授权的策略机械",
+        "证据收集、对账与跨层检查",
+        "唯一外部试点与治理总判定",
+        "已经做到",
+        "仍不能证明",
+        "为什么停在这里",
+        "接下来要看什么",
+        "必须按这个顺序理解",
+        "734127 &gt; 250000",
+        "1 order / 1 fill",
+        "SOURCE_STATUS_MISMATCH_REVIEW_REQUIRED",
+        "查看五层状态与 exact source",
+        "Policy 准备度",
     ):
         assert expected in html
     for stage_id in (
@@ -197,8 +225,34 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert "当前受审阅记录没有把 RUNNING 拆解为一个具体正在执行的研究子任务" in html
     assert "真实样本外、event-risk 与 forward maturity 证据仍不足" in html
     assert "attr-restart-oos-limits-expansion" in html
-    for excluded_task_number in range(2481, 2494):
-        assert f"TRADING-{excluded_task_number}" not in html
+    assert html.count('class="qqq-group ') == 4
+    assert html.count('data-qqq-task="') == 13
+    assert html.count('data-qqq-layer="A"') == 5
+    assert html.count('data-qqq-layer="B"') == 4
+    assert html.count('data-qqq-layer="C"') == 4
+    assert html.count('data-strategy-conclusion="PASS"') == 0
+    for projected_task_number in range(2481, 2494):
+        assert f'data-qqq-task="TRADING-{projected_task_number}"' in html
+    pilot_card = html[
+        html.index('data-qqq-task="TRADING-2492"') : html.index(
+            "</div></details>", html.index('data-qqq-task="TRADING-2492"')
+        )
+    ]
+    pilot_order = (
+        "PILOT_NO_GO_LICENSE_OR_EVIDENCE",
+        "唯一 scope violation 是 PROCESSED_DATA_POINTS",
+        "734127 &gt; 250000",
+        "1 order / 1 fill",
+    )
+    assert tuple(pilot_card.index(item) for item in pilot_order) == tuple(
+        sorted(pilot_card.index(item) for item in pilot_order)
+    )
+    signoff_card = html[
+        html.index('data-qqq-task="TRADING-2493"') : html.index(
+            "</div></details>", html.index('data-qqq-task="TRADING-2493"')
+        )
+    ]
+    assert signoff_card.index("NO_GO_KEEP_BLOCKED") < signoff_card.index("CONDITIONAL_GO")
     for legacy_primary_label in (
         "状态为什么是这样",
         "可以确认",
@@ -366,6 +420,8 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     second = write_cited_query_artifacts(showcase, tmp_path / "second")
     assert tuple(Path(item.path).name for item in first) == (
         "index.html",
+        "qqq_options_projection.json",
+        "qqq_options_projection_validation.json",
         "responses.json",
         "status_explanation_validation.json",
         "status_explanations.json",
@@ -375,6 +431,8 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     assert [item.size_bytes for item in first] == [item.size_bytes for item in second]
     for name in (
         "index.html",
+        "qqq_options_projection.json",
+        "qqq_options_projection_validation.json",
         "responses.json",
         "status_explanation_validation.json",
         "status_explanations.json",
@@ -386,6 +444,10 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     replayed = StrategyResearchStatusExplanationBundle.from_json_bytes(sidecar_bytes)
     assert replayed.canonical_bytes == sidecar_bytes
     assert replayed.content_sha256 == showcase.status_explanations.content_sha256
+    projection_bytes = (tmp_path / "first" / "qqq_options_projection.json").read_bytes()
+    assert projection_bytes == showcase.qqq_options_projection.canonical_bytes
+    projection = StrategyResearchQQQOptionsProjectionBundle.from_json_bytes(projection_bytes)
+    assert projection.content_sha256 == showcase.qqq_options_projection.content_sha256
 
 
 def test_renderer_rejects_status_explanation_validation_drift() -> None:
@@ -400,5 +462,21 @@ def test_renderer_rejects_status_explanation_validation_drift() -> None:
     with pytest.raises(
         ValueError,
         match="ATLAS_CITED_QUERY_STATUS_EXPLANATION_BINDING_INVALID",
+    ):
+        render_cited_query_html(invalid)
+
+
+def test_renderer_rejects_qqq_options_projection_validation_drift() -> None:
+    showcase = _showcase()
+    invalid = replace(
+        showcase,
+        qqq_options_projection_validation=replace(
+            showcase.qqq_options_projection_validation,
+            bundle_sha256="0" * 64,
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_QQQ_OPTIONS_PROJECTION_BINDING_INVALID",
     ):
         render_cited_query_html(invalid)

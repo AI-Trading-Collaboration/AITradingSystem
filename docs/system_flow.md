@@ -171,6 +171,19 @@ OWNER_DECISION_PENDING` 具有不同 badge，未知项不会被默认文案伪�
 bundle、policy、stage、status 与 cited-query validation binding。该 consumer 不改变 2495 状态，
 不引入 `TRADING-2481..2493`，也不执行 DQ、回测、投资结论、生产或 broker 动作。
 
+TRADING-2503 在 TRADING-2501 的 exact Owner acceptance 之后，首次把 `TRADING-2481..2493`
+接入独立的 `strategy_research_qqq_options_projection.v1` sidecar 与现有 Citation-first renderer。
+projection policy 固定重放 13 个 requirement path / Git blob / byte-count，按四组组织为：底座合同、
+policy-blocked mechanics、证据脚手架、external evidence/governance；每个节点分别保存 engineering、
+evidence、policy、external authority、strategy conclusion 五层状态，以及“已经做到 / 仍不能证明 /
+为什么阻塞 / 下一步看什么”读者文案。A/B/C 只表示主线治理事实、次级证据和 blocked mechanics，
+不是成绩或完成度。2492 的展示顺序由 contract 固定为 `NO-GO -> scope reason -> 734127 > 250000
+-> 1 order / 1 fill`；2493 的 aggregate `NO_GO_KEEP_BLOCKED` 永远支配 subordinate
+`CONDITIONAL_GO`。renderer 在写出前验证 source-set、Owner token、snapshot、policy 与 bundle hashes，
+新增 `qqq_options_projection.json / qqq_options_projection_validation.json`；页面用红/琥珀/紫灰而非
+绿色表达阻塞，primary start 保持 `2021-02-22`。该投影只解释既有 authority，不修改 QQQ research
+contract、task lifecycle、DQ/PIT、投资阈值或结论，也不执行外部平台、production 或 broker 动作。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -225,7 +238,10 @@ flowchart LR
     SNAP --> XPROJ
     XPROJ --> XVAL["Independent explanation validation<br/>fingerprint + lineage + anti-fabrication"]
     XVAL --> XRENDER["TRADING-2496 reader-first renderer<br/>8 stages / plain facts / explicit missing states"]
-    XRENDER --> XART["Deterministic static page + 4 JSON artifacts<br/>technical authority folded under audit disclosure"]
+    OAUTH["TRADING-2501 Owner-accepted review authority<br/>A/B/C layers + 13 exact source receipts"] --> OPROJ["TRADING-2503 QQQ Options projection<br/>4 reader groups / 5 status layers / aggregate NO-GO"]
+    OPROJ --> OVAL["Independent source + policy validation<br/>2492 order / 2493 dominance / no strategy PASS"]
+    OVAL --> XRENDER
+    XRENDER --> XART["Deterministic static page + 6 JSON artifacts<br/>technical authority folded under audit disclosure"]
     HPWEB -.-> HSTOP["Review artifact remains immutable<br/>no automatic projection or investment verdict"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]
@@ -238,6 +254,7 @@ flowchart LR
     HPWEB -.-> NONE
     HCAN -.-> NONE
     XVAL -.-> NONE
+    OVAL -.-> NONE
     XART -.-> NONE
 ```
 

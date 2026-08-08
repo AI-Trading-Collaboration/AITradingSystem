@@ -15,6 +15,12 @@ from ai_trading_system.atlas.cited_query_validation import (
     load_validated_snapshot_payload,
     validate_serialized_cited_query_response,
 )
+from ai_trading_system.atlas.qqq_options_projection import (
+    QQQOptionsProjectionValidation,
+    build_qqq_options_projection,
+    load_qqq_options_projection_policy,
+    validate_qqq_options_projection,
+)
 from ai_trading_system.atlas.status_explanation_projection import (
     StatusExplanationProjectionValidation,
     load_status_explanation_authority_policy,
@@ -34,6 +40,10 @@ from ai_trading_system.contracts.strategy_research_explorer import (
     AttributionDirection,
     ResearchAttribution,
     ResearchResultCard,
+)
+from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
+    QQQOptionsProjectionCard,
+    StrategyResearchQQQOptionsProjectionBundle,
 )
 from ai_trading_system.contracts.strategy_research_status_explanation import (
     ATLAS_STATUS_EXPLANATION_STAGE_IDS,
@@ -97,6 +107,8 @@ class AtlasCitedQueryShowcase:
     diff_payload: Mapping[str, object]
     status_explanations: StrategyResearchStatusExplanationBundle
     status_explanation_validation: StatusExplanationProjectionValidation
+    qqq_options_projection: StrategyResearchQQQOptionsProjectionBundle
+    qqq_options_projection_validation: QQQOptionsProjectionValidation
 
 
 @dataclass(frozen=True)
@@ -223,6 +235,19 @@ def build_cited_query_showcase(
     )
     if status_explanation_validation.status != "PASS":
         raise ValueError("ATLAS_CITED_QUERY_STATUS_EXPLANATION_VALIDATION_FAILED")
+    qqq_policy = load_qqq_options_projection_policy(repository_root=root)
+    qqq_options_projection = build_qqq_options_projection(
+        repository_root=root,
+        snapshot_id=snapshot.snapshot_id,
+        policy=qqq_policy,
+    )
+    qqq_options_projection_validation = validate_qqq_options_projection(
+        repository_root=root,
+        bundle=qqq_options_projection,
+        policy=qqq_policy,
+    )
+    if qqq_options_projection_validation.status != "PASS":
+        raise ValueError("ATLAS_CITED_QUERY_QQQ_OPTIONS_PROJECTION_VALIDATION_FAILED")
     return AtlasCitedQueryShowcase(
         responses=ordered,
         validations=tuple(validations),
@@ -232,6 +257,8 @@ def build_cited_query_showcase(
         diff_payload=diff_payload,
         status_explanations=status_explanations,
         status_explanation_validation=status_explanation_validation,
+        qqq_options_projection=qqq_options_projection,
+        qqq_options_projection_validation=qqq_options_projection_validation,
     )
 
 
@@ -755,6 +782,165 @@ def _render_reader_status_explanation(record: StatusExplanationRecord) -> str:
     )
 
 
+_QQQ_LAYER_LABELS = {
+    "A": "主线治理事实",
+    "B": "次级证据",
+    "C": "机械已实现 / policy 未授权",
+}
+_QQQ_STATUS_LAYER_LABELS = (
+    ("engineering_baseline", "工程底座"),
+    ("evidence_quality", "证据质量"),
+    ("policy_readiness", "Policy 准备度"),
+    ("external_authority", "外部权限"),
+    ("strategy_conclusion", "策略结论"),
+)
+
+
+def _validate_qqq_options_projection_binding(showcase: AtlasCitedQueryShowcase) -> None:
+    bundle = showcase.qqq_options_projection
+    validation = showcase.qqq_options_projection_validation
+    if validation.status != "PASS":
+        raise ValueError("ATLAS_CITED_QUERY_QQQ_OPTIONS_PROJECTION_NOT_PASS")
+    if (
+        bundle.snapshot_id != str(showcase.snapshot_payload["snapshot_id"])
+        or validation.snapshot_id != bundle.snapshot_id
+        or validation.bundle_sha256 != bundle.content_sha256
+        or validation.policy_sha256 != bundle.policy_sha256
+        or validation.source_set_sha256 != bundle.source_set_sha256
+    ):
+        raise ValueError("ATLAS_CITED_QUERY_QQQ_OPTIONS_PROJECTION_BINDING_INVALID")
+
+
+def _render_qqq_projection_card(card: QQQOptionsProjectionCard) -> str:
+    layer = card.layer.value
+    status_layers = card.status_layers.to_dict()
+    status_rows = "".join(
+        (
+            '<div class="qqq-layer-row">'
+            f"<dt>{escape(label)}</dt>"
+            f"<dd><code>{escape(str(status_layers[field]))}</code></dd>"
+            "</div>"
+        )
+        for field, label in _QQQ_STATUS_LAYER_LABELS
+    )
+    priority_facts = "".join(
+        f"<li><span>{index:02d}</span><strong>{escape(fact)}</strong></li>"
+        for index, fact in enumerate(card.priority_facts, start=1)
+    )
+    mismatch = (
+        ""
+        if card.source_status_note is None
+        else (
+            '<p class="qqq-source-warning"><strong>历史来源不一致仍保留：</strong>'
+            f"<code>{escape(card.source_status_note)}</code>。页面没有静默修正原任务文件。</p>"
+        )
+    )
+    default_open = " open" if card.task_id in {"TRADING-2492", "TRADING-2493"} else ""
+    return (
+        f'<details class="qqq-task-card qqq-layer-{escape(layer.lower())}" '
+        f'data-qqq-task="{escape(card.task_id)}" '
+        f'data-qqq-layer="{escape(layer)}" '
+        f'data-strategy-conclusion="{escape(card.status_layers.strategy_conclusion)}"'
+        f"{default_open}>"
+        '<summary class="qqq-task-summary">'
+        '<span class="qqq-task-identity">'
+        f"<code>{escape(card.task_id)}</code>"
+        f'<span class="qqq-layer-badge">{escape(layer)} · {escape(_QQQ_LAYER_LABELS[layer])}</span>'
+        "</span>"
+        f"<strong>{escape(card.title_zh)}</strong>"
+        f"<span>{escape(card.positioning_zh)}</span>"
+        '<i aria-hidden="true">⌄</i>'
+        "</summary>"
+        '<div class="qqq-task-body">'
+        '<div class="qqq-reader-grid">'
+        '<section class="qqq-reader-fact qqq-completed">'
+        "<h5>已经做到</h5>"
+        f"<p>{escape(card.completed_zh)}</p>"
+        "</section>"
+        '<section class="qqq-reader-fact qqq-not-proven">'
+        "<h5>仍不能证明</h5>"
+        f"<p>{escape(card.not_proven_zh)}</p>"
+        "</section>"
+        '<section class="qqq-reader-fact qqq-blocker">'
+        "<h5>为什么停在这里</h5>"
+        f"<p>{escape(card.blocker_zh)}</p>"
+        "</section>"
+        '<section class="qqq-reader-fact qqq-next">'
+        "<h5>接下来要看什么</h5>"
+        f"<p>{escape(card.next_reader_action_zh)}</p>"
+        "</section>"
+        "</div>"
+        '<div class="qqq-priority-facts">'
+        "<h5>必须按这个顺序理解</h5>"
+        f"<ol>{priority_facts}</ol>"
+        "</div>"
+        f"{mismatch}"
+        '<details class="qqq-audit">'
+        "<summary>查看五层状态与 exact source</summary>"
+        '<div class="qqq-audit-body">'
+        f'<dl class="qqq-layer-grid">{status_rows}</dl>'
+        '<div class="qqq-source-ref">'
+        f"<p><strong>source</strong> <code>{escape(card.source.path)}</code></p>"
+        f"<p>Git blob <code>{escape(card.source.git_blob)}</code> · "
+        f"bytes <code>{card.source.byte_count}</code></p>"
+        "</div></div></details>"
+        "</div></details>"
+    )
+
+
+def _render_qqq_options_projection(showcase: AtlasCitedQueryShowcase) -> str:
+    _validate_qqq_options_projection_binding(showcase)
+    bundle = showcase.qqq_options_projection
+    by_task = {item.task_id: item for item in bundle.cards}
+    group_sections = "".join(
+        (
+            f'<section class="qqq-group qqq-group-{index}" '
+            f'data-qqq-group="{escape(group.group_id)}">'
+            '<div class="qqq-group-head">'
+            f'<span class="qqq-group-number">{index:02d}</span>'
+            '<div><p class="qqq-group-kicker">READER GROUP</p>'
+            f"<h3>{escape(group.title_zh)}</h3>"
+            f"<p>{escape(group.capability_zh)}</p></div>"
+            "</div>"
+            '<div class="qqq-group-boundary">'
+            f"<p><strong>还不能证明：</strong>{escape(group.not_proven_zh)}</p>"
+            f"<p><strong>下一道决定：</strong>{escape(group.owner_need_zh)}</p>"
+            "</div>"
+            '<div class="qqq-task-list">'
+            + "".join(_render_qqq_projection_card(by_task[task_id]) for task_id in group.task_ids)
+            + "</div></section>"
+        )
+        for index, group in enumerate(bundle.groups, start=1)
+    )
+    return f"""
+    <section class="qqq-projection" aria-labelledby="qqq-projection-title">
+      <div class="section-kicker">QQQ OPTIONS · READER-FIRST GOVERNED PROJECTION</div>
+      <div class="qqq-title-row">
+        <div>
+          <h2 id="qqq-projection-title">QQQ 期权研究链：做到哪里、还缺什么</h2>
+          <p>这里把 13 个研发节点翻译成普通读者能直接判断的四件事：已经做到什么、仍不能证明什么、为什么被阻塞、下一步要看什么。</p>
+        </div>
+        <div class="qqq-count" aria-label="投影范围"><strong>13</strong><span>个 exact 节点</span><small>4 组 · 5 层状态</small></div>
+      </div>
+      <div class="qqq-decision" data-aggregate-conclusion="{escape(bundle.aggregate_conclusion)}">
+        <div class="qqq-decision-label"><span>当前总判定</span><strong>暂不继续</strong></div>
+        <div class="qqq-decision-copy">
+          <code>{escape(bundle.aggregate_conclusion)}</code>
+          <p>{escape(bundle.aggregate_explanation_zh)}</p>
+        </div>
+      </div>
+      <div class="qqq-reader-boundary" aria-label="读者结论边界">
+        <div><span>可以确认</span><strong>工程合同、机械与检查工具持续完善</strong></div>
+        <div><span>不能推出</span><strong>策略有效、收益稳健或具备部署条件</strong></div>
+        <div><span>当前关键原因</span><strong>试点超限，Owner 已签署 aggregate NO-GO</strong></div>
+      </div>
+      <p class="qqq-layer-guide"><strong>A / B / C 不是成绩：</strong>A 是读者必须先看到的主线治理事实，B 是次级证据，C 是“机械已实现但 policy 未授权”。页面没有绿色成功状态。</p>
+      <div class="qqq-groups">{group_sections}</div>
+      <p class="qqq-projection-safety"><strong>边界：</strong>primary window 从 <code>{escape(bundle.primary_research_start)}</code> 开始；本区块只重放 Owner 已接受的 projection authority，不执行新研究、回测、外部平台、投资结论、production 或 broker action。</p>
+    </section>
+    """
+
+
 def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
     by_question = {item.request.question_id: item for item in showcase.responses}
     if set(by_question) != set(CitedQueryQuestionId):
@@ -1013,6 +1199,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     )
     cards = "".join(_render_response(item) for item in showcase.responses)
     system_flow = _render_system_flow_map(showcase)
+    qqq_options_projection = _render_qqq_options_projection(showcase)
     result_ledger = _render_result_ledger(showcase)
     snapshot_id = str(showcase.snapshot_payload["snapshot_id"])
     diff_id = str(showcase.diff_payload["diff_id"])
@@ -1037,6 +1224,80 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .metric span {{ color:#d9e8ff; font-size:.82rem; }}
     main {{ width:min(1120px,calc(100% - 2rem)); margin:0 auto; padding:1.6rem 0 4rem; }}
     .notice {{ margin:0 0 1.4rem; padding:1rem 1.15rem; border-left:5px solid var(--blue); border-radius:.55rem; background:#eaf1ff; }}
+    .qqq-projection {{ margin:0 0 1.5rem; padding:1.35rem; border:1px solid #d9dfe9; border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; }}
+    .qqq-title-row {{ display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; margin:.35rem 0 1rem; }}
+    .qqq-title-row h2 {{ margin:0 0 .35rem; font-size:clamp(1.45rem,2.8vw,2.15rem); line-height:1.15; }}
+    .qqq-title-row p {{ max-width:760px; margin:0; color:var(--muted); }}
+    .qqq-count {{ flex:0 0 142px; padding:.72rem .85rem; border:1px solid #d8dfee; border-radius:.75rem; text-align:center; background:#f7f9fc; }}
+    .qqq-count strong,.qqq-count span,.qqq-count small {{ display:block; }}
+    .qqq-count strong {{ color:#334b77; font-size:1.65rem; line-height:1; }}
+    .qqq-count span {{ margin:.2rem 0; font-size:.72rem; font-weight:850; }}
+    .qqq-count small {{ color:var(--muted); font-size:.62rem; }}
+    .qqq-decision {{ display:grid; grid-template-columns:180px minmax(0,1fr); overflow:hidden; border:1px solid #d85c70; border-radius:.86rem; background:#fff7f8; }}
+    .qqq-decision-label {{ display:flex; flex-direction:column; justify-content:center; padding:1rem; color:#fff; background:#a9364b; }}
+    .qqq-decision-label span {{ font-size:.68rem; font-weight:850; letter-spacing:.08em; }}
+    .qqq-decision-label strong {{ font-size:1.25rem; }}
+    .qqq-decision-copy {{ padding:.9rem 1rem; }}
+    .qqq-decision-copy code {{ color:#9b2e43; font-weight:900; }}
+    .qqq-decision-copy p {{ margin:.28rem 0 0; color:#563942; font-size:.88rem; }}
+    .qqq-reader-boundary {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; margin:.8rem 0; }}
+    .qqq-reader-boundary > div {{ padding:.72rem .78rem; border:1px solid #e0e5ed; border-radius:.68rem; background:#f8fafc; }}
+    .qqq-reader-boundary span {{ display:block; color:#6a7485; font-size:.62rem; font-weight:850; letter-spacing:.07em; }}
+    .qqq-reader-boundary strong {{ display:block; margin-top:.18rem; color:#29364a; font-size:.78rem; line-height:1.42; }}
+    .qqq-reader-boundary > div:nth-child(2) {{ border-color:#e6c278; background:#fff9ed; }}
+    .qqq-reader-boundary > div:nth-child(3) {{ border-color:#e0a2ad; background:#fff7f8; }}
+    .qqq-layer-guide {{ margin:0 0 1rem; padding:.65rem .75rem; border-left:4px solid #7650a8; color:#535d70; background:#f7f2fc; font-size:.75rem; }}
+    .qqq-groups {{ display:grid; gap:1rem; }}
+    .qqq-group {{ overflow:hidden; border:1px solid #dfe4ec; border-radius:.82rem; background:#fbfcfe; }}
+    .qqq-group-head {{ display:grid; grid-template-columns:42px minmax(0,1fr); gap:.75rem; padding:1rem 1rem .75rem; }}
+    .qqq-group-number {{ display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:50%; color:#fff; background:#425a84; font-size:.72rem; font-weight:900; }}
+    .qqq-group-kicker {{ margin:0; color:#6d7890; font-size:.58rem!important; font-weight:900; letter-spacing:.1em; }}
+    .qqq-group-head h3 {{ margin:.08rem 0 .2rem; font-size:1.05rem; }}
+    .qqq-group-head p {{ margin:0; color:#5f6b7e; font-size:.78rem; }}
+    .qqq-group-2 .qqq-group-number {{ background:#7650a8; }}
+    .qqq-group-3 .qqq-group-number {{ background:#9b6b12; }}
+    .qqq-group-4 .qqq-group-number {{ background:#a9364b; }}
+    .qqq-group-boundary {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; padding:0 1rem .85rem; }}
+    .qqq-group-boundary p {{ margin:0; padding:.58rem .65rem; border-radius:.55rem; color:#5a6679; background:#eef2f7; font-size:.7rem; }}
+    .qqq-group-boundary p:first-child {{ background:#fff6e7; }}
+    .qqq-task-list {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; padding:.85rem; border-top:1px solid #e1e6ee; background:#fff; }}
+    .qqq-task-card {{ min-width:0; overflow:hidden; border:1px solid #dfe5ee; border-radius:.7rem; background:#f9fbfd; }}
+    .qqq-task-card > summary {{ border:0; background:transparent; }}
+    .qqq-task-summary {{ position:relative; display:flex; min-height:154px; padding:.78rem; flex-direction:column; list-style:none; }}
+    .qqq-task-summary::-webkit-details-marker {{ display:none; }}
+    .qqq-task-summary:focus-visible {{ outline:3px solid #6e9fea; outline-offset:-3px; }}
+    .qqq-task-identity {{ display:flex; justify-content:space-between; align-items:center; gap:.5rem; }}
+    .qqq-task-identity > code {{ color:#425a84; font-size:.67rem; font-weight:800; }}
+    .qqq-layer-badge {{ padding:.15rem .38rem; border-radius:999px; color:#3d5686; background:#eaf0fa; font-size:.55rem; font-weight:850; white-space:nowrap; }}
+    .qqq-layer-b .qqq-layer-badge {{ color:#7f5a0b; background:#fff1d2; }}
+    .qqq-layer-c .qqq-layer-badge {{ color:#684393; background:#f1e8fb; }}
+    .qqq-task-summary > strong {{ margin:.65rem 0 .28rem; font-size:.94rem; }}
+    .qqq-task-summary > span:not(.qqq-task-identity) {{ color:#5f6b7e; font-size:.72rem; line-height:1.45; }}
+    .qqq-task-summary > i {{ position:absolute; right:.75rem; bottom:.55rem; color:#58709b; font-style:normal; transition:transform .16s ease; }}
+    .qqq-task-card[open] .qqq-task-summary > i {{ transform:rotate(180deg); }}
+    .qqq-task-body {{ padding:.8rem; border-top:1px solid #dfe5ee; background:#fff; }}
+    .qqq-reader-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; }}
+    .qqq-reader-fact {{ min-width:0; padding:.6rem; border:1px solid #e3e7ee; border-radius:.55rem; background:#f8fafc; }}
+    .qqq-reader-fact h5,.qqq-priority-facts h5 {{ margin:0 0 .3rem; color:#4a5870; font-size:.65rem; }}
+    .qqq-reader-fact p {{ margin:0; color:#536075; font-size:.69rem; line-height:1.48; }}
+    .qqq-not-proven {{ border-color:#e6ca91; background:#fffaf1; }}
+    .qqq-blocker {{ border-color:#e4acb6; background:#fff7f8; }}
+    .qqq-next {{ border-color:#cfc0e2; background:#faf7fd; }}
+    .qqq-priority-facts {{ margin-top:.6rem; padding:.6rem; border-left:4px solid #a9364b; border-radius:.45rem; background:#fff7f8; }}
+    .qqq-priority-facts ol {{ display:grid; gap:.35rem; margin:0; padding:0; list-style:none; }}
+    .qqq-priority-facts li {{ display:grid; grid-template-columns:24px minmax(0,1fr); align-items:start; gap:.4rem; color:#603943; font-size:.67rem; }}
+    .qqq-priority-facts li span {{ display:flex; align-items:center; justify-content:center; width:21px; height:21px; border-radius:50%; color:#fff; background:#a9364b; font-size:.5rem; }}
+    .qqq-source-warning {{ margin:.6rem 0 0; padding:.55rem; border:1px solid #e0b55b; border-radius:.5rem; color:#6d5117; background:#fff8e9; font-size:.68rem; }}
+    .qqq-audit {{ margin-top:.6rem; overflow:hidden; border:1px solid #dfe5ee; border-radius:.52rem; background:#f6f8fb; }}
+    .qqq-audit > summary {{ padding:.55rem .65rem; color:#425a84; font-size:.65rem; }}
+    .qqq-audit-body {{ padding:.65rem; border-top:1px solid #dfe5ee; }}
+    .qqq-layer-grid {{ display:grid; gap:.3rem; margin:0; }}
+    .qqq-layer-row {{ display:grid; grid-template-columns:118px minmax(0,1fr); gap:.45rem; align-items:start; }}
+    .qqq-layer-row dt {{ color:#677287; font-size:.58rem; font-weight:800; }}
+    .qqq-layer-row dd {{ margin:0; font-size:.6rem; overflow-wrap:anywhere; }}
+    .qqq-source-ref {{ margin-top:.55rem; padding-top:.5rem; border-top:1px solid #dfe5ee; }}
+    .qqq-source-ref p {{ margin:.15rem 0; color:#657086; font-size:.58rem; overflow-wrap:anywhere; }}
+    .qqq-projection-safety {{ margin:1rem 0 0; padding:.7rem .8rem; border:1px dashed #9aa5b5; border-radius:.6rem; color:#566276; background:#f8fafc; font-size:.72rem; }}
     .flow-map {{ margin:0 0 1.5rem; padding:1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:hidden; }}
     .section-kicker {{ color:var(--teal); font-size:.72rem; font-weight:850; letter-spacing:.14em; }}
     .flow-heading {{ display:flex; align-items:flex-start; justify-content:space-between; gap:1.4rem; margin:.35rem 0 1rem; }}
@@ -1269,8 +1530,8 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .flow-heading {{ display:block; }} .you-are-here {{ margin-top:1rem; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail {{ grid-template-columns:1fr; }} .flow-map,.result-ledger {{ padding:1rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:900px) {{ .flow-heading,.qqq-title-row {{ display:block; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid {{ grid-template-columns:1fr; }} .flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
@@ -1289,6 +1550,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
   <main>
     <p class="notice"><strong>怎样阅读：</strong>先看“一句话回答”，再看“限制”；需要审计时展开引用。LIMITED 不等于研究失败，只表示时间、DQ 或研究上下文尚不完整。本页不是投资建议，也不会触发交易。</p>
     {system_flow}
+    {qqq_options_projection}
     {result_ledger}
     <nav aria-label="五个固定问题">{navigation}</nav>
     <div class="answer-grid">{cards}</div>
@@ -1361,6 +1623,20 @@ def status_explanation_validation_json_bytes(
     ).encode("utf-8")
 
 
+def qqq_options_projection_validation_json_bytes(
+    validation: QQQOptionsProjectionValidation,
+) -> bytes:
+    return (
+        json.dumps(
+            validation.to_dict(),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode("utf-8")
+
+
 def write_cited_query_artifacts(
     showcase: AtlasCitedQueryShowcase,
     output_directory: Path,
@@ -1368,9 +1644,14 @@ def write_cited_query_artifacts(
     if any(item.status != "PASS" for item in showcase.validations):
         raise ValueError("ATLAS_CITED_QUERY_ARTIFACT_VALIDATION_FAILED")
     _status_explanation_records_by_stage(showcase)
+    _validate_qqq_options_projection_binding(showcase)
     output_directory.mkdir(parents=True, exist_ok=True)
     payloads = {
         "index.html": render_cited_query_html(showcase).encode("utf-8"),
+        "qqq_options_projection.json": showcase.qqq_options_projection.canonical_bytes,
+        "qqq_options_projection_validation.json": (
+            qqq_options_projection_validation_json_bytes(showcase.qqq_options_projection_validation)
+        ),
         "responses.json": cited_query_responses_json_bytes(showcase.responses),
         "status_explanation_validation.json": status_explanation_validation_json_bytes(
             showcase.status_explanation_validation
@@ -1397,6 +1678,7 @@ __all__ = [
     "build_cited_query_showcase",
     "cited_query_responses_json_bytes",
     "cited_query_validations_json_bytes",
+    "qqq_options_projection_validation_json_bytes",
     "render_cited_query_html",
     "status_explanation_validation_json_bytes",
     "write_cited_query_artifacts",

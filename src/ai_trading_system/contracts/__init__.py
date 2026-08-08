@@ -180,6 +180,17 @@ from ai_trading_system.contracts.strategy_research_explorer_diff import (
     StrategyResearchExplorerDiff,
     StrategyResearchExplorerDiffContractError,
 )
+from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
+    QQQ_OPTIONS_PROJECTION_GROUP_IDS,
+    QQQ_OPTIONS_PROJECTION_TASK_IDS,
+    QQQOptionsProjectionCard,
+    QQQOptionsProjectionContractError,
+    QQQOptionsProjectionGroup,
+    QQQOptionsProjectionLayer,
+    QQQOptionsProjectionSource,
+    QQQOptionsProjectionStatusLayers,
+    StrategyResearchQQQOptionsProjectionBundle,
+)
 from ai_trading_system.contracts.strategy_research_status_explanation import (
     ATLAS_STATUS_EXPLANATION_STAGE_IDS,
     CitedExplanationFact,
@@ -334,6 +345,15 @@ __all__ = [
     "StrategyResearchExplorerDiff",
     "StrategyResearchExplorerDiffContractError",
     "StrategyResearchExplorerSnapshot",
+    "QQQ_OPTIONS_PROJECTION_GROUP_IDS",
+    "QQQ_OPTIONS_PROJECTION_TASK_IDS",
+    "QQQOptionsProjectionCard",
+    "QQQOptionsProjectionContractError",
+    "QQQOptionsProjectionGroup",
+    "QQQOptionsProjectionLayer",
+    "QQQOptionsProjectionSource",
+    "QQQOptionsProjectionStatusLayers",
+    "StrategyResearchQQQOptionsProjectionBundle",
     "ATLAS_STATUS_EXPLANATION_STAGE_IDS",
     "CitedExplanationFact",
     "ExplanationAuthorityBinding",
