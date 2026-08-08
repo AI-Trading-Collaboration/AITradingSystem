@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -31,9 +31,9 @@ Owner 随后签发
 `owner_decision:TRADING-2500:2026-08-08:authorize_single_zero_order_verified_account_qc_daily_capability_retry_v1`。
 capability coordinator 已在 project `34808569` 完成 read-only code precheck 与授权内唯一一次
 zero-order Cloud backtest；single-use token 随 evidence collection 立即失效。当前阶段只把
-`GO_FOR_DAILY_ENGINEERING_ONLY` 记录为 candidate status，最终 decision 保持
-`DAILY_CAPABILITY_EVIDENCE_COLLECTED_REVIEW_PENDING`，直到 independent reviewer 对 ordinary-pushed
-exact evidence 签署 tracked attestation；2499 在此前不得登记。
+`GO_FOR_DAILY_ENGINEERING_ONLY` 记录为 candidate status。Independent reviewer 随后对 ordinary-pushed
+exact evidence 签署 tracked attestation；strict terminal review 重新加载 canonical evidence 并从事实派生
+所有确认项，最终只在 `DAILY_ENGINEERING_ONLY` scope 内授权登记 2499。
 
 ## 2. 冻结继承与 predecessor evidence
 
@@ -130,7 +130,7 @@ action 得到 `NO_GO_CAPABILITY_OR_ENTITLEMENT`；证据不全得到 `UNKNOWN_EV
 5. S4：ordinary non-force push exact proposal hashes；
 6. S5：Owner 签发新的 hash-bound single-use token；
 7. S6：read-only account/code precheck 后执行唯一一次 retry；
-8. S7：independent review 与 terminal gate；仅 GO 后登记 2499。
+8. S7：independent review 与 terminal gate；reviewed GO 后登记 2499。已完成。
 
 本任务不以 2498 的自然语言方向、失效 token 或 Owner account-verification 操作替代 S5 exact token。
 
@@ -149,6 +149,13 @@ Task-shadow generator 需要 `arch_005_bootstrap_handoff.yaml` 冻结的四个 h
 匹配 handoff 后复制到本 worktree 同相对路径。hydrated files 不是 2500 新验证证据、不进入 Git，随
 worktree 一并清理；source canonical evidence 保持原位不修改。
 
+Full 还会消费 TRADING-2464 的 frozen DQ gate
+`outputs/validation_runtime/trading_2464_o1_dq_20260729T183000Z/o1_dq_gate.json`。隔离 worktree 缺失时，
+只允许从上述 canonical main checkout 按 exact relative path hydration；source/destination 必须同为
+4,057 bytes、SHA-256=`ca02b4310f99d664bb8d987debd4900f4367935b3938663c7a633400d988a1ca`。
+该 ignored file 只用于完整回归 fixture，不是 2500 新 evidence；source 保留、destination 随 worktree
+清理，恢复方式是从 source canonical path 再次按 hash 复制。
+
 若 frozen lane 与 local main 在 integration boundary 发生 drift，2500 只在
 `D:\Work\AITradingSystem_trading2500_qc_daily_retry\outputs\validation_runtime\trading2500_integration\`
 创建 ignored `change_manifest.json` 与 `integration_revalidation_plan.json`。两者仅用于从 exact
@@ -164,6 +171,13 @@ task/system-flow/architecture authority 与 independent-review handoff。退出�
 恢复；随后审计并 remove worktree、delete merged branch、`git worktree prune`。下载的 result artifact
 保留在 Owner 本机 `G:\Download\Jumping Blue Pig.json`，不复制进 repository；tracked evidence 只保存其
 byte count、top-level key inventory 与 SHA-256，不含 raw option rows。
+
+Terminal-review 复用同一绝对路径，新 branch=
+`codex/trading-2500-daily-capability-terminal-review`，exact base=
+`0cafcc6423364f04177ea86b6cc16badb862a42e`。用途仅为 sealed Owner review、2500 terminal status、2499
+registration 与 final authority；不启动 2499 实现。退出条件为 final-tree formal PASS、ordinary non-force
+push、local/origin SHA verify 后 remove worktree、delete branch、`git worktree prune`。本阶段不执行外部
+QuantConnect action。
 
 ## 7. Current progress
 
@@ -251,3 +265,37 @@ failure-fix parent，不是 formal promotion evidence。
 同步 expectation 的首次定向预检 `1 failed in 7.40s`，原因是重复键文本使 patch 命中一处早期历史
 测试、未命中 TRADING-2500 EOF 节点；在任何完整重跑前已原样恢复早期测试，并用 2500 唯一上下文
 更新正确节点。compatibility baseline historical payload 未修改；该定向失败同样不是 promotion evidence。
+
+2026-08-08：Owner/independent reviewer 签署 exact attestation
+`owner_attestation:TRADING-2500:2026-08-08:accept_qc_daily_capability_retry_evidence_v1`。新增 strict
+`daily_capability_gate_retry_review` loader；它重新解析原 evidence schema/seal/canonical bytes，并从真实
+project/code/range/session/quote/Greeks/IV/OI/order/fill/raw-row/prohibited-action facts 派生 review record，
+不信任调用者构造的 PASS。attestation canonical file/content SHA-256=
+`2c5ed5b80a101e0fc8a0285fabb941722189f3d034837df560292b1a031d132a` /
+`46690e117b7e89367bd37dcf1b17c28d6b097a7426a2bc3666337a52a621aded`；focused review+evidence=
+`55 passed in 5.88s`，Ruff PASS。
+
+Terminal decision=`GO_FOR_DAILY_ENGINEERING_ONLY`，successor scope=`DAILY_ENGINEERING_ONLY`，2499 已登记。
+该结论不解除 2493 broader NO-GO，不证明完整历史 coverage/license/download/投资有效性，不激活 2485
+selection 或 2486 execution policy，也不授权进一步 external action。Atlas TRADING-2501 registration window
+将在 2500 ordinary push 后先行；2499 START/LANE 与实现等待包含 2499/2501 两行登记的 exact latest main。
+
+Task-shadow 以本 worktree `PYTHONPATH=src;.` authority 重建并 validate 为 `966/461/505`、两代
+byte-identical；DevEx generate/validate 为 `1095 modules / 1259 tests / 856 direct writers / 0 violations`。
+首次完整 compatibility/deprecation 206-test terminal=`204 passed / 2 failed in 285.06s`：仅新 module/test
+造成 frozen deprecation inventory id/count stale，以及旧 2500 phase successor skip 未承认 terminal-review
+已接管 architecture fitness；无 review/DQ/2499 semantic failure。刷新精确 inventory 三字段、提升 append-only
+current authority 后，定向复核=`6 passed`，再以完全相同
+`python -m pytest -n 16 --dist loadfile tests/test_arch_004_refactor_policy.py tests/test_arch_004g_deprecation.py`
+覆盖得到 `206 passed in 290.35s`。首轮 204/2 与此前 targeted 3/1 均只作为 failure-fix 证据，不作 formal
+promotion evidence；historical prefix 持续为 `3,076,157 bytes` / SHA-256=
+`6dbe0d4a66bb6b00f6b68d830b84a2c0edd55c6bc25237d9ac575bb997896ae5`，byte-identical。
+
+首次 final-tree 五级中 Architecture/Contract/Integration/Reproducibility 分别
+`853/276/995/24` PASS；exclusive Full=`8589 passed / 9 failed / 6 skipped`。九个失败全部在
+`tests/research_strategies/test_o1_relative_opportunity_event_attempt_ledger.py` 的 fixture 构建阶段，
+同源缺失上述 ignored TRADING-2464 DQ gate，2500 review/compatibility/contract 无 node failure。
+该 Full artifact=`full_20260808T043407Z/test_runtime_summary.json`，作为 failure-fix parent 保留；
+修复边界仅为已记录的 canonical ignored-artifact hydration 与本说明，不改变 shared contract、DQ/PIT、
+review decision 或投资语义。修复后先以相同 `-n 16 --dist loadfile` 运行该完整 test file，再从最终
+tracked tree 重跑五级，Full provenance 使用 `failure_fix_rerun` 并绑定该 parent。

@@ -1,0 +1,15 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qc_qqq_options_daily_capability_gate_retry_review
+fragment_kind: module
+owner: external_validation
+module_prefix: src/ai_trading_system/qqq_options_research/daily_capability_gate_retry_review.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_ATTESTATION_PATH
+  - OWNER_ATTESTATION_ID
+  - QCQQQOptionsDailyCapabilityGateRetryIndependentReviewRecord
+  - QCQQQOptionsDailyCapabilityGateRetryReviewContractError
+  - QCQQQOptionsDailyCapabilityGateRetryReviewLoadResult
+  - build_qc_qqq_options_daily_capability_gate_retry_review
+  - load_qc_qqq_options_daily_capability_gate_retry_review
+compatibility_facades: []
+deprecation_status: active_reference_architecture

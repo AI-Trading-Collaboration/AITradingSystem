@@ -1,0 +1,133 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  task_id_sha256: 78e3a6513be839c264f7e86cc8e3ef32b26b41d6baacc565fb269aef37a796ca
+task_record:
+  task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  title: null
+  domain: Strategy research engineering / offline QQQ Options DAILY primary backtest
+    contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: engineering coordinator：从 2500 reviewed GO 建立 strictly offline contract、policy、typed
+    descriptor 与 tests；project owner：只在后继 policy review 中决定投资解释相关阈值
+  requirement_refs:
+  - docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。2500
+    仅证明 Free Cloud 五个 primary-window session 的 DAILY chain/quote/Greeks/IV/OI capability，未证明完整历史覆盖、稳定性或策略有效性。先完成离线合同和
+    fail-closed admission；不执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。当前
+    blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`，不阻塞合同工程，但阻塞真实策略选择、订单/成交模拟与投资结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 必须继承 2481–2488、2493、2497、2500 authority；默认 requested/evaluated start=`2021-02-22`，2022-12-01
+      不得成为默认；只消费 canonical DQ/PIT/evidence/review facts；日级 signal/selection/intent/submit/fill
+      chronology 禁止 same-session lookahead 与 daily-close/same-bar fill；没有 Owner-reviewed
+      DTE/moneyness/delta/spread/OI/volume/fee/slippage/latency/partial-fill/expiry
+      policy 时输出 typed blocked/cash-preservation，不得硬编码。合同及 tests、system flow、generated/compatibility
+      authority 与正式 gates PASS 后 ordinary push。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 7241a29ba0986c90dcd1f7f475cb94aea1f0a7726776dcc35c9aee5fabc57fc2
+  cell_count: 8
+  all_cells:
+  - TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  - Strategy research engineering / offline QQQ Options DAILY primary backtest contract
+  - P0
+  - IN_PROGRESS
+  - engineering coordinator：从 2500 reviewed GO 建立 strictly offline contract、policy、typed
+    descriptor 与 tests；project owner：只在后继 policy review 中决定投资解释相关阈值
+  - 详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。2500
+    仅证明 Free Cloud 五个 primary-window session 的 DAILY chain/quote/Greeks/IV/OI capability，未证明完整历史覆盖、稳定性或策略有效性。先完成离线合同和
+    fail-closed admission；不执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。当前
+    blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`，不阻塞合同工程，但阻塞真实策略选择、订单/成交模拟与投资结论。
+  - 必须继承 2481–2488、2493、2497、2500 authority；默认 requested/evaluated start=`2021-02-22`，2022-12-01
+    不得成为默认；只消费 canonical DQ/PIT/evidence/review facts；日级 signal/selection/intent/submit/fill
+    chronology 禁止 same-session lookahead 与 daily-close/same-bar fill；没有 Owner-reviewed
+    DTE/moneyness/delta/spread/OI/volume/fee/slippage/latency/partial-fill/expiry
+    policy 时输出 typed blocked/cash-preservation，不得硬编码。合同及 tests、system flow、generated/compatibility
+    authority 与正式 gates PASS 后 ordinary push。
+  - 2026-08-08：由 2500 terminal reviewed GO 授权登记，scope=`DAILY_ENGINEERING_ONLY`。本任务只开发离线
+    contract/descriptor/admission/replay 边界；QuantConnect 外部 action、raw data export、full-window
+    cloud backtest、selection authorization、investment interpretation、paper/live/broker/production
+    均为 none/false。
+  raw_line: '|TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1|Strategy
+    research engineering / offline QQQ Options DAILY primary backtest contract|P0|IN_PROGRESS|engineering
+    coordinator：从 2500 reviewed GO 建立 strictly offline contract、policy、typed descriptor
+    与 tests；project owner：只在后继 policy review 中决定投资解释相关阈值|详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。2500
+    仅证明 Free Cloud 五个 primary-window session 的 DAILY chain/quote/Greeks/IV/OI capability，未证明完整历史覆盖、稳定性或策略有效性。先完成离线合同和
+    fail-closed admission；不执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。当前
+    blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`，不阻塞合同工程，但阻塞真实策略选择、订单/成交模拟与投资结论。|必须继承
+    2481–2488、2493、2497、2500 authority；默认 requested/evaluated start=`2021-02-22`，2022-12-01
+    不得成为默认；只消费 canonical DQ/PIT/evidence/review facts；日级 signal/selection/intent/submit/fill
+    chronology 禁止 same-session lookahead 与 daily-close/same-bar fill；没有 Owner-reviewed
+    DTE/moneyness/delta/spread/OI/volume/fee/slippage/latency/partial-fill/expiry
+    policy 时输出 typed blocked/cash-preservation，不得硬编码。合同及 tests、system flow、generated/compatibility
+    authority 与正式 gates PASS 后 ordinary push。|2026-08-08：由 2500 terminal reviewed
+    GO 授权登记，scope=`DAILY_ENGINEERING_ONLY`。本任务只开发离线 contract/descriptor/admission/replay
+    边界；QuantConnect 外部 action、raw data export、full-window cloud backtest、selection
+    authorization、investment interpretation、paper/live/broker/production 均为 none/false。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-7241a29ba0986c90dcd1f7f4
+  task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: engineering coordinator：从 2500 reviewed GO 建立 strictly offline contract、policy、typed
+      descriptor 与 tests；project owner：只在后继 policy review 中决定投资解释相关阈值
+    notes: 2026-08-08：由 2500 terminal reviewed GO 授权登记，scope=`DAILY_ENGINEERING_ONLY`。本任务只开发离线
+      contract/descriptor/admission/replay 边界；QuantConnect 外部 action、raw data export、full-window
+      cloud backtest、selection authorization、investment interpretation、paper/live/broker/production
+      均为 none/false。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:7241a29ba0986c90dcd1f7f475cb94aea1f0a7726776dcc35c9aee5fabc57fc2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  - Strategy research engineering / offline QQQ Options DAILY primary backtest contract
+  - P0
+  - IN_PROGRESS
+  - engineering coordinator：从 2500 reviewed GO 建立 strictly offline contract、policy、typed
+    descriptor 与 tests；project owner：只在后继 policy review 中决定投资解释相关阈值
+  - 详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。2500
+    仅证明 Free Cloud 五个 primary-window session 的 DAILY chain/quote/Greeks/IV/OI capability，未证明完整历史覆盖、稳定性或策略有效性。先完成离线合同和
+    fail-closed admission；不执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。当前
+    blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`，不阻塞合同工程，但阻塞真实策略选择、订单/成交模拟与投资结论。
+  - 必须继承 2481–2488、2493、2497、2500 authority；默认 requested/evaluated start=`2021-02-22`，2022-12-01
+    不得成为默认；只消费 canonical DQ/PIT/evidence/review facts；日级 signal/selection/intent/submit/fill
+    chronology 禁止 same-session lookahead 与 daily-close/same-bar fill；没有 Owner-reviewed
+    DTE/moneyness/delta/spread/OI/volume/fee/slippage/latency/partial-fill/expiry
+    policy 时输出 typed blocked/cash-preservation，不得硬编码。合同及 tests、system flow、generated/compatibility
+    authority 与正式 gates PASS 后 ordinary push。
+  - 2026-08-08：由 2500 terminal reviewed GO 授权登记，scope=`DAILY_ENGINEERING_ONLY`。本任务只开发离线
+    contract/descriptor/admission/replay 边界；QuantConnect 外部 action、raw data export、full-window
+    cloud backtest、selection authorization、investment interpretation、paper/live/broker/production
+    均为 none/false。
+  docs_links:
+  - docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md
+  terminal: false
+  raw_row_sha256: 7241a29ba0986c90dcd1f7f475cb94aea1f0a7726776dcc35c9aee5fabc57fc2
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: c1ee59514b539048b0c24ca76f38df0e647b6d85bdb97ce93ba8474c0870d2e6

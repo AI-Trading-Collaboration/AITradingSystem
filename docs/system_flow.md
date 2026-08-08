@@ -7879,8 +7879,9 @@ gate 为 `GO_FOR_DAILY_ENGINEERING_ONLY`，它也不授权完整 `2021-02-22..pr
 `qqq_options_research.daily_capability_gate_retry` 为 2498 在算法运行前被 account-verification gate
 拦截后的单次重试生成 hash-bound proposal，并严格加载本次 export-safe evidence。2498 token 已失效；
 2500 exact single-use token 已用于唯一一次 read-only-prechecked、zero-order Cloud backtest，并在
-evidence collection 后失效。当前只形成 `GO_FOR_DAILY_ENGINEERING_ONLY` candidate，independent
-review 仍为 `PENDING_PROJECT_OWNER_REVIEW`。
+evidence collection 后失效。`daily_capability_gate_retry_review` 随后从 ordinary-pushed canonical evidence
+事实派生 independent review record；Owner 已接受 terminal `GO_FOR_DAILY_ENGINEERING_ONLY`，scope 仅为
+`DAILY_ENGINEERING_ONLY`。
 
 ```text
 2498 tracked proposal/policy + invalidated token + blocked attempt evidence
@@ -7901,11 +7902,37 @@ review 仍为 `PENDING_PROJECT_OWNER_REVIEW`。
   -> same GO_FOR_DAILY_ENGINEERING_ONLY | NO_GO_CAPABILITY_OR_ENTITLEMENT
      | UNKNOWN_EVIDENCE_INCOMPLETE taxonomy
   -> candidate GO + DAILY_CAPABILITY_EVIDENCE_COLLECTED_REVIEW_PENDING
-  -> only reviewed GO permits registering TRADING-2499
+  -> strict Owner review replays evidence schema/status/scope/identity/checksum
+  -> reviewed GO + successor scope = DAILY_ENGINEERING_ONLY
+  -> register TRADING-2499 offline contract only
 ```
 
 本次 project mutation=`0`，second backtest、raw rows、API/CLI/HTTP/Object Store、download、
 purchase/subscription、range expansion、investment interpretation、paper/live/broker/production 均未发生且
-继续禁止。Evidence candidate 只证明目标五日 DAILY contract 在 Free Cloud 可用；它不证明完整历史窗口、
-策略收益或 license/export 权利。2499 必须等待 independent reviewer 对 ordinary-pushed exact evidence
-签署 tracked attestation，不能直接消费聊天中的 candidate GO。
+继续禁止。Reviewed evidence 只证明目标五日 DAILY contract 在 Free Cloud 可用；它不证明完整历史窗口、
+策略收益或 license/export 权利。2499 只能消费 tracked review loader 的 canonical result，不能直接消费
+聊天中的 GO 或调用者自报 PASS。
+
+## TRADING-2499 QQQ Options Daily Primary Backtest Contract V1
+
+2500 reviewed GO 只打开 strictly offline DAILY engineering contract。2499 默认 primary requested/evaluated
+start=`2021-02-22`，显式区分 signal/selection/intent/submit/fill/valuation sessions，禁止 daily-close、
+same-bar 与 same-session lookahead。所有 admission 必须从 canonical DQ/PIT/evidence facts 派生；未评估项
+保持 `NOT_EVALUATED`/typed FAIL。
+
+```text
+2500 canonical evidence + tracked independent review
+  -> reviewed GO_FOR_DAILY_ENGINEERING_ONLY
+  -> 2499 offline DAILY contract/descriptor/admission
+  -> primary start = 2021-02-22; requested/evaluated ranges disclosed
+  -> prior-session OI/Greeks/IV + reviewed XNYS chronology
+  -> canonical DQ/PIT scope/as-of/checksum/status replay
+  -> Owner policy missing
+     -> POLICY_BLOCKED_CASH_PRESERVATION / orders = fills = 0
+  -> future external/cloud/full-window run requires a new task and exact authorization
+```
+
+2485 selection 仍为 `selection_authorized=false`；DTE/moneyness/delta/spread/OI/volume、fee/slippage/latency、
+partial-fill、expiry、position sizing 等影响投资解释的数值在 Owner-reviewed policy 前不得硬编码。2499 当前
+不执行 QuantConnect 登录、project mutation、Cloud run、API/CLI/HTTP/Object Store、download/export、
+paper/live/broker/production。

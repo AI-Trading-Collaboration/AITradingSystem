@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 74
+fragment_count: 75
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: ffbc9a4c5e98d776e23e87074ed403aaa1880104791fb4bbff3e50ece5236f44
+  current_sha256: fede5a764d8550e467eefe699a5a10d50698db4d390395dc4d41b18617d0cedd
   fragment_root: config/architecture/fragments/flows
   fragment_count: 33
   fragment_paths:
@@ -231,7 +231,7 @@ fragments:
   owner: architecture_governance
   target_id: system_flow
   path: config/architecture/fragments/flows/qc_qqq_options_daily_capability_gate_retry.yaml
-  sha256: a3d4555dd7e443372c2e478244ec361d9b8d03e90b54f3444da5d5c8c5be5f8f
+  sha256: fca9a1f96b4555129702ac6f2175618244d913228fe17e7690564870ba61f1c6
   generated_source_of_truth_active: false
 - fragment_id: flow.qc_qqq_options_license_export_due_diligence
   fragment_kind: flow
@@ -442,6 +442,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_daily_capability_gate_retry.yaml
   sha256: a0ca0c126dc4a846c8b387b16857d20bddef3d69da477c94dd36d2fd74894110
+  generated_source_of_truth_active: false
+- fragment_id: module.qc_qqq_options_daily_capability_gate_retry_review
+  fragment_kind: module
+  owner: external_validation
+  target_id: null
+  path: config/architecture/fragments/modules/qc_qqq_options_daily_capability_gate_retry_review.yaml
+  sha256: 6d07c7ee1a04ad3811535e6244fa6dc88b44d5583ca2c6aba9721ea5d5787c23
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_license_export_due_diligence
   fragment_kind: module
