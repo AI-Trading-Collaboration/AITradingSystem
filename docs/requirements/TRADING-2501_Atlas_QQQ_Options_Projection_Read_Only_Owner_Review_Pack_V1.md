@@ -6,13 +6,16 @@
 
 优先级：`P1`
 
-状态：`IN_PROGRESS`
+状态：`OWNER_ACCEPTED_PENDING_INTEGRATION`
 
 governed mode：`SINGLE_LANE`
 
 exact registration base：`c233c82e2f6c4dfcd4b1302c99b98789bc6f3def`
 
 Owner decision：`owner_decision:TRADING-2501:2026-08-08:build_read_only_owner_review_pack_before_canonical_projection_v1`
+
+Owner acceptance：
+`owner_decision:TRADING-2501:2026-08-08:accept_read_only_owner_review_pack_recommendations_v1`
 
 production effect：`none`
 
@@ -196,9 +199,16 @@ Owner 对每项只能选择以下之一：
 - `KEEP_EXCLUDED`：等同 D，给出 blocker 与可观察 exit condition；
 - `RETURN_FOR_SOURCE_RECONCILIATION`：发现 source/status/identity 冲突，先回原 authority owner 修复。
 
-当前建议集合：`A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、
-`C={2485,2486,2487,2488}`、`D={}`。这是 review proposal，不是 canonical projection decision；
-Owner 未逐项签署时，2494–2496 的 13 项排除规则保持不变。
+Owner 已接受集合：`A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、
+`C={2485,2486,2487,2488}`、`D={}`。acceptance exact token 为：
+
+```text
+owner_decision:TRADING-2501:2026-08-08:accept_read_only_owner_review_pack_recommendations_v1
+```
+
+该 token 同时接受本节的 reader wording、2489 source-status mismatch 披露、2492 阅读顺序、2493 dominance、
+primary-window 与 no-green/no-strategy-PASS hard stops。它只授权后继任务建立 serial projection contract/renderer
+consumer；在该后继任务完成前，2494–2496 的 13 项排除规则和当前页面保持不变。
 
 ## 6. 冲突支配与 hard stops
 
@@ -279,8 +289,10 @@ registered known-unrelated exclusion。
 - 2026-08-08：从该 exact tree 重放 13 个 source，source-set SHA-256=
   `29c97b0524c0ccf2ce1b215da9122bbfa875f45b08d682145a7409d6c1abd11f`；完成四组、五层状态、
   A/B/C/D 建议、2492/2493 dominance 与 Owner decision contract；
-- 当前：`OWNER_REVIEW_REQUIRED`。尚未签署任何逐项 projection decision，尚未启动 canonical projection、
-  renderer/page mutation、外部动作或投资结论。
+- 2026-08-08：Owner 回复“按建议接受”，封存 acceptance token=
+  `owner_decision:TRADING-2501:2026-08-08:accept_read_only_owner_review_pack_recommendations_v1`；
+- 当前：`OWNER_ACCEPTED_PENDING_INTEGRATION`。A/B/C/D 分层与 reader wording 已获接受，但 2501 尚未完成
+  latest-main integration；canonical projection、renderer/page mutation、外部动作与投资结论仍未启动。
 
 ## 11. Owner 初步验收入口
 
@@ -294,12 +306,12 @@ registered known-unrelated exclusion。
 
 |审阅范围|建议|Owner decision|需要补充的理由|
 |---|---|---|---|
-|2481–2483 foundation mainline facts|A|`PENDING_OWNER_REVIEW`|—|
-|2484 adapter evidence|B|`PENDING_OWNER_REVIEW`|—|
-|2485–2488 policy-blocked mechanics|C|`PENDING_OWNER_REVIEW`|—|
-|2489–2491 evidence scaffolding|B|`PENDING_OWNER_REVIEW`|—|
-|2492 bounded pilot NO-GO|A|`PENDING_OWNER_REVIEW`|—|
-|2493 signed aggregate NO-GO|A|`PENDING_OWNER_REVIEW`|—|
+|2481–2483 foundation mainline facts|A|`ACCEPT_AS_RECOMMENDED`|主层仍须明确“合同底座，不是策略结论”。|
+|2484 adapter evidence|B|`ACCEPT_AS_RECOMMENDED`|只进入次级证据层。|
+|2485–2488 policy-blocked mechanics|C|`ACCEPT_AS_RECOMMENDED`|必须与 unauthorized/cash-preservation 同屏。|
+|2489–2491 evidence scaffolding|B|`ACCEPT_AS_RECOMMENDED`|保留 manual/synthetic caveat 与 2489 mismatch。|
+|2492 bounded pilot NO-GO|A|`ACCEPT_AS_RECOMMENDED`|NO-GO 与 cap violation 必须先于 order/fill。|
+|2493 signed aggregate NO-GO|A|`ACCEPT_AS_RECOMMENDED`|aggregate NO-GO 支配 subordinate conditional axes。|
 
-只有这些 decision 被 exact Owner token 接受后，S6 才能另立 projection contract/renderer consumer 任务；
-2501 本身不修改当前页面。
+这些 decision 已由上述 exact Owner token 接受。S6 可在 2501 latest-main integration 后另立 serial
+projection contract/renderer consumer 任务；2501 本身仍不修改当前页面。
