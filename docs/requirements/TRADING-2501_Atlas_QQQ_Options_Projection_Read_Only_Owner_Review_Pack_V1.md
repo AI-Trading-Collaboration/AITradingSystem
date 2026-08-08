@@ -52,6 +52,31 @@ Web Pro advisory 使用 exact reviewed commit：
 12. `TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`；
 13. `TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。
 
+### 2.1 Exact source replay manifest
+
+以下清单从 registration commit `2064a2e1855229f7260c725f8287174dc09b63f3` 的 Git tree
+直接重放。`blob` 是 Git blob identity，`bytes` 是该 checkout 中的文件字节数。按表中顺序拼接
+`path|blob|bytes\n` 后的 source-set SHA-256 为
+`29c97b0524c0ccf2ce1b215da9122bbfa875f45b08d682145a7409d6c1abd11f`。
+
+|任务|source path|blob|bytes|
+|---|---|---|---:|
+|2481|`docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md`|`a6a17188e81da79d1d70555725c6e66bbeedd426`|12,767|
+|2482|`docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md`|`8c820d8ff60cb19a954a5a5e54ffb54913790bfb`|10,175|
+|2483|`docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md`|`d911ee2d3107e8bada019c8cfc1e9f49f51b412d`|14,863|
+|2484|`docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md`|`59cb3f06a6ea26c9970077308f96a7361c75b053`|13,057|
+|2485|`docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md`|`0ba4124cfffea203366c59deb4180b7679549f2e`|12,012|
+|2486|`docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md`|`61317fe900d0100cbebf0683c711848ffda21f5b`|15,349|
+|2487|`docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md`|`12fc97779072a2784755f15a7af803bd7787047f`|18,000|
+|2488|`docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md`|`bac081ec5335a7672c4520acacefbdf118383b42`|19,025|
+|2489|`docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md`|`2c13c30430dbdb889a84e45c8e4af7e939cb31d4`|20,461|
+|2490|`docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md`|`aebf21519ad13f7b796145bbbe392a943f3fc059`|19,295|
+|2491|`docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md`|`cbc706f0a0a342db8e9535602f529cd82968e92f`|11,492|
+|2492|`docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`|`c8a47316c0e83f9469fa26d6956837aabd524bdf`|26,705|
+|2493|`docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`|`b4dbde69804a4aeccffe2692ebe9e5f42442f789`|12,387|
+
+source-set 任一 path/blob/byte-count 漂移都必须重新审阅，不能继续沿用本 pack 的逐项建议。
+
 ## 3. 冻结的读者分组
 
 Owner Review Pack 按读者理解顺序分成四组，而不是按文件编号平铺：
@@ -78,24 +103,102 @@ Owner Review Pack 按读者理解顺序分成四组，而不是按文件编号�
 
 ## 5. 初步逐项建议（待 Owner 决定）
 
-|任务|Web Pro 初步分类|面向读者的一句话定位|
-|---|---|---|
-|2481|A|共享记录与安全边界已冻结；这只是数据合同，不是策略结论。|
-|2482|A|DQ/PIT 与证据身份可被严格重放；它证明可审计性，不证明收益。|
-|2483|A|信号包与 run manifest 可确定性导出；输入质量仍不等于选券或执行有效。|
-|2484|B|平台 adapter contract 已建立；真实平台能力和权限仍需独立证据。|
-|2485|C|确定性选券机制存在，但关键阈值未获 Owner review，默认不授权选券。|
-|2486|C|执行现实模型结构已建立，但 latency、slippage、fee 等政策未获批准。|
-|2487|C|现金、权利金与结算记账机制已建立；真实成交与策略盈亏仍未证明。|
-|2488|C|到期与公司行动安全路径已建立；exercise/assignment 等仍按 fail-closed 处理。|
-|2489|B|人工平台证据包可被规范收集；manual evidence 不等于完整历史验证。|
-|2490|B|本地 ingest/validator/reconciliation 边界已建立；外部 raw data authority 仍受限。|
-|2491|B|跨层 synthetic harness 可检查合同连贯性；synthetic PASS 不等于市场有效。|
-|2492|A|bounded pilot 的 aggregate verdict 为 NO-GO；必须先解释 cap violation，再提 1 order/1 fill。|
-|2493|A|aggregate `NO_GO_KEEP_BLOCKED` 支配局部 `CONDITIONAL_GO`，不能被局部通过覆盖。|
+### 5.1 A/B/C/D 表示什么
 
-分类语义将在实现阶段从 exact authority 固化；本表是 Owner Review Pack 的初步审阅建议，不是
-canonical projection decision。`D` 当前为空；若 exact source drift 或 authority 不足，可把对应项降为 D。
+这些字母不是优先级、成绩或完成度，也不使用“绿色=成功”的隐含语义：
+
+- `A — MAINLINE_GOVERNANCE_FACT`：Owner 接受后，可作为主阅读层的基础事实或支配性治理结论；
+- `B — SECONDARY_EVIDENCE_FACT`：Owner 接受后，只进入次级证据层或组级摘要，不能成为主状态；
+- `C — BLOCKED_MECHANICS_FACT`：Owner 接受后，只能说明“机械能力已实现但 policy 未授权”，必须与
+  cash-preservation/blocker 同屏；
+- `D — KEEP_EXCLUDED`：source drift、authority 不足、含义冲突或读者风险未消除，继续排除。
+
+`A` 不表示策略 PASS。2492/2493 被建议为 A，恰恰因为 `NO-GO` 是必须让读者优先看到的支配性事实。
+
+### 5.2 五层状态矩阵
+
+`engineering` 使用 current task register（source of truth）的状态；其他四层从 exact requirement facts
+保守归纳。`NOT_ESTABLISHED` 表示没有形成策略有效性结论，不等于负收益结论。
+
+|任务|engineering|evidence quality|policy readiness|external authority|strategy conclusion|建议|
+|---|---|---|---|---|---|---|
+|2481|`BASELINE_DONE`|`OFFLINE_CONTRACT_REPLAY`|`FROZEN_WITHOUT_INVESTMENT_THRESHOLDS`|`NOT_GRANTED`|`NOT_ESTABLISHED`|A|
+|2482|`BASELINE_DONE`|`OFFLINE_DQ_PIT_REPLAY`|`NUMERIC_FRESHNESS_THRESHOLDS_UNRESOLVED`|`NOT_GRANTED`|`NOT_ESTABLISHED`|A|
+|2483|`BASELINE_DONE`|`OFFLINE_SIGNAL_PACKAGE_REPLAY`|`ETF_MAPPING_AND_NON_PRIMARY_UNRESOLVED`|`NOT_GRANTED`|`NOT_ESTABLISHED`|A|
+|2484|`BASELINE_DONE`|`OFFLINE_ADAPTER_CONTRACT_REPLAY`|`CONTRACT_READY_NO_CLOUD_RUN`|`NOT_GRANTED`|`NOT_ESTABLISHED`|B|
+|2485|`BASELINE_DONE`|`SYNTHETIC_SELECTOR_MECHANICS`|`OWNER_REVIEW_REQUIRED_SELECTION_FALSE`|`NOT_GRANTED`|`NOT_ESTABLISHED`|C|
+|2486|`BASELINE_DONE`|`SYNTHETIC_EXECUTION_MECHANICS`|`OWNER_REVIEW_REQUIRED_EXECUTION_FALSE`|`NOT_GRANTED`|`NOT_ESTABLISHED`|C|
+|2487|`BASELINE_DONE`|`SYNTHETIC_ACCOUNTING_MECHANICS`|`OWNER_REVIEW_REQUIRED_ACCOUNTING_FALSE`|`NOT_GRANTED`|`NOT_ESTABLISHED`|C|
+|2488|`BASELINE_DONE`|`SYNTHETIC_LIFECYCLE_MECHANICS`|`OWNER_REVIEW_REQUIRED_LIFECYCLE_FALSE`|`NOT_GRANTED`|`NOT_ESTABLISHED`|C|
+|2489|`BASELINE_DONE`|`OFFLINE_MANUAL_BUNDLE_CONTRACT_ONLY`|`COLLECTION_AUTHORIZED_FALSE`|`NOT_GRANTED`|`NOT_ESTABLISHED`|B|
+|2490|`BASELINE_DONE`|`SYNTHETIC_RECONCILIATION_ONLY`|`RECONCILIATION_AUTHORIZED_FALSE`|`NOT_GRANTED`|`NOT_ESTABLISHED`|B|
+|2491|`BASELINE_DONE`|`SYNTHETIC_CROSS_LAYER_ONLY`|`PILOT_AUTHORIZED_FALSE`|`NOT_GRANTED`|`NOT_ESTABLISHED`|B|
+|2492|`BASELINE_DONE`|`BOUNDED_EXTERNAL_EVIDENCE_SCOPE_VIOLATION`|`SINGLE_USE_TOKEN_CONSUMED`|`NO_FURTHER_ACTION_AUTHORIZED`|`PILOT_NO_GO_LICENSE_OR_EVIDENCE`|A|
+|2493|`BASELINE_DONE`|`OWNER_SIGNED_GOVERNANCE_RECORD`|`SIGNED_NO_GO`|`NO_EXTERNAL_ACTION_AUTHORIZED`|`NO_GO_KEEP_BLOCKED`|A|
+
+审计发现：2489 supporting requirement 顶部仍写 `IN_PROGRESS`，current task register 已是
+`BASELINE_DONE`。本 pack 依项目规则以 task register 为 lifecycle source of truth，但把该不一致保留为
+`SOURCE_STATUS_MISMATCH_REVIEW_REQUIRED`；在进入 canonical projection contract 前，应由 2489 authority
+owner 另行协调，而不是由 2501 静默改写历史任务文件。
+
+### 5.3 四组 reader-first 审阅卡
+
+#### 组 1：2481–2484 Foundation contracts
+
+一句话结论：**底座已经能被严格重放，但真实期权研究还没有因此被证明。**
+
+|任务|已完成什么|还不能证明什么|当前 blocker|Owner 初步建议|
+|---|---|---|---|---|
+|2481|冻结 12 类 shared records、canonical seal/replay、安全与 export 边界。|不证明任何选券、成交、收益或平台能力。|投资阈值与 external token 均未授予。|接受 A，表述为“合同底座已冻结”。|
+|2482|冻结 local-cache 与 option-event 分轴的 DQ/PIT、15 项检查和 evidence identity。|不证明 quote/OI/Greeks 在真实研究窗完整、及时或可交易。|freshness/spread 等数值 policy 未审。|接受 A，表述为“质量检查规则已就位”。|
+|2483|建立 daily signal/run package、primary window 与 canonical DQ receipt replay。|不证明 ETF direction mapping、选券、执行或收益。|ETF mapping 与 non-primary authority 未审。|接受 A，表述为“研究输入包可审计”。|
+|2484|建立离线 QC adapter descriptor、subscription/engine/result mapping contract。|不证明 entitlement、真实 engine identity、历史 coverage 或 cloud run 可用。|external token/input admission 未授予。|接受 B，只在证据层展示。|
+
+#### 组 2：2485–2488 Mechanics implemented / policy blocked
+
+一句话结论：**选券、执行、记账和生命周期“怎么运转”已实现，但决定真实行为的 policy 钥匙尚未插入。**
+
+|任务|已完成什么|还不能证明什么|当前 blocker|Owner 初步建议|
+|---|---|---|---|---|
+|2485|确定性 candidate filtering/ranking、SID tie-break 与 no-contract cash path。|不证明哪组 DTE/delta/spread/OI/volume/rank 适合投资。|`selection_authorized=false`；所有数值为 `UNKNOWN_REQUIRES_POLICY_REVIEW`。|接受 C，与 policy blocker 同屏。|
+|2486|next-independent-minute、bid/ask side、limit、partial/reject/cancel 机械与 DQ replay。|不证明真实 latency、slippage、fee、quote-age 或成交概率。|`execution_authorized=false`；现实模型数值未审。|接受 C，不使用“执行验证通过”。|
+|2487|Decimal cash/reservation/premium/fee/settlement/lot/snapshot mechanics。|不证明真实初始资金、预算、费用、结算或策略 PnL。|`accounting_authorized=false`；cash/fee/settlement 方法未审。|接受 C，表述为“会计机械已实现”。|
+|2488|open/partial/exit/expiry/scope-violation lifecycle 与 fail-closed safety。|不证明真实 exercise/assignment/corporate-action 处置可用。|`lifecycle_authorized=false`；pre-expiry/settlement policy 未审。|接受 C，突出 scope violation 与 invalid-run。|
+
+#### 组 3：2489–2491 Evidence scaffolding / synthetic validation
+
+一句话结论：**证据收集、对账和跨层验收工具已就位，但它们目前主要证明“工具会检查”，不是“真实策略已通过”。**
+
+|任务|已完成什么|还不能证明什么|当前 blocker|Owner 初步建议|
+|---|---|---|---|---|
+|2489|定义 Results/Orders/Trades/Logs/Report/Project Files/screenshot/attestation strict bundle。|不证明真实 bundle 已完整收集或 license/export 已满足。|`collection_authorized=false`，且存在 supporting-status mismatch。|接受 B，但先标注 source mismatch。|
+|2490|定义 normalized ingest、七类 difference taxonomy 与 strict reconciliation。|不证明真实 external/local facts 已在 reviewed tolerance 下对齐。|`reconciliation_authorized=false`；mapping/tolerance 未审。|接受 B，只展示“对账工具就位”。|
+|2491|建立十个 synthetic scenarios、golden identity、cross-layer report 与 blocked checklist。|synthetic PASS 不证明 platform evidence、市场有效性或可扩窗。|pilot checklist 默认 `BLOCKED_OWNER_AUTHORIZATION`。|接受 B，必须带 synthetic-only badge。|
+
+#### 组 4：2492–2493 Historical external evidence / governance verdict
+
+一句话结论：**唯一一次 bounded external pilot 留下了可审计事实，但违反预注册资源上限；Owner 已签署继续 NO-GO。**
+
+|任务|先给读者看的结论|解释原因|随后才可补充的事实|Owner 初步建议|
+|---|---|---|---|---|
+|2492|`PILOT_NO_GO_LICENSE_OR_EVIDENCE`。|16 项 scope audit 中 `PROCESSED_DATA_POINTS` 唯一 FAIL：`734127 > 250000`；single-use token 已消费并失效，2489/2490 仍 blocked。|仅在上述结论后说明：单日 run completed、1 order/1 fill、09:31→09:32→09:33 chronology、无 raw option rows。|接受 A，把 NO-GO 与 cap violation 置于主层。|
+|2493|aggregate=`NO_GO_KEEP_BLOCKED`，terminal=`SIGNED_NO_GO`。|license、DQ/PIT、resource、shared reconciliation、range、paid-tier 轴均 `NO_GO`，并保留五项 UNKNOWN/exit condition。|platform capability 与 technical correctness 只有 subordinate `CONDITIONAL_GO`，不得覆盖 aggregate。|接受 A，作为当前 QQQ options 治理总判定。|
+
+2492 的 `$100000.00 → $100088.35`、terminal holdings 或 runtime unrealized 只属于一次 bounded smoke 的
+运行事实，不能进入读者主层，也不能被命名为收益证明。
+
+### 5.4 Owner 逐项 decision contract
+
+Owner 对每项只能选择以下之一：
+
+- `ACCEPT_AS_RECOMMENDED`：接受本 pack 的 A/B/C 层级和 reader wording；
+- `DOWNGRADE_TO_SECONDARY_OR_BLOCKED`：A→B/C 或 B→C，说明原因；
+- `KEEP_EXCLUDED`：等同 D，给出 blocker 与可观察 exit condition；
+- `RETURN_FOR_SOURCE_RECONCILIATION`：发现 source/status/identity 冲突，先回原 authority owner 修复。
+
+当前建议集合：`A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、
+`C={2485,2486,2487,2488}`、`D={}`。这是 review proposal，不是 canonical projection decision；
+Owner 未逐项签署时，2494–2496 的 13 项排除规则保持不变。
 
 ## 6. 冲突支配与 hard stops
 
@@ -170,4 +273,33 @@ registered known-unrelated exclusion。
 - 2026-08-08：Web Pro 建议 `PROCEED_TO_READ_ONLY_OWNER_REVIEW_PACK`；用户接受并要求继续；
 - 2026-08-08：与 QQQ engineering 线程冻结顺序：2500 terminal push → 2501 registration push → 2499 START；
 - 2026-08-08：2500 exact main `c233c82e2f6c4dfcd4b1302c99b98789bc6f3def` RELEASE，开始短登记边界；
-- 当前：registration boundary，尚未启动 canonical projection 或外部动作。
+- 2026-08-08：registration boundary ordinary push 完成，exact main=
+  `2064a2e1855229f7260c725f8287174dc09b63f3`；task shadow=`967/462/505`、v1/v2
+  byte-identical，DevEx=`1095 modules/1259 tests/856 writers/0 violations`，focused governance=`23 PASS`；
+- 2026-08-08：从该 exact tree 重放 13 个 source，source-set SHA-256=
+  `29c97b0524c0ccf2ce1b215da9122bbfa875f45b08d682145a7409d6c1abd11f`；完成四组、五层状态、
+  A/B/C/D 建议、2492/2493 dominance 与 Owner decision contract；
+- 当前：`OWNER_REVIEW_REQUIRED`。尚未签署任何逐项 projection decision，尚未启动 canonical projection、
+  renderer/page mutation、外部动作或投资结论。
+
+## 11. Owner 初步验收入口
+
+建议按以下顺序阅读，避免先被实现细节淹没：
+
+1. 先审 2493：当前总判定是否应明确保持 `NO_GO_KEEP_BLOCKED`；
+2. 再审 2492：是否同意把 `734127 > 250000` 放在 1 order/1 fill 之前；
+3. 再审 2481–2484：哪些基础事实值得进入主层，哪些只放证据层；
+4. 再审 2485–2488：是否同意统一使用“机械已实现 / policy 未授权”；
+5. 最后审 2489–2491：是否同意统一标记 manual/synthetic evidence 限制，以及 2489 source-status mismatch。
+
+|审阅范围|建议|Owner decision|需要补充的理由|
+|---|---|---|---|
+|2481–2483 foundation mainline facts|A|`PENDING_OWNER_REVIEW`|—|
+|2484 adapter evidence|B|`PENDING_OWNER_REVIEW`|—|
+|2485–2488 policy-blocked mechanics|C|`PENDING_OWNER_REVIEW`|—|
+|2489–2491 evidence scaffolding|B|`PENDING_OWNER_REVIEW`|—|
+|2492 bounded pilot NO-GO|A|`PENDING_OWNER_REVIEW`|—|
+|2493 signed aggregate NO-GO|A|`PENDING_OWNER_REVIEW`|—|
+
+只有这些 decision 被 exact Owner token 接受后，S6 才能另立 projection contract/renderer consumer 任务；
+2501 本身不修改当前页面。
