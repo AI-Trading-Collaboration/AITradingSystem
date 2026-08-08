@@ -14,68 +14,71 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: engineering coordinator：先生成只读、无阈值选择的 Owner decision pack；project owner：随后逐项选择、拒绝或继续阻塞；任何正式
-    policy/engine 实现须另立后继 contract wave
+  next_owner: project owner：复核 exact-main/hash-bound pack 后对五个 group 或逐 slot 选择 G1–G5；任何正式
+    policy/engine 实现须另立后继 serial contract wave
   requirement_refs:
   - docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。继承
-    2481–2499 exact authority，仅整理 selection/execution/accounting/lifecycle 的待决项、可选治理路径、证据需求、默认
-    cash-preservation 与 engine unblock 条件。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`；registration
-    boundary 不生成或暗示 DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
-    数值。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。已从
+    exact main `6f54ee742bc2f0d6633a6e4c33957388d358e0ac` 重放 2481–2499 authority，authority-set
+    SHA-256=`1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c`；28
+    个 selection/execution/accounting/lifecycle/acceptance slots 已给出非数值治理选项、证据需求与 fail-closed
+    结果。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: Decision pack 对每个待决项给出 `KEEP_UNRESOLVED_BLOCKED`、`OWNER_SUPPLIED_REVIEWED_POLICY`、`EVIDENCE_CALIBRATION_REQUIRED`
-      等非数值治理选项及所需证据；不得自行推荐或固化阈值，不得实现真实日级 engine，不得宣称 policy reviewed。任何必需项未获 exact
-      Owner token、versioned policy、rationale/evidence/review condition 时固定 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0；外部
-      QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production 动作为 none/false。
+    text: Owner token 必须绑定最终 ordinary-pushed main、pack LF SHA-256、authority-set SHA-256，并对每个
+      slot 产生可机械展开的 typed decision；G2 还需具体值/规则、rationale、intended effect、evidence、version/status、review/expiry
+      condition。此前持续固定 `POLICY_BLOCKED_CASH_PRESERVATION`、selection=false、orders/fills=0；不得实现真实日级
+      engine，不得宣称 policy reviewed，外部 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
+      动作为 none/false。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: c70a0f72d5b947a955eeaf7ce59caef533636971076c3081cdc2d495baf44270
+  row_sha256: 107e4f877bccbdd5da60e74ef0fe7163c1bd5e5ed5e87338965888b8412fe7d6
   cell_count: 8
   all_cells:
   - TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
   - Strategy research governance / QQQ Options DAILY backtest policy Owner decision
     pack
   - P0
-  - READY
-  - engineering coordinator：先生成只读、无阈值选择的 Owner decision pack；project owner：随后逐项选择、拒绝或继续阻塞；任何正式
-    policy/engine 实现须另立后继 contract wave
-  - 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。继承
-    2481–2499 exact authority，仅整理 selection/execution/accounting/lifecycle 的待决项、可选治理路径、证据需求、默认
-    cash-preservation 与 engine unblock 条件。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`；registration
-    boundary 不生成或暗示 DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
-    数值。
-  - Decision pack 对每个待决项给出 `KEEP_UNRESOLVED_BLOCKED`、`OWNER_SUPPLIED_REVIEWED_POLICY`、`EVIDENCE_CALIBRATION_REQUIRED`
-    等非数值治理选项及所需证据；不得自行推荐或固化阈值，不得实现真实日级 engine，不得宣称 policy reviewed。任何必需项未获 exact Owner
-    token、versioned policy、rationale/evidence/review condition 时固定 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0；外部
-    QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production 动作为 none/false。
-  - 2026-08-08：从 exact main `af3a185157951cddf4b439729bef9b06628192c6` 登记 P0 supporting
-    requirement；本次仅 registration boundary，`contract_change=false`，不进入 pack 实现。2489
-    已明确不得复用；2503 页面后继由 Atlas coordinator 独占。
+  - BLOCKED_OWNER_INPUT
+  - project owner：复核 exact-main/hash-bound pack 后对五个 group 或逐 slot 选择 G1–G5；任何正式 policy/engine
+    实现须另立后继 serial contract wave
+  - 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。已从
+    exact main `6f54ee742bc2f0d6633a6e4c33957388d358e0ac` 重放 2481–2499 authority，authority-set
+    SHA-256=`1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c`；28
+    个 selection/execution/accounting/lifecycle/acceptance slots 已给出非数值治理选项、证据需求与 fail-closed
+    结果。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`。
+  - Owner token 必须绑定最终 ordinary-pushed main、pack LF SHA-256、authority-set SHA-256，并对每个
+    slot 产生可机械展开的 typed decision；G2 还需具体值/规则、rationale、intended effect、evidence、version/status、review/expiry
+    condition。此前持续固定 `POLICY_BLOCKED_CASH_PRESERVATION`、selection=false、orders/fills=0；不得实现真实日级
+    engine，不得宣称 policy reviewed，外部 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
+    动作为 none/false。
+  - 2026-08-08：R1 authority inventory、R2 28-slot matrix、R3 reader-safe pack 已完成，状态转为
+    `BLOCKED_OWNER_INPUT` 等待 R4 exact Owner review。2489 不复用；2503 已由 Atlas 完成且本任务未修改其
+    paths/artifacts。
   raw_line: '|TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1|Strategy
-    research governance / QQQ Options DAILY backtest policy Owner decision pack|P0|READY|engineering
-    coordinator：先生成只读、无阈值选择的 Owner decision pack；project owner：随后逐项选择、拒绝或继续阻塞；任何正式
-    policy/engine 实现须另立后继 contract wave|详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。继承
-    2481–2499 exact authority，仅整理 selection/execution/accounting/lifecycle 的待决项、可选治理路径、证据需求、默认
-    cash-preservation 与 engine unblock 条件。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`；registration
-    boundary 不生成或暗示 DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
-    数值。|Decision pack 对每个待决项给出 `KEEP_UNRESOLVED_BLOCKED`、`OWNER_SUPPLIED_REVIEWED_POLICY`、`EVIDENCE_CALIBRATION_REQUIRED`
-    等非数值治理选项及所需证据；不得自行推荐或固化阈值，不得实现真实日级 engine，不得宣称 policy reviewed。任何必需项未获 exact Owner
-    token、versioned policy、rationale/evidence/review condition 时固定 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0；外部
-    QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production 动作为 none/false。|2026-08-08：从
-    exact main `af3a185157951cddf4b439729bef9b06628192c6` 登记 P0 supporting requirement；本次仅
-    registration boundary，`contract_change=false`，不进入 pack 实现。2489 已明确不得复用；2503 页面后继由
-    Atlas coordinator 独占。|'
+    research governance / QQQ Options DAILY backtest policy Owner decision pack|P0|BLOCKED_OWNER_INPUT|project
+    owner：复核 exact-main/hash-bound pack 后对五个 group 或逐 slot 选择 G1–G5；任何正式 policy/engine
+    实现须另立后继 serial contract wave|详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。已从
+    exact main `6f54ee742bc2f0d6633a6e4c33957388d358e0ac` 重放 2481–2499 authority，authority-set
+    SHA-256=`1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c`；28
+    个 selection/execution/accounting/lifecycle/acceptance slots 已给出非数值治理选项、证据需求与 fail-closed
+    结果。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`。|Owner token 必须绑定最终 ordinary-pushed
+    main、pack LF SHA-256、authority-set SHA-256，并对每个 slot 产生可机械展开的 typed decision；G2
+    还需具体值/规则、rationale、intended effect、evidence、version/status、review/expiry condition。此前持续固定
+    `POLICY_BLOCKED_CASH_PRESERVATION`、selection=false、orders/fills=0；不得实现真实日级 engine，不得宣称
+    policy reviewed，外部 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production 动作为
+    none/false。|2026-08-08：R1 authority inventory、R2 28-slot matrix、R3 reader-safe
+    pack 已完成，状态转为 `BLOCKED_OWNER_INPUT` 等待 R4 exact Owner review。2489 不复用；2503 已由
+    Atlas 完成且本任务未修改其 paths/artifacts。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-c70a0f72d5b947a955eeaf7c
+  event_id: legacy-import-107e4f877bccbdd5da60e74e
   task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -85,18 +88,18 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: READY
+  to_status: BLOCKED_OWNER_INPUT
   payload:
     priority: P0
-    next_owner: engineering coordinator：先生成只读、无阈值选择的 Owner decision pack；project owner：随后逐项选择、拒绝或继续阻塞；任何正式
-      policy/engine 实现须另立后继 contract wave
-    notes: 2026-08-08：从 exact main `af3a185157951cddf4b439729bef9b06628192c6` 登记 P0
-      supporting requirement；本次仅 registration boundary，`contract_change=false`，不进入
-      pack 实现。2489 已明确不得复用；2503 页面后继由 Atlas coordinator 独占。
+    next_owner: project owner：复核 exact-main/hash-bound pack 后对五个 group 或逐 slot 选择
+      G1–G5；任何正式 policy/engine 实现须另立后继 serial contract wave
+    notes: 2026-08-08：R1 authority inventory、R2 28-slot matrix、R3 reader-safe pack
+      已完成，状态转为 `BLOCKED_OWNER_INPUT` 等待 R4 exact Owner review。2489 不复用；2503 已由 Atlas
+      完成且本任务未修改其 paths/artifacts。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:c70a0f72d5b947a955eeaf7ce59caef533636971076c3081cdc2d495baf44270
+  - sha256:107e4f877bccbdd5da60e74ef0fe7163c1bd5e5ed5e87338965888b8412fe7d6
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -104,24 +107,25 @@ projection:
   - Strategy research governance / QQQ Options DAILY backtest policy Owner decision
     pack
   - P0
-  - READY
-  - engineering coordinator：先生成只读、无阈值选择的 Owner decision pack；project owner：随后逐项选择、拒绝或继续阻塞；任何正式
-    policy/engine 实现须另立后继 contract wave
-  - 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。继承
-    2481–2499 exact authority，仅整理 selection/execution/accounting/lifecycle 的待决项、可选治理路径、证据需求、默认
-    cash-preservation 与 engine unblock 条件。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`；registration
-    boundary 不生成或暗示 DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
-    数值。
-  - Decision pack 对每个待决项给出 `KEEP_UNRESOLVED_BLOCKED`、`OWNER_SUPPLIED_REVIEWED_POLICY`、`EVIDENCE_CALIBRATION_REQUIRED`
-    等非数值治理选项及所需证据；不得自行推荐或固化阈值，不得实现真实日级 engine，不得宣称 policy reviewed。任何必需项未获 exact Owner
-    token、versioned policy、rationale/evidence/review condition 时固定 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0；外部
-    QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production 动作为 none/false。
-  - 2026-08-08：从 exact main `af3a185157951cddf4b439729bef9b06628192c6` 登记 P0 supporting
-    requirement；本次仅 registration boundary，`contract_change=false`，不进入 pack 实现。2489
-    已明确不得复用；2503 页面后继由 Atlas coordinator 独占。
+  - BLOCKED_OWNER_INPUT
+  - project owner：复核 exact-main/hash-bound pack 后对五个 group 或逐 slot 选择 G1–G5；任何正式 policy/engine
+    实现须另立后继 serial contract wave
+  - 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。已从
+    exact main `6f54ee742bc2f0d6633a6e4c33957388d358e0ac` 重放 2481–2499 authority，authority-set
+    SHA-256=`1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c`；28
+    个 selection/execution/accounting/lifecycle/acceptance slots 已给出非数值治理选项、证据需求与 fail-closed
+    结果。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`。
+  - Owner token 必须绑定最终 ordinary-pushed main、pack LF SHA-256、authority-set SHA-256，并对每个
+    slot 产生可机械展开的 typed decision；G2 还需具体值/规则、rationale、intended effect、evidence、version/status、review/expiry
+    condition。此前持续固定 `POLICY_BLOCKED_CASH_PRESERVATION`、selection=false、orders/fills=0；不得实现真实日级
+    engine，不得宣称 policy reviewed，外部 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
+    动作为 none/false。
+  - 2026-08-08：R1 authority inventory、R2 28-slot matrix、R3 reader-safe pack 已完成，状态转为
+    `BLOCKED_OWNER_INPUT` 等待 R4 exact Owner review。2489 不复用；2503 已由 Atlas 完成且本任务未修改其
+    paths/artifacts。
   docs_links:
   - docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
   terminal: false
-  raw_row_sha256: c70a0f72d5b947a955eeaf7ce59caef533636971076c3081cdc2d495baf44270
+  raw_row_sha256: 107e4f877bccbdd5da60e74ef0fe7163c1bd5e5ed5e87338965888b8412fe7d6
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: de1de223948c685e4304a3e71b2b4fe79225aab9174a206f188608838291ce95
+fragment_checksum: d93a3e7f836fed3f2f18591fd2c3b5946b17daee5f366ac8f0bc357433c93bb7

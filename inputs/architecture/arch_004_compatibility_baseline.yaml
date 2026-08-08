@@ -48794,3 +48794,112 @@ phase_trading_2503_atlas_qqq_options_projection_renderer_v1:
     paper_live_broker_production_action: false
     production_effect: none
     broker_action: none
+phase_trading_2502_qqq_options_owner_reviewed_backtest_policy_decision_pack_v1:
+  schema_version: trading_2502_qqq_options_owner_reviewed_backtest_policy_decision_pack_compatibility.v1
+  status: BLOCKED_OWNER_INPUT
+  boundary_id: TRADING-2502-QQQ-OPTIONS-OWNER-DECISION-PACK-V1
+  task_ids:
+  - TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
+  prior_sections_immutability:
+    source_commit: 6f54ee742bc2f0d6633a6e4c33957388d358e0ac
+    repository_path: inputs/architecture/arch_004_compatibility_baseline.yaml
+    git_blob_sha1: 7a71bb370ffe0a71039e9fe42c0a8f8352a012fe
+    raw_byte_count: 3130799
+    raw_sha256: e2fa234bbcc2187e6cacb520c81f4275758bf12a307e05b6c8de3b4451d17de2
+    append_offset: 3130799
+    current_section_must_be_eof: true
+  known_unrelated_exclusions:
+  - docs/research/growth_tilt_owner_diagnosis_pack.md
+  superseded_live_source_paths:
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_trading2452_architecture_contract.py
+  removed_live_source_paths: []
+  new_source_paths:
+  - docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
+  - registry/development_tasks_shadow/active/8b/8be90a551ec4a2c97704c84338479363ad44d604b12151537c0019ce29e6d8ea.yaml
+  - registry/development_tasks_shadow_v2/8b/8be90a551ec4a2c97704c84338479363ad44d604b12151537c0019ce29e6d8ea.yaml
+  source_delta_paths:
+  - docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
+  - docs/task_register.md
+  - inputs/architecture/arch_004e_test_manifest.yaml
+  - inputs/architecture/arch_005_task_registry_baseline.yaml
+  - inputs/architecture/arch_005_task_shadow_index.yaml
+  - inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  - registry/development_tasks_shadow/active/8b/8be90a551ec4a2c97704c84338479363ad44d604b12151537c0019ce29e6d8ea.yaml
+  - registry/development_tasks_shadow_v2/8b/8be90a551ec4a2c97704c84338479363ad44d604b12151537c0019ce29e6d8ea.yaml
+  - tests/test_arch_004_refactor_policy.py
+  - tests/test_trading2452_architecture_contract.py
+  supersession:
+    superseded_by_phase: TRADING-2502-QQQ-OPTIONS-OWNER-DECISION-PACK-V1
+    scope: LATEST_ACTIVE_PLUS_OWNER_DECISION_PACK_DELTA
+    historical_hashes_rewritten: false
+    inherited_supersession_authority: phase_trading_2503_atlas_qqq_options_projection_renderer_v1
+    current_hash_authority: phase_trading_2502_qqq_options_owner_reviewed_backtest_policy_decision_pack_v1.sources
+  generated_fragment_authority:
+    mode: INDEX_TRANSITIVE_SHA256_AUTHORITY
+    index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    fragment_root: registry/development_tasks_shadow_v2
+    fragment_count: 970
+    active_task_count: 465
+    completed_task_count: 505
+    stable_path_key: sha256(task_id)
+    loader_hash_replay: PASS
+  sources:
+  - path: docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
+    sha256: afdcb44f44032fee958d4f6b1e8e4b56c1edb2faefa44026e16aff7153968588
+    hash_normalization: git_eol_lf
+  - path: docs/task_register.md
+    sha256: 0b5d1a9e8b22b382b12cb133aa2820bef48a23b8a17873f80492b5664f407098
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_004e_test_manifest.yaml
+    sha256: 99f3e1d3ea1c6198d22048bb4d03184e58ccd6c5e854a861de056cb9ce3e1d6d
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_registry_baseline.yaml
+    sha256: 4d2501de1acbb7fba6a6482b840680b095889210b4873d8c5c4cf09ce04a5c90
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_index.yaml
+    sha256: d940a8f0aa593a7c0880023c08e9d20e0c9e16fb99ac58ecb5c44262398a9ed6
+    hash_normalization: git_eol_lf
+  - path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+    sha256: fb5e86d37c597abb3153bc5cc5da8d1941fd991a806db191302932fde85dbc63
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow/active/8b/8be90a551ec4a2c97704c84338479363ad44d604b12151537c0019ce29e6d8ea.yaml
+    sha256: 39de3aeb6036effa67274081f90d401e80f459c2d2ef045ff1ac4d9f9cac9da6
+    hash_normalization: git_eol_lf
+  - path: registry/development_tasks_shadow_v2/8b/8be90a551ec4a2c97704c84338479363ad44d604b12151537c0019ce29e6d8ea.yaml
+    sha256: 8787060b94a665f5852e4e4464493dfbeda27a46de625a0c73f1ea332cfbfd0d
+    hash_normalization: git_eol_lf
+  - path: tests/test_arch_004_refactor_policy.py
+    sha256: 29e17b8ef7d5b17cdca39f6c214b850ecf23bba5cfc004019e92822e1e820386
+    hash_normalization: git_eol_lf
+  - path: tests/test_trading2452_architecture_contract.py
+    sha256: dd3dd1fed8fdf42e6cce9e67ae2ebd5a0645d61dee2282bc61e2644c4d809056
+    hash_normalization: git_eol_lf
+  decision_pack_authority:
+    prepared_from_exact_main: 6f54ee742bc2f0d6633a6e4c33957388d358e0ac
+    authority_set_sha256: 1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c
+    predecessor_requirement_count: 19
+    decision_slot_count: 28
+    owner_group_count: 5
+    nonzero_numeric_threshold_count: 0
+    current_status: BLOCKED_OWNER_INPUT
+    safe_default: POLICY_BLOCKED_CASH_PRESERVATION
+  validation:
+    authority_exact_replay: PASS_19_REQUIREMENTS
+    decision_matrix_static_contract: PASS_28_UNIQUE_SLOTS_NO_NONZERO_THRESHOLDS
+    task_registry_documentation_focused: PASS_28_TESTS_N16_LOADFILE
+    compatibility_regression: REQUIRED_FAILURE_FIX_RERUN
+    formal_five_gate: REQUIRED_FINAL_TREE
+  safety:
+    policy_reviewed: false
+    selection_authorized: false
+    engine_implemented_or_activated: false
+    external_platform_action: false
+    paper_live_broker_production_action: false
+    production_effect: none
+    broker_action: none
