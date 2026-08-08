@@ -1,0 +1,113 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  task_id_sha256: 9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6
+task_record:
+  task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  title: null
+  domain: Publishing & Experience / reader-safe QQQ Options projection owner review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas coordinator：形成只读 Owner Review Pack；project owner：逐项接受、退回或保持排除，未签署前不进入
+    canonical projection
+  requirement_refs:
+  - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。TRADING-2494–2496
+    当前明确排除 2481–2493；本任务只整理 13 项任务的 authority、四个阅读分组、五层状态与冲突支配规则，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`OWNER_PROJECTION_REVIEW_NOT_ACCEPTED`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 13 项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO`
+      的 cap violation 优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO`
+      的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 3722d46f6ed2911a7be6f72d2772e1a3e416f5f238849b86f85cc4c898025909
+  cell_count: 8
+  all_cells:
+  - TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  - Publishing & Experience / reader-safe QQQ Options projection owner review
+  - P1
+  - IN_PROGRESS
+  - Atlas coordinator：形成只读 Owner Review Pack；project owner：逐项接受、退回或保持排除，未签署前不进入 canonical
+    projection
+  - 详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。TRADING-2494–2496
+    当前明确排除 2481–2493；本任务只整理 13 项任务的 authority、四个阅读分组、五层状态与冲突支配规则，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`OWNER_PROJECTION_REVIEW_NOT_ACCEPTED`。
+  - 13 项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO` 的 cap
+    violation 优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO`
+    的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
+  - 2026-08-08：用户接受 Web Pro 的 `PROCEED_TO_READ_ONLY_OWNER_REVIEW_PACK` 建议并要求继续；advisory
+    基于 exact reviewed commit `ab22067ab9f57cc11144ae4eef899cb21f639181`，登记基线为 `c233c82e2f6c4dfcd4b1302c99b98789bc6f3def`。`production_effect=none`、`broker_action=none`、canonical
+    projection change=`none`。
+  raw_line: '|TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1|Publishing
+    & Experience / reader-safe QQQ Options projection owner review|P1|IN_PROGRESS|Atlas
+    coordinator：形成只读 Owner Review Pack；project owner：逐项接受、退回或保持排除，未签署前不进入 canonical
+    projection|详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。TRADING-2494–2496
+    当前明确排除 2481–2493；本任务只整理 13 项任务的 authority、四个阅读分组、五层状态与冲突支配规则，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`OWNER_PROJECTION_REVIEW_NOT_ACCEPTED`。|13
+    项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO` 的 cap violation
+    优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO` 的支配；不以绿色或“已完成”暗示策略
+    PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。|2026-08-08：用户接受 Web Pro 的 `PROCEED_TO_READ_ONLY_OWNER_REVIEW_PACK`
+    建议并要求继续；advisory 基于 exact reviewed commit `ab22067ab9f57cc11144ae4eef899cb21f639181`，登记基线为
+    `c233c82e2f6c4dfcd4b1302c99b98789bc6f3def`。`production_effect=none`、`broker_action=none`、canonical
+    projection change=`none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-3722d46f6ed2911a7be6f72d
+  task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Atlas coordinator：形成只读 Owner Review Pack；project owner：逐项接受、退回或保持排除，未签署前不进入
+      canonical projection
+    notes: 2026-08-08：用户接受 Web Pro 的 `PROCEED_TO_READ_ONLY_OWNER_REVIEW_PACK` 建议并要求继续；advisory
+      基于 exact reviewed commit `ab22067ab9f57cc11144ae4eef899cb21f639181`，登记基线为 `c233c82e2f6c4dfcd4b1302c99b98789bc6f3def`。`production_effect=none`、`broker_action=none`、canonical
+      projection change=`none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:3722d46f6ed2911a7be6f72d2772e1a3e416f5f238849b86f85cc4c898025909
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  - Publishing & Experience / reader-safe QQQ Options projection owner review
+  - P1
+  - IN_PROGRESS
+  - Atlas coordinator：形成只读 Owner Review Pack；project owner：逐项接受、退回或保持排除，未签署前不进入 canonical
+    projection
+  - 详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。TRADING-2494–2496
+    当前明确排除 2481–2493；本任务只整理 13 项任务的 authority、四个阅读分组、五层状态与冲突支配规则，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`OWNER_PROJECTION_REVIEW_NOT_ACCEPTED`。
+  - 13 项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO` 的 cap
+    violation 优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO`
+    的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
+  - 2026-08-08：用户接受 Web Pro 的 `PROCEED_TO_READ_ONLY_OWNER_REVIEW_PACK` 建议并要求继续；advisory
+    基于 exact reviewed commit `ab22067ab9f57cc11144ae4eef899cb21f639181`，登记基线为 `c233c82e2f6c4dfcd4b1302c99b98789bc6f3def`。`production_effect=none`、`broker_action=none`、canonical
+    projection change=`none`。
+  docs_links:
+  - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
+  terminal: false
+  raw_row_sha256: 3722d46f6ed2911a7be6f72d2772e1a3e416f5f238849b86f85cc4c898025909
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 7d361b2c4d23063beb852b4926843f919b21920f247cb0d7593918d65013e7d3
