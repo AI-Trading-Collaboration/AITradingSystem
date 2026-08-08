@@ -1,0 +1,108 @@
+schema_version: qqq_options_daily_primary_backtest_contract_policy.v1
+policy_id: qqq_options_daily_primary_backtest_contract_v1
+policy_version: 1.0.0
+status: OWNER_REVIEW_REQUIRED_BASELINE
+owner: project_owner
+owner_decision: owner_decision:TRADING-2500:2026-08-08:accept_qc_daily_capability_retry_evidence_v1
+rationale: Establish a deterministic offline DAILY QQQ options backtest contract from the reviewed Free Cloud capability evidence without inventing selection, execution, accounting, lifecycle, or investment thresholds.
+intended_effect: Admit only canonical DQ-bound primary-window inputs and preserve cash with zero orders and zero fills until every investment-facing policy is independently reviewed.
+validation_plan: Unit, property, golden, adjacent contract, compatibility, architecture, integration, reproducibility, and exclusive Full validation on the final tree.
+review_condition: Project Owner must independently review all selection, quote freshness, fee, slippage, fill, sizing, cash, lifecycle, and result-acceptance policies before activation.
+expiry_condition: Supersede only through a versioned reviewed policy with calibration evidence, backward-compatibility tests, and an explicit successor task.
+daily_engineering_authorized: true
+backtest_execution_authorized: false
+shared_contract_sha256: c89916ee7c3a4d9979780bf9359b0b39f61a383fe25aaf251e61ae629b43ff6b
+shared_policy_sha256: d7cc57a3c38bf0a1efc0553cb8b6e7ff302efc5afd2be3a44e2f04e82a056349
+dq_pit_policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+signal_export_policy_sha256: cf9d6ba3044bdf1d601de1ae7fe6f82fa3e26cc7811dc50160d24dfc902259e9
+adapter_policy_sha256: b9e48f0b53a6259a5bbc9594cbe1929721568d1723d498591ce14b8e3be92616
+selection_policy_sha256: bbb51a147e89dd279f35ed005810b7274c1ac2ff302df492c183e2f7f2abad30
+execution_policy_sha256: 8c8823ddcc509e7dfdb81803a6fe7099b1ff44fccefc5a607c2a9abc7875226a
+accounting_policy_sha256: faa2659ee141cb2209686c3eadee31059ee660c3cc6d6dd3e63e259f23b1484e
+lifecycle_policy_sha256: 1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582
+capability_review_module_sha256: ec643747d7c8f5a579dfec259e7b52bf75f026e5d30a26176cefd0ad599a34fb
+capability_review_file_sha256: 2c5ed5b80a101e0fc8a0285fabb941722189f3d034837df560292b1a031d132a
+capability_review_content_sha256: 46690e117b7e89367bd37dcf1b17c28d6b097a7426a2bc3666337a52a621aded
+capability_evidence_file_sha256: 829cd5de1d7691d98bfbf3554d27fabcda64598f3e26ce4747beddaf03f1c3b0
+capability_evidence_content_sha256: c19c2601e35fe6ee0495a041c1ddeafc52aa275a18856585b36ba2e6435fc609
+capability_result_artifact_sha256: 3e3b41b529294ac31c9559a6d46a7c8ad777063304adde72a72437d240751a09
+primary_research_start: '2021-02-22'
+approved_non_primary_authorities: []
+legacy_non_default_start: '2022-12-01'
+legacy_non_default_start_is_default: false
+market_data:
+  ticker: QQQ
+  underlying_resolution: DAILY
+  option_resolution: DAILY
+  signal_resolution: DAILY
+  normalization: RAW
+  exchange_calendar: XNYS
+  storage_timezone: UTC
+  exchange_timezone: America/New_York
+dq_admission:
+  scope: qqq_options_event_dq_pit_identity
+  policy_id: qqq_options_dq_pit_identity_v1
+  policy_version: 1.0.0
+  report_version: 1.0.0
+  required_check_ids:
+    - cache_identity
+    - chain_presence
+    - engine_identity
+    - evidence_identity
+    - exchange_calendar_identity
+    - fill_forward_ambiguity
+    - local_cache_dq_scope_separation
+    - open_interest_freshness
+    - order_fill_chronology
+    - prior_day_model_freshness
+    - provider_raw_checksum
+    - quote_freshness
+    - quote_integrity
+    - signal_selection_chronology
+    - symbol_mapping_identity
+chronology:
+  policy_id: qqq_options_daily_primary_chronology_v1
+  signal_to_selection: PRIOR_COMPLETED_XNYS_SESSION
+  selection_to_intent: STRICTLY_LATER_XNYS_SESSION
+  intent_to_submit: SAME_OR_LATER_XNYS_SESSION
+  submit_to_fill: STRICTLY_LATER_XNYS_SESSION
+  fill_to_valuation: SAME_OR_LATER_XNYS_SESSION
+  option_model_inputs: PRIOR_COMPLETED_XNYS_SESSION_ONLY
+  daily_close_fill_allowed: false
+  same_bar_fill_allowed: false
+  lookahead_allowed: false
+criteria:
+  mode: UNRESOLVED
+  dte: UNKNOWN_REQUIRES_POLICY_REVIEW
+  moneyness: UNKNOWN_REQUIRES_POLICY_REVIEW
+  delta: UNKNOWN_REQUIRES_POLICY_REVIEW
+  spread: UNKNOWN_REQUIRES_POLICY_REVIEW
+  open_interest: UNKNOWN_REQUIRES_POLICY_REVIEW
+  volume: UNKNOWN_REQUIRES_POLICY_REVIEW
+  quote_freshness: UNKNOWN_REQUIRES_POLICY_REVIEW
+  fees: UNKNOWN_REQUIRES_POLICY_REVIEW
+  slippage: UNKNOWN_REQUIRES_POLICY_REVIEW
+  latency: UNKNOWN_REQUIRES_POLICY_REVIEW
+  partial_fill: UNKNOWN_REQUIRES_POLICY_REVIEW
+  cancellation: UNKNOWN_REQUIRES_POLICY_REVIEW
+  expiry: UNKNOWN_REQUIRES_POLICY_REVIEW
+  position_sizing: UNKNOWN_REQUIRES_POLICY_REVIEW
+  initial_cash: UNKNOWN_REQUIRES_POLICY_REVIEW
+  acceptance_threshold: UNKNOWN_REQUIRES_POLICY_REVIEW
+safety:
+  research_only: true
+  selection_allowed: false
+  order_intent_allowed: false
+  order_submit_allowed: false
+  fill_allowed: false
+  daily_close_fill_allowed: false
+  same_bar_fill_allowed: false
+  cloud_run_authorized: false
+  external_action_allowed: false
+  raw_options_data_export_allowed: false
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

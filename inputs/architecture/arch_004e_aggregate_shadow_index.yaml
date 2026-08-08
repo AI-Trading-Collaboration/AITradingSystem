@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 75
+fragment_count: 77
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: fede5a764d8550e467eefe699a5a10d50698db4d390395dc4d41b18617d0cedd
+  current_sha256: 668d035ec6a103acf4b83574d96731f5a0cce53db7522fa74dfa4e3912cc5b89
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 33
+  fragment_count: 34
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -63,6 +63,7 @@ targets:
   - config/architecture/fragments/flows/qc_qqq_options_project_adapter.yaml
   - config/architecture/fragments/flows/qqq_options_cash_accounting.yaml
   - config/architecture/fragments/flows/qqq_options_cross_layer_validation_harness.yaml
+  - config/architecture/fragments/flows/qqq_options_daily_primary_backtest.yaml
   - config/architecture/fragments/flows/qqq_options_deterministic_selection.yaml
   - config/architecture/fragments/flows/qqq_options_dq_pit_identity.yaml
   - config/architecture/fragments/flows/qqq_options_minute_execution.yaml
@@ -289,6 +290,13 @@ fragments:
   path: config/architecture/fragments/flows/qqq_options_cross_layer_validation_harness.yaml
   sha256: 029075e88bbd47fb215aa9756b9da27a217759434e414b07280e18993f56c64b
   generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_daily_primary_backtest
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_daily_primary_backtest.yaml
+  sha256: be148e3bc86d573818914314c8ef36705e3562488e9fc1f1a0248b4eaca23cd1
+  generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_deterministic_selection
   fragment_kind: flow
   owner: architecture_governance
@@ -505,6 +513,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_cross_layer_validation_harness.yaml
   sha256: cf4a1412fc6fec484fbc290a4cb31034efdf2a262ee6b12d8f9590a5b05a2d88
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_daily_primary_backtest_contract
+  fragment_kind: module
+  owner: options_daily_backtest_engineering
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_daily_primary_backtest_contract.yaml
+  sha256: b50c5d9fb43cf9ea7b83b80269a171cf55ac0b17b73bf58bc12a89d59a21d319
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_deterministic_selection
   fragment_kind: module

@@ -3590,7 +3590,33 @@ TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_NEW_SOURCE_PATHS = f
         "tests/test_qc_qqq_options_daily_capability_gate_retry_review.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_SECTION
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION = (
+    "phase_trading_2499_qqq_options_daily_primary_backtest_contract_v1"
+)
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_BASE_COMMIT = (
+    "2064a2e1855229f7260c725f8287174dc09b63f3"
+)
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_BASELINE_GIT_BLOB = (
+    "48de3943619c250f929bb630f52a20a71af4210c"
+)
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_BYTE_COUNT = 3_092_810
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_SHA256 = (
+    "73c8cfdd52a361dc9e29d89f3bfe1df6cccbc586638ffca1f3f2b92381f23d6b"
+)
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {"tests/test_trading2452_architecture_contract.py"}
+)
+TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qqq_options_daily_primary_backtest.yaml",
+        ("config/architecture/fragments/modules/qqq_options_daily_primary_backtest_contract.yaml"),
+        "config/research/qqq_options_daily_primary_backtest_contract_v1.yaml",
+        ("src/ai_trading_system/qqq_options_research/daily_primary_backtest_contract.py"),
+        "tests/test_qqq_options_daily_primary_backtest_contract.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -5990,6 +6016,26 @@ def _trading_2500_qc_daily_capability_gate_retry_terminal_review_base_baseline_b
     assert object_id == (
         TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_BASELINE_GIT_BLOB
     )
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2499_qqq_options_daily_primary_backtest_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -8422,6 +8468,26 @@ def _assert_trading_2500_qc_daily_capability_gate_retry_terminal_review_historic
     expected_marker = (
         f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_SECTION}:\n".encode()
     )
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2499_qqq_options_daily_primary_backtest_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_BYTE_COUNT
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2499 daily contract historical prefix differs from immutable "
+        "ordinary-pushed 2500/2501 registration authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = f"{TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -11735,6 +11801,41 @@ def _trading_2500_qc_daily_capability_gate_retry_terminal_review_all_current_aut
 
 
 @cache
+def _trading_2499_qqq_options_daily_primary_backtest_superseded_live_source_paths() -> frozenset[
+    str
+]:
+    _assert_trading_2499_qqq_options_daily_primary_backtest_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2499_qqq_options_daily_primary_backtest_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION][
+        "superseded_live_source_paths"
+    ]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2499_qqq_options_daily_primary_backtest_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION][
+        "sources"
+    ]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2499_qqq_options_daily_primary_backtest_all_current_authority_paths() -> frozenset[
+    str
+]:
+    return (
+        _trading_2500_qc_daily_capability_gate_retry_terminal_review_all_current_authority_paths()
+        | _trading_2499_qqq_options_daily_primary_backtest_superseded_live_source_paths()
+        | _trading_2499_qqq_options_daily_primary_backtest_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -13359,7 +13460,22 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_SECTION in baseline:
+    if TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2499_qqq_options_daily_primary_backtest_superseded_live_source_paths()
+        )
+        assert (
+            _latest_active_source_mismatches(
+                TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION
+            )
+            | TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2499_qqq_options_daily_primary_backtest_all_current_authority_paths()
+        )
+        authority_section = TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION
+    elif TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_SECTION in baseline:
         current_superseded_paths = _trading_2500_qc_daily_capability_gate_retry_terminal_review_superseded_live_source_paths()  # noqa: E501
         assert (
             _latest_active_source_mismatches(
@@ -37662,7 +37778,7 @@ def test_trading_2500_daily_capability_retry_terminal_review_is_current_hash_aut
     assert set(source_paths) == expected
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["generated_fragment_authority"] == {
         "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
         "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
@@ -37721,6 +37837,117 @@ def test_trading_2500_daily_capability_retry_terminal_review_is_current_hash_aut
     ] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2500_qc_daily_capability_gate_retry_terminal_review_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2499_daily_primary_backtest_contract_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2499_qqq_options_daily_primary_backtest_base_baseline_blob()
+    _assert_trading_2499_qqq_options_daily_primary_backtest_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2499_qqq_options_daily_primary_backtest_contract_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == ("TRADING-2499-QQQ-OPTIONS-DAILY-PRIMARY-BACKTEST-CONTRACT-V1")
+    assert phase["task_ids"] == ["TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1"]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": (TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_BASELINE_GIT_BLOB),
+        "raw_byte_count": (
+            TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_SHA256),
+        "append_offset": (
+            TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _latest_active_source_mismatches(TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION)
+        | TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_NEW_SOURCE_PATHS
+    ) - TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": ("TRADING-2499-QQQ-OPTIONS-DAILY-PRIMARY-BACKTEST-CONTRACT-V1"),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_DAILY_CONTRACT_BASELINE",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 967,
+        "active_task_count": 462,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["contract_authority"] == {
+        "policy_sha256": ("4a060600ef9d532e75449a09628a54b84c9b68eca41989e1e4ed18de54b3109a"),
+        "primary_start": "2021-02-22",
+        "legacy_2022_12_01_is_default": False,
+        "dq_scope": "qqq_options_event_dq_pit_identity",
+        "required_dq_check_count": 15,
+        "input_admission_status": "PASS_DQ_CONTRACT_ONLY",
+        "blocked_disposition": "POLICY_BLOCKED_CASH_PRESERVATION",
+        "orders": 0,
+        "fills": 0,
+    }
+    assert phase["validation"] == {
+        "daily_contract_focused_parallel_pytest": "PASS_29_TESTS_N16_LOADFILE",
+        "compatibility_regression": "REQUIRED_FINAL_TREE",
+        "formal_five_gate": "REQUIRED_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "selection_policy_activated": False,
+        "execution_policy_activated": False,
+        "accounting_policy_activated": False,
+        "lifecycle_policy_activated": False,
+        "further_external_action_authorized": False,
+        "raw_options_download_or_export_authorized": False,
+        "investment_interpretation_allowed": False,
+        "paper_live_broker_production_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    tampered = bytearray(current_bytes)
+    tampered[TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2499_qqq_options_daily_primary_backtest_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

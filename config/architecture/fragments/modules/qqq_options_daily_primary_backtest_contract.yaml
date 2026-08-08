@@ -1,0 +1,20 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_daily_primary_backtest_contract
+fragment_kind: module
+owner: options_daily_backtest_engineering
+module_prefix: src/ai_trading_system/qqq_options_research/daily_primary_backtest_contract.py
+public_contracts:
+  - CanonicalDailyDQAdmission
+  - DEFAULT_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_POLICY_PATH
+  - DailyPrimaryBacktestChronologyPolicy
+  - QQQOptionsDailyPrimaryBacktestContractError
+  - QQQOptionsDailyPrimaryBacktestDescriptor
+  - QQQOptionsDailyPrimaryBacktestPolicy
+  - QQQOptionsDailyPrimaryBacktestPolicyLoadResult
+  - QQQOptionsDailyPrimaryBacktestRequest
+  - ResearchWindowRole
+  - build_qqq_options_daily_primary_backtest_descriptor
+  - load_qqq_options_daily_primary_backtest_descriptor
+  - load_qqq_options_daily_primary_backtest_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture

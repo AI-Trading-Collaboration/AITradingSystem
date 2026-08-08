@@ -7915,20 +7915,27 @@ purchase/subscription、range expansion、investment interpretation、paper/live
 
 ## TRADING-2499 QQQ Options Daily Primary Backtest Contract V1
 
-2500 reviewed GO 只打开 strictly offline DAILY engineering contract。2499 默认 primary requested/evaluated
+2500 reviewed GO 只打开 strictly offline DAILY engineering contract。task-owned policy
+`config/research/qqq_options_daily_primary_backtest_contract_v1.yaml` 精确绑定 2481–2488 与 2500 review
+authority；`qqq_options_research.daily_primary_backtest_contract` 默认 primary requested/evaluated
 start=`2021-02-22`，显式区分 signal/selection/intent/submit/fill/valuation sessions，禁止 daily-close、
-same-bar 与 same-session lookahead。所有 admission 必须从 canonical DQ/PIT/evidence facts 派生；未评估项
-保持 `NOT_EVALUATED`/typed FAIL。
+same-bar 与 same-session lookahead。所有 admission 都由 canonical `DQReportRecord` bytes 的真实
+schema/scope/status/as-of/range/source/checksum 与 15 项 checks 派生，不接受 caller-declared PASS；未评估的
+selection/execution/accounting/lifecycle 轴保持 typed `OWNER_REVIEW_REQUIRED`。
 
 ```text
 2500 canonical evidence + tracked independent review
   -> reviewed GO_FOR_DAILY_ENGINEERING_ONLY
-  -> 2499 offline DAILY contract/descriptor/admission
+  -> strict policy loader replays tracked 2500 review + exact predecessor hashes
+  -> QQQOptionsDailyPrimaryBacktestRequest
+  -> canonical DQ report fact derivation; forged PASS / FAIL / UNKNOWN fail closed
+  -> 2499 sealed QQQOptionsDailyPrimaryBacktestDescriptor
   -> primary start = 2021-02-22; requested/evaluated ranges disclosed
-  -> prior-session OI/Greeks/IV + reviewed XNYS chronology
+  -> normalized complete XNYS session inventory + prior-session OI/Greeks/IV chronology
   -> canonical DQ/PIT scope/as-of/checksum/status replay
   -> Owner policy missing
      -> POLICY_BLOCKED_CASH_PRESERVATION / orders = fills = 0
+  -> deterministic source identity + canonical seal/from_json_bytes replay
   -> future external/cloud/full-window run requires a new task and exact authorization
 ```
 
