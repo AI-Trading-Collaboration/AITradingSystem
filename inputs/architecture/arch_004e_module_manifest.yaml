@@ -16232,7 +16232,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.qqq_options_research.daily_capability_gate_retry
   path: src/ai_trading_system/qqq_options_research/daily_capability_gate_retry.py
-  sha256: bbd33e0c63ccd27859f1c71e36a66a1eb523e9b27dbaf9a48e0f39c47505704d
+  sha256: 857f75521233848a421fc104c27e5e407b683e4d269ce33e0e2fd557d9d4995c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

@@ -27,6 +27,9 @@ DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_POLICY_PATH = Path(
 DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_PROPOSAL_PATH = Path(
     "inputs/external_validation/qc_qqq_options_daily_capability_gate_retry_proposal_20260808.json"
 )
+DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_PATH = Path(
+    "inputs/external_validation/qc_qqq_options_daily_capability_gate_retry_evidence_20260808.json"
+)
 
 EXPECTED_RETRY_ALLOWED_ACTIONS: tuple[str, ...] = (
     "QUANTCONNECT_LOGIN",
@@ -57,6 +60,30 @@ PROPOSED_RETRY_OWNER_DECISION = (
     "owner_decision:TRADING-2500:2026-08-08:"
     "authorize_single_zero_order_verified_account_qc_daily_capability_retry_v1"
 )
+RETRY_OWNER_AUTHORIZATION_ID = PROPOSED_RETRY_OWNER_DECISION
+EXPECTED_RETRY_RESULT_TOP_LEVEL_KEYS: tuple[str, ...] = (
+    "algorithmConfiguration",
+    "analysis",
+    "charts",
+    "orders",
+    "profitLoss",
+    "rollingWindow",
+    "runtimeStatistics",
+    "state",
+    "statistics",
+    "totalPerformance",
+)
+RETRY_PROPOSAL_REPOSITORY_CODE_SHA = "c880bb9e55dbcf5c641756e80fdd2f9d00eaa0e2"
+RETRY_ORDINARY_PUSHED_MAIN_SHA = "ab22067ab9f57cc11144ae4eef899cb21f639181"
+RETRY_PROPOSAL_FILE_SHA256 = "d5ecad8167e2abef7e5a8d6427604da5b6f59d4be50607228097191eba74239e"
+RETRY_PROPOSAL_CONTENT_SHA256 = "77570e7ff88e1c567c29d10dcfc534cef07628cab58ceb894da79c6075f013b9"
+RETRY_POLICY_FILE_SHA256 = "851ee0fb3c2a14b25263b37115ece581869fee08dffac95e272960108c46bb19"
+RETRY_POLICY_CANONICAL_SHA256 = "540107c9dce0fa08a8f461f8c733a1c1c5b413405bb2caf4a6a46501575f9e9d"
+RETRY_PROPOSAL_AUTHORITY_SET_SHA256 = (
+    "52f8246d8192f4fbf40c3aa415aee56bdbb5eb937f4778daa30fda42f06ad3a2"
+)
+RETRY_PROJECT_SCRIPT_EMBEDDED_REPOSITORY_CODE_SHA = "676d6b1429ee1ef60fbfc4de1d62f9d6ee9184ce"
+RETRY_RESULT_ARTIFACT_SHA256 = "3e3b41b529294ac31c9559a6d46a7c8ad777063304adde72a72437d240751a09"
 
 PREDECESSOR_PROPOSAL_FILE_SHA256 = (
     "6b226751453bc2d73e0e5ec14be6975124e3a0948435ff7282658a3c2fe3e5dc"
@@ -419,6 +446,181 @@ class QCQQQOptionsDailyCapabilityGateRetryProposalLoadResult:
     policy: QCQQQOptionsDailyCapabilityGateRetryPolicyLoadResult
 
 
+class DailyCapabilityRetrySessionEvidence(_StrictModel):
+    session_date: date
+    option_chain_present: Literal[True]
+    contract_count: int
+    two_sided_quote_count: int
+    positive_open_interest_count: int
+    finite_greeks_count: int
+    finite_implied_volatility_count: int
+    raw_rows_logged: Literal[False]
+    orders_submitted: Literal[0]
+
+    @model_validator(mode="after")
+    def _validate_session(self) -> Self:
+        if self.session_date not in EXPECTED_SESSIONS:
+            raise ValueError("session date is outside the frozen expected sessions")
+        if self.contract_count <= 0:
+            raise ValueError("contract_count must be positive")
+        for field in (
+            "two_sided_quote_count",
+            "finite_greeks_count",
+            "finite_implied_volatility_count",
+        ):
+            if getattr(self, field) != self.contract_count:
+                raise ValueError(f"{field} must cover every observed contract")
+        if not 0 < self.positive_open_interest_count <= self.contract_count:
+            raise ValueError("positive_open_interest_count must be bounded and positive")
+        return self
+
+
+class QCQQQOptionsDailyCapabilityGateRetryEvidence(_SealedModel):
+    schema_version: Literal["qc_qqq_options_daily_capability_gate_retry_evidence.v1"]
+    record_id: str
+    collected_at_utc: datetime
+    owner_authorization_id: str
+    authorization_state: Literal["INVALIDATED_AFTER_EVIDENCE_COLLECTION"]
+    proposal_repository_code_sha: Literal["c880bb9e55dbcf5c641756e80fdd2f9d00eaa0e2"]
+    ordinary_pushed_main_sha: Literal["ab22067ab9f57cc11144ae4eef899cb21f639181"]
+    proposal_file_sha256: Literal[
+        "d5ecad8167e2abef7e5a8d6427604da5b6f59d4be50607228097191eba74239e"
+    ]
+    proposal_content_sha256: Literal[
+        "77570e7ff88e1c567c29d10dcfc534cef07628cab58ceb894da79c6075f013b9"
+    ]
+    policy_file_sha256: Literal["851ee0fb3c2a14b25263b37115ece581869fee08dffac95e272960108c46bb19"]
+    policy_canonical_sha256: Literal[
+        "540107c9dce0fa08a8f461f8c733a1c1c5b413405bb2caf4a6a46501575f9e9d"
+    ]
+    proposal_authority_set_sha256: Literal[
+        "52f8246d8192f4fbf40c3aa415aee56bdbb5eb937f4778daa30fda42f06ad3a2"
+    ]
+    account_tier: Literal["FREE"]
+    cloud_compute_ui_label: Literal["Free Node"]
+    account_verification_precheck: Literal["PASS_NO_VERIFICATION_GATE_OBSERVED"]
+    project_id: Literal[34808569]
+    project_name: Literal["Sleepy Yellow-Green Shark"]
+    project_mutation_count: Literal[0]
+    project_code_lf_sha256: Literal[
+        "1da0d834d5509aabd7fb3baeeff9b8b3f56eed3d9ba095679f84fda926843139"
+    ]
+    project_code_lf_byte_count: Literal[6148]
+    project_script_embedded_repository_code_sha: Literal["676d6b1429ee1ef60fbfc4de1d62f9d6ee9184ce"]
+    cloud_backtest_count: Literal[1]
+    second_cloud_backtest_used: Literal[False]
+    build_id: Literal["cd73fe-0a3a57"]
+    engine_version: Literal["LEAN Engine v2.5.0.0.17989"]
+    backtest_id: Literal["077252aa78ce2e0a7c3b9b4c38a554f7"]
+    backtest_name: Literal["Jumping Blue Pig"]
+    requested_start: date
+    requested_end: date
+    evaluated_start: date
+    evaluated_end: date
+    evaluated_sessions: tuple[date, ...]
+    session_evidence: tuple[DailyCapabilityRetrySessionEvidence, ...]
+    deployment_seconds: Literal["16.13"]
+    runtime_seconds: Literal["14.45"]
+    data_points_per_second_display: Literal["4k"]
+    processed_data_points: Literal[63982]
+    result_state: Literal["Completed"]
+    result_started_at_utc: datetime
+    result_completed_at_utc: datetime
+    result_artifact_filename: Literal["Jumping Blue Pig.json"]
+    result_artifact_byte_count: Literal[16776]
+    result_artifact_sha256: Literal[
+        "3e3b41b529294ac31c9559a6d46a7c8ad777063304adde72a72437d240751a09"
+    ]
+    result_top_level_keys: tuple[str, ...]
+    result_order_count: Literal[0]
+    total_orders: Literal[0]
+    fills: Literal[0]
+    portfolio_invested: Literal[False]
+    start_equity_usd: Literal["100000.00"]
+    end_equity_usd: Literal["100000.00"]
+    total_fees_usd: Literal["0.00"]
+    holdings_value_usd: Literal["0.00"]
+    volume: Literal[0]
+    raw_options_rows_present: Literal[False]
+    raw_rows_logged: Literal[False]
+    prohibited_actions_observed: Literal[False]
+    investment_interpretation_allowed: Literal[False]
+    production_effect: Literal["none"]
+    broker_action: Literal["none"]
+    candidate_gate_status: Literal["GO_FOR_DAILY_ENGINEERING_ONLY"]
+    decision: Literal["DAILY_CAPABILITY_EVIDENCE_COLLECTED_REVIEW_PENDING"]
+    independent_review_status: Literal["PENDING_PROJECT_OWNER_REVIEW"]
+    successor_registration_authorized: Literal[False]
+
+    @field_validator("record_id")
+    @classmethod
+    def _validate_record_id(cls, value: str) -> str:
+        return _identifier(value, "record_id")
+
+    @field_validator("collected_at_utc", "result_started_at_utc", "result_completed_at_utc")
+    @classmethod
+    def _validate_timestamp(cls, value: datetime, info: Any) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError(f"{info.field_name} must be timezone-aware")
+        return value.astimezone(UTC)
+
+    @field_validator(
+        "proposal_repository_code_sha",
+        "ordinary_pushed_main_sha",
+        "project_script_embedded_repository_code_sha",
+    )
+    @classmethod
+    def _validate_git_hash(cls, value: str, info: Any) -> str:
+        return _git_sha(value, str(info.field_name))
+
+    @field_validator(
+        "proposal_file_sha256",
+        "proposal_content_sha256",
+        "policy_file_sha256",
+        "policy_canonical_sha256",
+        "proposal_authority_set_sha256",
+        "project_code_lf_sha256",
+        "result_artifact_sha256",
+    )
+    @classmethod
+    def _validate_evidence_hash(cls, value: str, info: Any) -> str:
+        return _sha256(value, str(info.field_name))
+
+    @model_validator(mode="after")
+    def _validate_evidence(self) -> Self:
+        if self.owner_authorization_id != RETRY_OWNER_AUTHORIZATION_ID:
+            raise ValueError("owner authorization identity drifted")
+        if self.project_code_lf_sha256 != PREDECESSOR_SCRIPT_LF_SHA256:
+            raise ValueError("project code identity drifted")
+        if (
+            self.requested_start != EXPECTED_SESSIONS[0]
+            or self.evaluated_start != (EXPECTED_SESSIONS[0])
+        ):
+            raise ValueError("requested/evaluated start drifted")
+        if (
+            self.requested_end != EXPECTED_SESSIONS[-1]
+            or self.evaluated_end != (EXPECTED_SESSIONS[-1])
+        ):
+            raise ValueError("requested/evaluated end drifted")
+        if self.evaluated_sessions != EXPECTED_SESSIONS:
+            raise ValueError("evaluated session inventory drifted")
+        if tuple(item.session_date for item in self.session_evidence) != EXPECTED_SESSIONS:
+            raise ValueError("session evidence inventory drifted")
+        if self.result_top_level_keys != EXPECTED_RETRY_RESULT_TOP_LEVEL_KEYS:
+            raise ValueError("result top-level key inventory drifted")
+        if self.result_completed_at_utc < self.result_started_at_utc:
+            raise ValueError("result completion precedes result start")
+        return self
+
+
+@dataclass(frozen=True)
+class QCQQQOptionsDailyCapabilityGateRetryEvidenceLoadResult:
+    evidence: QCQQQOptionsDailyCapabilityGateRetryEvidence
+    evidence_path: Path
+    evidence_file_sha256: str
+    proposal: QCQQQOptionsDailyCapabilityGateRetryProposalLoadResult
+
+
 def _require_bound_regular_file(path: Path, *, project_root: Path, field: str) -> Path:
     root = project_root.resolve()
     candidate = path if path.is_absolute() else root / path
@@ -592,4 +794,49 @@ def load_qc_qqq_options_daily_capability_gate_retry_proposal(
         proposal_path=proposal_path,
         proposal_file_sha256=hashlib.sha256(raw).hexdigest(),
         policy=policy,
+    )
+
+
+def load_qc_qqq_options_daily_capability_gate_retry_evidence(
+    path: Path = DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_PATH,
+    *,
+    proposal_path: Path = DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_PROPOSAL_PATH,
+    policy_path: Path = DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_POLICY_PATH,
+    project_root: Path = PROJECT_ROOT,
+) -> QCQQQOptionsDailyCapabilityGateRetryEvidenceLoadResult:
+    root = project_root.resolve()
+    try:
+        evidence_path = _require_bound_regular_file(
+            path, project_root=root, field="daily capability retry evidence"
+        )
+        raw = evidence_path.read_bytes()
+        evidence = QCQQQOptionsDailyCapabilityGateRetryEvidence.from_json_bytes(raw)
+        proposal = load_qc_qqq_options_daily_capability_gate_retry_proposal(
+            proposal_path,
+            policy_path=policy_path,
+            project_root=root,
+        )
+        if evidence.proposal_repository_code_sha != proposal.proposal.repository_code_sha:
+            raise ValueError("proposal repository code SHA mismatch")
+        if evidence.proposal_file_sha256 != proposal.proposal_file_sha256:
+            raise ValueError("proposal file SHA-256 mismatch")
+        if evidence.proposal_content_sha256 != proposal.proposal.content_sha256:
+            raise ValueError("proposal content SHA-256 mismatch")
+        if evidence.policy_file_sha256 != proposal.policy.policy_file_sha256:
+            raise ValueError("policy file SHA-256 mismatch")
+        if evidence.policy_canonical_sha256 != proposal.policy.policy_canonical_sha256:
+            raise ValueError("policy canonical SHA-256 mismatch")
+        if evidence.proposal_authority_set_sha256 != proposal.proposal.authority_set_sha256:
+            raise ValueError("proposal authority-set SHA-256 mismatch")
+    except QCQQQOptionsDailyCapabilityGateRetryContractError:
+        raise
+    except (OSError, TypeError, ValueError) as exc:
+        raise QCQQQOptionsDailyCapabilityGateRetryContractError(
+            "QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_INVALID", str(exc)
+        ) from exc
+    return QCQQQOptionsDailyCapabilityGateRetryEvidenceLoadResult(
+        evidence=evidence,
+        evidence_path=evidence_path,
+        evidence_file_sha256=hashlib.sha256(raw).hexdigest(),
+        proposal=proposal,
     )

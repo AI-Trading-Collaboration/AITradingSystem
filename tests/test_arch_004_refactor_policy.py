@@ -3479,7 +3479,32 @@ TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_NEW_SOURCE_PATHS = frozenset(
         "tests/test_qc_qqq_options_daily_capability_gate_retry.py",
     }
 )
-LATEST_COMPATIBILITY_SECTION = TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION = (
+    "phase_trading_2500_qc_qqq_options_daily_capability_gate_retry_evidence_review_v1"
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_BASE_COMMIT = (
+    "ab22067ab9f57cc11144ae4eef899cb21f639181"
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_BASELINE_GIT_BLOB = (
+    "3365504f2b28a1d84328c216b93bae82797ebf4e"
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT = 3_066_628
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_SHA256 = (
+    "6824df74142c45e9265f44e1b9f773979604853a578b410dcb6cd3ae291dea97"
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_ADDITIONAL_SUPERSESSION_PATHS = (
+    frozenset({"tests/test_trading2452_architecture_contract.py"})
+)
+TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_NEW_SOURCE_PATHS = frozenset(
+    {
+        (
+            "inputs/external_validation/"
+            "qc_qqq_options_daily_capability_gate_retry_evidence_20260808.json"
+        ),
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -5835,6 +5860,28 @@ def _trading_2500_qc_daily_capability_gate_retry_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2500_qc_daily_capability_gate_retry_evidence_review_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert object_id == (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_BASELINE_GIT_BLOB
+    )
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -8219,6 +8266,30 @@ def _assert_trading_2500_qc_daily_capability_gate_retry_historical_prefix_immuta
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2500_qc_daily_capability_gate_retry_evidence_review_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2500 retry evidence-review historical prefix differs from immutable "
+        "ordinary-pushed retry proposal authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION}:\n".encode()
+    )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -11458,6 +11529,43 @@ def _trading_2500_qc_daily_capability_gate_retry_all_current_authority_paths() -
 
 
 @cache
+def _trading_2500_qc_daily_capability_gate_retry_evidence_review_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2500_qc_daily_capability_gate_retry_evidence_review_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2500_qc_daily_capability_gate_retry_evidence_review_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION
+    ]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2500_qc_daily_capability_gate_retry_evidence_review_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION
+    ]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2500_qc_daily_capability_gate_retry_evidence_review_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2500_qc_daily_capability_gate_retry_all_current_authority_paths()
+        | (
+            _trading_2500_qc_daily_capability_gate_retry_evidence_review_superseded_live_source_paths()
+        )
+        | _trading_2500_qc_daily_capability_gate_retry_evidence_review_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -13082,7 +13190,24 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION in baseline:
+    if TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2500_qc_daily_capability_gate_retry_evidence_review_superseded_live_source_paths  # noqa: E501
+        )()
+        assert (
+            _latest_active_source_mismatches(
+                TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION
+            )
+            | (
+                TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_ADDITIONAL_SUPERSESSION_PATHS
+            )
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2500_qc_daily_capability_gate_retry_evidence_review_all_current_authority_paths()
+        )
+        authority_section = TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION
+    elif TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION in baseline:
         current_superseded_paths = (
             _trading_2500_qc_daily_capability_gate_retry_superseded_live_source_paths()
         )
@@ -37044,8 +37169,15 @@ def test_trading_2500_daily_capability_gate_retry_is_current_hash_authority() ->
     assert source_paths == sorted(source_paths, key=str.casefold)
     assert len(source_paths) == len(set(source_paths))
     assert set(source_paths) == expected
+    successor_paths = (
+        _trading_2500_qc_daily_capability_gate_retry_evidence_review_superseded_live_source_paths()
+        if TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION in baseline
+        else frozenset()
+    )
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in successor_paths:
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["generated_fragment_authority"] == {
@@ -37110,6 +37242,153 @@ def test_trading_2500_daily_capability_gate_retry_is_current_hash_authority() ->
     tampered[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2500_qc_daily_capability_gate_retry_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2500_daily_capability_retry_evidence_review_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2500_qc_daily_capability_gate_retry_evidence_review_base_baseline_blob()
+    _assert_trading_2500_qc_daily_capability_gate_retry_evidence_review_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2500_qc_qqq_options_daily_capability_gate_retry_evidence_review_compatibility.v1"
+    )
+    assert phase["status"] == "EVIDENCE_COLLECTED_REVIEW_PENDING"
+    assert phase["boundary_id"] == (
+        "TRADING-2500-QC-QQQ-OPTIONS-DAILY-CAPABILITY-GATE-RETRY-EVIDENCE-REVIEW-V1"
+    )
+    assert phase["task_ids"] == ["TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1"]
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": (TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_BASE_COMMIT),
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": (
+            TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_BASELINE_GIT_BLOB
+        ),
+        "raw_byte_count": (
+            TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "raw_sha256": (
+            TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": (
+            TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT
+        ),
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _latest_active_source_mismatches(
+            TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION
+        )
+        | TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_NEW_SOURCE_PATHS
+    ) - TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2500-QC-QQQ-OPTIONS-DAILY-CAPABILITY-GATE-RETRY-EVIDENCE-REVIEW-V1"
+        ),
+        "scope": "LATEST_ACTIVE_CURRENT_MISMATCH_SET_WITH_NEW_SOURCES",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION),
+        "current_hash_authority": (
+            f"{TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 965,
+        "active_task_count": 460,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["evidence_authority"] == {
+        "authorization_id": (
+            "owner_decision:TRADING-2500:2026-08-08:"
+            "authorize_single_zero_order_verified_account_qc_daily_capability_retry_v1"
+        ),
+        "authorization_state": "INVALIDATED_AFTER_EVIDENCE_COLLECTION",
+        "project_id": "34808569",
+        "project_mutation_count": 0,
+        "project_code_lf_sha256": (
+            "1da0d834d5509aabd7fb3baeeff9b8b3f56eed3d9ba095679f84fda926843139"
+        ),
+        "build_id": "cd73fe-0a3a57",
+        "engine_version": "LEAN Engine v2.5.0.0.17989",
+        "backtest_id": "077252aa78ce2e0a7c3b9b4c38a554f7",
+        "result_artifact_sha256": (
+            "3e3b41b529294ac31c9559a6d46a7c8ad777063304adde72a72437d240751a09"
+        ),
+        "evidence_file_sha256": (
+            "829cd5de1d7691d98bfbf3554d27fabcda64598f3e26ce4747beddaf03f1c3b0"
+        ),
+        "evidence_content_sha256": (
+            "c19c2601e35fe6ee0495a041c1ddeafc52aa275a18856585b36ba2e6435fc609"
+        ),
+        "requested_start": "2021-02-22",
+        "requested_end": "2021-02-26",
+        "evaluated_session_count": 5,
+        "processed_data_points": 63982,
+        "orders": 0,
+        "fills": 0,
+        "raw_rows_logged_or_exported": False,
+        "candidate_gate_status": "GO_FOR_DAILY_ENGINEERING_ONLY",
+        "decision": "DAILY_CAPABILITY_EVIDENCE_COLLECTED_REVIEW_PENDING",
+        "independent_review_status": "PENDING_PROJECT_OWNER_REVIEW",
+        "successor_registration_authorized": False,
+    }
+    assert phase["validation"] == {
+        "daily_capability_retry_evidence_focused_parallel_pytest": "PASS_23_TESTS_N16_LOADFILE",
+        "focused_failure_fix_chain": "21_PASS_2_FAIL_THEN_22_PASS_1_FAIL_THEN_23_PASS",
+        "compatibility_regression": "PASS_205_TESTS_N16_LOADFILE",
+        "formal_five_gate": "PENDING_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "second_cloud_backtest_used": False,
+        "project_mutation_performed": False,
+        "orders_or_fills_observed": False,
+        "raw_options_rows_present": False,
+        "prohibited_action_observed": False,
+        "investment_interpretation_allowed": False,
+        "paper_live_broker_production_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+    tampered = bytearray(current_bytes)
+    tampered[
+        TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_HISTORICAL_PREFIX_BYTE_COUNT - 1
+    ] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2500_qc_daily_capability_gate_retry_evidence_review_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

@@ -14,72 +14,76 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
-    coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
-    evidence
+  next_owner: project owner / independent reviewer：复核 ordinary-pushed exact evidence
+    与 result artifact hash 后签署或拒绝 attestation；capability coordinator：完成 evidence candidate
+    的 governed validation/push/cleanup
   requirement_refs:
   - docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
-    的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
-    token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
-    SHA-256=`1da0d834...43139`，不再修改项目。
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。授权内唯一
+    zero-order retry 已完成，single-use token 已失效；project `34808569` 未修改，第二次 run 未执行。当前
+    blocker=`INDEPENDENT_REVIEW_OF_ORDINARY_PUSHED_EVIDENCE_PENDING`；candidate GO
+    不等于 terminal GO，2499 尚未授权登记。
   acceptance_criteria:
   - criterion_id: legacy_markdown
-    text: proposal 必须绑定 2498 proposal/policy、blocked screenshot/build/script identity、同一
-      `2021-02-22..2021-02-26` 五 session、project mutation=0、cloud backtest=1、orders/fills=0；运行前
-      read-only 复核 account verified 与 code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw
-      rows/API/CLI/HTTP/Object Store/download/purchase/range expansion 均 fail closed。只有
-      terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。
+    text: Tracked evidence 必须严格绑定 proposal/policy/authorization/code/project/build/engine/backtest/result
+      artifact 与五 session aggregates；orders/fills/fees/raw rows/scope violation 必须为零，requested/evaluated
+      range 精确为 `2021-02-22..2021-02-26`。只有 independent reviewer 对 ordinary-pushed
+      exact hashes 签署 tracked attestation 后，才可把 decision 提升为 `GO_FOR_DAILY_ENGINEERING_ONLY`
+      并登记 2499；拒绝或不完整继续 fail closed。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
 legacy_row_evidence:
-  row_sha256: b86ba7f003d8edce032a5376fa4c41ad4946ae2f1d88867a0d0b5e21324feb5c
+  row_sha256: bdd6c81a575486ca0bbacab450f1acc3b649acb5b894b82aa0c30aa115345d1b
   cell_count: 8
   all_cells:
   - TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
   - External validation / verified-account retry of the QQQ Options DAILY capability
     gate
   - P0
-  - BASELINE_DONE
-  - project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
-    coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
-    evidence
-  - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
-    的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
-    token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
-    SHA-256=`1da0d834...43139`，不再修改项目。
-  - proposal 必须绑定 2498 proposal/policy、blocked screenshot/build/script identity、同一
-    `2021-02-22..2021-02-26` 五 session、project mutation=0、cloud backtest=1、orders/fills=0；运行前
-    read-only 复核 account verified 与 code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw
-    rows/API/CLI/HTTP/Object Store/download/purchase/range expansion 均 fail closed。只有
-    terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。
-  - 2026-08-08：proposal engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal
-    file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority
-    set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203 PASS。tracked
-    proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。
+  - IN_PROGRESS
+  - project owner / independent reviewer：复核 ordinary-pushed exact evidence 与 result
+    artifact hash 后签署或拒绝 attestation；capability coordinator：完成 evidence candidate
+    的 governed validation/push/cleanup
+  - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。授权内唯一
+    zero-order retry 已完成，single-use token 已失效；project `34808569` 未修改，第二次 run 未执行。当前
+    blocker=`INDEPENDENT_REVIEW_OF_ORDINARY_PUSHED_EVIDENCE_PENDING`；candidate GO
+    不等于 terminal GO，2499 尚未授权登记。
+  - Tracked evidence 必须严格绑定 proposal/policy/authorization/code/project/build/engine/backtest/result
+    artifact 与五 session aggregates；orders/fills/fees/raw rows/scope violation 必须为零，requested/evaluated
+    range 精确为 `2021-02-22..2021-02-26`。只有 independent reviewer 对 ordinary-pushed exact
+    hashes 签署 tracked attestation 后，才可把 decision 提升为 `GO_FOR_DAILY_ENGINEERING_ONLY`
+    并登记 2499；拒绝或不完整继续 fail closed。
+  - 2026-08-08：FREE / `Free Node` precheck 与 exact code SHA PASS；唯一 backtest `077252aa78ce2e0a7c3b9b4c38a554f7`
+    / build `cd73fe-0a3a57` Completed，63,982 data points、五 session 完整、0 orders/0 fills/0
+    fees、未投资、无 raw rows。evidence file/content=`829cd5de...c3b0`/`c19c2601...609`，result
+    artifact=`3e3b41b5...a09`；candidate=`GO_FOR_DAILY_ENGINEERING_ONLY`、review pending、successor
+    registration=false。focused evidence=23 PASS；compat/deprecation failure-fix final=205
+    PASS。`production_effect=none`、`broker_action=none`。
   raw_line: '|TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1|External
-    validation / verified-account retry of the QQQ Options DAILY capability gate|P0|BASELINE_DONE|project
-    owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability coordinator：仅在
-    exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal evidence|详见
-    `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
-    的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
-    token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
-    SHA-256=`1da0d834...43139`，不再修改项目。|proposal 必须绑定 2498 proposal/policy、blocked
-    screenshot/build/script identity、同一 `2021-02-22..2021-02-26` 五 session、project
-    mutation=0、cloud backtest=1、orders/fills=0；运行前 read-only 复核 account verified 与
-    code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw rows/API/CLI/HTTP/Object Store/download/purchase/range
-    expansion 均 fail closed。只有 terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。|2026-08-08：proposal
-    engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy
-    file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203
-    PASS。tracked proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。|'
+    validation / verified-account retry of the QQQ Options DAILY capability gate|P0|IN_PROGRESS|project
+    owner / independent reviewer：复核 ordinary-pushed exact evidence 与 result artifact
+    hash 后签署或拒绝 attestation；capability coordinator：完成 evidence candidate 的 governed
+    validation/push/cleanup|详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。授权内唯一
+    zero-order retry 已完成，single-use token 已失效；project `34808569` 未修改，第二次 run 未执行。当前
+    blocker=`INDEPENDENT_REVIEW_OF_ORDINARY_PUSHED_EVIDENCE_PENDING`；candidate GO
+    不等于 terminal GO，2499 尚未授权登记。|Tracked evidence 必须严格绑定 proposal/policy/authorization/code/project/build/engine/backtest/result
+    artifact 与五 session aggregates；orders/fills/fees/raw rows/scope violation 必须为零，requested/evaluated
+    range 精确为 `2021-02-22..2021-02-26`。只有 independent reviewer 对 ordinary-pushed exact
+    hashes 签署 tracked attestation 后，才可把 decision 提升为 `GO_FOR_DAILY_ENGINEERING_ONLY`
+    并登记 2499；拒绝或不完整继续 fail closed。|2026-08-08：FREE / `Free Node` precheck 与 exact
+    code SHA PASS；唯一 backtest `077252aa78ce2e0a7c3b9b4c38a554f7` / build `cd73fe-0a3a57`
+    Completed，63,982 data points、五 session 完整、0 orders/0 fills/0 fees、未投资、无 raw rows。evidence
+    file/content=`829cd5de...c3b0`/`c19c2601...609`，result artifact=`3e3b41b5...a09`；candidate=`GO_FOR_DAILY_ENGINEERING_ONLY`、review
+    pending、successor registration=false。focused evidence=23 PASS；compat/deprecation
+    failure-fix final=205 PASS。`production_effect=none`、`broker_action=none`。|'
   history_completeness: LEGACY_HISTORY_PARTIAL
   ambiguous_unescaped_pipe_boundaries: false
 initial_event:
   schema_version: task_event.v1
-  event_id: legacy-import-b86ba7f003d8edce032a5376
+  event_id: legacy-import-bdd6c81a575486ca0bbacab4
   task_id: TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
   event_type: LEGACY_IMPORT
   occurred_at: null
@@ -89,20 +93,22 @@ initial_event:
   base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
   previous_state_event_id: null
   from_status: null
-  to_status: BASELINE_DONE
+  to_status: IN_PROGRESS
   payload:
     priority: P0
-    next_owner: project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
-      coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
-      evidence
-    notes: 2026-08-08：proposal engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal
-      file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority
-      set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203 PASS。tracked
-      proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。
+    next_owner: project owner / independent reviewer：复核 ordinary-pushed exact evidence
+      与 result artifact hash 后签署或拒绝 attestation；capability coordinator：完成 evidence
+      candidate 的 governed validation/push/cleanup
+    notes: 2026-08-08：FREE / `Free Node` precheck 与 exact code SHA PASS；唯一 backtest
+      `077252aa78ce2e0a7c3b9b4c38a554f7` / build `cd73fe-0a3a57` Completed，63,982
+      data points、五 session 完整、0 orders/0 fills/0 fees、未投资、无 raw rows。evidence file/content=`829cd5de...c3b0`/`c19c2601...609`，result
+      artifact=`3e3b41b5...a09`；candidate=`GO_FOR_DAILY_ENGINEERING_ONLY`、review pending、successor
+      registration=false。focused evidence=23 PASS；compat/deprecation failure-fix final=205
+      PASS。`production_effect=none`、`broker_action=none`。
   rationale: Lossless legacy row import with mutable source location held only in
     the v2 index.
   evidence_refs:
-  - sha256:b86ba7f003d8edce032a5376fa4c41ad4946ae2f1d88867a0d0b5e21324feb5c
+  - sha256:bdd6c81a575486ca0bbacab450f1acc3b649acb5b894b82aa0c30aa115345d1b
   history_completeness: LEGACY_HISTORY_PARTIAL
 projection:
   legacy_first_eight_cells:
@@ -110,26 +116,28 @@ projection:
   - External validation / verified-account retry of the QQQ Options DAILY capability
     gate
   - P0
-  - BASELINE_DONE
-  - project owner：复核 ordinary-pushed exact hashes 后签发新的 single-use token；capability
-    coordinator：仅在 exact token 下执行唯一 zero-order retry；independent reviewer：复核 terminal
-    evidence
-  - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。2498
-    的唯一 attempt 在 Cloud run 前被 credit-card account-verification gate 拦截；Owner 已在平台完成验证并要求重试。旧
-    token 已失效，本任务只允许在新 exact token 下复用 project `34808569` 已保存的 LF-normalized script
-    SHA-256=`1da0d834...43139`，不再修改项目。
-  - proposal 必须绑定 2498 proposal/policy、blocked screenshot/build/script identity、同一
-    `2021-02-22..2021-02-26` 五 session、project mutation=0、cloud backtest=1、orders/fills=0；运行前
-    read-only 复核 account verified 与 code hash；任何 mismatch、再次验证阻断、第二次 run、订单/成交/raw
-    rows/API/CLI/HTTP/Object Store/download/purchase/range expansion 均 fail closed。只有
-    terminal `GO_FOR_DAILY_ENGINEERING_ONLY` 才允许登记 2499。
-  - 2026-08-08：proposal engineering baseline 完成；implementation authority=`c880bb9e...aa0e2`；proposal
-    file/content=`d5ecad81...239e`/`77570e7f...13b9`；policy file/canonical=`851ee0fb...b19`/`540107c9...9e9d`；authority
-    set=`52f8246d...d3a2`。focused=44、adjacent=254、compat/deprecation=203 PASS。tracked
-    proposal 仍 unauthorized；external retry 未执行。`production_effect=none`、`broker_action=none`。
+  - IN_PROGRESS
+  - project owner / independent reviewer：复核 ordinary-pushed exact evidence 与 result
+    artifact hash 后签署或拒绝 attestation；capability coordinator：完成 evidence candidate
+    的 governed validation/push/cleanup
+  - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。授权内唯一
+    zero-order retry 已完成，single-use token 已失效；project `34808569` 未修改，第二次 run 未执行。当前
+    blocker=`INDEPENDENT_REVIEW_OF_ORDINARY_PUSHED_EVIDENCE_PENDING`；candidate GO
+    不等于 terminal GO，2499 尚未授权登记。
+  - Tracked evidence 必须严格绑定 proposal/policy/authorization/code/project/build/engine/backtest/result
+    artifact 与五 session aggregates；orders/fills/fees/raw rows/scope violation 必须为零，requested/evaluated
+    range 精确为 `2021-02-22..2021-02-26`。只有 independent reviewer 对 ordinary-pushed exact
+    hashes 签署 tracked attestation 后，才可把 decision 提升为 `GO_FOR_DAILY_ENGINEERING_ONLY`
+    并登记 2499；拒绝或不完整继续 fail closed。
+  - 2026-08-08：FREE / `Free Node` precheck 与 exact code SHA PASS；唯一 backtest `077252aa78ce2e0a7c3b9b4c38a554f7`
+    / build `cd73fe-0a3a57` Completed，63,982 data points、五 session 完整、0 orders/0 fills/0
+    fees、未投资、无 raw rows。evidence file/content=`829cd5de...c3b0`/`c19c2601...609`，result
+    artifact=`3e3b41b5...a09`；candidate=`GO_FOR_DAILY_ENGINEERING_ONLY`、review pending、successor
+    registration=false。focused evidence=23 PASS；compat/deprecation failure-fix final=205
+    PASS。`production_effect=none`、`broker_action=none`。
   docs_links:
   - docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md
   terminal: false
-  raw_row_sha256: b86ba7f003d8edce032a5376fa4c41ad4946ae2f1d88867a0d0b5e21324feb5c
+  raw_row_sha256: bdd6c81a575486ca0bbacab450f1acc3b649acb5b894b82aa0c30aa115345d1b
 producer_version: arch_005_shadow_registry_compiler.v2
-fragment_checksum: c4b08a63de629bba30304be6557fc60043fdb8bec21325fd6c14db9b39119b97
+fragment_checksum: 3642bb5c8c0b41c8f35359e9f27343a9dcc0d25de39b10f68464dc0434b5abf0

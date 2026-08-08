@@ -7876,9 +7876,11 @@ gate 为 `GO_FOR_DAILY_ENGINEERING_ONLY`，它也不授权完整 `2021-02-22..pr
 ## TRADING-2500 QuantConnect QQQ Options Daily Capability Gate Retry V1
 
 `config/research/qc_qqq_options_daily_capability_gate_retry_v1.yaml` 与
-`qqq_options_research.daily_capability_gate_retry` 只为 2498 在算法运行前被 account-verification gate
-拦截后的单次重试生成新的 hash-bound proposal。2498 token 已失效，Owner 的“已验证”声明只作为
-read-only UI precheck 的输入，不是 Cloud run authorization 或 capability PASS。
+`qqq_options_research.daily_capability_gate_retry` 为 2498 在算法运行前被 account-verification gate
+拦截后的单次重试生成 hash-bound proposal，并严格加载本次 export-safe evidence。2498 token 已失效；
+2500 exact single-use token 已用于唯一一次 read-only-prechecked、zero-order Cloud backtest，并在
+evidence collection 后失效。当前只形成 `GO_FOR_DAILY_ENGINEERING_ONLY` candidate，independent
+review 仍为 `PENDING_PROJECT_OWNER_REVIEW`。
 
 ```text
 2498 tracked proposal/policy + invalidated token + blocked attempt evidence
@@ -7891,11 +7893,19 @@ read-only UI precheck 的输入，不是 Cloud run authorization 或 capability 
   -> QQQ Equity RAW DAILY + QQQ Equity Options DAILY
   -> maximum new cloud backtest = 1; orders = fills = 0
   -> same session chain/contracts/two-sided quote/OI/Greeks/IV aggregates
+  -> exact evidence seal binds FREE / Free Node / project + code hash
+     / build + LEAN + backtest / result artifact SHA / 63,982 data points
+  -> five expected sessions complete; orders = fills = fees = 0
+     / portfolio invested = false / raw rows = false / scope violation = false
+  -> token INVALIDATED_AFTER_EVIDENCE_COLLECTION; second backtest = false
   -> same GO_FOR_DAILY_ENGINEERING_ONLY | NO_GO_CAPABILITY_OR_ENTITLEMENT
      | UNKNOWN_EVIDENCE_INCOMPLETE taxonomy
+  -> candidate GO + DAILY_CAPABILITY_EVIDENCE_COLLECTED_REVIEW_PENDING
   -> only reviewed GO permits registering TRADING-2499
 ```
 
-Exact new Owner token 前，proposal 保持 external action=false。Project mutation、second backtest、raw
-rows、API/CLI/HTTP/Object Store、download、purchase/subscription、range expansion、investment
-interpretation、paper/live/broker/production 均禁止；任何 account/code mismatch 均停止而不修复。
+本次 project mutation=`0`，second backtest、raw rows、API/CLI/HTTP/Object Store、download、
+purchase/subscription、range expansion、investment interpretation、paper/live/broker/production 均未发生且
+继续禁止。Evidence candidate 只证明目标五日 DAILY contract 在 Free Cloud 可用；它不证明完整历史窗口、
+策略收益或 license/export 权利。2499 必须等待 independent reviewer 对 ordinary-pushed exact evidence
+签署 tracked attestation，不能直接消费聊天中的 candidate GO。

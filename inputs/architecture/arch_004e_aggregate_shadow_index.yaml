@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 41a53c3b34904fd2ca5e5048af147d6b138ae00e231bf2330af9cd2071432b7d
+  current_sha256: ffbc9a4c5e98d776e23e87074ed403aaa1880104791fb4bbff3e50ece5236f44
   fragment_root: config/architecture/fragments/flows
   fragment_count: 33
   fragment_paths:
@@ -231,7 +231,7 @@ fragments:
   owner: architecture_governance
   target_id: system_flow
   path: config/architecture/fragments/flows/qc_qqq_options_daily_capability_gate_retry.yaml
-  sha256: 9bad4dff198dcd1b5623b708c76a490c5a4f7fcd794862380d9826bcd48f4f20
+  sha256: a3d4555dd7e443372c2e478244ec361d9b8d03e90b54f3444da5d5c8c5be5f8f
   generated_source_of_truth_active: false
 - fragment_id: flow.qc_qqq_options_license_export_due_diligence
   fragment_kind: flow
@@ -441,7 +441,7 @@ fragments:
   owner: external_validation
   target_id: null
   path: config/architecture/fragments/modules/qc_qqq_options_daily_capability_gate_retry.yaml
-  sha256: 6adb4f2e2f30fda6967809b7c182f6273a827ece263c29b2dbd9df6d7eb94d36
+  sha256: a0ca0c126dc4a846c8b387b16857d20bddef3d69da477c94dd36d2fd74894110
   generated_source_of_truth_active: false
 - fragment_id: module.qc_qqq_options_license_export_due_diligence
   fragment_kind: module

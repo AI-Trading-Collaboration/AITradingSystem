@@ -27,6 +27,14 @@ account verification，因此没有 backtest id、没有 processed data points�
 Owner 的自然语言“重试”而复用。Owner 已在 QuantConnect UI 完成 account verification，本任务只为
 同范围的一次重试生成新的 deterministic proposal；exact token 前不执行外部 retry。
 
+Owner 随后签发
+`owner_decision:TRADING-2500:2026-08-08:authorize_single_zero_order_verified_account_qc_daily_capability_retry_v1`。
+capability coordinator 已在 project `34808569` 完成 read-only code precheck 与授权内唯一一次
+zero-order Cloud backtest；single-use token 随 evidence collection 立即失效。当前阶段只把
+`GO_FOR_DAILY_ENGINEERING_ONLY` 记录为 candidate status，最终 decision 保持
+`DAILY_CAPABILITY_EVIDENCE_COLLECTED_REVIEW_PENDING`，直到 independent reviewer 对 ordinary-pushed
+exact evidence 签署 tracked attestation；2499 在此前不得登记。
+
 ## 2. 冻结继承与 predecessor evidence
 
 本任务继承 2481/2482/2484/2489/2490、2493/2497 与 2498 全部 authority，不重定义 shared
@@ -92,6 +100,27 @@ expansion、investment interpretation、paper/live/broker/production。
 `GO_FOR_DAILY_ENGINEERING_ONLY`。再次 account gate、run/build failure、required field 缺失或 prohibited
 action 得到 `NO_GO_CAPABILITY_OR_ENTITLEMENT`；证据不全得到 `UNKNOWN_EVIDENCE_INCOMPLETE`。
 
+本次 export-safe evidence 固定为
+`inputs/external_validation/qc_qqq_options_daily_capability_gate_retry_evidence_20260808.json`：
+
+- evidence file/content SHA-256：
+  `829cd5de1d7691d98bfbf3554d27fabcda64598f3e26ce4747beddaf03f1c3b0` /
+  `c19c2601e35fe6ee0495a041c1ddeafc52aa275a18856585b36ba2e6435fc609`；
+- result artifact `Jumping Blue Pig.json`：16,776 bytes，SHA-256=
+  `3e3b41b529294ac31c9559a6d46a7c8ad777063304adde72a72437d240751a09`；
+- project code LF SHA-256=`1da0d834d5509aabd7fb3baeeff9b8b3f56eed3d9ba095679f84fda926843139`，
+  与授权完全一致；project mutation count=`0`；
+- build/backtest identity=`cd73fe-0a3a57` / `077252aa78ce2e0a7c3b9b4c38a554f7`，
+  engine=`LEAN Engine v2.5.0.0.17989`，result=`Completed`；
+- requested/evaluated range 均为 `2021-02-22..2021-02-26`，五 session inventory 完整；
+- processed data points=`63,982`，orders/fills/fees=`0/0/0.00`，portfolio invested=`false`，
+  raw rows logged/exported=`false`；
+- account tier=`FREE`、compute UI=`Free Node`，未观察到 verification gate；没有第二次 run 或 prohibited
+  action。
+
+上述 evidence 只证明 Free Cloud 对目标日级数据合同的 capability candidate，不能推出历史全窗稳定性、
+策略收益、license/download 权利、投资结论或 production readiness。
+
 ## 5. Sequencing 与验收
 
 1. S0：登记本任务与 requirement；
@@ -125,6 +154,16 @@ worktree 一并清理；source canonical evidence 保持原位不修改。
 创建 ignored `change_manifest.json` 与 `integration_revalidation_plan.json`。两者仅用于从 exact
 base/lane-head/latest-main 重建并校验 `integration_revalidation_plan.v1`，不进入 Git；integration preflight
 与 final candidate 完成后删除，所需 plan id/status 进入 terminal handoff，且不替代 canonical formal evidence。
+
+外部 run 完成后的 evidence-review worktree：
+`D:\Work\AITradingSystem_trading2500_evidence_review`，branch=
+`codex/trading-2500-daily-capability-evidence-review`，exact base=
+`ab22067ab9f57cc11144ae4eef899cb21f639181`。用途是封存 export-safe evidence、strict loader、tests、
+task/system-flow/architecture authority 与 independent-review handoff。退出条件为 evidence candidate
+完成 final-tree validation、ordinary non-force push、remote SHA verify，且 canonical evidence 可由 Git
+恢复；随后审计并 remove worktree、delete merged branch、`git worktree prune`。下载的 result artifact
+保留在 Owner 本机 `G:\Download\Jumping Blue Pig.json`，不复制进 repository；tracked evidence 只保存其
+byte count、top-level key inventory 与 SHA-256，不含 raw option rows。
 
 ## 7. Current progress
 
@@ -166,3 +205,49 @@ SHA-256=`851ee0fb3c2a14b25263b37115ece581869fee08dffac95e272960108c46bb19` /
 `540107c9dce0fa08a8f461f8c733a1c1c5b413405bb2caf4a6a46501575f9e9d`，authority-set
 SHA-256=`52f8246d8192f4fbf40c3aa415aee56bdbb5eb937f4778daa30fda42f06ad3a2`。tracked proposal
 保持 `NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS`，不因生成 proposal 自动授权外部动作。
+
+2026-08-08：Owner exact token 与 proposal authority 完全匹配。read-only precheck 确认已登录 FREE
+organization、project `34808569`、`Free Node`，editor code LF bytes=`6,148` 且 SHA-256 精确匹配；没有
+project mutation。唯一一次 `Backtest Project` 完成并生成 build `cd73fe-0a3a57`、backtest
+`077252aa78ce2e0a7c3b9b4c38a554f7`；token 随 evidence collection 失效，未执行第二次 run。
+五个预期 session 的 contract/two-sided quote/finite Greeks/finite IV 分别完整覆盖，positive OI 均为正；
+result artifact 与 UI facts 共同确认 63,982 data points、0 orders、0 fills、0 fees、未投资、无 raw rows。
+
+2026-08-08：evidence-review focused failure-fix 链保持同一
+`python -m pytest -n 16 --dist loadfile tests/test_qc_qqq_options_daily_capability_gate_retry.py`
+覆盖。首轮 `21 passed / 2 failed`，根因是测试把 strict Python `date/datetime/tuple` payload 直接写成
+JSON；修正为 canonical model bytes 后第二轮 `22 passed / 1 failed`，唯一失败是临时 project fixture
+遗漏 2497 predecessor deep-chain files；只补完整 predecessor fixture 后第三轮 `23 passed in 4.35s`。
+随后只修 Ruff import ordering，同覆盖最终 `23 passed in 4.39s` 且 Ruff PASS。前两轮只作为 focused
+failure-fix 记录，不作为 formal promotion evidence。final-tree authority refresh 后同覆盖重跑出现
+`22 passed / 1 failed in 4.31s`：唯一失败是 proposal hash tamper test 仍先调用 strict `seal()` 构造
+已被 `Literal` 禁止的非法对象，导致在外部伪造 evidence bytes 写入前 fail closed。修复边界仅为该负向
+测试改成直接篡改 canonical JSON bytes 并由 loader 拒绝；完全相同覆盖随后 `23 passed in 4.30s`。
+该 22/1 轮同样只保留为 focused failure-fix evidence，不是 formal promotion evidence。当前 candidate status=
+`GO_FOR_DAILY_ENGINEERING_ONLY`，但 independent review=`PENDING_PROJECT_OWNER_REVIEW`、
+successor registration authorized=`false`；final GO 与 2499 仍等待 ordinary-pushed exact evidence 的
+Owner attestation。
+
+2026-08-08：compatibility/deprecation 固定覆盖始终为
+`python -m pytest -n 16 --dist loadfile tests/test_arch_004_refactor_policy.py tests/test_arch_004g_deprecation.py`
+的完整 205 tests。一次 5 秒 wrapper timeout 在 collection 阶段停止且 runner audit 为零，没有 node
+结果。首个 terminal=`122 passed / 83 failed in 275.38s`，全部为新 phase 前多一个换行导致 suffix marker
+错位的级联；byte-level relocation 先证明移除新增 block 后与 pushed base `3,066,628 bytes` / SHA-256
+`6824df74142c45e9265f44e1b9f773979604853a578b410dcb6cd3ae291dea97` 完全一致，再把同一 block 移到 EOF。
+第二个 terminal=`122 passed / 83 failed in 229.43s`，精确差集仅
+`tests/test_trading2452_architecture_contract.py` 的 historical successor 特例缺 additional-supersession
+声明；补 exact path 后第三个 terminal=`204 passed / 1 failed in 225.06s`，仅旧 2500 proposal phase
+自测尚未消费新 successor paths。最小修复后定向 old/new/Wave14 三节点=`3 passed`，第四次同覆盖最终
+`205 passed in 228.31s`。所有失败轮仅作为 focused failure-fix evidence，不是 formal promotion evidence；
+historical prefix/hash 与历史 payload 从未改写。
+
+2026-08-08：final-tree source refresh 后同一 205-test 覆盖重跑为
+`204 passed / 1 failed in 228.67s`。唯一失败是 evidence-review phase 已把
+`compatibility_regression` 收口为 `PASS_205_TESTS_N16_LOADFILE`，而同一 current-authority test 仍精确
+期待 `PENDING_FINAL_TREE`；source hash、historical prefix 与其他 204 节点全部通过。最小修复仅同步该
+validation expectation，随后必须用相同 `-n 16 --dist loadfile` 完整覆盖重跑；该 204/1 轮只作为
+failure-fix parent，不是 formal promotion evidence。
+
+同步 expectation 的首次定向预检 `1 failed in 7.40s`，原因是重复键文本使 patch 命中一处早期历史
+测试、未命中 TRADING-2500 EOF 节点；在任何完整重跑前已原样恢复早期测试，并用 2500 唯一上下文
+更新正确节点。compatibility baseline historical payload 未修改；该定向失败同样不是 promotion evidence。

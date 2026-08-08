@@ -7,11 +7,13 @@ import pytest
 from pydantic import ValidationError
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.qqq_options_research import daily_capability_gate_retry as retry_module
 from ai_trading_system.qqq_options_research.daily_capability_gate import (
     EXPECTED_AGGREGATE_FIELDS,
     EXPECTED_SESSIONS,
 )
 from ai_trading_system.qqq_options_research.daily_capability_gate_retry import (
+    DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_PATH,
     DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_POLICY_PATH,
     DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_PROPOSAL_PATH,
     EXPECTED_RETRY_ALLOWED_ACTIONS,
@@ -24,9 +26,11 @@ from ai_trading_system.qqq_options_research.daily_capability_gate_retry import (
     PREDECESSOR_SCRIPT_LF_SHA256,
     PROPOSED_RETRY_OWNER_DECISION,
     DailyCapabilityRetryRunScope,
+    QCQQQOptionsDailyCapabilityGateRetryEvidence,
     QCQQQOptionsDailyCapabilityGateRetryPolicy,
     QCQQQOptionsDailyCapabilityGateRetryProposal,
     build_qc_qqq_options_daily_capability_gate_retry_proposal,
+    load_qc_qqq_options_daily_capability_gate_retry_evidence,
     load_qc_qqq_options_daily_capability_gate_retry_policy,
     load_qc_qqq_options_daily_capability_gate_retry_proposal,
 )
@@ -36,6 +40,9 @@ TRACKED_IMPLEMENTATION_COMMIT = "c880bb9e55dbcf5c641756e80fdd2f9d00eaa0e2"
 TRACKED_PROPOSAL_FILE_SHA256 = "d5ecad8167e2abef7e5a8d6427604da5b6f59d4be50607228097191eba74239e"
 TRACKED_PROPOSAL_CONTENT_SHA256 = "77570e7ff88e1c567c29d10dcfc534cef07628cab58ceb894da79c6075f013b9"
 TRACKED_AUTHORITY_SET_SHA256 = "52f8246d8192f4fbf40c3aa415aee56bdbb5eb937f4778daa30fda42f06ad3a2"
+TRACKED_EVIDENCE_FILE_SHA256 = "829cd5de1d7691d98bfbf3554d27fabcda64598f3e26ce4747beddaf03f1c3b0"
+TRACKED_EVIDENCE_CONTENT_SHA256 = "c19c2601e35fe6ee0495a041c1ddeafc52aa275a18856585b36ba2e6435fc609"
+TRACKED_RESULT_ARTIFACT_SHA256 = "3e3b41b529294ac31c9559a6d46a7c8ad777063304adde72a72437d240751a09"
 
 
 def _proposal() -> QCQQQOptionsDailyCapabilityGateRetryProposal:
@@ -207,3 +214,81 @@ def test_retry_scope_cannot_promote_project_mutation_orders_or_fills() -> None:
 def test_policy_path_is_repository_relative_and_exists() -> None:
     assert not DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_POLICY_PATH.is_absolute()
     assert (PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_POLICY_PATH).is_file()
+
+
+def test_tracked_retry_evidence_replays_and_remains_pending_independent_review() -> None:
+    loaded = load_qc_qqq_options_daily_capability_gate_retry_evidence()
+    evidence = loaded.evidence
+
+    assert loaded.evidence_path == (
+        PROJECT_ROOT / DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_PATH
+    )
+    assert loaded.evidence_file_sha256 == TRACKED_EVIDENCE_FILE_SHA256
+    assert evidence.content_sha256 == TRACKED_EVIDENCE_CONTENT_SHA256
+    assert evidence.result_artifact_sha256 == TRACKED_RESULT_ARTIFACT_SHA256
+    assert evidence.project_code_lf_sha256 == PREDECESSOR_SCRIPT_LF_SHA256
+    assert evidence.evaluated_sessions == EXPECTED_SESSIONS
+    assert evidence.processed_data_points == 63982
+    assert evidence.total_orders == evidence.result_order_count == evidence.fills == 0
+    assert evidence.raw_options_rows_present is False
+    assert evidence.raw_rows_logged is False
+    assert evidence.candidate_gate_status == "GO_FOR_DAILY_ENGINEERING_ONLY"
+    assert evidence.decision == "DAILY_CAPABILITY_EVIDENCE_COLLECTED_REVIEW_PENDING"
+    assert evidence.independent_review_status == "PENDING_PROJECT_OWNER_REVIEW"
+    assert evidence.successor_registration_authorized is False
+
+
+def test_retry_evidence_five_sessions_have_complete_daily_aggregates() -> None:
+    evidence = load_qc_qqq_options_daily_capability_gate_retry_evidence().evidence
+    assert tuple(item.session_date for item in evidence.session_evidence) == EXPECTED_SESSIONS
+    for item in evidence.session_evidence:
+        assert item.option_chain_present is True
+        assert item.contract_count > 0
+        assert item.two_sided_quote_count == item.contract_count
+        assert item.finite_greeks_count == item.contract_count
+        assert item.finite_implied_volatility_count == item.contract_count
+        assert 0 < item.positive_open_interest_count <= item.contract_count
+        assert item.orders_submitted == 0
+        assert item.raw_rows_logged is False
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ({"evaluated_start": date(2021, 2, 23)}, "start drifted"),
+        ({"raw_options_rows_present": True}, "literal_error"),
+        ({"second_cloud_backtest_used": True}, "literal_error"),
+        ({"successor_registration_authorized": True}, "literal_error"),
+    ],
+)
+def test_retry_evidence_scope_or_authority_tamper_fails_closed(
+    mutation: dict[str, object], message: str
+) -> None:
+    payload = load_qc_qqq_options_daily_capability_gate_retry_evidence().evidence.model_dump(
+        mode="python"
+    )
+    payload.update(mutation)
+    payload["content_sha256"] = "0" * 64
+    with pytest.raises((ValidationError, ValueError), match=message):
+        QCQQQOptionsDailyCapabilityGateRetryEvidence.model_validate(payload)
+
+
+def test_retry_evidence_proposal_hash_tamper_fails_closed(tmp_path, monkeypatch) -> None:
+    proposal = load_qc_qqq_options_daily_capability_gate_retry_proposal()
+    evidence_path = tmp_path / DEFAULT_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_PATH
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    evidence = load_qc_qqq_options_daily_capability_gate_retry_evidence().evidence
+    payload = json.loads(evidence.canonical_bytes)
+    payload["proposal_file_sha256"] = "f" * 64
+    evidence_path.write_bytes(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    )
+    monkeypatch.setattr(
+        retry_module,
+        "load_qc_qqq_options_daily_capability_gate_retry_proposal",
+        lambda *args, **kwargs: proposal,
+    )
+    with pytest.raises(Exception, match="literal_error"):
+        load_qc_qqq_options_daily_capability_gate_retry_evidence(project_root=tmp_path)
