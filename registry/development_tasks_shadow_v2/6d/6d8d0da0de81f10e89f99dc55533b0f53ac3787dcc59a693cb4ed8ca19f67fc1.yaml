@@ -1,0 +1,126 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+  task_id_sha256: 6d8d0da0de81f10e89f99dc55533b0f53ac3787dcc59a693cb4ed8ca19f67fc1
+task_record:
+  task_id: DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+  title: null
+  domain: Developer experience / immutable compatibility prefix、content-addressed
+    fragments 与 hash-chain index
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: DEVX-006C architecture coordinator：完成 final-tree formal/Full、ordinary
+    push、cleanup 与 release；随后 D coordinator 从 released exact main 登记
+  requirement_refs:
+  - docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md`。Exact
+    base=`cb437a4d4be178180f60cb3ee2d2994c1be45f94`；冻结现有 monolith bytes，后续 section
+    只写 canonical fragment + 小型 index；所有 direct consumer 迁同一 merged loader；D/S5 等待本任务
+    release。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Legacy bytes/SHA 不变；section mapping/order/hash parity；fragment/index repeat-build
+      deterministic；missing/duplicate/reorder/tamper/path/symlink/chain failure fail
+      closed；legacy append writer=0、growth-assuming direct consumer=0、rollback无丢失；focused/Architecture/Contract/Integration/Reproducibility/Full与ordinary
+      push/cleanup PASS；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: c4413321cef338e3360f63d9097eb13b8be8586812260145a007c0274fd5392c
+  cell_count: 8
+  all_cells:
+  - DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+  - Developer experience / immutable compatibility prefix、content-addressed fragments
+    与 hash-chain index
+  - P1
+  - BASELINE_DONE
+  - DEVX-006C architecture coordinator：完成 final-tree formal/Full、ordinary push、cleanup
+    与 release；随后 D coordinator 从 released exact main 登记
+  - 详见 `docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md`。Exact
+    base=`cb437a4d4be178180f60cb3ee2d2994c1be45f94`；冻结现有 monolith bytes，后续 section
+    只写 canonical fragment + 小型 index；所有 direct consumer 迁同一 merged loader；D/S5 等待本任务
+    release。
+  - Legacy bytes/SHA 不变；section mapping/order/hash parity；fragment/index repeat-build
+    deterministic；missing/duplicate/reorder/tamper/path/symlink/chain failure fail
+    closed；legacy append writer=0、growth-assuming direct consumer=0、rollback无丢失；focused/Architecture/Contract/Integration/Reproducibility/Full与ordinary
+    push/cleanup PASS；`production_effect=none`。
+  - 2026-08-09：C1-C4 `BASELINE_DONE`；exact legacy seal=`3151107 bytes / 253b976b...3842
+    / blob 12496b55...`；dynamic consumers=`8`，growth reads `135→0`、runtime writer=`0`；focused=`33
+    passed`、完整 compatibility=`209 passed`，latest-authority migration 与 task-shadow
+    carry-forward PASS；进入 final-tree formal/Full closeout。
+  raw_line: '|DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION|Developer experience
+    / immutable compatibility prefix、content-addressed fragments 与 hash-chain index|P1|BASELINE_DONE|DEVX-006C
+    architecture coordinator：完成 final-tree formal/Full、ordinary push、cleanup 与 release；随后
+    D coordinator 从 released exact main 登记|详见 `docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md`。Exact
+    base=`cb437a4d4be178180f60cb3ee2d2994c1be45f94`；冻结现有 monolith bytes，后续 section
+    只写 canonical fragment + 小型 index；所有 direct consumer 迁同一 merged loader；D/S5 等待本任务
+    release。|Legacy bytes/SHA 不变；section mapping/order/hash parity；fragment/index
+    repeat-build deterministic；missing/duplicate/reorder/tamper/path/symlink/chain
+    failure fail closed；legacy append writer=0、growth-assuming direct consumer=0、rollback无丢失；focused/Architecture/Contract/Integration/Reproducibility/Full与ordinary
+    push/cleanup PASS；`production_effect=none`。|2026-08-09：C1-C4 `BASELINE_DONE`；exact
+    legacy seal=`3151107 bytes / 253b976b...3842 / blob 12496b55...`；dynamic consumers=`8`，growth
+    reads `135→0`、runtime writer=`0`；focused=`33 passed`、完整 compatibility=`209 passed`，latest-authority
+    migration 与 task-shadow carry-forward PASS；进入 final-tree formal/Full closeout。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-c4413321cef338e3360f63d9
+  task_id: DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: DEVX-006C architecture coordinator：完成 final-tree formal/Full、ordinary
+      push、cleanup 与 release；随后 D coordinator 从 released exact main 登记
+    notes: 2026-08-09：C1-C4 `BASELINE_DONE`；exact legacy seal=`3151107 bytes / 253b976b...3842
+      / blob 12496b55...`；dynamic consumers=`8`，growth reads `135→0`、runtime writer=`0`；focused=`33
+      passed`、完整 compatibility=`209 passed`，latest-authority migration 与 task-shadow
+      carry-forward PASS；进入 final-tree formal/Full closeout。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:c4413321cef338e3360f63d9097eb13b8be8586812260145a007c0274fd5392c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+  - Developer experience / immutable compatibility prefix、content-addressed fragments
+    与 hash-chain index
+  - P1
+  - BASELINE_DONE
+  - DEVX-006C architecture coordinator：完成 final-tree formal/Full、ordinary push、cleanup
+    与 release；随后 D coordinator 从 released exact main 登记
+  - 详见 `docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md`。Exact
+    base=`cb437a4d4be178180f60cb3ee2d2994c1be45f94`；冻结现有 monolith bytes，后续 section
+    只写 canonical fragment + 小型 index；所有 direct consumer 迁同一 merged loader；D/S5 等待本任务
+    release。
+  - Legacy bytes/SHA 不变；section mapping/order/hash parity；fragment/index repeat-build
+    deterministic；missing/duplicate/reorder/tamper/path/symlink/chain failure fail
+    closed；legacy append writer=0、growth-assuming direct consumer=0、rollback无丢失；focused/Architecture/Contract/Integration/Reproducibility/Full与ordinary
+    push/cleanup PASS；`production_effect=none`。
+  - 2026-08-09：C1-C4 `BASELINE_DONE`；exact legacy seal=`3151107 bytes / 253b976b...3842
+    / blob 12496b55...`；dynamic consumers=`8`，growth reads `135→0`、runtime writer=`0`；focused=`33
+    passed`、完整 compatibility=`209 passed`，latest-authority migration 与 task-shadow
+    carry-forward PASS；进入 final-tree formal/Full closeout。
+  docs_links:
+  - docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md
+  terminal: false
+  raw_row_sha256: c4413321cef338e3360f63d9097eb13b8be8586812260145a007c0274fd5392c
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: a7edcb5db7edd5e3927ef443a82748b8059cde65e3198e09274a82341bfe275c

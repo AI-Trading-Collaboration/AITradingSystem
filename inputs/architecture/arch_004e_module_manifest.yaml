@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1099
+module_count: 1100
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -14961,7 +14961,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.platform.architecture.bootstrap_handoff
   path: src/ai_trading_system/platform/architecture/bootstrap_handoff.py
-  sha256: 04f2d9d7fb274f0907afaaf7e504aa8a148f6e311a4a329fb9c9eb0e8dae4570
+  sha256: 6d6ecc9aa93959bd53277bae5e3210b37d237e096ea82b5deb54cf7283a9d2a0
   rule_id: platform_architecture
   owner_profile: platform
   owners:
@@ -15077,6 +15077,29 @@ modules:
 - module_id: src.ai_trading_system.platform.architecture.cli_contract
   path: src/ai_trading_system/platform/architecture/cli_contract.py
   sha256: 46d8955c85c8821683d05fd692008f2218aef973a160cadbe271df9b4e755b02
+  rule_id: platform_architecture
+  owner_profile: platform
+  owners:
+    code_owner: platform_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: platform_io
+    runtime_owner: platform_operations
+  layer: platform
+  category: architecture_platform_services
+  public_contract: true
+  deprecation_status: active
+  test_globs:
+  - tests/test_arch_004c_*.py
+  - tests/test_arch_004e_*.py
+  - tests/test_arch_005*.py
+  validation_tiers:
+  - architecture-fitness
+  - contract-validation
+  shared_integration: false
+- module_id: src.ai_trading_system.platform.architecture.compatibility_authority
+  path: src/ai_trading_system/platform/architecture/compatibility_authority.py
+  sha256: e217eb9750210b536e7069b3954ccf86bd3097ab80d19349b4c4406403d5cfab
   rule_id: platform_architecture
   owner_profile: platform
   owners:

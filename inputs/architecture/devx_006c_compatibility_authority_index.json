@@ -1,0 +1,37 @@
+{
+  "contract": {
+    "dual_write": false,
+    "fragment_identity": "CANONICAL_SECTION_SHA256",
+    "fragment_source_active": true,
+    "index_chain": "SHA256",
+    "legacy_append_allowed": false,
+    "rollback_mode": "FROZEN_LEGACY_PREFIX_ONLY"
+  },
+  "entries": [
+    {
+      "entry_sha256": "222f1877e0e16f2350334b5cd8b7f759bb5c7bdb662291ccb8dcf0e4a2309b88",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/a8/a87031088ebb2e25fd6d8864209fb80d34fee84f32ead3700ea5393c2abcf5dd.json",
+      "fragment_sha256": "87d576511fe82a6422595efb1e3784dec2c17f5308bbee0fa08b329bfe570a67",
+      "order": 0,
+      "previous_entry_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
+      "section_id": "phase_devx_006c_compatibility_authority_fragmentation",
+      "section_sha256": "a87031088ebb2e25fd6d8864209fb80d34fee84f32ead3700ea5393c2abcf5dd"
+    }
+  ],
+  "final_chain_sha256": "222f1877e0e16f2350334b5cd8b7f759bb5c7bdb662291ccb8dcf0e4a2309b88",
+  "genesis_chain_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
+  "legacy_prefix": {
+    "byte_count": 3151107,
+    "file_sha256": "253b976b2740f0097e1d8949ec8eaf3846c82809f88fdf3a47fb76fae6023842",
+    "git_blob": "12496b5578207855e5e4dd81159f80a5d0e8a3bb",
+    "grandfathered_duplicate_key_behavior": "PYYAML_SAFE_LOADER_LAST_VALUE_WINS",
+    "grandfathered_duplicate_key_count": 1,
+    "lf_sha256": "253b976b2740f0097e1d8949ec8eaf3846c82809f88fdf3a47fb76fae6023842",
+    "mapping_replay_sha256": "6b575efd51d511ac8a42d271a7e4ceba0b98b4ff73eafec7234ae95ba059c9cf",
+    "ordered_entry_ids_sha256": "81240fcd54624e808478267b62612a33b2c4f05a336a216ddf4208f9837e101b",
+    "path": "inputs/architecture/arch_004_compatibility_baseline.yaml",
+    "top_level_entry_count": 306
+  },
+  "schema_version": "compatibility_authority_index.v1",
+  "task_id": "DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION"
+}

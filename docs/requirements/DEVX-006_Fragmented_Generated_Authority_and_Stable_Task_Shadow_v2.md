@@ -3,10 +3,30 @@
 ## 状态
 
 - priority：P1
-- status：BASELINE_DONE（Task Shadow v2 side-by-side B 波完成；C/D 波与 cutover 未授权）
+- status：IN_PROGRESS（Task Shadow v2 B 波完成；C 波已独立授权并推进，D/S5 仍串行锁定）
 - owner：architecture coordinator + developer workflow owner
 - source finding：OPS-070 2026-07-27 checkout-dirty stability audit
 - production effect：none
+
+## 2026-08-09 C → D → S5 串行授权
+
+Owner 决定：
+`owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1`
+
+TRADING-2504 已由其单一 coordinator 完成 ordinary push、cleanup 与 resource release；released
+exact main=`cb437a4d4be178180f60cb3ee2d2994c1be45f94`。Owner 要求按 C → D → S5 顺序
+真正解决 shared path 冲突。本 parent task 因此重新进入 `IN_PROGRESS`，但当前只开放独立任务
+`DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION`：
+
+- C 波 requirement：`docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md`；
+- D 波必须等待 C ordinary push/cleanup/resource release 后从新 exact main 独立登记；
+- ARCH-005 S5 必须再等待 D 波完成并独立登记；
+- 不允许复用前序 frozen tree formal evidence，也不允许三个 cutover 并行或合并为一次 mutation。
+
+2026-08-09 C 波进展：legacy compatibility monolith 已按 exact base seal 为 immutable prefix；
+dynamic inventory 识别 8 个 consumer，growth-assuming direct read 从 135 降为 0、runtime append
+writer 为 0。Canonical JSON fragment、hash-chain index、merged loader、explicit legacy reader 与
+rollback/tamper contract 已实现；当前正在 final-tree validation，D/S5 尚未登记或启动。
 
 ## 2026-07-30 当前授权波与顺序
 
@@ -23,11 +43,11 @@ Owner 要求在恢复策略线与 Atlas 两条线并行前，先串行解除 sha
 第 4 步只剩 task commit、local-main fast-forward、ordinary push、clean audit 与向暂停线程
 发送 exact 新 `main`，任何一项失败都保持并行暂停。
 
-本轮明确不授权：
+原 B 波明确不授权：
 
 - Markdown task register 或 v1 shadow 的 source-of-truth cutover；
 - ARCH-005 S5、dual write、task status 自动写回或 scheduler dispatch；
-- compatibility authority fragmentation（C 波）；
+- compatibility authority fragmentation（C 波；已由 2026-08-09 上述后续 Owner 决定取代）；
 - report registry、artifact catalog、system flow source fragmentation（D 波）；
 - production、broker、trading、data/PIT、scoring 或 backtest 语义变化。
 
@@ -168,7 +188,7 @@ auto-stash/clean/reset 消失。OPS-070 的独立 runtime clone 负责隔离运�
 
 ## 风险与 cutover 边界
 
-- 当前仅登记 `PROPOSED`，未授权 S5 或任何 canonical source cutover；
+- 当前只授权 DEVX-006C compatibility source cutover；D 波与 ARCH-005 S5 仍未登记、未授权实施；
 - line number 从 fragment 移到 index 不能丢失 legacy byte/row traceability；
 - 现有 55 条多于 8 cells 的 legacy rows 必须原样保留；
 - 任何不能证明 lossless parity 的 fragment 只能保持 inactive shadow；

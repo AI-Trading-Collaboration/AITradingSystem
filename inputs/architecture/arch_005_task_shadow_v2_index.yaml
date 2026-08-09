@@ -1,12 +1,12 @@
 schema_version: arch_005_task_shadow_index.v2
 status: PASS
 stage: DEVX_006_TASK_SHADOW_V2_SIDE_BY_SIDE
-baseline_checksum: 5b013b5fa24720ad1a501f2265a3da3f72217240a17535bc67fa316415602a1a
+baseline_checksum: 401f6896c3c05b48505156ea9ae8891be81974b46b6f5acaf86c0f8fc2c62bac
 source_of_truth: LEGACY_MARKDOWN_ONLY
 cutover_performed: false
 v1_coexists: true
-task_count: 971
-fragment_count: 971
+task_count: 972
+fragment_count: 972
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -4682,14 +4682,24 @@ fragments:
     row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
 - task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
   path: registry/development_tasks_shadow_v2/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
-  file_sha256: 3f058e1bcae5488bd7aaa75c9deab831e21d3a2cad8a2cea4de4ae0f87fc6306
-  fragment_checksum: d6a9c583b7eadef996f57d471b00209dfe6fc3d4cff394c79f2a8cf9cdebc9b0
+  file_sha256: 0638208584b5e22b116154b2089ebd04738d09d7f130a06463cbf1357ae9907f
+  fragment_checksum: 8c6bcbe5ded3eabb08675f998fe4fa1d0f019c97fa570e62e9da7e6552cdc8bb
   locator:
     source_partition: active
     source_path: docs/task_register.md
     line_number: 2198
     order_in_partition: 466
-    row_sha256: dfe2e992ac1d62a79f6a18cdf8d34af038f474966b6fec24a52746f5cc5ea839
+    row_sha256: 2a945b0693ddd917fac94ae8eb65a84d1018fc65f28267caac60f51e8249431e
+- task_id: DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+  path: registry/development_tasks_shadow_v2/6d/6d8d0da0de81f10e89f99dc55533b0f53ac3787dcc59a693cb4ed8ca19f67fc1.yaml
+  file_sha256: 7e96bad810214dcc00c9a897c3c8c9b8da5314c097189c62b3b41c6a6784894a
+  fragment_checksum: a7edcb5db7edd5e3927ef443a82748b8059cde65e3198e09274a82341bfe275c
+  locator:
+    source_partition: active
+    source_path: docs/task_register.md
+    line_number: 2199
+    order_in_partition: 467
+    row_sha256: c4413321cef338e3360f63d9097eb13b8be8586812260145a007c0274fd5392c
 - task_id: DOCS-GOV-001_EXISTING_FRESHNESS_METADATA_DEBT
   path: registry/development_tasks_shadow_v2/2f/2f0204077a83040b98eb365dbea62ff7ac8c8e6f6b0816335084b43d02013b35.yaml
   file_sha256: 3f2ec0711b54fc7003c866ba2cf767cdb02dbc9f81dae66158dd3a1be99b128b
@@ -9743,8 +9753,8 @@ fragments:
 generated_views:
 - source: active
   source_path: docs/task_register.md
-  source_sha256: 9affb458a9ad9fc27c5c6be12b3c236c4f156fd2f8caad007bdf0fd4d028bdfb
-  rendered_sha256: 9affb458a9ad9fc27c5c6be12b3c236c4f156fd2f8caad007bdf0fd4d028bdfb
+  source_sha256: 378bd0c9a27ecc94b6d32d7121c4d93c6309266a1c51862ae0712b6c6a19e6c2
+  rendered_sha256: 378bd0c9a27ecc94b6d32d7121c4d93c6309266a1c51862ae0712b6c6a19e6c2
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -9755,11 +9765,11 @@ generated_views:
   persisted_in_git: false
 consumer_inventory:
   status: PASS_CHARACTERIZED
-  consumer_count: 135
-  runtime_consumer_count: 9
+  consumer_count: 136
+  runtime_consumer_count: 10
   test_consumer_count: 123
   script_consumer_count: 3
-  consumer_set_sha256: 9b32d7a5434059110fd8c1e9e9909ceb8b8a69732a2f2f23f7d60f80f13b1a25
+  consumer_set_sha256: 556bc08d50c9145843c429d041df7172ed213807b8af21284145196ccabbd826
   source_cutover_allowed: false
   consumers:
   - path: src/ai_trading_system/cli_commands/feedback.py
@@ -9783,6 +9793,13 @@ consumer_inventory:
     - docs/task_register.md
     - docs/task_register_completed.md
     reference_count: 2
+    migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
+    rollback: READ_LEGACY_MARKDOWN_DIRECT
+  - path: src/ai_trading_system/platform/architecture/compatibility_authority.py
+    role: runtime
+    targets:
+    - docs/task_register.md
+    reference_count: 1
     migration_status: LEGACY_DIRECT_OR_LITERAL_CONSUMER
     rollback: READ_LEGACY_MARKDOWN_DIRECT
   - path: src/ai_trading_system/platform/architecture/task_registry_shadow.py
@@ -10747,4 +10764,4 @@ safety:
   source_cutover_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 21af8f7260cc418f3c310636c5270902f8f3eb3eeed946fb1d77197ed94799c1
+index_checksum: 3b17f3c040cd232fdd0bbbe64da8f0f290fba3dccbc6a224687ed5e9964dbe91

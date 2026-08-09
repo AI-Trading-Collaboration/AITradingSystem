@@ -8,6 +8,9 @@ from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from ai_trading_system.platform.architecture.compatibility_authority import (
+    load_immutable_compatibility_prefix_bytes,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 BOOTSTRAP_HANDOFF_SCHEMA_VERSION = "arch_005_bootstrap_handoff.v1"
@@ -430,7 +433,10 @@ def _validate_architecture_state(
             sha_key="sha256",
             frozen_tracked_files=frozen_tracked_files,
         )
-        parsed = _mapping(safe_load_yaml_text(content.decode("utf-8")), name)
+        if name == "compatibility_baseline":
+            parsed = load_immutable_compatibility_prefix_bytes(content)
+        else:
+            parsed = _mapping(safe_load_yaml_text(content.decode("utf-8")), name)
         if name == "module_manifest" and (
             parsed.get("status") != "PASS" or parsed.get("orphan_count") != 0
         ):

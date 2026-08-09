@@ -1,0 +1,28 @@
+schema_version: devx_006c_compatibility_authority_policy.v1
+status: ACTIVE
+task_id: DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION
+exact_start_base: cb437a4d4be178180f60cb3ee2d2994c1be45f94
+owner_decision: owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1
+legacy_prefix:
+  path: inputs/architecture/arch_004_compatibility_baseline.yaml
+  byte_count: 3151107
+  file_sha256: 253b976b2740f0097e1d8949ec8eaf3846c82809f88fdf3a47fb76fae6023842
+  lf_sha256: 253b976b2740f0097e1d8949ec8eaf3846c82809f88fdf3a47fb76fae6023842
+  git_blob: 12496b5578207855e5e4dd81159f80a5d0e8a3bb
+  top_level_entry_count: 306
+  ordered_entry_ids_sha256: 81240fcd54624e808478267b62612a33b2c4f05a336a216ddf4208f9837e101b
+  mapping_replay_sha256: 6b575efd51d511ac8a42d271a7e4ceba0b98b4ff73eafec7234ae95ba059c9cf
+  grandfathered_duplicate_key_count: 1
+  grandfathered_duplicate_key_behavior: PYYAML_SAFE_LOADER_LAST_VALUE_WINS
+fragment_root: registry/architecture_compatibility_authority/fragments
+index_path: inputs/architecture/devx_006c_compatibility_authority_index.json
+consumer_inventory_path: inputs/architecture/devx_006c_compatibility_consumer_inventory.json
+contract:
+  legacy_append_allowed: false
+  fragment_source_active: true
+  dual_write: false
+  fragment_identity: CANONICAL_SECTION_SHA256
+  index_chain: SHA256
+  rollback_mode: FROZEN_LEGACY_PREFIX_ONLY
+production_effect: none
+broker_action: none

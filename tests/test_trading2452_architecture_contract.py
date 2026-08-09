@@ -6,6 +6,9 @@ from typing import Any
 
 import pytest
 
+from ai_trading_system.platform.architecture.compatibility_authority import (
+    load_compatibility_authority,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 POLICY_PATH = Path("config/architecture/arch_004_refactor_policy.yaml")
@@ -63,6 +66,9 @@ TRADING_2502_OWNER_DECISION_PACK_PHASE_KEY = (
 )
 TRADING_2504_OWNER_DECISION_MANIFEST_PHASE_KEY = (
     "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
+)
+DEVX_006C_COMPATIBILITY_AUTHORITY_PHASE_KEY = (
+    "phase_devx_006c_compatibility_authority_fragmentation"
 )
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
@@ -165,6 +171,7 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2503_ATLAS_PROJECTION_RENDERER_PHASE_KEY,
             TRADING_2502_OWNER_DECISION_PACK_PHASE_KEY,
             TRADING_2504_OWNER_DECISION_MANIFEST_PHASE_KEY,
+            DEVX_006C_COMPATIBILITY_AUTHORITY_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)
@@ -212,7 +219,7 @@ def test_trading2452_active_glossary_supersedes_frozen_v1_without_rewriting_it()
 
 
 def test_trading2452_compatibility_sources_are_current_and_auditable() -> None:
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = load_compatibility_authority()
     change = baseline["integrated_change_trading_2452"]
 
     assert change["status"] == "DONE"
@@ -225,7 +232,7 @@ def test_trading2452_compatibility_sources_are_current_and_auditable() -> None:
 
 
 def test_trading2453_w8e1_compatibility_sources_are_current_and_auditable() -> None:
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = load_compatibility_authority()
     change = baseline["integrated_change_trading_2453_w8e1"]
 
     assert change["status"] == "BLOCKED_OWNER_INPUT"

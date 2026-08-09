@@ -11,6 +11,9 @@ from typing import Any
 
 import pytest
 
+from ai_trading_system.platform.architecture.compatibility_authority import (
+    load_compatibility_authority,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path, safe_load_yaml_text
 
 POLICY_PATH = Path("config/architecture/arch_004_refactor_policy.yaml")
@@ -3806,20 +3809,16 @@ TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT = (
 TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB = (
     "638b601fba2ba9de4fd7b02d10631eabd49f376f"
 )
-TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_BYTE_COUNT = (
-    3_136_704
-)
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_BYTE_COUNT = 3_136_704
 TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_SHA256 = (
     "a76a69d057a86eb54b26943cd0f25c891a5d18f1c2d77757df35bbfaf895cd81"
 )
 TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_REMOVED_SOURCE_PATHS = frozenset()
-TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_ADDITIONAL_SUPERSESSION_PATHS = (
-    frozenset(
-        {
-            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-            "tests/test_trading2452_architecture_contract.py",
-        }
-    )
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_ADDITIONAL_SUPERSESSION_PATHS = frozenset(
+    {
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "tests/test_trading2452_architecture_contract.py",
+    }
 )
 TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_NEW_SOURCE_PATHS = frozenset(
     {
@@ -3843,6 +3842,8 @@ TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_NEW_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
+DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION = "phase_devx_006c_compatibility_authority_fragmentation"
+LATEST_COMPATIBILITY_SECTION = DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -6341,10 +6342,7 @@ def _trading_2504_qqq_options_owner_decision_manifest_base_baseline_blob() -> by
         capture_output=True,
         text=True,
     ).stdout.strip()
-    assert (
-        object_id
-        == TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB
-    )
+    assert object_id == TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -8865,9 +8863,7 @@ def _assert_trading_2504_qqq_options_owner_decision_manifest_historical_prefix_i
     current_bytes: bytes,
     base_blob: bytes,
 ) -> None:
-    expected_count = (
-        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_BYTE_COUNT
-    )
+    expected_count = TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_BYTE_COUNT
     assert len(base_blob) == expected_count
     assert hashlib.sha256(base_blob).hexdigest() == (
         TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_SHA256
@@ -8878,9 +8874,7 @@ def _assert_trading_2504_qqq_options_owner_decision_manifest_historical_prefix_i
         "ordinary-pushed registration authority blob"
     )
     suffix = current_bytes[expected_count:]
-    expected_marker = (
-        f"{TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION}:\n".encode()
-    )
+    expected_marker = f"{TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION}:\n".encode()
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -9172,7 +9166,7 @@ def _assert_current_d0b2b_historical_prefix_immutable() -> None:
 
 @cache
 def _compatibility_baseline() -> dict[str, Any]:
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = load_compatibility_authority()
     assert isinstance(baseline, dict)
     return baseline
 
@@ -12295,9 +12289,7 @@ def _trading_2503_atlas_qqq_options_projection_renderer_all_current_authority_pa
 
 
 @cache
-def _trading_2502_qqq_options_owner_decision_pack_superseded_live_source_paths() -> frozenset[
-    str
-]:
+def _trading_2502_qqq_options_owner_decision_pack_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2502_qqq_options_owner_decision_pack_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2502_qqq_options_owner_decision_pack_base_baseline_blob(),
@@ -12328,33 +12320,33 @@ def _trading_2502_qqq_options_owner_decision_pack_all_current_authority_paths() 
 
 
 @cache
-def _trading_2504_qqq_options_owner_decision_manifest_superseded_live_source_paths() -> (
-    frozenset[str]
-):
+def _trading_2504_qqq_options_owner_decision_manifest_superseded_live_source_paths() -> frozenset[
+    str
+]:
     _assert_trading_2504_qqq_options_owner_decision_manifest_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2504_qqq_options_owner_decision_manifest_base_baseline_blob(),
     )
-    paths = _compatibility_baseline()[
-        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
-    ]["superseded_live_source_paths"]
+    paths = _compatibility_baseline()[TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION][
+        "superseded_live_source_paths"
+    ]
     assert isinstance(paths, list)
     return frozenset(str(path) for path in paths)
 
 
 @cache
 def _trading_2504_qqq_options_owner_decision_manifest_source_paths() -> frozenset[str]:
-    sources = _compatibility_baseline()[
-        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
-    ]["sources"]
+    sources = _compatibility_baseline()[TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION][
+        "sources"
+    ]
     assert isinstance(sources, list)
     return frozenset(str(source["path"]) for source in sources)
 
 
 @cache
-def _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths() -> (
-    frozenset[str]
-):
+def _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths() -> frozenset[
+    str
+]:
     return (
         _trading_2502_qqq_options_owner_decision_pack_all_current_authority_paths()
         | _trading_2504_qqq_options_owner_decision_manifest_superseded_live_source_paths()
@@ -12973,6 +12965,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2503_ATLAS_QQQ_OPTIONS_PROJECTION_RENDERER_SECTION,
         TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION,
         TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION,
+        DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13057,6 +13050,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2503_ATLAS_QQQ_OPTIONS_PROJECTION_RENDERER_SECTION,
         TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION,
         TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION,
+        DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -13997,7 +13991,21 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION in baseline:
+    if DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION in baseline:
+        phase = baseline[DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION]
+        current_superseded_paths = frozenset(
+            str(path) for path in phase["superseded_live_source_paths"]
+        )
+        assert (
+            _latest_active_source_mismatches(DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION)
+            <= current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+            | current_superseded_paths
+        )
+        authority_section = DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION
+    elif TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION in baseline:
         current_superseded_paths = (
             _trading_2504_qqq_options_owner_decision_manifest_superseded_live_source_paths()
         )
@@ -14017,9 +14025,7 @@ def _source_sha256(source: dict[str, object]) -> str:
             _trading_2502_qqq_options_owner_decision_pack_superseded_live_source_paths()
         )
         assert (
-            _latest_active_source_mismatches(
-                TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION
-            )
+            _latest_active_source_mismatches(TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION)
             | TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_ADDITIONAL_SUPERSESSION_PATHS
             == current_superseded_paths
         )
@@ -17386,7 +17392,7 @@ def test_arch_004_semantic_glossary_separates_regime_and_research_window() -> No
 
 def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
     _assert_current_wave11_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     wave11 = baseline[WAVE11_SECTION]
 
     assert (
@@ -17621,7 +17627,7 @@ def test_arch_004_g2_5_wave11_is_append_only_current_hash_authority() -> None:
 
 def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority() -> None:
     _assert_current_docs_gov_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     docs_gov = baseline[DOCS_GOV_SECTION]
 
@@ -17720,7 +17726,7 @@ def test_docs_gov_001_freshness_closeout_is_append_only_current_hash_authority()
 
 def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave12_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     wave12 = baseline[WAVE12_SECTION]
 
@@ -17804,7 +17810,7 @@ def test_arch_004_wave12_s2_is_append_only_current_hash_authority() -> None:
 
 def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> None:
     _assert_current_wave13_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     wave13 = baseline[WAVE13_SECTION]
 
@@ -18060,7 +18066,7 @@ def test_arch_004_wave13_gov006_n1_is_append_only_current_hash_authority() -> No
 
 def test_arch_004_wave14_s0_1_is_immutable_historical_hash_authority() -> None:
     _assert_current_wave14_s0_1_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     section_ids = list(baseline)
     assert section_ids.index(WAVE14_S0_1_SECTION) < section_ids.index(WAVE14_S2_SECTION)
     assert section_ids.index(WAVE14_S2_SECTION) < section_ids.index(OPS_067_SECTION)
@@ -18281,7 +18287,7 @@ def test_arch_004_wave14_s0_1_rejects_historical_prefix_tamper() -> None:
 
 def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
     _assert_current_wave14_s2_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     wave14 = baseline[WAVE14_S2_SECTION]
 
@@ -18570,7 +18576,7 @@ def test_arch_004_wave14_s2_is_append_only_current_hash_authority() -> None:
 
 def test_ops_067_is_append_only_current_hash_authority() -> None:
     _assert_current_ops_067_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(WAVE14_S2_SECTION) < list(baseline).index(OPS_067_SECTION)
     assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
@@ -18756,7 +18762,7 @@ def test_ops_067_rejects_historical_prefix_tamper() -> None:
 
 def test_ops_068_is_append_only_current_hash_authority() -> None:
     _assert_current_ops_068_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(OPS_067_SECTION) < list(baseline).index(OPS_068_SECTION)
     ops_068 = baseline[OPS_068_SECTION]
@@ -18873,7 +18879,7 @@ def test_ops_068_rejects_historical_prefix_tamper() -> None:
 
 def test_arch_005s4d_is_append_only_current_hash_authority() -> None:
     _assert_current_arch_005s4d_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(OPS_068_SECTION) < list(baseline).index(ARCH_005S4D_SECTION)
     phase = baseline[ARCH_005S4D_SECTION]
@@ -19019,7 +19025,7 @@ def test_arch_005s4d_rejects_historical_prefix_tamper() -> None:
 
 def test_arch_004_wave15_is_append_only_current_hash_authority() -> None:
     _assert_current_wave15_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(ARCH_005S4D_SECTION) < list(baseline).index(WAVE15_SECTION)
     phase = baseline[WAVE15_SECTION]
@@ -19135,7 +19141,7 @@ def test_arch_004_wave15_is_append_only_current_hash_authority() -> None:
 
 def test_data_gov_001_d0b2b_is_append_only_current_hash_authority() -> None:
     _assert_current_d0b2b_historical_prefix_immutable()
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(WAVE15_SECTION) < list(baseline).index(D0B2B_SECTION)
     phase = baseline[D0B2B_SECTION]
@@ -19277,7 +19283,7 @@ def test_ops_069_is_append_only_current_hash_authority() -> None:
         current_bytes,
         _ops_069_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(D0B2B_SECTION) < list(baseline).index(OPS_069_SECTION)
     phase = baseline[OPS_069_SECTION]
@@ -19347,7 +19353,7 @@ def test_ops_070_is_append_only_current_hash_authority() -> None:
         current_bytes,
         _ops_070_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(OPS_069_SECTION) < list(baseline).index(OPS_070_SECTION)
     phase = baseline[OPS_070_SECTION]
@@ -19424,7 +19430,7 @@ def test_arch_005s4e_is_append_only_current_hash_authority() -> None:
         current_bytes,
         _arch_005s4e_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(OPS_070_SECTION) < list(baseline).index(ARCH_005S4E_SECTION)
     phase = baseline[ARCH_005S4E_SECTION]
@@ -19544,7 +19550,7 @@ def test_arch_005s4d_s2_is_append_only_current_hash_authority() -> None:
         current_bytes,
         _arch_005s4d_s2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(ARCH_005S4E_SECTION) < list(baseline).index(ARCH_005S4D_S2_SECTION)
     assert list(baseline).index(ARCH_005S4D_S2_SECTION) < list(baseline).index(
@@ -19662,7 +19668,7 @@ def test_trading_2458_2460_integration_is_append_only_current_hash_authority() -
         current_bytes,
         _trading_2458_2460_integration_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2458_2460_INTEGRATION_SECTION]
 
@@ -19766,7 +19772,7 @@ def test_devx_trading_cleanup_is_append_only_current_hash_authority() -> None:
         current_bytes,
         _devx_trading_cleanup_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[DEVX_TRADING_CLEANUP_SECTION]
 
@@ -19867,7 +19873,7 @@ def test_trading_2459_documentation_closeout_is_current_hash_authority() -> None
         current_bytes,
         _trading_2459_doc_closeout_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_TRADING_CLEANUP_SECTION) < list(baseline).index(
         TRADING_2459_DOC_CLOSEOUT_SECTION
@@ -19955,7 +19961,7 @@ def test_data_gov_002_phase_a_is_append_only_current_hash_authority() -> None:
         current_bytes,
         _data_gov_002_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_002_SECTION) < list(baseline).index(DEVX_002_SECTION)
     assert list(baseline).index(TRADING_2459_DOC_CLOSEOUT_SECTION) < list(baseline).index(
         DATA_GOV_002_SECTION
@@ -20043,7 +20049,7 @@ def test_devx_002_is_append_only_current_hash_authority() -> None:
         current_bytes,
         _devx_002_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DEVX_002_SECTION) < list(baseline).index(DEVX_002_PUSH_V2_SECTION)
     assert list(baseline).index(DATA_GOV_002_SECTION) < list(baseline).index(DEVX_002_SECTION)
     phase = baseline[DEVX_002_SECTION]
@@ -20123,7 +20129,7 @@ def test_devx_002_default_ordinary_push_v2_is_current_hash_authority() -> None:
         current_bytes,
         _devx_002_push_v2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_002_SECTION) < list(baseline).index(DEVX_002_PUSH_V2_SECTION)
     assert list(baseline).index(DEVX_002_PUSH_V2_SECTION) < list(baseline).index(
@@ -20205,7 +20211,7 @@ def test_arch_004g2_observability_is_append_only_current_hash_authority() -> Non
         current_bytes,
         _arch_004g2_observability_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_002_PUSH_V2_SECTION) < list(baseline).index(
         ARCH_004G2_OBSERVABILITY_SECTION
@@ -20287,7 +20293,7 @@ def test_arch_004g2_closure_threshold_miss_is_append_only_current_hash_authority
         current_bytes,
         _arch_004g2_closure_threshold_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[ARCH_004G2_CLOSURE_THRESHOLD_SECTION]
 
@@ -20371,7 +20377,7 @@ def test_data_gov_002_phase_b1_is_preserved_historical_authority() -> None:
         current_bytes,
         _data_gov_002_phase_b1_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_002_PHASE_B1_SECTION) < list(baseline).index(
         TRADING_2458_RETIREMENT_SECTION
     )
@@ -20454,7 +20460,7 @@ def test_trading_2458_candidate_family_retirement_is_preserved_historical_author
         current_bytes,
         _trading_2458_retirement_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2458_RETIREMENT_SECTION) < list(baseline).index(
         TRADING_2458_CLOSEOUT_SECTION
     )
@@ -20534,7 +20540,7 @@ def test_trading_2458_candidate_family_retirement_closeout_is_current_hash_autho
         current_bytes,
         _trading_2458_closeout_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(TRADING_2458_CLOSEOUT_SECTION) < list(baseline).index(
         DATA_GOV_002_PHASE_B2_SECTION
@@ -20625,7 +20631,7 @@ def test_data_gov_002_phase_b2_is_current_hash_authority() -> None:
         current_bytes,
         _data_gov_002_phase_b2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(TRADING_2458_CLOSEOUT_SECTION) < list(baseline).index(
         DATA_GOV_002_PHASE_B2_SECTION
@@ -20741,7 +20747,7 @@ def test_devx_003_is_preserved_historical_authority() -> None:
         current_bytes,
         _devx_003_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DATA_GOV_002_PHASE_B2_SECTION) < list(baseline).index(
         DEVX_003_SECTION
@@ -20863,7 +20869,7 @@ def test_data_gov_002c1_is_preserved_historical_authority() -> None:
         current_bytes,
         _data_gov_002c1_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_003_SECTION) < list(baseline).index(DATA_GOV_002C1_SECTION)
     assert list(baseline).index(DATA_GOV_002C1_SECTION) < list(baseline).index(
@@ -20979,7 +20985,7 @@ def test_data_gov_002c2_is_preserved_historical_authority() -> None:
         current_bytes,
         _data_gov_002c2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DATA_GOV_002C1_SECTION) < list(baseline).index(
         DATA_GOV_002C2_SECTION
@@ -21107,7 +21113,7 @@ def test_trading_2461_model_ladder_is_preserved_historical_authority() -> None:
         current_bytes,
         _trading_2461_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DATA_GOV_002C2_SECTION) < list(baseline).index(TRADING_2461_SECTION)
     assert list(baseline).index(TRADING_2461_SECTION) < list(baseline).index(
@@ -21224,7 +21230,7 @@ def test_arch_004g2_paper_weekly_is_preserved_historical_authority() -> None:
         current_bytes,
         _arch_004g2_paper_weekly_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(TRADING_2461_SECTION) < list(baseline).index(
         ARCH_004G2_PAPER_WEEKLY_SECTION
@@ -21332,7 +21338,7 @@ def test_ops_069_terminal_archive_is_preserved_historical_authority() -> None:
         current_bytes,
         _ops_069_terminal_archive_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(OPS_069_TERMINAL_ARCHIVE_SECTION) < list(baseline).index(
         DEVX_004_SECTION
@@ -21437,7 +21443,7 @@ def test_devx_004_is_preserved_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_004_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_004_SECTION) < list(baseline).index(
         DEVX_001_RECONCILIATION_SECTION
@@ -21502,7 +21508,7 @@ def test_devx_001_reconciliation_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_001_reconciliation_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[DEVX_001_RECONCILIATION_SECTION]
     assert phase["schema_version"] == (
@@ -21567,7 +21573,7 @@ def test_devx_005_is_preserved_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_005_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_005_SECTION) < list(baseline).index(TRADING_2462_SECTION)
     phase = baseline[DEVX_005_SECTION]
@@ -21635,7 +21641,7 @@ def test_trading_2462_tail_risk_audit_is_preserved_historical_authority() -> Non
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2462_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DEVX_005_SECTION) < list(baseline).index(TRADING_2462_SECTION)
     assert list(baseline).index(TRADING_2462_SECTION) < list(baseline).index(DEVX_006_SECTION)
@@ -21750,7 +21756,7 @@ def test_devx_006_arch_005m1_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_006_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DEVX_006_SECTION) < list(baseline).index(ARCH_005M2_SECTION)
     phase = baseline[DEVX_006_SECTION]
     assert phase["schema_version"] == (
@@ -21825,7 +21831,7 @@ def test_arch_005m2_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _arch_005m2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(ARCH_005M2_SECTION) < list(baseline).index(ARCH_005M3_SECTION)
     phase = baseline[ARCH_005M2_SECTION]
     assert phase["schema_version"] == (
@@ -21910,7 +21916,7 @@ def test_arch_005m3_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _arch_005m3_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(ARCH_005M3_SECTION) < list(baseline).index(
         ARCH_005M1_BATCH2_SECTION
     )
@@ -22006,7 +22012,7 @@ def test_arch_005m1_batch2_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _arch_005m1_batch2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(ARCH_005M1_BATCH2_SECTION) < list(baseline).index(
         ARCH_005M1_BATCH3_SECTION
     )
@@ -22094,7 +22100,7 @@ def test_arch_005m1_batch3_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _arch_005m1_batch3_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(ARCH_005M1_BATCH3_SECTION) < list(baseline).index(
         ARCH_005M1_BATCH4_SECTION
     )
@@ -22180,7 +22186,7 @@ def test_arch_005m1_batch4_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _arch_005m1_batch4_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(ARCH_005M1_BATCH4_SECTION) < list(baseline).index(
         OPS_070_STABLE_RELEASE_SECTION
     )
@@ -22269,7 +22275,7 @@ def test_ops_070_stable_release_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_stable_release_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_070_STABLE_RELEASE_SECTION) < list(baseline).index(
         OPS_070_RUNTIME_EXCLUDE_SECTION
     )
@@ -22351,7 +22357,7 @@ def test_ops_070_runtime_git_exclusion_is_immutable_historical_authority() -> No
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_runtime_exclude_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_070_RUNTIME_EXCLUDE_SECTION) < list(baseline).index(
         OPS_070_CROSS_RELEASE_POLICY_SECTION
     )
@@ -22428,7 +22434,7 @@ def test_ops_070_cross_release_policy_is_immutable_historical_authority() -> Non
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_cross_release_policy_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_070_CROSS_RELEASE_POLICY_SECTION) < list(baseline).index(
         OPS_070_FAILURE_AUDIT_SECTION
     )
@@ -22507,7 +22513,7 @@ def test_ops_070_promotion_failure_audit_is_immutable_historical_authority() -> 
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_failure_audit_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_070_FAILURE_AUDIT_SECTION) < list(baseline).index(
         OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION
     )
@@ -22586,7 +22592,7 @@ def test_ops_070_runtime_self_containment_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_070_runtime_self_containment_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_070_RUNTIME_SELF_CONTAINMENT_SECTION) < list(baseline).index(
         DATA_GOV_002C2P_SECTION
     )
@@ -22674,7 +22680,7 @@ def test_data_gov_002c2p_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_002c2p_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_002C2P_SECTION) < list(baseline).index(
         TRADING_2463_SECTION
     )
@@ -22762,7 +22768,7 @@ def test_trading_2463_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     section_names = list(baseline)
     assert section_names.index(TRADING_2463_SECTION) < section_names.index(
         TRADING_2463_S1_S2_SECTION
@@ -22847,7 +22853,7 @@ def test_trading_2463_s1_s2_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s1_s2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2463_S1_S2_SECTION) < list(baseline).index(
         TRADING_2463_S3_SECTION
     )
@@ -22931,7 +22937,7 @@ def test_trading_2463_s3_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s3_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2463_S3_SECTION) < list(baseline).index(
         TRADING_2463_S4_SECTION
     )
@@ -23021,7 +23027,7 @@ def test_trading_2463_s4_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s4_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2463_S4_SECTION) < list(baseline).index(
         DATA_GOV_002C3P_SECTION
     )
@@ -23136,7 +23142,7 @@ def test_trading_2463_s4_approval_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2463_s4_approval_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2463_S4_APPROVAL_SECTION) < list(baseline).index(
         OPS_071_SECTION
     )
@@ -23268,7 +23274,7 @@ def test_ops_071_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_071_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_071_SECTION) < list(baseline).index(DATA_GOV_002C3_RATE_SECTION)
     phase = baseline[OPS_071_SECTION]
     assert phase["schema_version"] == (
@@ -23359,7 +23365,7 @@ def test_data_gov_002c3_rate_is_preserved_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_002c3_rate_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     assert list(baseline).index(DATA_GOV_002C3_RATE_SECTION) < list(baseline).index(
         OPS_071_CLOSEOUT_SECTION
@@ -23446,7 +23452,7 @@ def test_ops_071_operational_acceptance_closeout_is_current_hash_authority() -> 
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _ops_071_closeout_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_071_CLOSEOUT_SECTION) < list(baseline).index(
         DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION
     )
@@ -23542,7 +23548,7 @@ def test_data_gov_001_d0b2b_ops067_closeout_is_preserved_historical_authority() 
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_001_d0b2b_ops067_closeout_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_001_D0B2B_OPS067_CLOSEOUT_SECTION) < list(baseline).index(
         DATA_GOV_002_PARENT_RECONCILIATION_SECTION
     )
@@ -23650,7 +23656,7 @@ def test_data_gov_002_parent_reconciliation_is_preserved_historical_authority() 
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_002_parent_reconciliation_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_002_PARENT_RECONCILIATION_SECTION) < list(baseline).index(
         DATA_GOV_001_D0C_SECTION
     )
@@ -23750,7 +23756,7 @@ def test_data_gov_001_d0c_is_append_only_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_001_d0c_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_001_D0C_SECTION) < list(baseline).index(
         DATA_GOV_001_D0D_SECTION
     )
@@ -23855,7 +23861,7 @@ def test_data_gov_001_d0d_is_append_only_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_001_d0d_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_001_D0D_SECTION) < list(baseline).index(
         DATA_GOV_001_D0E_SECTION
     )
@@ -23962,7 +23968,7 @@ def test_data_gov_001_d0e_is_append_only_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_001_d0e_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_001_D0E_SECTION) < list(baseline).index(DEVX_007_SECTION)
     phase = baseline[DATA_GOV_001_D0E_SECTION]
     assert phase["schema_version"] == (
@@ -24061,7 +24067,7 @@ def test_devx_007_is_append_only_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_007_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DEVX_007_SECTION) < list(baseline).index(
         TRADING_2464_DECISION_SECTION
     )
@@ -24140,7 +24146,7 @@ def test_trading_2464_decision_pack_is_append_only_current_hash_authority() -> N
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_decision_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_DECISION_SECTION) < list(baseline).index(
         TRADING_2464_DQ_RECOVERY_SECTION
     )
@@ -24230,7 +24236,7 @@ def test_trading_2464_dq_recovery_is_append_only_current_hash_authority() -> Non
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_dq_recovery_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     section_ids = list(baseline)
     assert section_ids.index(TRADING_2464_DQ_RECOVERY_SECTION) < section_ids.index(
         TRADING_2464_OWNER_TOKEN_SECTION
@@ -24326,7 +24332,7 @@ def test_trading_2464_owner_decision_token_is_append_only_current_hash_authority
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_owner_token_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     section_ids = list(baseline)
     assert section_ids.index(TRADING_2464_OWNER_TOKEN_SECTION) < section_ids.index(
         TRADING_2464_CONTRACT_SECTION
@@ -24418,7 +24424,7 @@ def test_trading_2464_owner_a_contract_is_append_only_current_hash_authority() -
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_contract_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     section_ids = list(baseline)
     assert section_ids.index(TRADING_2464_CONTRACT_SECTION) < section_ids.index(
         TRADING_2464_SYNTHETIC_SECTION
@@ -24514,7 +24520,7 @@ def test_trading_2464_synthetic_builder_is_append_only_current_hash_authority() 
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_synthetic_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_SYNTHETIC_SECTION) < list(baseline).index(
         TRADING_2464_ISOLATED_DQ_SECTION
     )
@@ -24604,7 +24610,7 @@ def test_trading_2464_isolated_dq_is_append_only_current_hash_authority() -> Non
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_isolated_dq_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_ISOLATED_DQ_SECTION) < list(baseline).index(
         TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION
     )
@@ -24703,7 +24709,7 @@ def test_trading_2464_event_attempt_runner_is_append_only_current_hash_authority
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_event_attempt_runner_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_EVENT_ATTEMPT_RUNNER_SECTION) < list(baseline).index(
         TRADING_2464_EVENT_RAW_REPLAY_SECTION
     )
@@ -24793,7 +24799,7 @@ def test_trading_2464_event_raw_replay_is_append_only_current_hash_authority() -
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_event_raw_replay_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_EVENT_RAW_REPLAY_SECTION) < list(baseline).index(
         TRADING_2464_EVENT_GATE_BINDING_SECTION
     )
@@ -24901,7 +24907,7 @@ def test_trading_2464_event_gate_binding_is_append_only_current_hash_authority()
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_event_gate_binding_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_EVENT_GATE_BINDING_SECTION) < list(baseline).index(
         TRADING_2464_COVERAGE_RUNNER_SECTION
     )
@@ -24995,7 +25001,7 @@ def test_trading_2464_coverage_runner_is_append_only_current_hash_authority() ->
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_coverage_runner_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_COVERAGE_RUNNER_SECTION) < list(baseline).index(
         TRADING_2464_COVERAGE_GATE_BINDING_SECTION
     )
@@ -25076,7 +25082,7 @@ def test_trading_2464_coverage_gate_binding_is_append_only_current_hash_authorit
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2464_coverage_gate_binding_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2464_COVERAGE_GATE_BINDING_SECTION) < list(baseline).index(
         TRADING_2465_REENTRY_PREREGISTRATION_SECTION
     )
@@ -25185,7 +25191,7 @@ def test_trading_2465_reentry_preregistration_is_current_hash_authority() -> Non
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2465_reentry_preregistration_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2465_REENTRY_PREREGISTRATION_SECTION) < list(
         baseline
     ).index(DEVX_006_TASK_SHADOW_V2_SECTION)
@@ -25293,7 +25299,7 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _devx_006_task_shadow_v2_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DEVX_006_TASK_SHADOW_V2_SECTION) < list(baseline).index(
         TRADING_2466_2467_INTEGRATION_SECTION
     )
@@ -25408,7 +25414,7 @@ def test_trading_2466_2467_integration_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2466_2467_integration_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2466_2467_INTEGRATION_SECTION) < list(baseline).index(
         TRADING_2468_ATLAS_COVERAGE_SECTION
     )
@@ -25525,7 +25531,7 @@ def test_trading_2468_atlas_coverage_is_current_hash_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _trading_2468_atlas_coverage_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2468_ATLAS_COVERAGE_SECTION) < list(baseline).index(
         TRADING_2469_DIFF_CONTRACT_SECTION
     )
@@ -25629,7 +25635,7 @@ def test_trading_2469_diff_contract_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2469_DIFF_CONTRACT_SECTION) < list(baseline).index(
         TRADING_2469_DIFF_CONSUMER_SECTION
     )
@@ -25742,7 +25748,7 @@ def test_trading_2469_diff_consumer_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2469_DIFF_CONSUMER_SECTION) < list(baseline).index(
         TRADING_2470_CITED_QUERY_CONTRACT_SECTION
     )
@@ -25863,7 +25869,7 @@ def test_trading_2470_cited_query_contract_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2470_CITED_QUERY_CONTRACT_SECTION) < list(baseline).index(
         TRADING_2470_CITED_QUERY_AMENDMENT_SECTION
     )
@@ -25978,7 +25984,7 @@ def test_trading_2470_cited_query_amendment_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2470_CITED_QUERY_AMENDMENT_SECTION) < list(baseline).index(
         TRADING_2470_CITED_QUERY_CONSUMER_SECTION
     )
@@ -26086,7 +26092,7 @@ def test_trading_2470_cited_query_consumer_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2470_CITED_QUERY_CONSUMER_SECTION) < list(baseline).index(
         TRADING_2471_FLOW_FOCUS_SECTION
     )
@@ -26256,7 +26262,7 @@ def test_trading_2471_flow_focus_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2471_FLOW_FOCUS_SECTION) < list(baseline).index(
         TRADING_2472_STATUS_PROVENANCE_SECTION
     )
@@ -26409,7 +26415,7 @@ def test_trading_2472_status_provenance_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2472_STATUS_PROVENANCE_SECTION) < list(baseline).index(
         TRADING_2473_EVIDENCE_DRILLDOWN_SECTION
     )
@@ -26558,7 +26564,7 @@ def test_trading_2473_evidence_drilldown_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2473_EVIDENCE_DRILLDOWN_SECTION) < list(baseline).index(
         TRADING_2474_RESULT_LEDGER_SECTION
     )
@@ -26711,7 +26717,7 @@ def test_trading_2474_result_ledger_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2474_RESULT_LEDGER_SECTION) < list(baseline).index(
         TRADING_2475_HISTORICAL_COVERAGE_SECTION
     )
@@ -26857,7 +26863,7 @@ def test_trading_2475_historical_coverage_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert TRADING_2475_HISTORICAL_COVERAGE_SECTION in baseline
     assert list(baseline).index(TRADING_2475_HISTORICAL_COVERAGE_SECTION) < list(baseline).index(
         TRADING_2476_ADAPTER_REVIEW_SECTION
@@ -27015,7 +27021,7 @@ def test_trading_2476_adapter_review_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2476_ADAPTER_REVIEW_SECTION) < list(baseline).index(
         OPS_072_TRANSPORT_SECTION
     )
@@ -27174,7 +27180,7 @@ def test_ops_072_transport_is_current_hash_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     base_blob = _ops_072_transport_base_baseline_blob()
     _assert_ops_072_transport_historical_prefix_immutable(current_bytes, base_blob)
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_072_TRANSPORT_SECTION) < list(baseline).index(
         TRADING_2477_HISTORICAL_ADAPTER_SECTION
     )
@@ -27270,7 +27276,7 @@ def test_trading_2477_historical_adapter_is_predecessor_hash_authority() -> None
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     base_blob = _trading_2477_historical_adapter_base_baseline_blob()
     _assert_trading_2477_historical_adapter_prefix_immutable(current_bytes, base_blob)
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2477_HISTORICAL_ADAPTER_SECTION) + 1 == list(
         baseline
     ).index(OPS_073_TERMINAL_DISPOSITION_SECTION)
@@ -27384,7 +27390,7 @@ def test_ops_073_terminal_disposition_is_predecessor_hash_authority() -> None:
     current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
     base_blob = _ops_073_terminal_disposition_base_baseline_blob()
     _assert_ops_073_terminal_disposition_historical_prefix_immutable(current_bytes, base_blob)
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(OPS_073_TERMINAL_DISPOSITION_SECTION) + 1 == list(baseline).index(
         TRADING_2478_QUANTCONNECT_PLANNING_SECTION
     )
@@ -27511,7 +27517,7 @@ def test_trading_2478_quantconnect_planning_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2478_QUANTCONNECT_PLANNING_SECTION) + 1 == list(
         baseline
     ).index(TRADING_2479_HISTORICAL_PROJECTION_SECTION)
@@ -27628,7 +27634,7 @@ def test_trading_2479_historical_projection_review_is_current_hash_authority() -
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2479_HISTORICAL_PROJECTION_SECTION) + 1 == list(
         baseline
     ).index(TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION)
@@ -27750,7 +27756,7 @@ def test_trading_2480_qc_capability_admission_is_current_hash_authority() -> Non
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2480_QC_CAPABILITY_ADMISSION_SECTION) + 1 == list(
         baseline
     ).index(TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION)
@@ -27868,7 +27874,7 @@ def test_trading_2481_qqq_options_shared_contract_has_2482_successor_authority()
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2481_QQQ_OPTIONS_SHARED_CONTRACT_SECTION) + 1 == list(
         baseline
     ).index(TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION)
@@ -27986,7 +27992,7 @@ def test_trading_2482_qqq_options_dq_pit_identity_has_2483_successor_authority()
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2482_QQQ_OPTIONS_DQ_PIT_IDENTITY_SECTION) + 1 == list(
         baseline
     ).index(TRADING_2483_QQQ_OPTIONS_SIGNAL_PACKAGE_SECTION)
@@ -28109,7 +28115,7 @@ def test_trading_2483_qqq_options_signal_package_has_2484_successor_authority() 
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2483_QQQ_OPTIONS_SIGNAL_PACKAGE_SECTION) + 1 == list(
         baseline
     ).index(TRADING_2484_QC_PROJECT_ADAPTER_SECTION)
@@ -28245,7 +28251,7 @@ def test_trading_2484_qc_project_adapter_has_2485_successor_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2484_QC_PROJECT_ADAPTER_SECTION) + 1 == list(
         baseline
     ).index(TRADING_2485_QQQ_OPTION_SELECTION_SECTION)
@@ -28383,7 +28389,7 @@ def test_trading_2485_qqq_option_selection_has_2486_successor_authority() -> Non
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     section_ids = list(baseline)
     assert section_ids.index(TRADING_2485_QQQ_OPTION_SELECTION_SECTION) + 1 == section_ids.index(
         TRADING_2486_QQQ_OPTIONS_MINUTE_EXECUTION_SECTION
@@ -28535,7 +28541,7 @@ def test_trading_2486_minute_execution_has_2487_successor_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     section_ids = list(baseline)
     assert section_ids.index(TRADING_2486_QQQ_OPTIONS_MINUTE_EXECUTION_SECTION) + 1 == (
         section_ids.index(TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION)
@@ -28700,7 +28706,7 @@ def test_trading_2487_cash_accounting_has_2494_successor_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2487_QQQ_OPTIONS_CASH_ACCOUNTING_SECTION]
     assert phase["schema_version"] == (
@@ -28861,7 +28867,7 @@ def test_trading_2494_atlas_historical_projection_has_2495_successor_authority()
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_SECTION]
     assert phase["schema_version"] == (
@@ -28996,7 +29002,7 @@ def test_trading_2495_atlas_reader_explanation_is_current_hash_authority() -> No
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2495_ATLAS_READER_STATUS_EXPLANATION_SECTION]
     assert phase["schema_version"] == (
@@ -29128,7 +29134,7 @@ def test_trading_2496_atlas_reader_renderer_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_SECTION]
     assert phase["schema_version"] == (
@@ -29280,7 +29286,7 @@ def test_trading_2489_qc_platform_evidence_bundle_is_current_hash_authority() ->
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2489_QC_PLATFORM_EVIDENCE_MANUAL_BUNDLE_SECTION]
     assert phase["schema_version"] == (
@@ -29418,7 +29424,7 @@ def test_trading_2490_qc_local_reconciliation_is_current_hash_authority() -> Non
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(TRADING_2490_QC_LOCAL_INGEST_RECONCILIATION_SECTION) + 1 == (
         list(baseline).index(TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION)
     )
@@ -29557,7 +29563,7 @@ def test_trading_2491_cross_layer_validation_harness_is_current_hash_authority()
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_SECTION]
     assert phase["schema_version"] == (
@@ -29697,7 +29703,7 @@ def test_trading_2492_bounded_cloud_pilot_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2492_QC_QQQ_OPTIONS_BOUNDED_CLOUD_PILOT_SECTION]
     assert phase["schema_version"] == (
@@ -29830,7 +29836,7 @@ def test_trading_2480_read_only_evidence_probe_is_current_hash_authority() -> No
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2480_QC_CAPABILITY_READ_ONLY_EVIDENCE_PROBE_SECTION]
     assert phase["schema_version"] == (
@@ -30007,7 +30013,7 @@ def test_trading_2480_capability_discovery_authorization_is_current_hash_authori
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2480_QC_CAPABILITY_DISCOVERY_AUTHORIZATION_SECTION]
     assert phase["schema_version"] == (
@@ -30173,7 +30179,7 @@ def test_trading_2480_capability_discovery_evidence_is_current_hash_authority() 
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2480_QC_CAPABILITY_DISCOVERY_EVIDENCE_SECTION]
     assert phase["schema_version"] == (
@@ -30331,7 +30337,7 @@ def test_trading_2480_capability_discovery_review_is_current_hash_authority() ->
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2480_QC_CAPABILITY_DISCOVERY_REVIEW_SECTION]
     assert phase["schema_version"] == (
@@ -30478,7 +30484,7 @@ def test_trading_2492_owner_review_proposal_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2492_QC_BOUNDED_PILOT_OWNER_REVIEW_PROPOSAL_SECTION]
     assert phase["schema_version"] == (
@@ -30836,7 +30842,7 @@ def test_data_gov_002c3p_is_immutable_historical_authority() -> None:
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
         _data_gov_002c3p_base_baseline_blob(),
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert list(baseline).index(DATA_GOV_002C3P_SECTION) < list(baseline).index(
         TRADING_2463_S4_APPROVAL_SECTION
     )
@@ -31492,7 +31498,7 @@ def test_arch_004_g2_5_wave11_rejects_historical_source_hash_rewrite() -> None:
 
 
 def test_arch_004_g2_5_wave11_rejects_unportable_or_reused_replacement_evidence() -> None:
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     attempts = baseline[WAVE11_SECTION]["validation"]["full_validation"]["attempts"]
     _assert_wave11_full_attempt_chain(attempts)
 
@@ -31553,7 +31559,7 @@ def test_arch_004_g2_5_wave11_rejects_unportable_or_reused_replacement_evidence(
 
 
 def test_arch_004_compatibility_baseline_freezes_surface_and_core_hashes() -> None:
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
 
     assert baseline["status"] == "FROZEN_AFTER_ARCH_004A1_REMEDIATION"
     assert baseline["surface_inventory"]["total"] == 3812
@@ -37148,7 +37154,7 @@ def test_ops_074_official_policy_capture_consumption_is_current_hash_authority()
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[OPS_074_OFFICIAL_POLICY_CAPTURE_CONSUMPTION_SECTION]
     assert phase["schema_version"] == (
@@ -37286,7 +37292,7 @@ def test_trading_2492_bounded_pilot_terminal_no_go_is_current_hash_authority() -
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2492_QC_BOUNDED_PILOT_TERMINAL_NO_GO_SECTION]
     assert phase["schema_version"] == (
@@ -37416,7 +37422,7 @@ def test_trading_2493_owner_stage_gate_signoff_is_current_hash_authority() -> No
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2493_QC_OWNER_STAGE_GATE_SIGNOFF_SECTION]
     assert phase["schema_version"] == (
@@ -37546,7 +37552,7 @@ def test_trading_2497_license_export_due_diligence_is_current_hash_authority() -
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2497_QC_LICENSE_EXPORT_DUE_DILIGENCE_SECTION]
     assert phase["schema_version"] == (
@@ -37655,7 +37661,7 @@ def test_trading_2497_license_export_owner_review_is_current_hash_authority() ->
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2497_QC_LICENSE_EXPORT_OWNER_REVIEW_SECTION]
     assert phase["schema_version"] == (
@@ -37778,7 +37784,7 @@ def test_trading_2498_daily_capability_gate_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2498_QC_DAILY_CAPABILITY_GATE_SECTION]
     assert phase["schema_version"] == (
@@ -37901,7 +37907,7 @@ def test_trading_2496_owner_visual_acceptance_is_current_hash_authority() -> Non
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2496_OWNER_VISUAL_ACCEPTANCE_SECTION]
     assert phase["schema_version"] == (
@@ -38020,7 +38026,7 @@ def test_trading_2500_daily_capability_gate_retry_is_current_hash_authority() ->
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_SECTION]
     assert phase["schema_version"] == (
@@ -38156,7 +38162,7 @@ def test_trading_2500_daily_capability_retry_evidence_review_is_current_hash_aut
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_EVIDENCE_REVIEW_SECTION]
     assert phase["schema_version"] == (
@@ -38310,7 +38316,7 @@ def test_trading_2500_daily_capability_retry_terminal_review_is_current_hash_aut
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2500_QC_DAILY_CAPABILITY_GATE_RETRY_TERMINAL_REVIEW_SECTION]
     assert phase["schema_version"] == (
@@ -38450,7 +38456,7 @@ def test_trading_2499_daily_primary_backtest_contract_is_current_hash_authority(
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_SECTION]
     assert phase["schema_version"] == (
@@ -38561,7 +38567,7 @@ def test_trading_2501_owner_review_acceptance_is_current_hash_authority() -> Non
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION]
     assert phase["schema_version"] == (
@@ -38671,7 +38677,7 @@ def test_trading_2503_projection_renderer_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2503_ATLAS_QQQ_OPTIONS_PROJECTION_RENDERER_SECTION]
     assert phase["schema_version"] == (
@@ -38784,16 +38790,14 @@ def test_trading_2502_owner_decision_pack_is_current_hash_authority() -> None:
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION]
     assert phase["schema_version"] == (
         "trading_2502_qqq_options_owner_reviewed_backtest_policy_decision_pack_compatibility.v1"
     )
     assert phase["status"] == "BLOCKED_OWNER_INPUT"
-    assert phase["boundary_id"] == (
-        "TRADING-2502-QQQ-OPTIONS-OWNER-DECISION-PACK-V1"
-    )
+    assert phase["boundary_id"] == ("TRADING-2502-QQQ-OPTIONS-OWNER-DECISION-PACK-V1")
     assert phase["task_ids"] == [
         "TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1"
     ]
@@ -38895,16 +38899,14 @@ def test_trading_2504_owner_decision_manifest_is_current_hash_authority() -> Non
         current_bytes,
         base_blob,
     )
-    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    baseline = _compatibility_baseline()
     assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
     phase = baseline[TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION]
     assert phase["schema_version"] == (
         "trading_2504_qqq_options_owner_decision_manifest_compatibility.v1"
     )
     assert phase["status"] == "BASELINE_DONE"
-    assert phase["boundary_id"] == (
-        "TRADING-2504-QQQ-OPTIONS-OWNER-DECISION-MANIFEST-V1"
-    )
+    assert phase["boundary_id"] == ("TRADING-2504-QQQ-OPTIONS-OWNER-DECISION-MANIFEST-V1")
     assert phase["task_ids"] == [
         "TRADING-2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_CANONICALIZATION_V1"
     ]
@@ -38914,22 +38916,16 @@ def test_trading_2504_owner_decision_manifest_is_current_hash_authority() -> Non
     assert phase["prior_sections_immutability"] == {
         "source_commit": TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT,
         "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
-        "git_blob_sha1": (
-            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB
-        ),
+        "git_blob_sha1": (TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB),
         "raw_byte_count": expected_prefix_count,
-        "raw_sha256": (
-            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_SHA256
-        ),
+        "raw_sha256": (TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_SHA256),
         "append_offset": expected_prefix_count,
         "current_section_must_be_eof": True,
     }
     assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
     superseded = set(phase["superseded_live_source_paths"])
     assert superseded == set(
-        _latest_active_source_mismatches(
-            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
-        )
+        _latest_active_source_mismatches(TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION)
         | TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_ADDITIONAL_SUPERSESSION_PATHS
     )
     assert set(phase["removed_live_source_paths"]) == (
@@ -38943,14 +38939,10 @@ def test_trading_2504_owner_decision_manifest_is_current_hash_authority() -> Non
     ) - TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_REMOVED_SOURCE_PATHS
     assert set(phase["source_delta_paths"]) == expected
     assert phase["supersession"] == {
-        "superseded_by_phase": (
-            "TRADING-2504-QQQ-OPTIONS-OWNER-DECISION-MANIFEST-V1"
-        ),
+        "superseded_by_phase": ("TRADING-2504-QQQ-OPTIONS-OWNER-DECISION-MANIFEST-V1"),
         "scope": "LATEST_ACTIVE_PLUS_OWNER_DECISION_MANIFEST_DELTA",
         "historical_hashes_rewritten": False,
-        "inherited_supersession_authority": (
-            TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION
-        ),
+        "inherited_supersession_authority": (TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION),
         "current_hash_authority": (
             f"{TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION}.sources"
         ),
@@ -38962,7 +38954,7 @@ def test_trading_2504_owner_decision_manifest_is_current_hash_authority() -> Non
     assert set(source_paths) == expected
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["generated_fragment_authority"] == {
         "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
         "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
@@ -38974,27 +38966,19 @@ def test_trading_2504_owner_decision_manifest_is_current_hash_authority() -> Non
         "loader_hash_replay": "PASS",
     }
     assert phase["owner_decision_manifest_authority"] == {
-        "prepared_from_exact_main": (
-            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT
-        ),
+        "prepared_from_exact_main": (TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT),
         "inherited_decision_pack_file_sha256": (
             "afdcb44f44032fee958d4f6b1e8e4b56c1edb2faefa44026e16aff7153968588"
         ),
         "inherited_decision_pack_authority_set_sha256": (
             "1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c"
         ),
-        "policy_file_sha256": (
-            "55fb29bb2e4347959920cd3f5d72cbc5fc94c2aac5794f301e1c41f9a31547de"
-        ),
+        "policy_file_sha256": ("55fb29bb2e4347959920cd3f5d72cbc5fc94c2aac5794f301e1c41f9a31547de"),
         "policy_canonical_sha256": (
             "c872e9aee37cf2ea36b201d81c48c98603ca4daa96c53d900cdaa5997e13f0db"
         ),
-        "slot_catalog_sha256": (
-            "a1492e27ea8599d453249e5d29280d6fcb882ea0376ce531b949eae7b7621ad6"
-        ),
-        "module_sha256": (
-            "ab80c9e3b8bca03d9bc6c72eb568c7ddeb8420364e60a615bec7d936277a0b77"
-        ),
+        "slot_catalog_sha256": ("a1492e27ea8599d453249e5d29280d6fcb882ea0376ce531b949eae7b7621ad6"),
+        "module_sha256": ("ab80c9e3b8bca03d9bc6c72eb568c7ddeb8420364e60a615bec7d936277a0b77"),
         "decision_slot_count": 28,
         "canonical_group_count": 5,
         "decision_action_count": 5,
