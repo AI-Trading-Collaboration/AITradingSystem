@@ -1,0 +1,17 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_page_effectiveness
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/page_effectiveness.py
+public_contracts:
+  - PageEffectivenessError
+  - PageEffectivenessPolicy
+  - PageEffectivenessTaskPolicy
+  - PageEffectivenessValidation
+  - load_page_effectiveness_policy
+  - build_page_effectiveness_manifest
+  - validate_page_effectiveness_manifest
+  - browser_evidence_identities
+  - write_page_effectiveness_sidecars
+compatibility_facades: []
+deprecation_status: active_reference_architecture

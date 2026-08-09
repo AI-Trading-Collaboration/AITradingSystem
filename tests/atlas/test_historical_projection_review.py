@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import subprocess
 from hashlib import sha256
 from pathlib import Path
@@ -17,6 +18,13 @@ from ai_trading_system.atlas.historical_projection_review import (
 )
 from ai_trading_system.atlas.historical_projection_review_renderer import (
     render_historical_projection_review_html,
+)
+from ai_trading_system.atlas.page_effectiveness import (
+    validate_page_effectiveness_manifest,
+)
+from ai_trading_system.contracts.strategy_research_page_effectiveness import (
+    PageFreshnessStatus,
+    StrategyResearchPageEffectivenessManifest,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -276,37 +284,76 @@ def test_local_canonical_page_uses_2503_successor_identity_when_available() -> N
     if not canonical.is_file():
         pytest.skip("local canonical ignored artifact not hydrated")
     payload = canonical.read_bytes()
-    assert len(payload) == 182100
-    assert sha256(payload).hexdigest() == (
-        "1bbfb90fb5b2eb7dd1cbea29e07ca60338e29ba995f5f263162736519d7ea337"
-    )
+    effectiveness_sidecar = canonical.parent / "page_effectiveness.json"
+    if effectiveness_sidecar.is_file():
+        manifest = StrategyResearchPageEffectivenessManifest.from_json_bytes(
+            effectiveness_sidecar.read_bytes()
+        )
+        rendered_payloads: dict[str, bytes] = {}
+        for identity in manifest.rendered_artifacts:
+            artifact = ROOT / identity.locator
+            assert artifact.is_file()
+            rendered_payloads[Path(identity.locator).name] = artifact.read_bytes()
+        validation = validate_page_effectiveness_manifest(
+            repository_root=ROOT,
+            manifest=manifest,
+            rendered_payloads=rendered_payloads,
+        )
+        page_identity = next(
+            identity
+            for identity in manifest.rendered_artifacts
+            if identity.locator == repository_path
+        )
+        validation_sidecar = json.loads(
+            (canonical.parent / "page_effectiveness_validation.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        assert validation.status == "PASS"
+        assert manifest.freshness_status is PageFreshnessStatus.CURRENT
+        assert manifest.repository_commit == _exact_commit()
+        assert len(payload) == page_identity.byte_count
+        assert sha256(payload).hexdigest() == page_identity.sha256
+        assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
+            f"TRADING-{task_id}" for task_id in range(2481, 2505)
+        ]
+        assert validation_sidecar["status"] == "PASS"
+        assert validation_sidecar["manifest_sha256"] == manifest.content_sha256
+        assert validation_sidecar["page_sha256"] == page_identity.sha256
+    else:
+        assert len(payload) == 182100
+        assert sha256(payload).hexdigest() == (
+            "1bbfb90fb5b2eb7dd1cbea29e07ca60338e29ba995f5f263162736519d7ea337"
+        )
     assert payload.count(b'data-historical-record="true"') == 5
     assert payload.count(b'data-aggregate-conclusion="NO_GO_KEEP_BLOCKED"') == 1
     assert all(
         payload.count(f'data-qqq-task="TRADING-{task_id}"'.encode()) == 1
         for task_id in range(2481, 2494)
     )
-    expected_sidecars = {
-        "status_explanations.json": (
-            27641,
-            "a4e832fdd043a81948b293becbe0a785d84fb5d48d0423fec90ec93984bd6d16",
-        ),
-        "status_explanation_validation.json": (
-            684,
-            "0465631c0862adca5acf4b41672294b1482e7a40aa68106c35489fbf8c7b8377",
-        ),
-        "qqq_options_projection.json": (
-            17551,
-            "cf22c77583ce3976d24e74df67077a13a46cd22c10f37a5b697b1e7fa2aa26df",
-        ),
-        "qqq_options_projection_validation.json": (
-            895,
-            "f05a577c00669cb2855b83c17a82ec1a8f1b212b630d3a94f836eb885f8348e2",
-        ),
-    }
-    for name, (expected_size, expected_sha256) in expected_sidecars.items():
-        sidecar = canonical.parent / name
-        assert sidecar.is_file()
-        sidecar_payload = sidecar.read_bytes()
-        assert len(sidecar_payload) == expected_size
-        assert sha256(sidecar_payload).hexdigest() == expected_sha256
+    if not effectiveness_sidecar.is_file():
+        expected_sidecars = {
+            "status_explanations.json": (
+                27641,
+                "a4e832fdd043a81948b293becbe0a785d84fb5d48d0423fec90ec93984bd6d16",
+            ),
+            "status_explanation_validation.json": (
+                684,
+                "0465631c0862adca5acf4b41672294b1482e7a40aa68106c35489fbf8c7b8377",
+            ),
+            "qqq_options_projection.json": (
+                17551,
+                "cf22c77583ce3976d24e74df67077a13a46cd22c10f37a5b697b1e7fa2aa26df",
+            ),
+            "qqq_options_projection_validation.json": (
+                895,
+                "f05a577c00669cb2855b83c17a82ec1a8f1b212b630d3a94f836eb885f8348e2",
+            ),
+        }
+        for name, (expected_size, expected_sha256) in expected_sidecars.items():
+            sidecar = canonical.parent / name
+            assert sidecar.is_file()
+            sidecar_payload = sidecar.read_bytes()
+            assert len(sidecar_payload) == expected_size
+            assert sha256(sidecar_payload).hexdigest() == expected_sha256

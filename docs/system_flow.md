@@ -195,6 +195,20 @@ evidence、policy、external authority、strategy conclusion 五层状态，以�
 绿色表达阻塞，primary start 保持 `2021-02-22`。该投影只解释既有 authority，不修改 QQQ research
 contract、task lifecycle、DQ/PIT、投资阈值或结论，也不执行外部平台、production 或 broker 动作。
 
+TRADING-2505 在现有 Citation-first renderer 之后增加页面有效性闭环，而不是增加新的策略事实。
+`page_effectiveness.yaml` 明确列出 `TRADING-2481..2504` 的 requirement source、core projection、
+reviewed successor inclusion/exclusion 与普通读者摘要；builder 通过 ARCH-005 S5 canonical task registry
+读取真实 task status，并绑定 exact repository/source snapshot commit、policy/module/renderer/requirement
+SHA-256、最终 HTML 与 JSON artifact identity。freshness 只允许 `CURRENT / REPOSITORY_AHEAD_NO_RELEVANT_DRIFT /
+STALE_REBUILD_REQUIRED / UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`；相关 source 漂移或未知 successor
+不能降级为 warning。页面首屏先回答“主线、最大阻塞、工程能力与研究证据、不能推出什么、下一责任方、
+能否投资/下单/启动 engine”六个问题，technical commit/hash/locator 延后到审计 disclosure。
+`ENGINEERING_VALIDATION / OWNER_VISUAL_REVIEW / READER_COMPREHENSION_REVIEW` 三条状态独立保存；
+自动化不得代签后两项。loopback HTTP + Playwright 在 desktop/tablet/mobile 验证布局、details、anchor、
+keyboard focus、accessibility/DOM 与 screenshot 后，browser evidence 再与 page/manifest hash 绑定。
+该闭环不改变 QQQ policy、DQ/PIT、研究窗口、投资结论或交易权限，external/production/broker action
+继续为 `none`。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -252,7 +266,12 @@ flowchart LR
     OAUTH["TRADING-2501 Owner-accepted review authority<br/>A/B/C layers + 13 exact source receipts"] --> OPROJ["TRADING-2503 QQQ Options projection<br/>4 reader groups / 5 status layers / aggregate NO-GO"]
     OPROJ --> OVAL["Independent source + policy validation<br/>2492 order / 2493 dominance / no strategy PASS"]
     OVAL --> XRENDER
-    XRENDER --> XART["Deterministic static page + 6 JSON artifacts<br/>technical authority folded under audit disclosure"]
+    XRENDER --> XART["Deterministic static page + 8 JSON artifacts<br/>technical authority folded under audit disclosure"]
+    TASKREG["ARCH-005 S5 canonical task registry<br/>TRADING-2481..2505 exact status + requirement refs"] --> EFF["TRADING-2505 page effectiveness<br/>source + semantic + visual + reader layers"]
+    XART --> EFF
+    EFF --> BVIS["Loopback HTTP + Playwright<br/>desktop / tablet / mobile / accessibility / DOM / screenshots"]
+    BVIS --> REVIEWS["Three independent acceptance tracks<br/>engineering / Owner visual / reader comprehension"]
+    REVIEWS -.-> NONE
     HPWEB -.-> HSTOP["Review artifact remains immutable<br/>no automatic projection or investment verdict"]
     V2 --> STATIC["TRADING-2467 static validator"]
     STATIC -.-> STOP["STOP before data / DQ / coverage / model"]

@@ -180,6 +180,17 @@ from ai_trading_system.contracts.strategy_research_explorer_diff import (
     StrategyResearchExplorerDiff,
     StrategyResearchExplorerDiffContractError,
 )
+from ai_trading_system.contracts.strategy_research_page_effectiveness import (
+    PageAcceptanceRecord,
+    PageAcceptanceStatus,
+    PageAcceptanceTrack,
+    PageArtifactIdentity,
+    PageEffectivenessContractError,
+    PageFreshnessStatus,
+    PageTaskCoverage,
+    PageValidityLayer,
+    StrategyResearchPageEffectivenessManifest,
+)
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     QQQ_OPTIONS_PROJECTION_GROUP_IDS,
     QQQ_OPTIONS_PROJECTION_TASK_IDS,
@@ -345,6 +356,15 @@ __all__ = [
     "StrategyResearchExplorerDiff",
     "StrategyResearchExplorerDiffContractError",
     "StrategyResearchExplorerSnapshot",
+    "PageAcceptanceRecord",
+    "PageAcceptanceStatus",
+    "PageAcceptanceTrack",
+    "PageArtifactIdentity",
+    "PageEffectivenessContractError",
+    "PageFreshnessStatus",
+    "PageTaskCoverage",
+    "PageValidityLayer",
+    "StrategyResearchPageEffectivenessManifest",
     "QQQ_OPTIONS_PROJECTION_GROUP_IDS",
     "QQQ_OPTIONS_PROJECTION_TASK_IDS",
     "QQQOptionsProjectionCard",

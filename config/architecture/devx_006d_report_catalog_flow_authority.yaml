@@ -21,20 +21,20 @@ targets:
     path: docs/artifact_catalog.md
     format: MARKDOWN
     splitter: EXACT_BLANK_LINE_BLOCKS_V1
-    byte_count: 1993337
-    file_sha256: 87e0fe43b8761a553033de5202fda7be8701bcbd78548015e49050335e4f87d4
-    lf_sha256: 87e0fe43b8761a553033de5202fda7be8701bcbd78548015e49050335e4f87d4
-    git_blob: 70a8a08d9657d3e2e71350b99164fbf6d48e25c0
-    entry_count: 548
+    byte_count: 1995237
+    file_sha256: 8dc02d25ae51cbaf1ea2a83ec7db55fb13842aeed371ca98fce97114a3a1cbc2
+    lf_sha256: 8dc02d25ae51cbaf1ea2a83ec7db55fb13842aeed371ca98fce97114a3a1cbc2
+    git_blob: 3abb7639158a7a7fc890a3c3bbbcd5d6eb18e8ae
+    entry_count: 550
   - target_id: system_flow
     path: docs/system_flow.md
     format: MARKDOWN
     splitter: EXACT_BLANK_LINE_BLOCKS_V1
-    byte_count: 2181441
-    file_sha256: 076572e38fd5aca08f6bc80cd6f0ae97503856092916028214f3c8c17a5cea6c
-    lf_sha256: 076572e38fd5aca08f6bc80cd6f0ae97503856092916028214f3c8c17a5cea6c
-    git_blob: 01e2f28ac2830b72452679f18a44148b34ec169b
-    entry_count: 935
+    byte_count: 2183312
+    file_sha256: 734023c2ec463a32cb10644ace5e8c14947c3ca60c2531295e46e120c1b630d4
+    lf_sha256: 734023c2ec463a32cb10644ace5e8c14947c3ca60c2531295e46e120c1b630d4
+    git_blob: 8f2857b74d78d0797ec2601a422cda07cc59660a
+    entry_count: 936
 contract:
   source_of_truth: LEGACY_MONOLITH
   fragment_shadow_active: false

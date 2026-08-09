@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # HTML/CSS source lines remain readable as one semantic declaration.
 # ruff: noqa: E501
+import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -14,6 +15,11 @@ from ai_trading_system.atlas.cited_query_validation import (
     load_validated_diff_payloads,
     load_validated_snapshot_payload,
     validate_serialized_cited_query_response,
+)
+from ai_trading_system.atlas.page_effectiveness import (
+    build_page_effectiveness_manifest,
+    validate_page_effectiveness_manifest,
+    write_page_effectiveness_sidecars,
 )
 from ai_trading_system.atlas.qqq_options_projection import (
     QQQOptionsProjectionValidation,
@@ -40,6 +46,12 @@ from ai_trading_system.contracts.strategy_research_explorer import (
     AttributionDirection,
     ResearchAttribution,
     ResearchResultCard,
+)
+from ai_trading_system.contracts.strategy_research_page_effectiveness import (
+    PageAcceptanceStatus,
+    PageArtifactIdentity,
+    PageFreshnessStatus,
+    StrategyResearchPageEffectivenessManifest,
 )
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     QQQOptionsProjectionCard,
@@ -109,6 +121,7 @@ class AtlasCitedQueryShowcase:
     status_explanation_validation: StatusExplanationProjectionValidation
     qqq_options_projection: StrategyResearchQQQOptionsProjectionBundle
     qqq_options_projection_validation: QQQOptionsProjectionValidation
+    page_effectiveness: StrategyResearchPageEffectivenessManifest
 
 
 @dataclass(frozen=True)
@@ -148,6 +161,8 @@ def build_cited_query_showcase(
     after_payload: Mapping[str, object],
     diff_payload: Mapping[str, object],
     repository_root: Path | None = None,
+    page_engineering_status: PageAcceptanceStatus = PageAcceptanceStatus.NOT_EXECUTED,
+    page_engineering_evidence_refs: Sequence[str] = (),
 ) -> AtlasCitedQueryShowcase:
     snapshot = load_validated_snapshot_payload(snapshot_payload)
     before, after, diff = load_validated_diff_payloads(
@@ -248,6 +263,11 @@ def build_cited_query_showcase(
     )
     if qqq_options_projection_validation.status != "PASS":
         raise ValueError("ATLAS_CITED_QUERY_QQQ_OPTIONS_PROJECTION_VALIDATION_FAILED")
+    page_effectiveness = build_page_effectiveness_manifest(
+        repository_root=root,
+        engineering_status=page_engineering_status,
+        engineering_evidence_refs=page_engineering_evidence_refs,
+    )
     return AtlasCitedQueryShowcase(
         responses=ordered,
         validations=tuple(validations),
@@ -259,6 +279,7 @@ def build_cited_query_showcase(
         status_explanation_validation=status_explanation_validation,
         qqq_options_projection=qqq_options_projection,
         qqq_options_projection_validation=qqq_options_projection_validation,
+        page_effectiveness=page_effectiveness,
     )
 
 
@@ -1176,6 +1197,92 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
     """
 
 
+_PAGE_FRESHNESS_LABELS = {
+    PageFreshnessStatus.CURRENT: "与生成时仓库一致",
+    PageFreshnessStatus.REPOSITORY_AHEAD_NO_RELEVANT_DRIFT: "仓库已推进，但页面相关内容未漂移",
+    PageFreshnessStatus.STALE_REBUILD_REQUIRED: "页面已过期，需要重建",
+    PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED: "有后继任务尚未完成影响分类",
+}
+_PAGE_ACCEPTANCE_LABELS = {
+    PageAcceptanceStatus.PASS: "已通过",
+    PageAcceptanceStatus.FAIL: "未通过",
+    PageAcceptanceStatus.PENDING_REVIEW: "等待独立验收",
+    PageAcceptanceStatus.NOT_EXECUTED: "尚未执行",
+}
+
+
+def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
+    manifest = showcase.page_effectiveness
+    if len(manifest.task_coverage) != 24:
+        raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
+    acceptance = "".join(
+        (
+            f'<li class="effectiveness-review-card" data-review-track="{escape(item.track.value)}" '
+            f'data-review-status="{escape(item.status.value)}">'
+            f"<strong>{escape(item.track.value)}</strong>"
+            f"<span>{escape(_PAGE_ACCEPTANCE_LABELS[item.status])}</span>"
+            f"<code>{escape(item.status.value)}</code>"
+            "</li>"
+        )
+        for item in manifest.acceptance
+    )
+    successor_rows = "".join(
+        (
+            f'<li data-successor-task="{escape(item.task_id)}" '
+            f'data-successor-coverage="{escape(item.coverage)}">'
+            f"<code>{escape(item.task_id.split('_', 1)[0])}</code>"
+            f"<span>{escape(item.reader_summary_zh)}</span>"
+            "</li>"
+        )
+        for item in manifest.task_coverage
+        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2504
+    )
+    return f"""
+    <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
+      <div class="effectiveness-title-row">
+        <div>
+          <p class="section-kicker">PAGE VALIDITY · FOUR INDEPENDENT LAYERS</p>
+          <h2 id="page-effectiveness-title">先确认：这张页面现在还能不能信</h2>
+          <p>页面可打开只说明浏览器读到了 HTML。这里把来源、语义、视觉和读者理解分开验收，避免旧页面继续显示却遗漏新的研究事实。</p>
+        </div>
+        <div class="freshness-badge" data-freshness-status="{escape(manifest.freshness_status.value)}">
+          <span>页面 freshness</span>
+          <strong>{escape(_PAGE_FRESHNESS_LABELS[manifest.freshness_status])}</strong>
+          <code>{escape(manifest.freshness_status.value)}</code>
+        </div>
+      </div>
+      <div class="reader-answer-grid" aria-label="读者先回答的六个问题">
+        <article><span>01 · 当前主线</span><strong>QQQ Options 的 DAILY 工程合同正在完善，但真实策略仍保持 NO-GO / policy blocked。</strong></article>
+        <article><span>02 · 最大阻塞</span><strong>28 个 selection、execution、accounting、lifecycle 决策还没有真实 Owner 输入，完整历史证据也未形成。</strong></article>
+        <article><span>03 · 已做到什么</span><strong>工程合同、DQ/PIT、离线 mechanics 与证据结构可重放；这只是能力，不是盈利或风险证据。</strong></article>
+        <article><span>04 · 不能推出什么</span><strong>不能推出策略有效、收益稳健、风险可接受，也不能把局部 capability GO 解释成 strategy PASS。</strong></article>
+        <article><span>05 · 下一步</span><strong>Project owner 先提供 typed decisions；之后另立受治理任务实现真实 DAILY engine，并重新生成证据。</strong></article>
+        <article class="reader-answer-stop"><span>06 · 现在能否投资或下单</span><strong>不能。selection=false、orders/fills=0；本页不授权真实 engine、外部动作或交易。</strong></article>
+      </div>
+      <div class="effectiveness-boundary">
+        <div>
+          <h3>三种“通过”互不代签</h3>
+          <ul class="effectiveness-review-grid">{acceptance}</ul>
+          <p>工程自动化只能更新 <code>ENGINEERING_VALIDATION</code>；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
+        </div>
+        <details class="successor-coverage">
+          <summary>查看 TRADING-2494–2504 如何影响当前页面</summary>
+          <ul>{successor_rows}</ul>
+        </details>
+      </div>
+      <details class="effectiveness-audit">
+        <summary>审计信息：exact commit、policy 与 source coverage</summary>
+        <dl>
+          <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
+          <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
+          <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+        </dl>
+      </details>
+    </section>
+    """
+
+
 def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     if len(showcase.responses) != len(CITED_QUERY_QUESTION_CATALOG):
         raise ValueError("ATLAS_CITED_QUERY_SHOWCASE_QUESTION_COUNT_INVALID")
@@ -1199,6 +1306,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     )
     cards = "".join(_render_response(item) for item in showcase.responses)
     system_flow = _render_system_flow_map(showcase)
+    page_effectiveness = _render_page_effectiveness(showcase)
     qqq_options_projection = _render_qqq_options_projection(showcase)
     result_ledger = _render_result_ledger(showcase)
     snapshot_id = str(showcase.snapshot_payload["snapshot_id"])
@@ -1208,6 +1316,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
   <title>Atlas 研究问答与证据</title>
   <style>
     :root {{ --ink:#172033; --muted:#697489; --line:#dfe4ec; --paper:#f4f6f9; --panel:#fff; --navy:#132743; --blue:#315fba; --green:#18705b; --teal:#0d7f77; --teal-soft:#e8f6f3; --blue-soft:#eaf1ff; --amber:#9b6b12; --red:#aa3d51; }}
@@ -1224,6 +1333,44 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .metric span {{ color:#d9e8ff; font-size:.82rem; }}
     main {{ width:min(1120px,calc(100% - 2rem)); margin:0 auto; padding:1.6rem 0 4rem; }}
     .notice {{ margin:0 0 1.4rem; padding:1rem 1.15rem; border-left:5px solid var(--blue); border-radius:.55rem; background:#eaf1ff; }}
+    .page-effectiveness {{ margin:0 0 1.5rem; padding:1.35rem; border:1px solid #cfd9ea; border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; }}
+    .effectiveness-title-row {{ display:grid; grid-template-columns:minmax(0,1.55fr) minmax(250px,.65fr); gap:1rem; align-items:start; }}
+    .effectiveness-title-row h2 {{ margin:.2rem 0 .4rem; font-size:clamp(1.45rem,2.8vw,2.15rem); line-height:1.18; }}
+    .effectiveness-title-row p:last-child {{ max-width:720px; margin:.2rem 0; color:var(--muted); }}
+    .freshness-badge {{ padding:.8rem .9rem; border:1px solid #7fa7d8; border-radius:.72rem; color:#244e80; background:#edf5ff; }}
+    .freshness-badge span,.freshness-badge strong,.freshness-badge code {{ display:block; }}
+    .freshness-badge span {{ font-size:.64rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }}
+    .freshness-badge strong {{ margin:.2rem 0; font-size:.83rem; line-height:1.4; }}
+    .freshness-badge code {{ color:#55769d; font-size:.6rem; }}
+    .reader-answer-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; margin:1rem 0; }}
+    .reader-answer-grid article {{ min-width:0; padding:.72rem .78rem; border:1px solid #dfe5ee; border-radius:.7rem; background:#f8fafc; }}
+    .reader-answer-grid span,.reader-answer-grid strong {{ display:block; }}
+    .reader-answer-grid span {{ color:#617089; font-size:.62rem; font-weight:900; letter-spacing:.05em; }}
+    .reader-answer-grid strong {{ margin-top:.25rem; color:#2e3d55; font-size:.78rem; line-height:1.55; }}
+    .reader-answer-grid .reader-answer-stop {{ border-color:#d89aa7; background:#fff6f8; }}
+    .reader-answer-stop strong {{ color:#8d3044; }}
+    .effectiveness-boundary {{ display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:.8rem; margin-top:.8rem; }}
+    .effectiveness-boundary > div,.successor-coverage {{ min-width:0; padding:.8rem; border:1px solid #dfe5ee; border-radius:.72rem; background:#fbfcfe; }}
+    .effectiveness-boundary h3 {{ margin:0 0 .55rem; font-size:.88rem; }}
+    .effectiveness-boundary p {{ margin:.55rem 0 0; color:var(--muted); font-size:.69rem; }}
+    .effectiveness-review-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.45rem; margin:0; padding:0; list-style:none; }}
+    .effectiveness-review-card {{ min-width:0; padding:.55rem; border:1px solid #cfd9ea; border-radius:.55rem; background:#fff; }}
+    .effectiveness-review-card strong,.effectiveness-review-card span,.effectiveness-review-card code {{ display:block; overflow-wrap:anywhere; }}
+    .effectiveness-review-card strong {{ color:#39577d; font-size:.58rem; }}
+    .effectiveness-review-card span {{ margin:.15rem 0; font-size:.7rem; font-weight:850; }}
+    .effectiveness-review-card code {{ color:#687b96; font-size:.53rem; }}
+    .successor-coverage {{ border-top:1px solid #dfe5ee; }}
+    .successor-coverage > summary,.effectiveness-audit > summary {{ padding:.2rem; color:var(--blue); font-size:.75rem; }}
+    .successor-coverage ul {{ display:grid; gap:.35rem; margin:.6rem 0 0; padding:0; list-style:none; }}
+    .successor-coverage li {{ display:grid; grid-template-columns:86px minmax(0,1fr); gap:.45rem; padding:.42rem; border-radius:.4rem; background:#fff; }}
+    .successor-coverage li code {{ color:#496a94; font-size:.59rem; }}
+    .successor-coverage li span {{ color:#536176; font-size:.65rem; line-height:1.45; }}
+    .effectiveness-audit {{ margin-top:.8rem; border:1px solid #dfe5ee; border-radius:.72rem; background:#f8fafc; }}
+    .effectiveness-audit > summary {{ padding:.7rem .8rem; }}
+    .effectiveness-audit dl {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.45rem; margin:0; padding:0 .8rem .8rem; }}
+    .effectiveness-audit dl div {{ min-width:0; padding:.48rem; border-radius:.42rem; background:#fff; }}
+    .effectiveness-audit dt {{ color:var(--muted); font-size:.58rem; font-weight:850; }}
+    .effectiveness-audit dd {{ margin:.12rem 0 0; font-size:.64rem; overflow-wrap:anywhere; }}
     .qqq-projection {{ margin:0 0 1.5rem; padding:1.35rem; border:1px solid #d9dfe9; border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; }}
     .qqq-title-row {{ display:flex; justify-content:space-between; align-items:flex-start; gap:1.2rem; margin:.35rem 0 1rem; }}
     .qqq-title-row h2 {{ margin:0 0 .35rem; font-size:clamp(1.45rem,2.8vw,2.15rem); line-height:1.15; }}
@@ -1530,8 +1677,8 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .flow-heading,.qqq-title-row {{ display:block; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid {{ grid-template-columns:1fr; }} .flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
@@ -1549,6 +1696,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
   </header>
   <main>
     <p class="notice"><strong>怎样阅读：</strong>先看“一句话回答”，再看“限制”；需要审计时展开引用。LIMITED 不等于研究失败，只表示时间、DQ 或研究上下文尚不完整。本页不是投资建议，也不会触发交易。</p>
+    {page_effectiveness}
     {system_flow}
     {qqq_options_projection}
     {result_ledger}
@@ -1667,6 +1815,52 @@ def write_cited_query_artifacts(
                 path=result.path.as_posix(),
                 sha256=result.sha256,
                 size_bytes=result.size_bytes,
+            )
+        )
+    page_prefix = "outputs/atlas/strategy_research_cited_query/trading_2470_v1"
+    rendered_identities = tuple(
+        PageArtifactIdentity(
+            role="ATLAS_PAGE_" + name.upper().replace(".", "_"),
+            locator=f"{page_prefix}/{name}",
+            sha256=hashlib.sha256(payload).hexdigest(),
+            byte_count=len(payload),
+        )
+        for name, payload in sorted(payloads.items())
+    )
+    preliminary = showcase.page_effectiveness
+    manifest = build_page_effectiveness_manifest(
+        repository_root=Path(__file__).resolve().parents[3],
+        repository_commit=preliminary.repository_commit,
+        source_snapshot_commit=preliminary.source_snapshot_commit,
+        rendered_artifacts=rendered_identities,
+        engineering_status=preliminary.acceptance[0].status,
+        engineering_evidence_refs=preliminary.acceptance[0].evidence_refs,
+    )
+    validation = validate_page_effectiveness_manifest(
+        repository_root=Path(__file__).resolve().parents[3],
+        manifest=manifest,
+        current_repository_commit=preliminary.repository_commit,
+        rendered_payloads=payloads,
+    )
+    if validation.status != "PASS":
+        raise ValueError(
+            "ATLAS_PAGE_EFFECTIVENESS_VALIDATION_FAILED:" + ",".join(validation.errors)
+        )
+    sidecars = write_page_effectiveness_sidecars(
+        output_directory=output_directory,
+        manifest=manifest,
+        validation=validation,
+    )
+    for name, identity in zip(
+        ("page_effectiveness.json", "page_effectiveness_validation.json"),
+        sidecars,
+        strict=True,
+    ):
+        artifacts.append(
+            AtlasCitedQueryRenderedArtifact(
+                path=(output_directory / name).as_posix(),
+                sha256=identity.sha256,
+                size_bytes=identity.byte_count,
             )
         )
     return tuple(artifacts)

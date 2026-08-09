@@ -95,6 +95,15 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "先看限制",
         "完整引用与 lineage",
         "LIMITED 不等于研究失败",
+        "先确认：这张页面现在还能不能信",
+        "这张页面现在还能不能信",
+        "QQQ Options 的 DAILY 工程合同正在完善",
+        "28 个 selection、execution、accounting、lifecycle 决策",
+        "三种“通过”互不代签",
+        "ENGINEERING_VALIDATION",
+        "OWNER_VISUAL_REVIEW",
+        "READER_COMPREHENSION_REVIEW",
+        "data-page-freshness=\"CURRENT\"",
         "策略系统全流程，以及你现在在哪里",
         "第 7 / 8 阶段",
         "当前实际关注路径",
@@ -426,6 +435,8 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "status_explanation_validation.json",
         "status_explanations.json",
         "validation.json",
+        "page_effectiveness.json",
+        "page_effectiveness_validation.json",
     )
     assert [item.sha256 for item in first] == [item.sha256 for item in second]
     assert [item.size_bytes for item in first] == [item.size_bytes for item in second]
@@ -437,6 +448,8 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "status_explanation_validation.json",
         "status_explanations.json",
         "validation.json",
+        "page_effectiveness.json",
+        "page_effectiveness_validation.json",
     ):
         assert (tmp_path / "first" / name).read_bytes() == (tmp_path / "second" / name).read_bytes()
     sidecar_bytes = (tmp_path / "first" / "status_explanations.json").read_bytes()

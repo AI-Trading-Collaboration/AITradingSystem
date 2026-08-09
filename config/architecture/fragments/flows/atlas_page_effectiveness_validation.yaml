@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.atlas_page_effectiveness_validation
+fragment_kind: flow
+owner: atlas_publishing_experience
+target_id: system_flow
+source: canonical_task_registry_and_validated_atlas_page_artifact_bundle
+stages:
+  - exact_repository_and_source_snapshot_commit_binding
+  - trading_2481_2493_core_and_2494_2504_successor_coverage_replay
+  - relevant_policy_module_renderer_and_requirement_sha256_replay
+  - source_truth_semantic_projection_visual_rendering_reader_comprehension_layers
+  - independent_engineering_owner_visual_and_reader_comprehension_statuses
+  - reader_first_six_question_projection_before_technical_authority
+  - loopback_http_desktop_tablet_mobile_playwright_validation
+  - accessibility_dom_screenshot_evidence_bound_to_page_sha256
+  - stale_or_unclassified_successor_fail_closed
+  - no_investment_order_engine_external_production_or_broker_effect
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

@@ -1,0 +1,169 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  task_id_sha256: 21788f3592ab3ca8a6fc14afb36d74de42073269bc3617f2a3a16f80b1af5b7b
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  title: null
+  domain: Atlas strategy research page / effectiveness, freshness and visual regression
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: project owner：独立执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 修复 2503 local-canonical historical assertion
+    后，从 final bytes 重跑完整五级；Full 绑定父 full_20260809T190700Z。随后 exact-commit Playwright
+    与 ordinary push/cleanup。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: source/semantic/browser engineering evidence exact-commit 可重放；2503 legacy
+      identity 与 2505 manifest-aware current identity 均 fail closed；三重验收独立；failure-fix
+      Full、ordinary push/cleanup PASS。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-09T17:55:00Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2505-registration-20260809t175500z
+  lane_id: null
+  base_commit: 78487d609469342a2c41f2885ad93b7187666aa1
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+    - Atlas strategy research page / effectiveness, freshness and visual regression
+    - P1
+    - PROPOSED
+    - Atlas page engineering owner；project owner 独立验收 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
+    - 详见 `docs/requirements/TRADING-2505_Atlas_Page_Effectiveness_Freshness_Visual_Regression_V1.md`。从
+      exact S5 release 建立 source truth / semantic projection / visual rendering /
+      reader comprehension 四层有效性；不得复用旧冻结树 evidence。
+    - exact commit/source/bundle/HTML identity 可重放；2481–2493 core 与 2494–2504 successor
+      全覆盖或显式排除；三重验收互不代签；loopback HTTP + Playwright desktop/tablet/mobile、accessibility/DOM/screenshot
+      PASS；formal/Full、ordinary push/cleanup PASS。
+    - 2026-08-10：exact base=78487d609469342a2c41f2885ad93b7187666aa1；Owner visual/reader
+      comprehension 默认 PENDING_REVIEW；不改变策略、DQ/PIT、research window 或阈值，不执行 external
+      QC/cloud/raw/paper/live/broker/production。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2505-registration-20260809t175500z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-24b197fcb5b5cb1f0650970fcfcb118c
+- schema_version: task_event.v1
+  task_id: TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-09T18:32:00Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2505-implementation-progress-20260809t183200z
+  lane_id: null
+  base_commit: 78487d609469342a2c41f2885ad93b7187666aa1
+  previous_state_event_id: task-event-24b197fcb5b5cb1f0650970fcfcb118c
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Atlas page engineering owner；project owner 独立验收 OWNER_VISUAL_REVIEW
+      与 READER_COMPREHENSION_REVIEW
+    blocker_or_next_step: Source/semantic implementation and preliminary loopback
+      Playwright PASS；refresh generated/compatibility authority，then final-tree formal
+      gates and exact-commit browser replay.
+    acceptance_criteria: exact commit/source/bundle/HTML identity 可重放；2481–2493 core
+      与 2494–2504 successor 全覆盖或显式排除；三重验收互不代签；loopback HTTP + Playwright desktop/tablet/mobile、accessibility/DOM/screenshot
+      PASS；formal/Full、ordinary push/cleanup PASS。
+    notes: 2026-08-10：typed manifest/policy/renderer/sidecars 完成；focused=17 PASS；desktop/tablet/mobile
+      preliminary horizontalOverflow=false、clipped=[]、details keyboard/anchor/console
+      PASS。Owner visual 与 reader comprehension 仍 PENDING_REVIEW。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2505-implementation-progress-20260809t183200z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e55aa9eb13f11b02eef06652de1c5f45
+- schema_version: task_event.v1
+  task_id: TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-09T18:51:00Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2505-baseline-candidate-20260809t185100z
+  lane_id: null
+  base_commit: 78487d609469342a2c41f2885ad93b7187666aa1
+  previous_state_event_id: task-event-e55aa9eb13f11b02eef06652de1c5f45
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: project owner：独立执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
+    blocker_or_next_step: 工程有效性基线完成；final-tree formal 与 exact-commit Playwright 收口后，由
+      project owner 独立验收视觉和读者理解。
+    acceptance_criteria: source/semantic/browser engineering evidence exact-commit
+      可重放；三重验收独立；Owner visual 与 reader comprehension 在真实事实前保持 PENDING_REVIEW；formal/Full、ordinary
+      push/cleanup PASS。
+    notes: 2026-08-10：Atlas focused 17 PASS；preliminary loopback Playwright desktop/tablet/mobile
+      layout/keyboard/anchor/console PASS；compatibility current-authority failure-fix
+      247 PASS；工程 candidate 收口为 BASELINE_DONE，不代表策略或人工验收 PASS。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2505-baseline-candidate-20260809t185100z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f5d0505c5047ee2a742dcf0fab9d1fe1
+- schema_version: task_event.v1
+  task_id: TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-09T19:30:00Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2505-full-failure-fix-20260809t193000z
+  lane_id: null
+  base_commit: 78487d609469342a2c41f2885ad93b7187666aa1
+  previous_state_event_id: task-event-f5d0505c5047ee2a742dcf0fab9d1fe1
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: project owner：独立执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
+    blocker_or_next_step: 修复 2503 local-canonical historical assertion 后，从 final bytes
+      重跑完整五级；Full 绑定父 full_20260809T190700Z。随后 exact-commit Playwright 与 ordinary
+      push/cleanup。
+    acceptance_criteria: source/semantic/browser engineering evidence exact-commit
+      可重放；2503 legacy identity 与 2505 manifest-aware current identity 均 fail closed；三重验收独立；failure-fix
+      Full、ordinary push/cleanup PASS。
+    notes: 2026-08-10：首次 Full 8708 PASS/1 FAIL/3 skipped，唯一失败是 ignored canonical page
+      已升级到 2505 而历史测试仍硬编码 2503 bytes；页面实现无其他失败。采用 durable manifest-aware identity
+      replay，不移动/还原 artifact；完整五级重跑。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2505-full-failure-fix-20260809t193000z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e8d6ae7d2408a61758b1ad4d87adae99
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  - Atlas strategy research page / effectiveness, freshness and visual regression
+  - P1
+  - BASELINE_DONE
+  - project owner：独立执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
+  - 修复 2503 local-canonical historical assertion 后，从 final bytes 重跑完整五级；Full 绑定父 full_20260809T190700Z。随后
+    exact-commit Playwright 与 ordinary push/cleanup。
+  - source/semantic/browser engineering evidence exact-commit 可重放；2503 legacy identity
+    与 2505 manifest-aware current identity 均 fail closed；三重验收独立；failure-fix Full、ordinary
+    push/cleanup PASS。
+  - 2026-08-10：首次 Full 8708 PASS/1 FAIL/3 skipped，唯一失败是 ignored canonical page 已升级到
+    2505 而历史测试仍硬编码 2503 bytes；页面实现无其他失败。采用 durable manifest-aware identity replay，不移动/还原
+    artifact；完整五级重跑。
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 3dc09e0e957511f9fc512ab1a3241fc73813658ea85dd9dd9a8e3cf6b7dab220
+last_event_id: task-event-e8d6ae7d2408a61758b1ad4d87adae99
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 782979397c77779c9a88c15d8cf9dfccd52144c8d29ca057145b91e8ea8a99ec

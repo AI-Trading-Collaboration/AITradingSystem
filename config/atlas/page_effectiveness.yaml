@@ -1,0 +1,137 @@
+schema_version: atlas_page_effectiveness_policy.v1
+policy_id: atlas_strategy_research_page_effectiveness_v1
+policy_version: 1.0.0
+status: REVIEWED_ENGINEERING_BASELINE
+owner: Atlas page engineering owner
+primary_research_start: '2021-02-22'
+canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
+manifest_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/page_effectiveness.json
+validation_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/page_effectiveness_validation.json
+reader_questions:
+  - CURRENT_RESEARCH_MAINLINE
+  - LARGEST_CURRENT_BLOCKER
+  - ENGINEERING_VS_RESEARCH_EVIDENCE
+  - PROHIBITED_INFERENCES
+  - NEXT_OWNER_AND_ACTION
+  - INVESTMENT_ORDER_ENGINE_AUTHORITY
+relevant_source_paths:
+  - config/atlas/page_effectiveness.yaml
+  - config/atlas/historical_canonical_projection.yaml
+  - config/atlas/qqq_options_projection.yaml
+  - config/atlas/status_explanation_authority.yaml
+  - src/ai_trading_system/atlas/cited_query_renderer.py
+  - src/ai_trading_system/atlas/historical_canonical_projection.py
+  - src/ai_trading_system/atlas/page_effectiveness.py
+  - src/ai_trading_system/atlas/qqq_options_projection.py
+  - src/ai_trading_system/atlas/status_explanation_projection.py
+  - src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
+  - src/ai_trading_system/contracts/strategy_research_qqq_options_projection.py
+  - src/ai_trading_system/contracts/strategy_research_status_explanation.py
+task_sources:
+  - task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+    requirement_path: docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 共用记录与安全 envelope 已冻结，但不代表策略有效。
+  - task_id: TRADING-2482_QQQ_OPTIONS_DQ_PIT_CACHE_EVIDENCE_IDENTITY_V1
+    requirement_path: docs/requirements/TRADING-2482_QQQ_Options_DQ_PIT_Cache_Evidence_Identity_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: DQ/PIT 检查合同已建立，真实期权历史证据仍须逐次验证。
+  - task_id: TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+    requirement_path: docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 日信号 package 可重放，不等于已完成选券、交易与回测。
+  - task_id: TRADING-2484_QC_QQQ_OPTIONS_PROJECT_ADAPTER_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2484_QC_QQQ_Options_Project_Adapter_Contract_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 平台 adapter 仅为离线合同，不表示已运行云端回测。
+  - task_id: TRADING-2485_QQQ_OPTION_UNIVERSE_DETERMINISTIC_SELECTION_V1
+    requirement_path: docs/requirements/TRADING-2485_QQQ_Option_Universe_Deterministic_Selection_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 选券 mechanics 已实现，但 Owner 参数未批准，默认不选券。
+  - task_id: TRADING-2486_QQQ_OPTIONS_MINUTE_EXECUTION_REALITY_MODEL_V1
+    requirement_path: docs/requirements/TRADING-2486_QQQ_Options_Minute_Execution_Reality_Model_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 分钟执行 mechanics 已实现，但现实参数未批准，默认不成交。
+  - task_id: TRADING-2487_QQQ_OPTIONS_CASH_PREMIUM_SETTLEMENT_ACCOUNTING_V1
+    requirement_path: docs/requirements/TRADING-2487_QQQ_Options_Cash_Premium_Settlement_Accounting_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 现金与权利金记账 mechanics 已实现，投资解释 policy 仍未批准。
+  - task_id: TRADING-2488_QQQ_OPTIONS_LIFECYCLE_EXPIRY_CORPORATE_ACTION_SAFETY_V1
+    requirement_path: docs/requirements/TRADING-2488_QQQ_Options_Lifecycle_Expiry_Corporate_Action_Safety_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 生命周期安全边界已实现，异常事件继续 fail closed。
+  - task_id: TRADING-2489_QC_QQQ_OPTIONS_PLATFORM_EVIDENCE_MANUAL_BUNDLE_V1
+    requirement_path: docs/requirements/TRADING-2489_QC_QQQ_Options_Platform_Evidence_Manual_Bundle_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 平台证据 bundle 合同已建立，真实 collection 仍受授权限制。
+  - task_id: TRADING-2490_QC_QQQ_OPTIONS_LOCAL_INGEST_VALIDATOR_RECONCILIATION_V1
+    requirement_path: docs/requirements/TRADING-2490_QC_QQQ_Options_Local_Ingest_Validator_Reconciliation_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: 本地 reconciliation mechanics 已建立，真实 bundle 与容差 policy 仍待审阅。
+  - task_id: TRADING-2491_QQQ_OPTIONS_CROSS_LAYER_VALIDATION_HARNESS_V1
+    requirement_path: docs/requirements/TRADING-2491_QQQ_Options_Cross_Layer_Validation_Harness_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: synthetic harness 已通过，不等于真实历史回测证据。
+  - task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+    requirement_path: docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: bounded pilot 为 NO-GO，734127 超过 250000，再说明 1 order / 1 fill。
+  - task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+    requirement_path: docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
+    coverage: CORE_PROJECTED
+    reader_summary_zh: aggregate NO_GO_KEEP_BLOCKED 支配局部 conditional capability。
+  - task_id: TRADING-2494_ATLAS_HISTORICAL_CANONICAL_PROJECTION_V1
+    requirement_path: docs/requirements/TRADING-2494_Atlas_Historical_Canonical_Projection_V1.md
+    coverage: INCLUDED_HISTORICAL_LANE
+    reader_summary_zh: 五份已审阅历史材料进入隔离支线，全部 display LIMITED。
+  - task_id: TRADING-2495_ATLAS_READER_STATUS_EXPLANATION_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2495_Atlas_Reader_Status_Explanation_Contract_V1.md
+    coverage: INCLUDED_STATUS_EXPLANATION
+    reader_summary_zh: 节点原因必须来自 typed explanation authority，不能从状态猜测。
+  - task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+    requirement_path: docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+    coverage: INCLUDED_READER_RENDERER
+    reader_summary_zh: 页面按读者问题顺序展示，技术字段默认折叠。
+  - task_id: TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+    requirement_path: docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+    coverage: DISCLOSED_SUCCESSOR_NOT_PROJECTED
+    reader_summary_zh: license/export 调查没有解除 primary-window、raw download 或真实回测 blocker。
+  - task_id: TRADING-2498_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_V1
+    requirement_path: docs/requirements/TRADING-2498_QC_QQQ_Options_Daily_Capability_Gate_V1.md
+    coverage: DISCLOSED_SUCCESSOR_NOT_PROJECTED
+    reader_summary_zh: 首次 DAILY capability gate 未形成可供策略结论使用的终局证据。
+  - task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md
+    coverage: DISCLOSED_SUCCESSOR_NOT_PROJECTED
+    reader_summary_zh: DAILY primary backtest 只完成离线合同，真实 engine 仍被 Owner policy 阻塞。
+  - task_id: TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+    requirement_path: docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md
+    coverage: DISCLOSED_SUCCESSOR_NOT_PROJECTED
+    reader_summary_zh: GO 只限 DAILY engineering，不代表策略、收益或新外部动作获批。
+  - task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+    requirement_path: docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
+    coverage: INCLUDED_QQQ_OWNER_REVIEW
+    reader_summary_zh: A/B/C 分层与阅读顺序由 Owner review pack 冻结。
+  - task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
+    requirement_path: docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
+    coverage: DISCLOSED_OWNER_INPUT_BLOCKED
+    reader_summary_zh: 28 个 decision slots 等待真实 Owner 输入，当前固定 cash preservation。
+  - task_id: TRADING-2503_ATLAS_QQQ_OPTIONS_SERIAL_PROJECTION_CONTRACT_RENDERER_CONSUMER_V1
+    requirement_path: docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md
+    coverage: INCLUDED_QQQ_PROJECTION_RENDERER
+    reader_summary_zh: 2481–2493 已以 reader-safe 四组结构进入页面。
+  - task_id: TRADING-2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_CANONICALIZATION_V1
+    requirement_path: docs/requirements/TRADING-2504_QQQ_Options_Owner_Decision_Manifest_Canonicalization_V1.md
+    coverage: DISCLOSED_OWNER_MANIFEST_POLICY_BLOCKED
+    reader_summary_zh: canonical manifest 合同已完成，但没有真实 Owner decisions，也没有激活 engine。
+acceptance_defaults:
+  engineering_validation: NOT_EXECUTED
+  owner_visual_review: PENDING_REVIEW
+  reader_comprehension_review: PENDING_REVIEW
+safety:
+  investment_conclusion_generated: false
+  order_authorized: false
+  real_engine_authorized: false
+  external_action: none
+  production_effect: none
+  broker_action: none
