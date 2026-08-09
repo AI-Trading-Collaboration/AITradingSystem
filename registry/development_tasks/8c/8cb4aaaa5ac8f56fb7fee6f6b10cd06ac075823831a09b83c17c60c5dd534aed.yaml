@@ -1,0 +1,134 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  task_id_sha256: 8cb4aaaa5ac8f56fb7fee6f6b10cd06ac075823831a09b83c17c60c5dd534aed
+task_record:
+  task_id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  title: null
+  domain: Data Foundation / Phase C price non-market-session typed attribution serial
+    contract wave
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform engineering coordinator：保持typed contract与owner decision
+    authority；任何dimensional classifier adoption、capability policy或consumer迁移必须另开任务并重新评审calendar/special-closure
+    drift
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+    decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。只批准reviewed
+    US equity calendar约束下的`primary_market_prices`；exact artifact/checksum、snapshot-local
+    ordinal和versioned digest为完整归因必要条件，secondary/incomplete保持`GLOBAL_OR_UNKNOWN_SCOPE`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Decision exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row
+      contract；complete primary填充，任一缺失清空legacy affected scope并fail closed；capability
+      policy/consumer bytes不变；final Architecture/Contract/Report/Reproducibility/Integration=`764/275/57/23/995
+      passed`，独占Full=`7606 passed / 3 skipped / 642 warnings`；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: b459d595b72d3e7b5950cb3032b0cd322a8ed42ec807611ed5cd325b55ef922a
+  cell_count: 8
+  all_cells:
+  - DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  - Data Foundation / Phase C price non-market-session typed attribution serial contract
+    wave
+  - P0
+  - BASELINE_DONE
+  - data platform engineering coordinator：保持typed contract与owner decision authority；任何dimensional
+    classifier adoption、capability policy或consumer迁移必须另开任务并重新评审calendar/special-closure
+    drift
+  - 详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+    decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。只批准reviewed
+    US equity calendar约束下的`primary_market_prices`；exact artifact/checksum、snapshot-local
+    ordinal和versioned digest为完整归因必要条件，secondary/incomplete保持`GLOBAL_OR_UNKNOWN_SCOPE`。
+  - Decision exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row contract；complete
+    primary填充，任一缺失清空legacy affected scope并fail closed；capability policy/consumer bytes不变；final
+    Architecture/Contract/Report/Reproducibility/Integration=`764/275/57/23/995 passed`，独占Full=`7606
+    passed / 3 skipped / 642 warnings`；`production_effect=none`、`broker_action=none`。
+  - 2026-07-28：三次main drift均以reviewed `RECONCILIATION_REQUIRED` plan在最新exact main重建，无blocker/contract
+    conflict；最终candidate=`af37b804f48c2aff3f7a262107343e56f8146ce5`通过focused 44、Ruff、strict
+    mypy及全部formal/Full门禁，基线闭合。后续consumer/policy采用仍未授权，故保留`BASELINE_DONE`并由data platform
+    engineering coordinator负责维持与发起独立评审。
+  raw_line: '|DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE|Data
+    Foundation / Phase C price non-market-session typed attribution serial contract
+    wave|P0|BASELINE_DONE|data platform engineering coordinator：保持typed contract与owner
+    decision authority；任何dimensional classifier adoption、capability policy或consumer迁移必须另开任务并重新评审calendar/special-closure
+    drift|详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+    decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。只批准reviewed
+    US equity calendar约束下的`primary_market_prices`；exact artifact/checksum、snapshot-local
+    ordinal和versioned digest为完整归因必要条件，secondary/incomplete保持`GLOBAL_OR_UNKNOWN_SCOPE`。|Decision
+    exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row contract；complete
+    primary填充，任一缺失清空legacy affected scope并fail closed；capability policy/consumer bytes不变；final
+    Architecture/Contract/Report/Reproducibility/Integration=`764/275/57/23/995 passed`，独占Full=`7606
+    passed / 3 skipped / 642 warnings`；`production_effect=none`、`broker_action=none`。|2026-07-28：三次main
+    drift均以reviewed `RECONCILIATION_REQUIRED` plan在最新exact main重建，无blocker/contract
+    conflict；最终candidate=`af37b804f48c2aff3f7a262107343e56f8146ce5`通过focused 44、Ruff、strict
+    mypy及全部formal/Full门禁，基线闭合。后续consumer/policy采用仍未授权，故保留`BASELINE_DONE`并由data platform
+    engineering coordinator负责维持与发起独立评审。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-b459d595b72d3e7b5950cb30
+  task_id: DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: data platform engineering coordinator：保持typed contract与owner decision
+      authority；任何dimensional classifier adoption、capability policy或consumer迁移必须另开任务并重新评审calendar/special-closure
+      drift
+    notes: 2026-07-28：三次main drift均以reviewed `RECONCILIATION_REQUIRED` plan在最新exact
+      main重建，无blocker/contract conflict；最终candidate=`af37b804f48c2aff3f7a262107343e56f8146ce5`通过focused
+      44、Ruff、strict mypy及全部formal/Full门禁，基线闭合。后续consumer/policy采用仍未授权，故保留`BASELINE_DONE`并由data
+      platform engineering coordinator负责维持与发起独立评审。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:b459d595b72d3e7b5950cb3032b0cd322a8ed42ec807611ed5cd325b55ef922a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002C3P_PRICE_NON_MARKET_SESSION_TYPED_ATTRIBUTION_CONTRACT_WAVE
+  - Data Foundation / Phase C price non-market-session typed attribution serial contract
+    wave
+  - P0
+  - BASELINE_DONE
+  - data platform engineering coordinator：保持typed contract与owner decision authority；任何dimensional
+    classifier adoption、capability policy或consumer迁移必须另开任务并重新评审calendar/special-closure
+    drift
+  - 详见 `docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md`。Owner
+    decision=`owner_decision:DATA-GOV-002C3P:2026-07-27:approve_price_non_market_session_contract_wave_v1`。只批准reviewed
+    US equity calendar约束下的`primary_market_prices`；exact artifact/checksum、snapshot-local
+    ordinal和versioned digest为完整归因必要条件，secondary/incomplete保持`GLOBAL_OR_UNKNOWN_SCOPE`。
+  - Decision exact bytes与C2P pack绑定；typed source/window/calendar/field/date/row contract；complete
+    primary填充，任一缺失清空legacy affected scope并fail closed；capability policy/consumer bytes不变；final
+    Architecture/Contract/Report/Reproducibility/Integration=`764/275/57/23/995 passed`，独占Full=`7606
+    passed / 3 skipped / 642 warnings`；`production_effect=none`、`broker_action=none`。
+  - 2026-07-28：三次main drift均以reviewed `RECONCILIATION_REQUIRED` plan在最新exact main重建，无blocker/contract
+    conflict；最终candidate=`af37b804f48c2aff3f7a262107343e56f8146ce5`通过focused 44、Ruff、strict
+    mypy及全部formal/Full门禁，基线闭合。后续consumer/policy采用仍未授权，故保留`BASELINE_DONE`并由data platform
+    engineering coordinator负责维持与发起独立评审。
+  docs_links:
+  - docs/requirements/DATA-GOV-002C3P_Price_Non_Market_Session_Typed_Attribution_Contract_Wave.md
+  terminal: false
+  canonical_row_sha256: b459d595b72d3e7b5950cb3032b0cd322a8ed42ec807611ed5cd325b55ef922a
+last_event_id: legacy-import-b459d595b72d3e7b5950cb30
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 4c12c94426fac909529c56e0ec5bf295fed31e0c15f56cd7629842a3c8c7b8db

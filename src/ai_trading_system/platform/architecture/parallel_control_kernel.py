@@ -316,7 +316,10 @@ def load_parallel_control_policy(path: Path) -> ParallelControlPolicy:
         raise ParallelControlError("CONTROL_POLICY_STATUS", str(payload.get("status")))
     if safety.get("production_effect") != "none" or safety.get("broker_action") != "none":
         raise ParallelControlError("CONTROL_POLICY_SAFETY", "production and broker must be none")
-    if safety.get("source_of_truth") != "LEGACY_MARKDOWN_ONLY":
+    if safety.get("source_of_truth") not in {
+        "LEGACY_MARKDOWN_ONLY",
+        "ARCH_005_TASK_REGISTRY",
+    }:
         raise ParallelControlError(
             "CONTROL_POLICY_SOURCE_OF_TRUTH", str(safety.get("source_of_truth"))
         )

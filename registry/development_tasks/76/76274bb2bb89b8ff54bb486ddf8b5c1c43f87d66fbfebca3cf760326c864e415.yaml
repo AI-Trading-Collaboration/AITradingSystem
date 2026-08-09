@@ -1,0 +1,108 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  task_id_sha256: 76274bb2bb89b8ff54bb486ddf8b5c1c43f87d66fbfebca3cf760326c864e415
+task_record:
+  task_id: ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  title: null
+  domain: Architecture maintenance / portable bootstrap validator bundle adoption
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: architecture platform maintainer：后续如扩展bundle schema或支持shallow archive须另立任务
+  requirement_refs:
+  - docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md`。复用G2.5已验证的tracked
+    exact-byte bundle，不创建sidecar或第二套事实源；历史handoff与四份summary bytes保持不可变。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: standalone validator不依赖untracked `outputs/`；完整校验path/SHA/decoded size/status/exit/bundle/runtime
+      tier与Git lineage；tamper/missing/CRLF/base-drift/history-missing typed fail closed；G2.5兼容且真实clean
+      clone在无validation outputs时CLI PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: c1fd94abb782e976bdac3bf5ea50c31928d993e3736ac85080249c4f20e9b05d
+  cell_count: 8
+  all_cells:
+  - ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  - Architecture maintenance / portable bootstrap validator bundle adoption
+  - P2
+  - DONE
+  - architecture platform maintainer：后续如扩展bundle schema或支持shallow archive须另立任务
+  - 详见 `docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md`。复用G2.5已验证的tracked
+    exact-byte bundle，不创建sidecar或第二套事实源；历史handoff与四份summary bytes保持不可变。
+  - standalone validator不依赖untracked `outputs/`；完整校验path/SHA/decoded size/status/exit/bundle/runtime
+    tier与Git lineage；tamper/missing/CRLF/base-drift/history-missing typed fail closed；G2.5兼容且真实clean
+    clone在无validation outputs时CLI PASS。
+  - 2026-07-27：candidate=`6af08fb99`；focused/Architecture/Contract/Reproducibility/Integration=`174/723/275/23/995
+    passed`，唯一required Full=`7469 passed / 3 skipped / 643 warnings`；首次post-Full Architecture因历史supersession测试对path
+    hash reversion的错误假设为`721 passed / 2 failed`并保留，修复后post-Full Architecture/Contract=`723/275
+    passed`；任务归档DONE。
+  raw_line: '|ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION|Architecture
+    maintenance / portable bootstrap validator bundle adoption|P2|DONE|architecture
+    platform maintainer：后续如扩展bundle schema或支持shallow archive须另立任务|详见 `docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md`。复用G2.5已验证的tracked
+    exact-byte bundle，不创建sidecar或第二套事实源；历史handoff与四份summary bytes保持不可变。|standalone
+    validator不依赖untracked `outputs/`；完整校验path/SHA/decoded size/status/exit/bundle/runtime
+    tier与Git lineage；tamper/missing/CRLF/base-drift/history-missing typed fail closed；G2.5兼容且真实clean
+    clone在无validation outputs时CLI PASS。|2026-07-27：candidate=`6af08fb99`；focused/Architecture/Contract/Reproducibility/Integration=`174/723/275/23/995
+    passed`，唯一required Full=`7469 passed / 3 skipped / 643 warnings`；首次post-Full Architecture因历史supersession测试对path
+    hash reversion的错误假设为`721 passed / 2 failed`并保留，修复后post-Full Architecture/Contract=`723/275
+    passed`；任务归档DONE。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-c1fd94abb782e976bdac3bf5
+  task_id: ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: architecture platform maintainer：后续如扩展bundle schema或支持shallow archive须另立任务
+    notes: 2026-07-27：candidate=`6af08fb99`；focused/Architecture/Contract/Reproducibility/Integration=`174/723/275/23/995
+      passed`，唯一required Full=`7469 passed / 3 skipped / 643 warnings`；首次post-Full
+      Architecture因历史supersession测试对path hash reversion的错误假设为`721 passed / 2 failed`并保留，修复后post-Full
+      Architecture/Contract=`723/275 passed`；任务归档DONE。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:c1fd94abb782e976bdac3bf5ea50c31928d993e3736ac85080249c4f20e9b05d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005M2_BOOTSTRAP_STANDALONE_VALIDATOR_PORTABLE_BUNDLE_ADOPTION
+  - Architecture maintenance / portable bootstrap validator bundle adoption
+  - P2
+  - DONE
+  - architecture platform maintainer：后续如扩展bundle schema或支持shallow archive须另立任务
+  - 详见 `docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md`。复用G2.5已验证的tracked
+    exact-byte bundle，不创建sidecar或第二套事实源；历史handoff与四份summary bytes保持不可变。
+  - standalone validator不依赖untracked `outputs/`；完整校验path/SHA/decoded size/status/exit/bundle/runtime
+    tier与Git lineage；tamper/missing/CRLF/base-drift/history-missing typed fail closed；G2.5兼容且真实clean
+    clone在无validation outputs时CLI PASS。
+  - 2026-07-27：candidate=`6af08fb99`；focused/Architecture/Contract/Reproducibility/Integration=`174/723/275/23/995
+    passed`，唯一required Full=`7469 passed / 3 skipped / 643 warnings`；首次post-Full Architecture因历史supersession测试对path
+    hash reversion的错误假设为`721 passed / 2 failed`并保留，修复后post-Full Architecture/Contract=`723/275
+    passed`；任务归档DONE。
+  docs_links:
+  - docs/requirements/ARCH-005M2_Bootstrap_Standalone_Validator_Portable_Bundle_Adoption.md
+  terminal: true
+  canonical_row_sha256: c1fd94abb782e976bdac3bf5ea50c31928d993e3736ac85080249c4f20e9b05d
+last_event_id: legacy-import-c1fd94abb782e976bdac3bf5
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: f8c2cd6f582b29b7c440b1c1bf9d7348f71ba4335b8503cbcede3a3d4c89f549

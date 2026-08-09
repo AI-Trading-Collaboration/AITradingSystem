@@ -1,0 +1,117 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-018A1
+  task_id_sha256: ff96ab11faace74ba46e71de75290b186ce7a5b09cd2cd782591aa1d4b6fca13
+task_record:
+  task_id: TRADING-018A1
+  title: null
+  domain: 交易执行/Daily Weight Adjustment Scheduler Multi-day Observation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证 + 项目 owner
+  requirement_refs:
+  - docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md
+  - docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 承接 `TRADING-018A` runbook 的 3～7 个美股交易日稳定性观察；阻塞于本地
+    Windows Task Scheduler 已安装或 operator 按同一命令连续手动运行，并且对应日期的 015/016/017/018 上游 artifacts
+    可审计；详细边界见 `docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md` 和 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 连续 3～7 个已完成美股交易日记录 scheduler/manual-run exit code、`dry_run_status`、`pipeline_status`、`missing_artifacts`、warnings
+      和 safety checks；每次输出必须保持 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`，且不写
+      production profile、不写 approved profile、不调用 IBKR/PaperBroker/replay/controlled
+      fill/lifecycle/comparison、不自动 git commit/push；若连续 `LIMITED`，按真实上游缺口拆分任务，不在 scheduler
+      层绕过；完成后补充 review/requirement 证据并归档
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 665808cad259145e1666b5cc597f1196f8ab5ab25878af4821d10ed3740ef45d
+  cell_count: 8
+  all_cells:
+  - TRADING-018A1
+  - 交易执行/Daily Weight Adjustment Scheduler Multi-day Observation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 承接 `TRADING-018A` runbook 的 3～7 个美股交易日稳定性观察；阻塞于本地 Windows Task Scheduler 已安装或
+    operator 按同一命令连续手动运行，并且对应日期的 015/016/017/018 上游 artifacts 可审计；详细边界见 `docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md`
+    和 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`
+  - 连续 3～7 个已完成美股交易日记录 scheduler/manual-run exit code、`dry_run_status`、`pipeline_status`、`missing_artifacts`、warnings
+    和 safety checks；每次输出必须保持 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`，且不写
+    production profile、不写 approved profile、不调用 IBKR/PaperBroker/replay/controlled
+    fill/lifecycle/comparison、不自动 git commit/push；若连续 `LIMITED`，按真实上游缺口拆分任务，不在 scheduler
+    层绕过；完成后补充 review/requirement 证据并归档
+  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018A wrapper、安全边界、本地 smoke、目标测试、`tests/trading_engine`
+    和当前 CI 已通过，但当前仓库只有本轮单日 isolated smoke，没有真实 3～7 天 scheduler/manual-run 样本；为避免误报运行期稳定性，本
+    follow-up 专门承接多日观察。'
+  raw_line: '|TRADING-018A1|交易执行/Daily Weight Adjustment Scheduler Multi-day Observation|P0|BLOCKED_EXTERNAL|系统验证
+    + 项目 owner|承接 `TRADING-018A` runbook 的 3～7 个美股交易日稳定性观察；阻塞于本地 Windows Task Scheduler
+    已安装或 operator 按同一命令连续手动运行，并且对应日期的 015/016/017/018 上游 artifacts 可审计；详细边界见 `docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md`
+    和 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`|连续
+    3～7 个已完成美股交易日记录 scheduler/manual-run exit code、`dry_run_status`、`pipeline_status`、`missing_artifacts`、warnings
+    和 safety checks；每次输出必须保持 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`，且不写
+    production profile、不写 approved profile、不调用 IBKR/PaperBroker/replay/controlled
+    fill/lifecycle/comparison、不自动 git commit/push；若连续 `LIMITED`，按真实上游缺口拆分任务，不在 scheduler
+    层绕过；完成后补充 review/requirement 证据并归档|2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018A
+    wrapper、安全边界、本地 smoke、目标测试、`tests/trading_engine` 和当前 CI 已通过，但当前仓库只有本轮单日 isolated
+    smoke，没有真实 3～7 天 scheduler/manual-run 样本；为避免误报运行期稳定性，本 follow-up 专门承接多日观察。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-665808cad259145e1666b5cc
+  task_id: TRADING-018A1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_EXTERNAL
+  payload:
+    priority: P0
+    next_owner: 系统验证 + 项目 owner
+    notes: '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018A wrapper、安全边界、本地 smoke、目标测试、`tests/trading_engine`
+      和当前 CI 已通过，但当前仓库只有本轮单日 isolated smoke，没有真实 3～7 天 scheduler/manual-run 样本；为避免误报运行期稳定性，本
+      follow-up 专门承接多日观察。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:665808cad259145e1666b5cc597f1196f8ab5ab25878af4821d10ed3740ef45d
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-018A1
+  - 交易执行/Daily Weight Adjustment Scheduler Multi-day Observation
+  - P0
+  - BLOCKED_EXTERNAL
+  - 系统验证 + 项目 owner
+  - 承接 `TRADING-018A` runbook 的 3～7 个美股交易日稳定性观察；阻塞于本地 Windows Task Scheduler 已安装或
+    operator 按同一命令连续手动运行，并且对应日期的 015/016/017/018 上游 artifacts 可审计；详细边界见 `docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md`
+    和 `docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md`
+  - 连续 3～7 个已完成美股交易日记录 scheduler/manual-run exit code、`dry_run_status`、`pipeline_status`、`missing_artifacts`、warnings
+    和 safety checks；每次输出必须保持 `mode=dry_run`、`production_effect=none`、`manual_review_only=true`，且不写
+    production profile、不写 approved profile、不调用 IBKR/PaperBroker/replay/controlled
+    fill/lifecycle/comparison、不自动 git commit/push；若连续 `LIMITED`，按真实上游缺口拆分任务，不在 scheduler
+    层绕过；完成后补充 review/requirement 证据并归档
+  - '2026-06-09: 新增并进入 BLOCKED_EXTERNAL，原因：TRADING-018A wrapper、安全边界、本地 smoke、目标测试、`tests/trading_engine`
+    和当前 CI 已通过，但当前仓库只有本轮单日 isolated smoke，没有真实 3～7 天 scheduler/manual-run 样本；为避免误报运行期稳定性，本
+    follow-up 专门承接多日观察。'
+  docs_links:
+  - docs/requirements/daily_weight_adjustment_scheduler_dry_run_2026-05-18.md
+  - docs/runbooks/daily_weight_adjustment_scheduler_dry_run.md
+  terminal: false
+  canonical_row_sha256: 665808cad259145e1666b5cc597f1196f8ab5ab25878af4821d10ed3740ef45d
+last_event_id: legacy-import-665808cad259145e1666b5cc
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 64e62124fcfc9fba5e2cb04f6117a64ab01d3813602fd893910a9677c39fa4a8

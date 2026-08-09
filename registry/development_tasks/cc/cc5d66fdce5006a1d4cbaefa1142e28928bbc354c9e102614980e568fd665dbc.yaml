@@ -1,0 +1,143 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-072_DAILY_OFFICIAL_POLICY_TRANSPORT_RESILIENCE
+  task_id_sha256: cc5d66fdce5006a1d4cbaefa1142e28928bbc354c9e102614980e568fd665dbc
+task_record:
+  task_id: OPS-072_DAILY_OFFICIAL_POLICY_TRANSPORT_RESILIENCE
+  title: null
+  domain: Operations / official-policy transient transport resilience and blocker
+    classification
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：正式验证、普通 main push、exact release promotion 与 deployment acceptance；operations
+    owner：新 release 后下一合法 invocation 执行 ordinary operational acceptance
+  requirement_refs:
+  - docs/requirements/OPS-072_Daily_Official_Policy_Transport_Resilience.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-072_Daily_Official_Policy_Transport_Resilience.md`。2026-08-01
+    canonical `as_of=2026-07-31` parent `daily_ops_run:2026-07-31:20260801T014510Z`
+    因 GovInfo pre-response TLS EOF 使 `official_policy_sources` partial；同时 capture
+    把候选数 `401` 误判为 HTTP permission。当前 invocation 唯一 trigger 已用完，parent/state/ledger/artifacts
+    保持 immutable。Recovery allowlist 只从 `artifact_lineage` 开始且要求 score PASS，本 parent
+    不可合法恢复；reason=`RECOVERY_BOUNDARY_NOT_ALLOWLISTED_SCORE_NOT_PASS`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: official-policy adapter 只对 pre-response TLS/timeout/connection 做 3 次 1/2
+      秒有界 retry；HTTP status、parser/schema/provider error 不重试；typed exhaustion/CLI
+      marker/capture classifier 可审计；裸 401/403 不再误分类；DQ/PIT/score dependency、historical
+      recapture、weights/broker/trading boundary 不变；focused+六类 formal gates、push、promotion/acceptance
+      完成。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 764b4dbf02390e2a753478b8bf5c14b506bfd783395757033f372bd5e03956b4
+  cell_count: 8
+  all_cells:
+  - OPS-072_DAILY_OFFICIAL_POLICY_TRANSPORT_RESILIENCE
+  - Operations / official-policy transient transport resilience and blocker classification
+  - P0
+  - VALIDATING
+  - Codex：正式验证、普通 main push、exact release promotion 与 deployment acceptance；operations
+    owner：新 release 后下一合法 invocation 执行 ordinary operational acceptance
+  - 详见 `docs/requirements/OPS-072_Daily_Official_Policy_Transport_Resilience.md`。2026-08-01
+    canonical `as_of=2026-07-31` parent `daily_ops_run:2026-07-31:20260801T014510Z`
+    因 GovInfo pre-response TLS EOF 使 `official_policy_sources` partial；同时 capture
+    把候选数 `401` 误判为 HTTP permission。当前 invocation 唯一 trigger 已用完，parent/state/ledger/artifacts
+    保持 immutable。Recovery allowlist 只从 `artifact_lineage` 开始且要求 score PASS，本 parent
+    不可合法恢复；reason=`RECOVERY_BOUNDARY_NOT_ALLOWLISTED_SCORE_NOT_PASS`。
+  - official-policy adapter 只对 pre-response TLS/timeout/connection 做 3 次 1/2 秒有界 retry；HTTP
+    status、parser/schema/provider error 不重试；typed exhaustion/CLI marker/capture classifier
+    可审计；裸 401/403 不再误分类；DQ/PIT/score dependency、historical recapture、weights/broker/trading
+    boundary 不变；focused+六类 formal gates、push、promotion/acceptance 完成。
+  - 2026-08-01：实现完成并转 `VALIDATING`；request-local retry/typed blocker/attempt evidence/docs
+    已完成，并行 focused/docs regression=`50 passed`，scoped Ruff/Black PASS；scoped mypy
+    暴露仓库既有 87 errors，未计 PASS。READ_ONLY/SINGLE_LANE preflight 与 checkout audit PASS；shared
+    `TRADING-2473` dirty paths未触碰，task worktree frozen base=`eea2d61d5`。下一步为六类 exact-commit
+    validation、push、promotion/acceptance及下一 session ordinary acceptance；不得第二次 daily、扩大
+    recovery allowlist、写 weights 或触发 broker/trading。
+  raw_line: '|OPS-072_DAILY_OFFICIAL_POLICY_TRANSPORT_RESILIENCE|Operations / official-policy
+    transient transport resilience and blocker classification|P0|VALIDATING|Codex：正式验证、普通
+    main push、exact release promotion 与 deployment acceptance；operations owner：新 release
+    后下一合法 invocation 执行 ordinary operational acceptance|详见 `docs/requirements/OPS-072_Daily_Official_Policy_Transport_Resilience.md`。2026-08-01
+    canonical `as_of=2026-07-31` parent `daily_ops_run:2026-07-31:20260801T014510Z`
+    因 GovInfo pre-response TLS EOF 使 `official_policy_sources` partial；同时 capture
+    把候选数 `401` 误判为 HTTP permission。当前 invocation 唯一 trigger 已用完，parent/state/ledger/artifacts
+    保持 immutable。Recovery allowlist 只从 `artifact_lineage` 开始且要求 score PASS，本 parent
+    不可合法恢复；reason=`RECOVERY_BOUNDARY_NOT_ALLOWLISTED_SCORE_NOT_PASS`。|official-policy
+    adapter 只对 pre-response TLS/timeout/connection 做 3 次 1/2 秒有界 retry；HTTP status、parser/schema/provider
+    error 不重试；typed exhaustion/CLI marker/capture classifier 可审计；裸 401/403 不再误分类；DQ/PIT/score
+    dependency、historical recapture、weights/broker/trading boundary 不变；focused+六类
+    formal gates、push、promotion/acceptance 完成。|2026-08-01：实现完成并转 `VALIDATING`；request-local
+    retry/typed blocker/attempt evidence/docs 已完成，并行 focused/docs regression=`50 passed`，scoped
+    Ruff/Black PASS；scoped mypy 暴露仓库既有 87 errors，未计 PASS。READ_ONLY/SINGLE_LANE preflight
+    与 checkout audit PASS；shared `TRADING-2473` dirty paths未触碰，task worktree frozen
+    base=`eea2d61d5`。下一步为六类 exact-commit validation、push、promotion/acceptance及下一 session
+    ordinary acceptance；不得第二次 daily、扩大 recovery allowlist、写 weights 或触发 broker/trading。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-764b4dbf02390e2a753478b8
+  task_id: OPS-072_DAILY_OFFICIAL_POLICY_TRANSPORT_RESILIENCE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex：正式验证、普通 main push、exact release promotion 与 deployment acceptance；operations
+      owner：新 release 后下一合法 invocation 执行 ordinary operational acceptance
+    notes: 2026-08-01：实现完成并转 `VALIDATING`；request-local retry/typed blocker/attempt
+      evidence/docs 已完成，并行 focused/docs regression=`50 passed`，scoped Ruff/Black PASS；scoped
+      mypy 暴露仓库既有 87 errors，未计 PASS。READ_ONLY/SINGLE_LANE preflight 与 checkout audit
+      PASS；shared `TRADING-2473` dirty paths未触碰，task worktree frozen base=`eea2d61d5`。下一步为六类
+      exact-commit validation、push、promotion/acceptance及下一 session ordinary acceptance；不得第二次
+      daily、扩大 recovery allowlist、写 weights 或触发 broker/trading。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:764b4dbf02390e2a753478b8bf5c14b506bfd783395757033f372bd5e03956b4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-072_DAILY_OFFICIAL_POLICY_TRANSPORT_RESILIENCE
+  - Operations / official-policy transient transport resilience and blocker classification
+  - P0
+  - VALIDATING
+  - Codex：正式验证、普通 main push、exact release promotion 与 deployment acceptance；operations
+    owner：新 release 后下一合法 invocation 执行 ordinary operational acceptance
+  - 详见 `docs/requirements/OPS-072_Daily_Official_Policy_Transport_Resilience.md`。2026-08-01
+    canonical `as_of=2026-07-31` parent `daily_ops_run:2026-07-31:20260801T014510Z`
+    因 GovInfo pre-response TLS EOF 使 `official_policy_sources` partial；同时 capture
+    把候选数 `401` 误判为 HTTP permission。当前 invocation 唯一 trigger 已用完，parent/state/ledger/artifacts
+    保持 immutable。Recovery allowlist 只从 `artifact_lineage` 开始且要求 score PASS，本 parent
+    不可合法恢复；reason=`RECOVERY_BOUNDARY_NOT_ALLOWLISTED_SCORE_NOT_PASS`。
+  - official-policy adapter 只对 pre-response TLS/timeout/connection 做 3 次 1/2 秒有界 retry；HTTP
+    status、parser/schema/provider error 不重试；typed exhaustion/CLI marker/capture classifier
+    可审计；裸 401/403 不再误分类；DQ/PIT/score dependency、historical recapture、weights/broker/trading
+    boundary 不变；focused+六类 formal gates、push、promotion/acceptance 完成。
+  - 2026-08-01：实现完成并转 `VALIDATING`；request-local retry/typed blocker/attempt evidence/docs
+    已完成，并行 focused/docs regression=`50 passed`，scoped Ruff/Black PASS；scoped mypy
+    暴露仓库既有 87 errors，未计 PASS。READ_ONLY/SINGLE_LANE preflight 与 checkout audit PASS；shared
+    `TRADING-2473` dirty paths未触碰，task worktree frozen base=`eea2d61d5`。下一步为六类 exact-commit
+    validation、push、promotion/acceptance及下一 session ordinary acceptance；不得第二次 daily、扩大
+    recovery allowlist、写 weights 或触发 broker/trading。
+  docs_links:
+  - docs/requirements/OPS-072_Daily_Official_Policy_Transport_Resilience.md
+  terminal: false
+  canonical_row_sha256: 764b4dbf02390e2a753478b8bf5c14b506bfd783395757033f372bd5e03956b4
+last_event_id: legacy-import-764b4dbf02390e2a753478b8
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: c1276b511519b2d97f6b0d88106119e4550136c047890ffa1aa0b4aa97144c9d

@@ -1,0 +1,114 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  task_id_sha256: 1822c0cf93a0237c022d88f5f201813efcdf3dd3d0b4cfbb1200ef2eac2d5d00
+task_record:
+  task_id: DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  title: null
+  domain: Developer experience / governed preflight, branch topology and Codex skill
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 后续研发任务owner：按v2默认ordinary push并观察remote divergence/no-upstream fail-closed体验；发现缺口另建follow-up
+  requirement_refs:
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner
+    decisions=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`、`owner_decision:DEVX-002:2026-07-26:default_ordinary_push_after_local_main_v2`；任何非平凡tracked
+    mutation须使用`run-governed-development`或等价preflight。默认在final-tree门禁和local-main fast-forward后普通push
+    `origin/main`；parallel sibling branches必须先经coordinator integration branch。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: AGENTS、ARCH-005和operating model一致；skill canonical/installed byte parity；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；默认push前fetch并要求`origin/main`为candidate祖先，push后复核双SHA；owner
+      no-push、无upstream、无关提交、remote divergence、non-fast-forward、history rewrite或force-push均fail
+      closed/显式跳过；适用验证、audit、commit、local-main ff和ordinary push通过；无production/broker
+      effect。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 65329b40fc1cd47a5cec78003e68af754dd9259fe8e1b4f0394b17fb9428a422
+  cell_count: 8
+  all_cells:
+  - DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  - Developer experience / governed preflight, branch topology and Codex skill
+  - P0
+  - BASELINE_DONE
+  - 后续研发任务owner：按v2默认ordinary push并观察remote divergence/no-upstream fail-closed体验；发现缺口另建follow-up
+  - 详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner decisions=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`、`owner_decision:DEVX-002:2026-07-26:default_ordinary_push_after_local_main_v2`；任何非平凡tracked
+    mutation须使用`run-governed-development`或等价preflight。默认在final-tree门禁和local-main fast-forward后普通push
+    `origin/main`；parallel sibling branches必须先经coordinator integration branch。
+  - AGENTS、ARCH-005和operating model一致；skill canonical/installed byte parity；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；默认push前fetch并要求`origin/main`为candidate祖先，push后复核双SHA；owner
+    no-push、无upstream、无关提交、remote divergence、non-fast-forward、history rewrite或force-push均fail
+    closed/显式跳过；适用验证、audit、commit、local-main ff和ordinary push通过；无production/broker
+    effect。
+  - 2026-07-26：Owner要求立即推送并恢复后续默认ordinary push；3个local-only提交已普通推送且`origin/main=211c934b6`。v2规则、skill与回归测试已完成，状态转回`BASELINE_DONE`；本轮收口必须完成formal
+    validation、local-main ff、default push与双SHA复核。PR、force-push、history rewrite和自动remote
+    divergence修复仍未授权。
+  raw_line: '|DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL|Developer experience /
+    governed preflight, branch topology and Codex skill|P0|BASELINE_DONE|后续研发任务owner：按v2默认ordinary
+    push并观察remote divergence/no-upstream fail-closed体验；发现缺口另建follow-up|详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner
+    decisions=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`、`owner_decision:DEVX-002:2026-07-26:default_ordinary_push_after_local_main_v2`；任何非平凡tracked
+    mutation须使用`run-governed-development`或等价preflight。默认在final-tree门禁和local-main fast-forward后普通push
+    `origin/main`；parallel sibling branches必须先经coordinator integration branch。|AGENTS、ARCH-005和operating
+    model一致；skill canonical/installed byte parity；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；默认push前fetch并要求`origin/main`为candidate祖先，push后复核双SHA；owner
+    no-push、无upstream、无关提交、remote divergence、non-fast-forward、history rewrite或force-push均fail
+    closed/显式跳过；适用验证、audit、commit、local-main ff和ordinary push通过；无production/broker
+    effect。|2026-07-26：Owner要求立即推送并恢复后续默认ordinary push；3个local-only提交已普通推送且`origin/main=211c934b6`。v2规则、skill与回归测试已完成，状态转回`BASELINE_DONE`；本轮收口必须完成formal
+    validation、local-main ff、default push与双SHA复核。PR、force-push、history rewrite和自动remote
+    divergence修复仍未授权。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-65329b40fc1cd47a5cec7800
+  task_id: DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 后续研发任务owner：按v2默认ordinary push并观察remote divergence/no-upstream fail-closed体验；发现缺口另建follow-up
+    notes: 2026-07-26：Owner要求立即推送并恢复后续默认ordinary push；3个local-only提交已普通推送且`origin/main=211c934b6`。v2规则、skill与回归测试已完成，状态转回`BASELINE_DONE`；本轮收口必须完成formal
+      validation、local-main ff、default push与双SHA复核。PR、force-push、history rewrite和自动remote
+      divergence修复仍未授权。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:65329b40fc1cd47a5cec78003e68af754dd9259fe8e1b4f0394b17fb9428a422
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-002_GOVERNED_DEVELOPMENT_WORKFLOW_SKILL
+  - Developer experience / governed preflight, branch topology and Codex skill
+  - P0
+  - BASELINE_DONE
+  - 后续研发任务owner：按v2默认ordinary push并观察remote divergence/no-upstream fail-closed体验；发现缺口另建follow-up
+  - 详见 `docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md`。Owner decisions=`owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`、`owner_decision:DEVX-002:2026-07-26:default_ordinary_push_after_local_main_v2`；任何非平凡tracked
+    mutation须使用`run-governed-development`或等价preflight。默认在final-tree门禁和local-main fast-forward后普通push
+    `origin/main`；parallel sibling branches必须先经coordinator integration branch。
+  - AGENTS、ARCH-005和operating model一致；skill canonical/installed byte parity；READ_ONLY/SINGLE_LANE/DUAL_LANE与typed冲突负例通过；默认push前fetch并要求`origin/main`为candidate祖先，push后复核双SHA；owner
+    no-push、无upstream、无关提交、remote divergence、non-fast-forward、history rewrite或force-push均fail
+    closed/显式跳过；适用验证、audit、commit、local-main ff和ordinary push通过；无production/broker
+    effect。
+  - 2026-07-26：Owner要求立即推送并恢复后续默认ordinary push；3个local-only提交已普通推送且`origin/main=211c934b6`。v2规则、skill与回归测试已完成，状态转回`BASELINE_DONE`；本轮收口必须完成formal
+    validation、local-main ff、default push与双SHA复核。PR、force-push、history rewrite和自动remote
+    divergence修复仍未授权。
+  docs_links:
+  - docs/requirements/DEVX-002_Governed_Development_Workflow_Skill.md
+  terminal: false
+  canonical_row_sha256: 65329b40fc1cd47a5cec78003e68af754dd9259fe8e1b4f0394b17fb9428a422
+last_event_id: legacy-import-65329b40fc1cd47a5cec7800
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: eaf5f7ba805504165ed90dc38a10c0211d5cd18ee9d810d006b19a0501c08b80

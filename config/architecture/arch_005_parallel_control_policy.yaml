@@ -76,7 +76,7 @@ s4:
   failure_injection_change_id: arch-005-s4-engineering-validation
   failure_injection_reason: CONTROLLED_REHEARSAL_FIRST_ATTEMPT
 safety:
-  source_of_truth: LEGACY_MARKDOWN_ONLY
+  source_of_truth: ARCH_005_TASK_REGISTRY
   task_governance_status_mutation_allowed: false
   generated_task_view_write_allowed: false
   strategy_logic_change_allowed: false

@@ -1,0 +1,127 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
+  task_id_sha256: 25417f96822bbfa2827c9d6b6887853a9a68915c5fe2adca2f1189adbb19d64b
+task_record:
+  task_id: TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
+  title: null
+  domain: External platform / QuantConnect Free capability, licensing and evidence
+    admission
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: engineering coordinator：封存 independent-review addendum 并完成 governed
+    validation/push；2492 coordinator：继续 blocked；project owner：任何 project 生命周期或后续平台动作必须另行授权
+  requirement_refs:
+  - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。首次
+    run token 已失效；唯一 project=`34808569`、backtest=`cc699b521d94b44e877b4fc18d514181`。Owner
+    已用 `owner_attestation:TRADING-2480:2026-08-04:accept_qc_capability_discovery_evidence_v1`
+    独立接受 evidence，并披露 terminal 后下载 aggregate result JSON 的例外。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Review addendum 必须 exact replay immutable evidence file/semantic hashes，绑定
+      reviewer/collector、project/backtest/build/Free resource/deployment/project code
+      与 aggregate result SHA/size/zero-activity facts；不得提交下载件或 raw rows，不得提升 admission、DQ/PIT
+      或激活 2492。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: a35bb088a54d64552585b6544f6141b497ee74524d97f51a2cf6e4a60876cf4e
+  cell_count: 8
+  all_cells:
+  - TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
+  - External platform / QuantConnect Free capability, licensing and evidence admission
+  - P0
+  - BASELINE_DONE
+  - engineering coordinator：封存 independent-review addendum 并完成 governed validation/push；2492
+    coordinator：继续 blocked；project owner：任何 project 生命周期或后续平台动作必须另行授权
+  - 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。首次
+    run token 已失效；唯一 project=`34808569`、backtest=`cc699b521d94b44e877b4fc18d514181`。Owner
+    已用 `owner_attestation:TRADING-2480:2026-08-04:accept_qc_capability_discovery_evidence_v1`
+    独立接受 evidence，并披露 terminal 后下载 aggregate result JSON 的例外。
+  - Review addendum 必须 exact replay immutable evidence file/semantic hashes，绑定 reviewer/collector、project/backtest/build/Free
+    resource/deployment/project code 与 aggregate result SHA/size/zero-activity facts；不得提交下载件或
+    raw rows，不得提升 admission、DQ/PIT 或激活 2492。
+  - 2026-08-04：evidence file/semantic SHA=`2d4c14e2…4807a`/`bd00355e…2702`；reviewer
+    aggregate result 17,322 bytes、SHA=`e4b440e3…2f2d4`，raw option field-name scan
+    全零。Review addendum semantic/file SHA=`fd13eabd…47eda`/`a5c9b935…c4ca3`。Independent
+    review 已接受，但 admission 仍 `CAPABILITY_OR_LICENSE_BLOCKED`、bounded pilot=false、DQ/PIT=`NOT_EVALUATED`、2492
+    blocked；`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1|External
+    platform / QuantConnect Free capability, licensing and evidence admission|P0|BASELINE_DONE|engineering
+    coordinator：封存 independent-review addendum 并完成 governed validation/push；2492 coordinator：继续
+    blocked；project owner：任何 project 生命周期或后续平台动作必须另行授权|详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。首次
+    run token 已失效；唯一 project=`34808569`、backtest=`cc699b521d94b44e877b4fc18d514181`。Owner
+    已用 `owner_attestation:TRADING-2480:2026-08-04:accept_qc_capability_discovery_evidence_v1`
+    独立接受 evidence，并披露 terminal 后下载 aggregate result JSON 的例外。|Review addendum 必须 exact
+    replay immutable evidence file/semantic hashes，绑定 reviewer/collector、project/backtest/build/Free
+    resource/deployment/project code 与 aggregate result SHA/size/zero-activity facts；不得提交下载件或
+    raw rows，不得提升 admission、DQ/PIT 或激活 2492。|2026-08-04：evidence file/semantic SHA=`2d4c14e2…4807a`/`bd00355e…2702`；reviewer
+    aggregate result 17,322 bytes、SHA=`e4b440e3…2f2d4`，raw option field-name scan
+    全零。Review addendum semantic/file SHA=`fd13eabd…47eda`/`a5c9b935…c4ca3`。Independent
+    review 已接受，但 admission 仍 `CAPABILITY_OR_LICENSE_BLOCKED`、bounded pilot=false、DQ/PIT=`NOT_EVALUATED`、2492
+    blocked；`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-a35bb088a54d64552585b654
+  task_id: TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: engineering coordinator：封存 independent-review addendum 并完成 governed
+      validation/push；2492 coordinator：继续 blocked；project owner：任何 project 生命周期或后续平台动作必须另行授权
+    notes: 2026-08-04：evidence file/semantic SHA=`2d4c14e2…4807a`/`bd00355e…2702`；reviewer
+      aggregate result 17,322 bytes、SHA=`e4b440e3…2f2d4`，raw option field-name scan
+      全零。Review addendum semantic/file SHA=`fd13eabd…47eda`/`a5c9b935…c4ca3`。Independent
+      review 已接受，但 admission 仍 `CAPABILITY_OR_LICENSE_BLOCKED`、bounded pilot=false、DQ/PIT=`NOT_EVALUATED`、2492
+      blocked；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:a35bb088a54d64552585b6544f6141b497ee74524d97f51a2cf6e4a60876cf4e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2480_QC_QQQ_OPTIONS_CAPABILITY_LICENSE_EVIDENCE_SPIKE_V1
+  - External platform / QuantConnect Free capability, licensing and evidence admission
+  - P0
+  - BASELINE_DONE
+  - engineering coordinator：封存 independent-review addendum 并完成 governed validation/push；2492
+    coordinator：继续 blocked；project owner：任何 project 生命周期或后续平台动作必须另行授权
+  - 详见 `docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。首次
+    run token 已失效；唯一 project=`34808569`、backtest=`cc699b521d94b44e877b4fc18d514181`。Owner
+    已用 `owner_attestation:TRADING-2480:2026-08-04:accept_qc_capability_discovery_evidence_v1`
+    独立接受 evidence，并披露 terminal 后下载 aggregate result JSON 的例外。
+  - Review addendum 必须 exact replay immutable evidence file/semantic hashes，绑定 reviewer/collector、project/backtest/build/Free
+    resource/deployment/project code 与 aggregate result SHA/size/zero-activity facts；不得提交下载件或
+    raw rows，不得提升 admission、DQ/PIT 或激活 2492。
+  - 2026-08-04：evidence file/semantic SHA=`2d4c14e2…4807a`/`bd00355e…2702`；reviewer
+    aggregate result 17,322 bytes、SHA=`e4b440e3…2f2d4`，raw option field-name scan
+    全零。Review addendum semantic/file SHA=`fd13eabd…47eda`/`a5c9b935…c4ca3`。Independent
+    review 已接受，但 admission 仍 `CAPABILITY_OR_LICENSE_BLOCKED`、bounded pilot=false、DQ/PIT=`NOT_EVALUATED`、2492
+    blocked；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md
+  terminal: false
+  canonical_row_sha256: a35bb088a54d64552585b6544f6141b497ee74524d97f51a2cf6e4a60876cf4e
+last_event_id: legacy-import-a35bb088a54d64552585b654
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 987c6aab1a3e67c13c51277dc64aba68b99bf3de09c6301b0127cf4fde59f392

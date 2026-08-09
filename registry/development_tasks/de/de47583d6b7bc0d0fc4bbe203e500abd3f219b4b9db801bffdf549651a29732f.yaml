@@ -1,0 +1,120 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION
+  task_id_sha256: de47583d6b7bc0d0fc4bbe203e500abd3f219b4b9db801bffdf549651a29732f
+task_record:
+  task_id: DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION
+  title: null
+  domain: Data Foundation / first exact per-consumer same-store migration for `daily_score_daily@1.0.0`
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform owner：如继续迁移，必须另立下一个exact consumer任务并重新绑定其same-store evidence；不得批量迁移。local
+    operator：host policy允许后删除需求文档列出的两个exact failed candidate目录
+  requirement_refs:
+  - docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md`。D0E只覆盖`daily_score_daily@1.0.0`；historical
+    canonical DQ、D0C与D0D能力通过新的isolated candidate transaction在同一store identity闭合，未改写historical
+    manifest或D0A false fields。两个failed candidate无unique evidence且不参与PASS结论，因host command
+    policy拒绝exact cleanup暂保留。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 同一exact isolated store上的publication、durability、ACL、strict DQ、consumer authorization和controlled
+      read rehearsal全部PASS；negative matrix在runner前fail closed；formal Full与governed
+      closeout PASS；generic cutover/automatic non-daily/QLD/production/broker保持关闭。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 7deed9312090677447e4c50e2ad07a350c4c912dcdc83f51f898eee59a52f6fa
+  cell_count: 8
+  all_cells:
+  - DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION
+  - Data Foundation / first exact per-consumer same-store migration for `daily_score_daily@1.0.0`
+  - P0
+  - DONE
+  - data platform owner：如继续迁移，必须另立下一个exact consumer任务并重新绑定其same-store evidence；不得批量迁移。local
+    operator：host policy允许后删除需求文档列出的两个exact failed candidate目录
+  - 详见 `docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md`。D0E只覆盖`daily_score_daily@1.0.0`；historical
+    canonical DQ、D0C与D0D能力通过新的isolated candidate transaction在同一store identity闭合，未改写historical
+    manifest或D0A false fields。两个failed candidate无unique evidence且不参与PASS结论，因host command
+    policy拒绝exact cleanup暂保留。
+  - 同一exact isolated store上的publication、durability、ACL、strict DQ、consumer authorization和controlled
+    read rehearsal全部PASS；negative matrix在runner前fail closed；formal Full与governed closeout
+    PASS；generic cutover/automatic non-daily/QLD/production/broker保持关闭。
+  - 2026-07-29：bundle=`data_foundation_consumer_migration_bundle_e19d0f959975c54f400025919921d3f6`；focused/compatibility=`155/143
+    passed`，Architecture/Contract/Report/Reproducibility/Integration=`784/276/57/24/995
+    passed`，Full=`7677 passed / 3 skipped / 644 warnings`。任务归档DONE；两个failed candidate共108,178,793
+    bytes因host policy拒绝删除而按exact path登记，canonical PASS目录保留，`production_effect=none`、`broker_action=none`。
+  raw_line: '|DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION|Data Foundation / first
+    exact per-consumer same-store migration for `daily_score_daily@1.0.0`|P0|DONE|data
+    platform owner：如继续迁移，必须另立下一个exact consumer任务并重新绑定其same-store evidence；不得批量迁移。local
+    operator：host policy允许后删除需求文档列出的两个exact failed candidate目录|详见 `docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md`。D0E只覆盖`daily_score_daily@1.0.0`；historical
+    canonical DQ、D0C与D0D能力通过新的isolated candidate transaction在同一store identity闭合，未改写historical
+    manifest或D0A false fields。两个failed candidate无unique evidence且不参与PASS结论，因host command
+    policy拒绝exact cleanup暂保留。|同一exact isolated store上的publication、durability、ACL、strict
+    DQ、consumer authorization和controlled read rehearsal全部PASS；negative matrix在runner前fail
+    closed；formal Full与governed closeout PASS；generic cutover/automatic non-daily/QLD/production/broker保持关闭。|2026-07-29：bundle=`data_foundation_consumer_migration_bundle_e19d0f959975c54f400025919921d3f6`；focused/compatibility=`155/143
+    passed`，Architecture/Contract/Report/Reproducibility/Integration=`784/276/57/24/995
+    passed`，Full=`7677 passed / 3 skipped / 644 warnings`。任务归档DONE；两个failed candidate共108,178,793
+    bytes因host policy拒绝删除而按exact path登记，canonical PASS目录保留，`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-7deed9312090677447e4c50e
+  task_id: DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: data platform owner：如继续迁移，必须另立下一个exact consumer任务并重新绑定其same-store
+      evidence；不得批量迁移。local operator：host policy允许后删除需求文档列出的两个exact failed candidate目录
+    notes: 2026-07-29：bundle=`data_foundation_consumer_migration_bundle_e19d0f959975c54f400025919921d3f6`；focused/compatibility=`155/143
+      passed`，Architecture/Contract/Report/Reproducibility/Integration=`784/276/57/24/995
+      passed`，Full=`7677 passed / 3 skipped / 644 warnings`。任务归档DONE；两个failed candidate共108,178,793
+      bytes因host policy拒绝删除而按exact path登记，canonical PASS目录保留，`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:7deed9312090677447e4c50e2ad07a350c4c912dcdc83f51f898eee59a52f6fa
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-001_D0E_DAILY_SCORE_CONSUMER_MIGRATION
+  - Data Foundation / first exact per-consumer same-store migration for `daily_score_daily@1.0.0`
+  - P0
+  - DONE
+  - data platform owner：如继续迁移，必须另立下一个exact consumer任务并重新绑定其same-store evidence；不得批量迁移。local
+    operator：host policy允许后删除需求文档列出的两个exact failed candidate目录
+  - 详见 `docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md`。D0E只覆盖`daily_score_daily@1.0.0`；historical
+    canonical DQ、D0C与D0D能力通过新的isolated candidate transaction在同一store identity闭合，未改写historical
+    manifest或D0A false fields。两个failed candidate无unique evidence且不参与PASS结论，因host command
+    policy拒绝exact cleanup暂保留。
+  - 同一exact isolated store上的publication、durability、ACL、strict DQ、consumer authorization和controlled
+    read rehearsal全部PASS；negative matrix在runner前fail closed；formal Full与governed closeout
+    PASS；generic cutover/automatic non-daily/QLD/production/broker保持关闭。
+  - 2026-07-29：bundle=`data_foundation_consumer_migration_bundle_e19d0f959975c54f400025919921d3f6`；focused/compatibility=`155/143
+    passed`，Architecture/Contract/Report/Reproducibility/Integration=`784/276/57/24/995
+    passed`，Full=`7677 passed / 3 skipped / 644 warnings`。任务归档DONE；两个failed candidate共108,178,793
+    bytes因host policy拒绝删除而按exact path登记，canonical PASS目录保留，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/DATA-GOV-001_D0E_Daily_Score_Consumer_Migration.md
+  terminal: true
+  canonical_row_sha256: 7deed9312090677447e4c50e2ad07a350c4c912dcdc83f51f898eee59a52f6fa
+last_event_id: legacy-import-7deed9312090677447e4c50e
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 2ecf322b3ce094ca8d3e9cabc7a7ce837b5f480c749f77d51b8361dbefb2e181

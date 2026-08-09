@@ -1,0 +1,120 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  task_id_sha256: 6f7aef41886b2c2728eb4f76ad629ef8437026cbe3c5add9ae0e36a9bc1b6674
+task_record:
+  task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  title: null
+  domain: Architecture / QQQ options shared schemas and governed policy envelope
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: TRADING-2482 coordinator：必须消费本合同；breaking change 需另开 owner-reviewed
+    serial contract wave
+  requirement_refs:
+  - docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md`。从
+    exact main `5bb71658c38da3104f9f198c9156d8f4153abe41` 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+    contracts；不实现 QC runner、不访问平台、不替 Owner 决定投资阈值。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: canonical serialization、PK/enums/Decimal units/timezones/checksums/lineage/export
+      classification、owner/version/rationale/review/expiry、safe policy envelope 与
+      breaking-change tests 完整；同步 system flow/architecture/task shadow；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 3974f62d95a61339053f144ead9fd006a81eee3bf0d734fd7530c553be85b93c
+  cell_count: 8
+  all_cells:
+  - TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  - Architecture / QQQ options shared schemas and governed policy envelope
+  - P0
+  - BASELINE_DONE
+  - TRADING-2482 coordinator：必须消费本合同；breaking change 需另开 owner-reviewed serial contract
+    wave
+  - 详见 `docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md`。从
+    exact main `5bb71658c38da3104f9f198c9156d8f4153abe41` 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+    contracts；不实现 QC runner、不访问平台、不替 Owner 决定投资阈值。
+  - canonical serialization、PK/enums/Decimal units/timezones/checksums/lineage/export
+    classification、owner/version/rationale/review/expiry、safe policy envelope 与 breaking-change
+    tests 完整；同步 system flow/architecture/task shadow；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。
+  - 2026-08-02：12 models + envelope/public enums + canonical seal/replay 已冻结；contract
+    SHA-256=`c89916ee...3ff6b`、policy SHA-256=`d7cc57a3...6349`；focused=28、adjacent=98。首轮
+    Architecture 因 missing successor authority 正确 FAIL；追加 immutable 2481 authority、显式
+    worktree inventory 重算后 compatibility/deprecation=178 PASS，等待正式五级重跑。TRADING-2480
+    external token gap 继续 fail closed；`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1|Architecture
+    / QQQ options shared schemas and governed policy envelope|P0|BASELINE_DONE|TRADING-2482
+    coordinator：必须消费本合同；breaking change 需另开 owner-reviewed serial contract wave|详见
+    `docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md`。从
+    exact main `5bb71658c38da3104f9f198c9156d8f4153abe41` 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+    contracts；不实现 QC runner、不访问平台、不替 Owner 决定投资阈值。|canonical serialization、PK/enums/Decimal
+    units/timezones/checksums/lineage/export classification、owner/version/rationale/review/expiry、safe
+    policy envelope 与 breaking-change tests 完整；同步 system flow/architecture/task shadow；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。|2026-08-02：12
+    models + envelope/public enums + canonical seal/replay 已冻结；contract SHA-256=`c89916ee...3ff6b`、policy
+    SHA-256=`d7cc57a3...6349`；focused=28、adjacent=98。首轮 Architecture 因 missing successor
+    authority 正确 FAIL；追加 immutable 2481 authority、显式 worktree inventory 重算后 compatibility/deprecation=178
+    PASS，等待正式五级重跑。TRADING-2480 external token gap 继续 fail closed；`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-3974f62d95a61339053f144e
+  task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2482 coordinator：必须消费本合同；breaking change 需另开 owner-reviewed
+      serial contract wave
+    notes: 2026-08-02：12 models + envelope/public enums + canonical seal/replay 已冻结；contract
+      SHA-256=`c89916ee...3ff6b`、policy SHA-256=`d7cc57a3...6349`；focused=28、adjacent=98。首轮
+      Architecture 因 missing successor authority 正确 FAIL；追加 immutable 2481 authority、显式
+      worktree inventory 重算后 compatibility/deprecation=178 PASS，等待正式五级重跑。TRADING-2480
+      external token gap 继续 fail closed；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:3974f62d95a61339053f144ead9fd006a81eee3bf0d734fd7530c553be85b93c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
+  - Architecture / QQQ options shared schemas and governed policy envelope
+  - P0
+  - BASELINE_DONE
+  - TRADING-2482 coordinator：必须消费本合同；breaking change 需另开 owner-reviewed serial contract
+    wave
+  - 详见 `docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md`。从
+    exact main `5bb71658c38da3104f9f198c9156d8f4153abe41` 冻结 run/signal/candidate/selection/order/fill/lifecycle/portfolio/DQ/evidence/reconciliation
+    contracts；不实现 QC runner、不访问平台、不替 Owner 决定投资阈值。
+  - canonical serialization、PK/enums/Decimal units/timezones/checksums/lineage/export
+    classification、owner/version/rationale/review/expiry、safe policy envelope 与 breaking-change
+    tests 完整；同步 system flow/architecture/task shadow；退出=`QQQ_OPTIONS_SHARED_CONTRACT_V1_REVIEWED`。
+  - 2026-08-02：12 models + envelope/public enums + canonical seal/replay 已冻结；contract
+    SHA-256=`c89916ee...3ff6b`、policy SHA-256=`d7cc57a3...6349`；focused=28、adjacent=98。首轮
+    Architecture 因 missing successor authority 正确 FAIL；追加 immutable 2481 authority、显式
+    worktree inventory 重算后 compatibility/deprecation=178 PASS，等待正式五级重跑。TRADING-2480
+    external token gap 继续 fail closed；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md
+  terminal: false
+  canonical_row_sha256: 3974f62d95a61339053f144ead9fd006a81eee3bf0d734fd7530c553be85b93c
+last_event_id: legacy-import-3974f62d95a61339053f144e
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 8dce60c911c14715ff371a7d539a60cc900246d77430d8266e998ac0e5d1490e

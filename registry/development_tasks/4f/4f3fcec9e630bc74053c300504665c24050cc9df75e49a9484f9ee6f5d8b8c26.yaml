@@ -1,0 +1,138 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2394_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION
+  task_id_sha256: 4f3fcec9e630bc74053c300504665c24050cc9df75e49a9484f9ee6f5d8b8c26
+task_record:
+  task_id: TRADING-2394_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION
+  title: null
+  domain: Strategy research / component ablation owner review and recombination decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2395 component recombination candidate plan
+  requirement_refs:
+  - docs/requirements/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md
+  - docs/tasks/completed/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`；承接
+    TRADING-2393 component attribution targeted ablation retest，只读取 TRADING-2391 /
+    2392 / 2393 prior validated artifacts，记录 owner decision 和 recombination decision；本任务不运行新
+    backtest、不生成新 signal、不重新读取 cached market data。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-component-ablation-owner-review-decision`；输出
+      `owner_review_decision.json`、`component_recombination_decision.json`、`recombination_principles.json`、`next_route.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION_READY`，owner
+      decision=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，best
+      reusable component=`growth_tilt_engine`，`growth_tilt_engine_adopted_as_return_engine=true`，`lower_turnover_guardrail_decision=USE_ONLY_AS_GUARDRAIL`，`guarded_turnover_transfer_decision=OWNER_REVIEW_REQUIRED`，recombination
+      plan approved=true，next route=`TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: ef8469bf3e80c6f0391096bf8653735225c7d53e405a6318a89322cedb13ca82
+  cell_count: 8
+  all_cells:
+  - TRADING-2394_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION
+  - Strategy research / component ablation owner review and recombination decision
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2395 component recombination candidate plan
+  - 详见 `docs/requirements/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`；承接
+    TRADING-2393 component attribution targeted ablation retest，只读取 TRADING-2391 /
+    2392 / 2393 prior validated artifacts，记录 owner decision 和 recombination decision；本任务不运行新
+    backtest、不生成新 signal、不重新读取 cached market data。
+  - 新增 `aits research strategies dynamic-strategy-component-ablation-owner-review-decision`；输出
+    `owner_review_decision.json`、`component_recombination_decision.json`、`recombination_principles.json`、`next_route.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION_READY`，owner
+    decision=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，best
+    reusable component=`growth_tilt_engine`，`growth_tilt_engine_adopted_as_return_engine=true`，`lower_turnover_guardrail_decision=USE_ONLY_AS_GUARDRAIL`，`guarded_turnover_transfer_decision=OWNER_REVIEW_REQUIRED`，recombination
+    plan approved=true，next route=`TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan`。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits
+    validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2391 / 2392 /
+    2393 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成新 signal/scoring、daily
+    report 或交易建议。candidate auto-accept、research-only observation、scheduler、event append、outcome
+    binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`。'
+  raw_line: '|TRADING-2394_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION|Strategy
+    research / component ablation owner review and recombination decision|P0|DONE|项目
+    owner 后续复核 TRADING-2395 component recombination candidate plan|详见 `docs/requirements/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`；承接
+    TRADING-2393 component attribution targeted ablation retest，只读取 TRADING-2391 /
+    2392 / 2393 prior validated artifacts，记录 owner decision 和 recombination decision；本任务不运行新
+    backtest、不生成新 signal、不重新读取 cached market data。|新增 `aits research strategies dynamic-strategy-component-ablation-owner-review-decision`；输出
+    `owner_review_decision.json`、`component_recombination_decision.json`、`recombination_principles.json`、`next_route.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION_READY`，owner
+    decision=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，best
+    reusable component=`growth_tilt_engine`，`growth_tilt_engine_adopted_as_return_engine=true`，`lower_turnover_guardrail_decision=USE_ONLY_AS_GUARDRAIL`，`guarded_turnover_transfer_decision=OWNER_REVIEW_REQUIRED`，recombination
+    plan approved=true，next route=`TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan`。|2026-07-07:
+    根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits validate-data
+    --as-of 2026-07-05`，因为只读取 prior validated TRADING-2391 / 2392 / 2393 artifacts，不读取
+    fresh cached market data、不运行新 backtest、不生成新 signal/scoring、daily report 或交易建议。candidate
+    auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+    trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-ef8469bf3e80c6f0391096bf
+  task_id: TRADING-2394_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2395 component recombination candidate plan
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行
+      `aits validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2391 /
+      2392 / 2393 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成新 signal/scoring、daily
+      report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:ef8469bf3e80c6f0391096bf8653735225c7d53e405a6318a89322cedb13ca82
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2394_DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION
+  - Strategy research / component ablation owner review and recombination decision
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2395 component recombination candidate plan
+  - 详见 `docs/requirements/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`；承接
+    TRADING-2393 component attribution targeted ablation retest，只读取 TRADING-2391 /
+    2392 / 2393 prior validated artifacts，记录 owner decision 和 recombination decision；本任务不运行新
+    backtest、不生成新 signal、不重新读取 cached market data。
+  - 新增 `aits research strategies dynamic-strategy-component-ablation-owner-review-decision`；输出
+    `owner_review_decision.json`、`component_recombination_decision.json`、`recombination_principles.json`、`next_route.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_COMPONENT_ABLATION_OWNER_REVIEW_AND_RECOMBINATION_DECISION_READY`，owner
+    decision=`APPROVE_COMPONENT_RECOMBINATION_PLAN_WITH_NO_OBSERVATION_APPROVAL`，best
+    reusable component=`growth_tilt_engine`，`growth_tilt_engine_adopted_as_return_engine=true`，`lower_turnover_guardrail_decision=USE_ONLY_AS_GUARDRAIL`，`guarded_turnover_transfer_decision=OWNER_REVIEW_REQUIRED`，recombination
+    plan approved=true，next route=`TRADING-2395_Dynamic_Strategy_Component_Recombination_Candidate_Plan`。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务未运行 `aits
+    validate-data --as-of 2026-07-05`，因为只读取 prior validated TRADING-2391 / 2392 /
+    2393 artifacts，不读取 fresh cached market data、不运行新 backtest、不生成新 signal/scoring、daily
+    report 或交易建议。candidate auto-accept、research-only observation、scheduler、event append、outcome
+    binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md
+  - docs/tasks/completed/TRADING-2394_Dynamic_Strategy_Component_Ablation_Owner_Review_And_Recombination_Decision.md
+  terminal: true
+  canonical_row_sha256: ef8469bf3e80c6f0391096bf8653735225c7d53e405a6318a89322cedb13ca82
+last_event_id: legacy-import-ef8469bf3e80c6f0391096bf
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 4574972bd63ad4f64783e035b3d72caf93f1e24bc34b360cd5b2130653933375

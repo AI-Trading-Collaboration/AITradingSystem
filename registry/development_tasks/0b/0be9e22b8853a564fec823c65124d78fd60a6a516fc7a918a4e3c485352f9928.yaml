@@ -1,0 +1,98 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-066_WINDOWS_REVALIDATION_ARBITER_LOCK_INITIALIZATION_RACE
+  task_id_sha256: 0be9e22b8853a564fec823c65124d78fd60a6a516fc7a918a4e3c485352f9928
+task_record:
+  task_id: OPS-066_WINDOWS_REVALIDATION_ARBITER_LOCK_INITIALIZATION_RACE
+  title: null
+  domain: Data platform / Windows per-key revalidation lock first-create race
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations/data platform：继续观察 Windows lease/timeout evidence；新异常以新任务重开
+  requirement_refs:
+  - docs/requirements/OPS-066_Windows_Revalidation_Arbiter_Lock_Initialization_Race.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-066_Windows_Revalidation_Arbiter_Lock_Initialization_Race.md`。移除
+    lock file 在 OS lock 外的空文件初始化窗口；所有 caller 先 open/create 与取得 byte-range lock，只有持锁者初始化空文件。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 保持 per-key lease/fencing/timeout/provider/DQ/TTL 语义；16-thread first-create
+      与 wrapper singleflight、完整 cache/coordination、architecture/full PASS；不同 key 仍并行。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 64bbfeb5e773d6ccca06236533598427777222c20cb85a7d1ea5e181dd97f06b
+  cell_count: 8
+  all_cells:
+  - OPS-066_WINDOWS_REVALIDATION_ARBITER_LOCK_INITIALIZATION_RACE
+  - Data platform / Windows per-key revalidation lock first-create race
+  - P0
+  - DONE
+  - operations/data platform：继续观察 Windows lease/timeout evidence；新异常以新任务重开
+  - 详见 `docs/requirements/OPS-066_Windows_Revalidation_Arbiter_Lock_Initialization_Race.md`。移除
+    lock file 在 OS lock 外的空文件初始化窗口；所有 caller 先 open/create 与取得 byte-range lock，只有持锁者初始化空文件。
+  - 保持 per-key lease/fencing/timeout/provider/DQ/TTL 语义；16-thread first-create 与 wrapper
+    singleflight、完整 cache/coordination、architecture/full PASS；不同 key 仍并行。
+  - 2026-07-21：由 TRADING-2452 Full 暴露真实 `PermissionError` 后修复。Focused=`2/39 passed`、architecture=`446
+    passed`、最终 Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`；`production_effect=none`、`broker_action=none`。
+  raw_line: '|OPS-066_WINDOWS_REVALIDATION_ARBITER_LOCK_INITIALIZATION_RACE|Data platform
+    / Windows per-key revalidation lock first-create race|P0|DONE|operations/data
+    platform：继续观察 Windows lease/timeout evidence；新异常以新任务重开|详见 `docs/requirements/OPS-066_Windows_Revalidation_Arbiter_Lock_Initialization_Race.md`。移除
+    lock file 在 OS lock 外的空文件初始化窗口；所有 caller 先 open/create 与取得 byte-range lock，只有持锁者初始化空文件。|保持
+    per-key lease/fencing/timeout/provider/DQ/TTL 语义；16-thread first-create 与 wrapper
+    singleflight、完整 cache/coordination、architecture/full PASS；不同 key 仍并行。|2026-07-21：由
+    TRADING-2452 Full 暴露真实 `PermissionError` 后修复。Focused=`2/39 passed`、architecture=`446
+    passed`、最终 Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`；`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-64bbfeb5e773d6ccca062365
+  task_id: OPS-066_WINDOWS_REVALIDATION_ARBITER_LOCK_INITIALIZATION_RACE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: operations/data platform：继续观察 Windows lease/timeout evidence；新异常以新任务重开
+    notes: 2026-07-21：由 TRADING-2452 Full 暴露真实 `PermissionError` 后修复。Focused=`2/39
+      passed`、architecture=`446 passed`、最终 Full=`6543 passed / 2 skipped / 642 warnings
+      / 1010.39s`；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:64bbfeb5e773d6ccca06236533598427777222c20cb85a7d1ea5e181dd97f06b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-066_WINDOWS_REVALIDATION_ARBITER_LOCK_INITIALIZATION_RACE
+  - Data platform / Windows per-key revalidation lock first-create race
+  - P0
+  - DONE
+  - operations/data platform：继续观察 Windows lease/timeout evidence；新异常以新任务重开
+  - 详见 `docs/requirements/OPS-066_Windows_Revalidation_Arbiter_Lock_Initialization_Race.md`。移除
+    lock file 在 OS lock 外的空文件初始化窗口；所有 caller 先 open/create 与取得 byte-range lock，只有持锁者初始化空文件。
+  - 保持 per-key lease/fencing/timeout/provider/DQ/TTL 语义；16-thread first-create 与 wrapper
+    singleflight、完整 cache/coordination、architecture/full PASS；不同 key 仍并行。
+  - 2026-07-21：由 TRADING-2452 Full 暴露真实 `PermissionError` 后修复。Focused=`2/39 passed`、architecture=`446
+    passed`、最终 Full=`6543 passed / 2 skipped / 642 warnings / 1010.39s`；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/OPS-066_Windows_Revalidation_Arbiter_Lock_Initialization_Race.md
+  terminal: true
+  canonical_row_sha256: 64bbfeb5e773d6ccca06236533598427777222c20cb85a7d1ea5e181dd97f06b
+last_event_id: legacy-import-64bbfeb5e773d6ccca062365
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 95f255aee91469a2136753eb2dacdd0bf477d00a889dd6253b144e01f7c61085

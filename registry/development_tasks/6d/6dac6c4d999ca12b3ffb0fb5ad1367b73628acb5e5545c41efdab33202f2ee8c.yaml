@@ -1,0 +1,116 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  task_id_sha256: 6dac6c4d999ca12b3ffb0fb5ad1367b73628acb5e5545c41efdab33202f2ee8c
+task_record:
+  task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  title: null
+  domain: Strategy research / SPY reference adoption and QLD incremental action-universe
+    evaluation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform先取得canonical DQ strict PASS并按冻结政策重跑；strategy owner随后再审QLD
+    automatic selection与production governance
+  requirement_refs:
+  - docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地，但2026-07-27进一步决定automatic
+    selection与production governance等待canonical DQ strict PASS后再审。独立趋势模型与风险门仍须先决定目标QQQ-equivalent
+    exposure；QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 政策manifest和portfolio decision contract已区分primary action assets、role-limited
+      implementation instruments与signal inputs；QLD只在independent trend/risk/exposure
+      decision之后参与执行实现比较；不得按本次历史收益切换；canonical strict PASS前不冻结可信趋势、near-2x容差、risk-gate
+      binding、selector、forward-shadow或退出参数；official target weights、paper-shadow、production和broker保持不变。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: abf188c29348564023d3322a9d37798d570bb6f3544132a99707487a7d70135e
+  cell_count: 8
+  all_cells:
+  - TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  - Strategy research / SPY reference adoption and QLD incremental action-universe
+    evaluation
+  - P0
+  - BASELINE_DONE
+  - data platform先取得canonical DQ strict PASS并按冻结政策重跑；strategy owner随后再审QLD automatic
+    selection与production governance
+  - 详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地，但2026-07-27进一步决定automatic
+    selection与production governance等待canonical DQ strict PASS后再审。独立趋势模型与风险门仍须先决定目标QQQ-equivalent
+    exposure；QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由。
+  - 政策manifest和portfolio decision contract已区分primary action assets、role-limited implementation
+    instruments与signal inputs；QLD只在independent trend/risk/exposure decision之后参与执行实现比较；不得按本次历史收益切换；canonical
+    strict PASS前不冻结可信趋势、near-2x容差、risk-gate binding、selector、forward-shadow或退出参数；official
+    target weights、paper-shadow、production和broker保持不变。
+  - 2026-07-27：Owner decision=`defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`。2026-07-26工程与formal收口仍有效；canonical
+    full-cache尚未strict PASS，scoped例外不供其他consumer复用。
+  raw_line: '|TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE|Strategy research
+    / SPY reference adoption and QLD incremental action-universe evaluation|P0|BASELINE_DONE|data
+    platform先取得canonical DQ strict PASS并按冻结政策重跑；strategy owner随后再审QLD automatic selection与production
+    governance|详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地，但2026-07-27进一步决定automatic
+    selection与production governance等待canonical DQ strict PASS后再审。独立趋势模型与风险门仍须先决定目标QQQ-equivalent
+    exposure；QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由。|政策manifest和portfolio
+    decision contract已区分primary action assets、role-limited implementation instruments与signal
+    inputs；QLD只在independent trend/risk/exposure decision之后参与执行实现比较；不得按本次历史收益切换；canonical
+    strict PASS前不冻结可信趋势、near-2x容差、risk-gate binding、selector、forward-shadow或退出参数；official
+    target weights、paper-shadow、production和broker保持不变。|2026-07-27：Owner decision=`defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`。2026-07-26工程与formal收口仍有效；canonical
+    full-cache尚未strict PASS，scoped例外不供其他consumer复用。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-abf188c29348564023d3322a
+  task_id: TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: data platform先取得canonical DQ strict PASS并按冻结政策重跑；strategy owner随后再审QLD
+      automatic selection与production governance
+    notes: 2026-07-27：Owner decision=`defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`。2026-07-26工程与formal收口仍有效；canonical
+      full-cache尚未strict PASS，scoped例外不供其他consumer复用。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:abf188c29348564023d3322a9d37798d570bb6f3544132a99707487a7d70135e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2459_STRATEGY_STYLE_DISCOVERY_SPY_QLD_UNIVERSE
+  - Strategy research / SPY reference adoption and QLD incremental action-universe
+    evaluation
+  - P0
+  - BASELINE_DONE
+  - data platform先取得canonical DQ strict PASS并按冻结政策重跑；strategy owner随后再审QLD automatic
+    selection与production governance
+  - 详见 `docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md`。Owner决定`owner_decision:TRADING-2459:2026-07-25:approve_qld_role_limited_2x_implementation_instrument`已落地，但2026-07-27进一步决定automatic
+    selection与production governance等待canonical DQ strict PASS后再审。独立趋势模型与风险门仍须先决定目标QQQ-equivalent
+    exposure；QLD不得进入trend signal、独立style、自由candidate search或自动加杠杆理由。
+  - 政策manifest和portfolio decision contract已区分primary action assets、role-limited implementation
+    instruments与signal inputs；QLD只在independent trend/risk/exposure decision之后参与执行实现比较；不得按本次历史收益切换；canonical
+    strict PASS前不冻结可信趋势、near-2x容差、risk-gate binding、selector、forward-shadow或退出参数；official
+    target weights、paper-shadow、production和broker保持不变。
+  - 2026-07-27：Owner decision=`defer_qld_automatic_selection_and_production_governance_until_canonical_dq_strict_pass_v1`。2026-07-26工程与formal收口仍有效；canonical
+    full-cache尚未strict PASS，scoped例外不供其他consumer复用。
+  docs_links:
+  - docs/requirements/TRADING-2459_Strategy_Style_Discovery_SPY_QLD_Universe_Evaluation.md
+  terminal: false
+  canonical_row_sha256: abf188c29348564023d3322a9d37798d570bb6f3544132a99707487a7d70135e
+last_event_id: legacy-import-abf188c29348564023d3322a
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: a247f0fb9b3e55564d13db597579d12a6eda72a4965de352c81869162ae043c5

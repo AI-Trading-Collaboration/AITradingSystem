@@ -1,0 +1,135 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
+  task_id_sha256: b4fcc2342f2653920383504d76b0e1c9122a664f5316942b6e7a7de969a87f11
+task_record:
+  task_id: TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue scheduled observation gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2026-06-13 daily-run 在 `as_of=2026-06-12`
+    的 weekly due gate fail-closed：`dynamic_v3_rescue_schedule_observe` 发现 5 个 latest
+    pointer 指向 `C:\Users\32739\AppData\Local\Temp\pytest-of-JACK\...`，不在 canonical
+    dynamic-v3 report root 内；已在 real snapshot latest pointer 写入层增加 canonical-root
+    guard，并用既有 repair CLI 从 canonical artifact root 重建 runtime latest pointers，待 owner
+    确认后可归档
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf dynamic-v3-rescue artifacts validate --family dynamic_v3_rescue`
+      和 `aits etf dynamic-v3-rescue schedule observe --as-of 2026-06-12` 在 current
+      workspace PASS；测试或临时 `output_dir` 不更新默认 latest pointer；canonical root 外 pointer
+      必须 fail closed 且诊断列出 offending pointer；修复不运行 real sweep、不生成 promotion pack、不写
+      official target weights、不触发 broker/order/production'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 3939167b66ca6b3618945579db8c49b84f797aafc395b515a0d80aeec2d1994b
+  cell_count: 8
+  all_cells:
+  - TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
+  - ETF portfolio/dynamic v3 rescue scheduled observation gate
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 2026-06-13 daily-run 在 `as_of=2026-06-12` 的 weekly due gate fail-closed：`dynamic_v3_rescue_schedule_observe`
+    发现 5 个 latest pointer 指向 `C:\Users\32739\AppData\Local\Temp\pytest-of-JACK\...`，不在
+    canonical dynamic-v3 report root 内；已在 real snapshot latest pointer 写入层增加 canonical-root
+    guard，并用既有 repair CLI 从 canonical artifact root 重建 runtime latest pointers，待 owner
+    确认后可归档
+  - '`aits etf dynamic-v3-rescue artifacts validate --family dynamic_v3_rescue` 和
+    `aits etf dynamic-v3-rescue schedule observe --as-of 2026-06-12` 在 current workspace
+    PASS；测试或临时 `output_dir` 不更新默认 latest pointer；canonical root 外 pointer 必须 fail
+    closed 且诊断列出 offending pointer；修复不运行 real sweep、不生成 promotion pack、不写 official
+    target weights、不触发 broker/order/production'
+  - '2026-06-13: 新增，原因：周期运营 `aits ops daily-run` 解析最新已完成美股交易日为 2026-06-12，数据质量、PIT、score-daily、Reader
+    Brief 已通过或有限通过，但 weekly due 的 Dynamic v3 schedule observe 因测试临时路径 latest pointer
+    污染失败，后续 `ops health` / secret scan 未执行；本轮未实施 workaround。2026-06-13: 实现 canonical-root
+    guard，`tmp_path` real snapshot focused regression 已覆盖；执行 `artifacts repair-latest`
+    修复 62 个 canonical pointers，`artifacts validate --family dynamic_v3_rescue` 和 `schedule
+    observe --as-of 2026-06-12` 已恢复 PASS；仍保持 no broker/order/production。'
+  raw_line: '|TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION|ETF portfolio/dynamic
+    v3 rescue scheduled observation gate|P0|VALIDATING|系统实现 + 项目 owner 后续复核|2026-06-13
+    daily-run 在 `as_of=2026-06-12` 的 weekly due gate fail-closed：`dynamic_v3_rescue_schedule_observe`
+    发现 5 个 latest pointer 指向 `C:\Users\32739\AppData\Local\Temp\pytest-of-JACK\...`，不在
+    canonical dynamic-v3 report root 内；已在 real snapshot latest pointer 写入层增加 canonical-root
+    guard，并用既有 repair CLI 从 canonical artifact root 重建 runtime latest pointers，待 owner
+    确认后可归档|`aits etf dynamic-v3-rescue artifacts validate --family dynamic_v3_rescue`
+    和 `aits etf dynamic-v3-rescue schedule observe --as-of 2026-06-12` 在 current workspace
+    PASS；测试或临时 `output_dir` 不更新默认 latest pointer；canonical root 外 pointer 必须 fail
+    closed 且诊断列出 offending pointer；修复不运行 real sweep、不生成 promotion pack、不写 official
+    target weights、不触发 broker/order/production|2026-06-13: 新增，原因：周期运营 `aits ops daily-run`
+    解析最新已完成美股交易日为 2026-06-12，数据质量、PIT、score-daily、Reader Brief 已通过或有限通过，但 weekly due
+    的 Dynamic v3 schedule observe 因测试临时路径 latest pointer 污染失败，后续 `ops health` / secret
+    scan 未执行；本轮未实施 workaround。2026-06-13: 实现 canonical-root guard，`tmp_path` real
+    snapshot focused regression 已覆盖；执行 `artifacts repair-latest` 修复 62 个 canonical
+    pointers，`artifacts validate --family dynamic_v3_rescue` 和 `schedule observe --as-of
+    2026-06-12` 已恢复 PASS；仍保持 no broker/order/production。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-3939167b66ca6b3618945579
+  task_id: TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-13: 新增，原因：周期运营 `aits ops daily-run` 解析最新已完成美股交易日为 2026-06-12，数据质量、PIT、score-daily、Reader
+      Brief 已通过或有限通过，但 weekly due 的 Dynamic v3 schedule observe 因测试临时路径 latest pointer
+      污染失败，后续 `ops health` / secret scan 未执行；本轮未实施 workaround。2026-06-13: 实现 canonical-root
+      guard，`tmp_path` real snapshot focused regression 已覆盖；执行 `artifacts repair-latest`
+      修复 62 个 canonical pointers，`artifacts validate --family dynamic_v3_rescue` 和
+      `schedule observe --as-of 2026-06-12` 已恢复 PASS；仍保持 no broker/order/production。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:3939167b66ca6b3618945579db8c49b84f797aafc395b515a0d80aeec2d1994b
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-246_DYNAMIC_V3_LATEST_POINTER_TEST_PATH_REGRESSION
+  - ETF portfolio/dynamic v3 rescue scheduled observation gate
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 2026-06-13 daily-run 在 `as_of=2026-06-12` 的 weekly due gate fail-closed：`dynamic_v3_rescue_schedule_observe`
+    发现 5 个 latest pointer 指向 `C:\Users\32739\AppData\Local\Temp\pytest-of-JACK\...`，不在
+    canonical dynamic-v3 report root 内；已在 real snapshot latest pointer 写入层增加 canonical-root
+    guard，并用既有 repair CLI 从 canonical artifact root 重建 runtime latest pointers，待 owner
+    确认后可归档
+  - '`aits etf dynamic-v3-rescue artifacts validate --family dynamic_v3_rescue` 和
+    `aits etf dynamic-v3-rescue schedule observe --as-of 2026-06-12` 在 current workspace
+    PASS；测试或临时 `output_dir` 不更新默认 latest pointer；canonical root 外 pointer 必须 fail
+    closed 且诊断列出 offending pointer；修复不运行 real sweep、不生成 promotion pack、不写 official
+    target weights、不触发 broker/order/production'
+  - '2026-06-13: 新增，原因：周期运营 `aits ops daily-run` 解析最新已完成美股交易日为 2026-06-12，数据质量、PIT、score-daily、Reader
+    Brief 已通过或有限通过，但 weekly due 的 Dynamic v3 schedule observe 因测试临时路径 latest pointer
+    污染失败，后续 `ops health` / secret scan 未执行；本轮未实施 workaround。2026-06-13: 实现 canonical-root
+    guard，`tmp_path` real snapshot focused regression 已覆盖；执行 `artifacts repair-latest`
+    修复 62 个 canonical pointers，`artifacts validate --family dynamic_v3_rescue` 和 `schedule
+    observe --as-of 2026-06-12` 已恢复 PASS；仍保持 no broker/order/production。'
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 3939167b66ca6b3618945579db8c49b84f797aafc395b515a0d80aeec2d1994b
+last_event_id: legacy-import-3939167b66ca6b3618945579
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 1775d8d60d97da5f4e5bb6072eab61260a7a9bd8b6ae8e01e901798df11521ee

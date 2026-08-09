@@ -1,0 +1,129 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
+  task_id_sha256: 53ea7ab1658edf6ba8841ea9fe18603e691a44a8d5210be8b5c4799f383fc771
+task_record:
+  task_id: TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
+  title: null
+  domain: Research trends / candidate signal prediction artifact backfill and provenance
+    audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md`；依赖
+    TRADING-2280 candidate-level validation。本批只审计缺失 artifact 类型、provenance 和 backfill
+    可行性，不训练模型、不修改 candidate scores、不打开 promotion/paper-shadow/production/broker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 生成 candidate signal/prediction artifact gap report、candidate artifact provenance
+      matrix、inconclusive candidate recovery plan 和对应 JSON artifacts；每个 INCONCLUSIVE
+      candidate 必须有缺失原因、backfill_possible、recovery_action、permanently_inconclusive
+      判断；可恢复 artifact 必须有可复现命令或 registry repair action，不可恢复候选固定 promotion/paper-shadow
+      false。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: a149dffd5b69828e3fec89a27ceef719ad67c6320c23a8afb273f4278529b662
+  cell_count: 8
+  all_cells:
+  - TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
+  - Research trends / candidate signal prediction artifact backfill and provenance
+    audit
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md`；依赖
+    TRADING-2280 candidate-level validation。本批只审计缺失 artifact 类型、provenance 和 backfill
+    可行性，不训练模型、不修改 candidate scores、不打开 promotion/paper-shadow/production/broker。
+  - 生成 candidate signal/prediction artifact gap report、candidate artifact provenance
+    matrix、inconclusive candidate recovery plan 和对应 JSON artifacts；每个 INCONCLUSIVE
+    candidate 必须有缺失原因、backfill_possible、recovery_action、permanently_inconclusive 判断；可恢复
+    artifact 必须有可复现命令或 registry repair action，不可恢复候选固定 promotion/paper-shadow false。
+  - '2026-06-29: 新增并进入 IN_PROGRESS；先审计 4 个 TRADING-2280 INCONCLUSIVE rows 的 signal
+    / prediction / actual-path / attribution / registry artifact evidence。2026-06-29:
+    实现完成并转入 VALIDATING；真实 run inconclusive=4、artifact_rows=28、complete_signal_prediction=0、backfill_possible=0、backfilled=0、permanently_inconclusive=4，`baseline`
+    frozen composer predictions 仅为 schema-incompatible source evidence。2026-06-29:
+    验证通过 Ruff、compileall、focused parallel pytest 48 passed、docs freshness、diff check
+    和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T161659Z/test_runtime_summary.json`。'
+  raw_line: '|TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL|Research
+    trends / candidate signal prediction artifact backfill and provenance audit|P0|VALIDATING|系统实现
+    + 项目 owner 后续复核|详见 `docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md`；依赖
+    TRADING-2280 candidate-level validation。本批只审计缺失 artifact 类型、provenance 和 backfill
+    可行性，不训练模型、不修改 candidate scores、不打开 promotion/paper-shadow/production/broker。|生成
+    candidate signal/prediction artifact gap report、candidate artifact provenance
+    matrix、inconclusive candidate recovery plan 和对应 JSON artifacts；每个 INCONCLUSIVE
+    candidate 必须有缺失原因、backfill_possible、recovery_action、permanently_inconclusive 判断；可恢复
+    artifact 必须有可复现命令或 registry repair action，不可恢复候选固定 promotion/paper-shadow false。|2026-06-29:
+    新增并进入 IN_PROGRESS；先审计 4 个 TRADING-2280 INCONCLUSIVE rows 的 signal / prediction
+    / actual-path / attribution / registry artifact evidence。2026-06-29: 实现完成并转入 VALIDATING；真实
+    run inconclusive=4、artifact_rows=28、complete_signal_prediction=0、backfill_possible=0、backfilled=0、permanently_inconclusive=4，`baseline`
+    frozen composer predictions 仅为 schema-incompatible source evidence。2026-06-29:
+    验证通过 Ruff、compileall、focused parallel pytest 48 passed、docs freshness、diff check
+    和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T161659Z/test_runtime_summary.json`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-a149dffd5b69828e3fec89a2
+  task_id: TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-29: 新增并进入 IN_PROGRESS；先审计 4 个 TRADING-2280 INCONCLUSIVE rows 的
+      signal / prediction / actual-path / attribution / registry artifact evidence。2026-06-29:
+      实现完成并转入 VALIDATING；真实 run inconclusive=4、artifact_rows=28、complete_signal_prediction=0、backfill_possible=0、backfilled=0、permanently_inconclusive=4，`baseline`
+      frozen composer predictions 仅为 schema-incompatible source evidence。2026-06-29:
+      验证通过 Ruff、compileall、focused parallel pytest 48 passed、docs freshness、diff check
+      和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T161659Z/test_runtime_summary.json`。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:a149dffd5b69828e3fec89a27ceef719ad67c6320c23a8afb273f4278529b662
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2281_CANDIDATE_SIGNAL_PREDICTION_ARTIFACT_BACKFILL
+  - Research trends / candidate signal prediction artifact backfill and provenance
+    audit
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md`；依赖
+    TRADING-2280 candidate-level validation。本批只审计缺失 artifact 类型、provenance 和 backfill
+    可行性，不训练模型、不修改 candidate scores、不打开 promotion/paper-shadow/production/broker。
+  - 生成 candidate signal/prediction artifact gap report、candidate artifact provenance
+    matrix、inconclusive candidate recovery plan 和对应 JSON artifacts；每个 INCONCLUSIVE
+    candidate 必须有缺失原因、backfill_possible、recovery_action、permanently_inconclusive 判断；可恢复
+    artifact 必须有可复现命令或 registry repair action，不可恢复候选固定 promotion/paper-shadow false。
+  - '2026-06-29: 新增并进入 IN_PROGRESS；先审计 4 个 TRADING-2280 INCONCLUSIVE rows 的 signal
+    / prediction / actual-path / attribution / registry artifact evidence。2026-06-29:
+    实现完成并转入 VALIDATING；真实 run inconclusive=4、artifact_rows=28、complete_signal_prediction=0、backfill_possible=0、backfilled=0、permanently_inconclusive=4，`baseline`
+    frozen composer predictions 仅为 schema-incompatible source evidence。2026-06-29:
+    验证通过 Ruff、compileall、focused parallel pytest 48 passed、docs freshness、diff check
+    和 contract-validation 193 passed；runtime artifact=`outputs/validation_runtime/contract-validation_20260628T161659Z/test_runtime_summary.json`。'
+  docs_links:
+  - docs/requirements/TRADING-2281_Candidate_Signal_Prediction_Artifact_Backfill.md
+  terminal: false
+  canonical_row_sha256: a149dffd5b69828e3fec89a27ceef719ad67c6320c23a8afb273f4278529b662
+last_event_id: legacy-import-a149dffd5b69828e3fec89a2
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: d7bce8b0a94f4fc9d35e43727cfc7130e91f6d63b57d2f695e93f86a260815b5

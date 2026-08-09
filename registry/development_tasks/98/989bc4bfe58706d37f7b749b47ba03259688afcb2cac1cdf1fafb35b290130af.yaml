@@ -1,0 +1,127 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  task_id_sha256: 989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af
+task_record:
+  schema_version: task_record.v1
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  title: null
+  domain: Developer experience / reduce generated-view dirty-path amplification
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 'architecture coordinator: S5 final-tree revalidation and ordinary release'
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: none; exact release closeout pending
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: B/C/D fragmentation and S5 canonical cutover remain replayable, fail closed
+      and released
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_import_evidence:
+  row_sha256: 32d3922d70d2ff0c59db5ef5edee3f3402d19f871b5bc7ba5f9f918b426576a6
+  cell_count: 8
+  all_cells:
+  - DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  - Developer experience / reduce generated-view dirty-path amplification
+  - P1
+  - IN_PROGRESS
+  - DEVX-006D coordinator：完成 final-tree formal/Full、ordinary push/cleanup 与 exact
+    RELEASE；随后 ARCH-005 S5 coordinator 从 released latest main 独立登记
+  - 详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。B/C/D
+    baseline 已完成；Owner decision=`owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1`，S5
+    仍须等待 D ordinary push/cleanup，不得复用 D formal evidence。
+  - 保持 B 波 stable task shadow、C 波 compatibility authority 与 D 波 inactive lossless
+    shadow；S5 实施 stable task source cutover、consumer migration、rollback 与最终 shared-path
+    收敛；`production_effect=none`。
+  - 2026-08-09：D 波 3 targets / 2850 entries / 192 fragments，3/3 byte-identical、coverage=100%；compact
+    index `874673 bytes`，consumer inventory `159 / pending=15 / cutover_ready=false`，focused
+    cross-layer=`111 passed`；进入 final-tree formal/Full closeout。
+  raw_line: '|DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2|Developer
+    experience / reduce generated-view dirty-path amplification|P1|IN_PROGRESS|DEVX-006D
+    coordinator：完成 final-tree formal/Full、ordinary push/cleanup 与 exact RELEASE；随后
+    ARCH-005 S5 coordinator 从 released latest main 独立登记|详见 `docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md`。B/C/D
+    baseline 已完成；Owner decision=`owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1`，S5
+    仍须等待 D ordinary push/cleanup，不得复用 D formal evidence。|保持 B 波 stable task shadow、C
+    波 compatibility authority 与 D 波 inactive lossless shadow；S5 实施 stable task source
+    cutover、consumer migration、rollback 与最终 shared-path 收敛；`production_effect=none`。|2026-08-09：D
+    波 3 targets / 2850 entries / 192 fragments，3/3 byte-identical、coverage=100%；compact
+    index `874673 bytes`，consumer inventory `159 / pending=15 / cutover_ready=false`，focused
+    cross-layer=`111 passed`；进入 final-tree formal/Full closeout。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-32d3922d70d2ff0c59db5ef5
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: DEVX-006D coordinator：完成 final-tree formal/Full、ordinary push/cleanup
+      与 exact RELEASE；随后 ARCH-005 S5 coordinator 从 released latest main 独立登记
+    notes: 2026-08-09：D 波 3 targets / 2850 entries / 192 fragments，3/3 byte-identical、coverage=100%；compact
+      index `874673 bytes`，consumer inventory `159 / pending=15 / cutover_ready=false`，focused
+      cross-layer=`111 passed`；进入 final-tree formal/Full closeout。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:32d3922d70d2ff0c59db5ef5edee3f3402d19f871b5bc7ba5f9f918b426576a6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-10T02:10:46+09:00'
+  actor: architecture-coordinator
+  change_id: devx-006-parent-final-done
+  lane_id: null
+  base_commit: 7cfc81d6ab9d992c6c45e1084e22b33b9560d519
+  previous_state_event_id: legacy-import-32d3922d70d2ff0c59db5ef5
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 'architecture coordinator: S5 final-tree revalidation and ordinary
+      release'
+    blocker_or_next_step: none; exact release closeout pending
+    acceptance_criteria: B/C/D fragmentation and S5 canonical cutover remain replayable,
+      fail closed and released
+    notes: '2026-08-10: C/D released; S5 canonical cutover and validating-tree formal/Full
+      passed; final DONE-tree release in progress'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:devx-006-parent-final-done
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fbee98aee12b548b97632a08d7589d94
+projection:
+  legacy_first_eight_cells:
+  - DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
+  - Developer experience / reduce generated-view dirty-path amplification
+  - P1
+  - DONE
+  - 'architecture coordinator: S5 final-tree revalidation and ordinary release'
+  - none; exact release closeout pending
+  - B/C/D fragmentation and S5 canonical cutover remain replayable, fail closed and
+    released
+  - '2026-08-10: C/D released; S5 canonical cutover and validating-tree formal/Full
+    passed; final DONE-tree release in progress'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 4fbd279bd024166fdc768f4b2ed8cd53552796fa906e9699a8130226a28e3ea0
+last_event_id: task-event-fbee98aee12b548b97632a08d7589d94
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 9676a5d84585bc36c6aec1fea4cc19ee7551405797e5e31a8523aad683ab4694

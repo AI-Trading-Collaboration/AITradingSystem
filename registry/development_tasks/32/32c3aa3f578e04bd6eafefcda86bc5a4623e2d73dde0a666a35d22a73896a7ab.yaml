@@ -1,0 +1,147 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-390_BENCHMARK_BASELINE_METRICS_MATERIALIZATION
+  task_id_sha256: 32c3aa3f578e04bd6eafefcda86bc5a4623e2d73dde0a666a35d22a73896a7ab
+task_record:
+  task_id: TRADING-390_BENCHMARK_BASELINE_METRICS_MATERIALIZATION
+  title: null
+  domain: ETF portfolio/dynamic v3 rescue benchmark baseline metrics materialization
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 项目 owner 复核 benchmark baseline control result；后续 TRADING-391 汇总 recovery
+    evidence pack，promotion 仍保持 blocked / return to research until evidence improves
+  requirement_refs:
+  - docs/requirements/TRADING-390_Benchmark_Baseline_Metrics_Materialization.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-390_Benchmark_Baseline_Metrics_Materialization.md`；从既有
+    `backtest_sim_outcome`、TRADING-389 candidate cost metrics、cost-sensitivity review
+    和通过同一 `aits validate-data` 质量门禁的 cached prices materialize benchmark baseline
+    control 所需 explicit candidate/baseline numeric inputs，并重跑 benchmark baseline control；不得把
+    benchmark comparison 当作 live allocation signal、不得发明 metrics、运行新 optimization/backtest、刷新数据、生成
+    execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+    state
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_metrics_materialization.py`、`aits
+      etf dynamic-v3-rescue benchmark-baseline-metrics-materialization run/report`、`validate-benchmark-baseline-metrics-materialization`、Reader
+      Brief section、report registry、artifact catalog、README、operations runbook、system
+      flow、requirements 和 focused tests；status 限定为 `BASELINE_METRICS_AVAILABLE
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 91b4f2943dc1951f4385d41af55151dab28364e3e30d7d61c09176c62557c30a
+  cell_count: 10
+  all_cells:
+  - TRADING-390_BENCHMARK_BASELINE_METRICS_MATERIALIZATION
+  - ETF portfolio/dynamic v3 rescue benchmark baseline metrics materialization
+  - P2
+  - DONE
+  - 项目 owner 复核 benchmark baseline control result；后续 TRADING-391 汇总 recovery evidence
+    pack，promotion 仍保持 blocked / return to research until evidence improves
+  - 详细拆解见 `docs/requirements/TRADING-390_Benchmark_Baseline_Metrics_Materialization.md`；从既有
+    `backtest_sim_outcome`、TRADING-389 candidate cost metrics、cost-sensitivity review
+    和通过同一 `aits validate-data` 质量门禁的 cached prices materialize benchmark baseline
+    control 所需 explicit candidate/baseline numeric inputs，并重跑 benchmark baseline control；不得把
+    benchmark comparison 当作 live allocation signal、不得发明 metrics、运行新 optimization/backtest、刷新数据、生成
+    execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+    state
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_metrics_materialization.py`、`aits
+    etf dynamic-v3-rescue benchmark-baseline-metrics-materialization run/report`、`validate-benchmark-baseline-metrics-materialization`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；status 限定为 `BASELINE_METRICS_AVAILABLE
+  - BASELINE_METRICS_PARTIAL
+  - INSUFFICIENT_BASELINE_METRICS`；baseline metrics 覆盖 static allocation、no-trade、QQQ-only、SPY-only
+    和 SPY/QQQ/SMH/SOXX equal-weight ETF，且只作为 BACKTEST_SIMULATION event-window research
+    evidence
+  - '2026-06-17: DONE；真实 artifact `benchmark-baseline-metrics-materialization_a84cbc04f0eb189d`
+    读取 backtest sim outcome `57c2eb4e71c3320d`、cost materialization `cost-metrics-materialization_938cbce979c4f135`
+    和 cost review `cost-sensitivity-review_c0ba1c397d10078e`，数据质量门禁 `PASS_WITH_WARNINGS`
+    / errors=0，输出 `BASELINE_METRICS_AVAILABLE`、available baselines=5、missing=0。Candidate
+    net proxy=`0.0063651375`；baseline net proxies static=`0.0052360815`、no_trade=`0.005236`、QQQ=`0.00581425`、SPY=`0.0040957065`、equal_weight_etf=`0.0081233043`。Rerun
+    benchmark control `benchmark-baseline-control_f236d7c827b26534` validation PASS，但
+    status=`CANDIDATE_UNDERPERFORMS_BASELINES`、outperformed=0、underperformed=5、next
+    action=`return_candidate_to_research_until_it_outperforms_baseline_controls`；该结果不是
+    promotion、extended shadow、official target、broker/order 或 live approval。'
+  raw_line: '|TRADING-390_BENCHMARK_BASELINE_METRICS_MATERIALIZATION|ETF portfolio/dynamic
+    v3 rescue benchmark baseline metrics materialization|P2|DONE|项目 owner 复核 benchmark
+    baseline control result；后续 TRADING-391 汇总 recovery evidence pack，promotion 仍保持
+    blocked / return to research until evidence improves|详细拆解见 `docs/requirements/TRADING-390_Benchmark_Baseline_Metrics_Materialization.md`；从既有
+    `backtest_sim_outcome`、TRADING-389 candidate cost metrics、cost-sensitivity review
+    和通过同一 `aits validate-data` 质量门禁的 cached prices materialize benchmark baseline
+    control 所需 explicit candidate/baseline numeric inputs，并重跑 benchmark baseline control；不得把
+    benchmark comparison 当作 live allocation signal、不得发明 metrics、运行新 optimization/backtest、刷新数据、生成
+    execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+    state|新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_metrics_materialization.py`、`aits
+    etf dynamic-v3-rescue benchmark-baseline-metrics-materialization run/report`、`validate-benchmark-baseline-metrics-materialization`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；status 限定为 `BASELINE_METRICS_AVAILABLE|BASELINE_METRICS_PARTIAL|INSUFFICIENT_BASELINE_METRICS`；baseline
+    metrics 覆盖 static allocation、no-trade、QQQ-only、SPY-only 和 SPY/QQQ/SMH/SOXX equal-weight
+    ETF，且只作为 BACKTEST_SIMULATION event-window research evidence|2026-06-17: DONE；真实
+    artifact `benchmark-baseline-metrics-materialization_a84cbc04f0eb189d` 读取 backtest
+    sim outcome `57c2eb4e71c3320d`、cost materialization `cost-metrics-materialization_938cbce979c4f135`
+    和 cost review `cost-sensitivity-review_c0ba1c397d10078e`，数据质量门禁 `PASS_WITH_WARNINGS`
+    / errors=0，输出 `BASELINE_METRICS_AVAILABLE`、available baselines=5、missing=0。Candidate
+    net proxy=`0.0063651375`；baseline net proxies static=`0.0052360815`、no_trade=`0.005236`、QQQ=`0.00581425`、SPY=`0.0040957065`、equal_weight_etf=`0.0081233043`。Rerun
+    benchmark control `benchmark-baseline-control_f236d7c827b26534` validation PASS，但
+    status=`CANDIDATE_UNDERPERFORMS_BASELINES`、outperformed=0、underperformed=5、next
+    action=`return_candidate_to_research_until_it_outperforms_baseline_controls`；该结果不是
+    promotion、extended shadow、official target、broker/order 或 live approval。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: true
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-91b4f2943dc1951f4385d41a
+  task_id: TRADING-390_BENCHMARK_BASELINE_METRICS_MATERIALIZATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P2
+    next_owner: 项目 owner 复核 benchmark baseline control result；后续 TRADING-391 汇总 recovery
+      evidence pack，promotion 仍保持 blocked / return to research until evidence improves
+    notes: BASELINE_METRICS_PARTIAL
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:91b4f2943dc1951f4385d41af55151dab28364e3e30d7d61c09176c62557c30a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-390_BENCHMARK_BASELINE_METRICS_MATERIALIZATION
+  - ETF portfolio/dynamic v3 rescue benchmark baseline metrics materialization
+  - P2
+  - DONE
+  - 项目 owner 复核 benchmark baseline control result；后续 TRADING-391 汇总 recovery evidence
+    pack，promotion 仍保持 blocked / return to research until evidence improves
+  - 详细拆解见 `docs/requirements/TRADING-390_Benchmark_Baseline_Metrics_Materialization.md`；从既有
+    `backtest_sim_outcome`、TRADING-389 candidate cost metrics、cost-sensitivity review
+    和通过同一 `aits validate-data` 质量门禁的 cached prices materialize benchmark baseline
+    control 所需 explicit candidate/baseline numeric inputs，并重跑 benchmark baseline control；不得把
+    benchmark comparison 当作 live allocation signal、不得发明 metrics、运行新 optimization/backtest、刷新数据、生成
+    execution model、写 official target weights、触发 broker/order 或修改 paper account/production
+    state
+  - 新增 `src/ai_trading_system/etf_portfolio/dynamic_v3_benchmark_baseline_metrics_materialization.py`、`aits
+    etf dynamic-v3-rescue benchmark-baseline-metrics-materialization run/report`、`validate-benchmark-baseline-metrics-materialization`、Reader
+    Brief section、report registry、artifact catalog、README、operations runbook、system
+    flow、requirements 和 focused tests；status 限定为 `BASELINE_METRICS_AVAILABLE
+  - BASELINE_METRICS_PARTIAL
+  docs_links:
+  - docs/requirements/TRADING-390_Benchmark_Baseline_Metrics_Materialization.md
+  terminal: true
+  canonical_row_sha256: 2639bacbd5c92bad3c04abaa1225a57f6ab985a4dd976902e72eb95ae6d46a65
+last_event_id: legacy-import-91b4f2943dc1951f4385d41a
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: c33fefc8adfd43e96cfceed1a5132a9621af314689bd363e0307be51f3d0caba

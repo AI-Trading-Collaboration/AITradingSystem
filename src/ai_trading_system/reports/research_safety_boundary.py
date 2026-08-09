@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.platform.architecture.task_registry_canonical import (
+    canonical_task_register_view_path,
+)
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "research_safety_boundary_audit"
@@ -251,10 +254,12 @@ def build_research_safety_boundary_payload(
         report_index_payload = _read_json_mapping(source_path)
         report_index_path = source_path
 
-    task_register_path = task_register_path or project_root / "docs" / "task_register.md"
-    completed_task_register_path = (
-        completed_task_register_path
-        or project_root / "docs" / "task_register_completed.md"
+    task_register_path = task_register_path or canonical_task_register_view_path(
+        project_root,
+        "active",
+    )
+    completed_task_register_path = completed_task_register_path or (
+        canonical_task_register_view_path(project_root, "completed")
     )
     task_checks = [
         *_scan_task_register(task_register_path, "active_task_register"),
@@ -280,19 +285,13 @@ def build_research_safety_boundary_payload(
         ]
     )
     metadata_issues = [
-        issue
-        for check in artifact_checks
-        for issue in _records(check.get("metadata_issues"))
+        issue for check in artifact_checks for issue in _records(check.get("metadata_issues"))
     ]
     unsafe_signals = [
-        issue
-        for issue in blocking_issues
-        if _text(issue.get("issue_id")).startswith("unsafe_")
+        issue for issue in blocking_issues if _text(issue.get("issue_id")).startswith("unsafe_")
     ]
     missing_metadata = [
-        issue
-        for issue in warning_issues
-        if issue.get("issue_id") == "missing_safety_metadata"
+        issue for issue in warning_issues if issue.get("issue_id") == "missing_safety_metadata"
     ]
     status = FAIL_STATUS if blocking_issues else WARN_STATUS if warning_issues else PASS_STATUS
     summary = {
@@ -308,12 +307,16 @@ def build_research_safety_boundary_payload(
         "blocking_issue_count": len(blocking_issues),
         "warning_issue_count": len(warning_issues),
         "shadow_continuation_readiness_input": (
-            "BLOCKED_BY_SAFETY_AUDIT" if blocking_issues else "AVAILABLE_WITH_WARNINGS"
+            "BLOCKED_BY_SAFETY_AUDIT"
+            if blocking_issues
+            else "AVAILABLE_WITH_WARNINGS"
             if warning_issues
             else "AVAILABLE"
         ),
         "future_promotion_board_input": (
-            "BLOCKED_BY_SAFETY_AUDIT" if blocking_issues else "REQUIRES_WARNING_REVIEW"
+            "BLOCKED_BY_SAFETY_AUDIT"
+            if blocking_issues
+            else "REQUIRES_WARNING_REVIEW"
             if warning_issues
             else "SAFETY_AUDIT_PASS"
         ),
@@ -440,14 +443,10 @@ def validate_research_safety_boundary_payload(payload: Mapping[str, Any]) -> dic
     warning_issues = _dedupe_issues(warning_issues)
     status = FAIL_STATUS if blocking_issues else WARN_STATUS if warning_issues else PASS_STATUS
     blocking_failed_checks = [
-        check
-        for check in checks
-        if check["status"] == "FAIL" and check["severity"] == "BLOCKING"
+        check for check in checks if check["status"] == "FAIL" and check["severity"] == "BLOCKING"
     ]
     warning_failed_checks = [
-        check
-        for check in checks
-        if check["status"] == "FAIL" and check["severity"] == "WARNING"
+        check for check in checks if check["status"] == "FAIL" and check["severity"] == "WARNING"
     ]
     validation_summary = {
         "check_count": len(checks),
@@ -990,9 +989,7 @@ def _reader_brief(
         ),
         "key_result": status,
         "blocking_issues": (
-            "none"
-            if not blocking_issues
-            else f"{len(blocking_issues)} blocking safety issue(s)."
+            "none" if not blocking_issues else f"{len(blocking_issues)} blocking safety issue(s)."
         ),
         "warnings": (
             "none" if not warning_issues else f"{len(warning_issues)} warning safety issue(s)."

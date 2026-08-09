@@ -1,0 +1,106 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: COST-001
+  task_id_sha256: 96997a2cd0cad819bba3cdf6c36dbdf7ffcab516598fee6e340c70232cbedc70
+task_record:
+  task_id: COST-001
+  title: null
+  domain: 回测/执行成本
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P2
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner
+  requirement_refs:
+  - docs/requirements/transaction_cost_model_2026-05-04.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 已完成交易摩擦模型基础版：回测成本拆成 commission、spread、slippage、market
+    impact、tax、FX、financing 和 ETF delay 等显式假设，并写入明细、报告和 trace manifest；剩余缺口是真实成交样本、券商费率/税费规则、容量约束、最小交易单位和成交质量验证；详细拆解见
+    `docs/requirements/transaction_cost_model_2026-05-04.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 回测支持 bid-ask spread、滑点、市场冲击、汇率、税费、融资利率、ETF 申赎或成交延迟、最小交易单位；报告显示成本敏感性，run
+      manifest 和 evidence bundle 记录成本假设
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 7f782229c0478df4c72974c2524236a47ad6bb4b6ac7363a5cb73b658414e1a9
+  cell_count: 8
+  all_cells:
+  - COST-001
+  - 回测/执行成本
+  - P2
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成交易摩擦模型基础版：回测成本拆成 commission、spread、slippage、market impact、tax、FX、financing
+    和 ETF delay 等显式假设，并写入明细、报告和 trace manifest；剩余缺口是真实成交样本、券商费率/税费规则、容量约束、最小交易单位和成交质量验证；详细拆解见
+    `docs/requirements/transaction_cost_model_2026-05-04.md`
+  - 回测支持 bid-ask spread、滑点、市场冲击、汇率、税费、融资利率、ETF 申赎或成交延迟、最小交易单位；报告显示成本敏感性，run manifest
+    和 evidence bundle 记录成本假设
+  - '当前回测已有基础单边成本和线性滑点；该任务有价值但不应挤占 P1 的 point-in-time、反馈闭环和数据源健康任务。2026-05-04: 从 PROPOSED
+    改为 IN_PROGRESS，原因：生产就绪缺口推进到交易摩擦层，开始实现不依赖外部数据的成本假设拆分、报告和 trace 记录。2026-05-04: 从
+    IN_PROGRESS 改为 BASELINE_DONE，原因：新增 backtest 成本假设拆分、每日成本列、中文报告摘要、trace `cost_assumptions`
+    和测试；完整 `DONE` 仍需真实成交和券商/税务/容量验证。'
+  raw_line: '|COST-001|回测/执行成本|P2|BASELINE_DONE|系统实现 + 项目 owner|已完成交易摩擦模型基础版：回测成本拆成
+    commission、spread、slippage、market impact、tax、FX、financing 和 ETF delay 等显式假设，并写入明细、报告和
+    trace manifest；剩余缺口是真实成交样本、券商费率/税费规则、容量约束、最小交易单位和成交质量验证；详细拆解见 `docs/requirements/transaction_cost_model_2026-05-04.md`|回测支持
+    bid-ask spread、滑点、市场冲击、汇率、税费、融资利率、ETF 申赎或成交延迟、最小交易单位；报告显示成本敏感性，run manifest 和
+    evidence bundle 记录成本假设|当前回测已有基础单边成本和线性滑点；该任务有价值但不应挤占 P1 的 point-in-time、反馈闭环和数据源健康任务。2026-05-04:
+    从 PROPOSED 改为 IN_PROGRESS，原因：生产就绪缺口推进到交易摩擦层，开始实现不依赖外部数据的成本假设拆分、报告和 trace 记录。2026-05-04:
+    从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 backtest 成本假设拆分、每日成本列、中文报告摘要、trace `cost_assumptions`
+    和测试；完整 `DONE` 仍需真实成交和券商/税务/容量验证。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-7f782229c0478df4c72974c2
+  task_id: COST-001
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P2
+    next_owner: 系统实现 + 项目 owner
+    notes: '当前回测已有基础单边成本和线性滑点；该任务有价值但不应挤占 P1 的 point-in-time、反馈闭环和数据源健康任务。2026-05-04:
+      从 PROPOSED 改为 IN_PROGRESS，原因：生产就绪缺口推进到交易摩擦层，开始实现不依赖外部数据的成本假设拆分、报告和 trace 记录。2026-05-04:
+      从 IN_PROGRESS 改为 BASELINE_DONE，原因：新增 backtest 成本假设拆分、每日成本列、中文报告摘要、trace `cost_assumptions`
+      和测试；完整 `DONE` 仍需真实成交和券商/税务/容量验证。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:7f782229c0478df4c72974c2524236a47ad6bb4b6ac7363a5cb73b658414e1a9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - COST-001
+  - 回测/执行成本
+  - P2
+  - BASELINE_DONE
+  - 系统实现 + 项目 owner
+  - 已完成交易摩擦模型基础版：回测成本拆成 commission、spread、slippage、market impact、tax、FX、financing
+    和 ETF delay 等显式假设，并写入明细、报告和 trace manifest；剩余缺口是真实成交样本、券商费率/税费规则、容量约束、最小交易单位和成交质量验证；详细拆解见
+    `docs/requirements/transaction_cost_model_2026-05-04.md`
+  - 回测支持 bid-ask spread、滑点、市场冲击、汇率、税费、融资利率、ETF 申赎或成交延迟、最小交易单位；报告显示成本敏感性，run manifest
+    和 evidence bundle 记录成本假设
+  - '当前回测已有基础单边成本和线性滑点；该任务有价值但不应挤占 P1 的 point-in-time、反馈闭环和数据源健康任务。2026-05-04: 从 PROPOSED
+    改为 IN_PROGRESS，原因：生产就绪缺口推进到交易摩擦层，开始实现不依赖外部数据的成本假设拆分、报告和 trace 记录。2026-05-04: 从
+    IN_PROGRESS 改为 BASELINE_DONE，原因：新增 backtest 成本假设拆分、每日成本列、中文报告摘要、trace `cost_assumptions`
+    和测试；完整 `DONE` 仍需真实成交和券商/税务/容量验证。'
+  docs_links:
+  - docs/requirements/transaction_cost_model_2026-05-04.md
+  terminal: false
+  canonical_row_sha256: 7f782229c0478df4c72974c2524236a47ad6bb4b6ac7363a5cb73b658414e1a9
+last_event_id: legacy-import-7f782229c0478df4c72974c2
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 4cbc863f49dfa08406bce9254e5973123d00aa687edeb08e7df668f5752c62bf

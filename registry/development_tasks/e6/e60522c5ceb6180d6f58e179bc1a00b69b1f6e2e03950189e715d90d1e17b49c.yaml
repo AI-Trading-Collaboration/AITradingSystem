@@ -1,0 +1,109 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  task_id_sha256: e60522c5ceb6180d6f58e179bc1a00b69b1f6e2e03950189e715d90d1e17b49c
+task_record:
+  task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  title: null
+  domain: Publishing & Experience / reader-first status explanation consumer and page
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: knowledge/reporting/UX owner：维护 V1 reader-first 展示合同；后续远程发布、交互或新数据投影必须另建任务
+  requirement_refs:
+  - docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。Owner 已于 2026-08-08 验收 canonical 页面视觉与可读性。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 8 个节点逐一绑定 validated explanation record；value states 显式区分；五文件 deterministic；原
+      cited-query response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static
+      DOM、compatibility、正式五级与 Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: b20feb77ccf647df71635bd06a9d8c0b6e141f9fe218363afa02c1479214dc92
+  cell_count: 8
+  all_cells:
+  - TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  - Publishing & Experience / reader-first status explanation consumer and page
+  - P1
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 reader-first 展示合同；后续远程发布、交互或新数据投影必须另建任务
+  - 详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。Owner 已于 2026-08-08 验收 canonical 页面视觉与可读性。
+  - 8 个节点逐一绑定 validated explanation record；value states 显式区分；五文件 deterministic；原 cited-query
+    response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static DOM、compatibility、正式五级与
+    Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-08：Owner acceptance token=`owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1`，独立状态=`OWNER_MANUAL_VISUAL_PASS`。此前
+    in-app browser `file://` 自动视觉仍保留为 `NOT_EXECUTED_URL_POLICY`，未绕过；人工验收不表示策略 PASS、投资建议、生产批准，也不授权
+    `TRADING-2481..2493` 投影、远程发布、production 或 broker action。
+  raw_line: '|TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1|Publishing
+    & Experience / reader-first status explanation consumer and page|P1|BASELINE_DONE|knowledge/reporting/UX
+    owner：维护 V1 reader-first 展示合同；后续远程发布、交互或新数据投影必须另建任务|详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。Owner 已于 2026-08-08 验收 canonical 页面视觉与可读性。|8
+    个节点逐一绑定 validated explanation record；value states 显式区分；五文件 deterministic；原 cited-query
+    response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static DOM、compatibility、正式五级与
+    Owner manual visual PASS；`production_effect=none`、`broker_action=none`。|2026-08-08：Owner
+    acceptance token=`owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1`，独立状态=`OWNER_MANUAL_VISUAL_PASS`。此前
+    in-app browser `file://` 自动视觉仍保留为 `NOT_EXECUTED_URL_POLICY`，未绕过；人工验收不表示策略 PASS、投资建议、生产批准，也不授权
+    `TRADING-2481..2493` 投影、远程发布、production 或 broker action。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-b20feb77ccf647df71635bd0
+  task_id: TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: knowledge/reporting/UX owner：维护 V1 reader-first 展示合同；后续远程发布、交互或新数据投影必须另建任务
+    notes: 2026-08-08：Owner acceptance token=`owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1`，独立状态=`OWNER_MANUAL_VISUAL_PASS`。此前
+      in-app browser `file://` 自动视觉仍保留为 `NOT_EXECUTED_URL_POLICY`，未绕过；人工验收不表示策略 PASS、投资建议、生产批准，也不授权
+      `TRADING-2481..2493` 投影、远程发布、production 或 broker action。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:b20feb77ccf647df71635bd06a9d8c0b6e141f9fe218363afa02c1479214dc92
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2496_ATLAS_READER_STATUS_EXPLANATION_RENDERER_V1
+  - Publishing & Experience / reader-first status explanation consumer and page
+  - P1
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 reader-first 展示合同；后续远程发布、交互或新数据投影必须另建任务
+  - 详见 `docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md`。从
+    exact main `d437ae7cf059f58a5cdd14cb61849166dd29b3b9` 消费 2495 sidecar；8 个节点固定按“一句话结论→正在做什么→已完成什么→还缺什么→为什么重要→什么会改变→责任/下一步→审计依据”展示，技术
+    authority 默认折叠。`TRADING-2481..2493` 继续排除。Owner 已于 2026-08-08 验收 canonical 页面视觉与可读性。
+  - 8 个节点逐一绑定 validated explanation record；value states 显式区分；五文件 deterministic；原 cited-query
+    response/validation bytes 保持 exact；不得从状态或自由摘要补写原因；focused、static DOM、compatibility、正式五级与
+    Owner manual visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-08：Owner acceptance token=`owner_decision:TRADING-2496:2026-08-08:owner_manual_visual_pass_v1`，独立状态=`OWNER_MANUAL_VISUAL_PASS`。此前
+    in-app browser `file://` 自动视觉仍保留为 `NOT_EXECUTED_URL_POLICY`，未绕过；人工验收不表示策略 PASS、投资建议、生产批准，也不授权
+    `TRADING-2481..2493` 投影、远程发布、production 或 broker action。
+  docs_links:
+  - docs/requirements/TRADING-2496_Atlas_Reader_Status_Explanation_Renderer_V1.md
+  terminal: false
+  canonical_row_sha256: b20feb77ccf647df71635bd06a9d8c0b6e141f9fe218363afa02c1479214dc92
+last_event_id: legacy-import-b20feb77ccf647df71635bd0
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 76906100b81d1c678738b891019a381fb0d632f897c1911f19b8181080d944ee

@@ -1,0 +1,133 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-074_DAILY_OFFICIAL_POLICY_CAPTURE_CONSUMPTION
+  task_id_sha256: e2d326f375535857600013dc37b966222447543ebc462fe35fa4ca83d51c1a71
+task_record:
+  task_id: OPS-074_DAILY_OFFICIAL_POLICY_CAPTURE_CONSUMPTION
+  title: null
+  domain: Operations / daily score consumes retained official-policy capture
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex：完成六类 formal gates、普通 main push、exact release promotion 与 deployment
+    acceptance；operations owner：下一个合法 new as-of ordinary run 复核
+  requirement_refs:
+  - docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md`。2026-08-05
+    ordinary run `daily_ops_run:2026-08-04:20260805T003613Z` 中 capture 已成功抓取并验证 official-policy
+    bytes，但 `score_daily` 再次请求 Federal Register 并遇 HTTP 503，造成重复 provider side effect
+    和可避免的评分失败。本 invocation 唯一 trigger 已用完，terminal parent 及 evidence 保持 immutable。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: capture-active daily score 必须严格绑定同 as-of validated capture manifest/artifacts，校验
+      path/size/SHA/candidate as_of/raw lineage 并零 provider request；missing/tamper/drift
+      fail closed；manual/non-daily live-fetch contract不扩大；DQ/PIT/recovery allowlist、weights/broker/trading
+      boundary不变；focused+六类 formal gates、push、promotion/acceptance完成。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 5114dece62b510ac5d805d2bb2d8d979613a468e2bad1146fa6359384495e48e
+  cell_count: 8
+  all_cells:
+  - OPS-074_DAILY_OFFICIAL_POLICY_CAPTURE_CONSUMPTION
+  - Operations / daily score consumes retained official-policy capture
+  - P0
+  - VALIDATING
+  - Codex：完成六类 formal gates、普通 main push、exact release promotion 与 deployment acceptance；operations
+    owner：下一个合法 new as-of ordinary run 复核
+  - 详见 `docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md`。2026-08-05
+    ordinary run `daily_ops_run:2026-08-04:20260805T003613Z` 中 capture 已成功抓取并验证 official-policy
+    bytes，但 `score_daily` 再次请求 Federal Register 并遇 HTTP 503，造成重复 provider side effect
+    和可避免的评分失败。本 invocation 唯一 trigger 已用完，terminal parent 及 evidence 保持 immutable。
+  - capture-active daily score 必须严格绑定同 as-of validated capture manifest/artifacts，校验
+    path/size/SHA/candidate as_of/raw lineage 并零 provider request；missing/tamper/drift
+    fail closed；manual/non-daily live-fetch contract不扩大；DQ/PIT/recovery allowlist、weights/broker/trading
+    boundary不变；focused+六类 formal gates、push、promotion/acceptance完成。
+  - 2026-08-05：实现已完成；capture-active score 严格绑定 manifest/download rows/candidate/raw
+    lineage 并写 zero-provider-request report，manual/non-daily live path 保持。focused
+    parallel pytest=`182 passed`，Ruff/Black PASS；真实 2026-08-04 retained evidence 只读校验=`PASS
+    / 8 payloads / 406 candidates / provider_request_performed=false`。scoped mypy
+    仅保留仓库既有 `87 errors`，本变更新增错误已清零。下一步是 exact candidate 六类 formal validation、push
+    与 promotion/acceptance；当前 failed parent 不展开 recovery，不得第二次 daily trigger。
+  raw_line: '|OPS-074_DAILY_OFFICIAL_POLICY_CAPTURE_CONSUMPTION|Operations / daily
+    score consumes retained official-policy capture|P0|VALIDATING|Codex：完成六类 formal
+    gates、普通 main push、exact release promotion 与 deployment acceptance；operations
+    owner：下一个合法 new as-of ordinary run 复核|详见 `docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md`。2026-08-05
+    ordinary run `daily_ops_run:2026-08-04:20260805T003613Z` 中 capture 已成功抓取并验证 official-policy
+    bytes，但 `score_daily` 再次请求 Federal Register 并遇 HTTP 503，造成重复 provider side effect
+    和可避免的评分失败。本 invocation 唯一 trigger 已用完，terminal parent 及 evidence 保持 immutable。|capture-active
+    daily score 必须严格绑定同 as-of validated capture manifest/artifacts，校验 path/size/SHA/candidate
+    as_of/raw lineage 并零 provider request；missing/tamper/drift fail closed；manual/non-daily
+    live-fetch contract不扩大；DQ/PIT/recovery allowlist、weights/broker/trading boundary不变；focused+六类
+    formal gates、push、promotion/acceptance完成。|2026-08-05：实现已完成；capture-active score
+    严格绑定 manifest/download rows/candidate/raw lineage 并写 zero-provider-request report，manual/non-daily
+    live path 保持。focused parallel pytest=`182 passed`，Ruff/Black PASS；真实 2026-08-04
+    retained evidence 只读校验=`PASS / 8 payloads / 406 candidates / provider_request_performed=false`。scoped
+    mypy 仅保留仓库既有 `87 errors`，本变更新增错误已清零。下一步是 exact candidate 六类 formal validation、push
+    与 promotion/acceptance；当前 failed parent 不展开 recovery，不得第二次 daily trigger。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-5114dece62b510ac5d805d2b
+  task_id: OPS-074_DAILY_OFFICIAL_POLICY_CAPTURE_CONSUMPTION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: Codex：完成六类 formal gates、普通 main push、exact release promotion 与 deployment
+      acceptance；operations owner：下一个合法 new as-of ordinary run 复核
+    notes: 2026-08-05：实现已完成；capture-active score 严格绑定 manifest/download rows/candidate/raw
+      lineage 并写 zero-provider-request report，manual/non-daily live path 保持。focused
+      parallel pytest=`182 passed`，Ruff/Black PASS；真实 2026-08-04 retained evidence
+      只读校验=`PASS / 8 payloads / 406 candidates / provider_request_performed=false`。scoped
+      mypy 仅保留仓库既有 `87 errors`，本变更新增错误已清零。下一步是 exact candidate 六类 formal validation、push
+      与 promotion/acceptance；当前 failed parent 不展开 recovery，不得第二次 daily trigger。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:5114dece62b510ac5d805d2bb2d8d979613a468e2bad1146fa6359384495e48e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-074_DAILY_OFFICIAL_POLICY_CAPTURE_CONSUMPTION
+  - Operations / daily score consumes retained official-policy capture
+  - P0
+  - VALIDATING
+  - Codex：完成六类 formal gates、普通 main push、exact release promotion 与 deployment acceptance；operations
+    owner：下一个合法 new as-of ordinary run 复核
+  - 详见 `docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md`。2026-08-05
+    ordinary run `daily_ops_run:2026-08-04:20260805T003613Z` 中 capture 已成功抓取并验证 official-policy
+    bytes，但 `score_daily` 再次请求 Federal Register 并遇 HTTP 503，造成重复 provider side effect
+    和可避免的评分失败。本 invocation 唯一 trigger 已用完，terminal parent 及 evidence 保持 immutable。
+  - capture-active daily score 必须严格绑定同 as-of validated capture manifest/artifacts，校验
+    path/size/SHA/candidate as_of/raw lineage 并零 provider request；missing/tamper/drift
+    fail closed；manual/non-daily live-fetch contract不扩大；DQ/PIT/recovery allowlist、weights/broker/trading
+    boundary不变；focused+六类 formal gates、push、promotion/acceptance完成。
+  - 2026-08-05：实现已完成；capture-active score 严格绑定 manifest/download rows/candidate/raw
+    lineage 并写 zero-provider-request report，manual/non-daily live path 保持。focused
+    parallel pytest=`182 passed`，Ruff/Black PASS；真实 2026-08-04 retained evidence 只读校验=`PASS
+    / 8 payloads / 406 candidates / provider_request_performed=false`。scoped mypy
+    仅保留仓库既有 `87 errors`，本变更新增错误已清零。下一步是 exact candidate 六类 formal validation、push
+    与 promotion/acceptance；当前 failed parent 不展开 recovery，不得第二次 daily trigger。
+  docs_links:
+  - docs/requirements/OPS-074_Daily_Official_Policy_Capture_Consumption.md
+  terminal: false
+  canonical_row_sha256: 5114dece62b510ac5d805d2bb2d8d979613a468e2bad1146fa6359384495e48e
+last_event_id: legacy-import-5114dece62b510ac5d805d2b
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: acfa30351d3285d6dd5ce6bb9ade6cbd728f118c9eab978e98e2dfdfbb828f44

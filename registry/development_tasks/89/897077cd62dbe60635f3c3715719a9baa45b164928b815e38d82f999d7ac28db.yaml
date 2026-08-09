@@ -1,0 +1,160 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: REPORT-053
+  task_id_sha256: 897077cd62dbe60635f3c3715719a9baa45b164928b815e38d82f999d7ac28db
+task_record:
+  task_id: REPORT-053
+  title: null
+  domain: 报告/Unified Reader Brief HTML v1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/unified_reader_brief_html_v1_2026-05-28.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/unified_reader_brief_html_v1_2026-05-28.md`；Unified
+    Reader Brief HTML v1 已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --date
+    2026-06-05` 与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`；JSON
+    包含 `task_cadence_calendar`、`manual_review_queue`、`report_navigation` 和 calculation
+    detail metadata，cadence groups=5、registry reports=166、manual review items=53、navigation
+    items=142 / groups=4，documentation contract status=`PASS`；HTML 包含 Executive Summary、Market
+    Situation、Score &amp; Decision Funnel、Task Cadence Calendar、Manual Review Queue
+    和 Report Navigation，`<details>` count=424，并展示 `production_effect` 与 artifact links；该任务只读汇总既有
+    artifacts，不运行 scoring/backtest/shadow/SEC PIT/weight/docs 上游，不改变 production scoring、weights、position
+    gates 或 trading 行为
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits reports reader-brief --date YYYY-MM-DD`、`--as-of YYYY-MM-DD` 和 `--latest`
+      均可生成 `reader_brief_YYYY-MM-DD.html/json`；页面按 Executive Summary、Market Situation、Score
+      & Decision Funnel、Backtest/Outcome、Shadow/Weight、Data Quality/PIT、Task Cadence
+      Calendar、Manual Review Queue、Report Navigation 顺序组织；只读读取既有 artifacts，不运行 scoring/backtest/shadow/SEC
+      PIT/weight/docs 上游；缺可选 artifact 降级显示；每个 production-sensitive 区块显示 `production_effect`；测试覆盖
+      JSON schema、HTML、missing degraded mode、source links、manual review 和 cadence
+      calendar'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 18dbc78514f896d27e6c8547e31dd6ad12213b49923319b361ff2013251dd619
+  cell_count: 8
+  all_cells:
+  - REPORT-053
+  - 报告/Unified Reader Brief HTML v1
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/unified_reader_brief_html_v1_2026-05-28.md`；Unified Reader
+    Brief HTML v1 已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --date 2026-06-05`
+    与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`；JSON
+    包含 `task_cadence_calendar`、`manual_review_queue`、`report_navigation` 和 calculation
+    detail metadata，cadence groups=5、registry reports=166、manual review items=53、navigation
+    items=142 / groups=4，documentation contract status=`PASS`；HTML 包含 Executive Summary、Market
+    Situation、Score &amp; Decision Funnel、Task Cadence Calendar、Manual Review Queue
+    和 Report Navigation，`<details>` count=424，并展示 `production_effect` 与 artifact links；该任务只读汇总既有
+    artifacts，不运行 scoring/backtest/shadow/SEC PIT/weight/docs 上游，不改变 production scoring、weights、position
+    gates 或 trading 行为
+  - '`aits reports reader-brief --date YYYY-MM-DD`、`--as-of YYYY-MM-DD` 和 `--latest`
+    均可生成 `reader_brief_YYYY-MM-DD.html/json`；页面按 Executive Summary、Market Situation、Score
+    & Decision Funnel、Backtest/Outcome、Shadow/Weight、Data Quality/PIT、Task Cadence
+    Calendar、Manual Review Queue、Report Navigation 顺序组织；只读读取既有 artifacts，不运行 scoring/backtest/shadow/SEC
+    PIT/weight/docs 上游；缺可选 artifact 降级显示；每个 production-sensitive 区块显示 `production_effect`；测试覆盖
+    JSON schema、HTML、missing degraded mode、source links、manual review 和 cadence calendar'
+  - '2026-05-28: 新增并进入 IN_PROGRESS，原因：REPORT-047~052 已完成治理底座，但每日读者入口仍需要从“可用汇总”升级为“先结论、再证据、再计算逻辑、最后详细链接”的
+    HTML v1。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader Brief HTML v1 增强、CLI
+    alias/latest、direct dispatcher、文档和测试；验证通过目标 pytest、ruff、black。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：latest 字段级和 HTML 结构复核确认 HTML v1 结构、cadence、navigation、manual review、calculation
+    details 和只读边界满足验收；`tests/test_reader_brief.py` 为 7 passed，Reader Brief latest/date、Reader
+    Brief quality、documentation contract 和 docs freshness 均通过。'
+  raw_line: '|REPORT-053|报告/Unified Reader Brief HTML v1|P1|DONE|系统验证|详细拆解见 `docs/requirements/unified_reader_brief_html_v1_2026-05-28.md`；Unified
+    Reader Brief HTML v1 已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --date
+    2026-06-05` 与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`；JSON
+    包含 `task_cadence_calendar`、`manual_review_queue`、`report_navigation` 和 calculation
+    detail metadata，cadence groups=5、registry reports=166、manual review items=53、navigation
+    items=142 / groups=4，documentation contract status=`PASS`；HTML 包含 Executive Summary、Market
+    Situation、Score &amp; Decision Funnel、Task Cadence Calendar、Manual Review Queue
+    和 Report Navigation，`<details>` count=424，并展示 `production_effect` 与 artifact links；该任务只读汇总既有
+    artifacts，不运行 scoring/backtest/shadow/SEC PIT/weight/docs 上游，不改变 production scoring、weights、position
+    gates 或 trading 行为|`aits reports reader-brief --date YYYY-MM-DD`、`--as-of YYYY-MM-DD`
+    和 `--latest` 均可生成 `reader_brief_YYYY-MM-DD.html/json`；页面按 Executive Summary、Market
+    Situation、Score & Decision Funnel、Backtest/Outcome、Shadow/Weight、Data Quality/PIT、Task
+    Cadence Calendar、Manual Review Queue、Report Navigation 顺序组织；只读读取既有 artifacts，不运行
+    scoring/backtest/shadow/SEC PIT/weight/docs 上游；缺可选 artifact 降级显示；每个 production-sensitive
+    区块显示 `production_effect`；测试覆盖 JSON schema、HTML、missing degraded mode、source links、manual
+    review 和 cadence calendar|2026-05-28: 新增并进入 IN_PROGRESS，原因：REPORT-047~052 已完成治理底座，但每日读者入口仍需要从“可用汇总”升级为“先结论、再证据、再计算逻辑、最后详细链接”的
+    HTML v1。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader Brief HTML v1 增强、CLI
+    alias/latest、direct dispatcher、文档和测试；验证通过目标 pytest、ruff、black。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：latest 字段级和 HTML 结构复核确认 HTML v1 结构、cadence、navigation、manual review、calculation
+    details 和只读边界满足验收；`tests/test_reader_brief.py` 为 7 passed，Reader Brief latest/date、Reader
+    Brief quality、documentation contract 和 docs freshness 均通过。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-18dbc78514f896d27e6c8547
+  task_id: REPORT-053
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统验证
+    notes: '2026-05-28: 新增并进入 IN_PROGRESS，原因：REPORT-047~052 已完成治理底座，但每日读者入口仍需要从“可用汇总”升级为“先结论、再证据、再计算逻辑、最后详细链接”的
+      HTML v1。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader Brief HTML v1
+      增强、CLI alias/latest、direct dispatcher、文档和测试；验证通过目标 pytest、ruff、black。2026-06-09:
+      从 VALIDATING 改为 DONE，原因：latest 字段级和 HTML 结构复核确认 HTML v1 结构、cadence、navigation、manual
+      review、calculation details 和只读边界满足验收；`tests/test_reader_brief.py` 为 7 passed，Reader
+      Brief latest/date、Reader Brief quality、documentation contract 和 docs freshness
+      均通过。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:18dbc78514f896d27e6c8547e31dd6ad12213b49923319b361ff2013251dd619
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-053
+  - 报告/Unified Reader Brief HTML v1
+  - P1
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/unified_reader_brief_html_v1_2026-05-28.md`；Unified Reader
+    Brief HTML v1 已完成并通过 latest 真实 artifact 复核；`aits reports reader-brief --date 2026-06-05`
+    与 `--latest` 均生成 `reader_brief_2026-06-05.html/json`，状态 `OK`、warnings=0、`production_effect=none`；JSON
+    包含 `task_cadence_calendar`、`manual_review_queue`、`report_navigation` 和 calculation
+    detail metadata，cadence groups=5、registry reports=166、manual review items=53、navigation
+    items=142 / groups=4，documentation contract status=`PASS`；HTML 包含 Executive Summary、Market
+    Situation、Score &amp; Decision Funnel、Task Cadence Calendar、Manual Review Queue
+    和 Report Navigation，`<details>` count=424，并展示 `production_effect` 与 artifact links；该任务只读汇总既有
+    artifacts，不运行 scoring/backtest/shadow/SEC PIT/weight/docs 上游，不改变 production scoring、weights、position
+    gates 或 trading 行为
+  - '`aits reports reader-brief --date YYYY-MM-DD`、`--as-of YYYY-MM-DD` 和 `--latest`
+    均可生成 `reader_brief_YYYY-MM-DD.html/json`；页面按 Executive Summary、Market Situation、Score
+    & Decision Funnel、Backtest/Outcome、Shadow/Weight、Data Quality/PIT、Task Cadence
+    Calendar、Manual Review Queue、Report Navigation 顺序组织；只读读取既有 artifacts，不运行 scoring/backtest/shadow/SEC
+    PIT/weight/docs 上游；缺可选 artifact 降级显示；每个 production-sensitive 区块显示 `production_effect`；测试覆盖
+    JSON schema、HTML、missing degraded mode、source links、manual review 和 cadence calendar'
+  - '2026-05-28: 新增并进入 IN_PROGRESS，原因：REPORT-047~052 已完成治理底座，但每日读者入口仍需要从“可用汇总”升级为“先结论、再证据、再计算逻辑、最后详细链接”的
+    HTML v1。2026-05-28: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 Reader Brief HTML v1 增强、CLI
+    alias/latest、direct dispatcher、文档和测试；验证通过目标 pytest、ruff、black。2026-06-09: 从 VALIDATING
+    改为 DONE，原因：latest 字段级和 HTML 结构复核确认 HTML v1 结构、cadence、navigation、manual review、calculation
+    details 和只读边界满足验收；`tests/test_reader_brief.py` 为 7 passed，Reader Brief latest/date、Reader
+    Brief quality、documentation contract 和 docs freshness 均通过。'
+  docs_links:
+  - docs/requirements/unified_reader_brief_html_v1_2026-05-28.md
+  terminal: true
+  canonical_row_sha256: 18dbc78514f896d27e6c8547e31dd6ad12213b49923319b361ff2013251dd619
+last_event_id: legacy-import-18dbc78514f896d27e6c8547
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 1a7372e56ae42438a276bb0a8b6d4df4a2ec5a5dfb37bf0de1b1456a76706f53

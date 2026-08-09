@@ -1,0 +1,50 @@
+schema_version: arch_005_s5_cutover_manifest.v1
+status: PASS
+task_id: ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+owner_decision: owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1
+exact_start_base: 7cfc81d6ab9d992c6c45e1084e22b33b9560d519
+final_import_source_commit: 7cfc81d6ab9d992c6c45e1084e22b33b9560d519
+source_of_truth_before: LEGACY_MARKDOWN_ONLY
+source_of_truth_after: ARCH_005_TASK_REGISTRY
+legacy_documents:
+- partition: active
+  path: docs/task_register.md
+  sha256: 99d7f726a78327faecf14346ca5b1f3eb37d1fa53016be384897480fe172fd77
+  byte_count: 1717555
+  task_count: 469
+- partition: completed
+  path: docs/task_register_completed.md
+  sha256: 618e110bcfb7db707513d8cfef242f5db55185c93fa86ed56e9bf17238b851a6
+  byte_count: 1100362
+  task_count: 505
+shadow_v2:
+  path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  sha256: 3ce6125ecdc65f78b7f4e513fc8675a65085069cedbee4b390423c97d736b8bf
+  index_checksum: f45135ff312290363ce505801f0a6a9595926d5d519503c78f9f4bef15590f9d
+  task_count: 974
+  cutover_performed: false
+canonical_import:
+  task_count: 974
+  projection_sha256: 4dd79fc6300ff5cebd041341cfcce8ba7133fdf0b4499226b456f9de33ec0bf3
+  missing_task_count: 0
+  duplicate_task_count: 0
+  semantic_parity: PASS
+templates:
+- partition: active
+  path: inputs/architecture/arch_005_s5_active_view_template.md
+  sha256: d0d65245a4585564f58d176802594c8b65be8eb44f3710dd9da03abfa7eb41cf
+  byte_count: 857615
+  removed_task_row_count: 469
+- partition: completed
+  path: inputs/architecture/arch_005_s5_completed_view_template.md
+  sha256: 08af942dbdfaf72b59979c102a406ca1a9ba34e38a2e3788e86d0e64b754f03b
+  byte_count: 1010
+  removed_task_row_count: 505
+rollback:
+  owner: architecture_coordinator_and_project_owner
+  mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
+  automatic_source_reversion_allowed: false
+  canonical_event_loss_allowed: false
+production_effect: none
+broker_action: none
+manifest_checksum: 51160bb4eea174ba135c2de01723dfeb0ab6e02c009d0c640e0f9e1befc7d4fe

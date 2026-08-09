@@ -23,7 +23,6 @@ from ai_trading_system.platform.architecture import (
     shadow_v2_fragment_path,
     validate_s0_baseline,
     validate_shadow_fragment,
-    validate_shadow_index,
     validate_shadow_v2_fragment,
     validate_shadow_v2_index,
     write_shadow_fragments,
@@ -360,8 +359,7 @@ def test_s0_rejects_terminal_partition_drift(tmp_path: Path) -> None:
         )
 
 
-def test_repository_s0_s1_artifacts_are_fresh_and_replayable() -> None:
-    documents = load_legacy_documents(PROJECT_ROOT)
+def test_repository_s0_s1_artifacts_are_immutable_final_import_evidence() -> None:
     baseline = safe_load_yaml_path(
         PROJECT_ROOT / "inputs/architecture/arch_005_task_registry_baseline.yaml"
     )
@@ -370,22 +368,14 @@ def test_repository_s0_s1_artifacts_are_fresh_and_replayable() -> None:
     )
     assert isinstance(baseline, dict)
     assert isinstance(index, dict)
-    validate_s0_baseline(baseline, documents=documents)
     records = index["fragments"]
     fragments = load_shadow_fragments(project_root=PROJECT_ROOT, records=records)
-    rebuilt = build_shadow_index(
-        baseline=baseline,
-        documents=documents,
-        fragments=fragments,
-        fragment_files=records,
-    )
-    validate_shadow_index(index, baseline=baseline, documents=documents)
-
-    assert rebuilt == index
+    for fragment in fragments:
+        validate_shadow_fragment(fragment)
     assert index["task_count"] == baseline["inventory"]["total_task_count"]
     assert index["missing_task_count"] == 0
     assert index["duplicate_task_count"] == 0
-    assert all(view["byte_identical"] for view in index["generated_views"])
+    assert baseline["source_of_truth"]["cutover_performed"] is False
 
     v2_index = safe_load_yaml_path(
         PROJECT_ROOT / "inputs/architecture/arch_005_task_shadow_v2_index.yaml"
@@ -396,20 +386,24 @@ def test_repository_s0_s1_artifacts_are_fresh_and_replayable() -> None:
         project_root=PROJECT_ROOT,
         records=v2_records,
     )
-    rebuilt_v2 = build_shadow_v2_index(
-        baseline=baseline,
-        documents=documents,
-        fragments=v2_fragments,
-        fragment_files=v2_records,
+    for fragment in v2_fragments:
+        validate_shadow_v2_fragment(fragment)
+
+    manifest = safe_load_yaml_path(
+        PROJECT_ROOT / "inputs/architecture/arch_005_s5_cutover_manifest.yaml"
     )
-    validate_shadow_v2_index(
-        v2_index,
-        baseline=baseline,
-        documents=documents,
-    )
-    assert rebuilt_v2 == v2_index
-    current_consumers = characterize_task_register_consumers(PROJECT_ROOT)
-    assert v2_index["consumer_inventory"] == current_consumers
+    assert isinstance(manifest, dict)
+    assert manifest["source_of_truth_before"] == "LEGACY_MARKDOWN_ONLY"
+    assert manifest["source_of_truth_after"] == "ARCH_005_TASK_REGISTRY"
+    assert manifest["shadow_v2"] == {
+        "path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "sha256": _sha256_file(
+            PROJECT_ROOT / "inputs/architecture/arch_005_task_shadow_v2_index.yaml"
+        ),
+        "index_checksum": v2_index["index_checksum"],
+        "task_count": v2_index["task_count"],
+        "cutover_performed": False,
+    }
     assert v2_index["cutover_performed"] is False
 
 
@@ -436,6 +430,12 @@ def _write_registers(root: Path, *, active_status: str) -> None:
     (docs / "task_register_completed.md").write_bytes(
         ("# Completed\r\n\r\n" + header + completed_row).encode("utf-8")
     )
+
+
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _write_task_rows(

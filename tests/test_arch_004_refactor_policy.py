@@ -3847,6 +3847,10 @@ DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION = (
     "phase_devx_006d_report_catalog_flow_lossless_fragmentation"
 )
 LATEST_COMPATIBILITY_SECTION = DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION
+ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION = (
+    "phase_arch_005_s5_canonical_task_source_cutover"
+)
+LATEST_COMPATIBILITY_SECTION = ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -12528,7 +12532,24 @@ def _arch_005s4d_s2_all_superseded_live_source_paths() -> frozenset[str]:
         paths |= _trading_2503_atlas_qqq_options_projection_renderer_all_current_authority_paths()
     elif TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION in baseline:
         paths |= _trading_2501_atlas_qqq_options_owner_review_all_current_authority_paths()
+    if ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION in baseline:
+        paths |= frozenset(
+            str(path)
+            for path in baseline[ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION][
+                "superseded_live_source_paths"
+            ]
+        )
     return paths
+
+
+@cache
+def _arch_005_s5_retired_shadow_fragment_paths() -> frozenset[str]:
+    section = _compatibility_baseline()[ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION]
+    return frozenset(
+        str(path)
+        for authority in section["retired_shadow_authorities"]
+        for path in authority["fragment_paths"]
+    )
 
 
 def _raw_source_sha256(source: dict[str, object]) -> str:
@@ -12969,6 +12990,8 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION,
         TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION,
         DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+        DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION,
+        ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -13054,6 +13077,8 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION,
         TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION,
         DEVX_006C_COMPATIBILITY_AUTHORITY_SECTION,
+        DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION,
+        ARCH_005_S5_CANONICAL_TASK_SOURCE_CUTOVER_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -25377,9 +25402,9 @@ def test_devx_006_task_shadow_v2_is_current_hash_authority() -> None:
         "loader_hash_replay": "PASS",
     }
     v2_index = safe_load_yaml_path(Path(fragment_authority["index_path"]))
-    latest_fragment_authority = _compatibility_baseline()[LATEST_COMPATIBILITY_SECTION][
-        "generated_fragment_authority"
-    ]
+    latest_fragment_authority = _compatibility_baseline()[
+        DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_SECTION
+    ]["generated_fragment_authority"]
     assert v2_index["fragment_count"] == latest_fragment_authority["fragment_count"]
     assert v2_index["fragment_count"] > fragment_authority["fragment_count"]
     assert all(
@@ -37720,6 +37745,8 @@ def test_trading_2497_license_export_owner_review_is_current_hash_authority() ->
     assert set(source_paths) == expected
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
+        if str(source["path"]) in _arch_005_s5_retired_shadow_fragment_paths():
+            continue
         assert _raw_source_sha256(source) == source["sha256"], source["path"]
 
     assert phase["evidence"] == {
@@ -38085,6 +38112,7 @@ def test_trading_2500_daily_capability_gate_retry_is_current_hash_authority() ->
         successor_paths = _trading_2500_qc_daily_capability_gate_retry_evidence_review_superseded_live_source_paths()  # noqa: E501
     else:
         successor_paths = frozenset()
+    successor_paths |= _arch_005_s5_retired_shadow_fragment_paths()
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
         if str(source["path"]) in successor_paths:

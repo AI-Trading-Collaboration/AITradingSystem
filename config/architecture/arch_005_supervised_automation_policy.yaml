@@ -101,7 +101,7 @@ commands:
     timeout_seconds: 300
     validation_tier: research-evidence-validation
 safety:
-  source_of_truth: LEGACY_MARKDOWN_ONLY
+  source_of_truth: ARCH_005_TASK_REGISTRY
   task_governance_status_mutation_allowed: false
   generated_task_view_write_allowed: false
   automatic_commit_allowed: false

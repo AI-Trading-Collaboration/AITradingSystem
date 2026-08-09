@@ -116,7 +116,7 @@ def test_reviewed_policy_and_plan_keep_human_gate_closed(tmp_path: Path) -> None
 
     assert policy.status == "REVIEWED_SUPERVISED_BASELINE"
     assert policy.max_workers == 2
-    assert policy.source_of_truth == "LEGACY_MARKDOWN_ONLY"
+    assert policy.source_of_truth == "ARCH_005_TASK_REGISTRY"
     assert plan["status"] == "PASS"
     assert plan["worker_count"] == 2
     assert plan["dispatch_allowed_by_this_artifact"] is False

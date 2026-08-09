@@ -1,0 +1,132 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  task_id_sha256: 8d8de50dbf2aecd71929a0c09f11eb706a0ff0035733c5cdfeb12f1e3eb0717d
+task_record:
+  task_id: TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  title: null
+  domain: External validation / verified-account retry of the QQQ Options DAILY capability
+    gate
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: TRADING-2499 engineering coordinator：只消费本任务的 reviewed GO，开发严格离线的 DAILY
+    primary backtest contract；未来任何 QuantConnect run 仍需新的独立授权
+  requirement_refs:
+  - docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。Owner/independent
+    reviewer 已接受 ordinary-pushed exact evidence；strict review loader 从 canonical evidence
+    事实派生确认项，terminal decision=`GO_FOR_DAILY_ENGINEERING_ONLY`、successor scope=`DAILY_ENGINEERING_ONLY`。本任务
+    blocker 已解除，但 2493 broader NO-GO、license/download、完整历史覆盖、选券/执行参数与外部 run 权限均未解除。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Tracked review 必须严格绑定 evidence file/content、project/code/build/backtest/result
+      artifact、五 session aggregates 与零 orders/fills/raw rows；伪造 PASS、任一 semantic FAIL/UNKNOWN、identity/hash/range
+      mismatch 均 fail closed。Reviewed GO 只允许登记 2499 离线工程合同，不得激活 2485 selection、2486
+      execution、投资解释、paper/live/broker/production 或新的外部动作。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 68a2c967a213f88cf3a77c95e4129a0d30f0c0a85e2aed689ab1ffa5a66caedf
+  cell_count: 8
+  all_cells:
+  - TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  - External validation / verified-account retry of the QQQ Options DAILY capability
+    gate
+  - P0
+  - BASELINE_DONE
+  - TRADING-2499 engineering coordinator：只消费本任务的 reviewed GO，开发严格离线的 DAILY primary
+    backtest contract；未来任何 QuantConnect run 仍需新的独立授权
+  - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。Owner/independent
+    reviewer 已接受 ordinary-pushed exact evidence；strict review loader 从 canonical evidence
+    事实派生确认项，terminal decision=`GO_FOR_DAILY_ENGINEERING_ONLY`、successor scope=`DAILY_ENGINEERING_ONLY`。本任务
+    blocker 已解除，但 2493 broader NO-GO、license/download、完整历史覆盖、选券/执行参数与外部 run 权限均未解除。
+  - Tracked review 必须严格绑定 evidence file/content、project/code/build/backtest/result
+    artifact、五 session aggregates 与零 orders/fills/raw rows；伪造 PASS、任一 semantic FAIL/UNKNOWN、identity/hash/range
+    mismatch 均 fail closed。Reviewed GO 只允许登记 2499 离线工程合同，不得激活 2485 selection、2486
+    execution、投资解释、paper/live/broker/production 或新的外部动作。
+  - 2026-08-08：Owner attestation=`owner_attestation:TRADING-2500:2026-08-08:accept_qc_daily_capability_retry_evidence_v1`；review
+    file/content=`2c5ed5b8...132a`/`46690e11...aded`，evidence file/content=`829cd5de...c3b0`/`c19c2601...609`，result
+    artifact=`3e3b41b5...a09`。FREE / `Free Node`、五 session、63,982 data points、0 orders/0
+    fills、project mutation=0、second run=false、raw rows=false 均由 canonical evidence
+    重放；`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1|External
+    validation / verified-account retry of the QQQ Options DAILY capability gate|P0|BASELINE_DONE|TRADING-2499
+    engineering coordinator：只消费本任务的 reviewed GO，开发严格离线的 DAILY primary backtest contract；未来任何
+    QuantConnect run 仍需新的独立授权|详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。Owner/independent
+    reviewer 已接受 ordinary-pushed exact evidence；strict review loader 从 canonical evidence
+    事实派生确认项，terminal decision=`GO_FOR_DAILY_ENGINEERING_ONLY`、successor scope=`DAILY_ENGINEERING_ONLY`。本任务
+    blocker 已解除，但 2493 broader NO-GO、license/download、完整历史覆盖、选券/执行参数与外部 run 权限均未解除。|Tracked
+    review 必须严格绑定 evidence file/content、project/code/build/backtest/result artifact、五
+    session aggregates 与零 orders/fills/raw rows；伪造 PASS、任一 semantic FAIL/UNKNOWN、identity/hash/range
+    mismatch 均 fail closed。Reviewed GO 只允许登记 2499 离线工程合同，不得激活 2485 selection、2486
+    execution、投资解释、paper/live/broker/production 或新的外部动作。|2026-08-08：Owner attestation=`owner_attestation:TRADING-2500:2026-08-08:accept_qc_daily_capability_retry_evidence_v1`；review
+    file/content=`2c5ed5b8...132a`/`46690e11...aded`，evidence file/content=`829cd5de...c3b0`/`c19c2601...609`，result
+    artifact=`3e3b41b5...a09`。FREE / `Free Node`、五 session、63,982 data points、0 orders/0
+    fills、project mutation=0、second run=false、raw rows=false 均由 canonical evidence
+    重放；`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-68a2c967a213f88cf3a77c95
+  task_id: TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2499 engineering coordinator：只消费本任务的 reviewed GO，开发严格离线的 DAILY
+      primary backtest contract；未来任何 QuantConnect run 仍需新的独立授权
+    notes: 2026-08-08：Owner attestation=`owner_attestation:TRADING-2500:2026-08-08:accept_qc_daily_capability_retry_evidence_v1`；review
+      file/content=`2c5ed5b8...132a`/`46690e11...aded`，evidence file/content=`829cd5de...c3b0`/`c19c2601...609`，result
+      artifact=`3e3b41b5...a09`。FREE / `Free Node`、五 session、63,982 data points、0
+      orders/0 fills、project mutation=0、second run=false、raw rows=false 均由 canonical
+      evidence 重放；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:68a2c967a213f88cf3a77c95e4129a0d30f0c0a85e2aed689ab1ffa5a66caedf
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2500_QC_QQQ_OPTIONS_DAILY_CAPABILITY_GATE_RETRY_V1
+  - External validation / verified-account retry of the QQQ Options DAILY capability
+    gate
+  - P0
+  - BASELINE_DONE
+  - TRADING-2499 engineering coordinator：只消费本任务的 reviewed GO，开发严格离线的 DAILY primary
+    backtest contract；未来任何 QuantConnect run 仍需新的独立授权
+  - 详见 `docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md`。Owner/independent
+    reviewer 已接受 ordinary-pushed exact evidence；strict review loader 从 canonical evidence
+    事实派生确认项，terminal decision=`GO_FOR_DAILY_ENGINEERING_ONLY`、successor scope=`DAILY_ENGINEERING_ONLY`。本任务
+    blocker 已解除，但 2493 broader NO-GO、license/download、完整历史覆盖、选券/执行参数与外部 run 权限均未解除。
+  - Tracked review 必须严格绑定 evidence file/content、project/code/build/backtest/result
+    artifact、五 session aggregates 与零 orders/fills/raw rows；伪造 PASS、任一 semantic FAIL/UNKNOWN、identity/hash/range
+    mismatch 均 fail closed。Reviewed GO 只允许登记 2499 离线工程合同，不得激活 2485 selection、2486
+    execution、投资解释、paper/live/broker/production 或新的外部动作。
+  - 2026-08-08：Owner attestation=`owner_attestation:TRADING-2500:2026-08-08:accept_qc_daily_capability_retry_evidence_v1`；review
+    file/content=`2c5ed5b8...132a`/`46690e11...aded`，evidence file/content=`829cd5de...c3b0`/`c19c2601...609`，result
+    artifact=`3e3b41b5...a09`。FREE / `Free Node`、五 session、63,982 data points、0 orders/0
+    fills、project mutation=0、second run=false、raw rows=false 均由 canonical evidence
+    重放；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2500_QC_QQQ_Options_Daily_Capability_Gate_Retry_V1.md
+  terminal: false
+  canonical_row_sha256: 68a2c967a213f88cf3a77c95e4129a0d30f0c0a85e2aed689ab1ffa5a66caedf
+last_event_id: legacy-import-68a2c967a213f88cf3a77c95
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 2b7c35e2970d3f33e10f60b0ebda76cfa3e606162f7144786cce0eafc8ebb1c8

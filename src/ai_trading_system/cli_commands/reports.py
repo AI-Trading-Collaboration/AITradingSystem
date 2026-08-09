@@ -100,6 +100,9 @@ from ai_trading_system.periodic_investment_review import (
     default_periodic_investment_review_report_path,
     write_periodic_investment_review_report,
 )
+from ai_trading_system.platform.architecture.task_registry_canonical import (
+    canonical_task_register_view_path,
+)
 from ai_trading_system.platform.reporting import write_owner_daily_brief_sidecars
 from ai_trading_system.prediction_ledger import (
     DEFAULT_PREDICTION_OUTCOMES_PATH,
@@ -3918,13 +3921,9 @@ def research_roadmap_dashboard_command(
         report_index_payload=raw_index,
         report_index_path=source_index,
         task_register_path=task_register_path
-        or project_root
-        / "docs"
-        / "task_register.md",
+        or canonical_task_register_view_path(project_root, "active"),
         completed_register_path=completed_register_path
-        or project_root
-        / "docs"
-        / "task_register_completed.md",
+        or canonical_task_register_view_path(project_root, "completed"),
         project_root=project_root,
     )
     report_json = json_output_path or default_research_roadmap_dashboard_json_path(

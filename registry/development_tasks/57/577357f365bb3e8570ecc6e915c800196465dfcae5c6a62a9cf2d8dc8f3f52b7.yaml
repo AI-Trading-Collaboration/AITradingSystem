@@ -1,0 +1,96 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-726_PIT_FEATURE_STORE_SNAPSHOT_REGISTRY
+  task_id_sha256: 577357f365bb3e8570ecc6e915c800196465dfcae5c6a62a9cf2d8dc8f3f52b7
+task_record:
+  task_id: TRADING-726_PIT_FEATURE_STORE_SNAPSHOT_REGISTRY
+  title: null
+  domain: Data foundation / PIT feature store and snapshot registry
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-726_to_733_Data_Foundation_for_Large_Scale_Strategy_Research.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-726_to_733_Data_Foundation_for_Large_Scale_Strategy_Research.md`；建立
+    PIT feature store、snapshot manifest、source manifest 和 as-of query baseline；validation-only
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits data pit-feature-store build-snapshot'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 78d878ea3050cc70c26c02325b16be357e365623c5fa8284fb76d3af5aec216a
+  cell_count: 10
+  all_cells:
+  - TRADING-726_PIT_FEATURE_STORE_SNAPSHOT_REGISTRY
+  - Data foundation / PIT feature store and snapshot registry
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-726_to_733_Data_Foundation_for_Large_Scale_Strategy_Research.md`；建立
+    PIT feature store、snapshot manifest、source manifest 和 as-of query baseline；validation-only
+  - '`aits data pit-feature-store build-snapshot'
+  - audit
+  - query` 可运行；pit_snapshot_manifest_present=true；available_time 覆盖率可见；lookahead_violation_count=0；current_view_only_feature_count
+    和 missing_source_manifest_count 可见；production_effect=none
+  - '2026-06-21: validation-only baseline 已实现并进入 VALIDATING；新增 PIT feature/source
+    availability config、schema、snapshot manifest、availability audit、as-of query CLI
+    与 focused tests；fast-unit、contract-validation、report-validation 已通过。'
+  raw_line: '|TRADING-726_PIT_FEATURE_STORE_SNAPSHOT_REGISTRY|Data foundation / PIT
+    feature store and snapshot registry|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-726_to_733_Data_Foundation_for_Large_Scale_Strategy_Research.md`；建立
+    PIT feature store、snapshot manifest、source manifest 和 as-of query baseline；validation-only|`aits
+    data pit-feature-store build-snapshot|audit|query` 可运行；pit_snapshot_manifest_present=true；available_time
+    覆盖率可见；lookahead_violation_count=0；current_view_only_feature_count 和 missing_source_manifest_count
+    可见；production_effect=none|2026-06-21: validation-only baseline 已实现并进入 VALIDATING；新增
+    PIT feature/source availability config、schema、snapshot manifest、availability audit、as-of
+    query CLI 与 focused tests；fast-unit、contract-validation、report-validation 已通过。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: true
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-78d878ea3050cc70c26c0232
+  task_id: TRADING-726_PIT_FEATURE_STORE_SNAPSHOT_REGISTRY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: audit
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:78d878ea3050cc70c26c02325b16be357e365623c5fa8284fb76d3af5aec216a
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-726_PIT_FEATURE_STORE_SNAPSHOT_REGISTRY
+  - Data foundation / PIT feature store and snapshot registry
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-726_to_733_Data_Foundation_for_Large_Scale_Strategy_Research.md`；建立
+    PIT feature store、snapshot manifest、source manifest 和 as-of query baseline；validation-only
+  - '`aits data pit-feature-store build-snapshot'
+  - audit
+  docs_links:
+  - docs/requirements/TRADING-726_to_733_Data_Foundation_for_Large_Scale_Strategy_Research.md
+  terminal: false
+  canonical_row_sha256: 7fd70ed5727e8c8a2521e3a64b07ed503f1ae60c6c74d1dd06eb92d66c82478c
+last_event_id: legacy-import-78d878ea3050cc70c26c0232
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: dc6e523f1031d16a55487830d7355831b6d7544bf2448f1277dfce8aca3dcf4b

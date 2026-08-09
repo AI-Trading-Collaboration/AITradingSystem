@@ -629,6 +629,7 @@ def build_repository_authority(
         section=section,
     )
     rendered_fragments = [(section_id, relative, record, fragment_bytes)]
+    latest_source_paths = c_source_paths
     d_policy_path = root / "config/architecture/devx_006d_report_catalog_flow_authority.yaml"
     if d_policy_path.exists():
         d_section_id, d_section = _devx_006d_section(
@@ -641,16 +642,26 @@ def build_repository_authority(
             section_id=d_section_id,
             section=d_section,
         )
-        rendered_fragments.append(
-            (d_section_id, d_relative, d_record, d_fragment_bytes)
+        rendered_fragments.append((d_section_id, d_relative, d_record, d_fragment_bytes))
+        latest_source_paths = list(d_section["superseded_live_source_paths"])
+    s5_policy_path = root / "config/architecture/arch_005_s5_task_source_cutover.yaml"
+    if s5_policy_path.exists():
+        s5_section_id, s5_section = _arch_005_s5_section(
+            root,
+            policy=policy,
+            inherited_source_paths=latest_source_paths,
         )
+        s5_relative, s5_record, s5_fragment_bytes = render_fragment(
+            section_id=s5_section_id,
+            section=s5_section,
+        )
+        rendered_fragments.append((s5_section_id, s5_relative, s5_record, s5_fragment_bytes))
     index, index_bytes = render_index(
         policy=policy,
         fragments=rendered_fragments,
     )
     fragment_paths = [
-        Path(policy["fragment_root"]) / Path(fragment[1])
-        for fragment in rendered_fragments
+        Path(policy["fragment_root"]) / Path(fragment[1]) for fragment in rendered_fragments
     ]
     latest_section_id, _, latest_record, latest_fragment_bytes = rendered_fragments[-1]
     fragment_path = fragment_paths[-1]
@@ -665,6 +676,12 @@ def build_repository_authority(
             write_bytes_atomic(root / path, rendered)
         write_bytes_atomic(root / index_path, index_bytes)
         write_bytes_atomic(root / inventory_path, inventory_bytes)
+        fragment_root = (root / _portable_path(policy["fragment_root"], "fragment_root")).resolve()
+        fragment_root.relative_to(root)
+        expected_fragments = {(root / path).resolve() for path in fragment_paths}
+        for stale in sorted(fragment_root.rglob("*.json")):
+            if stale.resolve() not in expected_fragments:
+                stale.unlink()
     return {
         "status": "PASS",
         "fragment_path": fragment_path.as_posix(),
@@ -700,9 +717,7 @@ def _devx_006d_section(
     d_policy_path = "config/architecture/devx_006d_report_catalog_flow_authority.yaml"
     d_policy = _mapping(
         load_strict_yaml_text(
-            _regular_path(root, d_policy_path, "devx_006d_policy").read_text(
-                encoding="utf-8"
-            ),
+            _regular_path(root, d_policy_path, "devx_006d_policy").read_text(encoding="utf-8"),
             label=d_policy_path,
         ),
         "devx_006d_policy",
@@ -720,9 +735,7 @@ def _devx_006d_section(
     ).read_bytes()
     d_index = _strict_json_bytes(d_index_content, d_index_path)
     d_inventory = _strict_json_bytes(d_inventory_content, d_inventory_path)
-    if d_index.get("status") != "PASS" or d_index.get("source_of_truth") != (
-        "LEGACY_MONOLITH"
-    ):
+    if d_index.get("status") != "PASS" or d_index.get("source_of_truth") != ("LEGACY_MONOLITH"):
         _fail("AUTHORITY_DEVX_006D_INDEX_INVALID", d_index_path)
     if d_inventory.get("status") != "PASS" or d_inventory.get("cutover_ready") is not False:
         _fail("AUTHORITY_DEVX_006D_INVENTORY_INVALID", d_inventory_path)
@@ -898,6 +911,257 @@ def _task_shadow_fragment_authority(
         "task_registry_baseline.inventory.completed_task_count",
     )
     return inherited
+
+
+def _arch_005_s5_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+    inherited_source_paths: Sequence[str],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_arch_005_s5_canonical_task_source_cutover"
+    s5_policy_path = "config/architecture/arch_005_s5_task_source_cutover.yaml"
+    s5_policy = _mapping(
+        load_strict_yaml_text(
+            _regular_path(root, s5_policy_path, "arch_005_s5_policy").read_text(encoding="utf-8"),
+            label=s5_policy_path,
+        ),
+        "arch_005_s5_policy",
+    )
+    canonical = _mapping(s5_policy.get("canonical"), "arch_005_s5_policy.canonical")
+    index_path = _portable_path(canonical.get("index_path"), "arch_005_s5.index_path")
+    manifest_path = _portable_path(
+        canonical.get("manifest_path"),
+        "arch_005_s5.manifest_path",
+    )
+    inventory_path = _portable_path(
+        canonical.get("consumer_inventory_path"),
+        "arch_005_s5.consumer_inventory_path",
+    )
+    index_content = _regular_path(root, index_path, "arch_005_s5_index").read_bytes()
+    manifest_content = _regular_path(root, manifest_path, "arch_005_s5_manifest").read_bytes()
+    inventory_content = _regular_path(root, inventory_path, "arch_005_s5_inventory").read_bytes()
+    index = _mapping(
+        load_strict_yaml_text(index_content.decode("utf-8"), label=index_path),
+        "arch_005_s5_index",
+    )
+    manifest = _mapping(
+        load_strict_yaml_text(manifest_content.decode("utf-8"), label=manifest_path),
+        "arch_005_s5_manifest",
+    )
+    inventory = _mapping(
+        load_strict_yaml_text(inventory_content.decode("utf-8"), label=inventory_path),
+        "arch_005_s5_inventory",
+    )
+    if (
+        index.get("status") != "PASS"
+        or index.get("source_of_truth") != "ARCH_005_TASK_REGISTRY"
+        or index.get("cutover_performed") is not True
+    ):
+        _fail("AUTHORITY_ARCH_005_S5_INDEX_INVALID", index_path)
+    if manifest.get("status") != "PASS" or manifest.get("source_of_truth_after") != (
+        "ARCH_005_TASK_REGISTRY"
+    ):
+        _fail("AUTHORITY_ARCH_005_S5_MANIFEST_INVALID", manifest_path)
+    if (
+        inventory.get("status") != "PASS"
+        or inventory.get("manual_semantic_runtime_consumer_count") != 0
+        or inventory.get("manual_writer_count") != 0
+    ):
+        _fail("AUTHORITY_ARCH_005_S5_INVENTORY_INVALID", inventory_path)
+    s5_source_paths = [
+        "AGENTS.md",
+        s5_policy_path,
+        "config/architecture/arch_004_g2_5_readiness.yaml",
+        "config/architecture/arch_005_parallel_control_policy.yaml",
+        "config/architecture/arch_005_supervised_automation_policy.yaml",
+        "docs/artifact_catalog.md",
+        "docs/requirements/ARCH-005_Parallel_Development_Control_Plane.md",
+        "docs/requirements/ARCH-005S5_Canonical_Task_Source_Cutover.md",
+        "docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        "docs/task_register_completed.md",
+        index_path,
+        manifest_path,
+        inventory_path,
+        "inputs/architecture/arch_005_s5_active_view_template.md",
+        "inputs/architecture/arch_005_s5_completed_view_template.md",
+        "inputs/architecture/arch_005_s5_rollback_rehearsal/rollback_rehearsal.yaml",
+        "inputs/architecture/arch_005_s5_rollback_rehearsal/task_register.md",
+        "inputs/architecture/arch_005_s5_rollback_rehearsal/task_register_completed.md",
+        "scripts/architecture_arch005_control_plane.py",
+        "scripts/architecture_arch005_registry.py",
+        "scripts/architecture_arch005_task_source.py",
+        "src/ai_trading_system/platform/architecture/__init__.py",
+        "src/ai_trading_system/platform/architecture/parallel_control_dispatch.py",
+        "src/ai_trading_system/platform/architecture/parallel_control_kernel.py",
+        "src/ai_trading_system/platform/architecture/parallel_control_scheduler.py",
+        "src/ai_trading_system/platform/architecture/supervised_automation.py",
+        "src/ai_trading_system/cli_commands/feedback.py",
+        "src/ai_trading_system/cli_commands/reports.py",
+        "src/ai_trading_system/platform/architecture/task_registry_canonical.py",
+        "src/ai_trading_system/reports/research_roadmap_dashboard.py",
+        "src/ai_trading_system/reports/research_safety_boundary.py",
+        "src/ai_trading_system/reports/task_register_consistency.py",
+        "tests/test_arch_005_s5_task_source_cutover.py",
+        "tests/test_arch_005_s2_kernel.py",
+        "tests/test_arch_005_s4_dispatch.py",
+        "tests/test_arch_005_s4a_supervised_automation.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_arch_005_task_registry_shadow.py",
+        "tests/test_trading2452_architecture_contract.py",
+    ]
+    source_paths = list(dict.fromkeys([*inherited_source_paths, *s5_source_paths]))
+    retired_shadow_authorities = _retired_task_shadow_authorities(root)
+    retired_shadow_fragment_paths = [
+        path
+        for authority in retired_shadow_authorities
+        for path in authority["fragment_paths"]
+    ]
+    superseded_paths = list(
+        dict.fromkeys([*source_paths, *retired_shadow_fragment_paths])
+    )
+    task_count = _positive_or_zero_int(index.get("task_count"), "arch_005_s5.task_count")
+    fragment_count = _positive_or_zero_int(
+        index.get("fragment_count"),
+        "arch_005_s5.fragment_count",
+    )
+    if task_count != fragment_count:
+        _fail("AUTHORITY_ARCH_005_S5_TASK_FRAGMENT_COUNT", index_path)
+    if (
+        index.get("manual_row_move_workflow_enabled") is not False
+        or _positive_or_zero_int(
+            index.get("governance_cycle_count"),
+            "arch_005_s5.governance_cycle_count",
+        )
+        < 2
+    ):
+        _fail("AUTHORITY_ARCH_005_S5_SELF_HOST_INCOMPLETE", index_path)
+    return section_id, {
+        "schema_version": "arch_005_s5_canonical_task_source_cutover.v1",
+        "task_id": _string(s5_policy.get("task_id"), "arch_005_s5.task_id"),
+        "status": "ACTIVE",
+        "exact_start_base": _string(
+            s5_policy.get("exact_start_base"),
+            "arch_005_s5.exact_start_base",
+        ),
+        "owner_decision": _string(
+            s5_policy.get("owner_decision"),
+            "arch_005_s5.owner_decision",
+        ),
+        "legacy_prefix_sha256": policy["legacy_prefix"]["file_sha256"],
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "task_registry_authority": {
+            "source_of_truth": "ARCH_005_TASK_REGISTRY",
+            "cutover_performed": True,
+            "index_path": index_path,
+            "index_sha256": _digest(index_content),
+            "manifest_path": manifest_path,
+            "manifest_sha256": _digest(manifest_content),
+            "consumer_inventory_path": inventory_path,
+            "consumer_inventory_sha256": _digest(inventory_content),
+            "fragment_root": _portable_path(
+                canonical.get("fragment_root"),
+                "arch_005_s5.fragment_root",
+            ),
+            "task_count": task_count,
+            "active_task_count": _positive_or_zero_int(
+                index.get("active_task_count"),
+                "arch_005_s5.active_task_count",
+            ),
+            "completed_task_count": _positive_or_zero_int(
+                index.get("completed_task_count"),
+                "arch_005_s5.completed_task_count",
+            ),
+            "fragment_count": fragment_count,
+            "governance_cycle_count": _positive_or_zero_int(
+                index.get("governance_cycle_count"),
+                "arch_005_s5.governance_cycle_count",
+            ),
+            "manual_row_move_workflow_enabled": index.get("manual_row_move_workflow_enabled"),
+            "final_chain_sha256": _sha256(
+                index.get("final_chain_sha256"),
+                "arch_005_s5.final_chain_sha256",
+            ),
+            "rollback_mode": "OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY",
+        },
+        "retired_shadow_authorities": retired_shadow_authorities,
+        "consumer_contract": {
+            "inventory_status": inventory["status"],
+            "consumer_count": _positive_or_zero_int(
+                inventory.get("consumer_count"),
+                "arch_005_s5.consumer_count",
+            ),
+            "manual_semantic_runtime_consumer_count": 0,
+            "manual_writer_count": 0,
+        },
+        "superseded_live_source_paths": superseded_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _retired_task_shadow_authorities(root: Path) -> list[dict[str, Any]]:
+    specs = (
+        (
+            "ARCH_005_TASK_SHADOW_V1",
+            "inputs/architecture/arch_005_task_shadow_index.yaml",
+            "registry/development_tasks_shadow",
+        ),
+        (
+            "ARCH_005_TASK_SHADOW_V2",
+            "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+            "registry/development_tasks_shadow_v2",
+        ),
+    )
+    authorities: list[dict[str, Any]] = []
+    for authority_id, index_path, fragment_root in specs:
+        index_file = _regular_path(root, index_path, f"{authority_id}.index")
+        index_content = index_file.read_bytes()
+        index = _mapping(
+            load_strict_yaml_text(index_content.decode("utf-8"), label=index_path),
+            f"{authority_id}.index",
+        )
+        raw_records = index.get("fragments")
+        if not isinstance(raw_records, list) or not raw_records:
+            _fail("AUTHORITY_ARCH_005_S5_SHADOW_INDEX_INVALID", index_path)
+        fragment_paths: list[str] = []
+        for position, raw_record in enumerate(raw_records):
+            record = _mapping(raw_record, f"{authority_id}.fragments[{position}]")
+            path = _portable_path(
+                record.get("path"),
+                f"{authority_id}.fragments[{position}].path",
+            )
+            if not path.startswith(f"{fragment_root}/"):
+                _fail("AUTHORITY_ARCH_005_S5_SHADOW_PATH_INVALID", path)
+            _regular_path(root, path, f"{authority_id}.fragment")
+            fragment_paths.append(path)
+        if len(fragment_paths) != len(set(fragment_paths)):
+            _fail("AUTHORITY_ARCH_005_S5_SHADOW_PATH_DUPLICATE", authority_id)
+        authorities.append(
+            {
+                "authority_id": authority_id,
+                "status": "IMMUTABLE_FINAL_IMPORT_EVIDENCE",
+                "index_path": index_path,
+                "index_sha256": _digest(index_content),
+                "index_checksum": _sha256(
+                    index.get("index_checksum"),
+                    f"{authority_id}.index_checksum",
+                ),
+                "fragment_root": fragment_root,
+                "fragment_count": len(fragment_paths),
+                "fragment_hash_authority": "INDEX_TRANSITIVE_SHA256",
+                "direct_fragment_hash_expansion": False,
+                "fragment_paths": fragment_paths,
+            }
+        )
+    return authorities
 
 
 def validate_repository_authority(repository_root: Path = Path(".")) -> dict[str, Any]:

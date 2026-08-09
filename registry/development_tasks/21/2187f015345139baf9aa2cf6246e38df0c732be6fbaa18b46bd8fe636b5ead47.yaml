@@ -1,0 +1,132 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  task_id_sha256: 2187f015345139baf9aa2cf6246e38df0c732be6fbaa18b46bd8fe636b5ead47
+task_record:
+  task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  title: null
+  domain: Architecture / shared-checkout writer and operations lease guard
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护guard/telemetry/safe
+    audit合同
+  requirement_refs:
+  - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1、S2只读遥测与post-close
+    safe worktree audit hardening均已闭合；事故事实保留，不回写为zero-read。首轮硬化Full的唯一失败源于测试把已清理的历史candidate目录当作必然存在，production
+    resolver始终正确fail closed；精确环境合同测试修复已完成。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`checkout_worktree_audit.v1`只读入口对dirty/unstaged/staged三个Git调用统一注入exact
+      literal exclusion；portable-lineage回归按历史路径存在性精确断言`HISTORICAL_PORTABLE_CONFLICT`或`PORTABLE_SOURCE_TAMPERED`且四consumer均FAIL；focused、failure-fix
+      Full、post-Full architecture/contract与safe audit均PASS；S5、task source、production与broker不得自动切换。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 89eb58a98cb0c0674ab81108d4a8da48e15ab827b7b6d8f04a6f0962785fb3fe
+  cell_count: 8
+  all_cells:
+  - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  - Architecture / shared-checkout writer and operations lease guard
+  - P0
+  - BASELINE_DONE
+  - project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护guard/telemetry/safe
+    audit合同
+  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1、S2只读遥测与post-close
+    safe worktree audit hardening均已闭合；事故事实保留，不回写为zero-read。首轮硬化Full的唯一失败源于测试把已清理的历史candidate目录当作必然存在，production
+    resolver始终正确fail closed；精确环境合同测试修复已完成。
+  - '`checkout_worktree_audit.v1`只读入口对dirty/unstaged/staged三个Git调用统一注入exact literal
+    exclusion；portable-lineage回归按历史路径存在性精确断言`HISTORICAL_PORTABLE_CONFLICT`或`PORTABLE_SOURCE_TAMPERED`且四consumer均FAIL；focused、failure-fix
+    Full、post-Full architecture/contract与safe audit均PASS；S5、task source、production与broker不得自动切换。'
+  - 2026-07-26：两批snapshot合计23 intents、22 leases、79 events、9 EXPECTED_BLOCK、0 confirmed
+    false block、0 unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
+    evidence ready。候选`b8d774828`已fast-forward并推送main；148个canonical evidence文件逐SHA复核，临时worktree清理释放253,037,884
+    bytes。post-close人工Git audit漏排事件已如实记录并由safe audit直接修复；focused guard/combined=`16/70
+    passed`。硬化首轮Full=`1 failed / 7267 passed / 3 skipped / 643 warnings`，父证据=`full_20260725T163954Z`；直接修复后focused
+    lineage/combined=`24/94 passed`，parent-bound Full=`7268 passed / 3 skipped / 643
+    warnings / 1123.35s`，artifact=`full_20260725T170729Z`；post-Full architecture/contract=`646/275
+    passed`，safe audit PASS。状态恢复`BASELINE_DONE`。S5、task source cutover、production和broker继续未授权。
+  raw_line: '|ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD|Architecture / shared-checkout
+    writer and operations lease guard|P0|BASELINE_DONE|project owner：独立评审两批rollup并决定是否另行提出S5；architecture
+    control-plane owner维护guard/telemetry/safe audit合同|详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1、S2只读遥测与post-close
+    safe worktree audit hardening均已闭合；事故事实保留，不回写为zero-read。首轮硬化Full的唯一失败源于测试把已清理的历史candidate目录当作必然存在，production
+    resolver始终正确fail closed；精确环境合同测试修复已完成。|`checkout_worktree_audit.v1`只读入口对dirty/unstaged/staged三个Git调用统一注入exact
+    literal exclusion；portable-lineage回归按历史路径存在性精确断言`HISTORICAL_PORTABLE_CONFLICT`或`PORTABLE_SOURCE_TAMPERED`且四consumer均FAIL；focused、failure-fix
+    Full、post-Full architecture/contract与safe audit均PASS；S5、task source、production与broker不得自动切换。|2026-07-26：两批snapshot合计23
+    intents、22 leases、79 events、9 EXPECTED_BLOCK、0 confirmed false block、0 unreviewed
+    block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5 evidence ready。候选`b8d774828`已fast-forward并推送main；148个canonical
+    evidence文件逐SHA复核，临时worktree清理释放253,037,884 bytes。post-close人工Git audit漏排事件已如实记录并由safe
+    audit直接修复；focused guard/combined=`16/70 passed`。硬化首轮Full=`1 failed / 7267 passed
+    / 3 skipped / 643 warnings`，父证据=`full_20260725T163954Z`；直接修复后focused lineage/combined=`24/94
+    passed`，parent-bound Full=`7268 passed / 3 skipped / 643 warnings / 1123.35s`，artifact=`full_20260725T170729Z`；post-Full
+    architecture/contract=`646/275 passed`，safe audit PASS。状态恢复`BASELINE_DONE`。S5、task
+    source cutover、production和broker继续未授权。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-89eb58a98cb0c0674ab81108
+  task_id: ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护guard/telemetry/safe
+      audit合同
+    notes: 2026-07-26：两批snapshot合计23 intents、22 leases、79 events、9 EXPECTED_BLOCK、0
+      confirmed false block、0 unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
+      evidence ready。候选`b8d774828`已fast-forward并推送main；148个canonical evidence文件逐SHA复核，临时worktree清理释放253,037,884
+      bytes。post-close人工Git audit漏排事件已如实记录并由safe audit直接修复；focused guard/combined=`16/70
+      passed`。硬化首轮Full=`1 failed / 7267 passed / 3 skipped / 643 warnings`，父证据=`full_20260725T163954Z`；直接修复后focused
+      lineage/combined=`24/94 passed`，parent-bound Full=`7268 passed / 3 skipped /
+      643 warnings / 1123.35s`，artifact=`full_20260725T170729Z`；post-Full architecture/contract=`646/275
+      passed`，safe audit PASS。状态恢复`BASELINE_DONE`。S5、task source cutover、production和broker继续未授权。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:89eb58a98cb0c0674ab81108d4a8da48e15ab827b7b6d8f04a6f0962785fb3fe
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD
+  - Architecture / shared-checkout writer and operations lease guard
+  - P0
+  - BASELINE_DONE
+  - project owner：独立评审两批rollup并决定是否另行提出S5；architecture control-plane owner维护guard/telemetry/safe
+    audit合同
+  - 详见 `docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md`。窄版S0/S1、S2只读遥测与post-close
+    safe worktree audit hardening均已闭合；事故事实保留，不回写为zero-read。首轮硬化Full的唯一失败源于测试把已清理的历史candidate目录当作必然存在，production
+    resolver始终正确fail closed；精确环境合同测试修复已完成。
+  - '`checkout_worktree_audit.v1`只读入口对dirty/unstaged/staged三个Git调用统一注入exact literal
+    exclusion；portable-lineage回归按历史路径存在性精确断言`HISTORICAL_PORTABLE_CONFLICT`或`PORTABLE_SOURCE_TAMPERED`且四consumer均FAIL；focused、failure-fix
+    Full、post-Full architecture/contract与safe audit均PASS；S5、task source、production与broker不得自动切换。'
+  - 2026-07-26：两批snapshot合计23 intents、22 leases、79 events、9 EXPECTED_BLOCK、0 confirmed
+    false block、0 unreviewed block；rollup=`checkout-telemetry-rollup-2a3986d8f3d6f0cb5c41`仅标记S5
+    evidence ready。候选`b8d774828`已fast-forward并推送main；148个canonical evidence文件逐SHA复核，临时worktree清理释放253,037,884
+    bytes。post-close人工Git audit漏排事件已如实记录并由safe audit直接修复；focused guard/combined=`16/70
+    passed`。硬化首轮Full=`1 failed / 7267 passed / 3 skipped / 643 warnings`，父证据=`full_20260725T163954Z`；直接修复后focused
+    lineage/combined=`24/94 passed`，parent-bound Full=`7268 passed / 3 skipped / 643
+    warnings / 1123.35s`，artifact=`full_20260725T170729Z`；post-Full architecture/contract=`646/275
+    passed`，safe audit PASS。状态恢复`BASELINE_DONE`。S5、task source cutover、production和broker继续未授权。
+  docs_links:
+  - docs/requirements/ARCH-005S4D_Shared_Checkout_Write_Lease_Guard.md
+  terminal: false
+  canonical_row_sha256: 89eb58a98cb0c0674ab81108d4a8da48e15ab827b7b6d8f04a6f0962785fb3fe
+last_event_id: legacy-import-89eb58a98cb0c0674ab81108
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 2141115d91ff81ff7b17d2aa152b8861c578fd154c76f6955271f765ccac58e6

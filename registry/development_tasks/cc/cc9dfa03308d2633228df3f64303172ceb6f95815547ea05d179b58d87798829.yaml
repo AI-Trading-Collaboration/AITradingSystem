@@ -1,0 +1,136 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2477_ATLAS_HISTORICAL_SOURCE_REGISTRATION_TYPED_ADAPTER_V1
+  task_id_sha256: cc9dfa03308d2633228df3f64303172ceb6f95815547ea05d179b58d87798829
+task_record:
+  task_id: TRADING-2477_ATLAS_HISTORICAL_SOURCE_REGISTRATION_TYPED_ADAPTER_V1
+  title: null
+  domain: Publishing & Experience / Atlas five historical source registrations and
+    typed adapters
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas coordinator：保持 exact source/adapter contracts；project owner：如需
+    node/result/page projection 必须另立任务并精确批准
+  requirement_refs:
+  - docs/requirements/TRADING-2477_Atlas_Historical_Source_Registration_and_Typed_Adapters_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2477_Atlas_Historical_Source_Registration_and_Typed_Adapters_V1.md`。五份
+    Owner-approved historical JSON 已注册为 `PUBLISHED_ARTIFACT` 并形成 Git-canonical typed
+    adapters；roadmap 因 lineage 缺口继续排除。Program snapshot 没有原始 DQ receipt，typed record
+    保留 `data_quality=null`，未补造 DQ 结论。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Git blob SHA-1/SHA-256、schema/task/report、source crosswalk、lineage/role
+      payload 与 safety flags exact；missing/path traversal/tamper fail closed；Atlas=`13
+      sources / 21 nodes / 22 edges / 8 results / 12 attributions`，新增 sources 不进入
+      graph；primary default=`2021-02-22`；cited-query HTML=`92180 bytes / SHA b7540d87…`；parallel
+      focused/formal gate 必须 PASS；`page_projection_allowed=false`、`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: c41a43f00eeeb0479ba834ae0b714571acf430aa9517541d5c64c7d0636690f7
+  cell_count: 8
+  all_cells:
+  - TRADING-2477_ATLAS_HISTORICAL_SOURCE_REGISTRATION_TYPED_ADAPTER_V1
+  - Publishing & Experience / Atlas five historical source registrations and typed
+    adapters
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：保持 exact source/adapter contracts；project owner：如需 node/result/page
+    projection 必须另立任务并精确批准
+  - 详见 `docs/requirements/TRADING-2477_Atlas_Historical_Source_Registration_and_Typed_Adapters_V1.md`。五份
+    Owner-approved historical JSON 已注册为 `PUBLISHED_ARTIFACT` 并形成 Git-canonical typed
+    adapters；roadmap 因 lineage 缺口继续排除。Program snapshot 没有原始 DQ receipt，typed record
+    保留 `data_quality=null`，未补造 DQ 结论。
+  - Git blob SHA-1/SHA-256、schema/task/report、source crosswalk、lineage/role payload
+    与 safety flags exact；missing/path traversal/tamper fail closed；Atlas=`13 sources
+    / 21 nodes / 22 edges / 8 results / 12 attributions`，新增 sources 不进入 graph；primary
+    default=`2021-02-22`；cited-query HTML=`92180 bytes / SHA b7540d87…`；parallel focused/formal
+    gate 必须 PASS；`page_projection_allowed=false`、`production_effect=none`。
+  - 2026-08-02：Owner token=`owner_decision:TRADING-2477:2026-08-02:approve_five_historical_sources_for_registration_and_typed_adapter_v1`。Registration
+    checkpoint=`9e90ccfb9a079473bab0e4f2af0c665c8a7a3ea1`；SINGLE_LANE START/LANE PASS；typed/source
+    focused=`27 passed`、Ruff/mypy PASS。Compatibility authority 采用 append-only TRADING-2477
+    section；正式五级验证在 final tree fail closed，结果由 runtime artifacts 与最终交付记录绑定。未读取 roadmap/known-unrelated
+    bytes，未执行页面 projection、DQ/model/backtest/production/broker。
+  raw_line: '|TRADING-2477_ATLAS_HISTORICAL_SOURCE_REGISTRATION_TYPED_ADAPTER_V1|Publishing
+    & Experience / Atlas five historical source registrations and typed adapters|P1|BASELINE_DONE|Atlas
+    coordinator：保持 exact source/adapter contracts；project owner：如需 node/result/page
+    projection 必须另立任务并精确批准|详见 `docs/requirements/TRADING-2477_Atlas_Historical_Source_Registration_and_Typed_Adapters_V1.md`。五份
+    Owner-approved historical JSON 已注册为 `PUBLISHED_ARTIFACT` 并形成 Git-canonical typed
+    adapters；roadmap 因 lineage 缺口继续排除。Program snapshot 没有原始 DQ receipt，typed record
+    保留 `data_quality=null`，未补造 DQ 结论。|Git blob SHA-1/SHA-256、schema/task/report、source
+    crosswalk、lineage/role payload 与 safety flags exact；missing/path traversal/tamper
+    fail closed；Atlas=`13 sources / 21 nodes / 22 edges / 8 results / 12 attributions`，新增
+    sources 不进入 graph；primary default=`2021-02-22`；cited-query HTML=`92180 bytes /
+    SHA b7540d87…`；parallel focused/formal gate 必须 PASS；`page_projection_allowed=false`、`production_effect=none`。|2026-08-02：Owner
+    token=`owner_decision:TRADING-2477:2026-08-02:approve_five_historical_sources_for_registration_and_typed_adapter_v1`。Registration
+    checkpoint=`9e90ccfb9a079473bab0e4f2af0c665c8a7a3ea1`；SINGLE_LANE START/LANE PASS；typed/source
+    focused=`27 passed`、Ruff/mypy PASS。Compatibility authority 采用 append-only TRADING-2477
+    section；正式五级验证在 final tree fail closed，结果由 runtime artifacts 与最终交付记录绑定。未读取 roadmap/known-unrelated
+    bytes，未执行页面 projection、DQ/model/backtest/production/broker。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-c41a43f00eeeb0479ba834ae
+  task_id: TRADING-2477_ATLAS_HISTORICAL_SOURCE_REGISTRATION_TYPED_ADAPTER_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas coordinator：保持 exact source/adapter contracts；project owner：如需
+      node/result/page projection 必须另立任务并精确批准
+    notes: 2026-08-02：Owner token=`owner_decision:TRADING-2477:2026-08-02:approve_five_historical_sources_for_registration_and_typed_adapter_v1`。Registration
+      checkpoint=`9e90ccfb9a079473bab0e4f2af0c665c8a7a3ea1`；SINGLE_LANE START/LANE
+      PASS；typed/source focused=`27 passed`、Ruff/mypy PASS。Compatibility authority
+      采用 append-only TRADING-2477 section；正式五级验证在 final tree fail closed，结果由 runtime
+      artifacts 与最终交付记录绑定。未读取 roadmap/known-unrelated bytes，未执行页面 projection、DQ/model/backtest/production/broker。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:c41a43f00eeeb0479ba834ae0b714571acf430aa9517541d5c64c7d0636690f7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2477_ATLAS_HISTORICAL_SOURCE_REGISTRATION_TYPED_ADAPTER_V1
+  - Publishing & Experience / Atlas five historical source registrations and typed
+    adapters
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：保持 exact source/adapter contracts；project owner：如需 node/result/page
+    projection 必须另立任务并精确批准
+  - 详见 `docs/requirements/TRADING-2477_Atlas_Historical_Source_Registration_and_Typed_Adapters_V1.md`。五份
+    Owner-approved historical JSON 已注册为 `PUBLISHED_ARTIFACT` 并形成 Git-canonical typed
+    adapters；roadmap 因 lineage 缺口继续排除。Program snapshot 没有原始 DQ receipt，typed record
+    保留 `data_quality=null`，未补造 DQ 结论。
+  - Git blob SHA-1/SHA-256、schema/task/report、source crosswalk、lineage/role payload
+    与 safety flags exact；missing/path traversal/tamper fail closed；Atlas=`13 sources
+    / 21 nodes / 22 edges / 8 results / 12 attributions`，新增 sources 不进入 graph；primary
+    default=`2021-02-22`；cited-query HTML=`92180 bytes / SHA b7540d87…`；parallel focused/formal
+    gate 必须 PASS；`page_projection_allowed=false`、`production_effect=none`。
+  - 2026-08-02：Owner token=`owner_decision:TRADING-2477:2026-08-02:approve_five_historical_sources_for_registration_and_typed_adapter_v1`。Registration
+    checkpoint=`9e90ccfb9a079473bab0e4f2af0c665c8a7a3ea1`；SINGLE_LANE START/LANE PASS；typed/source
+    focused=`27 passed`、Ruff/mypy PASS。Compatibility authority 采用 append-only TRADING-2477
+    section；正式五级验证在 final tree fail closed，结果由 runtime artifacts 与最终交付记录绑定。未读取 roadmap/known-unrelated
+    bytes，未执行页面 projection、DQ/model/backtest/production/broker。
+  docs_links:
+  - docs/requirements/TRADING-2477_Atlas_Historical_Source_Registration_and_Typed_Adapters_V1.md
+  terminal: false
+  canonical_row_sha256: c41a43f00eeeb0479ba834ae0b714571acf430aa9517541d5c64c7d0636690f7
+last_event_id: legacy-import-c41a43f00eeeb0479ba834ae
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: fab8c54d110da7f754a8150e8b9cbb646107f5b0c3b1b1446004e509721482d4

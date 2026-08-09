@@ -1,0 +1,94 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: REPORT-002
+  task_id_sha256: 74a99182129da30a9180ed068040cb36600b206bcb3283a141eded80e2bbcad7
+task_record:
+  task_id: REPORT-002
+  title: null
+  domain: 报告/执行解释
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现
+  requirement_refs:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 设计并实现日报/最终报告的变化原因树和“什么情况会改变判断”章节；详细拆解见
+    `docs/requirements/decision_support_improvements_2026-05-04.md#report-002`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 报告明确展示本期仓位区间变化、分模块分数变化、thesis/风险事件状态、最终动作约束和加/减仓触发条件；能区分市场短期波动、thesis 承压、thesis
+      证伪、估值过高但基本面未坏、基本面恶化；实现时同步更新 `docs/system_flow.md` 并补充报告快照或文本测试
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: bf24d658d6aee68201fef2dd24d5a5fb0c874ee2007ee85c91347e48357879d2
+  cell_count: 8
+  all_cells:
+  - REPORT-002
+  - 报告/执行解释
+  - P1
+  - DONE
+  - 系统实现
+  - 设计并实现日报/最终报告的变化原因树和“什么情况会改变判断”章节；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#report-002`
+  - 报告明确展示本期仓位区间变化、分模块分数变化、thesis/风险事件状态、最终动作约束和加/减仓触发条件；能区分市场短期波动、thesis 承压、thesis
+    证伪、估值过高但基本面未坏、基本面恶化；实现时同步更新 `docs/system_flow.md` 并补充报告快照或文本测试
+  - '2026-05-04: 已完成首版实现，`scores_daily.csv` overall 行保存模型/最终/置信度调整仓位区间，日报新增变化原因树、分模块分数变化、最终动作约束和判断改变条件；来自
+    2026-05-04 报告解释优化讨论；与 `REPORT-001`、`SCORE-002`、`THESIS-001` 协同'
+  raw_line: '|REPORT-002|报告/执行解释|P1|DONE|系统实现|设计并实现日报/最终报告的变化原因树和“什么情况会改变判断”章节；详细拆解见
+    `docs/requirements/decision_support_improvements_2026-05-04.md#report-002`|报告明确展示本期仓位区间变化、分模块分数变化、thesis/风险事件状态、最终动作约束和加/减仓触发条件；能区分市场短期波动、thesis
+    承压、thesis 证伪、估值过高但基本面未坏、基本面恶化；实现时同步更新 `docs/system_flow.md` 并补充报告快照或文本测试|2026-05-04:
+    已完成首版实现，`scores_daily.csv` overall 行保存模型/最终/置信度调整仓位区间，日报新增变化原因树、分模块分数变化、最终动作约束和判断改变条件；来自
+    2026-05-04 报告解释优化讨论；与 `REPORT-001`、`SCORE-002`、`THESIS-001` 协同|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-bf24d658d6aee68201fef2dd
+  task_id: REPORT-002
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: 系统实现
+    notes: '2026-05-04: 已完成首版实现，`scores_daily.csv` overall 行保存模型/最终/置信度调整仓位区间，日报新增变化原因树、分模块分数变化、最终动作约束和判断改变条件；来自
+      2026-05-04 报告解释优化讨论；与 `REPORT-001`、`SCORE-002`、`THESIS-001` 协同'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:bf24d658d6aee68201fef2dd24d5a5fb0c874ee2007ee85c91347e48357879d2
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - REPORT-002
+  - 报告/执行解释
+  - P1
+  - DONE
+  - 系统实现
+  - 设计并实现日报/最终报告的变化原因树和“什么情况会改变判断”章节；详细拆解见 `docs/requirements/decision_support_improvements_2026-05-04.md#report-002`
+  - 报告明确展示本期仓位区间变化、分模块分数变化、thesis/风险事件状态、最终动作约束和加/减仓触发条件；能区分市场短期波动、thesis 承压、thesis
+    证伪、估值过高但基本面未坏、基本面恶化；实现时同步更新 `docs/system_flow.md` 并补充报告快照或文本测试
+  - '2026-05-04: 已完成首版实现，`scores_daily.csv` overall 行保存模型/最终/置信度调整仓位区间，日报新增变化原因树、分模块分数变化、最终动作约束和判断改变条件；来自
+    2026-05-04 报告解释优化讨论；与 `REPORT-001`、`SCORE-002`、`THESIS-001` 协同'
+  docs_links:
+  - docs/requirements/decision_support_improvements_2026-05-04.md
+  - docs/system_flow.md
+  terminal: true
+  canonical_row_sha256: bf24d658d6aee68201fef2dd24d5a5fb0c874ee2007ee85c91347e48357879d2
+last_event_id: legacy-import-bf24d658d6aee68201fef2dd
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 7ee0c5faa75c4eebfc38f612057ed922b9210bf263c7b20b0347d3590b873742

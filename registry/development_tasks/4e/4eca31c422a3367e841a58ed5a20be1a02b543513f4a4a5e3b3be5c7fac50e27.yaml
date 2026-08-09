@@ -1,0 +1,132 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2479_ATLAS_HISTORICAL_PROJECTION_REVIEW_PACK_V1
+  task_id_sha256: 4eca31c422a3367e841a58ed5a20be1a02b543513f4a4a5e3b3be5c7fac50e27
+task_record:
+  task_id: TRADING-2479_ATLAS_HISTORICAL_PROJECTION_REVIEW_PACK_V1
+  title: null
+  domain: Publishing & Experience / Atlas review-only historical node-result projection
+    preview
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas coordinator：完成 append-only compatibility authority 与正式 closeout
+    gates；Project owner：如需把五份历史记录投影进 canonical snapshot/page，必须另给独立决策
+  requirement_refs:
+  - docs/requirements/TRADING-2479_Atlas_Historical_Projection_Review_Pack_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2479_Atlas_Historical_Projection_Review_Pack_V1.md`。Preview
+    已生成并通过 deterministic/typed/static 验证；Owner 已指示继续 review-pack 收口，但未据此伪记独立手工视觉 PASS，也未授权
+    canonical projection。Browser 自动化因本地 `file://` policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。本任务不修改
+    canonical cited-query 页面，不激活 current snapshot projection。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: exact 五份 typed records；current=`13/21/22/8/12`、candidate=`13/27/28/13/17`；六节点/六条
+      CONTAINS/五结果/五 NEUTRAL provenance；original/proposed/display status 显式分离；DQ/window/limitations
+      原样；deterministic、tamper fail closed、no-script/no-network；focused/formal PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: abdc6dcbcd2a29f52bdb978fe75dec29e91d4ab2b678696c06935b52d3a297d1
+  cell_count: 8
+  all_cells:
+  - TRADING-2479_ATLAS_HISTORICAL_PROJECTION_REVIEW_PACK_V1
+  - Publishing & Experience / Atlas review-only historical node-result projection
+    preview
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：完成 append-only compatibility authority 与正式 closeout gates；Project
+    owner：如需把五份历史记录投影进 canonical snapshot/page，必须另给独立决策
+  - 详见 `docs/requirements/TRADING-2479_Atlas_Historical_Projection_Review_Pack_V1.md`。Preview
+    已生成并通过 deterministic/typed/static 验证；Owner 已指示继续 review-pack 收口，但未据此伪记独立手工视觉 PASS，也未授权
+    canonical projection。Browser 自动化因本地 `file://` policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。本任务不修改
+    canonical cited-query 页面，不激活 current snapshot projection。
+  - exact 五份 typed records；current=`13/21/22/8/12`、candidate=`13/27/28/13/17`；六节点/六条
+    CONTAINS/五结果/五 NEUTRAL provenance；original/proposed/display status 显式分离；DQ/window/limitations
+    原样；deterministic、tamper fail closed、no-script/no-network；focused/formal PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-02：Owner token 新增=`owner_decision:TRADING-2479:2026-08-02:continue_review_pack_closeout_without_canonical_projection_v1`；实现与
+    review-only artifacts=`BASELINE_DONE`，但 `owner_manual_visual_pass=NOT_ASSERTED_BY_CONTINUE_INSTRUCTION`；pack=`atlas_historical_projection_review_3b154ecd81325353d9b7`；HTML=`29165
+    bytes / SHA c4b148dffd…`，validation=`PASS / 16 checks`，actual-input double-build
+    byte-identical；new focused=`14`、Atlas=`88` passed，static DOM=`5 cards / 5 history
+    nodes / 1 current / 0 active/external`；canonical page=`92180 bytes / b7540d87…`
+    unchanged。Canonical projection 仍需后续独立 Owner decision。
+  raw_line: '|TRADING-2479_ATLAS_HISTORICAL_PROJECTION_REVIEW_PACK_V1|Publishing &
+    Experience / Atlas review-only historical node-result projection preview|P1|BASELINE_DONE|Atlas
+    coordinator：完成 append-only compatibility authority 与正式 closeout gates；Project
+    owner：如需把五份历史记录投影进 canonical snapshot/page，必须另给独立决策|详见 `docs/requirements/TRADING-2479_Atlas_Historical_Projection_Review_Pack_V1.md`。Preview
+    已生成并通过 deterministic/typed/static 验证；Owner 已指示继续 review-pack 收口，但未据此伪记独立手工视觉 PASS，也未授权
+    canonical projection。Browser 自动化因本地 `file://` policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。本任务不修改
+    canonical cited-query 页面，不激活 current snapshot projection。|exact 五份 typed records；current=`13/21/22/8/12`、candidate=`13/27/28/13/17`；六节点/六条
+    CONTAINS/五结果/五 NEUTRAL provenance；original/proposed/display status 显式分离；DQ/window/limitations
+    原样；deterministic、tamper fail closed、no-script/no-network；focused/formal PASS；`production_effect=none`、`broker_action=none`。|2026-08-02：Owner
+    token 新增=`owner_decision:TRADING-2479:2026-08-02:continue_review_pack_closeout_without_canonical_projection_v1`；实现与
+    review-only artifacts=`BASELINE_DONE`，但 `owner_manual_visual_pass=NOT_ASSERTED_BY_CONTINUE_INSTRUCTION`；pack=`atlas_historical_projection_review_3b154ecd81325353d9b7`；HTML=`29165
+    bytes / SHA c4b148dffd…`，validation=`PASS / 16 checks`，actual-input double-build
+    byte-identical；new focused=`14`、Atlas=`88` passed，static DOM=`5 cards / 5 history
+    nodes / 1 current / 0 active/external`；canonical page=`92180 bytes / b7540d87…`
+    unchanged。Canonical projection 仍需后续独立 Owner decision。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-abdc6dcbcd2a29f52bdb978f
+  task_id: TRADING-2479_ATLAS_HISTORICAL_PROJECTION_REVIEW_PACK_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas coordinator：完成 append-only compatibility authority 与正式 closeout
+      gates；Project owner：如需把五份历史记录投影进 canonical snapshot/page，必须另给独立决策
+    notes: 2026-08-02：Owner token 新增=`owner_decision:TRADING-2479:2026-08-02:continue_review_pack_closeout_without_canonical_projection_v1`；实现与
+      review-only artifacts=`BASELINE_DONE`，但 `owner_manual_visual_pass=NOT_ASSERTED_BY_CONTINUE_INSTRUCTION`；pack=`atlas_historical_projection_review_3b154ecd81325353d9b7`；HTML=`29165
+      bytes / SHA c4b148dffd…`，validation=`PASS / 16 checks`，actual-input double-build
+      byte-identical；new focused=`14`、Atlas=`88` passed，static DOM=`5 cards / 5 history
+      nodes / 1 current / 0 active/external`；canonical page=`92180 bytes / b7540d87…`
+      unchanged。Canonical projection 仍需后续独立 Owner decision。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:abdc6dcbcd2a29f52bdb978fe75dec29e91d4ab2b678696c06935b52d3a297d1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2479_ATLAS_HISTORICAL_PROJECTION_REVIEW_PACK_V1
+  - Publishing & Experience / Atlas review-only historical node-result projection
+    preview
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：完成 append-only compatibility authority 与正式 closeout gates；Project
+    owner：如需把五份历史记录投影进 canonical snapshot/page，必须另给独立决策
+  - 详见 `docs/requirements/TRADING-2479_Atlas_Historical_Projection_Review_Pack_V1.md`。Preview
+    已生成并通过 deterministic/typed/static 验证；Owner 已指示继续 review-pack 收口，但未据此伪记独立手工视觉 PASS，也未授权
+    canonical projection。Browser 自动化因本地 `file://` policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。本任务不修改
+    canonical cited-query 页面，不激活 current snapshot projection。
+  - exact 五份 typed records；current=`13/21/22/8/12`、candidate=`13/27/28/13/17`；六节点/六条
+    CONTAINS/五结果/五 NEUTRAL provenance；original/proposed/display status 显式分离；DQ/window/limitations
+    原样；deterministic、tamper fail closed、no-script/no-network；focused/formal PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-02：Owner token 新增=`owner_decision:TRADING-2479:2026-08-02:continue_review_pack_closeout_without_canonical_projection_v1`；实现与
+    review-only artifacts=`BASELINE_DONE`，但 `owner_manual_visual_pass=NOT_ASSERTED_BY_CONTINUE_INSTRUCTION`；pack=`atlas_historical_projection_review_3b154ecd81325353d9b7`；HTML=`29165
+    bytes / SHA c4b148dffd…`，validation=`PASS / 16 checks`，actual-input double-build
+    byte-identical；new focused=`14`、Atlas=`88` passed，static DOM=`5 cards / 5 history
+    nodes / 1 current / 0 active/external`；canonical page=`92180 bytes / b7540d87…`
+    unchanged。Canonical projection 仍需后续独立 Owner decision。
+  docs_links:
+  - docs/requirements/TRADING-2479_Atlas_Historical_Projection_Review_Pack_V1.md
+  terminal: false
+  canonical_row_sha256: abdc6dcbcd2a29f52bdb978fe75dec29e91d4ab2b678696c06935b52d3a297d1
+last_event_id: legacy-import-abdc6dcbcd2a29f52bdb978f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: cd39793c674d9b5c5df4701f282fb0c52fe007d1c94255242c9d674eddf9da79

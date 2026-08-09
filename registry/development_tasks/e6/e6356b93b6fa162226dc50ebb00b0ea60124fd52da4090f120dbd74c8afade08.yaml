@@ -1,0 +1,119 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
+  task_id_sha256: e6356b93b6fa162226dc50ebb00b0ea60124fd52da4090f120dbd74c8afade08
+task_record:
+  task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
+  title: null
+  domain: Data Foundation / Phase C canonical DQ issue emission and source-owner readiness
+    inventory
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 逐site rate source owner：复核C2建议的6个row-level rate sites；data platform随后另建typed
+    contract wave，不由C1代签
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002C1_DQ_Issue_Attribution_Readiness_Inventory.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C1_DQ_Issue_Attribution_Readiness_Inventory.md`。Deterministic
+    inventory已枚举69个canonical sites，static/template/dynamic=`56/11/2`；当前只有`prices_non_market_session_date`对应的1个site具备reviewed
+    authority，其余68个保持owner review required。C2首批建议为6个static rate row-level value/move
+    sites，仍未授权。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 机械枚举canonical emitter、stable site id、source/policy SHA、code expression kind、现有typed-field
+      readiness与excluded constructor count；validator重建并拒绝遗漏/篡改；未reviewed项固定`GLOBAL_OR_UNKNOWN_SCOPE`/`OWNER_REVIEW_REQUIRED`；focused=`104`、architecture=`674`、contract/report/reproducibility/integration=`275/57/23/995`及Full=`7376
+      passed / 3 skipped / 643 warnings`；标准closeout PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 00c78d701acb49a84fc05e7feb7f982e633659e6773283b6c36bf37408fa416c
+  cell_count: 8
+  all_cells:
+  - DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
+  - Data Foundation / Phase C canonical DQ issue emission and source-owner readiness
+    inventory
+  - P0
+  - BASELINE_DONE
+  - 逐site rate source owner：复核C2建议的6个row-level rate sites；data platform随后另建typed contract
+    wave，不由C1代签
+  - 详见 `docs/requirements/DATA-GOV-002C1_DQ_Issue_Attribution_Readiness_Inventory.md`。Deterministic
+    inventory已枚举69个canonical sites，static/template/dynamic=`56/11/2`；当前只有`prices_non_market_session_date`对应的1个site具备reviewed
+    authority，其余68个保持owner review required。C2首批建议为6个static rate row-level value/move
+    sites，仍未授权。
+  - 机械枚举canonical emitter、stable site id、source/policy SHA、code expression kind、现有typed-field
+    readiness与excluded constructor count；validator重建并拒绝遗漏/篡改；未reviewed项固定`GLOBAL_OR_UNKNOWN_SCOPE`/`OWNER_REVIEW_REQUIRED`；focused=`104`、architecture=`674`、contract/report/reproducibility/integration=`275/57/23/995`及Full=`7376
+    passed / 3 skipped / 643 warnings`；标准closeout PASS。
+  - 2026-07-26：C1 builder/artifacts/governance/compatibility authority和正式门禁全部闭合，状态转`BASELINE_DONE`。下一步是独立C2
+    owner-review/contract任务；`rates_future_dates`/`rates_stale`/`rates_empty`不混入首批，未新增typed
+    schema或隔离权威。`production_effect=none`、`broker_action=none`。
+  raw_line: '|DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY|Data Foundation
+    / Phase C canonical DQ issue emission and source-owner readiness inventory|P0|BASELINE_DONE|逐site
+    rate source owner：复核C2建议的6个row-level rate sites；data platform随后另建typed contract
+    wave，不由C1代签|详见 `docs/requirements/DATA-GOV-002C1_DQ_Issue_Attribution_Readiness_Inventory.md`。Deterministic
+    inventory已枚举69个canonical sites，static/template/dynamic=`56/11/2`；当前只有`prices_non_market_session_date`对应的1个site具备reviewed
+    authority，其余68个保持owner review required。C2首批建议为6个static rate row-level value/move
+    sites，仍未授权。|机械枚举canonical emitter、stable site id、source/policy SHA、code expression
+    kind、现有typed-field readiness与excluded constructor count；validator重建并拒绝遗漏/篡改；未reviewed项固定`GLOBAL_OR_UNKNOWN_SCOPE`/`OWNER_REVIEW_REQUIRED`；focused=`104`、architecture=`674`、contract/report/reproducibility/integration=`275/57/23/995`及Full=`7376
+    passed / 3 skipped / 643 warnings`；标准closeout PASS。|2026-07-26：C1 builder/artifacts/governance/compatibility
+    authority和正式门禁全部闭合，状态转`BASELINE_DONE`。下一步是独立C2 owner-review/contract任务；`rates_future_dates`/`rates_stale`/`rates_empty`不混入首批，未新增typed
+    schema或隔离权威。`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-00c78d701acb49a84fc05e7f
+  task_id: DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 逐site rate source owner：复核C2建议的6个row-level rate sites；data platform随后另建typed
+      contract wave，不由C1代签
+    notes: 2026-07-26：C1 builder/artifacts/governance/compatibility authority和正式门禁全部闭合，状态转`BASELINE_DONE`。下一步是独立C2
+      owner-review/contract任务；`rates_future_dates`/`rates_stale`/`rates_empty`不混入首批，未新增typed
+      schema或隔离权威。`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:00c78d701acb49a84fc05e7feb7f982e633659e6773283b6c36bf37408fa416c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002C1_DQ_ISSUE_ATTRIBUTION_READINESS_INVENTORY
+  - Data Foundation / Phase C canonical DQ issue emission and source-owner readiness
+    inventory
+  - P0
+  - BASELINE_DONE
+  - 逐site rate source owner：复核C2建议的6个row-level rate sites；data platform随后另建typed contract
+    wave，不由C1代签
+  - 详见 `docs/requirements/DATA-GOV-002C1_DQ_Issue_Attribution_Readiness_Inventory.md`。Deterministic
+    inventory已枚举69个canonical sites，static/template/dynamic=`56/11/2`；当前只有`prices_non_market_session_date`对应的1个site具备reviewed
+    authority，其余68个保持owner review required。C2首批建议为6个static rate row-level value/move
+    sites，仍未授权。
+  - 机械枚举canonical emitter、stable site id、source/policy SHA、code expression kind、现有typed-field
+    readiness与excluded constructor count；validator重建并拒绝遗漏/篡改；未reviewed项固定`GLOBAL_OR_UNKNOWN_SCOPE`/`OWNER_REVIEW_REQUIRED`；focused=`104`、architecture=`674`、contract/report/reproducibility/integration=`275/57/23/995`及Full=`7376
+    passed / 3 skipped / 643 warnings`；标准closeout PASS。
+  - 2026-07-26：C1 builder/artifacts/governance/compatibility authority和正式门禁全部闭合，状态转`BASELINE_DONE`。下一步是独立C2
+    owner-review/contract任务；`rates_future_dates`/`rates_stale`/`rates_empty`不混入首批，未新增typed
+    schema或隔离权威。`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/DATA-GOV-002C1_DQ_Issue_Attribution_Readiness_Inventory.md
+  terminal: false
+  canonical_row_sha256: 00c78d701acb49a84fc05e7feb7f982e633659e6773283b6c36bf37408fa416c
+last_event_id: legacy-import-00c78d701acb49a84fc05e7f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 1437455243ca5902776a48606d36b6fd608bce592da8afaa9bbdc49d52729a62

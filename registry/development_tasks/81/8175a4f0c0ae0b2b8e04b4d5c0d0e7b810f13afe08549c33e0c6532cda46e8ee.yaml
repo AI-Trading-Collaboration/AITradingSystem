@@ -1,0 +1,186 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-024
+  task_id_sha256: 8175a4f0c0ae0b2b8e04b4d5c0d0e7b810f13afe08549c33e0c6532cda46e8ee
+task_record:
+  task_id: TRADING-024
+  title: null
+  domain: 交易执行/Data Freshness Summary
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/data_freshness_summary_2026-05-23.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/data_freshness_summary_2026-05-23.md`；只读
+    data freshness summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact
+    catalog、测试和最终收尾验证已完成；后续 TRADING-022 如需直接消费该 artifact，应另建 TRADING-025 只读接入任务，不混入本任务
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `scripts/run_data_freshness_summary.py` 和 `data/derived/data_freshness/data_freshness_summary_YYYY-MM-DD.json/md`、`data_freshness/logs/data_freshness_summary_run_YYYY-MM-DD.json/md`；覆盖
+      required/optional source registry、JSON date_fields / filename / modified time
+      日期抽取、missing/stale/status/safety field 扫描、overall `freshness_status`、Markdown
+      banners、run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和测试；所有输出固定
+      `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+      只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024 script、data download、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+      repo 外 OK/MISSING/CRITICAL/STALE/optional-missing smoke、目标 pytest、dashboard
+      pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: d6a7bb60571af6b5c1e4b0ba65a6e632726b83e00668fb23e097547bef74b0e9
+  cell_count: 8
+  all_cells:
+  - TRADING-024
+  - 交易执行/Data Freshness Summary
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/data_freshness_summary_2026-05-23.md`；只读 data freshness
+    summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；后续
+    TRADING-022 如需直接消费该 artifact，应另建 TRADING-025 只读接入任务，不混入本任务
+  - 新增 `scripts/run_data_freshness_summary.py` 和 `data/derived/data_freshness/data_freshness_summary_YYYY-MM-DD.json/md`、`data_freshness/logs/data_freshness_summary_run_YYYY-MM-DD.json/md`；覆盖
+    required/optional source registry、JSON date_fields / filename / modified time
+    日期抽取、missing/stale/status/safety field 扫描、overall `freshness_status`、Markdown
+    banners、run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和测试；所有输出固定
+    `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+    只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024 script、data download、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+    repo 外 OK/MISSING/CRITICAL/STALE/optional-missing smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff
+  - '2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `data_freshness.status`
+    仍为 `UNKNOWN`，需要先补一个独立只读 data freshness artifact；本任务只扫描已有文件和 metadata，不刷新数据、不触发任何上游
+    pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 data freshness summary
+    builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+    catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+    和 repo 外 OK/MISSING/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。2026-05-24: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo
+    外临时 fixture；OK 输出 `OK` 且 Markdown 包含 `Freshness Summary`、`Required Sources`、`Optional
+    Sources`；缺失 required artifact 输出 `MISSING` 且 Markdown 顶部包含 `Required Data Missing`；required
+    artifact `broker_execution=true` 输出 `CRITICAL`，Markdown 顶部包含 `CRITICAL: Data Freshness
+    Issue Detected` 且 critical alerts 非空；required artifact stale 输出 `STALE`，Markdown
+    顶部包含 `Stale Required Data Detected` 且 stale required sources 非空；`include_optional_sources=true`
+    下 optional missing 输出 `WATCH` 而不是 `MISSING`。所有 smoke 输出均确认 `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+    import guard 验证 Data Freshness Summary 卡片只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024
+    script、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。'
+  raw_line: '|TRADING-024|交易执行/Data Freshness Summary|P0|DONE|系统验证|详细拆解见 `docs/requirements/data_freshness_summary_2026-05-23.md`；只读
+    data freshness summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact
+    catalog、测试和最终收尾验证已完成；后续 TRADING-022 如需直接消费该 artifact，应另建 TRADING-025 只读接入任务，不混入本任务|新增
+    `scripts/run_data_freshness_summary.py` 和 `data/derived/data_freshness/data_freshness_summary_YYYY-MM-DD.json/md`、`data_freshness/logs/data_freshness_summary_run_YYYY-MM-DD.json/md`；覆盖
+    required/optional source registry、JSON date_fields / filename / modified time
+    日期抽取、missing/stale/status/safety field 扫描、overall `freshness_status`、Markdown
+    banners、run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和测试；所有输出固定
+    `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+    只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024 script、data download、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+    repo 外 OK/MISSING/CRITICAL/STALE/optional-missing smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff|2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `data_freshness.status`
+    仍为 `UNKNOWN`，需要先补一个独立只读 data freshness artifact；本任务只扫描已有文件和 metadata，不刷新数据、不触发任何上游
+    pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 data freshness summary
+    builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+    catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+    和 repo 外 OK/MISSING/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。2026-05-24: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo
+    外临时 fixture；OK 输出 `OK` 且 Markdown 包含 `Freshness Summary`、`Required Sources`、`Optional
+    Sources`；缺失 required artifact 输出 `MISSING` 且 Markdown 顶部包含 `Required Data Missing`；required
+    artifact `broker_execution=true` 输出 `CRITICAL`，Markdown 顶部包含 `CRITICAL: Data Freshness
+    Issue Detected` 且 critical alerts 非空；required artifact stale 输出 `STALE`，Markdown
+    顶部包含 `Stale Required Data Detected` 且 stale required sources 非空；`include_optional_sources=true`
+    下 optional missing 输出 `WATCH` 而不是 `MISSING`。所有 smoke 输出均确认 `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+    import guard 验证 Data Freshness Summary 卡片只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024
+    script、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-d6a7bb60571af6b5c1e4b0ba
+  task_id: TRADING-024
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `data_freshness.status`
+      仍为 `UNKNOWN`，需要先补一个独立只读 data freshness artifact；本任务只扫描已有文件和 metadata，不刷新数据、不触发任何上游
+      pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 data freshness summary
+      builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+      catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+      和 repo 外 OK/MISSING/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+      baseline 阻断，未混入无关格式化 diff。2026-05-24: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo
+      外临时 fixture；OK 输出 `OK` 且 Markdown 包含 `Freshness Summary`、`Required Sources`、`Optional
+      Sources`；缺失 required artifact 输出 `MISSING` 且 Markdown 顶部包含 `Required Data Missing`；required
+      artifact `broker_execution=true` 输出 `CRITICAL`，Markdown 顶部包含 `CRITICAL: Data
+      Freshness Issue Detected` 且 critical alerts 非空；required artifact stale 输出 `STALE`，Markdown
+      顶部包含 `Stale Required Data Detected` 且 stale required sources 非空；`include_optional_sources=true`
+      下 optional missing 输出 `WATCH` 而不是 `MISSING`。所有 smoke 输出均确认 `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+      import guard 验证 Data Freshness Summary 卡片只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024
+      script、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标
+      pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check
+      仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:d6a7bb60571af6b5c1e4b0ba65a6e632726b83e00668fb23e097547bef74b0e9
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-024
+  - 交易执行/Data Freshness Summary
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/data_freshness_summary_2026-05-23.md`；只读 data freshness
+    summary artifact、CLI、dashboard 卡片、runbook、system flow、artifact catalog、测试和最终收尾验证已完成；后续
+    TRADING-022 如需直接消费该 artifact，应另建 TRADING-025 只读接入任务，不混入本任务
+  - 新增 `scripts/run_data_freshness_summary.py` 和 `data/derived/data_freshness/data_freshness_summary_YYYY-MM-DD.json/md`、`data_freshness/logs/data_freshness_summary_run_YYYY-MM-DD.json/md`；覆盖
+    required/optional source registry、JSON date_fields / filename / modified time
+    日期抽取、missing/stale/status/safety field 扫描、overall `freshness_status`、Markdown
+    banners、run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和测试；所有输出固定
+    `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`、`safe_for_scheduler=true`；Dashboard
+    只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024 script、data download、market/backtest/scoring/broker/replay/trading；最终收尾验证通过
+    repo 外 OK/MISSING/CRITICAL/STALE/optional-missing smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量
+    pytest 和 ruff；全仓 black check 仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化
+    diff
+  - '2026-05-23: 新增并进入 IN_PROGRESS，原因：TRADING-022 operator brief 的 `data_freshness.status`
+    仍为 `UNKNOWN`，需要先补一个独立只读 data freshness artifact；本任务只扫描已有文件和 metadata，不刷新数据、不触发任何上游
+    pipeline。2026-05-23: 从 IN_PROGRESS 改为 VALIDATING，原因：已完成 data freshness summary
+    builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact
+    catalog 和专项测试；验证通过新增专项 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff
+    和 repo 外 OK/MISSING/CRITICAL/STALE smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。2026-05-24: 从 VALIDATING 改为 DONE，原因：最终收尾验证再次通过 repo
+    外临时 fixture；OK 输出 `OK` 且 Markdown 包含 `Freshness Summary`、`Required Sources`、`Optional
+    Sources`；缺失 required artifact 输出 `MISSING` 且 Markdown 顶部包含 `Required Data Missing`；required
+    artifact `broker_execution=true` 输出 `CRITICAL`，Markdown 顶部包含 `CRITICAL: Data Freshness
+    Issue Detected` 且 critical alerts 非空；required artifact stale 输出 `STALE`，Markdown
+    顶部包含 `Stale Required Data Detected` 且 stale required sources 非空；`include_optional_sources=true`
+    下 optional missing 输出 `WATCH` 而不是 `MISSING`。所有 smoke 输出均确认 `production_effect=none`、`manual_review_only=true`、`data_freshness_only=true`、`read_only=true`、`data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`、`apply_executed_by_freshness_check=false`、`rollback_executed_by_freshness_check=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard
+    import guard 验证 Data Freshness Summary 卡片只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024
+    script、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard
+    pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+    baseline 阻断，未混入无关格式化 diff。'
+  docs_links:
+  - docs/requirements/data_freshness_summary_2026-05-23.md
+  terminal: true
+  canonical_row_sha256: d6a7bb60571af6b5c1e4b0ba65a6e632726b83e00668fb23e097547bef74b0e9
+last_event_id: legacy-import-d6a7bb60571af6b5c1e4b0ba
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: feda4d1a9e87b704525724e3b49ca7fbcef5f4111643fa424dc92e670f71d268

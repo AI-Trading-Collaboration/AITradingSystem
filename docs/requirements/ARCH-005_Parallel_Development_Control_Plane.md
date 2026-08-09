@@ -1,12 +1,12 @@
 # ARCH-005 Parallel Development Control Plane
 
-最后更新：2026-07-26
+最后更新：2026-08-09
 
 ## 任务信息
 
 - task id：`ARCH-005_PARALLEL_DEVELOPMENT_CONTROL_PLANE`
 - priority：`P0`
-- status：`BASELINE_DONE_S4C_VALIDATED_DEFAULT_PUSH_S5_PENDING`
+- status：`BASELINE_DONE_S5_CANONICAL_CUTOVER_COMPLETE`
 - owner：architecture coordinator / developer platform owner / integration coordinator
 - owner review：project owner 负责 source-of-truth cutover 与调度策略复核
 - hard dependency：`ARCH-004C_PLATFORM_CONTRACTS`、`ARCH-004E_DEVEX_OWNERSHIP_GENERATED_INDEXES` `DONE`；现有 task-register consistency baseline
@@ -15,8 +15,8 @@
 - pre-bootstrap status：`COMPLETE_NON_CUTOVER_G2_4_CONTINUES`，slice id=`ARCH-005-PB1`，base=`fe0e19b9`；只新增pure contracts/validators/planner及测试，不生成runtime registry或scheduler state
 - integration milestone：S0～S4B 已在 G2.4 handoff 后完成；S4C validated-main integration 已由
   Wave 7 首次真实执行 PASS；2026-07-26 DEVX-002 v2恢复validated local-main后的默认ordinary
-  push，并保留remote divergence/history rewrite/force-push fail-closed边界；S5 canonical cutover
-  尚未授权
+  push，并保留remote divergence/history rewrite/force-push fail-closed边界；S5 canonical cutover 已按
+  `owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1` 串行授权并完成验证
 - current safety follow-up：Wave14暴露同一checkout计划外task/automation第二writer风险；
   `ARCH-005S4D_SHARED_CHECKOUT_WRITE_LEASE_GUARD`已按owner窄版S0/S1授权转为
   `P0/BASELINE_DONE`。Wave15现已获单独窄授权，但assignment仍须等待从授权基线最终HEAD生成的
@@ -29,6 +29,12 @@
 ARCH-005 S5 或 machine dispatch 权限。coordinator 必须先提交/推送 C 授权基线，再从 C HEAD 生成
 只含 reviewed policy/evidence 的 D exact carrier；carrier 只证明可手工分配 scoped implementation，
 不自动发 lease、dispatch、merge、运行 periodic/provider 或改 task source-of-truth。
+
+2026-08-09 S5 execution note：DEVX-006C/D 已按顺序 ordinary push/cleanup/release；S5 从 D exact
+main `7cfc81d6ab9d992c6c45e1084e22b33b9560d519` 独立执行 final import 与 canonical cutover。
+`registry/development_tasks` + canonical index 已成为事实源，两份 Markdown register 已转为 generated/
+do-not-edit compatibility views；consumer manual semantic read/write 已清零。Machine dispatch、automatic
+merge/push、production 与 broker 权限仍保持关闭。
 
 2026-07-26 current workflow note：Owner 通过
 `owner_decision:DEVX-002:2026-07-26:adopt_governed_local_main_skill_v1`

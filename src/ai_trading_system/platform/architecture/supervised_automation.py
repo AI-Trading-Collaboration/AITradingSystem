@@ -942,7 +942,7 @@ def validate_supervised_run(
             report.get("automatic_merge_performed") is False,
             report.get("automatic_push_performed") is False,
             report.get("automatic_pr_performed") is False,
-            report.get("source_of_truth") == "LEGACY_MARKDOWN_ONLY",
+            report.get("source_of_truth") == policy.source_of_truth,
             report.get("production_effect") == "none",
             report.get("broker_action") == "none",
         )
@@ -1359,7 +1359,10 @@ def _require_contained(path: Path, root: Path, code: str) -> None:
 def _validate_safety(safety: Mapping[str, Any], *, require_source_of_truth: bool = True) -> None:
     if safety.get("production_effect") != "none" or safety.get("broker_action") != "none":
         raise ParallelControlError("SUPERVISED_SAFETY", "production and broker must be none")
-    if require_source_of_truth and safety.get("source_of_truth") != "LEGACY_MARKDOWN_ONLY":
+    if require_source_of_truth and safety.get("source_of_truth") not in {
+        "LEGACY_MARKDOWN_ONLY",
+        "ARCH_005_TASK_REGISTRY",
+    }:
         raise ParallelControlError("SUPERVISED_SOURCE_OF_TRUTH", str(safety.get("source_of_truth")))
     for key, value in safety.items():
         if key.endswith("_allowed") and value is not False:

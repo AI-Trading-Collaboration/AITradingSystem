@@ -1,0 +1,120 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2474_ATLAS_RESULT_LEDGER_V1
+  task_id_sha256: 579d8c62ba12adf159c282580d7a9120107e03052091effccba1b7447701caf8
+task_record:
+  task_id: TRADING-2474_ATLAS_RESULT_LEDGER_V1
+  title: null
+  domain: Publishing & Experience / Atlas all-in-scope result and attribution ledger
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: integration coordinator：完成 final-tree Architecture/Contract、local-main/remote
+    closeout 与分支清理
+  requirement_refs:
+  - docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示
+    validated snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+    已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 同页逐项展示全部 in-scope results 的 raw/display status、通俗摘要、limitations、source refs
+      和全部归因；显式标注当前覆盖边界；缺失/重复/孤立 relation typed fail closed；deterministic/no-script/no-write/focused/formal/Owner
+      visual PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 0fad68e3873a8d234b313644b822e3e572ab09e6ef58947c5420d5e323c8b3b0
+  cell_count: 8
+  all_cells:
+  - TRADING-2474_ATLAS_RESULT_LEDGER_V1
+  - Publishing & Experience / Atlas all-in-scope result and attribution ledger
+  - P1
+  - BASELINE_DONE
+  - integration coordinator：完成 final-tree Architecture/Contract、local-main/remote
+    closeout 与分支清理
+  - 详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示 validated
+    snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+    已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。
+  - 同页逐项展示全部 in-scope results 的 raw/display status、通俗摘要、limitations、source refs 和全部归因；显式标注当前覆盖边界；缺失/重复/孤立
+    relation typed fail closed；deterministic/no-script/no-write/focused/formal/Owner
+    visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-01：Owner token 已记录；renderer/Atlas focused=`8/80 passed`，compatibility/deprecation=`169
+    passed`。candidate=`d3d66f1b7…` 正式 PASS：Architecture=`816`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7872
+    passed / 3 skipped / 644 warnings`。首次 Contract 仅因外层 `124s` timeout 中断且无测试失败，已在同一
+    candidate 受控重跑 PASS。当前只余 final-tree closeout；不授权 HTTP/LLM/free-text、新 empirical
+    research、production 或 broker action。
+  raw_line: '|TRADING-2474_ATLAS_RESULT_LEDGER_V1|Publishing & Experience / Atlas
+    all-in-scope result and attribution ledger|P1|BASELINE_DONE|integration coordinator：完成
+    final-tree Architecture/Contract、local-main/remote closeout 与分支清理|详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示
+    validated snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+    已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。|同页逐项展示全部 in-scope results 的 raw/display
+    status、通俗摘要、limitations、source refs 和全部归因；显式标注当前覆盖边界；缺失/重复/孤立 relation typed fail
+    closed；deterministic/no-script/no-write/focused/formal/Owner visual PASS；`production_effect=none`、`broker_action=none`。|2026-08-01：Owner
+    token 已记录；renderer/Atlas focused=`8/80 passed`，compatibility/deprecation=`169
+    passed`。candidate=`d3d66f1b7…` 正式 PASS：Architecture=`816`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7872
+    passed / 3 skipped / 644 warnings`。首次 Contract 仅因外层 `124s` timeout 中断且无测试失败，已在同一
+    candidate 受控重跑 PASS。当前只余 final-tree closeout；不授权 HTTP/LLM/free-text、新 empirical
+    research、production 或 broker action。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-0fad68e3873a8d234b313644
+  task_id: TRADING-2474_ATLAS_RESULT_LEDGER_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: integration coordinator：完成 final-tree Architecture/Contract、local-main/remote
+      closeout 与分支清理
+    notes: 2026-08-01：Owner token 已记录；renderer/Atlas focused=`8/80 passed`，compatibility/deprecation=`169
+      passed`。candidate=`d3d66f1b7…` 正式 PASS：Architecture=`816`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7872
+      passed / 3 skipped / 644 warnings`。首次 Contract 仅因外层 `124s` timeout 中断且无测试失败，已在同一
+      candidate 受控重跑 PASS。当前只余 final-tree closeout；不授权 HTTP/LLM/free-text、新 empirical
+      research、production 或 broker action。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:0fad68e3873a8d234b313644b822e3e572ab09e6ef58947c5420d5e323c8b3b0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2474_ATLAS_RESULT_LEDGER_V1
+  - Publishing & Experience / Atlas all-in-scope result and attribution ledger
+  - P1
+  - BASELINE_DONE
+  - integration coordinator：完成 final-tree Architecture/Contract、local-main/remote
+    closeout 与分支清理
+  - 详见 `docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md`。已在同页展示 validated
+    snapshot 的 8/8 results 与 12/12 attributions，并冻结 `historical_repository_coverage_complete=false`；Owner
+    已完成 `OWNER_MANUAL_VISUAL_PASS`，当前无实现 blocker。
+  - 同页逐项展示全部 in-scope results 的 raw/display status、通俗摘要、limitations、source refs 和全部归因；显式标注当前覆盖边界；缺失/重复/孤立
+    relation typed fail closed；deterministic/no-script/no-write/focused/formal/Owner
+    visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-01：Owner token 已记录；renderer/Atlas focused=`8/80 passed`，compatibility/deprecation=`169
+    passed`。candidate=`d3d66f1b7…` 正式 PASS：Architecture=`816`、Contract=`276`、Integration=`995`、Reproducibility=`24`、Full=`7872
+    passed / 3 skipped / 644 warnings`。首次 Contract 仅因外层 `124s` timeout 中断且无测试失败，已在同一
+    candidate 受控重跑 PASS。当前只余 final-tree closeout；不授权 HTTP/LLM/free-text、新 empirical
+    research、production 或 broker action。
+  docs_links:
+  - docs/requirements/TRADING-2474_Atlas_Result_Ledger_V1.md
+  terminal: false
+  canonical_row_sha256: 0fad68e3873a8d234b313644b822e3e572ab09e6ef58947c5420d5e323c8b3b0
+last_event_id: legacy-import-0fad68e3873a8d234b313644
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 790fd56b258d8bd31a3a6b453a69b0abbe7aa826a9bc043bdbd08b2ba72cec8e

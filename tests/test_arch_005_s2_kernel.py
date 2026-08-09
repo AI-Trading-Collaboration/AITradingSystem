@@ -84,7 +84,7 @@ def test_policy_is_reviewed_and_keeps_s5_and_investment_state_closed() -> None:
     assert policy.max_parallel_domain_lanes == 2
     assert policy.max_total_active_leases == 3
     assert policy.max_reassignments == 1
-    assert policy.source_of_truth == "LEGACY_MARKDOWN_ONLY"
+    assert policy.source_of_truth == "ARCH_005_TASK_REGISTRY"
 
 
 def test_dependency_graph_rejects_unknown_self_and_hard_cycle() -> None:

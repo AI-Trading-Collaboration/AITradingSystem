@@ -1,0 +1,166 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2407_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN
+  task_id_sha256: 3dc730961d275b5a931a46b276b91bf5cbde8c4502647f8c569972f14af8d524
+task_record:
+  task_id: TRADING-2407_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN
+  title: null
+  domain: Strategy research / valid-until execution semantics remediation plan
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核 TRADING-2408 dynamic strategy blocking gap remediation
+    implementation plan
+  requirement_refs:
+  - docs/requirements/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md
+  - docs/tasks/completed/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`；承接
+    TRADING-2406 growth tilt remediation plan、TRADING-2405 PIT gate 和 TRADING-2403
+    signal construction review，仅读取 prior validated artifacts、governed PIT input registry、strategy
+    execution policy registry 和 signal validity taxonomy，生成 `valid_until_window` semantics
+    review、stale signal risk audit、signal validity contract plan、growth tilt alignment
+    review、remediation plan、severity downgrade conditions 和 validation plan；本任务不清除或降级
+    blocker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies dynamic-strategy-valid-until-window-stale-signal-remediation-plan`；输出
+      `remediation_plan_result.json`、`valid_until_semantics_review.json`、`stale_signal_risk_audit.json`、`signal_validity_contract_plan.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+      docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN_READY`，input_under_review=`valid_until_window`，input_type=`EXECUTION_SEMANTIC`，current
+      severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，semantics
+      rows=6，stale risk rows=8，`valid_until_window_blocking_gap_resolved=false`，`valid_until_window_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+      route=`TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan`，所有
+      safety fields false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 27fa28c55c66c8f4ce67d08fef492fbac9f5ca5dd59c3355ba3f43ce371902e8
+  cell_count: 8
+  all_cells:
+  - TRADING-2407_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN
+  - Strategy research / valid-until execution semantics remediation plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2408 dynamic strategy blocking gap remediation implementation
+    plan
+  - 详见 `docs/requirements/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`；承接
+    TRADING-2406 growth tilt remediation plan、TRADING-2405 PIT gate 和 TRADING-2403
+    signal construction review，仅读取 prior validated artifacts、governed PIT input registry、strategy
+    execution policy registry 和 signal validity taxonomy，生成 `valid_until_window` semantics
+    review、stale signal risk audit、signal validity contract plan、growth tilt alignment
+    review、remediation plan、severity downgrade conditions 和 validation plan；本任务不清除或降级
+    blocker。
+  - 新增 `aits research strategies dynamic-strategy-valid-until-window-stale-signal-remediation-plan`；输出
+    `remediation_plan_result.json`、`valid_until_semantics_review.json`、`stale_signal_risk_audit.json`、`signal_validity_contract_plan.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN_READY`，input_under_review=`valid_until_window`，input_type=`EXECUTION_SEMANTIC`，current
+    severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，semantics
+    rows=6，stale risk rows=8，`valid_until_window_blocking_gap_resolved=false`，`valid_until_window_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+    route=`TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan`，所有
+    safety fields false/none。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 valid-until
+    / stale-signal remediation plan 和 signal validity contract plan，未运行 `aits validate-data
+    --as-of 2026-07-05`，因为只读取 prior validated 2405 / 2406 / 2403 artifacts、PIT input
+    registry、strategy execution policy registry 和 signal validity taxonomy，不读取 fresh
+    cached market data、不运行新 backtest、不生成 technical features、scoring、daily report 或交易建议。candidate
+    auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+    trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`。'
+  raw_line: '|TRADING-2407_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN|Strategy
+    research / valid-until execution semantics remediation plan|P0|DONE|项目 owner 后续复核
+    TRADING-2408 dynamic strategy blocking gap remediation implementation plan|详见
+    `docs/requirements/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`；承接
+    TRADING-2406 growth tilt remediation plan、TRADING-2405 PIT gate 和 TRADING-2403
+    signal construction review，仅读取 prior validated artifacts、governed PIT input registry、strategy
+    execution policy registry 和 signal validity taxonomy，生成 `valid_until_window` semantics
+    review、stale signal risk audit、signal validity contract plan、growth tilt alignment
+    review、remediation plan、severity downgrade conditions 和 validation plan；本任务不清除或降级
+    blocker。|新增 `aits research strategies dynamic-strategy-valid-until-window-stale-signal-remediation-plan`；输出
+    `remediation_plan_result.json`、`valid_until_semantics_review.json`、`stale_signal_risk_audit.json`、`signal_validity_contract_plan.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN_READY`，input_under_review=`valid_until_window`，input_type=`EXECUTION_SEMANTIC`，current
+    severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，semantics
+    rows=6，stale risk rows=8，`valid_until_window_blocking_gap_resolved=false`，`valid_until_window_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+    route=`TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan`，所有
+    safety fields false/none。|2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07:
+    实现完成并归档 DONE；本任务只做 valid-until / stale-signal remediation plan 和 signal validity
+    contract plan，未运行 `aits validate-data --as-of 2026-07-05`，因为只读取 prior validated
+    2405 / 2406 / 2403 artifacts、PIT input registry、strategy execution policy registry
+    和 signal validity taxonomy，不读取 fresh cached market data、不运行新 backtest、不生成 technical
+    features、scoring、daily report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+    append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+    report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-27fa28c55c66c8f4ce67d08f
+  task_id: TRADING-2407_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核 TRADING-2408 dynamic strategy blocking gap remediation
+      implementation plan
+    notes: '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做
+      valid-until / stale-signal remediation plan 和 signal validity contract plan，未运行
+      `aits validate-data --as-of 2026-07-05`，因为只读取 prior validated 2405 / 2406 /
+      2403 artifacts、PIT input registry、strategy execution policy registry 和 signal
+      validity taxonomy，不读取 fresh cached market data、不运行新 backtest、不生成 technical features、scoring、daily
+      report 或交易建议。candidate auto-accept、research-only observation、scheduler、event
+      append、outcome binding、paper-shadow、paper trade、shadow position、production、broker/order、daily
+      report 全部保持 disabled / false / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:27fa28c55c66c8f4ce67d08fef492fbac9f5ca5dd59c3355ba3f43ce371902e8
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2407_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN
+  - Strategy research / valid-until execution semantics remediation plan
+  - P0
+  - DONE
+  - 项目 owner 后续复核 TRADING-2408 dynamic strategy blocking gap remediation implementation
+    plan
+  - 详见 `docs/requirements/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`；承接
+    TRADING-2406 growth tilt remediation plan、TRADING-2405 PIT gate 和 TRADING-2403
+    signal construction review，仅读取 prior validated artifacts、governed PIT input registry、strategy
+    execution policy registry 和 signal validity taxonomy，生成 `valid_until_window` semantics
+    review、stale signal risk audit、signal validity contract plan、growth tilt alignment
+    review、remediation plan、severity downgrade conditions 和 validation plan；本任务不清除或降级
+    blocker。
+  - 新增 `aits research strategies dynamic-strategy-valid-until-window-stale-signal-remediation-plan`；输出
+    `remediation_plan_result.json`、`valid_until_semantics_review.json`、`stale_signal_risk_audit.json`、`signal_validity_contract_plan.json`、`severity_downgrade_conditions.json`、`validation_plan.json`、research
+    docs、registry、catalog、system flow 和 focused tests；真实 run status=`DYNAMIC_STRATEGY_VALID_UNTIL_WINDOW_SEMANTICS_AND_STALE_SIGNAL_REMEDIATION_PLAN_READY`，input_under_review=`valid_until_window`，input_type=`EXECUTION_SEMANTIC`，current
+    severity=`BLOCKING`，current PIT status=`UNKNOWN_OR_APPROXIMATE_PIT`，semantics
+    rows=6，stale risk rows=8，`valid_until_window_blocking_gap_resolved=false`，`valid_until_window_severity_downgraded=false`，candidate_search_allowed=false，research_only_observation_allowed=false，paper_shadow_allowed=false，production_allowed=false，next
+    route=`TRADING-2408_Dynamic_Strategy_Blocking_Gap_Remediation_Implementation_Plan`，所有
+    safety fields false/none。
+  - '2026-07-07: 根据 owner 附件新增并进入 IN_PROGRESS。2026-07-07: 实现完成并归档 DONE；本任务只做 valid-until
+    / stale-signal remediation plan 和 signal validity contract plan，未运行 `aits validate-data
+    --as-of 2026-07-05`，因为只读取 prior validated 2405 / 2406 / 2403 artifacts、PIT input
+    registry、strategy execution policy registry 和 signal validity taxonomy，不读取 fresh
+    cached market data、不运行新 backtest、不生成 technical features、scoring、daily report 或交易建议。candidate
+    auto-accept、research-only observation、scheduler、event append、outcome binding、paper-shadow、paper
+    trade、shadow position、production、broker/order、daily report 全部保持 disabled / false
+    / none；最终 validation 结果见 `docs/tasks/completed/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md`。'
+  docs_links:
+  - docs/requirements/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md
+  - docs/tasks/completed/TRADING-2407_Valid_Until_Window_Semantics_And_Stale_Signal_Remediation_Plan.md
+  terminal: true
+  canonical_row_sha256: 27fa28c55c66c8f4ce67d08fef492fbac9f5ca5dd59c3355ba3f43ce371902e8
+last_event_id: legacy-import-27fa28c55c66c8f4ce67d08f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: ef61c74795195ee29f727892a5c1e815ddb0252b36539b094955ba0031f0ed22

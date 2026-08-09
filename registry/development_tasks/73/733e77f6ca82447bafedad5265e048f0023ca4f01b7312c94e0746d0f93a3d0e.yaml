@@ -1,0 +1,134 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  task_id_sha256: 733e77f6ca82447bafedad5265e048f0023ca4f01b7312c94e0746d0f93a3d0e
+task_record:
+  task_id: TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  title: null
+  domain: Research integration / immutable daily signal and run package export
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: engineering coordinator：完成 ordinary main push/cleanup；project owner：如需
+    ETF direction mapping 或 non-primary window，提供独立 reviewed token/policy；TRADING-2484
+    owner 从 pushed latest main 继承 package contract
+  requirement_refs:
+  - docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md`。已从
+    pre-normalized `LONG_CALL/LONG_PUT/FLAT` 与 canonical `aits validate-data` execution
+    receipt 生成 immutable `daily_signal`、`run_manifest`、derived receipt 与 policy/code/source/DQ/calendar
+    hashes；不选约、不计算收益、不访问 QuantConnect。剩余缺口是 QC adapter、option-event DQ/PIT、selection/execution/accounting/backtest
+    与 owner-reviewed ETF mapping/non-primary window authority。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: canonical DQ receipt 同路径重验并派生 PASS；primary requested/evaluated start=`2021-02-22`，其他
+      start 仅 reviewed proxy/sensitivity/stress+D Q caveat；lag=1/no-lookahead、reviewed
+      effective session、exact coverage、canonical replay/tamper/idempotence negatives
+      PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 407aa998a79544ff1a513221c0284a35327e3beb7c9f5adcf44882dff7d58027
+  cell_count: 8
+  all_cells:
+  - TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  - Research integration / immutable daily signal and run package export
+  - P1
+  - BASELINE_DONE
+  - engineering coordinator：完成 ordinary main push/cleanup；project owner：如需 ETF direction
+    mapping 或 non-primary window，提供独立 reviewed token/policy；TRADING-2484 owner 从 pushed
+    latest main 继承 package contract
+  - 详见 `docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md`。已从
+    pre-normalized `LONG_CALL/LONG_PUT/FLAT` 与 canonical `aits validate-data` execution
+    receipt 生成 immutable `daily_signal`、`run_manifest`、derived receipt 与 policy/code/source/DQ/calendar
+    hashes；不选约、不计算收益、不访问 QuantConnect。剩余缺口是 QC adapter、option-event DQ/PIT、selection/execution/accounting/backtest
+    与 owner-reviewed ETF mapping/non-primary window authority。
+  - canonical DQ receipt 同路径重验并派生 PASS；primary requested/evaluated start=`2021-02-22`，其他
+    start 仅 reviewed proxy/sensitivity/stress+D Q caveat；lag=1/no-lookahead、reviewed
+    effective session、exact coverage、canonical replay/tamper/idempotence negatives
+    PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。
+  - 2026-08-02：offline baseline 完成；focused package=`25 passed`，2481/2482 邻接合同合计=`85
+    passed`，Ruff/mypy/DevEx/task-shadow PASS；正式五级门禁与 ordinary push/cleanup 待完成。`COORD-2483-DQ-WINDOW-V1`
+    已吸收：自报 PASS+任意 bytes 禁止，`2022-12-01` 非默认；ETF mapping/non-primary authority 均未获批准，external
+    token 未授予，`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1|Research integration
+    / immutable daily signal and run package export|P1|BASELINE_DONE|engineering coordinator：完成
+    ordinary main push/cleanup；project owner：如需 ETF direction mapping 或 non-primary
+    window，提供独立 reviewed token/policy；TRADING-2484 owner 从 pushed latest main 继承 package
+    contract|详见 `docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md`。已从
+    pre-normalized `LONG_CALL/LONG_PUT/FLAT` 与 canonical `aits validate-data` execution
+    receipt 生成 immutable `daily_signal`、`run_manifest`、derived receipt 与 policy/code/source/DQ/calendar
+    hashes；不选约、不计算收益、不访问 QuantConnect。剩余缺口是 QC adapter、option-event DQ/PIT、selection/execution/accounting/backtest
+    与 owner-reviewed ETF mapping/non-primary window authority。|canonical DQ receipt
+    同路径重验并派生 PASS；primary requested/evaluated start=`2021-02-22`，其他 start 仅 reviewed
+    proxy/sensitivity/stress+D Q caveat；lag=1/no-lookahead、reviewed effective session、exact
+    coverage、canonical replay/tamper/idempotence negatives PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。|2026-08-02：offline
+    baseline 完成；focused package=`25 passed`，2481/2482 邻接合同合计=`85 passed`，Ruff/mypy/DevEx/task-shadow
+    PASS；正式五级门禁与 ordinary push/cleanup 待完成。`COORD-2483-DQ-WINDOW-V1` 已吸收：自报 PASS+任意
+    bytes 禁止，`2022-12-01` 非默认；ETF mapping/non-primary authority 均未获批准，external token
+    未授予，`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-407aa998a79544ff1a513221
+  task_id: TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: engineering coordinator：完成 ordinary main push/cleanup；project owner：如需
+      ETF direction mapping 或 non-primary window，提供独立 reviewed token/policy；TRADING-2484
+      owner 从 pushed latest main 继承 package contract
+    notes: 2026-08-02：offline baseline 完成；focused package=`25 passed`，2481/2482 邻接合同合计=`85
+      passed`，Ruff/mypy/DevEx/task-shadow PASS；正式五级门禁与 ordinary push/cleanup 待完成。`COORD-2483-DQ-WINDOW-V1`
+      已吸收：自报 PASS+任意 bytes 禁止，`2022-12-01` 非默认；ETF mapping/non-primary authority 均未获批准，external
+      token 未授予，`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:407aa998a79544ff1a513221c0284a35327e3beb7c9f5adcf44882dff7d58027
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2483_QQQ_OPTIONS_SIGNAL_RUN_MANIFEST_EXPORT_V1
+  - Research integration / immutable daily signal and run package export
+  - P1
+  - BASELINE_DONE
+  - engineering coordinator：完成 ordinary main push/cleanup；project owner：如需 ETF direction
+    mapping 或 non-primary window，提供独立 reviewed token/policy；TRADING-2484 owner 从 pushed
+    latest main 继承 package contract
+  - 详见 `docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md`。已从
+    pre-normalized `LONG_CALL/LONG_PUT/FLAT` 与 canonical `aits validate-data` execution
+    receipt 生成 immutable `daily_signal`、`run_manifest`、derived receipt 与 policy/code/source/DQ/calendar
+    hashes；不选约、不计算收益、不访问 QuantConnect。剩余缺口是 QC adapter、option-event DQ/PIT、selection/execution/accounting/backtest
+    与 owner-reviewed ETF mapping/non-primary window authority。
+  - canonical DQ receipt 同路径重验并派生 PASS；primary requested/evaluated start=`2021-02-22`，其他
+    start 仅 reviewed proxy/sensitivity/stress+D Q caveat；lag=1/no-lookahead、reviewed
+    effective session、exact coverage、canonical replay/tamper/idempotence negatives
+    PASS；更新 system flow；退出=`INTERNAL_QQQ_OPTION_SIGNAL_PACKAGE_READY`。
+  - 2026-08-02：offline baseline 完成；focused package=`25 passed`，2481/2482 邻接合同合计=`85
+    passed`，Ruff/mypy/DevEx/task-shadow PASS；正式五级门禁与 ordinary push/cleanup 待完成。`COORD-2483-DQ-WINDOW-V1`
+    已吸收：自报 PASS+任意 bytes 禁止，`2022-12-01` 非默认；ETF mapping/non-primary authority 均未获批准，external
+    token 未授予，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2483_QQQ_Options_Signal_Run_Manifest_Export_V1.md
+  terminal: false
+  canonical_row_sha256: 407aa998a79544ff1a513221c0284a35327e3beb7c9f5adcf44882dff7d58027
+last_event_id: legacy-import-407aa998a79544ff1a513221
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 53a296f7ac51dbbb225c02cb164fa96cf46d4a821d399b61bfc86628fc41ff07

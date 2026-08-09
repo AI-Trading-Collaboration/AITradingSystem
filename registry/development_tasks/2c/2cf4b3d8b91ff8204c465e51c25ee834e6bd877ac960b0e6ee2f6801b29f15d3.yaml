@@ -1,0 +1,117 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  task_id_sha256: 2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3
+task_record:
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  title: null
+  domain: Developer experience / governed Web Pro exact-Git planning handoff
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: workflow owner：在下一次用户明确授权的 Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发
+  requirement_refs:
+  - docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md`。Skill
+    只在用户明确要求网页 Pro 外部审阅时，把公开或用户明确授权的 Git exact commit 与最小必要上下文发送到已登录 ChatGPT；必须分离
+    UI `Pro`、模型自述与 authoritative backend route evidence，并把 fallback 不可验证记为风险。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 使用 `skill-creator` 标准结构；canonical bundle 位于 `tools/codex_skills/run-web-pro-git-review/`，installed
+      bundle 位于 `$CODEX_HOME/skills/run-web-pro-git-review/`；固定 exact commit、不读取 moving
+      main；仓库检索成功/失败逐项披露；路由结论只允许 verified mismatch signal、UI/self-report consistent但route不可验证、或明确不可用；`quick_validate`、canonical/installed
+      parity、技能/历史 authority 聚焦测试、Architecture 785项与Contract 276项 PASS；task shadow
+      live drift 由新的 append-only DEVX-007 compatibility authority 接管且不改写 D0E 历史段；不修改策略、数据、生产或broker状态。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
+  cell_count: 8
+  all_cells:
+  - DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  - Developer experience / governed Web Pro exact-Git planning handoff
+  - P0
+  - BASELINE_DONE
+  - workflow owner：在下一次用户明确授权的 Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发
+  - 详见 `docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md`。Skill 只在用户明确要求网页
+    Pro 外部审阅时，把公开或用户明确授权的 Git exact commit 与最小必要上下文发送到已登录 ChatGPT；必须分离 UI `Pro`、模型自述与
+    authoritative backend route evidence，并把 fallback 不可验证记为风险。
+  - 使用 `skill-creator` 标准结构；canonical bundle 位于 `tools/codex_skills/run-web-pro-git-review/`，installed
+    bundle 位于 `$CODEX_HOME/skills/run-web-pro-git-review/`；固定 exact commit、不读取 moving
+    main；仓库检索成功/失败逐项披露；路由结论只允许 verified mismatch signal、UI/self-report consistent但route不可验证、或明确不可用；`quick_validate`、canonical/installed
+    parity、技能/历史 authority 聚焦测试、Architecture 785项与Contract 276项 PASS；task shadow live
+    drift 由新的 append-only DEVX-007 compatibility authority 接管且不改写 D0E 历史段；不修改策略、数据、生产或broker状态。
+  - 2026-07-29：skill bundle、提示模板、路由风险分类、恢复流程、静态契约测试与 append-only current-hash authority
+    已完成；首轮 Architecture 的 48 个 drift 失败已直接修复，复跑 `785 passed`，Contract `276 passed`。任务进入
+    `BASELINE_DONE`；不替代 TRADING-2464 的 Owner 授权或研究证据。
+  raw_line: '|DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL|Developer experience /
+    governed Web Pro exact-Git planning handoff|P0|BASELINE_DONE|workflow owner：在下一次用户明确授权的
+    Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发|详见 `docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md`。Skill
+    只在用户明确要求网页 Pro 外部审阅时，把公开或用户明确授权的 Git exact commit 与最小必要上下文发送到已登录 ChatGPT；必须分离
+    UI `Pro`、模型自述与 authoritative backend route evidence，并把 fallback 不可验证记为风险。|使用 `skill-creator`
+    标准结构；canonical bundle 位于 `tools/codex_skills/run-web-pro-git-review/`，installed
+    bundle 位于 `$CODEX_HOME/skills/run-web-pro-git-review/`；固定 exact commit、不读取 moving
+    main；仓库检索成功/失败逐项披露；路由结论只允许 verified mismatch signal、UI/self-report consistent但route不可验证、或明确不可用；`quick_validate`、canonical/installed
+    parity、技能/历史 authority 聚焦测试、Architecture 785项与Contract 276项 PASS；task shadow live
+    drift 由新的 append-only DEVX-007 compatibility authority 接管且不改写 D0E 历史段；不修改策略、数据、生产或broker状态。|2026-07-29：skill
+    bundle、提示模板、路由风险分类、恢复流程、静态契约测试与 append-only current-hash authority 已完成；首轮 Architecture
+    的 48 个 drift 失败已直接修复，复跑 `785 passed`，Contract `276 passed`。任务进入 `BASELINE_DONE`；不替代
+    TRADING-2464 的 Owner 授权或研究证据。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-e493853818217821e7ff20dc
+  task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: workflow owner：在下一次用户明确授权的 Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发
+    notes: 2026-07-29：skill bundle、提示模板、路由风险分类、恢复流程、静态契约测试与 append-only current-hash
+      authority 已完成；首轮 Architecture 的 48 个 drift 失败已直接修复，复跑 `785 passed`，Contract
+      `276 passed`。任务进入 `BASELINE_DONE`；不替代 TRADING-2464 的 Owner 授权或研究证据。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
+  - Developer experience / governed Web Pro exact-Git planning handoff
+  - P0
+  - BASELINE_DONE
+  - workflow owner：在下一次用户明确授权的 Web Pro exact-Git 审阅中观察复用体验；如无问题无需继续开发
+  - 详见 `docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md`。Skill 只在用户明确要求网页
+    Pro 外部审阅时，把公开或用户明确授权的 Git exact commit 与最小必要上下文发送到已登录 ChatGPT；必须分离 UI `Pro`、模型自述与
+    authoritative backend route evidence，并把 fallback 不可验证记为风险。
+  - 使用 `skill-creator` 标准结构；canonical bundle 位于 `tools/codex_skills/run-web-pro-git-review/`，installed
+    bundle 位于 `$CODEX_HOME/skills/run-web-pro-git-review/`；固定 exact commit、不读取 moving
+    main；仓库检索成功/失败逐项披露；路由结论只允许 verified mismatch signal、UI/self-report consistent但route不可验证、或明确不可用；`quick_validate`、canonical/installed
+    parity、技能/历史 authority 聚焦测试、Architecture 785项与Contract 276项 PASS；task shadow live
+    drift 由新的 append-only DEVX-007 compatibility authority 接管且不改写 D0E 历史段；不修改策略、数据、生产或broker状态。
+  - 2026-07-29：skill bundle、提示模板、路由风险分类、恢复流程、静态契约测试与 append-only current-hash authority
+    已完成；首轮 Architecture 的 48 个 drift 失败已直接修复，复跑 `785 passed`，Contract `276 passed`。任务进入
+    `BASELINE_DONE`；不替代 TRADING-2464 的 Owner 授权或研究证据。
+  docs_links:
+  - docs/requirements/DEVX-007_Web_Pro_Git_Strategy_Planning_Skill.md
+  terminal: false
+  canonical_row_sha256: e493853818217821e7ff20dc89410c9331acb1f6fc0d9c1a55e5a0c0f164a4f4
+last_event_id: legacy-import-e493853818217821e7ff20dc
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 3af0364711e3d00956e7ae5ff87ed348238fcdb947654127de262949741303db

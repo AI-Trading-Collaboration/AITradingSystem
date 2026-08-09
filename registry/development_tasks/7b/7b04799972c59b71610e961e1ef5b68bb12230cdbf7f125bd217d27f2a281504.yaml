@@ -1,0 +1,112 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
+  task_id_sha256: 7b04799972c59b71610e961e1ef5b68bb12230cdbf7f125bd217d27f2a281504
+task_record:
+  task_id: DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
+  title: null
+  domain: Developer experience / local-main closeout remote preflight consistency
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: engineering line：回到DATA-GOV-002 Phase C typed attribution主线；后续新closeout边界另建follow-up
+  requirement_refs:
+  - docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md`。实现覆盖clean
+    main、remote equal/ancestor正例与non-main、worker、dirty、missing remote、remote ahead、wrong
+    stage负例；canonical/installed 5文件byte-identical；真实local-main remote closeout已PASS。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 允许coordinator在clean local main运行只读`CLOSEOUT --remote-action`；阻断missing remote、origin-only>0、non-main、worker
+      role、missing remote-action与dirty checkout；不自动fetch/push/merge/rebase/PR/history
+      rewrite/force-push；canonical/installed parity、focused/formal/Full和本任务真实remote
+      closeout PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 4d7b75e0a06642ac1899cced6ab345b52ea772118b7cb6b82e7a04e4a64e6282
+  cell_count: 8
+  all_cells:
+  - DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
+  - Developer experience / local-main closeout remote preflight consistency
+  - P0
+  - BASELINE_DONE
+  - engineering line：回到DATA-GOV-002 Phase C typed attribution主线；后续新closeout边界另建follow-up
+  - 详见 `docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md`。实现覆盖clean
+    main、remote equal/ancestor正例与non-main、worker、dirty、missing remote、remote ahead、wrong
+    stage负例；canonical/installed 5文件byte-identical；真实local-main remote closeout已PASS。
+  - 允许coordinator在clean local main运行只读`CLOSEOUT --remote-action`；阻断missing remote、origin-only>0、non-main、worker
+    role、missing remote-action与dirty checkout；不自动fetch/push/merge/rebase/PR/history
+    rewrite/force-push；canonical/installed parity、focused/formal/Full和本任务真实remote
+    closeout PASS。
+  - 2026-07-26：candidate `69ef2555c`已ff到local main；installed `SINGLE_LANE/coordinator/CLOSEOUT/--remote-action`在`local_only=1`、`origin_only=0`、clean
+    checkout下PASS，无blocker/warning；此前focused 25、compatibility 64、architecture 672、contract
+    275、reproducibility 23、Full 7365/3 skipped/643 warnings均PASS。状态转`BASELINE_DONE`，最终普通push与双SHA复核由标准closeout执行。`production_effect=none`、`broker_action=none`。
+  raw_line: '|DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT|Developer experience / local-main
+    closeout remote preflight consistency|P0|BASELINE_DONE|engineering line：回到DATA-GOV-002
+    Phase C typed attribution主线；后续新closeout边界另建follow-up|详见 `docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md`。实现覆盖clean
+    main、remote equal/ancestor正例与non-main、worker、dirty、missing remote、remote ahead、wrong
+    stage负例；canonical/installed 5文件byte-identical；真实local-main remote closeout已PASS。|允许coordinator在clean
+    local main运行只读`CLOSEOUT --remote-action`；阻断missing remote、origin-only>0、non-main、worker
+    role、missing remote-action与dirty checkout；不自动fetch/push/merge/rebase/PR/history
+    rewrite/force-push；canonical/installed parity、focused/formal/Full和本任务真实remote
+    closeout PASS。|2026-07-26：candidate `69ef2555c`已ff到local main；installed `SINGLE_LANE/coordinator/CLOSEOUT/--remote-action`在`local_only=1`、`origin_only=0`、clean
+    checkout下PASS，无blocker/warning；此前focused 25、compatibility 64、architecture 672、contract
+    275、reproducibility 23、Full 7365/3 skipped/643 warnings均PASS。状态转`BASELINE_DONE`，最终普通push与双SHA复核由标准closeout执行。`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-4d7b75e0a06642ac1899cced
+  task_id: DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: engineering line：回到DATA-GOV-002 Phase C typed attribution主线；后续新closeout边界另建follow-up
+    notes: 2026-07-26：candidate `69ef2555c`已ff到local main；installed `SINGLE_LANE/coordinator/CLOSEOUT/--remote-action`在`local_only=1`、`origin_only=0`、clean
+      checkout下PASS，无blocker/warning；此前focused 25、compatibility 64、architecture 672、contract
+      275、reproducibility 23、Full 7365/3 skipped/643 warnings均PASS。状态转`BASELINE_DONE`，最终普通push与双SHA复核由标准closeout执行。`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:4d7b75e0a06642ac1899cced6ab345b52ea772118b7cb6b82e7a04e4a64e6282
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-003_GOVERNED_CLOSEOUT_REMOTE_PREFLIGHT
+  - Developer experience / local-main closeout remote preflight consistency
+  - P0
+  - BASELINE_DONE
+  - engineering line：回到DATA-GOV-002 Phase C typed attribution主线；后续新closeout边界另建follow-up
+  - 详见 `docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md`。实现覆盖clean
+    main、remote equal/ancestor正例与non-main、worker、dirty、missing remote、remote ahead、wrong
+    stage负例；canonical/installed 5文件byte-identical；真实local-main remote closeout已PASS。
+  - 允许coordinator在clean local main运行只读`CLOSEOUT --remote-action`；阻断missing remote、origin-only>0、non-main、worker
+    role、missing remote-action与dirty checkout；不自动fetch/push/merge/rebase/PR/history
+    rewrite/force-push；canonical/installed parity、focused/formal/Full和本任务真实remote
+    closeout PASS。
+  - 2026-07-26：candidate `69ef2555c`已ff到local main；installed `SINGLE_LANE/coordinator/CLOSEOUT/--remote-action`在`local_only=1`、`origin_only=0`、clean
+    checkout下PASS，无blocker/warning；此前focused 25、compatibility 64、architecture 672、contract
+    275、reproducibility 23、Full 7365/3 skipped/643 warnings均PASS。状态转`BASELINE_DONE`，最终普通push与双SHA复核由标准closeout执行。`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/DEVX-003_Governed_Closeout_Remote_Preflight.md
+  terminal: false
+  canonical_row_sha256: 4d7b75e0a06642ac1899cced6ab345b52ea772118b7cb6b82e7a04e4a64e6282
+last_event_id: legacy-import-4d7b75e0a06642ac1899cced
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 38a0c345d4a47d44f7dac4a5506a9800823b2bc07e4f5904927df87f35b5113c

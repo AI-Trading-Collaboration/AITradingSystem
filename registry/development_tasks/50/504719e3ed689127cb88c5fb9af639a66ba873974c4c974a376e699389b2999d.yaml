@@ -1,0 +1,95 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
+  task_id_sha256: 504719e3ed689127cb88c5fb9af639a66ba873974c4c974a376e699389b2999d
+task_record:
+  task_id: TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
+  title: null
+  domain: Research case library / forward and reverse diagnostics
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-726_to_733 总需求文档；建立正向/逆向 case
+    library、oracle diagnostic set 和 regret case conversion baseline
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits research cases register'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: b9a0927c2e01de538accc3a564d2e08595a204d04280b82fda88b2bc368e3cd5
+  cell_count: 12
+  all_cells:
+  - TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
+  - Research case library / forward and reverse diagnostics
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-726_to_733 总需求文档；建立正向/逆向 case library、oracle diagnostic set 和 regret
+    case conversion baseline
+  - '`aits research cases register'
+  - query
+  - build-from-regret-casebook
+  - build-oracle-diagnostic-set
+  - audit` 可运行；forward/reverse case counts 可见；oracle_cases_promotion_gate_allowed=false；case_source_evidence_linked=true
+  - '2026-06-21: validation-only baseline 已实现并进入 VALIDATING；新增 case library config/schema、register/query/build/audit
+    CLI 和测试；oracle/teacher cases 只能用于 diagnostics / hypothesis generation，不能进入 promotion
+    gate。'
+  raw_line: '|TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS|Research
+    case library / forward and reverse diagnostics|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+    TRADING-726_to_733 总需求文档；建立正向/逆向 case library、oracle diagnostic set 和 regret case
+    conversion baseline|`aits research cases register|query|build-from-regret-casebook|build-oracle-diagnostic-set|audit`
+    可运行；forward/reverse case counts 可见；oracle_cases_promotion_gate_allowed=false；case_source_evidence_linked=true|2026-06-21:
+    validation-only baseline 已实现并进入 VALIDATING；新增 case library config/schema、register/query/build/audit
+    CLI 和测试；oracle/teacher cases 只能用于 diagnostics / hypothesis generation，不能进入 promotion
+    gate。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: true
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-b9a0927c2e01de538accc3a5
+  task_id: TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: query
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:b9a0927c2e01de538accc3a564d2e08595a204d04280b82fda88b2bc368e3cd5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-733_RESEARCH_CASE_LIBRARY_FORWARD_REVERSE_DIAGNOSTICS
+  - Research case library / forward and reverse diagnostics
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-726_to_733 总需求文档；建立正向/逆向 case library、oracle diagnostic set 和 regret
+    case conversion baseline
+  - '`aits research cases register'
+  - query
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: 817c1be07177fd685676aeafbb98deb2ede896a29d0197063cffc9cee7b07dc6
+last_event_id: legacy-import-b9a0927c2e01de538accc3a5
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 13eab1d10c100d914e04a684f5b0f9dfc4a0ac10b2d03a1c8d615bfaf6dc13dd

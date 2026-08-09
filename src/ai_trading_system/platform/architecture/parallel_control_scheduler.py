@@ -61,6 +61,7 @@ class SchedulerDecision:
     alternatives: tuple[str, ...]
     readiness: tuple[ReadinessDecision, ...]
     active_lease_ids: tuple[str, ...]
+    source_of_truth: str
 
     def _body(self) -> dict[str, object]:
         return {
@@ -85,7 +86,7 @@ class SchedulerDecision:
             "dispatch_allowed": False,
             "lease_acquisition_allowed": False,
             "task_governance_status_mutated": False,
-            "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+            "source_of_truth": self.source_of_truth,
             "production_effect": "none",
             "broker_action": "none",
         }
@@ -123,7 +124,7 @@ class ShadowGovernanceAudit:
             "dispatch_allowed": False,
             "lease_acquisition_allowed": False,
             "task_governance_status_mutated": False,
-            "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+            "source_of_truth": self.decision.source_of_truth,
             "production_effect": "none",
         }
 
@@ -295,6 +296,7 @@ def build_shadow_scheduler_decision(
         alternatives=tuple(not_selected_change_ids),
         readiness=readiness,
         active_lease_ids=tuple(sorted(lease.lease_id for lease in active_leases)),
+        source_of_truth=policy.source_of_truth,
     )
 
 

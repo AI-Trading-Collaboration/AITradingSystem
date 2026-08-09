@@ -1,0 +1,59 @@
+schema_version: arch_005_s5_task_source_cutover_policy.v1
+policy_id: arch_005_s5_canonical_task_source_cutover
+task_id: ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+status: APPROVED_FOR_SERIAL_CUTOVER
+exact_start_base: 7cfc81d6ab9d992c6c45e1084e22b33b9560d519
+owner_decision: owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+canonical:
+  fragment_root: registry/development_tasks
+  index_path: inputs/architecture/arch_005_task_registry_index.yaml
+  manifest_path: inputs/architecture/arch_005_s5_cutover_manifest.yaml
+  consumer_inventory_path: inputs/architecture/arch_005_s5_consumer_inventory.yaml
+  stable_path_key: sha256(task_id)
+  fragment_schema: arch_005_task_registry_fragment.v1
+  index_schema: arch_005_task_registry_index.v1
+legacy_import:
+  baseline_path: inputs/architecture/arch_005_task_registry_baseline.yaml
+  v2_index_path: inputs/architecture/arch_005_task_shadow_v2_index.yaml
+  v2_fragment_root: registry/development_tasks_shadow_v2
+  active_path: docs/task_register.md
+  completed_path: docs/task_register_completed.md
+generated_views:
+  active_path: docs/task_register.md
+  completed_path: docs/task_register_completed.md
+  active_template_path: inputs/architecture/arch_005_s5_active_view_template.md
+  completed_template_path: inputs/architecture/arch_005_s5_completed_view_template.md
+  manual_edit_allowed: false
+  renderer: canonical_partition_table_plus_sealed_legacy_non_task_skeleton
+event_policy:
+  append_only: true
+  previous_event_required_after_initial: true
+  event_id: sha256(canonical_event_without_id)
+  allowed_statuses:
+  - PROPOSED
+  - READY
+  - IN_PROGRESS
+  - BLOCKED_OWNER_INPUT
+  - BLOCKED_EXTERNAL
+  - BASELINE_DONE
+  - VALIDATING
+  - DONE
+  - DEFERRED
+  - DROPPED
+  terminal_statuses:
+  - DONE
+  - DROPPED
+rollback:
+  mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
+  rehearsal_output_root: inputs/architecture/arch_005_s5_rollback_rehearsal
+  automatic_source_reversion_allowed: false
+  canonical_event_loss_allowed: false
+safety:
+  yaml_markdown_dual_write_allowed: false
+  worker_generated_view_write_allowed: false
+  automatic_dispatch_allowed: false
+  automatic_merge_allowed: false
+  automatic_push_allowed: false
+  production_effect: none
+  broker_action: none

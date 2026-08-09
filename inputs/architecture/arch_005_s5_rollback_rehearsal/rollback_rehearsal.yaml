@@ -1,0 +1,20 @@
+schema_version: arch_005_s5_rollback_rehearsal.v1
+status: PASS
+mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
+source_of_truth_reverted: false
+task_count: 974
+views:
+- partition: active
+  path: task_register.md
+  sha256: 124a80f37e008ddd7b666a7b1c56f1c6cef17782a1f9cbd03e1376f28fbca99d
+  row_count: 467
+  canonical_event_loss_count: 0
+- partition: completed
+  path: task_register_completed.md
+  sha256: 6f537e669d68770d461c5e347417ab748071321476c599db4ae4198c507c248c
+  row_count: 507
+  canonical_event_loss_count: 0
+canonical_event_loss_count: 0
+production_effect: none
+broker_action: none
+rehearsal_checksum: cc34cf3ae04e71a4d32a09f37a34b36ed48ba9dd91badf19c4125b9b32bc2023

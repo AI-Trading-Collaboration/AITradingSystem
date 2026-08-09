@@ -3,7 +3,7 @@
 ## 状态
 
 - priority：P1
-- status：IN_PROGRESS（Task Shadow v2 B 波完成；C 波已独立授权并推进，D/S5 仍串行锁定）
+- status：DONE（B/C/D 与 ARCH-005 S5 已按授权顺序完成；最终 release closeout 进行中）
 - owner：architecture coordinator + developer workflow owner
 - source finding：OPS-070 2026-07-27 checkout-dirty stability audit
 - production effect：none
@@ -20,13 +20,14 @@ exact main=`cb437a4d4be178180f60cb3ee2d2994c1be45f94`。Owner 要求按 C → D 
 
 - C 波 requirement：`docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md`；
 - D 波必须等待 C ordinary push/cleanup/resource release 后从新 exact main 独立登记；
-- ARCH-005 S5 必须再等待 D 波完成并独立登记；
+- ARCH-005 S5 已在 D ordinary push/cleanup/resource release 后从 exact latest main 独立登记并完成验证；
 - 不允许复用前序 frozen tree formal evidence，也不允许三个 cutover 并行或合并为一次 mutation。
 
 2026-08-09 C 波进展：legacy compatibility monolith 已按 exact base seal 为 immutable prefix；
 dynamic inventory 识别 8 个 consumer，growth-assuming direct read 从 135 降为 0、runtime append
 writer 为 0。Canonical JSON fragment、hash-chain index、merged loader、explicit legacy reader 与
-rollback/tamper contract 已实现；当前正在 final-tree validation，D/S5 尚未登记或启动。
+  rollback/tamper contract 已实现并完成 ordinary push/cleanup。D 波随后完成 3 个 monolith 的
+  lossless inactive fragmentation；S5 已从 D release 独立执行 canonical task-source cutover。
 
 ## 2026-07-30 当前授权波与顺序
 
@@ -188,9 +189,9 @@ auto-stash/clean/reset 消失。OPS-070 的独立 runtime clone 负责隔离运�
 
 ## 风险与 cutover 边界
 
-- DEVX-006C 已从 exact released main 完成 compatibility source cutover；当前按 Owner 指定顺序仅开放
-  DEVX-006D report/catalog/flow lossless fragmentation，ARCH-005 S5 仍须等待 D ordinary push/cleanup
-  后独立登记；
+- DEVX-006C 已从 exact released main 完成 compatibility source cutover，DEVX-006D 已完成
+  report/catalog/flow lossless fragmentation并 ordinary push/cleanup；ARCH-005 S5 已从 D exact release
+  `7cfc81d6ab9d992c6c45e1084e22b33b9560d519` 独立登记并完成 canonical cutover/formal validation；
 - line number 从 fragment 移到 index 不能丢失 legacy byte/row traceability；
 - 现有 55 条多于 8 cells 的 legacy rows 必须原样保留；
 - 任何不能证明 lossless parity 的 fragment 只能保持 inactive shadow；

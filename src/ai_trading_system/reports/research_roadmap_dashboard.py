@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.platform.architecture.task_registry_canonical import (
+    canonical_task_register_view_path,
+)
 from ai_trading_system.reports.research_monthly_review_pack import (
     PRODUCTION_EFFECT,
     _int,
@@ -95,8 +98,8 @@ def build_research_roadmap_dashboard_payload(
     as_of: date,
     report_index_payload: Mapping[str, Any] | None = None,
     report_index_path: Path | None = None,
-    task_register_path: Path = PROJECT_ROOT / "docs" / "task_register.md",
-    completed_register_path: Path = PROJECT_ROOT / "docs" / "task_register_completed.md",
+    task_register_path: Path | None = None,
+    completed_register_path: Path | None = None,
     project_root: Path = PROJECT_ROOT,
 ) -> dict[str, Any]:
     if report_index_payload is None:
@@ -106,8 +109,16 @@ def build_research_roadmap_dashboard_payload(
         report_index_payload = _read_json_mapping(source_path)
         report_index_path = source_path
 
-    active_tasks = _task_rows(task_register_path)
-    completed_tasks = _task_rows(completed_register_path)
+    active_path = task_register_path or canonical_task_register_view_path(
+        project_root,
+        "active",
+    )
+    completed_path = completed_register_path or canonical_task_register_view_path(
+        project_root,
+        "completed",
+    )
+    active_tasks = _task_rows(active_path)
+    completed_tasks = _task_rows(completed_path)
     context = _context_reports(report_index_payload, project_root=project_root)
     report_index_summary = _mapping(report_index_payload.get("summary"))
     active_task_summary = _active_task_summary(active_tasks)
@@ -546,9 +557,7 @@ def _context_reports(
         context[report_id] = {
             "report_id": report_id,
             "availability": (
-                "AVAILABLE"
-                if artifact_path is not None and artifact_path.exists()
-                else "MISSING"
+                "AVAILABLE" if artifact_path is not None and artifact_path.exists() else "MISSING"
             ),
             "artifact_path": "" if artifact_path is None else str(artifact_path),
             "source_payload_path": "" if payload_path is None else str(payload_path),

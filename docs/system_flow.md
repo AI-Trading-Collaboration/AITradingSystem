@@ -1344,6 +1344,31 @@ flowchart LR
     PARITY -.-> SAFE["No cutover / dual write / dispatch / lease / production"]
 ```
 
+ARCH-005 S5 在 DEVX-006C/D 串行 release 后完成唯一一次 final legacy import，并把事实源切换到
+`registry/development_tasks/<task-id-sha256>.yaml` 与
+`inputs/architecture/arch_005_task_registry_index.yaml`。每个 task fragment 固定 stable identity、
+typed task record、完整 legacy raw-row evidence 和 append-only causal events；index 绑定确定性 order、
+active/completed partition、fragment file/checksum 与前向 entry hash chain。`docs/task_register.md` 和
+`docs/task_register_completed.md` 现在仅由 canonical renderer 生成并带 do-not-edit banner；terminal status
+自动投影到 completed，不再允许手工 row move 或 Markdown/canonical dual write。semantic runtime consumer
+必须先经 `canonical_task_register_view_path()` 校验 index、fragment、manifest、consumer inventory、template
+与 generated-view bytes 后读取。两次 governance cycle（final import cutover + canonical self-hosted update）后
+manual row-move workflow 关闭；rollback rehearsal 只输出 owner-review legacy-compatible snapshots，绝不回退
+canonical authority 或丢弃 event history。该切换不授权 automatic dispatch/merge/push、production 或 broker。
+
+```mermaid
+flowchart LR
+    FINAL["Final legacy import<br/>974 tasks / 55 ambiguous rows"] --> FRAG["Stable canonical task fragments<br/>identity + events + raw evidence"]
+    FRAG --> CINDEX["Canonical index<br/>partition + order + hash chain"]
+    CINDEX --> AVIEW["Generated active view<br/>do not edit"]
+    CINDEX --> CVIEW["Generated completed view<br/>do not edit"]
+    CINDEX --> LOADER["Validated canonical loader"]
+    LOADER --> CONSUMERS["Reports / CLI semantic consumers"]
+    UPDATE["register / update CLI"] --> FRAG
+    CINDEX -.-> ROLLBACK["Owner-review snapshot only<br/>source never reverted"]
+    CINDEX -.-> SAFETY["No auto dispatch / merge / push / production / broker"]
+```
+
 ARCH-005-PB1 在 G2.4 尚未完成 phase-level handoff 时先提供 non-cutover 并行控制原语。调用方把每个候选变更声明为
 `change_manifest.v1`，其中固定 `base_commit`、DOMAIN/COORDINATOR 角色、owned/shared paths、module ids、
 contract 读写/version 以及 required validation tiers。解析器执行精确 schema、canonical POSIX path、40-hex base、

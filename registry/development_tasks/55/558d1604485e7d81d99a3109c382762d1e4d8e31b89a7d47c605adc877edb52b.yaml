@@ -1,0 +1,130 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  task_id_sha256: 558d1604485e7d81d99a3109c382762d1e4d8e31b89a7d47c605adc877edb52b
+task_record:
+  task_id: TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  title: null
+  domain: Data governance / QuantConnect QQQ Options license, entitlement and export
+    evidence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：独立复核并接受或拒绝 hash-bound proposal；未来若要解除 primary-window、2489/2490
+    或 raw-download blocker，必须另立任务并提供新的 exact authority
+  requirement_refs:
+  - docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。S3
+    continuation 只登记六个 portable evidence id、byte count、SHA-256 与人工观察，不复制网页/PDF/截图正文或
+    absolute user path。Cloud Access Free 只支持既有 2025-12-02 tested-session bounded capability；`2021-02-22`
+    primary window、raw download、2489/2490、DQ/PIT 与 range expansion 继续 blocked。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: task-owned typed Owner-review policy/API 与 canonical proposal deterministic；严格绑定原
+      2497 report、2493 NO-GO 和六 evidence hashes；错误价格映射、missing/reordered/duplicate
+      evidence、页面 hash/byte count tamper、public pricing→full entitlement、provider
+      start→primary-window promotion、download/API/CLI/purchase/external-action promotion
+      均 fail closed；focused/adjacent/compatibility/formal 与 generated authority PASS。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 45302524d0e6a0b98956efe91aedf6870bdd0b1a588ddc66cee3d918f97580b5
+  cell_count: 8
+  all_cells:
+  - TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  - Data governance / QuantConnect QQQ Options license, entitlement and export evidence
+  - P0
+  - BASELINE_DONE
+  - project owner：独立复核并接受或拒绝 hash-bound proposal；未来若要解除 primary-window、2489/2490 或
+    raw-download blocker，必须另立任务并提供新的 exact authority
+  - 详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。S3
+    continuation 只登记六个 portable evidence id、byte count、SHA-256 与人工观察，不复制网页/PDF/截图正文或
+    absolute user path。Cloud Access Free 只支持既有 2025-12-02 tested-session bounded capability；`2021-02-22`
+    primary window、raw download、2489/2490、DQ/PIT 与 range expansion 继续 blocked。
+  - task-owned typed Owner-review policy/API 与 canonical proposal deterministic；严格绑定原
+    2497 report、2493 NO-GO 和六 evidence hashes；错误价格映射、missing/reordered/duplicate evidence、页面
+    hash/byte count tamper、public pricing→full entitlement、provider start→primary-window
+    promotion、download/API/CLI/purchase/external-action promotion 均 fail closed；focused/adjacent/compatibility/formal
+    与 generated authority PASS。
+  - 2026-08-07：implementation commit=`9b94e4373d7fc0f1da021adcee537e2a1e0a709d`；canonical
+    proposal file/content=`66d7a7b8...4098`/`6b2c67da...63ef`，policy file/canonical=`f206447a...ac0b`/`0137e1db...c8f2`，evidence
+    set=`0733917e...977e`。proposal 保持 owner review incomplete、NO-GO、无外部授权；原 report
+    exact bytes 不变。`production_effect=none`、`broker_action=none`、new external action=`none`。
+  raw_line: '|TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1|Data governance
+    / QuantConnect QQQ Options license, entitlement and export evidence|P0|BASELINE_DONE|project
+    owner：独立复核并接受或拒绝 hash-bound proposal；未来若要解除 primary-window、2489/2490 或 raw-download
+    blocker，必须另立任务并提供新的 exact authority|详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。S3
+    continuation 只登记六个 portable evidence id、byte count、SHA-256 与人工观察，不复制网页/PDF/截图正文或
+    absolute user path。Cloud Access Free 只支持既有 2025-12-02 tested-session bounded capability；`2021-02-22`
+    primary window、raw download、2489/2490、DQ/PIT 与 range expansion 继续 blocked。|task-owned
+    typed Owner-review policy/API 与 canonical proposal deterministic；严格绑定原 2497 report、2493
+    NO-GO 和六 evidence hashes；错误价格映射、missing/reordered/duplicate evidence、页面 hash/byte
+    count tamper、public pricing→full entitlement、provider start→primary-window promotion、download/API/CLI/purchase/external-action
+    promotion 均 fail closed；focused/adjacent/compatibility/formal 与 generated authority
+    PASS。|2026-08-07：implementation commit=`9b94e4373d7fc0f1da021adcee537e2a1e0a709d`；canonical
+    proposal file/content=`66d7a7b8...4098`/`6b2c67da...63ef`，policy file/canonical=`f206447a...ac0b`/`0137e1db...c8f2`，evidence
+    set=`0733917e...977e`。proposal 保持 owner review incomplete、NO-GO、无外部授权；原 report
+    exact bytes 不变。`production_effect=none`、`broker_action=none`、new external action=`none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-45302524d0e6a0b98956efe9
+  task_id: TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：独立复核并接受或拒绝 hash-bound proposal；未来若要解除 primary-window、2489/2490
+      或 raw-download blocker，必须另立任务并提供新的 exact authority
+    notes: 2026-08-07：implementation commit=`9b94e4373d7fc0f1da021adcee537e2a1e0a709d`；canonical
+      proposal file/content=`66d7a7b8...4098`/`6b2c67da...63ef`，policy file/canonical=`f206447a...ac0b`/`0137e1db...c8f2`，evidence
+      set=`0733917e...977e`。proposal 保持 owner review incomplete、NO-GO、无外部授权；原 report
+      exact bytes 不变。`production_effect=none`、`broker_action=none`、new external action=`none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:45302524d0e6a0b98956efe91aedf6870bdd0b1a588ddc66cee3d918f97580b5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2497_QC_QQQ_OPTIONS_LICENSE_EXPORT_DUE_DILIGENCE_V1
+  - Data governance / QuantConnect QQQ Options license, entitlement and export evidence
+  - P0
+  - BASELINE_DONE
+  - project owner：独立复核并接受或拒绝 hash-bound proposal；未来若要解除 primary-window、2489/2490 或
+    raw-download blocker，必须另立任务并提供新的 exact authority
+  - 详见 `docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md`。S3
+    continuation 只登记六个 portable evidence id、byte count、SHA-256 与人工观察，不复制网页/PDF/截图正文或
+    absolute user path。Cloud Access Free 只支持既有 2025-12-02 tested-session bounded capability；`2021-02-22`
+    primary window、raw download、2489/2490、DQ/PIT 与 range expansion 继续 blocked。
+  - task-owned typed Owner-review policy/API 与 canonical proposal deterministic；严格绑定原
+    2497 report、2493 NO-GO 和六 evidence hashes；错误价格映射、missing/reordered/duplicate evidence、页面
+    hash/byte count tamper、public pricing→full entitlement、provider start→primary-window
+    promotion、download/API/CLI/purchase/external-action promotion 均 fail closed；focused/adjacent/compatibility/formal
+    与 generated authority PASS。
+  - 2026-08-07：implementation commit=`9b94e4373d7fc0f1da021adcee537e2a1e0a709d`；canonical
+    proposal file/content=`66d7a7b8...4098`/`6b2c67da...63ef`，policy file/canonical=`f206447a...ac0b`/`0137e1db...c8f2`，evidence
+    set=`0733917e...977e`。proposal 保持 owner review incomplete、NO-GO、无外部授权；原 report
+    exact bytes 不变。`production_effect=none`、`broker_action=none`、new external action=`none`。
+  docs_links:
+  - docs/requirements/TRADING-2497_QC_QQQ_Options_License_Export_Due_Diligence_V1.md
+  terminal: false
+  canonical_row_sha256: 45302524d0e6a0b98956efe91aedf6870bdd0b1a588ddc66cee3d918f97580b5
+last_event_id: legacy-import-45302524d0e6a0b98956efe9
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: c27b1b79f381df6d820e1229e16e5afe9982597cb550ecc16252c7f594ee8548

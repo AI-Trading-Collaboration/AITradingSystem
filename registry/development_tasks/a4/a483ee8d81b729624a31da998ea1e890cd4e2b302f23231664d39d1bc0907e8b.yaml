@@ -1,0 +1,125 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  task_id_sha256: a483ee8d81b729624a31da998ea1e890cd4e2b302f23231664d39d1bc0907e8b
+task_record:
+  task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  title: null
+  domain: Research governance / capability, license, DQ/PIT and range-expansion decision
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 后续独立任务 owners：逐项解除 license/export、DQ/PIT、resource calibration、2489/2490
+    reconciliation 与 primary-window UNKNOWN；project owner：只对新的 exact proposal 另行授权
+  requirement_refs:
+  - docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。project
+    owner 已 exact-bind proposal/policy/authority hashes 并签署 aggregate=`NO_GO_KEEP_BLOCKED`；terminal
+    signoff=`SIGNED_NO_GO`。capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`，五项
+    UNKNOWN 保留 owner/exit condition。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Owner attestation 与 terminal signoff 必须 canonical replay，proposal/policy/authority/axis/unknown/hash
+      chain byte-identical；final generated/current authority、focused/adjacent/compatibility
+      与 final-tree formal PASS；range expansion/further cloud/paid upgrade/investment/paper/live/broker/production
+      保持 false/none。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 6e7d759036e9db112b617c8564d3d2d8e00a6ae5713b9dcea02ebedb30e1f1ca
+  cell_count: 8
+  all_cells:
+  - TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  - Research governance / capability, license, DQ/PIT and range-expansion decision
+  - P0
+  - BASELINE_DONE
+  - 后续独立任务 owners：逐项解除 license/export、DQ/PIT、resource calibration、2489/2490 reconciliation
+    与 primary-window UNKNOWN；project owner：只对新的 exact proposal 另行授权
+  - 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。project
+    owner 已 exact-bind proposal/policy/authority hashes 并签署 aggregate=`NO_GO_KEEP_BLOCKED`；terminal
+    signoff=`SIGNED_NO_GO`。capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`，五项
+    UNKNOWN 保留 owner/exit condition。
+  - Owner attestation 与 terminal signoff 必须 canonical replay，proposal/policy/authority/axis/unknown/hash
+    chain byte-identical；final generated/current authority、focused/adjacent/compatibility
+    与 final-tree formal PASS；range expansion/further cloud/paid upgrade/investment/paper/live/broker/production
+    保持 false/none。
+  - 2026-08-06：Owner exact token 已接收；attestation file/content SHA=`9b159228...f4aa6`/`80db4e17...aeb54`，signoff
+    file/content SHA=`dd9c9332...74d02`/`a6824fc8...f059f`。2493 baseline 仅完成 NO-GO
+    治理收口，不解除 2489/2490 或未来 experiment blocker；任何重试、roll/short/multi-leg/LEAPS/Wheel
+    仍须另立任务与独立授权。
+  raw_line: '|TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1|Research governance
+    / capability, license, DQ/PIT and range-expansion decision|P0|BASELINE_DONE|后续独立任务
+    owners：逐项解除 license/export、DQ/PIT、resource calibration、2489/2490 reconciliation
+    与 primary-window UNKNOWN；project owner：只对新的 exact proposal 另行授权|详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。project
+    owner 已 exact-bind proposal/policy/authority hashes 并签署 aggregate=`NO_GO_KEEP_BLOCKED`；terminal
+    signoff=`SIGNED_NO_GO`。capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`，五项
+    UNKNOWN 保留 owner/exit condition。|Owner attestation 与 terminal signoff 必须 canonical
+    replay，proposal/policy/authority/axis/unknown/hash chain byte-identical；final
+    generated/current authority、focused/adjacent/compatibility 与 final-tree formal
+    PASS；range expansion/further cloud/paid upgrade/investment/paper/live/broker/production
+    保持 false/none。|2026-08-06：Owner exact token 已接收；attestation file/content SHA=`9b159228...f4aa6`/`80db4e17...aeb54`，signoff
+    file/content SHA=`dd9c9332...74d02`/`a6824fc8...f059f`。2493 baseline 仅完成 NO-GO
+    治理收口，不解除 2489/2490 或未来 experiment blocker；任何重试、roll/short/multi-leg/LEAPS/Wheel
+    仍须另立任务与独立授权。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-6e7d759036e9db112b617c85
+  task_id: TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 后续独立任务 owners：逐项解除 license/export、DQ/PIT、resource calibration、2489/2490
+      reconciliation 与 primary-window UNKNOWN；project owner：只对新的 exact proposal 另行授权
+    notes: 2026-08-06：Owner exact token 已接收；attestation file/content SHA=`9b159228...f4aa6`/`80db4e17...aeb54`，signoff
+      file/content SHA=`dd9c9332...74d02`/`a6824fc8...f059f`。2493 baseline 仅完成 NO-GO
+      治理收口，不解除 2489/2490 或未来 experiment blocker；任何重试、roll/short/multi-leg/LEAPS/Wheel
+      仍须另立任务与独立授权。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:6e7d759036e9db112b617c8564d3d2d8e00a6ae5713b9dcea02ebedb30e1f1ca
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2493_QC_QQQ_OPTIONS_OWNER_STAGE_GATE_SIGNOFF_V1
+  - Research governance / capability, license, DQ/PIT and range-expansion decision
+  - P0
+  - BASELINE_DONE
+  - 后续独立任务 owners：逐项解除 license/export、DQ/PIT、resource calibration、2489/2490 reconciliation
+    与 primary-window UNKNOWN；project owner：只对新的 exact proposal 另行授权
+  - 详见 `docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md`。project
+    owner 已 exact-bind proposal/policy/authority hashes 并签署 aggregate=`NO_GO_KEEP_BLOCKED`；terminal
+    signoff=`SIGNED_NO_GO`。capability/technical=`CONDITIONAL_GO`，license/DQ-PIT/resource/reconciliation/range/paid=`NO_GO`，五项
+    UNKNOWN 保留 owner/exit condition。
+  - Owner attestation 与 terminal signoff 必须 canonical replay，proposal/policy/authority/axis/unknown/hash
+    chain byte-identical；final generated/current authority、focused/adjacent/compatibility
+    与 final-tree formal PASS；range expansion/further cloud/paid upgrade/investment/paper/live/broker/production
+    保持 false/none。
+  - 2026-08-06：Owner exact token 已接收；attestation file/content SHA=`9b159228...f4aa6`/`80db4e17...aeb54`，signoff
+    file/content SHA=`dd9c9332...74d02`/`a6824fc8...f059f`。2493 baseline 仅完成 NO-GO
+    治理收口，不解除 2489/2490 或未来 experiment blocker；任何重试、roll/short/multi-leg/LEAPS/Wheel
+    仍须另立任务与独立授权。
+  docs_links:
+  - docs/requirements/TRADING-2493_QC_QQQ_Options_Owner_Stage_Gate_Signoff_V1.md
+  terminal: false
+  canonical_row_sha256: 6e7d759036e9db112b617c8564d3d2d8e00a6ae5713b9dcea02ebedb30e1f1ca
+last_event_id: legacy-import-6e7d759036e9db112b617c85
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 708897bb01740209022e4b60161ee19c5f91a737d3f996ab2415fb4aa5b75a84

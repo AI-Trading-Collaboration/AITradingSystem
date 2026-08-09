@@ -1,0 +1,125 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
+  task_id_sha256: 86400046a257eb64ca496c090375e861b5768daa558fb803233ff7cbaf031c4e
+task_record:
+  task_id: TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
+  title: null
+  domain: Publishing & Experience / Atlas native node evidence drilldown
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: knowledge/reporting/UX owner：维护 V1 静态 disclosure 与 provenance 复用合同；后续
+    HTTP/LLM/free-text consumer 必须另建任务
+  requirement_refs:
+  - docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md`。Owner
+    已在 canonical preview 手工验收并记录 `OWNER_MANUAL_VISUAL_PASS`；Browser automation 仍因本地
+    `file://` URL policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。无实现 blocker。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 八个 stable stage 各有原生 `<details>/<summary>`；current stage 唯一且默认展开；每节点展示 purpose、structured
+      reason、source kind、exact ref、可/不可推出结论与下一合法动作；typed fail closed；keyboard/responsive/no-script/no-write/deterministic/focused/formal/Owner
+      visual PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 3cc34197faa65387dd0e308383dbc7081dff9ff2b9e0afcf1596a87cdecbc3d5
+  cell_count: 8
+  all_cells:
+  - TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
+  - Publishing & Experience / Atlas native node evidence drilldown
+  - P1
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 静态 disclosure 与 provenance 复用合同；后续 HTTP/LLM/free-text
+    consumer 必须另建任务
+  - 详见 `docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md`。Owner
+    已在 canonical preview 手工验收并记录 `OWNER_MANUAL_VISUAL_PASS`；Browser automation 仍因本地
+    `file://` URL policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。无实现 blocker。
+  - 八个 stable stage 各有原生 `<details>/<summary>`；current stage 唯一且默认展开；每节点展示 purpose、structured
+    reason、source kind、exact ref、可/不可推出结论与下一合法动作；typed fail closed；keyboard/responsive/no-script/no-write/deterministic/focused/formal/Owner
+    visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-01：推进 token=`owner_decision:TRADING-2473:2026-08-01:advance_atlas_node_evidence_drilldown_v1`；验收
+    token=`owner_decision:TRADING-2473:2026-08-01:accept_atlas_node_evidence_drilldown_visual_v1`。HTML=`59847
+    bytes / SHA-256 0e3b1b2855…`，responses/validation SHA 不变；renderer=`7`、Atlas/citation=`63`、compatibility/deprecation=`168`
+    passed；正式 Architecture/Contract/Integration/Reproducibility/Full=`815/276/995/24/7870
+    passed`（Full `3 skipped / 644 warnings`）；治理写回后的最终树 Architecture/Contract=`815/276
+    passed`。
+  raw_line: '|TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1|Publishing & Experience
+    / Atlas native node evidence drilldown|P1|BASELINE_DONE|knowledge/reporting/UX
+    owner：维护 V1 静态 disclosure 与 provenance 复用合同；后续 HTTP/LLM/free-text consumer 必须另建任务|详见
+    `docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md`。Owner 已在
+    canonical preview 手工验收并记录 `OWNER_MANUAL_VISUAL_PASS`；Browser automation 仍因本地 `file://`
+    URL policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。无实现 blocker。|八个 stable stage 各有原生 `<details>/<summary>`；current
+    stage 唯一且默认展开；每节点展示 purpose、structured reason、source kind、exact ref、可/不可推出结论与下一合法动作；typed
+    fail closed；keyboard/responsive/no-script/no-write/deterministic/focused/formal/Owner
+    visual PASS；`production_effect=none`、`broker_action=none`。|2026-08-01：推进 token=`owner_decision:TRADING-2473:2026-08-01:advance_atlas_node_evidence_drilldown_v1`；验收
+    token=`owner_decision:TRADING-2473:2026-08-01:accept_atlas_node_evidence_drilldown_visual_v1`。HTML=`59847
+    bytes / SHA-256 0e3b1b2855…`，responses/validation SHA 不变；renderer=`7`、Atlas/citation=`63`、compatibility/deprecation=`168`
+    passed；正式 Architecture/Contract/Integration/Reproducibility/Full=`815/276/995/24/7870
+    passed`（Full `3 skipped / 644 warnings`）；治理写回后的最终树 Architecture/Contract=`815/276
+    passed`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-3cc34197faa65387dd0e3083
+  task_id: TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: knowledge/reporting/UX owner：维护 V1 静态 disclosure 与 provenance 复用合同；后续
+      HTTP/LLM/free-text consumer 必须另建任务
+    notes: 2026-08-01：推进 token=`owner_decision:TRADING-2473:2026-08-01:advance_atlas_node_evidence_drilldown_v1`；验收
+      token=`owner_decision:TRADING-2473:2026-08-01:accept_atlas_node_evidence_drilldown_visual_v1`。HTML=`59847
+      bytes / SHA-256 0e3b1b2855…`，responses/validation SHA 不变；renderer=`7`、Atlas/citation=`63`、compatibility/deprecation=`168`
+      passed；正式 Architecture/Contract/Integration/Reproducibility/Full=`815/276/995/24/7870
+      passed`（Full `3 skipped / 644 warnings`）；治理写回后的最终树 Architecture/Contract=`815/276
+      passed`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:3cc34197faa65387dd0e308383dbc7081dff9ff2b9e0afcf1596a87cdecbc3d5
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2473_ATLAS_NODE_EVIDENCE_DRILLDOWN_V1
+  - Publishing & Experience / Atlas native node evidence drilldown
+  - P1
+  - BASELINE_DONE
+  - knowledge/reporting/UX owner：维护 V1 静态 disclosure 与 provenance 复用合同；后续 HTTP/LLM/free-text
+    consumer 必须另建任务
+  - 详见 `docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md`。Owner
+    已在 canonical preview 手工验收并记录 `OWNER_MANUAL_VISUAL_PASS`；Browser automation 仍因本地
+    `file://` URL policy 为 `NOT_EXECUTED_URL_POLICY`，未绕过。无实现 blocker。
+  - 八个 stable stage 各有原生 `<details>/<summary>`；current stage 唯一且默认展开；每节点展示 purpose、structured
+    reason、source kind、exact ref、可/不可推出结论与下一合法动作；typed fail closed；keyboard/responsive/no-script/no-write/deterministic/focused/formal/Owner
+    visual PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-01：推进 token=`owner_decision:TRADING-2473:2026-08-01:advance_atlas_node_evidence_drilldown_v1`；验收
+    token=`owner_decision:TRADING-2473:2026-08-01:accept_atlas_node_evidence_drilldown_visual_v1`。HTML=`59847
+    bytes / SHA-256 0e3b1b2855…`，responses/validation SHA 不变；renderer=`7`、Atlas/citation=`63`、compatibility/deprecation=`168`
+    passed；正式 Architecture/Contract/Integration/Reproducibility/Full=`815/276/995/24/7870
+    passed`（Full `3 skipped / 644 warnings`）；治理写回后的最终树 Architecture/Contract=`815/276
+    passed`。
+  docs_links:
+  - docs/requirements/TRADING-2473_Atlas_Node_Evidence_Drilldown_V1.md
+  terminal: false
+  canonical_row_sha256: 3cc34197faa65387dd0e308383dbc7081dff9ff2b9e0afcf1596a87cdecbc3d5
+last_event_id: legacy-import-3cc34197faa65387dd0e3083
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: ee0514b9f4b63f63047bce506e8cfd4c452da939ae1900968d86fd1c201db090

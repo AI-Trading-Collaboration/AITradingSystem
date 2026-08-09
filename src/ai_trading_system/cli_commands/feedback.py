@@ -118,6 +118,9 @@ from ai_trading_system.parameter_replay import (
     write_parameter_replay_report,
     write_parameter_replay_summary,
 )
+from ai_trading_system.platform.architecture.task_registry_canonical import (
+    canonical_task_register_view_path,
+)
 from ai_trading_system.prediction_ledger import (
     DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH,
     DEFAULT_PREDICTION_LEDGER_PATH,
@@ -2037,11 +2040,9 @@ def feedback_loop_review_command(
         typer.Option(help="rule experiment ledger JSON 路径。"),
     ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
     task_register_path: Annotated[
-        Path,
+        Path | None,
         typer.Option(help="任务登记 Markdown 路径。"),
-    ] = PROJECT_ROOT
-    / "docs"
-    / "task_register.md",
+    ] = None,
     as_of: Annotated[
         str | None,
         typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -2068,7 +2069,8 @@ def feedback_loop_review_command(
         causal_chain_path=causal_chain_path,
         learning_queue_path=learning_queue_path,
         rule_experiment_path=rule_experiment_path,
-        task_register_path=task_register_path,
+        task_register_path=task_register_path
+        or canonical_task_register_view_path(PROJECT_ROOT, "active"),
     )
     report_path = output_path or default_feedback_loop_review_report_path(
         PROJECT_ROOT / "outputs" / "reports",

@@ -1,0 +1,98 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-863_DAILY_BRIEF_TAIL_RISK_SAFETY_RENDER_REVIEW
+  task_id_sha256: 1d386b173e7aa1c74fd6f0d911f4740c70689fb934875218937172f917e793be
+task_record:
+  task_id: TRADING-863_DAILY_BRIEF_TAIL_RISK_SAFETY_RENDER_REVIEW
+  title: null
+  domain: Reader Brief / tail-risk safety render review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；Reader
+    Brief 不得暗示 active strategy、paper-shadow candidate 或可执行建议
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 审查 Reader Brief HTML/payload 的 Tail-Risk Fallback Status 区块，输出 DAILY_BRIEF_SAFE/AMBIGUOUS/UNSAFE
+      和证据
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 19c43a770475d474d5ff075c8b0c808810a6c45685562b23b4e938bf328a21c1
+  cell_count: 8
+  all_cells:
+  - TRADING-863_DAILY_BRIEF_TAIL_RISK_SAFETY_RENDER_REVIEW
+  - Reader Brief / tail-risk safety render review
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；Reader
+    Brief 不得暗示 active strategy、paper-shadow candidate 或可执行建议
+  - 审查 Reader Brief HTML/payload 的 Tail-Risk Fallback Status 区块，输出 DAILY_BRIEF_SAFE/AMBIGUOUS/UNSAFE
+    和证据
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: Reader Brief render review 完成并转入 VALIDATING；补齐
+    `broker_action=none` 显式渲染，输出 `DAILY_BRIEF_SAFE`，未发现 active strategy、paper-shadow
+    candidate 或可执行建议暗示。'
+  raw_line: '|TRADING-863_DAILY_BRIEF_TAIL_RISK_SAFETY_RENDER_REVIEW|Reader Brief
+    / tail-risk safety render review|P1|VALIDATING|系统实现 + 项目 owner 后续复核|详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；Reader
+    Brief 不得暗示 active strategy、paper-shadow candidate 或可执行建议|审查 Reader Brief HTML/payload
+    的 Tail-Risk Fallback Status 区块，输出 DAILY_BRIEF_SAFE/AMBIGUOUS/UNSAFE 和证据|2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: Reader Brief render review 完成并转入 VALIDATING；补齐 `broker_action=none`
+    显式渲染，输出 `DAILY_BRIEF_SAFE`，未发现 active strategy、paper-shadow candidate 或可执行建议暗示。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-19c43a770475d474d5ff075c
+  task_id: TRADING-863_DAILY_BRIEF_TAIL_RISK_SAFETY_RENDER_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: Reader Brief render review 完成并转入
+      VALIDATING；补齐 `broker_action=none` 显式渲染，输出 `DAILY_BRIEF_SAFE`，未发现 active strategy、paper-shadow
+      candidate 或可执行建议暗示。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:19c43a770475d474d5ff075c8b0c808810a6c45685562b23b4e938bf328a21c1
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-863_DAILY_BRIEF_TAIL_RISK_SAFETY_RENDER_REVIEW
+  - Reader Brief / tail-risk safety render review
+  - P1
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md`；Reader
+    Brief 不得暗示 active strategy、paper-shadow candidate 或可执行建议
+  - 审查 Reader Brief HTML/payload 的 Tail-Risk Fallback Status 区块，输出 DAILY_BRIEF_SAFE/AMBIGUOUS/UNSAFE
+    和证据
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: Reader Brief render review 完成并转入 VALIDATING；补齐
+    `broker_action=none` 显式渲染，输出 `DAILY_BRIEF_SAFE`，未发现 active strategy、paper-shadow
+    candidate 或可执行建议暗示。'
+  docs_links:
+  - docs/requirements/TRADING-859_to_864_Tail_Risk_Governance_Closeout.md
+  terminal: false
+  canonical_row_sha256: 19c43a770475d474d5ff075c8b0c808810a6c45685562b23b4e938bf328a21c1
+last_event_id: legacy-import-19c43a770475d474d5ff075c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 9563a4f18f57a7854cd3dbfe378f48c516bfaf1d042be0b7ffee80235496132f

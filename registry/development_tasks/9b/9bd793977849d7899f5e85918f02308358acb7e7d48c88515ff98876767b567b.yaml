@@ -1,0 +1,105 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-846_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW
+  task_id_sha256: 9bd793977849d7899f5e85918f02308358acb7e7d48c88515ff98876767b567b
+task_record:
+  task_id: TRADING-846_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW
+  title: null
+  domain: Controlled strategy research / TRADING-828 forward outcome review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；即使
+    usable for research 也不得允许 promotion
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `aits research strategies tail-risk-independent-forward-outcome-result-review`，复核
+      valid 5d/10d/20d、triggered/non-triggered sample、outcome fields、forbidden dependency、time-window
+      和 baseline context，输出 USABLE/INCONCLUSIVE/SAMPLE_TOO_SMALL/BLOCKED
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 9db040ccf3ecf4018f359fa5137fce0bd5f8de8e66124f932deb3d8d9885d08f
+  cell_count: 8
+  all_cells:
+  - TRADING-846_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW
+  - Controlled strategy research / TRADING-828 forward outcome review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；即使
+    usable for research 也不得允许 promotion
+  - 新增 `aits research strategies tail-risk-independent-forward-outcome-result-review`，复核
+    valid 5d/10d/20d、triggered/non-triggered sample、outcome fields、forbidden dependency、time-window
+    和 baseline context，输出 USABLE/INCONCLUSIVE/SAMPLE_TOO_SMALL/BLOCKED
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+    Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+    tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  raw_line: '|TRADING-846_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW|Controlled strategy
+    research / TRADING-828 forward outcome review|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见
+    `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；即使
+    usable for research 也不得允许 promotion|新增 `aits research strategies tail-risk-independent-forward-outcome-result-review`，复核
+    valid 5d/10d/20d、triggered/non-triggered sample、outcome fields、forbidden dependency、time-window
+    和 baseline context，输出 USABLE/INCONCLUSIVE/SAMPLE_TOO_SMALL/BLOCKED|2026-06-22:
+    新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+    Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+    tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-9db040ccf3ecf4018f359fa5
+  task_id: TRADING-846_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up
+      CLI/artifacts、registry/catalog/system-flow/Reader Brief/tests；验证通过 focused parallel
+      pytest、registry/documentation/task-register tests、Ruff、compileall 和 git diff
+      --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:9db040ccf3ecf4018f359fa5137fce0bd5f8de8e66124f932deb3d8d9885d08f
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-846_INDEPENDENT_FORWARD_OUTCOME_RESULT_REVIEW
+  - Controlled strategy research / TRADING-828 forward outcome review
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 `docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md`；即使
+    usable for research 也不得允许 promotion
+  - 新增 `aits research strategies tail-risk-independent-forward-outcome-result-review`，复核
+    valid 5d/10d/20d、triggered/non-triggered sample、outcome fields、forbidden dependency、time-window
+    和 baseline context，输出 USABLE/INCONCLUSIVE/SAMPLE_TOO_SMALL/BLOCKED
+  - '2026-06-22: 新增并进入 IN_PROGRESS。2026-06-22: 实现完成并转入 VALIDATING；新增 follow-up CLI/artifacts、registry/catalog/system-flow/Reader
+    Brief/tests；验证通过 focused parallel pytest、registry/documentation/task-register
+    tests、Ruff、compileall 和 git diff --check；所有新增输出继续禁止 promotion/paper-shadow/production/broker。'
+  docs_links:
+  - docs/requirements/TRADING-843_to_858_Tail_Risk_Fallback_Governance_Followup.md
+  terminal: false
+  canonical_row_sha256: 9db040ccf3ecf4018f359fa5137fce0bd5f8de8e66124f932deb3d8d9885d08f
+last_event_id: legacy-import-9db040ccf3ecf4018f359fa5
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 9d2d7ebb8bcb3ebe1bdba6fb051ca8fdba4f6a6dee0998d61c61fa5231f18040

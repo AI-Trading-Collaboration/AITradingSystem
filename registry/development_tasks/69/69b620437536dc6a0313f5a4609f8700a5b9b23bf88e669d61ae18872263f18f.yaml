@@ -1,0 +1,129 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  task_id_sha256: 69b620437536dc6a0313f5a4609f8700a5b9b23bf88e669d61ae18872263f18f
+task_record:
+  task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  title: null
+  domain: 运行架构/每日结果恢复
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：提供 exact archive 或批准受限处置
+  requirement_refs:
+  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Owner 已于 2026-07-22 批准新的可审计 recovery workflow/spec（decision
+    id `owner_decision:OPS-062:2026-07-22:approve_auditable_recovery_v1`），但 cutoff-bound
+    preflight=`INCOMPLETE_REPLAY`：缺 `fmp_forward_pit_2026-07-16.csv`、同日 PIT validation/fetch
+    reports 与 `sec_fundamentals_2026-07-16.csv`。严格 canonical recovery 需 owner 提供/定位
+    exact cutoff archive；否则需另行批准 `LIMITED_PRIOR_SNAPSHOT_RECONSTRUCTION`，且 canonical
+    2026-07-16 继续保持 `FAILED`。详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 保留旧 state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或 2026-07-15 prior-day
+      snapshot 静默 retarget 为 exact 2026-07-16 input。只有 exact archive 完整后才可执行 owner-approved
+      unified `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader
+      Brief 同 run id PASS；受限重建只能隔离、无 canonical PASS、无 downstream/promotion/backtest/weight/production
+      使用，`production_effect=none`
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 1cdf2af6abec79ec607524a912bfad6da1e3d0506b65e36a5db23ccc08b49340
+  cell_count: 8
+  all_cells:
+  - OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  - 运行架构/每日结果恢复
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - project owner：提供 exact archive 或批准受限处置
+  - Owner 已于 2026-07-22 批准新的可审计 recovery workflow/spec（decision id `owner_decision:OPS-062:2026-07-22:approve_auditable_recovery_v1`），但
+    cutoff-bound preflight=`INCOMPLETE_REPLAY`：缺 `fmp_forward_pit_2026-07-16.csv`、同日
+    PIT validation/fetch reports 与 `sec_fundamentals_2026-07-16.csv`。严格 canonical
+    recovery 需 owner 提供/定位 exact cutoff archive；否则需另行批准 `LIMITED_PRIOR_SNAPSHOT_RECONSTRUCTION`，且
+    canonical 2026-07-16 继续保持 `FAILED`。详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+  - 保留旧 state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或 2026-07-15 prior-day
+    snapshot 静默 retarget 为 exact 2026-07-16 input。只有 exact archive 完整后才可执行 owner-approved
+    unified `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader
+    Brief 同 run id PASS；受限重建只能隔离、无 canonical PASS、无 downstream/promotion/backtest/weight/production
+    使用，`production_effect=none`
+  - 2026-07-22：owner approval 已登记；inventory-only/cache-only preflight 绑定原 attempt
+    1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT manifest 等可冻结但 4 个 required exact-as-of
+    artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现 historical visibility
+    bypass，未运行 score/live recovery，等待 owner 输入。
+  raw_line: '|OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY|运行架构/每日结果恢复|P0|BLOCKED_OWNER_INPUT|project
+    owner：提供 exact archive 或批准受限处置|Owner 已于 2026-07-22 批准新的可审计 recovery workflow/spec（decision
+    id `owner_decision:OPS-062:2026-07-22:approve_auditable_recovery_v1`），但 cutoff-bound
+    preflight=`INCOMPLETE_REPLAY`：缺 `fmp_forward_pit_2026-07-16.csv`、同日 PIT validation/fetch
+    reports 与 `sec_fundamentals_2026-07-16.csv`。严格 canonical recovery 需 owner 提供/定位
+    exact cutoff archive；否则需另行批准 `LIMITED_PRIOR_SNAPSHOT_RECONSTRUCTION`，且 canonical
+    2026-07-16 继续保持 `FAILED`。详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`|保留旧
+    state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或 2026-07-15 prior-day snapshot
+    静默 retarget 为 exact 2026-07-16 input。只有 exact archive 完整后才可执行 owner-approved unified
+    `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader Brief 同
+    run id PASS；受限重建只能隔离、无 canonical PASS、无 downstream/promotion/backtest/weight/production
+    使用，`production_effect=none`|2026-07-22：owner approval 已登记；inventory-only/cache-only
+    preflight 绑定原 attempt 1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT manifest
+    等可冻结但 4 个 required exact-as-of artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现
+    historical visibility bypass，未运行 score/live recovery，等待 owner 输入。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-1cdf2af6abec79ec607524a9
+  task_id: OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    priority: P0
+    next_owner: project owner：提供 exact archive 或批准受限处置
+    notes: 2026-07-22：owner approval 已登记；inventory-only/cache-only preflight 绑定原 attempt
+      1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT manifest 等可冻结但 4 个 required
+      exact-as-of artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现 historical
+      visibility bypass，未运行 score/live recovery，等待 owner 输入。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:1cdf2af6abec79ec607524a912bfad6da1e3d0506b65e36a5db23ccc08b49340
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-062_2026_07_16_DAILY_RUN_PROVIDER_RECOVERY
+  - 运行架构/每日结果恢复
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - project owner：提供 exact archive 或批准受限处置
+  - Owner 已于 2026-07-22 批准新的可审计 recovery workflow/spec（decision id `owner_decision:OPS-062:2026-07-22:approve_auditable_recovery_v1`），但
+    cutoff-bound preflight=`INCOMPLETE_REPLAY`：缺 `fmp_forward_pit_2026-07-16.csv`、同日
+    PIT validation/fetch reports 与 `sec_fundamentals_2026-07-16.csv`。严格 canonical
+    recovery 需 owner 提供/定位 exact cutoff archive；否则需另行批准 `LIMITED_PRIOR_SNAPSHOT_RECONSTRUCTION`，且
+    canonical 2026-07-16 继续保持 `FAILED`。详细拆解见 `docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md`
+  - 保留旧 state/ledger，不删除状态、不直跑下游；禁止把 cutoff 后 live refetch 或 2026-07-15 prior-day
+    snapshot 静默 retarget 为 exact 2026-07-16 input。只有 exact archive 完整后才可执行 owner-approved
+    unified `daily-run` recovery spec 并要求 36/36、DQ、PIT、SEC、score、dashboard、Reader
+    Brief 同 run id PASS；受限重建只能隔离、无 canonical PASS、无 downstream/promotion/backtest/weight/production
+    使用，`production_effect=none`
+  - 2026-07-22：owner approval 已登记；inventory-only/cache-only preflight 绑定原 attempt
+    1 cutoff，状态 `INCOMPLETE_REPLAY`，market/macro/PIT manifest 等可冻结但 4 个 required exact-as-of
+    artifacts 缺失。任务从 `IN_PROGRESS` 转 `BLOCKED_OWNER_INPUT`；未实现 historical visibility
+    bypass，未运行 score/live recovery，等待 owner 输入。
+  docs_links:
+  - docs/requirements/OPS-062_063_weekly_daily_result_gap_recovery_2026-07-17.md
+  terminal: false
+  canonical_row_sha256: 1cdf2af6abec79ec607524a912bfad6da1e3d0506b65e36a5db23ccc08b49340
+last_event_id: legacy-import-1cdf2af6abec79ec607524a9
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 18c7eba7f0bdae35487e1e562f1d638a88990ce2e26567a068ec23f409bf5f31

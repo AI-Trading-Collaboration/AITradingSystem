@@ -1,0 +1,147 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  task_id_sha256: 78e3a6513be839c264f7e86cc8e3ef32b26b41d6baacc565fb269aef37a796ca
+task_record:
+  task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  title: null
+  domain: Strategy research engineering / offline QQQ Options DAILY primary backtest
+    contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: project owner：在后继 policy review 中决定 selection/execution/accounting/lifecycle
+    的投资解释阈值；engineering successor：只有获得 exact reviewed policy 后才能实现真实日级 backtest engine
+  requirement_refs:
+  - docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。strictly
+    offline policy、request、canonical DQ admission 与 sealed descriptor 已实现；2500 DAILY
+    GO、2481–2488 exact hashes、PRIMARY 2021-02-22、XNYS session inventory、15 项 DQ/PIT
+    与 no-lookahead chronology 均被绑定。blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`
+    不阻塞本合同 baseline，但继续阻塞真实选券、订单/成交模拟、完整历史 Cloud run 与投资结论。未执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: canonical DQ report 的 forged PASS、semantic FAIL/UNKNOWN、scope/as-of/hash/range/source
+      mismatch 必须 fail closed；session 输入排列不改变 identity；2022-12-01 与未 reviewed sensitivity/proxy/stress
+      不得成为 primary；无 Owner-reviewed DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
+      policy 时固定输出 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0。tracked contract/policy/tests、system
+      flow、architecture/generated/append-only authority 与 final gates 必须在同一冻结树验证后
+      ordinary push。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 36bdaaf0c0566b820efbd13054f5efd85c6426c6e7c2d9d9764bf62277610d62
+  cell_count: 8
+  all_cells:
+  - TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  - Strategy research engineering / offline QQQ Options DAILY primary backtest contract
+  - P0
+  - BASELINE_DONE
+  - project owner：在后继 policy review 中决定 selection/execution/accounting/lifecycle 的投资解释阈值；engineering
+    successor：只有获得 exact reviewed policy 后才能实现真实日级 backtest engine
+  - 详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。strictly
+    offline policy、request、canonical DQ admission 与 sealed descriptor 已实现；2500 DAILY
+    GO、2481–2488 exact hashes、PRIMARY 2021-02-22、XNYS session inventory、15 项 DQ/PIT
+    与 no-lookahead chronology 均被绑定。blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`
+    不阻塞本合同 baseline，但继续阻塞真实选券、订单/成交模拟、完整历史 Cloud run 与投资结论。未执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。
+  - canonical DQ report 的 forged PASS、semantic FAIL/UNKNOWN、scope/as-of/hash/range/source
+    mismatch 必须 fail closed；session 输入排列不改变 identity；2022-12-01 与未 reviewed sensitivity/proxy/stress
+    不得成为 primary；无 Owner-reviewed DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
+    policy 时固定输出 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0。tracked contract/policy/tests、system
+    flow、architecture/generated/append-only authority 与 final gates 必须在同一冻结树验证后 ordinary
+    push。
+  - 2026-08-08：SINGLE_LANE base=`2064a2e1...`；policy SHA=`4a060600...109a`，focused
+    failure-fix chain=`25 PASS / 2 fixture FAIL -> 27 PASS -> strict replay expansion
+    29 PASS`，Ruff/mypy/compileall PASS，DevEx=`1096/1260/856/0`，task shadow=`967/462/505`
+    byte-identical。四个 frozen bootstrap artifacts 从 clean main 按 exact hash hydrate
+    到 ignored task workspace；外部/cloud/raw export/investment/paper/live/broker/production
+    effects 均 none/false。
+  raw_line: '|TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1|Strategy
+    research engineering / offline QQQ Options DAILY primary backtest contract|P0|BASELINE_DONE|project
+    owner：在后继 policy review 中决定 selection/execution/accounting/lifecycle 的投资解释阈值；engineering
+    successor：只有获得 exact reviewed policy 后才能实现真实日级 backtest engine|详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。strictly
+    offline policy、request、canonical DQ admission 与 sealed descriptor 已实现；2500 DAILY
+    GO、2481–2488 exact hashes、PRIMARY 2021-02-22、XNYS session inventory、15 项 DQ/PIT
+    与 no-lookahead chronology 均被绑定。blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`
+    不阻塞本合同 baseline，但继续阻塞真实选券、订单/成交模拟、完整历史 Cloud run 与投资结论。未执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。|canonical
+    DQ report 的 forged PASS、semantic FAIL/UNKNOWN、scope/as-of/hash/range/source mismatch
+    必须 fail closed；session 输入排列不改变 identity；2022-12-01 与未 reviewed sensitivity/proxy/stress
+    不得成为 primary；无 Owner-reviewed DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
+    policy 时固定输出 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0。tracked contract/policy/tests、system
+    flow、architecture/generated/append-only authority 与 final gates 必须在同一冻结树验证后 ordinary
+    push。|2026-08-08：SINGLE_LANE base=`2064a2e1...`；policy SHA=`4a060600...109a`，focused
+    failure-fix chain=`25 PASS / 2 fixture FAIL -> 27 PASS -> strict replay expansion
+    29 PASS`，Ruff/mypy/compileall PASS，DevEx=`1096/1260/856/0`，task shadow=`967/462/505`
+    byte-identical。四个 frozen bootstrap artifacts 从 clean main 按 exact hash hydrate
+    到 ignored task workspace；外部/cloud/raw export/investment/paper/live/broker/production
+    effects 均 none/false。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-36bdaaf0c0566b820efbd130
+  task_id: TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：在后继 policy review 中决定 selection/execution/accounting/lifecycle
+      的投资解释阈值；engineering successor：只有获得 exact reviewed policy 后才能实现真实日级 backtest
+      engine
+    notes: 2026-08-08：SINGLE_LANE base=`2064a2e1...`；policy SHA=`4a060600...109a`，focused
+      failure-fix chain=`25 PASS / 2 fixture FAIL -> 27 PASS -> strict replay expansion
+      29 PASS`，Ruff/mypy/compileall PASS，DevEx=`1096/1260/856/0`，task shadow=`967/462/505`
+      byte-identical。四个 frozen bootstrap artifacts 从 clean main 按 exact hash hydrate
+      到 ignored task workspace；外部/cloud/raw export/investment/paper/live/broker/production
+      effects 均 none/false。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:36bdaaf0c0566b820efbd13054f5efd85c6426c6e7c2d9d9764bf62277610d62
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2499_QQQ_OPTIONS_DAILY_PRIMARY_BACKTEST_CONTRACT_V1
+  - Strategy research engineering / offline QQQ Options DAILY primary backtest contract
+  - P0
+  - BASELINE_DONE
+  - project owner：在后继 policy review 中决定 selection/execution/accounting/lifecycle 的投资解释阈值；engineering
+    successor：只有获得 exact reviewed policy 后才能实现真实日级 backtest engine
+  - 详见 `docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md`。strictly
+    offline policy、request、canonical DQ admission 与 sealed descriptor 已实现；2500 DAILY
+    GO、2481–2488 exact hashes、PRIMARY 2021-02-22、XNYS session inventory、15 项 DQ/PIT
+    与 no-lookahead chronology 均被绑定。blocker=`OWNER_REVIEWED_SELECTION_EXECUTION_ACCOUNTING_LIFECYCLE_THRESHOLDS_NOT_GRANTED`
+    不阻塞本合同 baseline，但继续阻塞真实选券、订单/成交模拟、完整历史 Cloud run 与投资结论。未执行新的 QuantConnect login/project/backtest/API/CLI/HTTP/download。
+  - canonical DQ report 的 forged PASS、semantic FAIL/UNKNOWN、scope/as-of/hash/range/source
+    mismatch 必须 fail closed；session 输入排列不改变 identity；2022-12-01 与未 reviewed sensitivity/proxy/stress
+    不得成为 primary；无 Owner-reviewed DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance
+    policy 时固定输出 `POLICY_BLOCKED_CASH_PRESERVATION`、orders/fills=0。tracked contract/policy/tests、system
+    flow、architecture/generated/append-only authority 与 final gates 必须在同一冻结树验证后 ordinary
+    push。
+  - 2026-08-08：SINGLE_LANE base=`2064a2e1...`；policy SHA=`4a060600...109a`，focused
+    failure-fix chain=`25 PASS / 2 fixture FAIL -> 27 PASS -> strict replay expansion
+    29 PASS`，Ruff/mypy/compileall PASS，DevEx=`1096/1260/856/0`，task shadow=`967/462/505`
+    byte-identical。四个 frozen bootstrap artifacts 从 clean main 按 exact hash hydrate
+    到 ignored task workspace；外部/cloud/raw export/investment/paper/live/broker/production
+    effects 均 none/false。
+  docs_links:
+  - docs/requirements/TRADING-2499_QQQ_Options_Daily_Primary_Backtest_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: 36bdaaf0c0566b820efbd13054f5efd85c6426c6e7c2d9d9764bf62277610d62
+last_event_id: legacy-import-36bdaaf0c0566b820efbd130
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: d08aaadecad478d0e9b823643447f9e9c0db85a53b6faf244d3d117bfee8828e

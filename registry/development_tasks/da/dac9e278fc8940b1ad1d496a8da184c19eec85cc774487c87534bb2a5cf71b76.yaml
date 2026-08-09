@@ -1,0 +1,120 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-355_POINT_IN_TIME_SOURCE_MANIFEST
+  task_id_sha256: dac9e278fc8940b1ad1d496a8da184c19eec85cc774487c87534bb2a5cf71b76
+task_record:
+  task_id: TRADING-355_POINT_IN_TIME_SOURCE_MANIFEST
+  title: null
+  domain: Data governance / PIT source manifest
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 项目 owner 后续复核；代码实现完成
+  requirement_refs:
+  - docs/requirements/TRADING-355_Point_In_Time_Source_Manifest.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/TRADING-355_Point_In_Time_Source_Manifest.md`；建立
+    source-level point-in-time source manifest contract，用于未来研究数据治理；本任务不修复全部 PIT 数据问题，不改变
+    `download-data`、`validate-data`、PIT raw snapshot、score、backtest、paper-shadow 或
+    broker workflow
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 新增 `src/ai_trading_system/pit_source_manifest.py`、`aits data-sources pit-manifest
+      report` 和 `aits data-sources pit-manifest validate --latest`；每个 source record
+      包含 source name、retrieval time、effective date、revision risk、`STRONG_PIT
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: bda821fd1655c7620dfa5e5fe5787ee0c26015b45d17a5546ac1776ea9497b2e
+  cell_count: 11
+  all_cells:
+  - TRADING-355_POINT_IN_TIME_SOURCE_MANIFEST
+  - Data governance / PIT source manifest
+  - P0
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-355_Point_In_Time_Source_Manifest.md`；建立 source-level
+    point-in-time source manifest contract，用于未来研究数据治理；本任务不修复全部 PIT 数据问题，不改变 `download-data`、`validate-data`、PIT
+    raw snapshot、score、backtest、paper-shadow 或 broker workflow
+  - 新增 `src/ai_trading_system/pit_source_manifest.py`、`aits data-sources pit-manifest
+    report` 和 `aits data-sources pit-manifest validate --latest`；每个 source record
+    包含 source name、retrieval time、effective date、revision risk、`STRONG_PIT
+  - APPROX_PIT
+  - NON_PIT
+  - UNKNOWN`、cache path、checksum、refresh policy 和 validation policy；输出 JSON/Markdown
+    manifest、validation JSON/Markdown、Reader Brief section、latest pointer；Reader Brief、report
+    registry、artifact catalog、README、operations runbook、system flow、requirements 和
+    focused tests 同步；固定 `production_effect=none`、不刷新数据、不运行下游管线、不触发 broker
+  - '2026-06-16: DONE；真实 artifact `pit_source_manifest_2026-06-16_8fe811d76617ecd9`
+    生成成功，`status=PASS_WITH_WARNINGS`、`source_count=30`、`STRONG_PIT=10`、`APPROX_PIT=18`、`NON_PIT=1`、`UNKNOWN=1`、`error_count=0`、`warning_count=36`；`validate
+    --latest` 为 PASS_WITH_WARNINGS；focused pytest `tests/test_pit_source_manifest.py`
+    3 passed，Ruff PASS；warning 为 retrieval/cache/checksum/effective-date 治理调查项，不自动支持
+    production-grade PIT、backtest conclusion、score change、paper-shadow continuation
+    或 broker action。'
+  raw_line: '|TRADING-355_POINT_IN_TIME_SOURCE_MANIFEST|Data governance / PIT source
+    manifest|P0|DONE|项目 owner 后续复核；代码实现完成|详细拆解见 `docs/requirements/TRADING-355_Point_In_Time_Source_Manifest.md`；建立
+    source-level point-in-time source manifest contract，用于未来研究数据治理；本任务不修复全部 PIT 数据问题，不改变
+    `download-data`、`validate-data`、PIT raw snapshot、score、backtest、paper-shadow 或
+    broker workflow|新增 `src/ai_trading_system/pit_source_manifest.py`、`aits data-sources
+    pit-manifest report` 和 `aits data-sources pit-manifest validate --latest`；每个 source
+    record 包含 source name、retrieval time、effective date、revision risk、`STRONG_PIT|APPROX_PIT|NON_PIT|UNKNOWN`、cache
+    path、checksum、refresh policy 和 validation policy；输出 JSON/Markdown manifest、validation
+    JSON/Markdown、Reader Brief section、latest pointer；Reader Brief、report registry、artifact
+    catalog、README、operations runbook、system flow、requirements 和 focused tests 同步；固定
+    `production_effect=none`、不刷新数据、不运行下游管线、不触发 broker|2026-06-16: DONE；真实 artifact
+    `pit_source_manifest_2026-06-16_8fe811d76617ecd9` 生成成功，`status=PASS_WITH_WARNINGS`、`source_count=30`、`STRONG_PIT=10`、`APPROX_PIT=18`、`NON_PIT=1`、`UNKNOWN=1`、`error_count=0`、`warning_count=36`；`validate
+    --latest` 为 PASS_WITH_WARNINGS；focused pytest `tests/test_pit_source_manifest.py`
+    3 passed，Ruff PASS；warning 为 retrieval/cache/checksum/effective-date 治理调查项，不自动支持
+    production-grade PIT、backtest conclusion、score change、paper-shadow continuation
+    或 broker action。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: true
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-bda821fd1655c7620dfa5e5f
+  task_id: TRADING-355_POINT_IN_TIME_SOURCE_MANIFEST
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 项目 owner 后续复核；代码实现完成
+    notes: APPROX_PIT
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:bda821fd1655c7620dfa5e5fe5787ee0c26015b45d17a5546ac1776ea9497b2e
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-355_POINT_IN_TIME_SOURCE_MANIFEST
+  - Data governance / PIT source manifest
+  - P0
+  - DONE
+  - 项目 owner 后续复核；代码实现完成
+  - 详细拆解见 `docs/requirements/TRADING-355_Point_In_Time_Source_Manifest.md`；建立 source-level
+    point-in-time source manifest contract，用于未来研究数据治理；本任务不修复全部 PIT 数据问题，不改变 `download-data`、`validate-data`、PIT
+    raw snapshot、score、backtest、paper-shadow 或 broker workflow
+  - 新增 `src/ai_trading_system/pit_source_manifest.py`、`aits data-sources pit-manifest
+    report` 和 `aits data-sources pit-manifest validate --latest`；每个 source record
+    包含 source name、retrieval time、effective date、revision risk、`STRONG_PIT
+  - APPROX_PIT
+  docs_links:
+  - docs/requirements/TRADING-355_Point_In_Time_Source_Manifest.md
+  terminal: true
+  canonical_row_sha256: 3273495d4bc25098df5b9285f366b9fad5dec62cec8d61a9c6d0bafbbf6caab5
+last_event_id: legacy-import-bda821fd1655c7620dfa5e5f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: adc6b69cbe8ffcb196ba6d17599d26b0a1fe9db3912200e04da2d8e5bf6b8a87

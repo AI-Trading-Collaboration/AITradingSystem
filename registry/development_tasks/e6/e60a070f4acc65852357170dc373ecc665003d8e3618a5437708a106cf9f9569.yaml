@@ -1,0 +1,104 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
+  task_id_sha256: e60a070f4acc65852357170dc373ecc665003d8e3618a5437708a106cf9f9569
+task_record:
+  task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
+  title: null
+  domain: Developer experience / target-bound governed worktree audit
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
+  requirement_refs:
+  - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout
+    guard以脚本位置固定`PROJECT_ROOT`，从目标worktree调用main脚本仍审计main，导致DEVX-001清理事故。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`worktree-audit`显式绑定registered target worktree；输出policy/target/toplevel/common-dir
+      identity；dirty/unstaged/staged三路使用同target与完整exact exclusions；wrong/independent/unregistered
+      target fail closed；focused/Architecture/Contract PASS。'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
+  cell_count: 8
+  all_cells:
+  - DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
+  - Developer experience / target-bound governed worktree audit
+  - P0
+  - BASELINE_DONE
+  - developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
+  - 详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout guard以脚本位置固定`PROJECT_ROOT`，从目标worktree调用main脚本仍审计main，导致DEVX-001清理事故。
+  - '`worktree-audit`显式绑定registered target worktree；输出policy/target/toplevel/common-dir
+    identity；dirty/unstaged/staged三路使用同target与完整exact exclusions；wrong/independent/unregistered
+    target fail closed；focused/Architecture/Contract PASS。'
+  - 2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity drift gate完成；focused=`29
+    passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462 v3 target审计PASS。首轮Architecture
+    8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker effect。
+  raw_line: '|DEVX-005_TARGET_BOUND_WORKTREE_AUDIT|Developer experience / target-bound
+    governed worktree audit|P0|BASELINE_DONE|developer workflow / checkout guard owner维护v2合同；DEVX-001
+    owner按独立退出条件重新评估候选，不自动删除|详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout
+    guard以脚本位置固定`PROJECT_ROOT`，从目标worktree调用main脚本仍审计main，导致DEVX-001清理事故。|`worktree-audit`显式绑定registered
+    target worktree；输出policy/target/toplevel/common-dir identity；dirty/unstaged/staged三路使用同target与完整exact
+    exclusions；wrong/independent/unregistered target fail closed；focused/Architecture/Contract
+    PASS。|2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity drift
+    gate完成；focused=`29 passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462
+    v3 target审计PASS。首轮Architecture 8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker
+    effect。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-ec5ab181fa54fabc76acdb2c
+  task_id: DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
+    notes: 2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity
+      drift gate完成；focused=`29 passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462
+      v3 target审计PASS。首轮Architecture 8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker
+      effect。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-005_TARGET_BOUND_WORKTREE_AUDIT
+  - Developer experience / target-bound governed worktree audit
+  - P0
+  - BASELINE_DONE
+  - developer workflow / checkout guard owner维护v2合同；DEVX-001 owner按独立退出条件重新评估候选，不自动删除
+  - 详见 `docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md`。现有checkout guard以脚本位置固定`PROJECT_ROOT`，从目标worktree调用main脚本仍审计main，导致DEVX-001清理事故。
+  - '`worktree-audit`显式绑定registered target worktree；输出policy/target/toplevel/common-dir
+    identity；dirty/unstaged/staged三路使用同target与完整exact exclusions；wrong/independent/unregistered
+    target fail closed；focused/Architecture/Contract PASS。'
+  - 2026-07-27：`checkout_worktree_audit.v2`、`--target-repository`与identity drift gate完成；focused=`29
+    passed`、Architecture=`692 passed`、Contract=`275 passed`，真实TRADING-2462 v3 target审计PASS。首轮Architecture
+    8项治理接线失败已保留并直接修复，无门禁降级；未删除worktree，无production或broker effect。
+  docs_links:
+  - docs/requirements/DEVX-005_Target_Bound_Worktree_Audit.md
+  terminal: false
+  canonical_row_sha256: ec5ab181fa54fabc76acdb2cbe131373cbfa700d265e9418c2b3f463db3a32d7
+last_event_id: legacy-import-ec5ab181fa54fabc76acdb2c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 523b051f2d991b81e7b2628a809ed2704f98eb0b323b106c748b9ccc5971c971

@@ -1,0 +1,122 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  task_id_sha256: c86d46993be82fa2a3e2403b67e09b10675c5d58d3133df3a9804da12f75df82
+task_record:
+  task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  title: null
+  domain: Strategy Style Discovery / post-O1 route governance and blind re-entry preregistration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: TRADING-2467 strategy research owner：按 Owner 已选择的 exact A+D slots完成
+    inactive policy freeze；真实 coverage 仍需独立 Owner token与新任务。
+  requirement_refs:
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  - docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`
+    与 `docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md`。Owner
+    已采纳 `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`、`2027-02-01`
+    blind trigger、exact vintage rule和固定12个月一次look；本任务的历史proposal继续inactive，由TRADING-2467冻结active
+    decision payload。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 既有planning/preregistration、V1 binding、validator/tests与formal validation保持；Owner
+      route/date/vintage/look decision exact记录并转交TRADING-2467；未授权任何data/DQ/coverage/model/canonical/downstream
+      action。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 69b74023a423d48e0ecba74cd8f3894420e637e5b087b3db35cf132eb5ac78a0
+  cell_count: 8
+  all_cells:
+  - TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  - Strategy Style Discovery / post-O1 route governance and blind re-entry preregistration
+  - P0
+  - BASELINE_DONE
+  - TRADING-2467 strategy research owner：按 Owner 已选择的 exact A+D slots完成 inactive policy
+    freeze；真实 coverage 仍需独立 Owner token与新任务。
+  - 详见 `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`
+    与 `docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md`。Owner
+    已采纳 `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`、`2027-02-01`
+    blind trigger、exact vintage rule和固定12个月一次look；本任务的历史proposal继续inactive，由TRADING-2467冻结active
+    decision payload。
+  - 既有planning/preregistration、V1 binding、validator/tests与formal validation保持；Owner
+    route/date/vintage/look decision exact记录并转交TRADING-2467；未授权任何data/DQ/coverage/model/canonical/downstream
+    action。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2465:2026-07-30:select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1`。Web
+    Pro exact-commit审阅对话=`https://chatgpt.com/c/6a6ac917-8d38-83ee-9161-6e6fab018828`，7/7
+    blob SHA匹配，backend route仍不可证明。任务完成Owner决策交接并转`BASELINE_DONE`；`production_effect=none`、`broker_action=none`。
+  raw_line: '|TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION|Strategy
+    Style Discovery / post-O1 route governance and blind re-entry preregistration|P0|BASELINE_DONE|TRADING-2467
+    strategy research owner：按 Owner 已选择的 exact A+D slots完成 inactive policy freeze；真实
+    coverage 仍需独立 Owner token与新任务。|详见 `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`
+    与 `docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md`。Owner
+    已采纳 `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`、`2027-02-01`
+    blind trigger、exact vintage rule和固定12个月一次look；本任务的历史proposal继续inactive，由TRADING-2467冻结active
+    decision payload。|既有planning/preregistration、V1 binding、validator/tests与formal
+    validation保持；Owner route/date/vintage/look decision exact记录并转交TRADING-2467；未授权任何data/DQ/coverage/model/canonical/downstream
+    action。|2026-07-30：Owner token=`owner_decision:TRADING-2465:2026-07-30:select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1`。Web
+    Pro exact-commit审阅对话=`https://chatgpt.com/c/6a6ac917-8d38-83ee-9161-6e6fab018828`，7/7
+    blob SHA匹配，backend route仍不可证明。任务完成Owner决策交接并转`BASELINE_DONE`；`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-69b74023a423d48e0ecba74c
+  task_id: TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2467 strategy research owner：按 Owner 已选择的 exact A+D slots完成
+      inactive policy freeze；真实 coverage 仍需独立 Owner token与新任务。
+    notes: 2026-07-30：Owner token=`owner_decision:TRADING-2465:2026-07-30:select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1`。Web
+      Pro exact-commit审阅对话=`https://chatgpt.com/c/6a6ac917-8d38-83ee-9161-6e6fab018828`，7/7
+      blob SHA匹配，backend route仍不可证明。任务完成Owner决策交接并转`BASELINE_DONE`；`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:69b74023a423d48e0ecba74cd8f3894420e637e5b087b3db35cf132eb5ac78a0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2465_POST_O1_ROUTE_DECISION_AND_BLIND_REENTRY_PREREGISTRATION
+  - Strategy Style Discovery / post-O1 route governance and blind re-entry preregistration
+  - P0
+  - BASELINE_DONE
+  - TRADING-2467 strategy research owner：按 Owner 已选择的 exact A+D slots完成 inactive policy
+    freeze；真实 coverage 仍需独立 Owner token与新任务。
+  - 详见 `docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md`
+    与 `docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md`。Owner
+    已采纳 `A_PLUS_D_O1_BLIND_CALENDAR_REENTRY_WITH_GENERIC_EVIDENCE_INFRASTRUCTURE`、`2027-02-01`
+    blind trigger、exact vintage rule和固定12个月一次look；本任务的历史proposal继续inactive，由TRADING-2467冻结active
+    decision payload。
+  - 既有planning/preregistration、V1 binding、validator/tests与formal validation保持；Owner
+    route/date/vintage/look decision exact记录并转交TRADING-2467；未授权任何data/DQ/coverage/model/canonical/downstream
+    action。
+  - 2026-07-30：Owner token=`owner_decision:TRADING-2465:2026-07-30:select_o1_blind_calendar_reentry_with_generic_evidence_infrastructure_v1`。Web
+    Pro exact-commit审阅对话=`https://chatgpt.com/c/6a6ac917-8d38-83ee-9161-6e6fab018828`，7/7
+    blob SHA匹配，backend route仍不可证明。任务完成Owner决策交接并转`BASELINE_DONE`；`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/TRADING-2465_Post_O1_Route_Decision_And_Blind_Reentry_Preregistration.md
+  - docs/requirements/TRADING-2467_O1_Blind_Calendar_Reentry_Policy_Slot_Freeze.md
+  terminal: false
+  canonical_row_sha256: 69b74023a423d48e0ecba74cd8f3894420e637e5b087b3db35cf132eb5ac78a0
+last_event_id: legacy-import-69b74023a423d48e0ecba74c
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: e5f175b29049156020d4ff6941d8c6a50ce584f53d6380cf455ca8e0677b3157

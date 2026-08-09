@@ -1,0 +1,124 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  task_id_sha256: acfbf141d52be91423be6a52f49e44eabfbc7d41cd86941ed1bc87f8226a2252
+task_record:
+  task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  title: null
+  domain: Data Foundation / consumer capability-scoped strict DQ receipts
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: data platform engineering coordinator：准备consumer-specific adoption review决策上下文；未获Owner决定前不得修改active
+    policy/classifier/consumer，Phase D仍独立授权
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Phase
+    A/B1/B2与C1/C2/C2P/C3P/C3均已形成可审计baseline；price/rate typed contract只覆盖exact approved
+    source/site bundle，任一归因维度不完整继续`GLOBAL_OR_UNKNOWN_SCOPE`。D0B2B/OPS-067已在`main=b646fc9ae`证明canonical
+    as-of=`2026-07-27` strict DQ=`PASS`，receipt=`dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`，但generic
+    cutover/adoption仍未授权。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 下一决策门须绑定exact capability/consumer/policy bytes、issue site/code、typed decision
+      authority、多个真实批次full/scoped receipts及false-isolation正反/unknown证据，并由Owner选择`AUTHORIZE_CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE`、`HOLD_FOR_MORE_FALSE_ISOLATION_EVIDENCE`或`REJECT_ADOPTION`；在此之前不得改变capability
+      policy、classifier、consumer、QLD automatic selection、daily/periodic、production或broker行为。Phase
+      D还需独立Owner授权。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 649be2db475b3d0840c1be3b2563ef2837ed559c620883be07ec26ba36a39007
+  cell_count: 8
+  all_cells:
+  - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  - Data Foundation / consumer capability-scoped strict DQ receipts
+  - P0
+  - IN_PROGRESS
+  - data platform engineering coordinator：准备consumer-specific adoption review决策上下文；未获Owner决定前不得修改active
+    policy/classifier/consumer，Phase D仍独立授权
+  - 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Phase
+    A/B1/B2与C1/C2/C2P/C3P/C3均已形成可审计baseline；price/rate typed contract只覆盖exact approved
+    source/site bundle，任一归因维度不完整继续`GLOBAL_OR_UNKNOWN_SCOPE`。D0B2B/OPS-067已在`main=b646fc9ae`证明canonical
+    as-of=`2026-07-27` strict DQ=`PASS`，receipt=`dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`，但generic
+    cutover/adoption仍未授权。
+  - 下一决策门须绑定exact capability/consumer/policy bytes、issue site/code、typed decision
+    authority、多个真实批次full/scoped receipts及false-isolation正反/unknown证据，并由Owner选择`AUTHORIZE_CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE`、`HOLD_FOR_MORE_FALSE_ISOLATION_EVIDENCE`或`REJECT_ADOPTION`；在此之前不得改变capability
+    policy、classifier、consumer、QLD automatic selection、daily/periodic、production或broker行为。Phase
+    D还需独立Owner授权。
+  - 2026-07-29：父任务从陈旧B2叙述对齐至当前工程事实：C3P/C3 typed contract=`BASELINE_DONE`，canonical
+    strict DQ已由D0B2B/OPS-067恢复为`PASS`；本波仅更新parent/task/append-only governance authority和下一决策上下文，runtime/data
+    flow/cached data均不变，`production_effect=none`、`broker_action=none`。
+  raw_line: '|DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS|Data Foundation
+    / consumer capability-scoped strict DQ receipts|P0|IN_PROGRESS|data platform engineering
+    coordinator：准备consumer-specific adoption review决策上下文；未获Owner决定前不得修改active policy/classifier/consumer，Phase
+    D仍独立授权|详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Phase
+    A/B1/B2与C1/C2/C2P/C3P/C3均已形成可审计baseline；price/rate typed contract只覆盖exact approved
+    source/site bundle，任一归因维度不完整继续`GLOBAL_OR_UNKNOWN_SCOPE`。D0B2B/OPS-067已在`main=b646fc9ae`证明canonical
+    as-of=`2026-07-27` strict DQ=`PASS`，receipt=`dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`，但generic
+    cutover/adoption仍未授权。|下一决策门须绑定exact capability/consumer/policy bytes、issue site/code、typed
+    decision authority、多个真实批次full/scoped receipts及false-isolation正反/unknown证据，并由Owner选择`AUTHORIZE_CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE`、`HOLD_FOR_MORE_FALSE_ISOLATION_EVIDENCE`或`REJECT_ADOPTION`；在此之前不得改变capability
+    policy、classifier、consumer、QLD automatic selection、daily/periodic、production或broker行为。Phase
+    D还需独立Owner授权。|2026-07-29：父任务从陈旧B2叙述对齐至当前工程事实：C3P/C3 typed contract=`BASELINE_DONE`，canonical
+    strict DQ已由D0B2B/OPS-067恢复为`PASS`；本波仅更新parent/task/append-only governance authority和下一决策上下文，runtime/data
+    flow/cached data均不变，`production_effect=none`、`broker_action=none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-649be2db475b3d0840c1be3b
+  task_id: DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: data platform engineering coordinator：准备consumer-specific adoption
+      review决策上下文；未获Owner决定前不得修改active policy/classifier/consumer，Phase D仍独立授权
+    notes: 2026-07-29：父任务从陈旧B2叙述对齐至当前工程事实：C3P/C3 typed contract=`BASELINE_DONE`，canonical
+      strict DQ已由D0B2B/OPS-067恢复为`PASS`；本波仅更新parent/task/append-only governance authority和下一决策上下文，runtime/data
+      flow/cached data均不变，`production_effect=none`、`broker_action=none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:649be2db475b3d0840c1be3b2563ef2837ed559c620883be07ec26ba36a39007
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002_CONSUMER_CAPABILITY_SCOPED_DATA_QUALITY_RECEIPTS
+  - Data Foundation / consumer capability-scoped strict DQ receipts
+  - P0
+  - IN_PROGRESS
+  - data platform engineering coordinator：准备consumer-specific adoption review决策上下文；未获Owner决定前不得修改active
+    policy/classifier/consumer，Phase D仍独立授权
+  - 详见 `docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md`。Phase
+    A/B1/B2与C1/C2/C2P/C3P/C3均已形成可审计baseline；price/rate typed contract只覆盖exact approved
+    source/site bundle，任一归因维度不完整继续`GLOBAL_OR_UNKNOWN_SCOPE`。D0B2B/OPS-067已在`main=b646fc9ae`证明canonical
+    as-of=`2026-07-27` strict DQ=`PASS`，receipt=`dq_execution_28af63a1e747ba675e17d3001d8028592b6ec0ef63e823bcfa9463889b0cb5c4`，但generic
+    cutover/adoption仍未授权。
+  - 下一决策门须绑定exact capability/consumer/policy bytes、issue site/code、typed decision
+    authority、多个真实批次full/scoped receipts及false-isolation正反/unknown证据，并由Owner选择`AUTHORIZE_CONSUMER_SPECIFIC_ADOPTION_REVIEW_WAVE`、`HOLD_FOR_MORE_FALSE_ISOLATION_EVIDENCE`或`REJECT_ADOPTION`；在此之前不得改变capability
+    policy、classifier、consumer、QLD automatic selection、daily/periodic、production或broker行为。Phase
+    D还需独立Owner授权。
+  - 2026-07-29：父任务从陈旧B2叙述对齐至当前工程事实：C3P/C3 typed contract=`BASELINE_DONE`，canonical
+    strict DQ已由D0B2B/OPS-067恢复为`PASS`；本波仅更新parent/task/append-only governance authority和下一决策上下文，runtime/data
+    flow/cached data均不变，`production_effect=none`、`broker_action=none`。
+  docs_links:
+  - docs/requirements/DATA-GOV-002_Consumer_Capability_Scoped_Data_Quality_Receipts.md
+  terminal: false
+  canonical_row_sha256: 649be2db475b3d0840c1be3b2563ef2837ed559c620883be07ec26ba36a39007
+last_event_id: legacy-import-649be2db475b3d0840c1be3b
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 96fd8e5b17a1bb37fbe96b1e1e0564097c1f740ff8599853671ad8774e07d2f0

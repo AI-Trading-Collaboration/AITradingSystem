@@ -1,0 +1,116 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+  task_id_sha256: cb2d177c324173ff8a1b1f0390760d5e769def829adc68344d9e142e9d38ef57
+task_record:
+  task_id: ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+  title: null
+  domain: Architecture / canonical task record-event source cutover 与 generated Markdown
+    compatibility views
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: ARCH-005 S5 integration coordinator：完成 final import、canonical loader/validator/generator、consumer
+    migration、两次 self-host governance cycle、rollback rehearsal 与 ordinary push/cleanup
+  requirement_refs:
+  - docs/requirements/ARCH-005S5_Canonical_Task_Source_Cutover.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/ARCH-005S5_Canonical_Task_Source_Cutover.md`。Exact
+    base=`7cfc81d6ab9d992c6c45e1084e22b33b9560d519`；Owner decision=`owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1`；D
+    已 exact release，本任务不复用 D formal evidence。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Canonical per-task record/event fragments+index；final import 100% parity；Markdown
+      generated/do-not-edit且manual writer=0；manual semantic runtime consumer=0；two
+      governance cycles、rollback rehearsal、tamper/duplicate/missing/path/event-chain
+      fail closed；全部 formal/Full 与 ordinary push/cleanup PASS；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: 81e0fb586e25b831b510fbe6ffb896fe27f8ac2c7f6f056d367dfc2407268510
+  cell_count: 8
+  all_cells:
+  - ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+  - Architecture / canonical task record-event source cutover 与 generated Markdown
+    compatibility views
+  - P0
+  - IN_PROGRESS
+  - ARCH-005 S5 integration coordinator：完成 final import、canonical loader/validator/generator、consumer
+    migration、两次 self-host governance cycle、rollback rehearsal 与 ordinary push/cleanup
+  - 详见 `docs/requirements/ARCH-005S5_Canonical_Task_Source_Cutover.md`。Exact base=`7cfc81d6ab9d992c6c45e1084e22b33b9560d519`；Owner
+    decision=`owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1`；D
+    已 exact release，本任务不复用 D formal evidence。
+  - Canonical per-task record/event fragments+index；final import 100% parity；Markdown
+    generated/do-not-edit且manual writer=0；manual semantic runtime consumer=0；two governance
+    cycles、rollback rehearsal、tamper/duplicate/missing/path/event-chain fail closed；全部
+    formal/Full 与 ordinary push/cleanup PASS；`production_effect=none`。
+  - 2026-08-09：从 D released main 独立登记，当前只完成 supporting requirement/task row；implementation
+    必须在 expanded governed preflight PASS 后开始。
+  raw_line: '|ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER|Architecture / canonical task
+    record-event source cutover 与 generated Markdown compatibility views|P0|IN_PROGRESS|ARCH-005
+    S5 integration coordinator：完成 final import、canonical loader/validator/generator、consumer
+    migration、两次 self-host governance cycle、rollback rehearsal 与 ordinary push/cleanup|详见
+    `docs/requirements/ARCH-005S5_Canonical_Task_Source_Cutover.md`。Exact base=`7cfc81d6ab9d992c6c45e1084e22b33b9560d519`；Owner
+    decision=`owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1`；D
+    已 exact release，本任务不复用 D formal evidence。|Canonical per-task record/event fragments+index；final
+    import 100% parity；Markdown generated/do-not-edit且manual writer=0；manual semantic
+    runtime consumer=0；two governance cycles、rollback rehearsal、tamper/duplicate/missing/path/event-chain
+    fail closed；全部 formal/Full 与 ordinary push/cleanup PASS；`production_effect=none`。|2026-08-09：从
+    D released main 独立登记，当前只完成 supporting requirement/task row；implementation 必须在
+    expanded governed preflight PASS 后开始。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-81e0fb586e25b831b510fbe6
+  task_id: ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    priority: P0
+    next_owner: ARCH-005 S5 integration coordinator：完成 final import、canonical loader/validator/generator、consumer
+      migration、两次 self-host governance cycle、rollback rehearsal 与 ordinary push/cleanup
+    notes: 2026-08-09：从 D released main 独立登记，当前只完成 supporting requirement/task row；implementation
+      必须在 expanded governed preflight PASS 后开始。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:81e0fb586e25b831b510fbe6ffb896fe27f8ac2c7f6f056d367dfc2407268510
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER
+  - Architecture / canonical task record-event source cutover 与 generated Markdown
+    compatibility views
+  - P0
+  - IN_PROGRESS
+  - ARCH-005 S5 integration coordinator：完成 final import、canonical loader/validator/generator、consumer
+    migration、两次 self-host governance cycle、rollback rehearsal 与 ordinary push/cleanup
+  - 详见 `docs/requirements/ARCH-005S5_Canonical_Task_Source_Cutover.md`。Exact base=`7cfc81d6ab9d992c6c45e1084e22b33b9560d519`；Owner
+    decision=`owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1`；D
+    已 exact release，本任务不复用 D formal evidence。
+  - Canonical per-task record/event fragments+index；final import 100% parity；Markdown
+    generated/do-not-edit且manual writer=0；manual semantic runtime consumer=0；two governance
+    cycles、rollback rehearsal、tamper/duplicate/missing/path/event-chain fail closed；全部
+    formal/Full 与 ordinary push/cleanup PASS；`production_effect=none`。
+  - 2026-08-09：从 D released main 独立登记，当前只完成 supporting requirement/task row；implementation
+    必须在 expanded governed preflight PASS 后开始。
+  docs_links:
+  - docs/requirements/ARCH-005S5_Canonical_Task_Source_Cutover.md
+  terminal: false
+  raw_row_sha256: 81e0fb586e25b831b510fbe6ffb896fe27f8ac2c7f6f056d367dfc2407268510
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: a5c09e40df3c90d360c94591aa62711b793ea7c5d33152d579842f83bd0b0180

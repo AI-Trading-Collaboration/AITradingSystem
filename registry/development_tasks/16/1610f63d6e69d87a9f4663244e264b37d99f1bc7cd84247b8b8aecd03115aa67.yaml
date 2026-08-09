@@ -1,0 +1,129 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  task_id_sha256: 1610f63d6e69d87a9f4663244e264b37d99f1bc7cd84247b8b8aecd03115aa67
+task_record:
+  task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  title: null
+  domain: Data Foundation / Phase C price non-market-session six-dimension source-owner
+    review pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: DATA-GOV-002C3P engineering coordinator：按owner-approved conditions执行最小serial
+    typed attribution contract wave；dimensional classifier adoption仍需另行评审
+  requirement_refs:
+  - docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+    scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+    pilot authority不自动授权source/date/window/field/row runtime attribution。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Deterministic builder/validator/Markdown绑定C1 inventory、canonical source、DQ
+      policy、calendar runtime、special-closure loader/registry与proposal bytes；明确distinct
+      date count、全部trigger rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+      migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 3d45faa1a11b516e93abcebf834b22fe93fd5d01a02257c055e350a40135b5a6
+  cell_count: 8
+  all_cells:
+  - DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  - Data Foundation / Phase C price non-market-session six-dimension source-owner
+    review pack
+  - P0
+  - BASELINE_DONE
+  - DATA-GOV-002C3P engineering coordinator：按owner-approved conditions执行最小serial typed
+    attribution contract wave；dimensional classifier adoption仍需另行评审
+  - 详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+    scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+    pilot authority不自动授权source/date/window/field/row runtime attribution。
+  - Deterministic builder/validator/Markdown绑定C1 inventory、canonical source、DQ policy、calendar
+    runtime、special-closure loader/registry与proposal bytes；明确distinct date count、全部trigger
+    rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+    migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。
+  - 2026-07-27：工程基线闭合。Pack ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；唯一自然边界Full=`7578
+    passed / 3 skipped`。随后project owner以price source-owner身份决定`APPROVE_FOR_CONTRACT_WAVE`，附加primary
+    role/calendar、exact artifact checksum、snapshot-local ordinal、versioned digest、policy
+    drift re-review、incomplete-global及C3前不改变policy/consumer/production七项conditions；decision
+    authority由C3P固化。
+  raw_line: '|DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK|Data
+    Foundation / Phase C price non-market-session six-dimension source-owner review
+    pack|P0|BASELINE_DONE|DATA-GOV-002C3P engineering coordinator：按owner-approved
+    conditions执行最小serial typed attribution contract wave；dimensional classifier adoption仍需另行评审|详见
+    `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+    scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+    pilot authority不自动授权source/date/window/field/row runtime attribution。|Deterministic
+    builder/validator/Markdown绑定C1 inventory、canonical source、DQ policy、calendar runtime、special-closure
+    loader/registry与proposal bytes；明确distinct date count、全部trigger rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+    migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。|2026-07-27：工程基线闭合。Pack
+    ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；唯一自然边界Full=`7578
+    passed / 3 skipped`。随后project owner以price source-owner身份决定`APPROVE_FOR_CONTRACT_WAVE`，附加primary
+    role/calendar、exact artifact checksum、snapshot-local ordinal、versioned digest、policy
+    drift re-review、incomplete-global及C3前不改变policy/consumer/production七项conditions；decision
+    authority由C3P固化。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-3d45faa1a11b516e93abcebf
+  task_id: DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: DATA-GOV-002C3P engineering coordinator：按owner-approved conditions执行最小serial
+      typed attribution contract wave；dimensional classifier adoption仍需另行评审
+    notes: 2026-07-27：工程基线闭合。Pack ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；唯一自然边界Full=`7578
+      passed / 3 skipped`。随后project owner以price source-owner身份决定`APPROVE_FOR_CONTRACT_WAVE`，附加primary
+      role/calendar、exact artifact checksum、snapshot-local ordinal、versioned digest、policy
+      drift re-review、incomplete-global及C3前不改变policy/consumer/production七项conditions；decision
+      authority由C3P固化。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:3d45faa1a11b516e93abcebf834b22fe93fd5d01a02257c055e350a40135b5a6
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DATA-GOV-002C2P_PRICE_NON_MARKET_SESSION_ATTRIBUTION_SOURCE_OWNER_REVIEW_PACK
+  - Data Foundation / Phase C price non-market-session six-dimension source-owner
+    review pack
+  - P0
+  - BASELINE_DONE
+  - DATA-GOV-002C3P engineering coordinator：按owner-approved conditions执行最小serial typed
+    attribution contract wave；dimensional classifier adoption仍需另行评审
+  - 详见 `docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md`。Exact
+    scope仅为C1 site `dq_issue_site_312625a26da21428b763 / prices_non_market_session_date`；现有instrument-level
+    pilot authority不自动授权source/date/window/field/row runtime attribution。
+  - Deterministic builder/validator/Markdown绑定C1 inventory、canonical source、DQ policy、calendar
+    runtime、special-closure loader/registry与proposal bytes；明确distinct date count、全部trigger
+    rows、ticker/rate/source/date/field/row六维完整性与fail-closed条件；decision保持pending，runtime/schema/isolation/consumer
+    migration全部false；focused/formal/Full通过；`production_effect=none`、`broker_action=none`。
+  - 2026-07-27：工程基线闭合。Pack ID=`dq_price_issue_attribution_review_dff1943fa21f6aeaf9f15714`；唯一自然边界Full=`7578
+    passed / 3 skipped`。随后project owner以price source-owner身份决定`APPROVE_FOR_CONTRACT_WAVE`，附加primary
+    role/calendar、exact artifact checksum、snapshot-local ordinal、versioned digest、policy
+    drift re-review、incomplete-global及C3前不改变policy/consumer/production七项conditions；decision
+    authority由C3P固化。
+  docs_links:
+  - docs/requirements/DATA-GOV-002C2P_Price_Non_Market_Session_Attribution_Source_Owner_Review_Pack.md
+  terminal: false
+  canonical_row_sha256: 3d45faa1a11b516e93abcebf834b22fe93fd5d01a02257c055e350a40135b5a6
+last_event_id: legacy-import-3d45faa1a11b516e93abcebf
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 4233ab09b7ba1bc32fb012db95fc1f0c4413fef006c1bddcde9f689f45702767

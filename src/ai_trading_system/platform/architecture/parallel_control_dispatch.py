@@ -88,6 +88,7 @@ class ControlledDispatchReport:
     lease_store_path: str
     lease_replay: Mapping[str, object]
     artifact_checksums: tuple[tuple[str, str], ...]
+    source_of_truth: str
 
     def _body(self) -> dict[str, object]:
         return {
@@ -110,8 +111,8 @@ class ControlledDispatchReport:
             "dispatch_allowed": True,
             "dispatch_scope": "S4_EXPLICIT_PILOT_ALLOWLIST_ONLY",
             "lease_acquisition_allowed": True,
-            "canonical_source_cutover": False,
-            "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+            "canonical_source_cutover": self.source_of_truth == "ARCH_005_TASK_REGISTRY",
+            "source_of_truth": self.source_of_truth,
             "task_governance_status_mutated": False,
             "generated_task_view_written": False,
             "strategy_logic_changed": False,
@@ -368,6 +369,7 @@ class ControlledThreeLaneDispatcher:
             lease_store_path=self.lease_store.root.relative_to(self.project_root).as_posix(),
             lease_replay=replay.to_dict(),
             artifact_checksums=artifacts,
+            source_of_truth=self.policy.source_of_truth,
         )
         write_json_atomic(
             self._report_artifact_path(coordinator),
@@ -579,8 +581,12 @@ def validate_controlled_dispatch_report(
     check("dispatch_scope", payload.get("dispatch_scope") == "S4_EXPLICIT_PILOT_ALLOWLIST_ONLY")
     check("dispatch_allowed", payload.get("dispatch_allowed") is True)
     check("lease_allowed", payload.get("lease_acquisition_allowed") is True)
-    check("source_of_truth", payload.get("source_of_truth") == "LEGACY_MARKDOWN_ONLY")
-    check("canonical_cutover", payload.get("canonical_source_cutover") is False)
+    check("source_of_truth", payload.get("source_of_truth") == policy.source_of_truth)
+    check(
+        "canonical_cutover",
+        payload.get("canonical_source_cutover")
+        is (policy.source_of_truth == "ARCH_005_TASK_REGISTRY"),
+    )
     for field in (
         "task_governance_status_mutated",
         "generated_task_view_written",

@@ -1,0 +1,127 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
+  task_id_sha256: e5f589af3b9ef8a214af03d22b50895bc1b0da243b00134c8da95c88f95a9623
+task_record:
+  task_id: OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
+  title: null
+  domain: Operations / governed same-as-of recovery and lineage availability
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: operations owner：观察下一合法scheduler run；若扩大recovery boundary或改变lineage
+    availability contract须另立任务
+  requirement_refs:
+  - docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`。Recovery
+    request/receipt、immutable parent archive、selective report-tail replay与lineage
+    topology/availability分层已实现；v2 exact release `556f93a421...`已promotion并形成active
+    deployment。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: Parent state/ledger、release/deployment receipt与replay boundary精确绑定；每parent最多一个child；23个capture/DQ/PIT/score
+      upstream steps复用、只重放`artifact_lineage`起11个幂等tail steps；missing history保持`INSUFFICIENT_DATA/PASS_WITH_WARNINGS`且0
+      blocking；Reader Brief和两类quality validation完成；runtime weight迁移byte-identical；无provider重复、production/active-shadow
+      weight写入或broker/trading。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: f0faca71185009ca5a70f842de7c443b3c67bfe24effdd28ff6552d3e0298823
+  cell_count: 8
+  all_cells:
+  - OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
+  - Operations / governed same-as-of recovery and lineage availability
+  - P0
+  - DONE
+  - operations owner：观察下一合法scheduler run；若扩大recovery boundary或改变lineage availability
+    contract须另立任务
+  - 详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`。Recovery
+    request/receipt、immutable parent archive、selective report-tail replay与lineage
+    topology/availability分层已实现；v2 exact release `556f93a421...`已promotion并形成active
+    deployment。
+  - Parent state/ledger、release/deployment receipt与replay boundary精确绑定；每parent最多一个child；23个capture/DQ/PIT/score
+    upstream steps复用、只重放`artifact_lineage`起11个幂等tail steps；missing history保持`INSUFFICIENT_DATA/PASS_WITH_WARNINGS`且0
+    blocking；Reader Brief和两类quality validation完成；runtime weight迁移byte-identical；无provider重复、production/active-shadow
+    weight写入或broker/trading。
+  - 2026-07-29：v2六档=`341/773/276/995/24/7617 passed`，Full另`3 skipped / 639 warnings`；active
+    deployment=`ops_deployment_137332aacf307325fe93c2b72ddebfadd1de17c9`。Recovery
+    child=`daily_ops_run:2026-07-27:20260728T072717Z`、attempt=2、terminal=`PASS`、blocker=[]；lineage=`PASS_WITH_WARNINGS`（0
+    blocking/21 warnings）、Reader Brief=`OK`（13/13）、report quality=`PASS_WITH_WARNINGS`（0
+    blocking），`production_effect=none`。OPS-071完成不自动关闭D0B2B或解锁QLD/production governance。
+  raw_line: '|OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY|Operations
+    / governed same-as-of recovery and lineage availability|P0|DONE|operations owner：观察下一合法scheduler
+    run；若扩大recovery boundary或改变lineage availability contract须另立任务|详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`。Recovery
+    request/receipt、immutable parent archive、selective report-tail replay与lineage
+    topology/availability分层已实现；v2 exact release `556f93a421...`已promotion并形成active
+    deployment。|Parent state/ledger、release/deployment receipt与replay boundary精确绑定；每parent最多一个child；23个capture/DQ/PIT/score
+    upstream steps复用、只重放`artifact_lineage`起11个幂等tail steps；missing history保持`INSUFFICIENT_DATA/PASS_WITH_WARNINGS`且0
+    blocking；Reader Brief和两类quality validation完成；runtime weight迁移byte-identical；无provider重复、production/active-shadow
+    weight写入或broker/trading。|2026-07-29：v2六档=`341/773/276/995/24/7617 passed`，Full另`3
+    skipped / 639 warnings`；active deployment=`ops_deployment_137332aacf307325fe93c2b72ddebfadd1de17c9`。Recovery
+    child=`daily_ops_run:2026-07-27:20260728T072717Z`、attempt=2、terminal=`PASS`、blocker=[]；lineage=`PASS_WITH_WARNINGS`（0
+    blocking/21 warnings）、Reader Brief=`OK`（13/13）、report quality=`PASS_WITH_WARNINGS`（0
+    blocking），`production_effect=none`。OPS-071完成不自动关闭D0B2B或解锁QLD/production governance。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-f0faca71185009ca5a70f842
+  task_id: OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: operations owner：观察下一合法scheduler run；若扩大recovery boundary或改变lineage
+      availability contract须另立任务
+    notes: 2026-07-29：v2六档=`341/773/276/995/24/7617 passed`，Full另`3 skipped / 639
+      warnings`；active deployment=`ops_deployment_137332aacf307325fe93c2b72ddebfadd1de17c9`。Recovery
+      child=`daily_ops_run:2026-07-27:20260728T072717Z`、attempt=2、terminal=`PASS`、blocker=[]；lineage=`PASS_WITH_WARNINGS`（0
+      blocking/21 warnings）、Reader Brief=`OK`（13/13）、report quality=`PASS_WITH_WARNINGS`（0
+      blocking），`production_effect=none`。OPS-071完成不自动关闭D0B2B或解锁QLD/production governance。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:f0faca71185009ca5a70f842de7c443b3c67bfe24effdd28ff6552d3e0298823
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - OPS-071_DAILY_TERMINAL_RECOVERY_AND_LINEAGE_AVAILABILITY
+  - Operations / governed same-as-of recovery and lineage availability
+  - P0
+  - DONE
+  - operations owner：观察下一合法scheduler run；若扩大recovery boundary或改变lineage availability
+    contract须另立任务
+  - 详见 `docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md`。Owner决定`owner_decision:OPS-071:2026-07-28:implement_governed_same_as_of_recovery_v1`。Recovery
+    request/receipt、immutable parent archive、selective report-tail replay与lineage
+    topology/availability分层已实现；v2 exact release `556f93a421...`已promotion并形成active
+    deployment。
+  - Parent state/ledger、release/deployment receipt与replay boundary精确绑定；每parent最多一个child；23个capture/DQ/PIT/score
+    upstream steps复用、只重放`artifact_lineage`起11个幂等tail steps；missing history保持`INSUFFICIENT_DATA/PASS_WITH_WARNINGS`且0
+    blocking；Reader Brief和两类quality validation完成；runtime weight迁移byte-identical；无provider重复、production/active-shadow
+    weight写入或broker/trading。
+  - 2026-07-29：v2六档=`341/773/276/995/24/7617 passed`，Full另`3 skipped / 639 warnings`；active
+    deployment=`ops_deployment_137332aacf307325fe93c2b72ddebfadd1de17c9`。Recovery
+    child=`daily_ops_run:2026-07-27:20260728T072717Z`、attempt=2、terminal=`PASS`、blocker=[]；lineage=`PASS_WITH_WARNINGS`（0
+    blocking/21 warnings）、Reader Brief=`OK`（13/13）、report quality=`PASS_WITH_WARNINGS`（0
+    blocking），`production_effect=none`。OPS-071完成不自动关闭D0B2B或解锁QLD/production governance。
+  docs_links:
+  - docs/requirements/OPS-071_Daily_Terminal_Recovery_and_Lineage_Availability.md
+  terminal: true
+  canonical_row_sha256: f0faca71185009ca5a70f842de7c443b3c67bfe24effdd28ff6552d3e0298823
+last_event_id: legacy-import-f0faca71185009ca5a70f842
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 10d0cf24137339b0ea7ce75b3401eafb240dc9fc9ae953842ef166b6f4731f18

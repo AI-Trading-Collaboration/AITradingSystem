@@ -1,0 +1,117 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  task_id_sha256: 9454c85d03f8750fa90b1fb076ab58d292637996dfceba9f4cc983bc97e79fa6
+task_record:
+  task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  title: null
+  domain: Publishing & Experience / reader-safe QQQ Options projection owner review
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas coordinator：另立 serial projection contract/renderer consumer 任务；在该后继任务完成前保持当前页面与
+    2481–2493 排除规则不变
+  requirement_refs:
+  - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。Owner
+    已按 exact token 接受 A/B/C/D 分层、reader wording、2489 mismatch 披露、2492 阅读顺序与 2493 dominance；本任务只完成只读审阅决策，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`none_for_review_pack`；successor dependency=`SERIAL_PROJECTION_CONTRACT_AND_RENDERER_CONSUMER_NOT_REGISTERED`。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 13 项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO`
+      的 cap violation 优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO`
+      的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: e24ca7f5973e8b253923d282faec931095215f0dcf3eaa1841b5106c18a4c160
+  cell_count: 8
+  all_cells:
+  - TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  - Publishing & Experience / reader-safe QQQ Options projection owner review
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：另立 serial projection contract/renderer consumer 任务；在该后继任务完成前保持当前页面与
+    2481–2493 排除规则不变
+  - 详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。Owner
+    已按 exact token 接受 A/B/C/D 分层、reader wording、2489 mismatch 披露、2492 阅读顺序与 2493 dominance；本任务只完成只读审阅决策，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`none_for_review_pack`；successor dependency=`SERIAL_PROJECTION_CONTRACT_AND_RENDERER_CONSUMER_NOT_REGISTERED`。
+  - 13 项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO` 的 cap
+    violation 优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO`
+    的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
+  - 2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
+    token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7`
+    为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current canonical
+    page change=`none`。
+  raw_line: '|TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1|Publishing
+    & Experience / reader-safe QQQ Options projection owner review|P1|BASELINE_DONE|Atlas
+    coordinator：另立 serial projection contract/renderer consumer 任务；在该后继任务完成前保持当前页面与
+    2481–2493 排除规则不变|详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。Owner
+    已按 exact token 接受 A/B/C/D 分层、reader wording、2489 mismatch 披露、2492 阅读顺序与 2493 dominance；本任务只完成只读审阅决策，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`none_for_review_pack`；successor dependency=`SERIAL_PROJECTION_CONTRACT_AND_RENDERER_CONSUMER_NOT_REGISTERED`。|13
+    项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO` 的 cap violation
+    优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO` 的支配；不以绿色或“已完成”暗示策略
+    PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。|2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
+    token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7`
+    为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current canonical
+    page change=`none`。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-e24ca7f5973e8b253923d282
+  task_id: TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas coordinator：另立 serial projection contract/renderer consumer
+      任务；在该后继任务完成前保持当前页面与 2481–2493 排除规则不变
+    notes: 2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
+      token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift
+      plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7` 为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current
+      canonical page change=`none`。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:e24ca7f5973e8b253923d282faec931095215f0dcf3eaa1841b5106c18a4c160
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2501_ATLAS_QQQ_OPTIONS_PROJECTION_READ_ONLY_OWNER_REVIEW_PACK_V1
+  - Publishing & Experience / reader-safe QQQ Options projection owner review
+  - P1
+  - BASELINE_DONE
+  - Atlas coordinator：另立 serial projection contract/renderer consumer 任务；在该后继任务完成前保持当前页面与
+    2481–2493 排除规则不变
+  - 详见 `docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md`。Owner
+    已按 exact token 接受 A/B/C/D 分层、reader wording、2489 mismatch 披露、2492 阅读顺序与 2493 dominance；本任务只完成只读审阅决策，不修改页面、renderer、canonical
+    projection、研究状态或 QQQ contracts。blocker=`none_for_review_pack`；successor dependency=`SERIAL_PROJECTION_CONTRACT_AND_RENDERER_CONSUMER_NOT_REGISTERED`。
+  - 13 项 exact source 全部可追溯；每项有 A/B/C/D 建议、读者结论、已完成/未证明/仍阻塞；冻结 2492 `NO-GO` 的 cap
+    violation 优先顺序和 2493 aggregate `NO_GO_KEEP_BLOCKED` 对 subordinate `CONDITIONAL_GO`
+    的支配；不以绿色或“已完成”暗示策略 PASS；primary start=`2021-02-22`，不新增投资阈值、外部动作或页面写入。
+  - 2026-08-08：Owner 接受集合 `A={2481,2482,2483,2492,2493}`、`B={2484,2489,2490,2491}`、`C={2485,2486,2487,2488}`、`D={}`；acceptance
+    token 已封存。基于 latest main `2cff6c2641d168f0b51120cf6150dbc46d0b9fec` 的 drift plan=`integration-revalidation-9dff5eabaeb0c0a0e8c7`
+    为 READY、overlap=[]。`production_effect=none`、`broker_action=none`、current canonical
+    page change=`none`。
+  docs_links:
+  - docs/requirements/TRADING-2501_Atlas_QQQ_Options_Projection_Read_Only_Owner_Review_Pack_V1.md
+  terminal: false
+  canonical_row_sha256: e24ca7f5973e8b253923d282faec931095215f0dcf3eaa1841b5106c18a4c160
+last_event_id: legacy-import-e24ca7f5973e8b253923d282
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: c5db707a982d4edf1eaa372213f83614935bf0760e8f9d2d18a0649e1aaf14c3

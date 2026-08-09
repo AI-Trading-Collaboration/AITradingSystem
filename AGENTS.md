@@ -160,13 +160,18 @@ generated policy report so the conclusion remains auditable.
 
 ## Task Register Discipline
 
-`docs/task_register.md` is the source of truth for unfinished work, deferred
-enhancements, owner-dependent data tasks, and baseline implementations that are
-not yet complete enough for long-term system quality.
+`registry/development_tasks/` plus
+`inputs/architecture/arch_005_task_registry_index.yaml` is the canonical source
+of truth for unfinished work, deferred enhancements, owner-dependent data tasks,
+and baseline implementations that are not yet complete enough for long-term
+system quality. `docs/task_register.md` and `docs/task_register_completed.md` are
+generated, do-not-edit compatibility views; use
+`scripts/architecture_arch005_task_source.py register|update` for task mutations.
 
 Any non-trivial TODO, planned enhancement, accepted workaround, or follow-up
-from a review must be recorded there instead of being left only in code comments,
-chat history, or an ad hoc checklist. Each item should include:
+from a review must be recorded in the canonical registry instead of being left
+only in code comments, chat history, or an ad hoc checklist. Each item should
+include:
 
 - stable task id;
 - priority;
@@ -178,7 +183,7 @@ chat history, or an ad hoc checklist. Each item should include:
 
 Before implementing any non-trivial requirement, bug fix, scoring change, data
 pipeline change, or report behavior change discussed with the project owner,
-first create or update the relevant task-register item with priority, status,
+first create or update the relevant canonical task record with priority, status,
 next owner, blocker/dependency, and acceptance criteria. Do not move directly
 from discussion to implementation unless the change is trivial housekeeping that
 does not affect system behavior, investment interpretation, data flow, data
@@ -211,6 +216,11 @@ treating the task as complete.
 Whenever a task moves forward, becomes blocked, is superseded, or is completed,
 update the register in the same change as the code or documentation change that
 caused the status transition.
+
+Canonical task events are append-only and bind actor, change id, timestamp, base
+commit, previous state event, and resulting projection. Moving a row manually
+between active and completed Markdown files is forbidden; terminal status updates
+regenerate both compatibility views and their index bindings atomically.
 
 ## Governed Development Workflow Skill Discipline
 
@@ -339,13 +349,13 @@ deleting unaudited dirty or ignored content.
 Abandoning an attempt does not authorize discarding unreviewed changes. Dirty or
 uncertain directories must be preserved until audited. If a temporary directory
 cannot be removed at closeout, record its path, reason, behavioral or evidence
-risk, next owner, and concrete exit condition in `docs/task_register.md` or the
-linked supporting requirement. Leaving temporary directories behind without
+risk, next owner, and concrete exit condition in the canonical task registry or
+the linked supporting requirement. Leaving temporary directories behind without
 that record is not an acceptable closeout state.
 
 ## Local Branch, Commit, and Main Integration Discipline
 
-When completing work that was explicitly selected from `docs/task_register.md`
+When completing work that was explicitly selected from the canonical task registry
 or another project TODO list, the finished change may be committed directly to
 the current task branch after the relevant validation has passed. The commit
 must include the task-register/status update, supporting documentation updates,

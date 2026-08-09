@@ -1,0 +1,100 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  task_id_sha256: b3edb5dfae83e312d985e9cb7a8a40513da392f46c9371c26e056f9e12bb4841
+task_record:
+  task_id: TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  title: null
+  domain: Strategy research / typed mutation candidate generation
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: typed operators只面向 READY baseline capability；所有
+    candidate ref必须解析，禁止 placeholder、immutable/hard-veto mutation、exposure substitution与
+    structural duplicate；zero candidates有效。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: N2 conditional gate通过；contract refs完整；fingerprint/near-duplicate gate；declaration
+      order不作 ranking；不创建 baseline behavior或新 signal。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 24882282b3f79763ade47af31e26bfc144f698c71e4747b2c9a36c9507764c64
+  cell_count: 8
+  all_cells:
+  - TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  - Strategy research / typed mutation candidate generation
+  - P0
+  - DROPPED
+  - 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+  - typed operators只面向 READY baseline capability；所有 candidate ref必须解析，禁止 placeholder、immutable/hard-veto
+    mutation、exposure substitution与 structural duplicate；zero candidates有效。
+  - N2 conditional gate通过；contract refs完整；fingerprint/near-duplicate gate；declaration
+    order不作 ranking；不创建 baseline behavior或新 signal。
+  - '2026-07-10: N2 strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+    generator、未生成 candidate。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  raw_line: '|TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR|Strategy
+    research / typed mutation candidate generation|P0|DROPPED|独立 baseline capability
+    owner；仅在新证据令 N2 mutation-ready count>0 后重开|typed operators只面向 READY baseline capability；所有
+    candidate ref必须解析，禁止 placeholder、immutable/hard-veto mutation、exposure substitution与
+    structural duplicate；zero candidates有效。|N2 conditional gate通过；contract refs完整；fingerprint/near-duplicate
+    gate；declaration order不作 ranking；不创建 baseline behavior或新 signal。|2026-07-10: N2
+    strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+    generator、未生成 candidate。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-24882282b3f79763ade47af3
+  task_id: TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DROPPED
+  payload:
+    priority: P0
+    next_owner: 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+    notes: '2026-07-10: N2 strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+      generator、未生成 candidate。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+      转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:24882282b3f79763ade47af31e26bfc144f698c71e4747b2c9a36c9507764c64
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2438N3_GROWTH_TILT_CONTRACT_FIRST_CANDIDATE_GENERATOR
+  - Strategy research / typed mutation candidate generation
+  - P0
+  - DROPPED
+  - 独立 baseline capability owner；仅在新证据令 N2 mutation-ready count>0 后重开
+  - typed operators只面向 READY baseline capability；所有 candidate ref必须解析，禁止 placeholder、immutable/hard-veto
+    mutation、exposure substitution与 structural duplicate；zero candidates有效。
+  - N2 conditional gate通过；contract refs完整；fingerprint/near-duplicate gate；declaration
+    order不作 ranking；不创建 baseline behavior或新 signal。
+  - '2026-07-10: N2 strict结果 mutation-ready=0；status=`NOT_STARTED_NO_MUTATION_READY_CAPABILITY`，未实现
+    generator、未生成 candidate。 2026-07-23: GOV-006 N1 coordinator review 后按 SUPERSEDED_BY_TRADING_2438N1_N2_FAMILY_CLOSURE
+    转 DROPPED 并归档；manifest=gov_006_decision_manifest_3fb5f2a038eca2361179；production_effect=none。'
+  docs_links: []
+  terminal: true
+  canonical_row_sha256: 24882282b3f79763ade47af31e26bfc144f698c71e4747b2c9a36c9507764c64
+last_event_id: legacy-import-24882282b3f79763ade47af3
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 86097056a7043292c73601cf6bbf3c41f6d3dffcde0341ea2c6e8baa176c7f98

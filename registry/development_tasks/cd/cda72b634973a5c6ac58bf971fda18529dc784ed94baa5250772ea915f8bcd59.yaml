@@ -1,0 +1,120 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-062K
+  task_id_sha256: cda72b634973a5c6ac58bf971fda18529dc784ed94baa5250772ea915f8bcd59
+task_record:
+  task_id: TRADING-062K
+  title: null
+  domain: ETF daily brief simulation performance integration
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统验证
+  requirement_refs:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐日报
+    Simulation Performance 对 simulation ledger 的真实摘要读取
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: '`aits etf report daily` 和 `aits etf run daily` 生成的 portfolio brief 必须读取
+      `data/simulation/etf_ledger.csv` 或显式 ledger path，展示 model_version 级 records、20d
+      hit rate、avg portfolio return、relative vs SPY/QQQ；缺 ledger、空 ledger、窗口不足或 benchmark
+      缺失必须明确输出 `n/a` / 暂无记录，不得补造表现；测试覆盖 ledger 有值和缺 ledger 两种语义；文档同步说明日报小节读取 ledger
+      但不触发交易动作'
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 08b88868d31facdb557226fac15f68cb75b707a4d6f46314a946e14b32bdb3a0
+  cell_count: 8
+  all_cells:
+  - TRADING-062K
+  - ETF daily brief simulation performance integration
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐日报
+    Simulation Performance 对 simulation ledger 的真实摘要读取
+  - '`aits etf report daily` 和 `aits etf run daily` 生成的 portfolio brief 必须读取 `data/simulation/etf_ledger.csv`
+    或显式 ledger path，展示 model_version 级 records、20d hit rate、avg portfolio return、relative
+    vs SPY/QQQ；缺 ledger、空 ledger、窗口不足或 benchmark 缺失必须明确输出 `n/a` / 暂无记录，不得补造表现；测试覆盖
+    ledger 有值和缺 ledger 两种语义；文档同步说明日报小节读取 ledger 但不触发交易动作'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 12.2 要求 Daily Portfolio Brief 的 Simulation
+    Performance 包含 last 20 trading days、signal hit rate 和 portfolio vs benchmarks；当前
+    CLI 日报没有读取 simulation ledger，只输出占位文案。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `summarize_simulation_for_brief`
+    并接入 `aits etf report daily` / `aits etf run daily`；真实 smoke brief 显示默认 ledger
+    摘要，latest forward window 不足保持 `n/a`；目标测试、ruff、compileall、diff check 和全量 pytest
+    1628 passed。'
+  raw_line: '|TRADING-062K|ETF daily brief simulation performance integration|P0|DONE|系统验证|详细拆解见
+    `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐日报 Simulation
+    Performance 对 simulation ledger 的真实摘要读取|`aits etf report daily` 和 `aits etf run
+    daily` 生成的 portfolio brief 必须读取 `data/simulation/etf_ledger.csv` 或显式 ledger path，展示
+    model_version 级 records、20d hit rate、avg portfolio return、relative vs SPY/QQQ；缺
+    ledger、空 ledger、窗口不足或 benchmark 缺失必须明确输出 `n/a` / 暂无记录，不得补造表现；测试覆盖 ledger 有值和缺
+    ledger 两种语义；文档同步说明日报小节读取 ledger 但不触发交易动作|2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 12.2
+    要求 Daily Portfolio Brief 的 Simulation Performance 包含 last 20 trading days、signal
+    hit rate 和 portfolio vs benchmarks；当前 CLI 日报没有读取 simulation ledger，只输出占位文案。2026-05-31:
+    从 IN_PROGRESS 改为 DONE，原因：新增 `summarize_simulation_for_brief` 并接入 `aits etf report
+    daily` / `aits etf run daily`；真实 smoke brief 显示默认 ledger 摘要，latest forward window
+    不足保持 `n/a`；目标测试、ruff、compileall、diff check 和全量 pytest 1628 passed。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-08b88868d31facdb557226fa
+  task_id: TRADING-062K
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: DONE
+  payload:
+    priority: P0
+    next_owner: 系统验证
+    notes: '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 12.2 要求 Daily Portfolio Brief 的 Simulation
+      Performance 包含 last 20 trading days、signal hit rate 和 portfolio vs benchmarks；当前
+      CLI 日报没有读取 simulation ledger，只输出占位文案。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增
+      `summarize_simulation_for_brief` 并接入 `aits etf report daily` / `aits etf run
+      daily`；真实 smoke brief 显示默认 ledger 摘要，latest forward window 不足保持 `n/a`；目标测试、ruff、compileall、diff
+      check 和全量 pytest 1628 passed。'
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:08b88868d31facdb557226fac15f68cb75b707a4d6f46314a946e14b32bdb3a0
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-062K
+  - ETF daily brief simulation performance integration
+  - P0
+  - DONE
+  - 系统验证
+  - 详细拆解见 `docs/requirements/etf_portfolio_allocation_system_2026-05-31.md#状态`；已补齐日报
+    Simulation Performance 对 simulation ledger 的真实摘要读取
+  - '`aits etf report daily` 和 `aits etf run daily` 生成的 portfolio brief 必须读取 `data/simulation/etf_ledger.csv`
+    或显式 ledger path，展示 model_version 级 records、20d hit rate、avg portfolio return、relative
+    vs SPY/QQQ；缺 ledger、空 ledger、窗口不足或 benchmark 缺失必须明确输出 `n/a` / 暂无记录，不得补造表现；测试覆盖
+    ledger 有值和缺 ledger 两种语义；文档同步说明日报小节读取 ledger 但不触发交易动作'
+  - '2026-05-31: 新增并进入 IN_PROGRESS，原因：原文 12.2 要求 Daily Portfolio Brief 的 Simulation
+    Performance 包含 last 20 trading days、signal hit rate 和 portfolio vs benchmarks；当前
+    CLI 日报没有读取 simulation ledger，只输出占位文案。2026-05-31: 从 IN_PROGRESS 改为 DONE，原因：新增 `summarize_simulation_for_brief`
+    并接入 `aits etf report daily` / `aits etf run daily`；真实 smoke brief 显示默认 ledger
+    摘要，latest forward window 不足保持 `n/a`；目标测试、ruff、compileall、diff check 和全量 pytest
+    1628 passed。'
+  docs_links:
+  - docs/requirements/etf_portfolio_allocation_system_2026-05-31.md
+  terminal: true
+  canonical_row_sha256: 08b88868d31facdb557226fac15f68cb75b707a4d6f46314a946e14b32bdb3a0
+last_event_id: legacy-import-08b88868d31facdb557226fa
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 282c7f8f40cc1e711c488376c076998e2807c66872c5cf91afe49d292ef3c2f4

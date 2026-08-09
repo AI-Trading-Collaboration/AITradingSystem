@@ -23,6 +23,7 @@ from ai_trading_system.yaml_loader import safe_load_yaml_text
 REAL_LEGACY_PATH = Path("inputs/architecture/arch_004_compatibility_baseline.yaml")
 DEVX_006C_SECTION = "phase_devx_006c_compatibility_authority_fragmentation"
 DEVX_006D_SECTION = "phase_devx_006d_report_catalog_flow_lossless_fragmentation"
+ARCH_005_S5_SECTION = "phase_arch_005_s5_canonical_task_source_cutover"
 
 
 def _write_fixture_authority(
@@ -127,12 +128,16 @@ def test_repository_authority_is_fresh_and_cut_over() -> None:
 
     assert result["status"] == "PASS"
     assert len(legacy_only) == 306
-    assert len(merged) == 308
+    assert len(merged) == 309
     assert next(reversed(legacy_only)) == (
         "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
     )
-    assert next(reversed(merged)) == DEVX_006D_SECTION
+    assert next(reversed(merged)) == ARCH_005_S5_SECTION
     assert DEVX_006C_SECTION in merged
+    assert DEVX_006D_SECTION in merged
+    assert merged[ARCH_005_S5_SECTION]["task_registry_authority"]["source_of_truth"] == (
+        "ARCH_005_TASK_REGISTRY"
+    )
     assert merged[DEVX_006C_SECTION]["authority_contract"] == {
         "dual_write": False,
         "fragment_identity": "CANONICAL_SECTION_SHA256",

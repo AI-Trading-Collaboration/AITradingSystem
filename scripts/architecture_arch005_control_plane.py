@@ -194,8 +194,8 @@ def _validate_pilot(*, base_commit: str) -> dict[str, object]:
         "policy_sha256": _sha256(POLICY_PATH),
         "pilot_spec_sha256": _sha256(PILOT_PATH),
         "task_governance_status_mutated": False,
-        "canonical_source_cutover": False,
-        "source_of_truth": "LEGACY_MARKDOWN_ONLY",
+        "canonical_source_cutover": True,
+        "source_of_truth": "ARCH_005_TASK_REGISTRY",
         "production_effect": "none",
         "broker_action": "none",
     }

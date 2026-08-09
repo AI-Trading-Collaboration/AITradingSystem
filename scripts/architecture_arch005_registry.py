@@ -24,6 +24,9 @@ from ai_trading_system.platform.architecture import (
     write_shadow_fragments,
     write_shadow_v2_fragments,
 )
+from ai_trading_system.platform.architecture.task_registry_canonical import (
+    validate_canonical_registry,
+)
 from ai_trading_system.platform.artifacts.writer import write_bytes_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -32,6 +35,7 @@ HANDOFF_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_bootstrap_handoff.ya
 BASELINE_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_task_registry_baseline.yaml"
 INDEX_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_task_shadow_index.yaml"
 V2_INDEX_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_task_shadow_v2_index.yaml"
+CANONICAL_INDEX_PATH = PROJECT_ROOT / "inputs/architecture/arch_005_task_registry_index.yaml"
 VIEW_ROOT = PROJECT_ROOT / "outputs/architecture/arch_005_shadow_views"
 
 
@@ -39,9 +43,33 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="ARCH-005 S0/S1 shadow task registry")
     parser.add_argument("command", choices=("generate", "validate"))
     args = parser.parse_args()
+    if CANONICAL_INDEX_PATH.is_file():
+        return _validate_canonical_cutover()
     if args.command == "generate":
         return _generate()
     return _validate()
+
+
+def _validate_canonical_cutover() -> int:
+    registry = validate_canonical_registry(project_root=PROJECT_ROOT)
+    print(
+        json.dumps(
+            {
+                "status": "PASS",
+                "legacy_importer_retired": True,
+                "source_of_truth": registry.index["source_of_truth"],
+                "task_count": registry.index["task_count"],
+                "governance_cycle_count": registry.index["governance_cycle_count"],
+                "manual_row_move_workflow_enabled": registry.index[
+                    "manual_row_move_workflow_enabled"
+                ],
+                "production_effect": "none",
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
 
 
 def _generate() -> int:

@@ -1,0 +1,133 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
+  task_id_sha256: 6efdb8af5737f89e41f3467dc553c6308b441767c303da39c76a4d6f6b133ca3
+task_record:
+  task_id: TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
+  title: null
+  domain: Publishing & Experience / Atlas first historical adapter owner-review pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Project owner：若要继续，精确批准 candidate id + artifact SHA；Atlas coordinator：仅在该新授权后另立
+    source-registration / typed-adapter 任务
+  requirement_refs:
+  - docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md`。首批
+    12 条 allowlist 来自 TRADING-2475 的 291 条 tracked-unregistered queue；任务只读取 exact
+    allowlist 内容并盘点 schema/lineage/window/result/status/limitation 字段形态，不把文件名或 prose
+    推导成结论。Review pack baseline 已完成；实际 source registration、typed adapter 和页面投影仍被 Owner
+    decision 阻断。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: inventory/blob/content receipts 可重算；allowlist 外 research content read=0；bounded
+      JSON pointer/Markdown token inventory；adapter-readiness disposition deterministic
+      且不表达投资 verdict；tamper fail closed；当前 Atlas 8/8/12 与 HTML identity 不变；focused/formal
+      PASS；`production_effect=none`、`broker_action=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 74832405edacd40b291141167f3fc6293d9ee857e91717d758230125cd8aa765
+  cell_count: 8
+  all_cells:
+  - TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
+  - Publishing & Experience / Atlas first historical adapter owner-review pack
+  - P1
+  - BASELINE_DONE
+  - Project owner：若要继续，精确批准 candidate id + artifact SHA；Atlas coordinator：仅在该新授权后另立
+    source-registration / typed-adapter 任务
+  - 详见 `docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md`。首批
+    12 条 allowlist 来自 TRADING-2475 的 291 条 tracked-unregistered queue；任务只读取 exact
+    allowlist 内容并盘点 schema/lineage/window/result/status/limitation 字段形态，不把文件名或 prose
+    推导成结论。Review pack baseline 已完成；实际 source registration、typed adapter 和页面投影仍被 Owner
+    decision 阻断。
+  - inventory/blob/content receipts 可重算；allowlist 外 research content read=0；bounded
+    JSON pointer/Markdown token inventory；adapter-readiness disposition deterministic
+    且不表达投资 verdict；tamper fail closed；当前 Atlas 8/8/12 与 HTML identity 不变；focused/formal
+    PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-01：Owner token=`owner_decision:TRADING-2476:2026-08-01:advance_atlas_historical_adapter_review_pack_v1`。checkpoint=`b385f4140b54d936c57f889a55c6f5ba99d074f9`，pack=`atlas_historical_adapter_review_c6762a379ab3eeb7bb49`，disposition=`5
+    NEEDS_SOURCE_REGISTRATION / 1 NEEDS_SCHEMA_NORMALIZATION / 0 rejected`；formal=`Architecture
+    818 / Contract 276 / Integration 995 / Reproducibility 24 / Full 7884 + 3 skipped`
+    全部 PASS；current Atlas=`8 sources / 8 results / 12 attributions`，HTML=`92180 bytes
+    / SHA b7540d87…`；未执行 source registration 或页面投影。
+  raw_line: '|TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1|Publishing & Experience
+    / Atlas first historical adapter owner-review pack|P1|BASELINE_DONE|Project owner：若要继续，精确批准
+    candidate id + artifact SHA；Atlas coordinator：仅在该新授权后另立 source-registration /
+    typed-adapter 任务|详见 `docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md`。首批
+    12 条 allowlist 来自 TRADING-2475 的 291 条 tracked-unregistered queue；任务只读取 exact
+    allowlist 内容并盘点 schema/lineage/window/result/status/limitation 字段形态，不把文件名或 prose
+    推导成结论。Review pack baseline 已完成；实际 source registration、typed adapter 和页面投影仍被 Owner
+    decision 阻断。|inventory/blob/content receipts 可重算；allowlist 外 research content
+    read=0；bounded JSON pointer/Markdown token inventory；adapter-readiness disposition
+    deterministic 且不表达投资 verdict；tamper fail closed；当前 Atlas 8/8/12 与 HTML identity
+    不变；focused/formal PASS；`production_effect=none`、`broker_action=none`。|2026-08-01：Owner
+    token=`owner_decision:TRADING-2476:2026-08-01:advance_atlas_historical_adapter_review_pack_v1`。checkpoint=`b385f4140b54d936c57f889a55c6f5ba99d074f9`，pack=`atlas_historical_adapter_review_c6762a379ab3eeb7bb49`，disposition=`5
+    NEEDS_SOURCE_REGISTRATION / 1 NEEDS_SCHEMA_NORMALIZATION / 0 rejected`；formal=`Architecture
+    818 / Contract 276 / Integration 995 / Reproducibility 24 / Full 7884 + 3 skipped`
+    全部 PASS；current Atlas=`8 sources / 8 results / 12 attributions`，HTML=`92180 bytes
+    / SHA b7540d87…`；未执行 source registration 或页面投影。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-74832405edacd40b29114116
+  task_id: TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Project owner：若要继续，精确批准 candidate id + artifact SHA；Atlas coordinator：仅在该新授权后另立
+      source-registration / typed-adapter 任务
+    notes: 2026-08-01：Owner token=`owner_decision:TRADING-2476:2026-08-01:advance_atlas_historical_adapter_review_pack_v1`。checkpoint=`b385f4140b54d936c57f889a55c6f5ba99d074f9`，pack=`atlas_historical_adapter_review_c6762a379ab3eeb7bb49`，disposition=`5
+      NEEDS_SOURCE_REGISTRATION / 1 NEEDS_SCHEMA_NORMALIZATION / 0 rejected`；formal=`Architecture
+      818 / Contract 276 / Integration 995 / Reproducibility 24 / Full 7884 + 3 skipped`
+      全部 PASS；current Atlas=`8 sources / 8 results / 12 attributions`，HTML=`92180
+      bytes / SHA b7540d87…`；未执行 source registration 或页面投影。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:74832405edacd40b291141167f3fc6293d9ee857e91717d758230125cd8aa765
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2476_ATLAS_HISTORICAL_ADAPTER_REVIEW_PACK_V1
+  - Publishing & Experience / Atlas first historical adapter owner-review pack
+  - P1
+  - BASELINE_DONE
+  - Project owner：若要继续，精确批准 candidate id + artifact SHA；Atlas coordinator：仅在该新授权后另立
+    source-registration / typed-adapter 任务
+  - 详见 `docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md`。首批
+    12 条 allowlist 来自 TRADING-2475 的 291 条 tracked-unregistered queue；任务只读取 exact
+    allowlist 内容并盘点 schema/lineage/window/result/status/limitation 字段形态，不把文件名或 prose
+    推导成结论。Review pack baseline 已完成；实际 source registration、typed adapter 和页面投影仍被 Owner
+    decision 阻断。
+  - inventory/blob/content receipts 可重算；allowlist 外 research content read=0；bounded
+    JSON pointer/Markdown token inventory；adapter-readiness disposition deterministic
+    且不表达投资 verdict；tamper fail closed；当前 Atlas 8/8/12 与 HTML identity 不变；focused/formal
+    PASS；`production_effect=none`、`broker_action=none`。
+  - 2026-08-01：Owner token=`owner_decision:TRADING-2476:2026-08-01:advance_atlas_historical_adapter_review_pack_v1`。checkpoint=`b385f4140b54d936c57f889a55c6f5ba99d074f9`，pack=`atlas_historical_adapter_review_c6762a379ab3eeb7bb49`，disposition=`5
+    NEEDS_SOURCE_REGISTRATION / 1 NEEDS_SCHEMA_NORMALIZATION / 0 rejected`；formal=`Architecture
+    818 / Contract 276 / Integration 995 / Reproducibility 24 / Full 7884 + 3 skipped`
+    全部 PASS；current Atlas=`8 sources / 8 results / 12 attributions`，HTML=`92180 bytes
+    / SHA b7540d87…`；未执行 source registration 或页面投影。
+  docs_links:
+  - docs/requirements/TRADING-2476_Atlas_Historical_Adapter_Review_Pack_V1.md
+  terminal: false
+  canonical_row_sha256: 74832405edacd40b291141167f3fc6293d9ee857e91717d758230125cd8aa765
+last_event_id: legacy-import-74832405edacd40b29114116
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 079341d8a5403b35f989efc7aaa4de6d4c766b2a12d46ca48e000fcba7f03163

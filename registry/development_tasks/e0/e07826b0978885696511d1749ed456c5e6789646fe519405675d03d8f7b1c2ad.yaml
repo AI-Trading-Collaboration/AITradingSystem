@@ -1,0 +1,98 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
+  task_id_sha256: e07826b0978885696511d1749ed456c5e6789646fe519405675d03d8f7b1c2ad
+task_record:
+  task_id: TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
+  title: null
+  domain: Portfolio decision research / portfolio decision problem contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 系统实现 + 项目 owner 后续复核
+  requirement_refs: []
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 TRADING-703_to_725 总需求文档；建立动态投资决策 contract
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: portfolio decision config/schema/package 存在；`validate-contract
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: 17cc85f4b629c5f426946422df9ef17587e06ae56f1170e106ccc10f17138018
+  cell_count: 9
+  all_cells:
+  - TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
+  - Portfolio decision research / portfolio decision problem contract
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；建立动态投资决策 contract
+  - portfolio decision config/schema/package 存在；`validate-contract
+  - show-contract` 可运行；portfolio_decision_contract_valid=true；production_effect=none
+  - '2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入
+    VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio
+    decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+    / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+    production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。2026-06-21:
+    继续 VALIDATING；`validate-contract` 和 `show-contract` CLI 增加 JSON/Markdown artifact
+    写入与 `--output-root`，并登记 `portfolio_decision_contract_validation` report registry
+    条目。'
+  raw_line: '|TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT|Portfolio decision research
+    / portfolio decision problem contract|P0|VALIDATING|系统实现 + 项目 owner 后续复核|详见 TRADING-703_to_725
+    总需求文档；建立动态投资决策 contract|portfolio decision config/schema/package 存在；`validate-contract|show-contract`
+    可运行；portfolio_decision_contract_valid=true；production_effect=none|2026-06-21:
+    按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增
+    schema/config/protocol、research governance / acceleration / portfolio decision
+    / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation
+    / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定
+    production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。2026-06-21:
+    继续 VALIDATING；`validate-contract` 和 `show-contract` CLI 增加 JSON/Markdown artifact
+    写入与 `--output-root`，并登记 `portfolio_decision_contract_validation` report registry
+    条目。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: true
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-17cc85f4b629c5f426946422
+  task_id: TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: VALIDATING
+  payload:
+    priority: P0
+    next_owner: 系统实现 + 项目 owner 后续复核
+    notes: show-contract` 可运行；portfolio_decision_contract_valid=true；production_effect=none
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:17cc85f4b629c5f426946422df9ef17587e06ae56f1170e106ccc10f17138018
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-716_PORTFOLIO_DECISION_PROBLEM_CONTRACT
+  - Portfolio decision research / portfolio decision problem contract
+  - P0
+  - VALIDATING
+  - 系统实现 + 项目 owner 后续复核
+  - 详见 TRADING-703_to_725 总需求文档；建立动态投资决策 contract
+  - portfolio decision config/schema/package 存在；`validate-contract
+  - show-contract` 可运行；portfolio_decision_contract_valid=true；production_effect=none
+  docs_links: []
+  terminal: false
+  canonical_row_sha256: d22235be681aceb525016974da24ec4a557bfcc2cf7ae97a94990da64c35b894
+last_event_id: legacy-import-17cc85f4b629c5f426946422
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b70d989b166f587b77aed064f3e061918247be822778da12540586754079749e

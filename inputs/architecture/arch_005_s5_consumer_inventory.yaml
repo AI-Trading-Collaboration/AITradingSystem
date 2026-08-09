@@ -1,0 +1,1110 @@
+schema_version: arch_005_s5_consumer_inventory.v1
+status: PASS
+source_of_truth: ARCH_005_TASK_REGISTRY
+consumer_count: 134
+runtime_consumer_count: 8
+script_consumer_count: 3
+test_consumer_count: 123
+manual_semantic_runtime_consumer_count: 0
+manual_writer_count: 0
+consumers:
+- path: src/ai_trading_system/cli_commands/reports.py
+  role: runtime
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: CANONICAL_LOADER
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: VALIDATE_CANONICAL_REGISTRY_THEN_READ_GENERATED_VIEW
+- path: src/ai_trading_system/docs_freshness.py
+  role: runtime
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: GENERATED_VIEW_METADATA_OR_HASH
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: VALIDATE_CANONICAL_REGISTRY_THEN_READ_GENERATED_VIEW
+- path: src/ai_trading_system/platform/architecture/compatibility_authority.py
+  role: runtime
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: GENERATED_VIEW_METADATA_OR_HASH
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: VALIDATE_CANONICAL_REGISTRY_THEN_READ_GENERATED_VIEW
+- path: src/ai_trading_system/platform/architecture/task_registry_canonical.py
+  role: runtime
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: CANONICAL_AUTHORITY
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: src/ai_trading_system/platform/architecture/task_registry_shadow.py
+  role: runtime
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_FINAL_IMPORT_ONLY
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: src/ai_trading_system/reports/canonical_system_status.py
+  role: runtime
+  targets:
+  - task_register.md
+  category: GENERATED_VIEW_METADATA_OR_HASH
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: VALIDATE_CANONICAL_REGISTRY_THEN_READ_GENERATED_VIEW
+- path: src/ai_trading_system/reports/engineering_closeout.py
+  role: runtime
+  targets:
+  - task_register.md
+  category: GENERATED_VIEW_METADATA_OR_HASH
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: VALIDATE_CANONICAL_REGISTRY_THEN_READ_GENERATED_VIEW
+- path: src/ai_trading_system/reports/task_register_consistency.py
+  role: runtime
+  targets:
+  - task_register.md
+  category: CANONICAL_LOADER
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: VALIDATE_CANONICAL_REGISTRY_THEN_READ_GENERATED_VIEW
+- path: scripts/generate_qqq_plus_growth_closeout_artifacts.py
+  role: script
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: scripts/run_clean_clone_release_acceptance.py
+  role: script
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: scripts/trading2465_validate_o1_reentry_preregistration.py
+  role: script
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_blocking_gap_remediation_implementation_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_calibrated_gate_candidate_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_calibrated_gate_candidate_reclassification.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_calibrated_gate_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_candidate_optimization_divergence_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_candidate_pool_expansion_plan.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_component_ablation_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_component_attribution_gate_evidence_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_component_attribution_targeted_ablation_retest.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_component_recombination_candidate_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_component_recombination_candidate_retest.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_cost_turnover_cooldown_sensitivity.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_data_pit_signal_quality_gap_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_event_driven_retest.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_guarded_variant_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_observation_gate_threshold_calibration_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_optimization_plateau_next_candidate_decision.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_optimized_candidate_targeted_retest.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_optimized_variant_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_pit_coverage_matrix_implementation_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_pit_coverage_matrix_reusable_implementation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_pit_coverage_signal_construction_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_ranking_top_guarded_turnover_retest_plan.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_ranking_top_guarded_variant_retest.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_recombination_candidate_gate_evidence_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_recombination_candidate_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_recombination_line_plateau_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_filter_threshold_methodology_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_only_observation_log_schema_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_only_observation_owner_reassessment.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_only_observation_report_dry_run.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_dry_run.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_protocol.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_replay_validation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_signal_as_of_validity_contract_schema.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_slice_robustness_optimized_variant_retest.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_slice_robustness_return_gap_optimization_plan.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_targeted_gate_evidence_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_targeted_retest_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_top_candidate_owner_review_gate.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_dynamic_strategy_valid_until_window_stale_signal_remediation_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_baseline_contract_decision_pack.py
+  role: test
+  targets:
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_candidate_gauntlet_harness.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_candidate_runtime_spec_threshold_policy_approval.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_defensive_limited_adjustment_component_validation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_as_of_semantics_remediation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_candidate_promotion_evidence_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_contract_gap_remediation_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_contract_readiness_snapshot.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_forward_outcome_binding_boundary.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_manual_review_packet_dry_run.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_observe_only_signal_artifact_boundary.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_dry_run_wiring.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_enablement_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_preflight.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_paper_shadow_schedule_dry_run.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_recheck.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_snapshot.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_pit_gate_remaining_blocker_closure_plan.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_signal_artifact_source_traceability_remediation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_signal_validity_dependency_strategy.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_source_feature_contract_mapping.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_source_traceability_strategy_remediation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_source_traceability_upstream_artifact_closure.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_engine_valid_until_dependency_evidence_closure.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_existing_candidate_evidence_matrix.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_false_risk_off_missed_upside_batch_screen.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_forward_aging_candidate_pack.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_owner_decision_resolution.py
+  role: test
+  targets:
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_owner_mapping_inventory.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_paper_shadow_candidate_promotion_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_pit_replay_engine_blocker_closure.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_regime_slice_attribution_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_engine_remediation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_turnover_cooldown_parameter_plateau_study.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_growth_tilt_valid_until_outcome_hit_rate_study.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_o1_relative_opportunity_capability_audit_contract.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_strategies/test_o1_relative_opportunity_reentry_preregistration.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_dynamic_strategy_execution_cadence_bias_audit.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_event_append_contract_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_outcome_binding_contract_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_owner_decision_pause_checkpoint.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_paper_shadow_scope_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_production_broker_hard_blocker_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_promotion_blocker_matrix.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_audit_package.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_gap_closure_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_hardening_backlog.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_idempotency_replay_contract_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_kill_switch_plan.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_manual_review_gate.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_manual_run_dry_run.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_manual_run_replay_validation.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_owner_review_decision.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/research_trends/test_high_intensity_scheduler_smoke_dry_run.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_arch_004_refactor_policy.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_arch_004_wave12_g4_d0b_readiness.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_arch_004_wave14_scope_amendment.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_arch_005_bootstrap_handoff.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_arch_005_prebootstrap.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_arch_005_task_registry_shadow.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_FINAL_IMPORT_ONLY
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_architecture_wave_readiness.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_engineering_closeout.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_feedback_loop_review.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_gov_006_task_portfolio_normalization.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_governed_development_skill.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_research_roadmap_dashboard.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_research_safety_boundary.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_task_register_consistency.py
+  role: test
+  targets:
+  - task_register.md
+  - task_register_completed.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+- path: tests/test_trading2452_architecture_contract.py
+  role: test
+  targets:
+  - task_register.md
+  category: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+  manual_semantic_runtime_consumer: false
+  manual_writer: false
+  rollback: IMMUTABLE_MIGRATION_OR_TEST_EVIDENCE
+production_effect: none
+broker_action: none
+inventory_checksum: 4fea01e5c6ea53297c8d988ee65435750a5bdee46942794a3e59bf2e93cbc2ac

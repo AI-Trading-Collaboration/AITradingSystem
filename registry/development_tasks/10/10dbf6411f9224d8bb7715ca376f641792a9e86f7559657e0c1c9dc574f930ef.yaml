@@ -1,0 +1,126 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  task_id_sha256: 10dbf6411f9224d8bb7715ca376f641792a9e86f7559657e0c1c9dc574f930ef
+task_record:
+  task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  title: null
+  domain: External validation / preregistered bounded QuantConnect Free Cloud pilot
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO
+    处置并完成 stage-gate；2489/2490 owners：另行 reviewed policy 前 shared bundle/reconciliation
+    保持 blocked
+  requirement_refs:
+  - docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: evidence/request/attestation canonical hash chain、project/backtest/result
+      identity、one order/one fill、data-point cap violation、无 raw rows 与 shared blocker
+      均可重放；terminal disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range expansion/further
+      cloud action/investment interpretation 均 false。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+  schema_version: task_record.v1
+legacy_import_evidence:
+  row_sha256: cb1d26f19e3a47c6a88a9c8322af57c746f0336880991d3a93a0a112ee56a51c
+  cell_count: 8
+  all_cells:
+  - TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  - External validation / preregistered bounded QuantConnect Free Cloud pilot
+  - P0
+  - BASELINE_DONE
+  - TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO 处置并完成 stage-gate；2489/2490
+    owners：另行 reviewed policy 前 shared bundle/reconciliation 保持 blocked
+  - 详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。
+  - evidence/request/attestation canonical hash chain、project/backtest/result identity、one
+    order/one fill、data-point cap violation、无 raw rows 与 shared blocker 均可重放；terminal
+    disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range expansion/further cloud action/investment
+    interpretation 均 false。
+  - 2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+    SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+    attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+    attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+    Store/raw download/付费升级推断/paper/live/broker/production。
+  raw_line: '|TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1|External validation
+    / preregistered bounded QuantConnect Free Cloud pilot|P0|BASELINE_DONE|TRADING-2493
+    research owner + independent reviewer：只消费 terminal NO-GO 处置并完成 stage-gate；2489/2490
+    owners：另行 reviewed policy 前 shared bundle/reconciliation 保持 blocked|详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。|evidence/request/attestation
+    canonical hash chain、project/backtest/result identity、one order/one fill、data-point
+    cap violation、无 raw rows 与 shared blocker 均可重放；terminal disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range
+    expansion/further cloud action/investment interpretation 均 false。|2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+    SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+    attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+    attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+    Store/raw download/付费升级推断/paper/live/broker/production。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+events:
+- schema_version: task_event.v1
+  event_id: legacy-import-cb1d26f19e3a47c6a88a9c83
+  task_id: TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO
+      处置并完成 stage-gate；2489/2490 owners：另行 reviewed policy 前 shared bundle/reconciliation
+      保持 blocked
+    notes: 2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+      SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+      attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+      attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+      Store/raw download/付费升级推断/paper/live/broker/production。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:cb1d26f19e3a47c6a88a9c8322af57c746f0336880991d3a93a0a112ee56a51c
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2492_QC_QQQ_OPTIONS_BOUNDED_FREE_CLOUD_PILOT_V1
+  - External validation / preregistered bounded QuantConnect Free Cloud pilot
+  - P0
+  - BASELINE_DONE
+  - TRADING-2493 research owner + independent reviewer：只消费 terminal NO-GO 处置并完成 stage-gate；2489/2490
+    owners：另行 reviewed policy 前 shared bundle/reconciliation 保持 blocked
+  - 详见 `docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md`。既有
+    2480–2491 blocked/shared authority 与原 2492 proposal 保持不变；single-use authorization
+    已消费并失效。Owner 独立接受 evidence 与 scope violation，未接受 pilot success。
+  - evidence/request/attestation canonical hash chain、project/backtest/result identity、one
+    order/one fill、data-point cap violation、无 raw rows 与 shared blocker 均可重放；terminal
+    disposition=`PILOT_NO_GO_LICENSE_OR_EVIDENCE`；range expansion/further cloud action/investment
+    interpretation 均 false。
+  - 2026-08-05：project/backtest=`34808569`/`6e70793600035ddc3d7f856319a352db`；result
+    SHA=`fdd11ab6...6ead`；processed data points=`734127` 超过 reviewed cap=`250000`。Owner
+    attestation exact-bind evidence SHA=`2e57bfec...6293c` 与 pending request SHA=`94d7aef2...794f`；canonical
+    attestation file SHA=`3857b5fe...c1913`。2489/2490 仍 blocked；禁止重跑/改项目/API/CLI/HTTP/Object
+    Store/raw download/付费升级推断/paper/live/broker/production。
+  docs_links:
+  - docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md
+  terminal: false
+  canonical_row_sha256: cb1d26f19e3a47c6a88a9c8322af57c746f0336880991d3a93a0a112ee56a51c
+last_event_id: legacy-import-cb1d26f19e3a47c6a88a9c83
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 7b12e5f2ff4e0bc49db6633d210af266ff9cd6f1ceef6a6efb22948b6fc75190

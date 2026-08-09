@@ -102,7 +102,7 @@ def test_controlled_three_lane_dispatch_isolates_failure_and_recovers(tmp_path: 
     }
     assert report.lease_replay["active_leases"] == []
     assert report.to_dict()["task_governance_status_mutated"] is False
-    assert report.to_dict()["source_of_truth"] == "LEGACY_MARKDOWN_ONLY"
+    assert report.to_dict()["source_of_truth"] == "ARCH_005_TASK_REGISTRY"
 
 
 def test_controlled_dispatch_report_validates_artifact_bytes(tmp_path: Path) -> None:
