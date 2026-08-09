@@ -3797,6 +3797,52 @@ TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_NEW_SOURCE_PATHS = frozenset(
     }
 )
 LATEST_COMPATIBILITY_SECTION = TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION = (
+    "phase_trading_2504_qqq_options_owner_decision_manifest_v1"
+)
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT = (
+    "2da20cf05ec6d31c2c4cb9d7c6ce797c9128f301"
+)
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB = (
+    "638b601fba2ba9de4fd7b02d10631eabd49f376f"
+)
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_BYTE_COUNT = (
+    3_136_704
+)
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_SHA256 = (
+    "a76a69d057a86eb54b26943cd0f25c891a5d18f1c2d77757df35bbfaf895cd81"
+)
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_REMOVED_SOURCE_PATHS = frozenset()
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_ADDITIONAL_SUPERSESSION_PATHS = (
+    frozenset(
+        {
+            "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+            "tests/test_trading2452_architecture_contract.py",
+        }
+    )
+)
+TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_NEW_SOURCE_PATHS = frozenset(
+    {
+        "config/architecture/fragments/flows/qqq_options_owner_decision_manifest.yaml",
+        "config/architecture/fragments/modules/qqq_options_owner_decision_manifest.yaml",
+        "config/research/qqq_options_owner_decision_manifest_v1.yaml",
+        (
+            "docs/requirements/"
+            "TRADING-2504_QQQ_Options_Owner_Decision_Manifest_Canonicalization_V1.md"
+        ),
+        (
+            "registry/development_tasks_shadow/active/58/"
+            "5841bf26105546cecd05f348fa56755b4fdb9e6a290dcf7fa4bf2a8a9c27ee7a.yaml"
+        ),
+        (
+            "registry/development_tasks_shadow_v2/58/"
+            "5841bf26105546cecd05f348fa56755b4fdb9e6a290dcf7fa4bf2a8a9c27ee7a.yaml"
+        ),
+        "src/ai_trading_system/qqq_options_research/owner_decision_manifest.py",
+        "tests/test_qqq_options_owner_decision_manifest.py",
+    }
+)
+LATEST_COMPATIBILITY_SECTION = TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
 TRADING_2458_RETIREMENT_NEW_SOURCE_PATHS = frozenset(
     {
         "config/research/trading2458_candidate_family_retirement_v1.yaml",
@@ -6276,6 +6322,29 @@ def _trading_2502_qqq_options_owner_decision_pack_base_baseline_blob() -> bytes:
         text=True,
     ).stdout.strip()
     assert object_id == TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_BASELINE_GIT_BLOB
+    return subprocess.run(
+        ["git", "cat-file", "blob", object_name],
+        check=True,
+        capture_output=True,
+    ).stdout
+
+
+@cache
+def _trading_2504_qqq_options_owner_decision_manifest_base_baseline_blob() -> bytes:
+    object_name = (
+        f"{TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT}:"
+        f"{WAVE11_BASELINE_REPOSITORY_PATH}"
+    )
+    object_id = subprocess.run(
+        ["git", "rev-parse", object_name],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert (
+        object_id
+        == TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB
+    )
     return subprocess.run(
         ["git", "cat-file", "blob", object_name],
         check=True,
@@ -8788,6 +8857,30 @@ def _assert_trading_2502_qqq_options_owner_decision_pack_historical_prefix_immut
     )
     suffix = current_bytes[expected_count:]
     expected_marker = f"{TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION}:\n".encode()
+    assert suffix.startswith(expected_marker)
+    assert current_bytes.count(expected_marker) == 1
+
+
+def _assert_trading_2504_qqq_options_owner_decision_manifest_historical_prefix_immutable(
+    current_bytes: bytes,
+    base_blob: bytes,
+) -> None:
+    expected_count = (
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert len(base_blob) == expected_count
+    assert hashlib.sha256(base_blob).hexdigest() == (
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_SHA256
+    )
+    historical_prefix = current_bytes[:expected_count]
+    assert historical_prefix == base_blob, (
+        "TRADING-2504 decision-manifest historical prefix differs from immutable "
+        "ordinary-pushed registration authority blob"
+    )
+    suffix = current_bytes[expected_count:]
+    expected_marker = (
+        f"{TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION}:\n".encode()
+    )
     assert suffix.startswith(expected_marker)
     assert current_bytes.count(expected_marker) == 1
 
@@ -12235,6 +12328,41 @@ def _trading_2502_qqq_options_owner_decision_pack_all_current_authority_paths() 
 
 
 @cache
+def _trading_2504_qqq_options_owner_decision_manifest_superseded_live_source_paths() -> (
+    frozenset[str]
+):
+    _assert_trading_2504_qqq_options_owner_decision_manifest_historical_prefix_immutable(
+        COMPATIBILITY_BASELINE_PATH.read_bytes(),
+        _trading_2504_qqq_options_owner_decision_manifest_base_baseline_blob(),
+    )
+    paths = _compatibility_baseline()[
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
+    ]["superseded_live_source_paths"]
+    assert isinstance(paths, list)
+    return frozenset(str(path) for path in paths)
+
+
+@cache
+def _trading_2504_qqq_options_owner_decision_manifest_source_paths() -> frozenset[str]:
+    sources = _compatibility_baseline()[
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
+    ]["sources"]
+    assert isinstance(sources, list)
+    return frozenset(str(source["path"]) for source in sources)
+
+
+@cache
+def _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths() -> (
+    frozenset[str]
+):
+    return (
+        _trading_2502_qqq_options_owner_decision_pack_all_current_authority_paths()
+        | _trading_2504_qqq_options_owner_decision_manifest_superseded_live_source_paths()
+        | _trading_2504_qqq_options_owner_decision_manifest_source_paths()
+    )
+
+
+@cache
 def _trading_2476_adapter_review_superseded_live_source_paths() -> frozenset[str]:
     _assert_trading_2476_adapter_review_historical_prefix_immutable(
         COMPATIBILITY_BASELINE_PATH.read_bytes(),
@@ -12844,6 +12972,7 @@ def _prior_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION,
         TRADING_2503_ATLAS_QQQ_OPTIONS_PROJECTION_RENDERER_SECTION,
         TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION,
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION,
     ):
         if authority_section not in baseline or stop_section == authority_section:
             continue
@@ -12927,6 +13056,7 @@ def _latest_active_source_mismatches(stop_section: str) -> frozenset[str]:
         TRADING_2501_ATLAS_QQQ_OPTIONS_OWNER_REVIEW_SECTION,
         TRADING_2503_ATLAS_QQQ_OPTIONS_PROJECTION_RENDERER_SECTION,
         TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION,
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION,
     ):
         if stop_section == authority_section or authority_section not in baseline:
             continue
@@ -13867,7 +13997,22 @@ def _source_sha256(source: dict[str, object]) -> str:
     # owned by one of the append-only supersession ledgers; the newest section is
     # the current raw-live hash authority without rewriting any prior bytes.
     baseline = _compatibility_baseline()
-    if TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION in baseline:
+    if TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION in baseline:
+        current_superseded_paths = (
+            _trading_2504_qqq_options_owner_decision_manifest_superseded_live_source_paths()
+        )
+        assert (
+            _latest_active_source_mismatches(
+                TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
+            )
+            | TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_ADDITIONAL_SUPERSESSION_PATHS
+            == current_superseded_paths
+        )
+        superseded_paths = _trading_2470_prior_hash_authority_paths(
+            _trading_2504_qqq_options_owner_decision_manifest_all_current_authority_paths()
+        )
+        authority_section = TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
+    elif TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION in baseline:
         current_superseded_paths = (
             _trading_2502_qqq_options_owner_decision_pack_superseded_live_source_paths()
         )
@@ -38695,7 +38840,7 @@ def test_trading_2502_owner_decision_pack_is_current_hash_authority() -> None:
     assert set(source_paths) == expected
     for source in sources:
         assert source["hash_normalization"] == "git_eol_lf"
-        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+        assert _source_sha256(source) == source["sha256"], source["path"]
     assert phase["generated_fragment_authority"] == {
         "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
         "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
@@ -38738,6 +38883,147 @@ def test_trading_2502_owner_decision_pack_is_current_hash_authority() -> None:
     tampered[TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_HISTORICAL_PREFIX_BYTE_COUNT - 1] ^= 1
     with pytest.raises(AssertionError, match="historical prefix differs"):
         _assert_trading_2502_qqq_options_owner_decision_pack_historical_prefix_immutable(
+            bytes(tampered),
+            base_blob,
+        )
+
+
+def test_trading_2504_owner_decision_manifest_is_current_hash_authority() -> None:
+    current_bytes = COMPATIBILITY_BASELINE_PATH.read_bytes()
+    base_blob = _trading_2504_qqq_options_owner_decision_manifest_base_baseline_blob()
+    _assert_trading_2504_qqq_options_owner_decision_manifest_historical_prefix_immutable(
+        current_bytes,
+        base_blob,
+    )
+    baseline = safe_load_yaml_path(COMPATIBILITY_BASELINE_PATH)
+    assert next(reversed(baseline)) == LATEST_COMPATIBILITY_SECTION
+    phase = baseline[TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION]
+    assert phase["schema_version"] == (
+        "trading_2504_qqq_options_owner_decision_manifest_compatibility.v1"
+    )
+    assert phase["status"] == "BASELINE_DONE"
+    assert phase["boundary_id"] == (
+        "TRADING-2504-QQQ-OPTIONS-OWNER-DECISION-MANIFEST-V1"
+    )
+    assert phase["task_ids"] == [
+        "TRADING-2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_CANONICALIZATION_V1"
+    ]
+    expected_prefix_count = (
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_BYTE_COUNT
+    )
+    assert phase["prior_sections_immutability"] == {
+        "source_commit": TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT,
+        "repository_path": WAVE11_BASELINE_REPOSITORY_PATH,
+        "git_blob_sha1": (
+            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASELINE_GIT_BLOB
+        ),
+        "raw_byte_count": expected_prefix_count,
+        "raw_sha256": (
+            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_HISTORICAL_PREFIX_SHA256
+        ),
+        "append_offset": expected_prefix_count,
+        "current_section_must_be_eof": True,
+    }
+    assert phase["known_unrelated_exclusions"] == [WAVE14_S2_PROHIBITED_USER_PATH]
+    superseded = set(phase["superseded_live_source_paths"])
+    assert superseded == set(
+        _latest_active_source_mismatches(
+            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION
+        )
+        | TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_ADDITIONAL_SUPERSESSION_PATHS
+    )
+    assert set(phase["removed_live_source_paths"]) == (
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_REMOVED_SOURCE_PATHS
+    )
+    assert set(phase["new_source_paths"]) == (
+        TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_NEW_SOURCE_PATHS
+    )
+    expected = (
+        superseded | TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_NEW_SOURCE_PATHS
+    ) - TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_REMOVED_SOURCE_PATHS
+    assert set(phase["source_delta_paths"]) == expected
+    assert phase["supersession"] == {
+        "superseded_by_phase": (
+            "TRADING-2504-QQQ-OPTIONS-OWNER-DECISION-MANIFEST-V1"
+        ),
+        "scope": "LATEST_ACTIVE_PLUS_OWNER_DECISION_MANIFEST_DELTA",
+        "historical_hashes_rewritten": False,
+        "inherited_supersession_authority": (
+            TRADING_2502_QQQ_OPTIONS_OWNER_DECISION_PACK_SECTION
+        ),
+        "current_hash_authority": (
+            f"{TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_SECTION}.sources"
+        ),
+    }
+    sources = phase["sources"]
+    source_paths = [str(source["path"]) for source in sources]
+    assert source_paths == sorted(source_paths, key=str.casefold)
+    assert len(source_paths) == len(set(source_paths))
+    assert set(source_paths) == expected
+    for source in sources:
+        assert source["hash_normalization"] == "git_eol_lf"
+        assert _raw_source_sha256(source) == source["sha256"], source["path"]
+    assert phase["generated_fragment_authority"] == {
+        "mode": "INDEX_TRANSITIVE_SHA256_AUTHORITY",
+        "index_path": "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "fragment_root": "registry/development_tasks_shadow_v2",
+        "fragment_count": 971,
+        "active_task_count": 466,
+        "completed_task_count": 505,
+        "stable_path_key": "sha256(task_id)",
+        "loader_hash_replay": "PASS",
+    }
+    assert phase["owner_decision_manifest_authority"] == {
+        "prepared_from_exact_main": (
+            TRADING_2504_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_BASE_COMMIT
+        ),
+        "inherited_decision_pack_file_sha256": (
+            "afdcb44f44032fee958d4f6b1e8e4b56c1edb2faefa44026e16aff7153968588"
+        ),
+        "inherited_decision_pack_authority_set_sha256": (
+            "1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c"
+        ),
+        "policy_file_sha256": (
+            "55fb29bb2e4347959920cd3f5d72cbc5fc94c2aac5794f301e1c41f9a31547de"
+        ),
+        "policy_canonical_sha256": (
+            "c872e9aee37cf2ea36b201d81c48c98603ca4daa96c53d900cdaa5997e13f0db"
+        ),
+        "slot_catalog_sha256": (
+            "a1492e27ea8599d453249e5d29280d6fcb882ea0376ce531b949eae7b7621ad6"
+        ),
+        "module_sha256": (
+            "ab80c9e3b8bca03d9bc6c72eb568c7ddeb8420364e60a615bec7d936277a0b77"
+        ),
+        "decision_slot_count": 28,
+        "canonical_group_count": 5,
+        "decision_action_count": 5,
+        "primary_start": "2021-02-22",
+        "current_status": "BASELINE_DONE",
+        "safe_default": "POLICY_BLOCKED_CASH_PRESERVATION",
+        "resolver_selection_authorized": False,
+        "dq_pit_status": "NOT_EVALUATED_BY_THIS_CONTRACT",
+    }
+    assert phase["validation"] == {
+        "manifest_contract_parallel_pytest": "PASS_21_TESTS_N16_LOADFILE",
+        "qqq_options_adjacent_parallel_pytest": "PASS_658_TESTS_N16_LOADFILE",
+        "compatibility_regression": "REQUIRED_FINAL_TREE",
+        "formal_five_gate": "REQUIRED_FINAL_TREE",
+    }
+    assert phase["safety"] == {
+        "owner_decision_signed_or_inferred": False,
+        "numeric_threshold_introduced": False,
+        "selection_authorized": False,
+        "engine_implemented_or_activated": False,
+        "external_platform_action": False,
+        "paper_live_broker_production_action": False,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+    tampered = bytearray(current_bytes)
+    tampered[expected_prefix_count - 1] ^= 1
+    with pytest.raises(AssertionError, match="historical prefix differs"):
+        _assert_trading_2504_qqq_options_owner_decision_manifest_historical_prefix_immutable(
             bytes(tampered),
             base_blob,
         )

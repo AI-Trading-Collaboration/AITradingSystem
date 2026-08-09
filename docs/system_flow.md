@@ -7960,3 +7960,34 @@ selection/execution/accounting/lifecycle 轴保持 typed `OWNER_REVIEW_REQUIRED`
 partial-fill、expiry、position sizing 等影响投资解释的数值在 Owner-reviewed policy 前不得硬编码。2499 当前
 不执行 QuantConnect 登录、project mutation、Cloud run、API/CLI/HTTP/Object Store、download/export、
 paper/live/broker/production。
+
+## TRADING-2504 QQQ Options Owner Decision Manifest Canonicalization V1
+
+2504 是 2502 Owner decision pack 与未来 reviewed strategy policy 之间的最小串行合同波。版本化 policy
+`config/research/qqq_options_owner_decision_manifest_v1.yaml` 冻结 28 个 slot 的
+`slot_id -> canonical_group` 映射，显式解决 accounting 与 acceptance 同用 `ACC_*` 前缀时的推断歧义；
+本地 G1–G5 语义保持为 blocked、reviewed policy、calibration、sensitivity-only 与 reviewed N/A，不接受
+advisory reviewer 对这些代码的重命名。
+
+```text
+2502 exact pack LF SHA + authority-set SHA
+  -> strict 2504 policy loader
+  -> immutable 28-slot catalog + five canonical groups
+  -> group mode G1/G3/G4 OR PER_SLOT
+     -> group mode: exact expansion; any slot override fails closed
+     -> PER_SLOT: missing/duplicate/extra/unknown/cross-group fails closed
+  -> G2: exactly one slot-typed Owner value + governance metadata
+  -> G5: exactly one signed rationale + impact scope
+  -> canonical UTF-8/LF Owner decision manifest
+     -> duplicate key / unknown field / non-canonical bytes / identity/hash drift fails closed
+  -> dependency audit: DQ/PIT -> selection -> execution -> accounting -> lifecycle -> acceptance
+  -> corporate-action hard stop remains inherited from 2488 and is not a decision slot
+  -> VALID_CONTRACT_ONLY_OWNER_DECISION
+  -> POLICY_BLOCKED_CASH_PRESERVATION / selection=false / orders=fills=0
+```
+
+2504 不封存真实 Owner decision manifest，不填任何 DTE/moneyness/delta/spread/OI/volume/quote freshness/
+fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance 数值，也不生成 executable policy 或真实
+DAILY engine。即使 manifest 形式有效，也只证明 decision input 可审计；policy adoption、engine implementation、
+回测运行与投资结论仍分别需要独立后继任务和 exact Owner authority。QuantConnect/cloud/API/CLI/HTTP/raw
+export/paper/live/broker/production 动作继续为 none/false。

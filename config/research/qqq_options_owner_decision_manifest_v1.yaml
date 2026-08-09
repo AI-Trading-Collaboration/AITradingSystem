@@ -1,0 +1,246 @@
+schema_version: qqq_options_owner_decision_manifest_policy.v1
+policy_id: qqq_options_owner_decision_manifest_v1
+policy_version: 1.0.0
+status: OWNER_DECISION_REQUIRED_CONTRACT_ONLY
+owner: project_owner
+predecessor_task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
+pack_requirement_path: docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
+pack_requirement_lf_sha256: afdcb44f44032fee958d4f6b1e8e4b56c1edb2faefa44026e16aff7153968588
+authority_set_sha256: 1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c
+primary_research_start: '2021-02-22'
+primary_research_role: PRIMARY
+group_order:
+  - selection
+  - execution
+  - accounting
+  - lifecycle
+  - acceptance
+allowed_group_modes:
+  - G1
+  - G3
+  - G4
+  - PER_SLOT
+action_semantics:
+  - action: G1
+    semantic: KEEP_UNRESOLVED_BLOCKED
+    owner_value_required: false
+    reviewed_rationale_required: false
+  - action: G2
+    semantic: OWNER_SUPPLIED_REVIEWED_POLICY
+    owner_value_required: true
+    reviewed_rationale_required: false
+  - action: G3
+    semantic: EVIDENCE_CALIBRATION_REQUIRED
+    owner_value_required: false
+    reviewed_rationale_required: false
+  - action: G4
+    semantic: SENSITIVITY_ONLY_NOT_REALITY_BASELINE
+    owner_value_required: false
+    reviewed_rationale_required: false
+  - action: G5
+    semantic: NOT_APPLICABLE_WITH_REVIEWED_RATIONALE
+    owner_value_required: false
+    reviewed_rationale_required: true
+dependency_edges:
+  - upstream_gate_id: DQ_PIT_AUTHORITY
+    downstream_group: selection
+  - upstream_gate_id: selection
+    downstream_group: execution
+  - upstream_gate_id: execution
+    downstream_group: accounting
+  - upstream_gate_id: accounting
+    downstream_group: lifecycle
+  - upstream_gate_id: DQ_PIT_AUTHORITY
+    downstream_group: acceptance
+  - upstream_gate_id: accounting
+    downstream_group: acceptance
+  - upstream_gate_id: lifecycle
+    downstream_group: acceptance
+corporate_action_hard_stop:
+  authority_id: TRADING-2488_CORPORATE_ACTION_HARD_STOP
+  status: HARD_STOP_NOT_A_DECISION_SLOT
+  bypass_allowed: false
+  inherited_policy_sha256: 1798b6696e0f31571f9242a4276a06530fb951d15f250a2ef6756ac547037582
+slots:
+  - slot_id: SEL_DTE_WINDOW
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, PRIMARY_SESSION_COVERAGE, EXPIRY_COVERAGE]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: dte_window_policy_value.v1, value_kind: RANGE_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: SEL_MONEYNESS_RANGE
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, PRIMARY_SESSION_COVERAGE, MONEYNESS_DEFINITION]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: moneyness_policy_value.v1, value_kind: RANGE_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: SEL_DELTA_SOURCE_RANGE
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, PRIOR_SESSION_GREEKS_IDENTITY, MODEL_SOURCE_IDENTITY]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: delta_source_range_policy_value.v1, value_kind: MODEL_RANGE_RULE, required_payload_fields: [model_source, rule]}
+  - slot_id: SEL_SPREAD_LIMIT
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, TWO_SIDED_QUOTE_COVERAGE, SPREAD_DISTRIBUTION]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: spread_limit_policy_value.v1, value_kind: LIMIT_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: SEL_OPEN_INTEREST_FLOOR
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, PRIOR_SESSION_OI_IDENTITY, OI_DISTRIBUTION]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: open_interest_floor_policy_value.v1, value_kind: FLOOR_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: SEL_VOLUME_FLOOR
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, PIT_SAFE_VOLUME_IDENTITY, VOLUME_DISTRIBUTION]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: volume_floor_policy_value.v1, value_kind: FLOOR_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: SEL_QUOTE_FRESHNESS
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, QUOTE_TIMESTAMP_LINEAGE, QUOTE_INTEGRITY_DISTRIBUTION]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: quote_freshness_policy_value.v1, value_kind: FRESHNESS_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: SEL_RANK_PRIORITY
+    canonical_group: selection
+    evidence_class: DERIVED_MARKET_AGGREGATES
+    requires: [DQ_PIT_PASS, CANDIDATE_SENSITIVITY, PERMUTATION_REPLAY]
+    blocks: [SELECTION_AUTHORIZATION]
+    value_schema: {schema_id: rank_priority_policy_value.v1, value_kind: ORDERED_RULE, required_payload_fields: [ordered_rule_ids, tie_break_rule]}
+  - slot_id: EXE_MARKETABLE_LIMIT
+    canonical_group: execution
+    evidence_class: EXECUTION_SENSITIVITY
+    requires: [SELECTION_AUTHORITY, TWO_SIDED_QUOTE_COVERAGE, LIMIT_BOUND_SENSITIVITY]
+    blocks: [ORDER_INTENT_AUTHORIZATION, FILL_AUTHORIZATION]
+    value_schema: {schema_id: marketable_limit_policy_value.v1, value_kind: LIMIT_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: EXE_SLIPPAGE
+    canonical_group: execution
+    evidence_class: EXECUTION_SENSITIVITY
+    requires: [SELECTION_AUTHORITY, NON_ZERO_SLIPPAGE_SENSITIVITY, NO_FILL_COMPARATOR]
+    blocks: [FILL_AUTHORIZATION, REALITY_BASELINE]
+    value_schema: {schema_id: slippage_policy_value.v1, value_kind: MODEL_RULE, required_payload_fields: [model_id, rule]}
+  - slot_id: EXE_LATENCY
+    canonical_group: execution
+    evidence_class: EXECUTION_SENSITIVITY
+    requires: [SELECTION_AUTHORITY, EVENT_TIME_EVIDENCE, QUOTE_SURVIVAL_SENSITIVITY]
+    blocks: [FILL_AUTHORIZATION, REALITY_BASELINE]
+    value_schema: {schema_id: latency_policy_value.v1, value_kind: DURATION_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: EXE_PARTIAL_FILL
+    canonical_group: execution
+    evidence_class: EXECUTION_SENSITIVITY
+    requires: [SELECTION_AUTHORITY, PARTIAL_REPLAY_CASES, LIQUIDITY_EVIDENCE]
+    blocks: [FILL_AUTHORIZATION]
+    value_schema: {schema_id: partial_fill_policy_value.v1, value_kind: FRACTION_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: EXE_CANCEL_REJECT_NO_FILL
+    canonical_group: execution
+    evidence_class: EXECUTION_SENSITIVITY
+    requires: [SELECTION_AUTHORITY, TYPED_REASON_COVERAGE, NO_FILL_FREQUENCY]
+    blocks: [ORDER_LIFECYCLE_AUTHORIZATION]
+    value_schema: {schema_id: cancel_reject_policy_value.v1, value_kind: DISPOSITION_RULE, required_payload_fields: [reason_map, terminal_rule]}
+  - slot_id: EXE_QUOTE_DISPOSITION
+    canonical_group: execution
+    evidence_class: EXECUTION_SENSITIVITY
+    requires: [SELECTION_AUTHORITY, QUOTE_INTEGRITY_DQ, QUOTE_INCIDENT_AGGREGATES]
+    blocks: [ORDER_INTENT_AUTHORIZATION, FILL_AUTHORIZATION]
+    value_schema: {schema_id: quote_disposition_policy_value.v1, value_kind: DISPOSITION_RULE, required_payload_fields: [reason_map, terminal_rule]}
+  - slot_id: ACC_FEE_SCHEDULE
+    canonical_group: accounting
+    evidence_class: ACCOUNTING_AUTHORITY
+    requires: [EXECUTION_AUTHORITY, FEE_SOURCE, EFFECTIVE_DATE_COVERAGE]
+    blocks: [ACCOUNTING_AUTHORIZATION, NET_RETURN_INTERPRETATION]
+    value_schema: {schema_id: fee_schedule_policy_value.v1, value_kind: SCHEDULE_RULE, required_payload_fields: [schedule_id, effective_date_rule]}
+  - slot_id: ACC_INITIAL_CASH
+    canonical_group: accounting
+    evidence_class: ACCOUNTING_AUTHORITY
+    requires: [EXECUTION_AUTHORITY, RESEARCH_OBJECTIVE, CASH_PRESERVATION_CASES]
+    blocks: [SIZING_AUTHORIZATION]
+    value_schema: {schema_id: initial_cash_policy_value.v1, value_kind: MONEY_RULE, required_payload_fields: [rule, currency]}
+  - slot_id: ACC_SIZING_EXPOSURE
+    canonical_group: accounting
+    evidence_class: ACCOUNTING_AUTHORITY
+    requires: [EXECUTION_AUTHORITY, PREMIUM_EXPOSURE_DISTRIBUTION, STRESS_EVIDENCE]
+    blocks: [SIZING_AUTHORIZATION, ORDER_QUANTITY_AUTHORIZATION]
+    value_schema: {schema_id: sizing_exposure_policy_value.v1, value_kind: EXPOSURE_RULE, required_payload_fields: [rule, unit]}
+  - slot_id: ACC_CASH_RESERVATION
+    canonical_group: accounting
+    evidence_class: ACCOUNTING_AUTHORITY
+    requires: [EXECUTION_AUTHORITY, RESERVATION_RELEASE_REPLAY, INSUFFICIENT_CASH_CASES]
+    blocks: [ORDER_INTENT_AUTHORIZATION]
+    value_schema: {schema_id: cash_reservation_policy_value.v1, value_kind: RESERVATION_RULE, required_payload_fields: [reserve_rule, release_rule]}
+  - slot_id: ACC_IDENTITY_ROUNDING
+    canonical_group: accounting
+    evidence_class: ACCOUNTING_AUTHORITY
+    requires: [FILL_IDENTITY, DECIMAL_AUTHORITY, CROSS_ENGINE_REPLAY]
+    blocks: [ACCOUNTING_AUTHORIZATION, RECONCILIATION_PASS]
+    value_schema: {schema_id: identity_rounding_policy_value.v1, value_kind: ROUNDING_RULE, required_payload_fields: [identity_rule, rounding_rule]}
+  - slot_id: ACC_SETTLEMENT_COST_BASIS
+    canonical_group: accounting
+    evidence_class: ACCOUNTING_AUTHORITY
+    requires: [FILL_IDENTITY, SETTLEMENT_SOURCE, COST_BASIS_REPLAY]
+    blocks: [ACCOUNTING_AUTHORIZATION, REALIZED_PNL_INTERPRETATION]
+    value_schema: {schema_id: settlement_cost_basis_policy_value.v1, value_kind: SETTLEMENT_RULE, required_payload_fields: [settlement_rule, cost_basis_rule]}
+  - slot_id: LIFE_EXPIRY_EXIT_GUARD
+    canonical_group: lifecycle
+    evidence_class: LIFECYCLE_EVENT_EVIDENCE
+    requires: [ACCOUNTING_AUTHORITY, EXPIRY_CALENDAR_IDENTITY, EXIT_NO_QUOTE_CASES]
+    blocks: [LIFECYCLE_AUTHORIZATION]
+    value_schema: {schema_id: expiry_exit_guard_policy_value.v1, value_kind: EXIT_RULE, required_payload_fields: [expiry_source, exit_rule]}
+  - slot_id: LIFE_EXERCISE_ASSIGNMENT
+    canonical_group: lifecycle
+    evidence_class: LIFECYCLE_EVENT_EVIDENCE
+    requires: [ACCOUNTING_AUTHORITY, ENGINE_SEMANTICS_REVIEW, EVENT_COVERAGE]
+    blocks: [LIFECYCLE_AUTHORIZATION, UNDERLYING_EXPOSURE]
+    value_schema: {schema_id: exercise_assignment_policy_value.v1, value_kind: DISPOSITION_RULE, required_payload_fields: [exercise_rule, assignment_rule]}
+  - slot_id: LIFE_CLOSE_HOLD_ROLL
+    canonical_group: lifecycle
+    evidence_class: LIFECYCLE_EVENT_EVIDENCE
+    requires: [ACCOUNTING_AUTHORITY, STRATEGY_RATIONALE, CLOSE_ROLL_SENSITIVITY]
+    blocks: [LIFECYCLE_AUTHORIZATION, ROLL_AUTHORIZATION]
+    value_schema: {schema_id: close_hold_roll_policy_value.v1, value_kind: DISPOSITION_RULE, required_payload_fields: [close_rule, hold_rule, roll_rule]}
+  - slot_id: LIFE_TERMINAL_VALUATION
+    canonical_group: lifecycle
+    evidence_class: LIFECYCLE_EVENT_EVIDENCE
+    requires: [ACCOUNTING_AUTHORITY, QUOTE_AVAILABILITY, MARK_RECONCILIATION]
+    blocks: [LIFECYCLE_AUTHORIZATION, INVESTMENT_RESULT]
+    value_schema: {schema_id: terminal_valuation_policy_value.v1, value_kind: VALUATION_RULE, required_payload_fields: [mark_source, stale_quote_rule]}
+  - slot_id: ACC_RESULT_INCLUSION
+    canonical_group: acceptance
+    evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+    requires: [LIFECYCLE_AUTHORITY, TYPED_RUN_STATUS, EXCLUSION_IMPACT]
+    blocks: [AGGREGATE_CONCLUSION]
+    value_schema: {schema_id: result_inclusion_policy_value.v1, value_kind: INCLUSION_RULE, required_payload_fields: [included_statuses, excluded_statuses]}
+  - slot_id: ACC_SAMPLE_COVERAGE
+    canonical_group: acceptance
+    evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+    requires: [LIFECYCLE_AUTHORITY, PRIMARY_WINDOW_COVERAGE, HOLDOUT_DESIGN]
+    blocks: [RESULT_ACCEPTANCE]
+    value_schema: {schema_id: sample_coverage_policy_value.v1, value_kind: COVERAGE_RULE, required_payload_fields: [coverage_rule, holdout_rule]}
+  - slot_id: ACC_DQ_PIT_REPRO
+    canonical_group: acceptance
+    evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+    requires: [DQ_PIT_PASS, LIFECYCLE_AUTHORITY, DETERMINISTIC_REPLAY]
+    blocks: [RESULT_ACCEPTANCE]
+    value_schema: {schema_id: dq_pit_repro_policy_value.v1, value_kind: GATE_RULE, required_payload_fields: [dq_gate_rule, reproducibility_rule]}
+  - slot_id: ACC_INVESTMENT_PROMOTION
+    canonical_group: acceptance
+    evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+    requires: [RESULT_ACCEPTANCE, INDEPENDENT_REVIEW, OUT_OF_SAMPLE_EVIDENCE]
+    blocks: [INVESTMENT_PROMOTION]
+    value_schema: {schema_id: investment_promotion_policy_value.v1, value_kind: GATE_RULE, required_payload_fields: [promotion_rule, rejection_rule]}
+safety:
+  engine_activation_authorized: false
+  selection_authorized: false
+  order_intent_authorized: false
+  fill_authorized: false
+  cloud_run_authorized: false
+  external_action_authorized: false
+  raw_options_export_authorized: false
+  investment_interpretation_authorized: false
+  paper_authorized: false
+  live_authorized: false
+  broker_authorized: false
+  production_effect: none
+  broker_action: none

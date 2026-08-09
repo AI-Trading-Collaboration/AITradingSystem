@@ -1,0 +1,35 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_owner_decision_manifest
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/owner_decision_manifest.py
+public_contracts:
+  - DEFAULT_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_POLICY_PATH
+  - OwnerDecisionAction
+  - OwnerDecisionActionSemanticPolicy
+  - OwnerDecisionCanonicalGroup
+  - OwnerDecisionCorporateActionHardStop
+  - OwnerDecisionDependencyAudit
+  - OwnerDecisionDependencyEdgePolicy
+  - OwnerDecisionEvidenceClass
+  - OwnerDecisionGroupChoice
+  - OwnerDecisionGroupMode
+  - OwnerDecisionManifestSafety
+  - OwnerDecisionMaterializedSlot
+  - OwnerDecisionNotApplicableRationale
+  - OwnerDecisionResolutionStatus
+  - OwnerDecisionSlotChoice
+  - OwnerDecisionSlotPolicy
+  - OwnerDecisionValueKind
+  - OwnerDecisionValueSchemaPolicy
+  - OwnerReviewedPolicyValue
+  - QQQOptionsOwnerDecisionManifest
+  - QQQOptionsOwnerDecisionManifestContractError
+  - QQQOptionsOwnerDecisionManifestPolicy
+  - QQQOptionsOwnerDecisionManifestPolicyLoadResult
+  - QQQOptionsOwnerDecisionResolutionResult
+  - build_qqq_options_owner_decision_manifest
+  - load_qqq_options_owner_decision_manifest_policy
+  - resolve_qqq_options_owner_decision_manifest
+compatibility_facades: []
+deprecation_status: active_reference_architecture

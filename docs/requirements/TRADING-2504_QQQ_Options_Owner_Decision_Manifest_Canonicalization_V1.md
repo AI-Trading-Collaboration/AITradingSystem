@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 计划模式：`SINGLE_LANE`
 
@@ -164,15 +164,28 @@ engine implementation、回测执行和投资结论分别需要独立后继任�
 - `src/ai_trading_system/qqq_options_research/owner_decision_manifest.py`；
 - `tests/test_qqq_options_owner_decision_manifest.py`。
 
-Public API 计划包括：
+Public API 已冻结为：
 
-- default policy path；
-- canonical group/action/value/status enums；
-- slot catalog、group decision、typed Owner value、G5 rationale、manifest、resolver result models；
-- strict policy loader、manifest builder/parser/resolver；
-- `seal` / `canonical_bytes` / `canonical_sha256` / `from_json_bytes`。
+- `DEFAULT_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_POLICY_PATH`；
+- `OwnerDecisionCanonicalGroup`、`OwnerDecisionAction`、`OwnerDecisionGroupMode`、
+  `OwnerDecisionValueKind`、`OwnerDecisionEvidenceClass`、`OwnerDecisionResolutionStatus`；
+- `OwnerDecisionValueSchemaPolicy`、`OwnerDecisionSlotPolicy`、
+  `OwnerDecisionActionSemanticPolicy`、`OwnerDecisionDependencyEdgePolicy`、
+  `OwnerDecisionCorporateActionHardStop`、`OwnerDecisionManifestSafety`、
+  `QQQOptionsOwnerDecisionManifestPolicy`、
+  `QQQOptionsOwnerDecisionManifestPolicyLoadResult`；
+- `OwnerDecisionGroupChoice`、`OwnerDecisionSlotChoice`、
+  `OwnerDecisionMaterializedSlot`、`OwnerReviewedPolicyValue`、
+  `OwnerDecisionNotApplicableRationale`；
+- `QQQOptionsOwnerDecisionManifest`、`OwnerDecisionDependencyAudit`、
+  `QQQOptionsOwnerDecisionResolutionResult`、
+  `QQQOptionsOwnerDecisionManifestContractError`；
+- `load_qqq_options_owner_decision_manifest_policy`、
+  `build_qqq_options_owner_decision_manifest`、
+  `resolve_qqq_options_owner_decision_manifest`。
 
-确切名称在 serial contract implementation 中冻结，并在本文记录 final API；不得导入或调用真实 engine。
+两个 sealed record 均提供 `seal` / `canonical_bytes` / `canonical_sha256` /
+`from_json_bytes`；module 不导入或调用真实 engine。
 
 ## 11. 验收测试
 
@@ -213,5 +226,25 @@ Public API 计划包括：
 5. C4 final-tree formal gates、ordinary push、cleanup；
 6. C5 Owner handoff：2502 仍等待真实 typed Owner decision；本任务不自动进入 policy adoption。
 
-当前 registration blocker=`TASK_REGISTRATION_NOT_YET_PUSHED`。C0 后须从新的 exact local main 重新运行
-`SINGLE_LANE --contract-change` START/LANE preflight；未 PASS 前不得写 implementation paths。
+## 14. Final contract freeze
+
+- registration ordinary-pushed main=`2da20cf05ec6d31c2c4cb9d7c6ce797c9128f301`；
+- `SINGLE_LANE --contract-change` START/LANE preflight=`PASS`；
+- policy file SHA-256=
+  `55fb29bb2e4347959920cd3f5d72cbc5fc94c2aac5794f301e1c41f9a31547de`；
+- policy canonical SHA-256=
+  `c872e9aee37cf2ea36b201d81c48c98603ca4daa96c53d900cdaa5997e13f0db`；
+- slot catalog SHA-256=
+  `a1492e27ea8599d453249e5d29280d6fcb882ea0376ce531b949eae7b7621ad6`；
+- module LF SHA-256=
+  `ab80c9e3b8bca03d9bc6c72eb568c7ddeb8420364e60a615bec7d936277a0b77`；
+- focused failure-fix chain=`13 PASS / 8 FAIL -> 20 PASS / 1 FAIL -> 21 PASS`，最终同覆盖
+  `21 PASS`；
+- 2481–2504 QQQ adjacent=`658 PASS`；Ruff、strict mypy、compileall=`PASS`；
+- DevEx=`1099 modules / 1262 tests / 856 writers / 0 violations`；
+- task shadow=`971 / 466 / 505` byte-identical。
+
+C0–C3 已完成，C4 final-tree compatibility/formal gates 只验证本节冻结的 tracked bytes；门禁后不再修改
+tracked 内容。任务状态为 `BASELINE_DONE`，表示 canonical decision-input contract 已建立，不表示 Owner 已
+提供 2502 decisions、policy 已 adopted、engine 已激活或 backtest 已运行。后继 blocker=
+`TRADING_2502_TYPED_OWNER_DECISIONS_NOT_YET_PROVIDED`。
