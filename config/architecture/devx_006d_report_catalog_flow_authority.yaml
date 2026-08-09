@@ -1,0 +1,49 @@
+schema_version: devx_006d_report_catalog_flow_authority_policy.v1
+status: INACTIVE_SHADOW
+task_id: DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION
+exact_start_base: 57bec20b15a7b1d471bdb774a2966bb81f02a037
+owner_decision: owner_decision:DEVX-006C:2026-08-09:authorize_c_then_d_then_s5_serial_v1
+partition_count: 64
+fragment_root: registry/report_catalog_flow_authority/fragments
+index_path: inputs/architecture/devx_006d_report_catalog_flow_authority_index.json
+consumer_inventory_path: inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json
+targets:
+  - target_id: report_registry
+    path: config/report_registry.yaml
+    format: YAML_REPORT_REGISTRY
+    splitter: YAML_REPORT_ITEMS_WITH_PREFIX_V1
+    byte_count: 1814070
+    file_sha256: c25f1dac0a6c2822dc88f0ae0a06b93af2a21b7004abba3dd7400df93faae1af
+    lf_sha256: c25f1dac0a6c2822dc88f0ae0a06b93af2a21b7004abba3dd7400df93faae1af
+    git_blob: 696096ab2c12069106bb741442f53b2dcda787ab
+    entry_count: 1371
+  - target_id: artifact_catalog
+    path: docs/artifact_catalog.md
+    format: MARKDOWN
+    splitter: EXACT_BLANK_LINE_BLOCKS_V1
+    byte_count: 1991577
+    file_sha256: f67cb12f4ac5c9aea3ed7477cb5ec51a980a73cdd55470f95b1dc88abc58ef42
+    lf_sha256: f67cb12f4ac5c9aea3ed7477cb5ec51a980a73cdd55470f95b1dc88abc58ef42
+    git_blob: 7040b99ce5ebfbcb8764c40b1b8c691c423ba044
+    entry_count: 546
+  - target_id: system_flow
+    path: docs/system_flow.md
+    format: MARKDOWN
+    splitter: EXACT_BLANK_LINE_BLOCKS_V1
+    byte_count: 2179534
+    file_sha256: 086c5f68278e59fadf37f6ca05fdfaf64e7fb705019380e69c6255484e995fd4
+    lf_sha256: 086c5f68278e59fadf37f6ca05fdfaf64e7fb705019380e69c6255484e995fd4
+    git_blob: 82fc64ae3ce55d1163751f374d118d482050a748
+    entry_count: 933
+contract:
+  source_of_truth: LEGACY_MONOLITH
+  fragment_shadow_active: false
+  aggregate_write_allowed: false
+  fragment_identity: FULL_ENTRY_RAW_SHA256
+  partition_identity: RAW_SHA256_LOW_6_BITS
+  index_chain: SHA256
+  coverage_required_percent: 100
+  silent_drop_allowed: false
+  rollback_mode: IGNORE_INACTIVE_SHADOW
+production_effect: none
+broker_action: none

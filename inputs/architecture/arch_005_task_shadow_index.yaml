@@ -1,10 +1,10 @@
 schema_version: arch_005_task_shadow_index.v1
 status: PASS
 stage: S1_SHADOW_REGISTRY_AND_COMPATIBILITY_PROJECTION
-baseline_checksum: 401f6896c3c05b48505156ea9ae8891be81974b46b6f5acaf86c0f8fc2c62bac
+baseline_checksum: 638cdb7d929c695a9385dc27b1943494954754c2798fac1a1e474037553a7f17
 source_of_truth: LEGACY_MARKDOWN_ONLY
-task_count: 972
-fragment_count: 972
+task_count: 973
+fragment_count: 973
 missing_task_count: 0
 duplicate_task_count: 0
 semantic_parity:
@@ -393,14 +393,18 @@ fragments:
   path: registry/development_tasks_shadow/active/6d/6d8d0da0de81f10e89f99dc55533b0f53ac3787dcc59a693cb4ed8ca19f67fc1.yaml
   file_sha256: baaa3b36793c20225d5d4b8b41cc0874434e89235615df7e2a268f82db7ffa8d
   fragment_checksum: fee96525d808f37f4d204c93e46e8d55dc44c516b4ece9f32cd653bc9a941848
+- task_id: DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION
+  path: registry/development_tasks_shadow/active/29/29037f01a39ff8c92042af43800360f9f4dced7f91dbbe5dcc7dc84f6f5a6697.yaml
+  file_sha256: f46547ca9bc7ce6ae1dd40bdb6b33bcf4d60135a41d81ea30972a8c684610d90
+  fragment_checksum: a2806cbc8edcfd931475a18d108a9414b6a15abc45e3d88eb83b0ad030e93418
 - task_id: DEVX-006_BASE_DRIFT_AWARE_INTEGRATION_AND_REVALIDATION
   path: registry/development_tasks_shadow/completed/82/8208f6495030a28c1d528a7782e6ffe01e96146f35ba0efaa8dd72c47760a9fb.yaml
   file_sha256: 5941228151a614ca2694d97eb0978f4549bfcfc2799cd62998f3e7aae02de26f
   fragment_checksum: 6f293362dabecc9ab39899f21286ae6a4e624c64636b693da86240a1a47256a9
 - task_id: DEVX-006_FRAGMENTED_GENERATED_AUTHORITY_AND_STABLE_TASK_SHADOW_V2
   path: registry/development_tasks_shadow/active/98/989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml
-  file_sha256: b704001c9004b7cd0e3e5e1721a4b2dab2ba79580b35e54fc69cd42e6c2c40fc
-  fragment_checksum: 63b42c0ab693817eef1bf29fc2494e5611cc31aab3a62a4ff34944777c324f42
+  file_sha256: e8393f1dacd65cc496d8c6aee0fe649f3d50024ce6bae202465afaca81fc6066
+  fragment_checksum: bf16d500ff6a43a188913d9f14e72c3e3be51c8e40a441b26991ebde6269753c
 - task_id: DEVX-007_WEB_PRO_GIT_STRATEGY_PLANNING_SKILL
   path: registry/development_tasks_shadow/active/2c/2cf4b3d8b91ff8204c465e51c25ee834e6bd877ac960b0e6ee2f6801b29f15d3.yaml
   file_sha256: 1ba944d5a7e8e4e1b9821e6a2f5b06973aa80e08ab1ff07679a8b553e872e724
@@ -3913,8 +3917,8 @@ generated_views:
 - source: active
   source_path: docs/task_register.md
   shadow_output_path: outputs/architecture/arch_005_shadow_views/task_register.md
-  source_sha256: 378bd0c9a27ecc94b6d32d7121c4d93c6309266a1c51862ae0712b6c6a19e6c2
-  rendered_sha256: 378bd0c9a27ecc94b6d32d7121c4d93c6309266a1c51862ae0712b6c6a19e6c2
+  source_sha256: 6da563153231638fd28eba38ad75d5c3045bc45ce61279857248b635075db536
+  rendered_sha256: 6da563153231638fd28eba38ad75d5c3045bc45ce61279857248b635075db536
   byte_identical: true
   persisted_in_git: false
 - source: completed
@@ -3936,4 +3940,4 @@ safety:
   task_status_mutation_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: d6b563ac152a902d662b93136d894595a27f430868825e6e7595fe312fb873e7
+index_checksum: 43a53f8ab138e10ed08453d9b3b644505b84b2dd5b0061914692644544ff104f

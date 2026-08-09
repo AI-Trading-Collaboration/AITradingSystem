@@ -2,6 +2,17 @@
 
 本文档是系统从数据输入、中间评估到输出结论的流程图。它不是一次性说明文档，而是工程事实的一部分：后续新增命令、数据源、配置、评分模块、回测路径或报告输出时，必须同步维护本文件。
 
+DEVX-006D 为 `config/report_registry.yaml`、`docs/artifact_catalog.md` 与本文件建立
+full-entry v2 lossless fragment shadow。构建器从最终 monolith exact bytes 划分完整 YAML report
+entries 或 Markdown blank-line blocks；entry raw bytes 按稳定内容身份进入 content-addressed
+partitions，小型 index 独立记录 source seal、全局 order、entry/fragment hash 与前序 chain。
+validator 从 index/fragments 重建三份文件并要求 byte-identical、coverage=100%、silent drop=0；
+missing、duplicate、reorder、tamper、path escape、symlink、non-canonical JSON、hash-chain 或 source
+drift 全部 fail closed。当前读取路径仍是 `LEGACY_MONOLITH`，v2 仅为 inactive shadow；关闭
+shadow 即可 rollback，且不会回写、重排或删除 legacy files。未来 source-of-truth cutover 必须
+等待 direct-consumer inventory 全部迁移并另获 Owner review。本波不进入 periodic operations、
+DQ/PIT、scoring、backtest、investment conclusion、production 或 broker path。
+
 TRADING-2466 / TRADING-2468 Atlas 在现有研究结果之上增加只读解释层，不进入数据、模型、评分、
 回测或交易计算路径。V1.2 source registry 包含 13 个 sources，但 graph 仍只覆盖四条代表性路径：
 历史 R0-R2 evidence closure、QLD role-limited

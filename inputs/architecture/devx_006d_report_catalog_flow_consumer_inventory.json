@@ -1,0 +1,2509 @@
+{
+  "broker_action": "none",
+  "consumer_count": 159,
+  "consumers": [
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/cli_commands/engineering_reports.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/cli_commands/reports.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/controlled_strategy_batch.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/documentation_contract.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 2,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/etf_portfolio/baseline_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/etf_portfolio/strategy_evidence_dashboard.py",
+      "references": [
+        {
+          "literal_count": 2,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/explain.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/platform/architecture/arch_004_g2_5_readiness.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 3,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/reports/artifact_lifecycle_inventory.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/reports/canonical_system_status.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/reports/reader_brief.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 3,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/reports/research_governance_summary.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "src/ai_trading_system/research_quality/growth_tilt_pit_replay_engine_blocker_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "RUNTIME_OR_LIBRARY_CONSUMER"
+    },
+    {
+      "migration_status": "PENDING_OWNER_CUTOVER",
+      "path": "scripts/generate_qqq_plus_growth_closeout_artifacts.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "DEVELOPER_TOOL_CONSUMER"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/atlas/test_historical_coverage_inventory.py",
+      "references": [
+        {
+          "literal_count": 5,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_blocking_gap_remediation_implementation_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_calibrated_gate_candidate_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_calibrated_gate_candidate_reclassification.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_calibrated_gate_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_candidate_optimization_divergence_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_candidate_pool_expansion_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_component_ablation_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_component_attribution_gate_evidence_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_component_attribution_targeted_ablation_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_component_recombination_candidate_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_component_recombination_candidate_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_cost_turnover_cooldown_sensitivity.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_data_pit_signal_quality_gap_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_event_driven_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_expanded_candidate_pool_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_growth_tilt_engine_pit_signal_remediation_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_guarded_variant_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_observation_gate_threshold_calibration_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_optimization_plateau_next_candidate_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_optimized_candidate_targeted_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_optimized_variant_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_pit_coverage_matrix_implementation_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_pit_coverage_matrix_reusable_implementation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_pit_coverage_signal_construction_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_ranking_top_guarded_turnover_retest_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_ranking_top_guarded_variant_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_recombination_candidate_gate_evidence_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_recombination_candidate_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_recombination_candidate_targeted_gate_evidence_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_recombination_line_plateau_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_filter_threshold_methodology_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_only_observation_log_schema_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_only_observation_owner_reassessment.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_only_observation_report_dry_run.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_dry_run.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_protocol.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_research_only_shadow_observation_replay_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_signal_as_of_validity_contract_schema.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_slice_robustness_optimized_variant_retest.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_slice_robustness_return_gap_optimization_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_targeted_gate_evidence_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_targeted_retest_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_top_candidate_owner_review_gate.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_dynamic_strategy_valid_until_window_stale_signal_remediation_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_baseline_capability_graph.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_baseline_contract_adapters.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_candidate_family_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_candidate_gauntlet_harness.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_candidate_runtime_spec_threshold_policy_approval.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_defensive_limited_adjustment_component_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_as_of_semantics_remediation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_candidate_promotion_evidence_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_contract_gap_remediation_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_contract_readiness_snapshot.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_forward_outcome_binding_boundary.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_manual_review_packet_dry_run.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_observe_only_signal_artifact_boundary.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_paper_shadow_dry_run_wiring.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_paper_shadow_enablement_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_paper_shadow_preflight.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_paper_shadow_schedule_dry_run.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_recheck.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_recheck_after_source_traceability_remediation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_pit_gate_readiness_snapshot.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_pit_gate_remaining_blocker_closure_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_signal_artifact_source_traceability_remediation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_signal_validity_dependency_strategy.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_source_feature_contract_mapping.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_source_traceability_strategy_remediation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_source_traceability_upstream_artifact_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_engine_valid_until_dependency_evidence_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_existing_candidate_evidence_matrix.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_false_risk_off_missed_upside_batch_screen.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_forward_aging_candidate_pack.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_owner_decision_resolution.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_owner_mapping_inventory.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_paper_shadow_candidate_promotion_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_pit_replay_engine_blocker_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_regime_slice_attribution_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_remaining_candidate_pit_replay_blocker_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_replacement_candidate_contract.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_level_pit_replay_blocker_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_engine_remediation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_candidate_blocker_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_output_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_remaining_blocker_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_after_runtime_remediation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_top3_candidate_pit_replay_recheck_blocker_closure.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_turnover_cooldown_parameter_plateau_study.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_growth_tilt_valid_until_outcome_hit_rate_study.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_strategies/test_leveraged_exposure_instrument_evaluation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_ai_leadership_actual_path_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_ai_leadership_scope_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_ai_semiconductor_leadership_feasibility_audit.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_ai_semiconductor_leadership_generator_poc.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_dynamic_strategy_execution_cadence_bias_audit.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_event_calendar_feasibility_audit.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_event_calendar_gating_generator_poc.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_event_gating_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_exposure_cap_mechanics_simulation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_exposure_cap_simulation_source_binding.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_first_layer_candidate_generator_cli.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_event_append_contract_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_outcome_binding_contract_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_owner_decision_pause_checkpoint.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_paper_shadow_scope_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_production_broker_hard_blocker_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_promotion_blocker_matrix.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_audit_package.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_disabled_wiring.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_gap_closure_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_hardening_backlog.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_idempotency_replay_contract_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_kill_switch_plan.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_manual_review_gate.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_manual_run_dry_run.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_manual_run_replay_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_owner_review_decision.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_high_intensity_scheduler_smoke_dry_run.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_liquidity_rates_actual_path_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_liquidity_rates_feasibility_audit.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_liquidity_rates_generator_poc.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_liquidity_rates_scope_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_regenerated_candidate_artifact_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_regime_label_generator_diagnostic_poc.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_regime_segmented_candidate_validation.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_regime_state_machine_design_audit.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_risk_cap_cooldown_decay_design.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/research_trends/test_signal_validity_aging_runtime_design.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_arch_004_refactor_policy.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 9,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 27,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_arch_004_wave12_g4_d0b_readiness.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_arch_004e_devex.py",
+      "references": [
+        {
+          "literal_count": 2,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 2,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 2,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_arch_004f3_reporting_architecture.py",
+      "references": [
+        {
+          "literal_count": 2,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_candidate_bound_artifact_contract.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "MIGRATED_SHADOW",
+      "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
+      "references": [
+        {
+          "literal_count": 5,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 5,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 6,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SHADOW_AUTHORITY_IMPLEMENTATION"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_etf_baseline_review.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_etf_forward.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_first_layer_channel_archive_contract.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_trading2452_architecture_contract.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    },
+    {
+      "migration_status": "RETAINED_UNTIL_OWNER_CUTOVER",
+      "path": "tests/test_two_lane_optimization_master_closeout.py",
+      "references": [
+        {
+          "literal_count": 1,
+          "target_path": "config/report_registry.yaml"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/artifact_catalog.md"
+        },
+        {
+          "literal_count": 1,
+          "target_path": "docs/system_flow.md"
+        }
+      ],
+      "role": "SOURCE_CONTRACT_TEST"
+    }
+  ],
+  "cutover_ready": false,
+  "pending_owner_cutover_count": 15,
+  "production_effect": "none",
+  "rollback_mode": "IGNORE_INACTIVE_SHADOW",
+  "scan_roots": [
+    "src",
+    "scripts",
+    "tests"
+  ],
+  "schema_version": "report_catalog_flow_consumer_inventory.v1",
+  "source_of_truth": "LEGACY_MONOLITH",
+  "status": "PASS",
+  "target_paths": [
+    "config/report_registry.yaml",
+    "docs/artifact_catalog.md",
+    "docs/system_flow.md"
+  ],
+  "task_id": "DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION"
+}

@@ -188,7 +188,9 @@ auto-stash/clean/reset 消失。OPS-070 的独立 runtime clone 负责隔离运�
 
 ## 风险与 cutover 边界
 
-- 当前只授权 DEVX-006C compatibility source cutover；D 波与 ARCH-005 S5 仍未登记、未授权实施；
+- DEVX-006C 已从 exact released main 完成 compatibility source cutover；当前按 Owner 指定顺序仅开放
+  DEVX-006D report/catalog/flow lossless fragmentation，ARCH-005 S5 仍须等待 D ordinary push/cleanup
+  后独立登记；
 - line number 从 fragment 移到 index 不能丢失 legacy byte/row traceability；
 - 现有 55 条多于 8 cells 的 legacy rows 必须原样保留；
 - 任何不能证明 lossless parity 的 fragment 只能保持 inactive shadow；

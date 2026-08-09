@@ -4,6 +4,12 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`，也可以用 `aits explain <field|gate|artifact>` 做只读反查。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## DEVX-006D Report / Catalog / Flow Lossless Fragment Shadow
+
+|Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|
+|---|---|---|---|---|---|---|
+|`inputs/architecture/devx_006d_report_catalog_flow_authority_index.json`<br/>`inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json`<br/>`registry/report_catalog_flow_authority/fragments/**`|`python scripts/architecture_report_catalog_flow_authority.py build`；`validate` 做独立 seal、canonical bytes、hash-chain、coverage 与 byte replay|最终树中的 `config/report_registry.yaml`、`docs/artifact_catalog.md`、`docs/system_flow.md` exact bytes；reviewed DEVX-006D policy|架构协调者评估 full-entry v2 fragment shadow 是否具备未来 cutover 条件|否；`production_effect=none`、`broker_action=none`|当前 `source_of_truth=LEGACY_MONOLITH`、fragment shadow inactive。每个 YAML report entry 或 Markdown exact blank-line block 完整存入 content-addressed partition；index 保留全局顺序并逐字节重放。任何 missing/duplicate/tamper/path/symlink/hash/order/chain/coverage 漂移均 fail closed；本任务不删除、不重写、不自动发布三个 monolith。|
+
 ## TRADING-2466 / TRADING-2468 Atlas Strategy Research Path & Attribution Explorer
 
 |Artifact / path|Producer / validator|Inputs|Contract / gate|Consumer|Production-facing|Notes|

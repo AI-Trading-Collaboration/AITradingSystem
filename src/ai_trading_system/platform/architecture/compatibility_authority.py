@@ -555,7 +555,7 @@ def build_repository_authority(
         ensure_ascii=False,
     )
     section_id = "phase_devx_006c_compatibility_authority_fragmentation"
-    source_paths = [
+    c_source_paths = [
         "config/architecture/devx_006c_compatibility_authority.yaml",
         "docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md",
         "docs/requirements/DEVX-006C_Compatibility_Authority_Fragmentation.md",
@@ -611,8 +611,8 @@ def build_repository_authority(
             "growth_assuming_direct_consumer_count": 0,
             "runtime_legacy_append_writer_count": 0,
         },
-        "superseded_live_source_paths": source_paths,
-        "sources": [_source_record(root, path) for path in source_paths],
+        "superseded_live_source_paths": c_source_paths,
+        "sources": [_source_record(root, path) for path in c_source_paths],
         "supersession": {
             "historical_hashes_rewritten": False,
             "current_hash_authority": f"{section_id}.sources",
@@ -628,27 +628,54 @@ def build_repository_authority(
         section_id=section_id,
         section=section,
     )
+    rendered_fragments = [(section_id, relative, record, fragment_bytes)]
+    d_policy_path = root / "config/architecture/devx_006d_report_catalog_flow_authority.yaml"
+    if d_policy_path.exists():
+        d_section_id, d_section = _devx_006d_section(
+            root,
+            policy=policy,
+            legacy_baseline=legacy_baseline,
+            inherited_source_paths=c_source_paths,
+        )
+        d_relative, d_record, d_fragment_bytes = render_fragment(
+            section_id=d_section_id,
+            section=d_section,
+        )
+        rendered_fragments.append(
+            (d_section_id, d_relative, d_record, d_fragment_bytes)
+        )
     index, index_bytes = render_index(
         policy=policy,
-        fragments=[(section_id, relative, record, fragment_bytes)],
+        fragments=rendered_fragments,
     )
-    fragment_path = Path(policy["fragment_root"]) / Path(relative)
+    fragment_paths = [
+        Path(policy["fragment_root"]) / Path(fragment[1])
+        for fragment in rendered_fragments
+    ]
+    latest_section_id, _, latest_record, latest_fragment_bytes = rendered_fragments[-1]
+    fragment_path = fragment_paths[-1]
     index_path = Path(policy["index_path"])
     inventory_path = Path(policy["consumer_inventory_path"])
     if write:
-        write_bytes_atomic(root / fragment_path, fragment_bytes)
+        for path, rendered in zip(
+            fragment_paths,
+            (fragment[3] for fragment in rendered_fragments),
+            strict=True,
+        ):
+            write_bytes_atomic(root / path, rendered)
         write_bytes_atomic(root / index_path, index_bytes)
         write_bytes_atomic(root / inventory_path, inventory_bytes)
     return {
         "status": "PASS",
         "fragment_path": fragment_path.as_posix(),
-        "fragment_sha256": _digest(fragment_bytes),
+        "fragment_sha256": _digest(latest_fragment_bytes),
+        "fragment_count": len(rendered_fragments),
         "index_path": index_path.as_posix(),
         "index_sha256": _digest(index_bytes),
         "consumer_inventory_path": inventory_path.as_posix(),
         "consumer_inventory_sha256": _digest(inventory_bytes),
-        "section_id": section_id,
-        "section_sha256": record["section_sha256"],
+        "section_id": latest_section_id,
+        "section_sha256": latest_record["section_sha256"],
         "index": index,
     }
 
@@ -659,6 +686,166 @@ def _source_record(root: Path, portable: str) -> dict[str, str]:
         "path": portable,
         "sha256": _digest(content),
         "hash_normalization": "git_eol_lf",
+    }
+
+
+def _devx_006d_section(
+    root: Path,
+    *,
+    policy: Mapping[str, Any],
+    legacy_baseline: Mapping[str, Any],
+    inherited_source_paths: Sequence[str],
+) -> tuple[str, dict[str, Any]]:
+    section_id = "phase_devx_006d_report_catalog_flow_lossless_fragmentation"
+    d_policy_path = "config/architecture/devx_006d_report_catalog_flow_authority.yaml"
+    d_policy = _mapping(
+        load_strict_yaml_text(
+            _regular_path(root, d_policy_path, "devx_006d_policy").read_text(
+                encoding="utf-8"
+            ),
+            label=d_policy_path,
+        ),
+        "devx_006d_policy",
+    )
+    d_index_path = _portable_path(d_policy.get("index_path"), "devx_006d.index_path")
+    d_inventory_path = _portable_path(
+        d_policy.get("consumer_inventory_path"),
+        "devx_006d.consumer_inventory_path",
+    )
+    d_index_content = _regular_path(root, d_index_path, "devx_006d_index").read_bytes()
+    d_inventory_content = _regular_path(
+        root,
+        d_inventory_path,
+        "devx_006d_inventory",
+    ).read_bytes()
+    d_index = _strict_json_bytes(d_index_content, d_index_path)
+    d_inventory = _strict_json_bytes(d_inventory_content, d_inventory_path)
+    if d_index.get("status") != "PASS" or d_index.get("source_of_truth") != (
+        "LEGACY_MONOLITH"
+    ):
+        _fail("AUTHORITY_DEVX_006D_INDEX_INVALID", d_index_path)
+    if d_inventory.get("status") != "PASS" or d_inventory.get("cutover_ready") is not False:
+        _fail("AUTHORITY_DEVX_006D_INVENTORY_INVALID", d_inventory_path)
+    raw_targets = d_index.get("targets")
+    if not isinstance(raw_targets, list) or not raw_targets:
+        _fail("AUTHORITY_DEVX_006D_TARGETS_INVALID", d_index_path)
+    target_summary: list[dict[str, Any]] = []
+    fragment_count = 0
+    entry_count = 0
+    for position, raw_target in enumerate(raw_targets):
+        target = _mapping(raw_target, f"devx_006d.targets[{position}]")
+        source_seal = _mapping(
+            target.get("source_seal"),
+            f"devx_006d.targets[{position}].source_seal",
+        )
+        target_entry_count = _positive_or_zero_int(
+            target.get("entry_count"),
+            f"devx_006d.targets[{position}].entry_count",
+        )
+        target_fragment_count = _positive_or_zero_int(
+            target.get("fragment_count"),
+            f"devx_006d.targets[{position}].fragment_count",
+        )
+        entry_count += target_entry_count
+        fragment_count += target_fragment_count
+        target_summary.append(
+            {
+                "target_id": _string(target.get("target_id"), "devx_006d.target_id"),
+                "path": _portable_path(target.get("path"), "devx_006d.target.path"),
+                "file_sha256": _sha256(
+                    source_seal.get("file_sha256"),
+                    "devx_006d.target.file_sha256",
+                ),
+                "byte_count": _positive_or_zero_int(
+                    source_seal.get("byte_count"),
+                    "devx_006d.target.byte_count",
+                ),
+                "entry_count": target_entry_count,
+                "fragment_count": target_fragment_count,
+                "coverage_percent": _positive_or_zero_int(
+                    target.get("coverage_percent"),
+                    "devx_006d.target.coverage_percent",
+                ),
+            }
+        )
+    d_source_paths = [
+        d_policy_path,
+        "config/report_registry.yaml",
+        "docs/artifact_catalog.md",
+        "docs/requirements/DEVX-006_Fragmented_Generated_Authority_and_Stable_Task_Shadow_v2.md",
+        "docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md",
+        "docs/system_flow.md",
+        "docs/task_register.md",
+        d_index_path,
+        d_inventory_path,
+        "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
+        "inputs/architecture/arch_004e_architecture_fitness.yaml",
+        "inputs/architecture/arch_004e_module_manifest.yaml",
+        "inputs/architecture/arch_004e_test_manifest.yaml",
+        "inputs/architecture/arch_004g_deprecation_inventory.yaml",
+        "inputs/architecture/arch_005_task_registry_baseline.yaml",
+        "inputs/architecture/arch_005_task_shadow_index.yaml",
+        "inputs/architecture/arch_005_task_shadow_v2_index.yaml",
+        "scripts/architecture_report_catalog_flow_authority.py",
+        "src/ai_trading_system/platform/architecture/compatibility_authority.py",
+        "src/ai_trading_system/platform/architecture/report_catalog_flow_authority.py",
+        "tests/test_arch_004_refactor_policy.py",
+        "tests/test_arch_004g_deprecation.py",
+        "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_devx_006d_report_catalog_flow_authority.py",
+    ]
+    source_paths = list(dict.fromkeys([*inherited_source_paths, *d_source_paths]))
+    return section_id, {
+        "schema_version": "devx_006d_report_catalog_flow_lossless_fragmentation.v1",
+        "task_id": _string(d_policy.get("task_id"), "devx_006d.task_id"),
+        "status": "INACTIVE_SHADOW",
+        "exact_start_base": _string(
+            d_policy.get("exact_start_base"),
+            "devx_006d.exact_start_base",
+        ),
+        "owner_decision": _string(
+            d_policy.get("owner_decision"),
+            "devx_006d.owner_decision",
+        ),
+        "legacy_prefix_sha256": policy["legacy_prefix"]["file_sha256"],
+        "authority_contract": dict(_mapping(policy["contract"], "contract")),
+        "report_catalog_flow_fragment_authority": {
+            "source_of_truth": "LEGACY_MONOLITH",
+            "fragment_shadow_active": False,
+            "index_path": d_index_path,
+            "index_sha256": _digest(d_index_content),
+            "consumer_inventory_path": d_inventory_path,
+            "consumer_inventory_sha256": _digest(d_inventory_content),
+            "target_count": len(target_summary),
+            "entry_count": entry_count,
+            "fragment_count": fragment_count,
+            "targets": target_summary,
+            "rollback_mode": "IGNORE_INACTIVE_SHADOW",
+        },
+        "consumer_contract": {
+            "inventory_status": d_inventory["status"],
+            "consumer_count": _positive_or_zero_int(
+                d_inventory.get("consumer_count"),
+                "devx_006d.consumer_count",
+            ),
+            "pending_owner_cutover_count": _positive_or_zero_int(
+                d_inventory.get("pending_owner_cutover_count"),
+                "devx_006d.pending_owner_cutover_count",
+            ),
+            "cutover_ready": False,
+        },
+        "superseded_live_source_paths": source_paths,
+        "sources": [_source_record(root, path) for path in source_paths],
+        "supersession": {
+            "historical_hashes_rewritten": False,
+            "current_hash_authority": f"{section_id}.sources",
+        },
+        "generated_fragment_authority": _task_shadow_fragment_authority(
+            root,
+            legacy_baseline,
+        ),
+        "production_effect": d_policy.get("production_effect"),
+        "broker_action": d_policy.get("broker_action"),
     }
 
 

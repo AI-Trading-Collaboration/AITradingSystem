@@ -70,6 +70,9 @@ TRADING_2504_OWNER_DECISION_MANIFEST_PHASE_KEY = (
 DEVX_006C_COMPATIBILITY_AUTHORITY_PHASE_KEY = (
     "phase_devx_006c_compatibility_authority_fragmentation"
 )
+DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_PHASE_KEY = (
+    "phase_devx_006d_report_catalog_flow_lossless_fragmentation"
+)
 TRADING_2480_CAPABILITY_DISCOVERY_SUCCESSOR_CURRENT_AUTHORITY_PATHS = frozenset(
     {
         ("docs/requirements/TRADING-2492_QC_QQQ_Options_Bounded_Free_Cloud_Pilot_V1.md"),
@@ -172,6 +175,7 @@ def _assert_historical_source_is_current_or_superseded(
             TRADING_2502_OWNER_DECISION_PACK_PHASE_KEY,
             TRADING_2504_OWNER_DECISION_MANIFEST_PHASE_KEY,
             DEVX_006C_COMPATIBILITY_AUTHORITY_PHASE_KEY,
+            DEVX_006D_REPORT_CATALOG_FLOW_AUTHORITY_PHASE_KEY,
         }
     ):
         section_ids = list(baseline)

@@ -9,16 +9,25 @@
   },
   "entries": [
     {
-      "entry_sha256": "222f1877e0e16f2350334b5cd8b7f759bb5c7bdb662291ccb8dcf0e4a2309b88",
-      "fragment_path": "registry/architecture_compatibility_authority/fragments/a8/a87031088ebb2e25fd6d8864209fb80d34fee84f32ead3700ea5393c2abcf5dd.json",
-      "fragment_sha256": "87d576511fe82a6422595efb1e3784dec2c17f5308bbee0fa08b329bfe570a67",
+      "entry_sha256": "347048eb05a8ab8b8553a8ecba7844dd4d7bbbeeddb3af3b0371cd88a70a63eb",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/23/2389537ca95e4fcfbe5fdc782fda802e2be266ff95f705f7c878beefd98398ee.json",
+      "fragment_sha256": "8c765657a16f5d7be1910040b46180ce665eeeba4e0ff37512a689c18b10a1e3",
       "order": 0,
       "previous_entry_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
       "section_id": "phase_devx_006c_compatibility_authority_fragmentation",
-      "section_sha256": "a87031088ebb2e25fd6d8864209fb80d34fee84f32ead3700ea5393c2abcf5dd"
+      "section_sha256": "2389537ca95e4fcfbe5fdc782fda802e2be266ff95f705f7c878beefd98398ee"
+    },
+    {
+      "entry_sha256": "01569b9e61194153fbab1a064ec4c4ef364d11e0f3830d7a3094598b10b1fe1b",
+      "fragment_path": "registry/architecture_compatibility_authority/fragments/3d/3d86a1bf9ded46a03438e27c2e378770abeb4f97af08e3ba2bd39e4a74208094.json",
+      "fragment_sha256": "89aff91482c349f0c1ebb726d5d391138d4e41ef61d14dddb09b2c402738c1f9",
+      "order": 1,
+      "previous_entry_sha256": "347048eb05a8ab8b8553a8ecba7844dd4d7bbbeeddb3af3b0371cd88a70a63eb",
+      "section_id": "phase_devx_006d_report_catalog_flow_lossless_fragmentation",
+      "section_sha256": "3d86a1bf9ded46a03438e27c2e378770abeb4f97af08e3ba2bd39e4a74208094"
     }
   ],
-  "final_chain_sha256": "222f1877e0e16f2350334b5cd8b7f759bb5c7bdb662291ccb8dcf0e4a2309b88",
+  "final_chain_sha256": "01569b9e61194153fbab1a064ec4c4ef364d11e0f3830d7a3094598b10b1fe1b",
   "genesis_chain_sha256": "9be38b19ac0ccccd821200bc38b1fb86ce86e1052e7f4496595da5b40d475bcd",
   "legacy_prefix": {
     "byte_count": 3151107,

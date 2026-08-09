@@ -1,0 +1,123 @@
+schema_version: arch_005_task_shadow_fragment.v2
+shadow_only: true
+source_of_truth: LEGACY_MARKDOWN
+stable_task_identity:
+  task_id: DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION
+  task_id_sha256: 29037f01a39ff8c92042af43800360f9f4dced7f91dbbe5dcc7dc84f6f5a6697
+task_record:
+  task_id: DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION
+  title: null
+  domain: Developer experience / report registry、artifact catalog 与 system flow 的
+    full-entry v2 lossless shadow
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: DEVX-006D architecture coordinator：完成 final-tree formal/Full、ordinary
+    push/cleanup 与 exact RELEASE；随后交 ARCH-005 S5 coordinator
+  requirement_refs:
+  - docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md`。Exact
+    base=`57bec20b15a7b1d471bdb774a2966bb81f02a037`；不激活既有 shallow fragments，不执行 source-of-truth
+    cutover；claim-expansion incident 已留档。
+  acceptance_criteria:
+  - criterion_id: legacy_markdown
+    text: 三份 monolith exact seal；full-entry v2 content-addressed fragments/hash-chain
+      index；shadow render 逐字节相同、coverage=100%、silent drop=0；duplicate/missing/reorder/tamper/path/symlink/chain/collision
+      fail closed；direct consumer inventory/rollback；focused/Architecture/Contract/Integration/Reproducibility/Full
+      与 ordinary push/cleanup PASS；`production_effect=none`。
+  production_effect: UNKNOWN_LEGACY
+  broker_action: UNKNOWN_LEGACY
+legacy_row_evidence:
+  row_sha256: dc56b330cc13767c123f9edbfd73fe01840e3654816afff63ddcb0f084f31098
+  cell_count: 8
+  all_cells:
+  - DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION
+  - Developer experience / report registry、artifact catalog 与 system flow 的 full-entry
+    v2 lossless shadow
+  - P1
+  - BASELINE_DONE
+  - DEVX-006D architecture coordinator：完成 final-tree formal/Full、ordinary push/cleanup
+    与 exact RELEASE；随后交 ARCH-005 S5 coordinator
+  - 详见 `docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md`。Exact
+    base=`57bec20b15a7b1d471bdb774a2966bb81f02a037`；不激活既有 shallow fragments，不执行 source-of-truth
+    cutover；claim-expansion incident 已留档。
+  - 三份 monolith exact seal；full-entry v2 content-addressed fragments/hash-chain index；shadow
+    render 逐字节相同、coverage=100%、silent drop=0；duplicate/missing/reorder/tamper/path/symlink/chain/collision
+    fail closed；direct consumer inventory/rollback；focused/Architecture/Contract/Integration/Reproducibility/Full
+    与 ordinary push/cleanup PASS；`production_effect=none`。
+  - 2026-08-09：3 targets / 2850 entries / 192 fragments；3/3 byte-identical；compact
+    index=`874673 bytes / feb16525...b050`；consumer inventory=`159 / pending=15 /
+    cutover_ready=false`；compatibility latest section 已转 D inactive shadow；focused
+    cross-layer=`111 passed`，进入 final closeout。
+  raw_line: '|DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION|Developer experience
+    / report registry、artifact catalog 与 system flow 的 full-entry v2 lossless shadow|P1|BASELINE_DONE|DEVX-006D
+    architecture coordinator：完成 final-tree formal/Full、ordinary push/cleanup 与 exact
+    RELEASE；随后交 ARCH-005 S5 coordinator|详见 `docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md`。Exact
+    base=`57bec20b15a7b1d471bdb774a2966bb81f02a037`；不激活既有 shallow fragments，不执行 source-of-truth
+    cutover；claim-expansion incident 已留档。|三份 monolith exact seal；full-entry v2 content-addressed
+    fragments/hash-chain index；shadow render 逐字节相同、coverage=100%、silent drop=0；duplicate/missing/reorder/tamper/path/symlink/chain/collision
+    fail closed；direct consumer inventory/rollback；focused/Architecture/Contract/Integration/Reproducibility/Full
+    与 ordinary push/cleanup PASS；`production_effect=none`。|2026-08-09：3 targets /
+    2850 entries / 192 fragments；3/3 byte-identical；compact index=`874673 bytes /
+    feb16525...b050`；consumer inventory=`159 / pending=15 / cutover_ready=false`；compatibility
+    latest section 已转 D inactive shadow；focused cross-layer=`111 passed`，进入 final
+    closeout。|'
+  history_completeness: LEGACY_HISTORY_PARTIAL
+  ambiguous_unescaped_pipe_boundaries: false
+initial_event:
+  schema_version: task_event.v1
+  event_id: legacy-import-dc56b330cc13767c123f9edb
+  task_id: DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION
+  event_type: LEGACY_IMPORT
+  occurred_at: null
+  actor: devx_006_shadow_v2_importer
+  change_id: DEVX-006-TASK-SHADOW-V2
+  lane_id: null
+  base_commit: 152f2d332b174018ad9fca2ecb568469eaeaf0f8
+  previous_state_event_id: null
+  from_status: null
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: DEVX-006D architecture coordinator：完成 final-tree formal/Full、ordinary
+      push/cleanup 与 exact RELEASE；随后交 ARCH-005 S5 coordinator
+    notes: 2026-08-09：3 targets / 2850 entries / 192 fragments；3/3 byte-identical；compact
+      index=`874673 bytes / feb16525...b050`；consumer inventory=`159 / pending=15
+      / cutover_ready=false`；compatibility latest section 已转 D inactive shadow；focused
+      cross-layer=`111 passed`，进入 final closeout。
+  rationale: Lossless legacy row import with mutable source location held only in
+    the v2 index.
+  evidence_refs:
+  - sha256:dc56b330cc13767c123f9edbfd73fe01840e3654816afff63ddcb0f084f31098
+  history_completeness: LEGACY_HISTORY_PARTIAL
+projection:
+  legacy_first_eight_cells:
+  - DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION
+  - Developer experience / report registry、artifact catalog 与 system flow 的 full-entry
+    v2 lossless shadow
+  - P1
+  - BASELINE_DONE
+  - DEVX-006D architecture coordinator：完成 final-tree formal/Full、ordinary push/cleanup
+    与 exact RELEASE；随后交 ARCH-005 S5 coordinator
+  - 详见 `docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md`。Exact
+    base=`57bec20b15a7b1d471bdb774a2966bb81f02a037`；不激活既有 shallow fragments，不执行 source-of-truth
+    cutover；claim-expansion incident 已留档。
+  - 三份 monolith exact seal；full-entry v2 content-addressed fragments/hash-chain index；shadow
+    render 逐字节相同、coverage=100%、silent drop=0；duplicate/missing/reorder/tamper/path/symlink/chain/collision
+    fail closed；direct consumer inventory/rollback；focused/Architecture/Contract/Integration/Reproducibility/Full
+    与 ordinary push/cleanup PASS；`production_effect=none`。
+  - 2026-08-09：3 targets / 2850 entries / 192 fragments；3/3 byte-identical；compact
+    index=`874673 bytes / feb16525...b050`；consumer inventory=`159 / pending=15 /
+    cutover_ready=false`；compatibility latest section 已转 D inactive shadow；focused
+    cross-layer=`111 passed`，进入 final closeout。
+  docs_links:
+  - docs/requirements/DEVX-006D_Report_Catalog_Flow_Lossless_Fragmentation.md
+  terminal: false
+  raw_row_sha256: dc56b330cc13767c123f9edbfd73fe01840e3654816afff63ddcb0f084f31098
+producer_version: arch_005_shadow_registry_compiler.v2
+fragment_checksum: 3ba67b7d1804518e5850adcee6165ad2f2b621d6c6ee08fd00d5dc6043ed2f55
