@@ -55,6 +55,7 @@ from ai_trading_system.contracts.strategy_research_explorer import (
     ResearchResultCard,
 )
 from ai_trading_system.contracts.strategy_research_page_effectiveness import (
+    PageAcceptanceRecord,
     PageAcceptanceStatus,
     PageArtifactIdentity,
     PageFreshnessStatus,
@@ -177,6 +178,8 @@ def build_cited_query_showcase(
     repository_root: Path | None = None,
     page_engineering_status: PageAcceptanceStatus = PageAcceptanceStatus.NOT_EXECUTED,
     page_engineering_evidence_refs: Sequence[str] = (),
+    page_owner_visual_review: PageAcceptanceRecord | None = None,
+    page_reader_comprehension_review: PageAcceptanceRecord | None = None,
 ) -> AtlasCitedQueryShowcase:
     snapshot = load_validated_snapshot_payload(snapshot_payload)
     before, after, diff = load_validated_diff_payloads(
@@ -295,6 +298,8 @@ def build_cited_query_showcase(
         repository_root=root,
         engineering_status=page_engineering_status,
         engineering_evidence_refs=page_engineering_evidence_refs,
+        owner_visual_review=page_owner_visual_review,
+        reader_comprehension_review=page_reader_comprehension_review,
     )
     return AtlasCitedQueryShowcase(
         responses=ordered,
@@ -2033,6 +2038,8 @@ def write_cited_query_artifacts(
         rendered_artifacts=rendered_identities,
         engineering_status=preliminary.acceptance[0].status,
         engineering_evidence_refs=preliminary.acceptance[0].evidence_refs,
+        owner_visual_review=preliminary.acceptance[1],
+        reader_comprehension_review=preliminary.acceptance[2],
     )
     validation = validate_page_effectiveness_manifest(
         repository_root=Path(__file__).resolve().parents[3],

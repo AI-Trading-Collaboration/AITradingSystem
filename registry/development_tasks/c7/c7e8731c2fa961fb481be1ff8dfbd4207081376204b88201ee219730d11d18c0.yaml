@@ -13,19 +13,22 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Project owner：在新页面重新执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
+  next_owner: Atlas page engineering：把 freshness validator 接入相关 main 集成后与验收/分享前门禁；Project
+    owner 独立确认 OWNER_VISUAL_REVIEW
   requirement_refs:
   - docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: canonical requirement binding failure-fix
-    已记录；重建 task shadow/compatibility 后保持相同 24 项页面覆盖重跑，再执行 final-tree 五级门与普通 push。自动化不代签
-    Owner visual/reader comprehension。
+  unstructured_legacy_blocker_or_next_step: READER_COMPREHENSION_REVIEW=PASS 已持久化到
+    canonical HTML/manifest；human review track mismatch fail closed。剩余时效性缺口是自动触发 wiring，完成前由
+    Atlas page coordinator 显式运行 validator。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 八阶段均展示为什么、具体工作、三维进展、预期产物、后续用途与边界；13-concept graph 可递归解释并返回节点；canonical sidecar/freshness/browser/final-tree
-      gates PASS；Owner visual/reader comprehension 保持独立事实。详见 [TRADING-2506 requirement](docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md)。
+    text: 八阶段与递归概念解释已获 READER_COMPREHENSION_REVIEW=PASS；真实 human attestation 在 renderer→final
+      manifest 写入链保持 typed/replayable；canonical source/task/rendered freshness fail
+      closed；相关 main 集成后及验收/分享前自动执行 validator，STALE/UNCLASSIFIED 阻断当前声明；OWNER_VISUAL_REVIEW
+      保持独立事实。详见 [TRADING-2506 requirement](docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md)。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -113,23 +116,86 @@ events:
   - change:trading-2506-requirement-binding-failure-fix-20260810t064603z
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-53505c5474a4bbd170aebcadbbbac406
+- schema_version: task_event.v1
+  task_id: TRADING-2506_ATLAS_WORK_PROGRESS_RECURSIVE_EXPLANATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-10T10:18:46Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2506-reader-pass-freshness-boundary-20260810t101740z
+  lane_id: null
+  base_commit: ab8becdadb9a9dad6c09025007a7b9883448c23f
+  previous_state_event_id: task-event-53505c5474a4bbd170aebcadbbbac406
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas page engineering：把 freshness validator 接入相关 main 集成后与验收/分享前门禁；Project
+      owner 独立确认 OWNER_VISUAL_REVIEW
+    blocker_or_next_step: READER_COMPREHENSION_REVIEW 已由 Project owner 真实验收 PASS；当前
+      main 复核为 REPOSITORY_AHEAD_NO_RELEVANT_DRIFT。静态页面不会自行触发校验，自动门禁 wiring 尚未完成；完成前由
+      Atlas page coordinator 显式运行 validator。
+    acceptance_criteria: 八阶段与递归概念解释已获 READER_COMPREHENSION_REVIEW=PASS；canonical source/task/rendered
+      freshness 保持 fail closed；相关 main 集成后及验收/分享前自动执行 validator，STALE/UNCLASSIFIED
+      阻断当前声明；OWNER_VISUAL_REVIEW 保持独立事实。详见 [TRADING-2506 requirement](docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md)。
+    notes: 2026-08-10：Project owner 确认 canonical 页面可读性验收通过。即时复核 head=ab8becdad…、manifest
+      source snapshot=974215911…，validation=PASS/freshness=REPOSITORY_AHEAD_NO_RELEVANT_DRIFT；未发现受管语义来源、任务覆盖或
+      HTML identity 漂移。自动触发尚未接入，不得表述为已自动保证时效性。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2506-reader-pass-freshness-boundary-20260810t101740z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4027f6c7cb0e6a48eb8433c820be4742
+- schema_version: task_event.v1
+  task_id: TRADING-2506_ATLAS_WORK_PROGRESS_RECURSIVE_EXPLANATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-10T10:45:13Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2506-human-review-persistence-20260810-v1
+  lane_id: null
+  base_commit: ab8becdadb9a9dad6c09025007a7b9883448c23f
+  previous_state_event_id: task-event-4027f6c7cb0e6a48eb8433c820be4742
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas page engineering：把 freshness validator 接入相关 main 集成后与验收/分享前门禁；Project
+      owner 独立确认 OWNER_VISUAL_REVIEW
+    blocker_or_next_step: READER_COMPREHENSION_REVIEW=PASS 已持久化到 canonical HTML/manifest；human
+      review track mismatch fail closed。剩余时效性缺口是自动触发 wiring，完成前由 Atlas page coordinator
+      显式运行 validator。
+    acceptance_criteria: 八阶段与递归概念解释已获 READER_COMPREHENSION_REVIEW=PASS；真实 human attestation
+      在 renderer→final manifest 写入链保持 typed/replayable；canonical source/task/rendered
+      freshness fail closed；相关 main 集成后及验收/分享前自动执行 validator，STALE/UNCLASSIFIED 阻断当前声明；OWNER_VISUAL_REVIEW
+      保持独立事实。详见 [TRADING-2506 requirement](docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md)。
+    notes: 2026-08-10：修复 writer 重建 manifest 时丢失 human review 的合同缺口；canonical HTML/manifest/sidecar
+      显示 engineering PASS、reader PASS、visual PENDING。页面 focused 20 PASS；page+historical+compat
+      replacement 245 PASS。首次同覆盖只发生 outer timeout，无 node FAIL且不作证据。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2506-human-review-persistence-20260810-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-d791b159ffd339314e9a8b38336ed2d2
 projection:
   legacy_first_eight_cells:
   - TRADING-2506_ATLAS_WORK_PROGRESS_RECURSIVE_EXPLANATION_V1
   - Atlas strategy research page / work progress and recursive concept explanation
   - P1
   - BASELINE_DONE
-  - Project owner：在新页面重新执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
-  - canonical requirement binding failure-fix 已记录；重建 task shadow/compatibility 后保持相同
-    24 项页面覆盖重跑，再执行 final-tree 五级门与普通 push。自动化不代签 Owner visual/reader comprehension。
-  - 八阶段均展示为什么、具体工作、三维进展、预期产物、后续用途与边界；13-concept graph 可递归解释并返回节点；canonical sidecar/freshness/browser/final-tree
-    gates PASS；Owner visual/reader comprehension 保持独立事实。详见 [TRADING-2506 requirement](docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md)。
-  - 2026-08-10：最终字节 focused 首轮 9 PASS/15 FAIL，全部为 requirement_refs 缺失级联；page effectiveness
-    正确 fail closed。通过 append-only canonical update 恢复 requirement binding，不改变页面解释语义。
+  - Atlas page engineering：把 freshness validator 接入相关 main 集成后与验收/分享前门禁；Project owner
+    独立确认 OWNER_VISUAL_REVIEW
+  - READER_COMPREHENSION_REVIEW=PASS 已持久化到 canonical HTML/manifest；human review track
+    mismatch fail closed。剩余时效性缺口是自动触发 wiring，完成前由 Atlas page coordinator 显式运行 validator。
+  - 八阶段与递归概念解释已获 READER_COMPREHENSION_REVIEW=PASS；真实 human attestation 在 renderer→final
+    manifest 写入链保持 typed/replayable；canonical source/task/rendered freshness fail
+    closed；相关 main 集成后及验收/分享前自动执行 validator，STALE/UNCLASSIFIED 阻断当前声明；OWNER_VISUAL_REVIEW
+    保持独立事实。详见 [TRADING-2506 requirement](docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md)。
+  - 2026-08-10：修复 writer 重建 manifest 时丢失 human review 的合同缺口；canonical HTML/manifest/sidecar
+    显示 engineering PASS、reader PASS、visual PENDING。页面 focused 20 PASS；page+historical+compat
+    replacement 245 PASS。首次同覆盖只发生 outer timeout，无 node FAIL且不作证据。
   docs_links:
   - docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md
   terminal: false
-  canonical_row_sha256: 4d996372988824baf67e42b43ddb058447a6f7039697312686825af51710731a
-last_event_id: task-event-53505c5474a4bbd170aebcadbbbac406
+  canonical_row_sha256: 0f84e5d334d357b40899f38171cbe171bc1d440033380773409e19cc53d9c852
+last_event_id: task-event-d791b159ffd339314e9a8b38336ed2d2
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 27321d22a3f8df91384baeebc3be8a5cd62d5d8cb8f018749c190d0bb296718e
+fragment_checksum: c00d38ec5c8334d6a03690b6a49b1295d26778dc4dba7c94b36afb59b35bd849

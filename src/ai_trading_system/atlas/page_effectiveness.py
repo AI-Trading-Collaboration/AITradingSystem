@@ -339,23 +339,42 @@ def _unclassified_successors(
 
 
 def _acceptance(
-    *, engineering_status: PageAcceptanceStatus, engineering_evidence_refs: Sequence[str]
+    *,
+    engineering_status: PageAcceptanceStatus,
+    engineering_evidence_refs: Sequence[str],
+    owner_visual_review: PageAcceptanceRecord | None,
+    reader_comprehension_review: PageAcceptanceRecord | None,
 ) -> tuple[PageAcceptanceRecord, ...]:
+    def human_review(
+        track: PageAcceptanceTrack,
+        review: PageAcceptanceRecord | None,
+    ) -> PageAcceptanceRecord:
+        if review is None:
+            return PageAcceptanceRecord(
+                track=track,
+                status=PageAcceptanceStatus.PENDING_REVIEW,
+                evidence_refs=(),
+            )
+        if review.track is not track:
+            raise PageEffectivenessError(
+                "PAGE_EFFECTIVENESS_HUMAN_REVIEW_TRACK_INVALID:"
+                f"expected={track.value}:actual={review.track.value}"
+            )
+        return review
+
     return (
         PageAcceptanceRecord(
             track=PageAcceptanceTrack.ENGINEERING_VALIDATION,
             status=engineering_status,
             evidence_refs=tuple(engineering_evidence_refs),
         ),
-        PageAcceptanceRecord(
-            track=PageAcceptanceTrack.OWNER_VISUAL_REVIEW,
-            status=PageAcceptanceStatus.PENDING_REVIEW,
-            evidence_refs=(),
+        human_review(
+            PageAcceptanceTrack.OWNER_VISUAL_REVIEW,
+            owner_visual_review,
         ),
-        PageAcceptanceRecord(
-            track=PageAcceptanceTrack.READER_COMPREHENSION_REVIEW,
-            status=PageAcceptanceStatus.PENDING_REVIEW,
-            evidence_refs=(),
+        human_review(
+            PageAcceptanceTrack.READER_COMPREHENSION_REVIEW,
+            reader_comprehension_review,
         ),
     )
 
@@ -368,6 +387,8 @@ def build_page_effectiveness_manifest(
     rendered_artifacts: Sequence[PageArtifactIdentity] = (),
     engineering_status: PageAcceptanceStatus = PageAcceptanceStatus.NOT_EXECUTED,
     engineering_evidence_refs: Sequence[str] = (),
+    owner_visual_review: PageAcceptanceRecord | None = None,
+    reader_comprehension_review: PageAcceptanceRecord | None = None,
 ) -> StrategyResearchPageEffectivenessManifest:
     root = repository_root.resolve()
     policy = load_page_effectiveness_policy(repository_root=root)
@@ -403,6 +424,8 @@ def build_page_effectiveness_manifest(
         acceptance=_acceptance(
             engineering_status=engineering_status,
             engineering_evidence_refs=engineering_evidence_refs,
+            owner_visual_review=owner_visual_review,
+            reader_comprehension_review=reader_comprehension_review,
         ),
     )
     replay = StrategyResearchPageEffectivenessManifest.from_json_bytes(
@@ -433,6 +456,8 @@ def validate_page_effectiveness_manifest(
             rendered_artifacts=manifest.rendered_artifacts,
             engineering_status=manifest.acceptance[0].status,
             engineering_evidence_refs=manifest.acceptance[0].evidence_refs,
+            owner_visual_review=manifest.acceptance[1],
+            reader_comprehension_review=manifest.acceptance[2],
         )
         if manifest.policy_sha256 != expected.policy_sha256:
             errors.append("POLICY_DRIFT")

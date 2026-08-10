@@ -139,10 +139,25 @@
 
 ## 开放问题与退出条件
 
-- 本任务交付时 engineering validation 可由自动化写入；Owner visual 与 reader comprehension 仍只接受真实人工事实；
+- 本任务交付时 engineering validation 可由自动化写入；Owner visual 与 reader comprehension 仍只接受真实人工事实；截至 2026-08-10，`READER_COMPREHENSION_REVIEW=PASS`，`OWNER_VISUAL_REVIEW` 仍待独立确认；
 - 若新的 reader text 需要解释投资阈值或策略判断，停止并另开最小 reviewed policy wave；
 - 若 concept graph 只能靠硬编码 DOM 跳转而不能 canonical replay，保持任务未通过；
 - 若任何新增 successor 影响当前页面而未分类，page freshness 必须 fail closed。
+
+## 页面时效性运行边界
+
+当前 freshness contract 已能把页面绑定到 exact repository commit、25 项任务覆盖、15 份语义来源及 rendered HTML identity，并区分 `CURRENT`、`REPOSITORY_AHEAD_NO_RELEVANT_DRIFT`、`STALE_REBUILD_REQUIRED` 与 `UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`。这证明“执行校验时”可以发现相关漂移，但静态 HTML 不会自行感知仓库变化。
+
+后续时效性保证必须采用事件驱动门禁，不以未经评审的“生成后 N 天”阈值代替来源事实：
+
+1. 每次影响 Atlas 页面来源、任务 successor coverage 或 renderer identity 的 main 集成后运行 freshness validator；
+2. 每次页面验收、分享或发布前再次运行同一 validator；
+3. `STALE_REBUILD_REQUIRED` 或 `UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED` 必须阻断“当前页面”声明，并要求从 latest canonical sources 重建页面；
+4. `REPOSITORY_AHEAD_NO_RELEVANT_DRIFT` 可以继续阅读，但页面必须展示 exact source snapshot commit、current repository commit 与判定时间，不能静默显示为 `CURRENT`；
+5. 重建后重新校验 source/task/rendered identity；仅视觉来源发生变化时追加 browser regression，不能用旧截图替代新页面身份；
+6. 定期运行只能作为漏检兜底，正式 authority 仍是相关来源变化事件与验收前门禁。
+
+自动触发尚未接入统一集成/周期运行入口，因此在该 wiring 完成前，freshness validator 仍需由 Atlas page coordinator 在上述两个边界显式执行；不得把“已有校验函数”表述为“已自动保证时效性”。
 
 ## Progress notes
 
@@ -151,3 +166,5 @@
 - 2026-08-10：loopback HTTP + Playwright CLI 工程验收 PASS。desktop 1440×1200 与 mobile 390×844 均无水平溢出；第 6 节为“页面可靠性检查”，主标题“检查页面是否仍代表最新研究状态”，展开后为 3 项工作、3 项产物、3 个独立进展维度、4 个概念入口，状态审计默认折叠。概念“页面快照”具备通俗定义、2 个继续解释链接、1 个返回节点链接和 `:target` 高亮。截图保存在 `visual_regression/trading_2506_desktop.png` 与 `trading_2506_mobile.png`；该自动化事实不代签 Owner visual/reader comprehension。
 - 2026-08-10：最终字节 focused 首轮为 `9 passed / 15 failed`；15 个失败均由 2506 canonical task projection 缺少本 requirement 的 `requirement_refs` 引起，page effectiveness 按设计 fail closed，非页面语义回归。采用 append-only task update，在验收条件中加入 canonical Markdown requirement link，随后重建 task shadow、compatibility authority 并保持相同 24 项覆盖重跑。
 - 2026-08-10：首次完整 Full 为 `5 failed / 8711 passed / 3 skipped`，parent artifact=`outputs/validation_runtime/full_20260810T075448Z/test_runtime_summary.json`。四项失败来自本次新增 `system_flow`/`artifact_catalog` 条目后 DEVX-006D lossless shadow 未重建；一项来自 historical canonical-page consumer 仍把 task coverage 冻结在 2481–2504，未接受 sidecar 中已验证的 2506 successor。两者均为生成 authority/consumer freshness 缺口，不是策略计算或 work-progress/concept-graph 语义失败；修复后必须从最终字节重跑五级，并以该首次 Full 作为 `failure_fix_rerun` parent。
+- 2026-08-10：Project owner 在 canonical 页面上确认“目前可读性验收通过”，作为真实人工事实封存 `READER_COMPREHENSION_REVIEW=PASS`；该结论不自动代签 `OWNER_VISUAL_REVIEW`，也不构成策略有效、收益、风险、交易或 production 验收。对当前 main 的 freshness 复核为 `REPOSITORY_AHEAD_NO_RELEVANT_DRIFT`：仓库 commit 已前进，但受管的语义来源、任务覆盖与 rendered identity 未漂移。后续剩余边界是把 validator 接入相关 main 集成后与验收/分享前的自动门禁。
+- 2026-08-10：修复人工验收事实的 artifact persistence：`build_page_effectiveness_manifest` 与 `build_cited_query_showcase` 现在只接受 typed `PageAcceptanceRecord`，track 不匹配 fail closed；`write_cited_query_artifacts` 重建最终 manifest 时保留两条 human review，而不是重置为 `PENDING_REVIEW`。canonical 页面/sidecar 已显示 engineering=`PASS`、reader comprehension=`PASS`、owner visual=`PENDING_REVIEW`，静态 HTML、manifest、validation sidecar 与 live validator 八项身份检查 PASS。focused 页面测试=`20 passed`；页面+historical consumer+compatibility/deprecation 同覆盖 replacement=`245 passed`，首次同覆盖仅为外层 timeout、无 node FAIL/无 terminal summary，不作验证证据。

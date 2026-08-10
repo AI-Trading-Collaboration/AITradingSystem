@@ -111,6 +111,48 @@ def test_engineering_pass_requires_evidence_and_cannot_sign_human_review() -> No
         )
 
 
+def test_explicit_reader_review_survives_manifest_build_and_validation() -> None:
+    rendered, payloads = _rendered()
+    reader_review = PageAcceptanceRecord(
+        track=PageAcceptanceTrack.READER_COMPREHENSION_REVIEW,
+        status=PageAcceptanceStatus.PASS,
+        evidence_refs=(
+            "docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md",
+        ),
+        reviewer_id="project-owner",
+        reviewed_at="2026-08-10T10:17:40Z",
+        decision_id="trading-2506-reader-comprehension-pass-20260810-v1",
+    )
+    manifest = build_page_effectiveness_manifest(
+        repository_root=ROOT,
+        rendered_artifacts=rendered,
+        reader_comprehension_review=reader_review,
+    )
+    assert manifest.acceptance[1].status is PageAcceptanceStatus.PENDING_REVIEW
+    assert manifest.acceptance[2] == reader_review
+
+    validation = validate_page_effectiveness_manifest(
+        repository_root=ROOT,
+        manifest=manifest,
+        rendered_payloads=payloads,
+    )
+    assert validation.status == "PASS"
+    assert "HUMAN_REVIEW_EXPLICITLY_ATTESTED" in validation.checks
+
+
+def test_human_review_track_mismatch_fails_closed() -> None:
+    wrong_track = PageAcceptanceRecord(
+        track=PageAcceptanceTrack.OWNER_VISUAL_REVIEW,
+        status=PageAcceptanceStatus.PENDING_REVIEW,
+        evidence_refs=(),
+    )
+    with pytest.raises(PageEffectivenessError, match="HUMAN_REVIEW_TRACK_INVALID"):
+        build_page_effectiveness_manifest(
+            repository_root=ROOT,
+            reader_comprehension_review=wrong_track,
+        )
+
+
 def test_manifest_rejects_noncanonical_and_path_escape() -> None:
     manifest = build_page_effectiveness_manifest(repository_root=ROOT)
     with pytest.raises(PageEffectivenessContractError, match="NON_CANONICAL_BYTES"):
