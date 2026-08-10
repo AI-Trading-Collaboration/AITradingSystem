@@ -1,0 +1,98 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+  task_id_sha256: 95582f7c7f7e6e50cde1d0e0865cc98dff369406de8a3a8ffe53a5958bdf395f
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+  title: null
+  domain: Strategy research governance / QQQ Options Owner attestation and policy
+    adoption contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: engineering coordinator：完成 canonical attestation admission 合同；project
+    owner：后续提供 exact typed attestation；任何 executable policy/engine 须另立后继任务
+  requirement_refs:
+  - docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md`。当前
+    blocker=`CANONICAL_OWNER_ATTESTATION_NOT_YET_PROVIDED`；先实现 raw attestation bytes→2504
+    manifest→28-slot adoption plan 的 contract-only wave，复合 slot 只形成 versioned amendment
+    proposal。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: canonical attestation 必须绑定 owner/reviewer/token/date/repository SHA、2502
+      pack/authority 与 2504 policy/catalog；28 slots exactly once，G2/G5 完整，G1/G3/G4
+      与 amendment 未审均 fail closed。保持 DQ/PIT NOT_EVALUATED、engine blocked、selection=false、orders/fills=0；不得填阈值、代签
+      Owner、实现真实 DAILY engine 或执行外部/生产动作。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-10T12:36:18Z'
+  actor: codex_qqq_options_policy_adoption_coordinator
+  change_id: TRADING-2507-REGISTRATION-V1
+  lane_id: null
+  base_commit: 25c24409c3ed58941dbc512419458382e5f72817
+  previous_state_event_id: null
+  from_status: null
+  to_status: BLOCKED_OWNER_INPUT
+  payload:
+    legacy_projection:
+    - TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+    - Strategy research governance / QQQ Options Owner attestation and policy adoption
+      contract
+    - P0
+    - BLOCKED_OWNER_INPUT
+    - engineering coordinator：完成 canonical attestation admission 合同；project owner：后续提供
+      exact typed attestation；任何 executable policy/engine 须另立后继任务
+    - 详见 `docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md`。当前
+      blocker=`CANONICAL_OWNER_ATTESTATION_NOT_YET_PROVIDED`；先实现 raw attestation bytes→2504
+      manifest→28-slot adoption plan 的 contract-only wave，复合 slot 只形成 versioned amendment
+      proposal。
+    - canonical attestation 必须绑定 owner/reviewer/token/date/repository SHA、2502 pack/authority
+      与 2504 policy/catalog；28 slots exactly once，G2/G5 完整，G1/G3/G4 与 amendment 未审均
+      fail closed。保持 DQ/PIT NOT_EVALUATED、engine blocked、selection=false、orders/fills=0；不得填阈值、代签
+      Owner、实现真实 DAILY engine 或执行外部/生产动作。
+    - 2026-08-10：按 Web Pro exact-commit 预审建议登记最小 serial contract wave；registration
+      base=`25c24409c3ed58941dbc512419458382e5f72817`，状态保持 BLOCKED_OWNER_INPUT。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2507-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ba485a94e5341d9ddcc6abca0a0c8492
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+  - Strategy research governance / QQQ Options Owner attestation and policy adoption
+    contract
+  - P0
+  - BLOCKED_OWNER_INPUT
+  - engineering coordinator：完成 canonical attestation admission 合同；project owner：后续提供
+    exact typed attestation；任何 executable policy/engine 须另立后继任务
+  - 详见 `docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md`。当前
+    blocker=`CANONICAL_OWNER_ATTESTATION_NOT_YET_PROVIDED`；先实现 raw attestation bytes→2504
+    manifest→28-slot adoption plan 的 contract-only wave，复合 slot 只形成 versioned amendment
+    proposal。
+  - canonical attestation 必须绑定 owner/reviewer/token/date/repository SHA、2502 pack/authority
+    与 2504 policy/catalog；28 slots exactly once，G2/G5 完整，G1/G3/G4 与 amendment 未审均
+    fail closed。保持 DQ/PIT NOT_EVALUATED、engine blocked、selection=false、orders/fills=0；不得填阈值、代签
+    Owner、实现真实 DAILY engine 或执行外部/生产动作。
+  - 2026-08-10：按 Web Pro exact-commit 预审建议登记最小 serial contract wave；registration base=`25c24409c3ed58941dbc512419458382e5f72817`，状态保持
+    BLOCKED_OWNER_INPUT。
+  docs_links:
+  - docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: 78d79a1d7a92f91d682cfb3729e27d42f5305fefcd66642ae19d6c2842cd1d0b
+last_event_id: task-event-ba485a94e5341d9ddcc6abca0a0c8492
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b45f03ea37a5e3e399a424ce4fa10ab7d97c1f044011d419343d816d5416f6d1
