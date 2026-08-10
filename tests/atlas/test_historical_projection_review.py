@@ -319,6 +319,7 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
             *[f"TRADING-{task_id}" for task_id in range(2481, 2505)],
             "TRADING-2506",
             "TRADING-2507",
+            "TRADING-2508",
         ]
         assert validation_sidecar["status"] == "PASS"
         assert validation_sidecar["manifest_sha256"] == manifest.content_sha256

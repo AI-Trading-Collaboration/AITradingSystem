@@ -38,12 +38,12 @@ def _rendered(payload: bytes = b"<!doctype html><title>Atlas</title>\n") -> tupl
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_twenty_six_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_twenty_seven_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 26
+    assert len(policy.task_sources) == 27
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507)
+        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508)
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -69,13 +69,11 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status
         is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 26
+    assert len(manifest.task_coverage) == 27
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507)
+        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508)
     ]
-    assert manifest.task_coverage[-1].coverage == (
-        "DISCLOSED_OWNER_ADOPTION_POLICY_BLOCKED"
-    )
+    assert manifest.task_coverage[-1].coverage == "INCLUDED_THREE_AXIS_PROGRESS_MATRIX"
     assert len(manifest.source_artifacts) == 15
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
     assert [item.status for item in manifest.acceptance] == [

@@ -19,8 +19,10 @@ from ai_trading_system.atlas.work_progress_projection import (
 )
 from ai_trading_system.contracts.strategy_research_work_progress import (
     CapabilityProgress,
+    StrategyResearchProgressMatrix,
     StrategyResearchWorkProgressBundle,
     StrategyResearchWorkProgressContractError,
+    build_strategy_research_progress_matrix,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -64,6 +66,33 @@ def test_policy_projection_separates_progress_execution_and_research_effect() ->
     assert "没有产生新的策略证据" in snapshot_stage.research_effect_zh
     assert "旧页面即使还能打开" in snapshot_stage.why_needed_zh
     assert any("变化清单" in item for item in snapshot_stage.expected_outputs_zh)
+
+
+def test_progress_matrix_separates_engineering_and_research_counts() -> None:
+    atlas, status_bundle, policy = _inputs()
+    bundle = project_work_progress(
+        snapshot=atlas.snapshot,
+        status_explanations=status_bundle,
+        policy=policy,
+    )
+
+    matrix = build_strategy_research_progress_matrix(bundle.stage_records)
+
+    assert matrix == StrategyResearchProgressMatrix(
+        stage_count=8,
+        capability_available=4,
+        capability_in_progress=2,
+        capability_blocked=0,
+        capability_not_applicable=2,
+        research_no_new_evidence=4,
+        research_limited_evidence=3,
+        research_owner_decision_only=1,
+    )
+    with pytest.raises(
+        StrategyResearchWorkProgressContractError,
+        match="MATRIX_STAGE_SET_OR_ORDER_INVALID",
+    ):
+        build_strategy_research_progress_matrix(bundle.stage_records[:-1])
 
 
 def test_bundle_is_canonical_and_deterministic() -> None:

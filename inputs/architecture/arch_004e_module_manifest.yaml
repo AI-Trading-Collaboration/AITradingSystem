@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: ada6614cadf60521728de679415775db3833f5063b136455896eb9d1a932800d
+  sha256: a76e835539532ecc627eed74fb46e781a4ee37d162d452e3c967c7398c505b12
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -409,7 +409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.page_effectiveness
   path: src/ai_trading_system/atlas/page_effectiveness.py
-  sha256: 185b3a2a5272b30a8b9e03df94c65002c9503cc9c0b3026a81236ea2be81c99f
+  sha256: 4f068c5fa708f1a26cc852979a529ac8bcba81f8a1ecbecf063269f91059fac1
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2963,7 +2963,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.strategy_research_page_effectiveness
   path: src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
-  sha256: 8c89a02b498533f865c6e0a89d78ca5a3b715e70fffc03d25ea596abe4107f8b
+  sha256: 7d6cf60c59687246238ab6d5ba68eda57babef8d4cdef534ceb4f4676cd4da32
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -3029,7 +3029,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.strategy_research_work_progress
   path: src/ai_trading_system/contracts/strategy_research_work_progress.py
-  sha256: 89f70e3530fcf647d7ebcdabfee9b9d7b8bfe624ce74928c982dcb270893ff8e
+  sha256: cb65b59db7bd8d3a5e493ba5e31b64e54c69577e2a33b8ac35bf82a3882f1345
   rule_id: contracts
   owner_profile: architecture
   owners:

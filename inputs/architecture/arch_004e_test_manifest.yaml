@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: 99cfe203e8243edad222e45fcdcf7028eee05b902be80fc20aeb522edc4f8762
+  sha256: 1b2fbec67c03578a4cdbb683203dfe01a5bca4d332654da7b50baef72e034d87
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -139,7 +139,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: 8f4d8fbe9d09e9117c78f5d64050e7d0ce446aee2e9e6f41c58d53862a786e8c
+  sha256: df9799adc22438cde98442ce7b3dbe55fdaeb65b93e405c0ff2000f5d533f7ec
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: fb08226f5ab6fefc1cc90753ec318802e1352bbba3ecf8e688adb888c321be5f
+  sha256: ddf4266e0cca757c83622e0f3b173d022ea405d6c0dc6a2d403b8d7142ee37d7
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -315,7 +315,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_work_progress_projection
   path: tests/atlas/test_work_progress_projection.py
-  sha256: 639c2d28fa552580bebc900eb64d45b0dcc2176c4c008b7d8b78277c329d1212
+  sha256: a16bb0727634946df1f3e8130c7617103474396e90a11ba137647529443702ae
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8554,7 +8554,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: 0358c2730bfd8000378dccc479541e9cff3954e69f8ad98942172a3623e99253
+  sha256: e7e0779677ff5ef0a970c4f0975ae343a6897e8430c8fabe0aeb92d45dbdaf46
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -10282,7 +10282,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 8af0367fe8acc5f6ef70c5650bb2e6f8e491d96a1a75ecfcf785e48facb84320
+  sha256: f4820c98018a09faf92da7ffd67ba954b6de888e6cba7679eb3d0a7ec75cd10f
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

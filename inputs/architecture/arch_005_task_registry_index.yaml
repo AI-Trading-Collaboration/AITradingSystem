@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 977
-active_task_count: 470
+task_count: 978
+active_task_count: 471
 completed_task_count: 507
-fragment_count: 977
+fragment_count: 978
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 86418d0618f26c3c474b2fc8dcba46ea68153526eaf9af95d44c626da5a51f5a
+final_chain_sha256: 86e1d9c45d251208aa9394818412fa5a74f954f0a592472f561bdfb1338d04ae
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7845,12 +7845,20 @@ fragments:
   order: 977
   previous_entry_sha256: c47f3ad9a908eded60a43a303c7d2dfd5a3382f60555098ed2a88dfb34d8dbd9
   entry_sha256: 86418d0618f26c3c474b2fc8dcba46ea68153526eaf9af95d44c626da5a51f5a
+- task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  path: registry/development_tasks/e7/e76be5e0c8450715aaa14c4b145ee94ded72c28707d5402dabe1987d3f6aa8af.yaml
+  file_sha256: 1391ab401e7e15178438ad49c821472a51e3296f6a5e555b1e8aed147fa7beac
+  fragment_checksum: b428d5bc36eee76f51af0f6d0cc0221609c6be3a9307952e7421bae6023e14e8
+  partition: active
+  order: 978
+  previous_entry_sha256: 86418d0618f26c3c474b2fc8dcba46ea68153526eaf9af95d44c626da5a51f5a
+  entry_sha256: 86e1d9c45d251208aa9394818412fa5a74f954f0a592472f561bdfb1338d04ae
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: e5e5752e516b95c792316f3c61181317c0a97ff06628be23139bb92819bfdef4
-  byte_count: 1719219
-  row_count: 470
+  sha256: 032da154f1041f6d4bc108ac5882ead22218608b5b0529eccebdcb608ff96a52
+  byte_count: 1720168
+  row_count: 471
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -7978,7 +7986,28 @@ governance_cycles:
   change_id: TRADING-2507-REQUIREMENT-REF-BINDING-FAILURE-FIX-V1
   event_count: 3
   production_effect: none
-governance_cycle_count: 17
+- cycle_id: arch-005-s5-cycle-18
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  change_id: trading-2508-registration-20260811-v1
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-19
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  change_id: trading-2508-baseline-done-20260811-v1
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-20
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  change_id: trading-2508-requirement-binding-20260811-v1
+  event_count: 3
+  production_effect: none
+governance_cycle_count: 20
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -7992,4 +8021,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 6678211ecfcd9d100bfaa856fdcf80053f32f88d1f8f95f58c412d3abf267e20
+index_checksum: 87633e7693d0cf259879f0a82684cb3cc590d4297f5b5946e9badd8dc98e5d81

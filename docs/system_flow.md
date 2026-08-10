@@ -233,6 +233,18 @@ G3 仅 calibration required，G4 仅 sensitivity，G2/G5 绑定各自 reviewed m
 selection=false、orders/fills=0。该层不填阈值、不代签 Owner、不实现 DAILY engine，也没有 QuantConnect、
 external、investment、paper/live/broker 或 production action。
 
+TRADING-2508 在八阶段流程图之前增加 typed 三轴进度矩阵，并把同一组状态带到每个折叠节点：
+`CapabilityProgress` 只回答工程能力是否可用、建设中、受阻或本页不执行；`ResearchEffect` 只回答
+本页是否新增有限研究证据、没有新增研究证据或必须等待人工决策；`PageAcceptanceRecord` 只回答
+页面工程、Owner 视觉和读者理解三条独立验收。矩阵计数从八个 `StageWorkProgressRecord` 和三条
+acceptance record 派生，节点缺失、顺序漂移、未知状态、总数不等于八或 acceptance track 不完整时
+fail closed。原 canonical execution status 保留为第三个“本页状态”，流程位置徽标只表示上游、当前
+研究关注、页面当前位置或人工边界。页面显式展示 `strategy conclusion PASS=0`，因此工程能力可用、
+`VALIDATED` 或页面验收 PASS 都不能被解释成策略有效、收益稳健、可下单或可生产部署。renderer 同时
+覆盖 desktop/mobile 无横向溢出、文本标签与颜色双重表达，并由 TRADING-2505 freshness 清单把 2508
+作为 reviewed successor 纳入 exact source/task coverage。该层不执行 DQ、回测、研究、Owner 决策、
+外部平台、production 或 broker 动作。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，

@@ -21,6 +21,11 @@ from ai_trading_system.contracts import (
     StrategyResearchStatusExplanationBundle,
     StrategyResearchWorkProgressBundle,
 )
+from ai_trading_system.contracts.strategy_research_page_effectiveness import (
+    PageAcceptanceRecord,
+    PageAcceptanceStatus,
+    PageAcceptanceTrack,
+)
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     StrategyResearchQQQOptionsProjectionBundle,
 )
@@ -63,7 +68,12 @@ def _payloads(
     )
 
 
-def _showcase(*, injected_summary: str = "") -> AtlasCitedQueryShowcase:
+def _showcase(
+    *,
+    injected_summary: str = "",
+    page_engineering_status: PageAcceptanceStatus = PageAcceptanceStatus.NOT_EXECUTED,
+    page_reader_comprehension_review: PageAcceptanceRecord | None = None,
+) -> AtlasCitedQueryShowcase:
     before, after, diff = _payloads(injected_summary=injected_summary)
     return build_cited_query_showcase(
         target_ids={
@@ -79,6 +89,16 @@ def _showcase(*, injected_summary: str = "") -> AtlasCitedQueryShowcase:
         before_payload=before,
         after_payload=after,
         diff_payload=diff,
+        page_engineering_status=page_engineering_status,
+        page_engineering_evidence_refs=(
+            (
+                "docs/requirements/"
+                "TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md"
+            ),
+        )
+        if page_engineering_status is PageAcceptanceStatus.PASS
+        else (),
+        page_reader_comprehension_review=page_reader_comprehension_review,
     )
 
 
@@ -101,6 +121,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "QQQ Options 的 DAILY 工程合同正在完善",
         "28 个 selection、execution、accounting、lifecycle 决策",
         "Owner attestation adoption 合同已实现，但尚无真实 Owner attestation",
+        "页面把工程能力、研究证据和页面验收分开汇总",
         "三种“通过”互不代签",
         "ENGINEERING_VALIDATION",
         "OWNER_VISUAL_REVIEW",
@@ -120,9 +141,11 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "完成后怎样被使用",
         "不能说明什么",
         "陌生概念可以继续解释，并能返回原流程节点",
-        "进展状态",
-        "颜色表示节点在当前 evidence view 中的进展",
-        "不代表策略 PASS 或投资评级",
+        "工程、研究、页面验收分别看",
+        "策略结论通过",
+        "绿色的“能力可用”“已验证”或页面验收 PASS",
+        "本页状态图例",
+        "工程能力与研究证据请看上方矩阵",
         "本页未执行",
         "研究进行中",
         "证据有限",
@@ -221,6 +244,22 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert html.count('data-reader-section="expected_outputs"') == 8
     assert html.count('data-reader-section="progress_dimensions"') == 8
     assert html.count('data-progress-dimension="') == 24
+    assert html.count('data-stage-axis="') == 16
+    assert html.count('data-stage-axis="capability"') == 8
+    assert html.count('data-stage-axis="research"') == 8
+    assert html.count('data-stage-axis-value="AVAILABLE"') == 4
+    assert html.count('data-stage-axis-value="IN_PROGRESS"') == 2
+    assert html.count('data-stage-axis-value="NOT_APPLICABLE"') == 2
+    assert html.count('data-stage-axis-value="NO_NEW_RESEARCH_EVIDENCE"') == 4
+    assert html.count('data-stage-axis-value="LIMITED_RESEARCH_EVIDENCE"') == 3
+    assert html.count('data-stage-axis-value="OWNER_DECISION_ONLY"') == 1
+    assert html.count('data-progress-matrix="') == 3
+    assert html.count('data-matrix-axis="capability"') == 4
+    assert html.count('data-matrix-axis="research"') == 3
+    assert html.count('data-matrix-axis="page_acceptance"') == 3
+    assert 'data-progress-stage-count="8"' in html
+    assert 'data-page-acceptance-pass-count="0"' in html
+    assert 'data-strategy-conclusion-pass-count="0"' in html
     assert html.count('data-reader-section="downstream_use"') == 8
     assert html.count('data-reader-section="boundary"') == 8
     assert html.count('data-reader-section="next_trigger"') == 8
@@ -343,6 +382,50 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'lang="zh-CN"' in html
     assert len(showcase.responses) == 5
     assert all(item.status == "PASS" for item in showcase.validations)
+
+
+def test_progress_matrix_uses_independent_page_acceptance_facts() -> None:
+    reader_review = PageAcceptanceRecord(
+        track=PageAcceptanceTrack.READER_COMPREHENSION_REVIEW,
+        status=PageAcceptanceStatus.PASS,
+        evidence_refs=(
+            "docs/requirements/"
+            "TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md",
+        ),
+        reviewer_id="project-owner",
+        reviewed_at="2026-08-10T10:17:40Z",
+        decision_id="trading-2506-reader-comprehension-pass-20260810-v1",
+    )
+    showcase = _showcase(
+        page_engineering_status=PageAcceptanceStatus.PASS,
+        page_reader_comprehension_review=reader_review,
+    )
+
+    html = render_cited_query_html(showcase)
+
+    assert 'data-page-acceptance-pass-count="2"' in html
+    assert html.count('class="progress-matrix-card-head"') == 3
+    assert '<article class="progress-matrix-card"' in html
+    assert (
+        '<article class="progress-matrix-card" '
+        'data-progress-matrix="capability"><header>'
+        not in html
+    )
+    assert "2 / 3 已通过" in html
+    assert (
+        html.count(
+            'data-matrix-axis="page_acceptance" data-matrix-value="PASS"'
+        )
+        == 2
+    )
+    assert (
+        html.count(
+            'data-matrix-axis="page_acceptance" '
+            'data-matrix-value="PENDING_REVIEW"'
+        )
+        == 1
+    )
+    assert 'data-strategy-conclusion-pass-count="0"' in html
 
 
 def test_flow_focus_fails_closed_on_duplicate_question_response() -> None:

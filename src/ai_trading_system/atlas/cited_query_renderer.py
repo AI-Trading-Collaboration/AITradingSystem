@@ -57,6 +57,7 @@ from ai_trading_system.contracts.strategy_research_explorer import (
 from ai_trading_system.contracts.strategy_research_page_effectiveness import (
     PageAcceptanceRecord,
     PageAcceptanceStatus,
+    PageAcceptanceTrack,
     PageArtifactIdentity,
     PageFreshnessStatus,
     StrategyResearchPageEffectivenessManifest,
@@ -75,9 +76,12 @@ from ai_trading_system.contracts.strategy_research_status_explanation import (
     StrategyResearchStatusExplanationBundle,
 )
 from ai_trading_system.contracts.strategy_research_work_progress import (
+    CapabilityProgress,
     ReaderConcept,
+    ResearchEffect,
     StageWorkProgressRecord,
     StrategyResearchWorkProgressBundle,
+    build_strategy_research_progress_matrix,
 )
 from ai_trading_system.platform.artifacts import write_bytes_atomic
 
@@ -112,6 +116,22 @@ _ATTRIBUTION_DIRECTION_LABELS = {
     AttributionDirection.MIXED: "影响混合",
     AttributionDirection.NEUTRAL: "中性",
     AttributionDirection.UNKNOWN: "未知",
+}
+_CAPABILITY_PROGRESS_PRESENTATION = {
+    CapabilityProgress.AVAILABLE: ("能力可用", "axis-available"),
+    CapabilityProgress.IN_PROGRESS: ("能力建设中", "axis-active"),
+    CapabilityProgress.BLOCKED: ("工程受阻", "axis-blocked"),
+    CapabilityProgress.NOT_APPLICABLE: ("本页不执行", "axis-neutral"),
+}
+_RESEARCH_EFFECT_PRESENTATION = {
+    ResearchEffect.NO_NEW_RESEARCH_EVIDENCE: ("本页无新增证据", "axis-neutral"),
+    ResearchEffect.LIMITED_RESEARCH_EVIDENCE: ("研究证据有限", "axis-limited"),
+    ResearchEffect.OWNER_DECISION_ONLY: ("等待人工决策", "axis-review"),
+}
+_PAGE_ACCEPTANCE_TRACK_LABELS = {
+    PageAcceptanceTrack.ENGINEERING_VALIDATION: "工程验收",
+    PageAcceptanceTrack.OWNER_VISUAL_REVIEW: "Owner 视觉验收",
+    PageAcceptanceTrack.READER_COMPREHENSION_REVIEW: "读者理解验收",
 }
 
 
@@ -677,6 +697,129 @@ def _work_progress_records_by_stage(
     return records, concepts
 
 
+def _render_stage_axis_summary(record: StageWorkProgressRecord) -> str:
+    capability_label, capability_tone = _CAPABILITY_PROGRESS_PRESENTATION[
+        record.capability_progress
+    ]
+    research_label, research_tone = _RESEARCH_EFFECT_PRESENTATION[
+        record.research_effect
+    ]
+    return (
+        '<div class="stage-axis-summary" aria-label="工程与研究进度">'
+        f'<span class="stage-axis-chip {escape(capability_tone)}" '
+        f'data-stage-axis="capability" '
+        f'data-stage-axis-value="{escape(record.capability_progress.value)}">'
+        "<small>工程</small>"
+        f"<strong>{escape(capability_label)}</strong>"
+        "</span>"
+        f'<span class="stage-axis-chip {escape(research_tone)}" '
+        f'data-stage-axis="research" '
+        f'data-stage-axis-value="{escape(record.research_effect.value)}">'
+        "<small>研究证据</small>"
+        f"<strong>{escape(research_label)}</strong>"
+        "</span>"
+        "</div>"
+    )
+
+
+def _render_flow_progress_matrix(
+    showcase: AtlasCitedQueryShowcase,
+    records: Sequence[StageWorkProgressRecord],
+) -> str:
+    matrix = build_strategy_research_progress_matrix(records)
+    manifest = showcase.page_effectiveness
+    if tuple(item.track for item in manifest.acceptance) != tuple(PageAcceptanceTrack):
+        raise ValueError("ATLAS_PROGRESS_MATRIX_ACCEPTANCE_TRACK_SET_INVALID")
+    acceptance_tones = {
+        PageAcceptanceStatus.PASS: "axis-available",
+        PageAcceptanceStatus.FAIL: "axis-blocked",
+        PageAcceptanceStatus.PENDING_REVIEW: "axis-review",
+        PageAcceptanceStatus.NOT_EXECUTED: "axis-neutral",
+    }
+    engineering_counts = (
+        ("能力可用", CapabilityProgress.AVAILABLE.value, matrix.capability_available),
+        ("能力建设中", CapabilityProgress.IN_PROGRESS.value, matrix.capability_in_progress),
+        ("工程受阻", CapabilityProgress.BLOCKED.value, matrix.capability_blocked),
+        (
+            "本页不执行",
+            CapabilityProgress.NOT_APPLICABLE.value,
+            matrix.capability_not_applicable,
+        ),
+    )
+    research_counts = (
+        (
+            "研究证据有限",
+            ResearchEffect.LIMITED_RESEARCH_EVIDENCE.value,
+            matrix.research_limited_evidence,
+        ),
+        (
+            "本页无新增证据",
+            ResearchEffect.NO_NEW_RESEARCH_EVIDENCE.value,
+            matrix.research_no_new_evidence,
+        ),
+        (
+            "仅人工决策",
+            ResearchEffect.OWNER_DECISION_ONLY.value,
+            matrix.research_owner_decision_only,
+        ),
+    )
+    engineering_items = "".join(
+        (
+            f'<li data-matrix-axis="capability" data-matrix-value="{escape(value)}">'
+            f"<span>{escape(label)}</span><strong>{count}</strong></li>"
+        )
+        for label, value, count in engineering_counts
+    )
+    research_items = "".join(
+        (
+            f'<li data-matrix-axis="research" data-matrix-value="{escape(value)}">'
+            f"<span>{escape(label)}</span><strong>{count}</strong></li>"
+        )
+        for label, value, count in research_counts
+    )
+    acceptance_items = "".join(
+        (
+            f'<li class="{acceptance_tones[item.status]}" '
+            f'data-matrix-axis="page_acceptance" '
+            f'data-matrix-value="{escape(item.status.value)}">'
+            f"<span>{escape(_PAGE_ACCEPTANCE_TRACK_LABELS[item.track])}</span>"
+            f"<strong>{escape(_PAGE_ACCEPTANCE_LABELS[item.status])}</strong></li>"
+        )
+        for item in manifest.acceptance
+    )
+    acceptance_pass_count = sum(
+        item.status is PageAcceptanceStatus.PASS for item in manifest.acceptance
+    )
+    strategy_conclusion_pass_count = int(manifest.investment_conclusion_generated)
+    return (
+        '<section class="progress-matrix" aria-labelledby="progress-matrix-title" '
+        f'data-progress-stage-count="{matrix.stage_count}" '
+        f'data-page-acceptance-pass-count="{acceptance_pass_count}" '
+        f'data-strategy-conclusion-pass-count="{strategy_conclusion_pass_count}">'
+        '<div class="progress-matrix-heading">'
+        '<div><p class="section-kicker">THREE AXES · DO NOT MERGE</p>'
+        '<h3 id="progress-matrix-title">工程、研究、页面验收分别看</h3>'
+        '<p>同一个节点可以“工程可用”，同时“研究证据有限”。页面验收只回答这张页面是否可靠、好读，不回答策略是否有效。</p></div>'
+        '<div class="strategy-conclusion-count" data-strategy-conclusion="NOT_GENERATED">'
+        '<span>策略结论通过</span>'
+        f"<strong>{strategy_conclusion_pass_count}</strong>"
+        '<small>本页没有生成投资结论</small></div></div>'
+        '<div class="progress-matrix-grid">'
+        '<article class="progress-matrix-card" data-progress-matrix="capability">'
+        f'<div class="progress-matrix-card-head"><span>工程进度</span><strong>{matrix.capability_available} / {matrix.stage_count} 能力可用</strong></div>'
+        f'<ul>{engineering_items}</ul><p>回答“工具或合同是否已经做出来”，不回答策略表现。</p></article>'
+        '<article class="progress-matrix-card" data-progress-matrix="research">'
+        f'<div class="progress-matrix-card-head"><span>策略研究进度</span><strong>{matrix.research_limited_evidence} 个节点只有有限证据</strong></div>'
+        f'<ul>{research_items}</ul><p>回答“是否新增支持策略判断的证据”；有限不等于通过。</p></article>'
+        '<article class="progress-matrix-card" data-progress-matrix="page_acceptance">'
+        f'<div class="progress-matrix-card-head"><span>页面验收</span><strong>{acceptance_pass_count} / {len(manifest.acceptance)} 已通过</strong></div>'
+        f'<ul>{acceptance_items}</ul><p>三条验收互不代签，人工验收只能来自真实人工事实。</p></article>'
+        "</div>"
+        '<p class="progress-matrix-warning"><strong>最重要的边界：</strong>绿色的“能力可用”“已验证”或页面验收 PASS，都不等于 strategy PASS、收益稳健或可以下单。</p>'
+        "</section>"
+    )
+
+
 def _validate_showcase_response_bindings(showcase: AtlasCitedQueryShowcase) -> None:
     question_ids = tuple(item.request.question_id for item in showcase.responses)
     if len(set(question_ids)) != len(question_ids) or set(question_ids) != set(
@@ -1237,6 +1380,10 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_STAGE_SET_INVALID")
     if any(not value for item in stage_definitions for value in item):
         raise ValueError("ATLAS_CITED_QUERY_FLOW_DRILLDOWN_COPY_INVALID")
+    progress_matrix = _render_flow_progress_matrix(
+        showcase,
+        tuple(work_progress_by_stage[stage_id] for stage_id in stage_ids),
+    )
     historical_flow_lane = _render_historical_flow_lane(showcase)
     stage_cards = "".join(
         (
@@ -1255,10 +1402,12 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             f'<span class="stage-title">{escape(work_progress_by_stage[stage_id].display_title_zh)}</span>'
             f'<span class="stage-description">{escape(work_progress_by_stage[stage_id].work_items_zh[0])}</span>'
             f'<code class="stage-id">{escape(stage_id)}</code>'
+            f"{_render_stage_axis_summary(work_progress_by_stage[stage_id])}"
             f'<span class="stage-progress {escape(status_by_stage[stage_id].status_tone)}">'
             '<span class="progress-dot" aria-hidden="true"></span>'
+            '<span class="stage-progress-copy"><small>本页状态</small>'
             f"<strong>{escape(status_by_stage[stage_id].status_label)}</strong>"
-            f"<code>{escape(status_by_stage[stage_id].status_code)}</code>"
+            f"<code>{escape(status_by_stage[stage_id].status_code)}</code></span>"
             "</span>"
             '<span class="stage-disclosure-cue">'
             '<span class="cue-closed">展开读者说明</span>'
@@ -1321,14 +1470,15 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         <span><i class="legend-current"></i>当前页面位置</span>
         <span><i class="legend-boundary"></i>本页以外的决策边界</span>
       </div>
+      {progress_matrix}
       <div class="progress-key" aria-label="节点进展状态图例">
-        <strong>进展状态</strong>
+        <strong>本页状态图例</strong>
         <span class="progress-neutral"><i aria-hidden="true"></i>本页未执行</span>
         <span class="progress-active"><i aria-hidden="true"></i>研究进行中</span>
         <span class="progress-limited"><i aria-hidden="true"></i>证据有限</span>
         <span class="progress-validated"><i aria-hidden="true"></i>已验证</span>
         <span class="progress-review"><i aria-hidden="true"></i>待人工复核</span>
-        <small>颜色表示节点在当前 evidence view 中的进展，不代表策略 PASS 或投资评级。</small>
+        <small>这一行只解释“本页状态”；工程能力与研究证据请看上方矩阵和每张节点卡的两个独立标签。</small>
       </div>
       <p class="drilldown-help"><strong>怎样展开：</strong>点击任一节点，先读“为什么需要、具体做什么、目前进展、预期产物”，再看使用方式和边界；遇到陌生概念可继续点开通俗解释，状态限制与技术依据收在最后。当前页面节点默认展开。</p>
       <ol class="system-flow">{stage_cards}</ol>
@@ -1372,7 +1522,7 @@ _PAGE_ACCEPTANCE_LABELS = {
 
 def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
-    if len(manifest.task_coverage) != 26:
+    if len(manifest.task_coverage) != 27:
         raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
     acceptance = "".join(
         (
@@ -1394,7 +1544,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2507
+        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2508
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -1425,7 +1575,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新 <code>ENGINEERING_VALIDATION</code>；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage">
-          <summary>查看 TRADING-2494–2506 如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2508 如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -1435,7 +1585,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2506</code>（2505 为本清单任务）· {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2508</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
       </details>
     </section>
@@ -1620,6 +1770,32 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .flow-legend .legend-focus {{ border-color:var(--teal); background:var(--teal-soft); }}
     .flow-legend .legend-current {{ border-color:var(--blue); background:var(--blue); }}
     .flow-legend .legend-boundary {{ border-style:dashed; border-color:#8b95a6; background:#f8fafc; }}
+    .progress-matrix {{ margin:.2rem 0 1rem; padding:1rem; border:1px solid #cbd9ec; border-radius:.82rem; background:#f6f9fe; }}
+    .progress-matrix-heading {{ display:grid; grid-template-columns:minmax(0,1fr) 170px; gap:1rem; align-items:start; }}
+    .progress-matrix-heading h3 {{ margin:.18rem 0 .3rem; font-size:1.02rem; }}
+    .progress-matrix-heading p:last-child {{ max-width:720px; margin:0; color:#5d697d; font-size:.72rem; line-height:1.5; }}
+    .strategy-conclusion-count {{ padding:.65rem .75rem; border:1px solid #d79aa7; border-radius:.65rem; color:#8d3044; background:#fff7f8; text-align:center; }}
+    .strategy-conclusion-count span,.strategy-conclusion-count strong,.strategy-conclusion-count small {{ display:block; }}
+    .strategy-conclusion-count span {{ font-size:.61rem; font-weight:900; }}
+    .strategy-conclusion-count strong {{ font-size:1.45rem; line-height:1.15; }}
+    .strategy-conclusion-count small {{ color:#835c65; font-size:.57rem; }}
+    .progress-matrix-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.6rem; margin-top:.8rem; }}
+    .progress-matrix-card {{ min-width:0; padding:.7rem; border:1px solid #dbe3ee; border-radius:.65rem; background:#fff; }}
+    .progress-matrix-card-head span,.progress-matrix-card-head strong {{ display:block; }}
+    .progress-matrix-card-head span {{ color:#5d6a7f; font-size:.6rem; font-weight:900; letter-spacing:.04em; }}
+    .progress-matrix-card-head strong {{ margin:.12rem 0 .45rem; color:#2f4058; font-size:.76rem; }}
+    .progress-matrix-card ul {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.3rem; margin:0; padding:0; list-style:none; }}
+    .progress-matrix-card li {{ display:flex; align-items:center; justify-content:space-between; gap:.35rem; min-width:0; padding:.32rem .4rem; border-radius:.42rem; color:#4f5e73; background:#f4f7fa; }}
+    .progress-matrix-card li span {{ min-width:0; font-size:.58rem; line-height:1.35; }}
+    .progress-matrix-card li strong {{ font-size:.72rem; }}
+    .progress-matrix-card > p {{ margin:.5rem 0 0; color:#687489; font-size:.61rem; line-height:1.45; }}
+    .progress-matrix-warning {{ margin:.72rem 0 0; padding:.58rem .65rem; border-left:4px solid #a9364b; color:#6f3340; background:#fff8f9; font-size:.67rem; line-height:1.5; }}
+    .axis-available {{ color:#087a55 !important; background:#eef9f5 !important; }}
+    .axis-active {{ color:#1769aa !important; background:#eef6fc !important; }}
+    .axis-limited {{ color:#906000 !important; background:#fff7e7 !important; }}
+    .axis-review {{ color:#7650a8 !important; background:#f6f0fc !important; }}
+    .axis-blocked {{ color:#a9364b !important; background:#fff3f5 !important; }}
+    .axis-neutral {{ color:#657187 !important; background:#f1f3f6 !important; }}
     .progress-key {{ display:flex; flex-wrap:wrap; align-items:center; gap:.4rem .75rem; margin:-.15rem 0 1rem; padding:.65rem .75rem; border:1px solid #dde3ec; border-radius:.68rem; color:var(--muted); background:#f8fafc; font-size:.72rem; }}
     .progress-key > strong {{ color:var(--ink); font-size:.75rem; }}
     .progress-key span {{ display:inline-flex; align-items:center; gap:.3rem; white-space:nowrap; }}
@@ -1640,7 +1816,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; }}
     .flow-stage-shell:nth-child(8)::after {{ display:none; }}
     .flow-stage {{ min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:.82rem; background:#f8fafc; }}
-    .flow-stage > .stage-summary {{ display:flex; min-height:196px; padding:.82rem; list-style:none; flex-direction:column; }}
+    .flow-stage > .stage-summary {{ display:flex; min-height:278px; padding:.82rem; list-style:none; flex-direction:column; }}
     .flow-stage > .stage-summary::-webkit-details-marker {{ display:none; }}
     .flow-stage > .stage-summary:focus-visible {{ outline:3px solid #6e9fea; outline-offset:-3px; }}
     .stage-title {{ margin:.55rem 0 .28rem; font-size:.96rem; font-weight:850; line-height:1.25; }}
@@ -1650,9 +1826,16 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .stage-top {{ display:flex; align-items:center; justify-content:space-between; gap:.4rem; }}
     .stage-number {{ color:var(--muted); font:850 .7rem/1 system-ui,sans-serif; letter-spacing:.08em; }}
     .stage-badge {{ padding:.15rem .4rem; border-radius:999px; color:#667287; background:#e9edf3; font-size:.62rem; font-weight:850; }}
-    .stage-progress {{ display:grid; grid-template-columns:auto 1fr; align-items:center; gap:.08rem .35rem; margin-top:auto; padding:.43rem .5rem; border:1px solid currentColor; border-radius:.55rem; background:#fff; }}
-    .stage-progress strong {{ font-size:.7rem; line-height:1.2; }}
-    .stage-progress code {{ grid-column:2; color:currentColor; font-size:.56rem; line-height:1.2; overflow-wrap:anywhere; }}
+    .stage-axis-summary {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.35rem; margin:0 0 .45rem; }}
+    .stage-axis-chip {{ display:block; min-width:0; padding:.38rem .45rem; border:1px solid currentColor; border-radius:.48rem; }}
+    .stage-axis-chip small,.stage-axis-chip strong {{ display:block; }}
+    .stage-axis-chip small {{ font-size:.53rem; font-weight:900; letter-spacing:.04em; }}
+    .stage-axis-chip strong {{ margin-top:.08rem; font-size:.64rem; line-height:1.3; }}
+    .stage-progress {{ display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:.35rem; margin-top:auto; padding:.43rem .5rem; border:1px solid currentColor; border-radius:.55rem; background:#fff; }}
+    .stage-progress-copy small,.stage-progress-copy strong,.stage-progress-copy code {{ display:block; }}
+    .stage-progress-copy small {{ font-size:.52rem; font-weight:900; letter-spacing:.04em; }}
+    .stage-progress-copy strong {{ font-size:.7rem; line-height:1.2; }}
+    .stage-progress-copy code {{ color:currentColor; font-size:.56rem; line-height:1.2; overflow-wrap:anywhere; }}
     .stage-disclosure-cue {{ display:flex; align-items:center; justify-content:space-between; gap:.4rem; margin:.58rem 0 -.15rem; padding-top:.5rem; border-top:1px solid #dce2eb; color:#315fba; font-size:.65rem; font-weight:850; }}
     .stage-disclosure-cue i {{ font-style:normal; font-size:.95rem; transition:transform .16s ease; }}
     .cue-open {{ display:none; }}
@@ -1875,6 +2058,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
+    @media (max-width:900px) {{ .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
     @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
     @media (max-width:620px) {{ .metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}

@@ -1,0 +1,136 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  task_id_sha256: e76be5e0c8450715aaa14c4b145ee94ded72c28707d5402dabe1987d3f6aa8af
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  title: null
+  domain: Atlas strategy research page / engineering, research and acceptance progress
+    matrix
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Project Owner visual review / Atlas page maintainer
+  requirement_refs:
+  - docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 实现与自动化视觉检查已完成；Owner 视觉验收保持独立 PENDING_REVIEW。详见
+    docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md；后续
+    source/task 变化必须通过 canonical writer 与 freshness fail-closed 重新生成页面。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: typed 三轴矩阵、八节点工程/研究标签、独立页面验收、strategy PASS=0、27-task freshness、desktop/mobile
+      无水平溢出与 final-tree gates 均通过。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-10T15:18:57Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2508-registration-20260811-v1
+  lane_id: null
+  base_commit: 0680bae731e8e9c329378ace5324cc194b8e7672
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+    - Atlas strategy research page / engineering, research and acceptance progress
+      matrix
+    - P1
+    - PROPOSED
+    - Atlas page engineering owner
+    - 详见 docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md。先冻结
+      typed 三轴汇总，再接入折叠卡片与页面总览。
+    - 八节点分别展示工程能力、研究证据与本页状态；页面级三轨验收独立；工程稳定不得解释为策略有效；desktop/mobile、freshness、focused
+      与 final-tree gates PASS。
+    - 2026-08-11：Owner 要求增加工程线与策略线具体进度说明；依赖 2507 exact main 0680bae731e8e9c329378ace5324cc194b8e7672；无投资、生产或
+      broker 行为变化。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2508-registration-20260811-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-35044840e1d1fc77e262c57b4eeac69e
+- schema_version: task_event.v1
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-10T15:42:33Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2508-baseline-done-20260811-v1
+  lane_id: null
+  base_commit: 0680bae731e8e9c329378ace5324cc194b8e7672
+  previous_state_event_id: task-event-35044840e1d1fc77e262c57b4eeac69e
+  from_status: PROPOSED
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Project Owner visual review / Atlas page maintainer
+    blocker_or_next_step: 实现与自动化视觉检查已完成；Owner 视觉验收保持独立 PENDING_REVIEW。后续 source/task
+      变化必须通过 canonical writer 与 freshness fail-closed 重新生成页面。
+    acceptance_criteria: typed 三轴矩阵、八节点工程/研究标签、独立页面验收、strategy PASS=0、27-task freshness、desktop/mobile
+      无水平溢出与 final-tree gates 均通过。
+    notes: Atlas focused replacement 42 PASS；Playwright 1440x1200 与 390x844 验证 3 matrix
+      cards、16 axis chips、acceptance 2/3、no horizontal overflow；首轮 header 样式污染已 scoped
+      修复；无投资、外部平台、production 或 broker effect。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2508-baseline-done-20260811-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-52bd0990e18d93be48ec4659b5745af8
+- schema_version: task_event.v1
+  task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-10T15:56:39Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2508-requirement-binding-20260811-v1
+  lane_id: null
+  base_commit: 0680bae731e8e9c329378ace5324cc194b8e7672
+  previous_state_event_id: task-event-52bd0990e18d93be48ec4659b5745af8
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Project Owner visual review / Atlas page maintainer
+    blocker_or_next_step: 实现与自动化视觉检查已完成；Owner 视觉验收保持独立 PENDING_REVIEW。详见 docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md；后续
+      source/task 变化必须通过 canonical writer 与 freshness fail-closed 重新生成页面。
+    acceptance_criteria: typed 三轴矩阵、八节点工程/研究标签、独立页面验收、strategy PASS=0、27-task freshness、desktop/mobile
+      无水平溢出与 final-tree gates 均通过。
+    notes: Atlas focused replacement 42 PASS；Playwright 1440x1200 与 390x844 验证 3 matrix
+      cards、16 axis chips、acceptance 2/3、no horizontal overflow；首轮 header 样式污染已 scoped
+      修复；无投资、外部平台、production 或 broker effect。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2508-requirement-binding-20260811-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8680e4d03fec6c99935ff13b589be09e
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+  - Atlas strategy research page / engineering, research and acceptance progress matrix
+  - P1
+  - BASELINE_DONE
+  - Project Owner visual review / Atlas page maintainer
+  - 实现与自动化视觉检查已完成；Owner 视觉验收保持独立 PENDING_REVIEW。详见 docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md；后续
+    source/task 变化必须通过 canonical writer 与 freshness fail-closed 重新生成页面。
+  - typed 三轴矩阵、八节点工程/研究标签、独立页面验收、strategy PASS=0、27-task freshness、desktop/mobile
+    无水平溢出与 final-tree gates 均通过。
+  - Atlas focused replacement 42 PASS；Playwright 1440x1200 与 390x844 验证 3 matrix cards、16
+    axis chips、acceptance 2/3、no horizontal overflow；首轮 header 样式污染已 scoped 修复；无投资、外部平台、production
+    或 broker effect。
+  docs_links:
+  - docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md
+  terminal: false
+  canonical_row_sha256: 2758c1d9e601aa6576495642c988f3c39c7bd72f433ed015c16dbfc111d26d2a
+last_event_id: task-event-8680e4d03fec6c99935ff13b589be09e
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b428d5bc36eee76f51af0f6d0cc0221609c6be3a9307952e7421bae6023e14e8

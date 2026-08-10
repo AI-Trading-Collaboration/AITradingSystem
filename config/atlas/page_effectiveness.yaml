@@ -135,6 +135,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md
     coverage: DISCLOSED_OWNER_ADOPTION_POLICY_BLOCKED
     reader_summary_zh: Owner attestation adoption 合同已实现，但尚无真实 Owner attestation；默认仍为 POLICY_BLOCKED_CASH_PRESERVATION，不代表 engine/backtest 或策略获批。
+  - task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
+    requirement_path: docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md
+    coverage: INCLUDED_THREE_AXIS_PROGRESS_MATRIX
+    reader_summary_zh: 页面把工程能力、研究证据和页面验收分开汇总；绿色工程状态不代表策略有效或可以下单。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

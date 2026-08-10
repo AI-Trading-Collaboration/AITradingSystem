@@ -40,6 +40,97 @@ class ResearchEffect(StrEnum):
     OWNER_DECISION_ONLY = "OWNER_DECISION_ONLY"
 
 
+@dataclass(frozen=True)
+class StrategyResearchProgressMatrix:
+    stage_count: int
+    capability_available: int
+    capability_in_progress: int
+    capability_blocked: int
+    capability_not_applicable: int
+    research_no_new_evidence: int
+    research_limited_evidence: int
+    research_owner_decision_only: int
+
+    def __post_init__(self) -> None:
+        counts = (
+            self.capability_available,
+            self.capability_in_progress,
+            self.capability_blocked,
+            self.capability_not_applicable,
+            self.research_no_new_evidence,
+            self.research_limited_evidence,
+            self.research_owner_decision_only,
+        )
+        if self.stage_count != len(ATLAS_STATUS_EXPLANATION_STAGE_IDS):
+            raise StrategyResearchWorkProgressContractError(
+                "WORK_PROGRESS_MATRIX_STAGE_COUNT_INVALID"
+            )
+        if any(value < 0 for value in counts):
+            raise StrategyResearchWorkProgressContractError(
+                "WORK_PROGRESS_MATRIX_NEGATIVE_COUNT"
+            )
+        if (
+            self.capability_available
+            + self.capability_in_progress
+            + self.capability_blocked
+            + self.capability_not_applicable
+            != self.stage_count
+        ):
+            raise StrategyResearchWorkProgressContractError(
+                "WORK_PROGRESS_MATRIX_CAPABILITY_TOTAL_INVALID"
+            )
+        if (
+            self.research_no_new_evidence
+            + self.research_limited_evidence
+            + self.research_owner_decision_only
+            != self.stage_count
+        ):
+            raise StrategyResearchWorkProgressContractError(
+                "WORK_PROGRESS_MATRIX_RESEARCH_TOTAL_INVALID"
+            )
+
+
+def build_strategy_research_progress_matrix(
+    stage_records: Sequence[StageWorkProgressRecord],
+) -> StrategyResearchProgressMatrix:
+    stage_ids = tuple(item.stage_id for item in stage_records)
+    if stage_ids != ATLAS_STATUS_EXPLANATION_STAGE_IDS:
+        raise StrategyResearchWorkProgressContractError(
+            "WORK_PROGRESS_MATRIX_STAGE_SET_OR_ORDER_INVALID"
+        )
+    return StrategyResearchProgressMatrix(
+        stage_count=len(stage_records),
+        capability_available=sum(
+            item.capability_progress is CapabilityProgress.AVAILABLE
+            for item in stage_records
+        ),
+        capability_in_progress=sum(
+            item.capability_progress is CapabilityProgress.IN_PROGRESS
+            for item in stage_records
+        ),
+        capability_blocked=sum(
+            item.capability_progress is CapabilityProgress.BLOCKED
+            for item in stage_records
+        ),
+        capability_not_applicable=sum(
+            item.capability_progress is CapabilityProgress.NOT_APPLICABLE
+            for item in stage_records
+        ),
+        research_no_new_evidence=sum(
+            item.research_effect is ResearchEffect.NO_NEW_RESEARCH_EVIDENCE
+            for item in stage_records
+        ),
+        research_limited_evidence=sum(
+            item.research_effect is ResearchEffect.LIMITED_RESEARCH_EVIDENCE
+            for item in stage_records
+        ),
+        research_owner_decision_only=sum(
+            item.research_effect is ResearchEffect.OWNER_DECISION_ONLY
+            for item in stage_records
+        ),
+    )
+
+
 def _required_text(value: str, field: str) -> None:
     if not value.strip():
         raise StrategyResearchWorkProgressContractError(
@@ -575,6 +666,8 @@ __all__ = [
     "ReaderConcept",
     "ResearchEffect",
     "StageWorkProgressRecord",
+    "StrategyResearchProgressMatrix",
     "StrategyResearchWorkProgressBundle",
     "StrategyResearchWorkProgressContractError",
+    "build_strategy_research_progress_matrix",
 ]
