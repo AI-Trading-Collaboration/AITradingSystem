@@ -131,6 +131,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md
     coverage: INCLUDED_WORK_PROGRESS_RECURSIVE_EXPLANATION
     reader_summary_zh: 八个流程节点已补充工作内容、必要性、三维进展、预期产物和可继续展开的概念解释。
+  - task_id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md
+    coverage: DISCLOSED_OWNER_ADOPTION_POLICY_BLOCKED
+    reader_summary_zh: Owner attestation adoption 合同已实现，但尚无真实 Owner attestation；默认仍为 POLICY_BLOCKED_CASH_PRESERVATION，不代表 engine/backtest 或策略获批。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

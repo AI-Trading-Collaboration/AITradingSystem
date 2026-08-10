@@ -1,0 +1,24 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_owner_policy_adoption_contract
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/owner_policy_adoption_contract.py
+public_contracts:
+  - DEFAULT_QQQ_OPTIONS_OWNER_POLICY_ADOPTION_CONTRACT_PATH
+  - OwnerDecisionAttestationError
+  - OwnerDecisionAttestationLoadResult
+  - OwnerDecisionAttestationRecord
+  - PolicyAdoptionSlotPlan
+  - PolicyAdoptionSlotState
+  - QQQOptionsOwnerPolicyAdoptionContractPolicy
+  - QQQOptionsOwnerPolicyAdoptionContractPolicyLoadResult
+  - QQQOptionsPolicyAdoptionPlan
+  - QQQOptionsPolicyAdoptionResolution
+  - SlotCatalogAmendmentDisposition
+  - SlotCatalogAmendmentResolution
+  - build_policy_adoption_plan
+  - load_owner_decision_attestation
+  - load_qqq_options_owner_policy_adoption_contract
+  - resolve_policy_adoption_plan
+compatibility_facades: []
+deprecation_status: active_reference_architecture

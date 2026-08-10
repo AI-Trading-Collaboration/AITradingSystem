@@ -220,6 +220,19 @@ TRADING-2506 在八阶段流程节点中新增独立的工作进展解释合同�
 清单重放相关 policy、projector、contract 与 requirement。该解释层不执行研究、DQ、回测或投资决策，
 不改变原始 status，也没有 external、production 或 broker effect。
 
+TRADING-2507 在 TRADING-2502 的 28-slot decision pack 与 TRADING-2504 canonical manifest 之间增加
+唯一的 Owner attestation admission。调用方只能提交 canonical UTF-8/LF attestation bytes；loader 拒绝
+缺失、duplicate key、unknown field、non-canonical、hash tamper，并 exact-bind Owner/reviewer、token/date、
+repository SHA、2502 pack/authority 与 2504 policy/catalog。通过 admission 后，系统只从 attestation
+事实派生 group/PER_SLOT、G2 typed value、G5 rationale，再调用原 2504 builder/resolver；不接受另一套
+caller-supplied choices/values/rationales。随后生成 deterministic 28-slot adoption plan：G1 保持 unresolved，
+G3 仅 calibration required，G4 仅 sensitivity，G2/G5 绑定各自 reviewed metadata。11 项 composite-slot
+改进只作为 versioned amendment proposal 分轴记录，不修改 frozen v1 catalog，也不增加第 29 个 slot。
+当前没有真实 canonical Owner attestation，因此 task 继续 `BLOCKED_OWNER_INPUT`；合同最大状态仅为
+`VALID_POLICY_ADOPTION_CONTRACT_ONLY`，DQ/PIT=`NOT_EVALUATED_BY_THIS_CONTRACT`、engine cash-preservation、
+selection=false、orders/fills=0。该层不填阈值、不代签 Owner、不实现 DAILY engine，也没有 QuantConnect、
+external、investment、paper/live/broker 或 production action。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，

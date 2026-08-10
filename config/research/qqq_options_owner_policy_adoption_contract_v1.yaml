@@ -1,0 +1,63 @@
+schema_version: qqq_options_owner_policy_adoption_contract_policy.v1
+policy_id: qqq_options_owner_policy_adoption_contract
+policy_version: "1.0.0"
+policy_status: CONTRACT_ONLY_BLOCKED_OWNER_INPUT
+expected_owner_id: project_owner
+attestation_schema_version: qqq_options_owner_decision_attestation.v1
+primary_research_start: 2021-02-22
+frozen_slot_count: 28
+upstream_authority:
+  pack_requirement_path: docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
+  pack_requirement_lf_sha256: afdcb44f44032fee958d4f6b1e8e4b56c1edb2faefa44026e16aff7153968588
+  authority_set_sha256: 1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c
+  manifest_policy_path: config/research/qqq_options_owner_decision_manifest_v1.yaml
+  manifest_policy_file_sha256: 55fb29bb2e4347959920cd3f5d72cbc5fc94c2aac5794f301e1c41f9a31547de
+  manifest_policy_canonical_sha256: c872e9aee37cf2ea36b201d81c48c98603ca4daa96c53d900cdaa5997e13f0db
+  slot_catalog_sha256: a1492e27ea8599d453249e5d29280d6fcb882ea0376ce531b949eae7b7621ad6
+slot_catalog_amendments:
+  - amendment_id: SPLIT_LIFE_CLOSE_HOLD_ROLL
+    affected_slot_ids: [LIFE_CLOSE_HOLD_ROLL]
+    proposal: Separate close and hold mechanics from roll authorization so roll cannot be unlocked implicitly.
+  - amendment_id: SPLIT_LIFE_EXERCISE_ASSIGNMENT
+    affected_slot_ids: [LIFE_EXERCISE_ASSIGNMENT]
+    proposal: Separate long exercise and expiry handling from assignment and underlying-exposure hard stops.
+  - amendment_id: SPLIT_ACC_IDENTITY_ROUNDING
+    affected_slot_ids: [ACC_IDENTITY_ROUNDING]
+    proposal: Separate deterministic identity invariants from reviewed rounding and reconciliation policy.
+  - amendment_id: SPLIT_ACC_SETTLEMENT_COST_BASIS
+    affected_slot_ids: [ACC_SETTLEMENT_COST_BASIS]
+    proposal: Separate legal settlement timing from research profit-and-loss convention.
+  - amendment_id: EXPLICIT_QUOTE_OBSERVATION_IDENTITIES
+    affected_slot_ids: [SEL_QUOTE_FRESHNESS, EXE_QUOTE_DISPOSITION]
+    proposal: Bind selection and execution quote observations to separate explicit identities.
+  - amendment_id: ADD_TERMINAL_VALUATION_RESULT_INCLUSION_DEPENDENCY
+    affected_slot_ids: [LIFE_TERMINAL_VALUATION, ACC_RESULT_INCLUSION]
+    proposal: Add an explicit lifecycle terminal-valuation to acceptance result-inclusion dependency.
+  - amendment_id: ADD_LIFE_POSITION_STATE_TRANSITION
+    affected_slot_ids: [LIFE_CLOSE_HOLD_ROLL, LIFE_EXERCISE_ASSIGNMENT]
+    proposal: Review a versioned lifecycle position-state-transition axis.
+  - amendment_id: ADD_EXE_EXECUTION_OBSERVATION_SOURCE
+    affected_slot_ids: [EXE_QUOTE_DISPOSITION, EXE_MARKETABLE_LIMIT]
+    proposal: Review a versioned execution observation-source axis.
+  - amendment_id: ADD_ACC_CASH_CARRY_BENCHMARK
+    affected_slot_ids: [ACC_INITIAL_CASH, ACC_RESULT_INCLUSION]
+    proposal: Review a versioned cash-carry benchmark axis.
+  - amendment_id: ADD_ACC_METRIC_BENCHMARK_IDENTITY
+    affected_slot_ids: [ACC_RESULT_INCLUSION, ACC_INVESTMENT_PROMOTION]
+    proposal: Review a versioned metric benchmark-identity axis.
+  - amendment_id: ADD_ACC_RESEARCH_MULTIPLICITY_CONTROL
+    affected_slot_ids: [ACC_SAMPLE_COVERAGE, ACC_INVESTMENT_PROMOTION]
+    proposal: Review a versioned research multiplicity-control axis.
+safety:
+  maximum_adoption_status: VALID_POLICY_ADOPTION_CONTRACT_ONLY
+  dq_pit_status: NOT_EVALUATED_BY_THIS_CONTRACT
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  orders: 0
+  fills: 0
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

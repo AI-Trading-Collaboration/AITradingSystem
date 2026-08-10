@@ -1372,7 +1372,7 @@ _PAGE_ACCEPTANCE_LABELS = {
 
 def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
-    if len(manifest.task_coverage) != 25:
+    if len(manifest.task_coverage) != 26:
         raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
     acceptance = "".join(
         (
@@ -1394,7 +1394,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2506
+        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2507
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">

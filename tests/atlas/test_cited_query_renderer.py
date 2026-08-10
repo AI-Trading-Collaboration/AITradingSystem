@@ -100,6 +100,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "这张页面现在还能不能信",
         "QQQ Options 的 DAILY 工程合同正在完善",
         "28 个 selection、execution、accounting、lifecycle 决策",
+        "Owner attestation adoption 合同已实现，但尚无真实 Owner attestation",
         "三种“通过”互不代签",
         "ENGINEERING_VALIDATION",
         "OWNER_VISUAL_REVIEW",

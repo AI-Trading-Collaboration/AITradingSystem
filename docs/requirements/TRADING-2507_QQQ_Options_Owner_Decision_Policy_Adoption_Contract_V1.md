@@ -192,3 +192,47 @@ Web Pro 指出若干 composite slots 同时混合 mechanic invariant 与 Owner p
 - implementation 必须在 registration ordinary push 后从新 exact main 重新执行
   `SINGLE_LANE + contract_change=true` preflight；
 - production effect=`none`，broker action=`none`。
+
+## 13. 当前实施进展
+
+2026-08-10 已完成 R1 contract wave 的实现候选：新增 exact-bound policy loader、canonical attestation record/
+loader、2504 manifest/resolution replay、28-slot adoption plan/resolution 与 11 项 versioned amendment typed
+disposition。public records 均提供 seal/canonical bytes/hash/replay；plan resolver 继续固定
+`executable_policy_authorized=false`、`owner_input_blocker_cleared=false` 与 cash-preservation。首轮完全相同的
+`-n 16 --dist loadfile` focused 覆盖为 40 passed、0 failed；Ruff、mypy 与 compileall PASS。
+
+本轮仅使用明确标记为 synthetic contract fixture 的数据，没有写入真实 Owner attestation，没有引入任何
+DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/
+acceptance 数值，也没有解除 task blocker、selection 或 engine。R2 authority rebuild 已完成：task registry=
+`977/470/507`、DevEx=`1107 modules / 1268 tests / 856 writers / 0 violations`、QQQ adjacent=`684 passed`。
+compatibility/deprecation 首轮因不必要的 package-root export 与 stale inventory 级联为 `109 passed / 102 failed`；
+撤回该 export、按真实 checkout 重建 inventory/DevEx/compat authority 后，以完全相同命令覆盖重跑为
+`211 passed in 277.71s`。R3 final-tree gates 完成前不得收口，首轮 failure 保留为 failure-fix 证据，不能作为
+promotion evidence。
+
+首轮 final-tree Architecture/Contract/Integration/Reproducibility 分别为 `865/276/995/24 PASS`，但 exclusive
+Full 在 `full_20260810T133905Z` 以 `10 failed / 8727 passed / 3 skipped` 停止。失败分为两个确定根因：
+2507 成为 canonical successor 后尚未进入 Atlas reviewed-successor coverage，因而页面 freshness 正确地
+fail closed 为 `UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`；同时本文加入 system flow 后，DEVX-006D 的
+`docs/system_flow.md` exact-byte seal 尚未刷新。两类失败都不是 adoption contract、slot 解析或 cash-
+preservation 语义失败。
+
+经 Atlas coordinator 明确批准 A1 最小串行 failure-fix：page-effectiveness policy 仅追加 2507 的
+`DISCLOSED_OWNER_ADOPTION_POLICY_BLOCKED` 披露项，manifest task coverage exact/unique count 从 25 提升为
+26，并保留 acceptance tracks、freshness 状态机与 rendering 语义不变；DEVX-006D seal 按当前 system flow
+exact bytes 重建。2507 的页面摘要明确说明当前没有真实 Owner attestation、默认仍为
+`POLICY_BLOCKED_CASH_PRESERVATION`，不代表 engine/backtest 或策略获批。修复后必须从同一 final tree
+重跑五级，Full 使用 `failure_fix_rerun` 并绑定上述失败 Full 为 parent。
+
+failure-fix focused 首轮以 page/renderer/historical/DEVX-006D 完整 49-test 并行覆盖自然结束为
+`27 passed / 22 failed in 15.97s`。全部失败归并为 reviewed count/order、canonical requirement binding、
+renderer consumer invariant、historical current identity 与 DEVX-006D exact test seal 五类同源 authority 漏项；
+没有 pytest node 指向 2507 adoption/slot/cash-preservation 语义。经逐项 reviewed 最小扩展后，canonical task
+row 通过 append-only event 补入 requirement ref，完整 writer 保留原有 human review facts 重建 26-task 页面，
+同一 49-test 覆盖重跑为 `49 passed in 92.16s`。writer 验证 `ENGINEERING_VALIDATION=PASS`、
+`READER_COMPREHENSION_REVIEW=PASS`、`OWNER_VISUAL_REVIEW=PENDING_REVIEW`，没有串轨或伪签。
+
+final pre-formal 邻接证据为 QQQ options 全覆盖 `684 passed`、compatibility/deprecation 完全相同命令
+`211 passed in 303.46s`、Ruff/mypy/compileall PASS；task registry=`977/470/507`，governance cycles=17，
+DevEx=`1107 modules / 1268 tests / 856 writers / 0 violations`，DEVX-006D=`2861 entries / 192 fragments`。
+正式五级启动前还须在本段最终 bytes 上重建 compatibility 与 canonical page，并覆盖 replay/focused audit。

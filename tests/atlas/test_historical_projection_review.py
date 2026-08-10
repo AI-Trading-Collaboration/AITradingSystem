@@ -318,6 +318,7 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
         assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
             *[f"TRADING-{task_id}" for task_id in range(2481, 2505)],
             "TRADING-2506",
+            "TRADING-2507",
         ]
         assert validation_sidecar["status"] == "PASS"
         assert validation_sidecar["manifest_sha256"] == manifest.content_sha256
