@@ -1,0 +1,298 @@
+schema_version: atlas_work_progress_explanation_authority.v1
+policy_id: atlas_work_progress_recursive_explanation_v1
+policy_version: 1.0.0
+status: OWNER_REVIEWED_BASELINE
+owner_decision: owner_decision:TRADING-2506:2026-08-10:approve_work_progress_recursive_explanation_v1
+contract_schema_id: strategy_research_work_progress.v1
+contract_schema_version: 1.0.0
+template_version: atlas_work_progress_recursive_explanation_template.v1
+primary_research_start: '2021-02-22'
+safety:
+  investment_conclusion_generated: false
+  research_executed: false
+  backtest_executed: false
+  data_quality_executed: false
+  canonical_status_mutated: false
+  external_platform_action: false
+  production_effect: none
+  broker_action: none
+
+stage_records:
+  - stage_id: DATA_INPUTS
+    display_title_zh: 确认研究使用了哪些输入
+    why_needed_zh: 研究结论只有在输入来源和时间范围明确时才有解释基础，否则读者无法判断结果对应哪批信息。
+    work_items_zh:
+      - 汇总页面已经收到的数据和人工记录。
+      - 标明每项输入的来源与覆盖时间。
+    capability_progress: NOT_APPLICABLE
+    capability_progress_zh: 本页只读取已有记录，不负责获取或刷新输入。
+    latest_execution_status: NOT_EXECUTED_BY_PAGE
+    latest_execution_summary_zh: 当前页面没有执行输入刷新，只展示已经进入研究记录的内容。
+    research_effect: NO_NEW_RESEARCH_EVIDENCE
+    research_effect_zh: 这一步没有产生新的研究证据。
+    expected_outputs_zh:
+      - 输入来源清单。
+      - 输入覆盖范围说明。
+    downstream_use_zh: 后续质量检查和研究步骤据此知道自己读取了什么。
+    boundary_zh: 页面展示输入记录，不证明这些输入已经完整、最新或适合投资判断。
+    next_trigger_zh: 当输入来源或覆盖范围改变时，需要刷新记录并重新生成页面。
+    concept_ids: [research-input, data-quality-check]
+    source_ref_ids: [atlas-registry]
+
+  - stage_id: DATA_QUALITY_GATE
+    display_title_zh: 检查输入是否适合继续研究
+    why_needed_zh: 缺失、重复或时间错位的数据会让后面的指标和回测失真，因此必须在计算前先拦截问题。
+    work_items_zh:
+      - 检查数据是否完整、及时且没有明显冲突。
+      - 发现问题时停止依赖这批数据的后续计算。
+    capability_progress: NOT_APPLICABLE
+    capability_progress_zh: 本页不运行数据质量检查，只说明这项检查在研究流程中的位置。
+    latest_execution_status: NOT_EXECUTED_BY_PAGE
+    latest_execution_summary_zh: 当前页面没有绑定一次覆盖全部输入的数据质量运行结果。
+    research_effect: NO_NEW_RESEARCH_EVIDENCE
+    research_effect_zh: 未在本页执行检查既不代表通过，也不代表失败。
+    expected_outputs_zh:
+      - 数据质量结论。
+      - 发现的问题及停止原因。
+    downstream_use_zh: 只有对应运行通过后，依赖新数据的研究或回测才能继续。
+    boundary_zh: 页面本身不能替代正式的数据质量运行回执。
+    next_trigger_zh: 下一次使用新数据开展研究前，由数据流程执行并记录质量检查。
+    concept_ids: [data-quality-check]
+    source_ref_ids: [atlas-registry]
+
+  - stage_id: RESEARCH_MAINLINE
+    display_title_zh: 明确当前正在研究什么
+    why_needed_zh: 多条候选方法同时出现时，读者需要知道当前主问题、已经完成的阶段和暂停范围，避免把探索想法当成结论。
+    work_items_zh:
+      - 汇总当前研究问题和候选路径。
+      - 区分已经完成的工程工作、仍在研究的证据和暂停的扩展。
+    capability_progress: IN_PROGRESS
+    capability_progress_zh: 研究流程仍在推进，但当前记录没有给出一个明确正在执行的子任务。
+    latest_execution_status: RUNNING
+    latest_execution_summary_zh: 当前状态表示研究主线仍开放，不表示某个候选方法已经有效。
+    research_effect: LIMITED_RESEARCH_EVIDENCE
+    research_effect_zh: 已有部分可重建结果，但样本外和事件风险证据仍不足。
+    expected_outputs_zh:
+      - 当前研究问题说明。
+      - 候选路径与暂停范围。
+      - 已有证据和缺口清单。
+    downstream_use_zh: 回测与评估步骤据此只检查已获准的研究路径，不自行扩大搜索范围。
+    boundary_zh: 研究仍在进行不代表研究完成、候选有效或适合投资。
+    next_trigger_zh: 只有登记新的受治理任务或补齐关键证据后，研究范围才会改变。
+    concept_ids: [research-mainline, research-evidence]
+    source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+
+  - stage_id: BACKTEST_AND_EVALUATION
+    display_title_zh: 检查候选方法在历史环境中的表现
+    why_needed_zh: 一个想法可能只在被挑选过的样本中表现良好，必须用独立时间段和压力情景检查它是否稳定。
+    work_items_zh:
+      - 重建已经登记的历史评估结果。
+      - 检查独立时间段、压力情景和未成熟结果的限制。
+    capability_progress: AVAILABLE
+    capability_progress_zh: 现有结果和检查能力已经形成，可以重建当前评估记录。
+    latest_execution_status: LIMITED
+    latest_execution_summary_zh: 当前结果受样本重叠、事件样本不足和后续观察尚未成熟限制。
+    research_effect: LIMITED_RESEARCH_EVIDENCE
+    research_effect_zh: 现有证据只能支持有限结论，不能证明收益稳定或风险可接受。
+    expected_outputs_zh:
+      - 历史评估结果。
+      - 限制与未完成条件清单。
+    downstream_use_zh: 结果归因步骤使用这些限制解释为什么当前结论不能升级。
+    boundary_zh: 工程检查通过不等于策略效果通过，也不形成投资建议。
+    next_trigger_zh: 新的独立样本、事件样本和成熟观察结果到位后，才能重新评估限制。
+    concept_ids: [research-evidence, out-of-sample-check]
+    source_ref_ids: [restart-r0-r2-requirement, restart-r0-r2-closeout]
+
+  - stage_id: RESULT_ATTRIBUTION
+    display_title_zh: 解释结果为什么受支持或受限制
+    why_needed_zh: 只看收益或状态无法知道结果由什么驱动，也无法区分真实限制、数据问题和偶然表现。
+    work_items_zh:
+      - 把结果与支持、反对或限制它的证据对应起来。
+      - 说明哪些问题已经确认，哪些仍需补证据。
+    capability_progress: AVAILABLE
+    capability_progress_zh: 当前结果已经绑定两类明确限制，可以追溯其原因。
+    latest_execution_status: LIMITED
+    latest_execution_summary_zh: 已确认的限制反对把当前结果升级为可扩展的策略证据。
+    research_effect: LIMITED_RESEARCH_EVIDENCE
+    research_effect_zh: 归因缩小了可以相信的范围，但没有消除现有证据缺口。
+    expected_outputs_zh:
+      - 结果原因清单。
+      - 支持与反对关系。
+      - 尚未解决的证据缺口。
+    downstream_use_zh: 页面和人工复核据此判断结论应保持有限、继续补证据或明确停止。
+    boundary_zh: 原因解释不会自动把有限结果升级为策略通过。
+    next_trigger_zh: 当新的证据改变某条原因或限制时，重新生成归因和页面说明。
+    concept_ids: [result-attribution, research-evidence]
+    source_ref_ids: [restart-r0-r2-closeout]
+
+  - stage_id: ATLAS_SNAPSHOT_DIFF
+    display_title_zh: 检查页面是否仍代表最新研究状态
+    why_needed_zh: 研究任务和证据会持续变化，旧页面即使还能打开，也可能已经遗漏最新进展。
+    work_items_zh:
+      - 保存页面生成时使用的研究状态。
+      - 与上一状态比较并列出发生变化的内容。
+      - 记录每项展示内容来自哪里。
+    capability_progress: AVAILABLE
+    capability_progress_zh: 版本保存、变化比较和来源核对能力已经具备。
+    latest_execution_status: VALIDATED
+    latest_execution_summary_zh: 当前页面已完成检查，页面内容与登记来源一致。
+    research_effect: NO_NEW_RESEARCH_EVIDENCE
+    research_effect_zh: 这项检查只确认页面可靠，没有产生新的策略证据。
+    expected_outputs_zh:
+      - 页面是当前内容还是需要更新的判定。
+      - 变化清单。
+      - 展示内容的来源关系记录。
+    downstream_use_zh: 页面据此决定能否继续标记为当前，或必须重新生成后再供读者查看。
+    boundary_zh: 检查通过只证明页面记录与来源一致，不证明策略有效。
+    next_trigger_zh: 当研究任务、证据或页面来源改变时，重新比较并更新页面。
+    concept_ids: [page-snapshot, change-list, source-relationship, structural-check]
+    source_ref_ids: [atlas-registry]
+
+  - stage_id: CITATION_FIRST_QUERY
+    display_title_zh: 用固定问题把研究记录讲给读者
+    why_needed_zh: 研究文件很多且层级不同，固定问题可以让读者先得到一致答案，再按需查看依据。
+    work_items_zh:
+      - 回答研究主线、结果、限制、变化和来源五类问题。
+      - 为每句关键回答保留可核对的出处。
+    capability_progress: AVAILABLE
+    capability_progress_zh: 固定问题、回答生成和出处核对能力已经具备。
+    latest_execution_status: VALIDATED
+    latest_execution_summary_zh: 当前五类回答都已生成，并与各自出处对应。
+    research_effect: NO_NEW_RESEARCH_EVIDENCE
+    research_effect_zh: 页面重新组织已有记录，没有创造新的研究结论。
+    expected_outputs_zh:
+      - 五类通俗回答。
+      - 每个回答的限制说明。
+      - 可展开的出处列表。
+    downstream_use_zh: 读者先使用普通语言答案理解现状，需要审计时再查看原始出处。
+    boundary_zh: 回答可以追溯不等于回答中的策略已经通过。
+    next_trigger_zh: 当页面来源或固定问题的答案发生变化时，重新生成并核对全部回答。
+    concept_ids: [citation-question, citation-chain]
+    source_ref_ids: [atlas-registry]
+
+  - stage_id: OWNER_DECISION_BOUNDARY
+    display_title_zh: 由人工决定是否接受页面解释
+    why_needed_zh: 自动检查可以发现结构问题，却不能代替真实读者判断说明是否容易理解。
+    work_items_zh:
+      - 由项目负责人检查视觉层级和信息密度。
+      - 由目标读者回答关键问题并记录不清楚之处。
+    capability_progress: IN_PROGRESS
+    capability_progress_zh: 工程检查已经完成，读者理解问题正在通过本任务修复。
+    latest_execution_status: PENDING_OWNER_REVIEW
+    latest_execution_summary_zh: 旧页面的读者理解验收未通过，新页面仍需重新人工验收。
+    research_effect: OWNER_DECISION_ONLY
+    research_effect_zh: 人工验收只决定页面是否清楚，不批准策略、仓位或交易。
+    expected_outputs_zh:
+      - 视觉验收结论。
+      - 读者理解验收结论。
+      - 需要继续修改的具体问题。
+    downstream_use_zh: 通过后可收口页面任务；未通过时登记明确的页面改进后继。
+    boundary_zh: 页面验收与策略研究验收、投资决策和真实下单相互独立。
+    next_trigger_zh: 新页面生成后，由项目负责人和目标读者重新执行人工验收。
+    concept_ids: [human-review-boundary]
+    source_ref_ids: [atlas-registry]
+
+concepts:
+  - concept_id: research-input
+    display_name_zh: 研究输入
+    plain_definition_zh: 进入研究流程的数据、人工记录和受审阅资料。
+    why_needed_zh: 只有知道研究读取了什么，才能解释结果对应的时间和信息范围。
+    example_zh: 一段市场价格记录和它的覆盖日期就是一项研究输入。
+    related_concept_ids: [data-quality-check]
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: data-quality-check
+    display_name_zh: 数据质量检查
+    plain_definition_zh: 在计算前查找缺失、重复、过期或相互冲突的数据问题。
+    why_needed_zh: 如果问题数据继续进入研究，后面的指标和结果可能失真。
+    example_zh: 发现同一天出现两条互相冲突的价格记录时，流程应先停止并说明原因。
+    related_concept_ids: []
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: research-mainline
+    display_name_zh: 研究主线
+    plain_definition_zh: 当前最重要的研究问题、获准探索的路径和暂停范围。
+    why_needed_zh: 它帮助读者区分正在推进的工作、候选想法和已经形成的结果。
+    example_zh: 当前只允许补充既有候选的证据，而暂停新的参数搜索，就是一条主线边界。
+    related_concept_ids: [research-evidence]
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: research-evidence
+    display_name_zh: 研究证据
+    plain_definition_zh: 能够支持或反对某个研究判断，并且可以回到原始记录核对的信息。
+    why_needed_zh: 没有证据时，工程能力和研究想法都不能被当成有效策略。
+    example_zh: 一次可重建的历史评估及其限制说明，属于研究证据的一部分。
+    related_concept_ids: [out-of-sample-check, result-attribution]
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: out-of-sample-check
+    display_name_zh: 独立时间段检查
+    plain_definition_zh: 用没有参与候选挑选的一段历史时期检查方法表现。
+    why_needed_zh: 它可以减少只对已看过样本表现良好的错觉。
+    example_zh: 先固定候选，再用之后未参与挑选的时期进行评估。
+    related_concept_ids: []
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: result-attribution
+    display_name_zh: 结果归因
+    plain_definition_zh: 把一个结果与支持、反对或限制它的具体原因对应起来。
+    why_needed_zh: 归因让读者知道结果为什么有限，而不是只看到一个状态或数字。
+    example_zh: 样本不足和观察期尚未结束，可以分别成为限制同一结果的两条原因。
+    related_concept_ids: []
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: page-snapshot
+    display_name_zh: 页面快照
+    plain_definition_zh: 页面生成时所依据的一份固定研究状态，类似给当时的研究记录拍照。
+    why_needed_zh: 以后可以用它判断页面展示的是哪一时刻的内容，以及是否已经过期。
+    example_zh: 页面记录生成时有哪些任务和结果，之后新增任务时就能识别差异。
+    related_concept_ids: [change-list, source-relationship]
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: change-list
+    display_name_zh: 变化清单
+    plain_definition_zh: 两个研究状态之间新增、删除和修改内容的列表。
+    why_needed_zh: 它帮助页面只更新真正改变的内容，并向读者说明变化范围。
+    example_zh: 一个任务从进行中变为受阻，会在变化清单中显示状态改变。
+    related_concept_ids: [structural-check]
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: source-relationship
+    display_name_zh: 来源关系
+    plain_definition_zh: 说明页面上的一句话或一个状态来自哪项任务、结果或原始记录。
+    why_needed_zh: 读者对内容有疑问时，可以沿关系回到实际依据，而不是只相信页面文案。
+    example_zh: “证据有限”可以指向记录样本不足的结果文件。
+    related_concept_ids: [citation-chain]
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: structural-check
+    display_name_zh: 结构检查
+    plain_definition_zh: 确认页面记录所需字段齐全、关系没有断开且内容能被重新读取。
+    why_needed_zh: 页面看起来正常时，内部关系仍可能缺失，结构检查负责拦截这种情况。
+    example_zh: 页面引用了一个不存在的结果时，检查应失败并要求重新生成。
+    related_concept_ids: []
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: citation-question
+    display_name_zh: 引用式问题
+    plain_definition_zh: 先提出固定问题，再要求回答中的关键说法能够回到实际出处。
+    why_needed_zh: 它让不同页面版本始终回答相同核心问题，并保留核对路径。
+    example_zh: “当前最大阻塞是什么”必须同时给出回答和记录该阻塞的出处。
+    related_concept_ids: [citation-chain]
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: citation-chain
+    display_name_zh: 出处链
+    plain_definition_zh: 从页面说法依次回到结果、任务和原始记录的一条核对路径。
+    why_needed_zh: 它避免页面出现无法验证来源的结论。
+    example_zh: 一句结果限制可以先指向结果卡，再指向记录该限制的研究文档。
+    related_concept_ids: []
+    source_ref_ids: [atlas-registry]
+
+  - concept_id: human-review-boundary
+    display_name_zh: 人工验收边界
+    plain_definition_zh: 明确哪些判断必须由真实人员完成，自动检查不能代签。
+    why_needed_zh: 可读性和决策责任需要人的理解与授权，不能只凭程序运行成功。
+    example_zh: 页面没有溢出可以自动检查，但读者是否真正理解必须由人回答问题确认。
+    related_concept_ids: []
+    source_ref_ids: [atlas-registry]

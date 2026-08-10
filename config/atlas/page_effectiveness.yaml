@@ -19,14 +19,17 @@ relevant_source_paths:
   - config/atlas/historical_canonical_projection.yaml
   - config/atlas/qqq_options_projection.yaml
   - config/atlas/status_explanation_authority.yaml
+  - config/atlas/work_progress_explanation.yaml
   - src/ai_trading_system/atlas/cited_query_renderer.py
   - src/ai_trading_system/atlas/historical_canonical_projection.py
   - src/ai_trading_system/atlas/page_effectiveness.py
   - src/ai_trading_system/atlas/qqq_options_projection.py
   - src/ai_trading_system/atlas/status_explanation_projection.py
+  - src/ai_trading_system/atlas/work_progress_projection.py
   - src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
   - src/ai_trading_system/contracts/strategy_research_qqq_options_projection.py
   - src/ai_trading_system/contracts/strategy_research_status_explanation.py
+  - src/ai_trading_system/contracts/strategy_research_work_progress.py
 task_sources:
   - task_id: TRADING-2481_QQQ_OPTIONS_SHARED_SCHEMA_POLICY_FREEZE_V1
     requirement_path: docs/requirements/TRADING-2481_QQQ_Options_Shared_Schema_Policy_Freeze_V1.md
@@ -124,6 +127,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2504_QQQ_Options_Owner_Decision_Manifest_Canonicalization_V1.md
     coverage: DISCLOSED_OWNER_MANIFEST_POLICY_BLOCKED
     reader_summary_zh: canonical manifest 合同已完成，但没有真实 Owner decisions，也没有激活 engine。
+  - task_id: TRADING-2506_ATLAS_WORK_PROGRESS_RECURSIVE_EXPLANATION_V1
+    requirement_path: docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md
+    coverage: INCLUDED_WORK_PROGRESS_RECURSIVE_EXPLANATION
+    reader_summary_zh: 八个流程节点已补充工作内容、必要性、三维进展、预期产物和可继续展开的概念解释。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

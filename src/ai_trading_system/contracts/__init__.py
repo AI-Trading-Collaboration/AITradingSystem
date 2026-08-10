@@ -216,6 +216,14 @@ from ai_trading_system.contracts.strategy_research_status_explanation import (
     StrategyResearchStatusExplanationBundle,
     StrategyResearchStatusExplanationContractError,
 )
+from ai_trading_system.contracts.strategy_research_work_progress import (
+    CapabilityProgress,
+    ReaderConcept,
+    ResearchEffect,
+    StageWorkProgressRecord,
+    StrategyResearchWorkProgressBundle,
+    StrategyResearchWorkProgressContractError,
+)
 from ai_trading_system.contracts.workflow import (
     EntrypointRef,
     FailurePropagation,
@@ -386,6 +394,12 @@ __all__ = [
     "StatusExplanationRecord",
     "StrategyResearchStatusExplanationBundle",
     "StrategyResearchStatusExplanationContractError",
+    "CapabilityProgress",
+    "ReaderConcept",
+    "ResearchEffect",
+    "StageWorkProgressRecord",
+    "StrategyResearchWorkProgressBundle",
+    "StrategyResearchWorkProgressContractError",
     "ExplorerDiffChangeKind",
     "ExplorerDiffEntityKind",
     "ExplorerDiffEntitySummary",

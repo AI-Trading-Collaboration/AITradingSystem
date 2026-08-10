@@ -19,6 +19,7 @@ from ai_trading_system.contracts import (
     CitedQueryQuestionId,
     StrategyResearchExplorerSnapshot,
     StrategyResearchStatusExplanationBundle,
+    StrategyResearchWorkProgressBundle,
 )
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     StrategyResearchQQQOptionsProjectionBundle,
@@ -108,7 +109,16 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "第 7 / 8 阶段",
         "当前实际关注路径",
         "当前研究关注路径",
-        "Owner 决策边界",
+        "由人工决定是否接受页面解释",
+        "检查页面是否仍代表最新研究状态",
+        "页面可靠性检查",
+        "为什么需要这一步",
+        "具体做什么",
+        "目前进展：三种状态分开看",
+        "预期产物",
+        "完成后怎样被使用",
+        "不能说明什么",
+        "陌生概念可以继续解释，并能返回原流程节点",
         "进展状态",
         "颜色表示节点在当前 evidence view 中的进展",
         "不代表策略 PASS 或投资评级",
@@ -122,7 +132,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "怎样展开",
         "展开读者说明",
         "收起读者说明",
-        "一句话结论",
+        "状态限制摘要",
         "正在做什么",
         "已完成什么",
         "还缺什么",
@@ -204,6 +214,19 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert html.count('data-drilldown-stage="') == 8
     assert html.count('class="stage-drilldown"') == 8
     assert html.count('class="reader-explanation"') == 8
+    assert html.count('class="work-progress-reader"') == 8
+    assert html.count('data-reader-section="why_needed"') == 8
+    assert html.count('data-reader-section="work_items"') == 8
+    assert html.count('data-reader-section="expected_outputs"') == 8
+    assert html.count('data-reader-section="progress_dimensions"') == 8
+    assert html.count('data-progress-dimension="') == 24
+    assert html.count('data-reader-section="downstream_use"') == 8
+    assert html.count('data-reader-section="boundary"') == 8
+    assert html.count('data-reader-section="next_trigger"') == 8
+    assert html.count('class="concept-card"') == len(showcase.work_progress.concepts)
+    assert html.count('data-concept-ref="') == sum(
+        len(item.concept_ids) for item in showcase.work_progress.stage_records
+    )
     assert html.count('class="reader-conclusion"') == 8
     assert html.count('class="reader-audit"') == 8
     assert html.count('data-reader-section="conclusion"') == 8
@@ -435,6 +458,8 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "status_explanation_validation.json",
         "status_explanations.json",
         "validation.json",
+        "work_progress_explanation_validation.json",
+        "work_progress_explanations.json",
         "page_effectiveness.json",
         "page_effectiveness_validation.json",
     )
@@ -448,6 +473,8 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "status_explanation_validation.json",
         "status_explanations.json",
         "validation.json",
+        "work_progress_explanation_validation.json",
+        "work_progress_explanations.json",
         "page_effectiveness.json",
         "page_effectiveness_validation.json",
     ):
@@ -461,6 +488,10 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     assert projection_bytes == showcase.qqq_options_projection.canonical_bytes
     projection = StrategyResearchQQQOptionsProjectionBundle.from_json_bytes(projection_bytes)
     assert projection.content_sha256 == showcase.qqq_options_projection.content_sha256
+    progress_bytes = (tmp_path / "first" / "work_progress_explanations.json").read_bytes()
+    assert progress_bytes == showcase.work_progress.canonical_bytes
+    progress = StrategyResearchWorkProgressBundle.from_json_bytes(progress_bytes)
+    assert progress.content_sha256 == showcase.work_progress.content_sha256
 
 
 def test_renderer_rejects_status_explanation_validation_drift() -> None:
@@ -491,5 +522,21 @@ def test_renderer_rejects_qqq_options_projection_validation_drift() -> None:
     with pytest.raises(
         ValueError,
         match="ATLAS_CITED_QUERY_QQQ_OPTIONS_PROJECTION_BINDING_INVALID",
+    ):
+        render_cited_query_html(invalid)
+
+
+def test_renderer_rejects_work_progress_validation_drift() -> None:
+    showcase = _showcase()
+    invalid = replace(
+        showcase,
+        work_progress_validation=replace(
+            showcase.work_progress_validation,
+            bundle_sha256="0" * 64,
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="ATLAS_CITED_QUERY_WORK_PROGRESS_BINDING_INVALID",
     ):
         render_cited_query_html(invalid)

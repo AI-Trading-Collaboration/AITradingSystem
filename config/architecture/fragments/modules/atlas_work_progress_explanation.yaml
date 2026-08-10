@@ -1,0 +1,15 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_work_progress_explanation
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/work_progress_projection.py
+public_contracts:
+  - WorkProgressAuthorityPolicy
+  - WorkProgressProjectionError
+  - WorkProgressProjectionValidation
+  - load_work_progress_authority_policy
+  - project_work_progress
+  - validate_work_progress_bundle
+  - work_progress_validation_json_bytes
+compatibility_facades: []
+deprecation_status: active_reference_architecture

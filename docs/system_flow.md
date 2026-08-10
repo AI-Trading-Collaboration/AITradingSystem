@@ -196,7 +196,7 @@ evidence、policy、external authority、strategy conclusion 五层状态，以�
 contract、task lifecycle、DQ/PIT、投资阈值或结论，也不执行外部平台、production 或 broker 动作。
 
 TRADING-2505 在现有 Citation-first renderer 之后增加页面有效性闭环，而不是增加新的策略事实。
-`page_effectiveness.yaml` 明确列出 `TRADING-2481..2504` 的 requirement source、core projection、
+`page_effectiveness.yaml` 明确列出 `TRADING-2481..2504` 与 `TRADING-2506` 的 requirement source、core projection、
 reviewed successor inclusion/exclusion 与普通读者摘要；builder 通过 ARCH-005 S5 canonical task registry
 读取真实 task status，并绑定 exact repository/source snapshot commit、policy/module/renderer/requirement
 SHA-256、最终 HTML 与 JSON artifact identity。freshness 只允许 `CURRENT / REPOSITORY_AHEAD_NO_RELEVANT_DRIFT /
@@ -208,6 +208,17 @@ STALE_REBUILD_REQUIRED / UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`；相关 source
 keyboard focus、accessibility/DOM 与 screenshot 后，browser evidence 再与 page/manifest hash 绑定。
 该闭环不改变 QQQ policy、DQ/PIT、研究窗口、投资结论或交易权限，external/production/broker action
 继续为 `none`。
+
+TRADING-2506 在八阶段流程节点中新增独立的工作进展解释合同。每个节点先回答“为什么需要这一步、
+具体做什么、工程能力做到哪里、本次页面看到什么状态、对研究结论有什么影响、预期产物、完成后怎样
+被使用、不能说明什么、何时再做”，再把 TRADING-2495 的状态限制与技术依据收进折叠区。工程能力、
+最近执行状态和研究影响是三个不同维度，不再用一个颜色或 `VALIDATED` 同时代表完成度与策略有效性。
+`ATLAS_SNAPSHOT_DIFF` 的读者标题改为“检查页面是否仍代表最新研究状态”，并标为页面可靠性检查，
+不再归入当前策略研究关注。陌生概念由 typed concept graph 递归解释；未知引用、自引用、循环和孤立概念
+全部 fail closed，每个概念都能回到使用它的流程节点。writer 新增
+`work_progress_explanations.json / work_progress_explanation_validation.json`，并由 TRADING-2505 freshness
+清单重放相关 policy、projector、contract 与 requirement。该解释层不执行研究、DQ、回测或投资决策，
+不改变原始 status，也没有 external、production 或 broker effect。
 
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段

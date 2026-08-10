@@ -33,6 +33,13 @@ from ai_trading_system.atlas.status_explanation_projection import (
     project_status_explanations,
     validate_status_explanation_bundle,
 )
+from ai_trading_system.atlas.work_progress_projection import (
+    WorkProgressProjectionValidation,
+    load_work_progress_authority_policy,
+    project_work_progress,
+    validate_work_progress_bundle,
+    work_progress_validation_json_bytes,
+)
 from ai_trading_system.contracts.strategy_research_cited_query import (
     CITED_QUERY_QUESTION_CATALOG,
     CitedQueryAnswerStatus,
@@ -65,6 +72,11 @@ from ai_trading_system.contracts.strategy_research_status_explanation import (
     ExplanationValueState,
     StatusExplanationRecord,
     StrategyResearchStatusExplanationBundle,
+)
+from ai_trading_system.contracts.strategy_research_work_progress import (
+    ReaderConcept,
+    StageWorkProgressRecord,
+    StrategyResearchWorkProgressBundle,
 )
 from ai_trading_system.platform.artifacts import write_bytes_atomic
 
@@ -119,6 +131,8 @@ class AtlasCitedQueryShowcase:
     diff_payload: Mapping[str, object]
     status_explanations: StrategyResearchStatusExplanationBundle
     status_explanation_validation: StatusExplanationProjectionValidation
+    work_progress: StrategyResearchWorkProgressBundle
+    work_progress_validation: WorkProgressProjectionValidation
     qqq_options_projection: StrategyResearchQQQOptionsProjectionBundle
     qqq_options_projection_validation: QQQOptionsProjectionValidation
     page_effectiveness: StrategyResearchPageEffectivenessManifest
@@ -250,6 +264,20 @@ def build_cited_query_showcase(
     )
     if status_explanation_validation.status != "PASS":
         raise ValueError("ATLAS_CITED_QUERY_STATUS_EXPLANATION_VALIDATION_FAILED")
+    work_progress_policy = load_work_progress_authority_policy(repository_root=root)
+    work_progress = project_work_progress(
+        snapshot=snapshot,
+        status_explanations=status_explanations,
+        policy=work_progress_policy,
+    )
+    work_progress_validation = validate_work_progress_bundle(
+        snapshot=snapshot,
+        status_explanations=status_explanations,
+        bundle=work_progress,
+        policy=work_progress_policy,
+    )
+    if work_progress_validation.status != "PASS":
+        raise ValueError("ATLAS_CITED_QUERY_WORK_PROGRESS_VALIDATION_FAILED")
     qqq_policy = load_qqq_options_projection_policy(repository_root=root)
     qqq_options_projection = build_qqq_options_projection(
         repository_root=root,
@@ -277,6 +305,8 @@ def build_cited_query_showcase(
         diff_payload=diff_payload,
         status_explanations=status_explanations,
         status_explanation_validation=status_explanation_validation,
+        work_progress=work_progress,
+        work_progress_validation=work_progress_validation,
         qqq_options_projection=qqq_options_projection,
         qqq_options_projection_validation=qqq_options_projection_validation,
         page_effectiveness=page_effectiveness,
@@ -612,6 +642,36 @@ def _status_explanation_records_by_stage(
     return {item.stage_id: item for item in bundle.explanation_records}
 
 
+def _work_progress_records_by_stage(
+    showcase: AtlasCitedQueryShowcase,
+) -> tuple[dict[str, StageWorkProgressRecord], dict[str, ReaderConcept]]:
+    bundle = showcase.work_progress
+    validation = showcase.work_progress_validation
+    snapshot = load_validated_snapshot_payload(showcase.snapshot_payload)
+    if (
+        validation.status != "PASS"
+        or validation.snapshot_id != snapshot.snapshot_id
+        or validation.snapshot_id != bundle.snapshot_id
+        or validation.bundle_sha256 != bundle.content_sha256
+        or validation.policy_sha256 != bundle.policy_sha256
+    ):
+        raise ValueError("ATLAS_CITED_QUERY_WORK_PROGRESS_BINDING_INVALID")
+    stage_ids = tuple(item.stage_id for item in bundle.stage_records)
+    if stage_ids != ATLAS_STATUS_EXPLANATION_STAGE_IDS:
+        raise ValueError("ATLAS_CITED_QUERY_WORK_PROGRESS_STAGE_SET_INVALID")
+    records = {item.stage_id: item for item in bundle.stage_records}
+    concepts = {item.concept_id: item for item in bundle.concepts}
+    if len(concepts) != len(bundle.concepts):
+        raise ValueError("ATLAS_CITED_QUERY_WORK_PROGRESS_CONCEPT_SET_INVALID")
+    if any(
+        concept_id not in concepts
+        for record in bundle.stage_records
+        for concept_id in record.concept_ids
+    ):
+        raise ValueError("ATLAS_CITED_QUERY_WORK_PROGRESS_CONCEPT_BINDING_INVALID")
+    return records, concepts
+
+
 def _validate_showcase_response_bindings(showcase: AtlasCitedQueryShowcase) -> None:
     question_ids = tuple(item.request.question_id for item in showcase.responses)
     if len(set(question_ids)) != len(question_ids) or set(question_ids) != set(
@@ -719,7 +779,79 @@ def _render_transition_conditions(
     )
 
 
-def _render_reader_status_explanation(record: StatusExplanationRecord) -> str:
+def _render_work_progress_explanation(
+    record: StageWorkProgressRecord,
+    concepts: Mapping[str, ReaderConcept],
+) -> str:
+    work_items = "".join(f"<li>{escape(item)}</li>" for item in record.work_items_zh)
+    expected_outputs = "".join(
+        f"<li>{escape(item)}</li>" for item in record.expected_outputs_zh
+    )
+    concept_links = "".join(
+        (
+            f'<a class="concept-link" href="#reader-concept-{escape(concept_id)}" '
+            f'data-concept-ref="{escape(concept_id)}">'
+            f"{escape(concepts[concept_id].display_name_zh)}</a>"
+        )
+        for concept_id in record.concept_ids
+    )
+    return (
+        '<section class="work-progress-reader" data-reader-section="work_progress">'
+        '<div class="work-purpose" data-reader-section="why_needed">'
+        "<h4>为什么需要这一步</h4>"
+        f"<p>{escape(record.why_needed_zh)}</p>"
+        "</div>"
+        '<div class="work-reader-grid">'
+        '<section class="work-reader-card" data-reader-section="work_items">'
+        "<h4>具体做什么</h4>"
+        f'<ol class="work-item-list">{work_items}</ol>'
+        "</section>"
+        '<section class="work-reader-card" data-reader-section="expected_outputs">'
+        "<h4>预期产物</h4>"
+        f'<ul class="work-output-list">{expected_outputs}</ul>'
+        "</section>"
+        "</div>"
+        '<section class="progress-dimensions" data-reader-section="progress_dimensions">'
+        "<h4>目前进展：三种状态分开看</h4>"
+        '<div class="progress-dimension-grid">'
+        f'<article data-progress-dimension="capability" data-progress-value="{escape(record.capability_progress.value)}">'
+        "<span>工程能力</span>"
+        f"<strong>{escape(record.capability_progress_zh)}</strong>"
+        "</article>"
+        f'<article data-progress-dimension="latest_execution" data-progress-value="{escape(record.latest_execution_status)}">'
+        "<span>本次页面所见状态</span>"
+        f"<strong>{escape(record.latest_execution_summary_zh)}</strong>"
+        "</article>"
+        f'<article data-progress-dimension="research_effect" data-progress-value="{escape(record.research_effect.value)}">'
+        "<span>对研究结论的影响</span>"
+        f"<strong>{escape(record.research_effect_zh)}</strong>"
+        "</article>"
+        "</div></section>"
+        '<section class="work-reader-card" data-reader-section="downstream_use">'
+        "<h4>完成后怎样被使用</h4>"
+        f"<p>{escape(record.downstream_use_zh)}</p>"
+        "</section>"
+        '<section class="work-reader-card work-boundary" data-reader-section="boundary">'
+        "<h4>不能说明什么</h4>"
+        f"<p>{escape(record.boundary_zh)}</p>"
+        "</section>"
+        '<section class="work-reader-card" data-reader-section="next_trigger">'
+        "<h4>什么时候需要再做一次</h4>"
+        f"<p>{escape(record.next_trigger_zh)}</p>"
+        "</section>"
+        '<nav class="concept-links" aria-label="本节点概念解释">'
+        "<strong>遇到陌生概念，从这里继续解释</strong>"
+        f"<div>{concept_links}</div>"
+        "</nav>"
+        "</section>"
+    )
+
+
+def _render_reader_status_explanation(
+    record: StatusExplanationRecord,
+    work_progress: StageWorkProgressRecord,
+    concepts: Mapping[str, ReaderConcept],
+) -> str:
     facts_by_kind = {
         kind: tuple(item for item in record.facts if item.fact_kind is kind)
         for kind in ExplanationFactKind
@@ -745,10 +877,13 @@ def _render_reader_status_explanation(record: StatusExplanationRecord) -> str:
     checked_authority_ids = "".join(
         f"<li><code>{escape(item)}</code></li>" for item in record.checked_authority_ids
     )
-    return (
+    status_detail = (
+        '<details class="reader-status-detail">'
+        "<summary>查看状态限制、责任信息与审计依据</summary>"
+        '<div class="reader-status-detail-body">'
         '<div class="reader-explanation">'
         '<section class="reader-conclusion" data-reader-section="conclusion">'
-        "<span>一句话结论</span>"
+        "<span>状态限制摘要</span>"
         f"<p>{escape(record.plain_summary)}</p>"
         "</section>"
         + _render_fact_group(
@@ -800,6 +935,73 @@ def _render_reader_status_explanation(record: StatusExplanationRecord) -> str:
         f"<ul>{checked_authority_ids}</ul>"
         "</div></details>"
         "</div>"
+        "</div></details>"
+    )
+    return _render_work_progress_explanation(work_progress, concepts) + status_detail
+
+
+def _render_concept_library(
+    records: Mapping[str, StageWorkProgressRecord],
+    concepts: Mapping[str, ReaderConcept],
+) -> str:
+    stages_by_concept: dict[str, list[StageWorkProgressRecord]] = {
+        concept_id: [] for concept_id in concepts
+    }
+    for record in records.values():
+        for concept_id in record.concept_ids:
+            stages_by_concept[concept_id].append(record)
+    cards = "".join(
+        (
+            f'<article class="concept-card" id="reader-concept-{escape(concept.concept_id)}" '
+            f'data-concept-id="{escape(concept.concept_id)}" tabindex="-1">'
+            '<div class="concept-card-head">'
+            f"<h4>{escape(concept.display_name_zh)}</h4>"
+            f'<code>{escape(concept.concept_id)}</code>'
+            "</div>"
+            '<dl class="concept-explanation">'
+            f"<div><dt>一句话解释</dt><dd>{escape(concept.plain_definition_zh)}</dd></div>"
+            f"<div><dt>为什么需要</dt><dd>{escape(concept.why_needed_zh)}</dd></div>"
+            f"<div><dt>页面里的例子</dt><dd>{escape(concept.example_zh)}</dd></div>"
+            "</dl>"
+            + (
+                '<nav class="related-concepts" aria-label="继续解释相关概念">'
+                "<strong>继续解释</strong><div>"
+                + "".join(
+                    (
+                        f'<a href="#reader-concept-{escape(related_id)}" '
+                        f'data-related-concept="{escape(related_id)}">'
+                        f"{escape(concepts[related_id].display_name_zh)}</a>"
+                    )
+                    for related_id in concept.related_concept_ids
+                )
+                + "</div></nav>"
+                if concept.related_concept_ids
+                else '<p class="concept-leaf">这是当前解释路径的通俗终点，不再引入新概念。</p>'
+            )
+            + '<nav class="concept-backlinks" aria-label="返回使用该概念的流程节点">'
+            "<strong>返回流程节点</strong><div>"
+            + "".join(
+                (
+                    f'<a href="#flow-stage-{escape(stage.stage_id.lower().replace("_", "-"))}">'
+                    f"{escape(stage.display_title_zh)}</a>"
+                )
+                for stage in stages_by_concept[concept.concept_id]
+            )
+            + "</div></nav>"
+            "</article>"
+        )
+        for concept in concepts.values()
+    )
+    return (
+        '<section class="concept-library" id="reader-concept-library" '
+        'aria-labelledby="reader-concept-library-title">'
+        '<div class="concept-library-head">'
+        '<p class="section-kicker">RECURSIVE EXPLANATION · CLOSED CONCEPT GRAPH</p>'
+        '<h3 id="reader-concept-library-title">陌生概念可以继续解释，并能返回原流程节点</h3>'
+        '<p>每个概念只用通俗定义、用途和页面实例说明；“继续解释”只指向已登记概念，系统会拒绝缺失引用和循环解释。</p>'
+        "</div>"
+        f'<div class="concept-grid">{cards}</div>'
+        "</section>"
     )
 
 
@@ -1007,81 +1209,33 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         for label, stage, response in focus_rows
     )
     stage_definitions = (
-        (
-            "DATA_INPUTS",
-            "数据与治理输入",
-            "市场、宏观、基本面与人工治理信息。",
-            "flow-context",
-            "上游上下文",
-        ),
-        (
-            "DATA_QUALITY_GATE",
-            "数据质量门",
-            "Schema、完整性、新鲜度、PIT 与 validate-data。",
-            "flow-context",
-            "上游上下文",
-        ),
-        (
-            "RESEARCH_MAINLINE",
-            "研究主线",
-            "研究问题、策略路径与候选方法。",
-            "flow-focus",
-            "当前研究关注",
-        ),
-        (
-            "BACKTEST_AND_EVALUATION",
-            "回测与评估",
-            "Primary window、OOS、stress 与结果状态。",
-            "flow-focus",
-            "当前研究关注",
-        ),
-        (
-            "RESULT_ATTRIBUTION",
-            "结果归因",
-            "实际结果、驱动因素、限制与失败原因。",
-            "flow-focus",
-            "当前研究关注",
-        ),
-        (
-            "ATLAS_SNAPSHOT_DIFF",
-            "Atlas 快照与变化",
-            "Validated snapshot、diff、source lineage。",
-            "flow-focus",
-            "当前研究关注",
-        ),
-        (
-            "CITATION_FIRST_QUERY",
-            "引用式问答页面",
-            "五个固定问题、claim 与 citation closure。",
-            "flow-current",
-            "你在这里",
-        ),
-        (
-            "OWNER_DECISION_BOUNDARY",
-            "Owner 决策边界",
-            "人工复核、后续任务或明确停止，不自动 promotion。",
-            "flow-boundary",
-            "本页以外",
-        ),
+        ("DATA_INPUTS", "flow-context", "上游准备"),
+        ("DATA_QUALITY_GATE", "flow-context", "上游准备"),
+        ("RESEARCH_MAINLINE", "flow-focus", "当前研究关注"),
+        ("BACKTEST_AND_EVALUATION", "flow-focus", "当前研究关注"),
+        ("RESULT_ATTRIBUTION", "flow-focus", "当前研究关注"),
+        ("ATLAS_SNAPSHOT_DIFF", "flow-context", "页面可靠性检查"),
+        ("CITATION_FIRST_QUERY", "flow-current", "你在这里"),
+        ("OWNER_DECISION_BOUNDARY", "flow-boundary", "人工验收"),
     )
     status_provenance = _build_flow_status_provenance(showcase)
     status_by_stage = {item.stage_id: item for item in status_provenance}
     explanation_by_stage = _status_explanation_records_by_stage(showcase)
+    work_progress_by_stage, concepts = _work_progress_records_by_stage(showcase)
     stage_ids = tuple(item[0] for item in stage_definitions)
     if (
         len(stage_ids) != 8
         or len(set(stage_ids)) != len(stage_ids)
         or set(status_by_stage) != set(stage_ids)
+        or set(work_progress_by_stage) != set(stage_ids)
     ):
         raise ValueError("ATLAS_CITED_QUERY_FLOW_STATUS_STAGE_SET_INVALID")
-    if any(
-        not value for item in stage_definitions for value in (item[1], item[2], item[3], item[4])
-    ):
+    if any(not value for item in stage_definitions for value in item):
         raise ValueError("ATLAS_CITED_QUERY_FLOW_DRILLDOWN_COPY_INVALID")
     historical_flow_lane = _render_historical_flow_lane(showcase)
     stage_cards = "".join(
         (
-            '<li class="flow-stage-shell">'
+            f'<li class="flow-stage-shell" id="flow-stage-{escape(stage_id.lower().replace("_", "-"))}">'
             f'<details class="flow-stage {escape(role_tone)}" '
             f'data-stage="{escape(stage_id)}" '
             f'data-progress-status="{escape(status_by_stage[stage_id].status_code)}" '
@@ -1093,8 +1247,8 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             f'<span class="stage-number">{index:02d}</span>'
             f'<span class="stage-badge">{escape(role_badge)}</span>'
             "</span>"
-            f'<span class="stage-title">{escape(title)}</span>'
-            f'<span class="stage-description">{escape(description)}</span>'
+            f'<span class="stage-title">{escape(work_progress_by_stage[stage_id].display_title_zh)}</span>'
+            f'<span class="stage-description">{escape(work_progress_by_stage[stage_id].work_items_zh[0])}</span>'
             f'<code class="stage-id">{escape(stage_id)}</code>'
             f'<span class="stage-progress {escape(status_by_stage[stage_id].status_tone)}">'
             '<span class="progress-dot" aria-hidden="true"></span>'
@@ -1108,19 +1262,18 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
             "</span>"
             "</summary>"
             f'<div class="stage-drilldown" data-drilldown-source="{escape(explanation_by_stage[stage_id].status_object_scope)}">'
-            f"{_render_reader_status_explanation(explanation_by_stage[stage_id])}"
+            f"{_render_reader_status_explanation(explanation_by_stage[stage_id], work_progress_by_stage[stage_id], concepts)}"
             "</div>"
             "</details>"
             "</li>"
         )
         for index, (
             stage_id,
-            title,
-            description,
             role_tone,
             role_badge,
         ) in enumerate(stage_definitions, start=1)
     )
+    concept_library = _render_concept_library(work_progress_by_stage, concepts)
     provenance_ledger = "".join(
         (
             f'<li class="provenance-item" data-provenance-stage="{escape(item.stage_id)}" '
@@ -1172,8 +1325,9 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         <span class="progress-review"><i aria-hidden="true"></i>待人工复核</span>
         <small>颜色表示节点在当前 evidence view 中的进展，不代表策略 PASS 或投资评级。</small>
       </div>
-      <p class="drilldown-help"><strong>怎样展开：</strong>点击任一节点，按“一句话结论、正在做什么、已完成什么、还缺什么、为什么重要、什么会改变”的顺序阅读；技术字段收在“查看审计依据”里。当前页面节点默认展开。</p>
+      <p class="drilldown-help"><strong>怎样展开：</strong>点击任一节点，先读“为什么需要、具体做什么、目前进展、预期产物”，再看使用方式和边界；遇到陌生概念可继续点开通俗解释，状态限制与技术依据收在最后。当前页面节点默认展开。</p>
       <ol class="system-flow">{stage_cards}</ol>
+      {concept_library}
       <div class="focus-panel">
         <div class="focus-copy">
           <p class="section-kicker">CURRENT FOCUS · EXACT IDS</p>
@@ -1187,7 +1341,7 @@ def _render_system_flow_map(showcase: AtlasCitedQueryShowcase) -> str:
         <div class="provenance-copy">
           <p class="section-kicker">AUDIT APPENDIX · STRUCTURED FIELDS ONLY</p>
           <h3 id="status-provenance-title">状态审计附录</h3>
-          <p>供需要追溯的读者核对 status object scope 与 exact reference；主要阅读结论只来自已经验证的 2495 explanation sidecar。</p>
+          <p>供需要追溯的读者核对状态对象与原始依据；主要阅读结论来自已经验证的状态说明与工作进展 sidecar。</p>
         </div>
         <ol class="provenance-ledger">{provenance_ledger}</ol>
         <p class="provenance-boundary"><strong>怎样理解：</strong><code>VALIDATED</code> 只表示 evidence response/diff 的 validator PASS，不等于 strategy PASS 或投资评级；<code>LIMITED</code> 保留证据限制；<code>NOT_EXECUTED_BY_PAGE</code> 不是 DQ FAIL。</p>
@@ -1213,7 +1367,7 @@ _PAGE_ACCEPTANCE_LABELS = {
 
 def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
-    if len(manifest.task_coverage) != 24:
+    if len(manifest.task_coverage) != 25:
         raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
     acceptance = "".join(
         (
@@ -1235,7 +1389,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2504
+        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2506
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -1266,7 +1420,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新 <code>ENGINEERING_VALIDATION</code>；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage">
-          <summary>查看 TRADING-2494–2504 如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2506 如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -1276,7 +1430,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2506</code>（2505 为本清单任务）· {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
       </details>
     </section>
@@ -1501,6 +1655,45 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .flow-stage[open] .cue-closed {{ display:none; }}
     .flow-stage[open] .stage-disclosure-cue i {{ transform:rotate(180deg); }}
     .stage-drilldown {{ padding:.85rem; border-top:1px solid #dbe2ec; color:var(--ink); background:#fff; }}
+    .work-progress-reader {{ display:grid; gap:.7rem; }}
+    .work-purpose {{ padding:.82rem .88rem; border-left:4px solid var(--blue); border-radius:.62rem; background:var(--blue-soft); }}
+    .work-purpose h4,.work-reader-card h4,.progress-dimensions h4 {{ margin:0 0 .38rem; color:#34455e; font-size:.72rem; letter-spacing:.025em; }}
+    .work-purpose h4 {{ color:#315fba; }}
+    .work-purpose p,.work-reader-card p {{ margin:0; color:#354761; font-size:.74rem; line-height:1.55; }}
+    .work-reader-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.6rem; }}
+    .work-reader-card {{ min-width:0; padding:.7rem .75rem; border:1px solid #e0e6ee; border-radius:.58rem; background:#f8fafc; }}
+    .work-item-list,.work-output-list {{ display:grid; gap:.35rem; margin:0; padding-left:1.05rem; color:#354761; font-size:.7rem; line-height:1.5; }}
+    .work-boundary {{ border-color:#e8c880; background:#fffaf0; }}
+    .work-boundary h4 {{ color:#825b10; }}
+    .progress-dimensions {{ padding:.72rem .75rem; border:1px solid #cbd9ec; border-radius:.62rem; background:#f5f8fd; }}
+    .progress-dimension-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.45rem; }}
+    .progress-dimension-grid article {{ min-width:0; padding:.58rem; border-radius:.5rem; background:#fff; box-shadow:inset 0 0 0 1px #e0e6ef; }}
+    .progress-dimension-grid span {{ display:block; margin-bottom:.24rem; color:#657187; font-size:.57rem; font-weight:850; }}
+    .progress-dimension-grid strong {{ display:block; color:#2f4058; font-size:.67rem; line-height:1.48; }}
+    .concept-links {{ padding:.68rem .72rem; border:1px dashed #87a9d8; border-radius:.58rem; background:#f6f9fe; }}
+    .concept-links > strong {{ display:block; margin-bottom:.4rem; color:#315fba; font-size:.67rem; }}
+    .concept-links div,.related-concepts div,.concept-backlinks div {{ display:flex; flex-wrap:wrap; gap:.35rem; }}
+    .concept-link,.related-concepts a,.concept-backlinks a {{ display:inline-flex; padding:.2rem .45rem; border:1px solid #b8c9e2; border-radius:999px; color:#254f95; background:#fff; font-size:.6rem; font-weight:750; text-decoration:none; }}
+    .concept-link:hover,.related-concepts a:hover,.concept-backlinks a:hover {{ border-color:#4c7cc4; background:#edf4ff; }}
+    .reader-status-detail {{ overflow:hidden; margin-top:.75rem; border:1px solid #dce4ee; border-radius:.62rem; background:#f8fafc; }}
+    .reader-status-detail > summary {{ padding:.68rem .75rem; color:#536176; font-size:.68rem; font-weight:800; }}
+    .reader-status-detail-body {{ padding:.15rem .7rem .7rem; }}
+    .concept-library {{ margin:1.15rem 0 0; padding:1rem; border:1px solid #cad9ec; border-radius:.85rem; background:#f6f9fe; }}
+    .concept-library-head h3 {{ margin:.25rem 0 .35rem; font-size:1rem; }}
+    .concept-library-head p:last-child {{ margin:0; color:#5c687b; font-size:.72rem; line-height:1.5; }}
+    .concept-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; margin-top:.85rem; }}
+    .concept-card {{ min-width:0; padding:.72rem; border:1px solid #dde5ef; border-radius:.65rem; background:#fff; scroll-margin-top:1rem; }}
+    .concept-card:target,.concept-card:focus {{ outline:3px solid #72a3e7; outline-offset:2px; background:#f8fbff; }}
+    .concept-card-head {{ display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }}
+    .concept-card-head h4 {{ margin:0; color:#263d60; font-size:.76rem; }}
+    .concept-card-head code {{ color:#7a8596; font-size:.53rem; overflow-wrap:anywhere; }}
+    .concept-explanation {{ display:grid; gap:.38rem; margin:.58rem 0; }}
+    .concept-explanation div {{ padding:.45rem .5rem; border-radius:.42rem; background:#f7f9fc; }}
+    .concept-explanation dt {{ color:#5b687c; font-size:.56rem; font-weight:850; }}
+    .concept-explanation dd {{ margin:.15rem 0 0; color:#35445a; font-size:.66rem; line-height:1.48; }}
+    .related-concepts,.concept-backlinks {{ margin-top:.5rem; }}
+    .related-concepts > strong,.concept-backlinks > strong {{ display:block; margin-bottom:.32rem; color:#5b687c; font-size:.57rem; }}
+    .concept-leaf {{ margin:.52rem 0 0; color:#697589; font-size:.61rem; }}
     .reader-explanation {{ display:grid; gap:.65rem; }}
     .reader-conclusion {{ padding:.78rem .82rem; border-left:4px solid var(--blue); border-radius:.58rem; background:var(--blue-soft); }}
     .reader-conclusion span {{ display:block; color:#315fba; font-size:.62rem; font-weight:900; letter-spacing:.08em; }}
@@ -1678,7 +1871,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
     @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:620px) {{ .metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
@@ -1792,6 +1985,7 @@ def write_cited_query_artifacts(
     if any(item.status != "PASS" for item in showcase.validations):
         raise ValueError("ATLAS_CITED_QUERY_ARTIFACT_VALIDATION_FAILED")
     _status_explanation_records_by_stage(showcase)
+    _work_progress_records_by_stage(showcase)
     _validate_qqq_options_projection_binding(showcase)
     output_directory.mkdir(parents=True, exist_ok=True)
     payloads = {
@@ -1806,6 +2000,10 @@ def write_cited_query_artifacts(
         ),
         "status_explanations.json": showcase.status_explanations.canonical_bytes,
         "validation.json": cited_query_validations_json_bytes(showcase.validations),
+        "work_progress_explanation_validation.json": work_progress_validation_json_bytes(
+            showcase.work_progress_validation
+        ),
+        "work_progress_explanations.json": showcase.work_progress.canonical_bytes,
     }
     artifacts: list[AtlasCitedQueryRenderedArtifact] = []
     for name, payload in payloads.items():

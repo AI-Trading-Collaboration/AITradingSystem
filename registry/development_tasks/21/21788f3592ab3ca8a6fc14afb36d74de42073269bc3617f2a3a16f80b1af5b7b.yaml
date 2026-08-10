@@ -13,19 +13,18 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: project owner：独立执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
+  next_owner: Atlas page engineering owner：执行 TRADING-2506；project owner 在新页面重新验收
+    reader comprehension
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 修复 2503 local-canonical historical assertion
-    后，从 final bytes 重跑完整五级；Full 绑定父 full_20260809T190700Z。随后 exact-commit Playwright
-    与 ordinary push/cleanup。
+  unstructured_legacy_blocker_or_next_step: READER_COMPREHENSION_REVIEW=FAIL：进入 TRADING-2506
+    修复工作内容、必要性、进展、预期产物和递归概念解释；工程 source/semantic/browser PASS 保持独立。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: source/semantic/browser engineering evidence exact-commit 可重放；2503 legacy
-      identity 与 2505 manifest-aware current identity 均 fail closed；三重验收独立；failure-fix
-      Full、ordinary push/cleanup PASS。
+    text: 2505 engineering evidence 保持可重放；2506 新页面完成工作进展与 concept graph contract 后，由
+      project owner 重新执行 reader comprehension review；不得由自动化代签。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -146,24 +145,48 @@ events:
   - change:trading-2505-full-failure-fix-20260809t193000z
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e8d6ae7d2408a61758b1ad4d87adae99
+- schema_version: task_event.v1
+  task_id: TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-10T03:34:02Z'
+  actor: codex-atlas-page-coordinator
+  change_id: trading-2505-reader-comprehension-fail-20260810t033402z
+  lane_id: null
+  base_commit: 97421591119f68e46a091d0aca47c2a48aa9d317
+  previous_state_event_id: task-event-e8d6ae7d2408a61758b1ad4d87adae99
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P1
+    next_owner: Atlas page engineering owner：执行 TRADING-2506；project owner 在新页面重新验收
+      reader comprehension
+    blocker_or_next_step: READER_COMPREHENSION_REVIEW=FAIL：进入 TRADING-2506 修复工作内容、必要性、进展、预期产物和递归概念解释；工程
+      source/semantic/browser PASS 保持独立。
+    acceptance_criteria: 2505 engineering evidence 保持可重放；2506 新页面完成工作进展与 concept graph
+      contract 后，由 project owner 重新执行 reader comprehension review；不得由自动化代签。
+    notes: 2026-08-10：Owner 在 ATLAS_SNAPSHOT_DIFF 节点明确反馈阅读后仍不清楚具体工作、为什么需要、当前进展、预期结果，以及跨模块概念如何递归解释；该真实事实使
+      READER_COMPREHENSION_REVIEW 进入 FAIL，不影响策略边界或 engineering PASS。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2505-reader-comprehension-fail-20260810t033402z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1a97539fb140263f11ddae2dd8b9ea10
 projection:
   legacy_first_eight_cells:
   - TRADING-2505_ATLAS_PAGE_EFFECTIVENESS_FRESHNESS_VISUAL_REGRESSION_V1
   - Atlas strategy research page / effectiveness, freshness and visual regression
   - P1
   - BASELINE_DONE
-  - project owner：独立执行 OWNER_VISUAL_REVIEW 与 READER_COMPREHENSION_REVIEW
-  - 修复 2503 local-canonical historical assertion 后，从 final bytes 重跑完整五级；Full 绑定父 full_20260809T190700Z。随后
-    exact-commit Playwright 与 ordinary push/cleanup。
-  - source/semantic/browser engineering evidence exact-commit 可重放；2503 legacy identity
-    与 2505 manifest-aware current identity 均 fail closed；三重验收独立；failure-fix Full、ordinary
-    push/cleanup PASS。
-  - 2026-08-10：首次 Full 8708 PASS/1 FAIL/3 skipped，唯一失败是 ignored canonical page 已升级到
-    2505 而历史测试仍硬编码 2503 bytes；页面实现无其他失败。采用 durable manifest-aware identity replay，不移动/还原
-    artifact；完整五级重跑。
+  - Atlas page engineering owner：执行 TRADING-2506；project owner 在新页面重新验收 reader comprehension
+  - READER_COMPREHENSION_REVIEW=FAIL：进入 TRADING-2506 修复工作内容、必要性、进展、预期产物和递归概念解释；工程
+    source/semantic/browser PASS 保持独立。
+  - 2505 engineering evidence 保持可重放；2506 新页面完成工作进展与 concept graph contract 后，由 project
+    owner 重新执行 reader comprehension review；不得由自动化代签。
+  - 2026-08-10：Owner 在 ATLAS_SNAPSHOT_DIFF 节点明确反馈阅读后仍不清楚具体工作、为什么需要、当前进展、预期结果，以及跨模块概念如何递归解释；该真实事实使
+    READER_COMPREHENSION_REVIEW 进入 FAIL，不影响策略边界或 engineering PASS。
   docs_links: []
   terminal: false
-  canonical_row_sha256: 3dc09e0e957511f9fc512ab1a3241fc73813658ea85dd9dd9a8e3cf6b7dab220
-last_event_id: task-event-e8d6ae7d2408a61758b1ad4d87adae99
+  canonical_row_sha256: caee4566518847c5c501c4c2ec8fb7d273d301301cba6b88044de0b0738fb81a
+last_event_id: task-event-1a97539fb140263f11ddae2dd8b9ea10
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 782979397c77779c9a88c15d8cf9dfccd52144c8d29ca057145b91e8ea8a99ec
+fragment_checksum: 4567383a8e5e9f8b0fce33d4c51d7e854d4922a78bf7f6961bc09e7c17e51eb4

@@ -272,7 +272,7 @@ def test_forbidden_roadmap_policy_cannot_be_removed(
         _build(monkeypatch, tmp_path, policy_mutator=remove)
 
 
-def test_local_canonical_page_uses_2503_successor_identity_when_available() -> None:
+def test_local_canonical_page_uses_current_successor_identity_when_available() -> None:
     canonical_policy = _policy()["canonical_page"]
     assert isinstance(canonical_policy, dict)
     repository_path = canonical_policy["repository_path"]
@@ -316,7 +316,8 @@ def test_local_canonical_page_uses_2503_successor_identity_when_available() -> N
         assert len(payload) == page_identity.byte_count
         assert sha256(payload).hexdigest() == page_identity.sha256
         assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-            f"TRADING-{task_id}" for task_id in range(2481, 2505)
+            *[f"TRADING-{task_id}" for task_id in range(2481, 2505)],
+            "TRADING-2506",
         ]
         assert validation_sidecar["status"] == "PASS"
         assert validation_sidecar["manifest_sha256"] == manifest.content_sha256
