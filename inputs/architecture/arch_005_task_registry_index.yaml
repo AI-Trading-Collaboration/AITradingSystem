@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 978
-active_task_count: 471
+task_count: 979
+active_task_count: 472
 completed_task_count: 507
-fragment_count: 978
+fragment_count: 979
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 86e1d9c45d251208aa9394818412fa5a74f954f0a592472f561bdfb1338d04ae
+final_chain_sha256: 310d224af3dae7c8ca95af890822ed49bce02099d4d1d6f9feba18678ac8190c
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7853,12 +7853,20 @@ fragments:
   order: 978
   previous_entry_sha256: 86418d0618f26c3c474b2fc8dcba46ea68153526eaf9af95d44c626da5a51f5a
   entry_sha256: 86e1d9c45d251208aa9394818412fa5a74f954f0a592472f561bdfb1338d04ae
+- task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  path: registry/development_tasks/76/766caa6e5aabdec7c1d98ef835b35f71063487d0c68d94c1b126277be4774b61.yaml
+  file_sha256: 1cc649073c2d344d2e29e2bc63b1375f941ba85efd54ef6515e003b4c1910c05
+  fragment_checksum: d3fbc7c86bfbd420c98a57f2456a7c1a730fac2dc744a6889182cb2ff0bfd601
+  partition: active
+  order: 979
+  previous_entry_sha256: 86e1d9c45d251208aa9394818412fa5a74f954f0a592472f561bdfb1338d04ae
+  entry_sha256: 310d224af3dae7c8ca95af890822ed49bce02099d4d1d6f9feba18678ac8190c
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 032da154f1041f6d4bc108ac5882ead22218608b5b0529eccebdcb608ff96a52
-  byte_count: 1720168
-  row_count: 471
+  sha256: 3b7480523821c406e4dc75261a10385f7682f8bea942c7e70f727ff47bbe6540
+  byte_count: 1721414
+  row_count: 472
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -8007,7 +8015,14 @@ governance_cycles:
   change_id: trading-2508-requirement-binding-20260811-v1
   event_count: 3
   production_effect: none
-governance_cycle_count: 20
+- cycle_id: arch-005-s5-cycle-21
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  change_id: TRADING-2509-REGISTRATION-V1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 21
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8021,4 +8036,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 87633e7693d0cf259879f0a82684cb3cc590d4297f5b5946e9badd8dc98e5d81
+index_checksum: 6864e592e1637b249115ee8b4fe2996be6843763e04a443521d22051f8f8b652

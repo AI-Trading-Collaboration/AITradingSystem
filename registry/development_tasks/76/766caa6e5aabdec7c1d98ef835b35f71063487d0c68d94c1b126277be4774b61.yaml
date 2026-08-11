@@ -1,0 +1,95 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  task_id_sha256: 766caa6e5aabdec7c1d98ef835b35f71063487d0c68d94c1b126277be4774b61
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  title: null
+  domain: Strategy research governance / QQQ Options Owner decision slot catalog v2
+    amendment contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: codex_qqq_options_slot_catalog_v2_coordinator；后继 project owner 提供 reviewed
+    G2 policy values/evidence
+  requirement_refs:
+  - docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Owner 已批准 2502 结构选择与现有 11 项 versioned-successor
+    amendment；本任务只封存 canonical attestation、v2 catalog/migration/evidence schema。所有
+    policy 数值、engine/backtest 与外部动作继续 blocked。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 从 exact main e08bca3d…建立 tracked attestation evidence、immutable v2.0.0 catalog、deterministic
+      v1→v2 migration、typed evidence admission；28 slots exact once、11 amendments typed、DQ/PIT/window/lineage/cash-preservation
+      fail closed。不得填阈值、激活 engine、提交订单或执行 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
+      动作。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-11T15:08:45Z'
+  actor: codex_qqq_options_slot_catalog_v2_coordinator
+  change_id: TRADING-2509-REGISTRATION-V1
+  lane_id: null
+  base_commit: e08bca3d22c1174e3dc31c14e2a4416ea809c440
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+    - Strategy research governance / QQQ Options Owner decision slot catalog v2 amendment
+      contract
+    - P0
+    - IN_PROGRESS
+    - codex_qqq_options_slot_catalog_v2_coordinator；后继 project owner 提供 reviewed G2
+      policy values/evidence
+    - Owner 已批准 2502 结构选择与现有 11 项 versioned-successor amendment；本任务只封存 canonical attestation、v2
+      catalog/migration/evidence schema。所有 policy 数值、engine/backtest 与外部动作继续 blocked。
+    - 从 exact main e08bca3d…建立 tracked attestation evidence、immutable v2.0.0 catalog、deterministic
+      v1→v2 migration、typed evidence admission；28 slots exact once、11 amendments typed、DQ/PIT/window/lineage/cash-preservation
+      fail closed。不得填阈值、激活 engine、提交订单或执行 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
+      动作。
+    - 2026-08-12：Owner token 已通过 2507 canonical builder 内存重放，候选状态仅 VALID_POLICY_ADOPTION_CONTRACT_ONLY
+      / POLICY_BLOCKED_CASH_PRESERVATION。supporting requirement：[TRADING-2509 Slot
+      Catalog V2 Amendment Contract](docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md)。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2509-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1e2516a29addddbe5c4236a6bac221f6
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  - Strategy research governance / QQQ Options Owner decision slot catalog v2 amendment
+    contract
+  - P0
+  - IN_PROGRESS
+  - codex_qqq_options_slot_catalog_v2_coordinator；后继 project owner 提供 reviewed G2
+    policy values/evidence
+  - Owner 已批准 2502 结构选择与现有 11 项 versioned-successor amendment；本任务只封存 canonical attestation、v2
+    catalog/migration/evidence schema。所有 policy 数值、engine/backtest 与外部动作继续 blocked。
+  - 从 exact main e08bca3d…建立 tracked attestation evidence、immutable v2.0.0 catalog、deterministic
+    v1→v2 migration、typed evidence admission；28 slots exact once、11 amendments typed、DQ/PIT/window/lineage/cash-preservation
+    fail closed。不得填阈值、激活 engine、提交订单或执行 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
+    动作。
+  - 2026-08-12：Owner token 已通过 2507 canonical builder 内存重放，候选状态仅 VALID_POLICY_ADOPTION_CONTRACT_ONLY
+    / POLICY_BLOCKED_CASH_PRESERVATION。supporting requirement：[TRADING-2509 Slot Catalog
+    V2 Amendment Contract](docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md)。
+  docs_links:
+  - docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: 16ca5c202fe8d11400b773482d48dd758366fd681e6860ddc83fb981d7c944d6
+last_event_id: task-event-1e2516a29addddbe5c4236a6bac221f6
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: d3fbc7c86bfbd420c98a57f2456a7c1a730fac2dc744a6889182cb2ff0bfd601
