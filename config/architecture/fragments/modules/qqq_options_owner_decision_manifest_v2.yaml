@@ -1,0 +1,32 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_owner_decision_manifest_v2
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/owner_decision_manifest_v2.py
+public_contracts:
+  - DEFAULT_QQQ_OPTIONS_OWNER_DECISION_ATTESTATION_PATH
+  - DEFAULT_QQQ_OPTIONS_OWNER_DECISION_MANIFEST_V2_POLICY_PATH
+  - CatalogMutationKind
+  - EvidenceDQStatus
+  - OwnerPolicyEvidenceReference
+  - QQQOptionsOwnerDecisionCatalogV2MigrationReceipt
+  - QQQOptionsOwnerDecisionCatalogV2Resolution
+  - QQQOptionsOwnerDecisionManifestV2ContractError
+  - QQQOptionsOwnerDecisionManifestV2Policy
+  - QQQOptionsOwnerDecisionManifestV2PolicyLoadResult
+  - ReviewFindingDisposition
+  - SuccessorPolicyState
+  - V2AddedAxisRule
+  - V2DependencyAmendment
+  - V2EvidenceReferenceContract
+  - V2PredecessorAuthority
+  - V2QuoteObservationIdentityRule
+  - V2ReviewFinding
+  - V2Safety
+  - V2SlotMigrationEntry
+  - V2SplitRule
+  - build_qqq_options_owner_decision_catalog_v2_migration_receipt
+  - load_qqq_options_owner_decision_manifest_v2_policy
+  - resolve_qqq_options_owner_decision_catalog_v2_migration_receipt
+compatibility_facades: []
+deprecation_status: active_reference_architecture

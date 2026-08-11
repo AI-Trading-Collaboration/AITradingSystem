@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 ## 1. 目标
 
@@ -75,3 +75,65 @@ Web Pro 另指出 `EXE_CANCEL_REJECT_NO_FILL` 与 `ACC_DQ_PIT_REPRO` 仍有 comp
 ## 6. 后继边界
 
 TRADING-2509 完成后仍不能开始正式日级回测。下一自然步骤是独立的 primary-window evidence admission/calibration wave：针对 2021-02-22 起始窗口补齐 reviewed G2 policy evidence 和 Owner policy values；只有后继 executable-policy task 在所有 DQ/PIT、lineage、acceptance 条件满足后，才可另行评审是否解除 engine blocker。
+
+## 7. 实现进展（2026-08-12）
+
+- registration ordinary-pushed main：`1d7de7ff08e7253985760eb7e2257f117679b32c`；
+- tracked attestation raw/canonical SHA-256：
+  `8345a55a73df022ef70cb57d6d8df4d6c498cafb091647ef8e27c835cde6fccc`；
+- tracked attestation content SHA-256：
+  `2777768003bb81bdeadc72929edeae9db6f1a1d970b25ebf9e050adafa30b57c`；
+- v2 policy candidate file SHA-256：
+  `d4f7fb3ffb196ce65000ec24fc302c44395a9d3c4dad3e2e5554683639f9ca79`；
+- v2 policy candidate canonical SHA-256：
+  `9ac542b464ba4417d67fb626dc820d2e7e331c3c154951590fdf7a409ab67272`；
+- catalog inventory：37 slots=`24 unchanged + 8 split successors + 5 added axes`；
+- focused failure-fix：首轮 `23 passed / 1 failed`，唯一根因为 unknown split source 负例被
+  unchanged-inventory 检查先拦截；调整 fail-closed 诊断优先级后，同覆盖 `24 passed`。
+- frozen authority 保护复核：一次中间编辑误触 2502 exact-byte requirement，原覆盖产生
+  `5 passed / 19 failed`；未降低校验，已完整撤回该编辑并复核 2502 LF SHA-256 恢复为
+  `afdcb44f44032fee958d4f6b1e8e4b56c1edb2faefa44026e16aff7153968588`，随后同一
+  24-test 覆盖重新 `24 passed`。该轮只作为 failure-fix 证据，不作为正式门禁证据；
+- adjacent contract replay：2500 daily retry、2502 decision pack、2507 adoption 与 2509 v2
+  合并覆盖 `93 passed`；Ruff、mypy、compileall 均 PASS；
+- DevEx current tree：`1108 modules / 1269 tests / 856 writers / 0 violations`；canonical task
+  registry generate/validate 与 task shadow validate 均 PASS；
+- compatibility/deprecation failure-fix 使用完全相同的
+  `python -m pytest -n 16 --dist loadfile tests/test_arch_004_refactor_policy.py tests/test_arch_004g_deprecation.py`
+  覆盖：首轮 `210 passed / 1 failed in 306.22s`（inventory id stale）；更新 exact test
+  constant 后第二轮 `210 passed / 1 failed in 309.11s`（frozen inventory YAML stale）；仅同步
+  canonical inventory id/module/test exact 值后第三轮 `211 passed in 318.74s`。两轮 FAIL
+  保留为 focused failure-fix 证据，不作为正式门禁证据。
+- 首次 final-tree Full：`8741 passed / 22 failed / 3 skipped / 644 warnings`，artifact=
+  `outputs/validation_runtime/full_20260811T161724Z/test_runtime_summary.json`。2509 domain
+  tests 无失败；22 个 node 归并为三条 authority/consumer 根因：2502/2507 status update 的
+  compatibility projection cells 未保留 requirement link，导致 canonical `requirement_refs=[]`；
+  `docs/system_flow.md` 变化后 DEVX-006D source seal/shadow 尚未重建；2509 reviewed successor 尚未
+  进入 page-effectiveness exact coverage，local canonical page validation 因而 FAIL。
+- failure-fix 不降低任何 gate：以 append-only canonical task events 恢复 2502/2507 requirement
+  binding；page-effectiveness coverage 从 27 精确提升至 28，并仅披露“Owner structure + versioned
+  successor contract 已批准、G2 values/engine 仍 blocked”；刷新 DEVX-006D、fragmented
+  compatibility authority 与 canonical page。修复后 Full 必须使用上述失败 artifact 作为
+  `failure_fix_rerun` parent。
+- failure-fix 首轮 50-test 原因文件覆盖：`31 passed / 19 failed`；DEVX-006D failures 已清零，
+  18 个 Atlas node 同根因收敛为新纳入的 2509 task 自身也缺 requirement ref，另 1 个为旧
+  27-task canonical page sidecar。已追加 2509 requirement-binding event；canonical page 必须在
+  28-task manifest 下完整重建并保留既有 human review facts 后再以完全相同覆盖复跑。
+- 追加 2509 requirement-binding event、重建 registry/DevEx/compatibility authority 后，相同
+  50-test 覆盖为 `49 passed / 1 failed in 104.46s`；唯一失败严格收敛为 ignored canonical page
+  仍携带旧 27-task sidecar，代码、合同、registry 与 DEVX-006D 均无 node failure。
+- 使用现有 canonical writer 完整重建 11 个页面 artifacts；原样保留既有三条独立 acceptance
+  facts（`ENGINEERING_VALIDATION=PASS`、`OWNER_VISUAL_REVIEW=PASS`、
+  `READER_COMPREHENSION_REVIEW=PASS`）及其 reviewer/time/decision/evidence，不重新签署、不串轨。
+  重建时 `index.html` SHA-256=`93f169ff08bc768aab36ca65b1c45e537ce2b83883c70decfedcf7cd123e1970`，
+  `page_effectiveness.json` SHA-256=`fc490e72c54e250755e8d771f990ff41735e2e49690838732fa351311e2d36a0`；
+  完全相同 50-test 覆盖最终 `50 passed in 108.67s`。
+
+当前实现候选只达到 `VALID_VERSIONED_SUCCESSOR_CONTRACT_ONLY`。新增轴均为
+`OWNER_ACTION_UNRESOLVED`，不存在 implicit G1/G2；policy evidence inventory 为空，DQ/PIT、engine、selection、
+orders/fills、external action 与 investment interpretation 均保持 fail closed。正式验证与 final exact-main
+hash 在收口后补录。
+
+`BASELINE_DONE` 只表示 versioned successor contract 已建立；后继仍由 Project Owner 提供 reviewed G2
+per-slot policy values、primary-window canonical evidence 与验收策略。上述输入缺失前，不得建立 executable
+policy、解除 cash-preservation 或启动正式日级回测。

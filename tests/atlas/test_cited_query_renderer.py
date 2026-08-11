@@ -120,7 +120,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "这张页面现在还能不能信",
         "QQQ Options 的 DAILY 工程合同正在完善",
         "28 个 selection、execution、accounting、lifecycle 决策",
-        "Owner attestation adoption 合同已实现，但尚无真实 Owner attestation",
+        "真实 Owner attestation 已按 canonical admission 合同封存",
+        "37-slot v2 catalog、deterministic migration 与 typed evidence admission 已建立",
         "页面把工程能力、研究证据和页面验收分开汇总",
         "三种“通过”互不代签",
         "ENGINEERING_VALIDATION",
@@ -260,6 +261,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
+    assert 'data-task-coverage-count="28"' in html
+    assert 'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"' in html
     assert html.count('data-reader-section="downstream_use"') == 8
     assert html.count('data-reader-section="boundary"') == 8
     assert html.count('data-reader-section="next_trigger"') == 8

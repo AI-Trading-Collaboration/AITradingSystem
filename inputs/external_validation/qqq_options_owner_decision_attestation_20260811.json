@@ -1,0 +1,192 @@
+{
+  "amendment_resolutions": [
+    {
+      "amendment_id": "ADD_ACC_CASH_CARRY_BENCHMARK",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "ADD_ACC_METRIC_BENCHMARK_IDENTITY",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "ADD_ACC_RESEARCH_MULTIPLICITY_CONTROL",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "ADD_EXE_EXECUTION_OBSERVATION_SOURCE",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "ADD_LIFE_POSITION_STATE_TRANSITION",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "ADD_TERMINAL_VALUATION_RESULT_INCLUSION_DEPENDENCY",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "EXPLICIT_QUOTE_OBSERVATION_IDENTITIES",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "SPLIT_ACC_IDENTITY_ROUNDING",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "SPLIT_ACC_SETTLEMENT_COST_BASIS",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "SPLIT_LIFE_CLOSE_HOLD_ROLL",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    },
+    {
+      "amendment_id": "SPLIT_LIFE_EXERCISE_ASSIGNMENT",
+      "disposition": "ACCEPTED_FOR_VERSIONED_SUCCESSOR",
+      "rationale": "Project Owner accepts the reviewed versioned catalog successor scope only; this does not authorize policy values, engine activation, backtests, external actions, or investment interpretation.",
+      "successor_catalog_version": "2.0.0"
+    }
+  ],
+  "authority_set_sha256": "1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c",
+  "confirmed_no_engine_activation": true,
+  "confirmed_no_external_action": true,
+  "content_sha256": "2777768003bb81bdeadc72929edeae9db6f1a1d970b25ebf9e050adafa30b57c",
+  "created_at_utc": "2026-08-12T00:00:00Z",
+  "decision_date": "2026-08-11",
+  "group_choices": [
+    {
+      "canonical_group": "acceptance",
+      "mode": "PER_SLOT"
+    },
+    {
+      "canonical_group": "accounting",
+      "mode": "PER_SLOT"
+    },
+    {
+      "canonical_group": "execution",
+      "mode": "PER_SLOT"
+    },
+    {
+      "canonical_group": "lifecycle",
+      "mode": "PER_SLOT"
+    },
+    {
+      "canonical_group": "selection",
+      "mode": "G3"
+    }
+  ],
+  "independent_reviewer_id": "project_owner",
+  "manifest_policy_canonical_sha256": "c872e9aee37cf2ea36b201d81c48c98603ca4daa96c53d900cdaa5997e13f0db",
+  "manifest_policy_file_sha256": "55fb29bb2e4347959920cd3f5d72cbc5fc94c2aac5794f301e1c41f9a31547de",
+  "not_applicable_rationales": [],
+  "owner_decision_id": "owner_decision:TRADING-2502:2026-08-11:review_qqq_options_backtest_policy_decision_pack_v1",
+  "owner_id": "project_owner",
+  "owner_policy_values": [],
+  "pack_requirement_lf_sha256": "afdcb44f44032fee958d4f6b1e8e4b56c1edb2faefa44026e16aff7153968588",
+  "record_id": "trading_2502_owner_attestation_20260811_v1",
+  "repository_code_sha": "e08bca3d22c1174e3dc31c14e2a4416ea809c440",
+  "schema_version": "qqq_options_owner_decision_attestation.v1",
+  "slot_catalog_sha256": "a1492e27ea8599d453249e5d29280d6fcb882ea0376ce531b949eae7b7621ad6",
+  "slot_choices": [
+    {
+      "action": "G3",
+      "slot_id": "ACC_CASH_RESERVATION"
+    },
+    {
+      "action": "G3",
+      "slot_id": "ACC_DQ_PIT_REPRO"
+    },
+    {
+      "action": "G3",
+      "slot_id": "ACC_FEE_SCHEDULE"
+    },
+    {
+      "action": "G1",
+      "slot_id": "ACC_IDENTITY_ROUNDING"
+    },
+    {
+      "action": "G4",
+      "slot_id": "ACC_INITIAL_CASH"
+    },
+    {
+      "action": "G1",
+      "slot_id": "ACC_INVESTMENT_PROMOTION"
+    },
+    {
+      "action": "G3",
+      "slot_id": "ACC_RESULT_INCLUSION"
+    },
+    {
+      "action": "G3",
+      "slot_id": "ACC_SAMPLE_COVERAGE"
+    },
+    {
+      "action": "G1",
+      "slot_id": "ACC_SETTLEMENT_COST_BASIS"
+    },
+    {
+      "action": "G3",
+      "slot_id": "ACC_SIZING_EXPOSURE"
+    },
+    {
+      "action": "G1",
+      "slot_id": "EXE_CANCEL_REJECT_NO_FILL"
+    },
+    {
+      "action": "G4",
+      "slot_id": "EXE_LATENCY"
+    },
+    {
+      "action": "G3",
+      "slot_id": "EXE_MARKETABLE_LIMIT"
+    },
+    {
+      "action": "G4",
+      "slot_id": "EXE_PARTIAL_FILL"
+    },
+    {
+      "action": "G3",
+      "slot_id": "EXE_QUOTE_DISPOSITION"
+    },
+    {
+      "action": "G4",
+      "slot_id": "EXE_SLIPPAGE"
+    },
+    {
+      "action": "G1",
+      "slot_id": "LIFE_CLOSE_HOLD_ROLL"
+    },
+    {
+      "action": "G1",
+      "slot_id": "LIFE_EXERCISE_ASSIGNMENT"
+    },
+    {
+      "action": "G3",
+      "slot_id": "LIFE_EXPIRY_EXIT_GUARD"
+    },
+    {
+      "action": "G3",
+      "slot_id": "LIFE_TERMINAL_VALUATION"
+    }
+  ]
+}

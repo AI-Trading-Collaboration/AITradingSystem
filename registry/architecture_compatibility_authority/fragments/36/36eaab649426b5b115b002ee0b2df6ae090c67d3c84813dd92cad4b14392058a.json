@@ -2016,27 +2016,27 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/task_register.md",
-        "sha256": "032da154f1041f6d4bc108ac5882ead22218608b5b0529eccebdcb608ff96a52"
+        "sha256": "1fae5c34cb5a6cb36973eff3c14caa50dc3eae64de962e3ac6f6af53cddd3e44"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_architecture_fitness.yaml",
-        "sha256": "3666acfde090f09f08b420304878671c8eb6bbbc563eb02b8971ff5c05826f41"
+        "sha256": "0e5aa4b676618b10bec5cb642cc8824c1059cf15b3df6827b0e7a7fa454a5753"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "5ea68c4c32d0fe7ff6c04ae23201cc70c855baa5e8cebe50af370838b358b767"
+        "sha256": "492fe05a54ee3ebb44ff4b85dad3753d0b3d6999b5912c8293b71c2b496dab4f"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "8a343d343c2ef52b0cae4b15222e5bf2912c0f019bc0c0c641608f5f2eed412d"
+        "sha256": "54c7dc01ee54d0075d4306b25f0170c842c847f9954a05ea536dafe84cb0010c"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004g_deprecation_inventory.yaml",
-        "sha256": "b2ff384b6bc25830639af34faf6d09df147c1b9d70fbecb24dbd13e8efe2a076"
+        "sha256": "bd27176c59ee94442f98130765910507f52c146455319c4e58d04768ab1ccb75"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2096,7 +2096,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_004g_deprecation.py",
-        "sha256": "60be768baf003112acc0a35bd64462af4dc74e5df0072bfdc39532435053f80e"
+        "sha256": "8c613d008dae3620ae3ca6178df7a543b9307416ce1b73bf779d17b1445f065e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2111,7 +2111,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "fe13e1e9389f8d45baa41f8e16434fd372b3de8b7ff201d49bb3d3cec27f200d"
+        "sha256": "55bf875669750f79a5c47e7f6ee206b468181084e2814ddec099657c663ff493"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2131,12 +2131,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "docs/system_flow.md",
-        "sha256": "8a2cd3c61cd85407d14076db2554a454bf7929739087f09d71c0715a896fe666"
+        "sha256": "8c2a9f12a0cbbc55a66f0fd3471ead73d7984c744d5b695848003d8fed793b2e"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "434f5617a765305a90960a0908b91b2479c3e2428944bc42480f60cac4183716"
+        "sha256": "5d7f7b0d06964af61bccbbe1b570ea1e417c7c2adf753087d96adfc81705421e"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2146,7 +2146,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_aggregate_shadow_index.yaml",
-        "sha256": "fdb8e74a503cdd80a2ddc31da3b22cbb9ba394810f75468d4e3bf834aa268313"
+        "sha256": "67be1e43a0f59fe7d31960d5279a45c69fefcb276eaba11a4c4b48724f6aff79"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2161,7 +2161,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "f4820c98018a09faf92da7ffd67ba954b6de888e6cba7679eb3d0a7ec75cd10f"
+        "sha256": "8477fb57695b32a35f9e46d4e3a2cfdf736ae61fc8ddd3dd24109b80e06c2801"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2206,7 +2206,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_005_task_registry_index.yaml",
-        "sha256": "f7202a962b142a75d365f3bdacaa9338b3b3bc6b137b63de88b4bce083aa47eb"
+        "sha256": "6e77dd12dbfae08b1048064d6fdb1e0b29410c77229bc43884d42c1bc18e9288"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -2316,7 +2316,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_arch_005_s5_task_source_cutover.py",
-        "sha256": "e7e0779677ff5ef0a970c4f0975ae343a6897e8430c8fabe0aeb92d45dbdaf46"
+        "sha256": "72358900ccd93c3bd21ce4e8c9fbac5a33796bcb9adc27c69e0574fb753f5243"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -4360,25 +4360,25 @@
     },
     "task_id": "ARCH-005S5_CANONICAL_TASK_SOURCE_CUTOVER",
     "task_registry_authority": {
-      "active_task_count": 471,
+      "active_task_count": 472,
       "completed_task_count": 507,
       "consumer_inventory_path": "inputs/architecture/arch_005_s5_consumer_inventory.yaml",
       "consumer_inventory_sha256": "19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4",
       "cutover_performed": true,
-      "final_chain_sha256": "86e1d9c45d251208aa9394818412fa5a74f954f0a592472f561bdfb1338d04ae",
-      "fragment_count": 978,
+      "final_chain_sha256": "506817227d0276801eee086cccdbec7f8beb0db3b2a8ec90d6fd99f71edbf5a1",
+      "fragment_count": 979,
       "fragment_root": "registry/development_tasks",
-      "governance_cycle_count": 20,
+      "governance_cycle_count": 27,
       "index_path": "inputs/architecture/arch_005_task_registry_index.yaml",
-      "index_sha256": "f7202a962b142a75d365f3bdacaa9338b3b3bc6b137b63de88b4bce083aa47eb",
+      "index_sha256": "6e77dd12dbfae08b1048064d6fdb1e0b29410c77229bc43884d42c1bc18e9288",
       "manifest_path": "inputs/architecture/arch_005_s5_cutover_manifest.yaml",
       "manifest_sha256": "d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6",
       "manual_row_move_workflow_enabled": false,
       "rollback_mode": "OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY",
       "source_of_truth": "ARCH_005_TASK_REGISTRY",
-      "task_count": 978
+      "task_count": 979
     }
   },
   "section_id": "phase_arch_005_s5_canonical_task_source_cutover",
-  "section_sha256": "a67300d68daf4124980b95d2478627e344fb39833bac569d2e0689a318772e45"
+  "section_sha256": "36eaab649426b5b115b002ee0b2df6ae090c67d3c84813dd92cad4b14392058a"
 }

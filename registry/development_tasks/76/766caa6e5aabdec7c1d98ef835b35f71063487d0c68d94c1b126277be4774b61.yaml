@@ -14,22 +14,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: codex_qqq_options_slot_catalog_v2_coordinator；后继 project owner 提供 reviewed
-    G2 policy values/evidence
+  next_owner: project owner：后继任务提供 reviewed G2 per-slot policy values、canonical evidence
+    与明确验收策略；engineering coordinator 仅在新授权后构建 executable policy
   requirement_refs:
   - docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Owner 已批准 2502 结构选择与现有 11 项 versioned-successor
-    amendment；本任务只封存 canonical attestation、v2 catalog/migration/evidence schema。所有
-    policy 数值、engine/backtest 与外部动作继续 blocked。
+  unstructured_legacy_blocker_or_next_step: Versioned successor 2.0.0 contract 已完成；当前
+    blocker=OWNER_REVIEWED_G2_POLICY_VALUES_AND_PRIMARY_WINDOW_EVIDENCE_NOT_PROVIDED。DQ/PIT、selection、engine/backtest、external
+    action 与投资解释继续 blocked。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 从 exact main e08bca3d…建立 tracked attestation evidence、immutable v2.0.0 catalog、deterministic
-      v1→v2 migration、typed evidence admission；28 slots exact once、11 amendments typed、DQ/PIT/window/lineage/cash-preservation
-      fail closed。不得填阈值、激活 engine、提交订单或执行 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
-      动作。
+    text: Owner token/28-slot v1/11 amendments 已 exact-bound；v2=37 slots、deterministic
+      migration、typed evidence admission 与 unresolved added axes fail closed；无 thresholds、orders/fills=0、cash-preservation，focused/compatibility/final
+      formal gates PASS。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -68,28 +67,84 @@ events:
   - change:TRADING-2509-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-1e2516a29addddbe5c4236a6bac221f6
+- schema_version: task_event.v1
+  task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-11T15:53:03Z'
+  actor: codex_qqq_options_slot_catalog_v2_coordinator
+  change_id: TRADING-2509-V2-CONTRACT-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: 1d7de7ff08e7253985760eb7e2257f117679b32c
+  previous_state_event_id: task-event-1e2516a29addddbe5c4236a6bac221f6
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：后继任务提供 reviewed G2 per-slot policy values、canonical
+      evidence 与明确验收策略；engineering coordinator 仅在新授权后构建 executable policy
+    blocker_or_next_step: Versioned successor 2.0.0 contract 已完成；当前 blocker=OWNER_REVIEWED_G2_POLICY_VALUES_AND_PRIMARY_WINDOW_EVIDENCE_NOT_PROVIDED。DQ/PIT、selection、engine/backtest、external
+      action 与投资解释继续 blocked。
+    acceptance_criteria: Owner token/28-slot v1/11 amendments 已 exact-bound；v2=37
+      slots、deterministic migration、typed evidence admission 与 unresolved added axes
+      fail closed；无 thresholds、orders/fills=0、cash-preservation，focused/compatibility/final
+      formal gates PASS。
+    notes: 2026-08-12：TRADING-2509 contract-only v2 candidate 完成；2502/2507 frozen
+      requirement exact bytes 未改。正式 final-tree evidence 在本次收口后绑定。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2509-V2-CONTRACT-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f936c39d709b8a67cf81944063cfe198
+- schema_version: task_event.v1
+  task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-11T16:48:00Z'
+  actor: codex_qqq_options_slot_catalog_v2_coordinator
+  change_id: TRADING-2509-REQUIREMENT-REF-PRESERVATION-FAILURE-FIX-V1
+  lane_id: null
+  base_commit: 1d7de7ff08e7253985760eb7e2257f117679b32c
+  previous_state_event_id: task-event-f936c39d709b8a67cf81944063cfe198
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: project owner：后继任务提供 reviewed G2 per-slot policy values、canonical
+      evidence 与明确验收策略；engineering coordinator 仅在新授权后构建 executable policy
+    blocker_or_next_step: Versioned successor 2.0.0 contract 已完成；当前 blocker=OWNER_REVIEWED_G2_POLICY_VALUES_AND_PRIMARY_WINDOW_EVIDENCE_NOT_PROVIDED。DQ/PIT、selection、engine/backtest、external
+      action 与投资解释继续 blocked。
+    acceptance_criteria: Owner token/28-slot v1/11 amendments 已 exact-bound；v2=37
+      slots、deterministic migration、typed evidence admission 与 unresolved added axes
+      fail closed；无 thresholds、orders/fills=0、cash-preservation，focused/compatibility/final
+      formal gates PASS。
+    notes: 2026-08-12：v2 contract-only baseline 与 Full failure-fix 已记录；详见 [TRADING-2509
+      Slot Catalog V2 Amendment Contract](docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md)。G2
+      values、DQ/PIT admission、engine/backtest 与投资解释继续 blocked。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2509-REQUIREMENT-REF-PRESERVATION-FAILURE-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c044b154545ac6de10f0dcb5d4c0db8b
 projection:
   legacy_first_eight_cells:
   - TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
   - Strategy research governance / QQQ Options Owner decision slot catalog v2 amendment
     contract
   - P0
-  - IN_PROGRESS
-  - codex_qqq_options_slot_catalog_v2_coordinator；后继 project owner 提供 reviewed G2
-    policy values/evidence
-  - Owner 已批准 2502 结构选择与现有 11 项 versioned-successor amendment；本任务只封存 canonical attestation、v2
-    catalog/migration/evidence schema。所有 policy 数值、engine/backtest 与外部动作继续 blocked。
-  - 从 exact main e08bca3d…建立 tracked attestation evidence、immutable v2.0.0 catalog、deterministic
-    v1→v2 migration、typed evidence admission；28 slots exact once、11 amendments typed、DQ/PIT/window/lineage/cash-preservation
-    fail closed。不得填阈值、激活 engine、提交订单或执行 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
-    动作。
-  - 2026-08-12：Owner token 已通过 2507 canonical builder 内存重放，候选状态仅 VALID_POLICY_ADOPTION_CONTRACT_ONLY
-    / POLICY_BLOCKED_CASH_PRESERVATION。supporting requirement：[TRADING-2509 Slot Catalog
-    V2 Amendment Contract](docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md)。
+  - BASELINE_DONE
+  - project owner：后继任务提供 reviewed G2 per-slot policy values、canonical evidence 与明确验收策略；engineering
+    coordinator 仅在新授权后构建 executable policy
+  - Versioned successor 2.0.0 contract 已完成；当前 blocker=OWNER_REVIEWED_G2_POLICY_VALUES_AND_PRIMARY_WINDOW_EVIDENCE_NOT_PROVIDED。DQ/PIT、selection、engine/backtest、external
+    action 与投资解释继续 blocked。
+  - Owner token/28-slot v1/11 amendments 已 exact-bound；v2=37 slots、deterministic migration、typed
+    evidence admission 与 unresolved added axes fail closed；无 thresholds、orders/fills=0、cash-preservation，focused/compatibility/final
+    formal gates PASS。
+  - 2026-08-12：v2 contract-only baseline 与 Full failure-fix 已记录；详见 [TRADING-2509 Slot
+    Catalog V2 Amendment Contract](docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md)。G2
+    values、DQ/PIT admission、engine/backtest 与投资解释继续 blocked。
   docs_links:
   - docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 16ca5c202fe8d11400b773482d48dd758366fd681e6860ddc83fb981d7c944d6
-last_event_id: task-event-1e2516a29addddbe5c4236a6bac221f6
+  canonical_row_sha256: 3bc1be276ea35c95e0716c3f81d0e79ddda3ebf723d2dec1a02928fafd6483ec
+last_event_id: task-event-c044b154545ac6de10f0dcb5d4c0db8b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d3fbc7c86bfbd420c98a57f2456a7c1a730fac2dc744a6889182cb2ff0bfd601
+fragment_checksum: 392046c0b7e66baf5b687ed2724284f5e65e47640a98d919675d078f18fa2568

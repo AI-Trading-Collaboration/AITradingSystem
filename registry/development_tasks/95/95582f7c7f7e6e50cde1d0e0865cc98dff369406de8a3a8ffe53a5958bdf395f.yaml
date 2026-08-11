@@ -14,22 +14,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner：提供 canonical typed attestation；后继 coordinator：另立 executable
-    policy adoption/DAILY engine task
+  next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
   requirement_refs:
   - docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 合同实现已完成；当前唯一 blocker=CANONICAL_OWNER_ATTESTATION_NOT_YET_PROVIDED。2507
-    只验证 attestation admission 与 28-slot contract-only adoption plan，不解除 engine/selection/DQ-PIT
-    gate。
+  unstructured_legacy_blocker_or_next_step: Canonical attestation 已由 2509 tracked
+    evidence 接管；2507 admission contract 完成。executable policy、DQ/PIT、selection 与 engine
+    gate 未解除。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: canonical attestation 必须绑定 owner/reviewer/token/date/repository SHA、2502
-      pack/authority 与 2504 policy/catalog；28 slots exactly once，G2/G5 完整，G1/G3/G4
-      与 amendment 未审均 fail closed。保持 DQ/PIT NOT_EVALUATED、engine blocked、selection=false、orders/fills=0；不得填阈值、代签
-      Owner、实现真实 DAILY engine 或执行外部/生产动作。
+    text: tracked attestation raw/content/canonical hash、28-slot replay、11 amendment
+      disposition 与 2502/2504 authority exact-bound；最高状态仍 contract-only，orders/fills=0。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -129,29 +126,76 @@ events:
   - change:TRADING-2507-REQUIREMENT-REF-BINDING-FAILURE-FIX-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-4dfe287bef26e04c3e79f17f498017e7
+- schema_version: task_event.v1
+  task_id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-11T15:27:19Z'
+  actor: codex_qqq_options_slot_catalog_v2_coordinator
+  change_id: TRADING-2507-TRACKED-ATTESTATION-SUCCESSOR-HANDOFF-V1
+  lane_id: null
+  base_commit: 1d7de7ff08e7253985760eb7e2257f117679b32c
+  previous_state_event_id: task-event-4dfe287bef26e04c3e79f17f498017e7
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+    blocker_or_next_step: Canonical attestation 已由 2509 tracked evidence 接管；2507 admission
+      contract 完成。executable policy、DQ/PIT、selection 与 engine gate 未解除。
+    acceptance_criteria: tracked attestation raw/content/canonical hash、28-slot replay、11
+      amendment disposition 与 2502/2504 authority exact-bound；最高状态仍 contract-only，orders/fills=0。
+    notes: 2026-08-12：真实 Owner token 已封存；2507 转 BASELINE_DONE。owner_input_blocker_cleared=false
+      仍是 executable-policy safety literal。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2507-TRACKED-ATTESTATION-SUCCESSOR-HANDOFF-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b55a96c27eb74300ad663eef2f25518e
+- schema_version: task_event.v1
+  task_id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-11T16:43:47Z'
+  actor: codex_qqq_options_slot_catalog_v2_coordinator
+  change_id: TRADING-2507-REQUIREMENT-REF-PRESERVATION-FAILURE-FIX-V1
+  lane_id: null
+  base_commit: 1d7de7ff08e7253985760eb7e2257f117679b32c
+  previous_state_event_id: task-event-b55a96c27eb74300ad663eef2f25518e
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+    blocker_or_next_step: Canonical attestation 已由 2509 tracked evidence 接管；2507 admission
+      contract 完成。executable policy、DQ/PIT、selection 与 engine gate 未解除。
+    acceptance_criteria: tracked attestation raw/content/canonical hash、28-slot replay、11
+      amendment disposition 与 2502/2504 authority exact-bound；最高状态仍 contract-only，orders/fills=0。
+    notes: 2026-08-12：真实 Owner attestation 已由 2509 tracked evidence 封存；详见 [TRADING-2507
+      Owner Decision Policy Adoption Contract](docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md)。该
+      binding 仅恢复 canonical requirement ref，不解除 DQ/PIT、selection 或 engine gate。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2507-REQUIREMENT-REF-PRESERVATION-FAILURE-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3b9f5bc117b2c7cec7360077aa498516
 projection:
   legacy_first_eight_cells:
   - TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
   - Strategy research governance / QQQ Options Owner attestation and policy adoption
     contract
   - P0
-  - BLOCKED_OWNER_INPUT
-  - project owner：提供 canonical typed attestation；后继 coordinator：另立 executable policy
-    adoption/DAILY engine task
-  - 合同实现已完成；当前唯一 blocker=CANONICAL_OWNER_ATTESTATION_NOT_YET_PROVIDED。2507 只验证 attestation
-    admission 与 28-slot contract-only adoption plan，不解除 engine/selection/DQ-PIT gate。
-  - canonical attestation 必须绑定 owner/reviewer/token/date/repository SHA、2502 pack/authority
-    与 2504 policy/catalog；28 slots exactly once，G2/G5 完整，G1/G3/G4 与 amendment 未审均
-    fail closed。保持 DQ/PIT NOT_EVALUATED、engine blocked、selection=false、orders/fills=0；不得填阈值、代签
-    Owner、实现真实 DAILY engine 或执行外部/生产动作。
-  - 2026-08-10：R1 contract candidate 与 R2 authority 已实现；首轮 Full 暴露 Atlas reviewed-successor、DEVX-006D
-    seal 与 canonical requirement binding 缺口，现按 failure-fix 修复。supporting requirement：[TRADING-2507
-    Owner Decision Policy Adoption Contract](docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md)。真实
-    canonical Owner attestation 仍未提供，task 保持 BLOCKED_OWNER_INPUT、engine cash-preservation。
+  - BASELINE_DONE
+  - TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+  - Canonical attestation 已由 2509 tracked evidence 接管；2507 admission contract 完成。executable
+    policy、DQ/PIT、selection 与 engine gate 未解除。
+  - tracked attestation raw/content/canonical hash、28-slot replay、11 amendment disposition
+    与 2502/2504 authority exact-bound；最高状态仍 contract-only，orders/fills=0。
+  - 2026-08-12：真实 Owner attestation 已由 2509 tracked evidence 封存；详见 [TRADING-2507 Owner
+    Decision Policy Adoption Contract](docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md)。该
+    binding 仅恢复 canonical requirement ref，不解除 DQ/PIT、selection 或 engine gate。
   docs_links:
   - docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md
   terminal: false
-  canonical_row_sha256: 645952dea50ed8cd1f532b570cd79febee114cb961f30babfcee947112af9fa6
-last_event_id: task-event-4dfe287bef26e04c3e79f17f498017e7
+  canonical_row_sha256: f5a989a25459bcb316c7bb10828055a5d93fe1712f4aa1b4b27227f2b2f9b886
+last_event_id: task-event-3b9f5bc117b2c7cec7360077aa498516
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0a075a9e22c2744e3d6196c10dcf8ea753ead4b4edc7c49fbad7dfb9cc7cd589
+fragment_checksum: a5e0c35e30e07935d60f158cc42c664c2996895e4408114d95211cfa20fcc363

@@ -1,0 +1,148 @@
+schema_version: qqq_options_owner_decision_manifest_policy.v2
+policy_id: qqq_options_owner_decision_manifest_v2
+policy_version: 2.0.0
+policy_status: STRUCTURAL_SUCCESSOR_CONTRACT_ONLY
+task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+primary_research_start: '2021-02-22'
+primary_research_role: PRIMARY
+predecessor:
+  reviewed_main_sha: e08bca3d22c1174e3dc31c14e2a4416ea809c440
+  manifest_v1_policy_path: config/research/qqq_options_owner_decision_manifest_v1.yaml
+  manifest_v1_policy_file_sha256: 55fb29bb2e4347959920cd3f5d72cbc5fc94c2aac5794f301e1c41f9a31547de
+  manifest_v1_policy_canonical_sha256: c872e9aee37cf2ea36b201d81c48c98603ca4daa96c53d900cdaa5997e13f0db
+  slot_catalog_v1_sha256: a1492e27ea8599d453249e5d29280d6fcb882ea0376ce531b949eae7b7621ad6
+  adoption_policy_path: config/research/qqq_options_owner_policy_adoption_contract_v1.yaml
+  adoption_policy_file_sha256: 7adc957ad2c33aabbd998d5dcb10bbe2c09a49579d4322298af070ec512017b1
+  adoption_policy_canonical_sha256: 7481da7321c51d15266a40ff9f1cb55035ca19d0d56c29ef5797d01ac29feb73
+  attestation_path: inputs/external_validation/qqq_options_owner_decision_attestation_20260811.json
+  attestation_raw_sha256: 8345a55a73df022ef70cb57d6d8df4d6c498cafb091647ef8e27c835cde6fccc
+  attestation_content_sha256: 2777768003bb81bdeadc72929edeae9db6f1a1d970b25ebf9e050adafa30b57c
+  attestation_canonical_sha256: 8345a55a73df022ef70cb57d6d8df4d6c498cafb091647ef8e27c835cde6fccc
+accepted_amendment_ids:
+  - ADD_ACC_CASH_CARRY_BENCHMARK
+  - ADD_ACC_METRIC_BENCHMARK_IDENTITY
+  - ADD_ACC_RESEARCH_MULTIPLICITY_CONTROL
+  - ADD_EXE_EXECUTION_OBSERVATION_SOURCE
+  - ADD_LIFE_POSITION_STATE_TRANSITION
+  - ADD_TERMINAL_VALUATION_RESULT_INCLUSION_DEPENDENCY
+  - EXPLICIT_QUOTE_OBSERVATION_IDENTITIES
+  - SPLIT_ACC_IDENTITY_ROUNDING
+  - SPLIT_ACC_SETTLEMENT_COST_BASIS
+  - SPLIT_LIFE_CLOSE_HOLD_ROLL
+  - SPLIT_LIFE_EXERCISE_ASSIGNMENT
+unchanged_slot_ids:
+  - ACC_CASH_RESERVATION
+  - ACC_DQ_PIT_REPRO
+  - ACC_FEE_SCHEDULE
+  - ACC_INITIAL_CASH
+  - ACC_INVESTMENT_PROMOTION
+  - ACC_RESULT_INCLUSION
+  - ACC_SAMPLE_COVERAGE
+  - ACC_SIZING_EXPOSURE
+  - EXE_CANCEL_REJECT_NO_FILL
+  - EXE_LATENCY
+  - EXE_MARKETABLE_LIMIT
+  - EXE_PARTIAL_FILL
+  - EXE_QUOTE_DISPOSITION
+  - EXE_SLIPPAGE
+  - LIFE_EXPIRY_EXIT_GUARD
+  - LIFE_TERMINAL_VALUATION
+  - SEL_DELTA_SOURCE_RANGE
+  - SEL_DTE_WINDOW
+  - SEL_MONEYNESS_RANGE
+  - SEL_OPEN_INTEREST_FLOOR
+  - SEL_QUOTE_FRESHNESS
+  - SEL_RANK_PRIORITY
+  - SEL_SPREAD_LIMIT
+  - SEL_VOLUME_FLOOR
+split_rules:
+  - amendment_id: SPLIT_ACC_IDENTITY_ROUNDING
+    source_slot_id: ACC_IDENTITY_ROUNDING
+    successor_slot_ids: [ACC_EVENT_IDENTITY_INVARIANT, ACC_ROUNDING_RECONCILIATION]
+  - amendment_id: SPLIT_ACC_SETTLEMENT_COST_BASIS
+    source_slot_id: ACC_SETTLEMENT_COST_BASIS
+    successor_slot_ids: [ACC_SETTLEMENT_TIMING, ACC_COST_BASIS_CONVENTION]
+  - amendment_id: SPLIT_LIFE_CLOSE_HOLD_ROLL
+    source_slot_id: LIFE_CLOSE_HOLD_ROLL
+    successor_slot_ids: [LIFE_CLOSE_HOLD_POLICY, LIFE_ROLL_AUTHORIZATION]
+  - amendment_id: SPLIT_LIFE_EXERCISE_ASSIGNMENT
+    source_slot_id: LIFE_EXERCISE_ASSIGNMENT
+    successor_slot_ids: [LIFE_EXERCISE_POLICY, LIFE_ASSIGNMENT_POLICY]
+added_axis_rules:
+  - amendment_id: ADD_ACC_CASH_CARRY_BENCHMARK
+    slot_id: ACC_CASH_CARRY_BENCHMARK
+    canonical_group: accounting
+    evidence_class: ACCOUNTING_AUTHORITY
+    requires: [ACC_INITIAL_CASH, BENCHMARK_SOURCE_IDENTITY, PRIMARY_SESSION_COVERAGE]
+    blocks: [NET_RETURN_INTERPRETATION, BENCHMARK_RELATIVE_INTERPRETATION]
+  - amendment_id: ADD_ACC_METRIC_BENCHMARK_IDENTITY
+    slot_id: ACC_METRIC_BENCHMARK_IDENTITY
+    canonical_group: acceptance
+    evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+    requires: [ACC_RESULT_INCLUSION, BENCHMARK_SOURCE_IDENTITY, METRIC_DEFINITION_IDENTITY]
+    blocks: [AGGREGATE_CONCLUSION, INVESTMENT_PROMOTION]
+  - amendment_id: ADD_ACC_RESEARCH_MULTIPLICITY_CONTROL
+    slot_id: ACC_RESEARCH_MULTIPLICITY_CONTROL
+    canonical_group: acceptance
+    evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+    requires: [ACC_SAMPLE_COVERAGE, STUDY_REGISTRY_IDENTITY, HOLDOUT_DESIGN]
+    blocks: [RESULT_ACCEPTANCE, INVESTMENT_PROMOTION]
+  - amendment_id: ADD_EXE_EXECUTION_OBSERVATION_SOURCE
+    slot_id: EXE_EXECUTION_OBSERVATION_SOURCE
+    canonical_group: execution
+    evidence_class: EXECUTION_SENSITIVITY
+    requires: [SELECTION_AUTHORITY, EXECUTION_QUOTE_OBSERVATION, SOURCE_CHECKSUM_IDENTITY]
+    blocks: [ORDER_INTENT_AUTHORIZATION, FILL_AUTHORIZATION, REALITY_BASELINE]
+  - amendment_id: ADD_LIFE_POSITION_STATE_TRANSITION
+    slot_id: LIFE_POSITION_STATE_TRANSITION
+    canonical_group: lifecycle
+    evidence_class: LIFECYCLE_EVENT_EVIDENCE
+    requires: [ACCOUNTING_AUTHORITY, EVENT_CHRONOLOGY_IDENTITY, POSITION_STATE_REPLAY]
+    blocks: [LIFECYCLE_AUTHORIZATION, ROLL_AUTHORIZATION, UNDERLYING_EXPOSURE]
+quote_observation_identity_rules:
+  - slot_id: SEL_QUOTE_FRESHNESS
+    observation_identity: SELECTION_QUOTE_OBSERVATION
+  - slot_id: EXE_QUOTE_DISPOSITION
+    observation_identity: EXECUTION_QUOTE_OBSERVATION
+dependency_amendments:
+  - upstream_slot_id: LIFE_TERMINAL_VALUATION
+    downstream_slot_id: ACC_RESULT_INCLUSION
+review_findings:
+  - finding_id: SPLIT_EXE_CANCEL_REJECT_NO_FILL
+    affected_slot_ids: [EXE_CANCEL_REJECT_NO_FILL]
+    disposition: OWNER_REVIEW_REQUIRED_NOT_IN_ATTESTED_INVENTORY
+    rationale: Web Pro identified cancel, reject, and no-fill as a remaining composite; the 11-item attestation did not include this amendment, so v2 retains the blocked v1 slot pending a separate reviewed disposition.
+  - finding_id: SPLIT_ACC_DQ_PIT_REPRO_INVARIANT_FROM_OWNER_POLICY
+    affected_slot_ids: [ACC_DQ_PIT_REPRO]
+    disposition: OWNER_REVIEW_REQUIRED_NOT_IN_ATTESTED_INVENTORY
+    rationale: Web Pro identified invariant DQ/PIT requirements and Owner-tunable reproducibility acceptance as distinct concerns; the 11-item attestation did not include this amendment, so v2 retains the blocked v1 slot pending a separate reviewed disposition.
+evidence_reference_contract:
+  schema_version: qqq_options_owner_policy_evidence_reference.v1
+  required_fields:
+    - relative_path
+    - schema_version
+    - file_sha256
+    - content_sha256
+    - requested_start
+    - requested_end
+    - evaluated_start
+    - evaluated_end
+    - as_of_session
+    - dq_status
+  pass_required_for_admission: true
+  unknown_never_passes: true
+safety:
+  maximum_status: VALID_VERSIONED_SUCCESSOR_CONTRACT_ONLY
+  executable_policy_authorized: false
+  dq_pit_status: NOT_EVALUATED_BY_THIS_CONTRACT
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  orders: 0
+  fills: 0
+  external_action_authorized: false
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

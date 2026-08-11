@@ -8082,3 +8082,34 @@ fee/slippage/latency/partial-fill/cancel/expiry/sizing/cash/acceptance 数值，
 DAILY engine。即使 manifest 形式有效，也只证明 decision input 可审计；policy adoption、engine implementation、
 回测运行与投资结论仍分别需要独立后继任务和 exact Owner authority。QuantConnect/cloud/API/CLI/HTTP/raw
 export/paper/live/broker/production 动作继续为 none/false。
+
+## TRADING-2507 / TRADING-2509 QQQ Options Owner Attestation 与 Slot Catalog V2
+
+2507 提供 canonical Owner attestation admission 与 contract-only adoption plan；2509 在 Owner 对 2502 pack
+完成 exact-hash-bound review 后，只把该输入事实和 11 项已批准结构 amendment 投影为 immutable `2.0.0`
+successor catalog。v1 records/config bytes 保持不变。
+
+```text
+2502 Owner token + reviewed main/hash set
+  -> 2507 OwnerDecisionAttestationRecord canonical seal/replay
+     -> 28 v1 slots exactly once; G2 values=0; G5 rationales=0
+     -> VALID_POLICY_ADOPTION_CONTRACT_ONLY
+  -> strict 2509 v2 policy loader
+     -> tracked attestation raw/content/canonical SHA replay
+     -> immutable v1 catalog/adoption policy exact binding
+     -> 24 unchanged + 8 split successors + 5 added axes = 37 v2 slots
+     -> selection/execution quote observations use separate identities
+     -> LIFE_TERMINAL_VALUATION -> ACC_RESULT_INCLUSION explicit dependency
+     -> slot-level dependency DAG cycle check
+     -> added axes have OWNER_ACTION_UNRESOLVED (no implicit G1/G2/default)
+     -> future evidence refs require path/schema/file+content hashes/range/as-of/DQ PASS
+     -> UNKNOWN/FAIL/NOT_EVALUATED never become evidence PASS
+  -> VALID_VERSIONED_SUCCESSOR_CONTRACT_ONLY
+  -> POLICY_BLOCKED_CASH_PRESERVATION / selection=false / orders=fills=0
+```
+
+Web Pro 另指出 `EXE_CANCEL_REJECT_NO_FILL` 与 `ACC_DQ_PIT_REPRO` 的 composite 风险；它们不属于本次
+Owner token 中 11 项 typed disposition，因此 2509 只记录为
+`OWNER_REVIEW_REQUIRED_NOT_IN_ATTESTED_INVENTORY`，不伪称已批准，也不改写为 v2 split slots。整个链路不填
+DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/sizing/cash/acceptance
+数值，不运行 DAILY engine/backtest，不执行 QuantConnect/cloud/API/CLI/HTTP/raw/paper/live/broker/production。

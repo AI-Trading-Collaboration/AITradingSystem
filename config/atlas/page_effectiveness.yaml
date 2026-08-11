@@ -117,8 +117,8 @@ task_sources:
     reader_summary_zh: A/B/C 分层与阅读顺序由 Owner review pack 冻结。
   - task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
     requirement_path: docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
-    coverage: DISCLOSED_OWNER_INPUT_BLOCKED
-    reader_summary_zh: 28 个 decision slots 等待真实 Owner 输入，当前固定 cash preservation。
+    coverage: DISCLOSED_OWNER_STRUCTURE_REVIEWED_VALUES_BLOCKED
+    reader_summary_zh: Owner 已审阅 28 个 v1 decision slots 的结构选择与 versioned successor，但未提供 G2 policy values；cash preservation 与 engine blocker 继续生效。
   - task_id: TRADING-2503_ATLAS_QQQ_OPTIONS_SERIAL_PROJECTION_CONTRACT_RENDERER_CONSUMER_V1
     requirement_path: docs/requirements/TRADING-2503_Atlas_QQQ_Options_Serial_Projection_Contract_Renderer_Consumer_V1.md
     coverage: INCLUDED_QQQ_PROJECTION_RENDERER
@@ -133,12 +133,16 @@ task_sources:
     reader_summary_zh: 八个流程节点已补充工作内容、必要性、三维进展、预期产物和可继续展开的概念解释。
   - task_id: TRADING-2507_QQQ_OPTIONS_OWNER_DECISION_POLICY_ADOPTION_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2507_QQQ_Options_Owner_Decision_Policy_Adoption_Contract_V1.md
-    coverage: DISCLOSED_OWNER_ADOPTION_POLICY_BLOCKED
-    reader_summary_zh: Owner attestation adoption 合同已实现，但尚无真实 Owner attestation；默认仍为 POLICY_BLOCKED_CASH_PRESERVATION，不代表 engine/backtest 或策略获批。
+    coverage: DISCLOSED_OWNER_ATTESTATION_ADMITTED_POLICY_BLOCKED
+    reader_summary_zh: 真实 Owner attestation 已按 canonical admission 合同封存，但仅批准结构与 versioned successor；默认仍为 POLICY_BLOCKED_CASH_PRESERVATION，不代表 engine/backtest 或策略获批。
   - task_id: TRADING-2508_ATLAS_ENGINEERING_RESEARCH_ACCEPTANCE_PROGRESS_MATRIX_V1
     requirement_path: docs/requirements/TRADING-2508_Atlas_Engineering_Research_Acceptance_Progress_Matrix_V1.md
     coverage: INCLUDED_THREE_AXIS_PROGRESS_MATRIX
     reader_summary_zh: 页面把工程能力、研究证据和页面验收分开汇总；绿色工程状态不代表策略有效或可以下单。
+  - task_id: TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2509_QQQ_Options_Owner_Decision_Slot_Catalog_V2_Amendment_Contract_V1.md
+    coverage: DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY
+    reader_summary_zh: 37-slot v2 catalog、deterministic migration 与 typed evidence admission 已建立；新增轴和数值 policy 仍 unresolved，未激活 engine/backtest。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

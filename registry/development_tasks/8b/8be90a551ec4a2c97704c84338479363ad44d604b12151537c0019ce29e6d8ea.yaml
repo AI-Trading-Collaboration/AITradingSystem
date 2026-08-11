@@ -4,6 +4,7 @@ stable_task_identity:
   task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
   task_id_sha256: 8be90a551ec4a2c97704c84338479363ad44d604b12151537c0019ce29e6d8ea
 task_record:
+  schema_version: task_record.v1
   task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
   title: null
   domain: Strategy research governance / QQQ Options DAILY backtest policy Owner decision
@@ -13,28 +14,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: project owner：复核 exact-main/hash-bound pack 后对五个 group 或逐 slot 选择 G1–G5；任何正式
-    policy/engine 实现须另立后继 serial contract wave
+  next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
   requirement_refs:
   - docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。已从
-    exact main `6f54ee742bc2f0d6633a6e4c33957388d358e0ac` 重放 2481–2499 authority，authority-set
-    SHA-256=`1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c`；28
-    个 selection/execution/accounting/lifecycle/acceptance slots 已给出非数值治理选项、证据需求与 fail-closed
-    结果。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`。
+  unstructured_legacy_blocker_or_next_step: Owner decision token 已 exact-bound admission；2509
+    构建 contract-only v2 catalog/migration。真实 policy 数值、engine/backtest 与投资解释继续 blocked。
   acceptance_criteria:
-  - criterion_id: legacy_markdown
-    text: Owner token 必须绑定最终 ordinary-pushed main、pack LF SHA-256、authority-set SHA-256，并对每个
-      slot 产生可机械展开的 typed decision；G2 还需具体值/规则、rationale、intended effect、evidence、version/status、review/expiry
-      condition。此前持续固定 `POLICY_BLOCKED_CASH_PRESERVATION`、selection=false、orders/fills=0；不得实现真实日级
-      engine，不得宣称 policy reviewed，外部 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
-      动作为 none/false。
+  - criterion_id: legacy_compatibility
+    text: 2502 pack 的 28-slot 决策已由 canonical attestation exact replay；G2 values=0、G5
+      rationales=0，11 amendments 仅批准 versioned successor 2.0.0；cash-preservation/zero-order/zero-fill
+      保持。
   production_effect: UNKNOWN_LEGACY
   broker_action: UNKNOWN_LEGACY
-  schema_version: task_record.v1
 legacy_import_evidence:
   row_sha256: 107e4f877bccbdd5da60e74ef0fe7163c1bd5e5ed5e87338965888b8412fe7d6
   cell_count: 8
@@ -101,32 +95,79 @@ events:
   evidence_refs:
   - sha256:107e4f877bccbdd5da60e74ef0fe7163c1bd5e5ed5e87338965888b8412fe7d6
   history_completeness: LEGACY_HISTORY_PARTIAL
+- schema_version: task_event.v1
+  task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-11T15:27:18Z'
+  actor: codex_qqq_options_slot_catalog_v2_coordinator
+  change_id: TRADING-2502-OWNER-DECISION-ADMITTED-V1
+  lane_id: null
+  base_commit: 1d7de7ff08e7253985760eb7e2257f117679b32c
+  previous_state_event_id: legacy-import-107e4f877bccbdd5da60e74e
+  from_status: BLOCKED_OWNER_INPUT
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+    blocker_or_next_step: Owner decision token 已 exact-bound admission；2509 构建 contract-only
+      v2 catalog/migration。真实 policy 数值、engine/backtest 与投资解释继续 blocked。
+    acceptance_criteria: 2502 pack 的 28-slot 决策已由 canonical attestation exact replay；G2
+      values=0、G5 rationales=0，11 amendments 仅批准 versioned successor 2.0.0；cash-preservation/zero-order/zero-fill
+      保持。
+    notes: 2026-08-12：R4 Owner handoff DONE，R5 由 TRADING-2509 串行接管。supporting requirement
+      已同步；无外部动作。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2502-OWNER-DECISION-ADMITTED-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-18337cce8234f9e4debb4c69989dd453
+- schema_version: task_event.v1
+  task_id: TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-11T16:43:46Z'
+  actor: codex_qqq_options_slot_catalog_v2_coordinator
+  change_id: TRADING-2502-REQUIREMENT-REF-PRESERVATION-FAILURE-FIX-V1
+  lane_id: null
+  base_commit: 1d7de7ff08e7253985760eb7e2257f117679b32c
+  previous_state_event_id: task-event-18337cce8234f9e4debb4c69989dd453
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+    blocker_or_next_step: Owner decision token 已 exact-bound admission；2509 构建 contract-only
+      v2 catalog/migration。真实 policy 数值、engine/backtest 与投资解释继续 blocked。
+    acceptance_criteria: 2502 pack 的 28-slot 决策已由 canonical attestation exact replay；G2
+      values=0、G5 rationales=0，11 amendments 仅批准 versioned successor 2.0.0；cash-preservation/zero-order/zero-fill
+      保持。
+    notes: 2026-08-12：Owner structure decision 已由 2509 contract-only successor 接管；详见
+      [TRADING-2502 Owner Decision Pack](docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md)。该
+      binding 仅恢复 canonical requirement ref，不授权 policy values、engine/backtest 或投资解释。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2502-REQUIREMENT-REF-PRESERVATION-FAILURE-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fd0b3e6641c44646b51de03814f1f6e9
 projection:
   legacy_first_eight_cells:
   - TRADING-2502_QQQ_OPTIONS_OWNER_REVIEWED_BACKTEST_POLICY_DECISION_PACK_V1
   - Strategy research governance / QQQ Options DAILY backtest policy Owner decision
     pack
   - P0
-  - BLOCKED_OWNER_INPUT
-  - project owner：复核 exact-main/hash-bound pack 后对五个 group 或逐 slot 选择 G1–G5；任何正式 policy/engine
-    实现须另立后继 serial contract wave
-  - 详见 `docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md`。已从
-    exact main `6f54ee742bc2f0d6633a6e4c33957388d358e0ac` 重放 2481–2499 authority，authority-set
-    SHA-256=`1702d50c135204f1d92405cfaf4da7c3a06dae0bb09f2095d68ea388390e687c`；28
-    个 selection/execution/accounting/lifecycle/acceptance slots 已给出非数值治理选项、证据需求与 fail-closed
-    结果。当前 blocker=`OWNER_DECISIONS_NOT_YET_PROVIDED`。
-  - Owner token 必须绑定最终 ordinary-pushed main、pack LF SHA-256、authority-set SHA-256，并对每个
-    slot 产生可机械展开的 typed decision；G2 还需具体值/规则、rationale、intended effect、evidence、version/status、review/expiry
-    condition。此前持续固定 `POLICY_BLOCKED_CASH_PRESERVATION`、selection=false、orders/fills=0；不得实现真实日级
-    engine，不得宣称 policy reviewed，外部 QC/cloud/API/CLI/HTTP/raw/paper/live/broker/production
-    动作为 none/false。
-  - 2026-08-08：R1 authority inventory、R2 28-slot matrix、R3 reader-safe pack 已完成，状态转为
-    `BLOCKED_OWNER_INPUT` 等待 R4 exact Owner review。2489 不复用；2503 已由 Atlas 完成且本任务未修改其
-    paths/artifacts。
+  - BASELINE_DONE
+  - TRADING-2509 coordinator；后继 project owner 提供 reviewed G2 policy values/evidence
+  - Owner decision token 已 exact-bound admission；2509 构建 contract-only v2 catalog/migration。真实
+    policy 数值、engine/backtest 与投资解释继续 blocked。
+  - 2502 pack 的 28-slot 决策已由 canonical attestation exact replay；G2 values=0、G5 rationales=0，11
+    amendments 仅批准 versioned successor 2.0.0；cash-preservation/zero-order/zero-fill
+    保持。
+  - 2026-08-12：Owner structure decision 已由 2509 contract-only successor 接管；详见 [TRADING-2502
+    Owner Decision Pack](docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md)。该
+    binding 仅恢复 canonical requirement ref，不授权 policy values、engine/backtest 或投资解释。
   docs_links:
   - docs/requirements/TRADING-2502_QQQ_Options_Owner_Reviewed_Backtest_Policy_Decision_Pack_V1.md
   terminal: false
-  canonical_row_sha256: 107e4f877bccbdd5da60e74ef0fe7163c1bd5e5ed5e87338965888b8412fe7d6
-last_event_id: legacy-import-107e4f877bccbdd5da60e74e
+  canonical_row_sha256: a98d7c7eb10d5ba05ecd521742d8c2ddd06d50e00b5c5f0d5e5a2f4ed71caa14
+last_event_id: task-event-fd0b3e6641c44646b51de03814f1f6e9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d2cccfae45585f14cfe715bd7c194fcf7d4fed0a4ccf46f974312b04cde50638
+fragment_checksum: 5621e4e80f45e269843b0295e69e6ca1e779e43955bdda97702e0a2231e8614e
