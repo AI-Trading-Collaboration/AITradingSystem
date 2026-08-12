@@ -1,0 +1,83 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+  task_id_sha256: 368b1a7a5d5be4697618def0d1ada1d3025384853eb7b872c101d27a3c87e836
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+  title: null
+  domain: Strategy research engineering / QQQ Options primary-window derived calibration
+    evidence generator
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: codex primary-window derived evidence generator coordinator；后继 data-source
+    derived aggregate collector 与 Project Owner review
+  requirement_refs:
+  - docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 依赖 2510 admission；当前 blocker=PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；无外部动作授权。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 建立 strict derived observation→evidence generator、canonical DQ/PIT+2510 admission
+      replay 与 fixture/production separation；不填阈值、不建 G2、不激活 engine/backtest。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-12T03:37:39Z'
+  actor: codex_qqq_options_derived_evidence_generator_coordinator
+  change_id: TRADING-2511-REGISTRATION-V1
+  lane_id: null
+  base_commit: 062b21087aaaa398e3ff575fb65348bd8ed31819
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+    - Strategy research engineering / QQQ Options primary-window derived calibration
+      evidence generator
+    - P0
+    - IN_PROGRESS
+    - codex primary-window derived evidence generator coordinator；后继 data-source derived
+      aggregate collector 与 Project Owner review
+    - 依赖 2510 admission；当前 blocker=PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；无外部动作授权。
+    - 建立 strict derived observation→evidence generator、canonical DQ/PIT+2510 admission
+      replay 与 fixture/production separation；不填阈值、不建 G2、不激活 engine/backtest。
+    - 2026-08-12：从 exact main 062b21087aaaa398e3ff575fb65348bd8ed31819 登记；详见 [TRADING-2511
+      Primary Window Derived Calibration Evidence Generator](docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md)。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2511-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ac5a3c0d9952e3fec26bc2c004951361
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+  - Strategy research engineering / QQQ Options primary-window derived calibration
+    evidence generator
+  - P0
+  - IN_PROGRESS
+  - codex primary-window derived evidence generator coordinator；后继 data-source derived
+    aggregate collector 与 Project Owner review
+  - 依赖 2510 admission；当前 blocker=PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；无外部动作授权。
+  - 建立 strict derived observation→evidence generator、canonical DQ/PIT+2510 admission
+    replay 与 fixture/production separation；不填阈值、不建 G2、不激活 engine/backtest。
+  - 2026-08-12：从 exact main 062b21087aaaa398e3ff575fb65348bd8ed31819 登记；详见 [TRADING-2511
+    Primary Window Derived Calibration Evidence Generator](docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md)。
+  docs_links:
+  - docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md
+  terminal: false
+  canonical_row_sha256: ef358de9ed2ddbc82f6ec0f462d629c1af113dc6fb8220fb37a6eaf7a96a2a8e
+last_event_id: task-event-ac5a3c0d9952e3fec26bc2c004951361
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 3e85a33e22cec808b8b0e41cce21fa3a39864b3ec59fc3c94ca2fb45632e5afa
