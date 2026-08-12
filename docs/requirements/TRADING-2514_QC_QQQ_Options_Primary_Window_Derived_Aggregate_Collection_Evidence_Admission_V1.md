@@ -180,3 +180,11 @@ UNKNOWN、NOT_EVALUATED、scope mismatch、as-of mismatch、checksum mismatch、
   failure-fix=`79 passed / 1 exact-count failed` → 相同覆盖 `80 PASS`；compatibility/deprecation
   final=`211 PASS`。所有 tracked 进度在重建 authority 与正式门禁前封存；后续 final tree 不得复用
   修复前四级 PASS，必须完整重跑 Architecture→Contract→Integration→Reproducibility→exclusive Full。
+- 2026-08-13：OPS-076 first failure-fix final-tree 前四级 `865/276/995/24 PASS`；exclusive Full
+  `8874 passed / 1 failed / 3 skipped`。唯一失败是兼容性 active fragment 未接管新 coordinator/test
+  source hash，2514 admission、Atlas、runtime coordination 均无失败。采用 current-fragment source-set
+  最小修复，冻结 legacy prefix/historical hashes；后续完整五级不得复用本轮前四级，Full parent 改为
+  `full_20260812T150211Z`。
+- 2026-08-13：current-authority failure-fix focused=`58 PASS`，compatibility/deprecation=`211 PASS`；
+  legacy prefix exact bytes 未改。该证据在 final authority rebuild 与正式五级前封存；后续不再写 tracked
+  进度，Full 必须以 `failure_fix_rerun` 绑定 `full_20260812T150211Z`。

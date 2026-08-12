@@ -65,3 +65,14 @@ typed integrity/timeout contract。
   完全相同 80-test `-n 16 --dist loadfile` 覆盖 `80 passed in 72.89s`。最终
   compatibility/deprecation 原覆盖 `211 passed in 303.02s`；首轮 exact-count failure 只作
   failure-fix 证据，不作正式门禁证据。
+- 2026-08-13：修复后 first final-tree Architecture/Contract/Integration/Reproducibility
+  `865/276/995/24 PASS`；exclusive Full
+  `8874 passed / 1 failed / 3 skipped`，唯一失败为 historical TRADING-2452 audit 找到的最新
+  successor authority 仍是 TRADING-2501 的旧 coordinator source hash。运行时 coordination 与
+  OPS-076 focused tests 无失败。最小 durable authority fix 仅把 coordinator module 与对应 test 加入
+  active DEVX-006C fragment source set，使生成器从 live LF bytes 派生 current hash；不修改 legacy prefix、
+  historical hashes 或 audit 规则。新 final tree 必须重跑完整五级，Full 绑定 parent
+  `outputs/validation_runtime/full_20260812T150211Z/test_runtime_summary.json`。
+- 2026-08-13：active fragment source-set 修复后，原失败 node、相邻 TRADING-2453、DEVX-006C
+  authority 与 coordination 合计 `58 passed`；完整 compatibility/deprecation 原覆盖
+  `211 passed in 418.78s`。这些结果在正式五级前封存，后续 tracked bytes 冻结。

@@ -584,11 +584,13 @@ def build_repository_authority(
             "989bc4bfe58706d37f7b749b47ba03259688afcb2cac1cdf1fafb35b290130af.yaml"
         ),
         "scripts/architecture_compatibility_authority.py",
+        "src/ai_trading_system/external_request_cache_revalidation_coordination.py",
         "src/ai_trading_system/platform/architecture/bootstrap_handoff.py",
         "src/ai_trading_system/platform/architecture/compatibility_authority.py",
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_arch_004g_deprecation.py",
         "tests/test_devx_006c_compatibility_authority.py",
+        "tests/test_external_request_cache_revalidation_coordination.py",
         "tests/test_trading2452_architecture_contract.py",
     ]
     section: dict[str, Any] = {

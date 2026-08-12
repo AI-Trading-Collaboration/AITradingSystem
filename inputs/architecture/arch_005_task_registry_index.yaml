@@ -14,7 +14,7 @@ fragment_count: 985
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: e42841f7149a60639eb50c04da7e5f992adb32914da23e3de2e24c8e0414b914
+final_chain_sha256: 513eb71a8f7adb270ef49785bc90128155087dad052d5c8249f91eb1bedd1fef
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7903,17 +7903,17 @@ fragments:
   entry_sha256: ac06ba5db1a36782c030c1a4ff8f5e0fed4fd6f2c213c440055140c4cec8193e
 - task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
   path: registry/development_tasks/4a/4a99fbdd7cee5cf60691dcff7a73ce6e25417c166117a764ff3727af3475e349.yaml
-  file_sha256: dc10661ebdfa52eddd954318aa4d1effeb9e8aa482584e2cac268921bd30e6a7
-  fragment_checksum: 8780b497a4d5fe03d23cbade82117234dad47ac7e5721da078c67cc732069150
+  file_sha256: 34f0b4bd701aa791d977327e3982c10b3cb885944a27839b4fe2745704fa6bd3
+  fragment_checksum: 32de45a39e6aa34f23203dd3fb733ac37a46b06d06a4ccf7c9c2a3b13516dcdc
   partition: active
   order: 985
   previous_entry_sha256: ac06ba5db1a36782c030c1a4ff8f5e0fed4fd6f2c213c440055140c4cec8193e
-  entry_sha256: e42841f7149a60639eb50c04da7e5f992adb32914da23e3de2e24c8e0414b914
+  entry_sha256: 513eb71a8f7adb270ef49785bc90128155087dad052d5c8249f91eb1bedd1fef
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: fd24f449da053f9bc03ae22a416704b1369b977350e0a40db41dad6309c16ea0
-  byte_count: 1726635
+  sha256: 7415fffbbeeaeb91b12a10dc64ebd5d7ada55b60f998cdb53402dce980141584
+  byte_count: 1726548
   row_count: 478
   generated_do_not_edit: true
 - partition: completed
@@ -8217,7 +8217,21 @@ governance_cycles:
   change_id: OPS-076-FOCUSED-COMPAT-PASS
   event_count: 3
   production_effect: none
-governance_cycle_count: 42
+- cycle_id: arch-005-s5-cycle-43
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  change_id: OPS-076-CURRENT-AUTHORITY-FAILURE-FIX
+  event_count: 4
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-44
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  change_id: OPS-076-CURRENT-AUTHORITY-PASS
+  event_count: 5
+  production_effect: none
+governance_cycle_count: 44
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8231,4 +8245,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 9c4d3c6eb6fc09a19ef293c810f731f71fbeadebb279504b9cc6cb81bc343324
+index_checksum: 77dacc4c9eaf0696b8037f10321e9d6e14fc6267003a58960ab9b94df7a8bc6f

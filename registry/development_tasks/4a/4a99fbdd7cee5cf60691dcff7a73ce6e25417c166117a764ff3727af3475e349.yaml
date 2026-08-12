@@ -20,12 +20,12 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。durable
-    fix、focused、adjacent 与 compatibility 已 PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+  unstructured_legacy_blocker_or_next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。runtime/current-authority
+    focused与compatibility已PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: waiter probe/replay 共享 per-key arbiter lock；coordination 42、adjacent 80、compatibility
-      211 PASS；最终五级 PASS，Full failure_fix_rerun 绑定 full_20260812T134447Z；production_effect=none、broker_action=none。
+    text: legacy prefix/historical hashes冻结；DEVX-006C active source set派生 live LF
+      hashes；focused 58与compatibility 211 PASS；最终五级 PASS，Full绑定 full_20260812T150211Z。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -114,6 +114,61 @@ events:
   - change:OPS-076-FOCUSED-COMPAT-PASS
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5efefd09fea85cf48a88eeaa1a69b79e
+- schema_version: task_event.v1
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-13T00:28:07+09:00'
+  actor: codex
+  change_id: OPS-076-CURRENT-AUTHORITY-FAILURE-FIX
+  lane_id: null
+  base_commit: f5217d0a80c4312359d0f6f3a27e9efef726743e
+  previous_state_event_id: task-event-5efefd09fea85cf48a88eeaa1a69b79e
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 'data platform owner: monitor Windows spawned-process Full; new distinct
+      failures require a separate task'
+    blocker_or_next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。runtime
+      fix PASS；active compatibility fragment 必须接管 coordinator/test current hashes，随后完整五级与
+      2514 closeout。
+    acceptance_criteria: legacy prefix/historical hashes冻结；DEVX-006C active source
+      set派生 coordinator/test live LF hashes；historical audit、compatibility与完整五级 PASS；Full
+      failure_fix_rerun绑定 full_20260812T150211Z。
+    notes: 2026-08-13：first failure-fix Full=8874 passed/1 failed/3 skipped；唯一失败为
+      TRADING-2452 historical audit 的 current authority hash stale，runtime/2514无失败。采用
+      current fragment source-set 最小修复。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-076-CURRENT-AUTHORITY-FAILURE-FIX
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-88f4105c5a233d377869f29fd54b5960
+- schema_version: task_event.v1
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-13T00:39:16+09:00'
+  actor: codex
+  change_id: OPS-076-CURRENT-AUTHORITY-PASS
+  lane_id: null
+  base_commit: f5217d0a80c4312359d0f6f3a27e9efef726743e
+  previous_state_event_id: task-event-88f4105c5a233d377869f29fd54b5960
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 'data platform owner: monitor Windows spawned-process Full; new distinct
+      failures require a separate task'
+    blocker_or_next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。runtime/current-authority
+      focused与compatibility已PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+    acceptance_criteria: legacy prefix/historical hashes冻结；DEVX-006C active source
+      set派生 live LF hashes；focused 58与compatibility 211 PASS；最终五级 PASS，Full绑定 full_20260812T150211Z。
+    notes: 2026-08-13：current-authority fix focused=58 PASS；compatibility/deprecation=211
+      PASS；tracked progress在正式门禁前封存。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-076-CURRENT-AUTHORITY-PASS
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c850628c39a5086c2fadc04f7694efda
 projection:
   legacy_first_eight_cells:
   - OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
@@ -122,16 +177,16 @@ projection:
   - BASELINE_DONE
   - 'data platform owner: monitor Windows spawned-process Full; new distinct failures
     require a separate task'
-  - 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。durable
-    fix、focused、adjacent 与 compatibility 已 PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
-  - waiter probe/replay 共享 per-key arbiter lock；coordination 42、adjacent 80、compatibility
-    211 PASS；最终五级 PASS，Full failure_fix_rerun 绑定 full_20260812T134447Z；production_effect=none、broker_action=none。
-  - 2026-08-12：coordination=42 PASS；adjacent 79/1 exact-count failure 后同覆盖 80 PASS；compatibility/deprecation=211
-    PASS；tracked progress 在正式门禁前封存。
+  - 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。runtime/current-authority
+    focused与compatibility已PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+  - legacy prefix/historical hashes冻结；DEVX-006C active source set派生 live LF hashes；focused
+    58与compatibility 211 PASS；最终五级 PASS，Full绑定 full_20260812T150211Z。
+  - 2026-08-13：current-authority fix focused=58 PASS；compatibility/deprecation=211
+    PASS；tracked progress在正式门禁前封存。
   docs_links:
   - docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md
   terminal: false
-  canonical_row_sha256: fdd8eb8aa272f1ac3ba9eb02ba05abfaa3dc9783a64e6d34f3b2f2a78acdd486
-last_event_id: task-event-5efefd09fea85cf48a88eeaa1a69b79e
+  canonical_row_sha256: 4b1904345c6259cba3bdaf6f12110557e0472c0cfb590ec03fb3357268988a86
+last_event_id: task-event-c850628c39a5086c2fadc04f7694efda
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 8780b497a4d5fe03d23cbade82117234dad47ac7e5721da078c67cc732069150
+fragment_checksum: 32de45a39e6aa34f23203dd3fb733ac37a46b06d06a4ccf7c9c2a3b13516dcdc
