@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 984
-active_task_count: 477
+task_count: 985
+active_task_count: 478
 completed_task_count: 507
-fragment_count: 984
+fragment_count: 985
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: ac06ba5db1a36782c030c1a4ff8f5e0fed4fd6f2c213c440055140c4cec8193e
+final_chain_sha256: e42841f7149a60639eb50c04da7e5f992adb32914da23e3de2e24c8e0414b914
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7901,12 +7901,20 @@ fragments:
   order: 984
   previous_entry_sha256: 880a8b4b63c5b8191a56c1a86c6c2e8858a0e3ee74afdb22fd3518933f4f7759
   entry_sha256: ac06ba5db1a36782c030c1a4ff8f5e0fed4fd6f2c213c440055140c4cec8193e
+- task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  path: registry/development_tasks/4a/4a99fbdd7cee5cf60691dcff7a73ce6e25417c166117a764ff3727af3475e349.yaml
+  file_sha256: dc10661ebdfa52eddd954318aa4d1effeb9e8aa482584e2cac268921bd30e6a7
+  fragment_checksum: 8780b497a4d5fe03d23cbade82117234dad47ac7e5721da078c67cc732069150
+  partition: active
+  order: 985
+  previous_entry_sha256: ac06ba5db1a36782c030c1a4ff8f5e0fed4fd6f2c213c440055140c4cec8193e
+  entry_sha256: e42841f7149a60639eb50c04da7e5f992adb32914da23e3de2e24c8e0414b914
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: e6c6bf3266859c376817b29de1651834d1f543968f554c8338b9550f63bce833
-  byte_count: 1725765
-  row_count: 477
+  sha256: fd24f449da053f9bc03ae22a416704b1369b977350e0a40db41dad6309c16ea0
+  byte_count: 1726635
+  row_count: 478
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -8188,7 +8196,28 @@ governance_cycles:
   change_id: TRADING-2514-REQUIREMENT-REF-RESTORE-V1
   event_count: 3
   production_effect: none
-governance_cycle_count: 39
+- cycle_id: arch-005-s5-cycle-40
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  change_id: OPS-076-REGISTER
+  event_count: 1
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-41
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  change_id: OPS-076-BASELINE-DONE
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-42
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  change_id: OPS-076-FOCUSED-COMPAT-PASS
+  event_count: 3
+  production_effect: none
+governance_cycle_count: 42
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8202,4 +8231,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 54daff03d3d4d73d75d59b1de680c78b530a8ead5c965c7306726db35f965e76
+index_checksum: 9c4d3c6eb6fc09a19ef293c810f731f71fbeadebb279504b9cc6cb81bc343324

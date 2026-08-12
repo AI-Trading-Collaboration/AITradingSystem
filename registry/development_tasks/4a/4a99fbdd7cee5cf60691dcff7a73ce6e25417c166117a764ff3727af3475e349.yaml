@@ -1,0 +1,137 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  task_id_sha256: 4a99fbdd7cee5cf60691dcff7a73ce6e25417c166117a764ff3727af3475e349
+task_record:
+  schema_version: task_record.v1
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  title: null
+  domain: Data platform / Windows external-request cache waiter/publish atomicity
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: 'data platform owner: monitor Windows spawned-process Full; new distinct
+    failures require a separate task'
+  requirement_refs:
+  - docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。durable
+    fix、focused、adjacent 与 compatibility 已 PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: waiter probe/replay 共享 per-key arbiter lock；coordination 42、adjacent 80、compatibility
+      211 PASS；最终五级 PASS，Full failure_fix_rerun 绑定 full_20260812T134447Z；production_effect=none、broker_action=none。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-12T23:12:49+09:00'
+  actor: codex
+  change_id: OPS-076-REGISTER
+  lane_id: null
+  base_commit: 7d80ccddd61b3fc2d6a991f11e28eefffeff14a9
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+    - Data platform / Windows external-request cache waiter/publish atomicity
+    - P0
+    - IN_PROGRESS
+    - data platform / TRADING-2514 failure-fix coordinator
+    - 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。TRADING-2514
+      final Full 的唯一失败暴露 waiter 在 arbiter lock 外读取 cache pointer、与 winner atomic publish
+      并发的低概率 Windows FileNotFoundError；blocker=failure_fix_in_progress。
+    - waiter cache probe 与 lease replay 必须位于同一个 per-key arbiter critical section；不得增加
+      sleep/fallback/异常吞噬；same-key 20 轮与完整 coordination suite、compatibility、最终五级 PASS，Full
+      以 failure_fix_rerun 绑定 full_20260812T134447Z。
+    - 2026-08-12：Full=8873 passed/1 failed/3 skipped；唯一 node=test_two_spawned_processes_same_key_make_one_live_request[11]，随后完整
+      coordination file=41 passed；已完成 durable root-cause audit，尚未修改运行时代码。production_effect=none、broker_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:OPS-076-REGISTER
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8d373a510ff983fe6bb6db57e8e855dd
+- schema_version: task_event.v1
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T23:25:00+09:00'
+  actor: codex
+  change_id: OPS-076-BASELINE-DONE
+  lane_id: null
+  base_commit: 7d80ccddd61b3fc2d6a991f11e28eefffeff14a9
+  previous_state_event_id: task-event-8d373a510ff983fe6bb6db57e8e855dd
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 'data platform owner: monitor Windows spawned-process Full; new distinct
+      failures require a separate task'
+    blocker_or_next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。waiter
+      probe/replay 已进入与 winner publish 相同的 arbiter critical section；blocker=final_tree_validation_and_trading_2514_closeout。
+    acceptance_criteria: waiter probe 与 replay 共享 per-key arbiter lock；无 sleep/fallback/异常吞噬；coordination
+      42 PASS；compatibility 与 final-tree 五级 PASS，Full failure_fix_rerun 绑定 full_20260812T134447Z；production_effect=none、broker_action=none。
+    notes: 2026-08-12：durable fix 与 deterministic lock-depth regression 完成；coordination
+      42 passed in 27.87s，Ruff/strict mypy PASS。等待 compatibility authority、final-tree
+      five tiers 和 2514 ordinary push/cleanup。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-076-BASELINE-DONE
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7c1b2f04cd2d18859fd73125dbaf5198
+- schema_version: task_event.v1
+  task_id: OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T23:37:08+09:00'
+  actor: codex
+  change_id: OPS-076-FOCUSED-COMPAT-PASS
+  lane_id: null
+  base_commit: 7d80ccddd61b3fc2d6a991f11e28eefffeff14a9
+  previous_state_event_id: task-event-7c1b2f04cd2d18859fd73125dbaf5198
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: 'data platform owner: monitor Windows spawned-process Full; new distinct
+      failures require a separate task'
+    blocker_or_next_step: 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。durable
+      fix、focused、adjacent 与 compatibility 已 PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+    acceptance_criteria: waiter probe/replay 共享 per-key arbiter lock；coordination
+      42、adjacent 80、compatibility 211 PASS；最终五级 PASS，Full failure_fix_rerun 绑定 full_20260812T134447Z；production_effect=none、broker_action=none。
+    notes: 2026-08-12：coordination=42 PASS；adjacent 79/1 exact-count failure 后同覆盖
+      80 PASS；compatibility/deprecation=211 PASS；tracked progress 在正式门禁前封存。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:OPS-076-FOCUSED-COMPAT-PASS
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5efefd09fea85cf48a88eeaa1a69b79e
+projection:
+  legacy_first_eight_cells:
+  - OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY
+  - Data platform / Windows external-request cache waiter/publish atomicity
+  - P0
+  - BASELINE_DONE
+  - 'data platform owner: monitor Windows spawned-process Full; new distinct failures
+    require a separate task'
+  - 详见 docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md。durable
+    fix、focused、adjacent 与 compatibility 已 PASS；blocker=final_tree_five_tiers_and_trading_2514_closeout。
+  - waiter probe/replay 共享 per-key arbiter lock；coordination 42、adjacent 80、compatibility
+    211 PASS；最终五级 PASS，Full failure_fix_rerun 绑定 full_20260812T134447Z；production_effect=none、broker_action=none。
+  - 2026-08-12：coordination=42 PASS；adjacent 79/1 exact-count failure 后同覆盖 80 PASS；compatibility/deprecation=211
+    PASS；tracked progress 在正式门禁前封存。
+  docs_links:
+  - docs/requirements/OPS-076_Windows_Revalidation_Waiter_Probe_Arbiter_Atomicity.md
+  terminal: false
+  canonical_row_sha256: fdd8eb8aa272f1ac3ba9eb02ba05abfaa3dc9783a64e6d34f3b2f2a78acdd486
+last_event_id: task-event-5efefd09fea85cf48a88eeaa1a69b79e
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 8780b497a4d5fe03d23cbade82117234dad47ac7e5721da078c67cc732069150

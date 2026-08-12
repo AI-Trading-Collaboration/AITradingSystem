@@ -557,18 +557,23 @@ class ExternalRequestRevalidationCoordinator:
 
             waited_for_prior_owner = True
             while monotonic() < deadline:
-                observed = probe()
-                if observed.status == "INVALID":
-                    raise RevalidationCoordinationIntegrityError(
-                        "SOURCE_CACHE_INVALID", "waiter probe failed validation"
-                    )
-                if observed.status == "REUSABLE":
-                    return self._execution("WAITER_REUSE", observed, None, monotonic() - started)
                 with _exclusive_file_lock(
                     self.arbiter_path,
                     timeout_seconds=self.policy.arbiter_timeout_seconds,
                     poll_seconds=self.policy.initial_poll_interval_milliseconds / 1000,
                 ):
+                    # The winner holds this same arbiter across cache publication and its
+                    # post-publish probe. Keep the waiter probe in that critical section so
+                    # it cannot observe a Windows atomic-replace visibility gap.
+                    observed = probe()
+                    if observed.status == "INVALID":
+                        raise RevalidationCoordinationIntegrityError(
+                            "SOURCE_CACHE_INVALID", "waiter probe failed validation"
+                        )
+                    if observed.status == "REUSABLE":
+                        return self._execution(
+                            "WAITER_REUSE", observed, None, monotonic() - started
+                        )
                     replay = self._replay_or_raise()
                 if not replay.events or replay.current_state != "ACTIVE":
                     current = observed

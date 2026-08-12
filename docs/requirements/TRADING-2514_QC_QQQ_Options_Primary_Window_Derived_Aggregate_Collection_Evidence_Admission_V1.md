@@ -168,3 +168,15 @@ UNKNOWN、NOT_EVALUATED、scope mismatch、as-of mismatch、checksum mismatch、
   使 canonical `requirement_refs=[]` 后触发 Atlas fail-closed 级联。追加受治理的 requirement-ref restore event，
   不修改历史 event、不绕过 requirement binding；相同 181-test `-n 16 --dist loadfile` 覆盖重跑
   `181 passed in 104.58s`。首轮保留为 failure-fix parent，不作正式门禁证据。
+- 2026-08-12：final candidate `7d80ccddd61b3fc2d6a991f11e28eefffeff14a9` 的 Architecture、Contract、
+  Integration、Reproducibility 分别 `865/276/995/24 PASS`；exclusive Full
+  `8873 passed / 1 failed / 3 skipped`，唯一失败为 Windows spawned-process cache coordination
+  waiter 在 winner atomic publish 期间读取共享 pointer 的低概率 `FileNotFoundError`，与 2514 admission
+  业务语义无关。依 OPS-075 的“不同异常另建任务”约束登记
+  `OPS-076_WINDOWS_REVALIDATION_WAITER_PROBE_ARBITER_ATOMICITY`，采用最小 durable critical-section
+  修复；后续必须从修复后 final tree 重跑完整五级，Full 以 `failure_fix_rerun` 绑定
+  `full_20260812T134447Z`，不得复用旧 PASS tiers。
+- 2026-08-12：OPS-076 durable fix 后 coordination=`42 PASS`；2514/OPS-076/task-registry 邻接
+  failure-fix=`79 passed / 1 exact-count failed` → 相同覆盖 `80 PASS`；compatibility/deprecation
+  final=`211 PASS`。所有 tracked 进度在重建 authority 与正式门禁前封存；后续 final tree 不得复用
+  修复前四级 PASS，必须完整重跑 Architecture→Contract→Integration→Reproducibility→exclusive Full。

@@ -7,6 +7,7 @@ import os
 import socket
 import time
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -546,7 +547,8 @@ def test_waiter_reuses_after_active_owner_publishes_without_live_request(
         value="cached",
     )
     prior_owner = coordinator.acquire(needs, owner_id="owner-prior000")
-    assert prior_owner.lease is not None
+    prior_lease = prior_owner.lease
+    assert prior_lease is not None
     published = False
 
     def probe() -> RevalidationProbe[str]:
@@ -556,7 +558,7 @@ def test_waiter_reuses_after_active_owner_publishes_without_live_request(
         nonlocal published
         published = True
         coordinator.complete(
-            prior_owner.lease,
+            prior_lease,
             outcome="PUBLISHED",
             published_probe=reusable,
         )
@@ -571,6 +573,74 @@ def test_waiter_reuses_after_active_owner_publishes_without_live_request(
     assert result.status == "WAITER_REUSE"
     assert result.value == "cached"
     assert coordinator.replay().current_state == "COMPLETED"
+
+
+def test_waiter_probes_under_same_arbiter_as_winner_publish(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    coordinator = ExternalRequestRevalidationCoordinator(tmp_path / "request", cache_key=KEY_A)
+    needs = RevalidationProbe[str](
+        status="NEEDS_REVALIDATION",
+        generation_id="generation-1",
+        body_sha256=BODY_OLD,
+        reason_code="EXPIRED_REVALIDATE",
+    )
+    reusable = RevalidationProbe(
+        status="REUSABLE",
+        generation_id="generation-2",
+        body_sha256=BODY_NEW,
+        reason_code="HIT",
+        value="cached",
+    )
+    prior_owner = coordinator.acquire(needs, owner_id="owner-prior000")
+    prior_lease = prior_owner.lease
+    assert prior_lease is not None
+
+    original_lock = coordination._exclusive_file_lock
+    lock_depth = 0
+
+    @contextmanager
+    def tracked_lock(*args: Any, **kwargs: Any) -> Any:
+        nonlocal lock_depth
+        with original_lock(*args, **kwargs):
+            lock_depth += 1
+            try:
+                yield
+            finally:
+                lock_depth -= 1
+
+    monkeypatch.setattr(coordination, "_exclusive_file_lock", tracked_lock)
+    probe_calls = 0
+    published = False
+
+    def probe() -> RevalidationProbe[str]:
+        nonlocal probe_calls
+        probe_calls += 1
+        if probe_calls > 1:
+            assert lock_depth == 1
+        return reusable if published else needs
+
+    def publish_during_wait(_seconds: float) -> None:
+        nonlocal published
+        published = True
+        coordinator.complete(
+            prior_lease,
+            outcome="PUBLISHED",
+            published_probe=reusable,
+        )
+
+    result = coordinator.execute(
+        probe=probe,
+        fetch=lambda: pytest.fail("waiter reuse must not call live client"),
+        publish=lambda _value: pytest.fail("waiter reuse must not publish"),
+        sleep=publish_during_wait,
+    )
+
+    assert result.status == "WAITER_REUSE"
+    assert result.value == "cached"
+    assert probe_calls == 3
+    assert lock_depth == 0
 
 
 def test_late_contender_double_checks_completed_owner_without_live_request(

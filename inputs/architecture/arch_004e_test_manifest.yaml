@@ -8554,7 +8554,7 @@ tests:
   - src/ai_trading_system/platform/architecture/
 - test_id: tests.test_arch_005_s5_task_source_cutover
   path: tests/test_arch_005_s5_task_source_cutover.py
-  sha256: b6467c2f37e38478b2ba7ad18259bb037d077e0ad04652fffa25cc6a63012f5a
+  sha256: f1e2946617911185f1db881ea027549009222a2f5760bb35bd593fb672e5889f
   file_role: test
   rule_id: parallel_control_tests
   owner_profile: quality
@@ -11744,7 +11744,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_external_request_cache_revalidation_coordination
   path: tests/test_external_request_cache_revalidation_coordination.py
-  sha256: 89ae6c2c78dd8bc2957595264d7dd0d0b9c9f96a552f9904f7e0ba44cf22f734
+  sha256: 8fb1159f71f46d29e5ef28c8205323af2b8fb08b28d182a6422c04a282253392
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

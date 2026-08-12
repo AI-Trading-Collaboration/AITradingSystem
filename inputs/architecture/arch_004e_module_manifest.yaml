@@ -9251,7 +9251,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.external_request_cache_revalidation_coordination
   path: src/ai_trading_system/external_request_cache_revalidation_coordination.py
-  sha256: 889d85108ce3d56ad785f791b0b525ad72b7af6270f58bbe4e1dab4f2b152fcd
+  sha256: f80f4804e2c52a5a908bd82b2bc31b8a96b15eda299b3c094266d9ef9d0cf62a
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
