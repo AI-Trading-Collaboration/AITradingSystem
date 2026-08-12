@@ -1,0 +1,78 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+  task_id_sha256: e4ec85c6418396a14171740337e551954702ea93531787eb0e5da93aef43b71f
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+  title: null
+  domain: Strategy research governance / QQQ Options primary-window policy calibration
+    evidence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: codex calibration evidence coordinator；Project Owner 后续审阅 evidence 并另行提供
+    G2 policy
+  requirement_refs:
+  - docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 依赖 2509 v2 contract；当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED，无外部动作授权。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 建立 exact 18-slot G3 evidence intake/readiness contract；不填阈值、不建 G2、不激活 engine/backtest。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-12T01:32:36Z'
+  actor: codex_qqq_options_calibration_evidence_coordinator
+  change_id: TRADING-2510-REGISTRATION-V1
+  lane_id: null
+  base_commit: 22d59f0e8b2067ab34d2b70ff201533f566549da
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+    - Strategy research governance / QQQ Options primary-window policy calibration
+      evidence
+    - P0
+    - IN_PROGRESS
+    - codex calibration evidence coordinator；Project Owner 后续审阅 evidence 并另行提供 G2
+      policy
+    - 依赖 2509 v2 contract；当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED，无外部动作授权。
+    - 建立 exact 18-slot G3 evidence intake/readiness contract；不填阈值、不建 G2、不激活 engine/backtest。
+    - 2026-08-12：从 exact main 22d59f0e8b2067ab34d2b70ff201533f566549da 登记；详见 [TRADING-2510
+      Primary Window Policy Calibration Evidence](docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md)。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2510-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e7286f4180d9d4d74058d3b13c48c51f
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+  - Strategy research governance / QQQ Options primary-window policy calibration evidence
+  - P0
+  - IN_PROGRESS
+  - codex calibration evidence coordinator；Project Owner 后续审阅 evidence 并另行提供 G2 policy
+  - 依赖 2509 v2 contract；当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED，无外部动作授权。
+  - 建立 exact 18-slot G3 evidence intake/readiness contract；不填阈值、不建 G2、不激活 engine/backtest。
+  - 2026-08-12：从 exact main 22d59f0e8b2067ab34d2b70ff201533f566549da 登记；详见 [TRADING-2510
+    Primary Window Policy Calibration Evidence](docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md)。
+  docs_links:
+  - docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md
+  terminal: false
+  canonical_row_sha256: 3fc4517d91dedff239512d3be1fbc28724a9e986c7103f2574a0c8f8f05174fd
+last_event_id: task-event-e7286f4180d9d4d74058d3b13c48c51f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 3fbc03ccde8f13af116002511aac41f048ed710f5e18af88eca5d95bd85c90f8
