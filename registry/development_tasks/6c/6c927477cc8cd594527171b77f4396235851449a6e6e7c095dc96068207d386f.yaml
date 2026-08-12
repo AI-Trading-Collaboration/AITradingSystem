@@ -22,7 +22,7 @@ task_record:
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同可继续，未签
+  unstructured_legacy_blocker_or_next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同已完成，未签
     exact token 前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production
     动作
   acceptance_criteria:
@@ -68,26 +68,88 @@ events:
   - change:TRADING-2514-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-6063f8a1b798689479220d2346f94358
+- schema_version: task_event.v1
+  task_id: TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T13:16:22Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2514-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: 3ffc405c65dd6572d6e81f5cbc94fe2eecfe7701
+  previous_state_event_id: task-event-6063f8a1b798689479220d2346f94358
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：exact 2513 token/signoff；collector coordinator：future
+      bounded collection/evidence admission；independent reviewer：external lifecycle
+      and DQ/PIT evidence
+    blocker_or_next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同已完成，未签
+      exact token 前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production
+      动作
+    acceptance_criteria: 实现 strict token expiry/single-use/cap/action/hash binding、consumption
+      receipt、external action ledger、2512 Results parser evidence admission、2482/2510/2511
+      DQ/PIT handoff、typed fail-closed tests 与 Atlas disclosure；不得信任自报 PASS、不得提供 policy
+      values 或激活 engine
+    notes: 离线 authorization/evidence admission baseline 已实现；focused task=18 PASS，task+Atlas=53
+      PASS；Owner token/run/evidence/DQ-PIT 均未发生，external_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2514-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-510efbd1fd9e1377932f956db8faafe5
+- schema_version: task_event.v1
+  task_id: TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T13:20:07Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2514-REQUIREMENT-REF-RESTORE-V1
+  lane_id: null
+  base_commit: 3ffc405c65dd6572d6e81f5cbc94fe2eecfe7701
+  previous_state_event_id: task-event-510efbd1fd9e1377932f956db8faafe5
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：exact 2513 token/signoff；collector coordinator：future
+      bounded collection/evidence admission；independent reviewer：external lifecycle
+      and DQ/PIT evidence
+    blocker_or_next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同已完成，未签
+      exact token 前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production
+      动作
+    acceptance_criteria: 实现 strict token expiry/single-use/cap/action/hash binding、consumption
+      receipt、external action ledger、2512 Results parser evidence admission、2482/2510/2511
+      DQ/PIT handoff、typed fail-closed tests 与 Atlas disclosure；不得信任自报 PASS、不得提供 policy
+      values 或激活 engine
+    notes: 'Supporting requirement: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md；离线
+      authorization/evidence admission baseline 已实现；Owner token/run/evidence/DQ-PIT
+      均未发生，external_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2514-REQUIREMENT-REF-RESTORE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fc0c9f5f095498f322186830a680086a
 projection:
   legacy_first_eight_cells:
   - TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
   - External validation / QC QQQ Options primary-window collection authorization and
     evidence admission
   - P0
-  - IN_PROGRESS
+  - BASELINE_DONE
   - Project Owner：exact 2513 token/signoff；collector coordinator：future bounded collection/evidence
     admission；independent reviewer：external lifecycle and DQ/PIT evidence
-  - OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同可继续，未签 exact token
+  - OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同已完成，未签 exact token
     前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production 动作
   - 实现 strict token expiry/single-use/cap/action/hash binding、consumption receipt、external
     action ledger、2512 Results parser evidence admission、2482/2510/2511 DQ/PIT handoff、typed
     fail-closed tests 与 Atlas disclosure；不得信任自报 PASS、不得提供 policy values 或激活 engine
-  - 'Supporting requirement: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md；registration
-    base=f6505359ab6697c4c54bc42807026f34685d97a8；external_action=none。'
+  - 'Supporting requirement: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md；离线
+    authorization/evidence admission baseline 已实现；Owner token/run/evidence/DQ-PIT
+    均未发生，external_action=none。'
   docs_links:
   - docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md
   terminal: false
-  canonical_row_sha256: 0b7699e38289fa0bafd3ca5f71e4a4c267f6f7bd35d5aa6410a95feabf124adf
-last_event_id: task-event-6063f8a1b798689479220d2346f94358
+  canonical_row_sha256: 2737835343ea63149e857cde3fe927eea22c696fcfaba555eb45033075e57bcc
+last_event_id: task-event-fc0c9f5f095498f322186830a680086a
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: eb76791e1540ba592a52648090b45e9b9ef082f5446c174ae029e463e90d0703
+fragment_checksum: 4dcc766ba90e733185c169ac82f9a730265a8842ac712d63ad87dacc591388dd

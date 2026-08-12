@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -148,3 +148,23 @@ UNKNOWN、NOT_EVALUATED、scope mismatch、as-of mismatch、checksum mismatch、
 
 - 2026-08-12：从 exact main `f6505359ab6697c4c54bc42807026f34685d97a8` 启动 registration；
   当前仅登记 requirement/task authority，未执行任何外部动作。
+- 2026-08-12：离线 policy、strict Owner token admission、single-use consumption receipt、四阶段 external
+  action ledger、2512 Results replay、canonical 2481 DQ report validation、2511 source-bundle handoff 与 sealed
+  evidence receipt 已实现；Owner token 仍未提供，external action 仍为 `none`。
+- 2026-08-12：task-owned focused 首轮 `15 passed / 2 failed`（测试 fixture 使用 shared taxonomy 不接受的
+  `UNKNOWN`，并调用不存在的 shared helper）；第二轮 `17 passed / 1 failed`（fixture chronology 无效）；
+  第三轮 `17 passed / 1 failed`（fixture requested/evaluated range 无效）；修正 fixture 后相同并行覆盖
+  `18 passed in 58.69s`。这些失败均保留为 failure-fix 证据，未降低 shared record/DQ/PIT 合同。
+- 2026-08-12：task + Atlas/page/historical 共享 focused 首轮 `52 passed / 1 failed`，唯一失败为 ignored
+  canonical page 的旧 32-task sidecar 被新 33-task exact contract fail closed；完整 writer 重建并显式保留
+  ENGINEERING、OWNER_VISUAL、READER_COMPREHENSION 三条既有 PASS facts 后，相同 `-n 16 --dist loadfile`
+  覆盖 `53 passed in 108.12s`。
+- 2026-08-12：ARCH-004E 重建为 `1113 modules / 1274 tests / 856 direct writers / 0 violations`；
+  ARCH-004G frozen inventory、DEVX-006D `2886 entries / 192 fragments`、compatibility authority 与 Atlas
+  33-task disclosure 均进入 final candidate。正式五级门禁、ordinary push 与 cleanup 仍需在 final tracked
+  bytes 上完成；本状态不代表 Owner token、Cloud run、真实 evidence 或 DQ/PIT PASS 已发生。
+- 2026-08-12：2510–2514 + Atlas + task-source + report-flow 邻接首轮
+  `162 passed / 19 failed`；19 项全部由 BASELINE_DONE task update notes 未保留 supporting requirement link、
+  使 canonical `requirement_refs=[]` 后触发 Atlas fail-closed 级联。追加受治理的 requirement-ref restore event，
+  不修改历史 event、不绕过 requirement binding；相同 181-test `-n 16 --dist loadfile` 覆盖重跑
+  `181 passed in 104.58s`。首轮保留为 failure-fix parent，不作正式门禁证据。

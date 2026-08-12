@@ -159,6 +159,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2513_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Run_Proposal_Owner_Decision_Pack_V1.md
     coverage: DISCLOSED_EXACT_RUN_PROPOSAL_OWNER_AUTHORIZATION_REQUIRED
     reader_summary_zh: 2021-02-22..2025-12-02 exact 1202-session proposal package、2512-rendered main.py、canonical manifest 与 Owner token template 已实现；Owner 尚未签署，未运行 Cloud backtest、未取得 evidence 或 DQ PASS，selection 与 engine 继续 blocked。
+  - task_id: TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+    requirement_path: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md
+    coverage: DISCLOSED_EVIDENCE_ADMISSION_CONTRACT_OWNER_TOKEN_NOT_PROVIDED
+    reader_summary_zh: exact Owner token、single-use action ledger、2512 Results replay 与 canonical DQ/PIT evidence admission 合同已实现；Owner 尚未签署，未运行 Cloud backtest、未取得真实 evidence 或 DQ/PIT PASS，selection 与 engine 继续 blocked。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

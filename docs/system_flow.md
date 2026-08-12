@@ -8250,3 +8250,40 @@ run 已发生、primary-window evidence 已收集、DQ/PIT 已通过或 engine/s
 `OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL`；真实授权、单次零订单 collection 与 independent
 review 必须进入独立后继任务。API/CLI/HTTP/raw export、investment interpretation、paper/live/broker/production
 继续为 false/none。
+
+## TRADING-2514 QC QQQ Options Collection / Evidence Admission V1
+
+`config/research/qc_qqq_options_primary_window_derived_aggregate_collection_evidence_admission_v1.yaml`
+与 `qqq_options_research.primary_window_derived_aggregate_collection_evidence_admission` 为 2513 exact
+proposal 补上严格离线的 Owner authorization lifecycle、single-use external-action ledger、Results replay 与
+DQ/PIT evidence admission 合同。本任务没有观察到真实 Owner token，也不执行 QuantConnect 动作。
+
+```text
+2513 ordinary-pushed exact proposal package
+  -> exact Owner token admission
+     -> main/proposal/scope/code/policy/transport/project/range/session/cap binding
+     -> expiry + single-use + reviewer + allowed/prohibited action inventory
+     -> missing / reordered / forged / expired / already-consumed token fail closed
+  -> deterministic external-action ledger
+     -> login -> one project mutation -> one zero-order Cloud run -> manual Results download
+     -> exact chronology / project / backtest / source checksum / lineage identity
+     -> incomplete / failed / extra action / order / fill / raw row fail closed
+  -> 2512 strict Download Results JSON parser
+     -> exact 1202 XNYS sessions / 10 series / finite domain / zero orders and fills
+     -> artifact byte checksum remains distinct from canonical semantic identity
+  -> canonical 2481 DQReportRecord replay
+     -> exact 2510 policy / 2511 generator / 2482 scope / range / as-of / source checksum
+     -> exact 15 checks all PASS and PIT PASS
+     -> UNKNOWN / NOT_EVALUATED / semantic FAIL / forged PASS never admits
+  -> 2511 source observation bundle + 2510 evidence handoff
+  -> EVIDENCE_ADMITTED_FOR_OWNER_POLICY_REVIEW_NOT_EXECUTABLE
+  -> owner_policy_value_count=0 / selection=false / orders=fills=0
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+2514 的 `BASELINE_DONE` 只表示上述离线 admission 合同可重放；当前仍为
+`OWNER_AUTHORIZATION_NOT_PROVIDED` 与 `EVIDENCE_NOT_ADMITTED_POLICY_BLOCKED`。只有 Project Owner 另行签署
+2513 exact token 后，单一 coordinator 才能执行一次零订单 collection；真实 Results 仍须 independent reviewer
+与 canonical DQ/PIT 复核。即使 evidence admission PASS，也不会自动产生 G2 policy values、激活 selection/
+engine 或证明策略有效。API/CLI/HTTP/Object Store/raw option export、investment interpretation、paper/live/
+broker/production 当前继续为 false/none。
