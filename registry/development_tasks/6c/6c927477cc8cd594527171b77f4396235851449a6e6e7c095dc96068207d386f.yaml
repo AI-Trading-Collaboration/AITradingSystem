@@ -1,0 +1,93 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+  task_id_sha256: 6c927477cc8cd594527171b77f4396235851449a6e6e7c095dc96068207d386f
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+  title: null
+  domain: External validation / QC QQQ Options primary-window collection authorization
+    and evidence admission
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner：exact 2513 token/signoff；collector coordinator：future
+    bounded collection/evidence admission；independent reviewer：external lifecycle
+    and DQ/PIT evidence
+  requirement_refs:
+  - docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同可继续，未签
+    exact token 前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production
+    动作
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 实现 strict token expiry/single-use/cap/action/hash binding、consumption receipt、external
+      action ledger、2512 Results parser evidence admission、2482/2510/2511 DQ/PIT handoff、typed
+      fail-closed tests 与 Atlas disclosure；不得信任自报 PASS、不得提供 policy values 或激活 engine
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-12T12:41:32Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2514-REGISTRATION-V1
+  lane_id: null
+  base_commit: f6505359ab6697c4c54bc42807026f34685d97a8
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+    - External validation / QC QQQ Options primary-window collection authorization
+      and evidence admission
+    - P0
+    - IN_PROGRESS
+    - Project Owner：exact 2513 token/signoff；collector coordinator：future bounded
+      collection/evidence admission；independent reviewer：external lifecycle and DQ/PIT
+      evidence
+    - OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同可继续，未签 exact
+      token 前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production
+      动作
+    - 实现 strict token expiry/single-use/cap/action/hash binding、consumption receipt、external
+      action ledger、2512 Results parser evidence admission、2482/2510/2511 DQ/PIT handoff、typed
+      fail-closed tests 与 Atlas disclosure；不得信任自报 PASS、不得提供 policy values 或激活 engine
+    - 'Supporting requirement: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md；registration
+      base=f6505359ab6697c4c54bc42807026f34685d97a8；external_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2514-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6063f8a1b798689479220d2346f94358
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2514_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_COLLECTION_EVIDENCE_ADMISSION_V1
+  - External validation / QC QQQ Options primary-window collection authorization and
+    evidence admission
+  - P0
+  - IN_PROGRESS
+  - Project Owner：exact 2513 token/signoff；collector coordinator：future bounded collection/evidence
+    admission；independent reviewer：external lifecycle and DQ/PIT evidence
+  - OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；离线合同可继续，未签 exact token
+    前禁止 QuantConnect/cloud/API/CLI/HTTP/raw/order/paper/live/broker/production 动作
+  - 实现 strict token expiry/single-use/cap/action/hash binding、consumption receipt、external
+    action ledger、2512 Results parser evidence admission、2482/2510/2511 DQ/PIT handoff、typed
+    fail-closed tests 与 Atlas disclosure；不得信任自报 PASS、不得提供 policy values 或激活 engine
+  - 'Supporting requirement: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md；registration
+    base=f6505359ab6697c4c54bc42807026f34685d97a8；external_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md
+  terminal: false
+  canonical_row_sha256: 0b7699e38289fa0bafd3ca5f71e4a4c267f6f7bd35d5aa6410a95feabf124adf
+last_event_id: task-event-6063f8a1b798689479220d2346f94358
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: eb76791e1540ba592a52648090b45e9b9ef082f5446c174ae029e463e90d0703
