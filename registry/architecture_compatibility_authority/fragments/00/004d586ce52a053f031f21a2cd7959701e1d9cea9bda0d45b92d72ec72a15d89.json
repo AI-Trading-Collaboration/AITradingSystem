@@ -33,11 +33,11 @@
     "report_catalog_flow_fragment_authority": {
       "consumer_inventory_path": "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json",
       "consumer_inventory_sha256": "82d2c14aa4625242c9fd33163da38ab19a4eaa2842ca58c68a03e8b852692858",
-      "entry_count": 2870,
+      "entry_count": 2874,
       "fragment_count": 192,
       "fragment_shadow_active": false,
       "index_path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-      "index_sha256": "eec5941034d9927ca62095ff12d415e8a038539c4ff1bb2794a9f5eeb1cd7877",
+      "index_sha256": "c4a26c02c5fc715b990309798ecab9a5ec959d5da3d30120f295b2e4b9aef2aa",
       "rollback_mode": "IGNORE_INACTIVE_SHADOW",
       "source_of_truth": "LEGACY_MONOLITH",
       "target_count": 3,
@@ -61,10 +61,10 @@
           "target_id": "artifact_catalog"
         },
         {
-          "byte_count": 2191321,
+          "byte_count": 2193517,
           "coverage_percent": 100,
-          "entry_count": 947,
-          "file_sha256": "04298b29459c48e8c0eef0de0e33ef967a20316c94a17b57e943c22cb929be24",
+          "entry_count": 951,
+          "file_sha256": "e342ce37f09158bbee33198def6ded586957b32d6ee6fdaafa7de6dd96e5332a",
           "fragment_count": 64,
           "path": "docs/system_flow.md",
           "target_id": "system_flow"
@@ -186,7 +186,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "config/architecture/devx_006d_report_catalog_flow_authority.yaml",
-        "sha256": "5498478cf221f67ba5c5779b10c3320cff8ad51bc38676e2d118314892f55dce"
+        "sha256": "056d41102f24d58b8d07043121d92f14d4c762eb4ab934bd2aa804f0d358729b"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -211,7 +211,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json",
-        "sha256": "eec5941034d9927ca62095ff12d415e8a038539c4ff1bb2794a9f5eeb1cd7877"
+        "sha256": "c4a26c02c5fc715b990309798ecab9a5ec959d5da3d30120f295b2e4b9aef2aa"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -236,7 +236,7 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "tests/test_devx_006d_report_catalog_flow_authority.py",
-        "sha256": "c17a2217e9835316d5e082c61d042ae454f171b674ead803e28993ff01de9cdc"
+        "sha256": "f6083785435bbd42f0475bd85294dc8498d1790ef36beefcdf539077148dd99b"
       }
     ],
     "status": "INACTIVE_SHADOW",
@@ -282,5 +282,5 @@
     "task_id": "DEVX-006D_REPORT_CATALOG_FLOW_LOSSLESS_FRAGMENTATION"
   },
   "section_id": "phase_devx_006d_report_catalog_flow_lossless_fragmentation",
-  "section_sha256": "639f72858428a2a0c6d6e78161bb3e2a53fe9c0659d3d1b2b9c27b9dc811dea6"
+  "section_sha256": "004d586ce52a053f031f21a2cd7959701e1d9cea9bda0d45b92d72ec72a15d89"
 }
