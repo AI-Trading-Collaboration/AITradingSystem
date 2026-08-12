@@ -1518,7 +1518,7 @@ _PAGE_ACCEPTANCE_LABELS = {
 
 def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
-    if len(manifest.task_coverage) != 31:
+    if len(manifest.task_coverage) != 32:
         raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
     acceptance = "".join(
         (
@@ -1540,7 +1540,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2512
+        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2513
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -1571,7 +1571,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新 <code>ENGINEERING_VALIDATION</code>；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage">
-          <summary>查看 TRADING-2494–2512 如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2513 如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -1581,7 +1581,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2512</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2513</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
       </details>
     </section>

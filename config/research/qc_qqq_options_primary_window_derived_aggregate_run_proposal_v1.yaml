@@ -1,0 +1,53 @@
+schema_version: qc_qqq_options_primary_window_derived_aggregate_run_proposal_policy.v1
+policy_id: qc_qqq_options_primary_window_derived_aggregate_run_proposal_v1
+policy_version: 1.0.0
+policy_status: OWNER_REVIEW_REQUIRED_EXACT_PROPOSAL
+task_id: TRADING-2513_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_OWNER_DECISION_PACK_V1
+registration_base_repository_code_sha: 83d4f9680c4f78c7c1414659d51738ba7f615a7a
+package_id: TRADING_2513_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_V1
+package_root: inputs/research/qqq_options/trading_2513_primary_window_derived_aggregate_run_proposal_v1
+created_at_utc: '2026-08-12T12:00:00Z'
+run_scope_id: TRADING_2513_PRIMARY_WINDOW_SCOPE_V1
+proposal_id: TRADING_2513_PRIMARY_WINDOW_PROPOSAL_V1
+target_project_id: 34808569
+requested_start: '2021-02-22'
+requested_end: '2025-12-02'
+evaluated_start: '2021-02-22'
+evaluated_end: '2025-12-02'
+primary_research_role: PRIMARY
+exchange_calendar: XNYS
+expected_session_count: 1202
+expected_first_session: '2021-02-22'
+expected_last_session: '2025-12-02'
+collector_id: codex_capability_coordinator
+independent_reviewer_id: project_owner
+authorization_expires_after_hours: 168
+authorization_single_use: true
+authorization_invalidates_after_evidence_collection: true
+maximum_project_mutations: 1
+maximum_cloud_backtests: 1
+maximum_orders: 0
+maximum_fills: 0
+result_carrier: MANUAL_DOWNLOAD_RESULTS_JSON
+upstream_collector:
+  policy_path: config/research/qc_qqq_options_primary_window_export_safe_derived_aggregate_collector_v1.yaml
+  policy_file_sha256: 48511cc64cab07b091787e2b0cb23354424248da66e7dba8866cd9ce9a766a8f
+  policy_canonical_sha256: 3ebdd8a4dd89aad4584fbe8bffeeabb30d9b7bd2c28cd394c0fbc346939e999f
+  transport_map_sha256: 60c970b71d3c47337fb76452d1384f2463079ef5026239e875e78b8c37d3eab5
+  implementation_path: src/ai_trading_system/qqq_options_research/primary_window_export_safe_derived_aggregate_collector.py
+  implementation_file_sha256: 1c20aca322baa18c7b673167a290b5d38a20a6384f1c3a79d4af642dd32fbe2a
+safety:
+  authorization_status: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+  decision: OWNER_AUTHORIZATION_REQUIRED
+  owner_policy_value_count: 0
+  executable_policy_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  external_action_performed: false
+  investment_interpretation_generated: false
+  raw_options_data_export_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

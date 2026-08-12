@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -138,3 +138,43 @@ independent review 属于后继任务。授权 token 不得复用 2480、2492、
 本任务 exit condition 是 exact proposal package ordinary-push 后，向 Project Owner 提供其所有 canonical hashes 与
 可复核 token template。真实 Owner 授权、平台 run 与 evidence collection 必须登记为独立后继，不能在本任务中
 自动执行。
+
+## 9. 工程基线与验证记录
+
+2026-08-12 已完成严格离线 proposal package：
+
+- proposal policy file SHA-256：
+  `dc64eae45a3581089af1223c8bc6da005c0962d17906ad447cf72f8a9a5fbbaf`；
+- proposal policy canonical SHA-256：
+  `4c80425fae656c573ca74d44e5d738bc78307619c0471f2c852446430fefdbc6`；
+- module SHA-256：`a3e41608cbf4a63ee6420d3efed956350d104bb074ccd4bb91d0c5e0818bc6df`；
+- package manifest file/canonical SHA-256：
+  `a100984326f8015ebe55459e3e87d3a20902bb6693a793f0b91ea7cf1ad5d85d`；
+- package manifest content SHA-256：
+  `b44de8a0854cde6004f71ac2ed86cc619ab6c12c81b07f5efe790dad74219d58`；
+- run-scope content/canonical SHA-256：
+  `80c11d7073dcc86f1297a34b3497fe705069619d6f1f51927ab9b673172db15e` /
+  `85d4d0728351b120133aedd68ed41c4bc4a4df799959370c6f2435426311c572`；
+- proposal content/canonical SHA-256：
+  `f48732afc0d69656fbe5c62b1965296feccda30caa3279c80b9d1c20ce272240` /
+  `ab1d38ef1fab67aa12faff3982e9e6a01a1e83e8575b2bf9a4bbf9e552014ce3`；
+- project code LF SHA-256 / bytes：
+  `d7f96fbb14e03a1f248b0a14b3ebdaa1bbeeada2d15f87fb3277b98b9c6641a6` / `26074`；
+- unsigned Owner decision request SHA-256：
+  `d351082ce694edca09f0763ad4c85e4b167a46b290a36f4cffc61e1413b2b51e`；
+- task focused 首轮=`12 passed / 4 failed`，四项均为 manifest strict Python-mode JSON
+  restoration 错误；改用 canonical JSON-mode restoration 并统一 loader typed admission failure 后，相同覆盖
+  `16 passed in 19.15s`；Ruff、mypy 与 compileall PASS；
+- proposal + page-effectiveness + renderer + historical 同覆盖首轮=`50 passed / 1 failed`，唯一失败为 ignored
+  canonical page 的旧 31-task sidecar 被新 32-task exact contract fail closed；完整 writer 重建并显式保留三条
+  human acceptance 后，相同覆盖=`51 passed in 103.43s`；
+- 2510–2513 + Atlas + DEVX-006D 邻接覆盖=`143 passed in 111.01s`；
+- compatibility/deprecation 原样覆盖=`211 passed in 405.79s`；
+- DevEx=`1112 modules / 1273 tests / 856 direct writers / 0 violations`；task registry/shadow
+  `983`；report/catalog/flow shadow=`2882 entries / 192 fragments`，均 validate PASS；
+- canonical 页面已披露 2513，task coverage=`32`，并继续明确 Owner 未授权、run/evidence/DQ 未发生；
+- external QuantConnect/cloud/API/CLI/HTTP/raw/paper/live/broker/production action=`none`。
+
+`BASELINE_DONE` 不表示 Owner 已签署 token，也不授权任何外部动作。后继必须先使用 ordinary-pushed exact main
+与本节 hashes 复核 package，再由 Project Owner 另行签署 single-use/expiry-bounded token；真实 collection、
+evidence admission、DQ/PIT 和 independent review 不属于本任务。

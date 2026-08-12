@@ -1,0 +1,20 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_primary_window_derived_aggregate_run_proposal
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/primary_window_derived_aggregate_run_proposal.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_PACKAGE_ROOT
+  - DEFAULT_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_POLICY_PATH
+  - BuiltQCQQQOptionsPrimaryWindowRunProposalPackage
+  - ProposalPackageArtifact
+  - QCQQQOptionsPrimaryWindowRunProposalError
+  - QCQQQOptionsPrimaryWindowRunProposalPackageManifest
+  - QCQQQOptionsPrimaryWindowRunProposalPolicy
+  - QCQQQOptionsPrimaryWindowRunProposalPolicyLoadResult
+  - build_qc_qqq_options_primary_window_run_proposal_package
+  - load_qc_qqq_options_primary_window_run_proposal_package
+  - load_qc_qqq_options_primary_window_run_proposal_policy
+  - write_qc_qqq_options_primary_window_run_proposal_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

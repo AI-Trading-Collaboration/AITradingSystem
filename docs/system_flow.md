@@ -8217,3 +8217,36 @@ evidence，也不把 observed min/max/count 解释为 DTE、delta、moneyness、
 当前 blocker 为 `OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED`。未来运行必须先封存 exact
 proposal，再由 Project Owner 独立授权；QuantConnect/cloud/API/CLI/HTTP/raw export、investment interpretation、
 paper/live/broker/production 当前继续为 false/none。
+
+## TRADING-2513 QC QQQ Options Primary-Window Exact Run Proposal / Owner Decision Pack V1
+
+`config/research/qc_qqq_options_primary_window_derived_aggregate_run_proposal_v1.yaml`、
+`qqq_options_research.primary_window_derived_aggregate_run_proposal` 与
+`inputs/research/qqq_options/trading_2513_primary_window_derived_aggregate_run_proposal_v1/` 把 2512 的离线
+collector contract 封装成可由 Project Owner 逐字段复核的 exact proposal package。本节点只生成 canonical
+scope、project code、proposal、manifest 与未签署 token template；不会访问 QuantConnect 或执行外部动作。
+
+```text
+2512 frozen collector policy / transport / implementation hashes
+  -> reviewed PRIMARY scope
+     -> requested/evaluated 2021-02-22..2025-12-02
+     -> exact 1202 XNYS sessions / project 34808569
+  -> deterministic 2512-rendered main.py
+     -> max project mutations=1 / cloud backtests=1
+     -> max orders=0 / fills=0
+     -> no threshold / raw rows / logs-as-data / Object Store / network
+  -> exact five-file proposal package
+     -> run_scope.json / proposal.json / main.py
+     -> owner_decision_request.md / package_manifest.json
+     -> non-symlink exact inventory + canonical bytes + cross-bound hashes
+  -> OWNER_AUTHORIZATION_REQUIRED
+     -> no Owner token / no run / no evidence / no DQ PASS
+     -> owner_policy_value_count=0 / selection=false
+     -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+2513 的 `BASELINE_DONE` 仅表示 exact proposal package 已 ordinary-push 且可重放，不等于 Owner 已授权、Cloud
+run 已发生、primary-window evidence 已收集、DQ/PIT 已通过或 engine/selection 已激活。当前 blocker 为
+`OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL`；真实授权、单次零订单 collection 与 independent
+review 必须进入独立后继任务。API/CLI/HTTP/raw export、investment interpretation、paper/live/broker/production
+继续为 false/none。

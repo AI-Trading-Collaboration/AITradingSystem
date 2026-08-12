@@ -1,0 +1,72 @@
+{
+  "artifacts": [
+    {
+      "byte_count": 26074,
+      "relative_path": "main.py",
+      "role": "QC_COLLECTOR_PROJECT_CODE",
+      "sha256": "d7f96fbb14e03a1f248b0a14b3ebdaa1bbeeada2d15f87fb3277b98b9c6641a6"
+    },
+    {
+      "byte_count": 3823,
+      "relative_path": "owner_decision_request.md",
+      "role": "OWNER_DECISION_REQUEST",
+      "sha256": "d351082ce694edca09f0763ad4c85e4b167a46b290a36f4cffc61e1413b2b51e"
+    },
+    {
+      "byte_count": 26595,
+      "relative_path": "proposal.json",
+      "role": "COLLECTOR_PROPOSAL",
+      "sha256": "ab1d38ef1fab67aa12faff3982e9e6a01a1e83e8575b2bf9a4bbf9e552014ce3"
+    },
+    {
+      "byte_count": 22389,
+      "relative_path": "run_scope.json",
+      "role": "COLLECTOR_RUN_SCOPE",
+      "sha256": "85d4d0728351b120133aedd68ed41c4bc4a4df799959370c6f2435426311c572"
+    }
+  ],
+  "authorization_expires_after_hours": 168,
+  "authorization_invalidates_after_evidence_collection": true,
+  "authorization_single_use": true,
+  "authorization_status": "NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS",
+  "broker_action": "none",
+  "collector_id": "codex_capability_coordinator",
+  "collector_implementation_file_sha256": "1c20aca322baa18c7b673167a290b5d38a20a6384f1c3a79d4af642dd32fbe2a",
+  "collector_policy_canonical_sha256": "3ebdd8a4dd89aad4584fbe8bffeeabb30d9b7bd2c28cd394c0fbc346939e999f",
+  "collector_policy_file_sha256": "48511cc64cab07b091787e2b0cb23354424248da66e7dba8866cd9ce9a766a8f",
+  "content_sha256": "b44de8a0854cde6004f71ac2ed86cc619ab6c12c81b07f5efe790dad74219d58",
+  "created_at_utc": "2026-08-12T12:00:00Z",
+  "decision": "OWNER_AUTHORIZATION_REQUIRED",
+  "engine_status": "POLICY_BLOCKED_CASH_PRESERVATION",
+  "evaluated_end": "2025-12-02",
+  "evaluated_start": "2021-02-22",
+  "executable_policy_authorized": false,
+  "external_action_performed": false,
+  "first_session": "2021-02-22",
+  "independent_reviewer_id": "project_owner",
+  "investment_interpretation_generated": false,
+  "last_session": "2025-12-02",
+  "maximum_cloud_backtests": 1,
+  "maximum_fills": 0,
+  "maximum_orders": 0,
+  "maximum_project_mutations": 1,
+  "owner_policy_value_count": 0,
+  "package_id": "TRADING_2513_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_V1",
+  "production_effect": "none",
+  "project_code_lf_byte_count": 26074,
+  "project_code_lf_sha256": "d7f96fbb14e03a1f248b0a14b3ebdaa1bbeeada2d15f87fb3277b98b9c6641a6",
+  "proposal_canonical_sha256": "ab1d38ef1fab67aa12faff3982e9e6a01a1e83e8575b2bf9a4bbf9e552014ce3",
+  "proposal_content_sha256": "f48732afc0d69656fbe5c62b1965296feccda30caa3279c80b9d1c20ce272240",
+  "proposal_policy_canonical_sha256": "4c80425fae656c573ca74d44e5d738bc78307619c0471f2c852446430fefdbc6",
+  "proposal_policy_file_sha256": "dc64eae45a3581089af1223c8bc6da005c0962d17906ad447cf72f8a9a5fbbaf",
+  "repository_code_sha": "83d4f9680c4f78c7c1414659d51738ba7f615a7a",
+  "requested_end": "2025-12-02",
+  "requested_start": "2021-02-22",
+  "run_scope_canonical_sha256": "85d4d0728351b120133aedd68ed41c4bc4a4df799959370c6f2435426311c572",
+  "run_scope_content_sha256": "80c11d7073dcc86f1297a34b3497fe705069619d6f1f51927ab9b673172db15e",
+  "schema_version": "qc_qqq_options_primary_window_derived_aggregate_run_proposal_package.v1",
+  "selection_authorized": false,
+  "session_count": 1202,
+  "target_project_id": 34808569,
+  "transport_map_sha256": "60c970b71d3c47337fb76452d1384f2463079ef5026239e875e78b8c37d3eab5"
+}

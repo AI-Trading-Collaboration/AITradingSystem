@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 97
+fragment_count: 98
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 83a19aceb811a793d54728341e5bf7807374fe962e09a2ff0eee8922d9ecf900
+  current_sha256: 03e35dbd8ad2be288085dd18b7454096f7cd6c9da3789f99278e4f8081aac75b
   fragment_root: config/architecture/fragments/flows
   fragment_count: 42
   fragment_paths:
@@ -654,6 +654,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_position_lifecycle.yaml
   sha256: a701b400391194b0b18693e30f6790e81fd37cd05b0f401b2047b1692bdab1dc
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_primary_window_derived_aggregate_run_proposal
+  fragment_kind: module
+  owner: options_daily_backtest_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_primary_window_derived_aggregate_run_proposal.yaml
+  sha256: 1982b4c7a1a66c2daad98f09d375ab2246a9705f24b9de37f1ca74a8276c22e1
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_primary_window_derived_calibration_evidence_generator
   fragment_kind: module
