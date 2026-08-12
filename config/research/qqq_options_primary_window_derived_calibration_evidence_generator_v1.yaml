@@ -1,0 +1,182 @@
+schema_version: qqq_options_primary_window_derived_calibration_evidence_generator_policy.v1
+policy_id: qqq_options_primary_window_derived_calibration_evidence_generator_v1
+policy_version: 1.0.0
+policy_status: OWNER_REVIEW_REQUIRED_ENGINEERING_BASELINE
+task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+primary_research_start: '2021-02-22'
+primary_research_role: PRIMARY
+exchange_calendar: XNYS
+upstream_calibration:
+  policy_path: config/research/qqq_options_primary_window_policy_calibration_v1.yaml
+  policy_file_sha256: d19b2de2eec00759cb1e5b85ab976858518205ba933e121324e871e78120d7fd
+  policy_canonical_sha256: a06f87cd8ba7992ff9169def4caea8f045e089ec78ae5d1c11de4fd052c86c7c
+source_contract:
+  schema_version: qqq_options_primary_window_derived_observation_bundle.v1
+  derived_export_safe_required: true
+  raw_option_rows_prohibited: true
+  canonical_dq_report_required: true
+  exact_primary_session_inventory_required: true
+  incomplete_slot_rejected: true
+  deterministic_input_order_required: true
+production_source_inventory: []
+metric_definitions:
+- slot_id: ACC_CASH_RESERVATION
+  canonical_group: accounting
+  evidence_class: ACCOUNTING_AUTHORITY
+  metric_definition_id: trading2511.acc_cash_reservation.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: available_cash_max, unit_id: usd, operation: MAX}
+  - {statistic_id: available_cash_min, unit_id: usd, operation: MIN}
+- slot_id: ACC_DQ_PIT_REPRO
+  canonical_group: acceptance
+  evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+  metric_definition_id: trading2511.acc_dq_pit_repro.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: dq_replay_pass_count, unit_id: checks, operation: SUM}
+  - {statistic_id: pit_replay_pass_count, unit_id: checks, operation: SUM}
+- slot_id: ACC_FEE_SCHEDULE
+  canonical_group: accounting
+  evidence_class: ACCOUNTING_AUTHORITY
+  metric_definition_id: trading2511.acc_fee_schedule.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: observed_fee_max, unit_id: usd, operation: MAX}
+  - {statistic_id: observed_fee_min, unit_id: usd, operation: MIN}
+- slot_id: ACC_RESULT_INCLUSION
+  canonical_group: acceptance
+  evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+  metric_definition_id: trading2511.acc_result_inclusion.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: excluded_result_count, unit_id: results, operation: SUM}
+  - {statistic_id: included_result_count, unit_id: results, operation: SUM}
+- slot_id: ACC_SAMPLE_COVERAGE
+  canonical_group: acceptance
+  evidence_class: ACCEPTANCE_VALIDATION_EVIDENCE
+  metric_definition_id: trading2511.acc_sample_coverage.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: chain_present_session_count, unit_id: sessions, operation: SUM}
+  - {statistic_id: observed_session_count, unit_id: sessions, operation: SUM}
+- slot_id: ACC_SIZING_EXPOSURE
+  canonical_group: accounting
+  evidence_class: ACCOUNTING_AUTHORITY
+  metric_definition_id: trading2511.acc_sizing_exposure.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: observed_exposure_max, unit_id: usd, operation: MAX}
+  - {statistic_id: observed_exposure_min, unit_id: usd, operation: MIN}
+- slot_id: EXE_MARKETABLE_LIMIT
+  canonical_group: execution
+  evidence_class: EXECUTION_SENSITIVITY
+  metric_definition_id: trading2511.exe_marketable_limit.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: ask_price_max, unit_id: usd, operation: MAX}
+  - {statistic_id: ask_price_min, unit_id: usd, operation: MIN}
+- slot_id: EXE_QUOTE_DISPOSITION
+  canonical_group: execution
+  evidence_class: EXECUTION_SENSITIVITY
+  metric_definition_id: trading2511.exe_quote_disposition.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: missing_quote_count, unit_id: quotes, operation: SUM}
+  - {statistic_id: one_sided_quote_count, unit_id: quotes, operation: SUM}
+  - {statistic_id: two_sided_quote_count, unit_id: quotes, operation: SUM}
+- slot_id: LIFE_EXPIRY_EXIT_GUARD
+  canonical_group: lifecycle
+  evidence_class: LIFECYCLE_EVENT_EVIDENCE
+  metric_definition_id: trading2511.life_expiry_exit_guard.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: terminal_dte_max, unit_id: days, operation: MAX}
+  - {statistic_id: terminal_dte_min, unit_id: days, operation: MIN}
+- slot_id: LIFE_TERMINAL_VALUATION
+  canonical_group: lifecycle
+  evidence_class: LIFECYCLE_EVENT_EVIDENCE
+  metric_definition_id: trading2511.life_terminal_valuation.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: terminal_value_max, unit_id: usd, operation: MAX}
+  - {statistic_id: terminal_value_min, unit_id: usd, operation: MIN}
+- slot_id: SEL_DELTA_SOURCE_RANGE
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_delta_source_range.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: delta_max, unit_id: ratio, operation: MAX}
+  - {statistic_id: delta_min, unit_id: ratio, operation: MIN}
+- slot_id: SEL_DTE_WINDOW
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_dte_window.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: dte_days_max, unit_id: days, operation: MAX}
+  - {statistic_id: dte_days_min, unit_id: days, operation: MIN}
+- slot_id: SEL_MONEYNESS_RANGE
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_moneyness_range.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: moneyness_ratio_max, unit_id: ratio, operation: MAX}
+  - {statistic_id: moneyness_ratio_min, unit_id: ratio, operation: MIN}
+- slot_id: SEL_OPEN_INTEREST_FLOOR
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_open_interest_floor.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: open_interest_max, unit_id: contracts, operation: MAX}
+  - {statistic_id: open_interest_min_nonzero, unit_id: contracts, operation: MIN}
+- slot_id: SEL_QUOTE_FRESHNESS
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_quote_freshness.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: quote_age_seconds_max, unit_id: seconds, operation: MAX}
+  - {statistic_id: quote_age_seconds_min, unit_id: seconds, operation: MIN}
+- slot_id: SEL_RANK_PRIORITY
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_rank_priority.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: candidate_count, unit_id: contracts, operation: SUM}
+  - {statistic_id: deterministic_tie_count, unit_id: contracts, operation: SUM}
+- slot_id: SEL_SPREAD_LIMIT
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_spread_limit.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: relative_spread_max, unit_id: ratio, operation: MAX}
+  - {statistic_id: relative_spread_min, unit_id: ratio, operation: MIN}
+- slot_id: SEL_VOLUME_FLOOR
+  canonical_group: selection
+  evidence_class: DERIVED_MARKET_AGGREGATES
+  metric_definition_id: trading2511.sel_volume_floor.v1
+  metric_definition_version: 1.0.0
+  statistics:
+  - {statistic_id: volume_max, unit_id: contracts, operation: MAX}
+  - {statistic_id: volume_min_nonzero, unit_id: contracts, operation: MIN}
+safety:
+  owner_policy_value_count: 0
+  executable_policy_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  orders: 0
+  fills: 0
+  external_action_authorized: false
+  investment_interpretation_allowed: false
+  raw_options_data_export_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

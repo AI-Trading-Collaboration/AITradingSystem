@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -155,3 +155,23 @@ generator 完成后，需要一个独立授权的数据源侧 derived-aggregate 
 source bundle；之后 2510 admission 才能形成可交付 Project Owner 的 evidence review pack。只有 Owner 对每个
 slot 另行提供 typed G2 value、rationale、evidence refs 与 review/expiry metadata，才可进入 executable-policy
 serial contract wave。
+
+## 11. 2026-08-12 工程基线交付
+
+- short registration boundary 已 ordinary push：
+  `8d2ef8af0f1571addca12db4e37e506dccbd835a`；
+- task-owned policy file SHA-256：
+  `ec607e9d34d3ee454b997575fa94357cb3cc349bca0216c067a0a30b332d6a82`；
+- task-owned implementation file SHA-256：
+  `2957d40aac5b2f595b4a6d4d8aed3cfd86c2b2c6517ae52581bb3eecb681c7b1`；
+- policy 冻结 exact 18-slot metric definitions，production source inventory 为空；
+- source bundle、evidence records、reference index、package manifest 均使用 canonical
+  seal/from-json/replay；package loader 重验 exact inventory 与 2510
+  catalog/receipt/readiness/handoff cross-binding；
+- DQ gate 解析 canonical `DQReportRecord` 并重验 exact 15-check PASS、scope、policy、contract、
+  repository、source、range、as-of 与 checksums；arbitrary bytes、FAIL、NOT_EVALUATED 和 mismatch
+  均 fail closed；
+- generator/2510 focused replacement：`42 passed`，Ruff、mypy、compileall、DevEx 均 PASS；
+- Atlas consumer 已扩展为 30-task coverage，并明确披露“generator 已实现但 production source
+  inventory 仍为空”；该页面重建与 final-tree gates 在同一收口阶段完成；
+- 本工程基线没有生成 production evidence、policy 数值、交易信号、订单、成交或投资解释。

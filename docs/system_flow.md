@@ -8149,3 +8149,38 @@ inventory，因此 canonical readiness 仍为 `EVIDENCE_NOT_PROVIDED_POLICY_BLOC
 逐 slot 审阅 evidence 并另行提供 typed G2 value、rationale、evidence refs 与 review/expiry metadata；DAILY
 engine/backtest、QuantConnect/cloud/API/CLI/HTTP/raw export、investment interpretation、paper/live/broker/
 production 继续为 false/none。
+
+## TRADING-2511 QQQ Options Primary-Window Derived Calibration Evidence Generator V1
+
+`config/research/qqq_options_primary_window_derived_calibration_evidence_generator_v1.yaml` 与
+`qqq_options_research.primary_window_derived_calibration_evidence_generator` 把 2510 的 evidence admission
+合同推进到可实际运行的离线 generator。它只消费数据源侧已经汇总的 export-safe per-session/per-slot
+observations；production source inventory 当前仍为空，因此本工程基线不产生 production evidence。
+
+```text
+export-safe derived source observations (no raw option rows)
+  -> canonical source bundle seal/from-json
+     -> PRIMARY requested/evaluated start = 2021-02-22
+     -> exact reviewed XNYS session inventory
+     -> provider / dataset / source checksum / repository identity
+  -> canonical 2481 DQReportRecord replay
+     -> exact 2482 scope/policy/contract/source/range/as-of identity
+     -> exact 15 checks all PASS and PIT PASS
+     -> arbitrary bytes / FAIL / NOT_EVALUATED / hash mismatch stop package
+  -> exact 18-slot versioned metric definitions
+     -> descriptive SUM / MIN / MAX only
+     -> no threshold / recommendation / policy value
+     -> incomplete slot / unknown statistic / unit drift fail closed
+  -> deterministic per-slot 2510 calibration evidence records
+  -> 2510 catalog / receipt / readiness / handoff admission replay
+  -> source + evidence + reference index + package manifest cross-binding
+  -> owner_policy_value_count=0 / selection=false / orders=fills=0
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+2511 的 complete package 最高只能达到 `READY_FOR_OWNER_POLICY_REVIEW_NOT_EXECUTABLE`；它不把 observed
+envelope 解释为建议 DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/sizing/cash policy，也不激活
+engine/backtest。当前 blocker 为 `PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED`；后继需要独立授权的
+derived-aggregate collection run，且 Owner 仍须逐 slot 另行提供 typed G2 value、rationale、evidence refs 与
+review/expiry metadata。QuantConnect/cloud/API/CLI/HTTP/raw export、investment interpretation、paper/live/
+broker/production 继续为 false/none。

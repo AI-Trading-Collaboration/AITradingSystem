@@ -14,7 +14,7 @@ fragment_count: 981
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 02656e215d6b79355b86b0aab1a661750e0565f5690e16f3099caa62e88c08b3
+final_chain_sha256: 9a7e574de0a329f5c7b0aff2923fea51f3b71f4e6324c75ffc7095320d76729a
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7871,17 +7871,17 @@ fragments:
   entry_sha256: d15968fcb90d85dbe41b949b0deb09fe6786de500a8939dfb753a47b611ace0f
 - task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
   path: registry/development_tasks/36/368b1a7a5d5be4697618def0d1ada1d3025384853eb7b872c101d27a3c87e836.yaml
-  file_sha256: d708cb29684858918a90e2a8d0bd6a17b35be1e5d8644be8ede96b8b50a9c612
-  fragment_checksum: 3e85a33e22cec808b8b0e41cce21fa3a39864b3ec59fc3c94ca2fb45632e5afa
+  file_sha256: 5446d403a34b8e82fd0dc9020bc97cd0153633dceb8a73fc192780f760d2246d
+  fragment_checksum: 48f37fd09bafef03000fe25dd791331f1feba01638003baf4a843d4164cda88e
   partition: active
   order: 981
   previous_entry_sha256: d15968fcb90d85dbe41b949b0deb09fe6786de500a8939dfb753a47b611ace0f
-  entry_sha256: 02656e215d6b79355b86b0aab1a661750e0565f5690e16f3099caa62e88c08b3
+  entry_sha256: 9a7e574de0a329f5c7b0aff2923fea51f3b71f4e6324c75ffc7095320d76729a
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 9c0fee1b2e7bb91adfc6f55fbafa7c93abccebab31507b5a1ee353bbc1fbf32f
-  byte_count: 1722052
+  sha256: d6955ade288b3e489c7ae9b2a7fe44bb52a6f0d070ae3789c60b3fa02ff56009
+  byte_count: 1722487
   row_count: 474
   generated_do_not_edit: true
 - partition: completed
@@ -8108,7 +8108,14 @@ governance_cycles:
   change_id: TRADING-2511-REGISTRATION-V1
   event_count: 1
   production_effect: none
-governance_cycle_count: 31
+- cycle_id: arch-005-s5-cycle-32
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+  change_id: TRADING-2511-BASELINE-DONE-V1
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 32
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8122,4 +8129,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 8a69d66e78a30417dc7413d55469c1090e1d345e905845d99ea4aac0bf7892ed
+index_checksum: 6b710cb999c7647ca791856f1c2978ef01b658ea1e7a332f5f311cfd31c9bfbc

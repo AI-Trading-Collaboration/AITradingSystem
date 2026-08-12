@@ -213,7 +213,7 @@ def load_page_effectiveness_policy(
                 reader_summary_zh=str(item["reader_summary_zh"]),
             )
         )
-    if len(tasks) != 29 or len({item.task_id for item in tasks}) != 29:
+    if len(tasks) != 30 or len({item.task_id for item in tasks}) != 30:
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_POLICY_TASK_SET_INVALID")
     if tuple(_task_number(item.task_id) for item in tasks) != (
         *range(2481, 2505),
@@ -222,6 +222,7 @@ def load_page_effectiveness_policy(
         2508,
         2509,
         2510,
+        2511,
     ):
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_POLICY_TASK_ORDER_INVALID")
     defaults = _mapping(payload["acceptance_defaults"], "acceptance_defaults")

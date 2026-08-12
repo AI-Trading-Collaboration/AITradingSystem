@@ -147,6 +147,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md
     coverage: DISCLOSED_PRIMARY_WINDOW_CALIBRATION_EVIDENCE_NOT_PROVIDED
     reader_summary_zh: exact 18-slot G3 calibration evidence 合同、canonical DQ/PIT admission 与 readiness 三态已实现；production evidence inventory 仍为空，policy、selection 与 engine 继续 blocked。
+  - task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+    requirement_path: docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md
+    coverage: DISCLOSED_DERIVED_EVIDENCE_GENERATOR_SOURCE_BLOCKED
+    reader_summary_zh: export-safe per-session/per-slot 派生证据生成器、canonical DQ/PIT gate、deterministic package replay 已实现；production source inventory 仍为空，未生成真实 policy 值，selection 与 engine 继续 blocked。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

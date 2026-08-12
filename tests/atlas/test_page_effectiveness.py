@@ -38,12 +38,13 @@ def _rendered(
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_twenty_nine_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_thirty_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 29
+    assert len(policy.task_sources) == 30
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508, 2509, 2510)
+        f"TRADING-{number}"
+        for number in (*range(2481, 2505), 2506, 2507, 2508, 2509, 2510, 2511)
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -68,14 +69,19 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert (
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 29
+    assert len(manifest.task_coverage) == 30
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508, 2509, 2510)
+        f"TRADING-{number}"
+        for number in (*range(2481, 2505), 2506, 2507, 2508, 2509, 2510, 2511)
     ]
-    assert manifest.task_coverage[-2].coverage == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
+    assert manifest.task_coverage[-3].coverage == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
+    assert (
+        manifest.task_coverage[-2].coverage
+        == "DISCLOSED_PRIMARY_WINDOW_CALIBRATION_EVIDENCE_NOT_PROVIDED"
+    )
     assert (
         manifest.task_coverage[-1].coverage
-        == "DISCLOSED_PRIMARY_WINDOW_CALIBRATION_EVIDENCE_NOT_PROVIDED"
+        == "DISCLOSED_DERIVED_EVIDENCE_GENERATOR_SOURCE_BLOCKED"
     )
     assert len(manifest.source_artifacts) == 15
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

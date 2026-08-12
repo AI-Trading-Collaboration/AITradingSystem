@@ -14,18 +14,24 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: codex primary-window derived evidence generator coordinator；后继 data-source
-    derived aggregate collector 与 Project Owner review
+  next_owner: data-source derived aggregate collector；Project Owner evidence reviewer；后继
+    executable-policy serial contract coordinator
   requirement_refs:
   - docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 依赖 2510 admission；当前 blocker=PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；无外部动作授权。
+  unstructured_legacy_blocker_or_next_step: PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；production
+    source inventory 为空；需另行授权并提供 export-safe primary-window source bundle，之后经 2510
+    admission/Owner review；不得由 fixture 或默认零替代
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 建立 strict derived observation→evidence generator、canonical DQ/PIT+2510 admission
-      replay 与 fixture/production separation；不填阈值、不建 G2、不激活 engine/backtest。
+    text: 已实现 exact 18-slot versioned metric-definition policy、canonical per-session/per-slot
+      derived source bundle、SUM/MIN/MAX deterministic generator、2481/2482 canonical
+      DQ/PIT exact 15-check gate、2510 evidence admission/package replay；production
+      source 缺失保持 evidence=0/POLICY_BLOCKED，owner_policy_value_count=0、selection=false、orders/fills=0，无
+      raw/external/engine/backtest/investment/production/broker action；focused/final
+      gates 与 Atlas 30-task disclosure 需 PASS
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -60,24 +66,63 @@ events:
   - change:TRADING-2511-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ac5a3c0d9952e3fec26bc2c004951361
+- schema_version: task_event.v1
+  task_id: TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T06:00:00Z'
+  actor: codex_qqq_options_derived_evidence_generator_coordinator
+  change_id: TRADING-2511-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: 8d2ef8af0f1571addca12db4e37e506dccbd835a
+  previous_state_event_id: task-event-ac5a3c0d9952e3fec26bc2c004951361
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: data-source derived aggregate collector；Project Owner evidence reviewer；后继
+      executable-policy serial contract coordinator
+    blocker_or_next_step: PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；production
+      source inventory 为空；需另行授权并提供 export-safe primary-window source bundle，之后经 2510
+      admission/Owner review；不得由 fixture 或默认零替代
+    acceptance_criteria: 已实现 exact 18-slot versioned metric-definition policy、canonical
+      per-session/per-slot derived source bundle、SUM/MIN/MAX deterministic generator、2481/2482
+      canonical DQ/PIT exact 15-check gate、2510 evidence admission/package replay；production
+      source 缺失保持 evidence=0/POLICY_BLOCKED，owner_policy_value_count=0、selection=false、orders/fills=0，无
+      raw/external/engine/backtest/investment/production/broker action；focused/final
+      gates 与 Atlas 30-task disclosure 需 PASS
+    notes: 'Supporting requirement: docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md；registration
+      boundary=8d2ef8af0f1571addca12db4e37e506dccbd835a；实现与 policy 已封存，真实 calibration
+      source/evidence 仍 blocked。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2511-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8c29a3523fffa5b40b8c8d830569ce2b
 projection:
   legacy_first_eight_cells:
   - TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1
   - Strategy research engineering / QQQ Options primary-window derived calibration
     evidence generator
   - P0
-  - IN_PROGRESS
-  - codex primary-window derived evidence generator coordinator；后继 data-source derived
-    aggregate collector 与 Project Owner review
-  - 依赖 2510 admission；当前 blocker=PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；无外部动作授权。
-  - 建立 strict derived observation→evidence generator、canonical DQ/PIT+2510 admission
-    replay 与 fixture/production separation；不填阈值、不建 G2、不激活 engine/backtest。
-  - 2026-08-12：从 exact main 062b21087aaaa398e3ff575fb65348bd8ed31819 登记；详见 [TRADING-2511
-    Primary Window Derived Calibration Evidence Generator](docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md)。
+  - BASELINE_DONE
+  - data-source derived aggregate collector；Project Owner evidence reviewer；后继 executable-policy
+    serial contract coordinator
+  - PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_NOT_PROVIDED；production source inventory
+    为空；需另行授权并提供 export-safe primary-window source bundle，之后经 2510 admission/Owner
+    review；不得由 fixture 或默认零替代
+  - 已实现 exact 18-slot versioned metric-definition policy、canonical per-session/per-slot
+    derived source bundle、SUM/MIN/MAX deterministic generator、2481/2482 canonical
+    DQ/PIT exact 15-check gate、2510 evidence admission/package replay；production source
+    缺失保持 evidence=0/POLICY_BLOCKED，owner_policy_value_count=0、selection=false、orders/fills=0，无
+    raw/external/engine/backtest/investment/production/broker action；focused/final
+    gates 与 Atlas 30-task disclosure 需 PASS
+  - 'Supporting requirement: docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md；registration
+    boundary=8d2ef8af0f1571addca12db4e37e506dccbd835a；实现与 policy 已封存，真实 calibration
+    source/evidence 仍 blocked。'
   docs_links:
   - docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md
   terminal: false
-  canonical_row_sha256: ef358de9ed2ddbc82f6ec0f462d629c1af113dc6fb8220fb37a6eaf7a96a2a8e
-last_event_id: task-event-ac5a3c0d9952e3fec26bc2c004951361
+  canonical_row_sha256: bd019bbbdae4832b873275e76c2b24994071fcd92389d37427eccddcf074288d
+last_event_id: task-event-8c29a3523fffa5b40b8c8d830569ce2b
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3e85a33e22cec808b8b0e41cce21fa3a39864b3ec59fc3c94ca2fb45632e5afa
+fragment_checksum: 48f37fd09bafef03000fe25dd791331f1feba01638003baf4a843d4164cda88e
