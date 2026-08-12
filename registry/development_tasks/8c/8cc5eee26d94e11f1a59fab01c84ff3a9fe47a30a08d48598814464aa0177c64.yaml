@@ -1,0 +1,84 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  task_id_sha256: 8cc5eee26d94e11f1a59fab01c84ff3a9fe47a30a08d48598814464aa0177c64
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  title: null
+  domain: Strategy governance / strategy research reopen readiness decision contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex strategy-governance coordinator：完成 serial readiness contract；Project
+    Owner：后继明确选择唯一数据证据车道与任何真实 reopen 授权
+  requirement_refs:
+  - docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 统一 readiness contract 尚未实现；2513 exact
+    Owner token、QQQ Options collection/evidence/DQ-PIT PASS 未发生；后继单一数据证据车道尚未由 Owner
+    选择
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与
+      fail-closed replay；不得运行候选搜索、经验回测、holdout、外部平台或投资结论
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-12T16:28:54Z'
+  actor: codex_strategy_governance_coordinator
+  change_id: TRADING-2515-REGISTRATION-V1
+  lane_id: null
+  base_commit: c8da1bed30887b9a1bdc1a17b7699b026da93538
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+    - Strategy governance / strategy research reopen readiness decision contract
+    - P0
+    - IN_PROGRESS
+    - Codex strategy-governance coordinator：完成 serial readiness contract；Project Owner：后继明确选择唯一数据证据车道与任何真实
+      reopen 授权
+    - 统一 readiness contract 尚未实现；2513 exact Owner token、QQQ Options collection/evidence/DQ-PIT
+      PASS 未发生；后继单一数据证据车道尚未由 Owner 选择
+    - 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与
+      fail-closed replay；不得运行候选搜索、经验回测、holdout、外部平台或投资结论
+    - 'Supporting requirement: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md；registration
+      base=c8da1bed30887b9a1bdc1a17b7699b026da93538；external_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2515-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e230f9701278758526003e767b888a22
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  - Strategy governance / strategy research reopen readiness decision contract
+  - P0
+  - IN_PROGRESS
+  - Codex strategy-governance coordinator：完成 serial readiness contract；Project Owner：后继明确选择唯一数据证据车道与任何真实
+    reopen 授权
+  - 统一 readiness contract 尚未实现；2513 exact Owner token、QQQ Options collection/evidence/DQ-PIT
+    PASS 未发生；后继单一数据证据车道尚未由 Owner 选择
+  - 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与
+    fail-closed replay；不得运行候选搜索、经验回测、holdout、外部平台或投资结论
+  - 'Supporting requirement: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md；registration
+    base=c8da1bed30887b9a1bdc1a17b7699b026da93538；external_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md
+  terminal: false
+  canonical_row_sha256: 628b292e59c1a3c635e1c035084d144efe55c64006fc64cc7ea702d2f29c1095
+last_event_id: task-event-e230f9701278758526003e767b888a22
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b158107ab92da2656a604f5ab8ce78b1c64e7872dbf2b4fc653ea39196f071a8
