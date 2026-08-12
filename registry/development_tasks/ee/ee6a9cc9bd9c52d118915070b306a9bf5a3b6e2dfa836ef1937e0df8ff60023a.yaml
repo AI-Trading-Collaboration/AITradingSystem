@@ -1,0 +1,90 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2513_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_OWNER_DECISION_PACK_V1
+  task_id_sha256: ee6a9cc9bd9c52d118915070b306a9bf5a3b6e2dfa836ef1937e0df8ff60023a
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2513_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_OWNER_DECISION_PACK_V1
+  title: null
+  domain: External validation / QC QQQ Options primary-window exact run proposal and
+    Owner decision pack
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: collector proposal coordinator；Project Owner：exact proposal review/authorization；independent
+    reviewer：future external lifecycle evidence
+  requirement_refs:
+  - docs/requirements/TRADING-2513_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Run_Proposal_Owner_Decision_Pack_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；本任务只生成
+    ordinary-pushed exact package，不执行 QuantConnect/cloud 外部动作
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 生成并严格验证 2021-02-22..2025-12-02 exact 1202-session run scope、target project
+      34808569、2512-rendered main.py、sealed proposal/package manifest 与 Owner token
+      template；无 token/run/order/raw/policy values/engine activation；focused/generated/compat/Atlas/final
+      gates PASS
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2513_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_OWNER_DECISION_PACK_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-12T11:15:00Z'
+  actor: codex-collector-proposal-coordinator
+  change_id: TRADING-2513-REGISTRATION-V1
+  lane_id: null
+  base_commit: 1533952659413f0d890b64720e0e8a06a32fbdd4
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2513_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_OWNER_DECISION_PACK_V1
+    - External validation / QC QQQ Options primary-window exact run proposal and Owner
+      decision pack
+    - P0
+    - IN_PROGRESS
+    - collector proposal coordinator；Project Owner：exact proposal review/authorization；independent
+      reviewer：future external lifecycle evidence
+    - OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；本任务只生成 ordinary-pushed
+      exact package，不执行 QuantConnect/cloud 外部动作
+    - 生成并严格验证 2021-02-22..2025-12-02 exact 1202-session run scope、target project 34808569、2512-rendered
+      main.py、sealed proposal/package manifest 与 Owner token template；无 token/run/order/raw/policy
+      values/engine activation；focused/generated/compat/Atlas/final gates PASS
+    - 'Supporting requirement: docs/requirements/TRADING-2513_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Run_Proposal_Owner_Decision_Pack_V1.md；registration
+      base=1533952659413f0d890b64720e0e8a06a32fbdd4；production_effect=none、broker_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2513-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-c690d8b0d6b6c2a7b5efba694ad74014
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2513_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_PROPOSAL_OWNER_DECISION_PACK_V1
+  - External validation / QC QQQ Options primary-window exact run proposal and Owner
+    decision pack
+  - P0
+  - IN_PROGRESS
+  - collector proposal coordinator；Project Owner：exact proposal review/authorization；independent
+    reviewer：future external lifecycle evidence
+  - OWNER_DECISION_NOT_PROVIDED_FOR_EXACT_TRADING_2513_PROPOSAL；本任务只生成 ordinary-pushed
+    exact package，不执行 QuantConnect/cloud 外部动作
+  - 生成并严格验证 2021-02-22..2025-12-02 exact 1202-session run scope、target project 34808569、2512-rendered
+    main.py、sealed proposal/package manifest 与 Owner token template；无 token/run/order/raw/policy
+    values/engine activation；focused/generated/compat/Atlas/final gates PASS
+  - 'Supporting requirement: docs/requirements/TRADING-2513_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Run_Proposal_Owner_Decision_Pack_V1.md；registration
+    base=1533952659413f0d890b64720e0e8a06a32fbdd4；production_effect=none、broker_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2513_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Run_Proposal_Owner_Decision_Pack_V1.md
+  terminal: false
+  canonical_row_sha256: 227e80a6ccb3f77bdb9031b582d74fbd4c03ae9185099d4534482b1edfcafce7
+last_event_id: task-event-c690d8b0d6b6c2a7b5efba694ad74014
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 2746a20227ec666f1dcfb40567f54c443282f01d5c030c21cb63909768f4b166
