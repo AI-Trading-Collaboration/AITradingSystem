@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -169,3 +169,21 @@ exit condition：2515 final-tree 合同、tests、shared authority 与 formal ga
 
 - 2026-08-13：从 exact main `c8da1bed30887b9a1bdc1a17b7699b026da93538` 完成只读
   authority 盘点；2515 尚未登记，runner/lease 为 0，external action 为 none。
+- 2026-08-13：registration boundary 已普通 push 为
+  `b5c3b8d69c4c48dd76141394d7db794a74dd0802`。随后从该 exact base 建立 serial contract
+  task branch；START/LANE preflight 均 PASS，未读取 cache 或运行任何经验研究。
+- 2026-08-13：完成 reviewed baseline policy、9-source exact authority inventory、39 项 YAML
+  semantic fact、7 项 requirement semantic snippet、typed source/reason taxonomy、canonical seal/replay
+  与 fail-closed builder。当前 policy file SHA-256 为
+  `6f4688c245b512cef315128d721f76012725f37b7e232e197f107b1b4d27e223`，canonical
+  SHA-256 为 `ccde97a297ff9334dc8b93a937ecf43efadaac959d3e01dadc1a2980d438a637`，
+  authority-set SHA-256 为 `16d18eb1ad3c1052eac533979374cff2d1f118a0a021008533d5aed10c2b9269`。
+- 2026-08-13：task-focused 首轮为 `32 passed / 1 failed`，唯一失败为 test exact inventory
+  把 39 误写成 45；更正后同一 `-n 16 --dist loadfile` 覆盖为 `33 passed`。consumer 组合首轮
+  为 `66 passed / 2 failed`（旧 renderer 文案与 33-task canonical page），完整 writer 重建后第二轮
+  为 `67 passed / 1 failed`（旧 exact count 33），第三轮同一 68-test 覆盖为 `68 passed`。
+  这些首轮/第二轮只作为 failure-fix evidence，不作为 formal promotion evidence。
+- 2026-08-13：Atlas consumer 只新增 `KEEP_CLOSED + PREREGISTRATION_ONLY`、单一 evidence-lane
+  未选择与 QLD recommendation-only 披露；既有 ENGINEERING/OWNER_VISUAL/READER_COMPREHENSION
+  三条 typed PASS 事实由完整 writer 原样保留，没有重置、伪签或串轨。当前仍未执行 candidate
+  search、backtest、holdout、cache、QuantConnect 或其他 external action。

@@ -1,0 +1,194 @@
+schema_version: strategy_research_reopen_readiness_decision_policy.v1
+policy_id: strategy_research_reopen_readiness_decision_v1
+policy_version: 1.0.0
+policy_status: REVIEWED_BASELINE_KEEP_CLOSED
+task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+primary_research_start: '2021-02-22'
+primary_research_role: PRIMARY
+prohibited_default_start: '2022-12-01'
+reopen_decision: KEEP_CLOSED
+permitted_stage: PREREGISTRATION_ONLY
+selected_data_lane: null
+recommended_data_lane: QLD_CANONICAL_FULL_CACHE_DQ
+recommendation_status: RECOMMENDATION_ONLY_NOT_SELECTED_OR_AUTHORIZED
+source_facts:
+  - source_id: LEGACY_DYNAMIC_V3_SELECTION
+    status: BLOCKED_CONTAMINATED_LEGACY_SOURCE
+  - source_id: CLEAN_S1_RESEARCH
+    status: ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN
+  - source_id: O1_CAPABILITY
+    status: NOT_EVALUATED
+  - source_id: O1_BLIND_REENTRY
+    status: INACTIVE
+  - source_id: QQQ_OPTIONS_OWNER_AUTHORIZATION
+    status: OWNER_AUTHORIZATION_NOT_PROVIDED
+  - source_id: QQQ_OPTIONS_EVIDENCE
+    status: EVIDENCE_NOT_ADMITTED_POLICY_BLOCKED
+  - source_id: QQQ_OPTIONS_DQ_PIT
+    status: NOT_EVALUATED
+  - source_id: DATA_EVIDENCE_LANE_SELECTION
+    status: NOT_SELECTED
+blocking_reason_codes:
+  - LEGACY_SOURCE_CONTAMINATED
+  - CLEAN_S1_REQUIRES_SEPARATE_OWNER_RUN_AUTHORIZATION
+  - O1_CANONICAL_DQ_AND_OWNER_AUTHORIZATION_REQUIRED
+  - O1_BLIND_REENTRY_INACTIVE_AND_NOT_YET_DUE
+  - SINGLE_DATA_EVIDENCE_LANE_NOT_OWNER_SELECTED
+  - QQQ_OPTIONS_OWNER_TOKEN_NOT_PROVIDED
+  - QQQ_OPTIONS_EVIDENCE_NOT_ADMITTED
+  - QQQ_OPTIONS_DQ_PIT_NOT_EVALUATED
+authorities:
+  - authority_id: TRADING_2449_DYNAMIC_V3_GATE
+    path: config/research/dynamic_v3_clean_selection_preregistration_policy.yaml
+    format: YAML
+    file_sha256: 52006b623fbf64022b38b0a911c29f56b0a074caf9a02e41cedf4f6dfdfd2fd4
+    semantic_facts:
+      - dotted_path: schema_version
+        expected_json: '"dynamic_v3_clean_selection_preregistration_policy.v1"'
+      - dotted_path: qualification.required_result_visibility
+        expected_json: '"NONE"'
+      - dotted_path: safety_boundary.evaluator_execution_allowed
+        expected_json: 'false'
+      - dotted_path: safety_boundary.locked_holdout_access_allowed
+        expected_json: 'false'
+      - dotted_path: safety_boundary.new_parameter_search_allowed
+        expected_json: 'false'
+      - dotted_path: safety_boundary.production_effect
+        expected_json: '"none"'
+    required_snippets: []
+  - authority_id: TRADING_2451_CLEAN_S1_PREREGISTRATION
+    path: docs/requirements/TRADING-2451_Dynamic_V3_Clean_Selection_S1_Preregistration.md
+    format: TEXT
+    file_sha256: c5d5430833f1fd188ab3a59cfb296aadf7cdf8585ad3e5f639cfd6bce8b2cf43
+    semantic_facts: []
+    required_snippets:
+      - BLOCKED_CONTAMINATED_LEGACY_SOURCE
+      - ELIGIBLE_FOR_OWNER_AUTHORIZED_CLEAN_RUN
+      - historical_seen_protocol_replay
+      - investigator-blind
+  - authority_id: TRADING_2463_O1_PREREGISTRATION
+    path: docs/requirements/TRADING-2463_S4_O1_Relative_Opportunity_Spread_Preregistration_Freeze.md
+    format: TEXT
+    file_sha256: 3f44a9e0c404661e9abeed20c8141884794f440cc4822beaa2f0a155bd719766
+    semantic_facts: []
+    required_snippets:
+      - canonical DQ strict PASS
+      - 未来 capability audit 必须另立任务并取得新的 Owner 授权
+      - 未启动 capability audit
+  - authority_id: TRADING_2467_BLIND_REENTRY_POLICY
+    path: config/research/o1_relative_opportunity_blind_calendar_reentry_policy_v1.yaml
+    format: YAML
+    file_sha256: 273ff797e993653b520acb349759662f0d05e5bdde96372e1e17ee6f95b37757
+    semantic_facts:
+      - dotted_path: status
+        expected_json: '"OWNER_APPROVED_INACTIVE_POLICY_SLOT_FROZEN"'
+      - dotted_path: effective_status
+        expected_json: '"INACTIVE"'
+      - dotted_path: activation_allowed
+        expected_json: 'false'
+      - dotted_path: calendar_trigger.not_before_date
+        expected_json: '"2027-02-01"'
+      - dotted_path: future_attempt_contract.separate_real_run_owner_token_status
+        expected_json: '"NOT_GRANTED"'
+      - dotted_path: authorization.candidate_or_backtest_allowed
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TRADING_2510_PRIMARY_WINDOW_CALIBRATION
+    path: config/research/qqq_options_primary_window_policy_calibration_v1.yaml
+    format: YAML
+    file_sha256: d19b2de2eec00759cb1e5b85ab976858518205ba933e121324e871e78120d7fd
+    semantic_facts:
+      - dotted_path: policy_status
+        expected_json: '"CALIBRATION_EVIDENCE_CONTRACT_ONLY"'
+      - dotted_path: primary_research_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: evidence_contract.canonical_dq_pass_required
+        expected_json: 'true'
+      - dotted_path: safety.maximum_status
+        expected_json: '"READY_FOR_OWNER_POLICY_REVIEW_NOT_EXECUTABLE"'
+      - dotted_path: safety.selection_authorized
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TRADING_2511_DERIVED_EVIDENCE_GENERATOR
+    path: config/research/qqq_options_primary_window_derived_calibration_evidence_generator_v1.yaml
+    format: YAML
+    file_sha256: ec607e9d34d3ee454b997575fa94357cb3cc349bca0216c067a0a30b332d6a82
+    semantic_facts:
+      - dotted_path: policy_status
+        expected_json: '"OWNER_REVIEW_REQUIRED_ENGINEERING_BASELINE"'
+      - dotted_path: primary_research_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: safety.engine_status
+        expected_json: '"POLICY_BLOCKED_CASH_PRESERVATION"'
+      - dotted_path: safety.selection_authorized
+        expected_json: 'false'
+      - dotted_path: safety.raw_options_data_export_allowed
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TRADING_2512_DERIVED_AGGREGATE_COLLECTOR
+    path: config/research/qc_qqq_options_primary_window_export_safe_derived_aggregate_collector_v1.yaml
+    format: YAML
+    file_sha256: 48511cc64cab07b091787e2b0cb23354424248da66e7dba8866cd9ce9a766a8f
+    semantic_facts:
+      - dotted_path: policy_status
+        expected_json: '"OWNER_REVIEW_REQUIRED_ENGINEERING_BASELINE"'
+      - dotted_path: primary_research_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: safety.authorization_status
+        expected_json: '"NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS"'
+      - dotted_path: safety.selection_authorized
+        expected_json: 'false'
+      - dotted_path: safety.raw_options_data_export_allowed
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TRADING_2513_EXACT_RUN_PROPOSAL
+    path: config/research/qc_qqq_options_primary_window_derived_aggregate_run_proposal_v1.yaml
+    format: YAML
+    file_sha256: dc64eae45a3581089af1223c8bc6da005c0962d17906ad447cf72f8a9a5fbbaf
+    semantic_facts:
+      - dotted_path: policy_status
+        expected_json: '"OWNER_REVIEW_REQUIRED_EXACT_PROPOSAL"'
+      - dotted_path: requested_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: evaluated_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: safety.authorization_status
+        expected_json: '"NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS"'
+      - dotted_path: safety.external_action_performed
+        expected_json: 'false'
+    required_snippets: []
+  - authority_id: TRADING_2514_EVIDENCE_ADMISSION
+    path: config/research/qc_qqq_options_primary_window_derived_aggregate_collection_evidence_admission_v1.yaml
+    format: YAML
+    file_sha256: 8e7103680884288574b5cc0c0813085e47396f244c4fce9db275477013760a91
+    semantic_facts:
+      - dotted_path: policy_status
+        expected_json: '"ENGINEERING_BASELINE_OWNER_TOKEN_NOT_PROVIDED"'
+      - dotted_path: requested_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: evaluated_start
+        expected_json: '"2021-02-22"'
+      - dotted_path: safety.owner_token_observed
+        expected_json: 'false'
+      - dotted_path: safety.authorization_status
+        expected_json: '"OWNER_AUTHORIZATION_NOT_PROVIDED"'
+      - dotted_path: safety.evidence_status
+        expected_json: '"EVIDENCE_NOT_ADMITTED_POLICY_BLOCKED"'
+      - dotted_path: safety.external_action_performed
+        expected_json: 'false'
+    required_snippets: []
+safety:
+  empirical_research_authorized: false
+  candidate_search_authorized: false
+  parameter_search_authorized: false
+  backtest_authorized: false
+  holdout_access_authorized: false
+  investment_conclusion_authorized: false
+  data_lane_selected: false
+  cache_mutation_authorized: false
+  external_action_authorized: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

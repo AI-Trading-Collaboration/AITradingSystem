@@ -13,16 +13,15 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex strategy-governance coordinator：完成 serial readiness contract；Project
-    Owner：后继明确选择唯一数据证据车道与任何真实 reopen 授权
+  next_owner: Project Owner：后继从 exact 2515 main 选择唯一数据证据车道；后继 coordinator：另行登记并取得所需数据或外部授权
   requirement_refs:
   - docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 统一 readiness contract 尚未实现；2513 exact
-    Owner token、QQQ Options collection/evidence/DQ-PIT PASS 未发生；后继单一数据证据车道尚未由 Owner
-    选择
+  unstructured_legacy_blocker_or_next_step: 2515 readiness contract 已实现且维持 KEEP_CLOSED
+    + PREREGISTRATION_ONLY；QLD 仅 recommendation，QQQ Options token/evidence/DQ-PIT
+    均未发生；下一步须由 Owner 选择唯一数据证据车道
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与
@@ -61,24 +60,78 @@ events:
   - change:TRADING-2515-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e230f9701278758526003e767b888a22
+- schema_version: task_event.v1
+  task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T16:57:03Z'
+  actor: codex_strategy_governance_coordinator
+  change_id: TRADING-2515-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: b5c3b8d69c4c48dd76141394d7db794a74dd0802
+  previous_state_event_id: task-event-e230f9701278758526003e767b888a22
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：后继从 exact 2515 main 选择唯一数据证据车道；后继 coordinator：另行登记并取得所需数据或外部授权
+    blocker_or_next_step: 2515 readiness contract 已实现且维持 KEEP_CLOSED + PREREGISTRATION_ONLY；QLD
+      仅 recommendation，QQQ Options token/evidence/DQ-PIT 均未发生；下一步须由 Owner 选择唯一数据证据车道
+    acceptance_criteria: 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与
+      fail-closed replay；不得运行候选搜索、经验回测、holdout、外部平台或投资结论
+    notes: Policy/typed decision/authority replay/Atlas disclosure 已实现；focused 33
+      PASS，consumer final 68 PASS；无 candidate search/backtest/holdout/cache/external
+      action/investment conclusion。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2515-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-a08136b9e2bd0a4cf41b4beae1ebd8a3
+- schema_version: task_event.v1
+  task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T17:10:30Z'
+  actor: codex_strategy_governance_coordinator
+  change_id: TRADING-2515-REQUIREMENT-BINDING-FIX-V1
+  lane_id: null
+  base_commit: b5c3b8d69c4c48dd76141394d7db794a74dd0802
+  previous_state_event_id: task-event-a08136b9e2bd0a4cf41b4beae1ebd8a3
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：后继从 exact 2515 main 选择唯一数据证据车道；后继 coordinator：另行登记并取得所需数据或外部授权
+    blocker_or_next_step: 2515 readiness contract 已实现且维持 KEEP_CLOSED + PREREGISTRATION_ONLY；QLD
+      仅 recommendation，QQQ Options token/evidence/DQ-PIT 均未发生；下一步须由 Owner 选择唯一数据证据车道
+    acceptance_criteria: 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与
+      fail-closed replay；不得运行候选搜索、经验回测、holdout、外部平台或投资结论
+    notes: 'Supporting requirement: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md；Atlas
+      task coverage requirement binding failure-fix；focused readiness 33 PASS；consumer
+      同覆盖待修复后重跑；无 candidate search/backtest/holdout/cache/external action/investment
+      conclusion。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2515-REQUIREMENT-BINDING-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-08f7b0b2c9663593e85877599bcdc4ce
 projection:
   legacy_first_eight_cells:
   - TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
   - Strategy governance / strategy research reopen readiness decision contract
   - P0
-  - IN_PROGRESS
-  - Codex strategy-governance coordinator：完成 serial readiness contract；Project Owner：后继明确选择唯一数据证据车道与任何真实
-    reopen 授权
-  - 统一 readiness contract 尚未实现；2513 exact Owner token、QQQ Options collection/evidence/DQ-PIT
-    PASS 未发生；后继单一数据证据车道尚未由 Owner 选择
+  - BASELINE_DONE
+  - Project Owner：后继从 exact 2515 main 选择唯一数据证据车道；后继 coordinator：另行登记并取得所需数据或外部授权
+  - 2515 readiness contract 已实现且维持 KEEP_CLOSED + PREREGISTRATION_ONLY；QLD 仅 recommendation，QQQ
+    Options token/evidence/DQ-PIT 均未发生；下一步须由 Owner 选择唯一数据证据车道
   - 冻结 KEEP_CLOSED + PREREGISTRATION_ONLY baseline、typed authority/hash/research-window/单车道检查与
     fail-closed replay；不得运行候选搜索、经验回测、holdout、外部平台或投资结论
-  - 'Supporting requirement: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md；registration
-    base=c8da1bed30887b9a1bdc1a17b7699b026da93538；external_action=none。'
+  - 'Supporting requirement: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md；Atlas
+    task coverage requirement binding failure-fix；focused readiness 33 PASS；consumer
+    同覆盖待修复后重跑；无 candidate search/backtest/holdout/cache/external action/investment
+    conclusion。'
   docs_links:
   - docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md
   terminal: false
-  canonical_row_sha256: 628b292e59c1a3c635e1c035084d144efe55c64006fc64cc7ea702d2f29c1095
-last_event_id: task-event-e230f9701278758526003e767b888a22
+  canonical_row_sha256: 9423a261ad82b3564740f1b959b6dd22c4234f97dc864ad14ec78371f91a05b7
+last_event_id: task-event-08f7b0b2c9663593e85877599bcdc4ce
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b158107ab92da2656a604f5ab8ce78b1c64e7872dbf2b4fc653ea39196f071a8
+fragment_checksum: 1958cc9df75cfe30355410e409a389646db53ab491c566bdfe8c39b6c4be0de8

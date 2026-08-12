@@ -8287,3 +8287,32 @@ DQ/PIT evidence admission 合同。本任务没有观察到真实 Owner token，
 与 canonical DQ/PIT 复核。即使 evidence admission PASS，也不会自动产生 G2 policy values、激活 selection/
 engine 或证明策略有效。API/CLI/HTTP/Object Store/raw option export、investment interpretation、paper/live/
 broker/production 当前继续为 false/none。
+
+## TRADING-2515 Strategy Research Reopen Readiness Decision V1
+
+`config/research/strategy_research_reopen_readiness_decision_v1.yaml` 与
+`strategy_research_reopen_readiness_decision` 在任何新候选搜索、经验回测或投资结论之前，聚合并严格重验
+2449、2451、2463、2467 与 2510～2514 的当前 authority identity 和 frozen semantic facts。它不调用旧
+evaluator，也不把 engineering/page/capability PASS 转换为 strategy PASS。
+
+```text
+current reviewed authorities
+  -> bounded path + non-symlink file identity + exact SHA-256
+  -> strict YAML facts / exact requirement snippets
+     -> legacy dynamic_v3 source remains contaminated and blocked
+     -> clean S1 remains only eligible for a separate Owner-authorized run
+     -> O1 remains NOT_EVALUATED; blind re-entry policy remains INACTIVE/not-before 2027-02-01
+     -> QQQ Options token/evidence/DQ-PIT remain absent or NOT_EVALUATED
+  -> typed source facts + blocking reason taxonomy
+  -> KEEP_CLOSED + PREREGISTRATION_ONLY
+     -> empirical/search/backtest/holdout/cache/external/investment all false
+     -> QLD_CANONICAL_FULL_CACHE_DQ is recommendation only
+     -> no data lane is selected or authorized
+  -> canonical seal / bytes / SHA-256 / strict replay
+```
+
+2515 的 `PREREGISTRATION_ONLY` 只允许 governance contract 与全新假设预注册，不授权真实 research、cache
+mutation 或 external action。后继必须由 Project Owner 从 QLD canonical full-cache DQ 与 QQQ Options
+primary-window evidence 中选择唯一数据证据车道；同阶段不得并行执行两条重数据路线。Primary Research
+Window 继续从 `2021-02-22` 开始，`2022-12-01` 只保留为非默认历史边界。paper/live/broker/production
+继续为 false/none。

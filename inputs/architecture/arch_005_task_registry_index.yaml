@@ -14,7 +14,7 @@ fragment_count: 986
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 6c312cea59f39fc503bbcc372c263efab1789ed16a38a05b5ee6ae72b8151799
+final_chain_sha256: 433c6a284c29a10a76ae20563e511fd2e16a1a9275afe12bdd798f286dd15cfc
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7911,17 +7911,17 @@ fragments:
   entry_sha256: 513eb71a8f7adb270ef49785bc90128155087dad052d5c8249f91eb1bedd1fef
 - task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
   path: registry/development_tasks/8c/8cc5eee26d94e11f1a59fab01c84ff3a9fe47a30a08d48598814464aa0177c64.yaml
-  file_sha256: c907e64fdc50fa881828b143ac86aefabf59deeca80e4b9b3d98d6a6bd9b1f2b
-  fragment_checksum: b158107ab92da2656a604f5ab8ce78b1c64e7872dbf2b4fc653ea39196f071a8
+  file_sha256: 23d1a92b0bbcca874bf2910bd625e058aa25d7f8d592ac7b9fa0c71779c7f53a
+  fragment_checksum: 1958cc9df75cfe30355410e409a389646db53ab491c566bdfe8c39b6c4be0de8
   partition: active
   order: 986
   previous_entry_sha256: 513eb71a8f7adb270ef49785bc90128155087dad052d5c8249f91eb1bedd1fef
-  entry_sha256: 6c312cea59f39fc503bbcc372c263efab1789ed16a38a05b5ee6ae72b8151799
+  entry_sha256: 433c6a284c29a10a76ae20563e511fd2e16a1a9275afe12bdd798f286dd15cfc
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 3549855825181f4409f36c2ce96181b055a1963b6fd9306adb3df1683d0e9dae
-  byte_count: 1727440
+  sha256: 8ae4c018c62a5067cf0d289be13309cc11f736717e2e2f483b3138709675db2f
+  byte_count: 1727577
   row_count: 479
   generated_do_not_edit: true
 - partition: completed
@@ -8246,7 +8246,21 @@ governance_cycles:
   change_id: TRADING-2515-REGISTRATION-V1
   event_count: 1
   production_effect: none
-governance_cycle_count: 45
+- cycle_id: arch-005-s5-cycle-46
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  change_id: TRADING-2515-BASELINE-DONE-V1
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-47
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+  change_id: TRADING-2515-REQUIREMENT-BINDING-FIX-V1
+  event_count: 3
+  production_effect: none
+governance_cycle_count: 47
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8260,4 +8274,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: e8f59af02e4d14f8cf6a6f95a91660ac5f6d1534807174c53566ed3e82158906
+index_checksum: 92e7fe593163cc48c00c5d6bd4e33d9fe1f7c5b0cb4e9ec2f4e4edfbd7c6956f

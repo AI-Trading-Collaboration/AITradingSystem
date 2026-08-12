@@ -1,0 +1,25 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.strategy_research_reopen_readiness_decision
+fragment_kind: module
+owner: strategy_research_governance
+module_prefix: src/ai_trading_system/strategy_research_reopen_readiness_decision.py
+public_contracts:
+  - DEFAULT_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_POLICY_PATH
+  - AuthorityObservation
+  - AuthoritySemanticFact
+  - DataEvidenceLane
+  - PermittedResearchStage
+  - ReadinessActionRequest
+  - ReadinessAuthorityBinding
+  - ReadinessSafety
+  - ReadinessSourceFact
+  - ReadinessSourceStatus
+  - ReopenDecision
+  - StrategyResearchReopenReadinessDecision
+  - StrategyResearchReopenReadinessError
+  - StrategyResearchReopenReadinessPolicy
+  - StrategyResearchReopenReadinessPolicyLoadResult
+  - build_strategy_research_reopen_readiness_decision
+  - load_strategy_research_reopen_readiness_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture

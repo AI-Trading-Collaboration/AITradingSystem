@@ -163,6 +163,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2514_QC_QQQ_Options_Primary_Window_Derived_Aggregate_Collection_Evidence_Admission_V1.md
     coverage: DISCLOSED_EVIDENCE_ADMISSION_CONTRACT_OWNER_TOKEN_NOT_PROVIDED
     reader_summary_zh: exact Owner token、single-use action ledger、2512 Results replay 与 canonical DQ/PIT evidence admission 合同已实现；Owner 尚未签署，未运行 Cloud backtest、未取得真实 evidence 或 DQ/PIT PASS，selection 与 engine 继续 blocked。
+  - task_id: TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1
+    requirement_path: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md
+    coverage: DISCLOSED_STRATEGY_RESEARCH_REOPEN_READINESS_KEEP_CLOSED
+    reader_summary_zh: 既有 preregistration、DQ/PIT 与 external-action authority 已聚合为可重放 readiness 合同；当前仍为 KEEP_CLOSED + PREREGISTRATION_ONLY，QLD 仅是下一证据路线建议，尚未被 Owner 选择或授权。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW
