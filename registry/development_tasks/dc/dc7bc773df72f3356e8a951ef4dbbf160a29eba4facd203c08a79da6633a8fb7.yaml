@@ -14,21 +14,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: collector contract coordinator；Project Owner：后继 exact proposal 独立授权；independent
-    reviewer：未来 result evidence 复核
+  next_owner: Project Owner：后继 exact proposal 单次授权；collector coordinator：future result/DQ
+    handoff；independent reviewer：external lifecycle evidence
   requirement_refs:
   - docs/requirements/TRADING-2512_QC_QQQ_Options_Primary_Window_Export_Safe_Derived_Aggregate_Collector_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED；本任务仅实现严格离线合同/package，不执行
-    QuantConnect/cloud 外部动作
+  unstructured_legacy_blocker_or_next_step: OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED；先
+    ordinary-push exact proposal，再独立授权一次零订单 collection；无授权不得执行平台动作
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 实现 Free-quota-aware exact 10-series transport、9 supported slots/9 typed
-      unsupported、deterministic project-code renderer、strict Download Results parser、2482
-      DQ/PIT→2511 handoff；不得使用 logs/Object Store/raw rows，不得填阈值或激活 engine；focused/generated/compat/Atlas/final
-      gates PASS
+    text: 离线 Free-quota-aware 10-series collector、9 supported/9 unsupported、deterministic
+      project code、strict Results parser、canonical seals、fail-closed tests、2511 DQ
+      handoff boundary 与 Atlas disclosure 已实现；真实 run/evidence、G2 values、engine 仍 blocked
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -66,27 +65,53 @@ events:
   - change:TRADING-2512-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-ab703e1ffa25f1459502749df8239de1
+- schema_version: task_event.v1
+  task_id: TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T08:04:14Z'
+  actor: codex-collector-contract-coordinator
+  change_id: TRADING-2512-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: c4e75323f71eb5ad92a2ed60e34429acc824ae69
+  previous_state_event_id: task-event-ab703e1ffa25f1459502749df8239de1
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：后继 exact proposal 单次授权；collector coordinator：future
+      result/DQ handoff；independent reviewer：external lifecycle evidence
+    blocker_or_next_step: OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED；先
+      ordinary-push exact proposal，再独立授权一次零订单 collection；无授权不得执行平台动作
+    acceptance_criteria: 离线 Free-quota-aware 10-series collector、9 supported/9 unsupported、deterministic
+      project code、strict Results parser、canonical seals、fail-closed tests、2511 DQ
+      handoff boundary 与 Atlas disclosure 已实现；真实 run/evidence、G2 values、engine 仍 blocked
+    notes: 'Supporting requirement: docs/requirements/TRADING-2512_QC_QQQ_Options_Primary_Window_Export_Safe_Derived_Aggregate_Collector_Contract_V1.md；focused
+      collector=35 PASS；adjacent=206 PASS；page combination failure-fix=70 PASS；external_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2512-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-151652781863d33b4a4064edef777e97
 projection:
   legacy_first_eight_cells:
   - TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1
   - External validation / QC QQQ Options primary-window export-safe derived aggregate
     collector contract
   - P0
-  - IN_PROGRESS
-  - collector contract coordinator；Project Owner：后继 exact proposal 独立授权；independent
-    reviewer：未来 result evidence 复核
-  - OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED；本任务仅实现严格离线合同/package，不执行
-    QuantConnect/cloud 外部动作
-  - 实现 Free-quota-aware exact 10-series transport、9 supported slots/9 typed unsupported、deterministic
-    project-code renderer、strict Download Results parser、2482 DQ/PIT→2511 handoff；不得使用
-    logs/Object Store/raw rows，不得填阈值或激活 engine；focused/generated/compat/Atlas/final
-    gates PASS
-  - 'Supporting requirement: docs/requirements/TRADING-2512_QC_QQQ_Options_Primary_Window_Export_Safe_Derived_Aggregate_Collector_Contract_V1.md；registration
-    base=7fb7d17770c520a601450081500bda1906648992；production_effect=none、broker_action=none。'
+  - BASELINE_DONE
+  - Project Owner：后继 exact proposal 单次授权；collector coordinator：future result/DQ handoff；independent
+    reviewer：external lifecycle evidence
+  - OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED；先 ordinary-push
+    exact proposal，再独立授权一次零订单 collection；无授权不得执行平台动作
+  - 离线 Free-quota-aware 10-series collector、9 supported/9 unsupported、deterministic
+    project code、strict Results parser、canonical seals、fail-closed tests、2511 DQ handoff
+    boundary 与 Atlas disclosure 已实现；真实 run/evidence、G2 values、engine 仍 blocked
+  - 'Supporting requirement: docs/requirements/TRADING-2512_QC_QQQ_Options_Primary_Window_Export_Safe_Derived_Aggregate_Collector_Contract_V1.md；focused
+    collector=35 PASS；adjacent=206 PASS；page combination failure-fix=70 PASS；external_action=none。'
   docs_links:
   - docs/requirements/TRADING-2512_QC_QQQ_Options_Primary_Window_Export_Safe_Derived_Aggregate_Collector_Contract_V1.md
   terminal: false
-  canonical_row_sha256: b39879e13b2d2e24b1c06e9e319f200d5882a1d7b96b58870523b5e736e08167
-last_event_id: task-event-ab703e1ffa25f1459502749df8239de1
+  canonical_row_sha256: 8ea27462ace29e877453fd88282d92b9902cbaeea58705c03a09ce73f2e21a4d
+last_event_id: task-event-151652781863d33b4a4064edef777e97
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: e3e73a651e66592a539041d2916c6413d39f236e7d45421d4b1686e54f08d746
+fragment_checksum: aaf05a1fae4db45c9a584ac1ff5e05d0a56dbbdb03f99e65b38bad511c1ac4bd

@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -134,12 +134,13 @@ push exact proposal，由 Project Owner 单次授权 project mutation/backtest/e
 
 本地 parser 只接受 canonical manual Download Results bytes，并重验：
 
-- exact project id、backtest id、project-code hash、proposal/authorization/policy/repository identities；
-- exact chart name、10-series inventory、series type/unit/index、每个 series exact point count；
+- reviewed project id precheck、backtest id、project-code hash、proposal/authorization/policy/repository identities；
+- exact chart name、10-series inventory、series type/unit、每个 series exact point count；
 - point timestamp 单调、XNYS session/ordinal 可逆、session inventory 完整且没有周末/假日/额外 session；
 - finite decimal、per-statistic domain、max/min consistency、quote disposition count consistency；
 - result orders inventory empty、runtime total orders/fills/fees/volume 为零、portfolio 未投资；
-- no raw option rows、no logs-as-data、no second run、no range expansion、no prohibited action；
+- no raw option rows、no logs-as-data、no range expansion、no prohibited action；单次授权和 no-second-run
+  由独立 reviewer 对外部动作生命周期复核，不能由 Results JSON 单独推断；
 - JSON file checksum、content checksum 与 canonical evidence seal。
 
 解析成功只生成 collector evidence，DQ 状态仍为 `NOT_EVALUATED_PENDING_LOCAL_DQ_GATE`。只有调用 2482 canonical
@@ -179,7 +180,8 @@ DQ/PIT code path 并满足 exact 15-check PASS、source/range/as-of/checksum/rep
 
 ### S2：fail-closed coverage
 
-- unit/property/golden：input/result permutation identity、missing/extra/duplicate series/point/session、quota overflow、
+- unit/property/golden：JSON object/series key permutation 保持 semantic payload identity（raw file checksum 仍保留差异），
+  point permutation fail closed；missing/extra/duplicate series/point/session、quota overflow、
   timestamp/ordinal/DST/calendar drift、NaN/Inf/domain/max-min/count mismatch、range/repository/policy/code/proposal/hash drift；
 - orders/fills/nonzero portfolio、log/object-store/network/raw-row markers 与 fake authorization fail closed；
 - unsupported slots 永不生成；fixture 永不进入 production inventory。
@@ -195,7 +197,8 @@ DQ/PIT code path 并满足 exact 15-check PASS、source/range/as-of/checksum/rep
 ## 10. 验收标准
 
 1. exact 10-series transport 可在 Free quota 内无损承载 reviewed primary-window exact session inventory。
-2. 合法 Results JSON 不受 object/series/point 输入排列影响，生成 byte-identical collector evidence。
+2. 合法 Results JSON 不受 object/series key 排列影响，生成相同 semantic payload/observations；raw file checksum
+   仍忠实记录 byte 差异，因此 sealed evidence identity 可以不同。point 排列必须严格按 session/ordinal，乱序 fail closed。
 3. truncated/downsampled/tampered/extra/missing/noncanonical result、任何 order/fill/raw/prohibited marker 均 fail closed。
 4. 只生成 exact 9 supported slots；其余 9 slots 保持 typed unsupported/not-evaluated，不填零。
 5. 2511 handoff 必须经 canonical 2482 DQ/PIT exact 15-check gate，不能信任调用者声明。
@@ -203,6 +206,34 @@ DQ/PIT code path 并满足 exact 15-check PASS、source/range/as-of/checksum/rep
 7. focused、compatibility、generated authority、Atlas disclosure 与 final five-tier gates PASS。
 
 ## 11. 当前 blocker / 后继
+
+### 11.1 工程基线收口
+
+2026-08-12 已完成离线 collector contract/package：
+
+- policy file SHA-256：`48511cc64cab07b091787e2b0cb23354424248da66e7dba8866cd9ce9a766a8f`；
+- policy canonical SHA-256：`3ebdd8a4dd89aad4584fbe8bffeeabb30d9b7bd2c28cd394c0fbc346939e999f`；
+- transport-map canonical SHA-256：
+  `60c970b71d3c47337fb76452d1384f2463079ef5026239e875e78b8c37d3eab5`；
+- module SHA-256：`1c20aca322baa18c7b673167a290b5d38a20a6384f1c3a79d4af642dd32fbe2a`；
+- collector focused：`35 passed`（`-n 16 --dist loadfile`）；
+- 2510/2511/DAILY/decision adjacent：`206 passed`；
+- collector + page-effectiveness + renderer + historical 同覆盖 failure-fix：首轮
+  `68 passed / 2 failed`（旧文案与 30-task ignored page identity），完整 writer 重建并保留三条 human
+  acceptance 后同覆盖 `70 passed`；
+- canonical 页面已披露 2512，task coverage=`31`、freshness=`CURRENT`、validation=`PASS`，三条 acceptance
+  track 均保留原有真实 `PASS`；
+- formal Full 首轮=`8837 passed / 3 failed / 3 skipped`，三处失败同根因均为新增 `docs/system_flow.md`
+  后 DEVX-006D lossless shadow/source seal 未刷新；collector、页面、DQ/PIT 与策略合同无失败。已用 canonical
+  report/catalog/flow authority builder 重建为 `2878 entries / 192 fragments`，同覆盖 DEVX-006D focused
+  首轮=`13 passed / 2 failed`（仅 aggregate exact count 仍为旧值），修正后=`15 passed`。最终五级须从该
+  failure-fix final tree 重跑，Full parent 绑定 `full_20260812T090616Z`；
+- 外部 QuantConnect/cloud/API/CLI/HTTP/raw/paper/live/broker/production action=`none`。
+
+`BASELINE_DONE` 仅表示严格离线合同、renderer、parser、fail-closed tests 与页面披露已实现，不表示已执行
+collector run、已获得真实 primary-window evidence、DQ/PIT 已通过、Owner 已提供 G2 values，或策略/engine 已获批。
+
+### 11.2 仍然存在的 blocker
 
 当前 blocker：`OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED`。
 

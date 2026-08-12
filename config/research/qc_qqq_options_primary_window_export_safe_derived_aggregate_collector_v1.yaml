@@ -1,0 +1,134 @@
+schema_version: qc_qqq_options_primary_window_export_safe_derived_aggregate_collector_policy.v1
+policy_id: qc_qqq_options_primary_window_export_safe_derived_aggregate_collector_v1
+policy_version: 1.0.0
+policy_status: OWNER_REVIEW_REQUIRED_ENGINEERING_BASELINE
+task_id: TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1
+primary_research_start: '2021-02-22'
+primary_research_role: PRIMARY
+exchange_calendar: XNYS
+provider_id: QuantConnect
+dataset_id: US_EQUITY_OPTIONS_DAILY_DERIVED_AGGREGATES
+upstream_generator:
+  policy_path: config/research/qqq_options_primary_window_derived_calibration_evidence_generator_v1.yaml
+  policy_file_sha256: ec607e9d34d3ee454b997575fa94357cb3cc349bca0216c067a0a30b332d6a82
+  policy_canonical_sha256: a15e10cd03c35ae5148297c9c49b6bd990969f002b82b14294dd8fce2dbb06f2
+  implementation_path: src/ai_trading_system/qqq_options_research/primary_window_derived_calibration_evidence_generator.py
+  implementation_file_sha256: 2957d40aac5b2f595b4a6d4d8aed3cfd86c2b2c6517ae52581bb3eecb681c7b1
+platform_constraints:
+  organization_tier: FREE
+  max_custom_series: 10
+  max_points_per_series: 4000
+  max_primary_sessions: 2000
+  log_bytes_per_backtest: 10240
+  logs_as_data_carrier_allowed: false
+  object_store_allowed: false
+  result_carrier: MANUAL_DOWNLOAD_RESULTS_JSON
+  result_carrier_includes: [charts, orders, runtime_statistics]
+  result_download_requires_separate_owner_authorization: true
+  official_sources:
+  - https://www.quantconnect.com/docs/v2/cloud-platform/organizations/resources
+  - https://www.quantconnect.com/docs/v2/writing-algorithms/charting
+  - https://www.quantconnect.com/docs/v2/cloud-platform/backtesting/results
+  - https://www.lean.io/docs/v2/lean-engine/class-reference/cs/classQuantConnect_1_1Series.html
+transport:
+  chart_id: TRADING2512_EXPORT_SAFE_DERIVED_AGGREGATES_V1
+  algorithm_time_zone: America/New_York
+  point_local_hour: 12
+  point_local_minute: 0
+  decimal_places: 12
+  expected_series:
+  - series_id: S01_DELTA_RANGE
+    unit_id: ratio
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: SEL_DELTA_SOURCE_RANGE, statistic_id: delta_max, unit_id: ratio}
+    - {ordinal_second: 2, slot_id: SEL_DELTA_SOURCE_RANGE, statistic_id: delta_min, unit_id: ratio}
+  - series_id: S02_DTE_WINDOW
+    unit_id: days
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: SEL_DTE_WINDOW, statistic_id: dte_days_max, unit_id: days}
+    - {ordinal_second: 2, slot_id: SEL_DTE_WINDOW, statistic_id: dte_days_min, unit_id: days}
+  - series_id: S03_MONEYNESS_RANGE
+    unit_id: ratio
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: SEL_MONEYNESS_RANGE, statistic_id: moneyness_ratio_max, unit_id: ratio}
+    - {ordinal_second: 2, slot_id: SEL_MONEYNESS_RANGE, statistic_id: moneyness_ratio_min, unit_id: ratio}
+  - series_id: S04_OPEN_INTEREST
+    unit_id: contracts
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: SEL_OPEN_INTEREST_FLOOR, statistic_id: open_interest_max, unit_id: contracts}
+    - {ordinal_second: 2, slot_id: SEL_OPEN_INTEREST_FLOOR, statistic_id: open_interest_min_nonzero, unit_id: contracts}
+  - series_id: S05_RANK_PRIORITY
+    unit_id: contracts
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: SEL_RANK_PRIORITY, statistic_id: candidate_count, unit_id: contracts}
+    - {ordinal_second: 2, slot_id: SEL_RANK_PRIORITY, statistic_id: deterministic_tie_count, unit_id: contracts}
+  - series_id: S06_SPREAD_RANGE
+    unit_id: ratio
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: SEL_SPREAD_LIMIT, statistic_id: relative_spread_max, unit_id: ratio}
+    - {ordinal_second: 2, slot_id: SEL_SPREAD_LIMIT, statistic_id: relative_spread_min, unit_id: ratio}
+  - series_id: S07_VOLUME_RANGE
+    unit_id: contracts
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: SEL_VOLUME_FLOOR, statistic_id: volume_max, unit_id: contracts}
+    - {ordinal_second: 2, slot_id: SEL_VOLUME_FLOOR, statistic_id: volume_min_nonzero, unit_id: contracts}
+  - series_id: S08_ASK_RANGE
+    unit_id: usd
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: EXE_MARKETABLE_LIMIT, statistic_id: ask_price_max, unit_id: usd}
+    - {ordinal_second: 2, slot_id: EXE_MARKETABLE_LIMIT, statistic_id: ask_price_min, unit_id: usd}
+  - series_id: S09_QUOTE_DISPOSITION_A
+    unit_id: quotes
+    points_per_session: 2
+    mappings:
+    - {ordinal_second: 1, slot_id: EXE_QUOTE_DISPOSITION, statistic_id: missing_quote_count, unit_id: quotes}
+    - {ordinal_second: 2, slot_id: EXE_QUOTE_DISPOSITION, statistic_id: one_sided_quote_count, unit_id: quotes}
+  - series_id: S10_QUOTE_DISPOSITION_B
+    unit_id: quotes
+    points_per_session: 1
+    mappings:
+    - {ordinal_second: 1, slot_id: EXE_QUOTE_DISPOSITION, statistic_id: two_sided_quote_count, unit_id: quotes}
+supported_slots:
+- SEL_DELTA_SOURCE_RANGE
+- SEL_DTE_WINDOW
+- SEL_MONEYNESS_RANGE
+- SEL_OPEN_INTEREST_FLOOR
+- SEL_RANK_PRIORITY
+- SEL_SPREAD_LIMIT
+- SEL_VOLUME_FLOOR
+- EXE_MARKETABLE_LIMIT
+- EXE_QUOTE_DISPOSITION
+unsupported_slots:
+- {slot_id: ACC_CASH_RESERVATION, reason_code: ZERO_ORDER_ACCOUNTING_NOT_OBSERVED}
+- {slot_id: ACC_DQ_PIT_REPRO, reason_code: LOCAL_DQ_GATE_REQUIRED}
+- {slot_id: ACC_FEE_SCHEDULE, reason_code: ZERO_ORDER_ACCOUNTING_NOT_OBSERVED}
+- {slot_id: ACC_RESULT_INCLUSION, reason_code: LOCAL_ADMISSION_REQUIRED}
+- {slot_id: ACC_SAMPLE_COVERAGE, reason_code: LOCAL_ADMISSION_REQUIRED}
+- {slot_id: ACC_SIZING_EXPOSURE, reason_code: ZERO_ORDER_ACCOUNTING_NOT_OBSERVED}
+- {slot_id: LIFE_EXPIRY_EXIT_GUARD, reason_code: ZERO_ORDER_LIFECYCLE_NOT_OBSERVED}
+- {slot_id: LIFE_TERMINAL_VALUATION, reason_code: ZERO_ORDER_LIFECYCLE_NOT_OBSERVED}
+- {slot_id: SEL_QUOTE_FRESHNESS, reason_code: DAILY_DATA_HAS_NO_INTRADAY_QUOTE_AGE}
+safety:
+  authorization_status: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+  owner_policy_value_count: 0
+  executable_policy_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  orders: 0
+  fills: 0
+  external_action_authorized: false
+  investment_interpretation_allowed: false
+  raw_options_data_export_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

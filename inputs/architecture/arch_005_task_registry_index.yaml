@@ -14,7 +14,7 @@ fragment_count: 982
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: c9efdbd9516db0c8d8088b64ccceafd8321235ae9484a2d21f0ca115b369d0af
+final_chain_sha256: 3807cacf9925db6be05792ee584d515e7eb6b83b4a8c9dd24e85ce982057aa86
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7879,17 +7879,17 @@ fragments:
   entry_sha256: 9a7e574de0a329f5c7b0aff2923fea51f3b71f4e6324c75ffc7095320d76729a
 - task_id: TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1
   path: registry/development_tasks/dc/dc7bc773df72f3356e8a951ef4dbbf160a29eba4facd203c08a79da6633a8fb7.yaml
-  file_sha256: 30bf0853bb047e0cdb373c53f87e411381a2766cf0bc99ba0bbf91fc88514431
-  fragment_checksum: e3e73a651e66592a539041d2916c6413d39f236e7d45421d4b1686e54f08d746
+  file_sha256: cf0bc25e829b8202623da4503d9d945b9d8dcb212d270331b1a125143818b5d7
+  fragment_checksum: aaf05a1fae4db45c9a584ac1ff5e05d0a56dbbdb03f99e65b38bad511c1ac4bd
   partition: active
   order: 982
   previous_entry_sha256: 9a7e574de0a329f5c7b0aff2923fea51f3b71f4e6324c75ffc7095320d76729a
-  entry_sha256: c9efdbd9516db0c8d8088b64ccceafd8321235ae9484a2d21f0ca115b369d0af
+  entry_sha256: 3807cacf9925db6be05792ee584d515e7eb6b83b4a8c9dd24e85ce982057aa86
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: a088d8e4caa46c92adaca4d0f37fde27112bbff71561985cf8a58fb883e9ea2d
-  byte_count: 1723563
+  sha256: f250008311f3f3f3fdec28ae92adabcb9a536b0195d1a87721917bbfbd791cf1
+  byte_count: 1723568
   row_count: 475
   generated_do_not_edit: true
 - partition: completed
@@ -8130,7 +8130,14 @@ governance_cycles:
   change_id: TRADING-2512-REGISTRATION-V1
   event_count: 1
   production_effect: none
-governance_cycle_count: 33
+- cycle_id: arch-005-s5-cycle-34
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1
+  change_id: TRADING-2512-BASELINE-DONE-V1
+  event_count: 2
+  production_effect: none
+governance_cycle_count: 34
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8144,4 +8151,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 354c5072369ced6545d8387ff2ecdab328a257f45fe4ec43b60748778653f521
+index_checksum: d2051c14574cba560e3ad862032488501ac97c5de0627871577b18d564a7b937

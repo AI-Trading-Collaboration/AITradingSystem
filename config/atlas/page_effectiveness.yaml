@@ -151,6 +151,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2511_QQQ_Options_Primary_Window_Derived_Calibration_Evidence_Generator_V1.md
     coverage: DISCLOSED_DERIVED_EVIDENCE_GENERATOR_SOURCE_BLOCKED
     reader_summary_zh: export-safe per-session/per-slot 派生证据生成器、canonical DQ/PIT gate、deterministic package replay 已实现；production source inventory 仍为空，未生成真实 policy 值，selection 与 engine 继续 blocked。
+  - task_id: TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2512_QC_QQQ_Options_Primary_Window_Export_Safe_Derived_Aggregate_Collector_Contract_V1.md
+    coverage: DISCLOSED_EXPORT_SAFE_COLLECTOR_CONTRACT_RUN_NOT_AUTHORIZED
+    reader_summary_zh: Free-quota-aware 10-series DAILY collector contract、deterministic project code 与 strict Results parser 已实现；尚无单次 Owner 授权、真实 primary-window run 或 DQ-admitted evidence，policy、selection 与 engine 继续 blocked。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

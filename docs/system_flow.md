@@ -8184,3 +8184,36 @@ engine/backtest。当前 blocker 为 `PRIMARY_WINDOW_DERIVED_SESSION_AGGREGATES_
 derived-aggregate collection run，且 Owner 仍须逐 slot 另行提供 typed G2 value、rationale、evidence refs 与
 review/expiry metadata。QuantConnect/cloud/API/CLI/HTTP/raw export、investment interpretation、paper/live/
 broker/production 继续为 false/none。
+
+## TRADING-2512 QC QQQ Options Primary-Window Export-Safe Derived Aggregate Collector V1
+
+`config/research/qc_qqq_options_primary_window_export_safe_derived_aggregate_collector_v1.yaml` 与
+`qqq_options_research.primary_window_export_safe_derived_aggregate_collector` 为 2511 补上严格离线的
+QuantConnect DAILY collector contract、project-code renderer 与 Download Results parser。它定义未来一次另行
+授权的零订单 run 怎样在 Free chart quota 内传递 export-safe session aggregates；本任务本身不访问平台。
+
+```text
+explicit PRIMARY scope (start=2021-02-22, reviewed end, exact XNYS sessions)
+  -> Free quota precheck: exact 10 custom series / <= 4,000 points each
+  -> deterministic QQQ Equity DAILY RAW + QQQ Option DAILY project code
+     -> complete observed-chain validity population, no policy thresholds
+     -> 9 supported slots / 19 descriptive statistics
+     -> no order / no fill / no raw rows / no logs-as-data / no Object Store
+  -> separately ordinary-pushed proposal + single-use Owner authorization required
+  -> manual Download Results JSON only
+     -> project/code/proposal/authorization/policy/repository/range binding
+     -> exact chart/series/session/ordinal/finite/domain/count replay
+     -> order/fill/portfolio/raw/log/Object Store marker fail closed
+  -> collector evidence
+     -> exact 9 supported observations per session
+     -> exact 9 typed unsupported slots, including DAILY quote freshness
+     -> DQ = NOT_EVALUATED_PENDING_LOCAL_DQ_GATE
+  -> canonical 2482 DQ/PIT gate required before any 2511 source bundle
+  -> owner_policy_value_count=0 / selection=false / engine blocked / cash preserved
+```
+
+2512 只解决“如何安全取得 2511 所需的派生 session aggregates”的工程合同，不提供真实 primary-window
+evidence，也不把 observed min/max/count 解释为 DTE、delta、moneyness、spread、OI、volume 或 execution policy。
+当前 blocker 为 `OWNER_AUTHORIZED_PRIMARY_WINDOW_DERIVED_AGGREGATE_RUN_NOT_PROVIDED`。未来运行必须先封存 exact
+proposal，再由 Project Owner 独立授权；QuantConnect/cloud/API/CLI/HTTP/raw export、investment interpretation、
+paper/live/broker/production 当前继续为 false/none。

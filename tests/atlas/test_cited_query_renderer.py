@@ -118,8 +118,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "LIMITED 不等于研究失败",
         "先确认：这张页面现在还能不能信",
         "这张页面现在还能不能信",
-        "QQQ Options 的 DAILY 工程合同与 G3 calibration evidence 合同已建立",
-        "18 个 G3 slots 尚无 primary-window derived calibration evidence",
+        "QQQ Options 的 DAILY 工程、G3 evidence 与 export-safe collector 合同已建立",
+        "18 个 G3 slots 尚无经 DQ/PIT admission 的 primary-window evidence",
         "真实 Owner attestation 已按 canonical admission 合同封存",
         "37-slot v2 catalog、deterministic migration 与 typed evidence admission 已建立",
         "页面把工程能力、研究证据和页面验收分开汇总",
@@ -261,7 +261,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="30"' in html
+    assert 'data-task-coverage-count="31"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -272,6 +272,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     )
     assert (
         'data-successor-task="TRADING-2511_QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_GENERATOR_V1"'
+        in html
+    )
+    assert (
+        'data-successor-task="TRADING-2512_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EXPORT_SAFE_DERIVED_AGGREGATE_COLLECTOR_CONTRACT_V1"'
         in html
     )
     assert html.count('data-reader-section="downstream_use"') == 8
