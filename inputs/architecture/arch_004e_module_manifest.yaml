@@ -3,7 +3,7 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 source_root: src/ai_trading_system
-module_count: 1108
+module_count: 1109
 orphan_count: 0
 specific_overlap_count: 0
 modules:
@@ -189,7 +189,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.cited_query_renderer
   path: src/ai_trading_system/atlas/cited_query_renderer.py
-  sha256: 1c3c5e086fec5d98f4739ae1aa71fa5fc98f0e09ace7b44eaa219b9705e13204
+  sha256: 99e51445a218c08fe8ea027e22db5bbe3f9aae1ab2983383ff1fb6cbee28739c
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -409,7 +409,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.atlas.page_effectiveness
   path: src/ai_trading_system/atlas/page_effectiveness.py
-  sha256: 660e09aa436ce446cba73eabc74005a791d0af4ab94da43665b8dd04e317af2c
+  sha256: c1fb385b6c0d01467bd8be9a2448c8031d04ae34a16896bff399448e606a40ef
   rule_id: root_modules_fallback
   owner_profile: general
   owners:
@@ -2963,7 +2963,7 @@ modules:
   shared_integration: false
 - module_id: src.ai_trading_system.contracts.strategy_research_page_effectiveness
   path: src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
-  sha256: 762239aaf87e7cd8cd81e9389d4155b3486c6fecbf93fa2fc7ab4c8eb20d144c
+  sha256: a2ae6a29d589d0913b4d54757f6bde9ec9d8b880ce57585649bfe96e64c4dd0c
   rule_id: contracts
   owner_profile: architecture
   owners:
@@ -16728,6 +16728,26 @@ modules:
 - module_id: src.ai_trading_system.qqq_options_research.position_lifecycle
   path: src/ai_trading_system/qqq_options_research/position_lifecycle.py
   sha256: 8f5b8b28773be3a71366cf906ad1cc0a3b4721d91fc3f4450f7028959550d322
+  rule_id: root_modules_fallback
+  owner_profile: general
+  owners:
+    code_owner: system_engineering
+    policy_owner: architecture_governance
+    data_owner: data_governance
+    artifact_owner: system_reporting
+    runtime_owner: system_operations
+  layer: legacy_monolith
+  category: root_module_migration_debt
+  public_contract: false
+  deprecation_status: migrate_by_arch_004g_lane
+  test_globs:
+  - tests/test_*.py
+  validation_tiers:
+  - fast-unit
+  shared_integration: false
+- module_id: src.ai_trading_system.qqq_options_research.primary_window_policy_calibration
+  path: src/ai_trading_system/qqq_options_research/primary_window_policy_calibration.py
+  sha256: 343f9ebd9f8afb9cbf00f7b39309c334ea395ecad7a6c6f9563085a73d101c49
   rule_id: root_modules_fallback
   owner_profile: general
   owners:

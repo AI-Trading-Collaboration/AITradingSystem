@@ -1,0 +1,29 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_primary_window_policy_calibration
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/primary_window_policy_calibration.py
+public_contracts:
+  - DEFAULT_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_PATH
+  - AdmittedCalibrationEvidence
+  - CalibrationAggregateStatistic
+  - CalibrationEvidenceReference
+  - CalibrationEvidenceRequirement
+  - CalibrationReadinessStatus
+  - CalibrationSafety
+  - CalibrationSlotEvidenceStatus
+  - CalibrationSlotReadiness
+  - QQQOptionsPrimaryWindowCalibrationContractError
+  - QQQOptionsPrimaryWindowCalibrationEvaluation
+  - QQQOptionsPrimaryWindowCalibrationEvidenceBundleReceipt
+  - QQQOptionsPrimaryWindowCalibrationEvidenceRecord
+  - QQQOptionsPrimaryWindowCalibrationPolicy
+  - QQQOptionsPrimaryWindowCalibrationPolicyLoadResult
+  - QQQOptionsPrimaryWindowCalibrationReadinessReport
+  - QQQOptionsPrimaryWindowCalibrationRequirementCatalog
+  - QQQOptionsPrimaryWindowOwnerReviewHandoff
+  - build_qqq_options_primary_window_calibration_evaluation
+  - load_qqq_options_primary_window_calibration_policy
+  - resolve_qqq_options_primary_window_calibration_evaluation
+compatibility_facades: []
+deprecation_status: active_reference_architecture

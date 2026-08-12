@@ -701,9 +701,7 @@ def _render_stage_axis_summary(record: StageWorkProgressRecord) -> str:
     capability_label, capability_tone = _CAPABILITY_PROGRESS_PRESENTATION[
         record.capability_progress
     ]
-    research_label, research_tone = _RESEARCH_EFFECT_PRESENTATION[
-        record.research_effect
-    ]
+    research_label, research_tone = _RESEARCH_EFFECT_PRESENTATION[record.research_effect]
     return (
         '<div class="stage-axis-summary" aria-label="工程与研究进度">'
         f'<span class="stage-axis-chip {escape(capability_tone)}" '
@@ -799,21 +797,21 @@ def _render_flow_progress_matrix(
         '<div class="progress-matrix-heading">'
         '<div><p class="section-kicker">THREE AXES · DO NOT MERGE</p>'
         '<h3 id="progress-matrix-title">工程、研究、页面验收分别看</h3>'
-        '<p>同一个节点可以“工程可用”，同时“研究证据有限”。页面验收只回答这张页面是否可靠、好读，不回答策略是否有效。</p></div>'
+        "<p>同一个节点可以“工程可用”，同时“研究证据有限”。页面验收只回答这张页面是否可靠、好读，不回答策略是否有效。</p></div>"
         '<div class="strategy-conclusion-count" data-strategy-conclusion="NOT_GENERATED">'
-        '<span>策略结论通过</span>'
+        "<span>策略结论通过</span>"
         f"<strong>{strategy_conclusion_pass_count}</strong>"
-        '<small>本页没有生成投资结论</small></div></div>'
+        "<small>本页没有生成投资结论</small></div></div>"
         '<div class="progress-matrix-grid">'
         '<article class="progress-matrix-card" data-progress-matrix="capability">'
         f'<div class="progress-matrix-card-head"><span>工程进度</span><strong>{matrix.capability_available} / {matrix.stage_count} 能力可用</strong></div>'
-        f'<ul>{engineering_items}</ul><p>回答“工具或合同是否已经做出来”，不回答策略表现。</p></article>'
+        f"<ul>{engineering_items}</ul><p>回答“工具或合同是否已经做出来”，不回答策略表现。</p></article>"
         '<article class="progress-matrix-card" data-progress-matrix="research">'
         f'<div class="progress-matrix-card-head"><span>策略研究进度</span><strong>{matrix.research_limited_evidence} 个节点只有有限证据</strong></div>'
-        f'<ul>{research_items}</ul><p>回答“是否新增支持策略判断的证据”；有限不等于通过。</p></article>'
+        f"<ul>{research_items}</ul><p>回答“是否新增支持策略判断的证据”；有限不等于通过。</p></article>"
         '<article class="progress-matrix-card" data-progress-matrix="page_acceptance">'
         f'<div class="progress-matrix-card-head"><span>页面验收</span><strong>{acceptance_pass_count} / {len(manifest.acceptance)} 已通过</strong></div>'
-        f'<ul>{acceptance_items}</ul><p>三条验收互不代签，人工验收只能来自真实人工事实。</p></article>'
+        f"<ul>{acceptance_items}</ul><p>三条验收互不代签，人工验收只能来自真实人工事实。</p></article>"
         "</div>"
         '<p class="progress-matrix-warning"><strong>最重要的边界：</strong>绿色的“能力可用”“已验证”或页面验收 PASS，都不等于 strategy PASS、收益稳健或可以下单。</p>'
         "</section>"
@@ -932,9 +930,7 @@ def _render_work_progress_explanation(
     concepts: Mapping[str, ReaderConcept],
 ) -> str:
     work_items = "".join(f"<li>{escape(item)}</li>" for item in record.work_items_zh)
-    expected_outputs = "".join(
-        f"<li>{escape(item)}</li>" for item in record.expected_outputs_zh
-    )
+    expected_outputs = "".join(f"<li>{escape(item)}</li>" for item in record.expected_outputs_zh)
     concept_links = "".join(
         (
             f'<a class="concept-link" href="#reader-concept-{escape(concept_id)}" '
@@ -1104,7 +1100,7 @@ def _render_concept_library(
             f'data-concept-id="{escape(concept.concept_id)}" tabindex="-1">'
             '<div class="concept-card-head">'
             f"<h4>{escape(concept.display_name_zh)}</h4>"
-            f'<code>{escape(concept.concept_id)}</code>'
+            f"<code>{escape(concept.concept_id)}</code>"
             "</div>"
             '<dl class="concept-explanation">'
             f"<div><dt>一句话解释</dt><dd>{escape(concept.plain_definition_zh)}</dd></div>"
@@ -1146,7 +1142,7 @@ def _render_concept_library(
         '<div class="concept-library-head">'
         '<p class="section-kicker">RECURSIVE EXPLANATION · CLOSED CONCEPT GRAPH</p>'
         '<h3 id="reader-concept-library-title">陌生概念可以继续解释，并能返回原流程节点</h3>'
-        '<p>每个概念只用通俗定义、用途和页面实例说明；“继续解释”只指向已登记概念，系统会拒绝缺失引用和循环解释。</p>'
+        "<p>每个概念只用通俗定义、用途和页面实例说明；“继续解释”只指向已登记概念，系统会拒绝缺失引用和循环解释。</p>"
         "</div>"
         f'<div class="concept-grid">{cards}</div>'
         "</section>"
@@ -1522,7 +1518,7 @@ _PAGE_ACCEPTANCE_LABELS = {
 
 def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
-    if len(manifest.task_coverage) != 28:
+    if len(manifest.task_coverage) != 29:
         raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
     acceptance = "".join(
         (
@@ -1544,7 +1540,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2509
+        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2510
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -1561,11 +1557,11 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
         </div>
       </div>
       <div class="reader-answer-grid" aria-label="读者先回答的六个问题">
-        <article><span>01 · 当前主线</span><strong>QQQ Options 的 DAILY 工程合同正在完善，但真实策略仍保持 NO-GO / policy blocked。</strong></article>
-        <article><span>02 · 最大阻塞</span><strong>28 个 selection、execution、accounting、lifecycle 决策还没有真实 Owner 输入，完整历史证据也未形成。</strong></article>
+        <article><span>01 · 当前主线</span><strong>QQQ Options 的 DAILY 工程合同与 G3 calibration evidence 合同已建立，但真实策略仍保持 NO-GO / policy blocked。</strong></article>
+        <article><span>02 · 最大阻塞</span><strong>18 个 G3 slots 尚无 primary-window derived calibration evidence，G2 policy value 数仍为 0。</strong></article>
         <article><span>03 · 已做到什么</span><strong>工程合同、DQ/PIT、离线 mechanics 与证据结构可重放；这只是能力，不是盈利或风险证据。</strong></article>
         <article><span>04 · 不能推出什么</span><strong>不能推出策略有效、收益稳健、风险可接受，也不能把局部 capability GO 解释成 strategy PASS。</strong></article>
-        <article><span>05 · 下一步</span><strong>Project owner 先提供 typed decisions；之后另立受治理任务实现真实 DAILY engine，并重新生成证据。</strong></article>
+        <article><span>05 · 下一步</span><strong>先由受治理后继生成 18-slot primary-window derived evidence，再由 Project Owner 审阅并另行提供 typed G2 policy。</strong></article>
         <article class="reader-answer-stop"><span>06 · 现在能否投资或下单</span><strong>不能。selection=false、orders/fills=0；本页不授权真实 engine、外部动作或交易。</strong></article>
       </div>
       <div class="effectiveness-boundary">
@@ -1575,7 +1571,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新 <code>ENGINEERING_VALIDATION</code>；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage">
-          <summary>查看 TRADING-2494–2509 如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2510 如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -1585,7 +1581,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2509</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2510</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
       </details>
     </section>

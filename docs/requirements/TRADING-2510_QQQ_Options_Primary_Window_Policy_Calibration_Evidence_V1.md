@@ -6,7 +6,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -127,6 +127,23 @@ Admission 必须读取并校验 canonical evidence bytes，不能信任调用者
 3. empty/partial/complete evidence 使用 typed 状态，complete 也不越权形成 policy value 或 executable policy。
 4. 无新增投资阈值、无 raw export、无 engine/backtest/external/production/broker action。
 5. focused、compatibility、generated authority 与 final five-tier gates PASS。
+
+### 7.1 BASELINE_DONE 实现事实
+
+- task-owned policy 固定 primary start、18-slot G3 scope、exact 15-check DQ contract 与全部 no-effect
+  safety；production evidence inventory 为空；
+- `primary_window_policy_calibration` 从 2509 migration/attestation 机械派生 scope，读取 evidence 与 2481
+  `DQReportRecord` canonical bytes，并输出 catalog、bundle receipt、readiness 与 Owner handoff 四类 sealed
+  records；
+- empty/partial/complete 状态分别为 `EVIDENCE_NOT_PROVIDED_POLICY_BLOCKED`、
+  `PARTIAL_EVIDENCE_POLICY_BLOCKED`、`READY_FOR_OWNER_POLICY_REVIEW_NOT_EXECUTABLE`；complete 仍不生成
+  policy values 或 executable policy；
+- negative coverage 包含 forged PASS、DQ FAIL/NOT_EVALUATED/UNKNOWN、scope/range/as-of/source/hash、
+  duplicate/non-G3、pre-window primary、raw rows、path traversal/symlink 与 permutation replay；
+- focused 2510 tests `28 passed`，core+page focused `63 passed`，2481/2482/2485–2509 adjacent
+  mechanics `276 passed`；没有 QuantConnect/cloud/API/CLI/HTTP/raw/paper/live/broker/production 动作；
+- final formal artifacts 必须来自包含本状态写回与全部 generated authority 的 exact final tree；artifact locator
+  只在 terminal handoff 回传，不在 Full 后修改 tracked bytes。
 
 ## 8. 后继与 blocker
 

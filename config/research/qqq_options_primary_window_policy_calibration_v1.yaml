@@ -1,0 +1,76 @@
+schema_version: qqq_options_primary_window_policy_calibration_policy.v1
+policy_id: qqq_options_primary_window_policy_calibration_v1
+policy_version: 1.0.0
+policy_status: CALIBRATION_EVIDENCE_CONTRACT_ONLY
+task_id: TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+primary_research_start: 2021-02-22
+primary_research_role: PRIMARY
+exchange_calendar: XNYS
+source_authority:
+  v2_policy_path: config/research/qqq_options_owner_decision_manifest_v2.yaml
+  v2_policy_file_sha256: d4f7fb3ffb196ce65000ec24fc302c44395a9d3c4dad3e2e5554683639f9ca79
+  v2_policy_canonical_sha256: 9ac542b464ba4417d67fb626dc820d2e7e331c3c154951590fdf7a409ab67272
+  attestation_raw_sha256: 8345a55a73df022ef70cb57d6d8df4d6c498cafb091647ef8e27c835cde6fccc
+  attestation_canonical_sha256: 8345a55a73df022ef70cb57d6d8df4d6c498cafb091647ef8e27c835cde6fccc
+g3_slot_ids:
+  - ACC_CASH_RESERVATION
+  - ACC_DQ_PIT_REPRO
+  - ACC_FEE_SCHEDULE
+  - ACC_RESULT_INCLUSION
+  - ACC_SAMPLE_COVERAGE
+  - ACC_SIZING_EXPOSURE
+  - EXE_MARKETABLE_LIMIT
+  - EXE_QUOTE_DISPOSITION
+  - LIFE_EXPIRY_EXIT_GUARD
+  - LIFE_TERMINAL_VALUATION
+  - SEL_DELTA_SOURCE_RANGE
+  - SEL_DTE_WINDOW
+  - SEL_MONEYNESS_RANGE
+  - SEL_OPEN_INTEREST_FLOOR
+  - SEL_QUOTE_FRESHNESS
+  - SEL_RANK_PRIORITY
+  - SEL_SPREAD_LIMIT
+  - SEL_VOLUME_FLOOR
+dq_contract:
+  scope: qqq_options_event_dq_pit_identity
+  report_version: 1.0.0
+  policy_id: qqq_options_dq_pit_identity_v1
+  policy_version: 1.0.0
+  policy_sha256: 1e0128c40d9b125f5ce7d2a264f8308eb6885af70ebbdfe2184fed9af85b2358
+  required_check_ids:
+    - cache_identity
+    - chain_presence
+    - engine_identity
+    - evidence_identity
+    - exchange_calendar_identity
+    - fill_forward_ambiguity
+    - local_cache_dq_scope_separation
+    - open_interest_freshness
+    - order_fill_chronology
+    - prior_day_model_freshness
+    - provider_raw_checksum
+    - quote_freshness
+    - quote_integrity
+    - signal_selection_chronology
+    - symbol_mapping_identity
+evidence_contract:
+  schema_version: qqq_options_primary_window_calibration_evidence.v1
+  derived_export_safe_required: true
+  raw_option_rows_prohibited: true
+  canonical_dq_pass_required: true
+  deterministic_input_order_required: true
+safety:
+  maximum_status: READY_FOR_OWNER_POLICY_REVIEW_NOT_EXECUTABLE
+  owner_policy_value_count: 0
+  executable_policy_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  orders: 0
+  fills: 0
+  external_action_authorized: false
+  investment_interpretation_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

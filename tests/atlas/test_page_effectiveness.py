@@ -26,9 +26,9 @@ ROOT = Path(__file__).resolve().parents[2]
 PAGE_LOCATOR = "outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html"
 
 
-def _rendered(payload: bytes = b"<!doctype html><title>Atlas</title>\n") -> tuple[
-    tuple[PageArtifactIdentity, ...], dict[str, bytes]
-]:
+def _rendered(
+    payload: bytes = b"<!doctype html><title>Atlas</title>\n",
+) -> tuple[tuple[PageArtifactIdentity, ...], dict[str, bytes]]:
     identity = PageArtifactIdentity(
         role="ATLAS_PAGE_INDEX_HTML",
         locator=PAGE_LOCATOR,
@@ -38,12 +38,12 @@ def _rendered(payload: bytes = b"<!doctype html><title>Atlas</title>\n") -> tupl
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_twenty_eight_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_twenty_nine_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 28
+    assert len(policy.task_sources) == 29
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508, 2509)
+        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508, 2509, 2510)
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -66,15 +66,17 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     )
     assert manifest.freshness_status is PageFreshnessStatus.CURRENT
     assert (
-        manifest.freshness_status
-        is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
+        manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 28
+    assert len(manifest.task_coverage) == 29
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508, 2509)
+        f"TRADING-{number}" for number in (*range(2481, 2505), 2506, 2507, 2508, 2509, 2510)
     ]
-    assert manifest.task_coverage[-2].coverage == "INCLUDED_THREE_AXIS_PROGRESS_MATRIX"
-    assert manifest.task_coverage[-1].coverage == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
+    assert manifest.task_coverage[-2].coverage == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
+    assert (
+        manifest.task_coverage[-1].coverage
+        == "DISCLOSED_PRIMARY_WINDOW_CALIBRATION_EVIDENCE_NOT_PROVIDED"
+    )
     assert len(manifest.source_artifacts) == 15
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
     assert [item.status for item in manifest.acceptance] == [
@@ -82,9 +84,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         PageAcceptanceStatus.PENDING_REVIEW,
         PageAcceptanceStatus.PENDING_REVIEW,
     ]
-    replay = StrategyResearchPageEffectivenessManifest.from_json_bytes(
-        manifest.canonical_bytes
-    )
+    replay = StrategyResearchPageEffectivenessManifest.from_json_bytes(manifest.canonical_bytes)
     assert replay == manifest
     assert replay.content_sha256 == manifest.content_sha256
 
@@ -235,7 +235,4 @@ def test_repository_ahead_without_relevant_drift_is_not_called_current() -> None
         repository_commit="b" * 40,
         source_snapshot_commit="a" * 40,
     )
-    assert (
-        manifest.freshness_status
-        is PageFreshnessStatus.REPOSITORY_AHEAD_NO_RELEVANT_DRIFT
-    )
+    assert manifest.freshness_status is PageFreshnessStatus.REPOSITORY_AHEAD_NO_RELEVANT_DRIFT

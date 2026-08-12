@@ -118,8 +118,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "LIMITED 不等于研究失败",
         "先确认：这张页面现在还能不能信",
         "这张页面现在还能不能信",
-        "QQQ Options 的 DAILY 工程合同正在完善",
-        "28 个 selection、execution、accounting、lifecycle 决策",
+        "QQQ Options 的 DAILY 工程合同与 G3 calibration evidence 合同已建立",
+        "18 个 G3 slots 尚无 primary-window derived calibration evidence",
         "真实 Owner attestation 已按 canonical admission 合同封存",
         "37-slot v2 catalog、deterministic migration 与 typed evidence admission 已建立",
         "页面把工程能力、研究证据和页面验收分开汇总",
@@ -127,7 +127,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "ENGINEERING_VALIDATION",
         "OWNER_VISUAL_REVIEW",
         "READER_COMPREHENSION_REVIEW",
-        "data-page-freshness=\"CURRENT\"",
+        'data-page-freshness="CURRENT"',
         "策略系统全流程，以及你现在在哪里",
         "第 7 / 8 阶段",
         "当前实际关注路径",
@@ -261,8 +261,15 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="28"' in html
-    assert 'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"' in html
+    assert 'data-task-coverage-count="29"' in html
+    assert (
+        'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
+        in html
+    )
+    assert (
+        'data-successor-task="TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1"'
+        in html
+    )
     assert html.count('data-reader-section="downstream_use"') == 8
     assert html.count('data-reader-section="boundary"') == 8
     assert html.count('data-reader-section="next_trigger"') == 8
@@ -392,8 +399,7 @@ def test_progress_matrix_uses_independent_page_acceptance_facts() -> None:
         track=PageAcceptanceTrack.READER_COMPREHENSION_REVIEW,
         status=PageAcceptanceStatus.PASS,
         evidence_refs=(
-            "docs/requirements/"
-            "TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md",
+            "docs/requirements/TRADING-2506_Atlas_Work_Progress_Recursive_Explanation_V1.md",
         ),
         reviewer_id="project-owner",
         reviewed_at="2026-08-10T10:17:40Z",
@@ -411,23 +417,11 @@ def test_progress_matrix_uses_independent_page_acceptance_facts() -> None:
     assert '<article class="progress-matrix-card"' in html
     assert (
         '<article class="progress-matrix-card" '
-        'data-progress-matrix="capability"><header>'
-        not in html
+        'data-progress-matrix="capability"><header>' not in html
     )
     assert "2 / 3 已通过" in html
-    assert (
-        html.count(
-            'data-matrix-axis="page_acceptance" data-matrix-value="PASS"'
-        )
-        == 2
-    )
-    assert (
-        html.count(
-            'data-matrix-axis="page_acceptance" '
-            'data-matrix-value="PENDING_REVIEW"'
-        )
-        == 1
-    )
+    assert html.count('data-matrix-axis="page_acceptance" data-matrix-value="PASS"') == 2
+    assert html.count('data-matrix-axis="page_acceptance" data-matrix-value="PENDING_REVIEW"') == 1
     assert 'data-strategy-conclusion-pass-count="0"' in html
 
 

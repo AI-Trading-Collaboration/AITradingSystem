@@ -305,9 +305,7 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
             if identity.locator == repository_path
         )
         validation_sidecar = json.loads(
-            (canonical.parent / "page_effectiveness_validation.json").read_text(
-                encoding="utf-8"
-            )
+            (canonical.parent / "page_effectiveness_validation.json").read_text(encoding="utf-8")
         )
 
         assert validation.status == "PASS"
@@ -321,6 +319,7 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
             "TRADING-2507",
             "TRADING-2508",
             "TRADING-2509",
+            "TRADING-2510",
         ]
         assert validation_sidecar["status"] == "PASS"
         assert validation_sidecar["manifest_sha256"] == manifest.content_sha256

@@ -14,17 +14,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: codex calibration evidence coordinator；Project Owner 后续审阅 evidence 并另行提供
-    G2 policy
+  next_owner: primary-window derived evidence collection successor coordinator；Project
+    Owner 后续审阅 evidence 并另行提供 G2 policy
   requirement_refs:
   - docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 依赖 2509 v2 contract；当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED，无外部动作授权。
+  unstructured_legacy_blocker_or_next_step: exact 18-slot G3 contract 已实现；production
+    evidence inventory=0，当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED；无外部动作授权。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 建立 exact 18-slot G3 evidence intake/readiness contract；不填阈值、不建 G2、不激活 engine/backtest。
+    text: mechanical G3 scope、canonical evidence/DQ/PIT admission、empty/partial/complete
+      readiness 与 cash-preservation fail-closed；不填阈值、不建 G2、不激活 engine/backtest。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -58,21 +60,75 @@ events:
   - change:TRADING-2510-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e7286f4180d9d4d74058d3b13c48c51f
+- schema_version: task_event.v1
+  task_id: TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T02:08:20Z'
+  actor: codex_qqq_options_calibration_evidence_coordinator
+  change_id: TRADING-2510-CALIBRATION-EVIDENCE-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: 2a04be0167e880935283a413969ced91e3d95ea7
+  previous_state_event_id: task-event-e7286f4180d9d4d74058d3b13c48c51f
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: primary-window derived evidence collection successor coordinator；Project
+      Owner 后续审阅 evidence 并另行提供 G2 policy
+    blocker_or_next_step: exact 18-slot G3 contract 已实现；production evidence inventory=0，当前
+      blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED；无外部动作授权。
+    acceptance_criteria: mechanical G3 scope、canonical evidence/DQ/PIT admission、empty/partial/complete
+      readiness 与 cash-preservation fail-closed；不填阈值、不建 G2、不激活 engine/backtest。
+    notes: 2026-08-12：2510 focused 28 PASS、core+page 63 PASS、adjacent 276 PASS；页面披露
+      evidence-not-provided，final formal 绑定状态写回后的 exact tree。详见 supporting requirement。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2510-CALIBRATION-EVIDENCE-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6be4a3e15023cb027244d4da43060333
+- schema_version: task_event.v1
+  task_id: TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T02:43:40Z'
+  actor: codex_qqq_options_calibration_evidence_coordinator
+  change_id: TRADING-2510-REQUIREMENT-AUTHORITY-BINDING-FIX-V1
+  lane_id: null
+  base_commit: 2a04be0167e880935283a413969ced91e3d95ea7
+  previous_state_event_id: task-event-6be4a3e15023cb027244d4da43060333
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: primary-window derived evidence collection successor coordinator；Project
+      Owner 后续审阅 evidence 并另行提供 G2 policy
+    blocker_or_next_step: exact 18-slot G3 contract 已实现；production evidence inventory=0，当前
+      blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED；无外部动作授权。
+    acceptance_criteria: mechanical G3 scope、canonical evidence/DQ/PIT admission、empty/partial/complete
+      readiness 与 cash-preservation fail-closed；不填阈值、不建 G2、不激活 engine/backtest。
+    notes: '2026-08-12：BASELINE_DONE；28 core、63 core+page、276 adjacent PASS；supporting
+      requirement exact path: docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2510-REQUIREMENT-AUTHORITY-BINDING-FIX-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3c158df359ede2ab973e3b1400e9a9a6
 projection:
   legacy_first_eight_cells:
   - TRADING-2510_QQQ_OPTIONS_PRIMARY_WINDOW_POLICY_CALIBRATION_EVIDENCE_V1
   - Strategy research governance / QQQ Options primary-window policy calibration evidence
   - P0
-  - IN_PROGRESS
-  - codex calibration evidence coordinator；Project Owner 后续审阅 evidence 并另行提供 G2 policy
-  - 依赖 2509 v2 contract；当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED，无外部动作授权。
-  - 建立 exact 18-slot G3 evidence intake/readiness contract；不填阈值、不建 G2、不激活 engine/backtest。
-  - 2026-08-12：从 exact main 22d59f0e8b2067ab34d2b70ff201533f566549da 登记；详见 [TRADING-2510
-    Primary Window Policy Calibration Evidence](docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md)。
+  - BASELINE_DONE
+  - primary-window derived evidence collection successor coordinator；Project Owner
+    后续审阅 evidence 并另行提供 G2 policy
+  - exact 18-slot G3 contract 已实现；production evidence inventory=0，当前 blocker=PRIMARY_WINDOW_DERIVED_CALIBRATION_EVIDENCE_NOT_PROVIDED；无外部动作授权。
+  - mechanical G3 scope、canonical evidence/DQ/PIT admission、empty/partial/complete
+    readiness 与 cash-preservation fail-closed；不填阈值、不建 G2、不激活 engine/backtest。
+  - '2026-08-12：BASELINE_DONE；28 core、63 core+page、276 adjacent PASS；supporting requirement
+    exact path: docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md。'
   docs_links:
   - docs/requirements/TRADING-2510_QQQ_Options_Primary_Window_Policy_Calibration_Evidence_V1.md
   terminal: false
-  canonical_row_sha256: 3fc4517d91dedff239512d3be1fbc28724a9e986c7103f2574a0c8f8f05174fd
-last_event_id: task-event-e7286f4180d9d4d74058d3b13c48c51f
+  canonical_row_sha256: e588317ad3151fc9cf6e25250c350666d46d72d3bd9674166f987933a547aa92
+last_event_id: task-event-3c158df359ede2ab973e3b1400e9a9a6
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 3fbc03ccde8f13af116002511aac41f048ed710f5e18af88eca5d95bd85c90f8
+fragment_checksum: 42397239c757874dab4a219347fd02a7597e3b3644c2259d999711112b9edb2c

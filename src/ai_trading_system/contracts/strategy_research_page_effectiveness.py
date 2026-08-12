@@ -45,8 +45,7 @@ class PageValidityLayer(StrEnum):
 
 def canonical_json_bytes(payload: object) -> bytes:
     return (
-        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("utf-8")
 
 
@@ -271,9 +270,7 @@ class StrategyResearchPageEffectivenessManifest:
             ("source_snapshot_commit", self.source_snapshot_commit),
         ):
             if not _GIT_SHA.fullmatch(value):
-                raise PageEffectivenessContractError(
-                    f"PAGE_EFFECTIVENESS_GIT_SHA_INVALID:{field}"
-                )
+                raise PageEffectivenessContractError(f"PAGE_EFFECTIVENESS_GIT_SHA_INVALID:{field}")
         if not _SHA256.fullmatch(self.policy_sha256):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_POLICY_SHA_INVALID")
         if self.primary_research_start != "2021-02-22":
@@ -281,15 +278,13 @@ class StrategyResearchPageEffectivenessManifest:
         if self.validity_layers != tuple(PageValidityLayer):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_VALIDITY_LAYER_SET_INVALID")
         if (
-            len(self.task_coverage) != 28
-            or len({item.task_id for item in self.task_coverage}) != 28
+            len(self.task_coverage) != 29
+            or len({item.task_id for item in self.task_coverage}) != 29
         ):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_TASK_COVERAGE_SET_INVALID")
         if len({item.locator for item in self.source_artifacts}) != len(self.source_artifacts):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_SOURCE_DUPLICATE")
-        if len({item.locator for item in self.rendered_artifacts}) != len(
-            self.rendered_artifacts
-        ):
+        if len({item.locator for item in self.rendered_artifacts}) != len(self.rendered_artifacts):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_RENDERED_DUPLICATE")
         if tuple(item.track for item in self.acceptance) != tuple(PageAcceptanceTrack):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_ACCEPTANCE_TRACK_SET_INVALID")
@@ -309,9 +304,10 @@ class StrategyResearchPageEffectivenessManifest:
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_EXTERNAL_EFFECT_INVALID")
         if not _SHA256.fullmatch(self.content_sha256):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_CONTENT_SHA_INVALID")
-        if self.content_sha256 != hashlib.sha256(
-            canonical_json_bytes(self._payload(include_hash=False))
-        ).hexdigest():
+        if (
+            self.content_sha256
+            != hashlib.sha256(canonical_json_bytes(self._payload(include_hash=False))).hexdigest()
+        ):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_CONTENT_SHA_MISMATCH")
 
     def _payload(self, *, include_hash: bool) -> dict[str, object]:
@@ -395,9 +391,7 @@ class StrategyResearchPageEffectivenessManifest:
         )
 
     @classmethod
-    def from_dict(
-        cls, payload: Mapping[str, object]
-    ) -> StrategyResearchPageEffectivenessManifest:
+    def from_dict(cls, payload: Mapping[str, object]) -> StrategyResearchPageEffectivenessManifest:
         expected = {
             "schema_version",
             "page_id",
@@ -465,9 +459,7 @@ class StrategyResearchPageEffectivenessManifest:
         )
 
     @classmethod
-    def from_json_bytes(
-        cls, payload: bytes
-    ) -> StrategyResearchPageEffectivenessManifest:
+    def from_json_bytes(cls, payload: bytes) -> StrategyResearchPageEffectivenessManifest:
         try:
             decoded = json.loads(payload.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:

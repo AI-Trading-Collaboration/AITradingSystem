@@ -8113,3 +8113,39 @@ Owner token 中 11 项 typed disposition，因此 2509 只记录为
 `OWNER_REVIEW_REQUIRED_NOT_IN_ATTESTED_INVENTORY`，不伪称已批准，也不改写为 v2 split slots。整个链路不填
 DTE/moneyness/delta/spread/OI/volume/quote freshness/fee/slippage/latency/partial-fill/sizing/cash/acceptance
 数值，不运行 DAILY engine/backtest，不执行 QuantConnect/cloud/API/CLI/HTTP/raw/paper/live/broker/production。
+
+## TRADING-2510 QQQ Options Primary-Window Policy Calibration Evidence V1
+
+`config/research/qqq_options_primary_window_policy_calibration_v1.yaml` 与
+`qqq_options_research.primary_window_policy_calibration` 消费 2509 immutable v2 migration 和 tracked Owner
+attestation，只机械派生 Owner 已选择为 `G3/EVIDENCE_CALIBRATION_REQUIRED` 的 exact 18-slot scope。G1 继续
+unresolved/blocked，G4 只能用于显式 sensitivity，2509 新增五轴继续 `OWNER_ACTION_UNRESOLVED`；任何调用者
+都不能把这些非 G3 slot 伪装为 calibration scope。
+
+```text
+2509 v2 policy + tracked Owner attestation + deterministic 37-slot migration
+  -> exact 18 G3 calibration requirement catalog
+     -> selection 8 / execution 2 / accounting+acceptance 6 / lifecycle 2
+  -> bound regular-file evidence intake
+     -> canonical derived aggregate bytes + metric-definition identity
+     -> PRIMARY requested/evaluated start = 2021-02-22
+     -> exact reviewed XNYS session inventory + final as-of session
+     -> provider / dataset / source checksum / no raw rows / export-safe binding
+  -> canonical 2481 DQReportRecord replay
+     -> exact 2482 scope/policy/contract/source/range identity
+     -> exact 15 checks all PASS and PIT PASS
+     -> FAIL / UNKNOWN / NOT_EVALUATED / forged PASS never admits
+  -> deterministic slot-sorted evidence bundle receipt
+  -> EVIDENCE_NOT_PROVIDED_POLICY_BLOCKED
+     | PARTIAL_EVIDENCE_POLICY_BLOCKED
+     | READY_FOR_OWNER_POLICY_REVIEW_NOT_EXECUTABLE
+  -> owner_policy_value_count=0 / selection=false / orders=fills=0
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+2510 的 complete coverage 只表示 18 个 G3 slots 都有可审阅的 derived calibration evidence，不表示证据已被
+Owner 接受为 G2 policy，也不生成推荐阈值或 executable policy。production config 当前没有真实 evidence
+inventory，因此 canonical readiness 仍为 `EVIDENCE_NOT_PROVIDED_POLICY_BLOCKED`。下一步必须由 Project Owner
+逐 slot 审阅 evidence 并另行提供 typed G2 value、rationale、evidence refs 与 review/expiry metadata；DAILY
+engine/backtest、QuantConnect/cloud/API/CLI/HTTP/raw export、investment interpretation、paper/live/broker/
+production 继续为 false/none。

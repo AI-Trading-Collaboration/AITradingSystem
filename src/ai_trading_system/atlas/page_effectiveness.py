@@ -213,7 +213,7 @@ def load_page_effectiveness_policy(
                 reader_summary_zh=str(item["reader_summary_zh"]),
             )
         )
-    if len(tasks) != 28 or len({item.task_id for item in tasks}) != 28:
+    if len(tasks) != 29 or len({item.task_id for item in tasks}) != 29:
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_POLICY_TASK_SET_INVALID")
     if tuple(_task_number(item.task_id) for item in tasks) != (
         *range(2481, 2505),
@@ -221,6 +221,7 @@ def load_page_effectiveness_policy(
         2507,
         2508,
         2509,
+        2510,
     ):
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_POLICY_TASK_ORDER_INVALID")
     defaults = _mapping(payload["acceptance_defaults"], "acceptance_defaults")
@@ -431,9 +432,7 @@ def build_page_effectiveness_manifest(
             reader_comprehension_review=reader_comprehension_review,
         ),
     )
-    replay = StrategyResearchPageEffectivenessManifest.from_json_bytes(
-        manifest.canonical_bytes
-    )
+    replay = StrategyResearchPageEffectivenessManifest.from_json_bytes(manifest.canonical_bytes)
     if replay != manifest:
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_CANONICAL_REPLAY_MISMATCH")
     return manifest
@@ -496,9 +495,10 @@ def validate_page_effectiveness_manifest(
             checks.append("CANONICAL_HTML_IDENTITY_MATCH")
         if tuple(item.track for item in manifest.acceptance) == tuple(PageAcceptanceTrack):
             checks.append("THREE_ACCEPTANCE_TRACKS_INDEPENDENT")
-        if manifest.acceptance[1].status is PageAcceptanceStatus.PASS or manifest.acceptance[
-            2
-        ].status is PageAcceptanceStatus.PASS:
+        if (
+            manifest.acceptance[1].status is PageAcceptanceStatus.PASS
+            or manifest.acceptance[2].status is PageAcceptanceStatus.PASS
+        ):
             checks.append("HUMAN_REVIEW_EXPLICITLY_ATTESTED")
         else:
             checks.append("HUMAN_REVIEW_REMAINS_PENDING")
