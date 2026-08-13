@@ -1,0 +1,85 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  task_id_sha256: 6c5ea2ffd517dcb8a38d8405c0b26ab0bf16021ca288c92c224aabeca3194ba7
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  title: null
+  domain: QQQ Options 主窗口 collector filter failure-fix 与重新授权
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex capability coordinator：完成离线 filter 修复与 versioned proposal；Project
+    Owner：仅在新 hashes 发布后决定是否签署新 token
+  requirement_refs:
+  - docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2516 token 已消费；backtest 9518360aeb329219cd83e78442a1d229
+    runtime FAILED；manual Results JSON、evidence admission 与 DQ/PIT 均未完成
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 显式投影 list[Symbol] 且不引入投资阈值；2513 historical bytes不变；新 run仅允许新proposal/code
+      hashes与Owner exact single-use token；默认cash-preservation
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-13T14:05:24Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2518-REGISTRATION-V1
+  lane_id: null
+  base_commit: de4c8f5f608e77c94ca50944681cea5e43190c75
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+    - QQQ Options 主窗口 collector filter failure-fix 与重新授权
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：完成离线 filter 修复与 versioned proposal；Project Owner：仅在新
+      hashes 发布后决定是否签署新 token
+    - 2516 token 已消费；backtest 9518360aeb329219cd83e78442a1d229 runtime FAILED；manual
+      Results JSON、evidence admission 与 DQ/PIT 均未完成
+    - 显式投影 list[Symbol] 且不引入投资阈值；2513 historical bytes不变；新 run仅允许新proposal/code hashes与Owner
+      exact single-use token；默认cash-preservation
+    - 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；parent
+      ledger=e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2；consumption=235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498；external_action=none
+      after failed first run。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2518-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-4025e27b9feeb6d5c5e668072183bfc6
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  - QQQ Options 主窗口 collector filter failure-fix 与重新授权
+  - P0
+  - IN_PROGRESS
+  - Codex capability coordinator：完成离线 filter 修复与 versioned proposal；Project Owner：仅在新
+    hashes 发布后决定是否签署新 token
+  - 2516 token 已消费；backtest 9518360aeb329219cd83e78442a1d229 runtime FAILED；manual
+    Results JSON、evidence admission 与 DQ/PIT 均未完成
+  - 显式投影 list[Symbol] 且不引入投资阈值；2513 historical bytes不变；新 run仅允许新proposal/code hashes与Owner
+    exact single-use token；默认cash-preservation
+  - 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；parent
+    ledger=e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2；consumption=235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498；external_action=none
+    after failed first run。'
+  docs_links:
+  - docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md
+  terminal: false
+  canonical_row_sha256: b842a6b639525768732ba948c2ac5582ea936293f09a20502fe1b7b46572ee68
+last_event_id: task-event-4025e27b9feeb6d5c5e668072183bfc6
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 6d68d268c3e158fa800defb8d54f2df124ac785995ce1d0eadf2cea50c14852e

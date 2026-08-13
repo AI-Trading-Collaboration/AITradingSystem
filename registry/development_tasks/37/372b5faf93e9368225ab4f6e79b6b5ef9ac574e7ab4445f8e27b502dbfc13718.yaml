@@ -13,19 +13,18 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：如继续须在当前 Codex 对话提供 2516 exact v2 token；Codex capability
-    coordinator：token 后执行唯一 bounded lifecycle
+  next_owner: Codex capability coordinator：在2518离线修复并发布新proposal；Project Owner：其后决定是否签署新single-use
+    token
   requirement_refs:
   - docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: OWNER_REFRESH_TOKEN_NOT_PROVIDED；外部 run/evidence/DQ-PIT
-    尚未发生；禁止以 dry-run 或旧 v1 token 代替
+  unstructured_legacy_blocker_or_next_step: 2516_TOKEN_CONSUMED_AND_QC_RUNTIME_OPTION_FILTER_CASTING_ERROR；backtest
+    9518360aeb329219cd83e78442a1d229 FAILED；Results/evidence/DQ-PIT未完成；禁止第二次run
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 2516 canonical validator、first-run single-use consumption、2512 Results parser、2514
-      ledger 与 2482 canonical DQ/PIT successor contract 已实现；32 项邻接 PASS；无 token 时
+    text: 2517 strict contract已正确消费首次run；ledger=e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2；consumption=235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498；orders/fills=0/0；engine
       cash-preservation
   production_effect: none
   broker_action: none
@@ -89,25 +88,50 @@ events:
   - change:TRADING-2517-BASELINE-DONE-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e943674fe8f11f730598938c5b0844b3
+- schema_version: task_event.v1
+  task_id: TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-13T14:05:24Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2517-ACTUAL-FIRST-RUN-FAILED-V1
+  lane_id: null
+  base_commit: de4c8f5f608e77c94ca50944681cea5e43190c75
+  previous_state_event_id: task-event-e943674fe8f11f730598938c5b0844b3
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator：在2518离线修复并发布新proposal；Project Owner：其后决定是否签署新single-use
+      token
+    blocker_or_next_step: 2516_TOKEN_CONSUMED_AND_QC_RUNTIME_OPTION_FILTER_CASTING_ERROR；backtest
+      9518360aeb329219cd83e78442a1d229 FAILED；Results/evidence/DQ-PIT未完成；禁止第二次run
+    acceptance_criteria: 2517 strict contract已正确消费首次run；ledger=e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2；consumption=235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498；orders/fills=0/0；engine
+      cash-preservation
+    notes: 'Supporting requirement: docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md；actual
+      action=login+one project mutation+one failed cloud run；manual Results JSON unavailable；successor=TRADING-2518。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2517-ACTUAL-FIRST-RUN-FAILED-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-edde0975821107d1753bdbf519f949f5
 projection:
   legacy_first_eight_cells:
   - TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
   - QQQ Options refresh authorization admission 与 bounded collection lifecycle
   - P0
   - BASELINE_DONE
-  - Project Owner：如继续须在当前 Codex 对话提供 2516 exact v2 token；Codex capability coordinator：token
-    后执行唯一 bounded lifecycle
-  - OWNER_REFRESH_TOKEN_NOT_PROVIDED；外部 run/evidence/DQ-PIT 尚未发生；禁止以 dry-run 或旧 v1
-    token 代替
-  - 2516 canonical validator、first-run single-use consumption、2512 Results parser、2514
-    ledger 与 2482 canonical DQ/PIT successor contract 已实现；32 项邻接 PASS；无 token 时 cash-preservation
-  - 'Supporting requirement: docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md；registration
-    boundary=3bfbc06c96a7af56f188b69d006bab158591d0d6；Owner token/run/evidence/DQ-PIT=not
-    occurred；external_action=none。'
+  - Codex capability coordinator：在2518离线修复并发布新proposal；Project Owner：其后决定是否签署新single-use
+    token
+  - 2516_TOKEN_CONSUMED_AND_QC_RUNTIME_OPTION_FILTER_CASTING_ERROR；backtest 9518360aeb329219cd83e78442a1d229
+    FAILED；Results/evidence/DQ-PIT未完成；禁止第二次run
+  - 2517 strict contract已正确消费首次run；ledger=e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2；consumption=235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498；orders/fills=0/0；engine
+    cash-preservation
+  - 'Supporting requirement: docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md；actual
+    action=login+one project mutation+one failed cloud run；manual Results JSON unavailable；successor=TRADING-2518。'
   docs_links:
   - docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md
   terminal: false
-  canonical_row_sha256: 28b56dad9cd7e87278ca2a65c42aa0d339c306d22d9c2205959f46b2f840bb2d
-last_event_id: task-event-e943674fe8f11f730598938c5b0844b3
+  canonical_row_sha256: a9a82b737cd9eaa045ed0771d8ad02c877628863dd26e6f8a666706559ba3e49
+last_event_id: task-event-edde0975821107d1753bdbf519f949f5
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: f11f8e6cd8545a1730cd48cbb3a47cf26df314e6b855af6acd20ba0fa3b6b7fe
+fragment_checksum: 38866ea49f1a7a7410de0510e8893835bc11d2ff3c337aeb66d7056d25abb083
