@@ -4,7 +4,7 @@
 
 - task id：`TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1`；
 - priority：`P0`；
-- status：`IN_PROGRESS`；
+- status：`BASELINE_DONE`；
 - governed mode：`SINGLE_LANE`；
 - contract change：`true`；
 - registration base：`65b2bc1c88bf98132b7f6d58359ae3f18cea85f9`；
@@ -165,5 +165,9 @@ Coordinator-owned shared paths：
   `6f1303384c67fbc22a2939a2a599ff0ff044e9a058c828e5d8b2cdb5904122f8`，既有
   ENGINEERING/OWNER_VISUAL/READER_COMPREHENSION 三条 PASS 的 reviewer/time/decision/evidence 原样保留。
   两个失败域的组合 focused 同覆盖=`29 passed in 23.21s`。最终五级必须以该 Full 为 failure-fix parent。
+- 2026-08-13：ordinary push 后 READ_ONLY audit 发现 canonical task registry projection 已为
+  `BASELINE_DONE`，但本 requirement 顶部仍误留 `IN_PROGRESS`。本次同任务 consistency failure-fix 仅把
+  requirement 状态同步为真实 canonical projection，并重建其严格派生的 ignored Atlas package；不新增 task event、
+  不改变合同/授权语义，也不执行 QuantConnect 或其他外部动作。
 - 当前真实状态：Owner refresh token=`NOT_PROVIDED`；external action=`none`；collection/evidence/DQ/PIT=`not occurred`；
   engine=`POLICY_BLOCKED_CASH_PRESERVATION`。
