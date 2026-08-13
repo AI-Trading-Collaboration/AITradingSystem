@@ -1,0 +1,82 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+  task_id_sha256: 372b5faf93e9368225ab4f6e79b6b5ef9ac574e7ab4445f8e27b502dbfc13718
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+  title: null
+  domain: QQQ Options refresh authorization admission 与 bounded collection lifecycle
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex capability coordinator：实现 2516 v2 token→2514 lifecycle strict
+    successor；Project Owner：另行签署 exact token并独立复核
+  requirement_refs:
+  - docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2516 fresh v2 token 与冻结 2514 v1 admission
+    seam 尚未衔接；Owner token未提供，external run/evidence/DQ-PIT均未发生
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: canonical admission 2516 token；single-use在首次Cloud run后阻止复用；复用2512 Results
+      parser与2482 DQ/PIT；无token/FAIL/UNKNOWN/tamper均cash-preservation
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-13T03:56:36Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2517-REGISTRATION-V1
+  lane_id: null
+  base_commit: 0d1d614e01a040661050329cef48ac7ecab06bda
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+    - QQQ Options refresh authorization admission 与 bounded collection lifecycle
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：实现 2516 v2 token→2514 lifecycle strict successor；Project
+      Owner：另行签署 exact token并独立复核
+    - 2516 fresh v2 token 与冻结 2514 v1 admission seam 尚未衔接；Owner token未提供，external
+      run/evidence/DQ-PIT均未发生
+    - canonical admission 2516 token；single-use在首次Cloud run后阻止复用；复用2512 Results parser与2482
+      DQ/PIT；无token/FAIL/UNKNOWN/tamper均cash-preservation
+    - 'Supporting requirement: docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md；registration
+      base=0d1d614e01a040661050329cef48ac7ecab06bda；external_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2517-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2c71eddf6f8de00e39fca5c1c8a37128
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+  - QQQ Options refresh authorization admission 与 bounded collection lifecycle
+  - P0
+  - IN_PROGRESS
+  - Codex capability coordinator：实现 2516 v2 token→2514 lifecycle strict successor；Project
+    Owner：另行签署 exact token并独立复核
+  - 2516 fresh v2 token 与冻结 2514 v1 admission seam 尚未衔接；Owner token未提供，external run/evidence/DQ-PIT均未发生
+  - canonical admission 2516 token；single-use在首次Cloud run后阻止复用；复用2512 Results parser与2482
+    DQ/PIT；无token/FAIL/UNKNOWN/tamper均cash-preservation
+  - 'Supporting requirement: docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md；registration
+    base=0d1d614e01a040661050329cef48ac7ecab06bda；external_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md
+  terminal: false
+  canonical_row_sha256: 6864eaacce7abff368ba2b377e946698cb452c2b46ea0241d432f7e23addf6d4
+last_event_id: task-event-2c71eddf6f8de00e39fca5c1c8a37128
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 619071350d0d5487d4dd291207171de6f40b3c099d19935808fb5221cf17f268
