@@ -34,6 +34,11 @@ from ai_trading_system.qqq_options_research.primary_window_export_safe_derived_a
 from ai_trading_system.qqq_options_research.primary_window_policy_calibration import (
     load_qqq_options_primary_window_calibration_policy,
 )
+from ai_trading_system.qqq_options_research.refresh_authorization_admission import (
+    admit_qc_qqq_options_refresh_owner_authorization,
+    build_qc_qqq_options_refresh_collection_evidence_admission,
+    load_qc_qqq_options_refresh_authorization_admission_policy,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 IMPLEMENTATION_SHA = "3ffc405c65dd6572d6e81f5cbc94fe2eecfe7701"
@@ -92,6 +97,69 @@ def _owner_token() -> bytes:
         ("collector", policy.collector_id),
         ("independent_reviewer", policy.independent_reviewer_id),
         ("authorization_expires_at_utc", "2026-08-19T00:00:00Z"),
+        ("authorization_single_use", "true"),
+        ("authorization_invalidates_after_evidence_collection", "true"),
+    )
+    lines = (policy.expected_owner_decision_token,) + tuple(
+        f"{key}:{value}" for key, value in fields
+    )
+    return ("\n".join(lines) + "\n").encode()
+
+
+def _refresh_owner_token() -> bytes:
+    loaded = load_qc_qqq_options_refresh_authorization_admission_policy(
+        project_root=ROOT
+    )
+    policy = loaded.policy
+    refresh = loaded.refresh_package.policy_load
+    upstream = refresh.policy.upstream_authority
+    fields = (
+        ("ordinary_pushed_main_sha", policy.predecessor_ordinary_pushed_main_sha),
+        ("refresh_policy_file_sha256", policy.refresh_policy_file_sha256),
+        ("refresh_policy_canonical_sha256", policy.refresh_policy_canonical_sha256),
+        (
+            "refresh_package_manifest_file_sha256",
+            policy.refresh_package_manifest_file_sha256,
+        ),
+        (
+            "refresh_package_manifest_content_sha256",
+            policy.refresh_package_manifest_content_sha256,
+        ),
+        ("proposal_content_sha256", policy.proposal_content_sha256),
+        ("run_scope_content_sha256", policy.run_scope_content_sha256),
+        ("project_code_lf_sha256", policy.project_code_lf_sha256),
+        ("proposal_policy_file_sha256", upstream.proposal_policy_file_sha256),
+        (
+            "proposal_policy_canonical_sha256",
+            upstream.proposal_policy_canonical_sha256,
+        ),
+        ("collector_policy_file_sha256", policy.collector_policy_file_sha256),
+        (
+            "collector_policy_canonical_sha256",
+            policy.collector_policy_canonical_sha256,
+        ),
+        ("transport_map_sha256", policy.transport_map_sha256),
+        (
+            "admission_policy_file_sha256",
+            policy.legacy_admission_policy_file_sha256,
+        ),
+        (
+            "admission_policy_canonical_sha256",
+            policy.legacy_admission_policy_canonical_sha256,
+        ),
+        ("target_project_id", str(policy.target_project_id)),
+        (
+            "requested_range",
+            f"{policy.requested_start}..{policy.requested_end}",
+        ),
+        ("expected_session_count", str(policy.expected_session_count)),
+        ("maximum_project_mutations", "1"),
+        ("maximum_cloud_backtests", "1"),
+        ("maximum_orders", "0"),
+        ("maximum_fills", "0"),
+        ("collector", policy.collector_id),
+        ("independent_reviewer", policy.independent_reviewer_id),
+        ("authorization_expires_at_utc", "2026-08-18T00:00:00Z"),
         ("authorization_single_use", "true"),
         ("authorization_invalidates_after_evidence_collection", "true"),
     )
@@ -223,6 +291,53 @@ def _actions(result_bytes: bytes) -> tuple[CollectionExternalAction, ...]:
             ordinal=4,
             action_type=CollectionActionType.EXPORT_SAFE_MANUAL_DOWNLOAD_RESULTS_COLLECTION,
             occurred_at_utc=ACTION_START + timedelta(minutes=30),
+            backtest_id=BACKTEST_ID,
+            result_file_sha256=hashlib.sha256(result_bytes).hexdigest(),
+            **shared,
+        ),
+    )
+
+
+def _refresh_actions(result_bytes: bytes) -> tuple[CollectionExternalAction, ...]:
+    loaded = load_qc_qqq_options_refresh_authorization_admission_policy(
+        project_root=ROOT
+    )
+    policy = loaded.policy
+    start = datetime(2026, 8, 13, 14, 0, tzinfo=UTC)
+    shared = {
+        "target_project_id": policy.target_project_id,
+        "project_code_lf_sha256": policy.project_code_lf_sha256,
+        "status": CollectionActionStatus.COMPLETED,
+    }
+    return (
+        CollectionExternalAction(
+            action_id="trading-2517-action-login",
+            ordinal=1,
+            action_type=CollectionActionType.QUANTCONNECT_LOGIN,
+            occurred_at_utc=start,
+            target_project_id=policy.target_project_id,
+            status=CollectionActionStatus.COMPLETED,
+        ),
+        CollectionExternalAction(
+            action_id="trading-2517-action-project",
+            ordinal=2,
+            action_type=CollectionActionType.MODIFY_EXISTING_DEDICATED_PROJECT_ONCE,
+            occurred_at_utc=start + timedelta(minutes=10),
+            **shared,
+        ),
+        CollectionExternalAction(
+            action_id="trading-2517-action-run",
+            ordinal=3,
+            action_type=CollectionActionType.RUN_ONE_ZERO_ORDER_CLOUD_BACKTEST,
+            occurred_at_utc=start + timedelta(minutes=20),
+            backtest_id=BACKTEST_ID,
+            **shared,
+        ),
+        CollectionExternalAction(
+            action_id="trading-2517-action-download",
+            ordinal=4,
+            action_type=CollectionActionType.EXPORT_SAFE_MANUAL_DOWNLOAD_RESULTS_COLLECTION,
+            occurred_at_utc=start + timedelta(minutes=30),
             backtest_id=BACKTEST_ID,
             result_file_sha256=hashlib.sha256(result_bytes).hexdigest(),
             **shared,
@@ -485,6 +600,58 @@ def test_complete_result_and_canonical_dq_pit_build_policy_blocked_handoff(
     assert receipt.owner_policy_value_count == 0
     assert bundle.source_bundle.contains_raw_option_rows is False
     assert bundle.authorization_consumption.authorization_consumed is True
+
+
+def test_refresh_v2_authorization_reuses_results_and_canonical_dq_pit_end_to_end(
+    tmp_path: Path,
+) -> None:
+    authorization_at = datetime(2026, 8, 13, 13, 0, tzinfo=UTC)
+    admission_at = datetime(2026, 8, 13, 18, 0, tzinfo=UTC)
+    admitted = admit_qc_qqq_options_refresh_owner_authorization(
+        admission_id="trading-2517-authorization-admission",
+        admitted_at_utc=authorization_at,
+        owner_decision_bytes=_refresh_owner_token(),
+        owner_decision_source="PROJECT_OWNER_CURRENT_CODEX_DIALOG",
+        project_root=ROOT,
+    )
+    result = _result_bytes()
+    dq = _dq_report(
+        result_file_sha256=hashlib.sha256(result).hexdigest(),
+        generated_at=datetime(2026, 8, 13, 17, 30, tzinfo=UTC),
+    )
+    relative = "dq/trading_2517_report.json"
+    path = tmp_path / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(dq.canonical_bytes)
+    bundle = build_qc_qqq_options_refresh_collection_evidence_admission(
+        evidence_admission_id="trading-2517-evidence-admission",
+        authorization_consumption_id="trading-2517-evidence-consumption",
+        run_attempt_consumption_id="trading-2517-run-consumption",
+        action_ledger_id="trading-2517-action-ledger",
+        admitted_at_utc=admission_at,
+        implementation_repository_code_sha=IMPLEMENTATION_SHA,
+        admitted_authorization=admitted,
+        actions=_refresh_actions(result),
+        backtest_id=BACKTEST_ID,
+        result_bytes=result,
+        dq_report_path=relative,
+        dq_report_bytes=dq.canonical_bytes,
+        reviewed_project_code_lf_sha256=(
+            admitted.policy_load.policy.project_code_lf_sha256
+        ),
+        project_root=ROOT,
+        evidence_root=tmp_path,
+    )
+    legacy = bundle.legacy_evidence_bundle
+    assert bundle.run_attempt_consumption.authorization_consumed is True
+    assert legacy.authorization_consumption.authorization_consumed is True
+    assert legacy.collector_evidence.decision == "RESULT_PARSED_DQ_NOT_EVALUATED"
+    assert legacy.evidence_admission.local_derived_aggregate_dq_status == "PASS"
+    assert legacy.evidence_admission.local_derived_aggregate_pit_status == "PASS"
+    assert legacy.evidence_admission.option_event_dq_status == "NOT_EVALUATED"
+    assert legacy.evidence_admission.engine_status == "POLICY_BLOCKED_CASH_PRESERVATION"
+    assert legacy.evidence_admission.selection_authorized is False
+    assert legacy.evidence_admission.orders == legacy.evidence_admission.fills == 0
 
 
 def test_result_object_key_permutation_preserves_payload_semantics_not_file_identity(

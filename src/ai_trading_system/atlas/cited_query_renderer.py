@@ -1518,7 +1518,7 @@ _PAGE_ACCEPTANCE_LABELS = {
 
 def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
-    if len(manifest.task_coverage) != 35:
+    if len(manifest.task_coverage) != 36:
         raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
     acceptance = "".join(
         (
@@ -1540,7 +1540,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2516
+        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2517
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">
@@ -1561,7 +1561,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
         <article><span>02 · 最大阻塞</span><strong>18 个 G3 slots 尚无经 DQ/PIT admission 的 primary-window evidence，G2 policy value 数仍为 0。</strong></article>
         <article><span>03 · 已做到什么</span><strong>工程合同、DQ/PIT、离线 mechanics、10-series collector 与证据结构可重放；这只是能力，不是盈利或风险证据。</strong></article>
         <article><span>04 · 不能推出什么</span><strong>不能推出策略有效、收益稳健、风险可接受，也不能把局部 capability GO 解释成 strategy PASS。</strong></article>
-        <article><span>05 · 下一步</span><strong>先由 Project Owner 选择唯一数据证据车道；QLD canonical full-cache DQ 目前只是推荐调查路线，QQQ Options 仍需独立 exact token 与 DQ/PIT evidence。</strong></article>
+        <article><span>05 · 下一步</span><strong>QQQ Options 已是唯一数据证据车道；下一步须由 Project Owner 提供 2516 exact token，随后才允许一次 zero-order Cloud run、manual Results collection 与 canonical DQ/PIT admission。</strong></article>
         <article class="reader-answer-stop"><span>06 · 现在能否投资或下单</span><strong>不能。selection=false、orders/fills=0；本页不授权真实 engine、外部动作或交易。</strong></article>
       </div>
       <div class="effectiveness-boundary">
@@ -1571,7 +1571,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <p>工程自动化只能更新 <code>ENGINEERING_VALIDATION</code>；Owner 视觉验收和目标读者理解验收必须来自真实人工事实。</p>
         </div>
         <details class="successor-coverage">
-          <summary>查看 TRADING-2494–2516 如何影响当前页面</summary>
+          <summary>查看 TRADING-2494–2517 如何影响当前页面</summary>
           <ul>{successor_rows}</ul>
         </details>
       </div>
@@ -1581,7 +1581,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
           <div><dt>repository commit</dt><dd><code>{escape(manifest.repository_commit)}</code></dd></div>
           <div><dt>source snapshot</dt><dd><code>{escape(manifest.source_snapshot_commit)}</code></dd></div>
           <div><dt>policy SHA-256</dt><dd><code>{escape(manifest.policy_sha256)}</code></dd></div>
-          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2516</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
+          <div><dt>覆盖范围</dt><dd><code>TRADING-2481..2504, 2506..2517</code> · {len(manifest.source_artifacts)} semantic sources</dd></div>
         </dl>
       </details>
     </section>

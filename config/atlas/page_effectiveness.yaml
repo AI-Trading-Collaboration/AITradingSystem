@@ -171,6 +171,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md
     coverage: DISCLOSED_QQQ_OPTIONS_EVIDENCE_LANE_SELECTED_FRESH_TOKEN_REQUIRED
     reader_summary_zh: QQQ Options primary-window evidence lane 已被选作下一工程路线，fresh versioned authorization request 已实现；Owner token、Cloud run、真实 evidence 与 DQ/PIT 尚未发生，KEEP_CLOSED、cash preservation、零订单与零成交边界不变。
+  - task_id: TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+    requirement_path: docs/requirements/TRADING-2517_QC_QQQ_Options_Refresh_Authorization_Admission_and_Bounded_Collection_Lifecycle_V1.md
+    coverage: DISCLOSED_REFRESH_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_NOT_PROVIDED
+    reader_summary_zh: 2516 v2 Owner token 到 2514 evidence lifecycle 的 strict successor adapter、首次 Cloud run 即消耗 single-use 的门禁与 canonical Results/DQ/PIT handoff 已实现；Owner token、外部动作、真实 evidence 与 DQ/PIT 仍未发生，engine 继续 cash preservation。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

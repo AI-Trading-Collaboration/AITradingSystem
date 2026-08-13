@@ -1,0 +1,75 @@
+schema_version: qc_qqq_options_refresh_authorization_admission_policy.v1
+policy_id: qc_qqq_options_refresh_authorization_admission_v1
+policy_version: 1.0.0
+policy_status: ENGINEERING_BASELINE_OWNER_REFRESH_TOKEN_NOT_PROVIDED
+task_id: TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1
+predecessor_ordinary_pushed_main_sha: 0d1d614e01a040661050329cef48ac7ecab06bda
+refresh_policy_path: config/research/qc_qqq_options_primary_window_evidence_lane_authorization_refresh_v1.yaml
+refresh_policy_file_sha256: 4aa2983a6cb6c0ac02d03d18a807ea3bdf553770ac545130011911bf83caca77
+refresh_policy_canonical_sha256: acd849fd8189256d4908cc162eb0c9bfe4162c669760577f21d6c960919b4882
+refresh_package_root: inputs/research/qqq_options/trading_2516_primary_window_evidence_lane_authorization_refresh_v1
+refresh_package_manifest_file_sha256: 7373474ee0279f70dcc678f6325935c82e96b90e5e46da82613bb8fcb106d924
+refresh_package_manifest_content_sha256: 0978dceaefb1acec33e2da2681075128c880d19ce4b01a194a7b38961f943381
+legacy_admission_policy_path: config/research/qc_qqq_options_primary_window_derived_aggregate_collection_evidence_admission_v1.yaml
+legacy_admission_policy_file_sha256: 8e7103680884288574b5cc0c0813085e47396f244c4fce9db275477013760a91
+legacy_admission_policy_canonical_sha256: a4e399ea022c04b579bbaaeb12bdc922e332ceb1badb0e4ba9740f17e11f824a
+proposal_content_sha256: f48732afc0d69656fbe5c62b1965296feccda30caa3279c80b9d1c20ce272240
+run_scope_content_sha256: 80c11d7073dcc86f1297a34b3497fe705069619d6f1f51927ab9b673172db15e
+project_code_lf_sha256: d7f96fbb14e03a1f248b0a14b3ebdaa1bbeeada2d15f87fb3277b98b9c6641a6
+collector_policy_file_sha256: 48511cc64cab07b091787e2b0cb23354424248da66e7dba8866cd9ce9a766a8f
+collector_policy_canonical_sha256: 3ebdd8a4dd89aad4584fbe8bffeeabb30d9b7bd2c28cd394c0fbc346939e999f
+transport_map_sha256: 60c970b71d3c47337fb76452d1384f2463079ef5026239e875e78b8c37d3eab5
+expected_owner_decision_token: owner_decision:TRADING-2516:2026-08-13:authorize_single_zero_order_primary_window_derived_aggregate_collection_v2
+target_project_id: 34808569
+requested_start: '2021-02-22'
+requested_end: '2025-12-02'
+evaluated_start: '2021-02-22'
+evaluated_end: '2025-12-02'
+primary_research_role: PRIMARY
+exchange_calendar: XNYS
+expected_session_count: 1202
+maximum_project_mutations: 1
+maximum_cloud_backtests: 1
+maximum_orders: 0
+maximum_fills: 0
+collector_id: codex_capability_coordinator
+independent_reviewer_id: project_owner
+owner_decision_source: PROJECT_OWNER_CURRENT_CODEX_DIALOG
+result_carrier: MANUAL_DOWNLOAD_RESULTS_JSON
+allowed_actions:
+- QUANTCONNECT_LOGIN
+- MODIFY_EXISTING_DEDICATED_PROJECT_ONCE
+- RUN_ONE_ZERO_ORDER_CLOUD_BACKTEST
+- EXPORT_SAFE_MANUAL_DOWNLOAD_RESULTS_COLLECTION
+prohibited_actions:
+- API
+- BROKER
+- CLI
+- HTTP
+- INVESTMENT_INTERPRETATION
+- LIVE
+- OBJECT_STORE
+- PAPER
+- PRODUCTION
+- PURCHASE_OR_SUBSCRIPTION
+- RAW_OPTIONS_DATA_DOWNLOAD
+- RAW_OPTION_ROW_LOGGING_OR_EXPORT
+- SECOND_CLOUD_BACKTEST
+safety:
+  owner_token_observed: false
+  authorization_status: OWNER_REFRESH_TOKEN_NOT_PROVIDED
+  evidence_status: EVIDENCE_NOT_ADMITTED_POLICY_BLOCKED
+  owner_policy_value_count: 0
+  executable_policy_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  selection_authorized: false
+  orders: 0
+  fills: 0
+  external_action_performed: false
+  investment_interpretation_generated: false
+  raw_options_data_export_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

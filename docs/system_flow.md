@@ -8341,3 +8341,38 @@ Cloud backtest 与 Owner manual `Download Results`；这些动作仍须后续 Ow
 固定为 `0/0`。API/CLI/HTTP/Object Store/raw option export、purchase/subscription、第二次 run、range expansion、
 investment interpretation、paper/live/broker/production 均继续禁止。本任务自身 external action、production effect
 和 broker action 均为 `none`。
+
+## TRADING-2517 QC QQQ Options Refresh Authorization Admission / Bounded Lifecycle V1
+
+`config/research/qc_qqq_options_refresh_authorization_admission_v1.yaml` 与
+`qqq_options_research.refresh_authorization_admission` 显式衔接 2516 fresh v2 Owner token 与冻结 2514 v1
+collection/evidence lifecycle。该 successor 不修改旧 token/history；它只把 2516 canonical validator 的真实
+Project-owner candidate 转成继续受 2512/2514 exact scope 约束的 collector authorization。
+
+```text
+missing Owner token
+  -> OWNER_REFRESH_TOKEN_NOT_PROVIDED
+  -> authorization_consumed=false / external_action=false
+  -> POLICY_BLOCKED_CASH_PRESERVATION / orders=0 / fills=0
+
+Project Owner current-dialog exact v2 token bytes
+  -> 2516 canonical validator
+     -> source/main/policy/package/proposal/scope/code/project/range/session/cap/reviewer/expiry bind
+     -> OWNER_REFRESH_AUTHORIZATION_ADMITTED_UNUSED
+  -> deterministic 2512 collector authorization
+  -> 2514 canonical action ledger
+     -> login / one exact project mutation / first zero-order Cloud run / manual Results JSON
+     -> first Cloud run attempt (COMPLETED or FAILED)
+        -> single-use consumed; second run prohibited
+     -> complete four-action PASS only
+        -> 2512 strict Results parser
+        -> 2482 canonical 15-check DQ/PIT report fact validation
+        -> EVIDENCE_ADMITTED_DQ_PIT_PASS_POLICY_BLOCKED
+  -> 2511/2510 per-slot evidence review only
+  -> no policy value / no selection / no engine / no investment interpretation
+```
+
+Owner token 来源必须是 Project Owner 当前 Codex 对话；本地 dry-run 或调用者自报来源不构成 authorization
+fact。run 失败、Results 缺失或 DQ/PIT FAIL/UNKNOWN/NOT_EVALUATED 不会恢复 single-use，也不会产生 evidence
+PASS。2517 离线 baseline 本身没有执行 QuantConnect login、project mutation、Cloud run 或下载；production effect
+和 broker action 保持 `none`。

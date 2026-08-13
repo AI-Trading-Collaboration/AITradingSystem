@@ -1218,9 +1218,60 @@ def build_qc_qqq_options_primary_window_collection_evidence_admission(
     project_root: Path = PROJECT_ROOT,
     evidence_root: Path | None = None,
 ) -> QCQQQOptionsCollectionEvidenceAdmissionBundle:
+    loaded, authorization, authorization_receipt = (
+        admit_qc_qqq_options_primary_window_collection_owner_authorization(
+            admission_id=authorization_admission_id,
+            admitted_at_utc=authorization_admitted_at_utc,
+            owner_decision_bytes=owner_decision_bytes,
+            project_root=project_root,
+        )
+    )
+    builder = (
+        build_qc_qqq_options_primary_window_collection_evidence_admission_from_admitted_authorization
+    )
+    return builder(
+        evidence_admission_id=evidence_admission_id,
+        authorization_consumption_id=authorization_consumption_id,
+        action_ledger_id=action_ledger_id,
+        admitted_at_utc=admitted_at_utc,
+        implementation_repository_code_sha=implementation_repository_code_sha,
+        policy_load=loaded,
+        authorization=authorization,
+        authorization_admission=authorization_receipt,
+        actions=actions,
+        backtest_id=backtest_id,
+        result_bytes=result_bytes,
+        dq_report_path=dq_report_path,
+        dq_report_bytes=dq_report_bytes,
+        reviewed_project_code_lf_sha256=reviewed_project_code_lf_sha256,
+        prior_consumption_receipts=prior_consumption_receipts,
+        project_root=project_root,
+        evidence_root=evidence_root,
+    )
+
+
+def build_qc_qqq_options_primary_window_collection_evidence_admission_from_admitted_authorization(
+    *,
+    evidence_admission_id: str,
+    authorization_consumption_id: str,
+    action_ledger_id: str,
+    admitted_at_utc: datetime,
+    implementation_repository_code_sha: str,
+    policy_load: QCQQQOptionsCollectionEvidenceAdmissionPolicyLoadResult,
+    authorization: collector_v1.QCQQQOptionsDerivedAggregateCollectorAuthorization,
+    authorization_admission: OwnerAuthorizationAdmissionReceipt,
+    actions: tuple[CollectionExternalAction, ...],
+    backtest_id: str,
+    result_bytes: bytes,
+    dq_report_path: str,
+    dq_report_bytes: bytes,
+    reviewed_project_code_lf_sha256: str,
+    prior_consumption_receipts: tuple[OwnerAuthorizationConsumptionReceipt, ...] = (),
+    project_root: Path = PROJECT_ROOT,
+    evidence_root: Path | None = None,
+) -> QCQQQOptionsCollectionEvidenceAdmissionBundle:
     admitted_at = _utc(admitted_at_utc, "admitted_at_utc")
-    authorization_admitted_at = _utc(authorization_admitted_at_utc, "authorization_admitted_at_utc")
-    if authorization_admitted_at > admitted_at:
+    if authorization_admission.admitted_at_utc > admitted_at:
         raise QCQQQOptionsCollectionEvidenceAdmissionError(
             "OWNER_AUTHORIZATION_AS_OF_MISMATCH",
             "authorization admission cannot follow evidence admission",
@@ -1228,14 +1279,57 @@ def build_qc_qqq_options_primary_window_collection_evidence_admission(
     implementation_sha = _git_sha(
         implementation_repository_code_sha, "implementation_repository_code_sha"
     )
-    loaded, authorization, authorization_receipt = (
-        admit_qc_qqq_options_primary_window_collection_owner_authorization(
-            admission_id=authorization_admission_id,
-            admitted_at_utc=authorization_admitted_at,
-            owner_decision_bytes=owner_decision_bytes,
-            project_root=project_root,
-        )
+    canonical_loaded = load_qc_qqq_options_collection_evidence_admission_policy(
+        project_root=project_root
     )
+    if policy_load != canonical_loaded:
+        raise QCQQQOptionsCollectionEvidenceAdmissionError(
+            "COLLECTION_ADMISSION_AUTHORITY_MISMATCH",
+            "caller-supplied policy load differs from canonical 2514 authority",
+        )
+    loaded = canonical_loaded
+    authorization_receipt = authorization_admission
+    proposal = loaded.proposal_package.proposal
+    policy = loaded.policy
+    if (
+        authorization.proposal_content_sha256 != proposal.content_sha256
+        or authorization.run_scope_content_sha256 != proposal.run_scope.content_sha256
+        or authorization.repository_code_sha != proposal.run_scope.repository_code_sha
+        or authorization.target_project_id != policy.target_project_id
+        or authorization.project_code_lf_sha256 != policy.project_code_lf_sha256
+        or authorization.collector_policy_file_sha256
+        != policy.collector_policy_file_sha256
+        or authorization.collector_policy_canonical_sha256
+        != policy.collector_policy_canonical_sha256
+        or authorization.allowed_actions != policy.allowed_actions
+        or authorization.prohibited_actions != policy.prohibited_actions
+        or authorization.collector_id != policy.collector_id
+        or authorization.independent_reviewer_id != policy.independent_reviewer_id
+        or authorization.maximum_project_mutations != policy.maximum_project_mutations
+        or authorization.maximum_cloud_backtests != policy.maximum_cloud_backtests
+        or authorization.maximum_orders != policy.maximum_orders
+        or authorization.maximum_fills != policy.maximum_fills
+    ):
+        raise QCQQQOptionsCollectionEvidenceAdmissionError(
+            "COLLECTION_ADMISSION_AUTHORITY_MISMATCH",
+            "pre-admitted collector authorization differs from frozen collection scope",
+        )
+    if (
+        authorization_receipt.collector_authorization_content_sha256
+        != authorization.content_sha256
+        or authorization_receipt.owner_decision_token
+        != authorization.owner_decision_token
+        or authorization_receipt.proposal_content_sha256
+        != authorization.proposal_content_sha256
+        or authorization_receipt.run_scope_content_sha256
+        != authorization.run_scope_content_sha256
+        or authorization_receipt.authorized_at_utc != authorization.authorized_at_utc
+        or authorization_receipt.expires_at_utc != authorization.expires_at_utc
+    ):
+        raise QCQQQOptionsCollectionEvidenceAdmissionError(
+            "COLLECTION_ADMISSION_AUTHORITY_MISMATCH",
+            "pre-admission receipt differs from collector authorization",
+        )
     if any(
         item.owner_decision_token == authorization.owner_decision_token
         or item.collector_authorization_content_sha256 == authorization.content_sha256
@@ -1398,5 +1492,6 @@ __all__ = [
     "admit_qc_qqq_options_primary_window_collection_owner_authorization",
     "build_qc_qqq_options_collection_external_action_ledger",
     "build_qc_qqq_options_primary_window_collection_evidence_admission",
+    "build_qc_qqq_options_primary_window_collection_evidence_admission_from_admitted_authorization",
     "load_qc_qqq_options_collection_evidence_admission_policy",
 ]

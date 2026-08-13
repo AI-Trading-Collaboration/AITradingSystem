@@ -7,7 +7,7 @@
 
 优先级：`P0`
 
-状态：`IN_PROGRESS`
+状态：`BASELINE_DONE`
 
 mode：`SINGLE_LANE`
 
@@ -231,3 +231,30 @@ Coordinator-owned shared paths：
 当前 blocker：`OWNER_REFRESH_TOKEN_NOT_PROVIDED`。该 blocker 不妨碍离线 successor contract 实现，但在 Project
 Owner 提供 exact token 前，禁止 QuantConnect login/project mutation/Cloud run/Results collection；真实 evidence、
 DQ/PIT 与 policy review 均保持未发生。
+
+## 9. 实现与验证记录
+
+- registration boundary ordinary-pushed main：
+  `3bfbc06c96a7af56f188b69d006bab158591d0d6`；
+- task policy：`config/research/qc_qqq_options_refresh_authorization_admission_v1.yaml`；
+- public implementation：
+  `ai_trading_system.qqq_options_research.refresh_authorization_admission`；
+- 2516 v2 token 仅通过 canonical validator admission；相同文本若来源标记不是
+  `PROJECT_OWNER_CURRENT_CODEX_DIALOG`，继续 typed reject，不能把本地 dry-run 变成授权事实；
+- 2512 collector authorization、2514 action ledger、Results parser、canonical 15-check DQ/PIT admission 被直接
+  复用；2514 的旧 v1 policy/token/history 不变；
+- single-use consumption 提前绑定到第一次实际 Cloud run attempt：`COMPLETED` 与 `FAILED` 都消耗并禁止
+  第二次 run；只有 login 或 project precheck 不消费；
+- 完整 evidence admission 仍要求四动作 PASS、manual Results bytes identity 与 canonical DQ/PIT PASS；否则
+  evidence 不 admission，但首次 run 的消费事实不回滚；
+- 2026-08-13 focused 2517 + 2514 邻接覆盖：`32 passed`（`-n 16 --dist loadfile`）；
+- Atlas policy/renderer focused：首轮 `19 passed / 2 failed`，仅 source inventory 去重 count 与新 coverage count
+  exact assertion stale；最小修复后相同覆盖 `21 passed`；首轮保留为 failure-fix evidence，不作为 promotion
+  evidence；
+- 当前仍无 Project Owner exact token、无 QuantConnect 外部动作、无 Results artifact、无真实 DQ/PIT report；
+  `authorization_consumed=false`、`external_action=none`、orders/fills=`0/0`、engine=
+  `POLICY_BLOCKED_CASH_PRESERVATION`。
+
+`BASELINE_DONE` 只表示严格离线 contract 与 fail-closed tests 已实现；不表示真实 collection、DQ/PIT、policy
+review、engine/backtest 或投资结论已获准。下一责任人为 Project Owner：如决定继续，须在当前 Codex 对话提供
+2516 exact token；随后由单一 coordinator 执行且只能执行一次 bounded lifecycle。
