@@ -1,0 +1,114 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+  task_id_sha256: 3874af3763c3d554fa4e5ae7dcf0db302ac002fe5be2c4caaa9e4f39c59dbe11
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+  title: null
+  domain: QQQ Options primary-window evidence lane selection and versioned authorization
+    refresh contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Project Owner：ordinary-pushed exact 2516 request 后另行审阅 fresh single-use
+    token；后继 coordinator：仅在 token 到位后执行一次 bounded zero-order collection/evidence admission
+  requirement_refs:
+  - docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Versioned refresh contract 已实现；当前 blocker=OWNER_REFRESH_TOKEN_NOT_PROVIDED，Cloud
+    run/Results/evidence/DQ-PIT 均未发生，engine 保持 POLICY_BLOCKED_CASH_PRESERVATION
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 冻结 QQQ Options 唯一证据车道、2513/2514 exact authority、PRIMARY 1202 sessions、零订单/零成交与全部禁止项；old/backdated/expired/tampered
+      token fail closed；外部动作须独立 exact token
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-12T18:37:52Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2516-REGISTRATION-V1
+  lane_id: null
+  base_commit: 65b2bc1c88bf98132b7f6d58359ae3f18cea85f9
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+    - QQQ Options primary-window evidence lane selection and versioned authorization
+      refresh contract
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：完成 versioned authorization refresh 合同；Project Owner：ordinary-pushed
+      exact request 后另行审阅并签署 fresh single-use token
+    - 2513/2514 token 日期固定为 2026-08-12；不得倒签。当前 Owner refresh token 未提供，external run/evidence/DQ-PIT
+      均未发生
+    - 冻结 QQQ Options 唯一证据车道选择；versioned successor exact-bind 2513/2514、PRIMARY 1202
+      sessions、零订单/零成交与全部禁止项；旧/倒签/过期/tampered token fail closed
+    - 'Supporting requirement: docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md；registration
+      base=65b2bc1c88bf98132b7f6d58359ae3f18cea85f9；external_action=none。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2516-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-da9a33c980494d9e9e98cf79214fcdb3
+- schema_version: task_event.v1
+  task_id: TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-12T18:55:51Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2516-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: 65b2bc1c88bf98132b7f6d58359ae3f18cea85f9
+  previous_state_event_id: task-event-da9a33c980494d9e9e98cf79214fcdb3
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：ordinary-pushed exact 2516 request 后另行审阅 fresh single-use
+      token；后继 coordinator：仅在 token 到位后执行一次 bounded zero-order collection/evidence
+      admission
+    blocker_or_next_step: Versioned refresh contract 已实现；当前 blocker=OWNER_REFRESH_TOKEN_NOT_PROVIDED，Cloud
+      run/Results/evidence/DQ-PIT 均未发生，engine 保持 POLICY_BLOCKED_CASH_PRESERVATION
+    acceptance_criteria: 冻结 QQQ Options 唯一证据车道、2513/2514 exact authority、PRIMARY 1202
+      sessions、零订单/零成交与全部禁止项；old/backdated/expired/tampered token fail closed；外部动作须独立
+      exact token
+    notes: 'Supporting requirement: docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md；task
+      focused 16 PASS；task+Atlas failure-fix 51 PASS；human acceptance facts 保留；external_action=none。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2516-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-8895261ccc93b700e686d3eaa376c01b
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+  - QQQ Options primary-window evidence lane selection and versioned authorization
+    refresh contract
+  - P0
+  - BASELINE_DONE
+  - Project Owner：ordinary-pushed exact 2516 request 后另行审阅 fresh single-use token；后继
+    coordinator：仅在 token 到位后执行一次 bounded zero-order collection/evidence admission
+  - Versioned refresh contract 已实现；当前 blocker=OWNER_REFRESH_TOKEN_NOT_PROVIDED，Cloud
+    run/Results/evidence/DQ-PIT 均未发生，engine 保持 POLICY_BLOCKED_CASH_PRESERVATION
+  - 冻结 QQQ Options 唯一证据车道、2513/2514 exact authority、PRIMARY 1202 sessions、零订单/零成交与全部禁止项；old/backdated/expired/tampered
+    token fail closed；外部动作须独立 exact token
+  - 'Supporting requirement: docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md；task
+    focused 16 PASS；task+Atlas failure-fix 51 PASS；human acceptance facts 保留；external_action=none。'
+  docs_links:
+  - docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md
+  terminal: false
+  canonical_row_sha256: 5ef72c2cac977b3f327625d52c8957d1dc4d4de7b27f8f9e1e10fd4326c4343d
+last_event_id: task-event-8895261ccc93b700e686d3eaa376c01b
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 57f491532bd088d6cc90ef44d5bb525a8be8c4c5ab1ac0ad9d815e69949995c6

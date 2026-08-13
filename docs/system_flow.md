@@ -8316,3 +8316,28 @@ mutation 或 external action。后继必须由 Project Owner 从 QLD canonical f
 primary-window evidence 中选择唯一数据证据车道；同阶段不得并行执行两条重数据路线。Primary Research
 Window 继续从 `2021-02-22` 开始，`2022-12-01` 只保留为非默认历史边界。paper/live/broker/production
 继续为 false/none。
+
+## TRADING-2516 QC QQQ Options Evidence-Lane Authorization Refresh V1
+
+`config/research/qc_qqq_options_primary_window_evidence_lane_authorization_refresh_v1.yaml` 与
+`qqq_options_research.primary_window_evidence_lane_authorization_refresh` 将 2515 的唯一数据证据车道落实为
+`QQQ_OPTIONS_PRIMARY_WINDOW_DERIVED_AGGREGATE_EVIDENCE`，同时保持 external authorization 为独立、默认拒绝
+的状态。2513/2514 的历史 token/policy/package bytes 不被覆写；2516 使用 versioned successor 消除倒签风险。
+
+```text
+2515 KEEP_CLOSED + PREREGISTRATION_ONLY
+  -> select one evidence lane: QQQ Options primary-window aggregates
+  -> replay 2513 proposal package + 2514 admission policy exact hashes
+  -> freeze PRIMARY 2021-02-22..2025-12-02 / XNYS / 1202 sessions
+  -> fresh unsigned Owner request (2026-08-13, expiry <= 168h)
+     -> missing/old/backdated/expired/tampered token => typed rejection
+     -> exact fresh token => reviewed candidate only, not consumed
+  -> Owner token / Cloud run / Results / DQ-PIT remain not occurred
+  -> KEEP_CLOSED + POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+本合同的 allowed action inventory 只有登录 QuantConnect、一次 existing dedicated project 修改、一次 zero-order
+Cloud backtest 与 Owner manual `Download Results`；这些动作仍须后续 Owner exact token 才能发生。orders/fills
+固定为 `0/0`。API/CLI/HTTP/Object Store/raw option export、purchase/subscription、第二次 run、range expansion、
+investment interpretation、paper/live/broker/production 均继续禁止。本任务自身 external action、production effect
+和 broker action 均为 `none`。

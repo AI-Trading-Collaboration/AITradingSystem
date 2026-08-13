@@ -261,7 +261,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="34"' in html
+    assert 'data-task-coverage-count="35"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -289,6 +289,11 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert (
         'data-successor-task="TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1"' in html
     )
+    assert (
+        'data-successor-task="TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1"'
+        in html
+    )
+    assert "fresh versioned authorization request 已实现" in html
     assert "KEEP_CLOSED + PREREGISTRATION_ONLY" in html
     assert "Owner 尚未签署" in html
     assert html.count('data-reader-section="downstream_use"') == 8

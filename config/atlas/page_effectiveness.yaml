@@ -167,6 +167,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2515_Strategy_Research_Reopen_Readiness_Decision_V1.md
     coverage: DISCLOSED_STRATEGY_RESEARCH_REOPEN_READINESS_KEEP_CLOSED
     reader_summary_zh: 既有 preregistration、DQ/PIT 与 external-action authority 已聚合为可重放 readiness 合同；当前仍为 KEEP_CLOSED + PREREGISTRATION_ONLY，QLD 仅是下一证据路线建议，尚未被 Owner 选择或授权。
+  - task_id: TRADING-2516_QC_QQQ_OPTIONS_PRIMARY_WINDOW_EVIDENCE_LANE_AUTHORIZATION_REFRESH_V1
+    requirement_path: docs/requirements/TRADING-2516_QC_QQQ_Options_Primary_Window_Evidence_Lane_Authorization_Refresh_V1.md
+    coverage: DISCLOSED_QQQ_OPTIONS_EVIDENCE_LANE_SELECTED_FRESH_TOKEN_REQUIRED
+    reader_summary_zh: QQQ Options primary-window evidence lane 已被选作下一工程路线，fresh versioned authorization request 已实现；Owner token、Cloud run、真实 evidence 与 DQ/PIT 尚未发生，KEEP_CLOSED、cash preservation、零订单与零成交边界不变。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW
