@@ -8376,3 +8376,39 @@ Owner token 来源必须是 Project Owner 当前 Codex 对话；本地 dry-run �
 fact。run 失败、Results 缺失或 DQ/PIT FAIL/UNKNOWN/NOT_EVALUATED 不会恢复 single-use，也不会产生 evidence
 PASS。2517 离线 baseline 本身没有执行 QuantConnect login、project mutation、Cloud run 或下载；production effect
 和 broker action 保持 `none`。
+
+## TRADING-2518 QC QQQ Options Collector Filter Failure-Fix / Reauthorization V1
+
+`config/research/qc_qqq_options_primary_window_collector_filter_failure_fix_v1.yaml`、
+`qqq_options_research.primary_window_collector_filter_failure_fix` 与 versioned 2518 package 把 2516/2517 的真实
+首次运行失败封存为 canonical fact，并为后继重新授权生成 corrected proposal。它不修改 2513 historical package，
+也不复用已消费的 2516 v2 token。
+
+```text
+2516 exact v2 Owner token + 2517 admission
+  -> login + one project mutation + first Cloud backtest attempt
+     -> project 34808569 / backtest 9518360aeb329219cd83e78442a1d229
+     -> 0 orders / 0 fills / no Results JSON
+     -> runtime FAILED: OptionFilterUniverse contracts callback cast error
+     -> ledger FAILED/FAIL + first-run consumption receipt
+     -> token consumed; second run prohibited
+  -> versioned 2518 failure receipt
+     -> exact owner-token / ledger / consumption / code / backtest lineage
+     -> evidence collection=false / DQ-PIT=NOT_EVALUATED
+  -> corrected project code
+     -> historical selector enumerable
+     -> explicit [contract.symbol for contract in contracts]
+     -> select-all transport semantics / no DTE-delta-moneyness-liquidity threshold
+     -> 2021-02-22..2025-12-02 / XNYS / 1202 sessions unchanged
+  -> unsigned v3 Owner reauthorization request
+     -> OWNER_REAUTHORIZATION_REQUIRED
+     -> no new project mutation / Cloud run / Results / evidence / DQ-PIT
+     -> owner_policy_value_count=0 / selection=false / orders=fills=0
+     -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+2518 的 `BASELINE_DONE` 只表示 casting failure 的原因、首次 run 消费事实、修正版 code/package 与重新授权模板
+已经可重放；不表示 QuantConnect capability PASS、primary-window evidence 已取得、DQ/PIT 已通过、策略有效或
+engine 已激活。新的 Cloud run 必须由 Project Owner 针对 ordinary-pushed exact 2518 package 另行签署 single-use
+v3 token。API/CLI/HTTP/Object Store/raw option export、investment interpretation、paper/live/broker/production
+继续为 false/none。

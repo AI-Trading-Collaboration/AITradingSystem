@@ -1,9 +1,10 @@
 # TRADING-2518 — QQQ Options 主窗口 Collector Filter Failure-Fix 与重新授权 V1
 
-- status: `IN_PROGRESS`
+- status: `BASELINE_DONE`
 - priority: `P0`
 - governed mode: `SINGLE_LANE`
 - registration base: `de4c8f5f608e77c94ca50944681cea5e43190c75`
+- implementation base: `2ba0e799bc5e9549eb0220f33a5c2d907de86596`
 - production effect: `none`
 - broker action: `none`
 
@@ -131,7 +132,27 @@ Coordinator-owned shared：
 
 ## 6. 当前 blocker / next owner
 
-- Codex capability coordinator：完成严格离线 failure-fix、versioned package 与验证；
-- Project Owner：仅在 corrected proposal/package/code hashes 发布后，决定是否签署新的 single-use token；
-- 当前 blocker：`2516_TOKEN_CONSUMED_AND_QC_RUNTIME_OPTION_FILTER_CASTING_ERROR`；external action、second run、
-  evidence admission、DQ/PIT、engine activation 与投资解释均禁止。
+- Codex capability coordinator：严格离线 failure-fix、versioned package 与验证已完成；
+- Project Owner：仅在 ordinary-pushed corrected proposal/package/code hashes 发布后，决定是否签署新的
+  single-use v3 token；
+- 当前 blocker：`OWNER_REAUTHORIZATION_NOT_PROVIDED_FOR_CORRECTED_TRADING_2518_PROPOSAL`；external action、
+  second run、evidence admission、DQ/PIT、engine activation 与投资解释均禁止。
+
+## 7. 实现结果
+
+- policy：`config/research/qc_qqq_options_primary_window_collector_filter_failure_fix_v1.yaml`；
+- module：`src/ai_trading_system/qqq_options_research/primary_window_collector_filter_failure_fix.py`；
+- package：`inputs/research/qqq_options/trading_2518_primary_window_collector_filter_failure_fix_v1/`；
+- corrected `main.py` LF SHA-256=
+  `064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d`；
+- failure receipt content SHA-256=
+  `eebb37bbbabe584bd38c013ef41c48fd1e8196bf7207d24c265301310c93fb07`；
+- package manifest content/canonical SHA-256=
+  `08c1b32901aa6dc67923c2432017438ac3bee7d90810d910ba2149dd2fd85931` /
+  `a9d335f5c80a425301d25a39967b8d251d90960ef1301b55e55ac5b3380a21f7`；
+- 2513 historical `main.py` LF SHA-256 仍为
+  `d7f96fbb14e03a1f248b0a14b3ebdaa1bbeeada2d15f87fb3277b98b9c6641a6`；
+- no-threshold、0 orders/fills、missing Results、DQ/PIT=`NOT_EVALUATED`、cash-preservation 均由 typed
+  policy/receipt/manifest 与 negative tests fail closed；
+- Atlas page-effectiveness successor coverage 同步到 2518，明确披露 v2 token 已消费、run FAILED、修复已完成但
+  v3 reauthorization/evidence/DQ-PIT 尚未发生。

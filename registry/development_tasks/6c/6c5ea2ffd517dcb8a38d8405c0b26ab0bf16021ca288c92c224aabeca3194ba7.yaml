@@ -13,19 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator：完成离线 filter 修复与 versioned proposal；Project
-    Owner：仅在新 hashes 发布后决定是否签署新 token
+  next_owner: Project Owner：在 ordinary-pushed corrected package hashes 发布后决定是否签署 single-use
+    v3 token；Codex capability coordinator：仅在新 token 后执行唯一 bounded lifecycle
   requirement_refs:
   - docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2516 token 已消费；backtest 9518360aeb329219cd83e78442a1d229
-    runtime FAILED；manual Results JSON、evidence admission 与 DQ/PIT 均未完成
+  unstructured_legacy_blocker_or_next_step: OWNER_REAUTHORIZATION_NOT_PROVIDED_FOR_CORRECTED_TRADING_2518_PROPOSAL；旧2516
+    v2 token已消费；禁止第二次run、Results/evidence/DQ-PIT伪PASS
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 显式投影 list[Symbol] 且不引入投资阈值；2513 historical bytes不变；新 run仅允许新proposal/code
-      hashes与Owner exact single-use token；默认cash-preservation
+    text: 显式 list[Symbol] failure-fix、2513 historical bytes、failed-run ledger/consumption、corrected
+      package 与 unsigned v3 template 已冻结；corrected code=064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d；engine
+      cash-preservation
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -61,25 +62,82 @@ events:
   - change:TRADING-2518-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-4025e27b9feeb6d5c5e668072183bfc6
+- schema_version: task_event.v1
+  task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-13T14:28:13Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2518-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: 2ba0e799bc5e9549eb0220f33a5c2d907de86596
+  previous_state_event_id: task-event-4025e27b9feeb6d5c5e668072183bfc6
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：在 ordinary-pushed corrected package hashes 发布后决定是否签署
+      single-use v3 token；Codex capability coordinator：仅在新 token 后执行唯一 bounded lifecycle
+    blocker_or_next_step: OWNER_REAUTHORIZATION_NOT_PROVIDED_FOR_CORRECTED_TRADING_2518_PROPOSAL；旧2516
+      v2 token已消费；禁止第二次run、Results/evidence/DQ-PIT伪PASS
+    acceptance_criteria: 显式 list[Symbol] failure-fix、2513 historical bytes、failed-run
+      ledger/consumption、corrected package 与 unsigned v3 template 已冻结；corrected code=064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d；engine
+      cash-preservation
+    notes: 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；package
+      manifest canonical=9300fb5e8016954d103dea8230344948a5d34f6b4d63bc6545952f1467a12625；external_action=none
+      for 2518；new run requires new exact Owner token。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2518-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0675235fa36f804d88fc7a18fe19f43a
+- schema_version: task_event.v1
+  task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-13T14:51:31Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2518-FINAL-HASH-REFRESH-V1
+  lane_id: null
+  base_commit: 2ba0e799bc5e9549eb0220f33a5c2d907de86596
+  previous_state_event_id: task-event-0675235fa36f804d88fc7a18fe19f43a
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：在 ordinary-pushed corrected package hashes 发布后决定是否签署
+      single-use v3 token；Codex capability coordinator：仅在新 token 后执行唯一 bounded lifecycle
+    blocker_or_next_step: OWNER_REAUTHORIZATION_NOT_PROVIDED_FOR_CORRECTED_TRADING_2518_PROPOSAL；旧2516
+      v2 token已消费；禁止第二次run、Results/evidence/DQ-PIT伪PASS
+    acceptance_criteria: 显式 list[Symbol] failure-fix、2513 historical bytes、failed-run
+      ledger/consumption、corrected package 与 unsigned v3 template 已冻结；corrected code=064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d；engine
+      cash-preservation
+    notes: 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；package
+      manifest canonical=a9d335f5c80a425301d25a39967b8d251d90960ef1301b55e55ac5b3380a21f7；external_action=none
+      for 2518；new run requires new exact Owner token。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2518-FINAL-HASH-REFRESH-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7555990825cfcf1177133322ddeddf98
 projection:
   legacy_first_eight_cells:
   - TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
   - QQQ Options 主窗口 collector filter failure-fix 与重新授权
   - P0
-  - IN_PROGRESS
-  - Codex capability coordinator：完成离线 filter 修复与 versioned proposal；Project Owner：仅在新
-    hashes 发布后决定是否签署新 token
-  - 2516 token 已消费；backtest 9518360aeb329219cd83e78442a1d229 runtime FAILED；manual
-    Results JSON、evidence admission 与 DQ/PIT 均未完成
-  - 显式投影 list[Symbol] 且不引入投资阈值；2513 historical bytes不变；新 run仅允许新proposal/code hashes与Owner
-    exact single-use token；默认cash-preservation
-  - 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；parent
-    ledger=e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2；consumption=235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498；external_action=none
-    after failed first run。'
+  - BASELINE_DONE
+  - Project Owner：在 ordinary-pushed corrected package hashes 发布后决定是否签署 single-use
+    v3 token；Codex capability coordinator：仅在新 token 后执行唯一 bounded lifecycle
+  - OWNER_REAUTHORIZATION_NOT_PROVIDED_FOR_CORRECTED_TRADING_2518_PROPOSAL；旧2516 v2
+    token已消费；禁止第二次run、Results/evidence/DQ-PIT伪PASS
+  - 显式 list[Symbol] failure-fix、2513 historical bytes、failed-run ledger/consumption、corrected
+    package 与 unsigned v3 template 已冻结；corrected code=064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d；engine
+    cash-preservation
+  - 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；package
+    manifest canonical=a9d335f5c80a425301d25a39967b8d251d90960ef1301b55e55ac5b3380a21f7；external_action=none
+    for 2518；new run requires new exact Owner token。'
   docs_links:
   - docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md
   terminal: false
-  canonical_row_sha256: b842a6b639525768732ba948c2ac5582ea936293f09a20502fe1b7b46572ee68
-last_event_id: task-event-4025e27b9feeb6d5c5e668072183bfc6
+  canonical_row_sha256: f137565bddcc17c2093e589ceba2924686ffdbf6739398303bb29c63d4a630c6
+last_event_id: task-event-7555990825cfcf1177133322ddeddf98
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 6d68d268c3e158fa800defb8d54f2df124ac785995ce1d0eadf2cea50c14852e
+fragment_checksum: 088615faa0249004063c019a3aa1613b8a22264d04b96b1f3d62ed890bf28053

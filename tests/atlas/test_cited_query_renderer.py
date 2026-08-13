@@ -261,7 +261,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="36"' in html
+    assert 'data-task-coverage-count="37"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -297,8 +297,13 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         'data-successor-task="TRADING-2517_QC_QQQ_OPTIONS_REFRESH_AUTHORIZATION_ADMISSION_AND_BOUNDED_COLLECTION_LIFECYCLE_V1"'
         in html
     )
-    assert "fresh versioned authorization request 已实现" in html
-    assert "首次 Cloud run 即消耗 single-use" in html
+    assert (
+        'data-successor-task="TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1"'
+        in html
+    )
+    assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
+    assert "9518360aeb329219cd83e78442a1d229" in html
+    assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html
     assert "KEEP_CLOSED + PREREGISTRATION_ONLY" in html
     assert "Owner 尚未签署" in html
     assert html.count('data-reader-section="downstream_use"') == 8

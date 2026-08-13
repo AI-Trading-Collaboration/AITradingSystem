@@ -38,12 +38,12 @@ def _rendered(
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_thirty_six_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_thirty_seven_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 36
+    assert len(policy.task_sources) == 37
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2518))
+        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2519))
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -68,41 +68,45 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert (
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 36
+    assert len(manifest.task_coverage) == 37
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2518))
+        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2519))
     ]
-    assert manifest.task_coverage[-9].coverage == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
+    assert manifest.task_coverage[-10].coverage == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
     assert (
-        manifest.task_coverage[-8].coverage
+        manifest.task_coverage[-9].coverage
         == "DISCLOSED_PRIMARY_WINDOW_CALIBRATION_EVIDENCE_NOT_PROVIDED"
     )
     assert (
-        manifest.task_coverage[-7].coverage == "DISCLOSED_DERIVED_EVIDENCE_GENERATOR_SOURCE_BLOCKED"
+        manifest.task_coverage[-8].coverage == "DISCLOSED_DERIVED_EVIDENCE_GENERATOR_SOURCE_BLOCKED"
     )
     assert (
-        manifest.task_coverage[-6].coverage
+        manifest.task_coverage[-7].coverage
         == "DISCLOSED_EXPORT_SAFE_COLLECTOR_CONTRACT_RUN_NOT_AUTHORIZED"
     )
     assert (
-        manifest.task_coverage[-5].coverage
+        manifest.task_coverage[-6].coverage
         == "DISCLOSED_EXACT_RUN_PROPOSAL_OWNER_AUTHORIZATION_REQUIRED"
     )
     assert (
-        manifest.task_coverage[-4].coverage
+        manifest.task_coverage[-5].coverage
         == "DISCLOSED_EVIDENCE_ADMISSION_CONTRACT_OWNER_TOKEN_NOT_PROVIDED"
     )
     assert (
-        manifest.task_coverage[-3].coverage
+        manifest.task_coverage[-4].coverage
         == "DISCLOSED_STRATEGY_RESEARCH_REOPEN_READINESS_KEEP_CLOSED"
     )
     assert (
+        manifest.task_coverage[-3].coverage
+        == "DISCLOSED_QQQ_OPTIONS_EVIDENCE_LANE_TOKEN_CONSUMED_RUN_FAILED"
+    )
+    assert (
         manifest.task_coverage[-2].coverage
-        == "DISCLOSED_QQQ_OPTIONS_EVIDENCE_LANE_SELECTED_FRESH_TOKEN_REQUIRED"
+        == "DISCLOSED_REFRESH_AUTHORIZATION_CONSUMED_FAILED_RUN_NO_EVIDENCE"
     )
     assert (
         manifest.task_coverage[-1].coverage
-        == "DISCLOSED_REFRESH_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_NOT_PROVIDED"
+        == "DISCLOSED_COLLECTOR_FILTER_FIXED_REAUTHORIZATION_REQUIRED"
     )
     assert len(manifest.source_artifacts) == 15
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

@@ -1,0 +1,54 @@
+{
+  "artifacts": [
+    {
+      "byte_count": 1681,
+      "relative_path": "failure_receipt.json",
+      "role": "FAILED_RUN_RECEIPT",
+      "sha256": "e06103fa5a327f6d863a6d86d0c3089f37100dce1f545c74fc161107736ae647"
+    },
+    {
+      "byte_count": 26164,
+      "relative_path": "main.py",
+      "role": "CORRECTED_QC_PROJECT_CODE",
+      "sha256": "064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d"
+    },
+    {
+      "byte_count": 1943,
+      "relative_path": "owner_decision_request.md",
+      "role": "UNSIGNED_OWNER_REAUTHORIZATION_REQUEST",
+      "sha256": "14de29bdfdd12c07a7d5e2d1edcedfaace7f16f060b1d6da6ac6c18cbc1c833f"
+    }
+  ],
+  "broker_action": "none",
+  "content_sha256": "08c1b32901aa6dc67923c2432017438ac3bee7d90810d910ba2149dd2fd85931",
+  "corrected_project_code_lf_byte_count": 26164,
+  "corrected_project_code_lf_sha256": "064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d",
+  "created_at_utc": "2026-08-13T14:15:00Z",
+  "decision": "OWNER_REAUTHORIZATION_REQUIRED",
+  "engine_status": "POLICY_BLOCKED_CASH_PRESERVATION",
+  "evaluated_end": "2025-12-02",
+  "evaluated_start": "2021-02-22",
+  "executable_policy_authorized": false,
+  "expected_session_count": 1202,
+  "external_action_performed_by_task": false,
+  "failure_receipt_canonical_sha256": "e06103fa5a327f6d863a6d86d0c3089f37100dce1f545c74fc161107736ae647",
+  "failure_receipt_content_sha256": "eebb37bbbabe584bd38c013ef41c48fd1e8196bf7207d24c265301310c93fb07",
+  "filter_semantics": "SELECT_ALL_EXPLICIT_SYMBOL_LIST_NO_POLICY_THRESHOLD",
+  "implementation_file_sha256": "050ecc60917e7fd4afa3c942c0b47bdc46dd10132a9ac63a973597dd077192f4",
+  "investment_interpretation_generated": false,
+  "maximum_fills": 0,
+  "maximum_orders": 0,
+  "owner_policy_value_count": 0,
+  "owner_reauthorization_status": "OWNER_REAUTHORIZATION_NOT_PROVIDED",
+  "package_id": "TRADING_2518_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_V1",
+  "policy_canonical_sha256": "fa49cbb37ba6dfec0712136d3f72e64641f603e339d293f40db73957b1c85f9c",
+  "policy_file_sha256": "28cc02d1ff88674c3efc98cf85f31e7a192d7e127421081cccde00daf054e955",
+  "predecessor_project_code_lf_sha256": "d7f96fbb14e03a1f248b0a14b3ebdaa1bbeeada2d15f87fb3277b98b9c6641a6",
+  "production_effect": "none",
+  "repository_code_sha": "2ba0e799bc5e9549eb0220f33a5c2d907de86596",
+  "requested_end": "2025-12-02",
+  "requested_start": "2021-02-22",
+  "schema_version": "qc_qqq_options_primary_window_collector_filter_failure_fix_package.v1",
+  "selection_authorized": false,
+  "target_project_id": 34808569
+}

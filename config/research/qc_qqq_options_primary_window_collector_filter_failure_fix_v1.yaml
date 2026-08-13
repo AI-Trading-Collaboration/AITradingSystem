@@ -1,0 +1,82 @@
+schema_version: qc_qqq_options_primary_window_collector_filter_failure_fix_policy.v1
+policy_id: qc_qqq_options_primary_window_collector_filter_failure_fix_v1
+policy_version: 1.0.0
+policy_status: OWNER_REAUTHORIZATION_REQUIRED_CORRECTED_PROPOSAL
+task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+registration_base_repository_code_sha: 2ba0e799bc5e9549eb0220f33a5c2d907de86596
+created_at_utc: '2026-08-13T14:15:00Z'
+package_id: TRADING_2518_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_V1
+package_root: inputs/research/qqq_options/trading_2518_primary_window_collector_filter_failure_fix_v1
+implementation_path: src/ai_trading_system/qqq_options_research/primary_window_collector_filter_failure_fix.py
+implementation_file_sha256: 050ecc60917e7fd4afa3c942c0b47bdc46dd10132a9ac63a973597dd077192f4
+target_project_id: 34808569
+requested_start: '2021-02-22'
+requested_end: '2025-12-02'
+evaluated_start: '2021-02-22'
+evaluated_end: '2025-12-02'
+primary_research_role: PRIMARY
+exchange_calendar: XNYS
+expected_session_count: 1202
+maximum_project_mutations_for_new_authorization: 1
+maximum_cloud_backtests_for_new_authorization: 1
+maximum_orders: 0
+maximum_fills: 0
+filter_semantics: SELECT_ALL_EXPLICIT_SYMBOL_LIST_NO_POLICY_THRESHOLD
+expected_owner_decision_token: owner_decision:TRADING-2518:<YYYY-MM-DD>:authorize_single_zero_order_primary_window_derived_aggregate_collection_v3
+historical_authority:
+  proposal_policy_path: config/research/qc_qqq_options_primary_window_derived_aggregate_run_proposal_v1.yaml
+  proposal_policy_file_sha256: dc64eae45a3581089af1223c8bc6da005c0962d17906ad447cf72f8a9a5fbbaf
+  proposal_policy_canonical_sha256: 4c80425fae656c573ca74d44e5d738bc78307619c0471f2c852446430fefdbc6
+  proposal_package_root: inputs/research/qqq_options/trading_2513_primary_window_derived_aggregate_run_proposal_v1
+  proposal_package_manifest_file_sha256: a100984326f8015ebe55459e3e87d3a20902bb6693a793f0b91ea7cf1ad5d85d
+  proposal_package_manifest_content_sha256: b44de8a0854cde6004f71ac2ed86cc619ab6c12c81b07f5efe790dad74219d58
+  proposal_content_sha256: f48732afc0d69656fbe5c62b1965296feccda30caa3279c80b9d1c20ce272240
+  run_scope_content_sha256: 80c11d7073dcc86f1297a34b3497fe705069619d6f1f51927ab9b673172db15e
+  project_code_path: inputs/research/qqq_options/trading_2513_primary_window_derived_aggregate_run_proposal_v1/main.py
+  project_code_lf_sha256: d7f96fbb14e03a1f248b0a14b3ebdaa1bbeeada2d15f87fb3277b98b9c6641a6
+  refresh_admission_policy_path: config/research/qc_qqq_options_refresh_authorization_admission_v1.yaml
+  refresh_admission_policy_file_sha256: 53865ad76b0a88d8f9c0d63c19d19a7367703d80068166cc2c9644a1b80b087c
+  refresh_admission_implementation_path: src/ai_trading_system/qqq_options_research/refresh_authorization_admission.py
+  refresh_admission_implementation_file_sha256: f8d23da0d237b7be762a09aa9380f1ec7a207e0d83fcbdf430559a83e4c4acfa
+failed_run:
+  owner_decision_file_sha256: ee20b55c525a2241f88d215241f516ca0d9e016bc6611c966058ce8468fc82b2
+  owner_decision_content_sha256: 1304491e50feaf22764260e3d227656381d2b1b6984e095bb9a1c93bbbdf1d72
+  refresh_candidate_content_sha256: fecd74ae2c3477c3b1afb87dff7589111d4ec280b342485efc414dc003350fa0
+  collector_authorization_content_sha256: 3db9a31a84af7abe3392e18b4838597110f639cb8ed194497d7025681c26b1d3
+  refresh_admission_receipt_content_sha256: 21ee0862314a22c7100bf99384d8dc226fbb91c307131491fc922aca1a987661
+  external_action_ledger_content_sha256: e3979529e8bdca48e6b44a74376bbea635f02c218b3737afb265b33481e827f2
+  run_attempt_consumption_content_sha256: 235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498
+  target_project_id: 34808569
+  backtest_id: 9518360aeb329219cd83e78442a1d229
+  run_attempted_at_utc: '2026-08-13T13:54:35.282Z'
+  lifecycle_status: FAILED
+  scope_status: FAIL
+  reason_code: QC_RUNTIME_OPTION_FILTER_CASTING_ERROR
+  error_type: InvalidCastException
+  error_message: QuantConnect.Util.CastingEnumerable<BaseData, OptionUniverse> value cannot be converted to IEnumerable<Symbol>
+  error_source_line: 'option.set_filter(lambda universe: universe.contracts(lambda symbols: symbols))'
+  attempted_project_mutations: 1
+  attempted_cloud_backtests: 1
+  completed_results_downloads: 0
+  orders: 0
+  fills: 0
+  authorization_consumed: true
+  authorization_invalidated_for_further_runs: true
+  evidence_collection_completed: false
+  dq_pit_status: NOT_EVALUATED
+safety:
+  owner_reauthorization_status: OWNER_REAUTHORIZATION_NOT_PROVIDED
+  decision: OWNER_REAUTHORIZATION_REQUIRED
+  executable_policy_authorized: false
+  selection_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  owner_policy_value_count: 0
+  external_action_performed_by_task: false
+  second_cloud_backtest_allowed: false
+  investment_interpretation_generated: false
+  raw_options_data_export_allowed: false
+  paper_allowed: false
+  live_allowed: false
+  broker_allowed: false
+  production_effect: none
+  broker_action: none

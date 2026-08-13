@@ -278,8 +278,8 @@ class StrategyResearchPageEffectivenessManifest:
         if self.validity_layers != tuple(PageValidityLayer):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_VALIDITY_LAYER_SET_INVALID")
         if (
-            len(self.task_coverage) != 36
-            or len({item.task_id for item in self.task_coverage}) != 36
+            len(self.task_coverage) != 37
+            or len({item.task_id for item in self.task_coverage}) != 37
         ):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_TASK_COVERAGE_SET_INVALID")
         if len({item.locator for item in self.source_artifacts}) != len(self.source_artifacts):

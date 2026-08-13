@@ -1,0 +1,33 @@
+# TRADING-2518 corrected collector reauthorization request
+
+该文件只是未签署模板，不构成授权。2516 v2 token 已在失败 run 中消耗，不得复用。
+
+修复只把 Option universe callback 转成显式 `list[Symbol]`；不引入 DTE、delta、moneyness、spread、OI、volume 或其他策略阈值。
+
+```text
+owner_decision:TRADING-2518:<YYYY-MM-DD>:authorize_single_zero_order_primary_window_derived_aggregate_collection_v3
+ordinary_pushed_main_sha:<ORDINARY_PUSHED_MAIN_SHA>
+registration_base_repository_code_sha:2ba0e799bc5e9549eb0220f33a5c2d907de86596
+failure_fix_policy_file_sha256:28cc02d1ff88674c3efc98cf85f31e7a192d7e127421081cccde00daf054e955
+failure_fix_policy_canonical_sha256:fa49cbb37ba6dfec0712136d3f72e64641f603e339d293f40db73957b1c85f9c
+failure_fix_package_manifest_file_sha256:<CORRECTED_PACKAGE_MANIFEST_FILE_SHA256>
+failure_fix_package_manifest_content_sha256:<CORRECTED_PACKAGE_MANIFEST_CONTENT_SHA256>
+corrected_project_code_lf_sha256:064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d
+failed_backtest_id:9518360aeb329219cd83e78442a1d229
+failed_run_receipt_content_sha256:eebb37bbbabe584bd38c013ef41c48fd1e8196bf7207d24c265301310c93fb07
+previous_run_attempt_consumption_content_sha256:235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498
+target_project_id:34808569
+requested_range:2021-02-22..2025-12-02
+expected_session_count:1202
+maximum_project_mutations:1
+maximum_cloud_backtests:1
+maximum_orders:0
+maximum_fills:0
+collector:codex_capability_coordinator
+independent_reviewer:project_owner
+authorization_expires_at_utc:<OWNER_SELECTED_EXPIRY_NOT_MORE_THAN_168_HOURS>
+authorization_single_use:true
+authorization_invalidates_after_first_run_attempt:true
+```
+
+在 Project Owner 提供完整 exact v3 token 前：不得修改 QuantConnect project、不得运行第二次 Cloud backtest、不得宣称 evidence/DQ/PIT PASS，engine 保持 `POLICY_BLOCKED_CASH_PRESERVATION`。
