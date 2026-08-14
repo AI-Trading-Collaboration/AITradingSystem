@@ -261,7 +261,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="39"' in html
+    assert 'data-task-coverage-count="40"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -309,6 +309,11 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         'data-successor-task="TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1"'
         in html
     )
+    assert (
+        'data-successor-task="TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1"'
+        in html
+    )
+    assert "2521 strict admission adapter 已发布" in html
     assert "错误的 OptionContract underlying accessor" in html
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html

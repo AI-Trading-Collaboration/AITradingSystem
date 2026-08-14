@@ -187,6 +187,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md
     coverage: DISCLOSED_DAILY_SLICE_ACCESSOR_FIX_REVALIDATION_OWNER_TOKEN_REQUIRED
     reader_summary_zh: 离线排查确认 2519 successor 除 scheduled callback 假设外还误用了 contract.underlying；2520 已改为 precise daily Slice、underlying_last_price 与 export-safe diagnostics，但尚无新 Owner token 或 Cloud 再验证，evidence=FAIL、DQ/PIT=NOT_EVALUATED，engine 继续 cash preservation。
+  - task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+    requirement_path: docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
+    coverage: DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_NOT_PROVIDED
+    reader_summary_zh: 2521 已实现对 2520 v4 token 的严格 current-dialog admission、first-run-attempt single-use consumption 与 canonical Results parser adapter；Project Owner 尚未提供 exact v4 token，Cloud 再验证、evidence 与 DQ/PIT 均未发生，engine 继续 cash preservation。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

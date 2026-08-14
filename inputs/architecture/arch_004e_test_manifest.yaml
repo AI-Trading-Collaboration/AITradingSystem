@@ -3,8 +3,8 @@ status: PASS
 policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 test_root: tests
-test_file_count: 1280
-test_count: 1220
+test_file_count: 1281
+test_count: 1221
 support_file_count: 60
 orphan_count: 0
 specific_overlap_count: 0
@@ -27,7 +27,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_cited_query_renderer
   path: tests/atlas/test_cited_query_renderer.py
-  sha256: 7dca3106e548829af3eef8fe0f0c48f7bdd017974a3f3ded3bde41e29a2d8fe8
+  sha256: f64c522dac9315f0210eafb69251e8aa47bba8d2d7adb43cc7cc1463afbba828
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -139,7 +139,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_historical_projection_review
   path: tests/atlas/test_historical_projection_review.py
-  sha256: 6e42ff6452f66d9ef31a2a8d3c7494ae79b42109518c2ec27a9ffa4a5df125cb
+  sha256: 668fd6bd3febe2fb263bc72d3b35bb60cfd0abf8df26f567049eecf5b9d4b01b
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -187,7 +187,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.atlas.test_page_effectiveness
   path: tests/atlas/test_page_effectiveness.py
-  sha256: 05db1bea54d70db2e3e960ea6eb00da93fdf55ceddc3783b8c802b765155cd15
+  sha256: a4849c11720f4cde3ecd80f3424e357c313f983da7fd7aaf9a149b65aa88b9b4
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -8358,7 +8358,7 @@ tests:
   - src/ai_trading_system/research_framework/
 - test_id: tests.test_arch_004g_deprecation
   path: tests/test_arch_004g_deprecation.py
-  sha256: e058a42a802fa22b76566839fb80ebffebf813c8727d15e571daff60856c26ac
+  sha256: c557921c99d84f8e47dd5763572fb0497f840e8b334d5a3566c07779844e2d1b
   file_role: test
   rule_id: architecture_tests
   owner_profile: quality
@@ -10282,7 +10282,7 @@ tests:
   - src/ai_trading_system/
 - test_id: tests.test_devx_006d_report_catalog_flow_authority
   path: tests/test_devx_006d_report_catalog_flow_authority.py
-  sha256: 0c1adc95b0310e2e5879cd5db634fe8f706f9dda51069f371cb1243b75cc19b1
+  sha256: 3f7a5d72c10f7da5bc216a6123822cead7dbedbba171783414806950ace07030
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality
@@ -14689,6 +14689,22 @@ tests:
 - test_id: tests.test_qqq_options_daily_primary_backtest_contract
   path: tests/test_qqq_options_daily_primary_backtest_contract.py
   sha256: 23ae5aec31c4bfc1ef149c6d8da362a1ebf758fdbe38e3d8df2cf9b53b0a07f1
+  file_role: test
+  rule_id: root_tests_fallback
+  owner_profile: quality
+  owners:
+    code_owner: quality_engineering
+    policy_owner: architecture_governance
+    data_owner: test_data_governance
+    artifact_owner: validation_governance
+    runtime_owner: validation_operations
+  category: unit_or_support
+  suite: full
+  covered_module_prefixes:
+  - src/ai_trading_system/
+- test_id: tests.test_qqq_options_daily_slice_revalidation_authorization_admission
+  path: tests/test_qqq_options_daily_slice_revalidation_authorization_admission.py
+  sha256: 9f4f2f7f6185ac9e5398a2bdec2e3be4e7c9fb8723e80a4cd73ee579c6eda4a0
   file_role: test
   rule_id: root_tests_fallback
   owner_profile: quality

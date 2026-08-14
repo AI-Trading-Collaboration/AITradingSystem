@@ -1,0 +1,24 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_daily_slice_revalidation_authorization_admission
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/daily_slice_revalidation_authorization_admission.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_POLICY_PATH
+  - AdmittedQCQQQOptionsDailySliceAuthorization
+  - DailySliceOwnerAuthorizationAdmissionReceipt
+  - DailySliceOwnerDecisionCandidate
+  - DailySliceResultAdmissionReceipt
+  - DailySliceRunAttemptConsumptionReceipt
+  - QCQQQOptionsDailySliceAuthorizationAdmissionError
+  - QCQQQOptionsDailySliceAuthorizationAdmissionPolicy
+  - QCQQQOptionsDailySliceAuthorizationAdmissionPolicyLoadResult
+  - QCQQQOptionsDailySliceParsedResultBundle
+  - admit_qc_qqq_options_daily_slice_owner_authorization
+  - build_qc_qqq_options_daily_slice_external_action_ledger
+  - build_qc_qqq_options_daily_slice_parsed_result_admission
+  - build_qc_qqq_options_daily_slice_run_attempt_consumption
+  - load_qc_qqq_options_daily_slice_revalidation_authorization_admission_policy
+  - validate_qc_qqq_options_daily_slice_owner_decision_candidate
+compatibility_facades: []
+deprecation_status: active_reference_architecture

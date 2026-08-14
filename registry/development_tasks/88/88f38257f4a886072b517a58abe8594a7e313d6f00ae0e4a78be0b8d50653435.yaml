@@ -13,15 +13,16 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator：完成离线 v4 admission/single-use lifecycle；Project
-    Owner：在 exact successor hashes 发布后决定是否提供真实 token
+  next_owner: Project Owner：review exact 2521 hashes and decide whether to provide
+    the current-dialog v4 token; Codex runs at most one bounded zero-order revalidation
+    only after valid admission
   requirement_refs:
   - docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: OWNER_V4_TOKEN_NOT_PROVIDED；2517 exact-bound
-    2516 v2，不能消费 2520 v4；token 前 external_action=none
+  unstructured_legacy_blocker_or_next_step: OWNER_V4_TOKEN_NOT_PROVIDED；external_action=none；exact
+    successor hashes and final validation must publish before Owner token review
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: strict current-dialog token admission、exact 2520 authority cross-binding、first-run
@@ -61,24 +62,87 @@ events:
   - change:TRADING-2521-registration-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-3c9ac98fcc3e28ae145359e54bf437e6
+- schema_version: task_event.v1
+  task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T03:30:00Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2521-BASELINE-DONE-20260815T033000Z
+  lane_id: null
+  base_commit: 41d87031ebb2b2fcbdc639fc8684969a77eeb29f
+  previous_state_event_id: task-event-3c9ac98fcc3e28ae145359e54bf437e6
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：review exact 2521 hashes and decide whether to provide
+      the current-dialog v4 token; Codex runs at most one bounded zero-order revalidation
+      only after valid admission
+    blocker_or_next_step: OWNER_V4_TOKEN_NOT_PROVIDED；external_action=none；exact successor
+      hashes and final validation must publish before Owner token review
+    acceptance_criteria: strict current-dialog token admission、exact 2520 authority
+      cross-binding、first-run consumption、2512 Results parser 与 2482 DQ/PIT canonical
+      handoff、negative/property/golden、final gates；默认 cash preservation
+    notes: strict 2520 cross-binding, 2514 ledger, 2517 first-run consumption adapter,
+      2512 Results parser adapter, 1202-session fixture and Atlas 40-task disclosure
+      implemented; no real authorization/run/evidence/DQ-PIT
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2521-BASELINE-DONE-20260815T033000Z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-190b5146c6e99aae19d494a3a47b7ad2
+- schema_version: task_event.v1
+  task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T03:40:00Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2521-RESTORE-REQUIREMENT-BINDING-20260815T034000Z
+  lane_id: null
+  base_commit: 41d87031ebb2b2fcbdc639fc8684969a77eeb29f
+  previous_state_event_id: task-event-190b5146c6e99aae19d494a3a47b7ad2
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：review exact 2521 hashes and decide whether to provide
+      the current-dialog v4 token; Codex runs at most one bounded zero-order revalidation
+      only after valid admission
+    blocker_or_next_step: OWNER_V4_TOKEN_NOT_PROVIDED；external_action=none；exact successor
+      hashes and final validation must publish before Owner token review
+    acceptance_criteria: strict current-dialog token admission、exact 2520 authority
+      cross-binding、first-run consumption、2512 Results parser 与 2482 DQ/PIT canonical
+      handoff、negative/property/golden、final gates；默认 cash preservation
+    notes: '[supporting requirement](docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md)；strict
+      2520 cross-binding, 2514 ledger, 2517 first-run consumption adapter, 2512 Results
+      parser adapter, 1202-session fixture and Atlas 40-task disclosure implemented；no
+      real authorization/run/evidence/DQ-PIT'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2521-RESTORE-REQUIREMENT-BINDING-20260815T034000Z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-475f25055cdb37c2bd88c4f0b7930ece
 projection:
   legacy_first_eight_cells:
   - TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
   - QQQ Options daily Slice v4 authorization admission and bounded lifecycle
   - P0
-  - IN_PROGRESS
-  - Codex capability coordinator：完成离线 v4 admission/single-use lifecycle；Project Owner：在
-    exact successor hashes 发布后决定是否提供真实 token
-  - OWNER_V4_TOKEN_NOT_PROVIDED；2517 exact-bound 2516 v2，不能消费 2520 v4；token 前 external_action=none
+  - BASELINE_DONE
+  - Project Owner：review exact 2521 hashes and decide whether to provide the current-dialog
+    v4 token; Codex runs at most one bounded zero-order revalidation only after valid
+    admission
+  - OWNER_V4_TOKEN_NOT_PROVIDED；external_action=none；exact successor hashes and final
+    validation must publish before Owner token review
   - strict current-dialog token admission、exact 2520 authority cross-binding、first-run
     consumption、2512 Results parser 与 2482 DQ/PIT canonical handoff、negative/property/golden、final
     gates；默认 cash preservation
-  - '[supporting requirement](docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md)；registration
-    base 2dc9171a；不修改 2514/2517 frozen history'
+  - '[supporting requirement](docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md)；strict
+    2520 cross-binding, 2514 ledger, 2517 first-run consumption adapter, 2512 Results
+    parser adapter, 1202-session fixture and Atlas 40-task disclosure implemented；no
+    real authorization/run/evidence/DQ-PIT'
   docs_links:
   - docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
   terminal: false
-  canonical_row_sha256: a245030b8eca1198765639c249905174140270da9999a4c5a008c68d8294c647
-last_event_id: task-event-3c9ac98fcc3e28ae145359e54bf437e6
+  canonical_row_sha256: 3fa95ff42f3494cf98cfd04b3199c26a4cc6082bc5bb545c8e75ad10adbd45ab
+last_event_id: task-event-475f25055cdb37c2bd88c4f0b7930ece
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c11479735364e62dda60c0c7e7dd7588844f238d930be3feec6d99a769205d05
+fragment_checksum: 5ecaf4bb1129642a15d2c8ba9a80d4062cd77580f7b9481745e8ea7b5e66952e

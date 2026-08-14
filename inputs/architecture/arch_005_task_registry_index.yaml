@@ -14,7 +14,7 @@ fragment_count: 992
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: cbdf85412fb143f211b7004366a0ec0b9ed584d4cff2a2548c1a6df6e00ddd2e
+final_chain_sha256: 4115b2a9bab04e9766a096d2319c89c784457a0dd900def90a79ccc7cd6c2024
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7959,17 +7959,17 @@ fragments:
   entry_sha256: 8b437f4e265095798bba50da840fee791780c77e0b0f1d4d867f51849738346b
 - task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
   path: registry/development_tasks/88/88f38257f4a886072b517a58abe8594a7e313d6f00ae0e4a78be0b8d50653435.yaml
-  file_sha256: a9326cc841abd9d879dcfba2714e86a942bd60a0e3b504a0060065946999de17
-  fragment_checksum: c11479735364e62dda60c0c7e7dd7588844f238d930be3feec6d99a769205d05
+  file_sha256: c3cd07e66d708df01a9848cbeaa94860e3174456bce4299596e4a1f100672e0a
+  fragment_checksum: 5ecaf4bb1129642a15d2c8ba9a80d4062cd77580f7b9481745e8ea7b5e66952e
   partition: active
   order: 992
   previous_entry_sha256: 8b437f4e265095798bba50da840fee791780c77e0b0f1d4d867f51849738346b
-  entry_sha256: cbdf85412fb143f211b7004366a0ec0b9ed584d4cff2a2548c1a6df6e00ddd2e
+  entry_sha256: 4115b2a9bab04e9766a096d2319c89c784457a0dd900def90a79ccc7cd6c2024
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 5bc18b8dc0267c858bcfb6da0c32ec40b4b6b2ef122703da427e51f143a4ad02
-  byte_count: 1733533
+  sha256: 445f11dc3342e07db7923df496ada5adc65906f761e4dd0b7e01ac151b55e965
+  byte_count: 1733726
   row_count: 485
   generated_do_not_edit: true
 - partition: completed
@@ -8406,7 +8406,21 @@ governance_cycles:
   change_id: TRADING-2521-registration-v1
   event_count: 1
   production_effect: none
-governance_cycle_count: 61
+- cycle_id: arch-005-s5-cycle-62
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  change_id: TRADING-2521-BASELINE-DONE-20260815T033000Z
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-63
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  change_id: TRADING-2521-RESTORE-REQUIREMENT-BINDING-20260815T034000Z
+  event_count: 3
+  production_effect: none
+governance_cycle_count: 63
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8420,4 +8434,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 15827e9efdd0ee07e27171fcef6f3acfe519306cb5f018ec5022135efea6a0de
+index_checksum: be367ee0090b94d25c77cb4cc90f3121e5f5bbeec9e23705cd3290ce79154f1e

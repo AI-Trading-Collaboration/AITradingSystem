@@ -8482,3 +8482,38 @@ QuantConnect capability 或 DQ/PIT PASS。
 zero-order token。任务自身不登录 QuantConnect、不修改 project、不运行 Cloud backtest，也不收集 Results。
 在真实再验证、strict Results admission 与独立复核完成前，daily delivery 与全窗口 coverage 仍未证实；
 API/CLI/HTTP/Object Store/raw option export、订单、成交、投资解释、paper/live/broker/production 继续禁止。
+
+## TRADING-2521 QC QQQ Options Daily-Slice Revalidation Authorization Admission V1
+
+`config/research/qc_qqq_options_daily_slice_revalidation_authorization_admission_v1.yaml` 与
+`qqq_options_research.daily_slice_revalidation_authorization_admission` 是 2520 unsigned v4 request 的严格
+successor adapter。它不修改 2514/2517/2520 historical authority，也不把本地 token fixture、parser fixture 或
+调用者自报 PASS 当作真实授权、Results 或 DQ/PIT fact。
+
+```text
+2520 exact ordinary-pushed package
+  -> policy / manifest / proposal / scope / corrected code / failed-run lineage cross-binding
+  -> Project Owner current Codex dialog exact v4 bytes
+     -> strict LF / field inventory+order / duplicate / expiry / cap / reviewer validation
+     -> missing, old, local, expired, reordered or tampered token: reject before action
+  -> admitted-unused v4 receipt
+     -> 2512 collector authorization compatibility adapter
+     -> owner_policy_value_count=0 / selection=false / engine blocked
+  -> 2514 canonical external-action ledger
+     -> login / one exact project mutation / first zero-order run / manual Results
+  -> 2517 canonical first-run-attempt consumption
+     -> COMPLETED or FAILED both consume single-use v4 token
+     -> second run always prohibited
+  -> complete four-action identity only
+     -> 2512 strict export-safe Results parser
+     -> RESULT_PARSED_DQ_NOT_EVALUATED
+     -> local and option-event DQ/PIT remain NOT_EVALUATED
+  -> no order / no fill / no raw rows / no investment interpretation
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+2521 的 `BASELINE_DONE` 只表示 versioned authorization/lifecycle/parser contract 已实现；在 Project Owner
+提供 exact v4 token 前，真实 login、project mutation、Cloud run、Results collection、evidence 与 DQ/PIT 均未
+发生。即使未来 Results 能被 canonical parser 接受，也必须由 2482 canonical DQ/PIT report fact 另行通过后才
+能更新 evidence 状态；本任务不允许调用者构造 PASS。API/CLI/HTTP/Object Store/raw options export、订单、
+成交、paper/live/broker/production 和投资解释继续禁止。

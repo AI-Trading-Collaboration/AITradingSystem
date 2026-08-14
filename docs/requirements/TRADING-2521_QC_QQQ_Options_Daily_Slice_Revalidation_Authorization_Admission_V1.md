@@ -1,6 +1,6 @@
 # TRADING-2521 — QQQ Options daily Slice 再验证授权准入 V1
 
-- status: `IN_PROGRESS`
+- status: `BASELINE_DONE`
 - priority: `P0`
 - governed mode: `SINGLE_LANE`
 - contract change: `true`
@@ -28,7 +28,7 @@ dry-run 文本当作 Owner 授权都不允许。本任务建立最小 versioned 
 4. token、run、Results 或 DQ/PIT 任一未发生或不通过时保持 typed cash preservation；
 5. 为后续唯一一次 bounded zero-order Cloud revalidation 提供可审计入口。
 
-本任务的离线实现不构成 Owner 授权，不允许 QuantConnect login、project mutation、Cloud run、Results
+本任务的离线 baseline 不构成 Owner 授权，不允许 QuantConnect login、project mutation、Cloud run、Results
 collection、API/CLI/HTTP/Object Store、raw options export、paper/live/broker/production 或投资解释。
 
 ## 冻结 2520 authority
@@ -123,8 +123,28 @@ compatibility/current-authority 与 Atlas page-effectiveness consumer。
 提供 exact token 前，真实 authorization/run/Results/evidence/DQ-PIT 均未发生，external action 必须为
 `none`。
 
+`BASELINE_DONE` 只表示 strict v4 admission、first-run-attempt consumption、2514 action ledger 与 2512
+Results parser adapter 已通过离线验证。Results parser 的 typed receipt 固定为
+`RESULT_PARSED_DQ_NOT_EVALUATED`；它不会接受调用者自报 DQ/PIT PASS，也不会激活 selection/engine。
+
 ## 进度记录
 
 - `2026-08-14T17:21:57Z`：READ_ONLY audit 确认 latest main/origin=
   `2dc9171ad5f56fc0a9c31b5d388c7d37eb499b8b`、checkout clean、lease=0、2521 未占用；
   确认 2517 exact-bound 2516 v2，不能安全消费 2520 v4，因此登记最小 versioned successor。
+- `2026-08-15`：registration boundary ordinary-pushed main=
+  `41d87031ebb2b2fcbdc639fc8684969a77eeb29f`；实现 exact 2520 package/token cross-binding、current-dialog
+  source validation、2514 ledger、2517 first-run consumption adapter、2512 full 1202-session Results parser
+  adapter 与 canonical sealed records。focused 核心/相邻首轮 `52 passed`，完整 Results 与 negative coverage
+  `24 passed`；Atlas/历史 consumer 首轮 `57 passed / 2 stale-authority failed`，更新 39→40 exact count 并
+  由 canonical writer 重建 ignored page package 后相同覆盖 `59 passed`。页面保持
+  engineering=`PASS`、reader comprehension=`PASS`、owner visual=`PENDING_REVIEW`；未执行任何
+  QuantConnect/external/production/broker action。
+- `2026-08-15`：final focused authority 首轮为 `106 passed / 3 failed`，三个失败均为新增 system-flow
+  section 后 DEVX-006D 测试中的旧 aggregate/count/SHA；按当前 exact seal 更新并由 canonical writer
+  重建后，同一 `-n 16 --dist loadfile` 组合 `109 passed`。compatibility/deprecation 首轮
+  `210 passed / 1 failed`（current frozen inventory id stale），第二轮 `210 passed / 1 failed`
+  （inventory snapshot 尚为旧 modules/tests 计数）；以显式 `PYTHONPATH=src;.` 重算并精确冻结
+  `arch_004g_deprecation_inventory_34f1db8e21e0834c17d1`、`1120 modules / 1281 tests / 856 writers`
+  后，第三轮相同 211-test 覆盖全部 PASS。历史 compatibility prefix、exact-byte/hash 与 fail-closed
+  semantics 未放宽；所有失败均保留为 focused failure-fix evidence，不作为正式门禁证据。
