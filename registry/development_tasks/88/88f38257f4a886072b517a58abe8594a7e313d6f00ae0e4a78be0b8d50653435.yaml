@@ -1,0 +1,84 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  task_id_sha256: 88f38257f4a886072b517a58abe8594a7e313d6f00ae0e4a78be0b8d50653435
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  title: null
+  domain: QQQ Options daily Slice v4 authorization admission and bounded lifecycle
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex capability coordinator：完成离线 v4 admission/single-use lifecycle；Project
+    Owner：在 exact successor hashes 发布后决定是否提供真实 token
+  requirement_refs:
+  - docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: OWNER_V4_TOKEN_NOT_PROVIDED；2517 exact-bound
+    2516 v2，不能消费 2520 v4；token 前 external_action=none
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: strict current-dialog token admission、exact 2520 authority cross-binding、first-run
+      consumption、2512 Results parser 与 2482 DQ/PIT canonical handoff、negative/property/golden、final
+      gates；默认 cash preservation
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-14T17:21:57Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2521-registration-v1
+  lane_id: null
+  base_commit: 2dc9171ad5f56fc0a9c31b5d388c7d37eb499b8b
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+    - QQQ Options daily Slice v4 authorization admission and bounded lifecycle
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：完成离线 v4 admission/single-use lifecycle；Project
+      Owner：在 exact successor hashes 发布后决定是否提供真实 token
+    - OWNER_V4_TOKEN_NOT_PROVIDED；2517 exact-bound 2516 v2，不能消费 2520 v4；token 前 external_action=none
+    - strict current-dialog token admission、exact 2520 authority cross-binding、first-run
+      consumption、2512 Results parser 与 2482 DQ/PIT canonical handoff、negative/property/golden、final
+      gates；默认 cash preservation
+    - '[supporting requirement](docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md)；registration
+      base 2dc9171a；不修改 2514/2517 frozen history'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2521-registration-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3c9ac98fcc3e28ae145359e54bf437e6
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
+  - QQQ Options daily Slice v4 authorization admission and bounded lifecycle
+  - P0
+  - IN_PROGRESS
+  - Codex capability coordinator：完成离线 v4 admission/single-use lifecycle；Project Owner：在
+    exact successor hashes 发布后决定是否提供真实 token
+  - OWNER_V4_TOKEN_NOT_PROVIDED；2517 exact-bound 2516 v2，不能消费 2520 v4；token 前 external_action=none
+  - strict current-dialog token admission、exact 2520 authority cross-binding、first-run
+    consumption、2512 Results parser 与 2482 DQ/PIT canonical handoff、negative/property/golden、final
+    gates；默认 cash preservation
+  - '[supporting requirement](docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md)；registration
+    base 2dc9171a；不修改 2514/2517 frozen history'
+  docs_links:
+  - docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
+  terminal: false
+  canonical_row_sha256: a245030b8eca1198765639c249905174140270da9999a4c5a008c68d8294c647
+last_event_id: task-event-3c9ac98fcc3e28ae145359e54bf437e6
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: c11479735364e62dda60c0c7e7dd7588844f238d930be3feec6d99a769205d05
