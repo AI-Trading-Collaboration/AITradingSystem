@@ -1,0 +1,84 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+  task_id_sha256: 73848e0cc164fd248f45ab8d66d8af67ee34b51cc006e89a417b3895200877ec
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+  title: null
+  domain: QQQ Options 主窗口 daily Slice 零订单再验证 V1
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex capability coordinator：完成离线 revalidation package；Project Owner：仅在
+    exact hashes 发布后决定是否签发新的单次 token
+  requirement_refs:
+  - docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2519 daily Slice fix 尚未 Cloud 验证；v3 token
+    已消费；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 冻结 daily Slice delivery hypotheses；strict proposal/run scope/project code/package
+      hashes；新 token 前零外部动作；如获授权最多一次 mutation/一次 zero-order run；1202-session exact
+      与 no-raw/no-order fail closed
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-14T15:13:43Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2520-REGISTER-20260814T151343Z
+  lane_id: null
+  base_commit: 8f1b8c3fc1c4815fc0041569a1bce01634908229
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+    - QQQ Options 主窗口 daily Slice 零订单再验证 V1
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：完成离线 revalidation package；Project Owner：仅在 exact
+      hashes 发布后决定是否签发新的单次 token
+    - 2519 daily Slice fix 尚未 Cloud 验证；v3 token 已消费；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+    - 冻结 daily Slice delivery hypotheses；strict proposal/run scope/project code/package
+      hashes；新 token 前零外部动作；如获授权最多一次 mutation/一次 zero-order run；1202-session exact
+      与 no-raw/no-order fail closed
+    - '[supporting requirement](docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md)；registration
+      base 8f1b8c3f；继承 2519 code/result exact identity'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2520-REGISTER-20260814T151343Z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-33fe217830860222d089dc759c3b7cc1
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+  - QQQ Options 主窗口 daily Slice 零订单再验证 V1
+  - P0
+  - IN_PROGRESS
+  - Codex capability coordinator：完成离线 revalidation package；Project Owner：仅在 exact
+    hashes 发布后决定是否签发新的单次 token
+  - 2519 daily Slice fix 尚未 Cloud 验证；v3 token 已消费；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+  - 冻结 daily Slice delivery hypotheses；strict proposal/run scope/project code/package
+    hashes；新 token 前零外部动作；如获授权最多一次 mutation/一次 zero-order run；1202-session exact 与
+    no-raw/no-order fail closed
+  - '[supporting requirement](docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md)；registration
+    base 8f1b8c3f；继承 2519 code/result exact identity'
+  docs_links:
+  - docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md
+  terminal: false
+  canonical_row_sha256: f03931a3e0ec04732c7c2accd2f4f6ce3100d2d20700bf227f9934a15cdd1929
+last_event_id: task-event-33fe217830860222d089dc759c3b7cc1
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 75f2e107d4e048b1f65ce62012914ab0b6a8cb3cdb6a67c5960553d255cd1b47
