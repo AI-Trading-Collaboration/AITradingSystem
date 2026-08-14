@@ -1,0 +1,89 @@
+schema_version: qc_qqq_options_primary_window_daily_slice_zero_order_revalidation_policy.v1
+policy_id: TRADING_2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+policy_version: 1.0.0
+status: OFFLINE_REVALIDATION_PACKAGE_BASELINE
+task_id: TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+registration_base_repository_code_sha: 54e43a1aa9787c52d4b0cb363e30e5a4bf79aed9
+predecessor:
+  task_id: TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+  final_main_sha: 8f1b8c3fc1c4815fc0041569a1bce01634908229
+  package_relative_path: inputs/research/qqq_options/trading_2519_primary_window_daily_slice_failure_fix_v1
+  project_code_lf_sha256: d5d8638a2e864b5182887da11d0d74a181dec2e7be41f40bc709f2e245a35261
+  failed_backtest_id: b6d711f67a47199667c8a62f86208b28
+  failed_result_file_sha256: 30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b
+  observed_session_count: 0
+  invalid_session_count: 1202
+collector_authority:
+  policy_path: config/research/qc_qqq_options_primary_window_export_safe_derived_aggregate_collector_v1.yaml
+  policy_file_sha256: 48511cc64cab07b091787e2b0cb23354424248da66e7dba8866cd9ce9a766a8f
+  policy_canonical_sha256: 3ebdd8a4dd89aad4584fbe8bffeeabb30d9b7bd2c28cd394c0fbc346939e999f
+  transport_map_sha256: 60c970b71d3c47337fb76452d1384f2463079ef5026239e875e78b8c37d3eab5
+root_cause_hypotheses:
+- hypothesis_id: H1_DAILY_SLICE_DELIVERY
+  status: UNVERIFIED_PRIMARY_HYPOTHESIS
+  finding: The failed run's scheduled 09:31 callback observed no chain; causality relative to DAILY Slice delivery remains unverified.
+  successor_test: Read the canonical option-chain key only from on_data Slice delivery.
+- hypothesis_id: H2_OPTION_CONTRACT_UNDERLYING_ACCESSOR
+  status: CONFIRMED_OFFLINE_CODE_DEFECT
+  finding: The 2519 successor reads contract.underlying, but LEAN OptionContract exposes underlying_last_price.
+  successor_test: Require finite positive contract.underlying_last_price and reject legacy fixture-only underlying.
+- hypothesis_id: H3_DAILY_TIME_FRONTIER_IDENTITY
+  status: UNVERIFIED_GUARDED_HYPOTHESIS
+  finding: Session identity must be bound to precise daily market-close Slice time, not an assumed scheduled wall-clock.
+  successor_test: Explicitly enable daily_precise_end_time and bind session to data.time.date().
+- hypothesis_id: H4_TRANSPORT_AND_COVERAGE
+  status: UNVERIFIED_RESULT_HYPOTHESIS
+  finding: Even with a delivered chain, quote/Greeks/OI/volume or exact 1202-session transport may still fail closed.
+  successor_test: Preserve strict candidate checks and emit export-safe diagnostic counts without raw option rows.
+official_sources:
+- https://www.quantconnect.com/docs/v2/writing-algorithms/datasets/algoseek/us-equity-options
+- https://www.quantconnect.com/docs/v2/writing-algorithms/key-concepts/time-modeling/timeslices
+- https://www.quantconnect.com/docs/v2/writing-algorithms/initialization
+- https://raw.githubusercontent.com/QuantConnect/Lean/master/Common/Data/Market/OptionContract.cs
+run_scope:
+  target_project_id: 34808569
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  expected_session_count: 1202
+  primary_research_role: PRIMARY
+  exchange_calendar: XNYS
+  maximum_project_mutations: 1
+  maximum_cloud_backtests: 1
+  maximum_orders: 0
+  maximum_fills: 0
+allowed_actions_if_separately_authorized:
+- QUANTCONNECT_LOGIN
+- MODIFY_EXISTING_DEDICATED_PROJECT_ONCE
+- RUN_ONE_ZERO_ORDER_CLOUD_BACKTEST
+- EXPORT_SAFE_MANUAL_DOWNLOAD_RESULTS_COLLECTION
+prohibited_actions:
+- API
+- BROKER
+- CLI
+- HTTP
+- INVESTMENT_INTERPRETATION
+- LIVE
+- OBJECT_STORE
+- PAPER
+- PRODUCTION
+- PURCHASE_OR_SUBSCRIPTION
+- RAW_OPTIONS_DATA_DOWNLOAD
+- RAW_OPTION_ROW_LOGGING_OR_EXPORT
+- SECOND_CLOUD_BACKTEST
+safety:
+  current_owner_authorization_status: NOT_GRANTED_FOR_EXTERNAL_PLATFORM_ACTIONS
+  predecessor_v3_authorization_consumed: true
+  further_cloud_run_authorized: false
+  external_action_performed_by_task: false
+  selection_authorized: false
+  executable_policy_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  evidence_status: FAIL
+  dq_pit_status: NOT_EVALUATED
+  option_event_dq_pit_status: NOT_EVALUATED
+  raw_option_rows_permitted: false
+  owner_policy_value_count: 0
+  thresholds_introduced: false
+  investment_interpretation_authorized: false
+  production_effect: none
+  broker_action: none

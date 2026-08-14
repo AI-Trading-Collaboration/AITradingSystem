@@ -90,9 +90,7 @@ def _write_fixture(root: Path) -> dict[str, Any]:
         "owner_decision": "fixture-owner-decision",
         "partition_count": 64,
         "fragment_root": "registry/report_catalog_flow_authority/fragments",
-        "index_path": (
-            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"
-        ),
+        "index_path": ("inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"),
         "consumer_inventory_path": (
             "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json"
         ),
@@ -129,7 +127,7 @@ def test_repository_authority_is_fresh_lossless_and_inactive() -> None:
     assert result["source_of_truth"] == "LEGACY_MONOLITH"
     assert result["fragment_shadow_active"] is False
     assert result["target_count"] == 3
-    assert result["entry_count"] == 2907
+    assert result["entry_count"] == 2911
     assert 1 <= result["fragment_count"] <= 192
     assert policy["contract"] == {
         "source_of_truth": "LEGACY_MONOLITH",
@@ -153,7 +151,7 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
     assert fragment_authority["source_of_truth"] == "LEGACY_MONOLITH"
     assert fragment_authority["fragment_shadow_active"] is False
     assert fragment_authority["target_count"] == 3
-    assert fragment_authority["entry_count"] == 2907
+    assert fragment_authority["entry_count"] == 2911
     assert fragment_authority["fragment_count"] == 192
     assert section["consumer_contract"]["cutover_ready"] is False
 
@@ -176,8 +174,8 @@ def test_compatibility_authority_carries_the_inactive_shadow_contract() -> None:
         (
             "system_flow",
             "docs/system_flow.md",
-            "7405ae86f8b7423215e215538b9194e63f9bb2b356e0c00f05c36eab98184ce9",
-            984,
+            "ed52d1fdad73d457e0660cd821c38732000fe7998a557e5ee7353fadb222b55e",
+            988,
         ),
     ],
 )
@@ -190,9 +188,9 @@ def test_each_shadow_render_is_byte_identical_and_fully_covered(
     rendered = render_shadow_bytes(target_id)
     source = Path(source_path).read_bytes()
     index = json.loads(
-        Path(
-            "inputs/architecture/devx_006d_report_catalog_flow_authority_index.json"
-        ).read_text(encoding="utf-8")
+        Path("inputs/architecture/devx_006d_report_catalog_flow_authority_index.json").read_text(
+            encoding="utf-8"
+        )
     )
     target = next(row for row in index["targets"] if row["target_id"] == target_id)
 
@@ -223,9 +221,9 @@ def test_build_is_repeatable_and_never_writes_monoliths() -> None:
 
 def test_consumer_inventory_is_complete_and_cutover_remains_blocked() -> None:
     inventory = json.loads(
-        Path(
-            "inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json"
-        ).read_text(encoding="utf-8")
+        Path("inputs/architecture/devx_006d_report_catalog_flow_consumer_inventory.json").read_text(
+            encoding="utf-8"
+        )
     )
 
     assert inventory["status"] == "PASS"
@@ -257,9 +255,7 @@ def test_fixture_round_trip_and_report_entry_identity(tmp_path: Path) -> None:
         target_id = str(target["target_id"])
         source_path = str(target["path"])
         assert render_shadow_bytes(target_id, tmp_path) == fixture["sources"][source_path]
-    index = json.loads(
-        (tmp_path / fixture["policy"]["index_path"]).read_text(encoding="utf-8")
-    )
+    index = json.loads((tmp_path / fixture["policy"]["index_path"]).read_text(encoding="utf-8"))
     report_entries = index["targets"][0]["entry_order"]
     assert [entry["entry_id"] for entry in report_entries] == [
         "report_registry:prefix",

@@ -13,20 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator：完成离线 revalidation package；Project Owner：仅在
-    exact hashes 发布后决定是否签发新的单次 token
+  next_owner: Project Owner：复核 2520 ordinary-pushed exact hashes 后决定是否签发新的 single-use
+    zero-order Cloud revalidation token
   requirement_refs:
   - docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2519 daily Slice fix 尚未 Cloud 验证；v3 token
-    已消费；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+  unstructured_legacy_blocker_or_next_step: 2519 v3 token 已消费；2520 已确认 underlying
+    accessor 离线缺陷并生成修复包，但尚无新 Owner token/run/Results；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 冻结 daily Slice delivery hypotheses；strict proposal/run scope/project code/package
-      hashes；新 token 前零外部动作；如获授权最多一次 mutation/一次 zero-order run；1202-session exact
-      与 no-raw/no-order fail closed
+    text: strict package、precise daily Slice、underlying_last_price、export-safe diagnostics、1202-session
+      exact 与 no-raw/no-order fail closed 已实现并通过 focused；新 token 前保持 cash preservation
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -61,24 +60,52 @@ events:
   - change:TRADING-2520-REGISTER-20260814T151343Z
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-33fe217830860222d089dc759c3b7cc1
+- schema_version: task_event.v1
+  task_id: TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-14T15:47:00Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2520-BASELINE-DONE-20260814T154700Z
+  lane_id: null
+  base_commit: 54e43a1aa9787c52d4b0cb363e30e5a4bf79aed9
+  previous_state_event_id: task-event-33fe217830860222d089dc759c3b7cc1
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：复核 2520 ordinary-pushed exact hashes 后决定是否签发新的 single-use
+      zero-order Cloud revalidation token
+    blocker_or_next_step: 2519 v3 token 已消费；2520 已确认 underlying accessor 离线缺陷并生成修复包，但尚无新
+      Owner token/run/Results；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+    acceptance_criteria: strict package、precise daily Slice、underlying_last_price、export-safe
+      diagnostics、1202-session exact 与 no-raw/no-order fail closed 已实现并通过 focused；新
+      token 前保持 cash preservation
+    notes: '[supporting requirement](docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md)；registration
+      boundary 54e43a1a；2519 result/code exact lineage；Owner authorization template
+      待 final pushed hashes'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2520-BASELINE-DONE-20260814T154700Z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f00c2c92eec6d151c0af85b4fdb4c8f0
 projection:
   legacy_first_eight_cells:
   - TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
   - QQQ Options 主窗口 daily Slice 零订单再验证 V1
   - P0
-  - IN_PROGRESS
-  - Codex capability coordinator：完成离线 revalidation package；Project Owner：仅在 exact
-    hashes 发布后决定是否签发新的单次 token
-  - 2519 daily Slice fix 尚未 Cloud 验证；v3 token 已消费；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
-  - 冻结 daily Slice delivery hypotheses；strict proposal/run scope/project code/package
-    hashes；新 token 前零外部动作；如获授权最多一次 mutation/一次 zero-order run；1202-session exact 与
-    no-raw/no-order fail closed
+  - BASELINE_DONE
+  - Project Owner：复核 2520 ordinary-pushed exact hashes 后决定是否签发新的 single-use zero-order
+    Cloud revalidation token
+  - 2519 v3 token 已消费；2520 已确认 underlying accessor 离线缺陷并生成修复包，但尚无新 Owner token/run/Results；external_action=none；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+  - strict package、precise daily Slice、underlying_last_price、export-safe diagnostics、1202-session
+    exact 与 no-raw/no-order fail closed 已实现并通过 focused；新 token 前保持 cash preservation
   - '[supporting requirement](docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md)；registration
-    base 8f1b8c3f；继承 2519 code/result exact identity'
+    boundary 54e43a1a；2519 result/code exact lineage；Owner authorization template
+    待 final pushed hashes'
   docs_links:
   - docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md
   terminal: false
-  canonical_row_sha256: f03931a3e0ec04732c7c2accd2f4f6ce3100d2d20700bf227f9934a15cdd1929
-last_event_id: task-event-33fe217830860222d089dc759c3b7cc1
+  canonical_row_sha256: 67ef1f2b5812451dd18d2b766f36ff6a13d2f7d0c6f211fb37e9c964c258bb42
+last_event_id: task-event-f00c2c92eec6d151c0af85b4fdb4c8f0
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 75f2e107d4e048b1f65ce62012914ab0b6a8cb3cdb6a67c5960553d255cd1b47
+fragment_checksum: 1c33fc109b1ab4fe4c17343650c173fad89e699b57128426e6730e1f4f72a0cc

@@ -183,6 +183,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
     coverage: DISCLOSED_V3_RUN_INVALID_DAILY_SLICE_FAILURE_FIX_BASELINE
     reader_summary_zh: v3 单次授权已消费，真实 run 完成但日级 scheduled callback 未取得任何 session chain（0/1202），因此 evidence admission=FAIL、DQ/PIT=NOT_EVALUATED；canonical daily Slice 离线修复已实现但尚未获新授权验证，engine 继续 cash preservation。
+  - task_id: TRADING-2520_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_V1
+    requirement_path: docs/requirements/TRADING-2520_QC_QQQ_Options_Primary_Window_Daily_Slice_Zero_Order_Revalidation_V1.md
+    coverage: DISCLOSED_DAILY_SLICE_ACCESSOR_FIX_REVALIDATION_OWNER_TOKEN_REQUIRED
+    reader_summary_zh: 离线排查确认 2519 successor 除 scheduled callback 假设外还误用了 contract.underlying；2520 已改为 precise daily Slice、underlying_last_price 与 export-safe diagnostics，但尚无新 Owner token 或 Cloud 再验证，evidence=FAIL、DQ/PIT=NOT_EVALUATED，engine 继续 cash preservation。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

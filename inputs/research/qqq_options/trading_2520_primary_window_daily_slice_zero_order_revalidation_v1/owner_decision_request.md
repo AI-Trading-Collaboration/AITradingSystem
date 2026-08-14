@@ -1,0 +1,38 @@
+# TRADING-2520 daily Slice zero-order revalidation request
+
+该文件只是未签署模板，不构成授权。2518 v3 token 已在首次 run attempt 后失效，不得复用。
+
+离线排查确认 2519 除 scheduled callback 外还误读了 `contract.underlying`；本包改用 LEAN
+`OptionContract.underlying_last_price`、显式 precise daily close Slice，并新增
+export-safe 诊断计数。
+这些修改尚未由 Cloud 运行验证。
+
+```text
+owner_decision:TRADING-2520:<YYYY-MM-DD>:authorize_single_zero_order_primary_window_daily_slice_revalidation_v4
+ordinary_pushed_main_sha:<ORDINARY_PUSHED_MAIN_SHA>
+registration_base_repository_code_sha:54e43a1aa9787c52d4b0cb363e30e5a4bf79aed9
+revalidation_policy_file_sha256:f9f859568e34c836a2453b175dc283cbdeec7a009887f6f868beccaabd14f35c
+revalidation_policy_canonical_sha256:fc665f68e9fc6bbf52fdb0a3bc903aca13800cb2acdc22d5dd8bd0acd81588b3
+revalidation_package_manifest_file_sha256:<PACKAGE_MANIFEST_FILE_SHA256>
+revalidation_package_manifest_content_sha256:<PACKAGE_MANIFEST_CONTENT_SHA256>
+proposal_content_sha256:d17db4d8944483f6066011c5a854600ea2fdac4a23e91e8b869870c6795e85bb
+run_scope_content_sha256:7d20c370edfb7653da799444d08b9ceb713c33072f33e4eb3e1f2b7535fbfb14
+corrected_project_code_lf_sha256:88a60874737c1e210f5a2f5ac990d14d0f4de3024a1db8f41edaddf3db6226aa
+predecessor_failed_backtest_id:b6d711f67a47199667c8a62f86208b28
+predecessor_failed_result_file_sha256:30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b
+target_project_id:34808569
+requested_range:2021-02-22..2025-12-02
+expected_session_count:1202
+maximum_project_mutations:1
+maximum_cloud_backtests:1
+maximum_orders:0
+maximum_fills:0
+collector:codex_capability_coordinator
+independent_reviewer:project_owner
+authorization_expires_at_utc:<OWNER_SELECTED_EXPIRY_NOT_MORE_THAN_168_HOURS>
+authorization_single_use:true
+authorization_invalidates_after_first_run_attempt:true
+```
+
+新 token 到位前 external_action 必须保持 `none`；不得登录、修改项目、运行 Cloud backtest、
+下载 raw options rows 或宣称 evidence/DQ/PIT PASS。

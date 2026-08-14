@@ -38,12 +38,12 @@ def _rendered(
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_thirty_eight_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_thirty_nine_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 38
+    assert len(policy.task_sources) == 39
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2520))
+        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2521))
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -68,9 +68,9 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert (
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 38
+    assert len(manifest.task_coverage) == 39
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2520))
+        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2521))
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -105,6 +105,9 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     )
     assert coverage_by_task["TRADING-2519"] == (
         "DISCLOSED_V3_RUN_INVALID_DAILY_SLICE_FAILURE_FIX_BASELINE"
+    )
+    assert coverage_by_task["TRADING-2520"] == (
+        "DISCLOSED_DAILY_SLICE_ACCESSOR_FIX_REVALIDATION_OWNER_TOKEN_REQUIRED"
     )
     assert len(manifest.source_artifacts) == 15
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

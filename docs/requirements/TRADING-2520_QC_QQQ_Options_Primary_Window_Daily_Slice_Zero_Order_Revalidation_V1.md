@@ -1,6 +1,6 @@
 # TRADING-2520 — QQQ Options 主窗口 daily Slice 零订单再验证 V1
 
-- status: `IN_PROGRESS`
+- status: `BASELINE_DONE`
 - priority: `P0`
 - governed mode: `SINGLE_LANE`
 - registration base: `8f1b8c3fc1c4815fc0041569a1bce01634908229`
@@ -20,6 +20,13 @@ TRADING-2519 已将 QuantConnect 主窗口运行
 读取 option chain，而 `Resolution.DAILY` option chain 的 Slice 尚未在该时点交付。2519 已准备
 改为在 `on_data(self, data: Slice)` 中读取 `data.option_chains` 的 successor code，LF SHA-256 为
 `d5d8638a2e864b5182887da11d0d74a181dec2e7be41f40bc709f2e245a35261`。
+
+离线审计已经确认一个独立于调度时点的真实代码缺陷：2519 successor 读取
+`contract.underlying`，但 LEAN `OptionContract` 的公开 underlying price authority 是
+`UnderlyingLastPrice`，Python accessor 为 `underlying_last_price`。旧测试 fixture 恰好自造了
+`underlying` 属性，因而掩盖了真实 runtime API mismatch。2520 将该 accessor 修正为
+`underlying_last_price`；scheduled callback 与 daily Slice delivery 的因果关系仍保持
+`UNVERIFIED_PRIMARY_HYPOTHESIS`，不能仅凭离线代码审计宣称已经证实。
 
 本任务不会把该假设当作已证实根因，也不会把修复代码当作已经获得数据能力。任务目标是完成
 离线、可审计、可证伪的再验证包，并排除 code path 内仍可能导致全量 session 被拒绝的属性解析、
@@ -58,6 +65,11 @@ TRADING-2519 已将 QuantConnect 主窗口运行
    越界、未观察或非交易日不得被静默计入。
 4. `H4_AGGREGATE_COMPLETENESS`：只有全部 required derived series 对全部 1202 sessions 完整、有限且
    身份一致时，候选结果才可进入 `GO_FOR_DAILY_ENGINEERING_ONLY` 的后续 admission review。
+
+Accessor 结论以 QuantConnect/LEAN primary authority 为依据：AlgoSeek US Equity Options、Time Slice、
+Initialization 文档，以及 LEAN `Common/Data/Market/OptionContract.cs`。其中只有
+`H2_OPTION_CONTRACT_UNDERLYING_ACCESSOR` 被标记为 `CONFIRMED_OFFLINE_CODE_DEFECT`；daily delivery、
+time frontier 和全窗口 transport/coverage 仍必须由新的 bounded zero-order Cloud 结果证伪或确认。
 
 ## 再验证运行上限（仅供未来新 token 绑定）
 
@@ -121,7 +133,48 @@ TRADING-2519 已将 QuantConnect 主窗口运行
 - final-tree formal gates PASS 后才可发布新的 token template；
 - 本任务完成本身不执行任何外部动作。
 
+## 冻结离线身份
+
+- revalidation policy file SHA-256：
+  `f9f859568e34c836a2453b175dc283cbdeec7a009887f6f868beccaabd14f35c`；
+- revalidation policy canonical SHA-256：
+  `fc665f68e9fc6bbf52fdb0a3bc903aca13800cb2acdc22d5dd8bd0acd81588b3`；
+- package manifest file/content SHA-256：
+  `c6d632c0813b47d3a4e96a98457a43403387b79c6c90e214bd9fe1ddb66ee605`；
+- investigation content SHA-256：
+  `5ff1e87f1b0c43bba11b72ebdd61a93097669821961e2423dde3666343a00fba`；
+- proposal content SHA-256：
+  `d17db4d8944483f6066011c5a854600ea2fdac4a23e91e8b869870c6795e85bb`；
+- run-scope content SHA-256：
+  `7d20c370edfb7653da799444d08b9ceb713c33072f33e4eb3e1f2b7535fbfb14`；
+- corrected project code LF SHA-256：
+  `88a60874737c1e210f5a2f5ac990d14d0f4de3024a1db8f41edaddf3db6226aa`。
+
+`owner_decision_request.md` 中的 manifest/main placeholders 有意保持未填：把 manifest 自身 SHA 写入其
+inventory 中的模板会形成循环身份。ordinary-pushed main 与上述 package manifest SHA 应由最终交接消息
+共同绑定，Owner 不能仅复制未签署模板而跳过 exact-main 复核。
+
 ## 进度记录
 
 - `2026-08-14T15:13:43Z`：从 clean exact main
   `8f1b8c3fc1c4815fc0041569a1bce01634908229` 开始登记；external action 保持 `none`。
+- `2026-08-14T15:18:00Z`：registration boundary 已 ordinary push，exact main=
+  `54e43a1aa9787c52d4b0cb363e30e5a4bf79aed9`；从该基线 START/LANE PASS。
+- `2026-08-14T15:26:00Z`：离线 primary-source/API 审计确认 2519 的
+  `contract.underlying` accessor 缺陷；新 code 使用 `underlying_last_price`、
+  `daily_precise_end_time=true`、`data.time.date()` 与 export-safe diagnostic counts。
+- `2026-08-14T15:29:00Z`：首轮 adjacent focused coverage 为 `80 passed / 2 failed`；两个失败均为
+  canonical package owner template 在 formatter 后陈旧，不是 runtime semantics。使用同一 canonical writer
+  重建 package 后，完全相同的 `-n 16 --dist loadfile` 覆盖为 `82 passed`。
+- `2026-08-14T15:44:00Z`：Atlas/page-effectiveness 首轮为 `20 passed / 1 failed`，唯一失败是
+  renderer test 仍冻结 38-task count；同步为 39 后完全相同的 `-n 16 --dist loadfile` 覆盖为
+  `21 passed`。页面新增 2520 disclosure，但不改变人工验收轨道或策略结论。
+- `2026-08-14T15:47:00Z`：task projection 更新为 `BASELINE_DONE`。其含义仅为离线根因、严格包、
+  修正版 project code、tests 与 Owner request template 已形成；不表示 Cloud 再验证、evidence/DQ-PIT PASS、
+  selection 或 engine activation。
+- `2026-08-14T16:12:00Z`：compatibility/deprecation 首次原样运行在外层 304 秒上限被终止，无 pytest
+  terminal/node failure，不能作证据；放宽 wrapper 等待时间后的相同 211 项覆盖为 `210 passed / 1 failed`，
+  暴露旧 ARCH-004G inventory id。仅同步测试 current-authority 常量后第二轮仍为 `210/1`，进一步确认 frozen
+  inventory 文件本身陈旧。最终按 `PYTHONPATH=src;.` 的真实 inventory 更新 id 与 module/test counts，第三轮
+  完全相同的 `-n 16 --dist loadfile` 覆盖为 `211 passed`；历史 prefix、exact bytes、source hash 与 removal
+  safety 验证均未放宽。

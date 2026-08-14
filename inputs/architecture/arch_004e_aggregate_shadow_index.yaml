@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 102
+fragment_count: 104
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: 7405ae86f8b7423215e215538b9194e63f9bb2b356e0c00f05c36eab98184ce9
+  current_sha256: ed52d1fdad73d457e0660cd821c38732000fe7998a557e5ee7353fadb222b55e
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 43
+  fragment_count: 44
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -75,6 +75,7 @@ targets:
   - config/architecture/fragments/flows/qqq_options_owner_policy_adoption_contract.yaml
   - config/architecture/fragments/flows/qqq_options_position_lifecycle.yaml
   - config/architecture/fragments/flows/qqq_options_primary_window_daily_slice_failure_fix.yaml
+  - config/architecture/fragments/flows/qqq_options_primary_window_daily_slice_zero_order_revalidation.yaml
   - config/architecture/fragments/flows/qqq_options_primary_window_derived_calibration_evidence_generator.yaml
   - config/architecture/fragments/flows/qqq_options_primary_window_policy_calibration.yaml
   - config/architecture/fragments/flows/qqq_options_shared_contract.yaml
@@ -383,6 +384,13 @@ fragments:
   path: config/architecture/fragments/flows/qqq_options_primary_window_daily_slice_failure_fix.yaml
   sha256: 267a708cc7a8d3d27a9bdad7801d539393b3572e44ca958dd76b97d8e69f0929
   generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_primary_window_daily_slice_zero_order_revalidation
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_primary_window_daily_slice_zero_order_revalidation.yaml
+  sha256: 1ce572372c20f81246b65eca8e5e1d4daafb15a5323ca6b261e11c305e6e78cd
+  generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_primary_window_derived_calibration_evidence_generator
   fragment_kind: flow
   owner: architecture_governance
@@ -669,6 +677,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_primary_window_daily_slice_failure_fix.yaml
   sha256: 0739168541ad09052a2f462408d5139fad6715f84905487980dc0f76d2fd9490
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_primary_window_daily_slice_zero_order_revalidation
+  fragment_kind: module
+  owner: options_daily_backtest_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_primary_window_daily_slice_zero_order_revalidation.yaml
+  sha256: 3ea149857c2f3580273e904238e3e2ec2a69a67da459b964ff615ac66efb825e
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_primary_window_derived_aggregate_collection_evidence_admission
   fragment_kind: module

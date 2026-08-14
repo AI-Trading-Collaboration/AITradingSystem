@@ -1,0 +1,22 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_primary_window_daily_slice_zero_order_revalidation
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/primary_window_daily_slice_zero_order_revalidation.py
+public_contracts:
+  - DEFAULT_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_PACKAGE_ROOT
+  - DEFAULT_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_ZERO_ORDER_REVALIDATION_POLICY_PATH
+  - BuiltDailySliceZeroOrderRevalidationPackage
+  - DailySliceRevalidationInvestigation
+  - DailySliceRevalidationPackageManifest
+  - DailySliceZeroOrderRevalidationPolicy
+  - LoadedDailySliceZeroOrderRevalidationPackage
+  - LoadedDailySliceZeroOrderRevalidationPolicy
+  - QCQQQOptionsDailySliceRevalidationError
+  - RevalidationPackageArtifact
+  - build_qc_qqq_options_primary_window_daily_slice_zero_order_revalidation_package
+  - load_qc_qqq_options_primary_window_daily_slice_zero_order_revalidation_package
+  - load_qc_qqq_options_primary_window_daily_slice_zero_order_revalidation_policy
+  - write_qc_qqq_options_primary_window_daily_slice_zero_order_revalidation_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

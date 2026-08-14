@@ -8446,3 +8446,39 @@ PASS。2517 离线 baseline 本身没有执行 QuantConnect login、project muta
 engine 已激活。新的 Cloud run 必须由 Project Owner 针对 ordinary-pushed exact 2518 package 另行签署 single-use
 v3 token。API/CLI/HTTP/Object Store/raw option export、investment interpretation、paper/live/broker/production
 继续为 false/none。
+
+## TRADING-2520 QC QQQ Options Daily-Slice Zero-Order Revalidation V1
+
+`config/research/qc_qqq_options_primary_window_daily_slice_zero_order_revalidation_v1.yaml` 与
+`qqq_options_research.primary_window_daily_slice_zero_order_revalidation` 对 2519 的 `0/1202` 真实结果做进一步
+离线根因审计，并生成严格、尚未授权的零订单再验证包。它不覆盖 2519 failure evidence，也不把本地修复当作
+QuantConnect capability 或 DQ/PIT PASS。
+
+```text
+2519 consumed v3 run + INVALID_INCOMPLETE 0/1202 result
+  -> freeze result / failure / code / package / range / calendar identities
+  -> separate hypotheses
+     -> scheduled 09:31 versus DAILY Slice delivery: UNVERIFIED_PRIMARY_HYPOTHESIS
+     -> contract.underlying accessor: CONFIRMED_OFFLINE_CODE_DEFECT
+     -> daily time frontier and full-window transport: UNVERIFIED_GUARDED_HYPOTHESIS
+  -> primary LEAN OptionContract authority
+     -> replace fixture-only contract.underlying
+     -> require finite positive contract.underlying_last_price
+  -> canonical daily Slice successor
+     -> settings.daily_precise_end_time=true
+     -> data.option_chains[canonical symbol]
+     -> session identity=data.time.date()
+     -> missing/empty/duplicate/out-of-calendar session fails closed
+  -> export-safe diagnostics only
+     -> Slice callbacks / chain-present callbacks / unique sessions / invalid reasons
+     -> no raw option rows / no contract-level export
+  -> exact 2021-02-22..2025-12-02 / XNYS / 1202-session aggregate checks
+  -> no new Owner token or Cloud result
+  -> evidence=FAIL / DQ-PIT=NOT_EVALUATED / selection=false
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+2520 的离线 package、canonical bytes 与 strict loader 仅供 Project Owner 决定是否签署新的 single-use
+zero-order token。任务自身不登录 QuantConnect、不修改 project、不运行 Cloud backtest，也不收集 Results。
+在真实再验证、strict Results admission 与独立复核完成前，daily delivery 与全窗口 coverage 仍未证实；
+API/CLI/HTTP/Object Store/raw option export、订单、成交、投资解释、paper/live/broker/production 继续禁止。
