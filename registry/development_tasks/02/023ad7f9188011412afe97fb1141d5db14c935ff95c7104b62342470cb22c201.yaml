@@ -1,0 +1,83 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+  task_id_sha256: 023ad7f9188011412afe97fb1141d5db14c935ff95c7104b62342470cb22c201
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+  title: null
+  domain: QQQ Options 主窗口日级回调结果失败准入
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex capability coordinator：封存v3结果失败并完成离线daily Slice failure-fix；Project
+    Owner：仅在新ordinary-pushed hashes后决定是否另行授权
+  requirement_refs:
+  - docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: V3_AUTHORIZATION_CONSUMED_DAILY_SCHEDULE_RESULT_INVALID；observed_sessions=0/1202；evidence
+    admission=FAIL；DQ/PIT=NOT_EVALUATED；禁止自动重跑
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: v3 token/run/result exact facts与0 orders/fills冻结；2514 strict fail closed；successor改用canonical
+      daily Slice delivery且不引入阈值；final-tree五级与ordinary push/cleanup
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-14T01:34:31Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2519-REGISTRATION-V1
+  lane_id: null
+  base_commit: 6e36874e38119ede21a7085e2e6df3bc2cbb5b33
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+    - QQQ Options 主窗口日级回调结果失败准入
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：封存v3结果失败并完成离线daily Slice failure-fix；Project Owner：仅在新ordinary-pushed
+      hashes后决定是否另行授权
+    - V3_AUTHORIZATION_CONSUMED_DAILY_SCHEDULE_RESULT_INVALID；observed_sessions=0/1202；evidence
+      admission=FAIL；DQ/PIT=NOT_EVALUATED；禁止自动重跑
+    - v3 token/run/result exact facts与0 orders/fills冻结；2514 strict fail closed；successor改用canonical
+      daily Slice delivery且不引入阈值；final-tree五级与ordinary push/cleanup
+    - 'Supporting requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；backtest=b6d711f67a47199667c8a62f86208b28；result_sha256=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；external_action=none
+      after consumed run。'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2519-REGISTRATION-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3a0af0a09df24e9c776283609309973f
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+  - QQQ Options 主窗口日级回调结果失败准入
+  - P0
+  - IN_PROGRESS
+  - Codex capability coordinator：封存v3结果失败并完成离线daily Slice failure-fix；Project Owner：仅在新ordinary-pushed
+    hashes后决定是否另行授权
+  - V3_AUTHORIZATION_CONSUMED_DAILY_SCHEDULE_RESULT_INVALID；observed_sessions=0/1202；evidence
+    admission=FAIL；DQ/PIT=NOT_EVALUATED；禁止自动重跑
+  - v3 token/run/result exact facts与0 orders/fills冻结；2514 strict fail closed；successor改用canonical
+    daily Slice delivery且不引入阈值；final-tree五级与ordinary push/cleanup
+  - 'Supporting requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；backtest=b6d711f67a47199667c8a62f86208b28；result_sha256=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；external_action=none
+    after consumed run。'
+  docs_links:
+  - docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
+  terminal: false
+  canonical_row_sha256: 201205c69d3a2874a80de4df372ab07e5966bf4ae2911547baba5a445c63cf63
+last_event_id: task-event-3a0af0a09df24e9c776283609309973f
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 426510e0c0f39e6f1976906977cabe2ce6d465dcfce844890d3fb40654a72bb4

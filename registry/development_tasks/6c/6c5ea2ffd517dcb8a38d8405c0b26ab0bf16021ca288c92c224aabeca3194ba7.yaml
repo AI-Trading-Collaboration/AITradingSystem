@@ -13,20 +13,20 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Project Owner：在 ordinary-pushed corrected package hashes 发布后决定是否签署 single-use
-    v3 token；Codex capability coordinator：仅在新 token 后执行唯一 bounded lifecycle
+  next_owner: TRADING-2519 Codex capability coordinator：封存v3 INVALID_INCOMPLETE result并完成daily
+    Slice failure-fix；Project Owner：仅在新hashes后决定是否另行授权
   requirement_refs:
   - docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md
+  - docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: OWNER_REAUTHORIZATION_NOT_PROVIDED_FOR_CORRECTED_TRADING_2518_PROPOSAL；旧2516
-    v2 token已消费；禁止第二次run、Results/evidence/DQ-PIT伪PASS
+  unstructured_legacy_blocker_or_next_step: V3_AUTHORIZATION_CONSUMED；backtest b6d711f67a47199667c8a62f86208b28=Completed但collector
+    INVALID_INCOMPLETE 0/1202；禁止重跑；evidence/DQ-PIT不通过
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 显式 list[Symbol] failure-fix、2513 historical bytes、failed-run ledger/consumption、corrected
-      package 与 unsigned v3 template 已冻结；corrected code=064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d；engine
-      cash-preservation
+    text: v3唯一mutation/run与result SHA冻结；orders/fills=0/0；strict admission FAIL；2519接管daily
+      schedule root cause且不改写2518历史
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -118,26 +118,55 @@ events:
   - change:TRADING-2518-FINAL-HASH-REFRESH-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-7555990825cfcf1177133322ddeddf98
+- schema_version: task_event.v1
+  task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-14T01:34:31Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2518-V3-RUN-RESULT-RECORDED-V1
+  lane_id: null
+  base_commit: 6e36874e38119ede21a7085e2e6df3bc2cbb5b33
+  previous_state_event_id: task-event-7555990825cfcf1177133322ddeddf98
+  from_status: BASELINE_DONE
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: TRADING-2519 Codex capability coordinator：封存v3 INVALID_INCOMPLETE
+      result并完成daily Slice failure-fix；Project Owner：仅在新hashes后决定是否另行授权
+    blocker_or_next_step: V3_AUTHORIZATION_CONSUMED；backtest b6d711f67a47199667c8a62f86208b28=Completed但collector
+      INVALID_INCOMPLETE 0/1202；禁止重跑；evidence/DQ-PIT不通过
+    acceptance_criteria: v3唯一mutation/run与result SHA冻结；orders/fills=0/0；strict admission
+      FAIL；2519接管daily schedule root cause且不改写2518历史
+    notes: 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；successor
+      requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；result
+      SHA=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；external_action=none
+      after consumed run。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2518-V3-RUN-RESULT-RECORDED-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-21f13724dfb51e55731f7ccac51597e9
 projection:
   legacy_first_eight_cells:
   - TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
   - QQQ Options 主窗口 collector filter failure-fix 与重新授权
   - P0
   - BASELINE_DONE
-  - Project Owner：在 ordinary-pushed corrected package hashes 发布后决定是否签署 single-use
-    v3 token；Codex capability coordinator：仅在新 token 后执行唯一 bounded lifecycle
-  - OWNER_REAUTHORIZATION_NOT_PROVIDED_FOR_CORRECTED_TRADING_2518_PROPOSAL；旧2516 v2
-    token已消费；禁止第二次run、Results/evidence/DQ-PIT伪PASS
-  - 显式 list[Symbol] failure-fix、2513 historical bytes、failed-run ledger/consumption、corrected
-    package 与 unsigned v3 template 已冻结；corrected code=064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d；engine
-    cash-preservation
-  - 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；package
-    manifest canonical=a9d335f5c80a425301d25a39967b8d251d90960ef1301b55e55ac5b3380a21f7；external_action=none
-    for 2518；new run requires new exact Owner token。'
+  - TRADING-2519 Codex capability coordinator：封存v3 INVALID_INCOMPLETE result并完成daily
+    Slice failure-fix；Project Owner：仅在新hashes后决定是否另行授权
+  - V3_AUTHORIZATION_CONSUMED；backtest b6d711f67a47199667c8a62f86208b28=Completed但collector
+    INVALID_INCOMPLETE 0/1202；禁止重跑；evidence/DQ-PIT不通过
+  - v3唯一mutation/run与result SHA冻结；orders/fills=0/0；strict admission FAIL；2519接管daily
+    schedule root cause且不改写2518历史
+  - 'Supporting requirement: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md；successor
+    requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；result
+    SHA=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；external_action=none
+    after consumed run。'
   docs_links:
   - docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md
+  - docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
   terminal: false
-  canonical_row_sha256: f137565bddcc17c2093e589ceba2924686ffdbf6739398303bb29c63d4a630c6
-last_event_id: task-event-7555990825cfcf1177133322ddeddf98
+  canonical_row_sha256: 27e8ff4192ae7f8a71656141aaf75f03f5565712ff0d05d530a7126ca73bea33
+last_event_id: task-event-21f13724dfb51e55731f7ccac51597e9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 088615faa0249004063c019a3aa1613b8a22264d04b96b1f3d62ed890bf28053
+fragment_checksum: 95190e0b771eabed744bc9c2803123dbb7554b5ca479d3175c9687fa9db1ca1d
