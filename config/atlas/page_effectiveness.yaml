@@ -179,6 +179,10 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2518_QC_QQQ_Options_Primary_Window_Collector_Filter_Failure_Fix_and_Reauthorization_V1.md
     coverage: DISCLOSED_COLLECTOR_FILTER_FIXED_REAUTHORIZATION_REQUIRED
     reader_summary_zh: Option filter 已以显式 list[Symbol] 完成 versioned failure-fix，未引入任何投资阈值；旧 token 不可复用，尚无 v3 Owner reauthorization、新 run、Results 或 DQ/PIT PASS，engine 继续 cash preservation。
+  - task_id: TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+    requirement_path: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
+    coverage: DISCLOSED_V3_RUN_INVALID_DAILY_SLICE_FAILURE_FIX_BASELINE
+    reader_summary_zh: v3 单次授权已消费，真实 run 完成但日级 scheduled callback 未取得任何 session chain（0/1202），因此 evidence admission=FAIL、DQ/PIT=NOT_EVALUATED；canonical daily Slice 离线修复已实现但尚未获新授权验证，engine 继续 cash preservation。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

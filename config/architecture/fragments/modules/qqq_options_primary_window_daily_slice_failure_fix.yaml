@@ -1,0 +1,20 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_primary_window_daily_slice_failure_fix
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/primary_window_daily_slice_failure_fix.py
+public_contracts:
+  - DEFAULT_POLICY_PATH
+  - DailySliceFailureFixPackageManifest
+  - DailySliceFailureFixPolicy
+  - LoadedDailySliceFailureFixPackage
+  - LoadedDailySliceFailureFixPolicy
+  - PackageArtifact
+  - RunFailureFacts
+  - V3RunFailureReceipt
+  - build_qc_qqq_options_primary_window_daily_slice_failure_fix_package
+  - build_v3_run_failure_receipt
+  - load_qc_qqq_options_primary_window_daily_slice_failure_fix_policy
+  - write_qc_qqq_options_primary_window_daily_slice_failure_fix_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

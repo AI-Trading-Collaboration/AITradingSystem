@@ -8251,6 +8251,40 @@ run 已发生、primary-window evidence 已收集、DQ/PIT 已通过或 engine/s
 review 必须进入独立后继任务。API/CLI/HTTP/raw export、investment interpretation、paper/live/broker/production
 继续为 false/none。
 
+## TRADING-2519 QC QQQ Options Daily-Slice Result Failure Admission V1
+
+`config/research/qc_qqq_options_primary_window_daily_slice_failure_fix_v1.yaml`、
+`qqq_options_research.primary_window_daily_slice_failure_fix` 与 versioned 2519 package 封存了 2518 v3
+真实运行结果，并将日级采集 trigger 从 9:31 scheduled lookup 改为 canonical `Slice.option_chains`
+delivery。该层只形成失败准入与离线修复 authority，不恢复已消费 authorization，也不授权第二次 run。
+
+```text
+2518 v3 exact Owner token (single-use)
+  -> project 34808569 / build c87c22-be5a81
+  -> backtest b6d711f67a47199667c8a62f86208b28
+  -> Completed / 38,397,482 data points / orders=fills=0
+  -> runtime terminal INVALID_INCOMPLETE / observed=0 / invalid=1202
+  -> empty TRADING2512 aggregate chart series
+  -> strict failure receipt
+     -> evidence admission=FAIL
+     -> local aggregate DQ/PIT=NOT_EVALUATED
+     -> option-event DQ=NOT_EVALUATED
+     -> selection=false / POLICY_BLOCKED_CASH_PRESERVATION
+  -> versioned offline successor main.py
+     -> DAILY QQQ Equity + Option subscriptions unchanged
+     -> on_data(Slice) -> data.option_chains.get(canonical option symbol)
+     -> one deterministic per-session aggregate collection
+     -> missing/empty/duplicate/non-expected session fail closed
+     -> scheduled after_market_open lookup prohibited
+  -> no new cloud run / no threshold / no investment interpretation
+```
+
+2519 的 `BASELINE_DONE` 只表示真实 v3 result、failure receipt、exact package 与 canonical daily-Slice
+离线修复已经可重放并通过本地验证；它不表示修复已在 QuantConnect Cloud 验证，不表示 evidence、DQ/PIT、
+selection、engine 或策略有效性 PASS。任何后继 project mutation/backtest 都需要针对 ordinary-pushed exact
+2519 authority 的全新 Project Owner single-use token；API/CLI/HTTP/Object Store/raw option rows、paper/live/
+broker/production 继续禁止。
+
 ## TRADING-2514 QC QQQ Options Collection / Evidence Admission V1
 
 `config/research/qc_qqq_options_primary_window_derived_aggregate_collection_evidence_admission_v1.yaml`

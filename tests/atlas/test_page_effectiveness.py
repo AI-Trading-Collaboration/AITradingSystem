@@ -38,12 +38,12 @@ def _rendered(
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_thirty_seven_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_thirty_eight_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 37
+    assert len(policy.task_sources) == 38
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2519))
+        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2520))
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -68,45 +68,43 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert (
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 37
+    assert len(manifest.task_coverage) == 38
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2519))
+        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2520))
     ]
-    assert manifest.task_coverage[-10].coverage == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
-    assert (
-        manifest.task_coverage[-9].coverage
-        == "DISCLOSED_PRIMARY_WINDOW_CALIBRATION_EVIDENCE_NOT_PROVIDED"
+    coverage_by_task = {
+        item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
+    }
+    assert coverage_by_task["TRADING-2509"] == "DISCLOSED_VERSIONED_SUCCESSOR_CONTRACT_ONLY"
+    assert coverage_by_task["TRADING-2510"] == (
+        "DISCLOSED_PRIMARY_WINDOW_CALIBRATION_EVIDENCE_NOT_PROVIDED"
     )
-    assert (
-        manifest.task_coverage[-8].coverage == "DISCLOSED_DERIVED_EVIDENCE_GENERATOR_SOURCE_BLOCKED"
+    assert coverage_by_task["TRADING-2511"] == (
+        "DISCLOSED_DERIVED_EVIDENCE_GENERATOR_SOURCE_BLOCKED"
     )
-    assert (
-        manifest.task_coverage[-7].coverage
-        == "DISCLOSED_EXPORT_SAFE_COLLECTOR_CONTRACT_RUN_NOT_AUTHORIZED"
+    assert coverage_by_task["TRADING-2512"] == (
+        "DISCLOSED_EXPORT_SAFE_COLLECTOR_CONTRACT_RUN_NOT_AUTHORIZED"
     )
-    assert (
-        manifest.task_coverage[-6].coverage
-        == "DISCLOSED_EXACT_RUN_PROPOSAL_OWNER_AUTHORIZATION_REQUIRED"
+    assert coverage_by_task["TRADING-2513"] == (
+        "DISCLOSED_EXACT_RUN_PROPOSAL_OWNER_AUTHORIZATION_REQUIRED"
     )
-    assert (
-        manifest.task_coverage[-5].coverage
-        == "DISCLOSED_EVIDENCE_ADMISSION_CONTRACT_OWNER_TOKEN_NOT_PROVIDED"
+    assert coverage_by_task["TRADING-2514"] == (
+        "DISCLOSED_EVIDENCE_ADMISSION_CONTRACT_OWNER_TOKEN_NOT_PROVIDED"
     )
-    assert (
-        manifest.task_coverage[-4].coverage
-        == "DISCLOSED_STRATEGY_RESEARCH_REOPEN_READINESS_KEEP_CLOSED"
+    assert coverage_by_task["TRADING-2515"] == (
+        "DISCLOSED_STRATEGY_RESEARCH_REOPEN_READINESS_KEEP_CLOSED"
     )
-    assert (
-        manifest.task_coverage[-3].coverage
-        == "DISCLOSED_QQQ_OPTIONS_EVIDENCE_LANE_TOKEN_CONSUMED_RUN_FAILED"
+    assert coverage_by_task["TRADING-2516"] == (
+        "DISCLOSED_QQQ_OPTIONS_EVIDENCE_LANE_TOKEN_CONSUMED_RUN_FAILED"
     )
-    assert (
-        manifest.task_coverage[-2].coverage
-        == "DISCLOSED_REFRESH_AUTHORIZATION_CONSUMED_FAILED_RUN_NO_EVIDENCE"
+    assert coverage_by_task["TRADING-2517"] == (
+        "DISCLOSED_REFRESH_AUTHORIZATION_CONSUMED_FAILED_RUN_NO_EVIDENCE"
     )
-    assert (
-        manifest.task_coverage[-1].coverage
-        == "DISCLOSED_COLLECTOR_FILTER_FIXED_REAUTHORIZATION_REQUIRED"
+    assert coverage_by_task["TRADING-2518"] == (
+        "DISCLOSED_COLLECTOR_FILTER_FIXED_REAUTHORIZATION_REQUIRED"
+    )
+    assert coverage_by_task["TRADING-2519"] == (
+        "DISCLOSED_V3_RUN_INVALID_DAILY_SLICE_FAILURE_FIX_BASELINE"
     )
     assert len(manifest.source_artifacts) == 15
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

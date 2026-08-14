@@ -1,0 +1,73 @@
+schema_version: qc_qqq_options_primary_window_daily_slice_failure_fix_policy.v1
+policy_id: TRADING_2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_FAILURE_FIX_V1
+policy_version: 1.0.0
+status: REVIEWED_FAILURE_FIX_BASELINE
+registration_base_repository_code_sha: c49a661aa8274d1e3b23941b94ff366743d98438
+predecessor:
+  task_id: TRADING-2518_QC_QQQ_OPTIONS_PRIMARY_WINDOW_COLLECTOR_FILTER_FAILURE_FIX_AND_REAUTHORIZATION_V1
+  package_manifest_file_sha256: a9d335f5c80a425301d25a39967b8d251d90960ef1301b55e55ac5b3380a21f7
+  package_manifest_content_sha256: 08c1b32901aa6dc67923c2432017438ac3bee7d90810d910ba2149dd2fd85931
+  project_code_lf_sha256: 064a3bba10d1599a886eb52340ba843ff19ef9caf6a0da89ac5b5119c929d49d
+run_failure:
+  owner_decision_token: owner_decision:TRADING-2518:2026-08-14:authorize_single_zero_order_primary_window_derived_aggregate_collection_v3
+  ordinary_pushed_main_sha: 6e36874e38119ede21a7085e2e6df3bc2cbb5b33
+  registration_base_repository_code_sha: 2ba0e799bc5e9549eb0220f33a5c2d907de86596
+  failure_fix_policy_file_sha256: 28cc02d1ff88674c3efc98cf85f31e7a192d7e127421081cccde00daf054e955
+  failure_fix_policy_canonical_sha256: fa49cbb37ba6dfec0712136d3f72e64641f603e339d293f40db73957b1c85f9c
+  failed_backtest_id: 9518360aeb329219cd83e78442a1d229
+  failed_run_receipt_content_sha256: eebb37bbbabe584bd38c013ef41c48fd1e8196bf7207d24c265301310c93fb07
+  previous_run_attempt_consumption_content_sha256: 235bf53686052fabfd21089d6b0fb4dcafeb1b039375d142dfc9478ae595d498
+  authorization_expires_at_utc: '2026-08-21T00:00:00Z'
+  target_project_id: 34808569
+  collector: codex_capability_coordinator
+  independent_reviewer: project_owner
+  project_mutation_count: 1
+  cloud_backtest_count: 1
+  build_id: c87c22-be5a81
+  backtest_id: b6d711f67a47199667c8a62f86208b28
+  backtest_name: Muscular Fluorescent Orange Bat
+  host_class: Community B-MICRO
+  requested_start: '2021-02-22'
+  requested_end: '2025-12-02'
+  expected_session_count: 1202
+  elapsed_seconds: '900.27'
+  processed_data_points: 38397482
+  processed_data_points_per_second: 43000
+  result_file_sha256: 30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b
+  result_byte_count: 813023
+  state_status: Completed
+  observed_session_count: 0
+  invalid_session_count: 1202
+  orders: 0
+  fills: 0
+  total_fees: '$0.00'
+  start_equity: '100000'
+  end_equity: '100000'
+  portfolio_invested: false
+  raw_option_rows: false
+  log_data: false
+  object_store: false
+  authorization_consumed: true
+  authorization_invalidated_after_first_run_attempt: true
+  evidence_admission_status: FAIL
+  dq_pit_status: NOT_EVALUATED
+  typed_reason: QC_DAILY_CHAIN_SCHEDULE_PRE_DATA_EMPTY
+successor:
+  package_relative_path: inputs/research/qqq_options/trading_2519_primary_window_daily_slice_failure_fix_v1
+  project_code_relative_path: inputs/research/qqq_options/trading_2519_primary_window_daily_slice_failure_fix_v1/main.py
+  project_code_lf_sha256: d5d8638a2e864b5182887da11d0d74a181dec2e7be41f40bc709f2e245a35261
+  result_relative_path: inputs/research/qqq_options/trading_2519_primary_window_daily_slice_failure_fix_v1/result.json
+  failure_receipt_relative_path: inputs/research/qqq_options/trading_2519_primary_window_daily_slice_failure_fix_v1/failure_receipt.json
+  package_manifest_relative_path: inputs/research/qqq_options/trading_2519_primary_window_daily_slice_failure_fix_v1/package_manifest.json
+  trigger_authority: CANONICAL_DAILY_SLICE_OPTION_CHAINS
+  prohibited_trigger_authority: SCHEDULED_AFTER_MARKET_OPEN_FOR_DAILY_CHAIN
+safety:
+  external_action_performed_after_consumed_run: false
+  further_cloud_run_authorized: false
+  selection_authorized: false
+  engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+  investment_interpretation_authorized: false
+  production_effect: none
+  broker_action: none
+  raw_option_rows_permitted: false
+  thresholds_introduced: false

@@ -13,19 +13,19 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator：封存v3结果失败并完成离线daily Slice failure-fix；Project
-    Owner：仅在新ordinary-pushed hashes后决定是否另行授权
+  next_owner: Project Owner：仅在2519 ordinary-pushed exact package/code hashes后决定是否另行授权；未授权时external_action=none
   requirement_refs:
   - docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: V3_AUTHORIZATION_CONSUMED_DAILY_SCHEDULE_RESULT_INVALID；observed_sessions=0/1202；evidence
-    admission=FAIL；DQ/PIT=NOT_EVALUATED；禁止自动重跑
+  unstructured_legacy_blocker_or_next_step: V3_AUTHORIZATION_CONSUMED；真实result INVALID_INCOMPLETE
+    0/1202；offline daily Slice fix未获Cloud验证；evidence=FAIL；DQ/PIT=NOT_EVALUATED；engine
+    cash preservation
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: v3 token/run/result exact facts与0 orders/fills冻结；2514 strict fail closed；successor改用canonical
-      daily Slice delivery且不引入阈值；final-tree五级与ordinary push/cleanup
+    text: v3真实run/result exact封存；receipt/manifest exact-byte fail closed；successor仅使用canonical
+      daily Slice.option_chains；14 focused PASS；final-tree五级与ordinary push/cleanup
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -60,24 +60,48 @@ events:
   - change:TRADING-2519-REGISTRATION-V1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-3a0af0a09df24e9c776283609309973f
+- schema_version: task_event.v1
+  task_id: TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-14T01:59:12Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2519-BASELINE-DONE-V1
+  lane_id: null
+  base_commit: c49a661aa8274d1e3b23941b94ff366743d98438
+  previous_state_event_id: task-event-3a0af0a09df24e9c776283609309973f
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Project Owner：仅在2519 ordinary-pushed exact package/code hashes后决定是否另行授权；未授权时external_action=none
+    blocker_or_next_step: V3_AUTHORIZATION_CONSUMED；真实result INVALID_INCOMPLETE 0/1202；offline
+      daily Slice fix未获Cloud验证；evidence=FAIL；DQ/PIT=NOT_EVALUATED；engine cash preservation
+    acceptance_criteria: v3真实run/result exact封存；receipt/manifest exact-byte fail closed；successor仅使用canonical
+      daily Slice.option_chains；14 focused PASS；final-tree五级与ordinary push/cleanup
+    notes: 'Supporting requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；result=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；manifest=e8ac4449d4faa802c4209641b90f97c10dc70cd1b5555134b961d2e62c4f96ef；successor_code_lf=d5d8638a2e864b5182887da11d0d74a181dec2e7be41f40bc709f2e245a35261；no
+      further external action authorized。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2519-BASELINE-DONE-V1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0dc927748f5d6a1b28c5a2e91695cc90
 projection:
   legacy_first_eight_cells:
   - TRADING-2519_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SCHEDULE_RESULT_FAILURE_ADMISSION_V1
   - QQQ Options 主窗口日级回调结果失败准入
   - P0
-  - IN_PROGRESS
-  - Codex capability coordinator：封存v3结果失败并完成离线daily Slice failure-fix；Project Owner：仅在新ordinary-pushed
-    hashes后决定是否另行授权
-  - V3_AUTHORIZATION_CONSUMED_DAILY_SCHEDULE_RESULT_INVALID；observed_sessions=0/1202；evidence
-    admission=FAIL；DQ/PIT=NOT_EVALUATED；禁止自动重跑
-  - v3 token/run/result exact facts与0 orders/fills冻结；2514 strict fail closed；successor改用canonical
-    daily Slice delivery且不引入阈值；final-tree五级与ordinary push/cleanup
-  - 'Supporting requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；backtest=b6d711f67a47199667c8a62f86208b28；result_sha256=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；external_action=none
-    after consumed run。'
+  - BASELINE_DONE
+  - Project Owner：仅在2519 ordinary-pushed exact package/code hashes后决定是否另行授权；未授权时external_action=none
+  - V3_AUTHORIZATION_CONSUMED；真实result INVALID_INCOMPLETE 0/1202；offline daily Slice
+    fix未获Cloud验证；evidence=FAIL；DQ/PIT=NOT_EVALUATED；engine cash preservation
+  - v3真实run/result exact封存；receipt/manifest exact-byte fail closed；successor仅使用canonical
+    daily Slice.option_chains；14 focused PASS；final-tree五级与ordinary push/cleanup
+  - 'Supporting requirement: docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md；result=30f95852fe509e5229a86bed77978f62f9756016f17c3159c5afb63b6eaa205b；manifest=e8ac4449d4faa802c4209641b90f97c10dc70cd1b5555134b961d2e62c4f96ef；successor_code_lf=d5d8638a2e864b5182887da11d0d74a181dec2e7be41f40bc709f2e245a35261；no
+    further external action authorized。'
   docs_links:
   - docs/requirements/TRADING-2519_QC_QQQ_Options_Primary_Window_Daily_Schedule_Result_Failure_Admission_V1.md
   terminal: false
-  canonical_row_sha256: 201205c69d3a2874a80de4df372ab07e5966bf4ae2911547baba5a445c63cf63
-last_event_id: task-event-3a0af0a09df24e9c776283609309973f
+  canonical_row_sha256: d06048e62e6f56d2ae9ca51dc2440b49a63eb0299bd8fb1f2509ac003d03751c
+last_event_id: task-event-0dc927748f5d6a1b28c5a2e91695cc90
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 426510e0c0f39e6f1976906977cabe2ce6d465dcfce844890d3fb40654a72bb4
+fragment_checksum: b9701e34f9a6a6062ae4b88d07ef3fe42bdd1174d06c6e23c8346338427f734c

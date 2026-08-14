@@ -1,6 +1,6 @@
 # TRADING-2519 — QQQ Options 主窗口日级回调结果失败准入 V1
 
-- status: `IN_PROGRESS`
+- status: `BASELINE_DONE`
 - priority: `P0`
 - governed mode: `SINGLE_LANE`
 - registration base: `6e36874e38119ede21a7085e2e6df3bc2cbb5b33`
@@ -113,7 +113,18 @@ fragments、DevEx、compatibility/current-authority 与 Atlas page-effectiveness
 
 ## 6. 当前状态 / next owner
 
-- Codex capability coordinator：封存真实 v3 failure evidence，完成离线 daily Slice failure-fix 与验证；
+- canonical policy file SHA-256：`baf5468c32c42600da5dc6ea3a95f703ad91307eaf881d3591bdb718faadcdf5`；
+  canonical content SHA-256：`82cf612c2a9cb8573e9c591f1b6f13fe2431ebaf1e23b3ba6a03e421040de09e`；
+- failure receipt file/content SHA-256：
+  `f4669c80c64988e6860cdaa7c8df6fc783085af81fe387d7cbd886c151dadd75` /
+  `9354fc8a59b364307688398095e0c0b54b112fb2cb73815d5d8831cb4cd37978`；
+- package manifest file/content SHA-256：
+  `e8ac4449d4faa802c4209641b90f97c10dc70cd1b5555134b961d2e62c4f96ef` /
+  `f54be0fbbeaa5a96c2d0bfe014f569d7b27c34c764c8fc6ebe014a31aa9b9f3b`；
+- successor project code LF SHA-256：
+  `d5d8638a2e864b5182887da11d0d74a181dec2e7be41f40bc709f2e245a35261`；
+- focused unit/property/golden/negative coverage：`14 passed`，其中首轮发现测试自身 bytecode
+  污染 exact inventory，第二轮发现 receipt/manifest exact-byte 守卫缺口，均已做 durable failure-fix；
 - Project Owner：仅在 2519 ordinary-pushed package/code hashes 发布后决定是否另行授权；
 - 当前 blocker：`V3_AUTHORIZATION_CONSUMED_DAILY_SCHEDULE_RESULT_INVALID`；external action=`none`；
-  evidence admission=`FAIL`；DQ/PIT=`NOT_EVALUATED`。
+  evidence admission=`FAIL`；DQ/PIT=`NOT_EVALUATED`；engine=`POLICY_BLOCKED_CASH_PRESERVATION`。
