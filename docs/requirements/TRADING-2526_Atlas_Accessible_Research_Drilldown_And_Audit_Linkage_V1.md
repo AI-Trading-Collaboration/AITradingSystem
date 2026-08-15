@@ -109,3 +109,8 @@ STOP CONDITION：任何“简化”导致 provenance 不可达，或移动端视
   `reader_accessibility_validation.json`。coordinator focused=`74 passed in 138.06s`。2526-B 的 final
   browser/mobile/assistive-technology 复核尚未执行，Owner visual 与 reader comprehension 仍为
   `PENDING_REVIEW`。
+- 2026-08-16：候选 exact HTML SHA-256=`72ac2710f966015a586b9700765bb96ead6d76974813384de00214e003244c17`，
+  automated accessibility sidecar=`PASS` 且 human tracks 均为 `PENDING_REVIEW`。2526-B 尝试接管用户已开
+  `file://` 页面时被 in-app Browser URL 安全策略 fail closed，页面未被浏览器控制或重载；按 no-workaround
+  纪律未改用 alternate browser、raw CDP 或临时 loopback 绕过。下一步需要一个由浏览器策略允许的审阅入口，
+  再对同一 exact bytes 执行 desktop/mobile/keyboard/assistive-technology 与 audit destination replay。

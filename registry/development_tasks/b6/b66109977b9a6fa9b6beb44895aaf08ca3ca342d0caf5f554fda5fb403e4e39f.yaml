@@ -13,20 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 coordinator：冻结唯一 exact HTML，执行 2526-B browser/mobile/assistive-technology
-    门，再进入 final formal 与 governed closeout。
+  next_owner: 2524 coordinator / Project Owner：提供浏览器策略允许的同一 exact HTML 审阅入口，再执行 2526-B；不得绕过
+    file URL 安全策略。
   requirement_refs:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: why-first renderer、inline terminology、对象化状态和
-    accessibility sidecar 已集成；下一步只生成一次 final candidate 并绑定浏览器证据。2528 保持独立。
+  unstructured_legacy_blocker_or_next_step: candidate HTML 与 automated accessibility
+    PASS 已生成；in-app Browser 拒绝接管 file:// 页面，2526-B/2527-B 未完成。需要获允许的审阅入口后继续。2528 保持独立。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: reader_projection_contract.v1 的 source-bound PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP、九段
-      DOM 顺序、L0/L1/AUDIT budget、hover/focus/tap、无嵌套 disclosure、关键风险常显和 exact HTML
-      验收全部通过；不修改研究、DQ/PIT 或 production/broker 边界。
+    text: reader_projection_contract.v1、九段 why-first DOM、状态/日期/变化、inline term、单层 disclosure
+      与 exact sidecar 均通过；随后对相同 HTML bytes 完成 2526-B browser/AT 和适用 formal，人工轨不自动代签。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -241,26 +240,54 @@ events:
   - change:trading-2524-why-first-renderer-integration-focused-pass-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-20246d077e960cb5c05641ae52575844
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:57:20+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-exact-html-browser-policy-blocker-20260816-v1
+  lane_id: null
+  base_commit: 02200cb4da745449e076b424525795044bc8fafb
+  previous_state_event_id: task-event-20246d077e960cb5c05641ae52575844
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator / Project Owner：提供浏览器策略允许的同一 exact HTML 审阅入口，再执行
+      2526-B；不得绕过 file URL 安全策略。
+    blocker_or_next_step: candidate HTML 与 automated accessibility PASS 已生成；in-app
+      Browser 拒绝接管 file:// 页面，2526-B/2527-B 未完成。需要获允许的审阅入口后继续。2528 保持独立。
+    acceptance_criteria: reader_projection_contract.v1、九段 why-first DOM、状态/日期/变化、inline
+      term、单层 disclosure 与 exact sidecar 均通过；随后对相同 HTML bytes 完成 2526-B browser/AT
+      和适用 formal，人工轨不自动代签。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；candidate=02200cb4d；HTML
+      SHA-256=72ac2710f966015a586b9700765bb96ead6d76974813384de00214e003244c17；13
+      artifacts written；browser file URL policy blocked control/reload；no workaround
+      attempted。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-exact-html-browser-policy-blocker-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ccc4436975b62795aa10a2887882d4f9
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
   - IN_PROGRESS
-  - 2524 coordinator：冻结唯一 exact HTML，执行 2526-B browser/mobile/assistive-technology
-    门，再进入 final formal 与 governed closeout。
-  - why-first renderer、inline terminology、对象化状态和 accessibility sidecar 已集成；下一步只生成一次
-    final candidate 并绑定浏览器证据。2528 保持独立。
-  - reader_projection_contract.v1 的 source-bound PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP、九段
-    DOM 顺序、L0/L1/AUDIT budget、hover/focus/tap、无嵌套 disclosure、关键风险常显和 exact HTML 验收全部通过；不修改研究、DQ/PIT
-    或 production/broker 边界。
-  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；2525
-    a5183f745 与 2526/2527-A 2f8f24031 已吸收；why-first renderer 与 accessibility sidecar
-    已集成；focused=74 passed in 138.06s；2526-B/browser 与 human review 尚未执行。'
+  - 2524 coordinator / Project Owner：提供浏览器策略允许的同一 exact HTML 审阅入口，再执行 2526-B；不得绕过
+    file URL 安全策略。
+  - candidate HTML 与 automated accessibility PASS 已生成；in-app Browser 拒绝接管 file://
+    页面，2526-B/2527-B 未完成。需要获允许的审阅入口后继续。2528 保持独立。
+  - reader_projection_contract.v1、九段 why-first DOM、状态/日期/变化、inline term、单层 disclosure
+    与 exact sidecar 均通过；随后对相同 HTML bytes 完成 2526-B browser/AT 和适用 formal，人工轨不自动代签。
+  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；candidate=02200cb4d；HTML
+    SHA-256=72ac2710f966015a586b9700765bb96ead6d76974813384de00214e003244c17；13 artifacts
+    written；browser file URL policy blocked control/reload；no workaround attempted。'
   docs_links:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   terminal: false
-  canonical_row_sha256: cb61cd9a9b8ffe2b9c1f96bfbe67a01f63f03ad156aa891a3810022ff1a6a35e
-last_event_id: task-event-20246d077e960cb5c05641ae52575844
+  canonical_row_sha256: 9dde41dcb3514d7ae1b679cdf2625b60127a0282e9fe9a83c2e6d051ab1019f2
+last_event_id: task-event-ccc4436975b62795aa10a2887882d4f9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: c8ce09ceba18e93f8303bb267c0f8fced04c565d83a26ec59f28889a09b29f88
+fragment_checksum: ea1d0f75a1cf50a0fba64cddc45984822942d9ec2c3b697bd34e3cd897fe9542

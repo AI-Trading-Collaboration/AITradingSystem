@@ -13,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 coordinator：对唯一 final exact HTML 执行 desktop/mobile/keyboard/assistive-technology/audit
-    replay；Owner 保留人工视觉判断。
+  next_owner: 2524 coordinator / Project Owner：提供 browser policy 允许的 exact-byte 审阅入口，再执行
+    desktop/mobile/keyboard/assistive-technology/audit replay。
   requirement_refs:
   - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: deterministic validator 与 exact-HTML-hash
-    sidecar 已接入 writer；2526-B 浏览器、移动端与辅助技术门尚未执行，不得声明 human accessibility PASS。
+  unstructured_legacy_blocker_or_next_step: automated validator sidecar PASS；in-app
+    Browser 的 file:// URL 安全策略阻止 2526-B，未用 alternate browser、raw CDP 或 loopback 绕过。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 九段 DOM 顺序、标题、无嵌套 disclosure、术语描述目标、重复 tab-stop、reflow、keyboard、audit destination
-      与 exact HTML identity 均通过；自动化不代签人工理解。
+    text: 同一 exact HTML SHA-256 通过 DOM/heading/disclosure/term target 自动门和 desktop/mobile/keyboard/assistive-technology/audit
+      浏览器门；Owner visual 与 comprehension 仍需真实人工事实。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -146,25 +146,53 @@ events:
   - change:trading-2526-accessibility-sidecar-integration-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-089e6043c7eff2166a2ff238a86725d9
+- schema_version: task_event.v1
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:57:21+09:00'
+  actor: codex_coordinator
+  change_id: trading-2526b-file-url-policy-blocker-20260816-v1
+  lane_id: null
+  base_commit: 02200cb4da745449e076b424525795044bc8fafb
+  previous_state_event_id: task-event-089e6043c7eff2166a2ff238a86725d9
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator / Project Owner：提供 browser policy 允许的 exact-byte
+      审阅入口，再执行 desktop/mobile/keyboard/assistive-technology/audit replay。
+    blocker_or_next_step: automated validator sidecar PASS；in-app Browser 的 file://
+      URL 安全策略阻止 2526-B，未用 alternate browser、raw CDP 或 loopback 绕过。
+    acceptance_criteria: 同一 exact HTML SHA-256 通过 DOM/heading/disclosure/term target
+      自动门和 desktop/mobile/keyboard/assistive-technology/audit 浏览器门；Owner visual 与
+      comprehension 仍需真实人工事实。
+    notes: '[supporting requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)；HTML
+      SHA-256=72ac2710f966015a586b9700765bb96ead6d76974813384de00214e003244c17；reader_accessibility_validation=PASS；browser
+      file URL policy fail closed；2526-B not complete。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2526b-file-url-policy-blocker-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-91802e1364f9db48b6c72391adb4c5b1
 projection:
   legacy_first_eight_cells:
   - TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   - Atlas strategy research page / accessible research drilldown and audit linkage
   - P1
   - IN_PROGRESS
-  - 2524 coordinator：对唯一 final exact HTML 执行 desktop/mobile/keyboard/assistive-technology/audit
-    replay；Owner 保留人工视觉判断。
-  - deterministic validator 与 exact-HTML-hash sidecar 已接入 writer；2526-B 浏览器、移动端与辅助技术门尚未执行，不得声明
-    human accessibility PASS。
-  - 九段 DOM 顺序、标题、无嵌套 disclosure、术语描述目标、重复 tab-stop、reflow、keyboard、audit destination
-    与 exact HTML identity 均通过；自动化不代签人工理解。
-  - '[supporting requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)；2526-A
-    commit=2f8f24031 已吸收；writer fail closed 生成 reader_accessibility_validation.json；focused=74
-    passed in 138.06s；2526-B 仍待执行。'
+  - 2524 coordinator / Project Owner：提供 browser policy 允许的 exact-byte 审阅入口，再执行 desktop/mobile/keyboard/assistive-technology/audit
+    replay。
+  - automated validator sidecar PASS；in-app Browser 的 file:// URL 安全策略阻止 2526-B，未用
+    alternate browser、raw CDP 或 loopback 绕过。
+  - 同一 exact HTML SHA-256 通过 DOM/heading/disclosure/term target 自动门和 desktop/mobile/keyboard/assistive-technology/audit
+    浏览器门；Owner visual 与 comprehension 仍需真实人工事实。
+  - '[supporting requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)；HTML
+    SHA-256=72ac2710f966015a586b9700765bb96ead6d76974813384de00214e003244c17；reader_accessibility_validation=PASS；browser
+    file URL policy fail closed；2526-B not complete。'
   docs_links:
   - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
   terminal: false
-  canonical_row_sha256: bc25395caef43fd94537bbefebbc94fa4c9f0cfadc48a7c2a2f47394b17a860b
-last_event_id: task-event-089e6043c7eff2166a2ff238a86725d9
+  canonical_row_sha256: b665e1e7bce25fafbee107384397b7dbb818dea916b5fb55c5875b5f4d2d412c
+last_event_id: task-event-91802e1364f9db48b6c72391adb4c5b1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b5829a119c8660c943f27c62e4ea9230c785197496d38c2afb5b33e8b7e3d1e0
+fragment_checksum: a8a7297f4bbe9365ef2d9a799d6005647cbd1f861c0694056b74c49d70d5d22a

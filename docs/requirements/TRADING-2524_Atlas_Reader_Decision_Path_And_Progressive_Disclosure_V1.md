@@ -260,3 +260,9 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   task/source identity 位于主线之后。术语首次出现支持 hover/focus/tap、Escape 和完整定义链接，重复出现
   不增加 tab stop。八文件 focused=`74 passed in 138.06s`；当前尚未生成 final exact HTML、运行 2526-B
   browser/AT/mobile 或启动 2527-B human pilot，人工验收继续 `PENDING_REVIEW`。
+- 2026-08-16：coordinator implementation candidate=`02200cb4d`，从该 exact commit 生成的 HTML
+  SHA-256=`72ac2710f966015a586b9700765bb96ead6d76974813384de00214e003244c17`；13 个 artifacts 均由
+  canonical writer 原子写入，`reader_accessibility_validation.json` exact-bind 同一 HTML 并为 automated
+  `PASS`。in-app Browser 在接管/重载既有 `file://` tab 时被其本地 URL 安全策略拒绝；未切换浏览器、
+  未启动 loopback server 或以其他接口绕过。因此 2526-B 与 2527-B 均未完成，本任务保持
+  `IN_PROGRESS`，Owner visual/reader comprehension 保持 `PENDING_REVIEW`。
