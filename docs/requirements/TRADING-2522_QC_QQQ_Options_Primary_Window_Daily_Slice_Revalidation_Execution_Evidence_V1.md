@@ -246,3 +246,11 @@ preservation。
   修复仅同步 DEVX exact authority；页面必须在新 tracked commit 后由 canonical writer 重建，不删除
   sidecar、不改 skip/freshness/fail-closed 条件。DEVX-006D 完整同文件复测为
   `15 passed in 11.73s`；该首轮仅作 focused failure-fix lineage。
+- 新 reconciliation commit `d55bca19ec5f3e2d64d1d95ea1405db966581886` 后，canonical page
+  双写一致、freshness=`CURRENT`、42-task coverage 明确 `has_2528=true / has_2524=false`，
+  并保留 Reader PASS / Visual PENDING；完全相同 7-file reconciliation 覆盖终态为
+  `86 passed in 127.12s`。
+- 完整 compatibility/deprecation current-authority 覆盖
+  `python -m pytest -n 16 --dist loadfile tests/test_arch_004_refactor_policy.py tests/test_arch_004g_deprecation.py`
+  为 `211 passed in 482.05s`。这些是 formal 前 focused authority evidence；正式五级仍只接受
+  最终 notes/page-refresh commit 对应的 frozen tree。
