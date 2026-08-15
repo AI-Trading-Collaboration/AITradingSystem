@@ -13,21 +13,20 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Atlas 2524 integration coordinator；Project Owner 冻结 reader_projection_contract.v1
-    的 reader entry、always-visible fields 与模式边界
-  requirement_refs:
-  - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
+  next_owner: 2524 S0 coordinator：在 exact final tracked bytes 上完成 Architecture/Contract
+    门禁、提交、local-main ff 与 ordinary push。
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 先关闭 2523A；随后 serial S0 冻结并提交 reader_projection_contract.v1。S0
-    进入 local main 后，从同一 exact base 启动 2525 engineering 与 2526/2527-A strategy-evidence
-    lanes。
+  unstructured_legacy_blocker_or_next_step: S0 focused 已 PASS；须先完成正式门禁并把 serial contract
+    wave 发布到 main，2525--2527 才能从新 exact common base 启动。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: S0 冻结 section/order、always-visible fields、六问到五问 mapping、state/date/accessibility
-      interfaces、L0/L1/audit 与 exact source binding；双线 path claims 互斥；coordinator
-      单次集成和生成 exact HTML；2526-B 后才进入 2527-B；heavyweight Full 仅最终 candidate。
+    text: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
+      typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible
+      hover/focus/tap semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或
+      production/broker 边界。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -64,26 +63,87 @@ events:
   - change:trading-2523a-followon-register-1-20260815
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-34af082c22652a85e72b9e4cde8a2629
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T01:55:18.8392421+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-owner-why-first-s0-start-20260816-v1
+  lane_id: null
+  base_commit: 05e37edd42006d42f4736ddd4aa3797a12cf0f1f
+  previous_state_event_id: task-event-34af082c22652a85e72b9e4cde8a2629
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Atlas 2524 S0 coordinator；冻结 why-first causal chain、inline terminology
+      interaction 与 reader attention budget
+    blocker_or_next_step: 当前只执行 S0 serial contract wave；合同 reviewed/focused PASS/commit/进入
+      local main 后，2525 与 2526/2527-A 才能从同一 exact base 启动。
+    acceptance_criteria: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
+      typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible
+      hover/focus/tap semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或
+      production/broker 边界。
+    notes: 2026-08-16：Project Owner 明确指出术语总表造成记忆负担、页面像流水账且主要问题/设计理由/流程联系不清，授权把反馈交给
+      Web Pro 并按反馈推进。exact-commit advisory 对话 https://chatgpt.com/c/6a8092af-5a00-83e8-acde-0cb64554c925
+      已提交；已核对部分建议确认当前 DOM 非 why-first、集中 glossary 不足，现有 facts 缺 PROBLEM/CHOICE 与 source-bound
+      causal edges。完整网页终稿仍为 handoff，不作为 task authority。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-owner-why-first-s0-start-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-20d7694f9513ae35fef6e6c44d65921e
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T02:14:00+09:00'
+  actor: codex
+  change_id: trading-2524-s0-contract-focused-pass-20260816-v1
+  lane_id: null
+  base_commit: 05e37edd42006d42f4736ddd4aa3797a12cf0f1f
+  previous_state_event_id: task-event-20d7694f9513ae35fef6e6c44d65921e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 S0 coordinator：在 exact final tracked bytes 上完成 Architecture/Contract
+      门禁、提交、local-main ff 与 ordinary push。
+    blocker_or_next_step: S0 focused 已 PASS；须先完成正式门禁并把 serial contract wave 发布到 main，2525--2527
+      才能从新 exact common base 启动。
+    acceptance_criteria: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
+      typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible
+      hover/focus/tap semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或
+      production/broker 边界。
+    notes: reader_projection_contract.v1 已冻结 why-first source-bound 因果链、六问映射、L0/L1/AUDIT
+      预算与可访问 inline terminology 语义。单文件 focused=14 PASS；跨层首轮=56 PASS/2 FAIL（旧 system-flow
+      SHA 与 stale architecture manifest），修正后=58 PASS；Ruff、strict mypy、task-source、architecture/report-flow/compatibility
+      authority PASS。renderer/HTML 尚未修改；human/strategy/production/broker 不自动升级。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-s0-contract-focused-pass-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-f358bc4b2c68b79cb854009d4444ace1
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
-  - PROPOSED
-  - Atlas 2524 integration coordinator；Project Owner 冻结 reader_projection_contract.v1
-    的 reader entry、always-visible fields 与模式边界
-  - 先关闭 2523A；随后 serial S0 冻结并提交 reader_projection_contract.v1。S0 进入 local main 后，从同一
-    exact base 启动 2525 engineering 与 2526/2527-A strategy-evidence lanes。
-  - S0 冻结 section/order、always-visible fields、六问到五问 mapping、state/date/accessibility
-    interfaces、L0/L1/audit 与 exact source binding；双线 path claims 互斥；coordinator 单次集成和生成
-    exact HTML；2526-B 后才进入 2527-B；heavyweight Full 仅最终 candidate。
-  - 2026-08-15：Project Owner 确认采用 DUAL_LANE；[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)。2524
-    是 serial contract 和 integration coordinator；shared renderer/generated/governance/formal
-    state 均 coordinator-only；status 仍为 PROPOSED。
-  docs_links:
-  - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
+  - IN_PROGRESS
+  - 2524 S0 coordinator：在 exact final tracked bytes 上完成 Architecture/Contract 门禁、提交、local-main
+    ff 与 ordinary push。
+  - S0 focused 已 PASS；须先完成正式门禁并把 serial contract wave 发布到 main，2525--2527 才能从新 exact
+    common base 启动。
+  - reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
+    typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible hover/focus/tap
+    semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或 production/broker
+    边界。
+  - reader_projection_contract.v1 已冻结 why-first source-bound 因果链、六问映射、L0/L1/AUDIT
+    预算与可访问 inline terminology 语义。单文件 focused=14 PASS；跨层首轮=56 PASS/2 FAIL（旧 system-flow
+    SHA 与 stale architecture manifest），修正后=58 PASS；Ruff、strict mypy、task-source、architecture/report-flow/compatibility
+    authority PASS。renderer/HTML 尚未修改；human/strategy/production/broker 不自动升级。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 23be17e4fec7a0a31804c9fe8a0a9f05c1628be6bb0f00275d65bfd4e37abee1
-last_event_id: task-event-34af082c22652a85e72b9e4cde8a2629
+  canonical_row_sha256: f38e3de3aebf626f25f0b4598bfadf97cb37ac4d6cf187c38a5bd27fdccc7672
+last_event_id: task-event-f358bc4b2c68b79cb854009d4444ace1
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 72d3d70cd203f7fad8b0aa58295a66b2c3bdd3e02b03d8c6031f30f9bce95664
+fragment_checksum: 0b51c2838eb55acddeb8a7b7a7c0a751dd154cabe7364a9a0337dd37be637282

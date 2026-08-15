@@ -260,8 +260,13 @@ terminology policy SHA-256，并逐条保存 normalized surface、DOM locator、
 目标、解释晚于首现或 audit-only 越界全部 fail closed。内部标识只在 audit layer 保留，默认读者层改用
 中文目的、动作与边界；新 HTML 的 Owner visual 与 reader comprehension 均为 `PENDING_REVIEW`，自动化
 不得代签。2522 已完成唯一 v4 Cloud run，但所有 chain session 被组合 transport gate 拒绝，当前仍无
-DQ/PIT-admitted 策略证据；2528 仅登记离线 per-axis 诊断合同，2524--2527 仍是未开始的 Atlas 后继任务。
-该术语改造不改变研究窗口、DQ/PIT、策略结论、engine、order、production 或 broker 权限。
+DQ/PIT-admitted 策略证据；2528 仅登记离线 per-axis 诊断合同。2524 已进入最小串行契约波，新增
+`reader_projection_contract.v1`，冻结 `PROBLEM -> CONSTRAINT -> CHOICE -> EVIDENCE -> RESULT ->
+NEXT_STEP` 的 source-bound why-first 因果链、六问到五个 cited-query 问题的 typed mapping、
+`READER_DEFAULT / RESEARCH_DRILLDOWN / AUDIT_STRATUM` 信息层级，以及术语首次出现时共享短定义的
+hover/focus/tap 可达性语义；缺少问题、选择或来源边时返回 `INSUFFICIENT`，renderer 不得自行补写。
+页面实现仍等待该合同进入 main 后从同一新 base 启动 2525--2527；这一契约波不改变研究窗口、DQ/PIT、
+策略结论、engine、order、production 或 broker 权限，也不自动签署 Owner 视觉或读者理解验收。
 
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段

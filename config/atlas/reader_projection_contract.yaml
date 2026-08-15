@@ -1,0 +1,167 @@
+schema_version: atlas_reader_projection_contract.v1
+contract_id: atlas_reader_why_first_progressive_disclosure_v1
+contract_version: 1.0.0
+status: REVIEWED_SERIAL_CONTRACT
+owner: Atlas publishing experience coordinator
+section_slots:
+  - section_id: TRUST_STRIP
+    layer: READER_DEFAULT
+    default_visible: true
+    reader_purpose_zh: 先确认页面身份、时效、验收边界和非生产状态。
+    always_visible_fields:
+      - source_commit
+      - freshness
+      - evidence_date
+      - page_date
+      - engineering_validation
+      - owner_visual_review
+      - reader_comprehension_review
+      - strategy_conclusion_pass_count
+      - production_effect
+      - broker_action
+  - section_id: WHY_CONTEXT
+    layer: READER_DEFAULT
+    default_visible: true
+    reader_purpose_zh: 先回答为什么研究、为什么沿当前路径推进，以及下一步为何由当前结果触发。
+    always_visible_fields:
+      - current_problem
+      - largest_blocker
+      - evidence_summary
+      - conclusion_boundary
+      - critical_risk
+      - prohibited_inference
+      - next_owner
+      - next_legal_action
+  - section_id: CANONICAL_QUESTIONS
+    layer: READER_DEFAULT
+    default_visible: true
+    reader_purpose_zh: 用默认可见的简答连接页面六问与五个 cited-query 问题。
+    always_visible_fields:
+      - concise_answer
+      - core_limitation
+  - section_id: CHANGE_SUMMARY
+    layer: READER_DEFAULT
+    default_visible: true
+    reader_purpose_zh: 说明相对上一快照改变、未变、未知或停止的内容。
+    always_visible_fields:
+      - change_status
+      - change_summary
+  - section_id: CONCLUSION_BOUNDARY
+    layer: READER_DEFAULT
+    default_visible: true
+    reader_purpose_zh: 给出证据当前支持的最窄结论、停止原因和禁止推断。
+    always_visible_fields:
+      - conclusion_boundary
+      - critical_risk
+      - prohibited_inference
+      - stop_reason
+  - section_id: ACCEPTANCE_AXES
+    layer: READER_DEFAULT
+    default_visible: true
+    reader_purpose_zh: 分开呈现工程、Owner 视觉与读者理解三条验收轨道。
+    always_visible_fields:
+      - engineering_validation
+      - owner_visual_review
+      - reader_comprehension_review
+  - section_id: FLOW_POSITION
+    layer: READER_DEFAULT
+    default_visible: true
+    reader_purpose_zh: 解释当前步骤与上一步、下一步的因果关系。
+    always_visible_fields:
+      - previous_stage
+      - current_stage
+      - next_stage
+      - next_legal_action
+  - section_id: RESEARCH_DRILLDOWN
+    layer: RESEARCH_DRILLDOWN
+    default_visible: false
+    reader_purpose_zh: 按需展开节点解释、结果、归因、比较与计算。
+    always_visible_fields: []
+  - section_id: AUDIT_DESTINATIONS
+    layer: AUDIT_STRATUM
+    default_visible: false
+    reader_purpose_zh: 通过独立入口到达原始标识、校验值、定位信息和完整账本。
+    always_visible_fields: []
+question_mappings:
+  - page_question_id: CURRENT_RESEARCH_MAINLINE
+    cited_question_ids: [RESEARCH_MAINLINE_SUMMARY, SNAPSHOT_CHANGE_EXPLANATION]
+  - page_question_id: LARGEST_CURRENT_BLOCKER
+    cited_question_ids: [RESEARCH_MAINLINE_SUMMARY, ATTRIBUTION_AND_LIMITATIONS]
+  - page_question_id: ENGINEERING_VS_RESEARCH_EVIDENCE
+    cited_question_ids: [RESULT_AND_STATUS, ATTRIBUTION_AND_LIMITATIONS]
+  - page_question_id: PROHIBITED_INFERENCES
+    cited_question_ids: [ATTRIBUTION_AND_LIMITATIONS]
+  - page_question_id: NEXT_OWNER_AND_ACTION
+    cited_question_ids: [RESULT_AND_STATUS, SOURCE_LINEAGE]
+  - page_question_id: INVESTMENT_ORDER_ENGINE_AUTHORITY
+    cited_question_ids: [RESULT_AND_STATUS, ATTRIBUTION_AND_LIMITATIONS]
+causal_nodes: [PROBLEM, CONSTRAINT, CHOICE, EVIDENCE, RESULT, NEXT_STEP]
+causal_edges:
+  - source_node: PROBLEM
+    relation: BOUNDED_BY
+    target_node: CONSTRAINT
+  - source_node: CONSTRAINT
+    relation: JUSTIFIES
+    target_node: CHOICE
+  - source_node: CHOICE
+    relation: REQUIRES_EVIDENCE
+    target_node: EVIDENCE
+  - source_node: EVIDENCE
+    relation: SUPPORTS
+    target_node: RESULT
+  - source_node: RESULT
+    relation: LIMITS
+    target_node: NEXT_STEP
+  - source_node: RESULT
+    relation: TRIGGERS
+    target_node: NEXT_STEP
+term_interaction:
+  first_occurrence_scope: PER_READER_SECTION
+  first_occurrence_focusable: true
+  repeated_occurrence_additional_tab_stop: false
+  hover_focus_tap_same_definition: true
+  accessible_description_required: true
+  escape_closes: true
+  focus_context_restored: true
+  title_only_allowed: false
+  nested_interactive_control_allowed: false
+  short_definition_route: INLINE_TOOLTIP
+  long_definition_route: GLOSSARY_OR_RESEARCH_DRILLDOWN
+  raw_identifier_route: AUDIT_STRATUM
+  unavailable_interaction_fallback: VISIBLE_INLINE_OR_GLOSSARY
+attention_budget:
+  first_screen_required_fields:
+    - trust_strip
+    - current_problem
+    - why_chain_summary
+    - conclusion_boundary
+    - largest_blocker
+    - prohibited_inference
+    - next_legal_action
+  max_reader_decisions_per_l0_card: 1
+  max_primary_disclosures_per_l1_card: 1
+  max_reader_disclosure_depth: 1
+  nested_disclosures_allowed: false
+  glossary_position: AFTER_READER_MAINLINE
+  audit_payload_default_visible: false
+source_binding:
+  required: true
+  renderer_inference_allowed: false
+  missing_causal_fact_status: INSUFFICIENT
+  node_required_fields: [source_ref_id, source_locator, source_sha256]
+  edge_required_fields: [source_ref_id, source_locator, source_sha256]
+  exact_identity_fields: [source_commit, contract_sha256, html_sha256, manifest_sha256]
+  canonical_serialization: UTF8_SORTED_KEY_JSON_V1
+interfaces:
+  state_projection: reader_state_projection.v1
+  date_change_projection: reader_date_change_projection.v1
+  accessibility_validation: reader_accessibility_validation.v1
+  remediation_handoff: reader_projection_remediation_handoff.v1
+safety:
+  primary_research_start: '2021-02-22'
+  human_acceptance_auto_upgrade_allowed: false
+  strategy_conclusion_generated: false
+  order_authorized: false
+  real_engine_authorized: false
+  production_effect: none
+  broker_action: none

@@ -1,10 +1,10 @@
 # TRADING-2524：Atlas 读者决策路径与渐进披露 V1
 
-最后更新：2026-08-15
+最后更新：2026-08-16
 
 - stable task id：`TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1`
 - priority：`P1`
-- status：`PROPOSED`
+- status：`IN_PROGRESS`（S0 serial contract wave）
 - proposed governed mode：`DUAL_LANE` coordinator/integration scope
 - contract change：`true`（consumer-visible reader contract）
 - predecessor：`TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1`
@@ -20,6 +20,19 @@
 本任务建立最小、可回滚的 reader information architecture contract：先给结论边界、风险、阻塞与五个
 问题的简答，再按需进入研究解释与审计证据；不删除 provenance，不复制 canonical facts，也不新建第二套
 Reader Brief。
+
+2026-08-16 的 Owner 复核进一步明确：页面不能要求读者先记住整张术语表，再进入研究叙事；页面必须
+先解释“为什么要研究、为什么沿这条路径推进、每一步怎样改变下一步”，再展示“做了什么”。细节只有在
+能说明主问题、约束、选择、证据、结果或下一步时才进入 reader layer；否则压缩到 research drilldown
+或迁入 audit destination。术语解释改为在使用位置按需出现，集中 glossary 只保留索引和完整定义，不再
+占据页面最前方。
+
+Web Pro exact-commit advisory 已提交到
+`https://chatgpt.com/c/6a8092af-5a00-83e8-acde-0cb64554c925`，审阅快照固定为
+`05e37edd42006d42f4736ddd4aa3797a12cf0f1f`。已取得且能与仓库事实交叉核对的建议是：当前 DOM 不是
+why-first、集中 glossary 不能解决上下文内理解，现有 typed facts 可复用约束、影响和下一步，但缺少
+`PROBLEM`、`CHOICE` 以及 source-bound causal edges。网页完整终稿仍保持 handoff，因此这些部分只作
+advisory 输入；本 requirement、canonical task 与 executable guards 继续是实现 authority。
 
 ## 2. 冻结角色边界
 
@@ -47,6 +60,23 @@ Reader Brief。
 页面级六个 reader questions 与五个 cited-query questions 必须有 typed 映射，不能表现为 11 个互不相关的
 问题。移动端不得只把桌面多栏机械堆叠；视觉顺序必须与 DOM 顺序一致。
 
+### 3.1 Why-first causal chain
+
+L0 必须由同一 typed projection 给出以下有序语义，不允许 renderer 从相邻文案猜测联系：
+
+`PROBLEM -> CONSTRAINT -> CHOICE -> EVIDENCE -> RESULT -> NEXT_STEP`
+
+- `PROBLEM`：当前真正要回答的研究问题；
+- `CONSTRAINT`：为什么不能直接跳到策略结论、回测或下一阶段；
+- `CHOICE`：在约束下选择这条研究路径的理由，以及明确未选择什么；
+- `EVIDENCE`：该选择要求什么证据、当前已有什么、缺什么；
+- `RESULT`：证据目前支持的最窄结论与禁止推断；
+- `NEXT_STEP`：由当前结果触发的下一责任方、下一合法动作与重新进入条件。
+
+每个 node 和 edge 都必须绑定 canonical source；缺少 `PROBLEM`、`CHOICE` 或 source edge 时返回 typed
+`INSUFFICIENT`，不得用顺滑文案补齐。稳定 edge vocabulary 至少包含
+`BOUNDED_BY`、`JUSTIFIES`、`REQUIRES_EVIDENCE`、`SUPPORTS`、`LIMITS` 与 `TRIGGERS`。
+
 ## 4. Progressive disclosure 合同
 
 - L0 `READER_DEFAULT`：答案、边界、风险、日期、变化、停止原因与下一动作；
@@ -55,6 +85,27 @@ Reader Brief。
 - 页面内交互深度不得超过两级，不允许 `<details>` 嵌套 `<details>`；
 - 每张 reader card 最多一个主要 disclosure，summary 必须说明将展开什么；
 - 策略无效性、关键风险和下一合法动作不得因 disclosure 关闭而消失。
+
+### 4.1 Inline terminology interaction
+
+- governed reader term 在其所在 reader section 的首次出现必须形成可聚焦 inline trigger；hover、keyboard
+  focus 与 touch/tap 打开同一短定义，Escape 或失焦关闭并恢复上下文；
+- 同一 section 的重复出现可以避免新增 tab stop，但 hover/tap 仍须到达同一说明，screen reader 仍能取得
+  等价 accessible description；
+- trigger 不得使用裸 `title` 作为唯一信息源，也不得嵌套交互控件；短说明之外提供“完整定义” glossary
+  anchor，但 glossary 不得抢在 why-first reader entry 之前；
+- 长定义、带多条 lineage 的说明和 raw identifier 不进入 tooltip：前两者链接 glossary/L1，后者只进入
+  `AUDIT_STRATUM`；
+- 术语交互失败只能回退到可见 inline 定义或 glossary link，不能回退为 hover-only。
+
+### 4.2 Reader attention budget
+
+- 首屏 L0 只保留 trust strip、一个主问题、一条 why chain 摘要、最窄结论边界、最大 blocker、禁止推断
+  与下一合法动作；
+- 每张 L0 card 只表达一个 reader decision，标题必须是问题或因果作用，不使用模块名作为主要标题；
+- L1 每张 card 最多一个主要 disclosure，summary 明确“展开后能回答什么”；
+- raw ID、hash、locator、receipt、manifest、sidecar 和完整 ledger 不计入 L0/L1 信息预算，只通过独立
+  audit destination 到达。
 
 该设计参考 Shneiderman overview-first / details-on-demand、NN/g Progressive Disclosure、SEC Plain
 English、Google PAIR explainability/trust、FCA consumer understanding 与 W3C clear-content/accessibility
@@ -105,6 +156,13 @@ coordinator 先冻结 `reader_projection_contract.v1`，至少明确：
 - canonical source binding、raw identifier 对应关系与 exact identity/replay 规则；
 - worker 可消费的 fixtures、error types 与 coordinator remediation handoff 格式。
 
+本轮 S0 还必须冻结：
+
+- 上述六类 causal nodes、稳定 edge vocabulary、全链 source binding 与 `INSUFFICIENT` 处置；
+- inline term 的 hover/focus/tap、tab-stop 去重、Escape/focus restoration、长定义与 raw identifier 路由；
+- 首屏 attention budget、L0/L1/AUDIT 内容预算，以及 glossary 必须位于 reader mainline 之后；
+- 任何人类理解、策略有效性、production 或 broker 状态都不能由 contract validator 自动升级。
+
 S0 是 consumer-visible contract，必须由 coordinator 串行实现、review、focused validate、提交并进入
 local `main`。只有此后才冻结一个新的 exact common base，启动两条 lane；不得把未提交的 S0 working
 tree 当作共享合同。
@@ -144,6 +202,10 @@ coordinator 只生成一次 final exact HTML，并据此执行 2526-B final brow
 - canonical Atlas HTML、manifest、validation、work-progress 与 inventory/acceptance sidecars；
 - canonical task registry/index、generated task views、`docs/system_flow.md`、`docs/artifact_catalog.md`、
   architecture/module/test/deprecation manifests、compatibility authority 与 formal validation artifacts。
+- `tests/test_devx_006d_report_catalog_flow_authority.py` 的 exact system-flow seal 回归值；该随动只允许绑定
+  本任务审阅后的 `docs/system_flow.md` bytes，不得放宽 byte-parity 或 source-seal 检查。
+- `tests/test_arch_004g_deprecation.py` 的 current inventory identity 与 module/test exact count；仅允许反映
+  本任务新增一个 contract module 和一个 focused test file，不改变任何 removal gate。
 
 worker 禁止写入上述 coordinator paths，也不得自行生成“候选 final”HTML。若 2525/2526 需要 shared DOM、
 CSS 或 page config remediation，提交 typed failing evidence 与 proposed behavior，由 coordinator 在 I0
@@ -171,3 +233,18 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
 - 2026-08-15：Project Owner 确认采用“2524-S0 串行合同 + engineering/strategy-evidence 双线 +
   coordinator 单次集成 + final AT/human 串行验收”。本任务升级为后续 `DUAL_LANE`
   coordinator/integration scope；状态仍为 `PROPOSED`，2523 未闭合前不启动实现或 worktree。
+- 2026-08-16：2523A 已在 exact main
+  `05e37edd42006d42f4736ddd4aa3797a12cf0f1f` 闭合。Owner 新反馈冻结 why-first、上下文内术语解释、
+  主次分层和流程因果联系，并授权提交 Web Pro exact-commit advisory 后推进实现。READ_ONLY preflight
+  `PASS`；2524 DUAL_LANE START 得到预期 `SERIAL_CONTRACT_WAVE_REQUIRED`；随后从该 exact main 创建
+  `codex/trading-2524-reader-projection-contract`，S0 SINGLE_LANE preflight `PASS`，任务进入
+  `IN_PROGRESS`。当前只允许 S0 contract/config/tests/authority mutation；renderer、final HTML、2525、
+  2526 与 2527-A 仍不得从未提交合同启动。
+- 2026-08-16：S0 已实现 `reader_projection_contract.v1`、typed Python contract、package export、模块片段与
+  fail-closed tests；单文件 focused=`14 passed`。首次跨层 focused=`56 passed / 2 failed`，分别准确暴露
+  system-flow lossless shadow 测试仍绑定旧 SHA，以及最后代码格式修正后的 architecture manifest stale；
+  该结果仅作 failure-fix evidence。扩展 coordinator claim 后更新 exact system-flow seal、重建 report/
+  catalog/flow shadow、architecture manifest 与 compatibility authority，修正后同一四文件并行回归=
+  `58 passed in 47.78s`；Ruff、strict mypy、task-source、architecture fitness、report-flow authority 与
+  compatibility authority 均 PASS。当前仍未修改 renderer 或生成新 HTML，也未自动升级任何人工、策略、
+  production 或 broker 状态。
