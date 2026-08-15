@@ -219,6 +219,14 @@ from ai_trading_system.contracts.strategy_research_reader_projection import (
     ReaderTermInteractionContract,
     StrategyResearchReaderProjectionContract,
 )
+from ai_trading_system.contracts.strategy_research_reader_state import (
+    ReaderChangeContext,
+    ReaderChangeKind,
+    ReaderDateContext,
+    ReaderStateContractError,
+    ReaderStateKind,
+    ReaderStateProjection,
+)
 from ai_trading_system.contracts.strategy_research_reader_terminology import (
     ReaderInteractionState,
     ReaderProfile,
@@ -431,6 +439,12 @@ __all__ = [
     "ReaderSourceBindingContract",
     "ReaderTermInteractionContract",
     "StrategyResearchReaderProjectionContract",
+    "ReaderChangeContext",
+    "ReaderChangeKind",
+    "ReaderDateContext",
+    "ReaderStateContractError",
+    "ReaderStateKind",
+    "ReaderStateProjection",
     "QQQ_OPTIONS_PROJECTION_GROUP_IDS",
     "QQQ_OPTIONS_PROJECTION_TASK_IDS",
     "QQQOptionsProjectionCard",

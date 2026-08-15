@@ -103,3 +103,9 @@ STOP CONDITION：任何“简化”导致 provenance 不可达，或移动端视
   purpose=仅实现两项 requirement 已冻结且互不重叠的 evidence/protocol paths，exit condition=两项 lane
   focused/impact PASS、commits 被 2524 coordinator reviewed absorption、unique tracked/untracked/ignored
   audit 完成且无活跃进程依赖。不得在该 worktree 修改 renderer、生成 final HTML 或签署 accessibility。
+- 2026-08-16：2526-A 与 2527-A lane commit `2f8f24031` 已由 coordinator 审阅吸收；确定性 validator
+  已在真实渲染 HTML 上验证九段 DOM 顺序、标题层级、无嵌套 disclosure、术语首现描述目标、重复术语
+  tab-stop 去重与 card budget，并由 artifact writer fail closed 生成绑定 exact HTML SHA-256 的
+  `reader_accessibility_validation.json`。coordinator focused=`74 passed in 138.06s`。2526-B 的 final
+  browser/mobile/assistive-technology 复核尚未执行，Owner visual 与 reader comprehension 仍为
+  `PENDING_REVIEW`。

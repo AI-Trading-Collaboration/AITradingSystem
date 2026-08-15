@@ -1,0 +1,12 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_reader_accessibility_validation
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/reader_accessibility_validation.py
+public_contracts:
+  - ReaderAccessibilityValidationError
+  - ReaderAccessibilityValidationResult
+  - ReaderAccessibilityViolation
+  - validate_reader_accessibility
+compatibility_facades: []
+deprecation_status: active_reference_architecture

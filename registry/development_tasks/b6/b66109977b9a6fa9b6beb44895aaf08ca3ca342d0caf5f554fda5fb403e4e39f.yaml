@@ -13,20 +13,20 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 coordinator：从 ece8d9737 统一协调 2525 engineering 与 2526/2527-A strategy-evidence
-    lanes，随后单次集成 why-first renderer 与 exact HTML。
-  requirement_refs: []
+  next_owner: 2524 coordinator：冻结唯一 exact HTML，执行 2526-B browser/mobile/assistive-technology
+    门，再进入 final formal 与 governed closeout。
+  requirement_refs:
+  - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S0 已发布；先完成两条 lane focused/impact evidence，再由
-    coordinator 吸收并实现 shared DOM/CSS/page wiring。2528 保持独立。
+  unstructured_legacy_blocker_or_next_step: why-first renderer、inline terminology、对象化状态和
+    accessibility sidecar 已集成；下一步只生成一次 final candidate 并绑定浏览器证据。2528 保持独立。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
-      typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible
-      hover/focus/tap semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或
-      production/broker 边界。
+    text: reader_projection_contract.v1 的 source-bound PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP、九段
+      DOM 顺序、L0/L1/AUDIT budget、hover/focus/tap、无嵌套 disclosure、关键风险常显和 exact HTML
+      验收全部通过；不修改研究、DQ/PIT 或 production/broker 边界。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -183,27 +183,84 @@ events:
   - change:trading-2524-s0-release-note-correction-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-97762b50f51eee9156da88580b9f1303
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:09:00+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-requirement-binding-and-lane-absorption-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-97762b50f51eee9156da88580b9f1303
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：从 ece8d9737 统一协调 2525 engineering 与 2526/2527-A strategy-evidence
+      lanes，随后单次集成 why-first renderer 与 exact HTML。
+    blocker_or_next_step: S0 已发布；先完成两条 lane focused/impact evidence，再由 coordinator
+      吸收并实现 shared DOM/CSS/page wiring。2528 保持独立。
+    acceptance_criteria: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
+      typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible
+      hover/focus/tap semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或
+      production/broker 边界。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；S0
+      已发布；2525 lane a5183f745 与 2526/2527-A evidence lane 2f8f24031 已按固定顺序吸收到 coordinator
+      candidate；开始 why-first renderer、inline terminology 与 progressive disclosure
+      集成。2528 保持独立。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-requirement-binding-and-lane-absorption-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-14479a0bbbab74fe6dab079d998da8c1
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:38:20+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-why-first-renderer-integration-focused-pass-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-14479a0bbbab74fe6dab079d998da8c1
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：冻结唯一 exact HTML，执行 2526-B browser/mobile/assistive-technology
+      门，再进入 final formal 与 governed closeout。
+    blocker_or_next_step: why-first renderer、inline terminology、对象化状态和 accessibility
+      sidecar 已集成；下一步只生成一次 final candidate 并绑定浏览器证据。2528 保持独立。
+    acceptance_criteria: reader_projection_contract.v1 的 source-bound PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP、九段
+      DOM 顺序、L0/L1/AUDIT budget、hover/focus/tap、无嵌套 disclosure、关键风险常显和 exact HTML
+      验收全部通过；不修改研究、DQ/PIT 或 production/broker 边界。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；2525
+      a5183f745 与 2526/2527-A 2f8f24031 已吸收；why-first renderer 与 accessibility sidecar
+      已集成；focused=74 passed in 138.06s；2526-B/browser 与 human review 尚未执行。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-why-first-renderer-integration-focused-pass-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-20246d077e960cb5c05641ae52575844
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
   - IN_PROGRESS
-  - 2524 coordinator：从 ece8d9737 统一协调 2525 engineering 与 2526/2527-A strategy-evidence
-    lanes，随后单次集成 why-first renderer 与 exact HTML。
-  - S0 已发布；先完成两条 lane focused/impact evidence，再由 coordinator 吸收并实现 shared DOM/CSS/page
-    wiring。2528 保持独立。
-  - reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
-    typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible hover/focus/tap
-    semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或 production/broker
-    边界。
-  - S0 final exact commit=ece8d97373c1a8a70949aa0ae445b79593ee09b3；Architecture 首轮
-    864 PASS/1 FAIL（deprecation inventory stale），修正后 Architecture 865 PASS、Contract
-    276 PASS，已 ff-only main + ordinary push。DUAL_LANE START claims PASS；human/strategy/production/broker
-    仍不自动升级。本事件仅更正上一事件 notes 的拼写，不改变 projection 语义。
-  docs_links: []
+  - 2524 coordinator：冻结唯一 exact HTML，执行 2526-B browser/mobile/assistive-technology
+    门，再进入 final formal 与 governed closeout。
+  - why-first renderer、inline terminology、对象化状态和 accessibility sidecar 已集成；下一步只生成一次
+    final candidate 并绑定浏览器证据。2528 保持独立。
+  - reader_projection_contract.v1 的 source-bound PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP、九段
+    DOM 顺序、L0/L1/AUDIT budget、hover/focus/tap、无嵌套 disclosure、关键风险常显和 exact HTML 验收全部通过；不修改研究、DQ/PIT
+    或 production/broker 边界。
+  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；2525
+    a5183f745 与 2526/2527-A 2f8f24031 已吸收；why-first renderer 与 accessibility sidecar
+    已集成；focused=74 passed in 138.06s；2526-B/browser 与 human review 尚未执行。'
+  docs_links:
+  - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   terminal: false
-  canonical_row_sha256: 50772de6777d8cf435063de7e773f19edf2572a5b829377c140248b32129c29a
-last_event_id: task-event-97762b50f51eee9156da88580b9f1303
+  canonical_row_sha256: cb61cd9a9b8ffe2b9c1f96bfbe67a01f63f03ad156aa891a3810022ff1a6a35e
+last_event_id: task-event-20246d077e960cb5c05641ae52575844
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 803b7cb2bd76f695bb55a279c226647e7d122264433f6b799d5bc8eb6d91ee93
+fragment_checksum: c8ce09ceba18e93f8303bb267c0f8fced04c565d83a26ec59f28889a09b29f88

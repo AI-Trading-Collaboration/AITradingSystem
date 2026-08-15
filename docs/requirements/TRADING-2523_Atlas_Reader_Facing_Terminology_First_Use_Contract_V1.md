@@ -225,7 +225,8 @@ Coordinator-owned：
 
 ## 8. 后续可读性路线图
 
-以下任务均为后续计划，不表示已开始实现或已通过 Owner 验收：
+以下任务在 2523 closeout 时作为后续路线登记；其当前实现状态以各自 requirement 和
+`page_effectiveness.yaml` 为准，任何工程进展都不表示已通过 Owner 人工验收：
 
 1. [`TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1`](TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)：
    重排 reader-first 默认路径，并把页面内 disclosure 限制为 reader default 与 research drilldown 两级；

@@ -77,6 +77,23 @@ class _Frame:
 
 
 class _AccessibilityParser(HTMLParser):
+    _VOID_TAGS = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.stack: list[_Frame] = []
@@ -89,7 +106,9 @@ class _AccessibilityParser(HTMLParser):
         self.card_disclosure_counts: dict[str, int] = {}
         self.table_captions: dict[str, int] = {}
         self.element_ids: set[str] = set()
-        self.term_occurrences: dict[str, list[tuple[str, bool, str]]] = {}
+        self.term_occurrences: dict[
+            tuple[str, str], list[tuple[str, bool, str]]
+        ] = {}
 
     def _next_locator(self, tag: str, attrs: dict[str, str]) -> str:
         if self.stack:
@@ -142,9 +161,17 @@ class _AccessibilityParser(HTMLParser):
             )
         if "data-term-trigger" in attr_map:
             term_id = attr_map["data-term-trigger"]
+            reader_section = next(
+                (
+                    frame.attrs["data-reader-section"]
+                    for frame in reversed(self.stack)
+                    if "data-reader-section" in frame.attrs
+                ),
+                "document",
+            )
             first = attr_map.get("data-term-first") == "true"
             description_id = attr_map.get("aria-describedby", "")
-            self.term_occurrences.setdefault(term_id, []).append(
+            self.term_occurrences.setdefault((reader_section, term_id), []).append(
                 (locator, first, description_id)
             )
             if not description_id:
@@ -167,11 +194,15 @@ class _AccessibilityParser(HTMLParser):
                 self.table_captions[table.locator] = self.table_captions.get(table.locator, 0) + 1
         if tag == "th" and attr_map.get("scope") not in {"row", "col", "rowgroup", "colgroup"}:
             self._violate("TABLE_HEADER_SCOPE_MISSING", locator, "th scope required")
-        self.stack.append(_Frame(tag=tag, locator=locator, attrs=attr_map))
+        if tag not in self._VOID_TAGS:
+            self.stack.append(_Frame(tag=tag, locator=locator, attrs=attr_map))
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.handle_starttag(tag, attrs)
 
     def handle_data(self, data: str) -> None:
-        if self.stack:
-            self.stack[-1].text_parts.append(data)
+        for frame in self.stack:
+            frame.text_parts.append(data)
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
@@ -214,7 +245,7 @@ class _AccessibilityParser(HTMLParser):
         for locator, count in self.table_captions.items():
             if count != 1:
                 self._violate("TABLE_CAPTION_INVALID", locator, str(count))
-        for term_id, occurrences in self.term_occurrences.items():
+        for (reader_section, term_id), occurrences in self.term_occurrences.items():
             first_positions = [
                 position
                 for position, (_, first, _) in enumerate(occurrences)
@@ -224,13 +255,13 @@ class _AccessibilityParser(HTMLParser):
                 self._violate(
                     "TERM_FIRST_USE_COUNT_INVALID",
                     occurrences[0][0],
-                    f"{term_id}:{len(first_positions)}",
+                    f"{reader_section}:{term_id}:{len(first_positions)}",
                 )
             elif first_positions[0] != 0:
                 self._violate(
                     "TERM_FIRST_USE_ORDER_INVALID",
                     occurrences[first_positions[0]][0],
-                    term_id,
+                    f"{reader_section}:{term_id}",
                 )
             for locator, _, description_id in occurrences:
                 if description_id and description_id not in self.element_ids:

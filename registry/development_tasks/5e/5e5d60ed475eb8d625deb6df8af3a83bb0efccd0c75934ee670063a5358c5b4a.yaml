@@ -13,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2525 engineering lane worker；2524 coordinator 负责 reviewed absorption
-    与 shared renderer wiring。
-  requirement_refs: []
+  next_owner: 2524 coordinator：在唯一 exact HTML 上验证对象、日期、变化、下一动作与禁止推断投影，再随 coordinator
+    closeout 更新终态。
+  requirement_refs:
+  - docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 只实现四个 task-owned state/date/change paths；若需要新增
-    enum/public interface/cutoff，立即停止并回到 serial contract wave。
+  unstructured_legacy_blocker_or_next_step: typed state lane 已吸收并接入 renderer；等待 final
+    exact HTML、2526-B 与 integration formal，不能单独签署页面或策略验收。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 在 task-owned config/module/tests 内实现 typed state/date/change projection
-      与 negative cases；不写 shared renderer、page config、generated outputs 或 coordinator
-      state；focused/impact validation PASS 后交由 2524 coordinator 集成。
+    text: 对象限定 state、data/evidence/page dates、comparison snapshot、next legal action
+      与 prohibited inference 可重放；raw enum 保留 audit；页面/工程 PASS 不升级为 strategy PASS。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -88,25 +88,80 @@ events:
   - change:trading-2525-engineering-lane-start-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-894e407561c0ae196322e9923219bfcd
+- schema_version: task_event.v1
+  task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:09:15+09:00'
+  actor: codex_coordinator
+  change_id: trading-2525-lane-focused-evidence-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-894e407561c0ae196322e9923219bfcd
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2525 engineering lane worker；2524 coordinator 负责 reviewed absorption
+      与 shared renderer wiring。
+    blocker_or_next_step: 只实现四个 task-owned state/date/change paths；若需要新增 enum/public
+      interface/cutoff，立即停止并回到 serial contract wave。
+    acceptance_criteria: 在 task-owned config/module/tests 内实现 typed state/date/change
+      projection 与 negative cases；不写 shared renderer、page config、generated outputs
+      或 coordinator state；focused/impact validation PASS 后交由 2524 coordinator 集成。
+    notes: '[supporting requirement](docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md)；engineering
+      lane commit=a5183f745；focused=8 passed；Ruff PASS；strict mypy source-only follow-imports=skip
+      PASS；已交由 2524 coordinator reviewed absorption，尚未签署页面或策略验收。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2525-lane-focused-evidence-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-25b1037293130570db2f9b36e082cdcb
+- schema_version: task_event.v1
+  task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:38:21+09:00'
+  actor: codex_coordinator
+  change_id: trading-2525-reader-state-coordinator-integration-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-25b1037293130570db2f9b36e082cdcb
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：在唯一 exact HTML 上验证对象、日期、变化、下一动作与禁止推断投影，再随 coordinator
+      closeout 更新终态。
+    blocker_or_next_step: typed state lane 已吸收并接入 renderer；等待 final exact HTML、2526-B
+      与 integration formal，不能单独签署页面或策略验收。
+    acceptance_criteria: 对象限定 state、data/evidence/page dates、comparison snapshot、next
+      legal action 与 prohibited inference 可重放；raw enum 保留 audit；页面/工程 PASS 不升级为 strategy
+      PASS。
+    notes: '[supporting requirement](docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md)；lane
+      commit=a5183f745 已吸收并接入 why-first 页面；coordinator focused=74 passed in 138.06s；final
+      exact HTML 与人工验收尚未发生。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2525-reader-state-coordinator-integration-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3ce304cea79e93ac6cc5e57abc07542c
 projection:
   legacy_first_eight_cells:
   - TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
   - Atlas strategy research page / change evidence date and state semantics
   - P1
   - IN_PROGRESS
-  - 2525 engineering lane worker；2524 coordinator 负责 reviewed absorption 与 shared
-    renderer wiring。
-  - 只实现四个 task-owned state/date/change paths；若需要新增 enum/public interface/cutoff，立即停止并回到
-    serial contract wave。
-  - 在 task-owned config/module/tests 内实现 typed state/date/change projection 与 negative
-    cases；不写 shared renderer、page config、generated outputs 或 coordinator state；focused/impact
-    validation PASS 后交由 2524 coordinator 集成。
-  - 2524-S0 已发布到 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START
-    claims PASS。临时 worktree=D:\Work\AITradingSystem_trading2525_reader_state；focused/impact
-    PASS 与 coordinator absorption 后按 requirement 审计清理。
-  docs_links: []
+  - 2524 coordinator：在唯一 exact HTML 上验证对象、日期、变化、下一动作与禁止推断投影，再随 coordinator closeout
+    更新终态。
+  - typed state lane 已吸收并接入 renderer；等待 final exact HTML、2526-B 与 integration formal，不能单独签署页面或策略验收。
+  - 对象限定 state、data/evidence/page dates、comparison snapshot、next legal action 与 prohibited
+    inference 可重放；raw enum 保留 audit；页面/工程 PASS 不升级为 strategy PASS。
+  - '[supporting requirement](docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md)；lane
+    commit=a5183f745 已吸收并接入 why-first 页面；coordinator focused=74 passed in 138.06s；final
+    exact HTML 与人工验收尚未发生。'
+  docs_links:
+  - docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md
   terminal: false
-  canonical_row_sha256: 3c5973959509e69aae191ecd92c0edbf963181d16e0c8250465aa12363cf6827
-last_event_id: task-event-894e407561c0ae196322e9923219bfcd
+  canonical_row_sha256: 0213bf9f9f2ebcb67ac7e910a2775bb022a8b7b2dc65e4aec4aecdd1e59c381c
+last_event_id: task-event-3ce304cea79e93ac6cc5e57abc07542c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 5af72409b8f8616322d679a8663455dd6cfc582785f570c5fc30e12c0b69ca3c
+fragment_checksum: 1e0ad5b430d2b0f76aeed2b3b71c78d8c8ab07b29e5d68255a53b6e3dfbd8bbc

@@ -13,18 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2527-A strategy-evidence worker；2524 coordinator 管理 final identity，Project
-    Owner 保留 2527-B policy 与签署权。
-  requirement_refs: []
+  next_owner: Project Owner：冻结 sample/threshold/critical-error/reviewer/signature
+    policy；2524 coordinator 仅在 2526-B exact HTML PASS 后组织 2527-B。
+  requirement_refs:
+  - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 仅准备 protocol/schema/scenario/truth rubric；不得招募、执行
-    pilot 或自动签署 PASS。2527-B 仍等待 2526-B exact HTML PASS 与 Owner policy。
+  unstructured_legacy_blocker_or_next_step: protocol/schema/scenario/truth rubric
+    已准备；Owner policy 未批准，未招募或执行 pilot，不得自动签署 PASS。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B 对 frozen exact
-      HTML 保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级 PASS。
+    text: 2527-A 保持 PENDING_OWNER_POLICY；2527-B 只对 frozen exact HTML 记录 verbatim、双
+      reviewer、disagreement 与 Owner attestation；HTML 变化必须重测。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -88,24 +89,80 @@ events:
   - change:trading-2527a-protocol-preparation-start-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-5d9bbf306dc585f9164f429bc641d584
+- schema_version: task_event.v1
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:09:45+09:00'
+  actor: codex_coordinator
+  change_id: trading-2527a-protocol-focused-pass-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-5d9bbf306dc585f9164f429bc641d584
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2527-A strategy-evidence worker；2524 coordinator 管理 final identity，Project
+      Owner 保留 2527-B policy 与签署权。
+    blocker_or_next_step: 仅准备 protocol/schema/scenario/truth rubric；不得招募、执行 pilot
+      或自动签署 PASS。2527-B 仍等待 2526-B exact HTML PASS 与 Owner policy。
+    acceptance_criteria: 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B
+      对 frozen exact HTML 保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级
+      PASS。
+    notes: '[supporting requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)；2527-A
+      protocol preparation 已进入 evidence commit=2f8f24031；所有 participant、sample、threshold、reviewer
+      与签署槽位保持 PENDING_OWNER_POLICY；未招募、未执行 pilot、未自动签署 PASS。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2527a-protocol-focused-pass-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b59b3d2f4e0497f59d5dcd43dc9dbe67
+- schema_version: task_event.v1
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:38:23+09:00'
+  actor: codex_coordinator
+  change_id: trading-2527a-protocol-coordinator-integration-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-b59b3d2f4e0497f59d5dcd43dc9dbe67
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Project Owner：冻结 sample/threshold/critical-error/reviewer/signature
+      policy；2524 coordinator 仅在 2526-B exact HTML PASS 后组织 2527-B。
+    blocker_or_next_step: protocol/schema/scenario/truth rubric 已准备；Owner policy 未批准，未招募或执行
+      pilot，不得自动签署 PASS。
+    acceptance_criteria: 2527-A 保持 PENDING_OWNER_POLICY；2527-B 只对 frozen exact HTML
+      记录 verbatim、双 reviewer、disagreement 与 Owner attestation；HTML 变化必须重测。
+    notes: '[supporting requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)；2527-A
+      protocol commit=2f8f24031 已吸收；participant/sample/threshold/reviewer/signature
+      仍 PENDING_OWNER_POLICY；未执行 pilot、未产生 comprehension PASS。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2527a-protocol-coordinator-integration-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-fe1f41a631fe227458a2007aa326aa3c
 projection:
   legacy_first_eight_cells:
   - TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
   - Atlas strategy research page / governed human comprehension acceptance pilot
   - P1
   - IN_PROGRESS
-  - 2527-A strategy-evidence worker；2524 coordinator 管理 final identity，Project Owner
-    保留 2527-B policy 与签署权。
-  - 仅准备 protocol/schema/scenario/truth rubric；不得招募、执行 pilot 或自动签署 PASS。2527-B 仍等待
-    2526-B exact HTML PASS 与 Owner policy。
-  - 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B 对 frozen exact HTML
-    保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级 PASS。
-  - 2524-S0 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START claims
-    PASS。与 2526-A 共用 worktree=D:\Work\AITradingSystem_trading2526_2527_evidence，仅写本任务四个
-    protocol paths。
-  docs_links: []
+  - Project Owner：冻结 sample/threshold/critical-error/reviewer/signature policy；2524
+    coordinator 仅在 2526-B exact HTML PASS 后组织 2527-B。
+  - protocol/schema/scenario/truth rubric 已准备；Owner policy 未批准，未招募或执行 pilot，不得自动签署
+    PASS。
+  - 2527-A 保持 PENDING_OWNER_POLICY；2527-B 只对 frozen exact HTML 记录 verbatim、双 reviewer、disagreement
+    与 Owner attestation；HTML 变化必须重测。
+  - '[supporting requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)；2527-A
+    protocol commit=2f8f24031 已吸收；participant/sample/threshold/reviewer/signature
+    仍 PENDING_OWNER_POLICY；未执行 pilot、未产生 comprehension PASS。'
+  docs_links:
+  - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
   terminal: false
-  canonical_row_sha256: 509dd70fe30b367f550fafa14fbb993f02957d8bc506d254457affb42b0347f1
-last_event_id: task-event-5d9bbf306dc585f9164f429bc641d584
+  canonical_row_sha256: 590e20595fe8984ec121d66c1016fa76f9e6b67579f59ca03fc9a4755490a831
+last_event_id: task-event-fe1f41a631fe227458a2007aa326aa3c
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: d75673aae7e668099673384aa2222877b92aeb809dbc0fb149c159204dcc3fd1
+fragment_checksum: 7d8b5f2436c0a36648a0c0874826c3d78ec56d453c0c717f6af901d41b5414e2

@@ -16,7 +16,10 @@ reader_questions:
   - INVESTMENT_ORDER_ENGINE_AUTHORITY
 relevant_source_paths:
   - config/atlas/page_effectiveness.yaml
+  - config/atlas/reader_comprehension_protocol.yaml
   - config/atlas/reader_profile.yaml
+  - config/atlas/reader_projection_contract.yaml
+  - config/atlas/reader_state_semantics.yaml
   - config/atlas/reader_terminology.yaml
   - config/atlas/historical_canonical_projection.yaml
   - config/atlas/qqq_options_projection.yaml
@@ -26,12 +29,17 @@ relevant_source_paths:
   - src/ai_trading_system/atlas/historical_canonical_projection.py
   - src/ai_trading_system/atlas/page_effectiveness.py
   - src/ai_trading_system/atlas/qqq_options_projection.py
+  - src/ai_trading_system/atlas/reader_accessibility_validation.py
+  - src/ai_trading_system/atlas/reader_comprehension_protocol.py
+  - src/ai_trading_system/atlas/reader_state_projection.py
   - src/ai_trading_system/atlas/reader_terminology_projection.py
   - src/ai_trading_system/atlas/rendered_term_inventory.py
   - src/ai_trading_system/atlas/status_explanation_projection.py
   - src/ai_trading_system/atlas/work_progress_projection.py
   - src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
   - src/ai_trading_system/contracts/strategy_research_qqq_options_projection.py
+  - src/ai_trading_system/contracts/strategy_research_reader_projection.py
+  - src/ai_trading_system/contracts/strategy_research_reader_state.py
   - src/ai_trading_system/contracts/strategy_research_reader_terminology.py
   - src/ai_trading_system/contracts/strategy_research_status_explanation.py
   - src/ai_trading_system/contracts/strategy_research_work_progress.py
@@ -214,24 +222,24 @@ task_sources:
     reader_summary_zh: 2523B 已冻结 page-effectiveness v2、带后缀 task identity 的确定性顺序与 human PASS 对 exact 页面 SHA-256 的绑定；本任务只在该契约上增加术语解释，不降低页面身份约束。
   - task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
     requirement_path: docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
-    coverage: PLANNED_READER_DECISION_PATH_NOT_STARTED
-    reader_summary_zh: 后续将先冻结 reader_projection_contract.v1，再重排默认决策路径与渐进披露；当前状态为 PROPOSED，尚未启动实现或验收。
+    coverage: INTEGRATED_WHY_FIRST_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE
+    reader_summary_zh: why-first 因果链、九段读者顺序和一层 research drilldown 已进入当前候选；节点与边只投影 canonical 来源，缺少来源时不会由 renderer 补写。最终 exact HTML 工程与人工验收仍需分别完成。
   - task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
     requirement_path: docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md
-    coverage: PLANNED_READER_STATE_DATE_CHANGE_NOT_STARTED
-    reader_summary_zh: 后续 engineering lane 将实现对象限定的状态、日期与 snapshot change 投影；当前状态为 PROPOSED，尚未形成页面事实。
+    coverage: INTEGRATED_OBJECT_QUALIFIED_STATE_DATE_CHANGE_PROJECTION
+    reader_summary_zh: 对象限定的状态、数据/证据/页面日期、snapshot change、下一合法动作与禁止推断已进入当前候选；页面 PASS 不会被投影为策略有效。
   - task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
     requirement_path: docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
-    coverage: PLANNED_ACCESSIBILITY_DRILLDOWN_NOT_STARTED
-    reader_summary_zh: 后续 evidence lane 与 coordinator 将完成键盘、screen reader、reflow 和 audit destination；当前状态为 PROPOSED，不能据此宣称 accessibility PASS。
+    coverage: INTEGRATED_AUTOMATED_ACCESSIBILITY_HARNESS_FINAL_HUMAN_REVIEW_PENDING
+    reader_summary_zh: 九段 DOM 顺序、无嵌套 disclosure、标题层级、术语首现键盘入口和 audit destination 已由确定性 validator 覆盖；最终 exact HTML 的 browser/mobile/assistive-technology 与人工视觉复核仍不可由自动化代签。
   - task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
     requirement_path: docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
-    coverage: PLANNED_HUMAN_COMPREHENSION_PILOT_NOT_STARTED
-    reader_summary_zh: 后续只能对冻结 exact HTML 执行受治理的人类理解 pilot；当前状态为 PROPOSED，protocol、participant 与 Owner attestation 均未发生。
+    coverage: PROTOCOL_PREPARED_OWNER_POLICY_AND_HUMAN_PILOT_PENDING
+    reader_summary_zh: exact-HTML 理解验收 protocol、场景、事实问题和记录结构已准备，但样本、阈值、critical error 与 reviewer policy 仍等待 Owner；尚未招募、执行 pilot 或产生人类 PASS。
   - task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md
     coverage: DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED
-    reader_summary_zh: 2528 仅登记为严格离线的 per-axis transport 诊断合同，尚未实现；它将区分 quote、Greeks、IV、OI、volume 与交叉条件，但不会反演 raw rows、伪造轴向根因或授权新的 Cloud run。当前 evidence/DQ-PIT/engine 状态均不改变。
+    reader_summary_zh: 下一步先实现 2528 离线 per-axis 诊断合同。2528 仅登记为严格离线的 per-axis transport 诊断合同，尚未实现；它将区分 quote、Greeks、IV、OI、volume 与交叉条件，但不会反演 raw rows、伪造轴向根因或授权新的 Cloud run。当前 evidence/DQ-PIT/engine 状态均不改变。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

@@ -117,3 +117,7 @@ canonical truth 时立即停止验收。
   `D:\Work\AITradingSystem_trading2526_2527_evidence`，但只写第 5 节四个 task-owned protocol paths；
   exit condition 与 2526 requirement 记录一致。当前不招募、不执行 pilot、不生成 participant data，
   `2527-B` 继续等待唯一 exact HTML、2526-B PASS 与 Owner policy。
+- 2026-08-16：2527-A protocol 已随 lane commit `2f8f24031` 被 coordinator 审阅吸收；schema、场景、
+  事实问题、记录字段与 exact-HTML identity binding 已准备，未替 Owner 填入 sample、threshold、
+  critical-error、reviewer 或 signature policy。coordinator focused=`74 passed in 138.06s`；2527-B 未启动，
+  未招募 participant、未记录回答、未产生 Owner attestation 或 comprehension PASS。

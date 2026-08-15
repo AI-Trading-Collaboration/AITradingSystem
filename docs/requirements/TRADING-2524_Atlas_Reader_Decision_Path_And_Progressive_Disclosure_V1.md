@@ -254,3 +254,9 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   ff-only 进入 local `main` 并 ordinary push，`HEAD=local main=origin/main`。随后 DUAL_LANE START 对 2525
   engineering 与 2526/2527-A strategy-evidence 的互斥 claims 得到 `PASS`，coordinator branch 固定为
   `codex/trading-2524-reader-ia-integration`；所有 downstream lane 必须从该 released exact base 启动。
+- 2026-08-16：coordinator 已按固定顺序吸收 2525 lane commit `a5183f745` 与 2526/2527-A evidence
+  commit `2f8f24031`，并把 renderer 重排为九段 why-first 主线：先显示问题、约束、选择、证据、结论与
+  下一步，再由一个可访问的 research drilldown 展开八阶段流程、QQQ 投影和结果账本；glossary 与完整
+  task/source identity 位于主线之后。术语首次出现支持 hover/focus/tap、Escape 和完整定义链接，重复出现
+  不增加 tab stop。八文件 focused=`74 passed in 138.06s`；当前尚未生成 final exact HTML、运行 2526-B
+  browser/AT/mobile 或启动 2527-B human pilot，人工验收继续 `PENDING_REVIEW`。

@@ -111,3 +111,7 @@ candidate 验收必须等待 coordinator 吸收本 lane 并生成唯一 exact HT
   第 5 节四个 task-owned paths，exit condition=lane focused/impact PASS、commit 被 2524 coordinator
   reviewed absorption、unique tracked/untracked/ignored audit 完成且无活跃进程依赖。不得在该 worktree
   保留 canonical final HTML 或 shared coordinator bytes。
+- 2026-08-16：lane commit `a5183f745` 已由 2524 coordinator 审阅吸收。对象限定的 reader state、
+  data/evidence/page 三类日期、comparison snapshot、下一合法动作与禁止推断已接入 why-first 页面；raw
+  status 仍在 audit 层保留，页面或工程 PASS 不会升级为策略有效。coordinator 八文件 focused=`74 passed
+  in 138.06s`；最终 exact HTML 与人工验收尚未发生。

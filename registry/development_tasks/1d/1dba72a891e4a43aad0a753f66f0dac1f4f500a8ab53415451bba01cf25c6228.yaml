@@ -13,19 +13,19 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation
-    与 2526-B exact HTML gate。
-  requirement_refs: []
+  next_owner: 2524 coordinator：对唯一 final exact HTML 执行 desktop/mobile/keyboard/assistive-technology/audit
+    replay；Owner 保留人工视觉判断。
+  requirement_refs:
+  - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 只实现 accessibility validator/harness/negative
-    cases；不得改 renderer 或签署 accessibility。2526-B 等待唯一 exact HTML。
+  unstructured_legacy_blocker_or_next_step: deterministic validator 与 exact-HTML-hash
+    sidecar 已接入 writer；2526-B 浏览器、移动端与辅助技术门尚未执行，不得声明 human accessibility PASS。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与 typed evidence；coordinator
-      应用 shared DOM remediation；2526-B 对同一 exact HTML 完成 desktop/mobile/keyboard/screen-reader/reflow/audit
-      replay 后才开放 2527-B。
+    text: 九段 DOM 顺序、标题、无嵌套 disclosure、术语描述目标、重复 tab-stop、reflow、keyboard、audit destination
+      与 exact HTML identity 均通过；自动化不代签人工理解。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -90,25 +90,81 @@ events:
   - change:trading-2526a-strategy-evidence-lane-start-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-0c9def20757b8e5b40e55c0febf72781
+- schema_version: task_event.v1
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:09:30+09:00'
+  actor: codex_coordinator
+  change_id: trading-2526a-evidence-focused-pass-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-0c9def20757b8e5b40e55c0febf72781
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation
+      与 2526-B exact HTML gate。
+    blocker_or_next_step: 只实现 accessibility validator/harness/negative cases；不得改 renderer
+      或签署 accessibility。2526-B 等待唯一 exact HTML。
+    acceptance_criteria: 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与
+      typed evidence；coordinator 应用 shared DOM remediation；2526-B 对同一 exact HTML 完成
+      desktop/mobile/keyboard/screen-reader/reflow/audit replay 后才开放 2527-B。
+    notes: '[supporting requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)；2526-A
+      evidence commit=2f8f24031；focused accessibility/protocol set=10 passed；Ruff
+      PASS；strict mypy source-only follow-imports=skip PASS。2526-B 仍等待唯一 exact HTML
+      与浏览器/AT gate，不自动签署 accessibility PASS。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2526a-evidence-focused-pass-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e440b12cf2e15b826cb3c1ab117dd23d
+- schema_version: task_event.v1
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T03:38:22+09:00'
+  actor: codex_coordinator
+  change_id: trading-2526-accessibility-sidecar-integration-20260816-v1
+  lane_id: null
+  base_commit: 77adf43bc4017aeef517767019d0ac10da4d64b2
+  previous_state_event_id: task-event-e440b12cf2e15b826cb3c1ab117dd23d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：对唯一 final exact HTML 执行 desktop/mobile/keyboard/assistive-technology/audit
+      replay；Owner 保留人工视觉判断。
+    blocker_or_next_step: deterministic validator 与 exact-HTML-hash sidecar 已接入 writer；2526-B
+      浏览器、移动端与辅助技术门尚未执行，不得声明 human accessibility PASS。
+    acceptance_criteria: 九段 DOM 顺序、标题、无嵌套 disclosure、术语描述目标、重复 tab-stop、reflow、keyboard、audit
+      destination 与 exact HTML identity 均通过；自动化不代签人工理解。
+    notes: '[supporting requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)；2526-A
+      commit=2f8f24031 已吸收；writer fail closed 生成 reader_accessibility_validation.json；focused=74
+      passed in 138.06s；2526-B 仍待执行。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2526-accessibility-sidecar-integration-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-089e6043c7eff2166a2ff238a86725d9
 projection:
   legacy_first_eight_cells:
   - TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   - Atlas strategy research page / accessible research drilldown and audit linkage
   - P1
   - IN_PROGRESS
-  - 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation 与 2526-B
-    exact HTML gate。
-  - 只实现 accessibility validator/harness/negative cases；不得改 renderer 或签署 accessibility。2526-B
-    等待唯一 exact HTML。
-  - 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与 typed evidence；coordinator
-    应用 shared DOM remediation；2526-B 对同一 exact HTML 完成 desktop/mobile/keyboard/screen-reader/reflow/audit
-    replay 后才开放 2527-B。
-  - 2524-S0 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START claims
-    PASS。与 2527-A 共用 worktree=D:\Work\AITradingSystem_trading2526_2527_evidence，但
-    task-owned paths 与 evidence lineage 独立。
-  docs_links: []
+  - 2524 coordinator：对唯一 final exact HTML 执行 desktop/mobile/keyboard/assistive-technology/audit
+    replay；Owner 保留人工视觉判断。
+  - deterministic validator 与 exact-HTML-hash sidecar 已接入 writer；2526-B 浏览器、移动端与辅助技术门尚未执行，不得声明
+    human accessibility PASS。
+  - 九段 DOM 顺序、标题、无嵌套 disclosure、术语描述目标、重复 tab-stop、reflow、keyboard、audit destination
+    与 exact HTML identity 均通过；自动化不代签人工理解。
+  - '[supporting requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)；2526-A
+    commit=2f8f24031 已吸收；writer fail closed 生成 reader_accessibility_validation.json；focused=74
+    passed in 138.06s；2526-B 仍待执行。'
+  docs_links:
+  - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
   terminal: false
-  canonical_row_sha256: d45b2c53d3f87758d795be7df9120d8a517f50fdb5dc796052a66d3bfb0faeee
-last_event_id: task-event-0c9def20757b8e5b40e55c0febf72781
+  canonical_row_sha256: bc25395caef43fd94537bbefebbc94fa4c9f0cfadc48a7c2a2f47394b17a860b
+last_event_id: task-event-089e6043c7eff2166a2ff238a86725d9
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 468d2597cebb5b5a4b73e4b524d22e0d2e70b608a92663c90695bd9bcba24426
+fragment_checksum: b5829a119c8660c943f27c62e4ea9230c785197496d38c2afb5b33e8b7e3d1e0

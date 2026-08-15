@@ -8,6 +8,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from html import escape
+from html.parser import HTMLParser
 from pathlib import Path
 
 from ai_trading_system.atlas.cited_query import answer_cited_query
@@ -27,6 +28,13 @@ from ai_trading_system.atlas.qqq_options_projection import (
     build_qqq_options_projection,
     load_qqq_options_projection_policy,
     validate_qqq_options_projection,
+)
+from ai_trading_system.atlas.reader_accessibility_validation import (
+    validate_reader_accessibility,
+)
+from ai_trading_system.atlas.reader_state_projection import (
+    load_reader_state_semantics,
+    project_reader_state,
 )
 from ai_trading_system.atlas.reader_terminology_projection import (
     ReaderTerminologyPolicy,
@@ -67,12 +75,25 @@ from ai_trading_system.contracts.strategy_research_page_effectiveness import (
     PageAcceptanceTrack,
     PageArtifactIdentity,
     PageFreshnessStatus,
+    PageTaskCoverage,
     StrategyResearchPageEffectivenessManifest,
     page_task_identity_sort_key,
 )
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     QQQOptionsProjectionCard,
     StrategyResearchQQQOptionsProjectionBundle,
+)
+from ai_trading_system.contracts.strategy_research_reader_projection import (
+    ReaderCausalEdgeKind,
+    ReaderCausalNodeKind,
+    StrategyResearchReaderProjectionContract,
+)
+from ai_trading_system.contracts.strategy_research_reader_state import (
+    ReaderChangeKind,
+    ReaderStateProjection,
+)
+from ai_trading_system.contracts.strategy_research_reader_terminology import (
+    ReaderTermDefinition,
 )
 from ai_trading_system.contracts.strategy_research_status_explanation import (
     ATLAS_STATUS_EXPLANATION_STAGE_IDS,
@@ -165,6 +186,9 @@ class AtlasCitedQueryShowcase:
     qqq_options_projection: StrategyResearchQQQOptionsProjectionBundle
     qqq_options_projection_validation: QQQOptionsProjectionValidation
     reader_terminology: ReaderTerminologyPolicy
+    reader_projection_contract: StrategyResearchReaderProjectionContract
+    reader_projection_contract_sha256: str
+    reader_state: ReaderStateProjection
     page_effectiveness: StrategyResearchPageEffectivenessManifest
 
 
@@ -177,6 +201,102 @@ class _FlowStageStatusProvenance:
     source_kind: str
     reason_zh: str
     exact_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _ReaderCausalSource:
+    source_ref_id: str
+    source_locator: str
+    source_sha256: str
+
+
+@dataclass(frozen=True)
+class _ReaderCausalNode:
+    kind: ReaderCausalNodeKind
+    question_zh: str
+    answer_zh: str
+    sources: tuple[_ReaderCausalSource, ...]
+
+
+@dataclass(frozen=True)
+class _ReaderCausalEdge:
+    source_node: ReaderCausalNodeKind
+    relation: ReaderCausalEdgeKind
+    target_node: ReaderCausalNodeKind
+    source: _ReaderCausalSource
+
+
+def _task_coverage(
+    manifest: StrategyResearchPageEffectivenessManifest,
+    task_number: str,
+) -> PageTaskCoverage:
+    prefix = f"TRADING-{task_number}_"
+    matches = tuple(item for item in manifest.task_coverage if item.task_id.startswith(prefix))
+    if len(matches) != 1:
+        raise ValueError(f"ATLAS_READER_TASK_COVERAGE_INVALID:{task_number}:{len(matches)}")
+    return matches[0]
+
+
+def _coverage_source(item: PageTaskCoverage) -> _ReaderCausalSource:
+    return _ReaderCausalSource(
+        source_ref_id=item.task_id,
+        source_locator=item.requirement_path,
+        source_sha256=item.requirement_sha256,
+    )
+
+
+def _build_reader_state(
+    *,
+    manifest: StrategyResearchPageEffectivenessManifest,
+    responses: tuple[StrategyResearchCitedQueryResponse, ...],
+    snapshot_generated_at: str,
+    before_snapshot_id: str,
+    before_generated_at: str,
+    has_changes: bool,
+    policy_root: Path,
+) -> ReaderStateProjection:
+    readiness = _task_coverage(manifest, "2515")
+    evidence = _task_coverage(manifest, "2522")
+    next_step = _task_coverage(manifest, "2528")
+    change_response = next(
+        item
+        for item in responses
+        if item.request.question_id is CitedQueryQuestionId.SNAPSHOT_CHANGE_EXPLANATION
+    )
+    change_summary = " ".join(
+        item.text_zh
+        for item in change_response.claims
+        if not _contains_raw_reader_identifier(item.text_zh)
+    ).strip()
+    if not change_summary:
+        change_summary = "当前来源没有提供可安全展示的变化说明。"
+    citation_dates = tuple(
+        citation.as_of.isoformat()
+        for response in responses
+        for citation in response.citations
+    )
+    return project_reader_state(
+        policy=load_reader_state_semantics(repository_root=policy_root),
+        status_object_zh="策略研究重新开放状态",
+        raw_status="KEEP_CLOSED",
+        reason_zh=readiness.reader_summary_zh,
+        data_as_of=max(citation_dates) if citation_dates else None,
+        evidence_evaluated_at=snapshot_generated_at,
+        page_generated_at=snapshot_generated_at,
+        next_legal_action_zh=next_step.reader_summary_zh,
+        prohibited_inference_zh=(
+            "不能把工程校验、页面可读或一次外部运行解释为策略有效、收益稳健或风险可接受。"
+        ),
+        change_kind=(ReaderChangeKind.CHANGED if has_changes else ReaderChangeKind.UNCHANGED),
+        comparison_base_id=before_snapshot_id,
+        comparison_base_date=before_generated_at,
+        change_explanation_zh=change_summary,
+        source_refs=(
+            readiness.requirement_path,
+            evidence.requirement_path,
+            next_step.requirement_path,
+        ),
+    )
 
 
 def _build_snapshot_response(
@@ -324,12 +444,27 @@ def build_cited_query_showcase(
     if qqq_options_projection_validation.status != "PASS":
         raise ValueError("ATLAS_CITED_QUERY_QQQ_OPTIONS_PROJECTION_VALIDATION_FAILED")
     reader_terminology = load_reader_terminology_policy(repository_root=root)
+    reader_projection_contract_bytes = (
+        root / "config/atlas/reader_projection_contract.yaml"
+    ).read_bytes()
+    reader_projection_contract = StrategyResearchReaderProjectionContract.from_yaml_bytes(
+        reader_projection_contract_bytes
+    )
     page_effectiveness = build_page_effectiveness_manifest(
         repository_root=root,
         engineering_status=page_engineering_status,
         engineering_evidence_refs=page_engineering_evidence_refs,
         owner_visual_review=page_owner_visual_review,
         reader_comprehension_review=page_reader_comprehension_review,
+    )
+    reader_state = _build_reader_state(
+        manifest=page_effectiveness,
+        responses=ordered,
+        snapshot_generated_at=str(snapshot_payload["generated_at"]),
+        before_snapshot_id=str(before_payload["snapshot_id"]),
+        before_generated_at=str(before_payload["generated_at"]),
+        has_changes=bool(diff_payload["changes"]),
+        policy_root=root,
     )
     return AtlasCitedQueryShowcase(
         responses=ordered,
@@ -345,6 +480,11 @@ def build_cited_query_showcase(
         qqq_options_projection=qqq_options_projection,
         qqq_options_projection_validation=qqq_options_projection_validation,
         reader_terminology=reader_terminology,
+        reader_projection_contract=reader_projection_contract,
+        reader_projection_contract_sha256=hashlib.sha256(
+            reader_projection_contract_bytes
+        ).hexdigest(),
+        reader_state=reader_state,
         page_effectiveness=page_effectiveness,
     )
 
@@ -435,7 +575,7 @@ def _render_response(
     )
     status_class = response.answer_status.value.lower()
     return f"""
-    <article class="answer-card" id="{escape(response.request.question_id.value.lower())}">
+    <article class="answer-card" id="{escape(response.request.question_id.value.lower())}" data-reader-card="{escape(response.request.question_id.value)}">
       <div class="answer-head">
         <div>
           <p class="question-id">固定研究问题</p>
@@ -975,7 +1115,7 @@ def _render_fact_group(
     )
     return (
         f'<section class="reader-section {escape(emphasis)}" '
-        f'data-reader-section="{escape(section_id)}">'
+        f'data-reader-detail="{escape(section_id)}">'
         f"<h4>{escape(title)}</h4>"
         f'<ul class="reader-facts">{items}</ul>'
         "</section>"
@@ -1005,7 +1145,7 @@ def _render_transition_conditions(
     )
     return (
         '<section class="reader-section reader-transition" '
-        'data-reader-section="what_changes">'
+        'data-reader-detail="what_changes">'
         "<h4>什么会改变当前状态</h4>"
         f'<ul class="reader-facts">{items}</ul>'
         "</section>"
@@ -1027,23 +1167,23 @@ def _render_work_progress_explanation(
         for concept_id in record.concept_ids
     )
     return (
-        '<section class="work-progress-reader" data-reader-section="work_progress" '
+        '<section class="work-progress-reader" data-reader-detail="work_progress" '
         '>'
-        '<div class="work-purpose" data-reader-section="why_needed">'
+        '<div class="work-purpose" data-reader-detail="why_needed">'
         "<h4>为什么需要这一步</h4>"
         f"<p>{escape(record.why_needed_zh)}</p>"
         "</div>"
         '<div class="work-reader-grid">'
-        '<section class="work-reader-card" data-reader-section="work_items">'
+        '<section class="work-reader-card" data-reader-detail="work_items">'
         "<h4>具体做什么</h4>"
         f'<ol class="work-item-list">{work_items}</ol>'
         "</section>"
-        '<section class="work-reader-card" data-reader-section="expected_outputs">'
+        '<section class="work-reader-card" data-reader-detail="expected_outputs">'
         "<h4>预期产物</h4>"
         f'<ul class="work-output-list">{expected_outputs}</ul>'
         "</section>"
         "</div>"
-        '<section class="progress-dimensions" data-reader-section="progress_dimensions">'
+        '<section class="progress-dimensions" data-reader-detail="progress_dimensions">'
         "<h4>目前进展：三种状态分开看</h4>"
         '<div class="progress-dimension-grid">'
         f'<article data-progress-dimension="capability" data-progress-value="{escape(record.capability_progress.value)}">'
@@ -1059,15 +1199,15 @@ def _render_work_progress_explanation(
         f"<strong>{escape(record.research_effect_zh)}</strong>"
         "</article>"
         "</div></section>"
-        '<section class="work-reader-card" data-reader-section="downstream_use">'
+        '<section class="work-reader-card" data-reader-detail="downstream_use">'
         "<h4>完成后怎样被使用</h4>"
         f"<p>{escape(record.downstream_use_zh)}</p>"
         "</section>"
-        '<section class="work-reader-card work-boundary" data-reader-section="boundary">'
+        '<section class="work-reader-card work-boundary" data-reader-detail="boundary">'
         "<h4>不能说明什么</h4>"
         f"<p>{escape(record.boundary_zh)}</p>"
         "</section>"
-        '<section class="work-reader-card" data-reader-section="next_trigger">'
+        '<section class="work-reader-card" data-reader-detail="next_trigger">'
         "<h4>什么时候需要再做一次</h4>"
         f"<p>{escape(record.next_trigger_zh)}</p>"
         "</section>"
@@ -1114,7 +1254,7 @@ def _render_reader_status_explanation(
         "<summary>查看状态限制、责任信息与审计依据</summary>"
         '<div class="reader-status-detail-body">'
         '<div class="reader-explanation">'
-        '<section class="reader-conclusion" data-reader-section="conclusion">'
+        '<section class="reader-conclusion" data-reader-detail="conclusion">'
         "<span>状态限制摘要</span>"
         f"<p>{escape(record.plain_summary)}</p>"
         "</section>"
@@ -1143,7 +1283,7 @@ def _render_reader_status_explanation(
             facts=facts_by_kind[ExplanationFactKind.READER_IMPACT],
         )
         + _render_transition_conditions(record.transition_conditions)
-        + '<section class="reader-section reader-owner" data-reader-section="owner_and_next">'
+        + '<section class="reader-section reader-owner" data-reader-detail="owner_and_next">'
         "<h4>由谁负责，以及下一步怎么读</h4>"
         '<div class="owner-next-grid">'
         '<div><span class="owner-label">责任信息</span>'
@@ -1157,13 +1297,13 @@ def _render_reader_status_explanation(
         '<div class="reader-audit-body">'
         f"<p>状态对象 <code>{escape(record.status_object_scope)}</code> · "
         f"目标 <code>{escape(record.target_id)}</code></p>"
-        "<h5>Authority bindings</h5>"
+        "<h4>Authority bindings</h4>"
         f"<ul>{bindings}</ul>"
-        "<h5>Technical refs / source refs</h5>"
+        "<h4>Technical refs / source refs</h4>"
         f"<ul>{refs}</ul>"
-        "<h5>已检查范围</h5>"
+        "<h4>已检查范围</h4>"
         f"<p>{escape(' · '.join(record.checked_authority_scope))}</p>"
-        "<h5>已检查 authority IDs</h5>"
+        "<h4>已检查 authority IDs</h4>"
         f"<ul>{checked_authority_ids}</ul>"
         "</div></details>"
         "</div>"
@@ -1298,7 +1438,7 @@ def _render_qqq_projection_card(
         f"<li>{escape(fact)}</li>" for fact in audit_priority_facts
     )
     audit_priority_section = (
-        f"<h5>原始优先事实</h5><ol>{audit_priority_facts_html}</ol>"
+        f"<h4>原始优先事实</h4><ol>{audit_priority_facts_html}</ol>"
         if audit_priority_facts_html
         else ""
     )
@@ -1324,24 +1464,24 @@ def _render_qqq_projection_card(
         '<div class="qqq-task-body">'
         '<div class="qqq-reader-grid">'
         '<section class="qqq-reader-fact qqq-completed">'
-        "<h5>已经做到</h5>"
+        "<h4>已经做到</h4>"
         f"<p>{escape(project_reader_text(text=card.completed_zh, policy=terminology))}</p>"
         "</section>"
         '<section class="qqq-reader-fact qqq-not-proven">'
-        "<h5>仍不能证明</h5>"
+        "<h4>仍不能证明</h4>"
         f"<p>{escape(project_reader_text(text=card.not_proven_zh, policy=terminology))}</p>"
         "</section>"
         '<section class="qqq-reader-fact qqq-blocker">'
-        "<h5>为什么停在这里</h5>"
+        "<h4>为什么停在这里</h4>"
         f"<p>{escape(project_reader_text(text=card.blocker_zh, policy=terminology))}</p>"
         "</section>"
         '<section class="qqq-reader-fact qqq-next">'
-        "<h5>接下来要看什么</h5>"
+        "<h4>接下来要看什么</h4>"
         f"<p>{escape(project_reader_text(text=card.next_reader_action_zh, policy=terminology))}</p>"
         "</section>"
         "</div>"
         '<div class="qqq-priority-facts">'
-        "<h5>必须按这个顺序理解</h5>"
+        "<h4>必须按这个顺序理解</h4>"
         f"<ol>{priority_facts}</ol>"
         "</div>"
         '<details class="qqq-audit" data-reader-layer="audit">'
@@ -1625,11 +1765,294 @@ _PAGE_ACCEPTANCE_LABELS = {
 }
 
 
+@dataclass(frozen=True)
+class _InlineTermFrame:
+    tag: str
+    reader_section: str | None
+    blocked: bool
+
+
+@dataclass(frozen=True)
+class _DisclosureFrame:
+    source_tag: str
+    output_tag: str
+    nested_details: bool
+
+
+class _DisclosureFlatteningParser(HTMLParser):
+    _VOID_TAGS = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.parts: list[str] = []
+        self.stack: list[_DisclosureFrame] = []
+        self.details_depth = 0
+
+    @staticmethod
+    def _attrs(attrs: list[tuple[str, str | None]], *, extra_class: str) -> str:
+        rendered: list[str] = []
+        class_seen = False
+        for key, value in attrs:
+            if key == "open":
+                continue
+            if key == "class":
+                class_seen = True
+                value = f"{value or ''} {extra_class}".strip()
+            rendered.append(
+                f" {key}" if value is None else f' {key}="{escape(value, quote=True)}"'
+            )
+        if not class_seen:
+            rendered.append(f' class="{extra_class}"')
+        return "".join(rendered)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        tag = tag.lower()
+        nested_details = tag == "details" and self.details_depth > 0
+        flattened_summary = (
+            tag == "summary"
+            and bool(self.stack)
+            and self.stack[-1].source_tag == "details"
+            and self.stack[-1].nested_details
+        )
+        if nested_details:
+            output_tag = "section"
+            self.parts.append(
+                f'<section{self._attrs(attrs, extra_class="flat-disclosure")}>'
+            )
+        elif flattened_summary:
+            output_tag = "p"
+            self.parts.append(
+                f'<p{self._attrs(attrs, extra_class="flat-disclosure-title")}>'
+            )
+        else:
+            output_tag = tag
+            self.parts.append(self.get_starttag_text() or f"<{tag}>")
+        if tag == "details":
+            self.details_depth += 1
+        if tag not in self._VOID_TAGS:
+            self.stack.append(_DisclosureFrame(tag, output_tag, nested_details))
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        del tag, attrs
+        self.parts.append(self.get_starttag_text() or "")
+
+    def handle_endtag(self, tag: str) -> None:
+        tag = tag.lower()
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index].source_tag == tag:
+                frame = self.stack[index]
+                del self.stack[index:]
+                self.parts.append(f"</{frame.output_tag}>")
+                if tag == "details":
+                    self.details_depth -= 1
+                return
+        self.parts.append(f"</{tag}>")
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+    def handle_entityref(self, name: str) -> None:
+        self.parts.append(f"&{name};")
+
+    def handle_charref(self, name: str) -> None:
+        self.parts.append(f"&#{name};")
+
+    def handle_comment(self, data: str) -> None:
+        self.parts.append(f"<!--{data}-->")
+
+    def handle_decl(self, decl: str) -> None:
+        self.parts.append(f"<!{decl}>")
+
+
+def _flatten_nested_disclosures(html: str) -> str:
+    parser = _DisclosureFlatteningParser()
+    parser.feed(html)
+    parser.close()
+    return "".join(parser.parts)
+
+
+class _InlineTermParser(HTMLParser):
+    _VOID_TAGS = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+    _BLOCKED_TAGS = {"a", "button", "code", "script", "style", "template"}
+
+    def __init__(self, policy: ReaderTerminologyPolicy) -> None:
+        super().__init__(convert_charrefs=False)
+        self.policy = policy
+        self.parts: list[str] = []
+        self.stack: list[_InlineTermFrame] = []
+        self.first_seen: set[tuple[str, str]] = set()
+
+    def _matches(
+        self, text: str
+    ) -> tuple[tuple[int, int, ReaderTermDefinition, str], ...]:
+        candidates: list[tuple[int, int, ReaderTermDefinition, str]] = []
+        for term in self.policy.terms:
+            for alias in sorted(term.aliases, key=len, reverse=True):
+                escaped_alias = re.escape(alias)
+                pattern = (
+                    re.compile(rf"(?<![A-Za-z0-9_]){escaped_alias}(?![A-Za-z0-9_])")
+                    if re.search(r"[A-Za-z0-9]", alias)
+                    else re.compile(escaped_alias)
+                )
+                for match in pattern.finditer(text):
+                    candidates.append((match.start(), match.end(), term, match.group(0)))
+        selected: list[tuple[int, int, ReaderTermDefinition, str]] = []
+        occupied: set[int] = set()
+        for candidate in sorted(
+            candidates,
+            key=lambda item: (item[0], -(item[1] - item[0]), item[2].term_id),
+        ):
+            start, end, _term, _matched = candidate
+            if any(index in occupied for index in range(start, end)):
+                continue
+            selected.append(candidate)
+            occupied.update(range(start, end))
+        return tuple(selected)
+
+    def _render_text(self, text: str, section: str) -> str:
+        text = project_reader_text(text=text, policy=self.policy)
+        matches = self._matches(text)
+        if not matches:
+            return text
+        result: list[str] = []
+        cursor = 0
+        for start, end, term, matched in matches:
+            result.append(text[cursor:start])
+            key = (section, term.term_id)
+            first = key not in self.first_seen
+            if first:
+                self.first_seen.add(key)
+            description_id = f"term-description-{term.term_id}"
+            trigger = (
+                f'<span class="term-trigger" data-term-trigger="{escape(term.term_id)}" '
+                f'data-term-first="{str(first).lower()}" '
+                f'aria-describedby="{escape(description_id)}" '
+                f'data-term-short="{escape(term.plain_definition_zh, quote=True)}"'
+                + (
+                    f' tabindex="0" role="button" aria-expanded="false" '
+                    f'aria-controls="reader-term-{escape(term.term_id)}"'
+                    if first
+                    else ""
+                )
+                + f">{matched}</span>"
+            )
+            if first:
+                result.append(
+                    '<span class="term-context">'
+                    + trigger
+                    + f'<a class="term-full-link" href="#reader-term-{escape(term.term_id)}">'
+                    + "完整定义</a></span>"
+                )
+            else:
+                result.append(trigger)
+            cursor = end
+        result.append(text[cursor:])
+        return "".join(result)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        tag = tag.lower()
+        attr_map = {key: "" if value is None else value for key, value in attrs}
+        parent = self.stack[-1] if self.stack else None
+        section = attr_map.get("data-reader-section") or (
+            None if parent is None else parent.reader_section
+        )
+        blocked = bool(
+            (parent is not None and parent.blocked)
+            or tag in self._BLOCKED_TAGS
+            or attr_map.get("data-reader-layer") == "audit"
+            or "data-term-definition" in attr_map
+            or "data-term-glossary" in attr_map
+        )
+        self.parts.append(self.get_starttag_text() or f"<{tag}>")
+        if tag not in self._VOID_TAGS:
+            self.stack.append(_InlineTermFrame(tag, section, blocked))
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        del tag, attrs
+        self.parts.append(self.get_starttag_text() or "")
+
+    def handle_endtag(self, tag: str) -> None:
+        self.parts.append(f"</{tag}>")
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index].tag == tag.lower():
+                del self.stack[index:]
+                break
+
+    def handle_data(self, data: str) -> None:
+        frame = self.stack[-1] if self.stack else None
+        if frame is None or frame.blocked or frame.reader_section is None:
+            self.parts.append(data)
+            return
+        self.parts.append(self._render_text(data, frame.reader_section))
+
+    def handle_entityref(self, name: str) -> None:
+        self.parts.append(f"&{name};")
+
+    def handle_charref(self, name: str) -> None:
+        self.parts.append(f"&#{name};")
+
+    def handle_comment(self, data: str) -> None:
+        self.parts.append(f"<!--{data}-->")
+
+    def handle_decl(self, decl: str) -> None:
+        self.parts.append(f"<!{decl}>")
+
+
+def _add_inline_term_interactions(html: str, policy: ReaderTerminologyPolicy) -> str:
+    parser = _InlineTermParser(policy)
+    parser.feed(html)
+    parser.close()
+    return "".join(parser.parts)
+
+
+def _render_term_definition_bank(policy: ReaderTerminologyPolicy) -> str:
+    definitions = "".join(
+        (
+            f'<p class="term-description" id="term-description-{escape(term.term_id)}" '
+            f'data-term-definition="{escape(term.term_id)}">'
+            f"{escape(term.display_name_zh)}：{escape(term.plain_definition_zh)} "
+            f"{escape(term.why_needed_zh)}</p>"
+        )
+        for term in policy.terms
+    )
+    return f'<div class="term-definition-bank" aria-label="术语短解释">{definitions}</div>'
+
+
 def _render_reader_terminology_guide(policy: ReaderTerminologyPolicy) -> str:
     cards = "".join(
         (
             f'<article class="terminology-card" id="reader-term-{escape(term.term_id)}" '
-            f'data-term-definition="{escape(term.term_id)}">'
+            'data-term-glossary-card>'
             '<div class="terminology-card-head">'
             f"<h3>{escape(term.display_name_zh)}</h3>"
             f"<code>{escape(term.aliases[0])}</code>"
@@ -1641,12 +2064,12 @@ def _render_reader_terminology_guide(policy: ReaderTerminologyPolicy) -> str:
         for term in policy.terms
     )
     return f"""
-    <details class="terminology-guide" id="reader-terminology-guide">
-      <summary>先看词语说明：本页 {len(policy.terms)} 个专有名词都可在这里展开</summary>
+    <details class="terminology-guide" id="reader-terminology-guide" data-term-glossary data-reader-card="terminology-guide">
+      <summary>按需查阅：本页 {len(policy.terms)} 个术语的完整定义</summary>
       <div class="terminology-guide-intro">
-        <h2>名字和概念先用通俗话说明</h2>
+        <h2>术语索引与完整定义</h2>
         <p>{escape(policy.reader_profile.audience_zh)}</p>
-        <p>这些说明位于其他页面内容之前，键盘也能展开；任务、来源、数据格式、校验值和原因代码的原始编号继续保留在折叠审计区。</p>
+        <p>日常阅读不需要先记住这张表；在正文中 hover、键盘聚焦或轻触术语即可看到同一短解释。任务、来源、校验值和原因代码的原始编号只保留在审计区。</p>
       </div>
       <div class="terminology-grid">{cards}</div>
     </details>
@@ -1730,6 +2153,419 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     """
 
 
+def _build_why_first_projection(
+    showcase: AtlasCitedQueryShowcase,
+) -> tuple[tuple[_ReaderCausalNode, ...], tuple[_ReaderCausalEdge, ...]]:
+    manifest = showcase.page_effectiveness
+    calibration = _task_coverage(manifest, "2510")
+    readiness = _task_coverage(manifest, "2515")
+    authorization = _task_coverage(manifest, "2521")
+    evidence = _task_coverage(manifest, "2522")
+    next_step = _task_coverage(manifest, "2528")
+    qqq_source = _ReaderCausalSource(
+        source_ref_id="qqq_options_projection",
+        source_locator="config/atlas/qqq_options_projection.yaml",
+        source_sha256=showcase.qqq_options_projection.policy_sha256,
+    )
+    nodes = (
+        _ReaderCausalNode(
+            kind=ReaderCausalNodeKind.PROBLEM,
+            question_zh="我们真正要回答什么？",
+            answer_zh="现有已准入证据，是否足以让策略研究重新开放？",
+            sources=(_coverage_source(readiness),),
+        ),
+        _ReaderCausalNode(
+            kind=ReaderCausalNodeKind.CONSTRAINT,
+            question_zh="为什么不能直接跳到策略结论？",
+            answer_zh=calibration.reader_summary_zh,
+            sources=(_coverage_source(calibration), _coverage_source(readiness)),
+        ),
+        _ReaderCausalNode(
+            kind=ReaderCausalNodeKind.CHOICE,
+            question_zh="为什么选择当前研究路径？",
+            answer_zh=(
+                "在研究保持关闭、外部授权已消费的约束下，先完成严格离线的逐轴诊断；"
+                "不启动第二次 Cloud run，也不进入候选搜索或经验回测。"
+            ),
+            sources=(
+                _coverage_source(readiness),
+                _coverage_source(authorization),
+                _coverage_source(next_step),
+            ),
+        ),
+        _ReaderCausalNode(
+            kind=ReaderCausalNodeKind.EVIDENCE,
+            question_zh="这条路径目前拿到了什么证据？",
+            answer_zh=evidence.reader_summary_zh,
+            sources=(_coverage_source(evidence),),
+        ),
+        _ReaderCausalNode(
+            kind=ReaderCausalNodeKind.RESULT,
+            question_zh="现有证据只支持什么结论？",
+            answer_zh=showcase.qqq_options_projection.aggregate_explanation_zh,
+            sources=(qqq_source, _coverage_source(evidence)),
+        ),
+        _ReaderCausalNode(
+            kind=ReaderCausalNodeKind.NEXT_STEP,
+            question_zh="当前结果把下一步指向哪里？",
+            answer_zh=next_step.reader_summary_zh,
+            sources=(_coverage_source(next_step), _coverage_source(evidence)),
+        ),
+    )
+    contract_source = _ReaderCausalSource(
+        source_ref_id=showcase.reader_projection_contract.contract_id,
+        source_locator="config/atlas/reader_projection_contract.yaml",
+        source_sha256=showcase.reader_projection_contract_sha256,
+    )
+    edges = tuple(
+        _ReaderCausalEdge(
+            source_node=item.source_node,
+            relation=item.relation,
+            target_node=item.target_node,
+            source=contract_source,
+        )
+        for item in showcase.reader_projection_contract.causal_edges
+    )
+    if tuple(item.kind for item in nodes) != showcase.reader_projection_contract.causal_nodes:
+        raise ValueError("ATLAS_READER_CAUSAL_NODE_ORDER_INVALID")
+    if tuple((item.source_node, item.relation, item.target_node) for item in edges) != tuple(
+        (item.source_node, item.relation, item.target_node)
+        for item in showcase.reader_projection_contract.causal_edges
+    ):
+        raise ValueError("ATLAS_READER_CAUSAL_EDGE_SET_INVALID")
+    if any(not node.sources for node in nodes) or any(not edge.source.source_sha256 for edge in edges):
+        raise ValueError("ATLAS_READER_CAUSAL_SOURCE_BINDING_INSUFFICIENT")
+    return nodes, edges
+
+
+_CAUSAL_EDGE_LABELS = {
+    ReaderCausalEdgeKind.BOUNDED_BY: "受此约束",
+    ReaderCausalEdgeKind.JUSTIFIES: "所以选择",
+    ReaderCausalEdgeKind.REQUIRES_EVIDENCE: "需要证据",
+    ReaderCausalEdgeKind.SUPPORTS: "目前支持",
+    ReaderCausalEdgeKind.LIMITS: "限定范围",
+    ReaderCausalEdgeKind.TRIGGERS: "因此触发",
+}
+
+
+def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
+    manifest = showcase.page_effectiveness
+    state = showcase.reader_state
+    acceptance = {item.track: item for item in manifest.acceptance}
+    return f"""
+    <section class="trust-strip" data-reader-section="TRUST_STRIP" data-reader-card="trust-strip" data-page-freshness="{escape(manifest.freshness_status.value)}" data-source-commit="{escape(manifest.repository_commit)}">
+      <header>
+        <p class="eyebrow">ATLAS · 引用优先研究页面</p>
+        <h1>先看为什么，再看研究做了什么</h1>
+        <p class="lead">这页先说明研究问题、推进理由、结论边界和下一步；计算、逐节点结果与完整引用随后按需展开。</p>
+      </header>
+      <div class="trust-grid" aria-label="页面身份与安全边界">
+        <p data-always-visible="source_commit">精确代码版本：已锁定，完整值可在页末审计区核对。</p>
+        <p data-always-visible="freshness">页面时效性：{escape(_PAGE_FRESHNESS_LABELS[manifest.freshness_status])}</p>
+        <p data-always-visible="evidence_date">证据截至：{escape(state.dates.data_as_of or '未知')}</p>
+        <p data-always-visible="page_date">页面生成：{escape(state.dates.page_generated_at)}</p>
+        <p data-always-visible="engineering_validation">工程验收：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.ENGINEERING_VALIDATION].status])}</p>
+        <p data-always-visible="owner_visual_review">Owner 视觉验收：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.OWNER_VISUAL_REVIEW].status])}</p>
+        <p data-always-visible="reader_comprehension_review">读者理解验收：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.READER_COMPREHENSION_REVIEW].status])}</p>
+        <p data-always-visible="strategy_conclusion_pass_count">策略结论通过：0</p>
+        <p data-always-visible="production_effect">生产影响：无</p>
+        <p data-always-visible="broker_action">交易动作：无</p>
+      </div>
+      <p class="trust-stop" data-always-visible="critical-risk">本页不是投资建议，不授权真实策略执行引擎、外部动作或交易。</p>
+    </section>
+    """
+
+
+def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
+    nodes, edges = _build_why_first_projection(showcase)
+    edge_by_pair = {(item.source_node, item.target_node): item for item in edges}
+    node_cards: list[str] = []
+    for index, node in enumerate(nodes):
+        answer = project_reader_text(text=node.answer_zh, policy=showcase.reader_terminology)
+        source_ids = " ".join(item.source_ref_id for item in node.sources)
+        edge_attributes = ""
+        edge_marker = ""
+        if index:
+            previous = nodes[index - 1]
+            incoming = edge_by_pair[(previous.kind, node.kind)]
+            edge_attributes = (
+                f' data-causal-edge="{escape(incoming.relation.value)}"'
+                f' data-causal-edge-source="{escape(incoming.source.source_ref_id)}"'
+            )
+            edge_marker = (
+                f'<span class="causal-link">{escape(_CAUSAL_EDGE_LABELS[incoming.relation])}</span>'
+            )
+        node_cards.append(
+            f'<li class="causal-node" data-causal-node="{escape(node.kind.value)}" '
+            f'data-causal-source-count="{len(node.sources)}" data-causal-source-refs="{escape(source_ids)}"'
+            f"{edge_attributes}>"
+            f"{edge_marker}"
+            f'<span class="causal-number">{index + 1:02d}</span>'
+            f'<p class="causal-question">{escape(node.question_zh)}</p>'
+            f'<p class="causal-answer">{escape(answer)}</p></li>'
+        )
+    audit_sources = {
+        (source.source_ref_id, source.source_locator, source.source_sha256)
+        for node in nodes
+        for source in node.sources
+    }
+    audit_sources.update(
+        (edge.source.source_ref_id, edge.source.source_locator, edge.source.source_sha256)
+        for edge in edges
+    )
+    audit_rows = "".join(
+        f"<li><code>{escape(source_ref)}</code><br>{escape(locator)}<br>"
+        f"SHA-256 <code>{escape(source_sha)}</code></li>"
+        for source_ref, locator, source_sha in sorted(audit_sources)
+    )
+    return f"""
+    <section class="why-context" data-reader-section="WHY_CONTEXT" data-reader-card="why-context" aria-labelledby="why-context-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">WHY FIRST · SOURCE-BOUND</p>
+        <h2 id="why-context-title">这项研究为什么按现在的顺序推进？</h2>
+        <p>下面每一步都绑定已校验来源；如果问题、选择理由或因果边缺失，页面必须显示信息不足，不能由渲染器补写。</p>
+      </div>
+      <p class="reader-problem" data-always-visible="current_problem">当前主问题：现有已准入证据是否足以让策略研究重新开放？</p>
+      <ol class="causal-chain">{''.join(node_cards)}</ol>
+      <div class="why-boundary-grid">
+        <p data-always-visible="largest_blocker">最大阻塞：主研究窗口的校准证据仍未通过数据质量与时点可得性准入，现有汇总也不能确定具体失败轴。</p>
+        <p data-always-visible="prohibited_inference">禁止推断：不能据此宣称策略有效、收益稳健、风险可接受或可以下单。</p>
+        <p data-always-visible="next_legal_action">下一合法动作：只做已登记的严格离线逐轴诊断；不重复外部运行。</p>
+      </div>
+      <details class="causal-audit" data-reader-layer="audit">
+        <summary>核对这条因果链的 {len(audit_sources)} 个来源绑定</summary>
+        <ul>{audit_rows}</ul>
+      </details>
+    </section>
+    """
+
+
+def _render_canonical_questions(navigation: str, cards: str) -> str:
+    return f"""
+    <section class="canonical-questions" data-reader-section="CANONICAL_QUESTIONS" aria-labelledby="canonical-questions-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">FIVE QUESTIONS · DEFAULT ANSWERS</p>
+        <h2 id="canonical-questions-title">先用五个固定问题读懂当前研究</h2>
+        <p>每张卡先给一句话回答与核心限制；完整引用留在卡片自己的审计入口。</p>
+      </div>
+      <nav aria-label="五个固定问题">{navigation}</nav>
+      <div class="answer-grid">{cards}</div>
+    </section>
+    """
+
+
+_CHANGE_LABELS = {
+    ReaderChangeKind.CHANGED: "已有改变",
+    ReaderChangeKind.UNCHANGED: "没有改变",
+    ReaderChangeKind.UNKNOWN: "变化未知",
+    ReaderChangeKind.NOT_COMPARABLE: "不可比较",
+}
+
+
+def _render_change_summary(showcase: AtlasCitedQueryShowcase) -> str:
+    state = showcase.reader_state
+    return f"""
+    <section class="change-summary" data-reader-section="CHANGE_SUMMARY" data-reader-card="change-summary" aria-labelledby="change-summary-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">WHAT CHANGED · OBJECT-QUALIFIED</p>
+        <h2 id="change-summary-title">相对上一份研究快照，什么变了？</h2>
+      </div>
+      <p class="change-state" data-change-kind="{escape(state.change.change_kind.value)}">{escape(_CHANGE_LABELS[state.change.change_kind])}</p>
+      <p data-always-visible="change_summary">{escape(project_reader_text(text=state.change.explanation_zh, policy=showcase.reader_terminology))}</p>
+      <dl class="date-context">
+        <div><dt>数据截至</dt><dd>{escape(state.dates.data_as_of or '未知')}</dd></div>
+        <div><dt>证据评估</dt><dd>{escape(state.dates.evidence_evaluated_at or '未知')}</dd></div>
+        <div><dt>页面生成</dt><dd>{escape(state.dates.page_generated_at)}</dd></div>
+        <div><dt>比较基准日期</dt><dd>{escape(state.change.comparison_base_date or '不适用')}</dd></div>
+      </dl>
+      <details data-reader-layer="audit"><summary>查看比较基准身份</summary><code>{escape(state.change.comparison_base_id or 'none')}</code></details>
+    </section>
+    """
+
+
+def _render_conclusion_boundary(showcase: AtlasCitedQueryShowcase) -> str:
+    bundle = showcase.qqq_options_projection
+    state = showcase.reader_state
+    return f"""
+    <section class="conclusion-boundary" data-reader-section="CONCLUSION_BOUNDARY" data-reader-card="conclusion-boundary" aria-labelledby="conclusion-boundary-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">NARROWEST SUPPORTED RESULT</p>
+        <h2 id="conclusion-boundary-title">现有证据把结论限制在哪里？</h2>
+      </div>
+      <p class="boundary-result" data-always-visible="conclusion_boundary">{escape(project_reader_text(text=bundle.aggregate_explanation_zh, policy=showcase.reader_terminology))}</p>
+      <p class="boundary-risk" data-always-visible="critical_risk">关键风险：组合 transport gate 只给出总拒绝，不能唯一定位 quote、Greeks、OI、volume 或交叉条件中的具体失败轴。</p>
+      <p data-always-visible="prohibited_inference">{escape(state.prohibited_inference_zh)}</p>
+      <p data-always-visible="stop_reason">停止原因：唯一外部授权已经消费；证据准入未通过，数据质量与时点可得性仍未评估。</p>
+    </section>
+    """
+
+
+def _render_acceptance_axes(showcase: AtlasCitedQueryShowcase) -> str:
+    cards = "".join(
+        f'<li data-review-track="{escape(item.track.value)}" data-review-status="{escape(item.status.value)}">'
+        f'<strong>{escape(_PAGE_ACCEPTANCE_TRACK_LABELS[item.track])}</strong>'
+        f'<span>{escape(_PAGE_ACCEPTANCE_LABELS[item.status])}</span></li>'
+        for item in showcase.page_effectiveness.acceptance
+    )
+    return f"""
+    <section class="acceptance-axes" data-reader-section="ACCEPTANCE_AXES" aria-labelledby="acceptance-axes-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">THREE AXES · NEVER MERGED</p>
+        <h2 id="acceptance-axes-title">工程、页面和读者理解，分别通过了吗？</h2>
+        <p>三种“通过”互不代签；页面好读也不能代替策略证据。</p>
+      </div>
+      <ul class="acceptance-axis-grid">{cards}</ul>
+      <p data-always-visible="engineering_validation">工程验收只检查实现与可重放性。</p>
+      <p data-always-visible="owner_visual_review">Owner 视觉验收仍必须来自真实人工事实。</p>
+      <p data-always-visible="reader_comprehension_review">目标读者理解验收仍必须来自冻结页面上的独立人工记录。</p>
+    </section>
+    """
+
+
+def _render_flow_position(showcase: AtlasCitedQueryShowcase) -> str:
+    records = _status_explanation_records_by_stage(showcase)
+    work_records, _ = _work_progress_records_by_stage(showcase)
+    stage_ids = ("ATLAS_SNAPSHOT_DIFF", "CITATION_FIRST_QUERY", "OWNER_DECISION_BOUNDARY")
+    labels = ("上一步", "当前位置", "下一步")
+    cards = "".join(
+        f'<li data-flow-position="{escape(label)}" data-stage="{escape(stage_id)}">'
+        f'<span>{escape(label)}</span><strong>{escape(work_records[stage_id].display_title_zh)}</strong>'
+        f'<p>{escape(project_reader_text(text=records[stage_id].plain_summary, policy=showcase.reader_terminology))}</p></li>'
+        for label, stage_id in zip(labels, stage_ids, strict=True)
+    )
+    return f"""
+    <section class="flow-position" data-reader-section="FLOW_POSITION" aria-labelledby="flow-position-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">PREVIOUS → CURRENT → NEXT</p>
+        <h2 id="flow-position-title">当前页面位于研究流程的哪里？</h2>
+        <p>页面先比较研究快照，再给出引用优先回答，最后把接受与否交回人工决策边界。</p>
+      </div>
+      <ol class="flow-position-grid">{cards}</ol>
+      <p data-always-visible="next_legal_action">下一合法动作仍受当前证据结果约束；页面本身不会推进研究或授权交易。</p>
+    </section>
+    """
+
+
+def _render_research_drilldown(
+    *,
+    system_flow: str,
+    qqq_options_projection: str,
+    result_ledger: str,
+) -> str:
+    return f"""
+    <section class="research-drilldown" data-reader-section="RESEARCH_DRILLDOWN" aria-labelledby="research-drilldown-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">DETAILS ON DEMAND</p>
+        <h2 id="research-drilldown-title">需要核对节点、结果和归因时，再进入研究细节</h2>
+        <p data-always-visible="drilldown-purpose">以下内容服务于“为什么得到这个结论”的核对，不是新的研究主线。</p>
+        <button class="drilldown-toggle" type="button" aria-expanded="false" aria-controls="research-drilldown-body">展开研究流程、QQQ 投影与完整结果</button>
+      </div>
+      <div id="research-drilldown-body" class="research-drilldown-body" hidden>
+        {system_flow}
+        {qqq_options_projection}
+        {result_ledger}
+      </div>
+    </section>
+    """
+
+
+def _render_audit_destinations(
+    *,
+    showcase: AtlasCitedQueryShowcase,
+    terminology_guide: str,
+    snapshot_id: str,
+    diff_id: str,
+) -> str:
+    manifest = showcase.page_effectiveness
+    task_rows = "".join(
+        f'<li data-successor-task="{escape(item.task_id)}" '
+        f'data-successor-coverage="{escape(item.coverage)}">'
+        f"<code>{escape(item.task_id)}</code>"
+        f"<span>{escape(item.reader_summary_zh)}</span></li>"
+        for item in manifest.task_coverage
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2528
+    )
+    return f"""
+    <section class="audit-destinations" data-reader-section="AUDIT_DESTINATIONS" data-task-coverage-count="{len(manifest.task_coverage)}" aria-labelledby="audit-destinations-title">
+      <div class="reader-section-heading">
+        <p class="section-kicker">GLOSSARY + AUDIT DESTINATIONS</p>
+        <h2 id="audit-destinations-title">需要完整定义或可重放证据时，到这里核对</h2>
+        <p>术语索引、原始身份和 sidecar 都在主线之后；它们保留审计能力，但不占据首屏注意力。</p>
+      </div>
+      {terminology_guide}
+      <details class="task-coverage-audit" data-reader-layer="audit" data-reader-card="task-coverage-audit">
+        <summary>查看影响本页的后继任务与来源覆盖</summary>
+        <ul>{task_rows}</ul>
+      </details>
+      <footer>
+        <details data-reader-layer="audit" data-reader-card="page-audit">
+          <summary>查看页面生成、来源身份与安全审计信息</summary>
+          <p>Snapshot <code>{escape(snapshot_id)}</code></p>
+          <p>Diff <code>{escape(diff_id)}</code></p>
+          <p>repository commit <code>{escape(manifest.repository_commit)}</code></p>
+          <p>reader projection contract SHA-256 <code>{escape(showcase.reader_projection_contract_sha256)}</code></p>
+          <p>independent_validation=<code>PASS</code> · manual_review_only=<code>true</code> · production_effect=<code>none</code> · broker_action=<code>none</code></p>
+        </details>
+      </footer>
+    </section>
+    """
+
+
+_READER_INTERACTION_SCRIPT = """<script>
+(() => {
+  const closeTerms = (except = null) => {
+    document.querySelectorAll('.term-context.term-open').forEach((item) => {
+      if (item !== except) {
+        item.classList.remove('term-open');
+        const trigger = item.querySelector('.term-trigger[aria-expanded]');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+  };
+  const toggleTerm = (trigger) => {
+    const context = trigger.closest('.term-context');
+    if (!context) return;
+    const opening = !context.classList.contains('term-open');
+    closeTerms(opening ? context : null);
+    context.classList.toggle('term-open', opening);
+    if (trigger.hasAttribute('aria-expanded')) {
+      trigger.setAttribute('aria-expanded', String(opening));
+    }
+  };
+  document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('.term-trigger');
+    if (trigger) toggleTerm(trigger);
+    else if (!event.target.closest('.term-context')) closeTerms();
+  });
+  document.addEventListener('keydown', (event) => {
+    const trigger = event.target.closest('.term-trigger[tabindex="0"]');
+    if (trigger && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      toggleTerm(trigger);
+    }
+    if (event.key === 'Escape') {
+      const open = document.querySelector('.term-context.term-open');
+      const active = open && open.querySelector('.term-trigger[tabindex="0"]');
+      closeTerms();
+      if (active) active.focus();
+    }
+  });
+  const drilldown = document.querySelector('.drilldown-toggle');
+  const drilldownBody = document.getElementById('research-drilldown-body');
+  if (drilldown && drilldownBody) {
+    drilldown.addEventListener('click', () => {
+      const expanded = drilldown.getAttribute('aria-expanded') === 'true';
+      drilldown.setAttribute('aria-expanded', String(!expanded));
+      drilldownBody.hidden = expanded;
+      drilldown.textContent = expanded
+        ? '展开研究流程、QQQ 投影与完整结果'
+        : '收起研究流程、QQQ 投影与完整结果';
+    });
+  }
+})();
+</script>"""
+
+
 def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     if len(showcase.responses) != len(CITED_QUERY_QUESTION_CATALOG):
         raise ValueError("ATLAS_CITED_QUERY_SHOWCASE_QUESTION_COUNT_INVALID")
@@ -1737,15 +2573,6 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
         raise ValueError("ATLAS_CITED_QUERY_SHOWCASE_VALIDATION_NOT_PASS")
     _validate_showcase_response_bindings(showcase)
     _status_explanation_records_by_stage(showcase)
-    answered = sum(
-        item.answer_status is CitedQueryAnswerStatus.ANSWERED for item in showcase.responses
-    )
-    limited = sum(
-        item.answer_status is CitedQueryAnswerStatus.LIMITED for item in showcase.responses
-    )
-    blocked = sum(
-        item.answer_status is CitedQueryAnswerStatus.BLOCKED for item in showcase.responses
-    )
     navigation = "".join(
         f'<a href="#{escape(item.request.question_id.value.lower())}">'
         f"{escape(_QUESTION_PROMPTS[item.request.question_id])}</a>"
@@ -1756,12 +2583,30 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
         for item in showcase.responses
     )
     system_flow = _render_system_flow_map(showcase)
-    page_effectiveness = _render_page_effectiveness(showcase)
     qqq_options_projection = _render_qqq_options_projection(showcase)
     result_ledger = _render_result_ledger(showcase)
     terminology_guide = _render_reader_terminology_guide(showcase.reader_terminology)
     snapshot_id = str(showcase.snapshot_payload["snapshot_id"])
     diff_id = str(showcase.diff_payload["diff_id"])
+    trust_strip = _render_trust_strip(showcase)
+    why_context = _render_why_context(showcase)
+    canonical_questions = _render_canonical_questions(navigation, cards)
+    change_summary = _render_change_summary(showcase)
+    conclusion_boundary = _render_conclusion_boundary(showcase)
+    acceptance_axes = _render_acceptance_axes(showcase)
+    flow_position = _render_flow_position(showcase)
+    research_drilldown = _render_research_drilldown(
+        system_flow=system_flow,
+        qqq_options_projection=qqq_options_projection,
+        result_ledger=result_ledger,
+    )
+    audit_destinations = _render_audit_destinations(
+        showcase=showcase,
+        terminology_guide=terminology_guide,
+        snapshot_id=snapshot_id,
+        diff_id=diff_id,
+    )
+    term_definition_bank = _render_term_definition_bank(showcase.reader_terminology)
     html = f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -2210,47 +3055,98 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .citation p {{ margin:.15rem 0 .55rem; color:var(--muted); font-size:.76rem; overflow-wrap:anywhere; }}
     .citation strong {{ color:var(--ink); }}
     .identity {{ padding:.7rem 1.25rem; border-top:1px solid var(--line); }}
+    [hidden] {{ display:none!important; }}
+    .skip-link {{ position:fixed; z-index:1000; top:.5rem; left:.5rem; padding:.55rem .8rem; color:#fff; background:#102a4d; border-radius:.45rem; transform:translateY(-180%); }}
+    .skip-link:focus {{ transform:none; }}
+    .term-definition-bank {{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0; }}
+    .term-context {{ position:relative; display:inline; }}
+    .term-trigger {{ color:#174f91; border-bottom:1px dashed #4f7fb8; background:#edf5ff; border-radius:.18rem; cursor:help; text-decoration:none; }}
+    .term-trigger:focus-visible {{ outline:3px solid #76a8ec; outline-offset:2px; }}
+    .term-trigger::after {{ position:absolute; z-index:80; left:0; bottom:calc(100% + .55rem); display:block; width:min(300px,78vw); padding:.65rem .72rem; color:#fff; background:#142b4c; border-radius:.55rem; box-shadow:0 10px 28px #10223b40; content:attr(data-term-short); font-size:.72rem; font-weight:600; line-height:1.45; opacity:0; pointer-events:none; transform:translateY(.3rem); transition:opacity .15s ease,transform .15s ease; }}
+    .term-trigger:hover::after,.term-trigger:focus::after,.term-context.term-open .term-trigger::after {{ opacity:1; transform:none; }}
+    .term-full-link {{ position:absolute; z-index:81; left:.55rem; bottom:calc(100% + .72rem); color:#b9dbff; font-size:.64rem; font-weight:800; visibility:hidden; transform:translateY(-.05rem); }}
+    .term-context:hover .term-full-link,.term-context:focus-within .term-full-link,.term-context.term-open .term-full-link {{ visibility:visible; }}
+    .trust-strip,.why-context,.canonical-questions,.change-summary,.conclusion-boundary,.acceptance-axes,.flow-position,.research-drilldown,.audit-destinations {{ margin:0 0 1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:visible; }}
+    .trust-strip {{ overflow:hidden; border:0; }}
+    .trust-strip > header {{ padding:2.4rem 1.6rem; }}
+    .trust-strip > header h1 {{ font-size:clamp(2rem,5vw,3.8rem); }}
+    .trust-grid {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.55rem; padding:1rem 1.2rem; background:#fff; }}
+    .trust-grid p {{ margin:0; padding:.62rem .7rem; border:1px solid #dbe4ef; border-radius:.55rem; color:#43526a; background:#f8fafc; font-size:.7rem; line-height:1.4; }}
+    .trust-stop {{ margin:0; padding:.8rem 1.2rem; color:#6f4d0a; background:#fff3d8; border-top:1px solid #efd79f; font-weight:850; }}
+    .reader-section-heading {{ padding:1.25rem 1.35rem .9rem; }}
+    .reader-section-heading h2 {{ margin:.18rem 0 .35rem; font-size:clamp(1.35rem,2.7vw,2rem); line-height:1.2; }}
+    .reader-section-heading > p:last-child {{ max-width:780px; margin:.25rem 0 0; color:var(--muted); }}
+    .reader-problem {{ margin:0 1.35rem .9rem; padding:.9rem 1rem; border-left:5px solid var(--blue); border-radius:.55rem; color:#173b70; background:#edf4ff; font-size:1.05rem; font-weight:850; }}
+    .causal-chain {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:0; padding:0 1.35rem 1rem; list-style:none; }}
+    .causal-node {{ position:relative; min-width:0; padding:1rem; border:1px solid #d7e1ee; border-radius:.75rem; background:#fbfcfe; }}
+    .causal-node[data-causal-node="RESULT"] {{ border-color:#d9bd75; background:#fff9e8; }}
+    .causal-node[data-causal-node="NEXT_STEP"] {{ border-color:#8dc7be; background:#edf8f5; }}
+    .causal-number {{ display:block; color:#7a879a; font-size:.64rem; font-weight:900; letter-spacing:.1em; }}
+    .causal-link {{ position:absolute; top:.65rem; right:.7rem; padding:.1rem .35rem; color:#53657d; background:#e8eef6; border-radius:999px; font-size:.58rem; font-weight:850; }}
+    .causal-question {{ margin:.42rem 0 .3rem; font-weight:900; }}
+    .causal-answer {{ margin:0; color:#495870; font-size:.76rem; line-height:1.55; }}
+    .why-boundary-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; padding:0 1.35rem 1rem; }}
+    .why-boundary-grid p {{ margin:0; padding:.75rem .8rem; border-radius:.62rem; background:#f4f6f9; font-size:.75rem; }}
+    .why-boundary-grid p:nth-child(2) {{ color:#7d2d3e; background:#faedf0; }}
+    .why-boundary-grid p:nth-child(3) {{ color:#0b6259; background:#eaf7f3; }}
+    .causal-audit > ul {{ display:grid; gap:.5rem; padding:0 1.25rem 1.25rem; list-style:none; }}
+    .causal-audit li {{ padding:.6rem; border:1px solid #dfe5ed; border-radius:.45rem; background:#fff; font-size:.65rem; overflow-wrap:anywhere; }}
+    .canonical-questions > nav {{ padding:0 1.35rem; }}
+    .canonical-questions > .answer-grid {{ padding:0 1.35rem 1.35rem; }}
+    .change-state {{ display:inline-block; margin:0 1.35rem .7rem; padding:.25rem .65rem; color:#176557; background:#e6f5f0; border-radius:999px; font-weight:850; }}
+    .change-summary > p[data-always-visible] {{ margin:.2rem 1.35rem 1rem; }}
+    .date-context {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.55rem; margin:0; padding:0 1.35rem 1.1rem; }}
+    .date-context div {{ padding:.65rem .7rem; border:1px solid #dfe5ed; border-radius:.55rem; background:#f8fafc; }}
+    .date-context dt {{ color:#68758a; font-size:.62rem; font-weight:850; }}
+    .date-context dd {{ margin:.15rem 0 0; font-size:.72rem; overflow-wrap:anywhere; }}
+    .conclusion-boundary > p {{ margin:.5rem 1.35rem; padding:.8rem .9rem; border-radius:.6rem; background:#f4f6f9; }}
+    .conclusion-boundary > p:last-child {{ margin-bottom:1.35rem; }}
+    .boundary-result {{ border-left:5px solid #b38526; color:#634910; background:#fff8e6!important; font-weight:850; }}
+    .boundary-risk {{ border-left:5px solid var(--red); color:#792f3e; background:#faecef!important; }}
+    .acceptance-axis-grid,.flow-position-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; margin:0; padding:0 1.35rem 1rem; list-style:none; }}
+    .acceptance-axis-grid li,.flow-position-grid li {{ padding:.85rem .9rem; border:1px solid #dfe5ed; border-radius:.65rem; background:#f9fbfd; }}
+    .acceptance-axis-grid strong,.acceptance-axis-grid span,.flow-position-grid span,.flow-position-grid strong {{ display:block; }}
+    .acceptance-axis-grid span,.flow-position-grid span {{ color:#6a7689; font-size:.66rem; }}
+    .acceptance-axes > p,.flow-position > p {{ margin:.35rem 1.35rem; color:#56647a; font-size:.75rem; }}
+    .acceptance-axes > p:last-child,.flow-position > p:last-child {{ margin-bottom:1.2rem; }}
+    .flow-position-grid p {{ margin:.4rem 0 0; color:#516078; font-size:.72rem; }}
+    .drilldown-toggle {{ margin-top:.75rem; padding:.7rem 1rem; border:0; border-radius:.55rem; color:#fff; background:#235b9f; font:inherit; font-weight:850; cursor:pointer; }}
+    .drilldown-toggle:focus-visible {{ outline:3px solid #8bb8f3; outline-offset:3px; }}
+    .research-drilldown-body {{ padding:0 1.1rem 1.1rem; }}
+    .flat-disclosure {{ margin:.7rem 0 0; padding:.65rem .75rem; border:1px solid #dfe5ed; border-radius:.55rem; background:#f8fafc; }}
+    .flat-disclosure-title {{ margin:0 0 .45rem; color:#385a86; font-size:.7rem; font-weight:850; }}
+    .audit-destinations > .terminology-guide {{ margin:0 1.25rem 1rem; border:1px solid #cbd8e8; border-radius:.72rem; overflow:hidden; }}
+    .audit-destinations > .terminology-guide > summary {{ padding:.85rem 1rem; }}
+    .audit-destinations .terminology-guide-intro,.audit-destinations .terminology-grid {{ width:auto; margin-left:1rem; margin-right:1rem; }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
+    @media (max-width:900px) {{ .trust-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
     @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:620px) {{ .trust-grid,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
 </head>
 <body>
-  {terminology_guide}
-  <header>
-    <p class="eyebrow">ATLAS · 引用优先研究页面</p>
-    <h1>研究主线、结果与归因，一眼看清</h1>
-    <p class="lead">这里用五个固定问题解释研究记录。每一句回答都能追溯到仓库来源、精确代码版本、SHA-256 校验值与证据时点；信息不完整时明确标为“有依据但上下文有限”，不补写不存在的事实。</p>
-    <div class="metrics" aria-label="回答状态">
-      <div class="metric"><strong>{answered}</strong><span>证据完整</span></div>
-      <div class="metric"><strong>{limited}</strong><span>有依据但上下文有限</span></div>
-      <div class="metric"><strong>{blocked}</strong><span>无法可靠回答</span></div>
-    </div>
-  </header>
-  <main>
-    <p class="notice"><strong>怎样阅读：</strong>先看“一句话回答”，再看“限制”；需要审计时展开引用。“有依据但上下文有限”不等于研究失败，只表示时间、数据质量或研究上下文尚不完整。本页不是投资建议，也不会触发交易。</p>
-    {page_effectiveness}
-    {system_flow}
-    {qqq_options_projection}
-    {result_ledger}
-    <nav aria-label="五个固定问题">{navigation}</nav>
-    <div class="answer-grid">{cards}</div>
-    <footer>
-      <details data-reader-layer="audit">
-        <summary>查看页面生成与安全审计信息</summary>
-        <p>Snapshot <code>{escape(snapshot_id)}</code></p>
-        <p>Diff <code>{escape(diff_id)}</code></p>
-        <p>independent_validation=<code>PASS</code> · manual_review_only=<code>true</code> · production_effect=<code>none</code> · broker_action=<code>none</code></p>
-      </details>
-    </footer>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  {term_definition_bank}
+  <main id="main-content">
+    {trust_strip}
+    {why_context}
+    {canonical_questions}
+    {change_summary}
+    {conclusion_boundary}
+    {acceptance_axes}
+    {flow_position}
+    {research_drilldown}
+    {audit_destinations}
   </main>
+  {_READER_INTERACTION_SCRIPT}
 </body>
 </html>
 """
+    html = _flatten_nested_disclosures(html)
+    html = _add_inline_term_interactions(html, showcase.reader_terminology)
     build_rendered_term_inventory(
         html_bytes=html.encode("utf-8"),
         policy=showcase.reader_terminology,
@@ -2341,6 +3237,12 @@ def write_cited_query_artifacts(
     _validate_qqq_options_projection_binding(showcase)
     output_directory.mkdir(parents=True, exist_ok=True)
     html_bytes = render_cited_query_html(showcase).encode("utf-8")
+    reader_accessibility = validate_reader_accessibility(html_bytes)
+    if reader_accessibility.status != "PASS":
+        raise ValueError(
+            "ATLAS_READER_ACCESSIBILITY_VALIDATION_FAILED:"
+            + ",".join(item.code for item in reader_accessibility.violations)
+        )
     reader_terminology_inventory = build_rendered_term_inventory(
         html_bytes=html_bytes,
         policy=showcase.reader_terminology,
@@ -2352,6 +3254,15 @@ def write_cited_query_artifacts(
             qqq_options_projection_validation_json_bytes(showcase.qqq_options_projection_validation)
         ),
         "responses.json": cited_query_responses_json_bytes(showcase.responses),
+        "reader_accessibility_validation.json": (
+            json.dumps(
+                reader_accessibility.to_dict(),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            + "\n"
+        ).encode("utf-8"),
         "reader_terminology_inventory.json": reader_terminology_inventory.canonical_bytes,
         "status_explanation_validation.json": status_explanation_validation_json_bytes(
             showcase.status_explanation_validation

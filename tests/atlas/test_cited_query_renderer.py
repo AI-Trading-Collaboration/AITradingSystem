@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import replace
 from datetime import timedelta
+from html import unescape
 from pathlib import Path
 from typing import Any, cast
 
@@ -12,6 +15,9 @@ from ai_trading_system.atlas.cited_query_renderer import (
     build_cited_query_showcase,
     render_cited_query_html,
     write_cited_query_artifacts,
+)
+from ai_trading_system.atlas.reader_accessibility_validation import (
+    validate_reader_accessibility,
 )
 from ai_trading_system.atlas.snapshot_builder import build_atlas_bundle
 from ai_trading_system.atlas.snapshot_diff import build_snapshot_diff
@@ -29,6 +35,7 @@ from ai_trading_system.contracts.strategy_research_page_effectiveness import (
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     StrategyResearchQQQOptionsProjectionBundle,
 )
+from ai_trading_system.contracts.strategy_research_reader_projection import ReaderSectionId
 from ai_trading_system.contracts.strategy_research_reader_terminology import (
     RenderedTermInventory,
 )
@@ -108,8 +115,14 @@ def _showcase(
 def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     showcase = _showcase()
     html = render_cited_query_html(showcase)
+    rendered_text = unescape(re.sub(r"<[^>]+>", "", html)).replace("完整定义", "")
     for expected in (
-        "研究主线、结果与归因，一眼看清",
+        "先看为什么，再看研究做了什么",
+        "这项研究为什么按现在的顺序推进",
+        "我们真正要回答什么",
+        "为什么选择当前研究路径",
+        "现有证据只支持什么结论",
+        "当前结果把下一步指向哪里",
         "这条研究主线在研究什么",
         "这项研究实际得到什么结果",
         "哪些因素解释了结果",
@@ -118,13 +131,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "一句话回答",
         "先看限制",
         "完整引用与审计标识",
-        "有依据但上下文有限”不等于研究失败",
-        "先确认：这张页面现在还能不能信",
-        "这张页面现在还能不能信",
-        "策略研究重新开放条件已经登记",
-        "18 个 G3 证据槽位尚无通过 DQ/PIT（数据质量与时点可得性）准入的主研究窗口结果",
-        "先看词语说明",
-        "名字和概念先用通俗话说明",
+        "术语索引与完整定义",
+        "日常阅读不需要先记住这张表",
         "授权已消费，运行结果无效且不完整",
         "真实 Owner attestation 已按 canonical admission 合同封存",
         "37-slot v2 catalog、deterministic migration 与 typed evidence admission 已建立",
@@ -226,7 +234,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "查看五层状态与 exact source",
         "Policy 准备度",
     ):
-        assert expected in html
+        assert expected in html or unescape(expected) in rendered_text
     for stage_id in (
         "DATA_INPUTS",
         "DATA_QUALITY_GATE",
@@ -246,10 +254,10 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert html.count('class="stage-drilldown"') == 8
     assert html.count('class="reader-explanation"') == 8
     assert html.count('class="work-progress-reader"') == 8
-    assert html.count('data-reader-section="why_needed"') == 8
-    assert html.count('data-reader-section="work_items"') == 8
-    assert html.count('data-reader-section="expected_outputs"') == 8
-    assert html.count('data-reader-section="progress_dimensions"') == 8
+    assert html.count('data-reader-detail="why_needed"') == 8
+    assert html.count('data-reader-detail="work_items"') == 8
+    assert html.count('data-reader-detail="expected_outputs"') == 8
+    assert html.count('data-reader-detail="progress_dimensions"') == 8
     assert html.count('data-progress-dimension="') == 24
     assert html.count('data-stage-axis="') == 16
     assert html.count('data-stage-axis="capability"') == 8
@@ -344,29 +352,29 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         in html
     )
     assert "1201 个有 option chain 的 session 全部被组合 transport gate 拒绝" in html
-    assert "下一步先实现 2528 离线 per-axis 诊断合同" in html
+    assert "下一步先实现 2528 离线 per-axis 诊断合同" in rendered_text
     assert "2528 仅登记为严格离线的 per-axis transport 诊断合同" in html
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html
     assert "KEEP_CLOSED + PREREGISTRATION_ONLY" in html
     assert "Owner 尚未签署" in html
-    assert html.count('data-reader-section="downstream_use"') == 8
-    assert html.count('data-reader-section="boundary"') == 8
-    assert html.count('data-reader-section="next_trigger"') == 8
+    assert html.count('data-reader-detail="downstream_use"') == 8
+    assert html.count('data-reader-detail="boundary"') == 8
+    assert html.count('data-reader-detail="next_trigger"') == 8
     assert html.count('class="concept-card"') == len(showcase.work_progress.concepts)
     assert html.count('data-concept-ref="') == sum(
         len(item.concept_ids) for item in showcase.work_progress.stage_records
     )
     assert html.count('class="reader-conclusion"') == 8
-    assert html.count('class="reader-audit"') == 8
-    assert html.count('data-reader-section="conclusion"') == 8
-    assert html.count('data-reader-section="current_work"') == 8
-    assert html.count('data-reader-section="completed"') == 8
-    assert html.count('data-reader-section="remaining_gaps"') == 8
-    assert html.count('data-reader-section="reader_impact"') == 8
-    assert html.count('data-reader-section="what_changes"') == 8
-    assert html.count('data-reader-section="owner_and_next"') == 8
+    assert html.count('class="reader-audit flat-disclosure"') == 8
+    assert html.count('data-reader-detail="conclusion"') == 8
+    assert html.count('data-reader-detail="current_work"') == 8
+    assert html.count('data-reader-detail="completed"') == 8
+    assert html.count('data-reader-detail="remaining_gaps"') == 8
+    assert html.count('data-reader-detail="reader_impact"') == 8
+    assert html.count('data-reader-detail="what_changes"') == 8
+    assert html.count('data-reader-detail="owner_and_next"') == 8
     assert html.count('aria-current="step"') == 1
     assert html.count(' open aria-current="step"') == 1
     assert (
@@ -429,14 +437,14 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         )
     ]
     reader_order = (
-        'data-reader-section="conclusion"',
-        'data-reader-section="current_work"',
-        'data-reader-section="completed"',
-        'data-reader-section="remaining_gaps"',
-        'data-reader-section="reader_impact"',
-        'data-reader-section="what_changes"',
-        'data-reader-section="owner_and_next"',
-        'class="reader-audit"',
+        'data-reader-detail="conclusion"',
+        'data-reader-detail="current_work"',
+        'data-reader-detail="completed"',
+        'data-reader-detail="remaining_gaps"',
+        'data-reader-detail="reader_impact"',
+        'data-reader-detail="what_changes"',
+        'data-reader-detail="owner_and_next"',
+        'class="reader-audit flat-disclosure"',
     )
     assert tuple(first_reader_card.index(item) for item in reader_order) == tuple(
         sorted(first_reader_card.index(item) for item in reader_order)
@@ -465,9 +473,34 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "progress-review",
     ):
         assert progress_tone in html
-    assert "<script" not in html
+    assert html.count("<script>") == 1
     assert "<form" not in html
     assert "<iframe" not in html
+
+
+def test_renderer_follows_why_first_section_and_term_interaction_contract() -> None:
+    showcase = _showcase()
+    html = render_cited_query_html(showcase)
+    expected_order = tuple(item.value for item in ReaderSectionId)
+    positions = tuple(html.index(f'data-reader-section="{item}"') for item in expected_order)
+
+    assert positions == tuple(sorted(positions))
+    assert html.count('data-reader-section="') == len(expected_order)
+    assert html.index('data-reader-section="CANONICAL_QUESTIONS"') < html.index(
+        'data-reader-section="RESEARCH_DRILLDOWN"'
+    )
+    assert html.index('data-reader-section="WHY_CONTEXT"') < html.index(
+        'id="reader-terminology-guide"'
+    )
+    assert html.count('<li class="causal-node" data-causal-node="') == 6
+    assert html.count('data-causal-edge="') == 5
+    assert 'data-term-first="true"' in html
+    assert 'data-term-first="false"' in html
+    assert 'class="term-full-link"' in html
+    assert "title=" not in html
+
+    accessibility = validate_reader_accessibility(html.encode("utf-8"))
+    assert accessibility.status == "PASS", [item.to_dict() for item in accessibility.violations]
     assert "http://" not in html
     assert "https://" not in html
     assert 'lang="zh-CN"' in html
@@ -618,6 +651,7 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "qqq_options_projection.json",
         "qqq_options_projection_validation.json",
         "responses.json",
+        "reader_accessibility_validation.json",
         "reader_terminology_inventory.json",
         "status_explanation_validation.json",
         "status_explanations.json",
@@ -634,6 +668,7 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "qqq_options_projection.json",
         "qqq_options_projection_validation.json",
         "responses.json",
+        "reader_accessibility_validation.json",
         "reader_terminology_inventory.json",
         "status_explanation_validation.json",
         "status_explanations.json",
@@ -660,6 +695,15 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     terminology_bytes = (tmp_path / "first" / "reader_terminology_inventory.json").read_bytes()
     terminology = RenderedTermInventory.from_json_bytes(terminology_bytes)
     assert terminology.html_sha256 == first[0].sha256
+    accessibility_payload = json.loads(
+        (tmp_path / "first" / "reader_accessibility_validation.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert accessibility_payload["html_sha256"] == first[0].sha256
+    assert accessibility_payload["status"] == "PASS"
+    assert accessibility_payload["owner_visual_status"] == "PENDING_REVIEW"
+    assert accessibility_payload["reader_comprehension_status"] == "PENDING_REVIEW"
 
 
 def test_renderer_rejects_status_explanation_validation_drift() -> None:

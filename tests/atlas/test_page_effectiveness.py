@@ -133,21 +133,21 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE"
     )
     assert coverage_by_task["TRADING-2524"] == (
-        "PLANNED_READER_DECISION_PATH_NOT_STARTED"
+        "INTEGRATED_WHY_FIRST_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE"
     )
     assert coverage_by_task["TRADING-2525"] == (
-        "PLANNED_READER_STATE_DATE_CHANGE_NOT_STARTED"
+        "INTEGRATED_OBJECT_QUALIFIED_STATE_DATE_CHANGE_PROJECTION"
     )
     assert coverage_by_task["TRADING-2526"] == (
-        "PLANNED_ACCESSIBILITY_DRILLDOWN_NOT_STARTED"
+        "INTEGRATED_AUTOMATED_ACCESSIBILITY_HARNESS_FINAL_HUMAN_REVIEW_PENDING"
     )
     assert coverage_by_task["TRADING-2527"] == (
-        "PLANNED_HUMAN_COMPREHENSION_PILOT_NOT_STARTED"
+        "PROTOCOL_PREPARED_OWNER_POLICY_AND_HUMAN_PILOT_PENDING"
     )
     assert coverage_by_task["TRADING-2528"] == (
         "DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED"
     )
-    assert len(manifest.source_artifacts) == 20
+    assert len(manifest.source_artifacts) == 28
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
     assert [item.status for item in manifest.acceptance] == [
         PageAcceptanceStatus.NOT_EXECUTED,

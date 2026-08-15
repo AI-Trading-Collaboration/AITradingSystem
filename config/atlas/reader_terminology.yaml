@@ -31,6 +31,8 @@ raw_reader_replacements:
   OWNER_VISUAL_REVIEW: Owner 视觉验收
   READER_COMPREHENSION_REVIEW: 读者理解验收
   PENDING_REVIEW: 等待独立验收
+  NOT_EVALUATED: 尚未评估
+  FAIL: 未通过
   OWNER_V4_AUTHORIZATION_CONSUMED_RESULT_INVALID_INCOMPLETE: 授权已消费，运行结果无效且不完整
   next-independent-minute: 下一独立分钟执行
 terms:
@@ -94,6 +96,18 @@ terms:
     classification: GLOSSARY
     plain_definition_zh: 按固定规则检查结构、引用、身份和安全边界是否满足合同的程序。
     why_needed_zh: 校验通过只说明被检查的规则成立，不自动证明策略有效。
+  - term_id: not_evaluated
+    display_name_zh: 尚未评估
+    aliases: [NOT_EVALUATED, 尚未评估]
+    classification: GLOSSARY
+    plain_definition_zh: 当前对象还没有进入相应的证据或数据质量判断，因此不能判定结果。
+    why_needed_zh: 防止把“尚未检查”误读成“已经失败”或“已经通过”。
+  - term_id: validation_fail
+    display_name_zh: 校验未通过
+    aliases: [FAIL, fail, 未通过]
+    classification: GLOSSARY
+    plain_definition_zh: 当前对象没有满足已经声明的校验条件。
+    why_needed_zh: 它只限定被检查的对象和规则，不自动否定整个研究方向。
   - term_id: freshness
     display_name_zh: 页面时效性
     aliases: [freshness, Freshness, 页面时效性]
@@ -305,7 +319,7 @@ terms:
     plain_definition_zh: 某个明确校验或验收轨道满足了它自己的规则。
     why_needed_zh: 必须同时说明是哪一条轨道通过，不能跨轨道推导策略有效。
   - term_id: limited_status
-    display_name_zh: LIMITED 状态
+    display_name_zh: 证据有限状态
     aliases: [LIMITED, limited]
     classification: GLOSSARY
     plain_definition_zh: 当前陈述有来源，但时间、范围或研究上下文不完整。
