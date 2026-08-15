@@ -21,7 +21,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: dacd7c3c31434780adbfd1887b3cb2b76b6aecfc01bff3c6d4e8530dbbfea70a
+  current_sha256: 9061f6f10b25761a953d247e2b61957fbc0ba05c8ba8d1e7b9a11301c6282b98
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 6
   fragment_paths:
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: af6c62d58255f85dd2537cb505c25b3b2f2a16ff5ec995796de864a47b42d1c5
+  current_sha256: c92d6e38ff8e9103f716aad0e4d270a4e38a08abb645b47be6ed556ac1fefc0c
   fragment_root: config/architecture/fragments/flows
   fragment_count: 46
   fragment_paths:
@@ -153,7 +153,7 @@ fragments:
   owner: atlas_publishing_experience
   target_id: system_flow
   path: config/architecture/fragments/flows/atlas_page_effectiveness_validation.yaml
-  sha256: d03561be438f3aa4161053fbc20055547a3c146064ab115cc7e53c1334f6017e
+  sha256: 60e965a96fd979c2344c35d3a93bd7c3a5bf102c641e484c47ad3d37a482281e
   generated_source_of_truth_active: false
 - fragment_id: flow.atlas_qqq_options_projection_page
   fragment_kind: flow
@@ -776,7 +776,7 @@ fragments:
   owner: atlas_publishing_experience
   target_id: null
   path: config/architecture/fragments/modules/strategy_research_page_effectiveness_contract.yaml
-  sha256: bc18895535631fd7015d59c2904402270c99b2b36995eb72d5fbe9c4cfe1e0f1
+  sha256: b6ec4046a27902e549c4d07f4d0e7753dee3d7d633cfe29db4ff6f4de3342657
   generated_source_of_truth_active: false
 - fragment_id: module.strategy_research_qqq_options_projection_contract
   fragment_kind: module

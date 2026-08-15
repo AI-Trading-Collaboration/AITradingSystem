@@ -10,6 +10,7 @@ from typing import ClassVar
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
+_TASK_ID = re.compile(r"^TRADING-(\d+)([A-Z]*)_[A-Z0-9_]+$")
 
 
 class PageEffectivenessContractError(ValueError):
@@ -93,6 +94,17 @@ def _portable_path(value: str, field: str) -> str:
     return path
 
 
+def page_task_identity_sort_key(task_id: str) -> tuple[int, str]:
+    """Return the governed numeric/suffix identity used for task ordering."""
+
+    match = _TASK_ID.fullmatch(task_id)
+    if match is None:
+        raise PageEffectivenessContractError(
+            f"PAGE_EFFECTIVENESS_TASK_ID_INVALID:{task_id}"
+        )
+    return int(match.group(1)), match.group(2)
+
+
 @dataclass(frozen=True)
 class PageArtifactIdentity:
     role: str
@@ -137,10 +149,7 @@ class PageTaskCoverage:
     reader_summary_zh: str
 
     def __post_init__(self) -> None:
-        if not self.task_id.startswith("TRADING-"):
-            raise PageEffectivenessContractError(
-                f"PAGE_EFFECTIVENESS_TASK_ID_INVALID:{self.task_id}"
-            )
+        page_task_identity_sort_key(self.task_id)
         _portable_path(self.requirement_path, "coverage.requirement_path")
         if not self.requirement_path.startswith("docs/requirements/"):
             raise PageEffectivenessContractError(
@@ -185,6 +194,7 @@ class PageAcceptanceRecord:
     reviewer_id: str | None = None
     reviewed_at: str | None = None
     decision_id: str | None = None
+    reviewed_page_sha256: str | None = None
 
     def __post_init__(self) -> None:
         for ref in self.evidence_refs:
@@ -197,9 +207,25 @@ class PageAcceptanceRecord:
                 ("reviewer_id", self.reviewer_id),
                 ("reviewed_at", self.reviewed_at),
                 ("decision_id", self.decision_id),
+                ("reviewed_page_sha256", self.reviewed_page_sha256),
             ):
                 _required(value or "", f"acceptance.{field}")
-        if not human and any((self.reviewer_id, self.reviewed_at, self.decision_id)):
+            if not _SHA256.fullmatch(self.reviewed_page_sha256 or ""):
+                raise PageEffectivenessContractError(
+                    "PAGE_EFFECTIVENESS_REVIEWED_PAGE_SHA256_INVALID"
+                )
+        if human and self.status is not PageAcceptanceStatus.PASS and self.reviewed_page_sha256:
+            raise PageEffectivenessContractError(
+                "PAGE_EFFECTIVENESS_NON_PASS_CANNOT_BIND_REVIEWED_PAGE"
+            )
+        if not human and any(
+            (
+                self.reviewer_id,
+                self.reviewed_at,
+                self.decision_id,
+                self.reviewed_page_sha256,
+            )
+        ):
             raise PageEffectivenessContractError(
                 "PAGE_EFFECTIVENESS_ENGINEERING_CANNOT_IMPERSONATE_HUMAN_REVIEW"
             )
@@ -214,6 +240,7 @@ class PageAcceptanceRecord:
             "reviewer_id": self.reviewer_id,
             "reviewed_at": self.reviewed_at,
             "decision_id": self.decision_id,
+            "reviewed_page_sha256": self.reviewed_page_sha256,
         }
 
     @classmethod
@@ -225,6 +252,7 @@ class PageAcceptanceRecord:
             "reviewer_id",
             "reviewed_at",
             "decision_id",
+            "reviewed_page_sha256",
         }
         _exact_keys(payload, expected, "acceptance")
         return cls(
@@ -234,12 +262,17 @@ class PageAcceptanceRecord:
             reviewer_id=(None if payload["reviewer_id"] is None else str(payload["reviewer_id"])),
             reviewed_at=(None if payload["reviewed_at"] is None else str(payload["reviewed_at"])),
             decision_id=(None if payload["decision_id"] is None else str(payload["decision_id"])),
+            reviewed_page_sha256=(
+                None
+                if payload["reviewed_page_sha256"] is None
+                else str(payload["reviewed_page_sha256"])
+            ),
         )
 
 
 @dataclass(frozen=True)
 class StrategyResearchPageEffectivenessManifest:
-    schema_version: ClassVar[str] = "strategy_research_page_effectiveness.v1"
+    schema_version: ClassVar[str] = "strategy_research_page_effectiveness.v2"
 
     page_id: str
     repository_commit: str
@@ -277,11 +310,19 @@ class StrategyResearchPageEffectivenessManifest:
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_PRIMARY_START_INVALID")
         if self.validity_layers != tuple(PageValidityLayer):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_VALIDITY_LAYER_SET_INVALID")
-        if (
-            len(self.task_coverage) != 42
-            or len({item.task_id for item in self.task_coverage}) != 42
+        if not self.task_coverage or len({item.task_id for item in self.task_coverage}) != len(
+            self.task_coverage
         ):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_TASK_COVERAGE_SET_INVALID")
+        task_keys = tuple(page_task_identity_sort_key(item.task_id) for item in self.task_coverage)
+        if len(set(task_keys)) != len(task_keys):
+            raise PageEffectivenessContractError(
+                "PAGE_EFFECTIVENESS_TASK_IDENTITY_DUPLICATE"
+            )
+        if task_keys != tuple(sorted(task_keys)):
+            raise PageEffectivenessContractError(
+                "PAGE_EFFECTIVENESS_TASK_COVERAGE_ORDER_INVALID"
+            )
         if len({item.locator for item in self.source_artifacts}) != len(self.source_artifacts):
             raise PageEffectivenessContractError("PAGE_EFFECTIVENESS_SOURCE_DUPLICATE")
         if len({item.locator for item in self.rendered_artifacts}) != len(self.rendered_artifacts):
@@ -483,4 +524,5 @@ __all__ = [
     "PageValidityLayer",
     "StrategyResearchPageEffectivenessManifest",
     "canonical_json_bytes",
+    "page_task_identity_sort_key",
 ]

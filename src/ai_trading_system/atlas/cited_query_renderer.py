@@ -61,6 +61,7 @@ from ai_trading_system.contracts.strategy_research_page_effectiveness import (
     PageArtifactIdentity,
     PageFreshnessStatus,
     StrategyResearchPageEffectivenessManifest,
+    page_task_identity_sort_key,
 )
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     QQQOptionsProjectionCard,
@@ -1518,8 +1519,6 @@ _PAGE_ACCEPTANCE_LABELS = {
 
 def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
-    if len(manifest.task_coverage) != 42:
-        raise ValueError("ATLAS_PAGE_EFFECTIVENESS_TASK_COVERAGE_INVALID")
     acceptance = "".join(
         (
             f'<li class="effectiveness-review-card" data-review-track="{escape(item.track.value)}" '
@@ -1540,7 +1539,7 @@ def _render_page_effectiveness(showcase: AtlasCitedQueryShowcase) -> str:
             "</li>"
         )
         for item in manifest.task_coverage
-        if 2494 <= int(item.task_id.split("-", 1)[1].split("_", 1)[0]) <= 2528
+        if 2494 <= page_task_identity_sort_key(item.task_id)[0] <= 2528
     )
     return f"""
     <section class="page-effectiveness" id="page-effectiveness" aria-labelledby="page-effectiveness-title" data-page-freshness="{escape(manifest.freshness_status.value)}" data-task-coverage-count="{len(manifest.task_coverage)}">

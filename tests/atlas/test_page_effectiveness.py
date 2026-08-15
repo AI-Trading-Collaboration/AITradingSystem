@@ -20,6 +20,7 @@ from ai_trading_system.contracts.strategy_research_page_effectiveness import (
     PageEffectivenessContractError,
     PageFreshnessStatus,
     StrategyResearchPageEffectivenessManifest,
+    page_task_identity_sort_key,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,12 +39,13 @@ def _rendered(
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_forty_two_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 42
+    assert len(policy.task_sources) == 43
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2523))],
+        "TRADING-2523B",
         "TRADING-2528",
     ]
     assert policy.reader_questions == (
@@ -69,9 +71,11 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert (
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 42
+    assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
+    assert len(manifest.task_coverage) == 43
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
         *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2523))],
+        "TRADING-2523B",
         "TRADING-2528",
     ]
     coverage_by_task = {
@@ -112,10 +116,13 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_DAILY_SLICE_ACCESSOR_FIX_REVALIDATION_OWNER_TOKEN_REQUIRED"
     )
     assert coverage_by_task["TRADING-2521"] == (
-        "DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_NOT_PROVIDED"
+        "DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_ADMITTED_UNUSED"
     )
     assert coverage_by_task["TRADING-2522"] == (
         "DISCLOSED_V4_RUN_INVALID_ALL_CHAIN_SESSIONS_TRANSPORT_REJECTED_AXIS_UNRESOLVED"
+    )
+    assert coverage_by_task["TRADING-2523B"] == (
+        "COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE"
     )
     assert coverage_by_task["TRADING-2528"] == (
         "DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED"
@@ -160,6 +167,36 @@ def test_engineering_pass_requires_evidence_and_cannot_sign_human_review() -> No
             reviewer_id="project-owner",
             reviewed_at="2026-08-10T00:00:00+09:00",
             decision_id="owner-decision",
+            reviewed_page_sha256="a" * 64,
+        )
+
+
+def test_human_review_page_identity_is_required_only_for_pass() -> None:
+    with pytest.raises(PageEffectivenessContractError, match="REQUIRED:acceptance.reviewed_page"):
+        PageAcceptanceRecord(
+            track=PageAcceptanceTrack.OWNER_VISUAL_REVIEW,
+            status=PageAcceptanceStatus.PASS,
+            evidence_refs=("docs/requirements/review.md",),
+            reviewer_id="project-owner",
+            reviewed_at="2026-08-15T10:00:00+09:00",
+            decision_id="owner-review-v1",
+        )
+    with pytest.raises(PageEffectivenessContractError, match="REVIEWED_PAGE_SHA256_INVALID"):
+        PageAcceptanceRecord(
+            track=PageAcceptanceTrack.OWNER_VISUAL_REVIEW,
+            status=PageAcceptanceStatus.PASS,
+            evidence_refs=("docs/requirements/review.md",),
+            reviewer_id="project-owner",
+            reviewed_at="2026-08-15T10:00:00+09:00",
+            decision_id="owner-review-v1",
+            reviewed_page_sha256="not-a-sha",
+        )
+    with pytest.raises(PageEffectivenessContractError, match="NON_PASS_CANNOT_BIND"):
+        PageAcceptanceRecord(
+            track=PageAcceptanceTrack.READER_COMPREHENSION_REVIEW,
+            status=PageAcceptanceStatus.PENDING_REVIEW,
+            evidence_refs=(),
+            reviewed_page_sha256="a" * 64,
         )
 
 
@@ -174,6 +211,7 @@ def test_explicit_reader_review_survives_manifest_build_and_validation() -> None
         reviewer_id="project-owner",
         reviewed_at="2026-08-10T10:17:40Z",
         decision_id="trading-2506-reader-comprehension-pass-20260810-v1",
+        reviewed_page_sha256=rendered[0].sha256,
     )
     manifest = build_page_effectiveness_manifest(
         repository_root=ROOT,
@@ -190,6 +228,36 @@ def test_explicit_reader_review_survives_manifest_build_and_validation() -> None
     )
     assert validation.status == "PASS"
     assert "HUMAN_REVIEW_EXPLICITLY_ATTESTED" in validation.checks
+
+
+def test_human_pass_for_different_page_identity_fails_validation() -> None:
+    rendered, payloads = _rendered()
+    reader_review = PageAcceptanceRecord(
+        track=PageAcceptanceTrack.READER_COMPREHENSION_REVIEW,
+        status=PageAcceptanceStatus.PASS,
+        evidence_refs=("docs/requirements/review.md",),
+        reviewer_id="project-owner",
+        reviewed_at="2026-08-15T10:00:00+09:00",
+        decision_id="reader-review-v1",
+        reviewed_page_sha256="b" * 64,
+    )
+    manifest = build_page_effectiveness_manifest(
+        repository_root=ROOT,
+        rendered_artifacts=rendered,
+        reader_comprehension_review=reader_review,
+    )
+
+    validation = validate_page_effectiveness_manifest(
+        repository_root=ROOT,
+        manifest=manifest,
+        rendered_payloads=payloads,
+    )
+
+    assert validation.status == "FAIL"
+    assert (
+        "HUMAN_REVIEW_PAGE_IDENTITY_MISMATCH:READER_COMPREHENSION_REVIEW"
+        in validation.errors
+    )
 
 
 def test_human_review_track_mismatch_fails_closed() -> None:
@@ -211,6 +279,10 @@ def test_manifest_rejects_noncanonical_and_path_escape() -> None:
         StrategyResearchPageEffectivenessManifest.from_json_bytes(
             manifest.canonical_bytes.replace(b'"page_id":', b'"page_id" :', 1)
         )
+    legacy = manifest.to_dict()
+    legacy["schema_version"] = "strategy_research_page_effectiveness.v1"
+    with pytest.raises(PageEffectivenessContractError, match="SCHEMA_INVALID"):
+        StrategyResearchPageEffectivenessManifest.from_dict(legacy)
     with pytest.raises(PageEffectivenessContractError, match="PATH_INVALID"):
         PageArtifactIdentity(
             role="BROWSER_EVIDENCE",
@@ -233,7 +305,7 @@ def test_validation_passes_exact_payload_and_marks_source_drift_stale() -> None:
     )
     assert validation.status == "PASS"
     assert validation.freshness_status is PageFreshnessStatus.CURRENT
-    assert "TWENTY_FOUR_TASKS_COVERED" in validation.checks
+    assert "TASK_COVERAGE_EXACT_SET_MATCH" in validation.checks
     assert "THREE_ACCEPTANCE_TRACKS_INDEPENDENT" in validation.checks
 
     wrong_sources = (
@@ -279,3 +351,25 @@ def test_repository_ahead_without_relevant_drift_is_not_called_current() -> None
         source_snapshot_commit="a" * 40,
     )
     assert manifest.freshness_status is PageFreshnessStatus.REPOSITORY_AHEAD_NO_RELEVANT_DRIFT
+
+
+def test_task_identity_accepts_suffixes_and_rejects_ambiguous_ordering() -> None:
+    assert page_task_identity_sort_key("TRADING-2523_ATLAS_TASK_V1") == (2523, "")
+    assert page_task_identity_sort_key("TRADING-2523A_ATLAS_TASK_V1") == (2523, "A")
+    assert page_task_identity_sort_key("TRADING-2523B_ATLAS_TASK_V1") == (2523, "B")
+    with pytest.raises(PageEffectivenessContractError, match="TASK_ID_INVALID"):
+        page_task_identity_sort_key("TRADING-2523b_ATLAS_TASK_V1")
+
+    manifest = build_page_effectiveness_manifest(repository_root=ROOT)
+    with pytest.raises(PageEffectivenessContractError, match="TASK_COVERAGE_ORDER_INVALID"):
+        replace(manifest, task_coverage=tuple(reversed(manifest.task_coverage)))
+
+    duplicate_identity = (
+        *manifest.task_coverage[:-1],
+        replace(
+            manifest.task_coverage[-1],
+            task_id="TRADING-2523B_DUPLICATE_IDENTITY_V1",
+        ),
+    )
+    with pytest.raises(PageEffectivenessContractError, match="TASK_IDENTITY_DUPLICATE"):
+        replace(manifest, task_coverage=duplicate_identity)

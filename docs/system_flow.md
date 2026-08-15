@@ -195,16 +195,19 @@ evidence、policy、external authority、strategy conclusion 五层状态，以�
 绿色表达阻塞，primary start 保持 `2021-02-22`。该投影只解释既有 authority，不修改 QQQ research
 contract、task lifecycle、DQ/PIT、投资阈值或结论，也不执行外部平台、production 或 broker 动作。
 
-TRADING-2505 在现有 Citation-first renderer 之后增加页面有效性闭环，而不是增加新的策略事实。
-`page_effectiveness.yaml` 明确列出 `TRADING-2481..2504` 与 `TRADING-2506` 的 requirement source、core projection、
-reviewed successor inclusion/exclusion 与普通读者摘要；builder 通过 ARCH-005 S5 canonical task registry
-读取真实 task status，并绑定 exact repository/source snapshot commit、policy/module/renderer/requirement
+TRADING-2505 在现有 Citation-first renderer 之后增加页面有效性闭环，而不是增加新的策略事实；
+TRADING-2523B 将其 manifest 推进为 `strategy_research_page_effectiveness.v2`。`page_effectiveness.yaml`
+显式维护经审阅的 exact task set、requirement source、projection inclusion/exclusion 与普通读者摘要；task identity
+接受 `TRADING-<number><optional suffix>_...`，按 `(number, suffix)` 确定性排序，不再依赖硬编码数量、连续
+编号范围或特殊尾号。builder 通过 ARCH-005 S5 canonical task registry 读取真实 task status，以 successor
+replay 检出 policy 未分类任务，并绑定 exact repository/source snapshot commit、policy/module/renderer/requirement
 SHA-256、最终 HTML 与 JSON artifact identity。freshness 只允许 `CURRENT / REPOSITORY_AHEAD_NO_RELEVANT_DRIFT /
 STALE_REBUILD_REQUIRED / UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED`；相关 source 漂移或未知 successor
 不能降级为 warning。页面首屏先回答“主线、最大阻塞、工程能力与研究证据、不能推出什么、下一责任方、
 能否投资/下单/启动 engine”六个问题，technical commit/hash/locator 延后到审计 disclosure。
-`ENGINEERING_VALIDATION / OWNER_VISUAL_REVIEW / READER_COMPREHENSION_REVIEW` 三条状态独立保存；
-自动化不得代签后两项。loopback HTTP + Playwright 在 desktop/tablet/mobile 验证布局、details、anchor、
+`ENGINEERING_VALIDATION / OWNER_VISUAL_REVIEW / READER_COMPREHENSION_REVIEW` 三条状态独立保存；human track
+只有携带并匹配 policy 指定 canonical `index.html` SHA-256 才能记为 `PASS`，pending/fail 不得沿用旧页面
+identity，自动化不得代签后两项。loopback HTTP + Playwright 在 desktop/tablet/mobile 验证布局、details、anchor、
 keyboard focus、accessibility/DOM 与 screenshot 后，browser evidence 再与 page/manifest hash 绑定。
 该闭环不改变 QQQ policy、DQ/PIT、研究窗口、投资结论或交易权限，external/production/broker action
 继续为 `none`。

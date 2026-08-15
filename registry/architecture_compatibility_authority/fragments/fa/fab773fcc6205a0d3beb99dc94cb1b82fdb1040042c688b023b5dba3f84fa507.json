@@ -60,12 +60,12 @@
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_module_manifest.yaml",
-        "sha256": "67afde8c9cf8132b731da183c44146ed26801a89a58e34f747eb770882b39693"
+        "sha256": "21abe05a4733389c8a44b70f16163662f4fe1e4fc78b44791e50d442166990bb"
       },
       {
         "hash_normalization": "git_eol_lf",
         "path": "inputs/architecture/arch_004e_test_manifest.yaml",
-        "sha256": "765ca88cc782dc79925f635bcfc62646d52ec6749ad0054670afe220a78e6eb6"
+        "sha256": "2b55999658a5efa5b162f41b178efca22bebe41715623519a2b131e4b2ea3b32"
       },
       {
         "hash_normalization": "git_eol_lf",
@@ -187,5 +187,5 @@
     "task_id": "DEVX-006C_COMPATIBILITY_AUTHORITY_FRAGMENTATION"
   },
   "section_id": "phase_devx_006c_compatibility_authority_fragmentation",
-  "section_sha256": "a36afbccdf5f3939739cec479a4422b0538631f7d80824cc5e565111d5cdc2f1"
+  "section_sha256": "fab773fcc6205a0d3beb99dc94cb1b82fdb1040042c688b023b5dba3f84fa507"
 }

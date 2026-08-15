@@ -23,6 +23,7 @@ from ai_trading_system.atlas.page_effectiveness import (
     validate_page_effectiveness_manifest,
 )
 from ai_trading_system.contracts.strategy_research_page_effectiveness import (
+    PageEffectivenessContractError,
     PageFreshnessStatus,
     StrategyResearchPageEffectivenessManifest,
 )
@@ -286,9 +287,14 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
     payload = canonical.read_bytes()
     effectiveness_sidecar = canonical.parent / "page_effectiveness.json"
     if effectiveness_sidecar.is_file():
-        manifest = StrategyResearchPageEffectivenessManifest.from_json_bytes(
-            effectiveness_sidecar.read_bytes()
-        )
+        try:
+            manifest = StrategyResearchPageEffectivenessManifest.from_json_bytes(
+                effectiveness_sidecar.read_bytes()
+            )
+        except PageEffectivenessContractError as exc:
+            if str(exc) == "PAGE_EFFECTIVENESS_SCHEMA_INVALID":
+                pytest.skip("local canonical ignored sidecar predates current v2 contract")
+            raise
         rendered_payloads: dict[str, bytes] = {}
         for identity in manifest.rendered_artifacts:
             artifact = ROOT / identity.locator

@@ -13,5 +13,6 @@ public_contracts:
   - PageTaskCoverage
   - PageValidityLayer
   - StrategyResearchPageEffectivenessManifest
+  - page_task_identity_sort_key
 compatibility_facades: []
 deprecation_status: active_reference_architecture

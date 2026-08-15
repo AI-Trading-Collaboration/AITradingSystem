@@ -15,10 +15,12 @@ from ai_trading_system.contracts.strategy_research_page_effectiveness import (
     PageAcceptanceStatus,
     PageAcceptanceTrack,
     PageArtifactIdentity,
+    PageEffectivenessContractError,
     PageFreshnessStatus,
     PageTaskCoverage,
     StrategyResearchPageEffectivenessManifest,
     canonical_json_bytes,
+    page_task_identity_sort_key,
 )
 from ai_trading_system.platform.architecture.task_registry_canonical import (
     CanonicalTaskRegistry,
@@ -213,29 +215,15 @@ def load_page_effectiveness_policy(
                 reader_summary_zh=str(item["reader_summary_zh"]),
             )
         )
-    if len(tasks) != 42 or len({item.task_id for item in tasks}) != 42:
+    if not tasks or len({item.task_id for item in tasks}) != len(tasks):
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_POLICY_TASK_SET_INVALID")
-    if tuple(_task_number(item.task_id) for item in tasks) != (
-        *range(2481, 2505),
-        2506,
-        2507,
-        2508,
-        2509,
-        2510,
-        2511,
-        2512,
-        2513,
-        2514,
-        2515,
-        2516,
-        2517,
-        2518,
-        2519,
-        2520,
-        2521,
-        2522,
-        2528,
-    ):
+    try:
+        task_keys = tuple(page_task_identity_sort_key(item.task_id) for item in tasks)
+    except PageEffectivenessContractError as exc:
+        raise PageEffectivenessError(str(exc)) from exc
+    if len(set(task_keys)) != len(task_keys):
+        raise PageEffectivenessError("PAGE_EFFECTIVENESS_POLICY_TASK_IDENTITY_DUPLICATE")
+    if task_keys != tuple(sorted(task_keys)):
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_POLICY_TASK_ORDER_INVALID")
     defaults = _mapping(payload["acceptance_defaults"], "acceptance_defaults")
     _exact_keys(
@@ -284,13 +272,6 @@ def repository_head(repository_root: Path) -> str:
     if not re.fullmatch(r"[0-9a-f]{40}", value):
         raise PageEffectivenessError("PAGE_EFFECTIVENESS_REPOSITORY_HEAD_INVALID")
     return value
-
-
-def _task_number(task_id: str) -> int:
-    match = _TRADING_NUMBER.match(task_id)
-    if match is None:
-        raise PageEffectivenessError(f"PAGE_EFFECTIVENESS_TASK_NUMBER_INVALID:{task_id}")
-    return int(match.group(1))
 
 
 def _task_status(registry: CanonicalTaskRegistry, task_id: str) -> str:
@@ -352,7 +333,12 @@ def _unclassified_successors(
         match = _TRADING_NUMBER.match(task_id)
         if match and int(match.group(1)) > 2504 and task_id not in covered:
             unknown.append(task_id)
-    return tuple(sorted(unknown))
+    return tuple(
+        sorted(
+            unknown,
+            key=lambda task_id: (*page_task_identity_sort_key(task_id), task_id),
+        )
+    )
 
 
 def _acceptance(
@@ -463,7 +449,9 @@ def validate_page_effectiveness_manifest(
     current = current_repository_commit or repository_head(root)
     errors: list[str] = []
     checks: list[str] = []
+    page: PageArtifactIdentity | None = None
     try:
+        policy = load_page_effectiveness_policy(repository_root=root)
         expected = build_page_effectiveness_manifest(
             repository_root=root,
             repository_commit=current,
@@ -481,7 +469,7 @@ def validate_page_effectiveness_manifest(
         if manifest.task_coverage != expected.task_coverage:
             errors.append("TASK_COVERAGE_OR_STATUS_DRIFT")
         else:
-            checks.append("TWENTY_FOUR_TASKS_COVERED")
+            checks.append("TASK_COVERAGE_EXACT_SET_MATCH")
         if manifest.source_artifacts != expected.source_artifacts:
             errors.append("SEMANTIC_SOURCE_DRIFT")
         else:
@@ -502,9 +490,15 @@ def validate_page_effectiveness_manifest(
                     errors.append("RENDERED_ARTIFACT_DRIFT:" + artifact.locator)
             elif artifact.locator.startswith("outputs/"):
                 errors.append("RENDERED_ARTIFACT_MISSING:" + artifact.locator)
-        if not any(item.locator.endswith("index.html") for item in manifest.rendered_artifacts):
+        canonical_pages = tuple(
+            item
+            for item in manifest.rendered_artifacts
+            if item.locator == policy.canonical_page_path
+        )
+        if len(canonical_pages) != 1:
             errors.append("CANONICAL_HTML_IDENTITY_MISSING")
         else:
+            page = canonical_pages[0]
             checks.append("CANONICAL_HTML_IDENTITY_MATCH")
         if tuple(item.track for item in manifest.acceptance) == tuple(PageAcceptanceTrack):
             checks.append("THREE_ACCEPTANCE_TRACKS_INDEPENDENT")
@@ -512,7 +506,19 @@ def validate_page_effectiveness_manifest(
             manifest.acceptance[1].status is PageAcceptanceStatus.PASS
             or manifest.acceptance[2].status is PageAcceptanceStatus.PASS
         ):
-            checks.append("HUMAN_REVIEW_EXPLICITLY_ATTESTED")
+            mismatched_tracks = tuple(
+                item.track.value
+                for item in manifest.acceptance[1:]
+                if item.status is PageAcceptanceStatus.PASS
+                and (page is None or item.reviewed_page_sha256 != page.sha256)
+            )
+            if mismatched_tracks:
+                errors.extend(
+                    "HUMAN_REVIEW_PAGE_IDENTITY_MISMATCH:" + track
+                    for track in mismatched_tracks
+                )
+            else:
+                checks.append("HUMAN_REVIEW_EXPLICITLY_ATTESTED")
         else:
             checks.append("HUMAN_REVIEW_REMAINS_PENDING")
         if manifest.primary_research_start == "2021-02-22":
@@ -523,13 +529,14 @@ def validate_page_effectiveness_manifest(
             PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED,
         }:
             freshness = PageFreshnessStatus.STALE_REBUILD_REQUIRED
-    except (OSError, PageEffectivenessError, subprocess.SubprocessError) as exc:
+    except (
+        OSError,
+        PageEffectivenessContractError,
+        PageEffectivenessError,
+        subprocess.SubprocessError,
+    ) as exc:
         errors.append(str(exc))
         freshness = PageFreshnessStatus.STALE_REBUILD_REQUIRED
-    page = next(
-        (item for item in manifest.rendered_artifacts if item.locator.endswith("index.html")),
-        None,
-    )
     return PageEffectivenessValidation(
         schema_version="atlas_page_effectiveness_validation.v1",
         status="PASS" if not errors else "FAIL",

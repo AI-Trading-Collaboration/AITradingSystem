@@ -1,0 +1,198 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  task_id_sha256: 454e5767fd171621e0cb535e52f32220e842eab51a05da32c13bf6f70f020387
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  title: null
+  domain: Atlas / page-effectiveness v2 human review SHA 与 suffix task identity 串行合同波
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: TRADING-2523A coordinator
+  requirement_refs:
+  - docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Completed; the separately governed TRADING-2523A
+    lane may rebuild from the published exact main after this closeout.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: v2 manifest requires exact canonical page SHA for human PASS; suffix-aware
+      exact task coverage and current 2522/2528 facts are preserved; focused and five
+      formal tiers pass; audit, ff-only main and ordinary push complete the closeout.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T10:07:46Z'
+  actor: Codex
+  change_id: trading-2523b-register-page-effectiveness-serial-contract-wave-20260815
+  lane_id: null
+  base_commit: b20757326430152a1f3340cf5871773595194a8b
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+    - Atlas / page-effectiveness v2 human review SHA 与 suffix task identity 串行合同波
+    - P1
+    - IN_PROGRESS
+    - Codex coordinator
+    - 执行 corrected plan 要求的最小 serial contract wave；发布后 2523A 必须从新 exact main rebuild，2524--2528
+      均不在本波实现
+    - v2 manifest 要求 human PASS 绑定 exact page SHA；task coverage 支持 suffix identity
+      且不依赖硬编码数量/连续尾号；保留 2522/2528 current facts；focused 与五级正式门、audit、ff-only main、ordinary
+      push 全部通过
+    - '[supporting requirement](docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md);
+      triggering plan integration-revalidation-6dcc47dbf6e7454bc540; production effect
+      none; broker action none.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2523b-register-page-effectiveness-serial-contract-wave-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-1abef19e322d08a649ba7c71283bec1d
+- schema_version: task_event.v1
+  task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T19:38:59+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523b-implementation-focused-pass-20260815
+  lane_id: null
+  base_commit: b20757326430152a1f3340cf5871773595194a8b
+  previous_state_event_id: task-event-1abef19e322d08a649ba7c71283bec1d
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex coordinator
+    blocker_or_next_step: Final-tree Architecture, Contract, Integration, Reproducibility
+      and exclusive Full validation remain before closeout.
+    acceptance_criteria: v2 manifest 要求 human PASS 绑定 exact page SHA；task coverage
+      支持 suffix identity 且不依赖硬编码数量/连续尾号；保留 2522/2528 current facts；focused 与五级正式门、audit、ff-only
+      main、ordinary push 全部通过
+    notes: Implemented page-effectiveness v2, suffix-aware task identity/order, exact
+      human review page SHA binding and successor replay; deterministic authority
+      validators PASS; focused validation 70 passed in 104.46s; no terminology presentation
+      or TRADING-2528 mutation.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523b-implementation-focused-pass-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-bf12e200d3e3c85471cdf590a159e8e1
+- schema_version: task_event.v1
+  task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T19:40:34+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523b-enter-validating-20260815
+  lane_id: null
+  base_commit: b20757326430152a1f3340cf5871773595194a8b
+  previous_state_event_id: task-event-bf12e200d3e3c85471cdf590a159e8e1
+  from_status: IN_PROGRESS
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: Codex coordinator
+    blocker_or_next_step: Run final-tree Architecture, Contract, Integration, Reproducibility
+      and exclusive Full; fail closed on any tier.
+    acceptance_criteria: v2 manifest 要求 human PASS 绑定 exact page SHA；task coverage
+      支持 suffix identity 且不依赖硬编码数量/连续尾号；保留 2522/2528 current facts；focused 与五级正式门、audit、ff-only
+      main、ordinary push 全部通过
+    notes: Implementation and 70-test focused set PASS; entering formal validation
+      without external, production, broker, Cloud or browser action.
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523b-enter-validating-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-afdc0aa97efbedbbbac9f8afb3095496
+- schema_version: task_event.v1
+  task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T19:42:20+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523b-restore-requirement-projection-20260815
+  lane_id: null
+  base_commit: b20757326430152a1f3340cf5871773595194a8b
+  previous_state_event_id: task-event-afdc0aa97efbedbbbac9f8afb3095496
+  from_status: VALIDATING
+  to_status: VALIDATING
+  payload:
+    priority: P1
+    next_owner: Codex coordinator
+    blocker_or_next_step: Run final-tree Architecture, Contract, Integration, Reproducibility
+      and exclusive Full; fail closed on any tier.
+    acceptance_criteria: v2 manifest 要求 human PASS 绑定 exact page SHA；task coverage
+      支持 suffix identity 且不依赖硬编码数量/连续尾号；保留 2522/2528 current facts；focused 与五级正式门、audit、ff-only
+      main、ordinary push 全部通过
+    notes: '[supporting requirement](docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md);
+      implementation and 70-test focused set PASS; entering formal validation; no
+      external, production, broker, Cloud or browser action.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523b-restore-requirement-projection-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-6e7492984a12acc5dad94360359b77df
+- schema_version: task_event.v1
+  task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T21:14:29+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523b-terminal-validation-pass-20260815
+  lane_id: null
+  base_commit: b20757326430152a1f3340cf5871773595194a8b
+  previous_state_event_id: task-event-6e7492984a12acc5dad94360359b77df
+  from_status: VALIDATING
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: TRADING-2523A coordinator
+    blocker_or_next_step: Completed; the separately governed TRADING-2523A lane may
+      rebuild from the published exact main after this closeout.
+    acceptance_criteria: v2 manifest requires exact canonical page SHA for human PASS;
+      suffix-aware exact task coverage and current 2522/2528 facts are preserved;
+      focused and five formal tiers pass; audit, ff-only main and ordinary push complete
+      the closeout.
+    notes: '[supporting requirement](docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md);
+      final Architecture 865 PASS, Contract 276 PASS, Integration 995 PASS with 642
+      warnings, Reproducibility 24 PASS, and parent-bound failure-fix Full 9027 PASS
+      / 4 skipped / 644 warnings; production effect none; broker action none; no TRADING-2528
+      mutation.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523b-terminal-validation-pass-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0d7a8633280c80c5bea948b4b959a6a9
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+  - Atlas / page-effectiveness v2 human review SHA 与 suffix task identity 串行合同波
+  - P1
+  - DONE
+  - TRADING-2523A coordinator
+  - Completed; the separately governed TRADING-2523A lane may rebuild from the published
+    exact main after this closeout.
+  - v2 manifest requires exact canonical page SHA for human PASS; suffix-aware exact
+    task coverage and current 2522/2528 facts are preserved; focused and five formal
+    tiers pass; audit, ff-only main and ordinary push complete the closeout.
+  - '[supporting requirement](docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md);
+    final Architecture 865 PASS, Contract 276 PASS, Integration 995 PASS with 642
+    warnings, Reproducibility 24 PASS, and parent-bound failure-fix Full 9027 PASS
+    / 4 skipped / 644 warnings; production effect none; broker action none; no TRADING-2528
+    mutation.'
+  docs_links:
+  - docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md
+  terminal: true
+  canonical_row_sha256: 2823625ac71413dae220506374ff70d70beb656a258187cd0085a4798cd21595
+last_event_id: task-event-0d7a8633280c80c5bea948b4b959a6a9
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 9232d2aae908932201ca8a8397bc846d355bfc08feaf2a3258313ecfe3814ca0

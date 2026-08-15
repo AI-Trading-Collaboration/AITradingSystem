@@ -261,7 +261,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="42"' in html
+    assert 'data-task-coverage-count="43"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -465,6 +465,7 @@ def test_progress_matrix_uses_independent_page_acceptance_facts() -> None:
         reviewer_id="project-owner",
         reviewed_at="2026-08-10T10:17:40Z",
         decision_id="trading-2506-reader-comprehension-pass-20260810-v1",
+        reviewed_page_sha256="a" * 64,
     )
     showcase = _showcase(
         page_engineering_status=PageAcceptanceStatus.PASS,

@@ -1,7 +1,7 @@
 schema_version: atlas_page_effectiveness_policy.v1
 policy_id: atlas_strategy_research_page_effectiveness_v1
-policy_version: 1.0.0
-status: REVIEWED_ENGINEERING_BASELINE
+policy_version: 2.0.0
+status: REVIEWED_PAGE_IDENTITY_CONTRACT_V2
 owner: Atlas page engineering owner
 primary_research_start: '2021-02-22'
 canonical_page_path: outputs/atlas/strategy_research_cited_query/trading_2470_v1/index.html
@@ -189,12 +189,16 @@ task_sources:
     reader_summary_zh: 离线排查确认 2519 successor 除 scheduled callback 假设外还误用了 contract.underlying；2520 已改为 precise daily Slice、underlying_last_price 与 export-safe diagnostics，但尚无新 Owner token 或 Cloud 再验证，evidence=FAIL、DQ/PIT=NOT_EVALUATED，engine 继续 cash preservation。
   - task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
     requirement_path: docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
-    coverage: DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_NOT_PROVIDED
-    reader_summary_zh: 2521 已实现对 2520 v4 token 的严格 current-dialog admission、first-run-attempt single-use consumption 与 canonical Results parser adapter；Project Owner 尚未提供 exact v4 token，Cloud 再验证、evidence 与 DQ/PIT 均未发生，engine 继续 cash preservation。
+    coverage: DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_ADMITTED_UNUSED
+    reader_summary_zh: 2521 已按 current-dialog exact bytes 接纳 v4 token 并形成 admitted-unused receipt；该阶段没有运行 Cloud、没有 Results 或 DQ/PIT PASS，且 token 后续是否消费必须由 2522 execution evidence 单独陈述，engine 继续 cash preservation。
   - task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
     requirement_path: docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md
     coverage: DISCLOSED_V4_RUN_INVALID_ALL_CHAIN_SESSIONS_TRANSPORT_REJECTED_AXIS_UNRESOLVED
     reader_summary_zh: v4 唯一 Cloud run 已完成并消费授权；1201 个有 option chain 的 session 全部被组合 transport gate 拒绝，0 个有效候选，Results admission=FAIL、DQ/PIT=NOT_EVALUATED。现有 export-safe aggregate 不能确定 quote/Greeks/OI/volume 中的具体失败轴，2528 只登记离线诊断合同；禁止第二次 run，engine 继续 cash preservation。
+  - task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
+    requirement_path: docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md
+    coverage: COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE
+    reader_summary_zh: 2523B 只冻结 page-effectiveness v2、带后缀 task identity 的确定性顺序与 human PASS 对 exact 页面 SHA-256 的绑定；不改术语页面、Cloud、QQQ transport、DQ/PIT、engine 或交易权限。
   - task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md
     coverage: DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED
