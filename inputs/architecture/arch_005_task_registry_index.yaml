@@ -14,7 +14,7 @@ fragment_count: 1001
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 8a2d957609392051ed754292e2c8c7bcb4f136bf9df6903665a7e17eb18181f5
+final_chain_sha256: 3fa1f20d25bdf440a248e8fc212049544669cf56dd6257f9487306f650a3198e
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8007,41 +8007,41 @@ fragments:
   entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
 - task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   path: registry/development_tasks/b6/b66109977b9a6fa9b6beb44895aaf08ca3ca342d0caf5f554fda5fb403e4e39f.yaml
-  file_sha256: 5cfc82e80ed4ea44c2c2210682cc8c5d279a2d17c5aa12f80d62371bc1b5db6c
-  fragment_checksum: 0b51c2838eb55acddeb8a7b7a7c0a751dd154cabe7364a9a0337dd37be637282
+  file_sha256: 91af445ed3e938616c6f3ec73b94f2c7e5dc0239ea1aa68fface663824e0983d
+  fragment_checksum: 803b7cb2bd76f695bb55a279c226647e7d122264433f6b799d5bc8eb6d91ee93
   partition: active
   order: 998
   previous_entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
-  entry_sha256: 2237d8a93149d2bf95a4e1d0aa16f3e9137778b63e5a4fe29a49dd8f4fb3a3cc
+  entry_sha256: 6bb3075bcaed9fd5d67a2999237688af3122b4b3b45fca40d17898b62dec38d5
 - task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
   path: registry/development_tasks/5e/5e5d60ed475eb8d625deb6df8af3a83bb0efccd0c75934ee670063a5358c5b4a.yaml
-  file_sha256: 8f1c368be0f386ddedf89ed455c0f71eb5f793b8728a2c1556745fc41ae33547
-  fragment_checksum: 71030ef5b6519bdf882cd0c1821bdaa4bf21f5a0b899131554003ab067dea1c5
+  file_sha256: 365ef88e932bc17c5d7a61e0f77d2724842c93c8a89353a993d26a5d8a80a0c6
+  fragment_checksum: 5af72409b8f8616322d679a8663455dd6cfc582785f570c5fc30e12c0b69ca3c
   partition: active
   order: 999
-  previous_entry_sha256: 2237d8a93149d2bf95a4e1d0aa16f3e9137778b63e5a4fe29a49dd8f4fb3a3cc
-  entry_sha256: c745edb73f280b4ae1a7e4ab0e1687d833e7189b20a453e0c9a7078ae377fbd9
+  previous_entry_sha256: 6bb3075bcaed9fd5d67a2999237688af3122b4b3b45fca40d17898b62dec38d5
+  entry_sha256: 2b0a34dffa85dc776b7e89ccef04fdac9ada16c1371a3dccfeefb677238633b2
 - task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   path: registry/development_tasks/1d/1dba72a891e4a43aad0a753f66f0dac1f4f500a8ab53415451bba01cf25c6228.yaml
-  file_sha256: dfd4a226b9a41b6264f2885b6a71252781672e1c11d6fcca9faf363e7acc729c
-  fragment_checksum: 0941f1ca244f8f5161fd8bfd0440f18f2b048531a031f6f0b6e4b0954b4b0328
+  file_sha256: f0de685857955cfd0ab285ff99fe8b019b65d9ad4ac1487fb0ae6ad06740d113
+  fragment_checksum: 468d2597cebb5b5a4b73e4b524d22e0d2e70b608a92663c90695bd9bcba24426
   partition: active
   order: 1000
-  previous_entry_sha256: c745edb73f280b4ae1a7e4ab0e1687d833e7189b20a453e0c9a7078ae377fbd9
-  entry_sha256: 1f16688de92f8e3edb79fa69295b7fa5e66d8986732c8860595d602d5f5539d0
+  previous_entry_sha256: 2b0a34dffa85dc776b7e89ccef04fdac9ada16c1371a3dccfeefb677238633b2
+  entry_sha256: 9084ac617254c067fb972034691fa9e517ec1e72847ff0403d35c3f0a2d06e4b
 - task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
   path: registry/development_tasks/2f/2fb089b7548d9921a668d7611f3dccd913c34bc5548119ce7357763f659a0da1.yaml
-  file_sha256: 8ef3b1c7ec7290183fcf69fd5176f24f99d34856dd37cf5a5e736b166200c8cb
-  fragment_checksum: 43e410b70fe87ef11857ffdd2533507e3b827a5ae53ad185c47fce633d1e205d
+  file_sha256: 8c634e50a994414c149074cf3740ec588c22ffab9f4b5883dbea28f3288bf0e1
+  fragment_checksum: d75673aae7e668099673384aa2222877b92aeb809dbc0fb149c159204dcc3fd1
   partition: active
   order: 1001
-  previous_entry_sha256: 1f16688de92f8e3edb79fa69295b7fa5e66d8986732c8860595d602d5f5539d0
-  entry_sha256: 8a2d957609392051ed754292e2c8c7bcb4f136bf9df6903665a7e17eb18181f5
+  previous_entry_sha256: 9084ac617254c067fb972034691fa9e517ec1e72847ff0403d35c3f0a2d06e4b
+  entry_sha256: 3fa1f20d25bdf440a248e8fc212049544669cf56dd6257f9487306f650a3198e
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 6008305ed6eeeb2372ae18d41c5ff4a53295f24467ada0348e18022022a687af
-  byte_count: 1740080
+  sha256: 3817243e0a6aba4809db533319f61f8bade1712cb4a803b73fa65a7893b5701a
+  byte_count: 1739718
   row_count: 491
   generated_do_not_edit: true
 - partition: completed
@@ -8639,7 +8639,42 @@ governance_cycles:
   change_id: trading-2524-s0-contract-focused-pass-20260816-v1
   event_count: 3
   production_effect: none
-governance_cycle_count: 84
+- cycle_id: arch-005-s5-cycle-85
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  change_id: trading-2524-s0-release-and-dual-start-20260816-v1
+  event_count: 4
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-86
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
+  change_id: trading-2525-engineering-lane-start-20260816-v1
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-87
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  change_id: trading-2526a-strategy-evidence-lane-start-20260816-v1
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-88
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  change_id: trading-2527a-protocol-preparation-start-20260816-v1
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-89
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  change_id: trading-2524-s0-release-note-correction-20260816-v1
+  event_count: 5
+  production_effect: none
+governance_cycle_count: 89
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8653,4 +8688,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 042109b01b3176e6e77b2736c03b32386cdfb5034b25260e674e9541635fe243
+index_checksum: abc46c20d4c6074d397e7f4b34d0efbc39fd7a238c71f1e25cae56f89d8f13d0

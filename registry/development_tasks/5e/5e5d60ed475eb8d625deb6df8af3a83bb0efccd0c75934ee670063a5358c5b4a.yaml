@@ -13,15 +13,14 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2525 engineering lane worker（受 2524 coordinator 约束）；Project Owner 冻结状态词汇、日期字段、比较基线与阈值边界
-  requirement_refs:
-  - docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md
+  next_owner: 2525 engineering lane worker；2524 coordinator 负责 reviewed absorption
+    与 shared renderer wiring。
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 仅依赖 2523A closeout 与 2524-S0 exact contract
-    commit 进入 local main；不等待完整 2524。若需 enum/public interface/cutoff 变化，停止并回到 serial
-    contract/policy wave。
+  unstructured_legacy_blocker_or_next_step: 只实现四个 task-owned state/date/change paths；若需要新增
+    enum/public interface/cutoff，立即停止并回到 serial contract wave。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 在 task-owned config/module/tests 内实现 typed state/date/change projection
@@ -61,24 +60,53 @@ events:
   - change:trading-2523a-followon-register-2-20260815
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-dc0df9a459069ff3935360ecec4ed962
+- schema_version: task_event.v1
+  task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T02:41:11+09:00'
+  actor: codex
+  change_id: trading-2525-engineering-lane-start-20260816-v1
+  lane_id: null
+  base_commit: ece8d97373c1a8a70949aa0ae445b79593ee09b3
+  previous_state_event_id: task-event-dc0df9a459069ff3935360ecec4ed962
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2525 engineering lane worker；2524 coordinator 负责 reviewed absorption
+      与 shared renderer wiring。
+    blocker_or_next_step: 只实现四个 task-owned state/date/change paths；若需要新增 enum/public
+      interface/cutoff，立即停止并回到 serial contract wave。
+    acceptance_criteria: 在 task-owned config/module/tests 内实现 typed state/date/change
+      projection 与 negative cases；不写 shared renderer、page config、generated outputs
+      或 coordinator state；focused/impact validation PASS 后交由 2524 coordinator 集成。
+    notes: 2524-S0 已发布到 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE
+      START claims PASS。临时 worktree=D:\Work\AITradingSystem_trading2525_reader_state；focused/impact
+      PASS 与 coordinator absorption 后按 requirement 审计清理。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2525-engineering-lane-start-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-894e407561c0ae196322e9923219bfcd
 projection:
   legacy_first_eight_cells:
   - TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
   - Atlas strategy research page / change evidence date and state semantics
   - P1
-  - PROPOSED
-  - 2525 engineering lane worker（受 2524 coordinator 约束）；Project Owner 冻结状态词汇、日期字段、比较基线与阈值边界
-  - 仅依赖 2523A closeout 与 2524-S0 exact contract commit 进入 local main；不等待完整 2524。若需
-    enum/public interface/cutoff 变化，停止并回到 serial contract/policy wave。
+  - IN_PROGRESS
+  - 2525 engineering lane worker；2524 coordinator 负责 reviewed absorption 与 shared
+    renderer wiring。
+  - 只实现四个 task-owned state/date/change paths；若需要新增 enum/public interface/cutoff，立即停止并回到
+    serial contract wave。
   - 在 task-owned config/module/tests 内实现 typed state/date/change projection 与 negative
     cases；不写 shared renderer、page config、generated outputs 或 coordinator state；focused/impact
     validation PASS 后交由 2524 coordinator 集成。
-  - 2026-08-15：定位为 DUAL_LANE engineering worker；[supporting requirement](docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md)。与
-    2526/2527-A 从同一 S0 base 并行；status 仍为 PROPOSED，尚未创建 lane/worktree。
-  docs_links:
-  - docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md
+  - 2524-S0 已发布到 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START
+    claims PASS。临时 worktree=D:\Work\AITradingSystem_trading2525_reader_state；focused/impact
+    PASS 与 coordinator absorption 后按 requirement 审计清理。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 18433ed9c1e44998a7251a21ae7e3b4d2ae5f362f6b86107b8588c1e90b1f1d1
-last_event_id: task-event-dc0df9a459069ff3935360ecec4ed962
+  canonical_row_sha256: 3c5973959509e69aae191ecd92c0edbf963181d16e0c8250465aa12363cf6827
+last_event_id: task-event-894e407561c0ae196322e9923219bfcd
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 71030ef5b6519bdf882cd0c1821bdaa4bf21f5a0b899131554003ab067dea1c5
+fragment_checksum: 5af72409b8f8616322d679a8663455dd6cfc582785f570c5fc30e12c0b69ca3c

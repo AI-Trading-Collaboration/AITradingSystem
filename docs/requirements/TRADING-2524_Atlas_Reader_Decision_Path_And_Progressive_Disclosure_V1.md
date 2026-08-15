@@ -248,3 +248,9 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   `58 passed in 47.78s`；Ruff、strict mypy、task-source、architecture fitness、report-flow authority 与
   compatibility authority 均 PASS。当前仍未修改 renderer 或生成新 HTML，也未自动升级任何人工、策略、
   production 或 broker 状态。
+- 2026-08-16：S0 final commit=`ece8d97373c1a8a70949aa0ae445b79593ee09b3`；Architecture 首轮因新增
+  module/test 尚未刷新 deprecation inventory 而得到 `864 passed / 1 failed`，修正 inventory identity 与
+  exact counts 后 targeted=`1 passed`、Architecture=`865 passed`、Contract=`276 passed`。该 commit 已
+  ff-only 进入 local `main` 并 ordinary push，`HEAD=local main=origin/main`。随后 DUAL_LANE START 对 2525
+  engineering 与 2526/2527-A strategy-evidence 的互斥 claims 得到 `PASS`，coordinator branch 固定为
+  `codex/trading-2524-reader-ia-integration`；所有 downstream lane 必须从该 released exact base 启动。

@@ -1,10 +1,10 @@
 # TRADING-2525：Atlas 变化、证据日期与状态语义 V1
 
-最后更新：2026-08-15
+最后更新：2026-08-16
 
 - stable task id：`TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1`
 - priority：`P1`
-- status：`PROPOSED`
+- status：`IN_PROGRESS`（engineering lane）
 - proposed governed mode：2524 `DUAL_LANE` 的 engineering worker
 - contract change：`true`（reader-facing state/date semantics）
 - predecessor gate：2523 已关闭且 2524-S0 `reader_projection_contract.v1` 已进入 local `main`
@@ -105,3 +105,9 @@ candidate 验收必须等待 coordinator 吸收本 lane 并生成唯一 exact HT
 - 2026-08-15：Project Owner 确认并行拓扑；本任务定位为 2524 coordinator 下的 engineering lane，
   依赖从“完整 2524 完成”收窄为“2524-S0 exact contract commit 已进入 local `main`”。状态仍为
   `PROPOSED`，尚未创建 lane/worktree。
+- 2026-08-16：2524-S0 已从 exact main `ece8d97373c1a8a70949aa0ae445b79593ee09b3` 发布，2524
+  DUAL_LANE START claims `PASS`。本 lane 的临时 Git worktree 计划为
+  `D:\Work\AITradingSystem_trading2525_reader_state`，owner=`TRADING-2525`，purpose=实现本 requirement
+  第 5 节四个 task-owned paths，exit condition=lane focused/impact PASS、commit 被 2524 coordinator
+  reviewed absorption、unique tracked/untracked/ignored audit 完成且无活跃进程依赖。不得在该 worktree
+  保留 canonical final HTML 或 shared coordinator bytes。

@@ -1,10 +1,10 @@
 # TRADING-2526：Atlas 可访问研究展开与审计链接 V1
 
-最后更新：2026-08-15
+最后更新：2026-08-16
 
 - stable task id：`TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1`
 - priority：`P1`
-- status：`PROPOSED`
+- status：`IN_PROGRESS`（2526-A strategy-evidence lane）
 - proposed governed mode：2524 `DUAL_LANE` 的 strategy-evidence worker + coordinator final gate
 - contract change：`true`（accessible reader/research interaction contract）
 - predecessor gate：2523 已关闭且 2524-S0 `reader_projection_contract.v1` 已进入 local `main`
@@ -97,3 +97,9 @@ STOP CONDITION：任何“简化”导致 provenance 不可达，或移动端视
 - 2026-08-15：Project Owner 确认两阶段拓扑：2526-A 在 strategy-evidence lane 并行开发 validator/
   harness/evidence，shared renderer remediation 归 2524 coordinator；2526-B 对唯一 final HTML 串行执行
   browser/AT/mobile 验收。状态仍为 `PROPOSED`，尚未创建 lane/worktree。
+- 2026-08-16：2524-S0 exact main=`ece8d97373c1a8a70949aa0ae445b79593ee09b3`，DUAL_LANE START
+  claims `PASS`。2526-A 与 2527-A 共用的临时 Git worktree 计划为
+  `D:\Work\AITradingSystem_trading2526_2527_evidence`，owner=`TRADING-2526/TRADING-2527-A`，
+  purpose=仅实现两项 requirement 已冻结且互不重叠的 evidence/protocol paths，exit condition=两项 lane
+  focused/impact PASS、commits 被 2524 coordinator reviewed absorption、unique tracked/untracked/ignored
+  audit 完成且无活跃进程依赖。不得在该 worktree 修改 renderer、生成 final HTML 或签署 accessibility。

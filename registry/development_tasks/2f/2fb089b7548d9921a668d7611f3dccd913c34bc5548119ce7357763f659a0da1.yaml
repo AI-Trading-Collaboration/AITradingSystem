@@ -13,15 +13,14 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2527-A strategy-evidence worker；Project Owner 批准 participant/sample/scenario/threshold/signature
-    policy；2524 coordinator 执行 2527-B
-  requirement_refs:
-  - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
+  next_owner: 2527-A strategy-evidence worker；2524 coordinator 管理 final identity，Project
+    Owner 保留 2527-B policy 与签署权。
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2527-A 仅依赖 2524-S0，可准备 schema/protocol/scenario/truth
-    rubric；2527-B 必须等待唯一 exact HTML、2526-B PASS 与 Owner policy，identity 变化即停止并重测。
+  unstructured_legacy_blocker_or_next_step: 仅准备 protocol/schema/scenario/truth rubric；不得招募、执行
+    pilot 或自动签署 PASS。2527-B 仍等待 2526-B exact HTML PASS 与 Owner policy。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B 对 frozen exact
@@ -61,25 +60,52 @@ events:
   - change:trading-2523a-followon-register-4-20260815
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-9c46dfe8566581732f091ce17e18b59a
+- schema_version: task_event.v1
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T02:41:13+09:00'
+  actor: codex
+  change_id: trading-2527a-protocol-preparation-start-20260816-v1
+  lane_id: null
+  base_commit: ece8d97373c1a8a70949aa0ae445b79593ee09b3
+  previous_state_event_id: task-event-9c46dfe8566581732f091ce17e18b59a
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2527-A strategy-evidence worker；2524 coordinator 管理 final identity，Project
+      Owner 保留 2527-B policy 与签署权。
+    blocker_or_next_step: 仅准备 protocol/schema/scenario/truth rubric；不得招募、执行 pilot
+      或自动签署 PASS。2527-B 仍等待 2526-B exact HTML PASS 与 Owner policy。
+    acceptance_criteria: 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B
+      对 frozen exact HTML 保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级
+      PASS。
+    notes: 2524-S0 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START
+      claims PASS。与 2526-A 共用 worktree=D:\Work\AITradingSystem_trading2526_2527_evidence，仅写本任务四个
+      protocol paths。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2527a-protocol-preparation-start-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5d9bbf306dc585f9164f429bc641d584
 projection:
   legacy_first_eight_cells:
   - TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
   - Atlas strategy research page / governed human comprehension acceptance pilot
   - P1
-  - PROPOSED
-  - 2527-A strategy-evidence worker；Project Owner 批准 participant/sample/scenario/threshold/signature
-    policy；2524 coordinator 执行 2527-B
-  - 2527-A 仅依赖 2524-S0，可准备 schema/protocol/scenario/truth rubric；2527-B 必须等待唯一 exact
-    HTML、2526-B PASS 与 Owner policy，identity 变化即停止并重测。
+  - IN_PROGRESS
+  - 2527-A strategy-evidence worker；2524 coordinator 管理 final identity，Project Owner
+    保留 2527-B policy 与签署权。
+  - 仅准备 protocol/schema/scenario/truth rubric；不得招募、执行 pilot 或自动签署 PASS。2527-B 仍等待
+    2526-B exact HTML PASS 与 Owner policy。
   - 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B 对 frozen exact HTML
     保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级 PASS。
-  - 2026-08-15：拆为并行 2527-A protocol preparation 与串行 2527-B human gate；[supporting
-    requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)。status
-    仍为 PROPOSED，尚未执行人类测试或签署理解验收。
-  docs_links:
-  - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
+  - 2524-S0 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START claims
+    PASS。与 2526-A 共用 worktree=D:\Work\AITradingSystem_trading2526_2527_evidence，仅写本任务四个
+    protocol paths。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 70fdb8972844e52206449fb34cfb473e8dbbd4a1a90459f33caaa3f470392df7
-last_event_id: task-event-9c46dfe8566581732f091ce17e18b59a
+  canonical_row_sha256: 509dd70fe30b367f550fafa14fbb993f02957d8bc506d254457affb42b0347f1
+last_event_id: task-event-5d9bbf306dc585f9164f429bc641d584
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 43e410b70fe87ef11857ffdd2533507e3b827a5ae53ad185c47fce633d1e205d
+fragment_checksum: d75673aae7e668099673384aa2222877b92aeb809dbc0fb149c159204dcc3fd1

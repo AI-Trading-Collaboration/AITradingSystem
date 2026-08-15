@@ -14,14 +14,13 @@ task_record:
   priority: P1
   accountable_owner: null
   next_owner: 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation
-    与 2526-B；Project Owner 冻结 accessibility/browser/AT matrix
-  requirement_refs:
-  - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
+    与 2526-B exact HTML gate。
+  requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 2526-A 仅依赖 2524-S0，可与 2525/2527-A 并行且不得写
-    shared renderer/generated state；2526-B 等待 coordinator 唯一 exact HTML，任何 bytes 变化均重跑。
+  unstructured_legacy_blocker_or_next_step: 只实现 accessibility validator/harness/negative
+    cases；不得改 renderer 或签署 accessibility。2526-B 等待唯一 exact HTML。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与 typed evidence；coordinator
@@ -63,26 +62,53 @@ events:
   - change:trading-2523a-followon-register-3-20260815
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-e1448751d738fc7f1d6fdc744a001016
+- schema_version: task_event.v1
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T02:41:12+09:00'
+  actor: codex
+  change_id: trading-2526a-strategy-evidence-lane-start-20260816-v1
+  lane_id: null
+  base_commit: ece8d97373c1a8a70949aa0ae445b79593ee09b3
+  previous_state_event_id: task-event-e1448751d738fc7f1d6fdc744a001016
+  from_status: PROPOSED
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation
+      与 2526-B exact HTML gate。
+    blocker_or_next_step: 只实现 accessibility validator/harness/negative cases；不得改 renderer
+      或签署 accessibility。2526-B 等待唯一 exact HTML。
+    acceptance_criteria: 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与
+      typed evidence；coordinator 应用 shared DOM remediation；2526-B 对同一 exact HTML 完成
+      desktop/mobile/keyboard/screen-reader/reflow/audit replay 后才开放 2527-B。
+    notes: 2524-S0 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START
+      claims PASS。与 2527-A 共用 worktree=D:\Work\AITradingSystem_trading2526_2527_evidence，但
+      task-owned paths 与 evidence lineage 独立。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2526a-strategy-evidence-lane-start-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-0c9def20757b8e5b40e55c0febf72781
 projection:
   legacy_first_eight_cells:
   - TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   - Atlas strategy research page / accessible research drilldown and audit linkage
   - P1
-  - PROPOSED
-  - 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation 与 2526-B；Project
-    Owner 冻结 accessibility/browser/AT matrix
-  - 2526-A 仅依赖 2524-S0，可与 2525/2527-A 并行且不得写 shared renderer/generated state；2526-B
-    等待 coordinator 唯一 exact HTML，任何 bytes 变化均重跑。
+  - IN_PROGRESS
+  - 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation 与 2526-B
+    exact HTML gate。
+  - 只实现 accessibility validator/harness/negative cases；不得改 renderer 或签署 accessibility。2526-B
+    等待唯一 exact HTML。
   - 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与 typed evidence；coordinator
     应用 shared DOM remediation；2526-B 对同一 exact HTML 完成 desktop/mobile/keyboard/screen-reader/reflow/audit
     replay 后才开放 2527-B。
-  - 2026-08-15：拆为并行 2526-A evidence lane 与串行 2526-B final candidate gate；[supporting
-    requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)。status
-    仍为 PROPOSED，尚未创建 lane/worktree 或签署 accessibility PASS。
-  docs_links:
-  - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
+  - 2524-S0 exact main ece8d97373c1a8a70949aa0ae445b79593ee09b3；DUAL_LANE START claims
+    PASS。与 2527-A 共用 worktree=D:\Work\AITradingSystem_trading2526_2527_evidence，但
+    task-owned paths 与 evidence lineage 独立。
+  docs_links: []
   terminal: false
-  canonical_row_sha256: 5dcef1967423ed9fd89f69bb9ada17c09a8cf1340b044104f8a209106de33d42
-last_event_id: task-event-e1448751d738fc7f1d6fdc744a001016
+  canonical_row_sha256: d45b2c53d3f87758d795be7df9120d8a517f50fdb5dc796052a66d3bfb0faeee
+last_event_id: task-event-0c9def20757b8e5b40e55c0febf72781
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0941f1ca244f8f5161fd8bfd0440f18f2b048531a031f6f0b6e4b0954b4b0328
+fragment_checksum: 468d2597cebb5b5a4b73e4b524d22e0d2e70b608a92663c90695bd9bcba24426

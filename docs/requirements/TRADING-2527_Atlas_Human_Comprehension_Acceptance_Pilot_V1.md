@@ -1,10 +1,10 @@
 # TRADING-2527：Atlas 人类理解验收 Pilot V1
 
-最后更新：2026-08-15
+最后更新：2026-08-16
 
 - stable task id：`TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1`
 - priority：`P1`
-- status：`PROPOSED`
+- status：`IN_PROGRESS`（仅 2527-A protocol preparation）
 - proposed governed mode：2524 `DUAL_LANE` strategy-evidence preparation + final serial human gate
 - contract change：`false`（验证既有 frozen reader contract；若 pilot 需要改合同则另开 wave）
 - predecessor gates：2527-A 依赖 2524-S0；2527-B 依赖 2526-B 的 exact-HTML PASS 与 Owner policy
@@ -112,3 +112,8 @@ canonical truth 时立即停止验收。
   `trading-2527-staged-comprehension-topology-20260815-v1` payload 形成两个连续 no-op events。两者的
   status、owner、blocker、acceptance 与 notes 完全一致，canonical validator 为 `PASS`，projection 未
   分叉。按 append-only 纪律保留原事件，并以唯一 audit change id 记录本执行事件；不手工改写历史。
+- 2026-08-16：2524-S0 exact main=`ece8d97373c1a8a70949aa0ae445b79593ee09b3`，DUAL_LANE START
+  claims `PASS`。2527-A 与 2526-A 共用的临时 Git worktree 计划为
+  `D:\Work\AITradingSystem_trading2526_2527_evidence`，但只写第 5 节四个 task-owned protocol paths；
+  exit condition 与 2526 requirement 记录一致。当前不招募、不执行 pilot、不生成 participant data，
+  `2527-B` 继续等待唯一 exact HTML、2526-B PASS 与 Owner policy。

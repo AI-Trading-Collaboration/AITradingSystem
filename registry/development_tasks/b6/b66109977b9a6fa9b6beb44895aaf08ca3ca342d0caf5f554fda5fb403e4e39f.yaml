@@ -13,14 +13,14 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 S0 coordinator：在 exact final tracked bytes 上完成 Architecture/Contract
-    门禁、提交、local-main ff 与 ordinary push。
+  next_owner: 2524 coordinator：从 ece8d9737 统一协调 2525 engineering 与 2526/2527-A strategy-evidence
+    lanes，随后单次集成 why-first renderer 与 exact HTML。
   requirement_refs: []
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: S0 focused 已 PASS；须先完成正式门禁并把 serial contract
-    wave 发布到 main，2525--2527 才能从新 exact common base 启动。
+  unstructured_legacy_blocker_or_next_step: S0 已发布；先完成两条 lane focused/impact evidence，再由
+    coordinator 吸收并实现 shared DOM/CSS/page wiring。2528 保持独立。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
@@ -123,27 +123,87 @@ events:
   - change:trading-2524-s0-contract-focused-pass-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-f358bc4b2c68b79cb854009d4444ace1
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T02:41:10+09:00'
+  actor: codex
+  change_id: trading-2524-s0-release-and-dual-start-20260816-v1
+  lane_id: null
+  base_commit: ece8d97373c1a8a70949aa0ae445b79593ee09b3
+  previous_state_event_id: task-event-f358bc4b2c68b79cb854009d4444ace1
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：从 ece8d9737 统一协调 2525 engineering 与 2526/2527-A strategy-evidence
+      lanes，随后单次集成 why-first renderer 与 exact HTML。
+    blocker_or_next_step: S0 已发布；先完成两条 lane focused/impact evidence，再由 coordinator
+      吸收并实现 shared DOM/CSS/page wiring。2528 保持独立。
+    acceptance_criteria: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
+      typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible
+      hover/focus/tap semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或
+      production/broker 边界。
+    notes: 'S0 final=eec8 correction: exact ece8d97373c1a8a70949aa0ae445b79593ee09b3；Architecture
+      首轮 864 PASS/1 FAIL（deprecation inventory stale），修正后 Architecture 865 PASS、Contract
+      276 PASS，已 ff-only main + ordinary push。DUAL_LANE START claims PASS；human/strategy/production/broker
+      仍不自动升级。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-s0-release-and-dual-start-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3b7933ccc25650a47c2b4ced46b78fea
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T02:41:14+09:00'
+  actor: codex
+  change_id: trading-2524-s0-release-note-correction-20260816-v1
+  lane_id: null
+  base_commit: ece8d97373c1a8a70949aa0ae445b79593ee09b3
+  previous_state_event_id: task-event-3b7933ccc25650a47c2b4ced46b78fea
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：从 ece8d9737 统一协调 2525 engineering 与 2526/2527-A strategy-evidence
+      lanes，随后单次集成 why-first renderer 与 exact HTML。
+    blocker_or_next_step: S0 已发布；先完成两条 lane focused/impact evidence，再由 coordinator
+      吸收并实现 shared DOM/CSS/page wiring。2528 保持独立。
+    acceptance_criteria: reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
+      typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible
+      hover/focus/tap semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或
+      production/broker 边界。
+    notes: S0 final exact commit=ece8d97373c1a8a70949aa0ae445b79593ee09b3；Architecture
+      首轮 864 PASS/1 FAIL（deprecation inventory stale），修正后 Architecture 865 PASS、Contract
+      276 PASS，已 ff-only main + ordinary push。DUAL_LANE START claims PASS；human/strategy/production/broker
+      仍不自动升级。本事件仅更正上一事件 notes 的拼写，不改变 projection 语义。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-s0-release-note-correction-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-97762b50f51eee9156da88580b9f1303
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
   - IN_PROGRESS
-  - 2524 S0 coordinator：在 exact final tracked bytes 上完成 Architecture/Contract 门禁、提交、local-main
-    ff 与 ordinary push。
-  - S0 focused 已 PASS；须先完成正式门禁并把 serial contract wave 发布到 main，2525--2527 才能从新 exact
-    common base 启动。
+  - 2524 coordinator：从 ece8d9737 统一协调 2525 engineering 与 2526/2527-A strategy-evidence
+    lanes，随后单次集成 why-first renderer 与 exact HTML。
+  - S0 已发布；先完成两条 lane focused/impact evidence，再由 coordinator 吸收并实现 shared DOM/CSS/page
+    wiring。2528 保持独立。
   - reader_projection_contract.v1 必须冻结 PROBLEM→CONSTRAINT→CHOICE→EVIDENCE→RESULT→NEXT_STEP
     typed edges、source binding、why-first DOM slots、L0/L1/AUDIT budget、accessible hover/focus/tap
     semantics、no nested disclosure、关键风险/禁止推断常显；不得修改研究结果、DQ/PIT、阈值或 production/broker
     边界。
-  - reader_projection_contract.v1 已冻结 why-first source-bound 因果链、六问映射、L0/L1/AUDIT
-    预算与可访问 inline terminology 语义。单文件 focused=14 PASS；跨层首轮=56 PASS/2 FAIL（旧 system-flow
-    SHA 与 stale architecture manifest），修正后=58 PASS；Ruff、strict mypy、task-source、architecture/report-flow/compatibility
-    authority PASS。renderer/HTML 尚未修改；human/strategy/production/broker 不自动升级。
+  - S0 final exact commit=ece8d97373c1a8a70949aa0ae445b79593ee09b3；Architecture 首轮
+    864 PASS/1 FAIL（deprecation inventory stale），修正后 Architecture 865 PASS、Contract
+    276 PASS，已 ff-only main + ordinary push。DUAL_LANE START claims PASS；human/strategy/production/broker
+    仍不自动升级。本事件仅更正上一事件 notes 的拼写，不改变 projection 语义。
   docs_links: []
   terminal: false
-  canonical_row_sha256: f38e3de3aebf626f25f0b4598bfadf97cb37ac4d6cf187c38a5bd27fdccc7672
-last_event_id: task-event-f358bc4b2c68b79cb854009d4444ace1
+  canonical_row_sha256: 50772de6777d8cf435063de7e773f19edf2572a5b829377c140248b32129c29a
+last_event_id: task-event-97762b50f51eee9156da88580b9f1303
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 0b51c2838eb55acddeb8a7b7a7c0a751dd154cabe7364a9a0337dd37be637282
+fragment_checksum: 803b7cb2bd76f695bb55a279c226647e7d122264433f6b799d5bc8eb6d91ee93
