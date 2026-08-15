@@ -1,0 +1,54 @@
+schema_version: atlas_reader_comprehension_protocol.v1
+protocol_id: atlas_reader_comprehension_pilot_v1
+protocol_version: 1.0.0
+status: PENDING_OWNER_POLICY
+owner: Project Owner
+identity_binding_fields:
+  - html_sha256
+  - source_commit
+  - manifest_sha256
+  - reader_projection_contract_sha256
+  - viewport
+  - browser
+  - operating_system
+  - assistive_technology
+scenarios:
+  - CURRENT_RESEARCH_MAINLINE
+  - LARGEST_CURRENT_BLOCKER
+  - ENGINEERING_VS_RESEARCH_EVIDENCE
+  - PROHIBITED_INFERENCES
+  - NEXT_OWNER_AND_ACTION
+  - INVESTMENT_ORDER_ENGINE_AUTHORITY
+  - DATE_AND_FRESHNESS
+  - SNAPSHOT_CHANGE
+answer_categories:
+  - CORRECT
+  - PARTIALLY_CORRECT
+  - INCORRECT
+  - UNANSWERED
+  - PROHIBITED_INFERENCE_INDUCED
+owner_policy_slots:
+  participant_profiles: PENDING_OWNER_POLICY
+  sample_definition: PENDING_OWNER_POLICY
+  scenario_assignment: PENDING_OWNER_POLICY
+  critical_error_definition: PENDING_OWNER_POLICY
+  pass_threshold: PENDING_OWNER_POLICY
+  retest_rule: PENDING_OWNER_POLICY
+  reviewer_roster: PENDING_OWNER_POLICY
+  signature_authority: PENDING_OWNER_POLICY
+  accessibility_coverage: PENDING_OWNER_POLICY
+recording:
+  verbatim_required: true
+  first_path_required: true
+  first_misunderstanding_required: true
+  unknown_terms_required: true
+  two_independent_reviewers_required: true
+  disagreement_log_required: true
+  identity_change_requires_new_round: true
+safety:
+  participant_recruitment_authorized: false
+  pilot_execution_authorized: false
+  automated_pass_allowed: false
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none
