@@ -1,0 +1,58 @@
+schema_version: atlas_reader_state_semantics.v1
+policy_id: atlas_reader_state_date_change_v1
+policy_version: 1.0.0
+status: REVIEWED_ENGINEERING_BASELINE
+owner: Atlas publishing experience coordinator
+state_mappings:
+  - raw_status: UNKNOWN
+    reader_state: UNKNOWN
+    reader_label_zh: 信息不足
+  - raw_status: LIMITED
+    reader_state: LIMITED
+    reader_label_zh: 证据有限
+  - raw_status: BLOCKED
+    reader_state: BLOCKED
+    reader_label_zh: 当前步骤被阻塞
+  - raw_status: KEEP_CLOSED
+    reader_state: BLOCKED
+    reader_label_zh: 当前研究保持关闭
+  - raw_status: NOT_EVALUATED
+    reader_state: NOT_EVALUATED
+    reader_label_zh: 尚未评估
+  - raw_status: NOT_STRATEGY_VALID
+    reader_state: NOT_STRATEGY_VALID
+    reader_label_zh: 不能支持策略有效性
+  - raw_status: FAIL
+    reader_state: NOT_STRATEGY_VALID
+    reader_label_zh: 当前验收未通过
+  - raw_status: PASS
+    reader_state: PASS
+    reader_label_zh: 当前对象校验通过
+  - raw_status: VALIDATED
+    reader_state: PASS
+    reader_label_zh: 当前对象工程校验通过
+  - raw_status: ANSWERED
+    reader_state: PASS
+    reader_label_zh: 当前回答引用闭包完整
+  - raw_status: CURRENT
+    reader_state: PASS
+    reader_label_zh: 页面来源当前一致
+  - raw_status: PENDING_REVIEW
+    reader_state: NOT_EVALUATED
+    reader_label_zh: 等待独立人工验收
+date_fields: [data_as_of, evidence_evaluated_at, page_generated_at]
+comparison_states: [CHANGED, UNCHANGED, UNKNOWN, NOT_COMPARABLE]
+source_binding:
+  source_refs_required: true
+  comparison_base_identity_required: true
+  timezone_required_for_datetime: true
+  null_date_status: UNKNOWN
+safety:
+  primary_research_start: '2021-02-22'
+  raw_enum_rewrite_allowed: false
+  limited_to_pass_upgrade_allowed: false
+  engineering_to_strategy_upgrade_allowed: false
+  importance_cutoff_introduced: false
+  investment_conclusion_generated: false
+  production_effect: none
+  broker_action: none
