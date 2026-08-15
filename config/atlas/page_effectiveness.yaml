@@ -206,8 +206,8 @@ task_sources:
     reader_summary_zh: 页面新增目标读者画像、术语分类、完整 rendered-text inventory 与首现解释门禁；新 HTML 的人工视觉和理解验收不会沿用旧页面 PASS。
   - task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
     requirement_path: docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
-    coverage: IN_PROGRESS_BASE_DRIFT_INTEGRATION_CORRECTION
-    reader_summary_zh: 本纠正任务只承接 main 漂移后的候选集成、页面 identity 重建与最终验证，不改变策略、DQ/PIT、研究窗口或交易边界；完成前 TRADING-2524–2527 继续受阻。
+    coverage: COMPLETED_BASE_DRIFT_INTEGRATION_CORRECTION
+    reader_summary_zh: 本纠正任务已完成 main 漂移后的术语候选集成、页面 identity 重建与最终验证；没有改变策略、DQ/PIT、研究窗口或交易边界，TRADING-2524–2527 仍须按各自后续任务独立启动。
   - task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
     requirement_path: docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md
     coverage: COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE

@@ -213,6 +213,15 @@ Coordinator-owned：
   `task_record.requirement_refs` 被投影为空并触发 page-effectiveness fail-closed；并行回归如实记录为
   `21 failed, 78 passed in 89.34s`。已通过新的 append-only corrective event 恢复 requirement binding，
   不以串行重跑掩盖失败；后续须重建派生 authority 与 provisional page 后再用同一并行集合验证。
+- 2026-08-15：implementation candidate `191e8145efadc55f4c50a5d55bac810efd08ca90`
+  的 exact HTML SHA-256 为 `d44fe7fccb05aae6ce05baf45c07c6da62a6f49344d05d27edf6a72c940da343`；
+  desktop/mobile、keyboard、anchor、ARIA、console 与视觉工程检查 PASS，50 个术语卡、2934 个 reader
+  surfaces、574 个 term occurrences、478 个 audit identifiers 均可重放。五级 candidate gate 为
+  Architecture `865 passed`、Contract `276 passed`、Integration `995 passed / 642 warnings`、
+  Reproducibility `24 passed`、exclusive Full `9045 passed / 3 skipped / 644 warnings`。现将 2523A
+  terminal projection 与 page coverage 更新为完成态并形成新的 final-tree commit；该新 commit 仍须重新
+  生成 exact HTML/browser evidence 并完成最终树 formal replay，不能把 implementation candidate 的
+  证据冒充为最终发布证据。Owner visual 与 reader comprehension 继续为 `PENDING_REVIEW`。
 
 ## 8. 后续可读性路线图
 

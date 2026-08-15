@@ -13,15 +13,17 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: Codex coordinator
+  next_owner: Project Owner / next governed Atlas task
   requirement_refs:
   - docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Regenerate provisional page evidence after
-    restored requirement binding, rerun focused validation, then build the exact-commit
-    candidate and exact-SHA browser evidence; human reviews remain PENDING.
+  unstructured_legacy_blocker_or_next_step: Terminal projection frozen after implementation-candidate
+    gates; rebuild the exact final page, replay browser and formal validation on the
+    final-tree commit, then publish by ff-only main and ordinary non-force push. Human
+    Owner visual and reader comprehension reviews remain PENDING for their governed
+    follow-up.
   acceptance_criteria:
   - criterion_id: legacy_compatibility
     text: The latest-main candidate preserves the 2523 terminology and audit contract
@@ -175,34 +177,77 @@ events:
   - change:trading-2523a-restore-requirement-binding-20260815
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-b6ba52a7fcb376be8928481e8972f724
+- schema_version: task_event.v1
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T23:45:36.3650174+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-terminal-projection-final-tree-replay-20260815
+  lane_id: null
+  base_commit: 191e8145efadc55f4c50a5d55bac810efd08ca90
+  previous_state_event_id: task-event-b6ba52a7fcb376be8928481e8972f724
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: Project Owner / next governed Atlas task
+    blocker_or_next_step: Terminal projection frozen after implementation-candidate
+      gates; rebuild the exact final page, replay browser and formal validation on
+      the final-tree commit, then publish by ff-only main and ordinary non-force push.
+      Human Owner visual and reader comprehension reviews remain PENDING for their
+      governed follow-up.
+    acceptance_criteria: The latest-main candidate preserves the 2523 terminology
+      and audit contract without page-effectiveness v2 regression; rendered inventory
+      and first-use explanations pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA;
+      Architecture, Contract, Integration, Reproducibility, exclusive Full and governed
+      closeout pass; local main equals origin/main.
+    notes: '[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md);
+      implementation candidate 191e8145efadc55f4c50a5d55bac810efd08ca90 passed exact
+      browser engineering replay for HTML d44fe7fccb05aae6ce05baf45c07c6da62a6f49344d05d27edf6a72c940da343
+      and candidate formal gates: Architecture 865 passed; Contract 276 passed; Integration
+      995 passed / 642 warnings; Reproducibility 24 passed; exclusive Full 9045 passed
+      / 3 skipped / 644 warnings. Runtime artifacts: architecture-fitness_20260815T140540Z,
+      contract-validation_20260815T141238Z, integration_20260815T141555Z, reproducibility_20260815T141657Z,
+      full_20260815T141737Z. Final-tree commit must regenerate exact page/browser
+      and replay formal gates before publication. Owner visual and reader comprehension
+      remain PENDING. Production effect none; broker action none; TRADING-2524--2527
+      implementation remains out of scope.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523a-terminal-projection-final-tree-replay-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e4cb427be41f5cf955238316df3ad209
 projection:
   legacy_first_eight_cells:
   - TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
   - Atlas / 读者术语合同 base-drift 协调候选与最终门纠正
   - P1
-  - IN_PROGRESS
-  - Codex coordinator
-  - Regenerate provisional page evidence after restored requirement binding, rerun
-    focused validation, then build the exact-commit candidate and exact-SHA browser
-    evidence; human reviews remain PENDING.
+  - DONE
+  - Project Owner / next governed Atlas task
+  - Terminal projection frozen after implementation-candidate gates; rebuild the exact
+    final page, replay browser and formal validation on the final-tree commit, then
+    publish by ff-only main and ordinary non-force push. Human Owner visual and reader
+    comprehension reviews remain PENDING for their governed follow-up.
   - The latest-main candidate preserves the 2523 terminology and audit contract without
     page-effectiveness v2 regression; rendered inventory and first-use explanations
     pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA; Architecture, Contract,
     Integration, Reproducibility, exclusive Full and governed closeout pass; local
     main equals origin/main.
   - '[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md);
-    Plan integration-revalidation-df785dba6d283bd1f1c6 remains validated. A canonical
-    progress update omitted the Markdown requirement link, so the page-effectiveness
-    task-to-requirement binding failed closed and the focused run reported 21 failed
-    / 78 passed in 89.34s. This corrective event restores the canonical requirement
-    binding before regeneration and rerun. Terminology authority remains 50 terms;
-    page-effectiveness v2 and current 2522/2528 facts remain unchanged. Owner visual
-    and reader comprehension remain PENDING. Production effect none; broker action
-    none; TRADING-2524--2527 implementation remains out of scope.'
+    implementation candidate 191e8145efadc55f4c50a5d55bac810efd08ca90 passed exact
+    browser engineering replay for HTML d44fe7fccb05aae6ce05baf45c07c6da62a6f49344d05d27edf6a72c940da343
+    and candidate formal gates: Architecture 865 passed; Contract 276 passed; Integration
+    995 passed / 642 warnings; Reproducibility 24 passed; exclusive Full 9045 passed
+    / 3 skipped / 644 warnings. Runtime artifacts: architecture-fitness_20260815T140540Z,
+    contract-validation_20260815T141238Z, integration_20260815T141555Z, reproducibility_20260815T141657Z,
+    full_20260815T141737Z. Final-tree commit must regenerate exact page/browser and
+    replay formal gates before publication. Owner visual and reader comprehension
+    remain PENDING. Production effect none; broker action none; TRADING-2524--2527
+    implementation remains out of scope.'
   docs_links:
   - docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
-  terminal: false
-  canonical_row_sha256: 6800cc58997c34e6f3c4e1728213063e31c9c12165aee3bac7c762a45f7e5b15
-last_event_id: task-event-b6ba52a7fcb376be8928481e8972f724
+  terminal: true
+  canonical_row_sha256: dc2230b370f5be9bd134953e6c2533cb341b5598e69c306915ff1fb68e07b8dc
+last_event_id: task-event-e4cb427be41f5cf955238316df3ad209
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 77121ff931023fe522a04ed34a7a73faa4b064d84ca77c08aaeae4d5ede5810e
+fragment_checksum: 2831555713e203c328fe096f0b1c819ab1f025ee208120c4b9080100dc438f42

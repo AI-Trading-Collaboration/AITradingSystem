@@ -8,13 +8,13 @@ legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
 task_count: 1001
-active_task_count: 492
-completed_task_count: 509
+active_task_count: 491
+completed_task_count: 510
 fragment_count: 1001
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: d75520efd26185862c3bce2d1e6d9c9f2a10ce402f9f84491e72fbb8fcd5d8c1
+final_chain_sha256: a9e12e268c97374257ccfd5279b7f3dcd123581ab849b56cc36b6a4b45b35a47
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7991,64 +7991,64 @@ fragments:
   entry_sha256: 63d62a2e337a13eaced883acb8d000377b496a838f8bc9a0da09601c00d45269
 - task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
   path: registry/development_tasks/fa/fa09a126c92f815b7c9643538e44d4e24728077bc15568ca61069834b0b71e5e.yaml
-  file_sha256: 81983ab10a5b1569eb3573d1574c9fa3c96a82ec1f60ce543f9e6776e1673157
-  fragment_checksum: 77121ff931023fe522a04ed34a7a73faa4b064d84ca77c08aaeae4d5ede5810e
-  partition: active
+  file_sha256: 9dba3b88947ca8cb11210e8773c053df5543594474c3cb4ca92f6302490b18d3
+  fragment_checksum: 2831555713e203c328fe096f0b1c819ab1f025ee208120c4b9080100dc438f42
+  partition: completed
   order: 996
   previous_entry_sha256: 63d62a2e337a13eaced883acb8d000377b496a838f8bc9a0da09601c00d45269
-  entry_sha256: 3698fa285de6fbf16bdeadca67202fef16ddf898c7476760e026359ae11edf82
+  entry_sha256: c690853ceaaa0afde6a0437103babd6f96b3660e0f792d9d2534398fa8d19309
 - task_id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
   path: registry/development_tasks/52/524572dbdfb90ecdb82650c153991c224145e4fb840041fcf8c96c8d82c788fa.yaml
   file_sha256: 6ec61d62b68be151c9038a564f5bcc544f8d488480b52cdad517ed8599d15e6f
   fragment_checksum: bea8a1d1523e6ee433804bcdca3af15ae1c93bdc72f05d1249d0ddc62c6d6b8f
   partition: completed
   order: 997
-  previous_entry_sha256: 3698fa285de6fbf16bdeadca67202fef16ddf898c7476760e026359ae11edf82
-  entry_sha256: cdbfea635a9e824de2f91ac2166bd3830393009b1cd327c9bb0a76b9782e6b2f
+  previous_entry_sha256: c690853ceaaa0afde6a0437103babd6f96b3660e0f792d9d2534398fa8d19309
+  entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
 - task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   path: registry/development_tasks/b6/b66109977b9a6fa9b6beb44895aaf08ca3ca342d0caf5f554fda5fb403e4e39f.yaml
   file_sha256: 791e90421062ca6ddf7cda3e97b374fde72ec836b3d5481ae5a8dac68c55b4a0
   fragment_checksum: 72d3d70cd203f7fad8b0aa58295a66b2c3bdd3e02b03d8c6031f30f9bce95664
   partition: active
   order: 998
-  previous_entry_sha256: cdbfea635a9e824de2f91ac2166bd3830393009b1cd327c9bb0a76b9782e6b2f
-  entry_sha256: 8e19a447eb1b8667288bb5a32a89a78475863a1e1ee696cdfba094f2f74cf845
+  previous_entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
+  entry_sha256: 3f341745a2462c8f4646685ab852c8304e7ff67369c91bbf2f505d067ba09d48
 - task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
   path: registry/development_tasks/5e/5e5d60ed475eb8d625deb6df8af3a83bb0efccd0c75934ee670063a5358c5b4a.yaml
   file_sha256: 8f1c368be0f386ddedf89ed455c0f71eb5f793b8728a2c1556745fc41ae33547
   fragment_checksum: 71030ef5b6519bdf882cd0c1821bdaa4bf21f5a0b899131554003ab067dea1c5
   partition: active
   order: 999
-  previous_entry_sha256: 8e19a447eb1b8667288bb5a32a89a78475863a1e1ee696cdfba094f2f74cf845
-  entry_sha256: 7631415a81aebae7b3f5d1aa0c0a3d7b897002c9d11cec55c9a660153879737c
+  previous_entry_sha256: 3f341745a2462c8f4646685ab852c8304e7ff67369c91bbf2f505d067ba09d48
+  entry_sha256: c27cf10db46e11b19405a8cb2ef4f6d7ba58e906d07fdac0cf14ebe960efd52e
 - task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   path: registry/development_tasks/1d/1dba72a891e4a43aad0a753f66f0dac1f4f500a8ab53415451bba01cf25c6228.yaml
   file_sha256: dfd4a226b9a41b6264f2885b6a71252781672e1c11d6fcca9faf363e7acc729c
   fragment_checksum: 0941f1ca244f8f5161fd8bfd0440f18f2b048531a031f6f0b6e4b0954b4b0328
   partition: active
   order: 1000
-  previous_entry_sha256: 7631415a81aebae7b3f5d1aa0c0a3d7b897002c9d11cec55c9a660153879737c
-  entry_sha256: 92869bbe6f8578e86fcc0893d9573e0b1c938aa499b5c078d31220d7f0915e04
+  previous_entry_sha256: c27cf10db46e11b19405a8cb2ef4f6d7ba58e906d07fdac0cf14ebe960efd52e
+  entry_sha256: 2b8cc398a2bc0751b9a84d9bcaf2fc5e0251c71625c794c2c30820e398bf0cbf
 - task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
   path: registry/development_tasks/2f/2fb089b7548d9921a668d7611f3dccd913c34bc5548119ce7357763f659a0da1.yaml
   file_sha256: 8ef3b1c7ec7290183fcf69fd5176f24f99d34856dd37cf5a5e736b166200c8cb
   fragment_checksum: 43e410b70fe87ef11857ffdd2533507e3b827a5ae53ad185c47fce633d1e205d
   partition: active
   order: 1001
-  previous_entry_sha256: 92869bbe6f8578e86fcc0893d9573e0b1c938aa499b5c078d31220d7f0915e04
-  entry_sha256: d75520efd26185862c3bce2d1e6d9c9f2a10ce402f9f84491e72fbb8fcd5d8c1
+  previous_entry_sha256: 2b8cc398a2bc0751b9a84d9bcaf2fc5e0251c71625c794c2c30820e398bf0cbf
+  entry_sha256: a9e12e268c97374257ccfd5279b7f3dcd123581ab849b56cc36b6a4b45b35a47
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 4901c8b13f222cdf8fae08be558cf350c2ad466944e5cc84570fe1a9c32cca12
-  byte_count: 1741419
-  row_count: 492
+  sha256: be5e9fd2502a62122980d28405726134857ce639b3880f5b4c73ea4f8a0319b0
+  byte_count: 1739957
+  row_count: 491
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
-  sha256: 25e12d4038c0c610cf0d8c86d6dbc853f099de6c38fa351abc28ece2fa834569
-  byte_count: 1103595
-  row_count: 509
+  sha256: 848d5465d53fe596dd1dccbe02585ed8f2f554ff0a2b286b72c036bc23221272
+  byte_count: 1105371
+  row_count: 510
   generated_do_not_edit: true
 governance_cycles:
 - cycle_id: arch-005-s5-cycle-1-final-import-cutover
@@ -8618,7 +8618,14 @@ governance_cycles:
   change_id: trading-2523a-restore-requirement-binding-20260815
   event_count: 4
   production_effect: none
-governance_cycle_count: 81
+- cycle_id: arch-005-s5-cycle-82
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  change_id: trading-2523a-terminal-projection-final-tree-replay-20260815
+  event_count: 5
+  production_effect: none
+governance_cycle_count: 82
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8632,4 +8639,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: ba0c6e648d9bcec83bb1be1045826c83cea27f999e3afa08d9c2a740f1b8895d
+index_checksum: 4664e8bed57603cce53230aeee252134ab97b4b36c991578bf377ecab65e5b1b

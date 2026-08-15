@@ -127,7 +127,7 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "INCLUDED_READER_TERMINOLOGY_FIRST_USE_CONTRACT"
     )
     assert coverage_by_task["TRADING-2523A"] == (
-        "IN_PROGRESS_BASE_DRIFT_INTEGRATION_CORRECTION"
+        "COMPLETED_BASE_DRIFT_INTEGRATION_CORRECTION"
     )
     assert coverage_by_task["TRADING-2523B"] == (
         "COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE"
