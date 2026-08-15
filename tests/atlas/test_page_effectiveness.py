@@ -38,12 +38,13 @@ def _rendered(
     return (identity,), {"index.html": payload}
 
 
-def test_policy_freezes_reader_questions_and_forty_task_sources() -> None:
+def test_policy_freezes_reader_questions_and_forty_two_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 40
+    assert len(policy.task_sources) == 42
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2522))
+        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2523))],
+        "TRADING-2528",
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -68,9 +69,10 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     assert (
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
-    assert len(manifest.task_coverage) == 40
+    assert len(manifest.task_coverage) == 42
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2522))
+        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2523))],
+        "TRADING-2528",
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -111,6 +113,12 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
     )
     assert coverage_by_task["TRADING-2521"] == (
         "DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_NOT_PROVIDED"
+    )
+    assert coverage_by_task["TRADING-2522"] == (
+        "DISCLOSED_V4_RUN_INVALID_ALL_CHAIN_SESSIONS_TRANSPORT_REJECTED_AXIS_UNRESOLVED"
+    )
+    assert coverage_by_task["TRADING-2528"] == (
+        "DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED"
     )
     assert len(manifest.source_artifacts) == 15
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)

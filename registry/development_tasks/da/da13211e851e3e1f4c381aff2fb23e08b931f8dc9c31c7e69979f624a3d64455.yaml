@@ -1,0 +1,83 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  task_id_sha256: da13211e851e3e1f4c381aff2fb23e08b931f8dc9c31c7e69979f624a3d64455
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  title: null
+  domain: QQQ Options daily transport per-axis diagnostic contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex capability coordinator：从2522 ordinary-pushed exact main独立启动严格离线合同；Project
+    Owner：仅在未来新proposal hashes后决定是否授权外部再验证
+  requirement_refs:
+  - docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2522 v4授权已消费且result INVALID_INCOMPLETE；1201/1201
+    chain sessions被组合transport gate拒绝，具体失败轴 unresolved；external_action=none
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 逐轴typed contract、canonical seal/replay、single/cross-axis reasons、forged
+      PASS/hash/range/count/raw leakage negatives；默认cash preservation；不授权Cloud run
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T06:10:00Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2528-registration-v1
+  lane_id: null
+  base_commit: f876ec853c1431e760bc4cf5b89123265a32080f
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+    - QQQ Options daily transport per-axis diagnostic contract
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：从2522 ordinary-pushed exact main独立启动严格离线合同；Project
+      Owner：仅在未来新proposal hashes后决定是否授权外部再验证
+    - 2522 v4授权已消费且result INVALID_INCOMPLETE；1201/1201 chain sessions被组合transport
+      gate拒绝，具体失败轴 unresolved；external_action=none
+    - 逐轴typed contract、canonical seal/replay、single/cross-axis reasons、forged PASS/hash/range/count/raw
+      leakage negatives；默认cash preservation；不授权Cloud run
+    - '[supporting requirement](docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md)；registration-only
+      successor；2522 release后独立SINGLE_LANE实现；no external action'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2528-registration-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-61c80de30f734db877e2be0ffb008c37
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  - QQQ Options daily transport per-axis diagnostic contract
+  - P0
+  - IN_PROGRESS
+  - Codex capability coordinator：从2522 ordinary-pushed exact main独立启动严格离线合同；Project
+    Owner：仅在未来新proposal hashes后决定是否授权外部再验证
+  - 2522 v4授权已消费且result INVALID_INCOMPLETE；1201/1201 chain sessions被组合transport gate拒绝，具体失败轴
+    unresolved；external_action=none
+  - 逐轴typed contract、canonical seal/replay、single/cross-axis reasons、forged PASS/hash/range/count/raw
+    leakage negatives；默认cash preservation；不授权Cloud run
+  - '[supporting requirement](docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md)；registration-only
+    successor；2522 release后独立SINGLE_LANE实现；no external action'
+  docs_links:
+  - docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: 8554c393f4e72fb4a4a8b33f30591d442f0236c89aac473fd8dc10bb1deac96a
+last_event_id: task-event-61c80de30f734db877e2be0ffb008c37
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 576a9d8e5efdf2c869e4f6d4bec643fb45713cdc4d9c18351cb1b6e4bea4cf9f

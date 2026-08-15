@@ -191,6 +191,14 @@ task_sources:
     requirement_path: docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
     coverage: DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_NOT_PROVIDED
     reader_summary_zh: 2521 已实现对 2520 v4 token 的严格 current-dialog admission、first-run-attempt single-use consumption 与 canonical Results parser adapter；Project Owner 尚未提供 exact v4 token，Cloud 再验证、evidence 与 DQ/PIT 均未发生，engine 继续 cash preservation。
+  - task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+    requirement_path: docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md
+    coverage: DISCLOSED_V4_RUN_INVALID_ALL_CHAIN_SESSIONS_TRANSPORT_REJECTED_AXIS_UNRESOLVED
+    reader_summary_zh: v4 唯一 Cloud run 已完成并消费授权；1201 个有 option chain 的 session 全部被组合 transport gate 拒绝，0 个有效候选，Results admission=FAIL、DQ/PIT=NOT_EVALUATED。现有 export-safe aggregate 不能确定 quote/Greeks/OI/volume 中的具体失败轴，2528 只登记离线诊断合同；禁止第二次 run，engine 继续 cash preservation。
+  - task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md
+    coverage: DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED
+    reader_summary_zh: 2528 仅登记为严格离线的 per-axis transport 诊断合同，尚未实现；它将区分 quote、Greeks、IV、OI、volume 与交叉条件，但不会反演 raw rows、伪造轴向根因或授权新的 Cloud run。当前 evidence/DQ-PIT/engine 状态均不改变。
 acceptance_defaults:
   engineering_validation: NOT_EXECUTED
   owner_visual_review: PENDING_REVIEW

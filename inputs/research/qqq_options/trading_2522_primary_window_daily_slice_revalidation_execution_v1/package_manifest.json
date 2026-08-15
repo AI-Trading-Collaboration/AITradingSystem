@@ -1,0 +1,58 @@
+{
+  "artifacts": [
+    {
+      "byte_count": 2870,
+      "relative_path": "external_action_ledger.json",
+      "role": "COMPLETE_EXTERNAL_ACTION_LEDGER",
+      "sha256": "15f4e83c8cc1d5b65ad1fbc4cb90f155231c993981c1ea354c96e47e5b4e37c7"
+    },
+    {
+      "byte_count": 4324,
+      "relative_path": "failure_receipt.json",
+      "role": "TYPED_FAILURE_RECEIPT",
+      "sha256": "406ad4dc526002f29b9363d25dab2623e55940b385c0d1145d24dab78285ae29"
+    },
+    {
+      "byte_count": 1505,
+      "relative_path": "owner_decision.txt",
+      "role": "OWNER_DECISION_TOKEN",
+      "sha256": "f37e778a8f8c71e126efe622ef7d3f659af944164f7c97d82269125fa663e197"
+    },
+    {
+      "byte_count": 813386,
+      "relative_path": "result.json",
+      "role": "QC_RESULTS_EXPORT_SAFE",
+      "sha256": "45e8647f4d4b0e3590252acedacca4235695341574f44bc593d8ab9b283f603e"
+    },
+    {
+      "byte_count": 1377,
+      "relative_path": "run_attempt_consumption_receipt.json",
+      "role": "AUTHORIZATION_CONSUMPTION_RECEIPT",
+      "sha256": "d636b18cbbd2511bdabc577a8fe43fad1a0e52ca6a39fc5867227eb8aba4647b"
+    },
+    {
+      "byte_count": 2342,
+      "relative_path": "run_attempt_ledger.json",
+      "role": "FIRST_RUN_ATTEMPT_LEDGER",
+      "sha256": "a6fe697f6dcdf59719ce93f543695254b61e4f485ab73d657deb80f2f82fd0c7"
+    }
+  ],
+  "authorization_consumed": true,
+  "broker_action": "none",
+  "content_sha256": "d35c932b3508ce5f9c21a86660e5a7bb264574608e5fd756fbc8b9386c8a9137",
+  "created_at_utc": "2026-08-15T04:23:41.754660Z",
+  "dq_pit_status": "NOT_EVALUATED",
+  "engine_status": "POLICY_BLOCKED_CASH_PRESERVATION",
+  "evidence_admission_status": "FAIL",
+  "external_action_ledger_content_sha256": "406f788b6e9dabfbd8bf552c9a4b20c9a77e39b7fe07b7a9cd87d2c2c3671fce",
+  "failure_receipt_content_sha256": "43711b1ec803d098cb9c6af8f85373ce312ac079d37481e279c1c7659829e4ac",
+  "further_cloud_run_authorized": false,
+  "package_id": "TRADING_2522_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1",
+  "production_effect": "none",
+  "result_file_sha256": "45e8647f4d4b0e3590252acedacca4235695341574f44bc593d8ab9b283f603e",
+  "run_attempt_consumption_content_sha256": "5c997360241d6cc13c21bcf2dbde897b3965554953bb3dee69377c2588c9bca2",
+  "schema_version": "qc_qqq_options_daily_slice_execution_evidence_package.v1",
+  "selection_authorized": false,
+  "task_id": "TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1",
+  "typed_failure_reason": "DAILY_SLICE_TRANSPORT_ALL_SESSIONS_REJECTED_UNRESOLVED_AXIS"
+}

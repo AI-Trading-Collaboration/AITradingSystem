@@ -13,19 +13,21 @@ task_record:
   created_by: null
   priority: P0
   accountable_owner: null
-  next_owner: Codex capability coordinator：admit exact v4 token、execute one bounded
-    browser run、collect/export-safe evidence；Project Owner：independent review
+  next_owner: Codex capability coordinator：完成2522 final gates/push/cleanup后独立启动2528
+    offline per-axis diagnostic contract；Project Owner：未来仅在新proposal hashes后决定是否授权外部再验证
   requirement_refs:
   - docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: OWNER_V4_AUTHORIZATION_ADMITTED_UNUSED；first
-    Cloud run attempt consumes token；external_action=none before registration push
+  unstructured_legacy_blocker_or_next_step: V4_AUTHORIZATION_CONSUMED；backtest 60ce7e0bec3ad2d83a4d1341e0221492
+    Completed但result INVALID_INCOMPLETE；1201/1201 chain sessions transport rejected、具体axis
+    unresolved；second run prohibited；evidence=FAIL；DQ/PIT=NOT_EVALUATED
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: exact 1 mutation/1 backtest/0 orders/0 fills、1202-session strict Results、2512
-      parser、2482 DQ/PIT、typed failure/cash preservation、final gates
+    text: exact export-safe Results/package replay、complete action lifecycle、strict
+      parser FAIL、typed unresolved-axis failure、orders/fills=0/0、cash preservation、2528
+      registration-only、final gates/push/cleanup
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -60,24 +62,58 @@ events:
   - change:TRADING-2522-registration-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-2896677f620b5a80bdbdeeeb9c0d0916
+- schema_version: task_event.v1
+  task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T06:09:00Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2522-BASELINE-DONE-2528-RECONCILIATION-20260815T060900Z
+  lane_id: null
+  base_commit: f876ec853c1431e760bc4cf5b89123265a32080f
+  previous_state_event_id: task-event-2896677f620b5a80bdbdeeeb9c0d0916
+  from_status: IN_PROGRESS
+  to_status: BASELINE_DONE
+  payload:
+    priority: P0
+    next_owner: Codex capability coordinator：完成2522 final gates/push/cleanup后独立启动2528
+      offline per-axis diagnostic contract；Project Owner：未来仅在新proposal hashes后决定是否授权外部再验证
+    blocker_or_next_step: V4_AUTHORIZATION_CONSUMED；backtest 60ce7e0bec3ad2d83a4d1341e0221492
+      Completed但result INVALID_INCOMPLETE；1201/1201 chain sessions transport rejected、具体axis
+      unresolved；second run prohibited；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+    acceptance_criteria: exact export-safe Results/package replay、complete action
+      lifecycle、strict parser FAIL、typed unresolved-axis failure、orders/fills=0/0、cash
+      preservation、2528 registration-only、final gates/push/cleanup
+    notes: '[supporting requirement](docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md)；result
+      SHA=45e8647f4d4b0e3590252acedacca4235695341574f44bc593d8ab9b283f603e；manifest=407a9f9e8fe6a71dab62c879566b40213116606798e2ea9ba846dd4d05683892；typed
+      failure=DAILY_SLICE_TRANSPORT_ALL_SESSIONS_REJECTED_UNRESOLVED_AXIS；no further
+      external action authorized'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:TRADING-2522-BASELINE-DONE-2528-RECONCILIATION-20260815T060900Z
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-44f2f6ca17d1e3117833caf6ded83955
 projection:
   legacy_first_eight_cells:
   - TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
   - QQQ Options primary-window daily Slice revalidation execution and evidence
   - P0
-  - IN_PROGRESS
-  - Codex capability coordinator：admit exact v4 token、execute one bounded browser
-    run、collect/export-safe evidence；Project Owner：independent review
-  - OWNER_V4_AUTHORIZATION_ADMITTED_UNUSED；first Cloud run attempt consumes token；external_action=none
-    before registration push
-  - exact 1 mutation/1 backtest/0 orders/0 fills、1202-session strict Results、2512
-    parser、2482 DQ/PIT、typed failure/cash preservation、final gates
-  - '[supporting requirement](docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md)；registration
-    base 5485794e；inherits 2520/2521'
+  - BASELINE_DONE
+  - Codex capability coordinator：完成2522 final gates/push/cleanup后独立启动2528 offline
+    per-axis diagnostic contract；Project Owner：未来仅在新proposal hashes后决定是否授权外部再验证
+  - V4_AUTHORIZATION_CONSUMED；backtest 60ce7e0bec3ad2d83a4d1341e0221492 Completed但result
+    INVALID_INCOMPLETE；1201/1201 chain sessions transport rejected、具体axis unresolved；second
+    run prohibited；evidence=FAIL；DQ/PIT=NOT_EVALUATED
+  - exact export-safe Results/package replay、complete action lifecycle、strict parser
+    FAIL、typed unresolved-axis failure、orders/fills=0/0、cash preservation、2528 registration-only、final
+    gates/push/cleanup
+  - '[supporting requirement](docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md)；result
+    SHA=45e8647f4d4b0e3590252acedacca4235695341574f44bc593d8ab9b283f603e；manifest=407a9f9e8fe6a71dab62c879566b40213116606798e2ea9ba846dd4d05683892；typed
+    failure=DAILY_SLICE_TRANSPORT_ALL_SESSIONS_REJECTED_UNRESOLVED_AXIS；no further
+    external action authorized'
   docs_links:
   - docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md
   terminal: false
-  canonical_row_sha256: ae0594074294cdf57a47b3563249f931ab7088ee6c84df00fdb1bfc3715b5315
-last_event_id: task-event-2896677f620b5a80bdbdeeeb9c0d0916
+  canonical_row_sha256: 4bb73fa2e02e3ef36ecd224abfeef455dccdf567822fe11a455fb6542123e014
+last_event_id: task-event-44f2f6ca17d1e3117833caf6ded83955
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: b4dbc58ffb3c89eaf4af5ecdd0d6145f057f36af8ee266a17d089a83c3fc4636
+fragment_checksum: 5f711c75a3e91250780524b6ede9310540116b2114025097d0f5fb48eba055f9

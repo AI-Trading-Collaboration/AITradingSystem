@@ -7,14 +7,14 @@ cutover_performed: true
 legacy_markdown_writable: false
 policy_sha256: e5df2fb5ad151c30052d0862f8df291b6c88f3c3e66b8eec84941313726aa732
 fragment_root: registry/development_tasks
-task_count: 993
-active_task_count: 486
+task_count: 994
+active_task_count: 487
 completed_task_count: 507
-fragment_count: 993
+fragment_count: 994
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: bea08d60e4a6d306033edc8f8843358a15f36fce9f47c4f312ca7e2207201904
+final_chain_sha256: d25744c0b1980dce23795f30bbfbd7a4a70f723918e311a95e492431d2ddcce3
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7967,18 +7967,26 @@ fragments:
   entry_sha256: 4115b2a9bab04e9766a096d2319c89c784457a0dd900def90a79ccc7cd6c2024
 - task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
   path: registry/development_tasks/08/085c6f5f72ec102afa874132a73c4dff5a3ddd7ab6528d853a70b6f64d91a08b.yaml
-  file_sha256: a7b0bba8fe80279ea310b6a7bd066610b0505e00b29c30cf6706c6f8f35a8b96
-  fragment_checksum: b4dbc58ffb3c89eaf4af5ecdd0d6145f057f36af8ee266a17d089a83c3fc4636
+  file_sha256: cae9b14e305bc41436065a34c32c978a346085da5a06e673271a4019cc27e92a
+  fragment_checksum: 5f711c75a3e91250780524b6ede9310540116b2114025097d0f5fb48eba055f9
   partition: active
   order: 993
   previous_entry_sha256: 4115b2a9bab04e9766a096d2319c89c784457a0dd900def90a79ccc7cd6c2024
-  entry_sha256: bea08d60e4a6d306033edc8f8843358a15f36fce9f47c4f312ca7e2207201904
+  entry_sha256: 0f01f0e5bffb99603258d9cbe70cea28db2965158012a744813ada59e8fd83e7
+- task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  path: registry/development_tasks/da/da13211e851e3e1f4c381aff2fb23e08b931f8dc9c31c7e69979f624a3d64455.yaml
+  file_sha256: 6575ac6cfabe5e1c76fd6877ec6c0bf8e4397f63bc2b841fd354a095fcba3dc3
+  fragment_checksum: 576a9d8e5efdf2c869e4f6d4bec643fb45713cdc4d9c18351cb1b6e4bea4cf9f
+  partition: active
+  order: 994
+  previous_entry_sha256: 0f01f0e5bffb99603258d9cbe70cea28db2965158012a744813ada59e8fd83e7
+  entry_sha256: d25744c0b1980dce23795f30bbfbd7a4a70f723918e311a95e492431d2ddcce3
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: cba9c5fc1f084ebd844276a11c44257b8f2ff5c51597dbddc2a35c789204a2de
-  byte_count: 1734528
-  row_count: 486
+  sha256: db856361c74a2d6d3cc87eaeedaf4de88685489b32170b9e58520008482bd8b8
+  byte_count: 1735857
+  row_count: 487
   generated_do_not_edit: true
 - partition: completed
   path: docs/task_register_completed.md
@@ -8435,7 +8443,21 @@ governance_cycles:
   change_id: TRADING-2522-registration-v1
   event_count: 1
   production_effect: none
-governance_cycle_count: 64
+- cycle_id: arch-005-s5-cycle-65
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+  change_id: TRADING-2522-BASELINE-DONE-2528-RECONCILIATION-20260815T060900Z
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-66
+  cycle_type: SELF_HOSTED_TASK_REGISTRATION
+  status: PASS
+  task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  change_id: TRADING-2528-registration-v1
+  event_count: 1
+  production_effect: none
+governance_cycle_count: 66
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8449,4 +8471,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 9792508409f6441863def2d5b00bba8d96d38da3f597053ab0e1d0e8de2ee904
+index_checksum: 17bfcb757437e4c6d0570ac22b27456bf8996b73d4b75fabd4309fc72ca24e9e

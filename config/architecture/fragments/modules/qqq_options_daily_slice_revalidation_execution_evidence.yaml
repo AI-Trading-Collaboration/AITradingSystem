@@ -1,0 +1,18 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_daily_slice_revalidation_execution_evidence
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/daily_slice_revalidation_execution_evidence.py
+public_contracts:
+  - BACKTEST_ID
+  - PACKAGE_RELATIVE_PATH
+  - TASK_ID
+  - TYPED_FAILURE_REASON
+  - BuiltDailySliceExecutionEvidencePackage
+  - DailySliceExecutionEvidencePackageManifest
+  - DailySliceExecutionFailureReceipt
+  - PackageArtifact
+  - load_daily_slice_execution_evidence_package
+  - write_daily_slice_execution_evidence_package
+compatibility_facades: []
+deprecation_status: active_reference_architecture

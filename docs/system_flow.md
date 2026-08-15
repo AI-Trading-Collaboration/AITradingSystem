@@ -8517,3 +8517,29 @@ successor adapter。它不修改 2514/2517/2520 historical authority，也不把
 发生。即使未来 Results 能被 canonical parser 接受，也必须由 2482 canonical DQ/PIT report fact 另行通过后才
 能更新 evidence 状态；本任务不允许调用者构造 PASS。API/CLI/HTTP/Object Store/raw options export、订单、
 成交、paper/live/broker/production 和投资解释继续禁止。
+
+## TRADING-2522 QQQ Options 主窗口 daily Slice 再验证执行与失败证据 V1
+
+`qqq_options_research.daily_slice_revalidation_execution_evidence` 将 Project Owner v4 exact token、2521
+admission、first-run consumption、完整 external-action ledger 与真实 export-safe Results JSON 封装为
+canonical evidence package。唯一运行 `60ce7e0bec3ad2d83a4d1341e0221492` 使用主窗口
+`2021-02-22..2025-12-02`，orders/fills=`0/0`，且未读取或导出 raw option rows。
+
+```text
+v4 exact Owner token + 2520 package + 2521 admission
+  -> one project mutation + one Cloud backtest + one export-safe Results collection
+  -> authorization consumed; second run blocked
+  -> Results state Completed, but runtime terminal INVALID_INCOMPLETE
+  -> 1201 chain sessions / 0 valid candidates / 1201 transport rejections
+  -> 2512 strict parser: FAIL
+  -> typed reason: DAILY_SLICE_TRANSPORT_ALL_SESSIONS_REJECTED_UNRESOLVED_AXIS
+  -> local aggregate DQ/PIT = NOT_EVALUATED
+  -> option-event DQ/PIT = NOT_EVALUATED
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+  -> registration-only TRADING-2528 offline per-axis diagnostic contract
+```
+
+现有 export-safe aggregate 只证明所有实际有 chain 的 session 均被组合 transport gate 拒绝，不能可靠
+判断 quote、Greeks、IV、OI、volume 或 cross-field consistency 中哪一轴为根因。因此 2522 不伪造轴向
+PASS/FAIL、不提升 DQ/PIT、不激活 selection/engine，也不授权第二次 Cloud run。2528 只作为离线合同后继
+登记；它必须从 2522 ordinary-pushed exact main 独立启动，任何未来外部再验证仍需新的 exact Owner token。
