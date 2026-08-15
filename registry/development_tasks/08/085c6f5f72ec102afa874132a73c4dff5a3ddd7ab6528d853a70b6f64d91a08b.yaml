@@ -1,0 +1,83 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+  task_id_sha256: 085c6f5f72ec102afa874132a73c4dff5a3ddd7ab6528d853a70b6f64d91a08b
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+  title: null
+  domain: QQQ Options primary-window daily Slice revalidation execution and evidence
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P0
+  accountable_owner: null
+  next_owner: Codex capability coordinator：admit exact v4 token、execute one bounded
+    browser run、collect/export-safe evidence；Project Owner：independent review
+  requirement_refs:
+  - docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: OWNER_V4_AUTHORIZATION_ADMITTED_UNUSED；first
+    Cloud run attempt consumes token；external_action=none before registration push
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: exact 1 mutation/1 backtest/0 orders/0 fills、1202-session strict Results、2512
+      parser、2482 DQ/PIT、typed failure/cash preservation、final gates
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T01:54:13Z'
+  actor: codex_capability_coordinator
+  change_id: TRADING-2522-registration-v1
+  lane_id: null
+  base_commit: 5485794ec1aa8b89b8e1d7d8d683d0dcc43b27bb
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+    - QQQ Options primary-window daily Slice revalidation execution and evidence
+    - P0
+    - IN_PROGRESS
+    - Codex capability coordinator：admit exact v4 token、execute one bounded browser
+      run、collect/export-safe evidence；Project Owner：independent review
+    - OWNER_V4_AUTHORIZATION_ADMITTED_UNUSED；first Cloud run attempt consumes token；external_action=none
+      before registration push
+    - exact 1 mutation/1 backtest/0 orders/0 fills、1202-session strict Results、2512
+      parser、2482 DQ/PIT、typed failure/cash preservation、final gates
+    - '[supporting requirement](docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md)；registration
+      base 5485794e；inherits 2520/2521'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:TRADING-2522-registration-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-2896677f620b5a80bdbdeeeb9c0d0916
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+  - QQQ Options primary-window daily Slice revalidation execution and evidence
+  - P0
+  - IN_PROGRESS
+  - Codex capability coordinator：admit exact v4 token、execute one bounded browser
+    run、collect/export-safe evidence；Project Owner：independent review
+  - OWNER_V4_AUTHORIZATION_ADMITTED_UNUSED；first Cloud run attempt consumes token；external_action=none
+    before registration push
+  - exact 1 mutation/1 backtest/0 orders/0 fills、1202-session strict Results、2512
+    parser、2482 DQ/PIT、typed failure/cash preservation、final gates
+  - '[supporting requirement](docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md)；registration
+    base 5485794e；inherits 2520/2521'
+  docs_links:
+  - docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md
+  terminal: false
+  canonical_row_sha256: ae0594074294cdf57a47b3563249f931ab7088ee6c84df00fdb1bfc3715b5315
+last_event_id: task-event-2896677f620b5a80bdbdeeeb9c0d0916
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: b4dbc58ffb3c89eaf4af5ecdd0d6145f057f36af8ee266a17d089a83c3fc4636
