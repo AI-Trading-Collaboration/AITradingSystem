@@ -1,0 +1,21 @@
+schema_version: atlas_reader_profile.v1
+profile_id: atlas_strategy_research_general_reader
+profile_version: 1.0.0
+status: REVIEWED_BASELINE
+owner: Atlas page engineering owner
+audience_zh: 了解基本投资语境、但不要求熟悉本项目内部架构、状态码、外部研究平台数据传递或任务命名的策略研究页面读者。
+assumed_knowledge_zh:
+  - 知道股票、期权、收益和风险是不同概念。
+  - 知道研究页面不等同于投资建议或下单授权。
+not_assumed_knowledge_zh:
+  - 不要求知道本项目 task、stage、source、schema 或 reason code 的命名规则。
+  - 不要求知道 DQ/PIT、evidence admission、canonical replay 或 source lineage 的工程含义。
+  - 不要求知道 QuantConnect Slice、Results、OptionContract accessor 或 Cloud run 生命周期。
+  - 不要求知道 G2/G3、B0–B6、KEEP_CLOSED 或 PREREGISTRATION_ONLY 等内部状态约定。
+safety:
+  primary_research_start: '2021-02-22'
+  investment_conclusion_generated: false
+  order_authorized: false
+  real_engine_authorized: false
+  production_effect: none
+  broker_action: none

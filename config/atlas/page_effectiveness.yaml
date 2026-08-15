@@ -16,6 +16,8 @@ reader_questions:
   - INVESTMENT_ORDER_ENGINE_AUTHORITY
 relevant_source_paths:
   - config/atlas/page_effectiveness.yaml
+  - config/atlas/reader_profile.yaml
+  - config/atlas/reader_terminology.yaml
   - config/atlas/historical_canonical_projection.yaml
   - config/atlas/qqq_options_projection.yaml
   - config/atlas/status_explanation_authority.yaml
@@ -24,10 +26,13 @@ relevant_source_paths:
   - src/ai_trading_system/atlas/historical_canonical_projection.py
   - src/ai_trading_system/atlas/page_effectiveness.py
   - src/ai_trading_system/atlas/qqq_options_projection.py
+  - src/ai_trading_system/atlas/reader_terminology_projection.py
+  - src/ai_trading_system/atlas/rendered_term_inventory.py
   - src/ai_trading_system/atlas/status_explanation_projection.py
   - src/ai_trading_system/atlas/work_progress_projection.py
   - src/ai_trading_system/contracts/strategy_research_page_effectiveness.py
   - src/ai_trading_system/contracts/strategy_research_qqq_options_projection.py
+  - src/ai_trading_system/contracts/strategy_research_reader_terminology.py
   - src/ai_trading_system/contracts/strategy_research_status_explanation.py
   - src/ai_trading_system/contracts/strategy_research_work_progress.py
 task_sources:
@@ -189,16 +194,40 @@ task_sources:
     reader_summary_zh: 离线排查确认 2519 successor 除 scheduled callback 假设外还误用了 contract.underlying；2520 已改为 precise daily Slice、underlying_last_price 与 export-safe diagnostics，但尚无新 Owner token 或 Cloud 再验证，evidence=FAIL、DQ/PIT=NOT_EVALUATED，engine 继续 cash preservation。
   - task_id: TRADING-2521_QC_QQQ_OPTIONS_DAILY_SLICE_REVALIDATION_AUTHORIZATION_ADMISSION_V1
     requirement_path: docs/requirements/TRADING-2521_QC_QQQ_Options_Daily_Slice_Revalidation_Authorization_Admission_V1.md
-    coverage: DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_ADMITTED_UNUSED
-    reader_summary_zh: 2521 已按 current-dialog exact bytes 接纳 v4 token 并形成 admitted-unused receipt；该阶段没有运行 Cloud、没有 Results 或 DQ/PIT PASS，且 token 后续是否消费必须由 2522 execution evidence 单独陈述，engine 继续 cash preservation。
+    coverage: DISCLOSED_V4_AUTHORIZATION_ADMITTED_AND_CONSUMED_BY_2522_RUN
+    reader_summary_zh: 2521 已实现 v4 授权的严格准入、首次运行即消费和 Results 解析适配；exact v4 token 已由 2522 的唯一 Cloud run 准入并消费，不允许第二次运行。该 run 的 evidence admission=FAIL、DQ/PIT=NOT_EVALUATED，engine 继续 cash preservation。
   - task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
     requirement_path: docs/requirements/TRADING-2522_QC_QQQ_Options_Primary_Window_Daily_Slice_Revalidation_Execution_Evidence_V1.md
     coverage: DISCLOSED_V4_RUN_INVALID_ALL_CHAIN_SESSIONS_TRANSPORT_REJECTED_AXIS_UNRESOLVED
     reader_summary_zh: v4 唯一 Cloud run 已完成并消费授权；1201 个有 option chain 的 session 全部被组合 transport gate 拒绝，0 个有效候选，Results admission=FAIL、DQ/PIT=NOT_EVALUATED。现有 export-safe aggregate 不能确定 quote/Greeks/OI/volume 中的具体失败轴，2528 只登记离线诊断合同；禁止第二次 run，engine 继续 cash preservation。
+  - task_id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+    requirement_path: docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
+    coverage: INCLUDED_READER_TERMINOLOGY_FIRST_USE_CONTRACT
+    reader_summary_zh: 页面新增目标读者画像、术语分类、完整 rendered-text inventory 与首现解释门禁；新 HTML 的人工视觉和理解验收不会沿用旧页面 PASS。
+  - task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+    requirement_path: docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
+    coverage: IN_PROGRESS_BASE_DRIFT_INTEGRATION_CORRECTION
+    reader_summary_zh: 本纠正任务只承接 main 漂移后的候选集成、页面 identity 重建与最终验证，不改变策略、DQ/PIT、研究窗口或交易边界；完成前 TRADING-2524–2527 继续受阻。
   - task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
     requirement_path: docs/requirements/TRADING-2523B_Atlas_Page_Effectiveness_Serial_Contract_Wave_V1.md
     coverage: COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE
-    reader_summary_zh: 2523B 只冻结 page-effectiveness v2、带后缀 task identity 的确定性顺序与 human PASS 对 exact 页面 SHA-256 的绑定；不改术语页面、Cloud、QQQ transport、DQ/PIT、engine 或交易权限。
+    reader_summary_zh: 2523B 已冻结 page-effectiveness v2、带后缀 task identity 的确定性顺序与 human PASS 对 exact 页面 SHA-256 的绑定；本任务只在该契约上增加术语解释，不降低页面身份约束。
+  - task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+    requirement_path: docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
+    coverage: PLANNED_READER_DECISION_PATH_NOT_STARTED
+    reader_summary_zh: 后续将先冻结 reader_projection_contract.v1，再重排默认决策路径与渐进披露；当前状态为 PROPOSED，尚未启动实现或验收。
+  - task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
+    requirement_path: docs/requirements/TRADING-2525_Atlas_Change_Evidence_Date_And_State_Semantics_V1.md
+    coverage: PLANNED_READER_STATE_DATE_CHANGE_NOT_STARTED
+    reader_summary_zh: 后续 engineering lane 将实现对象限定的状态、日期与 snapshot change 投影；当前状态为 PROPOSED，尚未形成页面事实。
+  - task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+    requirement_path: docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
+    coverage: PLANNED_ACCESSIBILITY_DRILLDOWN_NOT_STARTED
+    reader_summary_zh: 后续 evidence lane 与 coordinator 将完成键盘、screen reader、reflow 和 audit destination；当前状态为 PROPOSED，不能据此宣称 accessibility PASS。
+  - task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+    requirement_path: docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
+    coverage: PLANNED_HUMAN_COMPREHENSION_PILOT_NOT_STARTED
+    reader_summary_zh: 后续只能对冻结 exact HTML 执行受治理的人类理解 pilot；当前状态为 PROPOSED，protocol、participant 与 Owner attestation 均未发生。
   - task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
     requirement_path: docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md
     coverage: DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED

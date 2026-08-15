@@ -1,0 +1,85 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  task_id_sha256: 2fb089b7548d9921a668d7611f3dccd913c34bc5548119ce7357763f659a0da1
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  title: null
+  domain: Atlas strategy research page / governed human comprehension acceptance pilot
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 2527-A strategy-evidence worker；Project Owner 批准 participant/sample/scenario/threshold/signature
+    policy；2524 coordinator 执行 2527-B
+  requirement_refs:
+  - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2527-A 仅依赖 2524-S0，可准备 schema/protocol/scenario/truth
+    rubric；2527-B 必须等待唯一 exact HTML、2526-B PASS 与 Owner policy，identity 变化即停止并重测。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B 对 frozen exact
+      HTML 保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级 PASS。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T22:10:18.4623936+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-followon-register-4-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+    - Atlas strategy research page / governed human comprehension acceptance pilot
+    - P1
+    - PROPOSED
+    - 2527-A strategy-evidence worker；Project Owner 批准 participant/sample/scenario/threshold/signature
+      policy；2524 coordinator 执行 2527-B
+    - 2527-A 仅依赖 2524-S0，可准备 schema/protocol/scenario/truth rubric；2527-B 必须等待唯一 exact
+      HTML、2526-B PASS 与 Owner policy，identity 变化即停止并重测。
+    - 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B 对 frozen exact HTML
+      保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级 PASS。
+    - 2026-08-15：拆为并行 2527-A protocol preparation 与串行 2527-B human gate；[supporting
+      requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)。status
+      仍为 PROPOSED，尚未执行人类测试或签署理解验收。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2523a-followon-register-4-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-9c46dfe8566581732f091ce17e18b59a
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
+  - Atlas strategy research page / governed human comprehension acceptance pilot
+  - P1
+  - PROPOSED
+  - 2527-A strategy-evidence worker；Project Owner 批准 participant/sample/scenario/threshold/signature
+    policy；2524 coordinator 执行 2527-B
+  - 2527-A 仅依赖 2524-S0，可准备 schema/protocol/scenario/truth rubric；2527-B 必须等待唯一 exact
+    HTML、2526-B PASS 与 Owner policy，identity 变化即停止并重测。
+  - 2527-A 只生成 reviewed protocol preparation，不招募、不执行、不代签；2527-B 对 frozen exact HTML
+    保留 verbatim、双 reviewer、disagreement 与 Owner attestation；自动化不得升级 PASS。
+  - 2026-08-15：拆为并行 2527-A protocol preparation 与串行 2527-B human gate；[supporting
+    requirement](docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md)。status
+    仍为 PROPOSED，尚未执行人类测试或签署理解验收。
+  docs_links:
+  - docs/requirements/TRADING-2527_Atlas_Human_Comprehension_Acceptance_Pilot_V1.md
+  terminal: false
+  canonical_row_sha256: 70fdb8972844e52206449fb34cfb473e8dbbd4a1a90459f33caaa3f470392df7
+last_event_id: task-event-9c46dfe8566581732f091ce17e18b59a
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 43e410b70fe87ef11857ffdd2533507e3b827a5ae53ad185c47fce633d1e205d

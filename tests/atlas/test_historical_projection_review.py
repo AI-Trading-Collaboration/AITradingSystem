@@ -338,6 +338,13 @@ def test_local_canonical_page_uses_current_successor_identity_when_available() -
             "TRADING-2520",
             "TRADING-2521",
             "TRADING-2522",
+            "TRADING-2523",
+            "TRADING-2523A",
+            "TRADING-2523B",
+            "TRADING-2524",
+            "TRADING-2525",
+            "TRADING-2526",
+            "TRADING-2527",
             "TRADING-2528",
         ]
         assert validation_sidecar["status"] == "PASS"

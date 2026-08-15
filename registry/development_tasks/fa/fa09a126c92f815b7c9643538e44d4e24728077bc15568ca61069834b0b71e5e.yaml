@@ -1,0 +1,208 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  task_id_sha256: fa09a126c92f815b7c9643538e44d4e24728077bc15568ca61069834b0b71e5e
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  title: null
+  domain: Atlas / 读者术语合同 base-drift 协调候选与最终门纠正
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Codex coordinator
+  requirement_refs:
+  - docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: Regenerate provisional page evidence after
+    restored requirement binding, rerun focused validation, then build the exact-commit
+    candidate and exact-SHA browser evidence; human reviews remain PENDING.
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: The latest-main candidate preserves the 2523 terminology and audit contract
+      without page-effectiveness v2 regression; rendered inventory and first-use explanations
+      pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA; Architecture,
+      Contract, Integration, Reproducibility, exclusive Full and governed closeout
+      pass; local main equals origin/main.
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T21:59:30+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-register-post-2523b-main-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+    - Atlas / 读者术语合同 base-drift 协调候选与最终门纠正
+    - P1
+    - IN_PROGRESS
+    - Codex coordinator
+    - Apply only reviewed overlaps from integration-revalidation-df785dba6d283bd1f1c6
+      on one latest-main candidate; preserve page-effectiveness v2, rebuild shared/generated
+      authority once, then run exact-HTML browser replay and final formal gates.
+    - The latest-main candidate preserves the 2523 terminology and audit contract
+      without page-effectiveness v2 regression; rendered inventory and first-use explanations
+      pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA; Architecture,
+      Contract, Integration, Reproducibility, exclusive Full and governed closeout
+      pass; local main equals origin/main.
+    - '[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md);
+      Project Owner authorized continuation after 2523B release; plan integration-revalidation-df785dba6d283bd1f1c6
+      validator PASS with RECONCILIATION_REQUIRED, zero contract conflicts, 18 reviewed
+      domain overlaps and 8 coordinator refreshes; production effect none; broker
+      action none; TRADING-2524--2527 implementation remains out of scope.'
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2523a-register-post-2523b-main-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e0b55623d0ea9b697a0b021da74770df
+- schema_version: task_event.v1
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T22:07:15.4907090+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-reviewed-overlap-reconciliation-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: task-event-e0b55623d0ea9b697a0b021da74770df
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex coordinator
+    blocker_or_next_step: Reviewed task-only replay and page-effectiveness v2 reconciliation
+      are complete on the latest-main candidate; rebuild generated/shared authority
+      once, then run lane-focused exact-HTML validation and browser replay.
+    acceptance_criteria: The latest-main candidate preserves the 2523 terminology
+      and audit contract without page-effectiveness v2 regression; rendered inventory
+      and first-use explanations pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA;
+      Architecture, Contract, Integration, Reproducibility, exclusive Full and governed
+      closeout pass; local main equals origin/main.
+    notes: '[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md);
+      Project Owner authorized continuation after 2523B release; plan integration-revalidation-df785dba6d283bd1f1c6
+      validator PASS with RECONCILIATION_REQUIRED, zero contract conflicts, 18 reviewed
+      domain overlaps and 8 coordinator refreshes; reviewed overlap reconciliation
+      preserves page-effectiveness v2 and current 2522/2528 facts; production effect
+      none; broker action none; TRADING-2524--2527 implementation remains out of scope.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523a-reviewed-overlap-reconciliation-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e11de27ccd8ccf5a302824d8cca887f7
+- schema_version: task_event.v1
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T22:45:15.5673365+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-focused-and-provisional-browser-evidence-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: task-event-e11de27ccd8ccf5a302824d8cca887f7
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex coordinator
+    blocker_or_next_step: Build the exact-commit implementation candidate, regenerate
+      canonical HTML/inventory and browser evidence against that SHA, then run the
+      serial formal gates; human Owner visual and reader comprehension reviews remain
+      PENDING.
+    acceptance_criteria: The latest-main candidate preserves the 2523 terminology
+      and audit contract without page-effectiveness v2 regression; rendered inventory
+      and first-use explanations pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA;
+      Architecture, Contract, Integration, Reproducibility, exclusive Full and governed
+      closeout pass; local main equals origin/main.
+    notes: 'Plan integration-revalidation-df785dba6d283bd1f1c6 remains validated.
+      Reviewed overlap reconciliation preserves page-effectiveness v2 and current
+      2522/2528 facts. Terminology authority remains 50 terms and corrects v4 to authorization
+      consumed, result invalid and incomplete. Final focused parallel regression:
+      99 passed in 130.31s. Provisional browser engineering checks passed desktop/mobile
+      reflow, keyboard disclosure, anchor, ARIA and console, but are not promotion
+      evidence because the page binds the pre-commit source identity. Owner visual
+      and reader comprehension remain PENDING. Production effect none; broker action
+      none; TRADING-2524--2527 implementation remains out of scope.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523a-focused-and-provisional-browser-evidence-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-3fd2731e491a42fc4c7f4577f03ca842
+- schema_version: task_event.v1
+  task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T22:49:56.3434213+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-restore-requirement-binding-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: task-event-3fd2731e491a42fc4c7f4577f03ca842
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: Codex coordinator
+    blocker_or_next_step: Regenerate provisional page evidence after restored requirement
+      binding, rerun focused validation, then build the exact-commit candidate and
+      exact-SHA browser evidence; human reviews remain PENDING.
+    acceptance_criteria: The latest-main candidate preserves the 2523 terminology
+      and audit contract without page-effectiveness v2 regression; rendered inventory
+      and first-use explanations pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA;
+      Architecture, Contract, Integration, Reproducibility, exclusive Full and governed
+      closeout pass; local main equals origin/main.
+    notes: '[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md);
+      Plan integration-revalidation-df785dba6d283bd1f1c6 remains validated. A canonical
+      progress update omitted the Markdown requirement link, so the page-effectiveness
+      task-to-requirement binding failed closed and the focused run reported 21 failed
+      / 78 passed in 89.34s. This corrective event restores the canonical requirement
+      binding before regeneration and rerun. Terminology authority remains 50 terms;
+      page-effectiveness v2 and current 2522/2528 facts remain unchanged. Owner visual
+      and reader comprehension remain PENDING. Production effect none; broker action
+      none; TRADING-2524--2527 implementation remains out of scope.'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523a-restore-requirement-binding-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-b6ba52a7fcb376be8928481e8972f724
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
+  - Atlas / 读者术语合同 base-drift 协调候选与最终门纠正
+  - P1
+  - IN_PROGRESS
+  - Codex coordinator
+  - Regenerate provisional page evidence after restored requirement binding, rerun
+    focused validation, then build the exact-commit candidate and exact-SHA browser
+    evidence; human reviews remain PENDING.
+  - The latest-main candidate preserves the 2523 terminology and audit contract without
+    page-effectiveness v2 regression; rendered inventory and first-use explanations
+    pass; exact HTML is replayed on desktop/mobile/keyboard/ARIA; Architecture, Contract,
+    Integration, Reproducibility, exclusive Full and governed closeout pass; local
+    main equals origin/main.
+  - '[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md);
+    Plan integration-revalidation-df785dba6d283bd1f1c6 remains validated. A canonical
+    progress update omitted the Markdown requirement link, so the page-effectiveness
+    task-to-requirement binding failed closed and the focused run reported 21 failed
+    / 78 passed in 89.34s. This corrective event restores the canonical requirement
+    binding before regeneration and rerun. Terminology authority remains 50 terms;
+    page-effectiveness v2 and current 2522/2528 facts remain unchanged. Owner visual
+    and reader comprehension remain PENDING. Production effect none; broker action
+    none; TRADING-2524--2527 implementation remains out of scope.'
+  docs_links:
+  - docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
+  terminal: false
+  canonical_row_sha256: 6800cc58997c34e6f3c4e1728213063e31c9c12165aee3bac7c762a45f7e5b15
+last_event_id: task-event-b6ba52a7fcb376be8928481e8972f724
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 77121ff931023fe522a04ed34a7a73faa4b064d84ca77c08aaeae4d5ede5810e

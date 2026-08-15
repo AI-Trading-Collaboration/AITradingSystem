@@ -1,0 +1,113 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+  task_id_sha256: 524572dbdfb90ecdb82650c153991c224145e4fb840041fcf8c96c8d82c788fa
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+  title: null
+  domain: Atlas strategy research page / reader-facing terminology first-use contract
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: TRADING-2523A coordinator；Project Owner 后续通过 TRADING-2527 对 exact HTML
+    执行独立 visual 与 reader comprehension review
+  requirement_refs:
+  - docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2523 的 immutable terminal 记录由 2523A 承接
+    base-drift 集成、页面 identity 重建、browser replay、exclusive Full 与 closeout；2524-S0
+    必须等待 2523A 发布。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: reader-facing inventory、50 项术语 exact-once 分类、首现解释、audit binding、2522/current
+      identity 与 no-strategy-PASS 安全边界闭合；最终门由 2523A 在 latest-main candidate 上完成。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T22:08:44.9366510+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523-register-active-post-2523b-main-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: null
+  from_status: null
+  to_status: IN_PROGRESS
+  payload:
+    legacy_projection:
+    - TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+    - Atlas strategy research page / reader-facing terminology first-use contract
+    - P1
+    - IN_PROGRESS
+    - TRADING-2523A coordinator；Project Owner 后续通过 TRADING-2527 对 exact HTML 执行独立
+      visual 与 reader comprehension review
+    - 2523 的 immutable terminal 记录由 2523A 承接 base-drift 集成、页面 identity 重建、browser
+      replay、exclusive Full 与 closeout；2524-S0 必须等待 2523A 发布。
+    - reader-facing inventory、50 项术语 exact-once 分类、首现解释、audit binding、2522/current
+      identity 与 no-strategy-PASS 安全边界闭合；最终门由 2523A 在 latest-main candidate 上完成。
+    - 2026-08-15：[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md)。冻结
+      lane 的 late Full 因 main drift carrier 检查失败；canonical terminal task 不可逆，故由 corrective
+      successor TRADING-2523A 继续。Owner visual/reader comprehension 保持 PENDING_REVIEW；production_effect=none，broker_action=none。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2523-register-active-post-2523b-main-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-7d38474b3c2fb5c786ede9fd4fd58526
+- schema_version: task_event.v1
+  task_id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-15T22:09:05.8424181+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523-terminal-history-restored-post-2523b-main-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: task-event-7d38474b3c2fb5c786ede9fd4fd58526
+  from_status: IN_PROGRESS
+  to_status: DONE
+  payload:
+    priority: P1
+    next_owner: TRADING-2523A coordinator；Project Owner 后续通过 TRADING-2527 对 exact
+      HTML 执行独立 visual 与 reader comprehension review
+    blocker_or_next_step: 2523 的 immutable terminal 记录由 2523A 承接 base-drift 集成、页面
+      identity 重建、browser replay、exclusive Full 与 closeout；2524-S0 必须等待 2523A 发布。
+    acceptance_criteria: reader-facing inventory、50 项术语 exact-once 分类、首现解释、audit binding、2522/current
+      identity 与 no-strategy-PASS 安全边界闭合；最终门由 2523A 在 latest-main candidate 上完成。
+    notes: 2026-08-15：[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md)。冻结
+      lane 的 late Full 因 main drift carrier 检查失败；canonical terminal task 不可逆，故由 corrective
+      successor TRADING-2523A 继续。Owner visual/reader comprehension 保持 PENDING_REVIEW；production_effect=none，broker_action=none。
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2523-terminal-history-restored-post-2523b-main-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-5e0f81c143a363941005821151c4592d
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
+  - Atlas strategy research page / reader-facing terminology first-use contract
+  - P1
+  - DONE
+  - TRADING-2523A coordinator；Project Owner 后续通过 TRADING-2527 对 exact HTML 执行独立 visual
+    与 reader comprehension review
+  - 2523 的 immutable terminal 记录由 2523A 承接 base-drift 集成、页面 identity 重建、browser replay、exclusive
+    Full 与 closeout；2524-S0 必须等待 2523A 发布。
+  - reader-facing inventory、50 项术语 exact-once 分类、首现解释、audit binding、2522/current identity
+    与 no-strategy-PASS 安全边界闭合；最终门由 2523A 在 latest-main candidate 上完成。
+  - 2026-08-15：[supporting requirement](docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md)。冻结
+    lane 的 late Full 因 main drift carrier 检查失败；canonical terminal task 不可逆，故由 corrective
+    successor TRADING-2523A 继续。Owner visual/reader comprehension 保持 PENDING_REVIEW；production_effect=none，broker_action=none。
+  docs_links:
+  - docs/requirements/TRADING-2523_Atlas_Reader_Facing_Terminology_First_Use_Contract_V1.md
+  terminal: true
+  canonical_row_sha256: d2b70bb250a3bb546125d4925d0048c83e079f51d9faea060051678a35770513
+last_event_id: task-event-5e0f81c143a363941005821151c4592d
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: bea8a1d1523e6ee433804bcdca3af15ae1c93bdc72f05d1249d0ddc62c6d6b8f

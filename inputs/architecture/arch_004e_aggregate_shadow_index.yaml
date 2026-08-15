@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 108
+fragment_count: 111
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -21,7 +21,7 @@ targets:
 - target_id: artifact_catalog
   current_path: docs/artifact_catalog.md
   current_exists: true
-  current_sha256: 9061f6f10b25761a953d247e2b61957fbc0ba05c8ba8d1e7b9a11301c6282b98
+  current_sha256: 91696daf91913e04d7b5a1f5b085c3802ede2cbe5a42afa7b1948db82a3180dd
   fragment_root: config/architecture/fragments/artifacts
   fragment_count: 6
   fragment_paths:
@@ -34,7 +34,7 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: c92d6e38ff8e9103f716aad0e4d270a4e38a08abb645b47be6ed556ac1fefc0c
+  current_sha256: bab41d55600fe2f28d72181a34b8f61f2ff14704f43ec7957e29bff4e715133a
   fragment_root: config/architecture/fragments/flows
   fragment_count: 46
   fragment_paths:
@@ -477,6 +477,20 @@ fragments:
   path: config/architecture/fragments/modules/atlas_reader_status_explanation_renderer.yaml
   sha256: b7795e21d5b00e56d6935572de82f73cbd2e7b3e133f39988c570494383e5a38
   generated_source_of_truth_active: false
+- fragment_id: module.atlas_reader_terminology_projection
+  fragment_kind: module
+  owner: atlas_publishing_experience
+  target_id: null
+  path: config/architecture/fragments/modules/atlas_reader_terminology_projection.yaml
+  sha256: f8f4fc7d4fa59d9e9ca031f38e96fbc9f6ef1d3d10aa04e316651f3279ce7639
+  generated_source_of_truth_active: false
+- fragment_id: module.atlas_rendered_term_inventory
+  fragment_kind: module
+  owner: atlas_publishing_experience
+  target_id: null
+  path: config/architecture/fragments/modules/atlas_rendered_term_inventory.yaml
+  sha256: 081cb936f5083d7731957b51ec48363dd902d13eb998ac0728a43afccbd7baaf
+  generated_source_of_truth_active: false
 - fragment_id: module.atlas_status_explanation_projection
   fragment_kind: module
   owner: atlas_publishing_experience
@@ -784,6 +798,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/strategy_research_qqq_options_projection_contract.yaml
   sha256: ee02aa122be9614321efd78cbb0caf925d4b0e9b7d80d6070bb0c31e013908b0
+  generated_source_of_truth_active: false
+- fragment_id: module.strategy_research_reader_terminology_contract
+  fragment_kind: module
+  owner: atlas_publishing_experience
+  target_id: null
+  path: config/architecture/fragments/modules/strategy_research_reader_terminology_contract.yaml
+  sha256: 3508cac95596ed5b66ce92f1ed62ec67d6c875df079ea5d79cefb34d20ad46a0
   generated_source_of_truth_active: false
 - fragment_id: module.strategy_research_reopen_readiness_decision
   fragment_kind: module

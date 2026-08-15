@@ -1,0 +1,20 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.strategy_research_reader_terminology_contract
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/contracts/strategy_research_reader_terminology.py
+public_contracts:
+  - ReaderInteractionState
+  - ReaderProfile
+  - ReaderTermClassification
+  - ReaderTermDefinition
+  - ReaderTerminologyContractError
+  - ReaderTextLayer
+  - ReaderTextSurface
+  - RenderedAuditIdentifier
+  - RenderedReaderSurface
+  - RenderedTermInventory
+  - RenderedTermOccurrence
+  - RenderedTermResolution
+compatibility_facades: []
+deprecation_status: active_reference_architecture

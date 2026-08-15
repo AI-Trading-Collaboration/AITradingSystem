@@ -589,6 +589,7 @@ def build_repository_authority(
         "src/ai_trading_system/platform/architecture/compatibility_authority.py",
         "tests/test_arch_004_refactor_policy.py",
         "tests/test_arch_004g_deprecation.py",
+        "tests/atlas/test_historical_source_adapters.py",
         "tests/test_devx_006c_compatibility_authority.py",
         "tests/test_external_request_cache_revalidation_coordination.py",
         "tests/test_trading2452_architecture_contract.py",

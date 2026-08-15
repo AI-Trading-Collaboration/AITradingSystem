@@ -1,0 +1,173 @@
+# TRADING-2524：Atlas 读者决策路径与渐进披露 V1
+
+最后更新：2026-08-15
+
+- stable task id：`TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1`
+- priority：`P1`
+- status：`PROPOSED`
+- proposed governed mode：`DUAL_LANE` coordinator/integration scope
+- contract change：`true`（consumer-visible reader contract）
+- predecessor：`TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1`
+- production effect：`none`
+- broker action：`none`
+
+## 1. 问题与目标
+
+当前 cited-query 页面把 `page_effectiveness`、`system_flow`、`qqq_options_projection` 和
+`result_ledger` 放在五个 canonical reader questions 之前。测试能够证明问题与证据存在，却不能证明
+普通读者在注意力耗尽前看到了答案。移动端仅完成无水平溢出也不能证明任务路径可用。
+
+本任务建立最小、可回滚的 reader information architecture contract：先给结论边界、风险、阻塞与五个
+问题的简答，再按需进入研究解释与审计证据；不删除 provenance，不复制 canonical facts，也不新建第二套
+Reader Brief。
+
+## 2. 冻结角色边界
+
+- typed fact/evidence layer 是 task、snapshot、result、DQ/PIT、acceptance 与 lineage 的唯一事实源；
+- Reader Brief 是唯一日常 reader entry，继续遵守 `conclusion -> evidence -> calculation -> links`；
+- Atlas 是围绕具体研究问题的 reader-first 解释与 research drilldown；
+- audit artifacts 保留 raw ID、hash、locator、receipt、manifest、sidecar 与 canonical bytes；
+- reader、research、audit 可以有不同投影深度，但不得形成三份独立手写状态或复制 HTML 报告。
+
+## 3. 推荐默认顺序
+
+桌面与移动端共享同一 DOM/语义顺序：
+
+1. 页面信任条：source commit、freshness、数据/证据/页面日期、三轴验收、
+   `strategy conclusion pass count=0`、`production_effect=none`、`broker_action=none`；
+2. reader overview：当前主线、最大 blocker、已有证据、不能推出什么、下一责任方与下一合法动作；
+3. 五个 canonical questions 及默认可见的简答和核心限制；
+4. 相对上一 snapshot 的 `CHANGED / UNCHANGED / UNKNOWN / STOPPED` 摘要；
+5. 当前研究结论边界、QQQ aggregate 与关键停止原因；
+6. engineering / research / page acceptance 三轴摘要；
+7. 当前 system-flow 阶段、上一步与下一步；
+8. QQQ projection、完整 result ledger、归因和计算的 research drilldown；
+9. glossary index 与明确的 audit destinations。
+
+页面级六个 reader questions 与五个 cited-query questions 必须有 typed 映射，不能表现为 11 个互不相关的
+问题。移动端不得只把桌面多栏机械堆叠；视觉顺序必须与 DOM 顺序一致。
+
+## 4. Progressive disclosure 合同
+
+- L0 `READER_DEFAULT`：答案、边界、风险、日期、变化、停止原因与下一动作；
+- L1 `RESEARCH_DRILLDOWN`：节点解释、结果、归因、比较与计算；
+- `AUDIT_STRATUM`：通过独立 anchor、sidecar 或 audit artifact 到达，不再嵌套于 L1 disclosure；
+- 页面内交互深度不得超过两级，不允许 `<details>` 嵌套 `<details>`；
+- 每张 reader card 最多一个主要 disclosure，summary 必须说明将展开什么；
+- 策略无效性、关键风险和下一合法动作不得因 disclosure 关闭而消失。
+
+该设计参考 Shneiderman overview-first / details-on-demand、NN/g Progressive Disclosure、SEC Plain
+English、Google PAIR explainability/trust、FCA consumer understanding 与 W3C clear-content/accessibility
+方法，但仓库 authority、typed facts 与真实验收结果始终优先。
+
+## 5. Owner 决策、允许动作与禁止动作
+
+必须由 Owner 冻结：
+
+- 默认读者与 Owner/researcher/operator/auditor 是否共用入口；
+- Reader Brief、Atlas 与 artifacts 的 canonical role boundary；
+- always-visible 的风险、日期、验收与授权字段；
+- 使用单页渐进展开还是同一事实源的角色投影；
+- 桌面与移动端的首要读者任务。
+
+允许：section order、compact summary、anchor、disclosure boundary、mobile linear flow、typed
+source-to-projection mapping 与可回滚 CSS/HTML。
+
+禁止：第二套 Reader Brief、复制 canonical facts、修改研究结果、研究窗口、DQ/PIT、状态 enum、投资解释
+阈值、production 或 broker 行为。
+
+## 6. 预期制品与验证
+
+预期制品：IA contract、desktop/mobile order、L0/L1/audit mapping、六问到五问 mapping、before/after
+exact HTML、source coverage map、rollback plan 与独立人工 review plan。
+
+验证至少覆盖：source/semantic replay、section/DOM order、关键风险默认可见、desktop/mobile visual、
+keyboard、screen-reader smoke、no nested disclosure、audit evidence 可达与基线/候选定性 comprehension。
+
+## 7. 分阶段并行拓扑
+
+### W0：前置串行门
+
+- 2523 必须先形成 validated final commit 并进入 local `main`；在此之前不创建本任务或 2525--2527
+  的实现 branch/worktree；
+- coordinator 复核 reader identity、terminology、publication identity 与现有页面 source binding；
+- 若 2523 closeout 后 local `main` 又发生 consumer-semantic drift，先生成 governed
+  `integration_revalidation_plan.v1`，不得让 lane 从不一致 base 启动。
+
+### S0：最小 serial contract wave
+
+coordinator 先冻结 `reader_projection_contract.v1`，至少明确：
+
+- section slots、DOM/视觉顺序与 always-visible fields；
+- 页面级六问到五个 cited-query questions 的 typed mapping；
+- L0 `READER_DEFAULT`、L1 `RESEARCH_DRILLDOWN` 与 `AUDIT_STRATUM` 边界；
+- state projection、date/change、accessibility semantics 的稳定接口，而非具体实现；
+- canonical source binding、raw identifier 对应关系与 exact identity/replay 规则；
+- worker 可消费的 fixtures、error types 与 coordinator remediation handoff 格式。
+
+S0 是 consumer-visible contract，必须由 coordinator 串行实现、review、focused validate、提交并进入
+local `main`。只有此后才冻结一个新的 exact common base，启动两条 lane；不得把未提交的 S0 working
+tree 当作共享合同。
+
+### P1：同 base 双线并行
+
+- engineering lane：执行 2525 的 typed state/date/change config、module 与 focused tests；
+- strategy-evidence lane：执行 2526-A 的 accessibility validator/harness/evidence，以及 2527-A 的
+  protocol/schema/scenario/truth-rubric 准备；
+- 两条 lane 从 S0 后同一个 exact local-main commit 创建独立 branch/worktree，声明互斥的 path、module、
+  runtime resource、public-contract 与 evidence-lineage claims；
+- lane worker 只运行 focused/impact validation，不运行或争抢 heavyweight Full。
+
+### I0：coordinator integration
+
+coordinator 从 frozen common base（如存在兼容 base drift，则从 governed plan 批准的 latest-main）形成唯一
+integration candidate，固定吸收顺序为：
+
+`S0 contract -> 2525 state/date domain -> 2526/2527-A evidence tools -> shared renderer/page wiring ->
+generated HTML/manifest/sidecars -> shared docs/registries -> formal validation`。
+
+coordinator 只生成一次 final exact HTML，并据此执行 2526-B final browser/AT/mobile 验收。通过后才可用
+同一 HTML identity 进入 2527-B human pilot。若 renderer remediation 改变 HTML bytes，2526-B 必须重跑，
+已经执行的 2527-B 事实不得跨 identity 复用。
+
+## 8. Path claims 与单写边界
+
+2524 coordinator-owned：
+
+- `docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md` 以及集成时
+  2525--2527 supporting requirements 的状态/进度更新；
+- `config/atlas/reader_projection_contract.yaml`；
+- `src/ai_trading_system/contracts/strategy_research_reader_projection.py`；
+- `tests/atlas/test_reader_projection_contract.py`；
+- `src/ai_trading_system/atlas/cited_query_renderer.py`、package exports、shared renderer tests 与
+  `config/atlas/page_effectiveness.yaml`；
+- canonical Atlas HTML、manifest、validation、work-progress 与 inventory/acceptance sidecars；
+- canonical task registry/index、generated task views、`docs/system_flow.md`、`docs/artifact_catalog.md`、
+  architecture/module/test/deprecation manifests、compatibility authority 与 formal validation artifacts。
+
+worker 禁止写入上述 coordinator paths，也不得自行生成“候选 final”HTML。若 2525/2526 需要 shared DOM、
+CSS 或 page config remediation，提交 typed failing evidence 与 proposed behavior，由 coordinator 在 I0
+一次性实现和回归。
+
+启动 preflight 时必须把实际路径与本节对账；新增共享路径默认归 coordinator，除非先更新 requirement、
+canonical task 和 path claims 并重新 preflight。
+
+## 9. Exit、falsification 与 downstream gate
+
+Exit criteria：五个问题位于重型模块之前；答案默认可见；页面内 disclosure 不超过两级；风险与禁止推断
+始终可见；所有 reader claims 保持 canonical source binding；audit evidence 完整可追踪。
+
+STOP CONDITION：任一可见 claim 失去 canonical source binding，或策略边界/风险被移入折叠层，立即停止；
+不得通过复制事实或放宽验证继续。
+
+2523 闭合后只允许进入本任务 S0；S0 经过 review、focused validation、commit 与 local-main integration
+后，即可并行启动 2525、2526-A 与 2527-A，不要求先完成整个 2524。2524 的最终退出仍要求 coordinator
+integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal gates 全部完成。
+
+## 10. 进度记录
+
+- 2026-08-15：根据 Project Owner 要求，将外部可读性评审建议登记为后续计划。当前仅为
+  `PROPOSED`，未修改 renderer、页面、研究语义或验收状态。
+- 2026-08-15：Project Owner 确认采用“2524-S0 串行合同 + engineering/strategy-evidence 双线 +
+  coordinator 单次集成 + final AT/human 串行验收”。本任务升级为后续 `DUAL_LANE`
+  coordinator/integration scope；状态仍为 `PROPOSED`，2523 未闭合前不启动实现或 worktree。

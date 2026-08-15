@@ -1,0 +1,12 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_reader_terminology_projection
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/reader_terminology_projection.py
+public_contracts:
+  - ReaderTerminologyPolicy
+  - ReaderTerminologyProjectionError
+  - load_reader_terminology_policy
+  - project_reader_text
+compatibility_facades: []
+deprecation_status: active_reference_architecture

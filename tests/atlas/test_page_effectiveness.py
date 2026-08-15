@@ -42,11 +42,12 @@ def _rendered(
 def test_policy_freezes_reader_questions_and_suffix_aware_task_sources() -> None:
     policy = load_page_effectiveness_policy(repository_root=ROOT)
     assert policy.primary_research_start == "2021-02-22"
-    assert len(policy.task_sources) == 43
+    assert len(policy.task_sources) == 49
     assert [item.task_id.split("_", 1)[0] for item in policy.task_sources] == [
-        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2523))],
+        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
+        "TRADING-2523A",
         "TRADING-2523B",
-        "TRADING-2528",
+        *[f"TRADING-{number}" for number in range(2524, 2529)],
     ]
     assert policy.reader_questions == (
         "CURRENT_RESEARCH_MAINLINE",
@@ -72,11 +73,12 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         manifest.freshness_status is not PageFreshnessStatus.UNCLASSIFIED_SUCCESSOR_REVIEW_REQUIRED
     )
     assert manifest.schema_version == "strategy_research_page_effectiveness.v2"
-    assert len(manifest.task_coverage) == 43
+    assert len(manifest.task_coverage) == 49
     assert [item.task_id.split("_", 1)[0] for item in manifest.task_coverage] == [
-        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2523))],
+        *[f"TRADING-{number}" for number in (*range(2481, 2505), *range(2506, 2524))],
+        "TRADING-2523A",
         "TRADING-2523B",
-        "TRADING-2528",
+        *[f"TRADING-{number}" for number in range(2524, 2529)],
     ]
     coverage_by_task = {
         item.task_id.split("_", 1)[0]: item.coverage for item in manifest.task_coverage
@@ -116,18 +118,36 @@ def test_manifest_binds_current_sources_tasks_and_independent_reviews() -> None:
         "DISCLOSED_DAILY_SLICE_ACCESSOR_FIX_REVALIDATION_OWNER_TOKEN_REQUIRED"
     )
     assert coverage_by_task["TRADING-2521"] == (
-        "DISCLOSED_V4_AUTHORIZATION_ADMISSION_CONTRACT_TOKEN_ADMITTED_UNUSED"
+        "DISCLOSED_V4_AUTHORIZATION_ADMITTED_AND_CONSUMED_BY_2522_RUN"
     )
     assert coverage_by_task["TRADING-2522"] == (
         "DISCLOSED_V4_RUN_INVALID_ALL_CHAIN_SESSIONS_TRANSPORT_REJECTED_AXIS_UNRESOLVED"
     )
+    assert coverage_by_task["TRADING-2523"] == (
+        "INCLUDED_READER_TERMINOLOGY_FIRST_USE_CONTRACT"
+    )
+    assert coverage_by_task["TRADING-2523A"] == (
+        "IN_PROGRESS_BASE_DRIFT_INTEGRATION_CORRECTION"
+    )
     assert coverage_by_task["TRADING-2523B"] == (
         "COMPLETED_PAGE_EFFECTIVENESS_V2_SERIAL_CONTRACT_WAVE"
+    )
+    assert coverage_by_task["TRADING-2524"] == (
+        "PLANNED_READER_DECISION_PATH_NOT_STARTED"
+    )
+    assert coverage_by_task["TRADING-2525"] == (
+        "PLANNED_READER_STATE_DATE_CHANGE_NOT_STARTED"
+    )
+    assert coverage_by_task["TRADING-2526"] == (
+        "PLANNED_ACCESSIBILITY_DRILLDOWN_NOT_STARTED"
+    )
+    assert coverage_by_task["TRADING-2527"] == (
+        "PLANNED_HUMAN_COMPREHENSION_PILOT_NOT_STARTED"
     )
     assert coverage_by_task["TRADING-2528"] == (
         "DISCLOSED_OFFLINE_PER_AXIS_DIAGNOSTIC_CONTRACT_REGISTERED_NOT_IMPLEMENTED"
     )
-    assert len(manifest.source_artifacts) == 15
+    assert len(manifest.source_artifacts) == 20
     assert [item.track for item in manifest.acceptance] == list(PageAcceptanceTrack)
     assert [item.status for item in manifest.acceptance] == [
         PageAcceptanceStatus.NOT_EXECUTED,

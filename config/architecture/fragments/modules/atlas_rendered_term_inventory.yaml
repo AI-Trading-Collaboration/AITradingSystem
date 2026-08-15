@@ -1,0 +1,10 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.atlas_rendered_term_inventory
+fragment_kind: module
+owner: atlas_publishing_experience
+module_prefix: src/ai_trading_system/atlas/rendered_term_inventory.py
+public_contracts:
+  - RenderedTermInventoryError
+  - build_rendered_term_inventory
+compatibility_facades: []
+deprecation_status: active_reference_architecture

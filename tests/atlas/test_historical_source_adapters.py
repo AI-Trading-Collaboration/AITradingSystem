@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
-from hashlib import sha256
+from hashlib import sha1, sha256
 from pathlib import Path
 
 import pytest
@@ -51,15 +51,9 @@ def _git_bytes(path: str) -> bytes:
     return result.stdout
 
 
-def _git_blob(path: str) -> str:
-    result = subprocess.run(
-        ["git", "rev-parse", f"{APPROVED_COMMIT}:{path}"],
-        cwd=PROJECT_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout.strip()
+def _git_blob(payload: bytes) -> str:
+    header = f"blob {len(payload)}\0".encode()
+    return sha1(header + payload).hexdigest()
 
 
 def _pure_inputs():
@@ -68,11 +62,12 @@ def _pure_inputs():
     assert isinstance(adapter_registry, dict)
     assert isinstance(source_registry, dict)
     paths = [item["source_path"] for item in adapter_registry["adapters"]]
+    source_payloads = {path: _git_bytes(path) for path in paths}
     return (
         adapter_registry,
         source_registry,
-        {path: _git_bytes(path) for path in paths},
-        {path: _git_blob(path) for path in paths},
+        source_payloads,
+        {path: _git_blob(payload) for path, payload in source_payloads.items()},
     )
 
 

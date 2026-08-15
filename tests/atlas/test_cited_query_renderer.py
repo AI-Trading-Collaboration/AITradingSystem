@@ -29,6 +29,9 @@ from ai_trading_system.contracts.strategy_research_page_effectiveness import (
 from ai_trading_system.contracts.strategy_research_qqq_options_projection import (
     StrategyResearchQQQOptionsProjectionBundle,
 )
+from ai_trading_system.contracts.strategy_research_reader_terminology import (
+    RenderedTermInventory,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -114,12 +117,15 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "这条信息来自哪里",
         "一句话回答",
         "先看限制",
-        "完整引用与 lineage",
-        "LIMITED 不等于研究失败",
+        "完整引用与审计标识",
+        "有依据但上下文有限”不等于研究失败",
         "先确认：这张页面现在还能不能信",
         "这张页面现在还能不能信",
-        "策略研究 reopen readiness 合同已建立",
-        "18 个 G3 slots 尚无经 DQ/PIT admission 的 primary-window evidence",
+        "策略研究重新开放条件已经登记",
+        "18 个 G3 证据槽位尚无通过 DQ/PIT（数据质量与时点可得性）准入的主研究窗口结果",
+        "先看词语说明",
+        "名字和概念先用通俗话说明",
+        "授权已消费，运行结果无效且不完整",
         "真实 Owner attestation 已按 canonical admission 合同封存",
         "37-slot v2 catalog、deterministic migration 与 typed evidence admission 已建立",
         "页面把工程能力、研究证据和页面验收分开汇总",
@@ -144,7 +150,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "陌生概念可以继续解释，并能返回原流程节点",
         "工程、研究、页面验收分别看",
         "策略结论通过",
-        "绿色的“能力可用”“已验证”或页面验收 PASS",
+        "绿色的“能力可用”“已验证”或页面验收通过",
         "本页状态图例",
         "工程能力与研究证据请看上方矩阵",
         "本页未执行",
@@ -171,7 +177,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "先读普通语言结论；需要核对时再展开 exact citations 与 lineage",
         "当前覆盖范围内的全部研究结果",
         "RESULT LEDGER · CANONICAL SNAPSHOT ONLY",
-        "这是 Atlas V1.3 的代表性主线 + 五份已审阅历史记录",
+        "这是 Atlas V1.3 的代表性主线加五份已审阅历史记录",
         "不是全仓历史研究的完整清单",
         "coverage_scope=ATLAS_V1_3_REPRESENTATIVE_PLUS_REVIEWED_HISTORY",
         "historical_repository_coverage_complete=false",
@@ -182,7 +188,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         "历史材料 · 非当前结论",
         "来源原始状态",
         "为什么这样映射",
-        "工程 PASS 也不等于 strategy PASS",
+        "工程通过也不等于策略结论通过",
         "NODE_RAW_STATUS",
         "RESULT_DISPLAY_STATUS",
         "CANONICAL_NODE",
@@ -261,7 +267,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     assert 'data-progress-stage-count="8"' in html
     assert 'data-page-acceptance-pass-count="0"' in html
     assert 'data-strategy-conclusion-pass-count="0"' in html
-    assert 'data-task-coverage-count="43"' in html
+    assert 'data-task-coverage-count="49"' in html
     assert (
         'data-successor-task="TRADING-2509_QQQ_OPTIONS_OWNER_DECISION_SLOT_CATALOG_V2_AMENDMENT_CONTRACT_V1"'
         in html
@@ -318,14 +324,28 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         in html
     )
     assert (
+        'data-successor-task="TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1"'
+        in html
+    )
+    assert (
+        'data-successor-task="TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1"'
+        in html
+    )
+    assert (
         'data-successor-task="TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1"'
+        in html
+    )
+    assert (
+        'data-successor-task="TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1"'
+        in html
+    )
+    assert (
+        'data-successor-task="TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1"'
         in html
     )
     assert "1201 个有 option chain 的 session 全部被组合 transport gate 拒绝" in html
     assert "下一步先实现 2528 离线 per-axis 诊断合同" in html
     assert "2528 仅登记为严格离线的 per-axis transport 诊断合同" in html
-    assert "误用了 contract.underlying" in html
-    assert "underlying_last_price" in html
     assert "2516 v2 token 也已签署并在唯一一次 Cloud run 尝试中消费" in html
     assert "9518360aeb329219cd83e78442a1d229" in html
     assert "Option filter 已以显式 list[Symbol] 完成 versioned failure-fix" in html
@@ -383,7 +403,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     ]
     pilot_order = (
         "PILOT_NO_GO_LICENSE_OR_EVIDENCE",
-        "唯一 scope violation 是 PROCESSED_DATA_POINTS",
+        "唯一 scope violation 是 已处理数据点数量",
         "734127 &gt; 250000",
         "1 order / 1 fill",
     )
@@ -598,6 +618,7 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "qqq_options_projection.json",
         "qqq_options_projection_validation.json",
         "responses.json",
+        "reader_terminology_inventory.json",
         "status_explanation_validation.json",
         "status_explanations.json",
         "validation.json",
@@ -613,6 +634,7 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
         "qqq_options_projection.json",
         "qqq_options_projection_validation.json",
         "responses.json",
+        "reader_terminology_inventory.json",
         "status_explanation_validation.json",
         "status_explanations.json",
         "validation.json",
@@ -635,6 +657,9 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     assert progress_bytes == showcase.work_progress.canonical_bytes
     progress = StrategyResearchWorkProgressBundle.from_json_bytes(progress_bytes)
     assert progress.content_sha256 == showcase.work_progress.content_sha256
+    terminology_bytes = (tmp_path / "first" / "reader_terminology_inventory.json").read_bytes()
+    terminology = RenderedTermInventory.from_json_bytes(terminology_bytes)
+    assert terminology.html_sha256 == first[0].sha256
 
 
 def test_renderer_rejects_status_explanation_validation_drift() -> None:

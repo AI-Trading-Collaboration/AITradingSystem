@@ -1,0 +1,88 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  task_id_sha256: 1dba72a891e4a43aad0a753f66f0dac1f4f500a8ab53415451bba01cf25c6228
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  title: null
+  domain: Atlas strategy research page / accessible research drilldown and audit linkage
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation
+    与 2526-B；Project Owner 冻结 accessibility/browser/AT matrix
+  requirement_refs:
+  - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 2526-A 仅依赖 2524-S0，可与 2525/2527-A 并行且不得写
+    shared renderer/generated state；2526-B 等待 coordinator 唯一 exact HTML，任何 bytes 变化均重跑。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与 typed evidence；coordinator
+      应用 shared DOM remediation；2526-B 对同一 exact HTML 完成 desktop/mobile/keyboard/screen-reader/reflow/audit
+      replay 后才开放 2527-B。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T22:10:06.4819125+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-followon-register-3-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+    - Atlas strategy research page / accessible research drilldown and audit linkage
+    - P1
+    - PROPOSED
+    - 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation 与 2526-B；Project
+      Owner 冻结 accessibility/browser/AT matrix
+    - 2526-A 仅依赖 2524-S0，可与 2525/2527-A 并行且不得写 shared renderer/generated state；2526-B
+      等待 coordinator 唯一 exact HTML，任何 bytes 变化均重跑。
+    - 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与 typed evidence；coordinator
+      应用 shared DOM remediation；2526-B 对同一 exact HTML 完成 desktop/mobile/keyboard/screen-reader/reflow/audit
+      replay 后才开放 2527-B。
+    - 2026-08-15：拆为并行 2526-A evidence lane 与串行 2526-B final candidate gate；[supporting
+      requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)。status
+      仍为 PROPOSED，尚未创建 lane/worktree 或签署 accessibility PASS。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2523a-followon-register-3-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-e1448751d738fc7f1d6fdc744a001016
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
+  - Atlas strategy research page / accessible research drilldown and audit linkage
+  - P1
+  - PROPOSED
+  - 2526-A strategy-evidence worker；2524 coordinator 负责 shared remediation 与 2526-B；Project
+    Owner 冻结 accessibility/browser/AT matrix
+  - 2526-A 仅依赖 2524-S0，可与 2525/2527-A 并行且不得写 shared renderer/generated state；2526-B
+    等待 coordinator 唯一 exact HTML，任何 bytes 变化均重跑。
+  - 2526-A 交付 keyboard/reflow/focus/audit validator、harness 与 typed evidence；coordinator
+    应用 shared DOM remediation；2526-B 对同一 exact HTML 完成 desktop/mobile/keyboard/screen-reader/reflow/audit
+    replay 后才开放 2527-B。
+  - 2026-08-15：拆为并行 2526-A evidence lane 与串行 2526-B final candidate gate；[supporting
+    requirement](docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md)。status
+    仍为 PROPOSED，尚未创建 lane/worktree 或签署 accessibility PASS。
+  docs_links:
+  - docs/requirements/TRADING-2526_Atlas_Accessible_Research_Drilldown_And_Audit_Linkage_V1.md
+  terminal: false
+  canonical_row_sha256: 5dcef1967423ed9fd89f69bb9ada17c09a8cf1340b044104f8a209106de33d42
+last_event_id: task-event-e1448751d738fc7f1d6fdc744a001016
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 0941f1ca244f8f5161fd8bfd0440f18f2b048531a031f6f0b6e4b0954b4b0328

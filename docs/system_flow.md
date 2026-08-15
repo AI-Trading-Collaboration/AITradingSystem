@@ -248,6 +248,21 @@ fail closed。原 canonical execution status 保留为第三个“本页状态�
 作为 reviewed successor 纳入 exact source/task coverage。该层不执行 DQ、回测、研究、Owner 决策、
 外部平台、production 或 broker 动作。
 
+TRADING-2523/2523A 在 reader-first renderer 与最终静态 artifact 之间增加面向读者的术语首现合同，
+并在 TRADING-2523B 已发布的 `strategy_research_page_effectiveness.v2` 页面身份契约上完成漂移纠正。
+`reader_profile.yaml` 冻结“理解基本投资语境、但不假定熟悉项目内部架构、状态码、QuantConnect
+transport 或 task naming”的目标读者；`reader_terminology.yaml` 对每个术语给出唯一分类、显式 alias、
+中文定义与使用理由。renderer 先投影键盘可达、非 hover-only 的术语说明，再由
+`build_rendered_term_inventory` 扫描普通 DOM、默认关闭但可达的 `details`、`aria-label`、
+`aria-describedby` 与 `title`。`reader_terminology_inventory.json` exact-bind HTML、reader profile 与
+terminology policy SHA-256，并逐条保存 normalized surface、DOM locator、interaction state、term mapping
+和 audit-layer raw identifier；未知 task/status/runtime/path/hash、大小写或 alias 漂移、重复定义、缺失 ARIA
+目标、解释晚于首现或 audit-only 越界全部 fail closed。内部标识只在 audit layer 保留，默认读者层改用
+中文目的、动作与边界；新 HTML 的 Owner visual 与 reader comprehension 均为 `PENDING_REVIEW`，自动化
+不得代签。2522 已完成唯一 v4 Cloud run，但所有 chain session 被组合 transport gate 拒绝，当前仍无
+DQ/PIT-admitted 策略证据；2528 仅登记离线 per-axis 诊断合同，2524--2527 仍是未开始的 Atlas 后继任务。
+该术语改造不改变研究窗口、DQ/PIT、策略结论、engine、order、production 或 broker 权限。
+
 TRADING-2467 是同一页面可展示的治理输入，但仍是 inactive policy：static validator 只重算 A+D
 route、blind date、data vintage、single-look budget、stop matrix、历史 Git/content identity 与九段
 V1 immutable hash。validator PASS 后立即停止；`2027-02-01` 只产生再次申请 Owner review 的资格，
@@ -305,8 +320,10 @@ flowchart LR
     OAUTH["TRADING-2501 Owner-accepted review authority<br/>A/B/C layers + 13 exact source receipts"] --> OPROJ["TRADING-2503 QQQ Options projection<br/>4 reader groups / 5 status layers / aggregate NO-GO"]
     OPROJ --> OVAL["Independent source + policy validation<br/>2492 order / 2493 dominance / no strategy PASS"]
     OVAL --> XRENDER
-    XRENDER --> XART["Deterministic static page + 8 JSON artifacts<br/>technical authority folded under audit disclosure"]
-    TASKREG["ARCH-005 S5 canonical task registry<br/>TRADING-2481..2505 exact status + requirement refs"] --> EFF["TRADING-2505 page effectiveness<br/>source + semantic + visual + reader layers"]
+    TPROFILE["TRADING-2523 reader profile + terminology authority<br/>unique classes / explicit aliases / plain Chinese"] --> TINV["Full rendered-text inventory<br/>visible + disclosure + ARIA/title + audit raw IDs"]
+    XRENDER --> TINV
+    TINV --> XART["Deterministic static page + 9 JSON artifacts<br/>technical authority folded under audit disclosure"]
+    TASKREG["ARCH-005 S5 canonical task registry<br/>reviewed task set incl. 2523A/2523B + requirement refs"] --> EFF["TRADING-2505/2523B page effectiveness v2<br/>source + semantic + visual + reader layers"]
     XART --> EFF
     EFF --> BVIS["Loopback HTTP + Playwright<br/>desktop / tablet / mobile / accessibility / DOM / screenshots"]
     BVIS --> REVIEWS["Three independent acceptance tracks<br/>engineering / Owner visual / reader comprehension"]

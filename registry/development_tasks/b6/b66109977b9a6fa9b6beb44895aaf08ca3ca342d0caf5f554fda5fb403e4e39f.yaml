@@ -1,0 +1,89 @@
+schema_version: arch_005_task_registry_fragment.v1
+source_of_truth: ARCH_005_TASK_REGISTRY
+stable_task_identity:
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  task_id_sha256: b66109977b9a6fa9b6beb44895aaf08ca3ca342d0caf5f554fda5fb403e4e39f
+task_record:
+  schema_version: task_record.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  title: null
+  domain: Atlas strategy research page / reader decision path and progressive disclosure
+  parent_task_id: null
+  created_at: null
+  created_by: null
+  priority: P1
+  accountable_owner: null
+  next_owner: Atlas 2524 integration coordinator；Project Owner 冻结 reader_projection_contract.v1
+    的 reader entry、always-visible fields 与模式边界
+  requirement_refs:
+  - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
+  module_ids: []
+  contract_versions: []
+  dependencies: []
+  unstructured_legacy_blocker_or_next_step: 先关闭 2523A；随后 serial S0 冻结并提交 reader_projection_contract.v1。S0
+    进入 local main 后，从同一 exact base 启动 2525 engineering 与 2526/2527-A strategy-evidence
+    lanes。
+  acceptance_criteria:
+  - criterion_id: legacy_compatibility
+    text: S0 冻结 section/order、always-visible fields、六问到五问 mapping、state/date/accessibility
+      interfaces、L0/L1/audit 与 exact source binding；双线 path claims 互斥；coordinator
+      单次集成和生成 exact HTML；2526-B 后才进入 2527-B；heavyweight Full 仅最终 candidate。
+  production_effect: none
+  broker_action: none
+legacy_import_evidence: null
+events:
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_REGISTERED
+  occurred_at: '2026-08-15T22:09:42.6904922+09:00'
+  actor: codex_coordinator
+  change_id: trading-2523a-followon-register-1-20260815
+  lane_id: null
+  base_commit: 354bc020532584bf50b50f801322ed65684f5e2e
+  previous_state_event_id: null
+  from_status: null
+  to_status: PROPOSED
+  payload:
+    legacy_projection:
+    - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+    - Atlas strategy research page / reader decision path and progressive disclosure
+    - P1
+    - PROPOSED
+    - Atlas 2524 integration coordinator；Project Owner 冻结 reader_projection_contract.v1
+      的 reader entry、always-visible fields 与模式边界
+    - 先关闭 2523A；随后 serial S0 冻结并提交 reader_projection_contract.v1。S0 进入 local main
+      后，从同一 exact base 启动 2525 engineering 与 2526/2527-A strategy-evidence lanes。
+    - S0 冻结 section/order、always-visible fields、六问到五问 mapping、state/date/accessibility
+      interfaces、L0/L1/audit 与 exact source binding；双线 path claims 互斥；coordinator
+      单次集成和生成 exact HTML；2526-B 后才进入 2527-B；heavyweight Full 仅最终 candidate。
+    - 2026-08-15：Project Owner 确认采用 DUAL_LANE；[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)。2524
+      是 serial contract 和 integration coordinator；shared renderer/generated/governance/formal
+      state 均 coordinator-only；status 仍为 PROPOSED。
+  rationale: Task registered through ARCH-005 canonical registry.
+  evidence_refs:
+  - change:trading-2523a-followon-register-1-20260815
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-34af082c22652a85e72b9e4cde8a2629
+projection:
+  legacy_first_eight_cells:
+  - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  - Atlas strategy research page / reader decision path and progressive disclosure
+  - P1
+  - PROPOSED
+  - Atlas 2524 integration coordinator；Project Owner 冻结 reader_projection_contract.v1
+    的 reader entry、always-visible fields 与模式边界
+  - 先关闭 2523A；随后 serial S0 冻结并提交 reader_projection_contract.v1。S0 进入 local main 后，从同一
+    exact base 启动 2525 engineering 与 2526/2527-A strategy-evidence lanes。
+  - S0 冻结 section/order、always-visible fields、六问到五问 mapping、state/date/accessibility
+    interfaces、L0/L1/audit 与 exact source binding；双线 path claims 互斥；coordinator 单次集成和生成
+    exact HTML；2526-B 后才进入 2527-B；heavyweight Full 仅最终 candidate。
+  - 2026-08-15：Project Owner 确认采用 DUAL_LANE；[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)。2524
+    是 serial contract 和 integration coordinator；shared renderer/generated/governance/formal
+    state 均 coordinator-only；status 仍为 PROPOSED。
+  docs_links:
+  - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
+  terminal: false
+  canonical_row_sha256: 23be17e4fec7a0a31804c9fe8a0a9f05c1628be6bb0f00275d65bfd4e37abee1
+last_event_id: task-event-34af082c22652a85e72b9e4cde8a2629
+producer_version: arch_005_s5_canonical_registry.v1
+fragment_checksum: 72d3d70cd203f7fad8b0aa58295a66b2c3bdd3e02b03d8c6031f30f9bce95664

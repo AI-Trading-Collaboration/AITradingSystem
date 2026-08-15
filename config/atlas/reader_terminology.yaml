@@ -1,0 +1,345 @@
+schema_version: atlas_reader_terminology_policy.v1
+policy_id: atlas_reader_facing_terminology_first_use_v1
+policy_version: 1.0.0
+status: REVIEWED_ENGINEERING_BASELINE
+owner: Atlas page engineering owner
+reader_profile_id: atlas_strategy_research_general_reader
+unknown_identifier_patterns:
+  - TASK_ID
+  - UPPER_SNAKE_IDENTIFIER
+  - GIT_OR_CONTENT_HASH
+  - REPOSITORY_PATH
+  - RUNTIME_COMPOSED_IDENTIFIER
+excluded_non_reader_regions:
+  - head/style
+  - head/script
+  - body/script
+  - body/template
+raw_reader_replacements:
+  KEEP_CLOSED: 保持研究关闭
+  PREREGISTRATION_ONLY: 只允许预先登记
+  GO_FOR_DAILY_ENGINEERING_ONLY: 只允许继续日级工程验证
+  CONDITIONAL_GO: 有条件继续
+  PROCESSED_DATA_POINTS: 已处理数据点数量
+  POLICY_BLOCKED_CASH_PRESERVATION: 政策阻塞下的现金保护状态
+  BLOCKED_OWNER_AUTHORIZATION: 等待 Owner 授权而阻塞
+  PASS: 已通过
+  strategy PASS: 策略结论通过
+  LIMITED: 证据有限
+  CURRENT: 当前有效
+  ENGINEERING_VALIDATION: 工程验收
+  OWNER_VISUAL_REVIEW: Owner 视觉验收
+  READER_COMPREHENSION_REVIEW: 读者理解验收
+  PENDING_REVIEW: 等待独立验收
+  OWNER_V4_AUTHORIZATION_CONSUMED_RESULT_INVALID_INCOMPLETE: 授权已消费，运行结果无效且不完整
+  next-independent-minute: 下一独立分钟执行
+terms:
+  - term_id: atlas
+    display_name_zh: Atlas 策略研究页面
+    aliases: [Atlas, ATLAS]
+    classification: GLOSSARY
+    plain_definition_zh: 把研究来源、流程、结果和限制汇总在同一处的只读页面。
+    why_needed_zh: 帮助读者沿着证据链理解当前研究状态，而不是只看一个结论标签。
+  - term_id: citation_first
+    display_name_zh: 引用优先
+    aliases: [citation-first, Citation-first, CITATION-FIRST, 引用优先]
+    classification: GLOSSARY
+    plain_definition_zh: 先确认一句话能追溯到哪些来源，再展示这句话。
+    why_needed_zh: 避免页面补写来源中不存在的事实。
+  - term_id: evidence
+    display_name_zh: 证据
+    aliases: [evidence, Evidence]
+    classification: GLOSSARY
+    plain_definition_zh: 能被定位、校验并支持某个有限陈述的记录或结果。
+    why_needed_zh: 研究结论必须说明由什么支持，以及证据不能说明什么。
+  - term_id: source_lineage
+    display_name_zh: 来源关系
+    aliases: [source lineage, lineage, 来源关系]
+    classification: GLOSSARY
+    plain_definition_zh: 记录页面上的信息从哪个原始来源、经过哪些步骤来到当前展示位置。
+    why_needed_zh: 便于发现过期来源、错误引用或中途发生的语义变化。
+  - term_id: exact_commit
+    display_name_zh: 精确代码版本
+    aliases: [exact commit, exact Git commit, 精确代码版本]
+    classification: GLOSSARY
+    plain_definition_zh: 生成页面时仓库中唯一确定的一次代码版本。
+    why_needed_zh: 同一页面必须能回到完全相同的代码和配置。
+  - term_id: sha256
+    display_name_zh: SHA-256 校验值
+    aliases: [SHA-256, SHA256]
+    classification: GLOSSARY
+    plain_definition_zh: 用于核对文件字节是否发生变化的一串固定长度校验值。
+    why_needed_zh: 它证明读取的是同一份文件，但不证明文件内容在投资意义上正确。
+  - term_id: canonical
+    display_name_zh: 唯一权威版本
+    aliases: [canonical, Canonical, CANONICAL]
+    classification: GLOSSARY
+    plain_definition_zh: 项目规定可重放、可校验且应被其他结果引用的唯一权威表达。
+    why_needed_zh: 防止多个相似副本给出相互冲突的状态。
+  - term_id: snapshot
+    display_name_zh: 页面快照
+    aliases: [snapshot, Snapshot, SNAPSHOT, 快照]
+    classification: GLOSSARY
+    plain_definition_zh: 在一个确定时点保存的研究来源、节点、结果和引用集合。
+    why_needed_zh: 后续才能准确比较页面生成前后发生了什么变化。
+  - term_id: diff
+    display_name_zh: 变化比较
+    aliases: [diff, Diff, 变化比较]
+    classification: GLOSSARY
+    plain_definition_zh: 对两个页面快照逐项比较后得到的新增、删除和修改清单。
+    why_needed_zh: 用来判断旧页面是否遗漏了新的研究事实。
+  - term_id: validator
+    display_name_zh: 校验器
+    aliases: [validator, Validator, 校验器]
+    classification: GLOSSARY
+    plain_definition_zh: 按固定规则检查结构、引用、身份和安全边界是否满足合同的程序。
+    why_needed_zh: 校验通过只说明被检查的规则成立，不自动证明策略有效。
+  - term_id: freshness
+    display_name_zh: 页面时效性
+    aliases: [freshness, Freshness, 页面时效性]
+    classification: GLOSSARY
+    plain_definition_zh: 页面来源和当前仓库相比是否仍然一致、是否需要重建的判定。
+    why_needed_zh: 页面能打开不代表它仍代表最新研究状态。
+  - term_id: dq_pit
+    display_name_zh: 数据质量与时点可得性检查
+    aliases: [DQ/PIT, DQ, PIT]
+    classification: GLOSSARY
+    plain_definition_zh: 同时检查数据是否完整可信，以及研究当时是否真的能够看到这些数据。
+    why_needed_zh: 避免用错误数据或未来才知道的信息支持历史研究结论。
+  - term_id: primary_window
+    display_name_zh: 主研究窗口
+    aliases: [primary-window, primary window, 主研究窗口]
+    classification: GLOSSARY
+    plain_definition_zh: 项目用于主要回测和投资结论的固定日期范围，从 2021-02-22 开始。
+    why_needed_zh: 防止不同页面悄悄使用不同起点而得到不可比较的结果。
+  - term_id: evidence_admission
+    display_name_zh: 证据准入
+    aliases: [evidence admission, admission, 证据准入]
+    classification: GLOSSARY
+    plain_definition_zh: 在证据进入研究结论前，对来源、范围、校验值和 DQ/PIT 状态进行的严格核对。
+    why_needed_zh: 只有通过准入的证据才能进入后续策略判断。
+  - term_id: owner
+    display_name_zh: Project Owner
+    aliases: [Project Owner, Project owner, Owner, owner]
+    classification: GLOSSARY
+    plain_definition_zh: 对需要人工决策、视觉验收或策略政策负责的项目负责人。
+    why_needed_zh: 自动化不能代替负责人签署人工或投资相关决定。
+  - term_id: owner_token
+    display_name_zh: 单次 Owner 授权
+    aliases: [Owner token, owner token, exact v4 token, v4 token, 单次 Owner 授权]
+    classification: GLOSSARY
+    plain_definition_zh: 负责人对一个明确范围、次数和失效条件的外部动作所作的可审计授权。
+    why_needed_zh: 防止一次授权被重复使用或扩展到未批准的动作。
+  - term_id: keep_closed
+    display_name_zh: 保持研究关闭
+    aliases: [KEEP_CLOSED]
+    classification: GLOSSARY
+    plain_definition_zh: 当前证据不足以重新进入候选搜索或经验回测阶段。
+    why_needed_zh: 它是研究流程边界，不是对策略长期价值的最终否定。
+  - term_id: preregistration_only
+    display_name_zh: 只允许预先登记
+    aliases: [PREREGISTRATION_ONLY]
+    classification: GLOSSARY
+    plain_definition_zh: 目前只能事先写清研究问题、数据和验收方法，不能根据结果反向挑选规则。
+    why_needed_zh: 降低看到结果后修改假设造成的研究偏差。
+  - term_id: g2_policy_values
+    display_name_zh: G2 数值政策
+    aliases: [G2, G2 policy value, G2 policy values]
+    classification: GLOSSARY
+    plain_definition_zh: 由负责人审阅后才能填写的选券、执行、记账或验收数值参数组。
+    why_needed_zh: 缺失时系统必须保持不选券、不下单和现金保护。
+  - term_id: g3_evidence_slots
+    display_name_zh: G3 证据槽位
+    aliases: [G3, G3 slot, G3 slots]
+    classification: GLOSSARY
+    plain_definition_zh: 用于接收主研究窗口校准证据的结构化位置。
+    why_needed_zh: 每个位置都需要独立来源和校验，不能用一条总结果代替。
+  - term_id: b_stage_codes
+    display_name_zh: B0–B6 阶段编号
+    aliases: [B0, B1, B2, B3, B4, B5, B6, B1–B4, B0/B1–B4/B5/B6]
+    classification: GLOSSARY
+    plain_definition_zh: 历史研究流程中从基线、重设计到验收边界的阶段编号。
+    why_needed_zh: 编号只是定位工具，不代表成熟度或策略评级。
+  - term_id: capability
+    display_name_zh: 工程能力
+    aliases: [capability, Capability, 工程能力]
+    classification: GLOSSARY
+    plain_definition_zh: 某个数据、校验或页面步骤已经具备可重复执行的实现。
+    why_needed_zh: 工程能力可用不等于已经得到策略证据。
+  - term_id: capability_go
+    display_name_zh: 工程能力可继续
+    aliases: [capability GO, GO_FOR_DAILY_ENGINEERING_ONLY]
+    classification: GLOSSARY
+    plain_definition_zh: 只允许继续某项工程验证，不代表策略、收益或风险通过。
+    why_needed_zh: 防止把局部工程许可误读为投资结论。
+  - term_id: conditional_go
+    display_name_zh: 有条件继续
+    aliases: [CONDITIONAL_GO]
+    classification: GLOSSARY
+    plain_definition_zh: 只允许满足已写明条件的局部步骤继续，不能据此判断整个研究或策略通过。
+    why_needed_zh: 页面中的局部平台和技术许可必须与总体研究决定分开理解。
+  - term_id: processed_data_points
+    display_name_zh: 已处理数据点数量
+    aliases: [PROCESSED_DATA_POINTS]
+    classification: GLOSSARY
+    plain_definition_zh: 一次受限运行实际读取和处理的数据记录总数。
+    why_needed_zh: 超过预先登记的上限属于范围违规，即使其他工程检查通过也必须停止。
+  - term_id: strategy_pass
+    display_name_zh: 策略结论通过
+    aliases: [strategy PASS, strategy pass, 策略结论通过]
+    classification: GLOSSARY
+    plain_definition_zh: 有充分、经审阅的研究证据支持策略判断；当前页面的数量必须保持为零。
+    why_needed_zh: 它与工程检查通过、页面验收通过是不同的结论轨道。
+  - term_id: engine
+    display_name_zh: 策略执行引擎
+    aliases: [engine, Engine, 策略执行引擎]
+    classification: GLOSSARY
+    plain_definition_zh: 根据已批准规则运行选券、模拟成交和记账的程序。
+    why_needed_zh: 合同或页面通过不能自动解除引擎的安全阻断。
+  - term_id: selection
+    display_name_zh: 期权合约选择
+    aliases: [selection, Selection, 期权合约选择]
+    classification: GLOSSARY
+    plain_definition_zh: 按已批准条件从可用期权中选择具体合约的步骤。
+    why_needed_zh: 参数未获批准时必须保持不选择任何合约。
+  - term_id: cash_preservation
+    display_name_zh: 现金保护状态
+    aliases: [cash preservation, POLICY_BLOCKED_CASH_PRESERVATION, 现金保护状态]
+    classification: GLOSSARY
+    plain_definition_zh: 关键政策或证据缺失时保持现金、不建立期权头寸的安全状态。
+    why_needed_zh: 它确保未知或未批准输入不会变成交易行为。
+  - term_id: daily_slice
+    display_name_zh: 日级 Slice 数据切片
+    aliases: [daily Slice, Slice, 日级 Slice]
+    classification: GLOSSARY
+    plain_definition_zh: 平台在一个交易日交给算法的一组市场数据对象。
+    why_needed_zh: 当前再验证要确认每个预期交易日都收到并处理了这一组数据。
+  - term_id: session_chain
+    display_name_zh: 交易日链
+    aliases: [session chain, session-chain, 交易日链]
+    classification: GLOSSARY
+    plain_definition_zh: 按交易所日历连续记录的预期交易日与实际处理结果。
+    why_needed_zh: 用于核对 1202 个交易日是否缺失、重复或顺序错误。
+  - term_id: ten_series_collector
+    display_name_zh: 10 条汇总序列收集器
+    aliases: [10-series collector, 10-series DAILY collector, 10 条汇总序列收集器]
+    classification: GLOSSARY
+    plain_definition_zh: 只导出十条按日汇总序列、不导出原始期权行的零订单收集程序。
+    why_needed_zh: 在许可和配额边界内收集校准所需的最小证据。
+  - term_id: option_contract_accessor
+    display_name_zh: OptionContract 标的价格读取方式
+    aliases: [OptionContract, underlying accessor, OptionContract underlying accessor]
+    classification: GLOSSARY
+    plain_definition_zh: 从期权合约对象取得其标的证券价格时必须使用的正确字段或方法。
+    why_needed_zh: 读取方式错误会让日级收集在运行时失败或产生空结果。
+  - term_id: next_independent_minute
+    display_name_zh: 下一独立分钟执行
+    aliases: [next-independent-minute]
+    classification: GLOSSARY
+    plain_definition_zh: 信号出现后不在同一分钟假设成交，而是等到下一分钟再按独立报价处理。
+    why_needed_zh: 避免用产生信号时尚不可成交的信息美化模拟执行结果。
+  - term_id: quantconnect_cloud
+    display_name_zh: QuantConnect 云端再验证
+    aliases: [QuantConnect, Cloud revalidation, Cloud run, cloud run, Cloud backtest]
+    classification: GLOSSARY
+    plain_definition_zh: 在 QuantConnect 云端项目中执行一次受限回测，以验证平台实际数据传递行为。
+    why_needed_zh: 离线代码通过不能替代真实平台的数据交付事实。
+  - term_id: results_artifact
+    display_name_zh: Results 结果文件
+    aliases: [Results, Results artifact, Results JSON]
+    classification: GLOSSARY
+    plain_definition_zh: 云端运行结束后导出的、只包含允许汇总结果的结构化文件。
+    why_needed_zh: 本地校验器通过它核对运行身份、交易日覆盖和零订单边界。
+  - term_id: qld
+    display_name_zh: QLD
+    aliases: [QLD]
+    classification: GLOSSARY
+    plain_definition_zh: 追踪纳斯达克 100 指数每日约两倍表现的交易所交易基金；本页只把它作为待审阅的替代证据路线。
+    why_needed_zh: 它不能自动替代 QQQ 期权证据，也未因出现在页面上而获得授权。
+  - term_id: leveraged_tracking
+    display_name_zh: 每日两倍跟踪
+    aliases: [2x tracking, 2x, 每日两倍跟踪]
+    classification: GLOSSARY
+    plain_definition_zh: 产品目标是单日收益约为基准的两倍，长期结果会受每日复利和路径影响。
+    why_needed_zh: 不能把单日倍数直接当成长周期收益倍数。
+  - term_id: turnover
+    display_name_zh: 换手率
+    aliases: [turnover, Turnover, 换手率]
+    classification: GLOSSARY
+    plain_definition_zh: 组合在一段时间内买卖和替换持仓的频繁程度。
+    why_needed_zh: 换手会影响交易成本和结果可实现性。
+  - term_id: drawdown
+    display_name_zh: 回撤
+    aliases: [drawdown, Drawdown, 回撤]
+    classification: GLOSSARY
+    plain_definition_zh: 资产或策略从先前高点下降到随后低点的幅度。
+    why_needed_zh: 用来描述下行风险，不能只看收益忽略损失路径。
+  - term_id: synthetic
+    display_name_zh: 合成测试数据
+    aliases: [synthetic, Synthetic, 合成测试数据]
+    classification: GLOSSARY
+    plain_definition_zh: 为验证代码行为而人工构造、并非真实市场历史的数据。
+    why_needed_zh: 合成测试通过只能证明程序边界，不构成真实策略证据。
+  - term_id: ingest
+    display_name_zh: 本地接收与导入
+    aliases: [ingest, Ingest, 本地接收与导入]
+    classification: GLOSSARY
+    plain_definition_zh: 把外部导出的允许文件读入本地并核对结构、身份和范围。
+    why_needed_zh: 防止错误文件或不完整结果进入研究链。
+  - term_id: bounded_pilot
+    display_name_zh: 受限试运行
+    aliases: [bounded pilot, Bounded pilot, 受限试运行]
+    classification: GLOSSARY
+    plain_definition_zh: 在明确次数、配额、数据和零订单限制下进行的小范围平台验证。
+    why_needed_zh: 它验证能力边界，不等于正式回测或生产授权。
+  - term_id: blocked_owner_authorization
+    display_name_zh: 等待 Owner 授权而阻塞
+    aliases: [BLOCKED_OWNER_AUTHORIZATION]
+    classification: GLOSSARY
+    plain_definition_zh: 工程检查已准备，但负责人尚未授权执行相应外部动作。
+    why_needed_zh: 防止把“工具可以运行”误读为“已经允许运行”。
+  - term_id: pass_status
+    display_name_zh: PASS 状态
+    aliases: [PASS]
+    classification: GLOSSARY
+    plain_definition_zh: 某个明确校验或验收轨道满足了它自己的规则。
+    why_needed_zh: 必须同时说明是哪一条轨道通过，不能跨轨道推导策略有效。
+  - term_id: limited_status
+    display_name_zh: LIMITED 状态
+    aliases: [LIMITED, limited]
+    classification: GLOSSARY
+    plain_definition_zh: 当前陈述有来源，但时间、范围或研究上下文不完整。
+    why_needed_zh: 它不是研究失败，也不能被当作完整证据。
+  - term_id: current_status
+    display_name_zh: CURRENT 状态
+    aliases: [CURRENT]
+    classification: GLOSSARY
+    plain_definition_zh: 页面来源快照与当前仓库相关内容一致。
+    why_needed_zh: 只说明页面未过期，不说明策略结论通过。
+  - term_id: acceptance_tracks
+    display_name_zh: 三条页面验收轨道
+    aliases: [三条页面验收轨道, ENGINEERING_VALIDATION, OWNER_VISUAL_REVIEW, READER_COMPREHENSION_REVIEW]
+    classification: GLOSSARY
+    plain_definition_zh: 分别记录自动化工程检查、负责人视觉检查和目标读者理解检查的三个独立状态。
+    why_needed_zh: 任意一条通过都不能替另外两条签字。
+  - term_id: pending_review
+    display_name_zh: 等待独立验收
+    aliases: [PENDING_REVIEW]
+    classification: GLOSSARY
+    plain_definition_zh: 该人工验收尚未由有权负责人针对当前页面完成。
+    why_needed_zh: 新 HTML 不能沿用旧页面的人工 PASS。
+  - term_id: authorization_consumed_invalid
+    display_name_zh: 授权已消费，运行结果无效且不完整
+    aliases: [授权已消费，运行结果无效且不完整, OWNER_V4_AUTHORIZATION_CONSUMED_RESULT_INVALID_INCOMPLETE, V4_AUTHORIZATION_CONSUMED]
+    classification: GLOSSARY
+    plain_definition_zh: v4 单次授权已经在唯一一次云端运行尝试中消费；该运行没有形成可准入的完整研究证据。
+    why_needed_zh: 它防止把已消费授权误写为仍可使用，也防止把已完成运行误写为有效策略证据。
+safety:
+  primary_research_start: '2021-02-22'
+  unknown_terms_fail_closed: true
+  hover_only_explanation_allowed: false
+  investment_conclusion_generated: false
+  order_authorized: false
+  real_engine_authorized: false
+  production_effect: none
+  broker_action: none
