@@ -1759,7 +1759,15 @@ def test_real_walk_forward_selection_uses_window_daily_paths(
 
     selected_candidate = selection["report"]["summary"]["selected_candidate_count"]
     assert selected_candidate == len(windows)
-    candidate_id = train_rows[0]["leaderboard"][0]["candidate_id"]
+    non_reject_source_ids = {
+        row["candidate_id"] for row in source_rows if row["gate"] != "reject"
+    }
+    assert non_reject_source_ids
+    candidate_id = next(
+        row["candidate_id"]
+        for row in train_rows[0]["leaderboard"]
+        if row["candidate_id"] in non_reject_source_ids
+    )
     overfit = run_overfit_review(
         sweep_id=sweep_id,
         candidate_id=candidate_id,

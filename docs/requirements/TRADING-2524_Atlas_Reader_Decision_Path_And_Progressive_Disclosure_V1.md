@@ -226,6 +226,9 @@ coordinator 只生成一次 final exact HTML，并据此执行 2526-B final brow
   本任务审阅后的 `docs/system_flow.md` bytes，不得放宽 byte-parity 或 source-seal 检查。
 - `tests/test_arch_004g_deprecation.py` 的 current inventory identity 与 module/test exact count；仅允许反映
   本任务新增一个 contract module 和一个 focused test file，不改变任何 removal gate。
+- `tests/test_etf_dynamic_v3_parameter_research.py` 仅限 final Full failure-fix：把
+  `test_real_walk_forward_selection_uses_window_daily_paths` 的候选选择从线程完成顺序改为显式选择
+  非 `reject` 来源候选；不得修改策略实现、gate、阈值、score 或投资结论。
 
 worker 禁止写入上述 coordinator paths，也不得自行生成“候选 final”HTML。若 2525/2526 需要 shared DOM、
 CSS 或 page config remediation，提交 typed failing evidence 与 proposed behavior，由 coordinator 在 I0
@@ -348,3 +351,18 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   architecture-fitness 自检 `PASS`，目标用例加完整 deprecation 文件并行复核=`10 passed in 38.04s`。
   首轮 Architecture 继续保留为 failure-fix evidence，不得冒充 promotion PASS；必须在提交 final-tree
   manifest refresh 后重跑完整 Architecture，且通过前不启动 Contract 或推送。
+- 2026-08-16：上述修复后的正式链为 Architecture=`865 passed in 366.97s`、Contract=
+  `276 passed in 162.82s`、Integration=`995 passed / 642 warnings in 51.36s`、Reproducibility=
+  `24 passed in 23.02s`；Full artifact=
+  `outputs/validation_runtime/full_20260816T050749Z/test_runtime_summary.json` 得到
+  `9073 passed / 5 failed / 3 skipped / 644 warnings in 1660.25s`，因此推送继续 fail-closed。四项失败来自
+  append-only compatibility authority 尚未绑定最终 `docs/system_flow.md`、deprecation test bytes 以及
+  缺失 current content-addressed fragment，另有 canonical ignored HTML 仍绑定前一 tracked commit；
+  canonical builder 重建后 authority validate 与三个原失败节点=`3 passed in 14.63s`。剩余策略测试在同一
+  16-worker/loadfile 模式独立复现=`1 passed in 5.00s`；代码审计确认 test fixture 以
+  `ThreadPoolExecutor.as_completed` 产生的结果顺序分配 synthetic daily return，随后无条件拿 leaderboard
+  首项做 overfit review，因此偶发把原始 `gate=reject` 候选送入一个固定期待 `REVIEW_REQUIRED` 的断言。
+  failure-fix 只允许显式选择非 `reject` 来源候选并增加前置断言，不改变任何策略 gate、阈值、score 或
+  investment-facing 语义。最终 tracked commit 后必须重建 exact HTML，并以该 Full artifact 为 parent 运行
+  `failure_fix_rerun`；修正后五次独立 16-worker/loadfile 复核依次为
+  `1 passed in 5.37s / 5.22s / 5.24s / 5.13s / 5.48s`，但 focused PASS 不替代 Full。

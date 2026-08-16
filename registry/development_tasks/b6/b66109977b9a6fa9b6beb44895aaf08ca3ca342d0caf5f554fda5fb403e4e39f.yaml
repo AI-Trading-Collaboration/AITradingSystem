@@ -13,21 +13,21 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 coordinator：提交 final module/test manifest refresh，重跑完整 Architecture；仅
-    PASS 后继续 Contract→Integration→Reproducibility→Full 与普通推送。
+  next_owner: 2524 coordinator：按最终 tracked bytes 重建 DevEx 与 append-only compatibility
+    authority，提交 candidate，重建 exact HTML，并运行 parent-bound failure-fix Full；PASS 后完成
+    ff-only main/ordinary push。
   requirement_refs:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: 首轮 Architecture 864 PASS/1 FAIL，唯一失败为
-    final renderer/test bytes 导致 module/test manifests stale；确定性刷新和 targeted 10 PASS
-    已完成，须完整 Architecture failure-fix rerun。
+  unstructured_legacy_blocker_or_next_step: Full 的测试夹具非确定性已作最小修正并连续 5 次 16-worker/loadfile
+    PASS；compatibility 原 3 个失败节点已 PASS。剩余是最终生成顺序、exact HTML 与 parent-bound Full。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: module/test manifests 必须与最终候选确定性一致且 architecture-fitness/deprecation targeted
-      PASS；完整 Architecture 重跑必须 promotion-blocking PASS，首轮失败只作 failure-fix evidence；后继
-      tiers 不得提前启动。
+    text: 最终 generated/compatibility validate PASS；tracked candidate clean commit；canonical
+      HTML/sidecars exact-bind 该 commit；Full failure_fix_rerun 以 full_20260816T050749Z
+      为 parent 且 PASS；推送安全门通过。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -527,26 +527,86 @@ events:
   - change:trading-2524-final-architecture-manifest-failure-fix-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-c63bf5b29106efc76b9f58331893aa6e
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T14:40:47.5289230+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-full-failure-fix-determinism-and-authority-20260816-v1
+  lane_id: null
+  base_commit: fcab1220232da0387ec6385b13ea78626d001f8d
+  previous_state_event_id: task-event-c63bf5b29106efc76b9f58331893aa6e
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：修复 Full 暴露的测试夹具非确定性，提交 compatibility authority/failure
+      evidence，重建 exact HTML 后用父 artifact 运行 failure-fix Full；PASS 后才可推送。
+    blocker_or_next_step: Final Full=9073 passed/5 failed/3 skipped/644 warnings；4
+      项为 compatibility authority 与 stale exact HTML，1 项为线程完成顺序污染测试候选选择。不得改策略阈值或以 focused
+      PASS 代替 Full。
+    acceptance_criteria: append-only compatibility authority build/validate 与 3 个失败节点
+      PASS；walk-forward 测试按语义选择非 reject 候选且多次并行稳定；最终 tracked commit 后重建 exact HTML；以
+      full_20260816T050749Z 为 parent 的 failure_fix_rerun Full PASS；随后 governed closeout/push。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；Full
+      artifact=outputs/validation_runtime/full_20260816T050749Z/test_runtime_summary.json；compatibility
+      targeted=3 passed/14.63s；strategy focused reproduction=1 passed/5.00s；root cause=ThreadPoolExecutor
+      as_completed order used by fixture index, not investment policy regression。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-full-failure-fix-determinism-and-authority-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-08e197e641824981bff72516ff162c64
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T14:44:05.9113777+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-full-determinism-fix-targeted-pass-20260816-v1
+  lane_id: null
+  base_commit: fcab1220232da0387ec6385b13ea78626d001f8d
+  previous_state_event_id: task-event-08e197e641824981bff72516ff162c64
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：按最终 tracked bytes 重建 DevEx 与 append-only compatibility
+      authority，提交 candidate，重建 exact HTML，并运行 parent-bound failure-fix Full；PASS
+      后完成 ff-only main/ordinary push。
+    blocker_or_next_step: Full 的测试夹具非确定性已作最小修正并连续 5 次 16-worker/loadfile PASS；compatibility
+      原 3 个失败节点已 PASS。剩余是最终生成顺序、exact HTML 与 parent-bound Full。
+    acceptance_criteria: 最终 generated/compatibility validate PASS；tracked candidate
+      clean commit；canonical HTML/sidecars exact-bind 该 commit；Full failure_fix_rerun
+      以 full_20260816T050749Z 为 parent 且 PASS；推送安全门通过。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；strategy
+      fixture fix=5/5 independent xdist PASS (5.37s/5.22s/5.24s/5.13s/5.48s)；compatibility
+      failed nodes=3 passed/14.63s；no policy or threshold mutation。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-full-determinism-fix-targeted-pass-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-647e362dd84ee1d884bcc9c9660ec949
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
   - IN_PROGRESS
-  - 2524 coordinator：提交 final module/test manifest refresh，重跑完整 Architecture；仅 PASS
-    后继续 Contract→Integration→Reproducibility→Full 与普通推送。
-  - 首轮 Architecture 864 PASS/1 FAIL，唯一失败为 final renderer/test bytes 导致 module/test
-    manifests stale；确定性刷新和 targeted 10 PASS 已完成，须完整 Architecture failure-fix rerun。
-  - module/test manifests 必须与最终候选确定性一致且 architecture-fitness/deprecation targeted
-    PASS；完整 Architecture 重跑必须 promotion-blocking PASS，首轮失败只作 failure-fix evidence；后继
-    tiers 不得提前启动。
-  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；Architecture
-    first=864 PASS/1 FAIL/372.99s；artifact=outputs/validation_runtime/architecture-fitness_20260816T044754Z/test_runtime_summary.json；violations=module_manifest_fresh+test_manifest_fresh；deterministic
-    generate PASS；targeted devex+deprecation=10 PASS/38.04s。'
+  - 2524 coordinator：按最终 tracked bytes 重建 DevEx 与 append-only compatibility authority，提交
+    candidate，重建 exact HTML，并运行 parent-bound failure-fix Full；PASS 后完成 ff-only main/ordinary
+    push。
+  - Full 的测试夹具非确定性已作最小修正并连续 5 次 16-worker/loadfile PASS；compatibility 原 3 个失败节点已 PASS。剩余是最终生成顺序、exact
+    HTML 与 parent-bound Full。
+  - 最终 generated/compatibility validate PASS；tracked candidate clean commit；canonical
+    HTML/sidecars exact-bind 该 commit；Full failure_fix_rerun 以 full_20260816T050749Z
+    为 parent 且 PASS；推送安全门通过。
+  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；strategy
+    fixture fix=5/5 independent xdist PASS (5.37s/5.22s/5.24s/5.13s/5.48s)；compatibility
+    failed nodes=3 passed/14.63s；no policy or threshold mutation。'
   docs_links:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   terminal: false
-  canonical_row_sha256: 00aed4b1602a21ee9f2c38f87ea89e6764d9aa465cbaa4b2c497123f768a6c8d
-last_event_id: task-event-c63bf5b29106efc76b9f58331893aa6e
+  canonical_row_sha256: 544d78b28f176f5a806078e2abf01ab6a7a79d3b5b0b3fbe4ea10faad6c2a233
+last_event_id: task-event-647e362dd84ee1d884bcc9c9660ec949
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 34ccf5e4aa2eb46825ab0228989838cfcaf3fa656af33c0d301d98ddece56200
+fragment_checksum: 167a8142a60268209bd1e3706b906d2dd3a4f8be58c22f9af6ce5d882cc8c117

@@ -14,7 +14,7 @@ fragment_count: 1001
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 7c2509febb7c70d7e4c4442a1750220fe8b24f34ecf23bf57cda3a84ea0f5cf7
+final_chain_sha256: e550febb40d6a933cf737eaff986df1f2cb0a95af37fd92033798f0c5827b1d6
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -8007,41 +8007,41 @@ fragments:
   entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
 - task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   path: registry/development_tasks/b6/b66109977b9a6fa9b6beb44895aaf08ca3ca342d0caf5f554fda5fb403e4e39f.yaml
-  file_sha256: 190dc5ccec68c4c40a1905b737613b787d4851dc79eab6f1ed4d613f21f7a77a
-  fragment_checksum: 34ccf5e4aa2eb46825ab0228989838cfcaf3fa656af33c0d301d98ddece56200
+  file_sha256: bfb22432495f295fd1b113e4b6cc14a8ff6c99e083ca65ec0511fc8e34f20153
+  fragment_checksum: 167a8142a60268209bd1e3706b906d2dd3a4f8be58c22f9af6ce5d882cc8c117
   partition: active
   order: 998
   previous_entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
-  entry_sha256: a6affc62cd956c585a161e2170ce9591cc46cd1e72f81d79c2afc307cadfecf0
+  entry_sha256: 90dac55e376462b6295890490dc27ccbe317da6fbe64bcfaa097124cae92172e
 - task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
   path: registry/development_tasks/5e/5e5d60ed475eb8d625deb6df8af3a83bb0efccd0c75934ee670063a5358c5b4a.yaml
   file_sha256: 61df456af4d353ddb21930d5ba90cfd6bbb51d7e6c16bbfc642b532f6250737d
   fragment_checksum: 1e0ad5b430d2b0f76aeed2b3b71c78d8c8ab07b29e5d68255a53b6e3dfbd8bbc
   partition: active
   order: 999
-  previous_entry_sha256: a6affc62cd956c585a161e2170ce9591cc46cd1e72f81d79c2afc307cadfecf0
-  entry_sha256: 6860faea461a1631031a75ec87a14e389760e78c1150fd1cf8d265609b0f98c9
+  previous_entry_sha256: 90dac55e376462b6295890490dc27ccbe317da6fbe64bcfaa097124cae92172e
+  entry_sha256: d280bd51314fce13d785fa195edb7de15b3720a74d026dbfd89675d731086060
 - task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   path: registry/development_tasks/1d/1dba72a891e4a43aad0a753f66f0dac1f4f500a8ab53415451bba01cf25c6228.yaml
   file_sha256: 4a8316751c42188d63b33f59b76762eb4e0cd78b6a8764d275345a0baf2a8e2f
   fragment_checksum: a8a7297f4bbe9365ef2d9a799d6005647cbd1f861c0694056b74c49d70d5d22a
   partition: active
   order: 1000
-  previous_entry_sha256: 6860faea461a1631031a75ec87a14e389760e78c1150fd1cf8d265609b0f98c9
-  entry_sha256: eb964c089862ed768e51617d31429189eb7ccb1306fd9576fcc128e7103cd5e4
+  previous_entry_sha256: d280bd51314fce13d785fa195edb7de15b3720a74d026dbfd89675d731086060
+  entry_sha256: 4aa25494c3b201796ec46debe5dee39815abab7ab9b2993a1174d58ac2b95782
 - task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
   path: registry/development_tasks/2f/2fb089b7548d9921a668d7611f3dccd913c34bc5548119ce7357763f659a0da1.yaml
   file_sha256: a44d538e07f9b885935ce72deaaeae5c2868de6e79d9857edd5d99b987cd9143
   fragment_checksum: 7d8b5f2436c0a36648a0c0874826c3d78ec56d453c0c717f6af901d41b5414e2
   partition: active
   order: 1001
-  previous_entry_sha256: eb964c089862ed768e51617d31429189eb7ccb1306fd9576fcc128e7103cd5e4
-  entry_sha256: 7c2509febb7c70d7e4c4442a1750220fe8b24f34ecf23bf57cda3a84ea0f5cf7
+  previous_entry_sha256: 4aa25494c3b201796ec46debe5dee39815abab7ab9b2993a1174d58ac2b95782
+  entry_sha256: e550febb40d6a933cf737eaff986df1f2cb0a95af37fd92033798f0c5827b1d6
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: a11a9cc42a5d3552baeed45d303a06b40ee4a69381ce7ff316486b82ad9c4032
-  byte_count: 1739832
+  sha256: d529b7e278dc6a078a2462ff15e79d14b10eabeeb6be06a3e6fe477e1b3a574f
+  byte_count: 1739736
   row_count: 491
   generated_do_not_edit: true
 - partition: completed
@@ -8807,7 +8807,21 @@ governance_cycles:
   change_id: trading-2524-final-architecture-manifest-failure-fix-20260816-v1
   event_count: 17
   production_effect: none
-governance_cycle_count: 108
+- cycle_id: arch-005-s5-cycle-109
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  change_id: trading-2524-full-failure-fix-determinism-and-authority-20260816-v1
+  event_count: 18
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-110
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  change_id: trading-2524-full-determinism-fix-targeted-pass-20260816-v1
+  event_count: 19
+  production_effect: none
+governance_cycle_count: 110
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8821,4 +8835,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: 6a8138d3522a5941408c9aa7d9003adb99aa26d9e3f08edec70faed13c695b88
+index_checksum: 9e18bfe2b433b3ff9c476ea36b037f300bfceb189efc23f06b6a8a906f74fed3
