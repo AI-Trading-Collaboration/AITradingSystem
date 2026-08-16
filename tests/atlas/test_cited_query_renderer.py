@@ -117,8 +117,8 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     html = render_cited_query_html(showcase)
     rendered_text = unescape(re.sub(r"<[^>]+>", "", html)).replace("完整定义", "")
     for expected in (
-        "先看为什么，再看研究做了什么",
-        "这项研究为什么按现在的顺序推进",
+        "先理解这套策略系统，再看当前研究卡点",
+        "在这个整体上下文下，本次研究为什么按现在的顺序推进",
         "我们真正要回答什么",
         "为什么选择当前研究路径",
         "现有证据只支持什么结论",
@@ -494,6 +494,17 @@ def test_renderer_follows_why_first_section_and_term_interaction_contract() -> N
     )
     assert html.count('<li class="causal-node" data-causal-node="') == 6
     assert html.count('data-causal-edge="') == 5
+    system_context = html.index('data-reader-overview="SYSTEM_CONTEXT"')
+    research_closure = html.index('data-reader-context="RESEARCH_CLOSURE"')
+    local_chain = html.index('data-reader-context="CURRENT_LOCAL_CHAIN"')
+    first_causal_node = html.index('<li class="causal-node" data-causal-node="')
+    assert system_context < research_closure < local_chain < first_causal_node
+    assert html.count('data-system-stage="') == 4
+    assert "原始需求不是尽快产出一个策略答案" in html
+    assert "为什么策略研究之前会被关闭" in html
+    assert "不是已经证明策略无效" in html
+    assert "当前页面只在处理第 02 步“可信证据”里的一个具体卡点" in html
+    assert "TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1" in html
     assert 'data-term-first="true"' in html
     assert 'data-term-first="false"' in html
     assert 'class="term-full-link"' in html

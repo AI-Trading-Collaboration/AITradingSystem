@@ -27,6 +27,13 @@ Reader Brief。
 或迁入 audit destination。术语解释改为在使用位置按需出现，集中 glossary 只保留索引和完整定义，不再
 占据页面最前方。
 
+Owner 的后续人工复核又发现：现有 why-first 虽然解释了 2522/2528 的局部诊断顺序，却仍从“研究重新开放”
+这一中间状态起步，读者自然会追问“为什么此前关闭”。因此 reader entry 必须先回到原始需求：这套系统要
+把策略想法变成可追溯、可复核且证据不足时会停止的决策过程。页面在任何局部 task 之前，必须先用简短
+全局路径说明研究、证据门、人工决策与授权执行的关系，并解释 fail-closed 不是“已经证明策略无效”，而是
+“尚无足够可信证据继续得出结论或进入执行”。随后才能把当前 per-axis 诊断定位为全局证据门中的一个局部
+卡点；不得把局部任务编号和 transport 细节冒充系统级 why。
+
 Web Pro exact-commit advisory 已提交到
 `https://chatgpt.com/c/6a8092af-5a00-83e8-acde-0cb64554c925`，审阅快照固定为
 `05e37edd42006d42f4736ddd4aa3797a12cf0f1f`。已取得且能与仓库事实交叉核对的建议是：当前 DOM 不是
@@ -46,7 +53,8 @@ advisory 输入；本 requirement、canonical task 与 executable guards 继续�
 
 桌面与移动端共享同一 DOM/语义顺序：
 
-1. 页面信任条：source commit、freshness、数据/证据/页面日期、三轴验收、
+1. 页面信任条与全局定向：先回答系统原始需求、`研究问题 -> 可信证据 -> 人工决策 -> 授权执行`
+   四步关系、为什么 fail-closed、当前停在哪一步；随后显示 source commit、freshness、数据/证据/页面日期、三轴验收、
    `strategy conclusion pass count=0`、`production_effect=none`、`broker_action=none`；
 2. reader overview：当前主线、最大 blocker、已有证据、不能推出什么、下一责任方与下一合法动作；
 3. 五个 canonical questions 及默认可见的简答和核心限制；
@@ -61,6 +69,18 @@ advisory 输入；本 requirement、canonical task 与 executable guards 继续�
 问题。移动端不得只把桌面多栏机械堆叠；视觉顺序必须与 DOM 顺序一致。
 
 ### 3.1 Why-first causal chain
+
+局部 `PROBLEM -> CONSTRAINT -> CHOICE -> EVIDENCE -> RESULT -> NEXT_STEP` 之前必须先有一个不超过四步的
+系统级定向，并默认可见地回答：
+
+- 原始需求是什么，而不是当前 task 在做什么；
+- 为什么系统设计为证据不足时保持研究关闭和 cash preservation；
+- 当前关闭是“策略已被证明无效”还是“证据门尚未通过”；
+- 重新开放至少还需要什么，以及当前页面只在处理其中哪个局部卡点。
+
+这段定向必须复用现有 contract safety、readiness、primary-window evidence、external-action admission 和
+当前 evidence 事实，不得另写一套状态。任务 ID、slot 数、transport axis 和 raw reason code 不进入系统级
+定向；它们只能在后续局部链或 drilldown 中出现。
 
 L0 必须由同一 typed projection 给出以下有序语义，不允许 renderer 从相邻文案猜测联系：
 
@@ -274,3 +294,15 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   继续由既有 `aria-describedby` 提供读屏说明后，定向 `2 passed`，四文件并行回归=`45 passed in 110.64s`。
   新 exact HTML 尚待从最终 tracked commit 生成并由 Owner 刷新复核，visual/reader comprehension 继续
   `PENDING_REVIEW`，不得把本次修复或 automated PASS 当成人工代签。
+- 2026-08-16：Owner 刷新后确认出现更高层的信息架构缺口：页面直接询问“现有证据是否足以重新开放研究”，
+  却没有先解释系统原始需求、研究为什么会进入关闭状态，以及当前诊断在整个策略决策链中的位置。本轮将
+  既有 `WHY_CONTEXT` 修正为“全局定向在前、局部六步因果链在后”；不新增 reader section、不改变任务/研究
+  状态、不修改 DQ/PIT、策略阈值、production 或 broker 权限。新 HTML 仍需 Owner 对“首次阅读能否建立
+  整体心智模型”进行人工复核。
+- 2026-08-16：coordinator 已把首屏改为四步全局路径：策略问题、可信证据、人工决策、授权执行；默认可见地
+  说明当前停在可信证据，并在局部六步链之前直接回答“研究关闭是证据门 fail-closed，不是策略已证伪”、
+  重新开放所需条件及当前页面只处理哪个局部卡点。首轮定向测试准确拦下英文装饰标题 `EVIDENCE` 对既有
+  `evidence` 术语造成的大小写漂移，随后拦下旧 hero 文案断言；修正标题和回归权威后 targeted=`2 passed`，
+  renderer/term-inventory/accessibility/page-effectiveness 四文件并行回归=`45 passed in 139.97s`。数据流、
+  research state、DQ/PIT 与 execution authority 均未改变，因此不更新 `docs/system_flow.md`；新 exact HTML
+  仍须在最终 tracked commit 后重建并由 Owner 人工复核。

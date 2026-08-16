@@ -2257,12 +2257,30 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
     manifest = showcase.page_effectiveness
     state = showcase.reader_state
     acceptance = {item.track: item for item in manifest.acceptance}
+    context_source_refs = " ".join(
+        (
+            showcase.reader_projection_contract.contract_id,
+            _task_coverage(manifest, "2510").task_id,
+            _task_coverage(manifest, "2515").task_id,
+            _task_coverage(manifest, "2522").task_id,
+        )
+    )
     return f"""
     <section class="trust-strip" data-reader-section="TRUST_STRIP" data-reader-card="trust-strip" data-page-freshness="{escape(manifest.freshness_status.value)}" data-source-commit="{escape(manifest.repository_commit)}">
       <header>
         <p class="eyebrow">ATLAS · 引用优先研究页面</p>
-        <h1>先看为什么，再看研究做了什么</h1>
-        <p class="lead">这页先说明研究问题、推进理由、结论边界和下一步；计算、逐节点结果与完整引用随后按需展开。</p>
+        <h1>先理解这套策略系统，再看当前研究卡点</h1>
+        <p class="lead">原始需求不是尽快产出一个策略答案，而是把策略想法逐步变成可追溯、可复核的决策；任何关键证据不完整，研究结论和执行都会停下来。</p>
+        <div class="system-orientation" data-reader-overview="SYSTEM_CONTEXT" data-context-source-refs="{escape(context_source_refs)}">
+          <p class="system-orientation-title">一眼看懂整体路径</p>
+          <ol>
+            <li data-system-stage="RESEARCH_QUESTION"><span>01 · 策略问题</span><strong>先明确真正想验证的投资判断</strong></li>
+            <li data-system-stage="TRUSTED_EVIDENCE"><span>02 · 可信证据</span><strong>固定研究范围，核对数据、时点与来源</strong></li>
+            <li data-system-stage="HUMAN_DECISION"><span>03 · 人工决策</span><strong>只接受证据支持的最窄结论</strong></li>
+            <li data-system-stage="AUTHORIZED_EXECUTION"><span>04 · 授权执行</span><strong>另行审批后才可能进入模拟或生产</strong></li>
+          </ol>
+          <p class="system-orientation-current"><strong>当前停在第 02 步“可信证据”：</strong>主研究窗口的证据尚未通过准入，所以系统不会把工程能力误当成策略有效性。</p>
+        </div>
       </header>
       <div class="trust-grid" aria-label="页面身份与安全边界">
         <p data-always-visible="source_commit">精确代码版本：已锁定，完整值可在页末审计区核对。</p>
@@ -2283,6 +2301,9 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
 
 def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
     nodes, edges = _build_why_first_projection(showcase)
+    context_source_refs = " ".join(
+        sorted({source.source_ref_id for node in nodes for source in node.sources})
+    )
     edge_by_pair = {(item.source_node, item.target_node): item for item in edges}
     node_cards: list[str] = []
     for index, node in enumerate(nodes):
@@ -2326,9 +2347,22 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
     return f"""
     <section class="why-context" data-reader-section="WHY_CONTEXT" data-reader-card="why-context" aria-labelledby="why-context-title">
       <div class="reader-section-heading">
-        <p class="section-kicker">WHY FIRST · SOURCE-BOUND</p>
-        <h2 id="why-context-title">这项研究为什么按现在的顺序推进？</h2>
-        <p>下面每一步都绑定已校验来源；如果问题、选择理由或因果边缺失，页面必须显示信息不足，不能由渲染器补写。</p>
+        <p class="section-kicker">SYSTEM CONTEXT · WHY RESEARCH STOPS</p>
+        <h2 id="why-context-title">为什么策略研究之前会被关闭？</h2>
+        <p>这里的“关闭”是一道安全门：当关键证据还不足以支撑可靠结论时，系统停止继续研究或执行，而不是先给答案、以后再补证据。</p>
+      </div>
+      <div class="research-closure" data-reader-context="RESEARCH_CLOSURE" data-context-source-refs="{escape(context_source_refs)}">
+        <p class="research-closure-verdict"><span>直接回答</span><strong>因为主研究窗口的关键证据没有达到可用于策略结论的准入门槛。</strong></p>
+        <div class="research-closure-meaning">
+          <p><strong>这不表示什么：</strong>不是已经证明策略无效，也不是一次局部运行失败就否定整个策略。</p>
+          <p><strong>怎样才能重新开放：</strong>先补齐并通过数据质量、时点可得性和来源准入，再由人工决定证据是否足以继续；页面不会自动放行。</p>
+        </div>
+        <p class="current-scope"><strong>你现在看到的是哪一小段：</strong>当前页面只在处理第 02 步“可信证据”里的一个具体卡点——现有汇总无法指出期权数据究竟在哪个检查轴失败，因此只能先做严格离线诊断。</p>
+      </div>
+      <div class="local-why-heading" data-reader-context="CURRENT_LOCAL_CHAIN">
+        <p class="section-kicker">CURRENT RESEARCH GATE · SOURCE-BOUND</p>
+        <h3>在这个整体上下文下，本次研究为什么按现在的顺序推进？</h3>
+        <p>下面六步解释当前局部选择；每一步都绑定已校验来源。问题、选择理由或因果边缺失时，页面必须显示信息不足，不能由渲染器补写。</p>
       </div>
       <p class="reader-problem" data-always-visible="current_problem">当前主问题：现有已准入证据是否足以让策略研究重新开放？</p>
       <ol class="causal-chain">{''.join(node_cards)}</ol>
@@ -2666,6 +2700,14 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     header h1 {{ max-width:840px; margin:.25rem 0 .7rem; font-size:clamp(2.2rem,6vw,4.6rem); line-height:1.02; letter-spacing:-.035em; }}
     .eyebrow {{ margin:0; font-size:.78rem; font-weight:800; letter-spacing:.16em; }}
     .lead {{ max-width:780px; margin:.8rem 0 0; color:#d9e8ff; font-size:1.08rem; }}
+    .system-orientation {{ max-width:980px; margin-top:1.35rem; padding:1rem; border:1px solid #ffffff38; border-radius:.9rem; background:#071a3259; backdrop-filter:blur(5px); }}
+    .system-orientation-title {{ margin:0 0 .65rem; color:#b9d8ff; font-size:.72rem; font-weight:900; letter-spacing:.12em; }}
+    .system-orientation ol {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.55rem; margin:0; padding:0; list-style:none; }}
+    .system-orientation li {{ min-width:0; padding:.65rem .7rem; border:1px solid #ffffff24; border-radius:.62rem; background:#ffffff10; }}
+    .system-orientation li span,.system-orientation li strong {{ display:block; }}
+    .system-orientation li span {{ color:#b9d8ff; font-size:.61rem; font-weight:900; letter-spacing:.04em; }}
+    .system-orientation li strong {{ margin-top:.18rem; color:#fff; font-size:.75rem; line-height:1.45; }}
+    .system-orientation-current {{ margin:.7rem 0 0; padding:.62rem .7rem; border-left:4px solid #79d6c5; border-radius:.38rem; color:#e8f7f4; background:#071a326b; font-size:.75rem; line-height:1.5; }}
     .metrics {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; max-width:720px; margin-top:1.5rem; }}
     .metric {{ padding:.8rem 1rem; border:1px solid #ffffff2b; border-radius:.8rem; background:#ffffff12; }}
     .metric strong {{ display:block; font-size:1.8rem; }}
@@ -3121,6 +3163,16 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .reader-section-heading {{ padding:1.25rem 1.35rem .9rem; }}
     .reader-section-heading h2 {{ margin:.18rem 0 .35rem; font-size:clamp(1.35rem,2.7vw,2rem); line-height:1.2; }}
     .reader-section-heading > p:last-child {{ max-width:780px; margin:.25rem 0 0; color:var(--muted); }}
+    .research-closure {{ margin:0 1.35rem 1rem; padding:1rem; border:1px solid #c5d7ec; border-radius:.82rem; background:#f4f8ff; }}
+    .research-closure-verdict {{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:.75rem; align-items:start; margin:0; }}
+    .research-closure-verdict span {{ padding:.2rem .5rem; border-radius:999px; color:#245393; background:#dfebff; font-size:.64rem; font-weight:900; white-space:nowrap; }}
+    .research-closure-verdict strong {{ color:#143d73; font-size:1.05rem; line-height:1.5; }}
+    .research-closure-meaning {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; margin-top:.75rem; }}
+    .research-closure-meaning p {{ margin:0; padding:.72rem .78rem; border:1px solid #d6e2f1; border-radius:.65rem; color:#43546c; background:#fff; font-size:.76rem; line-height:1.55; }}
+    .current-scope {{ margin:.75rem 0 0; padding:.72rem .78rem; border-left:4px solid var(--teal); border-radius:.42rem; color:#285b58; background:#e9f7f4; font-size:.78rem; }}
+    .local-why-heading {{ padding:.25rem 1.35rem .85rem; }}
+    .local-why-heading h3 {{ margin:.18rem 0 .3rem; font-size:clamp(1.15rem,2.2vw,1.55rem); line-height:1.25; }}
+    .local-why-heading > p:last-child {{ max-width:820px; margin:.2rem 0 0; color:var(--muted); font-size:.78rem; }}
     .reader-problem {{ margin:0 1.35rem .9rem; padding:.9rem 1rem; border-left:5px solid var(--blue); border-radius:.55rem; color:#173b70; background:#edf4ff; font-size:1.05rem; font-weight:850; }}
     .causal-chain {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:0; padding:0 1.35rem 1rem; list-style:none; }}
     .causal-node {{ position:relative; min-width:0; padding:1rem; border:1px solid #d7e1ee; border-radius:.75rem; background:#fbfcfe; }}
@@ -3165,9 +3217,9 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .audit-destinations .terminology-guide-intro,.audit-destinations .terminology-grid {{ width:auto; margin-left:1rem; margin-right:1rem; }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .trust-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
+    @media (max-width:900px) {{ .trust-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .system-orientation ol {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
     @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .trust-grid,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:620px) {{ .trust-grid,.system-orientation ol,.research-closure-meaning,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .research-closure-verdict {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>
