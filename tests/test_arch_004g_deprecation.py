@@ -57,7 +57,7 @@ WAVE14_S0_1_DOCS_CONFIG_REFERENCE_COUNTS = {
     # requirement; this is governance reachability, not a new runtime caller.
     "reader_brief_legacy_builder_renderer": 94,
 }
-WAVE17_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_4ffe2cf5a998e3704813"
+WAVE17_CURRENT_INVENTORY_ID = "arch_004g_deprecation_inventory_04ebc048f6930eabe8e2"
 WAVE17_CURRENT_REPOSITORY_COUNTS = {
     "python_module_count": 1129,
     "python_test_file_count": 1288,

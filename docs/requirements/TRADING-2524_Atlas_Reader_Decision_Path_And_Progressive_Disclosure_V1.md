@@ -229,6 +229,9 @@ coordinator 只生成一次 final exact HTML，并据此执行 2526-B final brow
 - `tests/test_etf_dynamic_v3_parameter_research.py` 仅限 final Full failure-fix：把
   `test_real_walk_forward_selection_uses_window_daily_paths` 的候选选择从线程完成顺序改为显式选择
   非 `reject` 来源候选；不得修改策略实现、gate、阈值、score 或投资结论。
+- `src/ai_trading_system/platform/architecture/compatibility_authority.py` 仅限把上述测试路径加入 active
+  DEVX-006C current source set；沿用 OPS-076 已验证模式，不得修改 legacy prefix、historical hash、
+  supersession audit 规则或 compatibility consumer 语义。
 
 worker 禁止写入上述 coordinator paths，也不得自行生成“候选 final”HTML。若 2525/2526 需要 shared DOM、
 CSS 或 page config remediation，提交 typed failing evidence 与 proposed behavior，由 coordinator 在 I0
@@ -366,3 +369,13 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   investment-facing 语义。最终 tracked commit 后必须重建 exact HTML，并以该 Full artifact 为 parent 运行
   `failure_fix_rerun`；修正后五次独立 16-worker/loadfile 复核依次为
   `1 passed in 5.37s / 5.22s / 5.24s / 5.13s / 5.48s`，但 focused PASS 不替代 Full。
+- 2026-08-16：candidate `a8141923e9275b9fa5fa31f95ae8999f4fe73bd6` 的 Architecture=
+  `746 passed / 119 failed in 187.03s`，artifact=
+  `outputs/validation_runtime/architecture-fitness_20260816T055247Z/test_runtime_summary.json`。119 项均来自
+  同一 live mismatch：本任务修正的 `tests/test_etf_dynamic_v3_parameter_research.py` 尚未加入最新
+  compatibility supersession source set，所以全部历史 section 审计一致 fail closed；没有 119 个独立业务
+  回归。最小修复沿用 OPS-076 的 active DEVX-006C source-set 模式，只让生成器从该测试的 live LF bytes
+  派生 current hash，不修改 legacy prefix、historical hashes 或 audit rule；完整 Architecture 必须原样重跑，
+  此失败只作 failure-fix evidence。source-set 修正并重建 authority 后，三个代表性历史前缀节点、
+  compatibility/2452、策略夹具、DevEx 与完整 deprecation 合计 `17 passed in 79.59s`；仍不替代完整
+  Architecture。

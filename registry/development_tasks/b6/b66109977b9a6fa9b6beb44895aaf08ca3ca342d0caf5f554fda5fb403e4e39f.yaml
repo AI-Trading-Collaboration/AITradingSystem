@@ -13,21 +13,21 @@ task_record:
   created_by: null
   priority: P1
   accountable_owner: null
-  next_owner: 2524 coordinator：按最终 tracked bytes 重建 DevEx 与 append-only compatibility
-    authority，提交 candidate，重建 exact HTML，并运行 parent-bound failure-fix Full；PASS 后完成
-    ff-only main/ordinary push。
+  next_owner: 2524 coordinator：按 OPS-076 既有模式把被本任务修改的策略测试加入 active DEVX-006C current
+    source set，重建 generated/compatibility，原样重跑 Architecture；PASS 前不启动后继 tier。
   requirement_refs:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   module_ids: []
   contract_versions: []
   dependencies: []
-  unstructured_legacy_blocker_or_next_step: Full 的测试夹具非确定性已作最小修正并连续 5 次 16-worker/loadfile
-    PASS；compatibility 原 3 个失败节点已 PASS。剩余是最终生成顺序、exact HTML 与 parent-bound Full。
+  unstructured_legacy_blocker_or_next_step: Architecture final attempt=746 passed/119
+    failed/187.03s；119 项均由 tests/test_etf_dynamic_v3_parameter_research.py 形成未被最新
+    supersession source set 覆盖的 live mismatch。历史 section 与业务逻辑无独立失败。
   acceptance_criteria:
   - criterion_id: legacy_compatibility
-    text: 最终 generated/compatibility validate PASS；tracked candidate clean commit；canonical
-      HTML/sidecars exact-bind 该 commit；Full failure_fix_rerun 以 full_20260816T050749Z
-      为 parent 且 PASS；推送安全门通过。
+    text: 只扩展 active current source set，不修改 legacy prefix/historical hashes/audit
+      rule；compatibility build/validate 和相邻 authority focused PASS；Architecture 完整重跑
+      PASS 后才继续 Contract/Integration/Reproducibility/parent-bound Full。
   production_effect: none
   broker_action: none
 legacy_import_evidence: null
@@ -586,27 +586,55 @@ events:
   - change:trading-2524-full-determinism-fix-targeted-pass-20260816-v1
   history_completeness: CANONICAL_EVENT_COMPLETE
   event_id: task-event-647e362dd84ee1d884bcc9c9660ec949
+- schema_version: task_event.v1
+  task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
+  event_type: TASK_UPDATED
+  occurred_at: '2026-08-16T14:56:20.6754584+09:00'
+  actor: codex_coordinator
+  change_id: trading-2524-architecture-current-source-set-failure-fix-20260816-v1
+  lane_id: null
+  base_commit: a8141923e9275b9fa5fa31f95ae8999f4fe73bd6
+  previous_state_event_id: task-event-647e362dd84ee1d884bcc9c9660ec949
+  from_status: IN_PROGRESS
+  to_status: IN_PROGRESS
+  payload:
+    priority: P1
+    next_owner: 2524 coordinator：按 OPS-076 既有模式把被本任务修改的策略测试加入 active DEVX-006C current
+      source set，重建 generated/compatibility，原样重跑 Architecture；PASS 前不启动后继 tier。
+    blocker_or_next_step: Architecture final attempt=746 passed/119 failed/187.03s；119
+      项均由 tests/test_etf_dynamic_v3_parameter_research.py 形成未被最新 supersession source
+      set 覆盖的 live mismatch。历史 section 与业务逻辑无独立失败。
+    acceptance_criteria: 只扩展 active current source set，不修改 legacy prefix/historical
+      hashes/audit rule；compatibility build/validate 和相邻 authority focused PASS；Architecture
+      完整重跑 PASS 后才继续 Contract/Integration/Reproducibility/parent-bound Full。
+    notes: '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；artifact=outputs/validation_runtime/architecture-fitness_20260816T055247Z/test_runtime_summary.json；exact
+      result=746 passed/119 failed/187.03s；shared cause=uncovered live mismatch for
+      tests/test_etf_dynamic_v3_parameter_research.py。'
+  rationale: Governed canonical task-registry update after ARCH-005 S5 cutover.
+  evidence_refs:
+  - change:trading-2524-architecture-current-source-set-failure-fix-20260816-v1
+  history_completeness: CANONICAL_EVENT_COMPLETE
+  event_id: task-event-ac390050845a4f5ee27f25ddfa845690
 projection:
   legacy_first_eight_cells:
   - TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   - Atlas strategy research page / reader decision path and progressive disclosure
   - P1
   - IN_PROGRESS
-  - 2524 coordinator：按最终 tracked bytes 重建 DevEx 与 append-only compatibility authority，提交
-    candidate，重建 exact HTML，并运行 parent-bound failure-fix Full；PASS 后完成 ff-only main/ordinary
-    push。
-  - Full 的测试夹具非确定性已作最小修正并连续 5 次 16-worker/loadfile PASS；compatibility 原 3 个失败节点已 PASS。剩余是最终生成顺序、exact
-    HTML 与 parent-bound Full。
-  - 最终 generated/compatibility validate PASS；tracked candidate clean commit；canonical
-    HTML/sidecars exact-bind 该 commit；Full failure_fix_rerun 以 full_20260816T050749Z
-    为 parent 且 PASS；推送安全门通过。
-  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；strategy
-    fixture fix=5/5 independent xdist PASS (5.37s/5.22s/5.24s/5.13s/5.48s)；compatibility
-    failed nodes=3 passed/14.63s；no policy or threshold mutation。'
+  - 2524 coordinator：按 OPS-076 既有模式把被本任务修改的策略测试加入 active DEVX-006C current source
+    set，重建 generated/compatibility，原样重跑 Architecture；PASS 前不启动后继 tier。
+  - Architecture final attempt=746 passed/119 failed/187.03s；119 项均由 tests/test_etf_dynamic_v3_parameter_research.py
+    形成未被最新 supersession source set 覆盖的 live mismatch。历史 section 与业务逻辑无独立失败。
+  - 只扩展 active current source set，不修改 legacy prefix/historical hashes/audit rule；compatibility
+    build/validate 和相邻 authority focused PASS；Architecture 完整重跑 PASS 后才继续 Contract/Integration/Reproducibility/parent-bound
+    Full。
+  - '[supporting requirement](docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md)；artifact=outputs/validation_runtime/architecture-fitness_20260816T055247Z/test_runtime_summary.json；exact
+    result=746 passed/119 failed/187.03s；shared cause=uncovered live mismatch for
+    tests/test_etf_dynamic_v3_parameter_research.py。'
   docs_links:
   - docs/requirements/TRADING-2524_Atlas_Reader_Decision_Path_And_Progressive_Disclosure_V1.md
   terminal: false
-  canonical_row_sha256: 544d78b28f176f5a806078e2abf01ab6a7a79d3b5b0b3fbe4ea10faad6c2a233
-last_event_id: task-event-647e362dd84ee1d884bcc9c9660ec949
+  canonical_row_sha256: 64aa3c29e345e0e05e68812b0b2dad28ccc19681d907fdd1b03b51f40d2d48a4
+last_event_id: task-event-ac390050845a4f5ee27f25ddfa845690
 producer_version: arch_005_s5_canonical_registry.v1
-fragment_checksum: 167a8142a60268209bd1e3706b906d2dd3a4f8be58c22f9af6ce5d882cc8c117
+fragment_checksum: fcbdbe741da62a406204caa18531cfc53149ee4ddf495e3cbfdcdd229f10c69c
