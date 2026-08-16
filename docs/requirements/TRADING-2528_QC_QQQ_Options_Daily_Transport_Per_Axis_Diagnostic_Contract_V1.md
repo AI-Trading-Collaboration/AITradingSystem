@@ -1,6 +1,6 @@
 # TRADING-2528 — QQQ Options daily transport per-axis diagnostic contract V1
 
-- status: `IN_PROGRESS`
+- status: `BASELINE_DONE`
 - priority: `P0`
 - governed mode: `SINGLE_LANE`（2522 release 后独立启动）
 - registration base: `f876ec853c1431e760bc4cf5b89123265a32080f`
@@ -47,11 +47,35 @@ cross-field consistency 等观测轴，保留 session-level count/unknown/reject
 
 ## Path claims
 
-2528 task-owned paths 在独立 START/LANE preflight 后冻结；预计包含 requirement、versioned policy、
-diagnostic contract module 与 focused tests。task registry/index/shadow、`docs/system_flow.md`、architecture、
-Atlas/generated/compatibility 仍由该任务的单一 coordinator 在最终候选统一接线。
+2528 task-owned paths 已在独立 START/LANE preflight 后冻结为：
+
+- `docs/requirements/TRADING-2528_QC_QQQ_Options_Daily_Transport_Per_Axis_Diagnostic_Contract_V1.md`；
+- `config/research/qc_qqq_options_daily_transport_per_axis_diagnostic_v1.yaml`；
+- `src/ai_trading_system/qqq_options_research/daily_transport_per_axis_diagnostic.py`；
+- `tests/test_qqq_options_daily_transport_per_axis_diagnostic.py`。
+
+task registry/index、`docs/system_flow.md`、`docs/artifact_catalog.md`、architecture fragments/manifests 与
+compatibility authority 仍由该任务的单一 coordinator 在最终候选统一接线。
 
 ## 当前边界
 
-本次 2522 coordinator 只登记该后继，不实现任何 2528 code/policy/test，不启动新外部动作。2528 必须从
-2522 ordinary-pushed exact main 独立启动并重新执行 governed preflight。
+2522 coordinator 只登记了该后继，没有实现任何 2528 code/policy/test，也没有启动新外部动作。2528 已在
+2524 独立发布后从 exact main `06b0b29fac5d77e011d5dbe0151f566c8c030d0d` 启动：
+`SINGLE_LANE` START/LANE preflight 均为 `PASS`，branch=
+`codex/trading-2528-daily-transport-axis-diagnostic`。当前仍保持 `external_action=none`；本轮只允许严格离线
+policy/contract/focused tests，不授权新的 QuantConnect/Cloud/API/CLI/HTTP/Results/raw-row 动作。
+
+## 实现进度
+
+- 2026-08-16：versioned policy 已冻结 2522 repository/result/backtest/range/session 与六个 canonical source
+  hashes；typed contract 定义八个 axis、四种 axis status、single/cross/unresolved reject scope、canonical
+  content seal/from-JSON replay 与输入排列不变性。冻结 2522 事实只产生 `OPTION_CHAIN_PRESENCE=PRESENT`；
+  underlying、bid/ask、Greeks、IV、OI、volume、cross-field 全部为 `NOT_EVALUATED`，最终分类固定为
+  `UNRESOLVED_COMBINATION`。forged `PASS`/`UNKNOWN`、axis set/order、hash/range/session/count、raw-row
+  carrier 与 unknown promotion negatives 已覆盖；core focused=`19 passed in 7.81s`，Ruff=`PASS`。
+- architecture/system-flow/task/generated/compatibility authority 已完成接线并验证新鲜；core、predecessor replay
+  与 architecture focused 同批为 `61 passed in 21.50s`，strict mypy 与 Ruff 均为 `PASS`。离线合同因此进入
+  `BASELINE_DONE`；发布前仍必须在 exact candidate 上完成五级 formal validation。
+- 下一边界只属于未来独立授权：若 Project Owner 提供新的 exact proposal hashes 与授权 token，后继任务才可
+  采集逐轴 export-safe aggregate。当前没有下载数据、读取 raw option rows、运行 Cloud、改变 DQ/PIT、授权
+  selection/engine 或产生投资解释。

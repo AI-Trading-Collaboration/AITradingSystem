@@ -14,7 +14,7 @@ fragment_count: 1001
 missing_task_count: 0
 duplicate_task_count: 0
 chain_genesis_sha256: 4277253b220d0bdc5886e09aadb6ebb81ed5caf2a83fa295f01a68ccb9e607de
-final_chain_sha256: 9d58867ed45338f2ed0fae44d4e12d6a46ccdf8616a38ce5b0ea6a7fb18e609e
+final_chain_sha256: d040e8a53af5ec689477f2a9a689fc9184c366056d4eef0b1cac431eeecb870b
 cutover_manifest_sha256: d3be4d99b7b499ba0f35ad7bfbd1d1334a9a63937045d480dfdb12d69ee7a6f6
 consumer_inventory_sha256: 19c8db7a608de904383c5e63598b22b071fee7125e710470d99c8e60e0ba2ee4
 templates:
@@ -7975,73 +7975,73 @@ fragments:
   entry_sha256: 0f01f0e5bffb99603258d9cbe70cea28db2965158012a744813ada59e8fd83e7
 - task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
   path: registry/development_tasks/da/da13211e851e3e1f4c381aff2fb23e08b931f8dc9c31c7e69979f624a3d64455.yaml
-  file_sha256: 6575ac6cfabe5e1c76fd6877ec6c0bf8e4397f63bc2b841fd354a095fcba3dc3
-  fragment_checksum: 576a9d8e5efdf2c869e4f6d4bec643fb45713cdc4d9c18351cb1b6e4bea4cf9f
+  file_sha256: 366ba2d2b07d5d1b524297e646839afef48a8af92bb358b2ed95b2d72a2d4838
+  fragment_checksum: c0ec493be792209a71de0f04e367490054b8db907c8f03fd9c15691e7322c066
   partition: active
   order: 994
   previous_entry_sha256: 0f01f0e5bffb99603258d9cbe70cea28db2965158012a744813ada59e8fd83e7
-  entry_sha256: d25744c0b1980dce23795f30bbfbd7a4a70f723918e311a95e492431d2ddcce3
+  entry_sha256: 5b7254f71da8ff4e28f0e4b1aed4a26c3ffdffeac28f8c114c52df62398c4ce2
 - task_id: TRADING-2523B_ATLAS_PAGE_EFFECTIVENESS_SERIAL_CONTRACT_WAVE_V1
   path: registry/development_tasks/45/454e5767fd171621e0cb535e52f32220e842eab51a05da32c13bf6f70f020387.yaml
   file_sha256: aa6c6565e235d72ed7e5695c069db34bd62842aa39bafe0cf40a5ce7dfb6a822
   fragment_checksum: 9232d2aae908932201ca8a8397bc846d355bfc08feaf2a3258313ecfe3814ca0
   partition: completed
   order: 995
-  previous_entry_sha256: d25744c0b1980dce23795f30bbfbd7a4a70f723918e311a95e492431d2ddcce3
-  entry_sha256: 63d62a2e337a13eaced883acb8d000377b496a838f8bc9a0da09601c00d45269
+  previous_entry_sha256: 5b7254f71da8ff4e28f0e4b1aed4a26c3ffdffeac28f8c114c52df62398c4ce2
+  entry_sha256: bce297f3618a5e835e91a6278dee18c11c1a38e334f760aadb9a23a0803247a5
 - task_id: TRADING-2523A_ATLAS_READER_TERMINOLOGY_INTEGRATION_CORRECTION_V1
   path: registry/development_tasks/fa/fa09a126c92f815b7c9643538e44d4e24728077bc15568ca61069834b0b71e5e.yaml
   file_sha256: 9dba3b88947ca8cb11210e8773c053df5543594474c3cb4ca92f6302490b18d3
   fragment_checksum: 2831555713e203c328fe096f0b1c819ab1f025ee208120c4b9080100dc438f42
   partition: completed
   order: 996
-  previous_entry_sha256: 63d62a2e337a13eaced883acb8d000377b496a838f8bc9a0da09601c00d45269
-  entry_sha256: c690853ceaaa0afde6a0437103babd6f96b3660e0f792d9d2534398fa8d19309
+  previous_entry_sha256: bce297f3618a5e835e91a6278dee18c11c1a38e334f760aadb9a23a0803247a5
+  entry_sha256: a24cd5a7236740b2d0e011e964fe8de38c895745501a220d93f579a7c779874b
 - task_id: TRADING-2523_ATLAS_READER_FACING_TERMINOLOGY_FIRST_USE_CONTRACT_V1
   path: registry/development_tasks/52/524572dbdfb90ecdb82650c153991c224145e4fb840041fcf8c96c8d82c788fa.yaml
   file_sha256: 6ec61d62b68be151c9038a564f5bcc544f8d488480b52cdad517ed8599d15e6f
   fragment_checksum: bea8a1d1523e6ee433804bcdca3af15ae1c93bdc72f05d1249d0ddc62c6d6b8f
   partition: completed
   order: 997
-  previous_entry_sha256: c690853ceaaa0afde6a0437103babd6f96b3660e0f792d9d2534398fa8d19309
-  entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
+  previous_entry_sha256: a24cd5a7236740b2d0e011e964fe8de38c895745501a220d93f579a7c779874b
+  entry_sha256: fdc6c589b9a5faf04f144b0d53cfa6396f7ded2b4884131a74fa2d0395bffe97
 - task_id: TRADING-2524_ATLAS_READER_DECISION_PATH_AND_PROGRESSIVE_DISCLOSURE_V1
   path: registry/development_tasks/b6/b66109977b9a6fa9b6beb44895aaf08ca3ca342d0caf5f554fda5fb403e4e39f.yaml
   file_sha256: 08a65259ebaf284defa04257a0e388c38300bb7bb077fc87bfc44618773d5ede
   fragment_checksum: ed48890a53098b00d12ae8cfc4106e060404ddbc618c626e39d42002636ad0fb
   partition: active
   order: 998
-  previous_entry_sha256: 111cf9e166892130abd3ed97739b20acc6718dd4ca2f2a38bc5701560943d542
-  entry_sha256: 3d145ab8ae95c8e9d8d5257dc88d7dddb6b2feaee7bd46cedf4080a4af69b70f
+  previous_entry_sha256: fdc6c589b9a5faf04f144b0d53cfa6396f7ded2b4884131a74fa2d0395bffe97
+  entry_sha256: 43f7663122d3e8f46d208bdd844766b45296326644c5f359a74ff2aeecbfcaac
 - task_id: TRADING-2525_ATLAS_CHANGE_EVIDENCE_DATE_AND_STATE_SEMANTICS_V1
   path: registry/development_tasks/5e/5e5d60ed475eb8d625deb6df8af3a83bb0efccd0c75934ee670063a5358c5b4a.yaml
   file_sha256: 61df456af4d353ddb21930d5ba90cfd6bbb51d7e6c16bbfc642b532f6250737d
   fragment_checksum: 1e0ad5b430d2b0f76aeed2b3b71c78d8c8ab07b29e5d68255a53b6e3dfbd8bbc
   partition: active
   order: 999
-  previous_entry_sha256: 3d145ab8ae95c8e9d8d5257dc88d7dddb6b2feaee7bd46cedf4080a4af69b70f
-  entry_sha256: 9365e665650270a411da4e53d530c581a47e673014f36f3b8cdb291121a03e34
+  previous_entry_sha256: 43f7663122d3e8f46d208bdd844766b45296326644c5f359a74ff2aeecbfcaac
+  entry_sha256: 357e1c8a1a1d89b92526f10073ae00a57d938ac9dff21c72e326b2647f1e724a
 - task_id: TRADING-2526_ATLAS_ACCESSIBLE_RESEARCH_DRILLDOWN_AND_AUDIT_LINKAGE_V1
   path: registry/development_tasks/1d/1dba72a891e4a43aad0a753f66f0dac1f4f500a8ab53415451bba01cf25c6228.yaml
   file_sha256: 4a8316751c42188d63b33f59b76762eb4e0cd78b6a8764d275345a0baf2a8e2f
   fragment_checksum: a8a7297f4bbe9365ef2d9a799d6005647cbd1f861c0694056b74c49d70d5d22a
   partition: active
   order: 1000
-  previous_entry_sha256: 9365e665650270a411da4e53d530c581a47e673014f36f3b8cdb291121a03e34
-  entry_sha256: 43b433fbdb3c0801ff24a9321173f5baacab32b2c1384050cdeca0980ad3b2e1
+  previous_entry_sha256: 357e1c8a1a1d89b92526f10073ae00a57d938ac9dff21c72e326b2647f1e724a
+  entry_sha256: b168de897fb93390298a2933ba819124e6f9b1b0d03a64495d740a30ae3b4c46
 - task_id: TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1
   path: registry/development_tasks/2f/2fb089b7548d9921a668d7611f3dccd913c34bc5548119ce7357763f659a0da1.yaml
   file_sha256: a44d538e07f9b885935ce72deaaeae5c2868de6e79d9857edd5d99b987cd9143
   fragment_checksum: 7d8b5f2436c0a36648a0c0874826c3d78ec56d453c0c717f6af901d41b5414e2
   partition: active
   order: 1001
-  previous_entry_sha256: 43b433fbdb3c0801ff24a9321173f5baacab32b2c1384050cdeca0980ad3b2e1
-  entry_sha256: 9d58867ed45338f2ed0fae44d4e12d6a46ccdf8616a38ce5b0ea6a7fb18e609e
+  previous_entry_sha256: b168de897fb93390298a2933ba819124e6f9b1b0d03a64495d740a30ae3b4c46
+  entry_sha256: d040e8a53af5ec689477f2a9a689fc9184c366056d4eef0b1cac431eeecb870b
 generated_views:
 - partition: active
   path: docs/task_register.md
-  sha256: 2b626770644e863612fb56b8f08374147df2f01433842edb4155eab1c3b48a23
-  byte_count: 1739686
+  sha256: b438f8f8ba14de0cfe608af856aca150f4bffcbee2cb313b3d809c00d801ae53
+  byte_count: 1739957
   row_count: 491
   generated_do_not_edit: true
 - partition: completed
@@ -8842,7 +8842,28 @@ governance_cycles:
   change_id: trading-2524-full-rcf-targeted-pass-20260816-v1
   event_count: 22
   production_effect: none
-governance_cycle_count: 113
+- cycle_id: arch-005-s5-cycle-114
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  change_id: trading-2528-independent-lane-start-20260816-v1
+  event_count: 2
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-115
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  change_id: trading-2528-core-contract-focused-pass-20260816-v1
+  event_count: 3
+  production_effect: none
+- cycle_id: arch-005-s5-cycle-116
+  cycle_type: SELF_HOSTED_TASK_UPDATE
+  status: PASS
+  task_id: TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1
+  change_id: trading-2528-offline-baseline-ready-20260816-v1
+  event_count: 4
+  production_effect: none
+governance_cycle_count: 116
 manual_row_move_workflow_enabled: false
 rollback:
   mode: OWNER_REVIEWED_LEGACY_COMPATIBLE_SNAPSHOT_ONLY
@@ -8856,4 +8877,4 @@ safety:
   automatic_push_allowed: false
   production_effect: none
   broker_action: none
-index_checksum: eed7fa4bbac54c8deec70ee0e21e1985d2cc9643cc21c7ab96e6725854d43bfa
+index_checksum: 49c641b679c645f1a8105c5ccdfeb7608f407d3ef5aa29b8c662927e489cf7a8

@@ -260,7 +260,8 @@ terminology policy SHA-256，并逐条保存 normalized surface、DOM locator、
 目标、解释晚于首现或 audit-only 越界全部 fail closed。内部标识只在 audit layer 保留，默认读者层改用
 中文目的、动作与边界；新 HTML 的 Owner visual 与 reader comprehension 均为 `PENDING_REVIEW`，自动化
 不得代签。2522 已完成唯一 v4 Cloud run，但所有 chain session 被组合 transport gate 拒绝，当前仍无
-DQ/PIT-admitted 策略证据；2528 仅登记离线 per-axis 诊断合同。2524--2527-A 已在同一受治理候选中形成
+DQ/PIT-admitted 策略证据；2528 已实现严格离线 per-axis 诊断合同，只确认 chain presence，其他轴保持
+`NOT_EVALUATED`，组合根因保持 unresolved。2524--2527-A 已在同一受治理候选中形成
 可重放的读者投影链：`reader_projection_contract.v1` 冻结 `PROBLEM -> CONSTRAINT -> CHOICE -> EVIDENCE ->
 RESULT -> NEXT_STEP` 的 source-bound why-first 因果链、六问到五个 cited-query 问题的 typed mapping 与
 `READER_DEFAULT / RESEARCH_DRILLDOWN / AUDIT_STRATUM` 信息层级；`reader_state_semantics.v1` 将状态限定到
@@ -8570,10 +8571,37 @@ v4 exact Owner token + 2520 package + 2521 admission
   -> local aggregate DQ/PIT = NOT_EVALUATED
   -> option-event DQ/PIT = NOT_EVALUATED
   -> POLICY_BLOCKED_CASH_PRESERVATION
-  -> registration-only TRADING-2528 offline per-axis diagnostic contract
+  -> TRADING-2528 strict offline per-axis diagnostic contract
 ```
 
 现有 export-safe aggregate 只证明所有实际有 chain 的 session 均被组合 transport gate 拒绝，不能可靠
 判断 quote、Greeks、IV、OI、volume 或 cross-field consistency 中哪一轴为根因。因此 2522 不伪造轴向
-PASS/FAIL、不提升 DQ/PIT、不激活 selection/engine，也不授权第二次 Cloud run。2528 只作为离线合同后继
-登记；它必须从 2522 ordinary-pushed exact main 独立启动，任何未来外部再验证仍需新的 exact Owner token。
+PASS/FAIL、不提升 DQ/PIT、不激活 selection/engine，也不授权第二次 Cloud run。2528 从已发布 main 独立
+实现；任何未来外部再验证仍需新的 exact Owner token。
+
+## TRADING-2528 QQQ Options daily transport 逐轴离线诊断合同 V1
+
+`qqq_options_research.daily_transport_per_axis_diagnostic` 只消费 2522 canonical failure receipt、package
+manifest 与 export-safe hashes；不消费或反演 raw option rows。versioned policy 冻结 2522 source repository、
+result/backtest、`2021-02-22..2025-12-02` requested/evaluated range 与 `1202/1201/0/1201`
+expected/chain/valid/rejected session identity。
+
+```text
+2522 failure receipt + package manifest + export-safe hash bindings
+  -> exact policy/repository/result/backtest/range/session validation
+  -> OPTION_CHAIN_PRESENCE = PRESENT (1201 sessions)
+  -> UNDERLYING / BID_ASK / GREEKS / IV / OI / VOLUME / CROSS_FIELD
+     = NOT_EVALUATED (no per-axis counters exported)
+  -> combined transport rejection = UNRESOLVED_COMBINATION
+  -> no single-axis or cross-axis root-cause guess
+  -> canonical content SHA-256 + exact JSON replay + input-order invariance
+  -> forged PASS/UNKNOWN, axis-set/hash/range/count/raw-carrier drift fail closed
+  -> evidence admission = FAIL; DQ/PIT = NOT_EVALUATED
+  -> no Cloud / no external action / no selection / no investment interpretation
+  -> POLICY_BLOCKED_CASH_PRESERVATION
+```
+
+合同包含 single-axis、cross-axis 与 unresolved-combination 三类稳定 reject scope，但冻结的 2522 事实只能
+合法产生第三类。`PRESENT` 仅表示 option chain 曾出现，不等于该轴或整体 transport/DQ/PIT PASS；其余轴在
+没有 per-axis derived counters 时不得由调用者自报或从组合计数推断。该合同不授权新 Cloud run、Results
+下载、API/CLI/HTTP、订单、成交、paper/live/broker/production 或策略解释。

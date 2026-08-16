@@ -4,7 +4,7 @@ policy_id: arch_004e_devex_ownership_policy
 policy_sha256: 45c2759c724f0751e7f84b326c163bdfd9c347827291e6771eb5648336ddb4b2
 existing_aggregate_source_of_truth_changed: false
 target_count: 3
-fragment_count: 116
+fragment_count: 118
 targets:
 - target_id: report_registry
   current_path: config/report_registry.yaml
@@ -34,9 +34,9 @@ targets:
 - target_id: system_flow
   current_path: docs/system_flow.md
   current_exists: true
-  current_sha256: ff17c208496c6231e74cc4fe75a6e60b8218418e36db43592721926318416f3c
+  current_sha256: fdf4f529e85fb7222ccae8a99dfaf64b1d87031438f3f5b46b0dd8b10c29d49b
   fragment_root: config/architecture/fragments/flows
-  fragment_count: 46
+  fragment_count: 47
   fragment_paths:
   - config/architecture/fragments/flows/arch_004g3_reader_brief_native.yaml
   - config/architecture/fragments/flows/arch_004g4_periodic_consumers.yaml
@@ -69,6 +69,7 @@ targets:
   - config/architecture/fragments/flows/qqq_options_daily_primary_backtest.yaml
   - config/architecture/fragments/flows/qqq_options_daily_slice_revalidation_authorization_admission.yaml
   - config/architecture/fragments/flows/qqq_options_daily_slice_revalidation_execution_evidence.yaml
+  - config/architecture/fragments/flows/qqq_options_daily_transport_per_axis_diagnostic.yaml
   - config/architecture/fragments/flows/qqq_options_deterministic_selection.yaml
   - config/architecture/fragments/flows/qqq_options_dq_pit_identity.yaml
   - config/architecture/fragments/flows/qqq_options_minute_execution.yaml
@@ -343,6 +344,13 @@ fragments:
   target_id: system_flow
   path: config/architecture/fragments/flows/qqq_options_daily_slice_revalidation_execution_evidence.yaml
   sha256: d37f2a0a8adeabbce936e3a9e8c7bf199f29ae3a8efcfef2b7505758cfbee9ed
+  generated_source_of_truth_active: false
+- fragment_id: flow.qqq_options_daily_transport_per_axis_diagnostic
+  fragment_kind: flow
+  owner: architecture_governance
+  target_id: system_flow
+  path: config/architecture/fragments/flows/qqq_options_daily_transport_per_axis_diagnostic.yaml
+  sha256: cf165a4d0d68d92bad83e54b1c8ea9afad8aa9815505bd7463125c360eea0216
   generated_source_of_truth_active: false
 - fragment_id: flow.qqq_options_deterministic_selection
   fragment_kind: flow
@@ -686,6 +694,13 @@ fragments:
   target_id: null
   path: config/architecture/fragments/modules/qqq_options_daily_slice_revalidation_execution_evidence.yaml
   sha256: 6968197c81c0a54881f82229849a8ce5d8fd1f72a34fecea5a97de4790b91559
+  generated_source_of_truth_active: false
+- fragment_id: module.qqq_options_daily_transport_per_axis_diagnostic
+  fragment_kind: module
+  owner: options_daily_backtest_governance
+  target_id: null
+  path: config/architecture/fragments/modules/qqq_options_daily_transport_per_axis_diagnostic.yaml
+  sha256: a258a3404e354c64bc55f460d2f1af42b2dea522aed771218c3c62a94ebcd88b
   generated_source_of_truth_active: false
 - fragment_id: module.qqq_options_deterministic_selection
   fragment_kind: module

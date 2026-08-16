@@ -1,0 +1,46 @@
+schema_version: qc_qqq_options_daily_transport_per_axis_diagnostic_policy.v1
+policy_id: qc_qqq_options_daily_transport_per_axis_diagnostic_v1
+contract_version: 1.0.0
+diagnostic_repository_base_commit: 06b0b29fac5d77e011d5dbe0151f566c8c030d0d
+source_task_id: TRADING-2522_QC_QQQ_OPTIONS_PRIMARY_WINDOW_DAILY_SLICE_REVALIDATION_EXECUTION_EVIDENCE_V1
+source_repository_commit: 54e43a1aa9787c52d4b0cb363e30e5a4bf79aed9
+source_failure_receipt_content_sha256: 43711b1ec803d098cb9c6af8f85373ce312ac079d37481e279c1c7659829e4ac
+source_failure_receipt_file_sha256: 406ad4dc526002f29b9363d25dab2623e55940b385c0d1145d24dab78285ae29
+source_package_manifest_content_sha256: d35c932b3508ce5f9c21a86660e5a7bb264574608e5fd756fbc8b9386c8a9137
+source_package_manifest_file_sha256: 407a9f9e8fe6a71dab62c879566b40213116606798e2ea9ba846dd4d05683892
+source_result_file_sha256: 45e8647f4d4b0e3590252acedacca4235695341574f44bc593d8ab9b283f603e
+source_result_payload_sha256: 73d4fbac5db140766e6f8fa5e2d6c656fc8c55f71e9d7a6123650795300a6471
+source_backtest_id: 60ce7e0bec3ad2d83a4d1341e0221492
+requested_start: "2021-02-22"
+requested_end: "2025-12-02"
+evaluated_start: "2021-02-22"
+evaluated_end: "2025-12-02"
+expected_session_count: 1202
+chain_session_count: 1201
+valid_candidate_session_count: 0
+transport_rejected_session_count: 1201
+axis_order:
+  - OPTION_CHAIN_PRESENCE
+  - UNDERLYING_PRICE
+  - BID_ASK_QUOTE
+  - GREEKS
+  - IMPLIED_VOLATILITY
+  - OPEN_INTEREST
+  - VOLUME
+  - CROSS_FIELD_CONSISTENCY
+source_binding_order:
+  - FAILURE_RECEIPT_CONTENT
+  - FAILURE_RECEIPT_FILE
+  - PACKAGE_MANIFEST_CONTENT
+  - PACKAGE_MANIFEST_FILE
+  - RESULT_FILE
+  - RESULT_PAYLOAD
+unknown_input_maps_to: NOT_EVALUATED
+caller_asserted_pass_accepted: false
+raw_option_rows_allowed: false
+new_external_action_authorized: false
+further_cloud_run_authorized: false
+selection_authorized: false
+engine_status: POLICY_BLOCKED_CASH_PRESERVATION
+production_effect: none
+broker_action: none

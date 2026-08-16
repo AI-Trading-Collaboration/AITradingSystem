@@ -1,0 +1,19 @@
+schema_version: arch_004e_flow_fragment.v1
+fragment_id: flow.qqq_options_daily_transport_per_axis_diagnostic
+fragment_kind: flow
+owner: architecture_governance
+target_id: system_flow
+source: trading_2522_export_safe_failure_receipt_and_package_manifest
+stages:
+  - load_exact_versioned_per_axis_diagnostic_policy
+  - bind_2522_repository_policy_result_backtest_range_and_session_identity
+  - accept_only_failure_receipt_manifest_and_export_safe_hash_bindings
+  - preserve_option_chain_presence_from_1201_observed_chain_sessions
+  - keep_underlying_quote_greeks_iv_oi_volume_and_cross_field_not_evaluated
+  - classify_combined_rejection_as_unresolved_without_per_axis_counters
+  - reject_forged_pass_unknown_extra_missing_duplicate_or_reordered_axes
+  - reject_checksum_range_session_count_and_raw_row_carrier_drift
+  - seal_canonical_order_invariant_envelope_and_replay_exact_bytes
+  - preserve_no_cloud_no_selection_no_engine_and_policy_blocked_cash
+compatibility_flow_entry_required: false
+generated_source_of_truth_active: false

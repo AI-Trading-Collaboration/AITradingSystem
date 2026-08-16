@@ -1,0 +1,22 @@
+schema_version: arch_004e_module_fragment.v1
+fragment_id: module.qqq_options_daily_transport_per_axis_diagnostic
+fragment_kind: module
+owner: options_daily_backtest_governance
+module_prefix: src/ai_trading_system/qqq_options_research/daily_transport_per_axis_diagnostic.py
+public_contracts:
+  - AxisDiagnosticReason
+  - AxisDiagnosticRecord
+  - AxisDiagnosticStatus
+  - AxisRejectScope
+  - DailyTransportAxis
+  - DailyTransportAxisDiagnosticPolicy
+  - DailyTransportPerAxisDiagnosticEnvelope
+  - DiagnosticSourceBinding
+  - DiagnosticSourceId
+  - LoadedDailyTransportAxisDiagnosticPolicy
+  - build_daily_transport_per_axis_diagnostic
+  - build_repository_daily_transport_per_axis_diagnostic
+  - classify_axis_rejection
+  - load_daily_transport_axis_diagnostic_policy
+compatibility_facades: []
+deprecation_status: active_reference_architecture
