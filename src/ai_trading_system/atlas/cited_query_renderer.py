@@ -271,9 +271,7 @@ def _build_reader_state(
     if not change_summary:
         change_summary = "当前来源没有提供可安全展示的变化说明。"
     citation_dates = tuple(
-        citation.as_of.isoformat()
-        for response in responses
-        for citation in response.citations
+        citation.as_of.isoformat() for response in responses for citation in response.citations
     )
     return project_reader_state(
         policy=load_reader_state_semantics(repository_root=policy_root),
@@ -538,16 +536,16 @@ def _render_response(
         if not _contains_raw_reader_identifier(claim.text_zh)
     )
     audit_claims = tuple(
-        claim.text_zh
-        for claim in response.claims
-        if _contains_raw_reader_identifier(claim.text_zh)
+        claim.text_zh for claim in response.claims if _contains_raw_reader_identifier(claim.text_zh)
     )
     claims = "".join(
         f'<p class="claim">{escape(project_reader_text(text=item, policy=terminology))}</p>'
         for item in reader_claims
     )
     if audit_claims:
-        claims += '<p class="claim">来源身份与校验结果已经核对；原始路径和校验值收在下方审计明细中。</p>'
+        claims += (
+            '<p class="claim">来源身份与校验结果已经核对；原始路径和校验值收在下方审计明细中。</p>'
+        )
     if not claims:
         claims = '<p class="claim muted">没有生成未经引用的结论。</p>'
     reader_limitations = tuple(
@@ -567,12 +565,10 @@ def _render_response(
         else '<p class="good">没有额外证据限制。</p>'
     )
     if audit_limitations:
-        limitations += '<p>另有机器可读的限制标识，已放入下方审计明细。</p>'
+        limitations += "<p>另有机器可读的限制标识，已放入下方审计明细。</p>"
     citations = "".join(_render_citation(item) for item in response.citations)
     raw_claims = "".join(f"<li>{escape(item)}</li>" for item in audit_claims)
-    raw_limitations = "".join(
-        f"<li>{escape(item)}</li>" for item in audit_limitations
-    )
+    raw_limitations = "".join(f"<li>{escape(item)}</li>" for item in audit_limitations)
     status_class = response.answer_status.value.lower()
     return f"""
     <article class="answer-card" id="{escape(response.request.question_id.value.lower())}" data-reader-card="{escape(response.request.question_id.value)}">
@@ -594,8 +590,8 @@ def _render_response(
       </section>
       <details data-reader-layer="audit">
         <summary>查看 {len(response.citations)} 条完整引用与审计标识</summary>
-        {f'<h3>原始回答字段</h3><ul>{raw_claims}</ul>' if raw_claims else ''}
-        {f'<h3>原始限制字段</h3><ul>{raw_limitations}</ul>' if raw_limitations else ''}
+        {f"<h3>原始回答字段</h3><ul>{raw_claims}</ul>" if raw_claims else ""}
+        {f"<h3>原始限制字段</h3><ul>{raw_limitations}</ul>" if raw_limitations else ""}
         <p class="reason">机器原因码：<code>{escape(" · ".join(response.reason_codes) or "none")}</code></p>
         <ul class="citations">{citations or "<li>没有通过引用闭包的证据。</li>"}</ul>
         <p class="identity">response <code>{escape(response.response_id)}</code> · request <code>{escape(response.request.request_id)}</code> · target <code>{escape(response.request.target_kind.value)}</code> / <code>{escape(response.request.target_id)}</code></p>
@@ -657,9 +653,7 @@ def _render_result_ledger_card(
     )
     if audit_limitations:
         limitations += "<li>另有机器限制标识，已保留在本卡审计明细中。</li>"
-    audit_limitations_html = "".join(
-        f"<li>{escape(item)}</li>" for item in audit_limitations
-    )
+    audit_limitations_html = "".join(f"<li>{escape(item)}</li>" for item in audit_limitations)
     source_refs = "".join(
         f"<li><code>{escape(source_ref_id)}</code></li>" for source_ref_id in result.source_ref_ids
     )
@@ -672,9 +666,13 @@ def _render_result_ledger_card(
         if is_historical
         else ""
     )
-    original_status = "" if result.source_original_status is None else (
-        "<div><dt>来源原始状态</dt>"
-        f"<dd><code>{escape(result.source_original_status)}</code></dd></div>"
+    original_status = (
+        ""
+        if result.source_original_status is None
+        else (
+            "<div><dt>来源原始状态</dt>"
+            f"<dd><code>{escape(result.source_original_status)}</code></dd></div>"
+        )
     )
     mapping_rationale = (
         ""
@@ -719,7 +717,7 @@ def _render_result_ledger_card(
               <div><dt>investment-facing</dt><dd><code>investment_facing=false</code></dd></div>
               {original_status}
             </dl>
-            {f'<h4>机器限制标识</h4><ul>{audit_limitations_html}</ul>' if audit_limitations_html else ''}
+            {f"<h4>机器限制标识</h4><ul>{audit_limitations_html}</ul>" if audit_limitations_html else ""}
           </section>
           <section>
             <h4>限制</h4>
@@ -1168,7 +1166,7 @@ def _render_work_progress_explanation(
     )
     return (
         '<section class="work-progress-reader" data-reader-detail="work_progress" '
-        '>'
+        ">"
         '<div class="work-purpose" data-reader-detail="why_needed">'
         "<h4>为什么需要这一步</h4>"
         f"<p>{escape(record.why_needed_zh)}</p>"
@@ -1434,17 +1432,19 @@ def _render_qqq_projection_card(
     ) or (
         "<li><span>—</span><strong>原始治理顺序已保留在审计明细；读者结论以上方四项为准。</strong></li>"
     )
-    audit_priority_facts_html = "".join(
-        f"<li>{escape(fact)}</li>" for fact in audit_priority_facts
-    )
+    audit_priority_facts_html = "".join(f"<li>{escape(fact)}</li>" for fact in audit_priority_facts)
     audit_priority_section = (
         f"<h4>原始优先事实</h4><ol>{audit_priority_facts_html}</ol>"
         if audit_priority_facts_html
         else ""
     )
-    mismatch = "" if card.source_status_note is None else (
-        '<p class="qqq-source-warning"><strong>历史来源不一致仍保留：</strong>'
-        f"<code>{escape(card.source_status_note)}</code>。页面没有静默修正原任务文件。</p>"
+    mismatch = (
+        ""
+        if card.source_status_note is None
+        else (
+            '<p class="qqq-source-warning"><strong>历史来源不一致仍保留：</strong>'
+            f"<code>{escape(card.source_status_note)}</code>。页面没有静默修正原任务文件。</p>"
+        )
     )
     default_open = " open" if card.task_id in {"TRADING-2492", "TRADING-2493"} else ""
     return (
@@ -1520,9 +1520,7 @@ def _render_qqq_options_projection(showcase: AtlasCitedQueryShowcase) -> str:
             "</div>"
             '<div class="qqq-task-list">'
             + "".join(
-                _render_qqq_projection_card(
-                    by_task[task_id], showcase.reader_terminology
-                )
+                _render_qqq_projection_card(by_task[task_id], showcase.reader_terminology)
                 for task_id in group.task_ids
             )
             + "</div></section>"
@@ -1813,9 +1811,7 @@ class _DisclosureFlatteningParser(HTMLParser):
             if key == "class":
                 class_seen = True
                 value = f"{value or ''} {extra_class}".strip()
-            rendered.append(
-                f" {key}" if value is None else f' {key}="{escape(value, quote=True)}"'
-            )
+            rendered.append(f" {key}" if value is None else f' {key}="{escape(value, quote=True)}"')
         if not class_seen:
             rendered.append(f' class="{extra_class}"')
         return "".join(rendered)
@@ -1831,14 +1827,10 @@ class _DisclosureFlatteningParser(HTMLParser):
         )
         if nested_details:
             output_tag = "section"
-            self.parts.append(
-                f'<section{self._attrs(attrs, extra_class="flat-disclosure")}>'
-            )
+            self.parts.append(f"<section{self._attrs(attrs, extra_class='flat-disclosure')}>")
         elif flattened_summary:
             output_tag = "p"
-            self.parts.append(
-                f'<p{self._attrs(attrs, extra_class="flat-disclosure-title")}>'
-            )
+            self.parts.append(f"<p{self._attrs(attrs, extra_class='flat-disclosure-title')}>")
         else:
             output_tag = tag
             self.parts.append(self.get_starttag_text() or f"<{tag}>")
@@ -1912,9 +1904,7 @@ class _InlineTermParser(HTMLParser):
         self.stack: list[_InlineTermFrame] = []
         self.first_seen: set[tuple[str, str]] = set()
 
-    def _matches(
-        self, text: str
-    ) -> tuple[tuple[int, int, ReaderTermDefinition, str], ...]:
+    def _matches(self, text: str) -> tuple[tuple[int, int, ReaderTermDefinition, str], ...]:
         candidates: list[tuple[int, int, ReaderTermDefinition, str]] = []
         for term in self.policy.terms:
             for alias in sorted(term.aliases, key=len, reverse=True):
@@ -1967,8 +1957,7 @@ class _InlineTermParser(HTMLParser):
                 + f">{matched}</span>"
             )
             full_definition_link = (
-                f'<a class="term-full-link" href="#reader-term-{escape(term.term_id)}">'
-                "完整定义</a>"
+                f'<a class="term-full-link" href="#reader-term-{escape(term.term_id)}">完整定义</a>'
                 if first
                 else ""
             )
@@ -2057,7 +2046,7 @@ def _render_reader_terminology_guide(policy: ReaderTerminologyPolicy) -> str:
     cards = "".join(
         (
             f'<article class="terminology-card" id="reader-term-{escape(term.term_id)}" '
-            'data-term-glossary-card>'
+            "data-term-glossary-card>"
             '<div class="terminology-card-head">'
             f"<h3>{escape(term.display_name_zh)}</h3>"
             f"<code>{escape(term.aliases[0])}</code>"
@@ -2238,7 +2227,9 @@ def _build_why_first_projection(
         for item in showcase.reader_projection_contract.causal_edges
     ):
         raise ValueError("ATLAS_READER_CAUSAL_EDGE_SET_INVALID")
-    if any(not node.sources for node in nodes) or any(not edge.source.source_sha256 for edge in edges):
+    if any(not node.sources for node in nodes) or any(
+        not edge.source.source_sha256 for edge in edges
+    ):
         raise ValueError("ATLAS_READER_CAUSAL_SOURCE_BINDING_INSUFFICIENT")
     return nodes, edges
 
@@ -2267,34 +2258,29 @@ def _render_trust_strip(showcase: AtlasCitedQueryShowcase) -> str:
     )
     return f"""
     <section class="trust-strip" data-reader-section="TRUST_STRIP" data-reader-card="trust-strip" data-page-freshness="{escape(manifest.freshness_status.value)}" data-source-commit="{escape(manifest.repository_commit)}">
+      <div class="trust-grid" aria-label="页面身份与安全边界">
+        <p data-always-visible="source_commit">代码版本：已锁定，完整值可在页末核对。</p>
+        <p><span data-always-visible="evidence_date">数据截至：{escape(state.dates.data_as_of or "未知")}</span><span data-always-visible="page_date">页面生成：{escape(state.dates.page_generated_at)}</span></p>
+        <p><span data-always-visible="freshness">页面状态：{escape(_PAGE_FRESHNESS_LABELS[manifest.freshness_status])}</span><span data-always-visible="engineering_validation">工程检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.ENGINEERING_VALIDATION].status])}</span></p>
+        <p><span data-always-visible="owner_visual_review">视觉检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.OWNER_VISUAL_REVIEW].status])}</span><span data-always-visible="reader_comprehension_review">理解检查：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.READER_COMPREHENSION_REVIEW].status])}</span></p>
+        <p class="trust-grid-boundary"><span data-always-visible="strategy_conclusion_pass_count">策略结论：尚未形成</span><span data-always-visible="production_effect">生产动作：无</span><span data-always-visible="broker_action">交易动作：无</span></p>
+      </div>
       <header>
-        <p class="eyebrow">ATLAS · 引用优先研究页面</p>
-        <h1>先理解这套策略系统，再看当前研究卡点</h1>
-        <p class="lead">原始需求不是尽快产出一个策略答案，而是把策略想法逐步变成可追溯、可复核的决策；任何关键证据不完整，研究结论和执行都会停下来。</p>
+        <p class="eyebrow">策略研究说明 · 只读页面</p>
+        <h1 data-always-visible="current_problem" data-reader-claim-source-refs="{escape(context_source_refs)}">这项策略研究为什么还不能继续？</h1>
+        <p class="lead">这套系统不会直接给出买卖答案。它先确认数据可靠，再评价策略，最后由人工决定是否继续。</p>
         <div class="system-orientation" data-reader-overview="SYSTEM_CONTEXT" data-context-source-refs="{escape(context_source_refs)}">
-          <p class="system-orientation-title">一眼看懂整体路径</p>
+          <p class="system-orientation-title">系统怎样从想法走到行动</p>
           <ol>
-            <li data-system-stage="RESEARCH_QUESTION"><span>01 · 策略问题</span><strong>先明确真正想验证的投资判断</strong></li>
-            <li data-system-stage="TRUSTED_EVIDENCE"><span>02 · 可信证据</span><strong>固定研究范围，核对数据、时点与来源</strong></li>
-            <li data-system-stage="HUMAN_DECISION"><span>03 · 人工决策</span><strong>只接受证据支持的最窄结论</strong></li>
-            <li data-system-stage="AUTHORIZED_EXECUTION"><span>04 · 授权执行</span><strong>另行审批后才可能进入模拟或生产</strong></li>
+            <li data-system-stage="RESEARCH_QUESTION"><span>01 · 提出问题</span><strong>先说明真正想判断什么</strong></li>
+            <li data-system-stage="TRUSTED_EVIDENCE"><span>02 · 检查数据</span><strong>确认用于判断的数据完整可靠</strong></li>
+            <li data-system-stage="HUMAN_DECISION"><span>03 · 形成结论</span><strong>只说现有数据真正支持的部分</strong></li>
+            <li data-system-stage="AUTHORIZED_EXECUTION"><span>04 · 决定行动</span><strong>由人工决定是否继续，页面不会自行执行</strong></li>
           </ol>
-          <p class="system-orientation-current"><strong>当前停在第 02 步“可信证据”：</strong>主研究窗口的证据尚未通过准入，所以系统不会把工程能力误当成策略有效性。</p>
+          <p class="system-orientation-current"><strong>当前停在第 02 步：</strong>期权数据没有满足检查要求，而且现有汇总没有指出具体是哪一项出了问题。</p>
         </div>
       </header>
-      <div class="trust-grid" aria-label="页面身份与安全边界">
-        <p data-always-visible="source_commit">精确代码版本：已锁定，完整值可在页末审计区核对。</p>
-        <p data-always-visible="freshness">页面时效性：{escape(_PAGE_FRESHNESS_LABELS[manifest.freshness_status])}</p>
-        <p data-always-visible="evidence_date">证据截至：{escape(state.dates.data_as_of or '未知')}</p>
-        <p data-always-visible="page_date">页面生成：{escape(state.dates.page_generated_at)}</p>
-        <p data-always-visible="engineering_validation">工程验收：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.ENGINEERING_VALIDATION].status])}</p>
-        <p data-always-visible="owner_visual_review">Owner 视觉验收：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.OWNER_VISUAL_REVIEW].status])}</p>
-        <p data-always-visible="reader_comprehension_review">读者理解验收：{escape(_PAGE_ACCEPTANCE_LABELS[acceptance[PageAcceptanceTrack.READER_COMPREHENSION_REVIEW].status])}</p>
-        <p data-always-visible="strategy_conclusion_pass_count">策略结论通过：0</p>
-        <p data-always-visible="production_effect">生产影响：无</p>
-        <p data-always-visible="broker_action">交易动作：无</p>
-      </div>
-      <p class="trust-stop" data-always-visible="critical-risk">本页不是投资建议，不授权真实策略执行引擎、外部动作或交易。</p>
+      <p class="trust-stop" data-always-visible="critical-risk">本页只解释研究状态，不提供投资建议，也不会运行策略、连接外部系统或下单。</p>
     </section>
     """
 
@@ -2305,6 +2291,15 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
         sorted({source.source_ref_id for node in nodes for source in node.sources})
     )
     edge_by_pair = {(item.source_node, item.target_node): item for item in edges}
+    node_by_kind = {item.kind: item for item in nodes}
+
+    def source_refs(*kinds: ReaderCausalNodeKind) -> str:
+        return " ".join(
+            sorted(
+                {source.source_ref_id for kind in kinds for source in node_by_kind[kind].sources}
+            )
+        )
+
     node_cards: list[str] = []
     for index, node in enumerate(nodes):
         answer = project_reader_text(text=node.answer_zh, policy=showcase.reader_terminology)
@@ -2347,35 +2342,57 @@ def _render_why_context(showcase: AtlasCitedQueryShowcase) -> str:
     return f"""
     <section class="why-context" data-reader-section="WHY_CONTEXT" data-reader-card="why-context" aria-labelledby="why-context-title">
       <div class="reader-section-heading">
-        <p class="section-kicker">SYSTEM CONTEXT · WHY RESEARCH STOPS</p>
-        <h2 id="why-context-title">为什么策略研究之前会被关闭？</h2>
-        <p>这里的“关闭”是一道安全门：当关键证据还不足以支撑可靠结论时，系统停止继续研究或执行，而不是先给答案、以后再补证据。</p>
+        <p class="section-kicker">20 秒先看懂</p>
+        <h2 id="why-context-title">当前决定、原因和下一步</h2>
+        <p>下面四项是本页默认答案；无需展开，也无需先查看词语说明。</p>
       </div>
-      <div class="research-closure" data-reader-context="RESEARCH_CLOSURE" data-context-source-refs="{escape(context_source_refs)}">
-        <p class="research-closure-verdict"><span>直接回答</span><strong>因为主研究窗口的关键证据没有达到可用于策略结论的准入门槛。</strong></p>
-        <div class="research-closure-meaning">
-          <p><strong>这不表示什么：</strong>不是已经证明策略无效，也不是一次局部运行失败就否定整个策略。</p>
-          <p><strong>怎样才能重新开放：</strong>先补齐并通过数据质量、时点可得性和来源准入，再由人工决定证据是否足以继续；页面不会自动放行。</p>
+      <div class="research-closure" data-reader-layer="reader" data-reader-context="RESEARCH_CLOSURE" data-context-source-refs="{escape(context_source_refs)}">
+        <div class="reader-decision-grid" aria-label="当前研究的四个默认答案">
+          <article class="reader-decision-card" data-reader-decision="CURRENT_DECISION" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.RESULT))}">
+            <span>01 · 当前决定</span><strong data-always-visible="conclusion_boundary">暂不继续形成策略结论。</strong>
+          </article>
+          <article class="reader-decision-card" data-reader-decision="WHY_PAUSED" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.CONSTRAINT, ReaderCausalNodeKind.EVIDENCE))}">
+            <span>02 · 为什么</span><strong data-always-visible="largest_blocker">期权数据没有满足检查要求，但现有汇总没有指出具体哪一项出了问题。</strong>
+          </article>
+          <article class="reader-decision-card" data-reader-decision="CURRENT_WORK" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.CHOICE))}">
+            <span>03 · 现在在查什么</span><strong>只用已经保存的结果逐项排查，不发起新的外部运行。</strong>
+          </article>
+          <article class="reader-decision-card" data-reader-decision="NEXT_STEP" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.NEXT_STEP))}">
+            <span>04 · 下一步</span><strong data-always-visible="next_legal_action">找到原因并重新核对后，由人工决定是否继续。页面不会自行放行。</strong>
+          </article>
         </div>
-        <p class="current-scope"><strong>你现在看到的是哪一小段：</strong>当前页面只在处理第 02 步“可信证据”里的一个具体卡点——现有汇总无法指出期权数据究竟在哪个检查轴失败，因此只能先做严格离线诊断。</p>
+        <p class="reader-safety" data-always-visible="prohibited_inference" data-reader-claim-source-refs="{escape(source_refs(ReaderCausalNodeKind.RESULT))}"><strong>当前不能推出：</strong>这既不能证明策略有效，也不能证明策略无效；更不表示可以投资、部署或交易。</p>
+        <ol class="reader-plain-flow" aria-label="当前研究与前后步骤的关系">
+          <li><span>已经收集数据</span></li>
+          <li class="is-current"><span>当前：定位没有满足要求的原因</span></li>
+          <li><span>重新核对数据</span></li>
+          <li><span>人工决定是否继续</span></li>
+        </ol>
       </div>
-      <div class="local-why-heading" data-reader-context="CURRENT_LOCAL_CHAIN">
-        <p class="section-kicker">CURRENT RESEARCH GATE · SOURCE-BOUND</p>
-        <h3>在这个整体上下文下，本次研究为什么按现在的顺序推进？</h3>
-        <p>下面六步解释当前局部选择；每一步都绑定已校验来源。问题、选择理由或因果边缺失时，页面必须显示信息不足，不能由渲染器补写。</p>
-      </div>
-      <p class="reader-problem" data-always-visible="current_problem">当前主问题：现有已准入证据是否足以让策略研究重新开放？</p>
-      <ol class="causal-chain">{''.join(node_cards)}</ol>
-      <div class="why-boundary-grid">
-        <p data-always-visible="largest_blocker">最大阻塞：主研究窗口的校准证据仍未通过数据质量与时点可得性准入，现有汇总也不能确定具体失败轴。</p>
-        <p data-always-visible="prohibited_inference">禁止推断：不能据此宣称策略有效、收益稳健、风险可接受或可以下单。</p>
-        <p data-always-visible="next_legal_action">下一合法动作：只做已登记的严格离线逐轴诊断；不重复外部运行。</p>
-      </div>
-      <details class="causal-audit" data-reader-layer="audit">
+      <details class="local-research-explanation" data-reader-layer="research">
+        <summary>展开：为什么这样判断、当前具体查什么</summary>
+        <div class="local-research-explanation-body" data-reader-context="CURRENT_LOCAL_CHAIN">
+          <div class="local-why-heading">
+            <p class="section-kicker">研究解释 · 来源已绑定</p>
+            <h3>在这个整体上下文下，本次研究为什么按现在的顺序推进？</h3>
+            <p>下面六步解释当前局部选择；每一步都绑定已校验来源。问题、选择理由或因果边缺失时，页面必须显示信息不足，不能由渲染器补写。</p>
+          </div>
+          <p class="reader-problem">当前研究问题：现有已准入证据是否足以让策略研究重新开放？</p>
+          <ol class="causal-chain">{"".join(node_cards)}</ol>
+          <div class="why-boundary-grid">
+            <p data-research-detail="largest_blocker">最大阻塞：主研究窗口的校准证据仍未通过数据质量与时点可得性准入，现有汇总也不能确定具体失败轴。</p>
+            <p data-research-detail="prohibited_inference">禁止推断：不能据此宣称策略有效、收益稳健、风险可接受或可以下单。</p>
+            <p data-research-detail="next_legal_action">下一合法动作：只做已登记的严格离线逐轴诊断；不重复外部运行。</p>
+          </div>
+        </div>
+      </details>
+    </section>
+    <div class="causal-audit-section" data-reader-card="why-context-audit" data-reader-layer="audit">
+      <details class="causal-audit">
         <summary>核对这条因果链的 {len(audit_sources)} 个来源绑定</summary>
         <ul>{audit_rows}</ul>
       </details>
-    </section>
+    </div>
     """
 
 
@@ -2412,12 +2429,12 @@ def _render_change_summary(showcase: AtlasCitedQueryShowcase) -> str:
       <p class="change-state" data-change-kind="{escape(state.change.change_kind.value)}">{escape(_CHANGE_LABELS[state.change.change_kind])}</p>
       <p data-always-visible="change_summary">{escape(project_reader_text(text=state.change.explanation_zh, policy=showcase.reader_terminology))}</p>
       <dl class="date-context">
-        <div><dt>数据截至</dt><dd>{escape(state.dates.data_as_of or '未知')}</dd></div>
-        <div><dt>证据评估</dt><dd>{escape(state.dates.evidence_evaluated_at or '未知')}</dd></div>
+        <div><dt>数据截至</dt><dd>{escape(state.dates.data_as_of or "未知")}</dd></div>
+        <div><dt>证据评估</dt><dd>{escape(state.dates.evidence_evaluated_at or "未知")}</dd></div>
         <div><dt>页面生成</dt><dd>{escape(state.dates.page_generated_at)}</dd></div>
-        <div><dt>比较基准日期</dt><dd>{escape(state.change.comparison_base_date or '不适用')}</dd></div>
+        <div><dt>比较基准日期</dt><dd>{escape(state.change.comparison_base_date or "不适用")}</dd></div>
       </dl>
-      <details data-reader-layer="audit"><summary>查看比较基准身份</summary><code>{escape(state.change.comparison_base_id or 'none')}</code></details>
+      <details data-reader-layer="audit"><summary>查看比较基准身份</summary><code>{escape(state.change.comparison_base_id or "none")}</code></details>
     </section>
     """
 
@@ -2442,8 +2459,8 @@ def _render_conclusion_boundary(showcase: AtlasCitedQueryShowcase) -> str:
 def _render_acceptance_axes(showcase: AtlasCitedQueryShowcase) -> str:
     cards = "".join(
         f'<li data-review-track="{escape(item.track.value)}" data-review-status="{escape(item.status.value)}">'
-        f'<strong>{escape(_PAGE_ACCEPTANCE_TRACK_LABELS[item.track])}</strong>'
-        f'<span>{escape(_PAGE_ACCEPTANCE_LABELS[item.status])}</span></li>'
+        f"<strong>{escape(_PAGE_ACCEPTANCE_TRACK_LABELS[item.track])}</strong>"
+        f"<span>{escape(_PAGE_ACCEPTANCE_LABELS[item.status])}</span></li>"
         for item in showcase.page_effectiveness.acceptance
     )
     return f"""
@@ -2468,8 +2485,8 @@ def _render_flow_position(showcase: AtlasCitedQueryShowcase) -> str:
     labels = ("上一步", "当前位置", "下一步")
     cards = "".join(
         f'<li data-flow-position="{escape(label)}" data-stage="{escape(stage_id)}">'
-        f'<span>{escape(label)}</span><strong>{escape(work_records[stage_id].display_title_zh)}</strong>'
-        f'<p>{escape(project_reader_text(text=records[stage_id].plain_summary, policy=showcase.reader_terminology))}</p></li>'
+        f"<span>{escape(label)}</span><strong>{escape(work_records[stage_id].display_title_zh)}</strong>"
+        f"<p>{escape(project_reader_text(text=records[stage_id].plain_summary, policy=showcase.reader_terminology))}</p></li>"
         for label, stage_id in zip(labels, stage_ids, strict=True)
     )
     return f"""
@@ -2656,8 +2673,7 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
         for item in showcase.responses
     )
     cards = "".join(
-        _render_response(item, showcase.reader_terminology)
-        for item in showcase.responses
+        _render_response(item, showcase.reader_terminology) for item in showcase.responses
     )
     system_flow = _render_system_flow_map(showcase)
     qqq_options_projection = _render_qqq_options_projection(showcase)
@@ -3153,23 +3169,36 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .term-popover::before {{ display:block; content:attr(data-term-short); font-weight:650; overflow-wrap:anywhere; }}
     .term-full-link {{ display:block; margin-top:.52rem; padding-top:.42rem; border-top:1px solid #ffffff2e; color:#b9dbff; font-size:.66rem; font-weight:850; text-decoration:underline; text-underline-offset:.16rem; }}
     .term-full-link:focus-visible {{ outline:2px solid #fff; outline-offset:2px; border-radius:.18rem; }}
-    .trust-strip,.why-context,.canonical-questions,.change-summary,.conclusion-boundary,.acceptance-axes,.flow-position,.research-drilldown,.audit-destinations {{ margin:0 0 1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:visible; }}
+    .trust-strip,.why-context,.causal-audit-section,.canonical-questions,.change-summary,.conclusion-boundary,.acceptance-axes,.flow-position,.research-drilldown,.audit-destinations {{ margin:0 0 1.35rem; border:1px solid var(--line); border-radius:1rem; background:#fff; box-shadow:0 10px 30px #12213a0a; overflow:visible; }}
     .trust-strip {{ overflow:hidden; border:0; }}
     .trust-strip > header {{ padding:2.4rem 1.6rem; }}
     .trust-strip > header h1 {{ font-size:clamp(2rem,5vw,3.8rem); }}
     .trust-grid {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.55rem; padding:1rem 1.2rem; background:#fff; }}
     .trust-grid p {{ margin:0; padding:.62rem .7rem; border:1px solid #dbe4ef; border-radius:.55rem; color:#43526a; background:#f8fafc; font-size:.7rem; line-height:1.4; }}
+    .trust-grid p span {{ display:block; }}
+    .trust-grid p span + span {{ margin-top:.16rem; }}
+    .trust-grid-boundary {{ color:#714155!important; border-color:#ead1da!important; background:#fff7f9!important; }}
     .trust-stop {{ margin:0; padding:.8rem 1.2rem; color:#6f4d0a; background:#fff3d8; border-top:1px solid #efd79f; font-weight:850; }}
     .reader-section-heading {{ padding:1.25rem 1.35rem .9rem; }}
     .reader-section-heading h2 {{ margin:.18rem 0 .35rem; font-size:clamp(1.35rem,2.7vw,2rem); line-height:1.2; }}
     .reader-section-heading > p:last-child {{ max-width:780px; margin:.25rem 0 0; color:var(--muted); }}
     .research-closure {{ margin:0 1.35rem 1rem; padding:1rem; border:1px solid #c5d7ec; border-radius:.82rem; background:#f4f8ff; }}
-    .research-closure-verdict {{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:.75rem; align-items:start; margin:0; }}
-    .research-closure-verdict span {{ padding:.2rem .5rem; border-radius:999px; color:#245393; background:#dfebff; font-size:.64rem; font-weight:900; white-space:nowrap; }}
-    .research-closure-verdict strong {{ color:#143d73; font-size:1.05rem; line-height:1.5; }}
-    .research-closure-meaning {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; margin-top:.75rem; }}
-    .research-closure-meaning p {{ margin:0; padding:.72rem .78rem; border:1px solid #d6e2f1; border-radius:.65rem; color:#43546c; background:#fff; font-size:.76rem; line-height:1.55; }}
-    .current-scope {{ margin:.75rem 0 0; padding:.72rem .78rem; border-left:4px solid var(--teal); border-radius:.42rem; color:#285b58; background:#e9f7f4; font-size:.78rem; }}
+    .reader-decision-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.65rem; }}
+    .reader-decision-card {{ min-width:0; padding:.85rem .9rem; border:1px solid #d6e2f1; border-radius:.7rem; background:#fff; }}
+    .reader-decision-card > span,.reader-decision-card > strong {{ display:block; }}
+    .reader-decision-card > span {{ color:#657895; font-size:.63rem; font-weight:900; letter-spacing:.04em; }}
+    .reader-decision-card > strong {{ margin-top:.3rem; color:#173d70; font-size:.82rem; line-height:1.55; }}
+    .reader-decision-card[data-reader-decision="CURRENT_DECISION"] {{ border-color:#a9c5e9; background:#edf4ff; }}
+    .reader-decision-card[data-reader-decision="NEXT_STEP"] {{ border-color:#9acfc6; background:#edf8f5; }}
+    .reader-safety {{ margin:.75rem 0 0; padding:.72rem .82rem; border-left:4px solid #b34b61; border-radius:.48rem; color:#6f3140; background:#faedf0; font-size:.78rem; line-height:1.55; }}
+    .reader-plain-flow {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1.25rem; margin:.85rem 0 0; padding:0; list-style:none; }}
+    .reader-plain-flow li {{ position:relative; min-width:0; padding:.64rem .7rem; border:1px solid #dce4ee; border-radius:.55rem; color:#526177; background:#fff; font-size:.7rem; font-weight:800; line-height:1.45; text-align:center; }}
+    .reader-plain-flow li::after {{ position:absolute; right:-.95rem; top:50%; content:"→"; color:#7890ae; font-size:.9rem; transform:translateY(-50%); }}
+    .reader-plain-flow li:last-child::after {{ display:none; }}
+    .reader-plain-flow .is-current {{ color:#0c6259; border-color:#8dc7be; background:#e9f7f4; }}
+    .local-research-explanation {{ margin:0 1.35rem 1rem; border:1px solid #d4dfec; border-radius:.75rem; background:#fbfcfe; overflow:hidden; }}
+    .local-research-explanation > summary {{ padding:.85rem 1rem; color:#244f83; background:#eef4fb; font-size:.8rem; font-weight:900; }}
+    .local-research-explanation-body {{ padding:.95rem 0 .15rem; }}
     .local-why-heading {{ padding:.25rem 1.35rem .85rem; }}
     .local-why-heading h3 {{ margin:.18rem 0 .3rem; font-size:clamp(1.15rem,2.2vw,1.55rem); line-height:1.25; }}
     .local-why-heading > p:last-child {{ max-width:820px; margin:.2rem 0 0; color:var(--muted); font-size:.78rem; }}
@@ -3188,6 +3217,8 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .why-boundary-grid p:nth-child(3) {{ color:#0b6259; background:#eaf7f3; }}
     .causal-audit > ul {{ display:grid; gap:.5rem; padding:0 1.25rem 1.25rem; list-style:none; }}
     .causal-audit li {{ padding:.6rem; border:1px solid #dfe5ed; border-radius:.45rem; background:#fff; font-size:.65rem; overflow-wrap:anywhere; }}
+    .causal-audit-section {{ background:#f8fafc; box-shadow:none; }}
+    .causal-audit-section > details > summary {{ padding:.85rem 1.1rem; color:#53657d; font-size:.74rem; font-weight:850; }}
     .canonical-questions > nav {{ padding:0 1.35rem; }}
     .canonical-questions > .answer-grid {{ padding:0 1.35rem 1.35rem; }}
     .change-state {{ display:inline-block; margin:0 1.35rem .7rem; padding:.25rem .65rem; color:#176557; background:#e6f5f0; border-radius:999px; font-weight:850; }}
@@ -3217,9 +3248,9 @@ def render_cited_query_html(showcase: AtlasCitedQueryShowcase) -> str:
     .audit-destinations .terminology-guide-intro,.audit-destinations .terminology-grid {{ width:auto; margin-left:1rem; margin-right:1rem; }}
     code {{ overflow-wrap:anywhere; }}
     footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }}
-    @media (max-width:900px) {{ .trust-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .system-orientation ol {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
+    @media (max-width:900px) {{ .trust-grid,.reader-decision-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .system-orientation ol {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .causal-chain {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .date-context {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} .progress-matrix-grid,.progress-matrix-heading {{ grid-template-columns:1fr; }} .strategy-conclusion-count {{ width:170px; }} }}
     @media (max-width:900px) {{ .effectiveness-title-row,.effectiveness-boundary,.flow-heading,.qqq-title-row {{ grid-template-columns:1fr; display:grid; }} .you-are-here,.qqq-count {{ margin-top:1rem; }} .qqq-count {{ width:142px; }} .qqq-task-list {{ grid-template-columns:1fr; }} .system-flow {{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:"s1 s2" "s4 s3" "s5 s6" "s8 s7"; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(5)::after {{ content:"→"; right:-.78rem; left:auto; top:98px; bottom:auto; transform:translateY(-50%); }} .flow-stage-shell:nth-child(2)::after,.flow-stage-shell:nth-child(4)::after,.flow-stage-shell:nth-child(6)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.2rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(3)::after,.flow-stage-shell:nth-child(7)::after {{ content:"←"; right:auto; left:-.78rem; top:98px; transform:translateY(-50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .focus-panel,.result-ledger-intro {{ grid-template-columns:1fr; }} .historical-lane-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }} nav,.result-ledger-grid {{ grid-template-columns:1fr 1fr; }} .citations {{ grid-template-columns:1fr; }} }}
-    @media (max-width:620px) {{ .trust-grid,.system-orientation ol,.research-closure-meaning,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .research-closure-verdict {{ grid-template-columns:1fr; }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
+    @media (max-width:620px) {{ .trust-grid,.system-orientation ol,.reader-decision-grid,.reader-plain-flow,.causal-chain,.why-boundary-grid,.date-context,.acceptance-axis-grid,.flow-position-grid,.terminology-grid,.metrics,nav,.reader-answer-grid,.effectiveness-review-grid,.effectiveness-audit dl,.focus-ledger,.provenance-ledger,.drilldown-grid,.historical-lane-grid,.result-ledger-grid,.result-status-pair,.attribution-meta,.owner-next-grid,.transition-detail,.qqq-reader-boundary,.qqq-group-boundary,.qqq-reader-grid,.work-reader-grid,.progress-dimension-grid,.concept-grid {{ grid-template-columns:1fr; }} .trust-strip > header {{ padding:1.8rem 1rem; }} .trust-grid {{ padding:.8rem; }} .research-closure,.local-research-explanation {{ margin-left:.8rem; margin-right:.8rem; }} .reader-plain-flow {{ gap:1.15rem; }} .reader-plain-flow li::after {{ right:50%; top:auto; bottom:-1.05rem; content:"↓"; transform:translateX(50%); }} .page-effectiveness,.flow-map,.result-ledger,.qqq-projection {{ padding:1rem; }} .successor-coverage li {{ grid-template-columns:1fr; }} .qqq-decision {{ grid-template-columns:1fr; }} .qqq-decision-label {{ padding:.7rem .85rem; }} .qqq-task-identity {{ align-items:flex-start; flex-direction:column; }} .qqq-layer-row {{ grid-template-columns:1fr; gap:.05rem; }} .historical-lane-head {{ display:block; }} .historical-lane-boundary {{ margin-top:.6rem; }} .provenance-copy {{ display:block; }} .provenance-copy > p:last-child {{ margin-top:.4rem; }} .system-flow {{ grid-template-columns:1fr; grid-template-areas:"s1" "s2" "s3" "s4" "s5" "s6" "s7" "s8"; gap:1.15rem; }} .flow-stage > .stage-summary {{ min-height:0; }} .flow-stage-shell::after,.flow-stage-shell:nth-child(n+5):nth-child(-n+7)::after {{ content:"↓"; right:50%; left:auto; top:auto; bottom:-1.18rem; transform:translateX(50%); }} .flow-stage-shell:nth-child(8)::after {{ display:none; }} .drilldown-grid .drilldown-wide {{ grid-column:auto; }} .reader-facts > li {{ grid-template-columns:1fr; }} .answer-head,.result-ledger-head {{ display:block; }} .status {{ display:inline-block; margin-top:.7rem; }} .result-status {{ margin-top:.55rem; text-align:left; }} .attribution-heading {{ align-items:flex-start; flex-direction:column; }} .attribution-id {{ text-align:left; }} }}
     @media (prefers-reduced-motion:reduce) {{ html {{ scroll-behavior:auto; }} .stage-disclosure-cue i {{ transition:none; }} }}
     @media print {{ body {{ background:#fff; }} nav {{ display:none; }} .stage-drilldown {{ display:block!important; }} .answer-card {{ break-inside:avoid; box-shadow:none; }} }}
   </style>

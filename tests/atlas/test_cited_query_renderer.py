@@ -117,7 +117,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
     html = render_cited_query_html(showcase)
     rendered_text = unescape(re.sub(r"<[^>]+>", "", html)).replace("完整定义", "")
     for expected in (
-        "先理解这套策略系统，再看当前研究卡点",
+        "这项策略研究为什么还不能继续",
         "在这个整体上下文下，本次研究为什么按现在的顺序推进",
         "我们真正要回答什么",
         "为什么选择当前研究路径",
@@ -336,8 +336,7 @@ def test_renderer_presents_five_reader_questions_and_lineage() -> None:
         in html
     )
     assert (
-        'data-successor-task="TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1"'
-        in html
+        'data-successor-task="TRADING-2527_ATLAS_HUMAN_COMPREHENSION_ACCEPTANCE_PILOT_V1"' in html
     )
     assert (
         'data-successor-task="TRADING-2528_QC_QQQ_OPTIONS_DAILY_TRANSPORT_PER_AXIS_DIAGNOSTIC_CONTRACT_V1"'
@@ -500,10 +499,39 @@ def test_renderer_follows_why_first_section_and_term_interaction_contract() -> N
     first_causal_node = html.index('<li class="causal-node" data-causal-node="')
     assert system_context < research_closure < local_chain < first_causal_node
     assert html.count('data-system-stage="') == 4
-    assert "原始需求不是尽快产出一个策略答案" in html
-    assert "为什么策略研究之前会被关闭" in html
-    assert "不是已经证明策略无效" in html
-    assert "当前页面只在处理第 02 步“可信证据”里的一个具体卡点" in html
+    assert "这项策略研究为什么还不能继续？" in html
+    assert "系统怎样从想法走到行动" in html
+    assert "当前决定、原因和下一步" in html
+    assert html.count('class="reader-decision-card"') == 4
+    assert 'class="reader-plain-flow"' in html
+    assert html.count('class="local-research-explanation"') == 1
+    assert "为什么策略研究之前会被关闭" not in html
+
+    l0_start = html.index('data-reader-section="TRUST_STRIP"')
+    l1_start = html.index('<details class="local-research-explanation"')
+    l0_html = html[l0_start:l1_start]
+    l0_text = unescape(re.sub(r"<[^>]+>", " ", l0_html))
+    for decision_kind in ("CURRENT_DECISION", "WHY_PAUSED", "CURRENT_WORK", "NEXT_STEP"):
+        assert l0_html.count(f'data-reader-decision="{decision_kind}"') == 1
+    assert 'class="term-trigger"' not in l0_html
+    for forbidden_term in (
+        "主研究窗口",
+        "关键证据",
+        "准入门槛",
+        "数据质量",
+        "时点可得性",
+        "来源准入",
+        "可信证据",
+        "检查轴",
+        "严格离线诊断",
+        "DQ/PIT",
+        "admission",
+        "axis",
+        "G2",
+        "G3",
+        "TRADING-",
+    ):
+        assert forbidden_term not in l0_text
     assert "TRADING-2515_STRATEGY_RESEARCH_REOPEN_READINESS_DECISION_V1" in html
     assert 'data-term-first="true"' in html
     assert 'data-term-first="false"' in html
@@ -715,9 +743,7 @@ def test_artifact_writer_is_byte_deterministic(tmp_path: Path) -> None:
     terminology = RenderedTermInventory.from_json_bytes(terminology_bytes)
     assert terminology.html_sha256 == first[0].sha256
     accessibility_payload = json.loads(
-        (tmp_path / "first" / "reader_accessibility_validation.json").read_text(
-            encoding="utf-8"
-        )
+        (tmp_path / "first" / "reader_accessibility_validation.json").read_text(encoding="utf-8")
     )
     assert accessibility_payload["html_sha256"] == first[0].sha256
     assert accessibility_payload["status"] == "PASS"

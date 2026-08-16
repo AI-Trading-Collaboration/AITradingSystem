@@ -306,3 +306,23 @@ integration、唯一 exact HTML、2526-B final candidate 验收与适用 formal 
   renderer/term-inventory/accessibility/page-effectiveness 四文件并行回归=`45 passed in 139.97s`。数据流、
   research state、DQ/PIT 与 execution authority 均未改变，因此不更新 `docs/system_flow.md`；新 exact HTML
   仍须在最终 tracked commit 后重建并由 Owner 人工复核。
+- 2026-08-16：Owner 对新页面再次复核后指出，首屏虽然补了全局上下文，但“主研究窗口、关键证据、准入门槛、
+  数据质量、时点可得性、来源准入、可信证据、检查轴、严格离线诊断”等项目概念仍互相解释，hover 反而可能
+  把结构问题拆成多个临时窗口。Owner 授权把该问题提交 Web Pro，并在收到建议后继续优化。新 exact-commit
+  advisory=`https://chatgpt.com/c/6a8135db-8e1c-83ee-9617-9e360a6660e3`，仓库基线固定为
+  `ece8d97373c1a8a70949aa0ae445b79593ee09b3`，本地候选 `1e1458d472641bb05b60ab6d113dbee00d1b3e31`
+  仅作为 prompt-supplied newer candidate。经本地 authority reconciliation，本轮不改变已冻结合同，也不启动
+  新 serial contract wave：首屏改为 compact trust strip、一个当前时态主问题、四张零术语决策卡、始终可见的
+  禁止推断条和普通话流程线；局部六步因果链进入单层 L1 disclosure，raw identifier 与完整来源继续走独立
+  AUDIT destination。L0 删除全部 tooltip 后仍必须独立成立；标题只解释“为什么现在仍不继续得出策略结论”，
+  canonical source 不足时不得倒推或编造历史关闭原因。验收新增首屏未解释缩写/raw ID 为 0、四卡一决策、
+  320/360/390px 可达，以及 desktop/mobile 分轨的 20 秒五问复述；工程 PASS 仍不代签 Owner visual 或 reader
+  comprehension。
+- 2026-08-16：coordinator 已落实 Pro 建议的 L0/L1/AUDIT 重排：compact trust strip 位于标题之前；首屏改为
+  当前时态 H1、四张单决策卡、始终可见的禁止推断和普通话流程线；项目术语、缩写与 raw ID 从 L0 可见文本
+  移除，局部六步链进入唯一 L1 disclosure，完整来源核对成为独立 AUDIT card。回归测试显式删除全部 L0
+  tooltip 后验证正文仍成立，并拒绝“主研究窗口、关键证据、准入门槛、DQ/PIT、G2/G3、TRADING-*”等未解释
+  概念重返首屏。首次扩展回归 `44 passed / 1 failed` 仅暴露旧标题快照，更新权威后最终四文件并行回归=
+  `45 passed in 135.07s`。本轮不改变研究事实、DQ/PIT、production、broker 或系统数据流，因此不更新
+  `docs/system_flow.md`；下一步从最终 tracked commit 原子重建 exact HTML，并进行 320/360/390px 与 desktop
+  视觉复核，Owner visual/reader comprehension 继续 `PENDING_REVIEW`。
